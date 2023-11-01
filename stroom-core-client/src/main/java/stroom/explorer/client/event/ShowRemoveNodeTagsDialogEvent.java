@@ -15,25 +15,30 @@
  *
  */
 
-package stroom.document.client.event;
+package stroom.explorer.client.event;
 
-import stroom.docref.DocRef;
+import stroom.explorer.shared.ExplorerNode;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 
-public class RefreshDocumentEvent extends GwtEvent<RefreshDocumentEvent.Handler> {
+import java.util.List;
+import java.util.Objects;
+
+public class ShowRemoveNodeTagsDialogEvent extends GwtEvent<ShowRemoveNodeTagsDialogEvent.Handler> {
 
     private static Type<Handler> TYPE;
-    private final DocRef docRef;
+    private final List<ExplorerNode> explorerNodes;
 
-    private RefreshDocumentEvent(final DocRef docRef) {
-        this.docRef = docRef;
+    private ShowRemoveNodeTagsDialogEvent(final List<ExplorerNode> explorerNodes) {
+        this.explorerNodes = Objects.requireNonNull(explorerNodes);
     }
 
-    public static void fire(final HasHandlers handlers, final DocRef docRef) {
-        handlers.fireEvent(new RefreshDocumentEvent(docRef));
+    public static void fire(final HasHandlers handlers,
+                            final List<ExplorerNode> explorerNodes) {
+        handlers.fireEvent(
+                new ShowRemoveNodeTagsDialogEvent(explorerNodes));
     }
 
     public static Type<Handler> getType() {
@@ -45,24 +50,23 @@ public class RefreshDocumentEvent extends GwtEvent<RefreshDocumentEvent.Handler>
 
     @Override
     public final Type<Handler> getAssociatedType() {
-        return getType();
+        return TYPE;
     }
 
     @Override
     protected void dispatch(final Handler handler) {
-        handler.onReload(this);
+        handler.onCreate(this);
     }
 
-    public DocRef getDocRef() {
-        return docRef;
+    public List<ExplorerNode> getExplorerNodes() {
+        return explorerNodes;
     }
-
 
     // --------------------------------------------------------------------------------
 
 
     public interface Handler extends EventHandler {
 
-        void onReload(RefreshDocumentEvent event);
+        void onCreate(final ShowRemoveNodeTagsDialogEvent event);
     }
 }

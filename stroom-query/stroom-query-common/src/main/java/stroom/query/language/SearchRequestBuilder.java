@@ -941,7 +941,7 @@ public class SearchRequestBuilder {
             if (TokenType.isString(token)) {
                 if (afterAs) {
                     if (columnName != null) {
-                        throw new TokenException(token, "Syntax exception, duplicate column name");
+                        throw new TokenException(token, "Syntax exception, unexpected column name");
                     } else {
                         columnName = token.getUnescapedText();
                     }
@@ -964,6 +964,7 @@ public class SearchRequestBuilder {
 
                 addField(fieldToken,
                         fieldToken.getUnescapedText(),
+                        fieldToken.getUnescapedText(),
                         columnName,
                         sortMap,
                         groupMap,
@@ -980,6 +981,7 @@ public class SearchRequestBuilder {
         if (fieldToken != null) {
             addField(fieldToken,
                     fieldToken.getUnescapedText(),
+                    fieldToken.getUnescapedText(),
                     columnName,
                     sortMap,
                     groupMap,
@@ -989,6 +991,7 @@ public class SearchRequestBuilder {
     }
 
     private void addField(final AbstractToken token,
+                          final String id,
                           final String fieldName,
                           final String columnName,
                           final Map<String, Sort> sortMap,
@@ -996,7 +999,7 @@ public class SearchRequestBuilder {
                           final Map<String, Filter> filterMap,
                           final TableSettings.Builder tableSettingsBuilder) {
         addField(token,
-                fieldName,
+                id,
                 fieldName,
                 columnName,
                 true,

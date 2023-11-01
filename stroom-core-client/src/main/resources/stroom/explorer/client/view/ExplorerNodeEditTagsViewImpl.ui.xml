@@ -6,7 +6,7 @@
     <g:FlowPanel styleName="editNodeTags max form flex-column">
 
         <form:FormGroup identity="editNodeTagsAddTags"
-                        label="Add Tag(s)"
+                        label="Add/Filter Tag(s)"
                         addStyleNames="editNodeTagsAddTagsFrmGrp dock-min form">
             <g:FlowPanel styleName="max form dock-min">
                 <g:HTML styleName="editNodeTagsAddTagsLabel example-label">
@@ -43,7 +43,8 @@
             <form:FormGroup identity="editNodeTagsNodeTags"
                             addStyleNames="editNodeTagsNodeTagsFrmGrp dock-max">
                 <g:FlowPanel styleName="max form">
-                    <g:Label addStyleNames="form-label dock-min">Tags</g:Label>
+                    <g:Label ui:field="nodeTagsLabel"
+                             addStyleNames="form-label dock-min"/>
                     <g:ListBox ui:field="nodeTagsListBox"
                                addStyleNames="form-control dock-max max"/>
                 </g:FlowPanel>

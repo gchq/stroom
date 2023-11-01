@@ -23,6 +23,7 @@ import stroom.dashboard.shared.ValidateExpressionResult;
 import stroom.datasource.api.v2.DataSource;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
+import stroom.docstore.shared.Documentation;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.expression.api.DateTimeSettings;
 import stroom.expression.api.ExpressionContext;
@@ -49,11 +50,14 @@ import stroom.security.api.SecurityContext;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TerminateHandlerFactory;
+import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.servlet.HttpServletRequestHolder;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.string.ExceptionStringUtil;
+import stroom.view.api.ViewStore;
+import stroom.view.shared.ViewDoc;
 
 import java.time.ZoneId;
 import java.util.ArrayList;
@@ -82,6 +86,7 @@ class QueryServiceImpl implements QueryService {
     private final ExecutorProvider executorProvider;
     private final TaskContextFactory taskContextFactory;
     private final DataSourceProviderRegistry dataSourceProviderRegistry;
+    private final ViewStore viewStore;
     private final ResultStoreManager searchResponseCreatorManager;
     private final NodeInfo nodeInfo;
     private final SearchRequestBuilder searchRequestBuilder;
@@ -96,6 +101,7 @@ class QueryServiceImpl implements QueryService {
                      final ExecutorProvider executorProvider,
                      final TaskContextFactory taskContextFactory,
                      final DataSourceProviderRegistry dataSourceProviderRegistry,
+                     final ViewStore viewStore,
                      final ResultStoreManager searchResponseCreatorManager,
                      final NodeInfo nodeInfo,
                      final SearchRequestBuilder searchRequestBuilder,
@@ -108,6 +114,7 @@ class QueryServiceImpl implements QueryService {
         this.executorProvider = executorProvider;
         this.taskContextFactory = taskContextFactory;
         this.dataSourceProviderRegistry = dataSourceProviderRegistry;
+        this.viewStore = viewStore;
         this.searchResponseCreatorManager = searchResponseCreatorManager;
         this.nodeInfo = nodeInfo;
         this.searchRequestBuilder = searchRequestBuilder;
@@ -489,18 +496,29 @@ class QueryServiceImpl implements QueryService {
 
     @Override
     public Optional<DataSource> getDataSource(final DocRef dataSourceRef) {
-        return dataSourceProviderRegistry.getDataSource(dataSourceRef);
+        return securityContext.useAsReadResult(() -> dataSourceProviderRegistry.getDataSource(dataSourceRef));
     }
 
     @Override
     public Optional<DataSource> getDataSource(final String query) {
-        final AtomicReference<DataSource> ref = new AtomicReference<>();
-        try {
-            searchRequestBuilder.extractDataSourceOnly(query, docRef ->
-                    ref.set(getDataSource(docRef).orElse(null)));
-        } catch (final RuntimeException e) {
-            LOGGER.debug(e::getMessage, e);
-        }
-        return Optional.ofNullable(ref.get());
+        return securityContext.useAsReadResult(() -> {
+            final AtomicReference<DataSource> ref = new AtomicReference<>();
+            try {
+                searchRequestBuilder.extractDataSourceOnly(query, docRef ->
+                        ref.set(getDataSource(docRef).orElse(null)));
+            } catch (final RuntimeException e) {
+                LOGGER.debug(e::getMessage, e);
+            }
+            return Optional.ofNullable(ref.get());
+        });
+    }
+
+    @Override
+    public Documentation fetchDocumentation(final DocRef docRef) {
+        return securityContext.useAsReadResult(() -> {
+            final String markdown = NullSafe.get(viewStore.readDocument(docRef),
+                    ViewDoc::getDescription);
+            return Documentation.of(markdown);
+        });
     }
 }

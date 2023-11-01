@@ -133,7 +133,10 @@ class ReferenceDataLoadTaskHandler {
                 errorReceiverProxy.setErrorReceiver(errorReceiver);
 
                 LOGGER.debug("Loading reference data: {}", refStreamDefinition);
-                taskContext.info(() -> "Loading " + refStreamDefinition);
+                taskContext.info(() -> LogUtil.message(
+                        "Loading reference data stream {}:{}",
+                        refStreamDefinition.getStreamId(),
+                        refStreamDefinition.getPartNumber()));
 
                 // Open the stream source.
                 try (final Source source = streamStore.openSource(refStreamDefinition.getStreamId())) {
@@ -193,9 +196,18 @@ class ReferenceDataLoadTaskHandler {
         // Get the store specific to this load
         final RefDataStore refDataStore = refDataStoreFactory.getOffHeapStore(refStreamDefinition);
 
+        taskContext.info(() -> LogUtil.message(
+                "Loading reference data stream {}:{} - Acquiring stream lock",
+                refStreamDefinition.getStreamId(),
+                refStreamDefinition.getPartNumber()));
+
         refDataStore.doWithLoaderUnlessComplete(refStreamDefinition, meta.getEffectiveMs(), refDataLoader -> {
             // we are now blocking any other thread loading the same refStreamDefinition
             // and know that this stream has not already been loaded.
+            taskContext.info(() -> LogUtil.message(
+                    "Loading reference data stream {}:{} - Starting stream processing",
+                    refStreamDefinition.getStreamId(),
+                    refStreamDefinition.getPartNumber()));
 
             try {
                 // set this loader in the holder so it is available to the pipeline filters

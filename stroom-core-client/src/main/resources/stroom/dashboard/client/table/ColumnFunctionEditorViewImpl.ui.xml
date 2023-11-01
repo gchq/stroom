@@ -10,7 +10,7 @@
             </g:HTML>
         </g:FlowPanel>
         <g:MySplitLayoutPanel styleName="max DashboardViewImpl">
-            <g:north size="180">
+            <g:north size="60">
                 <g:SimplePanel ui:field="editorContainer" styleName="max columnFunctionEditorViewImpl-editorContainer"/>
             </g:north>
             <g:center>

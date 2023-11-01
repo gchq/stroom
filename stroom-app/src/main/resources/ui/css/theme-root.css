@@ -77,16 +77,15 @@
     --navigation-icon-button__background-color--hover: var(--icon-button__background-color--hover);
     --navigation-icon-button__border-color--hover: var(--icon-button__border-color--hover);
 
-    --expression-item-box__background-color--selected: #bbdefb;
-    --expression-item-box__background-color--hover: #f7fbff;
+    --expression-item-box__background-color--selected: var(--row__background-color--selected);/*#454545;*/
+    --expression-item-box__background-color--hover: var(--row__background-color--hovered);/*#555;*/
     --expression-item-box__background-color--disabled: #ccc;
-    --expression-item-box__background-color--hotspot: rgba(255,0,0,.3);
+    --expression-item-box__background-color--hotspot: var(--row__background-color--selected--hovered);
 
     --pipeline-element-box__background-color: #f5f9fd;
     --pipeline-element-box__background-color--hover: #f7fbff;
-    --pipeline-element-box__background-color--selected: #bbdefb;
-    --pipeline-element-box__background-color--selected--hover: #bbdefb;
-    --pipeline-element-box__background-color--hotspot: rgba(255,0,0,.3);
+    --pipeline-element-box__background-color--selected: var(--row__background-color--selected);
+    --pipeline-element-box__background-color--selected--hover: var(--row__background-color--selected--hovered);
     --pipeline-element-box__text-color: #666;
     --pipeline-element-box__text-color--selected: #000;
     --pipeline-element-box__border-color: #918e8c;
@@ -95,6 +94,7 @@
     --pipeline-element-box__border-color--error: orangered;
     --pipeline-element-box__border-color--fatal-error: red;
     --pipeline-element-box__border-color--fatal-error-dark: #c60000;
+    --pipeline-element-box__border-color--hotspot: var(--pipeline-element-box__border-color--info);
 
     --link__text-color: #0000AA;
 

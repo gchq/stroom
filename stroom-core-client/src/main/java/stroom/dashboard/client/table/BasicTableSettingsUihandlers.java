@@ -16,8 +16,13 @@
 
 package stroom.dashboard.client.table;
 
-public interface TableSettingsUihandlers {
-    void setQueryId(String queryId);
+import com.gwtplatform.mvp.client.UiHandlers;
 
-    void setExtractValues(boolean extractValues);
+public interface BasicTableSettingsUihandlers extends UiHandlers {
+
+//    void setQueryId(String queryId);
+//
+//    void setExtractValues(boolean extractValues);
+
+    void onUseDefaultExtractionPipeline(boolean useDefaultExtractionPipeline);
 }

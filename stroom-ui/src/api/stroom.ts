@@ -153,6 +153,11 @@ export type AddPermissionEvent = PermissionChangeEvent & {
   userUuid?: string;
 };
 
+export interface AddRemoveTagsRequest {
+  docRefs?: DocRef[];
+  tags?: string[];
+}
+
 export interface AnalyticDataShard {
   /** @format int64 */
   createTimeMs?: number;
@@ -1065,7 +1070,6 @@ export interface DocumentType {
     | "REMOVE"
     | "RESIZE"
     | "RESIZE_HANDLE"
-    | "RULESET"
     | "SAVE"
     | "SAVEAS"
     | "SEARCH"
@@ -1073,6 +1077,7 @@ export interface DocumentType {
     | "SHARD_CLOSE"
     | "SHARD_FLUSH"
     | "SHARE"
+    | "SHIELD"
     | "SHOW"
     | "SHOW_MENU"
     | "STEP"
@@ -1443,7 +1448,6 @@ export interface ExplorerDocContentMatch {
     | "REMOVE"
     | "RESIZE"
     | "RESIZE_HANDLE"
-    | "RULESET"
     | "SAVE"
     | "SAVEAS"
     | "SEARCH"
@@ -1451,6 +1455,7 @@ export interface ExplorerDocContentMatch {
     | "SHARD_CLOSE"
     | "SHARD_FLUSH"
     | "SHARE"
+    | "SHIELD"
     | "SHOW"
     | "SHOW_MENU"
     | "STEP"
@@ -1628,7 +1633,6 @@ export interface ExplorerNode {
     | "REMOVE"
     | "RESIZE"
     | "RESIZE_HANDLE"
-    | "RULESET"
     | "SAVE"
     | "SAVEAS"
     | "SEARCH"
@@ -1636,6 +1640,7 @@ export interface ExplorerNode {
     | "SHARD_CLOSE"
     | "SHARD_FLUSH"
     | "SHARE"
+    | "SHIELD"
     | "SHOW"
     | "SHOW_MENU"
     | "STEP"
@@ -2980,7 +2985,6 @@ export interface PipelineElementType {
     | "REMOVE"
     | "RESIZE"
     | "RESIZE_HANDLE"
-    | "RULESET"
     | "SAVE"
     | "SAVEAS"
     | "SEARCH"
@@ -2988,6 +2992,7 @@ export interface PipelineElementType {
     | "SHARD_CLOSE"
     | "SHARD_FLUSH"
     | "SHARE"
+    | "SHIELD"
     | "SHOW"
     | "SHOW_MENU"
     | "STEP"
@@ -4455,6 +4460,7 @@ export interface TableComponentSettings {
   /** TODO */
   queryId: string;
   showDetail?: boolean;
+  useDefaultExtractionPipeline?: boolean;
 }
 
 export type TableCoprocessorSettings = CoprocessorSettings & { componentIds?: string[]; tableSettings?: TableSettings };
@@ -6946,6 +6952,25 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Explorer (v2)
+     * @name AddTags
+     * @summary Add tags to explorer nodes
+     * @request PUT:/explorer/v2/addTags
+     * @secure
+     */
+    addTags: (data: AddRemoveTagsRequest, params: RequestParams = {}) =>
+      this.request<any, void>({
+        path: `/explorer/v2/addTags`,
+        method: "PUT",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Explorer (v2)
      * @name CopyExplorerItems
      * @summary Copy explorer items
      * @request POST:/explorer/v2/copy
@@ -7075,6 +7100,25 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Explorer (v2)
+     * @name FetchExplorerNodeTagsByDocRefs
+     * @summary Fetch explorer node tags held by at least one of decRefs
+     * @request POST:/explorer/v2/fetchExplorerNodeTagsByDocRefs
+     * @secure
+     */
+    fetchExplorerNodeTagsByDocRefs: (data: DocRef[], params: RequestParams = {}) =>
+      this.request<any, string[]>({
+        path: `/explorer/v2/fetchExplorerNodeTagsByDocRefs`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Explorer (v2)
      * @name FetchExplorerNodes
      * @summary Fetch explorer nodes
      * @request POST:/explorer/v2/fetchExplorerNodes
@@ -7179,6 +7223,25 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
       this.request<any, BulkActionResult>({
         path: `/explorer/v2/move`,
         method: "PUT",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Explorer (v2)
+     * @name RemoveTags
+     * @summary Remove tags from explorer nodes
+     * @request DELETE:/explorer/v2/removeTags
+     * @secure
+     */
+    removeTags: (data: AddRemoveTagsRequest, params: RequestParams = {}) =>
+      this.request<any, void>({
+        path: `/explorer/v2/removeTags`,
+        method: "DELETE",
         body: data,
         secure: true,
         type: ContentType.Json,

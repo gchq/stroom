@@ -84,7 +84,9 @@ public class ExplorerNodeEditTagsViewImpl
     Label editNodeTagsAllTagsLabel;
     @UiField
     ListBox nodeTagsListBox;
-    private DocRef docRef;
+    @UiField
+    Label nodeTagsLabel;
+    private List<DocRef> docRefs;
 
     @Inject
     public ExplorerNodeEditTagsViewImpl(final Binder binder) {
@@ -134,7 +136,15 @@ public class ExplorerNodeEditTagsViewImpl
         switch (event.getNativeKeyCode()) {
             case KeyCodes.KEY_DELETE:
             case KeyCodes.KEY_BACKSPACE:
+            case KeyCodes.KEY_H:
+            case KeyCodes.KEY_LEFT:
                 removedSelectedNodeTags();
+                break;
+            case KeyCodes.KEY_J:
+                moveSelectionDown(nodeTagsListBox);
+                break;
+            case KeyCodes.KEY_K:
+                moveSelectionUp(nodeTagsListBox);
                 break;
 //            case KeyCodes.KEY_TAB:
 //                textBox.setText(allTagsListBox.getSelectedValue());
@@ -142,6 +152,34 @@ public class ExplorerNodeEditTagsViewImpl
         }
     }
 
+    private void moveSelectionDown(final ListBox listBox) {
+        final int selectedIndex = listBox.getSelectedIndex();
+        final int lastIdx = listBox.getItemCount() - 1;
+        final int newIdx;
+        if (selectedIndex == -1) {
+            newIdx = 0;
+        } else if (selectedIndex == lastIdx) {
+            newIdx = selectedIndex;
+        } else {
+            newIdx = selectedIndex + 1;
+        }
+        listBox.setSelectedIndex(newIdx);
+        selectedValue = listBox.getSelectedValue();
+    }
+
+    private void moveSelectionUp(final ListBox listBox) {
+        final int selectedIndex = listBox.getSelectedIndex();
+        final int newIdx;
+        if (selectedIndex == -1) {
+            newIdx = 0;
+        } else if (selectedIndex == 0) {
+            newIdx = selectedIndex;
+        } else {
+            newIdx = selectedIndex - 1;
+        }
+        listBox.setSelectedIndex(newIdx);
+        selectedValue = listBox.getSelectedValue();
+    }
 
     private void handleNodeTagsClickEvent(final ClickEvent event) {
         updateButtonStates();
@@ -174,6 +212,9 @@ public class ExplorerNodeEditTagsViewImpl
 //                textBox.setText(allTagsListBox.getSelectedValue());
                 selectedValue = allTagsListBox.getSelectedValue();
                 break;
+            case KeyCodes.KEY_J:
+                moveSelectionDown(allTagsListBox);
+                break;
             case KeyCodes.KEY_UP:
 //                textBox.setText(allTagsListBox.getSelectedValue());
                 // Allow the user to move up from the list to the text field
@@ -185,7 +226,12 @@ public class ExplorerNodeEditTagsViewImpl
                 }
                 selectedValue = allTagsListBox.getSelectedValue();
                 break;
+            case KeyCodes.KEY_K:
+                moveSelectionUp(allTagsListBox);
+                break;
             case KeyCodes.KEY_ENTER:
+            case KeyCodes.KEY_L:
+            case KeyCodes.KEY_RIGHT:
 //                    GWT.log("allTagsListBox ENTER clicked");
                 addSelectedTags();
 
@@ -346,6 +392,10 @@ public class ExplorerNodeEditTagsViewImpl
         final List<String> tagsList = GwtNullSafe.stream(nodeTags)
                 .sorted()
                 .collect(Collectors.toList());
+        final int documentCount = GwtNullSafe.size(docRefs);
+        nodeTagsLabel.setText(documentCount > 1
+                ? "Tags to add to " + documentCount + " Documents"
+                : "Document Tags");
 
         nodeTagsListBox.clear();
         for (final String string : tagsList) {
@@ -437,14 +487,14 @@ public class ExplorerNodeEditTagsViewImpl
     }
 
     @Override
-    public void setData(final DocRef nodeDocRef,
+    public void setData(final List<DocRef> nodeDocRefs,
                         final Set<String> nodeTags,
                         final Set<String> allTags) {
 
         clearInput();
         this.nodeTags.clear();
         this.allTags.clear();
-        this.docRef = nodeDocRef;
+        this.docRefs = nodeDocRefs;
         this.nodeTags.addAll(GwtNullSafe.set(nodeTags));
         this.allTags.addAll(GwtNullSafe.set(allTags));
         updateNodeTagsListBoxContents();

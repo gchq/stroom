@@ -67,8 +67,8 @@ public class EditorPresenter
 //        registerHandler(view.addMouseDownHandler(event -> contextMenu.hide()));
 
         registerHandler(view.addContextMenuHandler(event ->
-                contextMenu.show(
-                        EditorPresenter.this,
+            contextMenu.show(
+                    EditorPresenter.this,
                         event.getPopupPosition())));
         registerHandler(view.addKeyDownHandler(event -> {
             if (event.isAltKeyDown() || event.isControlKeyDown()) {
@@ -270,6 +270,10 @@ public class EditorPresenter
         }
 
         getView().setReadOnly(readOnly);
+    }
+
+    public void setOptionsToDefaultAvailability() {
+        getView().setOptionsToDefaultAvailability();
     }
 
     public void setMode(final AceEditorMode mode) {

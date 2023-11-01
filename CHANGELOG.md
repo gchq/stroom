@@ -13,6 +13,55 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2.2] - 2023-10-31
+
+* Issue **#3887** : Add option to use default extraction pipeline to dashboard table.
+
+* Issue **#3885** : Allow pane resizing in dashboards without needing to be in design mode.
+
+* Issue **#3889** : Allow use of dashboard datasources with just `Use` permission.
+
+
+## [v7.2.1] - 2023-10-30
+
+* Issue **#3883** : Fix auto creation of `admin` user when an IDP type of TEST_CREDENTIALS is used.
+
+
+## [v7.2.0] - 2023-10-27
+
+* Issue **#3863** : Improve layout of dashboard column expression editor, reducing the height of the expression editor box.
+
+* Issue **#3865** : Fix issue caused by applying a filter to a missing field in StroomQL.
+
+* Issue **#3866** : Allow `having` clauses in StroomQL to work on column id plus name.
+
+* Issue **#3862** : Change splitter offset.
+
+* Issue **#3840** : Fix field filtering when used with missing fields.
+
+* Issue **#3864** : Prevent right click from selecting rows in a Dashboard table.
+
+* Allow selection of a dashboard table row using `space` or multiple rows with `space` + `ctrl`/`shift`.
+
+* Issue **#3854** : Fix query info prompt.
+
+* Issue **#3857** : Fix ability to view stream as hex when the stream can be decoded to UTF8 or similar.
+
+* Issue **#3855** : Fix table row selection.
+
+* Issue **#3853** : Fix pipeline structure editor.
+
+* Change the Server Tasks table to wrap the text in the Info column.
+
+* Change the Info tool tip on the Server Tasks screen to also show the task info text.
+
+* Issue **#3868** : Improve the server task info for reference data loads, migrations and purges. Now shows if the task is waiting for a lock and updates with the load/migration/purge progress.
+
+* Issue **#3769** : Change the icon for Rule Set document to a shield, so as not to conflict with the Analytic Rule.
+
+* Issue **#3814** : Add support for adding/removing tags from multiple nodes via the explorer context menu.
+
+
 ## [v7.2-beta.79] - 2023-10-18
 
 * Issue **#3849** : Add fix for `DateExpressionParser` NPE.
@@ -6080,7 +6129,10 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2-beta.79...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2.2...HEAD
+[v7.2.2]: https://github.com/gchq/stroom/compare/v7.2.1...v7.2.2
+[v7.2.1]: https://github.com/gchq/stroom/compare/v7.2.0...v7.2.1
+[v7.2.0]: https://github.com/gchq/stroom/compare/v7.2-beta.79...v7.2.0
 [v7.2-beta.79]: https://github.com/gchq/stroom/compare/v7.2-beta.78...v7.2-beta.79
 [v7.2-beta.78]: https://github.com/gchq/stroom/compare/v7.2-beta.77...v7.2-beta.78
 [v7.2-beta.77]: https://github.com/gchq/stroom/compare/v7.2-beta.76...v7.2-beta.77

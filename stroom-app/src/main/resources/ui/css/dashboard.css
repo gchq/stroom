@@ -237,13 +237,15 @@
 }
 
 .flexLayout-splitter-dragger {
-	display: none;
+	/*display: none;*/
     position: absolute;
 }
 
+/*
 .dashboard__designMode .flexLayout-splitter-dragger {
 	display: block;
 }
+*/
 /*
 .dashboard__designMode .flexLayout-splitter-dragger:hover, .flexLayout-splitterVisible .flexLayout-splitter-dragger {
 	opacity: 1;
