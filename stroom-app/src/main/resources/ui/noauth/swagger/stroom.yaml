@@ -360,6 +360,26 @@ paths:
       summary: Get the data for the shard
       tags:
       - AnalyticNotifications
+  /analyticProcess/v1/filter:
+    post:
+      operationId: findAnalyticProcessFilter
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnalyticRuleDoc'
+        description: analyticRuleDoc
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProcessorFilterRow'
+          description: default response
+      summary: Find the process filter for the specified process
+      tags:
+      - AnalyticProcess
   /analyticProcess/v1/tracker:
     post:
       operationId: findAnalyticProcessTracker
@@ -368,7 +388,7 @@ paths:
           application/json:
             schema:
               type: string
-        description: processUuid
+        description: analyticUuid
         required: true
       responses:
         default:
@@ -11471,8 +11491,11 @@ components:
           type: string
         pipelineUuid:
           type: string
-        taskType:
+        processorType:
           type: string
+          enum:
+          - PIPELINE
+          - STREAMING_ANALYTIC
         updateTimeMs:
           type: integer
           format: int64
@@ -11807,6 +11830,8 @@ components:
     QueryData:
       type: object
       properties:
+        analyticRule:
+          $ref: '#/components/schemas/DocRef'
         dataSource:
           $ref: '#/components/schemas/DocRef'
         expression:

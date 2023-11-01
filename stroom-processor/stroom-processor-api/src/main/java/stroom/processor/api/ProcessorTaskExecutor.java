@@ -22,7 +22,7 @@ import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorTask;
 import stroom.task.api.TaskContext;
 
-public interface DataProcessorTaskExecutor {
+public interface ProcessorTaskExecutor {
 
     ProcessorResult exec(TaskContext taskContext,
                          Processor processor,

@@ -7,25 +7,26 @@
              xmlns:l="urn:import:stroom.item.client"
              xmlns:b="urn:import:stroom.widget.button.client"
              xmlns:d="urn:import:stroom.widget.customdatebox.client">
-    <g:FlowPanel styleName="max form-padding form">
+    <g:FlowPanel styleName="max form-padding form overflow-auto">
         <form:FormGroup identity="analyticProcessingQuery"
                         label="Query">
-            <g:SimplePanel ui:field="queryEditorContainer" styleName="stroom-control__no-padding default-min-sizes"/>
+            <g:SimplePanel ui:field="queryEditorContainer" styleName="stroom-control__no-padding default-min-sizes overflow-hidden"/>
         </form:FormGroup>
         <form:FormGroup identity="analyticProcessingEnabled"
                         label="Enabled">
             <tickbox:CustomCheckBox ui:field="enabled"/>
         </form:FormGroup>
+        <form:FormGroup identity="analyticProcessingType"
+                        label="Processing Type">
+            <l:SelectionBox ui:field="processingType"/>
+        </form:FormGroup>
         <form:FormGroup identity="analyticProcessingNode"
-                        label="Processing Node">
+                        label="Processing Node"
+                        ui:field="nodeContainer">
             <l:SelectionBox ui:field="node"/>
         </form:FormGroup>
         <form:FormGroup identity="analyticProcessingErrorFeed" label="Feed For Errors">
             <g:SimplePanel ui:field="errorFeed"/>
-        </form:FormGroup>
-        <form:FormGroup identity="analyticProcessingType"
-                        label="Processing Type">
-            <l:SelectionBox ui:field="processingType"/>
         </form:FormGroup>
         <form:FormGroup ui:field="analyticProcessingMinMetaCreateTimeMs"
                         identity="analyticProcessingMinMetaCreateTimeMs"
@@ -65,7 +66,7 @@
         <form:FormGroup identity="analyticProcessingInfo"
                         label="Processing Info">
             <g:FlowPanel styleName="form">
-                <g:SimplePanel ui:field="info" styleName="default-min-sizes dashboard-panel"/>
+                <g:SimplePanel ui:field="info" styleName="default-min-sizes stroom-control__no-padding overflow-auto"/>
                 <b:Button ui:field="refresh" text="Refresh"/>
             </g:FlowPanel>
         </form:FormGroup>

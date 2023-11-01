@@ -682,7 +682,8 @@ public final class MappingUtil {
                 map(value.getExpression()),
                 null,
                 null,
-                map(value.getLimits()));
+                map(value.getLimits()),
+                null);
     }
 
     public static stroom.processor.shared.Limits map(stroom.legacy.model_6_1.Limits value) {

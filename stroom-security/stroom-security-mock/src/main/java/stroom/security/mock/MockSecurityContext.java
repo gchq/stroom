@@ -109,7 +109,7 @@ public class MockSecurityContext implements SecurityContext {
 
     @Override
     public String getDocumentOwnerUuid(final DocRef docRef) {
-        return getUserUuid();
+        return null;
     }
 
     @Override

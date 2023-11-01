@@ -32,6 +32,7 @@ import stroom.docstore.api.UniqueNameUtil;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.importexport.shared.ImportSettings;
+import stroom.importexport.shared.ImportSettings.ImportMode;
 import stroom.importexport.shared.ImportState;
 import stroom.query.common.v2.DataSourceProviderRegistry;
 import stroom.query.language.SearchRequestBuilder;
@@ -59,17 +60,20 @@ class AnalyticRuleStoreImpl implements AnalyticRuleStore {
     private final SecurityContext securityContext;
     private final Provider<DataSourceProviderRegistry> dataSourceProviderRegistryProvider;
     private final SearchRequestBuilder searchRequestBuilder;
+    private final Provider<AnalyticRuleProcessors> analyticRuleProcessorsProvider;
 
     @Inject
     AnalyticRuleStoreImpl(final StoreFactory storeFactory,
                           final AnalyticRuleSerialiser serialiser,
                           final SecurityContext securityContext,
+                          final Provider<AnalyticRuleProcessors> analyticRuleProcessorsProvider,
                           final Provider<DataSourceProviderRegistry> dataSourceProviderRegistryProvider,
                           final SearchRequestBuilder searchRequestBuilder) {
         this.store = storeFactory.createStore(serialiser, AnalyticRuleDoc.DOCUMENT_TYPE, AnalyticRuleDoc.class);
         this.securityContext = securityContext;
         this.dataSourceProviderRegistryProvider = dataSourceProviderRegistryProvider;
         this.searchRequestBuilder = searchRequestBuilder;
+        this.analyticRuleProcessorsProvider = analyticRuleProcessorsProvider;
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -80,13 +84,12 @@ class AnalyticRuleStoreImpl implements AnalyticRuleStore {
     public DocRef createDocument(final String name) {
         final DocRef docRef = store.createDocument(name);
 
-        // Create an alert rule from a template.
-
         // Read and write as a processing user to ensure we are allowed as documents do not have permissions added to
         // them until after they are created in the store.
         securityContext.asProcessingUser(() -> {
             final AnalyticRuleDoc analyticRuleDoc = store.readDocument(docRef);
             store.writeDocument(analyticRuleDoc);
+            analyticRuleProcessorsProvider.get().updateProcessorFilters(analyticRuleDoc);
         });
         return docRef;
     }
@@ -133,6 +136,7 @@ class AnalyticRuleStoreImpl implements AnalyticRuleStore {
 
     @Override
     public void deleteDocument(final String uuid) {
+        deleteProcessorFilter(DocRef.builder().type(getType()).uuid(uuid).build());
         store.deleteDocument(uuid);
     }
 
@@ -227,6 +231,7 @@ class AnalyticRuleStoreImpl implements AnalyticRuleStore {
 
     @Override
     public AnalyticRuleDoc writeDocument(final AnalyticRuleDoc document) {
+        analyticRuleProcessorsProvider.get().updateProcessorFilters(document);
         return store.writeDocument(document);
     }
 
@@ -248,7 +253,12 @@ class AnalyticRuleStoreImpl implements AnalyticRuleStore {
                                  final Map<String, byte[]> dataMap,
                                  final ImportState importState,
                                  final ImportSettings importSettings) {
-        return store.importDocument(docRef, dataMap, importState, importSettings);
+        final DocRef ref = store.importDocument(docRef, dataMap, importState, importSettings);
+        if (ImportMode.IGNORE_CONFIRMATION.equals(importSettings.getImportMode())
+                || ImportMode.ACTION_CONFIRMATION.equals(importSettings.getImportMode())) {
+            updateProcessorFilter(ref);
+        }
+        return ref;
     }
 
     @Override
@@ -288,5 +298,23 @@ class AnalyticRuleStoreImpl implements AnalyticRuleStore {
     @Override
     public List<DocContentMatch> findByContent(final String pattern, final boolean regex, final boolean matchCase) {
         return store.findByContent(pattern, regex, matchCase);
+    }
+
+    private void updateProcessorFilter(final DocRef docRef) {
+        try {
+            final AnalyticRuleDoc analyticRuleDoc = readDocument(docRef);
+            analyticRuleProcessorsProvider.get().updateProcessorFilters(analyticRuleDoc);
+        } catch (final RuntimeException e) {
+            LOGGER.debug(e::getMessage, e);
+        }
+    }
+
+    private void deleteProcessorFilter(final DocRef docRef) {
+        try {
+            final AnalyticRuleDoc analyticRuleDoc = readDocument(docRef);
+            analyticRuleProcessorsProvider.get().deleteProcessorFilters(analyticRuleDoc);
+        } catch (final RuntimeException e) {
+            LOGGER.debug(e::getMessage, e);
+        }
     }
 }

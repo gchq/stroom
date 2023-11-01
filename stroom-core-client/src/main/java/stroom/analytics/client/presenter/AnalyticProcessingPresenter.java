@@ -44,6 +44,8 @@ import stroom.pipeline.client.event.ChangeDataEvent;
 import stroom.pipeline.client.event.ChangeDataEvent.ChangeDataHandler;
 import stroom.pipeline.client.event.HasChangeDataHandlers;
 import stroom.preferences.client.DateTimeFormatter;
+import stroom.processor.client.presenter.ProcessorInfoBuilder;
+import stroom.processor.shared.ProcessorFilterRow;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.widget.util.client.HtmlBuilder;
@@ -72,6 +74,7 @@ public class AnalyticProcessingPresenter
 
     private final EditorPresenter editorPresenter;
     private final EntityDropDownPresenter errorFeedPresenter;
+    private final ProcessorInfoBuilder processorInfoBuilder;
     private DocRef currentErrorFeed;
     private final RestFactory restFactory;
     private final DateTimeFormatter dateTimeFormatter;
@@ -81,12 +84,14 @@ public class AnalyticProcessingPresenter
     public AnalyticProcessingPresenter(final EventBus eventBus,
                                        final AnalyticProcessingView view,
                                        final EntityDropDownPresenter errorFeedPresenter,
+                                       final ProcessorInfoBuilder processorInfoBuilder,
                                        final RestFactory restFactory,
                                        final EditorPresenter editorPresenter,
                                        final DateTimeFormatter dateTimeFormatter,
                                        final NodeManager nodeManager) {
         super(eventBus, view);
         this.errorFeedPresenter = errorFeedPresenter;
+        this.processorInfoBuilder = processorInfoBuilder;
         this.restFactory = restFactory;
         this.editorPresenter = editorPresenter;
         this.dateTimeFormatter = dateTimeFormatter;
@@ -142,6 +147,7 @@ public class AnalyticProcessingPresenter
 
     @Override
     public void onProcessingTypeChange() {
+        setProcessType(getView().getProcessingType());
         ChangeDataEvent.fire(this, getView().getProcessingType());
     }
 
@@ -152,14 +158,26 @@ public class AnalyticProcessingPresenter
 
     private void refreshTracker() {
         if (getEntity() != null && getEntity().getUuid() != null) {
-            final Rest<AnalyticTracker> rest = restFactory.create();
-            rest
-                    .onSuccess(result -> {
-                        final SafeHtml safeHtml = getInfo(result);
-                        getView().setInfo(safeHtml);
-                    })
-                    .call(ANALYTIC_PROCESSOR_FILTER_RESOURCE)
-                    .getTracker(getEntity().getUuid());
+            if (AnalyticProcessType.STREAMING.equals(getView().getProcessingType())) {
+                final Rest<ProcessorFilterRow> rest = restFactory.create();
+                rest
+                        .onSuccess(row -> {
+                            final SafeHtml safeHtml = processorInfoBuilder.get(row);
+                            getView().setInfo(safeHtml);
+                        })
+                        .call(ANALYTIC_PROCESSOR_FILTER_RESOURCE)
+                        .getFilter(write(getEntity()));
+
+            } else {
+                final Rest<AnalyticTracker> rest = restFactory.create();
+                rest
+                        .onSuccess(result -> {
+                            final SafeHtml safeHtml = getInfo(result);
+                            getView().setInfo(safeHtml);
+                        })
+                        .call(ANALYTIC_PROCESSOR_FILTER_RESOURCE)
+                        .getTracker(getEntity().getUuid());
+            }
         }
     }
 
@@ -229,6 +247,11 @@ public class AnalyticProcessingPresenter
     protected void onRead(final DocRef docRef, final AnalyticRuleDoc analyticRuleDoc, final boolean readOnly) {
         final AnalyticProcessConfig analyticProcessConfig = analyticRuleDoc.getAnalyticProcessConfig();
         if (analyticProcessConfig != null) {
+            final AnalyticProcessType analyticProcessType = analyticRuleDoc.getAnalyticProcessType() == null
+                    ? AnalyticProcessType.SCHEDULED_QUERY
+                    : analyticRuleDoc.getAnalyticProcessType();
+            setProcessType(analyticProcessType);
+
             editorPresenter.setText(analyticRuleDoc.getQuery());
             getView().setEnabled(analyticProcessConfig.isEnabled());
             getView().setNode(analyticProcessConfig.getNode());
@@ -236,9 +259,6 @@ public class AnalyticProcessingPresenter
             this.currentErrorFeed = analyticProcessConfig.getErrorFeed();
             errorFeedPresenter.setSelectedEntityReference(currentErrorFeed);
 
-            getView().setProcessingType(analyticRuleDoc.getAnalyticProcessType() == null
-                    ? AnalyticProcessType.SCHEDULED_QUERY
-                    : analyticRuleDoc.getAnalyticProcessType());
 
             if (analyticProcessConfig instanceof TableBuilderAnalyticProcessConfig) {
                 final TableBuilderAnalyticProcessConfig ac =
@@ -266,6 +286,12 @@ public class AnalyticProcessingPresenter
             }
         }
 
+        refreshTracker();
+    }
+
+    private void setProcessType(final AnalyticProcessType analyticProcessType) {
+        getView().setNodeVisible(!AnalyticProcessType.STREAMING.equals(analyticProcessType));
+        getView().setProcessingType(analyticProcessType);
         refreshTracker();
     }
 
@@ -327,6 +353,10 @@ public class AnalyticProcessingPresenter
 
         void setEnabled(final boolean enabled);
 
+        AnalyticProcessType getProcessingType();
+
+        void setProcessingType(AnalyticProcessType analyticProcessType);
+
         Long getMinMetaCreateTimeMs();
 
         void setMinMetaCreateTimeMs(Long minMetaCreateTimeMs);
@@ -343,17 +373,15 @@ public class AnalyticProcessingPresenter
 
         void setMaxEventTimeMs(Long maxEventTimeMs);
 
-        void setNodes(final List<String> nodes);
+        void setNodes(List<String> nodes);
 
         String getNode();
 
-        void setNode(final String node);
+        void setNode(String node);
+
+        void setNodeVisible(boolean visible);
 
         void setErrorFeedView(View view);
-
-        AnalyticProcessType getProcessingType();
-
-        void setProcessingType(AnalyticProcessType analyticProcessType);
 
         SimpleDuration getQueryFrequency();
 

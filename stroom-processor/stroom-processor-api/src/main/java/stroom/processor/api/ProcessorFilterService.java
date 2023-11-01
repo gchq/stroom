@@ -23,6 +23,7 @@ import stroom.processor.shared.CreateProcessFilterRequest;
 import stroom.processor.shared.FetchProcessorRequest;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
+import stroom.processor.shared.ProcessorFilterRow;
 import stroom.processor.shared.ProcessorListRow;
 import stroom.processor.shared.ReprocessDataInfo;
 import stroom.util.shared.HasIntCrud;
@@ -52,4 +53,6 @@ public interface ProcessorFilterService extends HasIntCrud<ProcessorFilter> {
     void setPriority(Integer id, Integer priority);
 
     void setEnabled(Integer id, Boolean enabled);
+
+    ProcessorFilterRow getRow(ProcessorFilter processorFilter);
 }

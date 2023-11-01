@@ -32,7 +32,7 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 
-@XmlType(name = "query", propOrder = {"dataSource", "expression", "params", "timeRange", "limits"})
+@XmlType(name = "query", propOrder = {"dataSource", "expression", "params", "timeRange", "limits", "analyticRule"})
 @XmlRootElement(name = "query")
 @JsonInclude(Include.NON_NULL)
 public class QueryData implements Serializable {
@@ -47,6 +47,8 @@ public class QueryData implements Serializable {
     private TimeRange timeRange;
     @JsonProperty
     private Limits limits;
+    @JsonProperty
+    private DocRef analyticRule;
 
     public QueryData() {
     }
@@ -56,12 +58,14 @@ public class QueryData implements Serializable {
                      @JsonProperty("expression") final ExpressionOperator expression,
                      @JsonProperty("params") final List<Param> params,
                      @JsonProperty("timeRange") final TimeRange timeRange,
-                     @JsonProperty("limits") final Limits limits) {
+                     @JsonProperty("limits") final Limits limits,
+                     @JsonProperty("analyticRule") final DocRef analyticRule) {
         this.dataSource = dataSource;
         this.expression = expression;
         this.params = params;
         this.timeRange = timeRange;
         this.limits = limits;
+        this.analyticRule = analyticRule;
     }
 
     @XmlElement
@@ -108,6 +112,15 @@ public class QueryData implements Serializable {
         this.limits = limits;
     }
 
+    @XmlElement
+    public DocRef getAnalyticRule() {
+        return analyticRule;
+    }
+
+    public void setAnalyticRule(final DocRef analyticRule) {
+        this.analyticRule = analyticRule;
+    }
+
     public static Builder builder() {
         return new Builder();
     }
@@ -123,6 +136,7 @@ public class QueryData implements Serializable {
         private List<Param> params;
         private TimeRange timeRange;
         private Limits limits;
+        private DocRef analyticRule;
 
         private Builder() {
         }
@@ -133,25 +147,26 @@ public class QueryData implements Serializable {
             this.params = queryData.params;
             this.timeRange = queryData.timeRange;
             this.limits = queryData.limits;
+            this.analyticRule = queryData.analyticRule;
         }
 
-        public Builder dataSource(final DocRef value) {
-            this.dataSource = value;
+        public Builder dataSource(final DocRef dataSource) {
+            this.dataSource = dataSource;
             return this;
         }
 
-        public Builder limits(final Limits value) {
-            this.limits = value;
+        public Builder limits(final Limits limits) {
+            this.limits = limits;
             return this;
         }
 
-        public Builder expression(final ExpressionOperator value) {
-            this.expression = value;
+        public Builder expression(final ExpressionOperator expression) {
+            this.expression = expression;
             return this;
         }
 
-        public Builder params(final List<Param> value) {
-            this.params = value;
+        public Builder params(final List<Param> params) {
+            this.params = params;
             return this;
         }
 
@@ -160,8 +175,13 @@ public class QueryData implements Serializable {
             return this;
         }
 
+        public Builder analyticRule(final DocRef analyticRule) {
+            this.analyticRule = analyticRule;
+            return this;
+        }
+
         public QueryData build() {
-            return new QueryData(dataSource, expression, params, timeRange, limits);
+            return new QueryData(dataSource, expression, params, timeRange, limits, analyticRule);
         }
     }
 }

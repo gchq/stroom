@@ -16,7 +16,8 @@
 
 package stroom.core.dataprocess;
 
-import stroom.processor.api.DataProcessorBinder;
+import stroom.processor.api.ProcessorTaskExecutorBinder;
+import stroom.processor.shared.ProcessorType;
 
 import com.google.inject.AbstractModule;
 
@@ -24,7 +25,7 @@ public class PipelineStreamTaskModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        DataProcessorBinder.create(binder())
-                .bind("pipelineStreamProcessor", PipelineDataProcessorTaskExecutor.class);
+        ProcessorTaskExecutorBinder.create(binder())
+                .bind(ProcessorType.PIPELINE, StandardProcessorTaskExecutor.class);
     }
 }

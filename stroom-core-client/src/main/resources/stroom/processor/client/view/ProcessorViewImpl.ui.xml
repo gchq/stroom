@@ -11,7 +11,7 @@
                 <g:ThinSplitLayoutPanel vSplits="0.5" addStyleNames="max">
                     <g:west size="600">
                         <g:MaxScrollPanel addStyleNames="max dashboard-panel">
-                            <g:SimplePanel ui:field="info" addStyleNames="info-page"/>
+                            <g:SimplePanel ui:field="info"/>
                         </g:MaxScrollPanel>
                     </g:west>
                     <g:center>
