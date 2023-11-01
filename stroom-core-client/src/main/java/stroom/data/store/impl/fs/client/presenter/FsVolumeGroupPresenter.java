@@ -20,8 +20,8 @@ package stroom.data.store.impl.fs.client.presenter;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.data.grid.client.WrapperView;
-import stroom.data.store.impl.fs.shared.FsVolume;
-import stroom.data.store.impl.fs.shared.FsVolumeResource;
+import stroom.data.store.impl.fs.shared.FsVolumeGroup;
+import stroom.data.store.impl.fs.shared.FsVolumeGroupResource;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.svg.client.IconColour;
@@ -36,35 +36,38 @@ import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.List;
 
-public class ManageFSVolumesPresenter extends ContentTabPresenter<WrapperView> {
+public class FsVolumeGroupPresenter extends ContentTabPresenter<WrapperView> {
 
-    private static final FsVolumeResource FS_VOLUME_RESOURCE = GWT.create(FsVolumeResource.class);
+    private static final FsVolumeGroupResource FS_VOLUME_GROUP_RESOURCE =
+            GWT.create(FsVolumeGroupResource.class);
 
-    private final FSVolumeStatusListPresenter volumeStatusListPresenter;
-    private final Provider<FSVolumeEditPresenter> editProvider;
+    private final FsVolumeGroupListPresenter volumeStatusListPresenter;
+    private final Provider<FsVolumeGroupEditPresenter> editProvider;
     private final RestFactory restFactory;
+    private final Provider<NewFsVolumeGroupPresenter> newFsVolumeGroupPresenterProvider;
 
     private final ButtonView newButton;
     private final ButtonView openButton;
     private final ButtonView deleteButton;
-    private final ButtonView rescanButton;
 
     @Inject
-    public ManageFSVolumesPresenter(final EventBus eventBus,
-                                    final WrapperView view,
-                                    final FSVolumeStatusListPresenter volumeStatusListPresenter,
-                                    final Provider<FSVolumeEditPresenter> editProvider,
-                                    final RestFactory restFactory) {
+    public FsVolumeGroupPresenter(
+            final EventBus eventBus,
+            final WrapperView view,
+            final FsVolumeGroupListPresenter volumeStatusListPresenter,
+            final Provider<FsVolumeGroupEditPresenter> editProvider,
+            final RestFactory restFactory,
+            final Provider<NewFsVolumeGroupPresenter> newFsVolumeGroupPresenterProvider) {
+
         super(eventBus, view);
         this.volumeStatusListPresenter = volumeStatusListPresenter;
         this.editProvider = editProvider;
         this.restFactory = restFactory;
+        this.newFsVolumeGroupPresenterProvider = newFsVolumeGroupPresenterProvider;
 
         newButton = volumeStatusListPresenter.getView().addButton(SvgPresets.NEW_ITEM);
         openButton = volumeStatusListPresenter.getView().addButton(SvgPresets.EDIT);
         deleteButton = volumeStatusListPresenter.getView().addButton(SvgPresets.DELETE);
-        rescanButton = volumeStatusListPresenter.getView().addButton(SvgPresets.REFRESH_GREEN);
-        rescanButton.setTitle("Rescan Public Volumes");
 
         view.setView(volumeStatusListPresenter.getView());
     }
@@ -80,37 +83,41 @@ public class ManageFSVolumesPresenter extends ContentTabPresenter<WrapperView> {
         registerHandler(newButton.addClickHandler(event -> add()));
         registerHandler(openButton.addClickHandler(event -> edit()));
         registerHandler(deleteButton.addClickHandler(event -> delete()));
-        registerHandler(rescanButton.addClickHandler(event -> {
-            restFactory.builder()
-                    .forBoolean()
-                    .onSuccess(response -> refresh()).call(FS_VOLUME_RESOURCE).rescan();
-        }));
     }
 
     private void add() {
-        final FSVolumeEditPresenter editor = editProvider.get();
-        editor.show(new FsVolume(), "Add Volume", added -> {
-            if (added != null) {
-                refresh();
+        final NewFsVolumeGroupPresenter presenter = newFsVolumeGroupPresenterProvider.get();
+        presenter.show("", name -> {
+            if (name != null) {
+                final Rest<FsVolumeGroup> rest = restFactory.create();
+                rest
+                        .onSuccess(volumeGroup -> {
+                            edit(volumeGroup);
+                            presenter.hide();
+                            refresh();
+                        })
+                        .call(FS_VOLUME_GROUP_RESOURCE)
+                        .create(name);
+            } else {
+                presenter.hide();
             }
-            editor.hide();
         });
     }
 
     private void edit() {
-        final FsVolume volume = volumeStatusListPresenter.getSelectionModel().getSelected();
+        final FsVolumeGroup volume = volumeStatusListPresenter.getSelectionModel().getSelected();
         if (volume != null) {
-            final Rest<FsVolume> rest = restFactory.create();
+            final Rest<FsVolumeGroup> rest = restFactory.create();
             rest
                     .onSuccess(this::edit)
-                    .call(FS_VOLUME_RESOURCE)
+                    .call(FS_VOLUME_GROUP_RESOURCE)
                     .fetch(volume.getId());
         }
     }
 
-    private void edit(final FsVolume volume) {
-        final FSVolumeEditPresenter editor = editProvider.get();
-        editor.show(volume, "Edit Volume", result -> {
+    private void edit(final FsVolumeGroup volumeGroup) {
+        final FsVolumeGroupEditPresenter editor = editProvider.get();
+        editor.show(volumeGroup, "Edit Volume Group - " + volumeGroup.getName(), result -> {
             if (result != null) {
                 refresh();
             }
@@ -119,30 +126,25 @@ public class ManageFSVolumesPresenter extends ContentTabPresenter<WrapperView> {
     }
 
     private void delete() {
-        final List<FsVolume> list = volumeStatusListPresenter.getSelectionModel().getSelectedItems();
+        final List<FsVolumeGroup> list = volumeStatusListPresenter.getSelectionModel().getSelectedItems();
         if (list != null && list.size() > 0) {
-            String message = "Are you sure you want to delete the selected volume?";
+            String message = "Are you sure you want to delete the selected volume group?";
             if (list.size() > 1) {
-                message = "Are you sure you want to delete the selected volumes?";
+                message = "Are you sure you want to delete the selected volume groups?";
             }
-            ConfirmEvent.fire(ManageFSVolumesPresenter.this, message,
+            ConfirmEvent.fire(FsVolumeGroupPresenter.this, message,
                     result -> {
                         if (result) {
                             volumeStatusListPresenter.getSelectionModel().clear();
-                            for (final FsVolume volume : list) {
+                            for (final FsVolumeGroup volume : list) {
                                 final Rest<Boolean> rest = restFactory.create();
-                                rest.onSuccess(response -> refresh()).call(FS_VOLUME_RESOURCE).delete(volume.getId());
+                                rest.onSuccess(response ->
+                                        refresh()).call(FS_VOLUME_GROUP_RESOURCE).delete(volume.getId());
                             }
                         }
                     });
         }
     }
-
-//    @Override
-//    protected void revealInParent() {
-//        final PopupSize popupSize = PopupSize.resizable(1000, 600);
-//        ShowPopupEvent.fire(this, this, PopupType.CLOSE_DIALOG, null, popupSize, "Manage Volumes", null, null);
-//    }
 
     private void enableButtons() {
         final boolean enabled = volumeStatusListPresenter.getSelectionModel().getSelected() != null;

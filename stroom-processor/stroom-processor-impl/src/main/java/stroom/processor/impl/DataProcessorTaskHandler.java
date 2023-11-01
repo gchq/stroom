@@ -118,7 +118,7 @@ public class DataProcessorTaskHandler {
         }
 
         // Open the stream source.
-        try (Source source = streamStore.openSource(processorTask.getMetaId())) {
+        try (final Source source = streamStore.openSource(processorTask.getMetaId())) {
             if (source == null) {
                 throw new ProcessingException("Source not found for " + processorTask.getMetaId());
             }

@@ -152,6 +152,7 @@ appConfig:
     filesystemVolume:
       createDefaultStreamVolumesOnStart: true
       defaultStreamVolumeFilesystemUtilisation: 0.9
+      defaultStreamVolumeGroupName: "Default Volume Group"
       defaultStreamVolumePaths:
       - "volumes/default_stream_volume"
       feedPathCache:
@@ -171,6 +172,10 @@ appConfig:
         Test Events: "tevt"
         Test Reference: "tref"
       typePathCache:
+        expireAfterAccess: "PT10M"
+        expireAfterWrite: null
+        maximumSize: 1000
+      volumeCache:
         expireAfterAccess: "PT10M"
         expireAfterWrite: null
         maximumSize: 1000

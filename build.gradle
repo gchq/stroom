@@ -110,7 +110,7 @@ ext.versions = [
         // 6.1.x - https://www.cloudera.com/documentation/enterprise/6/release-notes/topics/rg_cdh_61_maven_artifacts.html
 
         //------------3rd-party------------
-        aws               : '2.17.253',
+        aws               : '2.20.157',
         curator           : '4.2.0', // Curator 4 works with ZK 3.4.x in soft compatibility mode, i.e. you must exlude its dep on ZK and explicitly add one for 3.4.x
         dropwizard        : '2.0.28', // used to set the dropwizard-bom version, that controls lots of dependency versions
         elasticsearch     : '7.17.12',
@@ -143,7 +143,9 @@ ext.libs = [
 
         //------3rd Party-libs---------------
         assertj_core                        : "org.assertj:assertj-core", // version controlled by dropwizard-dependencies
-        aws_dependencies                    : "software.amazon.awssdk:bom:$versions.aws",
+        aws_bom                             : "software.amazon.awssdk:bom:$versions.aws",
+        aws_crt                             : "software.amazon.awssdk.crt:aws-crt:0.27.3",
+        aws_s3_transfer_manager             : "software.amazon.awssdk:s3-transfer-manager", // version controlled by AWS BOM
         aws_sqs                             : "software.amazon.awssdk:sqs", // version controlled by AWS BOM
         bcrypt                              : 'de.svenkubiak:jBCrypt:0.4.1',
         caffeine                            : "com.github.ben-manes.caffeine:caffeine", // version controlled by dropwizard-dependencies
@@ -340,7 +342,7 @@ subprojects {
     // This bit makes all sub projects have access to the BOMs for the dependency versions
     dependencies {
         implementation platform(libs.dropwizard_dependencies)
-        implementation platform(libs.aws_dependencies)
+        implementation platform(libs.aws_bom)
     }
 
     //println project.getConfigurations().getByName("implementation").getAllDependencies()

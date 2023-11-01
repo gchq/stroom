@@ -16,19 +16,11 @@
 
 package stroom.data.store.impl.fs.client.gin;
 
-import stroom.core.client.gin.PluginModule;
-import stroom.data.store.impl.fs.client.presenter.FSVolumeEditPresenter;
-import stroom.data.store.impl.fs.client.presenter.ManageFSVolumesPresenter;
-import stroom.data.store.impl.fs.client.view.FSVolumeEditViewImpl;
+import stroom.data.store.impl.fs.client.presenter.FsVolumeEditPresenter;
 
-public class FSVolumeModule extends PluginModule {
+import com.google.gwt.inject.client.AsyncProvider;
 
-    @Override
-    protected void configure() {
-        bind(ManageFSVolumesPresenter.class);
-//        bind(ManageFSVolumesPresenter.ManageVolumesProxy.class).asEagerSingleton();
+public interface FsVolumeGinjector {
 
-        bindPresenterWidget(FSVolumeEditPresenter.class, FSVolumeEditPresenter.VolumeEditView.class,
-                FSVolumeEditViewImpl.class);
-    }
+    AsyncProvider<FsVolumeEditPresenter> getFileVolumeEditPresenter();
 }

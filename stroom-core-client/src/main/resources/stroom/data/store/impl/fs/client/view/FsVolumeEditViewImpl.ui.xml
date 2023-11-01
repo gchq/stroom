@@ -4,6 +4,9 @@
              xmlns:l="urn:import:stroom.item.client"
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form">
+        <form:FormGroup identity="fsVolumeType" label="Volume Type">
+            <l:SelectionBox ui:field="volumeType" addStyleNames="w-100"/>
+        </form:FormGroup>
         <form:FormGroup identity="fsVolumePath" label="Path">
             <g:TextBox ui:field="path" addStyleNames="w-100"/>
         </form:FormGroup>
@@ -12,6 +15,12 @@
         </form:FormGroup>
         <form:FormGroup identity="fsVolumeLimit" label="Limit">
             <g:TextBox ui:field="byteLimit" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup identity="fsVolumeConfig"
+                        label="S3 Configuration"
+                        addStyleNames="default-min-sizes flex-grow-1">
+            <g:ResizeLayoutPanel ui:field="configEditorContainer"
+                                 addStyleNames="dock-max stroom-control__no-padding"/>
         </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder> 

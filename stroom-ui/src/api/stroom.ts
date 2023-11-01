@@ -347,6 +347,47 @@ export interface Automate {
   refreshInterval?: string;
 }
 
+export type AwsBasicCredentials = AwsCredentials & { accessKeyId?: string; secretAccessKey?: string };
+
+export interface AwsCredentials {
+  type: string;
+}
+
+export interface AwsHttpConfig {
+  connectionTimeout?: string;
+  proxyConfiguration?: AwsProxyConfig;
+  trustAllCertificatesEnabled?: boolean;
+}
+
+export type AwsProfileCredentials = AwsCredentials & { profileFilePath?: string; profileName?: string };
+
+export interface AwsProxyConfig {
+  host?: string;
+  password?: string;
+
+  /** @format int32 */
+  port?: number;
+  scheme?: string;
+  useSystemPropertyValues?: boolean;
+  username?: string;
+}
+
+export type AwsSessionCredentials = AwsCredentials & {
+  accessKeyId?: string;
+  secretAccessKey?: string;
+  sessionToken?: string;
+};
+
+export type AwsWebCredentials = AwsCredentials & {
+  asyncCredentialUpdateEnabled?: boolean;
+  prefetchTime?: string;
+  roleArn?: string;
+  roleSessionName?: string;
+  sessionDuration?: string;
+  staleTime?: string;
+  webIdentityTokenFile?: string;
+};
+
 export interface Base64EncodedDocumentData {
   dataMap?: Record<string, string>;
 
@@ -1820,6 +1861,7 @@ export interface FeedDoc {
   updateUser?: string;
   uuid?: string;
   version?: string;
+  volumeGroup?: string;
 }
 
 export interface FetchAllDocumentPermissionsRequest {
@@ -1997,6 +2039,7 @@ export interface FindExplorerNodeQuery {
 }
 
 export interface FindFsVolumeCriteria {
+  group?: FsVolumeGroup;
   pageRequest?: PageRequest;
   selection?: SelectionVolumeUseStatus;
   sort?: string;
@@ -2131,6 +2174,8 @@ export interface FsVolume {
   /** @format int32 */
   id?: number;
   path?: string;
+  s3ClientConfig?: S3ClientConfig;
+  s3ClientConfigData?: string;
   status?: "ACTIVE" | "INACTIVE" | "CLOSED";
 
   /** @format int64 */
@@ -2139,7 +2184,28 @@ export interface FsVolume {
 
   /** @format int32 */
   version?: number;
+
+  /** @format int32 */
+  volumeGroupId?: number;
   volumeState?: FsVolumeState;
+  volumeType?: "STANDARD" | "S3";
+}
+
+export interface FsVolumeGroup {
+  /** @format int64 */
+  createTimeMs?: number;
+  createUser?: string;
+
+  /** @format int32 */
+  id?: number;
+  name?: string;
+
+  /** @format int64 */
+  updateTimeMs?: number;
+  updateUser?: string;
+
+  /** @format int32 */
+  version?: number;
 }
 
 export interface FsVolumeState {
@@ -3659,6 +3725,15 @@ export interface ResultPageFsVolume {
 /**
  * A page of results.
  */
+export interface ResultPageFsVolumeGroup {
+  /** Details of the page of results being returned. */
+  pageResponse?: PageResponse;
+  values?: FsVolumeGroup[];
+}
+
+/**
+ * A page of results.
+ */
 export interface ResultPageIndexShard {
   /** Details of the page of results being returned. */
   pageResponse?: PageResponse;
@@ -3823,6 +3898,48 @@ export interface Row {
 
   /** The value for this row of data. The values in the list are in the same order as the fields in the ResultRequest */
   values: string[];
+}
+
+export interface S3ClientConfig {
+  accelerate?: boolean;
+  async?: boolean;
+  bucketName?: string;
+  checksumValidationEnabled?: boolean;
+  createBuckets?: boolean;
+  credentials?: AwsCredentials;
+  credentialsProviderType?:
+    | "ANONYMOUS"
+    | "DEFAULT"
+    | "ENVIRONMENT_VARIABLE"
+    | "PROFILE"
+    | "STATIC"
+    | "SYSTEM_PROPERTY"
+    | "WEB";
+  crossRegionAccessEnabled?: boolean;
+  endpointOverride?: string;
+  forcePathStyle?: boolean;
+  httpConfiguration?: AwsHttpConfig;
+  keyPattern?: string;
+
+  /** @format int32 */
+  maxConcurrency?: number;
+
+  /** @format int64 */
+  minimalPartSizeInBytes?: number;
+  multipart?: boolean;
+
+  /** @format int32 */
+  numRetries?: number;
+
+  /** @format int64 */
+  readBufferSizeInBytes?: number;
+  region?: string;
+
+  /** @format double */
+  targetThroughputInGbps?: number;
+
+  /** @format int64 */
+  thresholdInBytes?: number;
 }
 
 export interface SavePipelineXmlRequest {
@@ -7577,6 +7694,114 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     updateFsVolume: (id: number, data: FsVolume, params: RequestParams = {}) =>
       this.request<any, FsVolume>({
         path: `/fsVolume/v1/${id}`,
+        method: "PUT",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Data Volume Groups
+     * @name CreateFsVolumeGroup
+     * @summary Creates a data volume group
+     * @request POST:/fsVolume/volumeGroup/v2
+     * @secure
+     */
+    createFsVolumeGroup: (data: string, params: RequestParams = {}) =>
+      this.request<any, FsVolumeGroup>({
+        path: `/fsVolume/volumeGroup/v2`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Data Volume Groups
+     * @name FetchFsVolumeGroupByName
+     * @summary Gets a data volume group by name
+     * @request GET:/fsVolume/volumeGroup/v2/fetchByName/{name}
+     * @secure
+     */
+    fetchFsVolumeGroupByName: (name: string, params: RequestParams = {}) =>
+      this.request<any, FsVolumeGroup>({
+        path: `/fsVolume/volumeGroup/v2/fetchByName/${name}`,
+        method: "GET",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Data Volume Groups
+     * @name FindFsVolumeGroups
+     * @summary Finds data volume groups matching request
+     * @request POST:/fsVolume/volumeGroup/v2/find
+     * @secure
+     */
+    findFsVolumeGroups: (data: ExpressionCriteria, params: RequestParams = {}) =>
+      this.request<any, ResultPageFsVolumeGroup>({
+        path: `/fsVolume/volumeGroup/v2/find`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Data Volume Groups
+     * @name DeleteFsVolumeGroup
+     * @summary Deletes a data volume group
+     * @request DELETE:/fsVolume/volumeGroup/v2/{id}
+     * @secure
+     */
+    deleteFsVolumeGroup: (id: number, params: RequestParams = {}) =>
+      this.request<any, boolean>({
+        path: `/fsVolume/volumeGroup/v2/${id}`,
+        method: "DELETE",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Data Volume Groups
+     * @name FetchFsVolumeGroup
+     * @summary Gets a data volume group
+     * @request GET:/fsVolume/volumeGroup/v2/{id}
+     * @secure
+     */
+    fetchFsVolumeGroup: (id: number, params: RequestParams = {}) =>
+      this.request<any, FsVolumeGroup>({
+        path: `/fsVolume/volumeGroup/v2/${id}`,
+        method: "GET",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Data Volume Groups
+     * @name UpdateFsVolumeGroup
+     * @summary Updates a data volume group
+     * @request PUT:/fsVolume/volumeGroup/v2/{id}
+     * @secure
+     */
+    updateFsVolumeGroup: (id: number, data: FsVolumeGroup, params: RequestParams = {}) =>
+      this.request<any, FsVolumeGroup>({
+        path: `/fsVolume/volumeGroup/v2/${id}`,
         method: "PUT",
         body: data,
         secure: true,

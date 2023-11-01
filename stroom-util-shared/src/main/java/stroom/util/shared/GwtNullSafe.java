@@ -168,6 +168,14 @@ public class GwtNullSafe {
         return str == null || str.isEmpty();
     }
 
+    public static Optional<String> nonBlank(final String str) {
+        if (isBlankString(str)) {
+            return Optional.empty();
+        } else {
+            return Optional.of(str);
+        }
+    }
+
     public static String join(final CharSequence delimiter, final CharSequence... elements) {
         if (elements == null || elements.length == 0) {
             return "";

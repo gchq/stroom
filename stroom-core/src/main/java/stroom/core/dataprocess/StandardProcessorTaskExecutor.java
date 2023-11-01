@@ -19,6 +19,7 @@ package stroom.core.dataprocess;
 
 import stroom.data.store.api.Store;
 import stroom.feed.api.FeedProperties;
+import stroom.feed.api.VolumeGroupNameProvider;
 import stroom.meta.api.MetaService;
 import stroom.node.api.NodeInfo;
 import stroom.pipeline.ErrorWriterProxy;
@@ -64,7 +65,8 @@ public class StandardProcessorTaskExecutor extends AbstractProcessorTaskExecutor
                                          final RecordErrorReceiver recordErrorReceiver,
                                          final NodeInfo nodeInfo,
                                          final PipelineDataCache pipelineDataCache,
-                                         final InternalStatisticsReceiver internalStatisticsReceiver) {
+                                         final InternalStatisticsReceiver internalStatisticsReceiver,
+                                         final VolumeGroupNameProvider volumeGroupNameProvider) {
         super(pipelineFactory,
                 store,
                 pipelineStore,
@@ -85,6 +87,7 @@ public class StandardProcessorTaskExecutor extends AbstractProcessorTaskExecutor
                 recordErrorReceiver,
                 nodeInfo,
                 pipelineDataCache,
-                internalStatisticsReceiver);
+                internalStatisticsReceiver,
+                volumeGroupNameProvider);
     }
 }

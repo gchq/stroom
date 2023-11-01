@@ -24,12 +24,17 @@ import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.data.store.impl.fs.shared.FindFsVolumeCriteria;
 import stroom.data.store.impl.fs.shared.FsVolume;
+import stroom.data.store.impl.fs.shared.FsVolumeGroup;
 import stroom.data.store.impl.fs.shared.FsVolumeResource;
+import stroom.data.store.impl.fs.shared.FsVolumeType;
+import stroom.data.store.impl.fs.shared.S3ClientConfig;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.preferences.client.DateTimeFormatter;
+import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.Selection;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
@@ -45,21 +50,24 @@ import java.util.OptionalDouble;
 import java.util.OptionalLong;
 import java.util.function.Consumer;
 
-public class FSVolumeStatusListPresenter extends MyPresenterWidget<PagerView> {
+public class FsVolumeStatusListPresenter extends MyPresenterWidget<PagerView> {
 
     private static final FsVolumeResource FS_VOLUME_RESOURCE = GWT.create(FsVolumeResource.class);
 
     private final MyDataGrid<FsVolume> dataGrid;
     private final MultiSelectionModelImpl<FsVolume> selectionModel;
-    private final RestDataProvider<FsVolume, ResultPage<FsVolume>> dataProvider;
+    private final RestFactory restFactory;
     private final DateTimeFormatter dateTimeFormatter;
+    private FindFsVolumeCriteria criteria;
+    private RestDataProvider<FsVolume, ResultPage<FsVolume>> dataProvider;
 
     @Inject
-    public FSVolumeStatusListPresenter(final EventBus eventBus,
+    public FsVolumeStatusListPresenter(final EventBus eventBus,
                                        final PagerView view,
                                        final RestFactory restFactory,
                                        final DateTimeFormatter dateTimeFormatter) {
         super(eventBus, view);
+        this.restFactory = restFactory;
 
         dataGrid = new MyDataGrid<>();
         selectionModel = dataGrid.addDefaultSelectionModel(true);
@@ -69,24 +77,33 @@ public class FSVolumeStatusListPresenter extends MyPresenterWidget<PagerView> {
         getWidget().getElement().addClassName("default-min-sizes");
 
         initTableColumns();
+    }
 
-        final FindFsVolumeCriteria criteria = FindFsVolumeCriteria.matchAll();
-        dataProvider = new RestDataProvider<FsVolume, ResultPage<FsVolume>>(eventBus) {
-            @Override
-            protected void exec(final Range range,
-                                final Consumer<ResultPage<FsVolume>> dataConsumer,
-                                final Consumer<Throwable> throwableConsumer) {
-                CriteriaUtil.setRange(criteria, range);
-                final Rest<ResultPage<FsVolume>> rest = restFactory.create();
-                rest
-                        .onSuccess(dataConsumer)
-                        .onFailure(throwableConsumer)
-                        .call(FS_VOLUME_RESOURCE)
-                        .find(criteria);
-            }
-        };
-        dataProvider.addDataDisplay(dataGrid);
-        dataProvider.refresh();
+    public void setGroup(final FsVolumeGroup group) {
+        criteria = new FindFsVolumeCriteria(
+                null,
+                group,
+                null,
+                Selection.selectAll());
+        if (dataProvider == null) {
+            dataProvider = new RestDataProvider<FsVolume, ResultPage<FsVolume>>(getEventBus()) {
+                @Override
+                protected void exec(final Range range,
+                                    final Consumer<ResultPage<FsVolume>> dataConsumer,
+                                    final Consumer<Throwable> throwableConsumer) {
+                    CriteriaUtil.setRange(criteria, range);
+                    final Rest<ResultPage<FsVolume>> rest = restFactory.create();
+                    rest
+                            .onSuccess(dataConsumer)
+                            .onFailure(throwableConsumer)
+                            .call(FS_VOLUME_RESOURCE)
+                            .find(criteria);
+                }
+            };
+            dataProvider.addDataDisplay(dataGrid);
+        } else {
+            dataProvider.refresh();
+        }
     }
 
     /**
@@ -97,10 +114,32 @@ public class FSVolumeStatusListPresenter extends MyPresenterWidget<PagerView> {
         final Column<FsVolume, String> volumeColumn = new Column<FsVolume, String>(new TextCell()) {
             @Override
             public String getValue(final FsVolume volume) {
+                if (volume == null) {
+                    return null;
+                }
+                if (FsVolumeType.S3.equals(volume.getVolumeType())) {
+                    return GwtNullSafe.getOrElse(
+                            volume.getS3ClientConfig(),
+                            S3ClientConfig::getBucketName,
+                            S3ClientConfig.DEFAULT_BUCKET_NAME);
+                }
+
                 return volume.getPath();
             }
         };
         dataGrid.addResizableColumn(volumeColumn, "Path", 300);
+
+        // Volume type.
+        final Column<FsVolume, String> volumeTypeColumn = new Column<FsVolume, String>(new TextCell()) {
+            @Override
+            public String getValue(final FsVolume row) {
+                if (row == null) {
+                    return null;
+                }
+                return row.getVolumeType().getDisplayValue();
+            }
+        };
+        dataGrid.addResizableColumn(volumeTypeColumn, "Type", 90);
 
         // Status.
         final Column<FsVolume, String> streamStatusColumn = new Column<FsVolume, String>(new TextCell()) {

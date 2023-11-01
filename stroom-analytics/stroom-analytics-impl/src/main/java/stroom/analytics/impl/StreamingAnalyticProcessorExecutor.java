@@ -20,6 +20,7 @@ package stroom.analytics.impl;
 import stroom.core.dataprocess.AbstractProcessorTaskExecutor;
 import stroom.data.store.api.Store;
 import stroom.feed.api.FeedProperties;
+import stroom.feed.api.VolumeGroupNameProvider;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.Meta;
 import stroom.node.api.NodeInfo;
@@ -71,7 +72,8 @@ public class StreamingAnalyticProcessorExecutor extends AbstractProcessorTaskExe
                                               final PipelineDataCache pipelineDataCache,
                                               final InternalStatisticsReceiver internalStatisticsReceiver,
                                               final StreamingAnalyticDataProcessorDecorator
-                                                          streamingAnalyticDataProcessorDecorator) {
+                                                          streamingAnalyticDataProcessorDecorator,
+                                              final VolumeGroupNameProvider volumeGroupNameProvider) {
         super(pipelineFactory,
                 store,
                 pipelineStore,
@@ -92,7 +94,8 @@ public class StreamingAnalyticProcessorExecutor extends AbstractProcessorTaskExe
                 recordErrorReceiver,
                 nodeInfo,
                 pipelineDataCache,
-                internalStatisticsReceiver);
+                internalStatisticsReceiver,
+                volumeGroupNameProvider);
         this.streamingAnalyticDataProcessorDecorator = streamingAnalyticDataProcessorDecorator;
     }
 

@@ -18,7 +18,6 @@
 package stroom.data.store.api;
 
 import stroom.meta.api.MetaProperties;
-import stroom.meta.shared.Meta;
 
 /**
  * <p>
@@ -37,6 +36,8 @@ import stroom.meta.shared.Meta;
  */
 public interface Store {
 
+    Target openTarget(MetaProperties metaProperties) throws DataException;
+
     /**
      * <p>
      * Open a new target (i.e. new file) based on some meta data
@@ -44,17 +45,7 @@ public interface Store {
      *
      * @return the stream to write to
      */
-    Target openTarget(MetaProperties metaProperties) throws DataException;
-
-    /**
-     * <p>
-     * Open a new stream (i.e. new file) based on some meta data
-     * </p>
-     *
-     * @param append allow appending to the stream (or wipe it?)
-     * @return the stream to write to
-     */
-    Target openExistingTarget(Meta meta) throws DataException;
+    Target openTarget(MetaProperties metaProperties, String volumeGroup) throws DataException;
 
     /**
      * <p>
@@ -63,7 +54,7 @@ public interface Store {
      *
      * @return items deleted
      */
-    Target deleteTarget(Target target);
+    void deleteTarget(Target target);
 
     /**
      * <p>

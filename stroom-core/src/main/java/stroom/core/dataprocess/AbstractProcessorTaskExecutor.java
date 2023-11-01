@@ -27,6 +27,7 @@ import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.feed.api.FeedProperties;
+import stroom.feed.api.VolumeGroupNameProvider;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.api.MetaService;
@@ -137,6 +138,7 @@ public abstract class AbstractProcessorTaskExecutor implements ProcessorTaskExec
     private final NodeInfo nodeInfo;
     private final PipelineDataCache pipelineDataCache;
     private final InternalStatisticsReceiver internalStatisticsReceiver;
+    private final VolumeGroupNameProvider volumeGroupNameProvider;
 
     private Processor streamProcessor;
     private ProcessorFilter processorFilter;
@@ -165,7 +167,8 @@ public abstract class AbstractProcessorTaskExecutor implements ProcessorTaskExec
                                             final RecordErrorReceiver recordErrorReceiver,
                                             final NodeInfo nodeInfo,
                                             final PipelineDataCache pipelineDataCache,
-                                            final InternalStatisticsReceiver internalStatisticsReceiver) {
+                                            final InternalStatisticsReceiver internalStatisticsReceiver,
+                                            final VolumeGroupNameProvider volumeGroupNameProvider) {
         this.pipelineFactory = pipelineFactory;
         this.streamStore = store;
         this.pipelineStore = pipelineStore;
@@ -187,6 +190,7 @@ public abstract class AbstractProcessorTaskExecutor implements ProcessorTaskExec
         this.nodeInfo = nodeInfo;
         this.pipelineDataCache = pipelineDataCache;
         this.internalStatisticsReceiver = internalStatisticsReceiver;
+        this.volumeGroupNameProvider = volumeGroupNameProvider;
     }
 
     @Override
@@ -224,7 +228,8 @@ public abstract class AbstractProcessorTaskExecutor implements ProcessorTaskExec
                         processorFilter,
                         processorTask,
                         recordCount,
-                        errorReceiverProxy)) {
+                        errorReceiverProxy,
+                        volumeGroupNameProvider)) {
 
             try {
                 final DefaultErrorWriter errorWriter = new DefaultErrorWriter();
@@ -610,6 +615,7 @@ public abstract class AbstractProcessorTaskExecutor implements ProcessorTaskExec
         private final ProcessorTask processorTask;
         private final RecordCount recordCount;
         private final ErrorReceiverProxy errorReceiverProxy;
+        private final VolumeGroupNameProvider volumeGroupNameProvider;
 
         private OutputStream processInfoOutputStream;
         private Target processInfoStreamTarget;
@@ -622,7 +628,8 @@ public abstract class AbstractProcessorTaskExecutor implements ProcessorTaskExec
                                         final ProcessorFilter processorFilter,
                                         final ProcessorTask processorTask,
                                         final RecordCount recordCount,
-                                        final ErrorReceiverProxy errorReceiverProxy) {
+                                        final ErrorReceiverProxy errorReceiverProxy,
+                                        final VolumeGroupNameProvider volumeGroupNameProvider) {
             this.streamStore = streamStore;
             this.metaData = metaData;
             this.meta = meta;
@@ -632,6 +639,7 @@ public abstract class AbstractProcessorTaskExecutor implements ProcessorTaskExec
             this.processorTask = processorTask;
             this.recordCount = recordCount;
             this.errorReceiverProxy = errorReceiverProxy;
+            this.volumeGroupNameProvider = volumeGroupNameProvider;
         }
 
         @Override
@@ -679,7 +687,9 @@ public abstract class AbstractProcessorTaskExecutor implements ProcessorTaskExec
                         .processorTaskId(processorTaskId)
                         .build();
 
-                processInfoStreamTarget = streamStore.openTarget(dataProperties);
+                final String volumeGroupName = volumeGroupNameProvider
+                        .getVolumeGroupName(meta.getFeedName(), StreamTypeNames.ERROR, null);
+                processInfoStreamTarget = streamStore.openTarget(dataProperties, volumeGroupName);
                 processInfoOutputStream = new WrappedOutputStream(processInfoStreamTarget.next().get()) {
                     @Override
                     public void close() throws IOException {
