@@ -20,6 +20,7 @@ package stroom.search.manualtesting;
 
 
 import stroom.docref.DocRef;
+import stroom.index.impl.IndexShardSearchConfig;
 import stroom.index.impl.IndexStore;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
@@ -32,7 +33,6 @@ import stroom.query.common.v2.ResultStoreManager;
 import stroom.search.AbstractSearchTest;
 import stroom.search.CommonIndexingTestHelper;
 import stroom.search.extraction.ExtractionConfig;
-import stroom.search.impl.shard.IndexShardSearchConfig;
 import stroom.task.api.TaskManager;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;

@@ -25,6 +25,7 @@ import stroom.util.xml.SAXParserFactoryFactory;
 import stroom.util.xml.XMLUtil;
 
 import org.apache.commons.io.output.ByteArrayOutputStream;
+import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -126,6 +127,7 @@ class TestXMLWriter extends StroomUnitTest {
                 bw.close();
 
             } catch (final IOException | SAXException | ParserConfigurationException | RuntimeException e) {
+                LOGGER.error(e.getMessage(), e);
                 fail(LogUtil.message("Error processing file {}. {}", inputFile, e.getMessage()), e);
             }
         } catch (final IOException | RuntimeException e) {

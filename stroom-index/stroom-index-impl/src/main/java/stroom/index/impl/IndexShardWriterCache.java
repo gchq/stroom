@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,26 +16,22 @@
 
 package stroom.index.impl;
 
-
 import stroom.index.shared.IndexShardKey;
 
-/**
- * API into our index shard writer cache.
- */
 public interface IndexShardWriterCache {
+    IndexShardWriter getWriterByShardKey(IndexShardKey key);
+
     IndexShardWriter getWriterByShardId(long indexShardId);
-
-    IndexShardWriter getWriterByShardKey(IndexShardKey indexShardKey);
-
-    void sweep();
 
     void flush(long indexShardId);
 
     void flushAll();
 
-    void close(IndexShardWriter indexShardWriter);
-
     void delete(long indexShardId);
+
+    void sweep();
+
+    void close(IndexShardWriter indexShardWriter);
 
     void shutdown();
 }

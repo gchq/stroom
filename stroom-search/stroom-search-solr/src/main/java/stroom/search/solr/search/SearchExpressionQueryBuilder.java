@@ -28,16 +28,16 @@ import stroom.query.common.v2.DateExpressionParser;
 import stroom.search.solr.shared.SolrIndexField;
 import stroom.search.solr.shared.SolrIndexFieldType;
 
-import org.apache.lucene.index.Term;
-import org.apache.lucene.search.BooleanClause;
-import org.apache.lucene.search.BooleanClause.Occur;
-import org.apache.lucene.search.BooleanQuery;
-import org.apache.lucene.search.BooleanQuery.Builder;
-import org.apache.lucene.search.MatchAllDocsQuery;
-import org.apache.lucene.search.NumericRangeQuery;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.TermQuery;
-import org.apache.lucene.search.WildcardQuery;
+import org.apache.lucene553.index.Term;
+import org.apache.lucene553.search.BooleanClause;
+import org.apache.lucene553.search.BooleanClause.Occur;
+import org.apache.lucene553.search.BooleanQuery;
+import org.apache.lucene553.search.BooleanQuery.Builder;
+import org.apache.lucene553.search.MatchAllDocsQuery;
+import org.apache.lucene553.search.NumericRangeQuery;
+import org.apache.lucene553.search.Query;
+import org.apache.lucene553.search.TermQuery;
+import org.apache.lucene553.search.WildcardQuery;
 
 import java.util.ArrayList;
 import java.util.Collections;

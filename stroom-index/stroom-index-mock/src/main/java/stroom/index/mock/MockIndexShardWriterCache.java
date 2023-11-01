@@ -81,7 +81,6 @@ public class MockIndexShardWriterCache implements IndexShardWriterCache {
     public void sweep() {
     }
 
-    @Override
     public void close(final IndexShardWriter indexShardWriter) {
         indexShardWriter.close();
         openWritersByShardId.remove(indexShardWriter.getIndexShardId());
@@ -102,7 +101,6 @@ public class MockIndexShardWriterCache implements IndexShardWriterCache {
 //        openWritersByShardId.values().parallelStream().forEach(this::close);
 //    }
 
-    @Override
     public void shutdown() {
         openWritersByShardId.values().parallelStream().forEach(this::close);
     }

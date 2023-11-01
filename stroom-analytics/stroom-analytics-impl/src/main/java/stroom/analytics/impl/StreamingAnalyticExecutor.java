@@ -1,5 +1,6 @@
 package stroom.analytics.impl;
 
+import stroom.analytics.api.NotificationState;
 import stroom.analytics.shared.AnalyticProcessConfig;
 import stroom.analytics.shared.AnalyticProcessType;
 import stroom.analytics.shared.AnalyticRuleDoc;
@@ -27,10 +28,11 @@ import stroom.query.api.v2.TableSettings;
 import stroom.query.common.v2.CompiledFields;
 import stroom.query.common.v2.ExpressionContextFactory;
 import stroom.query.language.functions.FieldIndex;
+import stroom.search.extraction.AnalyticFieldListConsumer;
 import stroom.search.extraction.ExtractionException;
 import stroom.search.extraction.ExtractionState;
 import stroom.search.extraction.FieldListConsumerHolder;
-import stroom.search.impl.SearchExpressionQueryBuilderFactory;
+import stroom.search.extraction.MemoryIndex;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.task.api.ExecutorProvider;
@@ -78,7 +80,7 @@ public class StreamingAnalyticExecutor {
     private final Provider<ExtractionState> extractionStateProvider;
     private final Provider<DetectionConsumerProxy> detectionConsumerProxyProvider;
     private final TaskContextFactory taskContextFactory;
-    private final SearchExpressionQueryBuilderFactory searchExpressionQueryBuilderFactory;
+    private final Provider<MemoryIndex> memoryIndexProvider;
     private final ExpressionMatcher metaExpressionMatcher;
     private final NodeInfo nodeInfo;
     private final AnalyticRuleSearchRequestHelper analyticRuleSearchRequestHelper;
@@ -100,7 +102,7 @@ public class StreamingAnalyticExecutor {
                                      final Provider<FieldListConsumerHolder> fieldListConsumerHolderProvider,
                                      final Provider<ExtractionState> extractionStateProvider,
                                      final TaskContextFactory taskContextFactory,
-                                     final SearchExpressionQueryBuilderFactory searchExpressionQueryBuilderFactory,
+                                     final Provider<MemoryIndex> memoryIndexProvider,
                                      final Provider<DetectionConsumerProxy> detectionConsumerProxyProvider,
                                      final AnalyticErrorWritingExecutor analyticErrorWritingExecutor,
                                      final ExpressionMatcherFactory expressionMatcherFactory,
@@ -118,7 +120,7 @@ public class StreamingAnalyticExecutor {
         this.fieldListConsumerHolderProvider = fieldListConsumerHolderProvider;
         this.extractionStateProvider = extractionStateProvider;
         this.taskContextFactory = taskContextFactory;
-        this.searchExpressionQueryBuilderFactory = searchExpressionQueryBuilderFactory;
+        this.memoryIndexProvider = memoryIndexProvider;
         this.detectionConsumerProxyProvider = detectionConsumerProxyProvider;
         this.analyticErrorWritingExecutor = analyticErrorWritingExecutor;
         this.metaExpressionMatcher = expressionMatcherFactory.create(MetaFields.getFieldMap());
@@ -436,9 +438,8 @@ public class StreamingAnalyticExecutor {
                 paramMap);
         final FieldIndex fieldIndex = compiledFields.getFieldIndex();
 
-        // Cache the query for use across multiple streams.
-        final SearchExpressionQueryCache searchExpressionQueryCache =
-                new SearchExpressionQueryCache(searchExpressionQueryBuilderFactory, searchRequest);
+        // Cache the memory index for use across multiple streams.
+        final MemoryIndex memoryIndex = memoryIndexProvider.get();
 
         // Determine if notifications have been disabled.
         final NotificationState notificationState = notificationStateService.getState(analytic.analyticRuleDoc);
@@ -460,7 +461,7 @@ public class StreamingAnalyticExecutor {
                                 fieldIndex,
                                 notificationState,
                                 detectionConsumerProxy,
-                                searchExpressionQueryCache,
+                                memoryIndex,
                                 null,
                                 detectionConsumerProxy);
                 return Optional.of(analyticFieldListConsumer);

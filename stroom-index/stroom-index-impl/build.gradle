@@ -22,6 +22,7 @@ dependencies {
     implementation project(':stroom-query:stroom-query-language-api')
     implementation project(':stroom-query:stroom-query-api')
     implementation project(':stroom-query:stroom-query-common')
+    implementation project(':stroom-search:stroom-search-extraction')
     implementation project(':stroom-search:stroom-searchable-api')
     implementation project(':stroom-security:stroom-security-api')
     implementation project(':stroom-statistics:stroom-statistics-api')
@@ -38,9 +39,6 @@ dependencies {
     implementation libs.jakarta_validation_api
     implementation libs.javax_inject
     implementation libs.jaxb_api
-    implementation libs.lucene_analyzers_common
-    implementation libs.lucene_core
-    implementation libs.lucene_queryparser
     implementation libs.restygwt
     implementation libs.saxon_he
     implementation libs.slf4j_api
@@ -48,6 +46,7 @@ dependencies {
     implementation libs.ws_rs_api
     implementation libs.xml_apis
 
+    testImplementation project(':stroom-index:stroom-index-mock')
     testImplementation project(':stroom-test-common')
 
     testImplementation libs.assertj_core

@@ -18,7 +18,6 @@ package stroom.index.impl;
 
 import stroom.docref.DocRef;
 import stroom.index.shared.AllPartition;
-import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexShardKey;
 import stroom.index.shared.Partition;
@@ -29,16 +28,15 @@ import stroom.pipeline.errorhandler.LoggedException;
 import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.factory.PipelineProperty;
 import stroom.pipeline.factory.PipelinePropertyDocRef;
-import stroom.pipeline.filter.AbstractFieldFilter;
-import stroom.pipeline.filter.FieldValue;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.MetaHolder;
+import stroom.search.extraction.AbstractFieldFilter;
+import stroom.search.extraction.FieldValue;
 import stroom.svg.shared.SvgImage;
 import stroom.util.CharBuffer;
 import stroom.util.shared.Severity;
 
-import org.apache.lucene.document.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.Locator;
@@ -79,7 +77,7 @@ class DynamicIndexingFilter extends AbstractFieldFilter {
     private final IndexStructureCache indexStructureCache;
     private final CharBuffer debugBuffer = new CharBuffer(10);
     private DocRef indexRef;
-    private IndexDoc index;
+    private stroom.index.shared.IndexDoc index;
     private final TimePartitionFactory timePartitionFactory = new TimePartitionFactory();
     private final TreeMap<Long, TimePartition> timePartitionTreeMap = new TreeMap<>();
     private final Map<Partition, IndexShardKey> indexShardKeyMap = new HashMap<>();
@@ -156,7 +154,7 @@ class DynamicIndexingFilter extends AbstractFieldFilter {
             indexStructure.getIndexFields().forEach(foundFields::remove);
             if (foundFields.size() > 0) {
                 LOGGER.info("Updating fields for: " + indexRef);
-                final IndexDoc indexDoc = indexStore.readDocument(indexRef);
+                final stroom.index.shared.IndexDoc indexDoc = indexStore.readDocument(indexRef);
                 if (indexDoc.getFields() != null) {
                     foundFields.addAll(indexDoc.getFields());
                 }
@@ -187,8 +185,7 @@ class DynamicIndexingFilter extends AbstractFieldFilter {
 
     @Override
     protected void processFields(final List<FieldValue> fieldValues) {
-        // Create a document to store fields in.
-        final Document document = new Document();
+        final IndexDocument document = new IndexDocument();
         for (final FieldValue fieldValue : fieldValues) {
             final IndexField indexField = fieldValue.field();
             foundFields.add(indexField);
@@ -198,11 +195,26 @@ class DynamicIndexingFilter extends AbstractFieldFilter {
                     currentEventTime = fieldValue.value().toLong();
                 }
 
-                addField(document, fieldValue);
+                // Output some debug.
+                if (LOGGER.isDebugEnabled()) {
+                    debugBuffer.append("processIndexContent() - Adding to index indexName=");
+                    debugBuffer.append(indexRef.getName());
+                    debugBuffer.append(" name=");
+                    debugBuffer.append(fieldValue.field().getFieldName());
+                    debugBuffer.append(" value=");
+                    debugBuffer.append(fieldValue.value());
+
+                    final String debug = debugBuffer.toString();
+                    debugBuffer.clear();
+
+                    LOGGER.debug(debug);
+                }
+
+                document.add(fieldValue);
             }
         }
 
-        if (document.getFields().size() > 0) {
+        if (document.getValues().size() > 0) {
             try {
                 Partition partition = defaultPartition;
                 if (currentEventTime != null) {
@@ -231,37 +243,8 @@ class DynamicIndexingFilter extends AbstractFieldFilter {
         }
     }
 
-    private void addField(final Document document,
-                          final FieldValue fieldValue) {
-        try {
-            org.apache.lucene.document.Field field = FieldFactory.create(fieldValue);
-
-            // Add the current field to the document if it is not null.
-            if (field != null) {
-                // Output some debug.
-                if (LOGGER.isDebugEnabled()) {
-                    debugBuffer.append("processIndexContent() - Adding to index indexName=");
-                    debugBuffer.append(indexRef.getName());
-                    debugBuffer.append(" name=");
-                    debugBuffer.append(fieldValue.field().getFieldName());
-                    debugBuffer.append(" value=");
-                    debugBuffer.append(fieldValue.value());
-
-                    final String debug = debugBuffer.toString();
-                    debugBuffer.clear();
-
-                    LOGGER.debug(debug);
-                }
-
-                document.add(field);
-            }
-        } catch (final RuntimeException e) {
-            log(Severity.ERROR, e.getMessage(), e);
-        }
-    }
-
     @PipelineProperty(description = "The index to send records to.", displayPriority = 1)
-    @PipelinePropertyDocRef(types = IndexDoc.DOCUMENT_TYPE)
+    @PipelinePropertyDocRef(types = stroom.index.shared.IndexDoc.DOCUMENT_TYPE)
     public void setIndex(final DocRef indexRef) {
         this.indexRef = indexRef;
     }

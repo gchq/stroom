@@ -18,7 +18,7 @@ package stroom.search.impl;
 
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.StroomCache;
-import stroom.search.impl.shard.IndexShardSearchConfig;
+import stroom.index.impl.IndexShardSearchConfig;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 

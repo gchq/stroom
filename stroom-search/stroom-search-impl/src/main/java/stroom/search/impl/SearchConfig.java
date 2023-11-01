@@ -1,8 +1,8 @@
 package stroom.search.impl;
 
+import stroom.index.impl.IndexShardSearchConfig;
 import stroom.query.common.v2.SearchResultStoreConfig;
 import stroom.search.extraction.ExtractionConfig;
-import stroom.search.impl.shard.IndexShardSearchConfig;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsStroomConfig;
 

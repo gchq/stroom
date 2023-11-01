@@ -20,7 +20,6 @@ package stroom.index;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.index.impl.IndexVolumeGroupService;
 import stroom.index.impl.IndexVolumeService;
-import stroom.index.impl.selection.VolumeConfig;
 import stroom.index.shared.IndexVolume;
 import stroom.index.shared.IndexVolumeGroup;
 import stroom.node.impl.NodeConfig;
@@ -46,17 +45,14 @@ class VolumeCreatorForTesting implements VolumeCreator {
     private final NodeConfig nodeConfig;
     private final IndexVolumeService volumeService;
     private final IndexVolumeGroupService indexVolumeGroupService;
-    private final VolumeConfig volumeConfig;
 
     @Inject
     VolumeCreatorForTesting(final NodeConfig nodeConfig,
                             final IndexVolumeService volumeService,
-                            final IndexVolumeGroupService indexVolumeGroupService,
-                            final VolumeConfig volumeConfig) {
+                            final IndexVolumeGroupService indexVolumeGroupService) {
         this.nodeConfig = nodeConfig;
         this.volumeService = volumeService;
         this.indexVolumeGroupService = indexVolumeGroupService;
-        this.volumeConfig = volumeConfig;
     }
 
     private List<IndexVolume> getInitialVolumeList(final Path tempDir) {

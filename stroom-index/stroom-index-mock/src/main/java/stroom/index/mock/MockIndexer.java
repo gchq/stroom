@@ -16,16 +16,13 @@
 
 package stroom.index.mock;
 
+import stroom.index.impl.IndexDocument;
 import stroom.index.impl.IndexShardWriter;
 import stroom.index.impl.IndexShardWriterCache;
 import stroom.index.impl.Indexer;
 import stroom.index.shared.IndexShardKey;
 import stroom.util.io.TempDirProvider;
 
-import org.apache.lucene.document.Document;
-
-import java.io.IOException;
-import java.io.UncheckedIOException;
 import javax.inject.Inject;
 
 public class MockIndexer implements Indexer {
@@ -37,17 +34,13 @@ public class MockIndexer implements Indexer {
     }
 
     @Inject
-    MockIndexer(final IndexShardWriterCache indexShardWriterCache) {
+    public MockIndexer(final IndexShardWriterCache indexShardWriterCache) {
         this.indexShardWriterCache = indexShardWriterCache;
     }
 
     @Override
-    public void addDocument(final IndexShardKey key, final Document document) {
-        try {
-            final IndexShardWriter indexShardWriter = indexShardWriterCache.getWriterByShardKey(key);
-            indexShardWriter.addDocument(document);
-        } catch (final IOException e) {
-            throw new UncheckedIOException(e);
-        }
+    public void addDocument(final IndexShardKey key, final IndexDocument document) {
+        final IndexShardWriter indexShardWriter = indexShardWriterCache.getWriterByShardKey(key);
+        indexShardWriter.addDocument(document);
     }
 }

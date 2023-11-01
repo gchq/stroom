@@ -1,6 +1,7 @@
 package stroom.analytics.impl;
 
-import stroom.pipeline.filter.FieldValue;
+import stroom.search.extraction.AnalyticFieldListConsumer;
+import stroom.search.extraction.FieldValue;
 
 import java.util.List;
 

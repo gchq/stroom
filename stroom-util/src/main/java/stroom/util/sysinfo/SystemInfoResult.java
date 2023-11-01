@@ -98,7 +98,7 @@ public class SystemInfoResult {
         private String description = null;
         private Map<String, Object> details = new HashMap<>();
 
-        private Builder(final String name) {
+        public Builder(final String name) {
             this.name = name;
         }
 
