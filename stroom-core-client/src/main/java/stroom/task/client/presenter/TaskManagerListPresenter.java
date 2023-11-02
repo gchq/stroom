@@ -345,14 +345,14 @@ public class TaskManagerListPresenter
                 ColumnSizeConstants.SMALL_COL);
 
         // Info
-        dataGrid.addResizableColumn(
+        dataGrid.addAutoResizableColumn(
                 DataGridUtil.htmlColumnBuilder(getColouredCellFunc(TaskProgress::getTaskInfo))
                         .withSorting(FindTaskProgressCriteria.FIELD_INFO)
                         .withStyleName(MyDataGrid.RESOURCES.dataGridStyle().dataGridCellWrapText())
                         .withStyleName(MyDataGrid.RESOURCES.dataGridStyle().dataGridCellVerticalTop())
                         .build(),
                 FindTaskProgressCriteria.FIELD_INFO,
-                700);
+                200);
 
         dataGrid.addEndColumn(new EndColumn<>());
     }
