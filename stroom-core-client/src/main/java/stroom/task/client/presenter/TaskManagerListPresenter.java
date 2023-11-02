@@ -409,7 +409,8 @@ public class TaskManagerListPresenter
                 TaskProgress::isMatchedInFilter);
     }
 
-    private Function<TaskProgress, SafeHtml> getWrapableColouredCellFunc(final Function<TaskProgress, String> extractor) {
+    private Function<TaskProgress, SafeHtml> getWrapableColouredCellFunc(
+            final Function<TaskProgress, String> extractor) {
         final Function<TaskProgress, SafeHtml> colouredCellFunc = getColouredCellFunc(extractor);
 
         return (TaskProgress row) -> {
