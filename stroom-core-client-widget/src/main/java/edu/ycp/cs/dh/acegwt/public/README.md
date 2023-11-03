@@ -1,3 +1,5 @@
+You can find Ace release builds here https://github.com/ajaxorg/ace-builds/releases
+
 For Stroom to be able to display four different annotation icons in the left hand gutter the source for `ace.js` has been altered. Any future update to `ace.js` will need to incorporate this change.
 
 The original `ace.js` lines 15705-15711:
