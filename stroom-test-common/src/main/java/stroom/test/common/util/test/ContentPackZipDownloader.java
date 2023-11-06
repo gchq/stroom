@@ -5,6 +5,7 @@ import stroom.content.GitRepo;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.json.JsonUtil;
+import stroom.util.logging.DurationTimer;
 import stroom.util.logging.LogUtil;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -25,6 +26,7 @@ import java.net.URL;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.Map;
@@ -32,6 +34,9 @@ import java.util.Map;
 public class ContentPackZipDownloader {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ContentPackZipDownloader.class);
+    private static final Path LOCK_FILE_PATH = Paths.get(System.getProperty("java.io.tmpdir"))
+            .resolve("stroom_zip_download.lock")
+            .toAbsolutePath();
     public static final String CONTENT_PACK_DOWNLOAD_DIR = "~/.stroom/contentPackDownload";
 
     private static void downloadZip(final String url,
@@ -100,8 +105,16 @@ public class ContentPackZipDownloader {
             final ContentPackZipCollection contentPacks = mapper.readValue(
                     contentPacksDefinition.toFile(),
                     ContentPackZipCollection.class);
-            contentPacks.getContentPacks().forEach(contentPack ->
-                    downloadZip(contentPack, contentPackDownloadDir, contentPackImportDir));
+
+            // Multiple test JVMs cannot interact with the git repo at once,
+            // else git's locking will be violated, so easier for
+            // all to lock on a single file and do it serially.
+            final DurationTimer timer = DurationTimer.start();
+            FileUtil.doUnderFileLock(LOCK_FILE_PATH, () -> {
+                LOGGER.info("Acquired lock on {} in {}", LOCK_FILE_PATH, timer);
+                contentPacks.getContentPacks().forEach(contentPack ->
+                        downloadZip(contentPack, contentPackDownloadDir, contentPackImportDir));
+            });
         } catch (final Exception e) {
             LOGGER.error(e.getMessage(), e);
             throw new RuntimeException(e);
@@ -151,6 +164,7 @@ public class ContentPackZipDownloader {
 
     /**
      * synchronized to avoid multiple test threads downloading the same pack concurrently
+     * Don't have to worry about other JVM as this method is called under lock on a single common file.
      */
     public static synchronized Path downloadContentPackZip(final ContentPackZip contentPackZip,
                                                            final Path destDir,
@@ -161,48 +175,43 @@ public class ContentPackZipDownloader {
         Preconditions.checkArgument(Files.isDirectory(destDir));
 
         final Path destFilePath = buildDestFilePath(contentPackZip, destDir);
-        final Path lockFilePath = buildLockFilePath(contentPackZip, destDir);
 
         ensureDirectoryExists(destDir);
 
-        FileUtil.doUnderFileLock(lockFilePath, () -> {
-            // Now we have the lock for this zip file we can see if we need to download it or not
+        boolean destFileExists = Files.isRegularFile(destFilePath);
 
-            boolean destFileExists = Files.isRegularFile(destFilePath);
+        if (destFileExists && conflictMode.equals(ConflictMode.KEEP_EXISTING)) {
+            LOGGER.debug("Requested contentPack {} already exists in {}, keeping existing",
+                    contentPackZip.getName(),
+                    FileUtil.getCanonicalPath(destFilePath));
+        } else {
+            if (destFileExists && conflictMode.equals(ConflictMode.OVERWRITE_EXISTING)) {
+                LOGGER.debug("Requested contentPack {} already exists in {}, overwriting existing",
+                        contentPackZip.getName(),
+                        FileUtil.getCanonicalPath(destFilePath));
+                try {
+                    Files.delete(destFilePath);
+                    destFileExists = false;
+                } catch (final IOException e) {
+                    throw new UncheckedIOException(String.format("Unable to remove existing content pack %s",
+                            FileUtil.getCanonicalPath(destFilePath)), e);
+                }
+            }
 
-            if (destFileExists && conflictMode.equals(ConflictMode.KEEP_EXISTING)) {
-                LOGGER.debug("Requested contentPack {} already exists in {}, keeping existing",
+            if (destFileExists) {
+                LOGGER.info("ContentPack {} already exists {}",
                         contentPackZip.getName(),
                         FileUtil.getCanonicalPath(destFilePath));
             } else {
-                if (destFileExists && conflictMode.equals(ConflictMode.OVERWRITE_EXISTING)) {
-                    LOGGER.debug("Requested contentPack {} already exists in {}, overwriting existing",
-                            contentPackZip.getName(),
-                            FileUtil.getCanonicalPath(destFilePath));
-                    try {
-                        Files.delete(destFilePath);
-                        destFileExists = false;
-                    } catch (final IOException e) {
-                        throw new UncheckedIOException(String.format("Unable to remove existing content pack %s",
-                                FileUtil.getCanonicalPath(destFilePath)), e);
-                    }
-                }
+                final URL fileUrl = getUrl(contentPackZip);
+                LOGGER.info("Downloading contentPack {} from {} to {}",
+                        contentPackZip.getName(),
+                        fileUrl,
+                        FileUtil.getCanonicalPath(destFilePath));
 
-                if (destFileExists) {
-                    LOGGER.info("ContentPack {} already exists {}",
-                            contentPackZip.getName(),
-                            FileUtil.getCanonicalPath(destFilePath));
-                } else {
-                    final URL fileUrl = getUrl(contentPackZip);
-                    LOGGER.info("Downloading contentPack {} from {} to {}",
-                            contentPackZip.getName(),
-                            fileUrl.toString(),
-                            FileUtil.getCanonicalPath(destFilePath));
-
-                    downloadFile(fileUrl, destFilePath);
-                }
+                downloadFile(fileUrl, destFilePath);
             }
-        });
+        }
 
         return destFilePath;
     }
