@@ -48,12 +48,12 @@ exports.snippets = [
         "content": "```${1:language}\n${2}\n```\n${0}"
     },
     {
-        "tabTrigger": "xml",
+        "tabTrigger": "fxml",
         "name": "Fenced block of XML",
         "content": "```xml\n${1}\n```\n${0}"
     },
     {
-        "tabTrigger": "text",
+        "tabTrigger": "ftext",
         "name": "Fenced block of plain text",
         "content": "```text\n${1}\n```\n${0}"
     },

@@ -32,7 +32,7 @@ exports.snippets = [
         "content": `
 eval StreamId = first(StreamId)
 eval EventId = first(EventId)
-$0`,
+\$0`.trim(), // trim the leading new line
     },
     {
         "tabTrigger": "first",
