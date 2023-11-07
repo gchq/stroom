@@ -136,6 +136,12 @@ public class ContentPackZipDownloader {
         }
 
         final Path lockFilePath = Path.of(destDir.toAbsolutePath() + ".lock");
+        final Path parent = lockFilePath.getParent();
+        try {
+            Files.createDirectories(lockFilePath.getParent());
+        } catch (IOException e) {
+            throw new RuntimeException("Error creating lockFilePath parent dir " + parent);
+        }
 
         // Multiple test JVMs cannot interact with the git repo at once,
         // else git's locking will be violated, so easier for
