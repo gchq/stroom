@@ -122,9 +122,7 @@ public class ContentPackZipDownloader {
                 .resolve(gitRepo.getBranch())
                 .resolve(gitRepo.getCommit());
 
-        if (!Files.exists(dir)) {
-            gitPull(contentPack.getRepo(), dir);
-        }
+        gitPull(contentPack.getRepo(), dir);
 
         return dir;
     }
@@ -136,6 +134,7 @@ public class ContentPackZipDownloader {
         }
 
         final Path lockFilePath = Path.of(destDir.toAbsolutePath() + ".lock");
+        final Path completedFilePath = Path.of(destDir.toAbsolutePath() + ".complete");
         final Path parent = lockFilePath.getParent();
         try {
             Files.createDirectories(lockFilePath.getParent());
@@ -143,25 +142,41 @@ public class ContentPackZipDownloader {
             throw new RuntimeException("Error creating lockFilePath parent dir " + parent);
         }
 
-        // Multiple test JVMs cannot interact with the git repo at once,
-        // else git's locking will be violated, so easier for
-        // all to lock on a single file and do it serially.
-        final DurationTimer timer = DurationTimer.start();
-        FileUtil.doUnderFileLock(lockFilePath, () -> {
-            LOGGER.info("Acquired lock on {} in {}", lockFilePath, timer);
-            LOGGER.info("Pulling from Git repo: {} into destDir: {}", gitRepo, destDir);
-            try (final Git git = Git
-                    .cloneRepository()
-                    .setURI(gitRepo.getUri())
-                    .setBranch(gitRepo.getBranch())
-                    .setDirectory(destDir.toFile())
-                    .call()) {
-                git.checkout().setName(gitRepo.getCommit()).call();
-            } catch (final GitAPIException e) {
-                LOGGER.error(e.getMessage(), e);
-                throw new RuntimeException(e.getMessage(), e);
-            }
-        });
+        if (Files.exists(completedFilePath) && Files.exists(destDir)) {
+            LOGGER.debug("{} already exists, nothing to do", destDir);
+        } else {
+            // Multiple test JVMs cannot interact with the git repo at once,
+            // else git's locking will be violated, so easier for
+            // all to lock on a single file and do it serially.
+            final DurationTimer timer = DurationTimer.start();
+            FileUtil.doUnderFileLock(lockFilePath, () -> {
+                LOGGER.info("Acquired lock on {} in {}", lockFilePath, timer);
+
+                // Now re-test for existence
+                if (Files.exists(completedFilePath) && Files.exists(destDir)) {
+                    LOGGER.debug("{} already exists, nothing to do", destDir);
+                } else {
+                    LOGGER.info("Pulling from Git repo: {} into destDir: {}", gitRepo, destDir);
+                    try (final Git git = Git
+                            .cloneRepository()
+                            .setURI(gitRepo.getUri())
+                            .setBranch(gitRepo.getBranch())
+                            .setDirectory(destDir.toFile())
+                            .call()) {
+                        git.checkout().setName(gitRepo.getCommit()).call();
+                    } catch (final GitAPIException e) {
+                        LOGGER.error(e.getMessage(), e);
+                        throw new RuntimeException(e.getMessage(), e);
+                    }
+                    try {
+                        FileUtil.touch(completedFilePath);
+                    } catch (IOException e) {
+                        throw new RuntimeException(LogUtil.message(
+                                "Error creating file {} - {}", completedFilePath, LogUtil.exceptionMessage(e), e));
+                    }
+                }
+            });
+        }
 
         return destDir;
     }
