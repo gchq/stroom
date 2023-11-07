@@ -129,10 +129,6 @@ public class ContentPackZipDownloader {
 
     public static synchronized Path gitPull(final GitRepo gitRepo,
                                             final Path destDir) {
-        if (Files.exists(destDir)) {
-            throw new RuntimeException("Expected new dir");
-        }
-
         final Path lockFilePath = Path.of(destDir.toAbsolutePath() + ".lock");
         final Path completedFilePath = Path.of(destDir.toAbsolutePath() + ".complete");
         final Path parent = lockFilePath.getParent();
@@ -156,6 +152,10 @@ public class ContentPackZipDownloader {
                 if (Files.exists(completedFilePath) && Files.exists(destDir)) {
                     LOGGER.debug("{} already exists, nothing to do", destDir);
                 } else {
+                    if (Files.exists(destDir)) {
+                        LOGGER.info("Found incomplete git clone {}, deleting it", destDir);
+                        FileUtil.deleteDir(destDir);
+                    }
                     LOGGER.info("Pulling from Git repo: {} into destDir: {}", gitRepo, destDir);
                     try (final Git git = Git
                             .cloneRepository()
@@ -169,6 +169,7 @@ public class ContentPackZipDownloader {
                         throw new RuntimeException(e.getMessage(), e);
                     }
                     try {
+                        // Create the .complete file so other jvms know the git clone is good to use
                         FileUtil.touch(completedFilePath);
                     } catch (IOException e) {
                         throw new RuntimeException(LogUtil.message(
