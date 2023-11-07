@@ -136,7 +136,7 @@ public class DependenciesPresenter extends MyPresenterWidget<PagerView> {
                 ColumnSizeConstants.ICON_COL);
 
         // From (Type)
-        dataGrid.addResizableColumn(DataGridUtil.textColumnBuilder((Dependency row) ->
+        dataGrid.addAutoResizableColumn(DataGridUtil.textColumnBuilder((Dependency row) ->
                                 getValue(row, Dependency::getFrom, DocRef::getType))
                         .withSorting(DependencyCriteria.FIELD_FROM_TYPE, true)
                         .build(),
@@ -149,7 +149,7 @@ public class DependenciesPresenter extends MyPresenterWidget<PagerView> {
                 .withSorting(DependencyCriteria.FIELD_FROM_NAME, true)
                 .build();
         DataGridUtil.addCommandLinkFieldUpdater(fromNameColumn);
-        dataGrid.addResizableColumn(fromNameColumn,
+        dataGrid.addAutoResizableColumn(fromNameColumn,
                 DependencyCriteria.FIELD_FROM_NAME,
                 COL_WIDTH_NAME);
 
@@ -164,7 +164,7 @@ public class DependenciesPresenter extends MyPresenterWidget<PagerView> {
                 ColumnSizeConstants.ICON_COL);
 
         // To (Type)
-        dataGrid.addResizableColumn(DataGridUtil.textColumnBuilder((Dependency row) ->
+        dataGrid.addAutoResizableColumn(DataGridUtil.textColumnBuilder((Dependency row) ->
                                 getValue(row, Dependency::getTo, DocRef::getType))
                         .withSorting(DependencyCriteria.FIELD_TO_TYPE, true)
                         .build(),
@@ -177,7 +177,7 @@ public class DependenciesPresenter extends MyPresenterWidget<PagerView> {
                 .withSorting(DependencyCriteria.FIELD_TO_NAME, true)
                 .build();
         DataGridUtil.addCommandLinkFieldUpdater(toNameColumn);
-        dataGrid.addResizableColumn(toNameColumn,
+        dataGrid.addAutoResizableColumn(toNameColumn,
                 DependencyCriteria.FIELD_TO_NAME,
                 COL_WIDTH_NAME);
 

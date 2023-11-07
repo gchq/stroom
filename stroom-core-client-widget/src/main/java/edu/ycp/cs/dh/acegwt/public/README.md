@@ -1,3 +1,12 @@
+You can find Ace release builds here https://github.com/ajaxorg/ace-builds/releases.
+Use the content of `src` directory.
+If we every have issues with conflicts with the globally named things like `define` and `require` then
+we can switch to using the `src-src-noconflict`.
+Ideally we would use the minified version but as we have to modify it we can't.
+
+Currently using `1.5.0` of Ace.
+To check the version, look for `exports.version = ` in `ace.js`.
+
 For Stroom to be able to display four different annotation icons in the left hand gutter the source for `ace.js` has been altered. Any future update to `ace.js` will need to incorporate this change.
 
 The original `ace.js` lines 15705-15711:
@@ -85,3 +94,11 @@ The mode STROOM_EXPRESSION was added to AceEditorMode.
 
 To use other ACE modes you need to include them in here `stroom-core/src/main/resources/stroom/core/servlet/app.html`
 
+If you need to add snippets to an existing mode that does not have any snippets
+then you need to add something like this to the `mode-*.js` file so it knows where to
+find the snippets file:
+``` js
+    this.snippetFileId = "ace/snippets/xml";
+```
+
+For examples of how to add snippets see `snippets/(xml|stroom_query|markdown).js`

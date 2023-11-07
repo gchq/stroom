@@ -110,7 +110,7 @@ public abstract class AbstractUserListPresenter
                     return GwtNullSafe.requireNonNullElse(userRef.getDisplayName(), userRef.getSubjectId());
                 }
             };
-            dataGrid.addResizableColumn(displayNameCol, "Display Name", 200);
+            dataGrid.addAutoResizableColumn(displayNameCol, "Display Name", 200);
             columns.add(displayNameCol);
 
             // Full name
@@ -120,7 +120,7 @@ public abstract class AbstractUserListPresenter
                     return userRef.getFullName();
                 }
             };
-            dataGrid.addResizableColumn(fullNameCol, "Full Name", 350);
+            dataGrid.addAutoResizableColumn(fullNameCol, "Full Name", 350);
             columns.add(fullNameCol);
         }
 
@@ -134,7 +134,7 @@ public abstract class AbstractUserListPresenter
         final String nameColName = includeAdditionalUserInfo()
                 ? "Unique User Identity"
                 : "Group Name";
-        dataGrid.addResizableColumn(uniqueIdentityCol, nameColName, 300);
+        dataGrid.addAutoResizableColumn(uniqueIdentityCol, nameColName, 300);
         columns.add(uniqueIdentityCol);
 
         final EndColumn<User> endCol = new EndColumn<>();
