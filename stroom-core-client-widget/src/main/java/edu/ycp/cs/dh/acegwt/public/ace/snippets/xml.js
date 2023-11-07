@@ -21,204 +21,326 @@ define("ace/snippets/xml",["require","exports","module"], function(require, expo
 
 exports.snippets = [
     {
-        "tabTrigger": "apply-templates with-param",
+        "tabTrigger": "wapply",
         "name": "apply-templates with-param",
         "content": `
 <xsl:apply-templates select="\${1:*}">
-  <xsl:with-param name="\${2:param}">\${3}</xsl:with-param>\${4}
-</xsl:apply-templates>
-\${0}`
+  <xsl:with-param name="\${2:param}">\${3}</xsl:with-param>
+  \${0}
+</xsl:apply-templates>`.trim()
     },
+
     {
-    "tabTrigger": "apply-templates sort-by",
-    "name": "apply-templates sort-by",
-    "content": `
+        "tabTrigger": "applysort",
+        "name": "apply-templates sort-by",
+        "content": `
 <xsl:apply-templates select="\${1:*}">
   <xsl:sort select="\${2:node}" order="\${3:ascending}" data-type="\${4:text}">\${5}
 </xsl:apply-templates>
-\${0}`
+\${0}`.trim()
     },
+
     {
-    "tabTrigger": "apply-templates plain",
-    "name": "apply-templates plain",
-    "content": `
+        "tabTrigger": "apply",
+        "name": "apply-templates plain",
+        "content": `
 <xsl:apply-templates select="\${1:*}" />
-\${0}`
+\${0}`.trim()
     },
+
     {
-    "tabTrigger": "attribute blank",
-    "name": "attribute blank",
-    "content": `
+        "tabTrigger": "attr",
+        "name": "attribute blank",
+        "content": `
 <xsl:attribute name="\${1:name}">\${2}</xsl:attribute>
-\${0}`
+\${0}`.trim()
     },
+
     {
-    "tabTrigger": "attribute value-of",
-    "name": "attribute value-of",
-    "content": `
+        "tabTrigger": "attrval",
+        "name": "attribute value-of",
+        "content": `
 <xsl:attribute name="\${1:name}">
   <xsl:value-of select="\${2:*}" />
 </xsl:attribute>
-\${0}`
+\${0}`.trim()
     },
+
     {
-    "tabTrigger": "call-template",
-    "name": "call-template",
-    "content": `
+        "tabTrigger": "call",
+        "name": "call-template",
+        "content": `
 <xsl:call-template name="\${1:template}" />
-\$0`
+\${0}`.trim()
     },
+
     {
-    "tabTrigger": "call-template with-param",
-    "name": "call-template with-param",
-    "content": `
+        "tabTrigger": "wcall",
+        "name": "call-template with-param",
+        "content": `
 <xsl:call-template name="\${1:template}">
   <xsl:with-param name="\${2:param}">\${3}</xsl:with-param>\${4}
 </xsl:call-template>
-\${0}`
+\${0}`.trim()
     },
+
     {
-    "tabTrigger": "choose",
-    "name": "choose",
-    "content": `
+        "tabTrigger": "choose",
+        "name": "choose",
+        "content": `
 <xsl:choose>
   <xsl:when test="\${1:value}">
     \${2}
   </xsl:when>\${3}
 </xsl:choose>
-\$0`
+\${0}`.trim()
     },
+
     {
-    "tabTrigger": "copy-of",
-    "name": "copy-of",
-    "content": `
+        "tabTrigger": "copyof",
+        "name": "copy-of",
+        "content": `
 <xsl:copy-of select="\${1:*}" />
-\${0}`
+\${0}`.trim()
     },
+
     {
-    "tabTrigger": "for-each",
-    "name": "for-each",
-    "content": `
+        "tabTrigger": "foreach",
+        "name": "for-each",
+        "content": `
 <xsl:for-each select="\${1:*}">
   \${2}
 </xsl:for-each>
-\${0}`
+\${0}`.trim()
     },
+
     {
-    "tabTrigger": "if",
-    "name": "if",
-    "content": `
+        "tabTrigger": "if",
+        "name": "if",
+        "content": `
 <xsl:if test="\${1:test}">
   \${2}
 </xsl:if>
-\${0}`
+\${0}`.trim()
     },
+
     {
-    "tabTrigger": "import",
-    "name": "import",
-    "content": `
+        "tabTrigger": "imp",
+        "name": "import",
+        "content": `
 <xsl:import href="\${1:stylesheet}" />
-\${0}`
+\${0}`.trim()
     },
+
     {
-    "tabTrigger": "include",
-    "name": "include",
-    "content": `
+        "tabTrigger": "inc",
+        "name": "include",
+        "content": `
 <xsl:include href="\${1:stylesheet}" />
-\${0}`
+\${0}`.trim()
     },
+
     {
-    "tabTrigger": "otherwise",
-    "name": "otherwise",
-    "content": `
+        "tabTrigger": "otherwise",
+        "name": "otherwise",
+        "content": `
 <xsl:otherwise>
   \${1}
 </xsl:otherwise>
-\$0`
+\$0`.trim()
     },
+
     {
-    "tabTrigger": "param",
-    "name": "param",
-    "content": `
+        "tabTrigger": "param",
+        "name": "param",
+        "content": `
 <xsl:param name="\${1:name}">
   \${2}
 </xsl:param>
-\${0}`
+\${0}`.trim()
     },
+
     {
-    "tabTrigger": "stylesheet",
-    "name": "stylesheet",
-    "content": `
-<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+        "tabTrigger": "style",
+        "name": "stylesheet",
+        "content": `
+<xsl:stylesheet version="1.0" xmlns="\${1}" xpath-default-namespace="\${2:\${1}}" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
   \${0}
-</xsl:stylesheet>`
+</xsl:stylesheet>`.trim()
     },
+
     {
-    "tabTrigger": "template",
-    "name": "template",
-    "content": `
+        "tabTrigger": "temp",
+        "name": "template",
+        "content": `
 <xsl:template match="\${1:*}">
-  \${3}
+  \${2}
 </xsl:template>
-\$0`
+\$0`.trim()
     },
+
     {
-    "tabTrigger": "template named",
-    "name": "template named",
-    "content": `
+        "tabTrigger": "ntemp",
+        "name": "template named",
+        "content": `
 <xsl:template name="\${1:name}">
   \${2}
 </xsl:template>
-\$0`
+\$0`.trim()
     },
+
     {
-    "tabTrigger": "text",
-    "name": "text",
-    "content": `
+        "tabTrigger": "text",
+        "name": "text",
+        "content": `
 <xsl:text>\${1}</xsl:text>
-\$0`
+\$0`.trim()
     },
+
     {
-    "tabTrigger": "value-of",
-    "name": "value-of",
-    "content": `
+        "tabTrigger": "valof",
+        "name": "value-of",
+        "content": `
 <xsl:value-of select="\${1:*}" />
-\${0}`
+\${0}`.trim()
     },
+
     {
-    "tabTrigger": "variable blank",
-    "name": "variable blank",
-    "content": `
+        "tabTrigger": "var",
+        "name": "variable blank",
+        "content": `
 <xsl:variable name="\${1:name}">
-  \${2}
-</xsl:variable>`
+  \${0}
+</xsl:variable>`.trim()
     },
+
     {
-    "tabTrigger": "variable select",
-    "name": "variable select",
-    "content": `
-<xsl:variable select="\${1:*}" />\${2} `
+        "tabTrigger": "varsel",
+        "name": "variable select",
+        "content": `
+<xsl:variable select="\${1:*}" />
+\${0}`.trim()
     },
+
     {
-    "tabTrigger": "when",
-    "name": "when",
-    "content": `
+        "tabTrigger": "when",
+        "name": "when",
+        "content": `
 <xsl:when test="\${1:test}">
-  \${2}
-</xsl:when>`
+  \${0}
+</xsl:when>`.trim()
     },
+
     {
-    "tabTrigger": "with-param",
-    "name": "with-param",
-    "content": `
-<xsl:with-param name="\${1:name}">\${2}</xsl:with-param>`
+        "tabTrigger": "wparam",
+        "name": "with-param",
+        "content": `
+<xsl:with-param name="\${1:name}">\${2}</xsl:with-param>
+\${0}`.trim()
     },
+
     {
-    "tabTrigger": "with-param select",
-    "name": "with-param select",
-    "content": `
-<xsl:with-param name="\${1:name}" select="\${2:*}" />`
+        "tabTrigger": "wparamsel",
+        "name": "with-param select",
+        "content": `
+<xsl:with-param name="\${1:name}" select="\${2:*}" />
+\${0}`.trim() // trim the leading new line
     },
+
+    {
+        "tabTrigger": "ident",
+        "name": "identity skeleton",
+        "content": `
+<xsl:stylesheet version="1.0" xpath-default-namespace="\${1:event-logging:3}" xmlns="\${2:\${1}}" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+
+  <!-- Whenever you match any node or any attribute -->
+  <xsl:template match="node( )|@*">
+
+    <!-- Copy the current node -->
+    <xsl:copy>
+
+      <!-- Including any attributes it has and any child nodes -->
+      <xsl:apply-templates select="@*|node( )"/>
+    </xsl:copy>
+  </xsl:template>
+
+  \${0}
+</xsl:stylesheet>`.trim() // trim the leading new line
+    },
+
+    {
+        "tabTrigger": "recident",
+        "name": "records identity skeleton",
+        "content": `
+<xsl:stylesheet version="1.0" xpath-default-namespace="records:2" xmlns="event-logging:3" xmlns:stroom="stroom" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+
+  <!-- Match Root Object -->
+  <xsl:template match="records">
+    <Events xmlns="event-logging:3" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="event-logging:3 file://event-logging-v3.4.2.xsd" Version="3.4.2">
+      <xsl:apply-templates />
+    </Events>
+  </xsl:template>
+  <xsl:template match="record">
+    <Event>
+      <EventTime>
+        <TimeCreated>\${1:time}</TimeCreated>
+      </EventTime>
+      <EventSource>
+        <System>
+          <Name>\${2:name}</Name>
+          <Environment>\${3:environment}</Environment>
+        </System>
+        <Generator>\${4:generator}</Generator>
+        <Device>\${5:device}</Device>
+      </EventSource>
+      <EventDetail>
+        <TypeId>\${6:type}</TypeId>
+        \${0}
+        <xsl:apply-templates />
+      </EventDetail>
+    </Event>
+  </xsl:template>
+
+  <!-- Whenever you match any node or any attribute -->
+  <xsl:template match="node( )|@*">
+
+    <!-- Copy the current node -->
+    <xsl:copy>
+
+      <!-- Including any attributes it has and any child nodes -->
+      <xsl:apply-templates select="@*|node( )" />
+    </xsl:copy>
+  </xsl:template>
+</xsl:stylesheet>`.trim() // trim the leading new line
+    },
+
+    {
+        "tabTrigger": "evtident",
+        "name": "events identity skeleton",
+        "content": `
+<xsl:stylesheet version="1.0" xpath-default-namespace="event-logging:3" xmlns="event-logging:3" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+
+  <!-- Match Root Object -->
+  <xsl:template match="Events">
+    <Events xmlns="event-logging:3" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="event-logging:3 file://event-logging-v3.4.2.xsd" Version="3.4.2">
+      <xsl:apply-templates />
+    </Events>
+  </xsl:template>
+  \${0}
+
+  <!-- Whenever you match any node or any attribute -->
+  <xsl:template match="node( )|@*">
+
+    <!-- Copy the current node -->
+    <xsl:copy>
+
+      <!-- Including any attributes it has and any child nodes -->
+      <xsl:apply-templates select="@*|node( )" />
+    </xsl:copy>
+  </xsl:template>
+</xsl:stylesheet>`.trim() // trim the leading new line
+    },
+
 ];
 
 exports.scope = "xml";
@@ -231,4 +353,4 @@ exports.scope = "xml";
                     });
                 })();
 
-// vim:sw=2:ts=2:noet:
+// vim:sw=4:ts=4:et:
