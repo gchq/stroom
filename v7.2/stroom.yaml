@@ -8382,6 +8382,7 @@ components:
           - TABLE_NESTED
           - TAB_CLOSE
           - TAGS
+          - TEXT_WRAP
           - TICK
           - UNDO
           - UNLOCK
@@ -8869,6 +8870,7 @@ components:
           - TABLE_NESTED
           - TAB_CLOSE
           - TAGS
+          - TEXT_WRAP
           - TICK
           - UNDO
           - UNLOCK
@@ -9061,6 +9063,7 @@ components:
           - TABLE_NESTED
           - TAB_CLOSE
           - TAGS
+          - TEXT_WRAP
           - TICK
           - UNDO
           - UNLOCK
@@ -11226,6 +11229,7 @@ components:
           - TABLE_NESTED
           - TAB_CLOSE
           - TAGS
+          - TEXT_WRAP
           - TICK
           - UNDO
           - UNLOCK
