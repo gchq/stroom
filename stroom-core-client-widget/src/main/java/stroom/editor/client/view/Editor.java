@@ -262,6 +262,10 @@ public class Editor extends Composite implements HasValueChangeHandlers<String> 
             if (mode != null) {
                 try {
                     editor.setMode(mode);
+
+
+//                    GWT.log("mode: " + editor.getMode());
+//                    GWT.log("mode: " + editor.getModeShortName());
                 } catch (final RuntimeException e) {
                     throw new RuntimeException(
                             "Unable to set mode '" +

@@ -61,6 +61,11 @@ public class XsltPresenter extends DocumentEditTabPresenter<LinkTabPanelView, Xs
                                final DocRef docRef,
                                final XsltDoc document,
                                final boolean readOnly) {
+//                presenter.getBasicAutoCompletionOption().setOn();
+//                presenter.getSnippetsOption().setOn();
+//                presenter.deRegisterCompletionProviders();
+
+
                 presenter.setText(document.getData());
                 presenter.setReadOnly(readOnly);
                 presenter.getFormatAction().setAvailable(!readOnly);
