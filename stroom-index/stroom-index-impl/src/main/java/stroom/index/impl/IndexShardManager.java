@@ -27,12 +27,15 @@ import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TerminateHandlerFactory;
+import stroom.util.NullSafe;
 import stroom.util.concurrent.StripedLock;
 import stroom.util.io.FileUtil;
 import stroom.util.io.PathCreator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.StringUtil;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -135,58 +138,71 @@ public class IndexShardManager {
                     criteria.getNodeNameSet().add(nodeInfo.getThisNodeName());
                     criteria.getIndexShardStatusSet().add(IndexShardStatus.DELETED);
                     final ResultPage<IndexShard> shards = indexShardService.find(criteria);
-
-                    final Runnable runnable = taskContextFactory.context(
-                            "Delete Logically Deleted Shards",
-                            TerminateHandlerFactory.NOOP_FACTORY,
-                            taskContext -> {
-                                try {
-                                    taskContext.info(() -> "Deleting Logically Deleted Shards...");
-
-                                    LOGGER.logDurationIfDebugEnabled(() -> {
-                                        final Iterator<IndexShard> iter = shards.getValues().iterator();
-                                        while (!Thread.currentThread().isInterrupted() && iter.hasNext()) {
-                                            final IndexShard shard = iter.next();
-                                            final IndexShardWriter indexShardWriter =
-                                                    indexShardWriterCache.getWriterByShardId(shard.getId());
-                                            try {
-                                                if (indexShardWriter != null) {
-                                                    LOGGER.debug(() ->
-                                                            "deleteLogicallyDeleted() - Unable to delete index " +
-                                                                    "shard " + shard.getId() + " as it is currently " +
-                                                                    "in use");
-                                                } else {
-                                                    deleteFromDisk(shard);
-                                                }
-                                            } catch (final RuntimeException e) {
-                                                LOGGER.error(e::getMessage, e);
-                                            }
-                                        }
-                                    }, "deleteLogicallyDeleted()");
-                                } finally {
-                                    deletingShards.set(false);
-                                }
-                            });
-
-                    // In tests we don't have a task manager.
-                    if (executor == null) {
-                        runnable.run();
+                    if (NullSafe.test(shards, shards2 -> shards2.size() > 0)) {
+                        deleteShardsFromDisk(indexShardWriterCache, shards);
                     } else {
-                        executor.execute(runnable);
+                        LOGGER.debug("No matching shards to delete, criteria: {}", criteria);
                     }
-
                 } catch (final RuntimeException e) {
                     LOGGER.error(e::getMessage, e);
+                } finally {
                     deletingShards.set(false);
                 }
+            } else {
+                LOGGER.debug("Another thread is deleting shards, we will just drop out quietly");
             }
         });
+    }
+
+    private void deleteShardsFromDisk(final IndexShardWriterCache indexShardWriterCache,
+                                      final ResultPage<IndexShard> shards) {
+        final Runnable runnable = taskContextFactory.context(
+                "Delete Logically Deleted Shards",
+                TerminateHandlerFactory.NOOP_FACTORY,
+                taskContext -> {
+                    try {
+                        taskContext.info(() -> LogUtil.message("Deleting {} Logically Deleted Shard{}...",
+                                shards.size(), StringUtil.pluralSuffix(shards.size())));
+
+                        LOGGER.logDurationIfDebugEnabled(() -> {
+                            final Iterator<IndexShard> iter = shards.getValues().iterator();
+                            while (!Thread.currentThread().isInterrupted() && iter.hasNext()) {
+                                final IndexShard shard = iter.next();
+                                final IndexShardWriter indexShardWriter =
+                                        indexShardWriterCache.getWriterByShardId(shard.getId());
+                                try {
+                                    if (indexShardWriter != null) {
+                                        LOGGER.debug(() ->
+                                                "deleteShardsFromDisk() - Unable to delete index " +
+                                                        "shard " + shard.getId() + " as it is currently " +
+                                                        "in use");
+                                    } else {
+                                        deleteFromDisk(shard);
+                                    }
+                                } catch (final RuntimeException e) {
+                                    LOGGER.error(e::getMessage, e);
+                                }
+                            }
+                        }, "deleteShardsFromDisk()");
+                    } finally {
+                        deletingShards.set(false);
+                    }
+                });
+
+        // In tests we don't have a task manager.
+        if (executor == null) {
+            runnable.run();
+        } else {
+            executor.execute(runnable);
+        }
     }
 
     private void deleteFromDisk(final IndexShard shard) {
         try {
             // Find the index shard dir.
             final Path dir = IndexShardUtil.getIndexPath(shard, pathCreator);
+            LOGGER.debug(() -> LogUtil.message("deleteFromDisk() - shard ID: {}, dir: '{}'",
+                    shard.getId(), LogUtil.path(dir)));
 
             // See if there are any files in the directory.
             if (!Files.isDirectory(dir) || FileUtil.deleteDir(dir)) {
