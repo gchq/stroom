@@ -190,11 +190,10 @@ public class IndexShardManager {
                 });
 
         // In tests we don't have a task manager.
-        if (executor == null) {
-            runnable.run();
-        } else {
-            executor.execute(runnable);
-        }
+        NullSafe.consumeOr(
+                executor,
+                ex -> ex.execute(runnable),
+                runnable);
     }
 
     private void deleteFromDisk(final IndexShard shard) {
