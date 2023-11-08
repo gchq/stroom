@@ -18,7 +18,7 @@ package stroom.statistics.impl.sql.rollup;
 
 import org.apache.hadoop.hbase.util.Bytes;
 
-import javax.xml.bind.DatatypeConverter;
+import jakarta.xml.bind.DatatypeConverter;
 
 public class ByteArrayUtils {
 

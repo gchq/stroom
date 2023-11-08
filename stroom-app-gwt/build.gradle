@@ -1,14 +1,41 @@
 ext.moduleName = 'stroom.app.gwt'
 
+def getSysPropertyOrDefault = { propName, defaultValue ->
+    def val;
+    if (System.hasProperty(propName)
+            && System.getProperty(propName) != "unspecified"
+            && System.getProperty(propName) != "") {
+        val = System.getProperty(propName)
+        println "Using property [$propName] with value [$val]"
+    } else {
+        val = defaultValue
+        println "Property [$propName] has no value, using default value [$val]"
+    }
+    return val;
+}
+
 def resourcesDir = project(':stroom-app').file('src/main/resources')
 def warDir = "${resourcesDir}/ui"
 def outputDir = "${warDir}/stroom"
 
-def gwtBuildDir = "${project.buildDir}/gwt"
+//def gwtBuildDir = "${project.buildDir}/gwt"
+def javaIoTmpDir = getSysPropertyOrDefault("java.io.tmpdir", "/tmp")
+println 'javaIoTmpDir: ' + javaIoTmpDir
+// Append the rootDir so gwt builds from different dirs don't conflict
+def gwtBuildDir = javaIoTmpDir + "/app-gwt_build/" + rootDir
+gwtBuildDir = gwtBuildDir.replaceAll('//', '/')
+println 'gwtBuildDir: ' + gwtBuildDir
+
 def tmpDir = "${gwtBuildDir}/tmp"
+println 'tmpDir: ' + tmpDir
 def workDir = "${gwtBuildDir}/work"
 def deployDir = "${gwtBuildDir}/deploy"
 def extraDir = "${gwtBuildDir}/extra"
+def modifiedProjectsBasePath = "${gwtBuildDir}/modified_projects"
+
+def gwtSourceDirs = []
+def modifiedCoreSharedJarPath = null
+def modifiedCoreSharedSourcePath = null
 
 configurations.all {
     resolutionStrategy {
@@ -22,6 +49,7 @@ configurations.all {
         }
     }
 }
+
 
 // Declare a source set just for our GWT compile that is separate from teh Java compilation source set.
 sourceSets {
@@ -48,14 +76,15 @@ dependencies {
     implementation libs.gwt_user
     implementation libs.gwtp_mvp_client
     implementation libs.jackson_annotations
-    implementation libs.jaxb_api
+    implementation libs.jaxb_api__gwt
     implementation libs.swagger_annotations // needed so gwt can compile the stroom-query code that contains swagger annotations
+    implementation libs.ws_rs_api__gwt
 
     gwtSourceImplementation libs.gin
     gwtSourceImplementation libs.gwt_dev
     gwtSourceImplementation libs.gwt_user
     gwtSourceImplementation libs.gwtp_mvp_client
-    gwtSourceImplementation libs.jaxb_api
+    gwtSourceImplementation libs.jaxb_api__gwt
     gwtSourceImplementation libs.swagger_annotations // needed so gwt can compile the stroom-query code that contains swagger annotations
     gwtSourceImplementation libs.restygwt
     gwtSourceImplementation libs.ws_rs_api__gwt
@@ -68,63 +97,229 @@ dependencies {
 //    gwtSourceCompile "${libs.stroomQueryCommon}:sources"
 }
 
-// Create a list of source directories where source for GWT can be found.
-def gwtSourceDirs = []
-
 // Define a list of projects that contain the source code we want to compile with GWT.
 def projList = [
-        project(':stroom-app-gwt'),
-        project(':stroom-core-client'),
-        project(':stroom-core-client-widget'),
-        project(':stroom-core-shared'),
-        project(':stroom-dashboard:stroom-dashboard-client'),
-        project(':stroom-docref'),
-        project(':stroom-query:stroom-query-language-api'),
-        project(':stroom-query:stroom-query-api'),
-        project(':stroom-query:stroom-query-common'),
-        project(':stroom-security:stroom-security-client'),
-        project(':stroom-security:stroom-security-client-api'),
-        project(':stroom-statistics:stroom-statistics-client'),
-        project(':stroom-util-shared')
+    project(':stroom-app-gwt'),
+    project(':stroom-core-client'),
+    project(':stroom-core-client-widget'),
+    project(':stroom-dashboard:stroom-dashboard-client'),
+    project(':stroom-security:stroom-security-client'),
+    project(':stroom-statistics:stroom-statistics-client'),
 ]
 
-// Add source from each of the defined projects.
-projList.each { p ->
-    gwtSourceDirs.addAll(p.sourceSets.main.output.classesDirs)
-    gwtSourceDirs.addAll(p.sourceSets.main.java.srcDirs)
-    gwtSourceDirs.addAll(p.sourceSets.main.resources.srcDirs)
+// Mutually exclusive with projList
+// List of projects to do the jakarta => javax transform on
+def projectsToRename = [
+    project(':stroom-core-shared'),
+    project(':stroom-docref'),
+    project(':stroom-query:stroom-query-api'),
+    project(':stroom-util-shared'),
+    project(':stroom-query:stroom-query-common'),
+    project(':stroom-query:stroom-query-language-api'),
+    project(':stroom-security:stroom-security-client-api'),
+]
+
+configurations {
+    jakartaTransformerConfiguration
 }
 
-// Add all of the library sources from the gwtSource source set defined above.
-gwtSourceDirs.addAll(sourceSets.gwtSource.compileClasspath)
+dependencies {
+    jakartaTransformerConfiguration "org.eclipse.transformer:org.eclipse.transformer.cli:0.5.0"
+}
 
-task gwtCompile(dependsOn: classes, type: JavaExec) {
-    group "gwt"
-    dependsOn 'gwtClean'
+//task jakartaReverseTransform(dependsOn: ':stroom-core-shared:jar', type: JavaExec) {
 
-    def module = 'stroom.app.App'
+    ////doFirst {
+        ////def coreSharedJar = project(':stroom-core-shared').jar
+        ////def inputJarName = coreSharedJar.archiveFileName
+        ////println 'inputJarName: ' + inputJarName
+    ////}
+
+    //classpath configurations.jakartaTransformerConfiguration
+    //mainClass = "org.eclipse.transformer.cli.JakartaTransformerCLI"
+
+    //def coreSharedJarPath = project(':stroom-core-shared').jar.archiveFile.get().getAsFile().toPath()
+    //def tempDirPath = File.createTempDir().toPath()
+    //modifiedCoreSharedJarPath = tempDirPath.resolve('stroom-core-shared.modified.jar')
+    //def propFilePath = rootDir.toPath().resolve('jakarta-renames-reverse.properties')
+    //println 'coreSharedJarPath: ' + coreSharedJarPath
+    //println 'modifiedCoreSharedJarPath: ' + modifiedCoreSharedJarPath
+    //println 'propFilePath: ' + propFilePath
+
+    //args = [
+        //coreSharedJarPath,
+        //modifiedCoreSharedJarPath,
+        //'-tr', propFilePath
+    //]
+
+    //doLast {
+        //// Create a list of source directories where source for GWT can be found.
+        //gwtSourceDirs = []
+
+        //// Add source from each of the defined projects.
+        //projList.each { p ->
+            //gwtSourceDirs.addAll(p.sourceSets.main.output.classesDirs)
+            //gwtSourceDirs.addAll(p.sourceSets.main.java.srcDirs)
+            //gwtSourceDirs.addAll(p.sourceSets.main.resources.srcDirs)
+        //}
+
+        //// Add all of the library sources from the gwtSource source set defined above.
+        //gwtSourceDirs.addAll(sourceSets.gwtSource.compileClasspath)
+
+        //gwtSourceDirs.add(modifiedCoreSharedJarPath)
+
+        //println "Dumping $gwtSourceDirs.size gwtSourceDirs"
+        //gwtSourceDirs.each {
+            //println "${it.toString()}"
+        //}
+    //}
+//}
+
+//println "output classesDirs:    " + project(':stroom-core-shared').sourceSets.main.output.classesDirs
+//println "java srcDirs:          " + project(':stroom-core-shared').sourceSets.main.java.srcDirs
+//println "resources classesDirs: " + project(':stroom-core-shared').sourceSets.main.resources.srcDirs
+
+//task jakartaReverseTransformSources(dependsOn: ':stroom-core-shared:jar', type: JavaExec) {
+
+    //classpath configurations.jakartaTransformerConfiguration
+    //mainClass = "org.eclipse.transformer.cli.TransformerCLI"
+
+    //def coreSharedProjectPath = project(':stroom-core-shared').projectDir
+    //def tempDirPath = File.createTempDir().toPath()
+    //modifiedCoreSharedSourcePath = tempDirPath.resolve('stroom-core-shared-modified')
+    //def propFilePath = rootDir.toPath().resolve('jakarta-renames-reverse.properties')
+    //println 'modifiedProjectsBasePath: ' + modifiedProjectsBasePath
+    //println 'coreSharedProjectPath: ' + coreSharedProjectPath
+    //println 'modifiedCoreSharedSourcePath: ' + modifiedCoreSharedSourcePath
+    //println 'propFilePath: ' + propFilePath
+
+    //args = [
+        //coreSharedProjectPath,
+        //modifiedCoreSharedSourcePath,
+        //'-tr', propFilePath
+    //]
+
+    //doLast {
+        //// Create a list of source directories where source for GWT can be found.
+        //gwtSourceDirs = []
+
+        //// Add source from each of the defined projects.
+        //projList.each { p ->
+            //gwtSourceDirs.addAll(p.sourceSets.main.output.classesDirs)
+            //gwtSourceDirs.addAll(p.sourceSets.main.java.srcDirs)
+            //gwtSourceDirs.addAll(p.sourceSets.main.resources.srcDirs)
+        //}
+
+        //// Add all of the library sources from the gwtSource source set defined above.
+        //gwtSourceDirs.addAll(sourceSets.gwtSource.compileClasspath)
+
+        //// Now add the dirs from out modified (jakarta => javax) stroom-core-shared temp dir
+        //gwtSourceDirs.add(modifiedCoreSharedSourcePath.resolve('build').resolve('classes').resolve('java').resolve('main'))
+        //gwtSourceDirs.add(modifiedCoreSharedSourcePath.resolve('src').resolve('main').resolve('java'))
+        //gwtSourceDirs.add(modifiedCoreSharedSourcePath.resolve('src').resolve('main').resolve('resources'))
+
+        //println "Dumping $gwtSourceDirs.size gwtSourceDirs"
+        //gwtSourceDirs.each {
+            //println "${it.toString()}"
+        //}
+    //}
+//}
+
+task jakartaReverseTransformSources {
+
+    projectsToRename.each { prj ->
+        dependsOn prj.tasks.getByName('compileJava')
+    }
 
     doFirst {
-        println 'Deleting GWT compiled output: ' + outputDir.toString()
-        delete outputDir
-        println 'Deleting GWT build dir: ' + gwtBuildDir.toString()
-        delete gwtBuildDir
+        // Create a list of source directories where source for GWT can be found.
+        gwtSourceDirs = []
 
-        println "Making directory gwtBuildDir $gwtBuildDir"
-        file(gwtBuildDir).mkdirs()
-        println "Making directory tmpDir $tmpDir"
-        file(tmpDir).mkdirs()
-        println "Making directory workDir $workDir"
-        file(workDir).mkdirs()
-        println "Making directory deployDir $deployDir"
-        file(deployDir).mkdirs()
-        println "Making directory extraDir $extraDir"
-        file(extraDir).mkdirs()
+    }
+
+    // This file has all the rename mappings for TransformerCLI to use
+    def propFilePath = rootDir.toPath().resolve('jakarta-renames-reverse.properties')
+    println 'modifiedProjectsBasePath: ' + modifiedProjectsBasePath
+    println 'propFilePath: ' + propFilePath
+
+    projectsToRename.each { prj ->
+        def inputProjectPath = prj.projectDir
+        def outputProjectPath = new File(modifiedProjectsBasePath).toPath().resolve(prj.name)
+
+        doLast {
+            println 'Running eclipse TransformerCLI on ' + prj.name
+            println 'inputProjectPath: ' + inputProjectPath
+            println 'outputProjectPath: ' + outputProjectPath
+            println 'modifiedProjectsBasePath: ' + modifiedProjectsBasePath
+            new File(modifiedProjectsBasePath).mkdirs();
+
+            javaexec {
+                classpath configurations.jakartaTransformerConfiguration
+                mainClass = "org.eclipse.transformer.cli.TransformerCLI"
+                args = [
+                    inputProjectPath,
+                    outputProjectPath,
+                    '-tr', propFilePath
+                ]
+            }
+            // Now add the dirs from out modified (jakarta => javax) stroom-core-shared temp dir
+            gwtSourceDirs.add(outputProjectPath.resolve('build').resolve('classes').resolve('java').resolve('main'))
+            gwtSourceDirs.add(outputProjectPath.resolve('src').resolve('main').resolve('java'))
+            gwtSourceDirs.add(outputProjectPath.resolve('src').resolve('main').resolve('resources'))
+        }
+    }
+
+    doLast {
+        // Add source from each of the defined projects.
+        projList.each { prj ->
+            gwtSourceDirs.addAll(prj.sourceSets.main.output.classesDirs)
+            gwtSourceDirs.addAll(prj.sourceSets.main.java.srcDirs)
+            gwtSourceDirs.addAll(prj.sourceSets.main.resources.srcDirs)
+        }
+
+        // Add all of the library sources from the gwtSource source set defined above.
+        gwtSourceDirs.addAll(sourceSets.gwtSource.compileClasspath)
 
         println "Dumping $gwtSourceDirs.size gwtSourceDirs"
         gwtSourceDirs.each {
             println "${it.toString()}"
         }
+    }
+}
+
+task gwtCompile(dependsOn: classes, type: JavaExec) {
+    group "gwt"
+    dependsOn 'gwtClean'
+    dependsOn 'jakartaReverseTransformSources'
+    //finalizedBy 'cleanTempFiles'
+
+    def module = 'stroom.app.App'
+
+    doFirst {
+        println 'Deleting GWT build dirs in ' + gwtBuildDir.toString()
+        delete tmpDir
+        delete workDir
+        delete deployDir
+        delete extraDir
+
+        println "Making directory gwtBuildDir $gwtBuildDir"
+        new File(gwtBuildDir).mkdirs();
+        println "Making directory tmpDir $tmpDir"
+        new File(tmpDir).mkdirs();
+        println "Making directory workDir $workDir"
+        new File(workDir).mkdirs();
+        println "Making directory deployDir $deployDir"
+        new File(deployDir).mkdirs();
+        println "Making directory extraDir $extraDir"
+        new File(extraDir).mkdirs();
+
+        println "gwtSourceDirs count: ${gwtSourceDirs.size()}"
+
+        println "Dumping $gwtSourceDirs.size gwtSourceDirs"
+        gwtSourceDirs.each {
+            println "${it.toString()}"
+        }
+        println 'modifiedProjectsBasePath: ' + modifiedProjectsBasePath
     }
 
     mainClass = gwtCompilerProps.mainClass
@@ -149,6 +344,7 @@ task gwtCompile(dependsOn: classes, type: JavaExec) {
 
     jvmArgs = [
             "-Djava.io.tmpdir=${tmpDir}",
+            '-Dgwt.persistentunitcache=false',
             '--add-opens', 'java.base/java.lang=ALL-UNNAMED',  // needed for GWT
     ]
     minHeapSize = gwtCompilerProps.minHeap
@@ -157,18 +353,24 @@ task gwtCompile(dependsOn: classes, type: JavaExec) {
 
 task gwtDraftCompile(dependsOn: classes, type: JavaExec) {
     group "gwt"
+    dependsOn 'jakartaReverseTransformSources'
+    //finalizedBy 'cleanTempFiles'
     def module = 'stroom.app.AppSuperDevModeChrome'
 
     doFirst {
         println 'Deleting GWT compiled output: ' + outputDir.toString()
         delete outputDir
 
-        println 'Making GWT output directories'
-        file(gwtBuildDir).mkdirs()
-        file(tmpDir).mkdirs()
-        file(workDir).mkdirs()
-        file(deployDir).mkdirs()
-        file(extraDir).mkdirs()
+        println "Making directory gwtBuildDir $gwtBuildDir"
+        new File(gwtBuildDir).mkdirs();
+        println "Making directory tmpDir $tmpDir"
+        new File(tmpDir).mkdirs();
+        println "Making directory workDir $workDir"
+        new File(workDir).mkdirs();
+        println "Making directory deployDir $deployDir"
+        new File(deployDir).mkdirs();
+        println "Making directory extraDir $extraDir"
+        new File(extraDir).mkdirs();
     }
 
     mainClass = 'com.google.gwt.dev.Compiler'
@@ -203,6 +405,7 @@ task gwtDraftCompile(dependsOn: classes, type: JavaExec) {
 
 task gwtSuperDevMode(dependsOn: classes, type: JavaExec) {
     group "gwt"
+    dependsOn 'jakartaReverseTransformSources'
     def module = 'stroom.app.AppSuperDevModeChrome'
 
 //    def dirs = []
@@ -212,15 +415,15 @@ task gwtSuperDevMode(dependsOn: classes, type: JavaExec) {
 
     doFirst {
         println "Making directory gwtBuildDir $gwtBuildDir"
-        file(gwtBuildDir).mkdirs()
+        new File(gwtBuildDir).mkdirs();
         println "Making directory tmpDir $tmpDir"
-        file(tmpDir).mkdirs()
+        new File(tmpDir).mkdirs();
         println "Making directory workDir $workDir"
-        file(workDir).mkdirs()
+        new File(workDir).mkdirs();
         println "Making directory deployDir $deployDir"
-        file(deployDir).mkdirs()
+        new File(deployDir).mkdirs();
         println "Making directory extraDir $extraDir"
-        file(extraDir).mkdirs()
+        new File(extraDir).mkdirs();
 
         def GREEN = '\033[1;32m'
         def NC = '\033[0m'
@@ -268,13 +471,24 @@ task gwtClean {
         delete outputDir
         println 'Deleting GWT build dir: ' + gwtBuildDir.toString()
         delete gwtBuildDir
+        println 'Deleting modified projects: ' + modifiedProjectsBasePath.toString()
+        delete modifiedProjectsBasePath
+
         println "Making directory gwtBuildDir $gwtBuildDir"
-        file(gwtBuildDir).mkdirs()
+        //Files.createDirectories(Paths.get(gwtBuildDir));
+        new File(gwtBuildDir).mkdirs();
         println "Making directory tmpDir $tmpDir"
-        file(tmpDir).mkdirs()
+        new File(tmpDir).mkdirs();
     }
 }
 
+task cleanTempFiles(type: Delete) {
+    //delete modifiedProjectsBasePath
+}
+
+task doNothing {
+
+}
 
 //import com.vanniktech.dependency.graph.generator.DependencyGraphGeneratorPlugin
 //import com.vanniktech.dependency.graph.generator.DependencyGraphGeneratorExtension.Generator

@@ -21,7 +21,7 @@ import stroom.util.xml.XMLMarshallerUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.xml.bind.JAXBContext;
+import jakarta.xml.bind.JAXBContext;
 
 abstract class AbstractEntityMarshaller<T_ENTITY, T_OBJECT> implements Marshaller<T_ENTITY, T_OBJECT> {
 

@@ -30,7 +30,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.List;
-import javax.xml.bind.JAXBContext;
+import jakarta.xml.bind.JAXBContext;
 
 @Deprecated
 public class V5_0_0_44__PipelineProperties extends BaseJavaMigration {

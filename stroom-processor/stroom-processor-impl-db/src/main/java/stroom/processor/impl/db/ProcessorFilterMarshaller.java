@@ -20,8 +20,8 @@ import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.QueryData;
 
 import javax.inject.Singleton;
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
+import jakarta.xml.bind.JAXBContext;
+import jakarta.xml.bind.JAXBException;
 
 @Singleton
 public class ProcessorFilterMarshaller extends AbstractEntityMarshaller<ProcessorFilter, QueryData> {

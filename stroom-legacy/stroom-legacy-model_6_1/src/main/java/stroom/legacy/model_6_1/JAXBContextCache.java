@@ -2,8 +2,8 @@ package stroom.legacy.model_6_1;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
+import jakarta.xml.bind.JAXBContext;
+import jakarta.xml.bind.JAXBException;
 
 @Deprecated
 public final class JAXBContextCache {

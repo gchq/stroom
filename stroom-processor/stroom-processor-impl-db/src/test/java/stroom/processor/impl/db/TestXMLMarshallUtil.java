@@ -25,7 +25,7 @@ import stroom.query.api.v2.ExpressionTerm;
 
 import org.junit.jupiter.api.Test;
 
-import javax.xml.bind.JAXBException;
+import jakarta.xml.bind.JAXBException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

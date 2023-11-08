@@ -18,7 +18,7 @@ dependencies {
     implementation libs.javax_inject
     implementation libs.jaxb_api
     implementation libs.restygwt
-    implementation libs.ws_rs_api
+    implementation libs.ws_rs_api__gwt
 
     //Needed only for the GwtCompilerWrapper
     compileOnly libs.gwt_dev

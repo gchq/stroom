@@ -14,8 +14,8 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.Map;
 import javax.inject.Inject;
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
+import jakarta.xml.bind.JAXBContext;
+import jakarta.xml.bind.JAXBException;
 
 public class PipelineSerialiser implements DocumentSerialiser2<PipelineDoc> {
 

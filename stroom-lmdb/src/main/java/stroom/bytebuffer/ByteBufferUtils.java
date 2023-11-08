@@ -26,7 +26,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-import javax.xml.bind.DatatypeConverter;
+import jakarta.xml.bind.DatatypeConverter;
 
 public class ByteBufferUtils {
 

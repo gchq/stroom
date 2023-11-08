@@ -23,7 +23,7 @@ import stroom.util.xml.XMLMarshallerUtil;
 
 import org.junit.jupiter.api.Test;
 
-import javax.xml.bind.JAXBContext;
+import jakarta.xml.bind.JAXBContext;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

@@ -10,7 +10,6 @@ import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONParser;
 import com.google.gwt.json.client.JSONValue;
-import jakarta.ws.rs.core.MediaType;
 import org.fusesource.restygwt.client.DirectRestService;
 import org.fusesource.restygwt.client.Method;
 import org.fusesource.restygwt.client.MethodCallback;
@@ -20,6 +19,7 @@ import java.io.PrintStream;
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import javax.ws.rs.core.MediaType;
 
 public abstract class AbstractRest<R> implements Rest<R> {
 

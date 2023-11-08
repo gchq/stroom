@@ -29,7 +29,7 @@ import javax.persistence.Lob;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
-import javax.xml.bind.annotation.XmlTransient;
+import jakarta.xml.bind.annotation.XmlTransient;
 
 @Entity
 @Table(name = "STAT_DAT_SRC", uniqueConstraints = @UniqueConstraint(columnNames = {"NAME"}))

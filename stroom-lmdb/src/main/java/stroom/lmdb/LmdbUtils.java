@@ -36,7 +36,7 @@ import java.nio.ByteBuffer;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import javax.xml.bind.DatatypeConverter;
+import jakarta.xml.bind.DatatypeConverter;
 
 /**
  * Class of static utility methods for working with lmdbjava

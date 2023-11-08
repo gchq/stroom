@@ -30,8 +30,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
+import jakarta.xml.bind.JAXBContext;
+import jakarta.xml.bind.JAXBException;
 
 import static stroom.legacy.model_6_1.ExpressionTerm.Condition.IN_CONDITION_DELIMITER;
 
