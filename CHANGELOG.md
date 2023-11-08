@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2.4] - 2023-11-08
+
+* Issue **#3901** : Fix concurrent modification exception.
+
+
 ## [v7.2.3] - 2023-11-07
 
 * Change the tables on the following screens to initially fill the available space: Server Tasks, App Permissions, Dependencies, Pipeline Structure properties, Properties, Jobs.
@@ -6145,7 +6150,8 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2.3...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2.4...HEAD
+[v7.2.4]: https://github.com/gchq/stroom/compare/v7.2.3...v7.2.4
 [v7.2.3]: https://github.com/gchq/stroom/compare/v7.2.2...v7.2.3
 [v7.2.2]: https://github.com/gchq/stroom/compare/v7.2.1...v7.2.2
 [v7.2.1]: https://github.com/gchq/stroom/compare/v7.2.0...v7.2.1
