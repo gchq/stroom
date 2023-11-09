@@ -11,12 +11,13 @@ import stroom.task.shared.TaskProgress;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
-import jakarta.inject.Inject;
-import jakarta.inject.Provider;
 
 public class SolrSearchExecutor {
 

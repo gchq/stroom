@@ -21,6 +21,8 @@ import stroom.util.shared.PageRequest;
 import stroom.util.shared.QuickFilterResultPage;
 import stroom.util.shared.ResultPage;
 
+import jakarta.inject.Inject;
+
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
@@ -32,7 +34,6 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import jakarta.inject.Inject;
 
 public class DependencyServiceImpl implements DependencyService {
 

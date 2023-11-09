@@ -14,9 +14,8 @@ import stroom.query.api.v2.ExpressionTerm;
 import stroom.search.impl.SearchExpressionQueryBuilder;
 import stroom.test.AbstractCoreIntegrationTest;
 
-import org.junit.jupiter.api.Test;
-
 import jakarta.inject.Inject;
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

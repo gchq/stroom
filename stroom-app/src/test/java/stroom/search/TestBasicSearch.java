@@ -38,6 +38,7 @@ import stroom.test.CommonTestScenarioCreator;
 import stroom.util.io.PathCreator;
 import stroom.util.shared.ResultPage;
 
+import jakarta.inject.Inject;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.index.IndexReader;
@@ -50,7 +51,6 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.util.List;
-import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

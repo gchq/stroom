@@ -20,6 +20,8 @@ import stroom.legacy.model_6_1.DocumentEntity;
 import stroom.legacy.model_6_1.ExtensionProvider;
 import stroom.legacy.model_6_1.ExternalFile;
 
+import jakarta.xml.bind.annotation.XmlTransient;
+
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -30,7 +32,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
-import jakarta.xml.bind.annotation.XmlTransient;
 
 @Deprecated
 public final class BeanPropertyUtil {

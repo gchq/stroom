@@ -25,6 +25,7 @@ import stroom.security.identity.config.SmtpConfig;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import jakarta.inject.Inject;
 import org.simplejavamail.email.Email;
 import org.simplejavamail.mailer.Mailer;
 import org.simplejavamail.mailer.config.ServerConfig;
@@ -32,7 +33,6 @@ import org.simplejavamail.mailer.config.TransportStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import jakarta.inject.Inject;
 import javax.mail.Message;
 
 class EmailSender {

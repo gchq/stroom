@@ -27,6 +27,8 @@ import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.FetchWithUuid;
 import stroom.util.shared.ModelStringUtil;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.request.schema.SchemaRequest.FieldTypes;
@@ -37,8 +39,6 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import jakarta.inject.Inject;
-import jakarta.inject.Provider;
 
 @AutoLogged
 class SolrIndexResourceImpl implements SolrIndexResource, FetchWithUuid<SolrIndexDoc> {

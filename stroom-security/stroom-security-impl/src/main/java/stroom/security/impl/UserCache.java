@@ -28,11 +28,12 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Clearable;
 
-import java.util.Objects;
-import java.util.Optional;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
+
+import java.util.Objects;
+import java.util.Optional;
 
 @Singleton
 @EntityEventHandler(type = UserDocRefUtil.USER, action = {

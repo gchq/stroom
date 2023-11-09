@@ -10,11 +10,12 @@ import stroom.query.api.v2.ExpressionUtil;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.ResultPage;
 
+import jakarta.inject.Singleton;
+
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import jakarta.inject.Singleton;
 
 @Singleton
 public class MockProcessorDao implements ProcessorDao, Clearable {

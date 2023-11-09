@@ -40,7 +40,6 @@ import stroom.pipeline.state.MetaHolder;
 import stroom.svg.shared.SvgImage;
 
 import com.google.common.base.Strings;
-
 import jakarta.inject.Inject;
 
 /**

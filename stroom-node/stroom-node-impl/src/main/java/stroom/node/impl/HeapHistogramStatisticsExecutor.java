@@ -11,6 +11,7 @@ import stroom.util.logging.LogUtil;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.collect.Maps;
+import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,7 +22,6 @@ import java.util.Map;
 import java.util.SortedMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import jakarta.inject.Inject;
 
 /**
  * Class for running scheduled jobs to execute a jmap heap histogram and load the results into

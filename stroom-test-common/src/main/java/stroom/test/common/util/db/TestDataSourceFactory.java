@@ -7,12 +7,12 @@ import stroom.db.util.DataSourceFactoryImpl;
 import stroom.db.util.JooqUtil;
 import stroom.util.shared.Clearable;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.sql.DataSource;
 
 @Singleton

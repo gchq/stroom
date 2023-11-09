@@ -37,6 +37,7 @@ import stroom.util.logging.LogUtil;
 import stroom.util.shared.Range;
 
 import com.google.inject.assistedinject.Assisted;
+import jakarta.inject.Inject;
 import org.lmdbjava.CursorIterable;
 import org.lmdbjava.CursorIterable.KeyVal;
 import org.lmdbjava.KeyRange;
@@ -47,7 +48,6 @@ import java.util.Iterator;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
-import jakarta.inject.Inject;
 
 public class RangeStoreDb
         extends AbstractLmdbDb<RangeStoreKey, ValueStoreKey>

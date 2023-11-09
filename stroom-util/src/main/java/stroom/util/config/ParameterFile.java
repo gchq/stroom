@@ -16,10 +16,11 @@
 
 package stroom.util.config;
 
-import java.util.ArrayList;
-import java.util.List;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlRootElement;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @XmlRootElement(name = "parameters")
 public class ParameterFile {

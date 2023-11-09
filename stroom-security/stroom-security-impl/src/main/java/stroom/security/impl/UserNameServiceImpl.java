@@ -11,11 +11,12 @@ import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserName;
 
+import jakarta.inject.Inject;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-import jakarta.inject.Inject;
 
 public class UserNameServiceImpl implements UserNameService {
 

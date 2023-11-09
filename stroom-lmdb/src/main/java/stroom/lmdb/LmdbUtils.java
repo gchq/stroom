@@ -24,6 +24,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
+import jakarta.xml.bind.DatatypeConverter;
 import org.lmdbjava.CursorIterable;
 import org.lmdbjava.CursorIterable.KeyVal;
 import org.lmdbjava.Dbi;
@@ -36,7 +37,6 @@ import java.nio.ByteBuffer;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import jakarta.xml.bind.DatatypeConverter;
 
 /**
  * Class of static utility methods for working with lmdbjava

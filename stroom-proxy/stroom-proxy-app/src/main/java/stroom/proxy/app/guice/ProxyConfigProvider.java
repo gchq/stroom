@@ -16,6 +16,8 @@ import stroom.util.shared.NotInjectableConfig;
 import stroom.util.shared.PropertyPath;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -24,8 +26,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
 
 /**
  * This is sort of the equivalent to stroom's ConfigMapper class.

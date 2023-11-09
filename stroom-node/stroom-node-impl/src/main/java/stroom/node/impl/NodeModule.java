@@ -29,7 +29,6 @@ import stroom.util.guice.RestResourcesBinder;
 import stroom.util.io.PathCreator;
 
 import com.google.inject.AbstractModule;
-
 import jakarta.inject.Inject;
 
 public class NodeModule extends AbstractModule {

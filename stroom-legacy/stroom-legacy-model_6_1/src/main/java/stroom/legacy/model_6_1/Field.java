@@ -16,12 +16,13 @@
 
 package stroom.legacy.model_6_1;
 
-import java.io.Serializable;
-import java.util.Objects;
 import jakarta.xml.bind.annotation.XmlAccessType;
 import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlType;
+
+import java.io.Serializable;
+import java.util.Objects;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "field", propOrder = {"id", "name", "expression", "sort", "filter", "format", "group", "width", "visible", "special"})

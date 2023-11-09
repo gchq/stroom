@@ -11,6 +11,8 @@ import stroom.util.sysinfo.HasSystemInfo;
 import stroom.util.sysinfo.HasSystemInfo.ParamInfo;
 import stroom.util.sysinfo.SystemInfoResult;
 
+import jakarta.inject.Inject;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -19,7 +21,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import jakarta.inject.Inject;
 
 // If we make it a singleton due to systemInfoSuppliers then we would
 // probably need the injected set to be a map of providers instead.

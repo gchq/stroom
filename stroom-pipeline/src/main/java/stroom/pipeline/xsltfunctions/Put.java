@@ -18,12 +18,11 @@ package stroom.pipeline.xsltfunctions;
 
 import stroom.util.shared.Severity;
 
+import jakarta.inject.Inject;
 import net.sf.saxon.expr.XPathContext;
 import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.trans.XPathException;
-
-import jakarta.inject.Inject;
 
 class Put extends StroomExtensionFunctionCall {
 

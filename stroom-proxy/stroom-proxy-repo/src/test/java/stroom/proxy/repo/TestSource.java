@@ -3,6 +3,7 @@ package stroom.proxy.repo;
 import stroom.proxy.repo.dao.SourceDao;
 import stroom.proxy.repo.queue.Batch;
 
+import jakarta.inject.Inject;
 import name.falgout.jeffrey.testing.junit.guice.GuiceExtension;
 import name.falgout.jeffrey.testing.junit.guice.IncludeModule;
 import org.jooq.exception.DataAccessException;
@@ -18,7 +19,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
-import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 

@@ -51,6 +51,8 @@ import stroom.util.shared.ResourcePaths;
 import stroom.util.time.StroomDuration;
 
 import com.google.common.base.Strings;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.client.SyncInvoker;
 import net.sf.saxon.Configuration;
@@ -74,8 +76,6 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import jakarta.inject.Inject;
-import jakarta.inject.Provider;
 
 public class ReferenceDataServiceImpl implements ReferenceDataService {
 

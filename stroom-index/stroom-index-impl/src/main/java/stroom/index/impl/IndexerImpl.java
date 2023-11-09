@@ -23,13 +23,13 @@ import stroom.util.concurrent.StripedLock;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.store.AlreadyClosedException;
 
 import java.io.IOException;
 import java.util.concurrent.locks.Lock;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
 
 /**
  * Pool API into open index shards.

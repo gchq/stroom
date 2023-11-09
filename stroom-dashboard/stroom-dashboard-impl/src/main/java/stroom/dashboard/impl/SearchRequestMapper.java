@@ -45,6 +45,7 @@ import stroom.visualisation.shared.VisualisationDoc;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.inject.Inject;
 import org.apache.commons.text.StringEscapeUtils;
 
 import java.io.IOException;
@@ -55,7 +56,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import jakarta.inject.Inject;
 
 public class SearchRequestMapper {
 

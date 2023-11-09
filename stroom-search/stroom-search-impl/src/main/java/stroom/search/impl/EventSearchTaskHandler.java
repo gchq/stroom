@@ -32,9 +32,10 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
+import jakarta.inject.Inject;
+
 import java.util.Collections;
 import java.util.function.BiConsumer;
-import jakarta.inject.Inject;
 
 
 public class EventSearchTaskHandler {

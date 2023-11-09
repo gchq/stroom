@@ -25,11 +25,12 @@ import stroom.meta.impl.MetaServiceConfig;
 import stroom.meta.impl.db.jooq.tables.records.MetaProcessorRecord;
 import stroom.util.shared.Clearable;
 
-import java.util.Objects;
-import java.util.Optional;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
+
+import java.util.Objects;
+import java.util.Optional;
 
 import static stroom.meta.impl.db.jooq.tables.MetaProcessor.META_PROCESSOR;
 

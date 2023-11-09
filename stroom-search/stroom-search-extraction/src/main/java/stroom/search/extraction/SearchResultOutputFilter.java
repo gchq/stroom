@@ -29,10 +29,9 @@ import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValString;
 import stroom.svg.shared.SvgImage;
 
+import jakarta.inject.Inject;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
-
-import jakarta.inject.Inject;
 
 @ConfigurableElement(
         type = "SearchResultOutputFilter",

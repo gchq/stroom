@@ -3,11 +3,12 @@ package stroom.proxy.repo;
 import stroom.receive.common.StreamHandlers;
 import stroom.util.concurrent.UncheckedInterruptedException;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
 
 @Singleton
 public class MockFailureDestinations implements FailureDestinations {

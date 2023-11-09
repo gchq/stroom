@@ -55,6 +55,9 @@ import stroom.util.shared.ResultPage;
 import stroom.util.shared.Severity;
 import stroom.util.shared.UserName;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -63,8 +66,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
 
 @Singleton
 class ProcessorFilterServiceImpl implements ProcessorFilterService {

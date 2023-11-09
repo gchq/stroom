@@ -22,6 +22,9 @@ import stroom.util.json.JsonUtil;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
 import org.simplejavamail.email.Email;
 import org.simplejavamail.mailer.Mailer;
 import org.simplejavamail.mailer.config.ServerConfig;
@@ -29,9 +32,6 @@ import org.simplejavamail.mailer.config.TransportStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Provider;
-import jakarta.inject.Singleton;
 import javax.mail.Message;
 
 @Singleton

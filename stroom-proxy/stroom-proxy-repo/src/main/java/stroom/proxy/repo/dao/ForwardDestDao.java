@@ -19,12 +19,13 @@ package stroom.proxy.repo.dao;
 import stroom.db.util.JooqUtil;
 import stroom.proxy.repo.ForwardDest;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
 
 import static stroom.proxy.repo.db.jooq.tables.ForwardDest.FORWARD_DEST;
 

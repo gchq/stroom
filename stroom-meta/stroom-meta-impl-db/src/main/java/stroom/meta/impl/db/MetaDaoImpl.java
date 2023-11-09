@@ -59,6 +59,9 @@ import stroom.util.time.TimePeriod;
 
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
 import org.jooq.CaseConditionStep;
 import org.jooq.Condition;
 import org.jooq.Cursor;
@@ -96,9 +99,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import jakarta.inject.Inject;
-import jakarta.inject.Provider;
-import jakarta.inject.Singleton;
 
 import static stroom.meta.impl.db.jooq.tables.Meta.META;
 import static stroom.meta.impl.db.jooq.tables.MetaFeed.META_FEED;

@@ -55,6 +55,7 @@ import stroom.util.servlet.HttpServletRequestHolder;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.string.ExceptionStringUtil;
 
+import jakarta.inject.Inject;
 import jakarta.servlet.http.HttpServletRequest;
 
 import java.time.ZoneId;
@@ -68,7 +69,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
-import jakarta.inject.Inject;
 
 @AutoLogged
 class QueryServiceImpl implements QueryService {

@@ -30,13 +30,13 @@ import stroom.util.io.IgnoreCloseWriter;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.io.SerializedString;
+import jakarta.inject.Inject;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 
 import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.Deque;
-import jakarta.inject.Inject;
 
 /**
  * Writes out XML and records segment boundaries as it goes.

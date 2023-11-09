@@ -7,6 +7,9 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
 import org.lmdbjava.Env;
 import org.lmdbjava.Env.Builder;
 import org.lmdbjava.EnvFlags;
@@ -22,9 +25,6 @@ import java.util.EnumSet;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import jakarta.inject.Inject;
-import jakarta.inject.Provider;
-import jakarta.inject.Singleton;
 
 @Singleton // The LMDB lib is dealt with statically by LMDB java so only want to initialise it once
 public class LmdbEnvFactory {

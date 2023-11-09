@@ -23,6 +23,8 @@ import stroom.legacy.model_6_1.StreamType;
 import stroom.legacy.model_6_1.XMLMarshallerUtil;
 import stroom.util.shared.EntityServiceException;
 
+import jakarta.xml.bind.JAXBContext;
+import jakarta.xml.bind.JAXBException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,8 +36,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import jakarta.xml.bind.JAXBContext;
-import jakarta.xml.bind.JAXBException;
 
 @Deprecated
 public class LegacyXmlSerialiser {

@@ -34,6 +34,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
 import com.google.inject.assistedinject.Assisted;
+import jakarta.inject.Inject;
 import org.lmdbjava.CursorIterable;
 import org.lmdbjava.CursorIterable.KeyVal;
 import org.lmdbjava.KeyRange;
@@ -45,7 +46,6 @@ import java.nio.ByteBuffer;
 import java.util.Iterator;
 import java.util.Optional;
 import java.util.function.Consumer;
-import jakarta.inject.Inject;
 
 public class KeyValueStoreDb
         extends AbstractLmdbDb<KeyValueStoreKey, ValueStoreKey>

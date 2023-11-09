@@ -10,6 +10,8 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.ws.rs.core.HttpHeaders;
 import org.jose4j.jwa.AlgorithmConstraints;
@@ -29,8 +31,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
-import jakarta.inject.Inject;
-import jakarta.inject.Provider;
 
 class InternalJwtContextFactory implements JwtContextFactory {
 

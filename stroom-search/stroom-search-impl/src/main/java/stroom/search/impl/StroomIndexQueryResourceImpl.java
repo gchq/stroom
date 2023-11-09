@@ -29,7 +29,6 @@ import stroom.query.common.v2.ResultStoreManager;
 import stroom.query.common.v2.TerminateDecorator;
 
 import com.codahale.metrics.annotation.Timed;
-
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 

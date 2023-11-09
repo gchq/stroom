@@ -41,6 +41,7 @@ import stroom.test.common.util.test.FileSystemTestUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.string.StringIdUtil;
 
+import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -48,7 +49,6 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

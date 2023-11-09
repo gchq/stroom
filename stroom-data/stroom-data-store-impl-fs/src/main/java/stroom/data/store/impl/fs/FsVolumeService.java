@@ -38,6 +38,9 @@ import stroom.util.sysinfo.SystemInfoResult;
 import stroom.util.time.StroomDuration;
 
 import com.google.common.collect.ImmutableSortedMap;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
 
 import java.io.IOException;
 import java.nio.file.FileStore;
@@ -60,9 +63,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
-import jakarta.inject.Inject;
-import jakarta.inject.Provider;
-import jakarta.inject.Singleton;
 
 @Singleton
 @EntityEventHandler(type = FsVolumeService.ENTITY_TYPE, action = {

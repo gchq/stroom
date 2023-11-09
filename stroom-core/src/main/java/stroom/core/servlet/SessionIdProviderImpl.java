@@ -18,11 +18,10 @@ package stroom.core.servlet;
 
 import stroom.util.servlet.SessionIdProvider;
 
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpSession;
-
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 
 class SessionIdProviderImpl implements SessionIdProvider {
 

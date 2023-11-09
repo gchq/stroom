@@ -44,12 +44,12 @@ import stroom.svg.shared.SvgImage;
 import stroom.util.io.PathCreator;
 import stroom.util.shared.Severity;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
 
 import java.util.function.Consumer;
-import jakarta.inject.Inject;
-import jakarta.inject.Provider;
 
 @ConfigurableElement(
         type = "DSParser",

@@ -16,13 +16,14 @@ import stroom.query.language.functions.ValuesConsumer;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.ResultPage;
 
+import jakarta.inject.Singleton;
+
 import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import jakarta.inject.Singleton;
 
 @Singleton
 public class MockProcessorTaskDao implements ProcessorTaskDao, Clearable {

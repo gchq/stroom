@@ -19,11 +19,10 @@ package stroom.legacy.db;
 import stroom.legacy.model_6_1.JAXBContextCache;
 import stroom.legacy.model_6_1.XMLMarshallerUtil;
 
+import jakarta.xml.bind.JAXBContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
-
-import jakarta.xml.bind.JAXBContext;
 
 @Deprecated
 public class ObjectMarshaller<E> {

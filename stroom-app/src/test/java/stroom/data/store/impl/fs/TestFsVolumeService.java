@@ -10,6 +10,8 @@ import stroom.util.io.PathCreator;
 import stroom.util.io.capacity.RoundRobinCapacitySelector;
 import stroom.util.shared.ResultPage;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -19,8 +21,6 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
-import jakarta.inject.Inject;
-import jakarta.inject.Provider;
 
 public class TestFsVolumeService extends AbstractCoreIntegrationTest {
 

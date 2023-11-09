@@ -28,9 +28,10 @@ import stroom.processor.shared.ProcessorListRowResultPage;
 import stroom.processor.shared.ReprocessDataInfo;
 import stroom.util.shared.ResultPage;
 
-import java.util.List;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
+
+import java.util.List;
 
 @AutoLogged
 class ProcessorFilterResourceImpl implements ProcessorFilterResource {

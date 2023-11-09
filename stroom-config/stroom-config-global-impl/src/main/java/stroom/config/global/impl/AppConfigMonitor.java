@@ -11,12 +11,12 @@ import stroom.util.config.PropertyPathDecorator;
 import stroom.util.shared.AbstractConfig;
 
 import io.dropwizard.lifecycle.Managed;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.file.Path;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
 
 @Singleton
 public class AppConfigMonitor extends AbstractFileChangeMonitor implements Managed, HasHealthCheck {

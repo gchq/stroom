@@ -24,10 +24,11 @@ import stroom.statistics.impl.sql.shared.StatisticRollupResource;
 import stroom.statistics.impl.sql.shared.StatisticsDataSourceData;
 import stroom.statistics.impl.sql.shared.StatisticsDataSourceFieldChangeRequest;
 
-import java.util.List;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
+
+import java.util.List;
 
 //Utility functions without side effects (at least by design)
 @AutoLogged(OperationType.UNLOGGED)

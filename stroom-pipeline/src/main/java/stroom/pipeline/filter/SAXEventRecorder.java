@@ -31,6 +31,7 @@ import stroom.util.shared.OutputState;
 import stroom.util.shared.Severity;
 import stroom.util.shared.TextRange;
 
+import jakarta.inject.Inject;
 import net.sf.saxon.Configuration;
 import net.sf.saxon.om.NodeInfo;
 import net.sf.saxon.xpath.XPathEvaluator;
@@ -40,7 +41,6 @@ import org.xml.sax.SAXException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import jakarta.inject.Inject;
 import javax.xml.namespace.NamespaceContext;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpression;

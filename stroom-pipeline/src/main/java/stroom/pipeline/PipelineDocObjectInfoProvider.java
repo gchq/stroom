@@ -24,11 +24,10 @@ import stroom.pipeline.shared.PipelineDoc;
 import event.logging.BaseObject;
 import event.logging.Data;
 import event.logging.OtherObject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 class PipelineDocObjectInfoProvider implements ObjectInfoProvider {
     private static final Logger LOGGER = LoggerFactory.getLogger(PipelineDocObjectInfoProvider.class);

@@ -5,8 +5,9 @@ import stroom.util.HealthCheckUtils;
 import stroom.util.sysinfo.HasSystemInfo;
 import stroom.util.sysinfo.SystemInfoResult;
 
-import java.util.Map;
 import jakarta.inject.Inject;
+
+import java.util.Map;
 
 /**
  * Allows us to see the {@link AppConfig} tree on a node

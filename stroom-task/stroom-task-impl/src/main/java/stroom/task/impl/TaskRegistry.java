@@ -2,10 +2,11 @@ package stroom.task.impl;
 
 import stroom.task.shared.TaskId;
 
+import jakarta.inject.Singleton;
+
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import jakarta.inject.Singleton;
 
 @Singleton
 class TaskRegistry {

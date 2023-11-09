@@ -9,10 +9,10 @@ import stroom.ui.config.shared.UserPreferences;
 
 import event.logging.ComplexLoggedOutcome;
 import event.logging.UpdateEventAction;
-
-import java.util.Objects;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
+
+import java.util.Objects;
 
 @AutoLogged
 public class UserPreferencesResourceImpl implements UserPreferencesResource {

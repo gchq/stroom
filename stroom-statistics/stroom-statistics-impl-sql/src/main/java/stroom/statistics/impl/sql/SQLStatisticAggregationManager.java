@@ -22,13 +22,13 @@ import stroom.task.api.TaskContextFactory;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ModelStringUtil;
 
+import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.SQLException;
 import java.time.Instant;
 import java.util.concurrent.locks.ReentrantLock;
-import jakarta.inject.Inject;
 
 class SQLStatisticAggregationManager {
 

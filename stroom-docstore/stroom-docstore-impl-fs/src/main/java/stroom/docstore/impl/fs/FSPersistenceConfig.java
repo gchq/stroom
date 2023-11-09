@@ -1,7 +1,6 @@
 package stroom.docstore.impl.fs;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-
 import jakarta.inject.Singleton;
 
 @Singleton

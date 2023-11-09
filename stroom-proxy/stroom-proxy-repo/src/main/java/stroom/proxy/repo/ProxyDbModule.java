@@ -21,13 +21,13 @@ import stroom.util.shared.Flushable;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
+import jakarta.inject.Singleton;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
-import jakarta.inject.Singleton;
 import javax.sql.DataSource;
 
 public class ProxyDbModule extends AbstractModule {

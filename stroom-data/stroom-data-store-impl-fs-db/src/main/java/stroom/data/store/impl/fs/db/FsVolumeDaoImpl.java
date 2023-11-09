@@ -10,6 +10,8 @@ import stroom.db.util.JooqUtil;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Selection;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import org.jooq.Condition;
 import org.jooq.Record;
 import org.jooq.Result;
@@ -21,8 +23,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
 
 import static stroom.data.store.impl.fs.db.jooq.tables.FsVolume.FS_VOLUME;
 import static stroom.data.store.impl.fs.db.jooq.tables.FsVolumeState.FS_VOLUME_STATE;

@@ -22,6 +22,8 @@ import stroom.util.logging.LambdaLoggerFactory;
 
 import com.google.common.base.Strings;
 import com.google.common.net.HttpHeaders;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import jakarta.servlet.Filter;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.FilterConfig;
@@ -34,8 +36,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Objects;
 import java.util.function.Supplier;
-import jakarta.inject.Inject;
-import jakarta.inject.Provider;
 
 public class ContentSecurityFilter implements Filter {
 

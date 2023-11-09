@@ -26,12 +26,13 @@ import stroom.query.language.token.TokenType;
 import stroom.util.json.JsonUtil;
 import stroom.visualisation.shared.VisualisationDoc;
 
+import jakarta.inject.Inject;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import jakarta.inject.Inject;
 
 public class VisualisationTokenConsumerImpl implements VisualisationTokenConsumer {
 

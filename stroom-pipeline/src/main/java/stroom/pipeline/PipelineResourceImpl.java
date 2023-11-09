@@ -27,10 +27,11 @@ import stroom.pipeline.shared.SavePipelineXmlRequest;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.util.shared.FetchWithUuid;
 
-import java.util.List;
-import java.util.stream.Collectors;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @AutoLogged
 class PipelineResourceImpl implements PipelineResource, FetchWithUuid<PipelineDoc> {

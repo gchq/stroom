@@ -11,6 +11,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ResourcePaths;
 
+import jakarta.inject.Inject;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.client.Entity;
@@ -21,7 +22,6 @@ import jakarta.ws.rs.core.Response.Status;
 
 import java.io.IOException;
 import java.io.InputStream;
-import jakarta.inject.Inject;
 
 public class RemoteNodeSearch implements NodeSearch {
 

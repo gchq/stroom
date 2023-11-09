@@ -38,6 +38,8 @@ import stroom.util.shared.Range;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Selection;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import org.jooq.Condition;
 import org.jooq.Cursor;
 import org.jooq.Field;
@@ -57,8 +59,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
 
 import static stroom.index.impl.db.jooq.Tables.INDEX_SHARD;
 import static stroom.index.impl.db.jooq.Tables.INDEX_VOLUME_GROUP;

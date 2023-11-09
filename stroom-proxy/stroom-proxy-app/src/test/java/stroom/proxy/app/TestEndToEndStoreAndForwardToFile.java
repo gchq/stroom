@@ -11,12 +11,12 @@ import stroom.util.time.StroomDuration;
 
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.verification.LoggedRequest;
+import jakarta.inject.Inject;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
 import java.util.List;
-import jakarta.inject.Inject;
 
 public class TestEndToEndStoreAndForwardToFile extends AbstractEndToEndTest {
 

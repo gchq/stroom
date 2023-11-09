@@ -20,13 +20,12 @@ package stroom.pipeline.refdata.store;
 import stroom.pipeline.refdata.store.offheapstore.RefDataValueProxyConsumer;
 
 import com.google.inject.assistedinject.Assisted;
+import jakarta.inject.Inject;
 import net.sf.saxon.event.PipelineConfiguration;
 import net.sf.saxon.event.Receiver;
 import net.sf.saxon.trans.XPathException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import jakarta.inject.Inject;
 
 public class GenericRefDataValueProxyConsumer implements RefDataValueProxyConsumer {
 

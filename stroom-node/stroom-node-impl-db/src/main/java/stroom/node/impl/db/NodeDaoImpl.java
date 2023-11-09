@@ -23,6 +23,7 @@ import stroom.node.impl.db.jooq.tables.records.NodeRecord;
 import stroom.node.shared.Node;
 import stroom.util.shared.ResultPage;
 
+import jakarta.inject.Inject;
 import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.OrderField;
@@ -30,7 +31,6 @@ import org.jooq.OrderField;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import jakarta.inject.Inject;
 
 import static stroom.node.impl.db.jooq.tables.Node.NODE;
 

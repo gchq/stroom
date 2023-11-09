@@ -16,11 +16,10 @@
 
 package stroom.legacy.model_6_1;
 
+import jakarta.xml.bind.JAXBContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
-
-import jakarta.xml.bind.JAXBContext;
 
 @Deprecated
 public abstract class EntityMarshaller<E extends BaseEntity, O> implements Marshaller<E, O> {

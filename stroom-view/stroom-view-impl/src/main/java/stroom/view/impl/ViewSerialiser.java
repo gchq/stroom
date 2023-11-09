@@ -5,9 +5,10 @@ import stroom.docstore.api.Serialiser2;
 import stroom.docstore.api.Serialiser2Factory;
 import stroom.view.shared.ViewDoc;
 
+import jakarta.inject.Inject;
+
 import java.io.IOException;
 import java.util.Map;
-import jakarta.inject.Inject;
 
 public class ViewSerialiser implements DocumentSerialiser2<ViewDoc> {
 

@@ -33,10 +33,11 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
-import java.util.Collections;
-import java.util.concurrent.Executor;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
+
+import java.util.Collections;
+import java.util.concurrent.Executor;
 
 public class SolrEventSearchTaskHandler {
 

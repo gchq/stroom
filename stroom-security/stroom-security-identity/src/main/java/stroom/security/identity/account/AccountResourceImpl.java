@@ -44,14 +44,14 @@ import event.logging.UpdateEventAction;
 import event.logging.User;
 import event.logging.ViewEventAction;
 import event.logging.util.EventLoggingUtil;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.ws.rs.NotFoundException;
 
 import java.math.BigInteger;
 import java.util.Objects;
 import java.util.Optional;
-import jakarta.inject.Inject;
-import jakarta.inject.Provider;
 
 @AutoLogged(OperationType.MANUALLY_LOGGED)
 class AccountResourceImpl implements AccountResource {

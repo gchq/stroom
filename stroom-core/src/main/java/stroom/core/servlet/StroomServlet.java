@@ -19,8 +19,9 @@ package stroom.core.servlet;
 import stroom.ui.config.shared.UiConfig;
 import stroom.util.shared.IsServlet;
 
-import java.util.Set;
 import jakarta.inject.Inject;
+
+import java.util.Set;
 
 public class StroomServlet extends AppServlet implements IsServlet {
 

@@ -38,6 +38,7 @@ import stroom.svg.shared.SvgImage;
 import stroom.util.CharBuffer;
 import stroom.util.shared.Severity;
 
+import jakarta.inject.Inject;
 import org.apache.lucene.document.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,7 +52,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
-import jakarta.inject.Inject;
 
 /**
  * The index filter... takes the index XML and builds the LUCENE documents

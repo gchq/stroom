@@ -20,6 +20,7 @@ import io.dropwizard.client.proxy.ProxyConfiguration;
 import io.dropwizard.client.ssl.TlsConfiguration;
 import io.dropwizard.core.setup.Environment;
 import io.dropwizard.util.Duration;
+import jakarta.inject.Provider;
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.WebTarget;
 
@@ -36,7 +37,6 @@ import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
-import jakarta.inject.Provider;
 
 public abstract class AbstractJerseyClientFactory implements JerseyClientFactory {
 

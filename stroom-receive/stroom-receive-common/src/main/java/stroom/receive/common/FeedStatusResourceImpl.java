@@ -24,7 +24,6 @@ import stroom.util.HasHealthCheck;
 
 import com.codahale.metrics.annotation.Timed;
 import com.codahale.metrics.health.HealthCheck.Result;
-
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 

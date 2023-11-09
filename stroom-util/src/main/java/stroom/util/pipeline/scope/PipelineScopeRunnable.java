@@ -1,7 +1,8 @@
 package stroom.util.pipeline.scope;
 
-import java.util.function.Supplier;
 import jakarta.inject.Inject;
+
+import java.util.function.Supplier;
 
 public class PipelineScopeRunnable {
 

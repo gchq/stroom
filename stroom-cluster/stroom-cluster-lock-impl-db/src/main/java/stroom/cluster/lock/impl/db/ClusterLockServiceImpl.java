@@ -21,14 +21,14 @@ import stroom.node.api.NodeInfo;
 import stroom.task.api.TaskContextFactory;
 import stroom.util.logging.LogExecutionTime;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
 
 @Singleton
 class ClusterLockServiceImpl implements ClusterLockService {

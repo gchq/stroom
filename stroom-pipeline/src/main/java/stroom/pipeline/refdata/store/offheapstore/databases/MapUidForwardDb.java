@@ -31,6 +31,7 @@ import stroom.pipeline.refdata.store.offheapstore.serdes.UIDSerde;
 import stroom.util.logging.LogUtil;
 
 import com.google.inject.assistedinject.Assisted;
+import jakarta.inject.Inject;
 import org.lmdbjava.CursorIterable;
 import org.lmdbjava.KeyRange;
 import org.lmdbjava.Txn;
@@ -40,7 +41,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
-import jakarta.inject.Inject;
 
 public class MapUidForwardDb extends AbstractLmdbDb<MapDefinition, UID> {
 

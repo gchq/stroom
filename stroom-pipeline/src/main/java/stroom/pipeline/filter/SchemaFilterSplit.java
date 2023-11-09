@@ -25,6 +25,7 @@ import stroom.security.api.SecurityContext;
 import stroom.svg.shared.SvgImage;
 
 import jakarta.inject.Inject;
+
 import javax.xml.XMLConstants;
 
 /**

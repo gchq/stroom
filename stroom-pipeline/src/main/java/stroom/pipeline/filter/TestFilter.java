@@ -22,12 +22,12 @@ import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.svg.shared.SvgImage;
 
+import jakarta.inject.Inject;
 import org.xml.sax.SAXException;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import jakarta.inject.Inject;
 
 /**
  * A filter used to sample the output produced by SAX events at any point in the

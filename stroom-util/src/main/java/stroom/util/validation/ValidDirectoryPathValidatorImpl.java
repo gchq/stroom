@@ -5,6 +5,7 @@ import stroom.util.io.SimplePathCreator;
 import stroom.util.shared.validation.ValidDirectoryPath;
 import stroom.util.shared.validation.ValidDirectoryPathValidator;
 
+import jakarta.inject.Inject;
 import jakarta.validation.ConstraintValidatorContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,7 +13,6 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import jakarta.inject.Inject;
 
 public class ValidDirectoryPathValidatorImpl implements ValidDirectoryPathValidator {
 

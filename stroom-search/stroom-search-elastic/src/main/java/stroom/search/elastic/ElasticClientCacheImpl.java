@@ -24,15 +24,15 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Clearable;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
 import org.elasticsearch.client.RestHighLevelClient;
 
 import java.io.IOException;
 import java.util.IdentityHashMap;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import jakarta.inject.Inject;
-import jakarta.inject.Provider;
-import jakarta.inject.Singleton;
 
 @Singleton
 public class ElasticClientCacheImpl implements ElasticClientCache, Clearable {

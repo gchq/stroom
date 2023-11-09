@@ -30,6 +30,8 @@ import stroom.util.logging.LogUtil;
 import stroom.util.sysinfo.HasSystemInfo;
 import stroom.util.sysinfo.SystemInfoResult;
 
+import jakarta.inject.Singleton;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -41,7 +43,6 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import jakarta.inject.Singleton;
 
 @Singleton
 public class CacheManagerImpl implements CacheManager, HasSystemInfo {

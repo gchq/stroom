@@ -26,13 +26,12 @@ import stroom.pipeline.xml.event.simple.StartElement;
 import stroom.pipeline.xml.event.simple.StartPrefixMapping;
 import stroom.svg.shared.SvgImage;
 
+import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.Attributes;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
-
-import jakarta.inject.Inject;
 
 /**
  * Splits a single XML instance into separate XML instances that contain

@@ -6,13 +6,13 @@ import stroom.security.api.SecurityContext;
 import stroom.suggestions.api.SuggestionsQueryHandler;
 import stroom.suggestions.api.SuggestionsService;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Map;
-import jakarta.inject.Inject;
-import jakarta.inject.Provider;
-import jakarta.inject.Singleton;
 
 @Singleton
 @SuppressWarnings("unused")

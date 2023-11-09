@@ -22,9 +22,8 @@ import stroom.node.api.NodeInfo;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
 
-import org.junit.jupiter.api.Test;
-
 import jakarta.inject.Inject;
+import org.junit.jupiter.api.Test;
 
 class TestStreamTaskServiceBatchLocking extends AbstractCoreIntegrationTest {
 

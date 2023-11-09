@@ -16,10 +16,11 @@
 
 package stroom.legacy.model_6_1;
 
-import java.io.Serializable;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.XmlType;
+
+import java.io.Serializable;
 
 @XmlType(name = "query", propOrder = {"dataSource", "expression", "limits"})
 @XmlRootElement(name = "query")

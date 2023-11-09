@@ -8,10 +8,11 @@ import stroom.receive.common.StreamHandler;
 import stroom.receive.common.StreamHandlers;
 import stroom.receive.common.StroomStreamException;
 
+import jakarta.inject.Inject;
+
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.function.Consumer;
-import jakarta.inject.Inject;
 
 public class ProxyRepositoryStreamHandlers implements StreamHandlers {
 

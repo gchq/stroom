@@ -19,14 +19,14 @@ package stroom.pipeline.factory;
 import stroom.pipeline.factory.PipelineElementModule.ElementType;
 
 import com.google.inject.Provider;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
 
 @Singleton
 public class ElementRegistryFactoryImpl implements ElementRegistryFactory, ElementFactory {

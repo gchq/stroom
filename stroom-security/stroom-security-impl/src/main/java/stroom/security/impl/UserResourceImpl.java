@@ -18,13 +18,13 @@ import stroom.util.user.UserNameUtil;
 
 import event.logging.CreateEventAction;
 import event.logging.Outcome;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import jakarta.ws.rs.NotFoundException;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import jakarta.inject.Inject;
-import jakarta.inject.Provider;
 
 @AutoLogged
 public class UserResourceImpl implements UserResource {

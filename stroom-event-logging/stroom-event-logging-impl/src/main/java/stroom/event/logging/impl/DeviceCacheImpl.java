@@ -5,14 +5,14 @@ import stroom.cache.api.LoadingStroomCache;
 
 import event.logging.Device;
 import event.logging.util.DeviceUtil;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import jakarta.inject.Inject;
-import jakarta.inject.Provider;
-import jakarta.inject.Singleton;
 
 @Singleton
 public class DeviceCacheImpl implements DeviceCache {

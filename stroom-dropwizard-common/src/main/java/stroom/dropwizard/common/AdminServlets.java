@@ -7,6 +7,7 @@ import stroom.util.shared.IsAdminServlet;
 import io.dropwizard.core.setup.Environment;
 import io.vavr.Tuple;
 import io.vavr.Tuple3;
+import jakarta.inject.Inject;
 import jakarta.servlet.Servlet;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jetty.servlet.ServletContextHandler;
@@ -22,7 +23,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import jakarta.inject.Inject;
 
 public class AdminServlets {
 

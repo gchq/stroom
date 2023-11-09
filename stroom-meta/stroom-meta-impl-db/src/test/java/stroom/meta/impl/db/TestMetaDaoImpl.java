@@ -65,6 +65,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.TypeLiteral;
 import io.vavr.Tuple;
+import jakarta.inject.Inject;
 import org.jooq.Record1;
 import org.jooq.impl.DSL;
 import org.junit.jupiter.api.BeforeEach;
@@ -90,7 +91,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
-import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static stroom.meta.impl.db.MetaDaoImpl.meta;

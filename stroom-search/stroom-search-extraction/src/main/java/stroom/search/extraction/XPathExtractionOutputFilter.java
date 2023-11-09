@@ -30,6 +30,7 @@ import stroom.svg.shared.SvgImage;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.Severity;
 
+import jakarta.inject.Inject;
 import net.sf.saxon.Configuration;
 import net.sf.saxon.event.PipelineConfiguration;
 import net.sf.saxon.event.ReceivingContentHandler;
@@ -52,7 +53,6 @@ import org.xml.sax.SAXException;
 
 import java.util.HashMap;
 import java.util.Iterator;
-import jakarta.inject.Inject;
 
 import static stroom.index.shared.IndexConstants.EVENT_ID;
 import static stroom.index.shared.IndexConstants.STREAM_ID;

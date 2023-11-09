@@ -23,6 +23,8 @@ import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.Unauthenticated;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -34,8 +36,6 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.Set;
-import jakarta.inject.Inject;
-import jakarta.inject.Provider;
 
 /**
  * Public un-authenticated servlet for client systems to monitor stroom's availability.

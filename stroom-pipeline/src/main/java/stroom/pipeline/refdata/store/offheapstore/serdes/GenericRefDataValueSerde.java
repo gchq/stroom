@@ -21,9 +21,10 @@ import stroom.bytebuffer.PooledByteBufferOutputStream;
 import stroom.pipeline.refdata.store.RefDataValue;
 import stroom.pipeline.refdata.store.UnknownRefDataValue;
 
+import jakarta.inject.Inject;
+
 import java.nio.ByteBuffer;
 import java.util.function.Supplier;
-import jakarta.inject.Inject;
 
 public class GenericRefDataValueSerde implements RefDataValueSerde {
 

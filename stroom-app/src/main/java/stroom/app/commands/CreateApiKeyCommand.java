@@ -19,6 +19,7 @@ import event.logging.CreateEventAction;
 import event.logging.Outcome;
 import event.logging.User;
 import io.dropwizard.core.setup.Bootstrap;
+import jakarta.inject.Inject;
 import net.sourceforge.argparse4j.inf.Namespace;
 import net.sourceforge.argparse4j.inf.Subparser;
 import org.slf4j.Logger;
@@ -34,7 +35,6 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Date;
 import java.util.Set;
-import jakarta.inject.Inject;
 
 /**
  * Creates an API key for a user the internal identity provider

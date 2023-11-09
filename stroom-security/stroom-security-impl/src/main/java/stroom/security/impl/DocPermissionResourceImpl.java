@@ -53,6 +53,8 @@ import event.logging.Permission;
 import event.logging.PermissionAttribute;
 import event.logging.Permissions;
 import event.logging.UpdateEventAction;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -64,8 +66,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
-import jakarta.inject.Inject;
-import jakarta.inject.Provider;
 
 @AutoLogged
 class DocPermissionResourceImpl implements DocPermissionResource {

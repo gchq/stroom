@@ -21,6 +21,7 @@ import stroom.util.io.CloseableUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.IsServlet;
 
+import jakarta.inject.Inject;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -29,7 +30,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.util.Set;
-import jakarta.inject.Inject;
 
 public class DynamicCSSServlet extends HttpServlet implements IsServlet {
 

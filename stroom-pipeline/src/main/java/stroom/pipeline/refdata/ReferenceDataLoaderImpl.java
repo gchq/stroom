@@ -21,10 +21,11 @@ import stroom.pipeline.refdata.store.RefStreamDefinition;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 
-import java.util.function.Function;
-import java.util.function.Supplier;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
+
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 public class ReferenceDataLoaderImpl implements ReferenceDataLoader {
 

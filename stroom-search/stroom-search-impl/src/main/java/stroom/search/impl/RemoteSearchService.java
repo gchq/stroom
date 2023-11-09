@@ -14,6 +14,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.string.ExceptionStringUtil;
 
 import com.esotericsoftware.kryo.KryoException;
+import jakarta.inject.Inject;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -23,7 +24,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
-import jakarta.inject.Inject;
 
 public class RemoteSearchService {
 

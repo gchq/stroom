@@ -7,6 +7,8 @@ import stroom.resource.api.ResourceStore;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.ResourceKey;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.StreamingOutput;
@@ -14,8 +16,6 @@ import jakarta.ws.rs.core.StreamingOutput;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import jakarta.inject.Inject;
-import jakarta.inject.Provider;
 
 @AutoLogged
 public class ExportContentResourceImpl implements ExportContentResource {

@@ -26,6 +26,8 @@ import stroom.task.shared.ThreadPool;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.util.Version;
 
@@ -36,8 +38,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.LongAdder;
-import jakarta.inject.Inject;
-import jakarta.inject.Provider;
 
 public class IndexShardSearchFactory {
 

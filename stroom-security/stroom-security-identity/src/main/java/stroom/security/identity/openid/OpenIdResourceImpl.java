@@ -22,6 +22,8 @@ import event.logging.AuthenticateOutcomeReason;
 import event.logging.Data;
 import event.logging.OtherObject;
 import event.logging.ViewEventAction;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.ws.rs.RedirectionException;
 import jakarta.ws.rs.WebApplicationException;
@@ -37,8 +39,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import jakarta.inject.Inject;
-import jakarta.inject.Provider;
 
 @AutoLogged
 class OpenIdResourceImpl implements OpenIdResource {

@@ -2,9 +2,10 @@ package stroom.analytics.impl;
 
 import stroom.analytics.shared.AnalyticRuleDoc;
 
+import jakarta.inject.Singleton;
+
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import jakarta.inject.Singleton;
 
 @Singleton
 public class NotificationStateService {

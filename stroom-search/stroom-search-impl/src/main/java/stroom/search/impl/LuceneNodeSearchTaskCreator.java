@@ -17,11 +17,12 @@ import stroom.task.api.TaskContext;
 import stroom.util.shared.Range;
 import stroom.util.shared.ResultPage;
 
+import jakarta.inject.Inject;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import jakarta.inject.Inject;
 
 public class LuceneNodeSearchTaskCreator implements NodeTaskCreator {
 

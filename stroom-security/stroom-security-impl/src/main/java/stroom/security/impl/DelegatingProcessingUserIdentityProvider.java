@@ -5,11 +5,12 @@ import stroom.security.api.UserIdentity;
 import stroom.security.openid.api.AbstractOpenIdConfig;
 import stroom.security.openid.api.IdpType;
 
-import java.util.Map;
-import java.util.Objects;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
+
+import java.util.Map;
+import java.util.Objects;
 
 /**
  * Delegates to an implementation of ProcessingUserIdentityProvider depending on the type of

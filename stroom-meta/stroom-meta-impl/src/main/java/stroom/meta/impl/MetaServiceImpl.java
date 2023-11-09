@@ -41,6 +41,9 @@ import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 import stroom.util.time.TimePeriod;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -58,8 +61,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import jakarta.inject.Inject;
-import jakarta.inject.Provider;
 
 public class MetaServiceImpl implements MetaService, Searchable {
 

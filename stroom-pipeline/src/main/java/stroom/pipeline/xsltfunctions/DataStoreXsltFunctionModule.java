@@ -1,9 +1,8 @@
 package stroom.pipeline.xsltfunctions;
 
-import net.sf.saxon.value.SequenceType;
-
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
+import net.sf.saxon.value.SequenceType;
 
 public class DataStoreXsltFunctionModule extends AbstractXsltFunctionModule {
 

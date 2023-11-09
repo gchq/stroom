@@ -25,13 +25,13 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import org.apache.solr.client.solrj.SolrServerException;
 
 import java.io.IOException;
 import java.util.List;
 import java.util.function.Supplier;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
 
 @Singleton
 public class SolrIndexOptimiseExecutor {

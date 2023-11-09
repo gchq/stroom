@@ -27,12 +27,11 @@ import stroom.search.elastic.shared.ElasticConnectionConfig;
 import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.FetchWithUuid;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.client.core.MainResponse;
-
-import jakarta.inject.Inject;
-import jakarta.inject.Provider;
 
 @AutoLogged
 class ElasticClusterResourceImpl implements ElasticClusterResource, FetchWithUuid<ElasticClusterDoc> {

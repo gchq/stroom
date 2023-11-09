@@ -34,10 +34,9 @@ import event.logging.MultiObject;
 import event.logging.OtherObject;
 import event.logging.UpdateEventAction;
 import event.logging.util.EventLoggingUtil;
+import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import jakarta.inject.Inject;
 
 class ExplorerEventLogImpl implements ExplorerEventLog {
 

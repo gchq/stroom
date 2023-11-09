@@ -38,6 +38,9 @@ import stroom.util.shared.CompareUtil;
 import stroom.util.shared.PageResponse;
 
 import com.google.common.base.Strings;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
 import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.OrderField;
@@ -57,9 +60,6 @@ import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Stream;
-import jakarta.inject.Inject;
-import jakarta.inject.Provider;
-import jakarta.inject.Singleton;
 
 import static java.util.Map.entry;
 import static stroom.security.identity.db.jooq.tables.Account.ACCOUNT;

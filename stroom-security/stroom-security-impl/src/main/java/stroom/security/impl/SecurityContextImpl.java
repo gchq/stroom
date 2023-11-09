@@ -17,12 +17,13 @@ import stroom.util.logging.LogUtil;
 import stroom.util.shared.DocumentOwnerException;
 import stroom.util.shared.PermissionException;
 
-import java.util.Objects;
-import java.util.Set;
-import java.util.function.Supplier;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
+
+import java.util.Objects;
+import java.util.Set;
+import java.util.function.Supplier;
 
 @Singleton
 class SecurityContextImpl implements SecurityContext {

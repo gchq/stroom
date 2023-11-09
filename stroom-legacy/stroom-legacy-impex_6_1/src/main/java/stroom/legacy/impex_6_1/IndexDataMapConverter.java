@@ -8,11 +8,12 @@ import stroom.index.impl.selection.VolumeConfig;
 import stroom.index.shared.IndexDoc;
 import stroom.util.shared.Severity;
 
-import java.io.IOException;
-import java.util.Map;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
+
+import java.io.IOException;
+import java.util.Map;
 
 @Singleton
 @Deprecated

@@ -4,6 +4,8 @@ import stroom.data.store.impl.fs.DataVolumeDao.DataVolume;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.SimpleMeta;
 
+import jakarta.inject.Inject;
+
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -11,7 +13,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import jakarta.inject.Inject;
 
 public class FsFileFinder {
 

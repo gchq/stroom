@@ -16,6 +16,8 @@
 
 package stroom.legacy.model_6_1;
 
+import jakarta.xml.bind.annotation.XmlTransient;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -26,7 +28,6 @@ import javax.persistence.Lob;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
-import jakarta.xml.bind.annotation.XmlTransient;
 
 @Entity
 @Table(name = "STROOM_STATS_STORE", uniqueConstraints = @UniqueConstraint(columnNames = {"NAME"}))

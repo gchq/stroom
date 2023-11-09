@@ -38,6 +38,7 @@ import stroom.util.shared.Severity;
 import stroom.util.shared.StoredError;
 import stroom.util.shared.StringUtil;
 
+import jakarta.inject.Inject;
 import net.sf.saxon.Configuration;
 import net.sf.saxon.event.Builder;
 import net.sf.saxon.event.PipelineConfiguration;
@@ -53,7 +54,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import jakarta.inject.Inject;
 
 
 abstract class AbstractLookup extends StroomExtensionFunctionCall {

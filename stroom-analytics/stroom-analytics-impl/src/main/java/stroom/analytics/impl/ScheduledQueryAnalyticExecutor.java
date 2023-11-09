@@ -60,6 +60,9 @@ import stroom.util.shared.time.TimeUnit;
 import stroom.util.time.SimpleDurationUtil;
 import stroom.view.shared.ViewDoc;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -69,8 +72,6 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
-import jakarta.inject.Inject;
-import jakarta.inject.Provider;
 
 public class ScheduledQueryAnalyticExecutor {
 

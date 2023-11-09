@@ -29,8 +29,9 @@ import stroom.task.shared.TaskId;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
-import java.util.concurrent.CompletableFuture;
 import jakarta.inject.Inject;
+
+import java.util.concurrent.CompletableFuture;
 
 public class SolrAsyncSearchTaskHandler {
 

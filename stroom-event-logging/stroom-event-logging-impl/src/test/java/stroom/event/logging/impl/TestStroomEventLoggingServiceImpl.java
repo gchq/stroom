@@ -20,6 +20,7 @@ import event.logging.Resource;
 import event.logging.User;
 import event.logging.ViewEventAction;
 import event.logging.impl.LogReceiver;
+import jakarta.inject.Provider;
 import jakarta.servlet.http.HttpServletRequest;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -36,7 +37,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
-import jakarta.inject.Provider;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

@@ -44,6 +44,8 @@ import stroom.search.solr.shared.SolrIndexField;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContextFactory;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,8 +56,6 @@ import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import jakarta.inject.Inject;
-import jakarta.inject.Provider;
 
 // used by DI
 @SuppressWarnings("unused")

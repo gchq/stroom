@@ -21,8 +21,9 @@ import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.svg.shared.SvgImage;
 
-import java.io.OutputStream;
 import jakarta.inject.Inject;
+
+import java.io.OutputStream;
 
 @ConfigurableElement(
         type = "TestAppender",

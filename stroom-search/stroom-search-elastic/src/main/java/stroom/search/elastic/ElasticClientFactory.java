@@ -2,6 +2,7 @@ package stroom.search.elastic;
 
 import stroom.search.elastic.shared.ElasticConnectionConfig;
 
+import jakarta.inject.Inject;
 import org.apache.http.Header;
 import org.apache.http.HttpHost;
 import org.apache.http.client.config.RequestConfig.Builder;
@@ -29,7 +30,6 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import jakarta.inject.Inject;
 import javax.net.ssl.SSLContext;
 
 public class ElasticClientFactory {

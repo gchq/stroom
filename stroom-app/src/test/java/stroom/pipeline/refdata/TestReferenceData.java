@@ -58,6 +58,8 @@ import stroom.util.shared.Range;
 
 import io.vavr.Tuple;
 import io.vavr.Tuple3;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -82,8 +84,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.TreeSet;
-import jakarta.inject.Inject;
-import jakarta.inject.Provider;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

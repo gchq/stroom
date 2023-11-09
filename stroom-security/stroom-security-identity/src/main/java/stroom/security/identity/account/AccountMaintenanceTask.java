@@ -6,12 +6,11 @@ import stroom.task.api.TaskContextFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.time.StroomDuration;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Singleton
 class AccountMaintenanceTask {

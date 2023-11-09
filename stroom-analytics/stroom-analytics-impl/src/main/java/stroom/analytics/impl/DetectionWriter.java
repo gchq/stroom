@@ -4,6 +4,7 @@ import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.filter.XMLFilter;
 import stroom.util.shared.Severity;
 
+import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.Attributes;
@@ -12,7 +13,6 @@ import org.xml.sax.helpers.AttributesImpl;
 
 import java.util.List;
 import java.util.Locale;
-import jakarta.inject.Inject;
 
 public class DetectionWriter implements DetectionConsumer {
 

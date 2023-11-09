@@ -44,11 +44,12 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
+import jakarta.inject.Inject;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.nio.channels.ClosedByInterruptException;
-import jakarta.inject.Inject;
 
 public class AnalyticsStreamProcessor {
 

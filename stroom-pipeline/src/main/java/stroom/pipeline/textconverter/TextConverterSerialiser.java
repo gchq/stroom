@@ -6,9 +6,10 @@ import stroom.docstore.api.Serialiser2Factory;
 import stroom.pipeline.shared.TextConverterDoc;
 import stroom.util.string.EncodingUtil;
 
+import jakarta.inject.Inject;
+
 import java.io.IOException;
 import java.util.Map;
-import jakarta.inject.Inject;
 
 public class TextConverterSerialiser implements DocumentSerialiser2<TextConverterDoc> {
 

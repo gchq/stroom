@@ -22,11 +22,11 @@ import stroom.pipeline.xml.converter.ds3.DS3ParserFactory;
 import stroom.pipeline.xml.converter.xmlfragment.XMLFragmentParserFactory;
 import stroom.util.io.StreamUtil;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import org.xml.sax.ErrorHandler;
 
 import java.io.StringReader;
-import jakarta.inject.Inject;
-import jakarta.inject.Provider;
 
 public class DSChooser {
 

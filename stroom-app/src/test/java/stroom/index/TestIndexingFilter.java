@@ -45,6 +45,8 @@ import stroom.test.common.StroomPipelineTestFileUtil;
 import stroom.util.date.DateUtil;
 import stroom.util.pipeline.scope.PipelineScopeRunnable;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexOptions;
 import org.apache.lucene.index.IndexableFieldType;
@@ -54,8 +56,6 @@ import org.junit.jupiter.api.Test;
 
 import java.io.InputStream;
 import java.util.List;
-import jakarta.inject.Inject;
-import jakarta.inject.Provider;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

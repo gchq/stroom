@@ -19,12 +19,11 @@ package stroom.pipeline.xsltfunctions;
 import stroom.pipeline.state.FeedHolder;
 import stroom.util.shared.Severity;
 
+import jakarta.inject.Inject;
 import net.sf.saxon.expr.XPathContext;
 import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.value.StringValue;
-
-import jakarta.inject.Inject;
 
 class FeedName extends StroomExtensionFunctionCall {
 

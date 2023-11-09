@@ -27,11 +27,11 @@ import stroom.pipeline.xml.event.simple.StartElement;
 import stroom.pipeline.xml.event.simple.StartPrefixMapping;
 import stroom.svg.shared.SvgImage;
 
+import jakarta.inject.Inject;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 
 import java.util.List;
-import jakarta.inject.Inject;
 
 /**
  * Filters out records that have raised an error or warning during processing.

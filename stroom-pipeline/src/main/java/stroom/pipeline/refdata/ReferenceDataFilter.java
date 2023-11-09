@@ -40,6 +40,7 @@ import stroom.util.shared.Range;
 import stroom.util.shared.Severity;
 
 import com.sun.xml.fastinfoset.sax.SAXDocumentSerializer;
+import jakarta.inject.Inject;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 
@@ -53,7 +54,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
-import jakarta.inject.Inject;
 
 /**
  * This XML filter captures XML content that defines key, value maps to be

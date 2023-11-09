@@ -16,6 +16,8 @@
 
 package stroom.legacy.model_6_1;
 
+import jakarta.xml.bind.annotation.XmlTransient;
+
 import java.util.HashSet;
 import java.util.Set;
 import javax.persistence.Column;
@@ -27,7 +29,6 @@ import javax.persistence.Lob;
 import javax.persistence.ManyToMany;
 import javax.persistence.Table;
 import javax.persistence.Transient;
-import jakarta.xml.bind.annotation.XmlTransient;
 
 @Entity
 @Table(name = "IDX")

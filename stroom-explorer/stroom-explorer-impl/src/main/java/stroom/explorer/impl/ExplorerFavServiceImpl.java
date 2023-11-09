@@ -8,10 +8,11 @@ import stroom.security.api.SecurityContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
-import java.util.List;
-import java.util.Objects;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
+
+import java.util.List;
+import java.util.Objects;
 
 public class ExplorerFavServiceImpl implements ExplorerFavService {
 

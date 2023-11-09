@@ -32,6 +32,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
 import com.google.common.base.Preconditions;
+import jakarta.inject.Inject;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -42,7 +43,6 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import jakarta.inject.Inject;
 
 @SuppressWarnings("unused")
 class SearchableSearchProvider implements SearchProvider {

@@ -34,6 +34,9 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.BuildInfo;
 import stroom.util.shared.ModelStringUtil;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -42,8 +45,6 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
 
 /**
  * Component that remembers the node list and who is the current master node

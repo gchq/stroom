@@ -48,6 +48,8 @@ import stroom.util.io.PathCreator;
 import stroom.util.shared.Severity;
 import stroom.util.xml.XMLUtil;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import net.sf.saxon.s9api.XsltExecutable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,8 +63,6 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.util.List;
 import java.util.Properties;
-import jakarta.inject.Inject;
-import jakarta.inject.Provider;
 import javax.xml.transform.ErrorListener;
 import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.sax.TransformerHandler;

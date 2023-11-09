@@ -10,6 +10,8 @@ import stroom.security.shared.SessionResource;
 import stroom.security.shared.UrlResponse;
 import stroom.security.shared.ValidateSessionResponse;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import org.slf4j.Logger;
@@ -18,8 +20,6 @@ import org.slf4j.LoggerFactory;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
-import jakarta.inject.Inject;
-import jakarta.inject.Provider;
 
 @AutoLogged(OperationType.MANUALLY_LOGGED)
 public class SessionResourceImpl implements SessionResource {

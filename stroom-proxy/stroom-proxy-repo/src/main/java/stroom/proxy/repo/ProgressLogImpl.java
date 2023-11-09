@@ -1,5 +1,6 @@
 package stroom.proxy.repo;
 
+import jakarta.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -7,7 +8,6 @@ import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
-import jakarta.inject.Singleton;
 
 @Singleton
 public class ProgressLogImpl implements ProgressLog {

@@ -4,10 +4,9 @@ import stroom.util.config.ConfigValidator.Result;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.validation.ValidationSeverity;
 
+import jakarta.inject.Inject;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
-
-import jakarta.inject.Inject;
 
 public class AppConfigValidator {
 

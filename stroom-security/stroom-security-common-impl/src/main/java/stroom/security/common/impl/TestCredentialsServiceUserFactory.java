@@ -6,8 +6,9 @@ import stroom.util.authentication.DefaultOpenIdCredentials;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
-import java.util.Objects;
 import jakarta.inject.Inject;
+
+import java.util.Objects;
 
 public class TestCredentialsServiceUserFactory implements ServiceUserFactory {
 

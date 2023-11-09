@@ -2,10 +2,10 @@ package stroom.db.util;
 
 import stroom.query.api.v2.ExpressionItem;
 
+import jakarta.inject.Inject;
 import org.jooq.Condition;
 
 import java.util.function.Function;
-import jakarta.inject.Inject;
 
 public class ExpressionMapperFactory {
 

@@ -18,11 +18,11 @@ import stroom.proxy.repo.store.SequentialFileStore;
 import stroom.util.shared.Flushable;
 
 import io.dropwizard.lifecycle.Managed;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 import java.util.List;
 import java.util.Set;
-import jakarta.inject.Inject;
-import jakarta.inject.Provider;
 
 public class ProxyLifecycle implements Managed {
 

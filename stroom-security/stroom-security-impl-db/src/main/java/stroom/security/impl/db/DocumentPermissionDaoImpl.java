@@ -5,12 +5,13 @@ import stroom.security.impl.DocumentPermissionDao;
 import stroom.security.impl.UserDocumentPermissions;
 import stroom.security.shared.DocumentPermissionNames;
 
+import jakarta.inject.Inject;
+
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import jakarta.inject.Inject;
 
 import static stroom.security.impl.db.jooq.tables.DocPermission.DOC_PERMISSION;
 

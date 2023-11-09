@@ -23,12 +23,12 @@ import stroom.pipeline.xml.XMLValidator;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.util.pipeline.scope.PipelineScopeRunnable;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-import jakarta.inject.Inject;
-import jakarta.inject.Provider;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

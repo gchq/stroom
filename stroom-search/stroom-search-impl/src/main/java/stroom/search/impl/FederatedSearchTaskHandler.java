@@ -36,6 +36,9 @@ import stroom.task.shared.ThreadPool;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -43,8 +46,6 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
-import jakarta.inject.Inject;
-import jakarta.inject.Provider;
 
 class FederatedSearchTaskHandler {
 

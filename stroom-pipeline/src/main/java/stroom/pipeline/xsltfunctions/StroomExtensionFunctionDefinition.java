@@ -21,13 +21,13 @@ import stroom.pipeline.errorhandler.ErrorReceiver;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.xml.NamespaceConstants;
 
+import jakarta.inject.Provider;
 import net.sf.saxon.lib.ExtensionFunctionCall;
 import net.sf.saxon.lib.ExtensionFunctionDefinition;
 import net.sf.saxon.om.StructuredQName;
 import net.sf.saxon.value.SequenceType;
 
 import java.util.List;
-import jakarta.inject.Provider;
 
 class StroomExtensionFunctionDefinition<T extends StroomExtensionFunctionCall> extends ExtensionFunctionDefinition {
 

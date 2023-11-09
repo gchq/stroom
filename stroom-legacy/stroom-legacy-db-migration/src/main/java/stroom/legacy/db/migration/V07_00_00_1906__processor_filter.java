@@ -5,6 +5,7 @@ import stroom.processor.impl.db.ProcessorFilterMarshaller;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.util.xml.XMLMarshallerUtil;
 
+import jakarta.xml.bind.JAXBContext;
 import org.flywaydb.core.api.migration.BaseJavaMigration;
 import org.flywaydb.core.api.migration.Context;
 import org.slf4j.Logger;
@@ -14,7 +15,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Objects;
-import jakarta.xml.bind.JAXBContext;
 
 @Deprecated
 public class V07_00_00_1906__processor_filter extends BaseJavaMigration {

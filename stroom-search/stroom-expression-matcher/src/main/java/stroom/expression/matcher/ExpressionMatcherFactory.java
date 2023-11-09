@@ -5,8 +5,9 @@ import stroom.datasource.api.v2.AbstractField;
 import stroom.dictionary.api.WordListProvider;
 import stroom.expression.api.DateTimeSettings;
 
-import java.util.Map;
 import jakarta.inject.Inject;
+
+import java.util.Map;
 
 public class ExpressionMatcherFactory {
 

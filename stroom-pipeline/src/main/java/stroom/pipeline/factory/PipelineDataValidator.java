@@ -25,10 +25,11 @@ import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.pipeline.shared.data.PipelinePropertyType;
 import stroom.pipeline.shared.data.PipelineReference;
 
+import jakarta.inject.Inject;
+
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import jakarta.inject.Inject;
 
 public class PipelineDataValidator {
 

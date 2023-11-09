@@ -21,6 +21,7 @@ import stroom.security.api.SecurityContext;
 import stroom.util.io.FileUtil;
 import stroom.util.io.PathCreator;
 
+import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,7 +33,6 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
-import jakarta.inject.Inject;
 
 @SuppressWarnings("unused")
 public class ContentPackImport {

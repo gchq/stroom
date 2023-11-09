@@ -53,10 +53,11 @@ import stroom.util.date.DateUtil;
 import stroom.util.io.IgnoreCloseInputStream;
 import stroom.util.shared.Severity;
 
+import jakarta.inject.Inject;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
-import jakarta.inject.Inject;
 
 
 class HeadlessTranslationTaskHandler {

@@ -8,10 +8,11 @@ import stroom.security.openid.api.OpenIdConfiguration;
 import stroom.util.authentication.DefaultOpenIdCredentials;
 import stroom.util.logging.LogUtil;
 
-import java.security.SecureRandom;
-import java.util.Objects;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
+
+import java.security.SecureRandom;
+import java.util.Objects;
 
 public class OpenIdClientDetailsFactoryImpl implements OpenIdClientFactory {
 

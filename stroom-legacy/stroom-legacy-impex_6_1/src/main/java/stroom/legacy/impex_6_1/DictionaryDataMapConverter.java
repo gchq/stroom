@@ -11,11 +11,12 @@ import stroom.legacy.model_6_1.OldDictionaryDoc;
 import stroom.util.shared.Severity;
 import stroom.util.string.EncodingUtil;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+
 import java.io.IOException;
 import java.util.Map;
 import java.util.UUID;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
 
 @Singleton
 @Deprecated

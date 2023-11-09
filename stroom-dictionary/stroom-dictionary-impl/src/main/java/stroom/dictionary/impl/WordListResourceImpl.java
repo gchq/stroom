@@ -22,13 +22,13 @@ import stroom.dictionary.shared.WordListResource;
 import stroom.docref.DocRef;
 import stroom.event.logging.rs.api.AutoLogged;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 import java.util.List;
-import jakarta.inject.Inject;
-import jakarta.inject.Provider;
 
 @AutoLogged
 class WordListResourceImpl implements WordListResource {

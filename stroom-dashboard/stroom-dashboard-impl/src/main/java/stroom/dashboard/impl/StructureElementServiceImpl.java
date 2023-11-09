@@ -3,11 +3,12 @@ package stroom.dashboard.impl;
 import stroom.dashboard.shared.StructureElement;
 import stroom.util.NullSafe;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
 
 @Singleton
 class StructureElementServiceImpl implements StructureElementService {

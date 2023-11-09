@@ -21,12 +21,11 @@ import stroom.activity.shared.Activity;
 import stroom.security.api.SecurityContext;
 
 import com.google.inject.Inject;
+import jakarta.inject.Provider;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import jakarta.inject.Provider;
 
 public class CurrentActivityImpl implements CurrentActivity {
 

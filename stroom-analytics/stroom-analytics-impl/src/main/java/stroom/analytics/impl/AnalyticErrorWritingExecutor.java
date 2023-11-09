@@ -4,9 +4,10 @@ import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TerminateHandlerFactory;
 
-import java.util.function.Consumer;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
+
+import java.util.function.Consumer;
 
 class AnalyticErrorWritingExecutor {
 

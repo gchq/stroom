@@ -34,6 +34,7 @@ import stroom.util.shared.StoredError;
 import stroom.xmlschema.shared.XmlSchemaDoc;
 
 import com.google.common.base.Strings;
+import jakarta.inject.Inject;
 import org.xml.sax.Attributes;
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.Locator;
@@ -44,7 +45,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 import java.util.regex.Pattern;
-import jakarta.inject.Inject;
 import javax.xml.XMLConstants;
 import javax.xml.validation.Schema;
 import javax.xml.validation.ValidatorHandler;

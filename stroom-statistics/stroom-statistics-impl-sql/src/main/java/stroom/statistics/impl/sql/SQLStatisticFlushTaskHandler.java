@@ -25,6 +25,9 @@ import stroom.util.logging.LogExecutionTime;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.ModelStringUtil;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+
 import java.sql.BatchUpdateException;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -32,8 +35,6 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Supplier;
-import jakarta.inject.Inject;
-import jakarta.inject.Provider;
 
 
 // @NotThreadSafe // Each thread should construct its own instance for each call to exec

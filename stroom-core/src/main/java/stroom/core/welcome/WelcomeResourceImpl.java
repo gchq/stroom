@@ -9,7 +9,6 @@ import stroom.ui.config.shared.UiConfig;
 import event.logging.Banner;
 import event.logging.ComplexLoggedOutcome;
 import event.logging.ViewEventAction;
-
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 

@@ -11,12 +11,12 @@ import stroom.test.common.util.test.FileSystemTestUtil;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import jakarta.inject.Inject;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import jakarta.inject.Inject;
 
 /**
  * This class should be used when integration tests require stroom content that is available as

@@ -24,6 +24,7 @@ import stroom.util.date.DateFormatterCache;
 import stroom.util.date.DateUtil;
 import stroom.util.shared.Severity;
 
+import jakarta.inject.Inject;
 import net.sf.saxon.expr.XPathContext;
 import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
@@ -47,7 +48,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
-import jakarta.inject.Inject;
 
 class FormatDate extends StroomExtensionFunctionCall {
 

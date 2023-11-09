@@ -22,6 +22,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
 import com.google.inject.assistedinject.Assisted;
+import jakarta.inject.Inject;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.IOException;
@@ -31,7 +32,6 @@ import java.nio.ByteBuffer;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
-import jakarta.inject.Inject;
 
 /*
  * This class is derived from and copies parts of

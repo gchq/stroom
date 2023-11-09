@@ -21,11 +21,10 @@ import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.node.api.NodeService;
 import stroom.util.shared.ResourcePaths;
 
-import jakarta.ws.rs.client.Entity;
-
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
+import jakarta.ws.rs.client.Entity;
 
 @Singleton
 @AutoLogged(OperationType.UNLOGGED) //Perm changes logged by DocPermissionResourceImpl

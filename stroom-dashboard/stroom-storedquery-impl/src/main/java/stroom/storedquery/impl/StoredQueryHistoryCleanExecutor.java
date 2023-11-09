@@ -23,11 +23,12 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.UserName;
 
+import jakarta.inject.Inject;
+
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.function.Supplier;
-import jakarta.inject.Inject;
 
 /**
  * Task to clean out old query history items.

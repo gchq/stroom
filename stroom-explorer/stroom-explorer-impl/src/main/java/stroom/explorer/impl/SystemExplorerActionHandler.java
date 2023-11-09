@@ -13,12 +13,13 @@ import stroom.security.shared.DocumentPermissionNames;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.PermissionException;
 
+import jakarta.inject.Inject;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import jakarta.inject.Inject;
 
 class SystemExplorerActionHandler implements ExplorerActionHandler {
 

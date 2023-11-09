@@ -9,11 +9,11 @@ import stroom.pipeline.refdata.store.ValueStoreHashAlgorithm;
 import stroom.pipeline.refdata.store.offheapstore.StagingRefDataValue;
 import stroom.util.logging.LogUtil;
 
+import jakarta.inject.Inject;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import jakarta.inject.Inject;
 
 /**
  * <pre>{@code

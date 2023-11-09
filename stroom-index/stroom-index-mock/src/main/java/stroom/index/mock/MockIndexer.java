@@ -22,11 +22,11 @@ import stroom.index.impl.Indexer;
 import stroom.index.shared.IndexShardKey;
 import stroom.util.io.TempDirProvider;
 
+import jakarta.inject.Inject;
 import org.apache.lucene.document.Document;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import jakarta.inject.Inject;
 
 public class MockIndexer implements Indexer {
 

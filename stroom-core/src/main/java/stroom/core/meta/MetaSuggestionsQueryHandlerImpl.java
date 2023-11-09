@@ -20,6 +20,8 @@ import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.util.filter.QuickFilterPredicateFactory;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import jakarta.validation.constraints.NotNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.slf4j.Logger;
@@ -35,8 +37,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
 
 @Singleton
 public class MetaSuggestionsQueryHandlerImpl implements MetaSuggestionsQueryHandler {

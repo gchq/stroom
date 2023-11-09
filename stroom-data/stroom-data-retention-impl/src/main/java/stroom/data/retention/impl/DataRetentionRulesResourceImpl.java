@@ -33,7 +33,6 @@ import event.logging.Query;
 import event.logging.Term;
 import event.logging.TermCondition;
 import io.swagger.v3.oas.annotations.Parameter;
-
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 

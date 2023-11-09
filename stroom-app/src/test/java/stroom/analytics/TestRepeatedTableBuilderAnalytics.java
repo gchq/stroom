@@ -32,6 +32,7 @@ import stroom.resource.impl.ResourceModule;
 import stroom.security.mock.MockSecurityContextModule;
 import stroom.test.BootstrapTestModule;
 
+import jakarta.inject.Inject;
 import name.falgout.jeffrey.testing.junit.guice.GuiceExtension;
 import name.falgout.jeffrey.testing.junit.guice.IncludeModule;
 import org.junit.jupiter.api.Test;
@@ -39,7 +40,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
-import jakarta.inject.Inject;
 
 @ExtendWith(GuiceExtension.class)
 @IncludeModule(UriFactoryModule.class)

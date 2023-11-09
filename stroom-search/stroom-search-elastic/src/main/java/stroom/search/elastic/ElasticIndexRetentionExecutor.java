@@ -32,6 +32,8 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.core.TimeValue;
 import org.elasticsearch.index.query.QueryBuilder;
@@ -40,8 +42,6 @@ import org.elasticsearch.index.reindex.DeleteByQueryRequest;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
 
 @Singleton
 public class ElasticIndexRetentionExecutor {

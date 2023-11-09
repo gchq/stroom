@@ -41,6 +41,7 @@ import stroom.util.CharBuffer;
 import stroom.util.date.DateUtil;
 import stroom.util.shared.Severity;
 
+import jakarta.inject.Inject;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.slf4j.Logger;
@@ -53,7 +54,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
-import jakarta.inject.Inject;
 
 /**
  * The index filter... takes the index XML and builds the LUCENE documents

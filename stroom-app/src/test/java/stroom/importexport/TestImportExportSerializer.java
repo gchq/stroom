@@ -55,6 +55,7 @@ import stroom.util.shared.Message;
 import stroom.util.shared.Severity;
 import stroom.xmlschema.shared.XmlSchemaDoc;
 
+import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -68,7 +69,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

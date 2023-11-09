@@ -8,12 +8,13 @@ import stroom.util.logging.LogUtil;
 import stroom.util.shared.Severity;
 import stroom.util.shared.StringUtil;
 
+import jakarta.inject.Inject;
+
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.NavigableSet;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import jakarta.inject.Inject;
 
 public class EffectiveStreamService {
 

@@ -25,13 +25,13 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.swagger.v3.oas.annotations.media.Schema;
-
-import java.util.Objects;
-import java.util.function.Predicate;
 import jakarta.xml.bind.annotation.XmlAccessType;
 import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlType;
+
+import java.util.Objects;
+import java.util.function.Predicate;
 
 @JsonPropertyOrder({"field", "condition", "value", "docRef"})
 @JsonInclude(JsonInclude.Include.NON_NULL)

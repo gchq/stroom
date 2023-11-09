@@ -34,14 +34,15 @@ import stroom.meta.shared.Status;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
 
 /**
  * A file system stream store.

@@ -7,13 +7,13 @@ import stroom.feed.shared.FeedDoc.FeedStatus;
 import stroom.meta.api.MetaService;
 import stroom.util.io.StreamUtil;
 
+import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 import java.util.Optional;
-import jakarta.inject.Inject;
 
 public class FeedPropertiesImpl implements FeedProperties {
 

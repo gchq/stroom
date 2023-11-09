@@ -5,11 +5,12 @@ import stroom.docstore.api.RWLockFactory;
 import stroom.docstore.impl.Persistence;
 import stroom.util.shared.Clearable;
 
+import jakarta.inject.Singleton;
+
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
-import jakarta.inject.Singleton;
 
 @Singleton
 public class MemoryPersistence implements Persistence, Clearable {

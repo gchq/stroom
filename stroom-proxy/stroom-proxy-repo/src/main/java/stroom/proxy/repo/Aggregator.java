@@ -20,10 +20,11 @@ import stroom.proxy.repo.dao.AggregateDao;
 import stroom.proxy.repo.queue.Batch;
 import stroom.proxy.repo.queue.BatchUtil;
 
-import java.util.concurrent.TimeUnit;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
+
+import java.util.concurrent.TimeUnit;
 
 @Singleton
 public class Aggregator {

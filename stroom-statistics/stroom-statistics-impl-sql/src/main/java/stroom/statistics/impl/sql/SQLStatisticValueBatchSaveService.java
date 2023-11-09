@@ -18,6 +18,7 @@ package stroom.statistics.impl.sql;
 
 import stroom.util.logging.LogExecutionTime;
 
+import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,7 +28,6 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.Duration;
 import java.util.List;
-import jakarta.inject.Inject;
 
 /**
  * SQL_STAT_VAL_SRC - Input Table SQL_STAT_KEY - Key Table SQL_STAT_VAL - Value

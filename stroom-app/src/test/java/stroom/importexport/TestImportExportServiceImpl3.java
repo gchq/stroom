@@ -27,13 +27,13 @@ import stroom.test.common.util.test.FileSystemTestUtil;
 import stroom.util.shared.Message;
 import stroom.util.zip.ZipUtil;
 
+import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

@@ -29,6 +29,8 @@ import stroom.util.entityevent.EntityEventBus;
 import stroom.util.shared.SimpleUserName;
 import stroom.util.shared.UserName;
 
+import jakarta.inject.Inject;
+
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -37,7 +39,6 @@ import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import jakarta.inject.Inject;
 
 class UserServiceImpl implements UserService {
 

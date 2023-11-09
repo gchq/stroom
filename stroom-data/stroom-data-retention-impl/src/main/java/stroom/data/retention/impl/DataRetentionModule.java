@@ -23,7 +23,6 @@ import stroom.util.guice.RestResourcesBinder;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
-
 import jakarta.inject.Inject;
 
 import static stroom.job.api.Schedule.ScheduleType.CRON;

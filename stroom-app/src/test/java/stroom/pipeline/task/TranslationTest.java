@@ -69,6 +69,7 @@ import stroom.util.logging.LogUtil;
 import stroom.util.shared.Indicators;
 import stroom.util.shared.ResultPage;
 
+import jakarta.inject.Inject;
 import jakarta.validation.constraints.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -89,7 +90,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
-import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;

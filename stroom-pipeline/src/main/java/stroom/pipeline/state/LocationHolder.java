@@ -29,11 +29,11 @@ import stroom.util.shared.DefaultLocation;
 import stroom.util.shared.Location;
 import stroom.util.shared.TextRange;
 
+import jakarta.inject.Inject;
 import org.xml.sax.Locator;
 
 import java.util.ArrayList;
 import java.util.List;
-import jakarta.inject.Inject;
 
 @PipelineScoped
 public class LocationHolder implements Holder {

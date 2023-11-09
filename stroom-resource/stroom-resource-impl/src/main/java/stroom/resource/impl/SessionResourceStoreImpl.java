@@ -22,6 +22,7 @@ import stroom.util.servlet.HttpServletRequestHolder;
 import stroom.util.shared.IsServlet;
 import stroom.util.shared.ResourceKey;
 
+import jakarta.inject.Inject;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -32,7 +33,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Set;
 import java.util.UUID;
-import jakarta.inject.Inject;
 
 /**
  * Wrapper for the ResourceStore that makes sure the user can only access stuff

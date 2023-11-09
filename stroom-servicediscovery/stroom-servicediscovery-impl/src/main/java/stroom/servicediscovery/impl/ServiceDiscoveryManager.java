@@ -1,6 +1,8 @@
 package stroom.servicediscovery.impl;
 
 import com.google.common.base.Preconditions;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import org.apache.curator.RetryPolicy;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
@@ -19,8 +21,6 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
 
 @Singleton
 public class ServiceDiscoveryManager {

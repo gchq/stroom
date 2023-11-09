@@ -12,10 +12,11 @@ import stroom.processor.shared.ProcessorListRow;
 import stroom.processor.shared.ReprocessDataInfo;
 import stroom.util.shared.ResultPage;
 
-import java.util.List;
-import java.util.Optional;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+
+import java.util.List;
+import java.util.Optional;
 
 @Singleton
 public class MockProcessorFilterService implements ProcessorFilterService {

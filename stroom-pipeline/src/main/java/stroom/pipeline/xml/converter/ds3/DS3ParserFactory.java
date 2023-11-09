@@ -23,6 +23,7 @@ import stroom.pipeline.xml.converter.ds3.ref.VarMap;
 import stroom.pipeline.xmlschema.FindXMLSchemaCriteria;
 import stroom.util.xml.SAXParserFactoryFactory;
 
+import jakarta.inject.Inject;
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -30,7 +31,6 @@ import org.xml.sax.XMLReader;
 
 import java.io.IOException;
 import java.io.Reader;
-import jakarta.inject.Inject;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParserFactory;
 

@@ -5,12 +5,13 @@ import stroom.explorer.api.HasDataSourceDocRefs;
 import stroom.searchable.api.Searchable;
 import stroom.searchable.api.SearchableProvider;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
 
 @Singleton
 class SearchableProviderImpl implements SearchableProvider, HasDataSourceDocRefs {

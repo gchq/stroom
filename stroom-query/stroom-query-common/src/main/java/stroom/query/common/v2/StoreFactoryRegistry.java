@@ -2,12 +2,13 @@ package stroom.query.common.v2;
 
 import stroom.docref.DocRef;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
 
 @Singleton
 public class StoreFactoryRegistry {

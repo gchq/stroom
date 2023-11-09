@@ -5,11 +5,11 @@ import stroom.security.impl.AppPermissionDao;
 import stroom.security.impl.db.jooq.tables.StroomUser;
 import stroom.security.impl.db.jooq.tables.records.AppPermissionRecord;
 
+import jakarta.inject.Inject;
 import org.jooq.Record;
 
 import java.util.HashSet;
 import java.util.Set;
-import jakarta.inject.Inject;
 
 import static stroom.security.impl.db.jooq.Tables.STROOM_USER_GROUP;
 import static stroom.security.impl.db.jooq.tables.AppPermission.APP_PERMISSION;

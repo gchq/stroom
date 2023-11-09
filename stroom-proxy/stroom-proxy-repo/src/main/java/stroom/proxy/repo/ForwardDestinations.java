@@ -2,13 +2,14 @@ package stroom.proxy.repo;
 
 import stroom.proxy.repo.dao.ForwardDestDao;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
 
 @Singleton
 public class ForwardDestinations {

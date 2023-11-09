@@ -20,6 +20,7 @@ package stroom.node.mock;
 import stroom.node.api.FindNodeCriteria;
 import stroom.node.api.NodeService;
 
+import jakarta.inject.Singleton;
 import jakarta.ws.rs.client.Invocation.Builder;
 import jakarta.ws.rs.core.Response;
 
@@ -28,7 +29,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import jakarta.inject.Singleton;
 
 /**
  * Mock class that manages one node.

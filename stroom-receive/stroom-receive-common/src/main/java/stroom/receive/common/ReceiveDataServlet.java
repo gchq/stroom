@@ -22,6 +22,8 @@ import stroom.util.shared.IsServlet;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.Unauthenticated;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -32,8 +34,6 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.Enumeration;
 import java.util.Set;
-import jakarta.inject.Inject;
-import jakarta.inject.Provider;
 
 /**
  * <p>

@@ -25,11 +25,12 @@ import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFieldsMap;
 import stroom.util.shared.Clearable;
 
-import java.util.ArrayList;
-import java.util.List;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Singleton
 public class IndexStructureCacheImpl implements IndexStructureCache, Clearable {

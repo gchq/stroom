@@ -9,6 +9,8 @@ import stroom.index.impl.db.jooq.tables.records.IndexVolumeGroupRecord;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexVolumeGroup;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import org.jooq.Record;
 import org.jooq.exception.DataAccessException;
 import org.slf4j.Logger;
@@ -19,8 +21,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
-import jakarta.inject.Inject;
-import jakarta.inject.Provider;
 
 import static stroom.index.impl.db.jooq.Tables.INDEX_VOLUME_GROUP;
 

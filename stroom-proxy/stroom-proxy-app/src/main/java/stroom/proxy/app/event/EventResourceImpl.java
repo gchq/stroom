@@ -18,10 +18,9 @@ package stroom.proxy.app.event;
 
 import stroom.meta.api.AttributeMap;
 
-import jakarta.servlet.http.HttpServletRequest;
-
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import jakarta.servlet.http.HttpServletRequest;
 
 @Singleton
 public class EventResourceImpl implements EventResource {

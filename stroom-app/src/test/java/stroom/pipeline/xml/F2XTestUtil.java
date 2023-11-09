@@ -42,10 +42,11 @@ import stroom.task.api.TaskContextFactory;
 import stroom.test.common.StroomPipelineTestFileUtil;
 import stroom.util.shared.Severity;
 
+import jakarta.inject.Inject;
+
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.util.List;
-import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;

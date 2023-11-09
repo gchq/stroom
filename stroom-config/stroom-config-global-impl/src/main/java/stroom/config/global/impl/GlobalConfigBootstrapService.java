@@ -6,10 +6,11 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.PropertyPath;
 
-import java.util.ArrayList;
-import java.util.List;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Singleton // Needs to be singleton to prevent initialise being called multiple times
 public class GlobalConfigBootstrapService {

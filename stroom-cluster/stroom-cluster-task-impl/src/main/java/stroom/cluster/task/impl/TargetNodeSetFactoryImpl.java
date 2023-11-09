@@ -24,13 +24,13 @@ import stroom.cluster.task.api.TargetNodeSetFactory;
 import stroom.cluster.task.api.TargetType;
 import stroom.node.api.NodeInfo;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 import java.util.Set;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
 
 @Singleton
 public class TargetNodeSetFactoryImpl implements TargetNodeSetFactory {

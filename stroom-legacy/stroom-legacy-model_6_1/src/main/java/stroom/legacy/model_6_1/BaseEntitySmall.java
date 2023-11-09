@@ -16,12 +16,13 @@
 
 package stroom.legacy.model_6_1;
 
+import jakarta.xml.bind.annotation.XmlTransient;
+
 import javax.persistence.Column;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.MappedSuperclass;
-import jakarta.xml.bind.annotation.XmlTransient;
 
 @MappedSuperclass
 @Deprecated

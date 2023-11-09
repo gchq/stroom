@@ -18,9 +18,10 @@ package stroom.test;
 
 import stroom.util.shared.Clearable;
 
+import jakarta.inject.Inject;
+
 import java.nio.file.Path;
 import java.util.Set;
-import jakarta.inject.Inject;
 
 /**
  * Version of the test control used with the mocks.

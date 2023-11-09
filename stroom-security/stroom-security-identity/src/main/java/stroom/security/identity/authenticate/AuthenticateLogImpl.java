@@ -11,10 +11,10 @@ import event.logging.MultiObject;
 import event.logging.OtherObject;
 import event.logging.UpdateEventAction;
 import event.logging.User;
-
-import java.util.Map;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
+
+import java.util.Map;
 
 public class AuthenticateLogImpl implements AuthenticateLog {
 //    private static final String AUTH_STATE = "AUTH_STATE";

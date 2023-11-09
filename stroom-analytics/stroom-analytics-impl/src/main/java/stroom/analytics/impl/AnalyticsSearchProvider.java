@@ -37,10 +37,11 @@ import stroom.search.impl.FederatedSearchExecutor;
 import stroom.search.impl.FederatedSearchTask;
 import stroom.security.api.SecurityContext;
 
+import jakarta.inject.Inject;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import jakarta.inject.Inject;
 
 public class AnalyticsSearchProvider implements SearchProvider, HasDataSourceDocRefs {
 

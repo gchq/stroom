@@ -12,6 +12,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.servlet.UserAgentSessionUtil;
 
+import jakarta.inject.Inject;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import jakarta.ws.rs.core.UriBuilder;
@@ -19,7 +20,6 @@ import jakarta.ws.rs.core.UriBuilder;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import jakarta.inject.Inject;
 
 class OpenIdManager {
 

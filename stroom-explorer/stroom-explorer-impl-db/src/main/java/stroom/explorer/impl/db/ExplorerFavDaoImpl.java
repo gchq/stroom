@@ -5,6 +5,7 @@ import stroom.docref.DocRef;
 import stroom.explorer.impl.ExplorerFavDao;
 import stroom.explorer.impl.db.jooq.tables.records.ExplorerFavouriteRecord;
 
+import jakarta.inject.Inject;
 import org.jooq.DSLContext;
 import org.jooq.Record1;
 import org.jooq.SelectConditionStep;
@@ -12,7 +13,6 @@ import org.jooq.SelectConditionStep;
 import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
-import jakarta.inject.Inject;
 
 import static stroom.explorer.impl.db.jooq.Tables.EXPLORER_FAVOURITE;
 import static stroom.explorer.impl.db.jooq.Tables.EXPLORER_NODE;

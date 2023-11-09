@@ -5,9 +5,10 @@ import stroom.docstore.api.Serialiser2;
 import stroom.docstore.api.Serialiser2Factory;
 import stroom.search.solr.shared.SolrIndexDoc;
 
+import jakarta.inject.Inject;
+
 import java.io.IOException;
 import java.util.Map;
-import jakarta.inject.Inject;
 
 @Deprecated
 public class SolrIndexSerialiser implements DocumentSerialiser2<SolrIndexDoc> {

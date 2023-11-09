@@ -36,6 +36,7 @@ import stroom.query.common.v2.ResultStoreManager;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.json.JsonUtil;
 
+import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,7 +47,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

@@ -53,6 +53,8 @@ import stroom.util.io.StreamUtil;
 import stroom.util.shared.Severity;
 import stroom.util.xml.SAXParserFactoryFactory;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
@@ -62,8 +64,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.function.Consumer;
-import jakarta.inject.Inject;
-import jakarta.inject.Provider;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;

@@ -91,6 +91,7 @@ import stroom.util.shared.ResultPage;
 import stroom.util.shared.Severity;
 
 import com.google.common.collect.ImmutableSortedMap;
+import jakarta.inject.Inject;
 import org.slf4j.MarkerFactory;
 
 import java.io.IOException;
@@ -104,7 +105,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import jakarta.inject.Inject;
 
 public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecutor {
 

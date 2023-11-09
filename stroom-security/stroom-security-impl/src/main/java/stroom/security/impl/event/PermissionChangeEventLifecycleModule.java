@@ -20,7 +20,6 @@ import stroom.lifecycle.api.LifecycleBinder;
 import stroom.util.RunnableWrapper;
 
 import com.google.inject.AbstractModule;
-
 import jakarta.inject.Inject;
 
 public class PermissionChangeEventLifecycleModule extends AbstractModule {

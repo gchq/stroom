@@ -3,8 +3,9 @@ package stroom.search.extraction;
 import stroom.pipeline.filter.FieldValue;
 import stroom.util.pipeline.scope.PipelineScoped;
 
-import java.util.List;
 import jakarta.inject.Inject;
+
+import java.util.List;
 
 @PipelineScoped
 public class FieldListConsumerHolder implements FieldListConsumer {

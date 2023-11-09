@@ -28,12 +28,12 @@ import stroom.util.shared.ResultPage;
 import event.logging.AdvancedQuery;
 import event.logging.And;
 import event.logging.Query;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.function.Consumer;
-import jakarta.inject.Inject;
-import jakarta.inject.Provider;
 
 @AutoLogged(OperationType.MANUALLY_LOGGED)
 class JobResourceImpl implements JobResource {

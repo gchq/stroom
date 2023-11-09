@@ -54,6 +54,7 @@ import io.dropwizard.core.Application;
 import io.dropwizard.core.setup.Bootstrap;
 import io.dropwizard.core.setup.Environment;
 import io.dropwizard.servlets.tasks.LogConfigurationTask;
+import jakarta.inject.Inject;
 import jakarta.servlet.DispatcherType;
 import jakarta.servlet.FilterRegistration;
 import jakarta.validation.ValidatorFactory;
@@ -64,7 +65,6 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.EnumSet;
 import java.util.Objects;
-import jakarta.inject.Inject;
 
 public class App extends Application<Config> {
 

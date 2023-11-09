@@ -6,7 +6,6 @@ import stroom.util.RunnableWrapper;
 import stroom.util.guice.HasHealthCheckBinder;
 
 import com.google.inject.AbstractModule;
-
 import jakarta.inject.Inject;
 
 public class ServiceDiscoveryModule extends AbstractModule {

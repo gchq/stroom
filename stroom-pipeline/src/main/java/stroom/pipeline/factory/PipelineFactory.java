@@ -47,6 +47,7 @@ import stroom.pipeline.writer.OutputRecorder;
 import stroom.task.api.Terminator;
 import stroom.util.pipeline.scope.PipelineScoped;
 
+import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,7 +60,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import jakarta.inject.Inject;
 
 @PipelineScoped
 public class PipelineFactory {

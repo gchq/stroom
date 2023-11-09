@@ -21,11 +21,10 @@ import stroom.test.CommonTestControl;
 import stroom.test.CommonTranslationTestHelper;
 import stroom.test.StoreCreationTool;
 
+import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import jakarta.inject.Inject;
 
 class TestPipelineStatistics {
 

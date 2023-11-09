@@ -53,13 +53,13 @@ import stroom.test.CommonTestControl;
 import stroom.util.shared.ResourceKey;
 import stroom.visualisation.shared.VisualisationDoc;
 
+import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

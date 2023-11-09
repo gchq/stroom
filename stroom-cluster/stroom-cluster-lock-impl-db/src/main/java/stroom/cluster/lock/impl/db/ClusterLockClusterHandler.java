@@ -21,12 +21,12 @@ import stroom.task.api.TaskContextFactory;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.PermissionException;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.ConcurrentHashMap;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
 
 @Singleton
 public class ClusterLockClusterHandler {

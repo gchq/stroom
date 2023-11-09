@@ -26,9 +26,8 @@ import stroom.pipeline.xml.converter.json.JSONFactoryConfig;
 import stroom.pipeline.xml.converter.json.JSONParserFactory;
 import stroom.svg.shared.SvgImage;
 
-import org.xml.sax.XMLReader;
-
 import jakarta.inject.Inject;
+import org.xml.sax.XMLReader;
 
 @ConfigurableElement(
         type = "JSONParser",

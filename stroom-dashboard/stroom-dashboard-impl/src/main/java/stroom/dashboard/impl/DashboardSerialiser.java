@@ -7,13 +7,13 @@ import stroom.docstore.api.Serialiser2;
 import stroom.docstore.api.Serialiser2Factory;
 import stroom.util.string.EncodingUtil;
 
+import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.Map;
-import jakarta.inject.Inject;
 
 public class DashboardSerialiser implements DocumentSerialiser2<DashboardDoc> {
 

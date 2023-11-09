@@ -47,6 +47,8 @@ import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.filter.FilterFieldDefinition;
 import stroom.view.api.ViewStore;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import jakarta.ws.rs.client.Entity;
 
 import java.util.Collections;
@@ -55,8 +57,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import jakarta.inject.Inject;
-import jakarta.inject.Provider;
 
 @AutoLogged
 class QueryResourceImpl implements QueryResource {

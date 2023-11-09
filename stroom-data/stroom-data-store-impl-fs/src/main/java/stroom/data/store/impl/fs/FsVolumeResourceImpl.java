@@ -29,7 +29,6 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ResultPage;
 
 import event.logging.Query;
-
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 

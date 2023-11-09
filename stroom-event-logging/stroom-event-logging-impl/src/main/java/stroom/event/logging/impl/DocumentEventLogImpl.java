@@ -46,14 +46,14 @@ import event.logging.UnknownEventAction;
 import event.logging.UpdateEventAction;
 import event.logging.ViewEventAction;
 import event.logging.util.EventLoggingUtil;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Optional;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
 
 @Singleton
 public class DocumentEventLogImpl implements DocumentEventLog {

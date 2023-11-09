@@ -25,8 +25,9 @@ import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.Severity;
 
-import java.io.Reader;
 import jakarta.inject.Inject;
+
+import java.io.Reader;
 
 @ConfigurableElement(
         type = "InvalidCharFilterReader",

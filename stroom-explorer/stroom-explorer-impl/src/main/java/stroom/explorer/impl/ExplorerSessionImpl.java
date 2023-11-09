@@ -4,12 +4,12 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 
 import java.util.Optional;
-import jakarta.inject.Inject;
-import jakarta.inject.Provider;
 
 class ExplorerSessionImpl implements ExplorerSession {
 

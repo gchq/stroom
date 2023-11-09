@@ -23,6 +23,9 @@ import stroom.statistics.api.InternalStatisticsReceiver;
 import stroom.util.date.DateUtil;
 
 import com.google.common.base.Preconditions;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,9 +33,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
-import jakarta.inject.Inject;
-import jakarta.inject.Provider;
-import jakarta.inject.Singleton;
 
 @Singleton
 class MetaStatisticsImpl implements MetaStatistics {

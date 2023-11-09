@@ -21,7 +21,6 @@ import stroom.statistics.api.InternalStatisticsReceiver;
 import stroom.util.RunnableWrapper;
 
 import com.google.inject.AbstractModule;
-
 import jakarta.inject.Inject;
 
 public class InternalStatisticsModule extends AbstractModule {

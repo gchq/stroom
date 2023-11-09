@@ -21,9 +21,10 @@ import stroom.cluster.api.ClusterState;
 import stroom.node.api.NodeInfo;
 import stroom.node.shared.ClusterNodeInfo;
 
+import jakarta.inject.Inject;
+
 import java.util.Collections;
 import java.util.Set;
-import jakarta.inject.Inject;
 
 public class MockClusterNodeManager implements ClusterNodeManager {
 

@@ -12,14 +12,14 @@ import stroom.util.shared.validation.ValidRegexValidator;
 import stroom.util.shared.validation.ValidSimpleCronValidator;
 
 import com.google.inject.ConfigurationException;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorFactory;
 import jakarta.validation.Validation;
 
 import java.util.Map;
-import jakarta.inject.Inject;
-import jakarta.inject.Provider;
-import jakarta.inject.Singleton;
 
 @Singleton
 public class CustomConstraintValidatorFactory implements ConstraintValidatorFactory {

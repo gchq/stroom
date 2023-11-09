@@ -33,6 +33,7 @@ import stroom.util.shared.QuickFilterResultPage;
 import stroom.util.shared.filter.FilterFieldDefinition;
 
 import com.google.common.base.Strings;
+import jakarta.inject.Inject;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,7 +42,6 @@ import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import jakarta.inject.Inject;
 
 public class ActivityServiceImpl implements ActivityService {
 

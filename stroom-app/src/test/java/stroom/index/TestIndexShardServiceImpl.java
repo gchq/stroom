@@ -27,10 +27,9 @@ import stroom.index.shared.IndexVolume;
 import stroom.node.api.NodeInfo;
 import stroom.test.AbstractCoreIntegrationTest;
 
+import jakarta.inject.Inject;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
-
-import jakarta.inject.Inject;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 

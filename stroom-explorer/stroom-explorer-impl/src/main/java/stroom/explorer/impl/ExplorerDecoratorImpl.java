@@ -4,11 +4,12 @@ import stroom.docref.DocRef;
 import stroom.explorer.api.ExplorerDecorator;
 import stroom.explorer.api.HasDataSourceDocRefs;
 
+import jakarta.inject.Inject;
+
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
-import jakarta.inject.Inject;
 
 public class ExplorerDecoratorImpl implements ExplorerDecorator {
 

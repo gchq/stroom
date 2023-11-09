@@ -23,10 +23,11 @@ import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
 import stroom.util.io.TempDirProvider;
 
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Singleton
 public class MockIndexShardWriterCache implements IndexShardWriterCache {

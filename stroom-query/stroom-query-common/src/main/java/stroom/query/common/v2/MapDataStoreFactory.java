@@ -7,9 +7,10 @@ import stroom.query.api.v2.TableSettings;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.ref.ErrorConsumer;
 
-import java.util.Map;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
+
+import java.util.Map;
 
 public class MapDataStoreFactory implements DataStoreFactory {
 

@@ -39,6 +39,7 @@ import stroom.test.common.util.test.FileSystemTestUtil;
 import stroom.util.shared.time.TimeUnit;
 import stroom.util.time.StroomDuration;
 
+import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -46,7 +47,6 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.List;
-import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

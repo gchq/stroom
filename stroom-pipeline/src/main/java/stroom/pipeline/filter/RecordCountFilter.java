@@ -25,12 +25,11 @@ import stroom.pipeline.state.RecordCount;
 import stroom.pipeline.state.RecordCountService;
 import stroom.svg.shared.SvgImage;
 
+import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
-
-import jakarta.inject.Inject;
 
 /**
  * A SAX filter used to count the number of first level elements in an XML

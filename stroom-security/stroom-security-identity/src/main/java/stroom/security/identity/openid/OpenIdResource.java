@@ -6,6 +6,7 @@ import stroom.util.shared.RestResource;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.inject.Singleton;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.Consumes;
@@ -21,7 +22,6 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.util.List;
 import java.util.Map;
-import jakarta.inject.Singleton;
 
 @Singleton
 @Tag(name = OpenIdResource.AUTHENTICATION_TAG)

@@ -21,12 +21,12 @@ import stroom.proxy.repo.FeedKey;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
 
 import static stroom.proxy.repo.db.jooq.tables.Feed.FEED;
 

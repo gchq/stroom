@@ -7,6 +7,8 @@ import stroom.util.shared.ResourcePaths;
 import com.codahale.metrics.health.HealthCheck;
 import com.codahale.metrics.health.HealthCheck.Result;
 import com.google.common.base.Preconditions;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import org.apache.curator.x.discovery.ServiceDiscovery;
 import org.apache.curator.x.discovery.ServiceInstance;
 import org.apache.curator.x.discovery.ServiceType;
@@ -19,8 +21,6 @@ import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.TreeMap;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
 
 /**
  * Responsible for registering stroom's various externally exposed services with service discovery

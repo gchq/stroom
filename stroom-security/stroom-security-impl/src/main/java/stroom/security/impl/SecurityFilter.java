@@ -29,6 +29,9 @@ import stroom.util.net.UrlUtils;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.ServletAuthenticationChecker;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
 import jakarta.servlet.Filter;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.FilterConfig;
@@ -45,9 +48,6 @@ import jakarta.ws.rs.core.Response.Status;
 import java.io.IOException;
 import java.util.Optional;
 import java.util.Set;
-import jakarta.inject.Inject;
-import jakarta.inject.Provider;
-import jakarta.inject.Singleton;
 
 /**
  * Filter to avoid posts to the wrong place (e.g. the root of the app)

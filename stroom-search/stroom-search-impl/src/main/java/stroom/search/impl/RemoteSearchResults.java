@@ -22,10 +22,11 @@ import stroom.search.impl.shard.IndexShardSearchConfig;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
-import java.util.Optional;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
+
+import java.util.Optional;
 
 @Singleton
 class RemoteSearchResults {

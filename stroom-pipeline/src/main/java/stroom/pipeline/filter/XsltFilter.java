@@ -48,6 +48,8 @@ import stroom.util.io.PathCreator;
 import stroom.util.shared.Location;
 import stroom.util.shared.Severity;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import net.sf.saxon.Configuration;
 import net.sf.saxon.jaxp.TemplatesImpl;
 import net.sf.saxon.jaxp.TransformerImpl;
@@ -59,8 +61,6 @@ import org.xml.sax.SAXException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
-import jakarta.inject.Inject;
-import jakarta.inject.Provider;
 import javax.xml.transform.ErrorListener;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.sax.SAXResult;

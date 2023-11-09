@@ -7,6 +7,7 @@ import stroom.pipeline.refdata.store.RefDataValueProxy;
 import stroom.util.logging.LogUtil;
 
 import com.google.inject.assistedinject.Assisted;
+import jakarta.inject.Inject;
 import net.sf.saxon.event.PipelineConfiguration;
 import net.sf.saxon.event.Receiver;
 import org.slf4j.Logger;
@@ -14,7 +15,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.Objects;
-import jakarta.inject.Inject;
 
 
 public class OffHeapRefDataValueProxyConsumer

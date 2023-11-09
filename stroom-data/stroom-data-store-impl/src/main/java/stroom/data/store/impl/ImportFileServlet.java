@@ -23,6 +23,7 @@ import stroom.util.shared.IsServlet;
 import stroom.util.shared.PropertyMap;
 import stroom.util.shared.ResourceKey;
 
+import jakarta.inject.Inject;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -43,7 +44,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import jakarta.inject.Inject;
 
 /**
  * Generic Import Service

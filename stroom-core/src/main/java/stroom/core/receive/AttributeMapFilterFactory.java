@@ -23,11 +23,12 @@ import stroom.receive.common.FeedStatusAttributeMapFilter;
 import stroom.receive.common.ReceiveDataConfig;
 import stroom.receive.rules.shared.ReceiveDataRules;
 
-import java.util.Objects;
-import java.util.concurrent.atomic.AtomicReference;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
+
+import java.util.Objects;
+import java.util.concurrent.atomic.AtomicReference;
 
 @Singleton
 public class AttributeMapFilterFactory {

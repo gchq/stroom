@@ -23,10 +23,10 @@ import stroom.statistics.api.InternalStatisticsReceiver;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
+import jakarta.inject.Provider;
 
 import java.util.Arrays;
 import java.util.Collections;
-import jakarta.inject.Provider;
 
 public class MetaStatisticsModule extends AbstractModule {
 

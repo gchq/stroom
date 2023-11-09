@@ -17,13 +17,13 @@ import event.logging.DeleteEventAction;
 import event.logging.Query;
 import event.logging.Term;
 import event.logging.TermCondition;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Objects;
-import jakarta.inject.Inject;
-import jakarta.inject.Provider;
 
 @AutoLogged
 public class ReferenceDataResourceImpl implements ReferenceDataResource {
