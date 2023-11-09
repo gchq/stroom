@@ -21,7 +21,7 @@ import java.util.Map;
 import java.util.SortedMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 /**
  * Class for running scheduled jobs to execute a jmap heap histogram and load the results into

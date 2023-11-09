@@ -28,7 +28,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.function.LongSupplier;
 import java.util.function.Supplier;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 public class SimplePathCreator implements PathCreator {
 

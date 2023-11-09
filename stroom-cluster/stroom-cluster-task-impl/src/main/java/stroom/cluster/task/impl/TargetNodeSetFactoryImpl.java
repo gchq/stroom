@@ -29,8 +29,8 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 import java.util.Set;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 @Singleton
 public class TargetNodeSetFactoryImpl implements TargetNodeSetFactory {

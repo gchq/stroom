@@ -36,7 +36,7 @@ import org.xml.sax.SAXException;
 import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.Deque;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 /**
  * Writes out XML and records segment boundaries as it goes.

@@ -28,7 +28,7 @@ import stroom.util.exception.DataChangedException;
 
 import org.junit.jupiter.api.Test;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 

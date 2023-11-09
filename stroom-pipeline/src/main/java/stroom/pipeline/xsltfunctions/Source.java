@@ -33,7 +33,7 @@ import net.sf.saxon.tree.tiny.TinyBuilder;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 class Source extends StroomExtensionFunctionCall {
 

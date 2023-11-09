@@ -26,7 +26,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 /**
  * Flags records that contain errors so that the RecordOutputFilter can exclude

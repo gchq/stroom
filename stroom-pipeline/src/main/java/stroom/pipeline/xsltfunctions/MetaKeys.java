@@ -27,7 +27,7 @@ import net.sf.saxon.value.StringValue;
 
 import java.util.Set;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 class MetaKeys extends StroomExtensionFunctionCall {
 

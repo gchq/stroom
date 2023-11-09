@@ -64,7 +64,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.EnumSet;
 import java.util.Objects;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 public class App extends Application<Config> {
 

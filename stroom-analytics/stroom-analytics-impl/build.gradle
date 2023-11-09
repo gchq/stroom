@@ -37,7 +37,7 @@ dependencies {
 //    implementation project(':stroom-view:stroom-view-impl')
     implementation project(':stroom-view:stroom-view-api')
 
-    implementation libs.guice5
+    implementation libs.guice
     implementation libs.jackson_annotations
     implementation libs.jakarta_validation_api
     implementation libs.jaxb_api

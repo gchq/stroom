@@ -5,7 +5,7 @@ import stroom.query.api.v2.ExpressionItem;
 import org.jooq.Condition;
 
 import java.util.function.Function;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 public class ExpressionMapperFactory {
 

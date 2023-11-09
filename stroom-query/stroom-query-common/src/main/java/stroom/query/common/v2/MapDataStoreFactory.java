@@ -8,8 +8,8 @@ import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.ref.ErrorConsumer;
 
 import java.util.Map;
-import javax.inject.Inject;
-import javax.inject.Provider;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 public class MapDataStoreFactory implements DataStoreFactory {
 

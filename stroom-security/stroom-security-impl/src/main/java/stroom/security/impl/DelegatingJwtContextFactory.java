@@ -11,8 +11,8 @@ import org.jose4j.jwt.consumer.JwtContext;
 
 import java.util.Map;
 import java.util.Optional;
-import javax.inject.Inject;
-import javax.inject.Provider;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 ///**
 // * A front for {@link InternalJwtContextFactory} and {@link StandardJwtContextFactory}

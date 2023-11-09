@@ -7,7 +7,7 @@ import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 
 import java.io.IOException;
 import java.util.Map;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 public class StatisticStoreSerialiser implements DocumentSerialiser2<StatisticStoreDoc> {
 

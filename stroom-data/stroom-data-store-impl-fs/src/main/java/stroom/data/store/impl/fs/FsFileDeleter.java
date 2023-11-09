@@ -17,7 +17,7 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.LongConsumer;
 import java.util.function.Supplier;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 /**
  * Split out on its own to aid mocking in tests.

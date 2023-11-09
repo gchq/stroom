@@ -25,7 +25,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.util.Map;
 import java.util.function.UnaryOperator;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 @ExtendWith(GuiceExtension.class)
 @IncludeModule(DbTestModule.class)

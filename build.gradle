@@ -112,17 +112,17 @@ ext.versions = [
         //------------3rd-party------------
         aws               : '2.17.253',
         curator           : '4.2.0', // Curator 4 works with ZK 3.4.x in soft compatibility mode, i.e. you must exlude its dep on ZK and explicitly add one for 3.4.x
-        dropwizard        : '4.0.3', // used to set the dropwizard-bom version, that controls lots of dependency versions
+        dropwizard        : '4.0.4', // used to set the dropwizard-bom version, that controls lots of dependency versions
         elasticsearch     : '7.17.14',
         httpcore          : '4.4.16', // Transient dependency of Elasticsearch
-        guice5            : '5.1.0',
+        guice             : '7.0.0',
         gwt               : '2.10.0',
         hikari            : '5.0.0',
         jackson_swagger   : '2.11.1', // Specific version of jackson for use with the swagger plugin
         jersey            : '2.35', // This is a fudge. We should get it from the dropwiz bom but dropwizard-jersey pulls in 2.33 and metrics-jersey pulls in 2.35. IJ seems to get confused and put both on the classpath. See dependencySubstitution below.
         jmh               : '1.35',
         jooq              : '3.16.4',
-        junit_jupiter     : '5.8.2',
+        junit_jupiter     : '5.10.1',
         kafka             : '2.2.1', // CDH 6.3 uses kafka 2.2.1
         lucene            : '5.5.3',
         swagger           : '2.1.12',
@@ -184,16 +184,16 @@ ext.libs = [
         elasticsearch_rest_client           : "org.elasticsearch.client:elasticsearch-rest-client:$versions.elasticsearch",
         elasticsearch                       : "org.elasticsearch:elasticsearch:$versions.elasticsearch",
         elasticsearch_core                  : "org.elasticsearch:elasticsearch-core:$versions.elasticsearch",
-        fast_infoset                        : "com.sun.xml.fastinfoset:FastInfoset:1.2.12",
+        fast_infoset                        : "com.sun.xml.fastinfoset:FastInfoset:1.2.18",
         flyway_core                         : "org.flywaydb:flyway-core:7.5.3",
         gin                                 : "com.google.gwt.inject:gin:2.1.2",
         guava                               : "com.google.guava:guava", // version controlled by dropwizard-dependencies
-        guice3                              : "com.google.inject:guice:3.0",
-        guice5                              : "com.google.inject:guice:$versions.guice5",
-        guice_assistedinject                : "com.google.inject.extensions:guice-assistedinject:$versions.guice5",
+        guice__gwt                          : "com.google.inject:guice:3.0",
+        guice                               : "com.google.inject:guice:$versions.guice",
+        guice_assistedinject                : "com.google.inject.extensions:guice-assistedinject:$versions.guice",
         guice_extension                     : "name.falgout.jeffrey.testing.junit5:guice-extension:1.2.1",
-        guice_multibindings                 : "com.google.inject.extensions:guice-multibindings:$versions.guice5",
-        guice_grapher                       : "com.google.inject.extensions:guice-grapher:$versions.guice5",
+        guice_multibindings                 : "com.google.inject.extensions:guice-multibindings:$versions.guice",
+        guice_grapher                       : "com.google.inject.extensions:guice-grapher:$versions.guice",
         gwt_dev                             : "org.gwtproject:gwt-dev:$versions.gwt",
         gwt_servlet                         : "org.gwtproject:gwt-servlet:$versions.gwt",
         gwt_user                            : "org.gwtproject:gwt-user:$versions.gwt",
@@ -223,8 +223,8 @@ ext.libs = [
         java_jwt                            : "com.auth0:java-jwt:3.1.0",
         javax_annotation_api                : "javax.annotation:javax.annotation-api:1.3.2",
         javassist                           : "org.javassist:javassist", // version controlled by dropwizard-dependencies
-        //javax_inject                        : "javax.inject:javax.inject:1",
-        javax_inject                        : "jakarta.inject:jakarta.inject-api:2.0.1",
+        javax_inject__gwt                   : "javax.inject:javax.inject:1",
+        jakarta_inject                      : "jakarta.inject:jakarta.inject-api:2.0.1",
         jaxb_api                            : "jakarta.xml.bind:jakarta.xml.bind-api:4.0.1",
         jaxb_api__gwt                       : "javax.xml.bind:jaxb-api:2.3.1",//"jakarta.xml.bind:jakarta.xml.bind-api:3.0.1", // Using beta versions of jaxb libs as they resolve the split pkg problem between jaxb-core and jaxb-runtime
         jaxb_impl                           : "com.sun.xml.bind:jaxb-impl:4.0.4",

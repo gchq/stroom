@@ -28,7 +28,7 @@ import java.time.Instant;
 import java.util.Optional;
 import java.util.concurrent.atomic.LongAccumulator;
 import java.util.function.Predicate;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 public class ProcessingInfoDb extends AbstractLmdbDb<RefStreamDefinition, RefDataProcessingInfo> {
 

@@ -39,8 +39,8 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import javax.inject.Inject;
-import javax.inject.Provider;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static stroom.meta.impl.db.jooq.tables.Meta.META;

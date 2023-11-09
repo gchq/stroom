@@ -7,7 +7,7 @@ import stroom.query.shared.QueryDoc;
 
 import java.io.IOException;
 import java.util.Map;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 public class QuerySerialiser implements DocumentSerialiser2<QueryDoc> {
 

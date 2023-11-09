@@ -20,7 +20,7 @@ import jakarta.validation.Validation;
 import jakarta.validation.Validator;
 import jakarta.validation.ValidatorFactory;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 
 public class ValidationModule extends AbstractModule {
 

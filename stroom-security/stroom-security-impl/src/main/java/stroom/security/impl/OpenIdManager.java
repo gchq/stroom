@@ -19,7 +19,7 @@ import jakarta.ws.rs.core.UriBuilder;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 class OpenIdManager {
 

@@ -7,8 +7,8 @@ import stroom.security.openid.api.OpenIdConfiguration;
 import stroom.util.logging.LogUtil;
 
 import java.util.Map;
-import javax.inject.Inject;
-import javax.inject.Provider;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 /**
  * Delegates to the appropriate {@link ServiceUserFactory} based on what {@link ServiceUserFactory}

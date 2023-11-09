@@ -24,7 +24,7 @@ import stroom.test.StoreCreationTool;
 
 import org.junit.jupiter.api.Test;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 class TestTranslationStepping extends AbstractCoreIntegrationTest {
 

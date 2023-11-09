@@ -15,7 +15,7 @@ import com.google.inject.assistedinject.Assisted;
 import org.lmdbjava.DbiFlags;
 import org.lmdbjava.Env;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 public class RangeValueStagingDb
         extends AbstractLmdbDb<UnSortedDupKey<RangeStoreKey>, StagingValue> {

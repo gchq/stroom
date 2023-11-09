@@ -13,7 +13,7 @@ import org.slf4j.LoggerFactory;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 import java.util.Optional;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 public class FeedPropertiesImpl implements FeedProperties {
 

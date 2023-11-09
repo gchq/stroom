@@ -28,7 +28,7 @@ import stroom.svg.shared.SvgImage;
 
 import org.xml.sax.XMLReader;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 @ConfigurableElement(
         type = "JSONParser",

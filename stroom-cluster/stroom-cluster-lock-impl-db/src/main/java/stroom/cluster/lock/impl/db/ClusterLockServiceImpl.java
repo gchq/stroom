@@ -27,8 +27,8 @@ import org.slf4j.LoggerFactory;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 @Singleton
 class ClusterLockServiceImpl implements ClusterLockService {

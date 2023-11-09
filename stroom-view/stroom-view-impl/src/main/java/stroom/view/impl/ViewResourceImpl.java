@@ -26,8 +26,8 @@ import stroom.view.shared.ViewDoc;
 import stroom.view.shared.ViewResource;
 
 import java.util.List;
-import javax.inject.Inject;
-import javax.inject.Provider;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 @AutoLogged
 class ViewResourceImpl implements ViewResource {

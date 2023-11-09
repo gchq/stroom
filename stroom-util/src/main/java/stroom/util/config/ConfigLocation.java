@@ -1,7 +1,7 @@
 package stroom.util.config;
 
 import java.nio.file.Path;
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 
 /**
  * Allows to use guice to pass round the config location

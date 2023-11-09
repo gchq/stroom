@@ -45,7 +45,7 @@ import java.nio.ByteBuffer;
 import java.util.Iterator;
 import java.util.Optional;
 import java.util.function.Consumer;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 public class KeyValueStoreDb
         extends AbstractLmdbDb<KeyValueStoreKey, ValueStoreKey>

@@ -37,7 +37,7 @@ import net.sf.saxon.event.Receiver;
 import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.Objects;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 public class OnHeapRefDataValueProxyConsumer
         extends AbstractConsumer

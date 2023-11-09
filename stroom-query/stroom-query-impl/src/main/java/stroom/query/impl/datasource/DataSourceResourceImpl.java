@@ -26,8 +26,8 @@ import stroom.util.NullSafe;
 import stroom.view.api.ViewStore;
 import stroom.view.shared.ViewDoc;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 @AutoLogged
 class DataSourceResourceImpl implements DataSourceResource {

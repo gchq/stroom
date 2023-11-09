@@ -36,7 +36,7 @@ import event.logging.SearchEventAction;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.util.Optional;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 class RequestEventLogImpl implements RequestEventLog {
 

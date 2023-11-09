@@ -32,7 +32,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 @SuppressWarnings("unused")
 public class ContentPackImport {

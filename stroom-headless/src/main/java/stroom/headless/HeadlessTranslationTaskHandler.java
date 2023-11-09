@@ -56,7 +56,7 @@ import stroom.util.shared.Severity;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 
 class HeadlessTranslationTaskHandler {

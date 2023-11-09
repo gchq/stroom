@@ -14,7 +14,7 @@ import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
 import java.util.List;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 import static stroom.job.impl.db.jooq.Tables.JOB;
 

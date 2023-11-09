@@ -13,8 +13,8 @@ import org.jose4j.jwk.PublicJsonWebKey;
 
 import java.util.List;
 import java.util.UUID;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 import static stroom.security.identity.db.jooq.tables.JsonWebKey.JSON_WEB_KEY;
 

@@ -29,7 +29,7 @@ import com.google.inject.AbstractModule;
 import jakarta.servlet.http.HttpSessionListener;
 
 import java.util.concurrent.Executor;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 public class TaskModule extends AbstractModule {
 

@@ -26,7 +26,7 @@ import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.value.StringValue;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 class Classification extends StroomExtensionFunctionCall {
 

@@ -39,7 +39,7 @@ import java.io.Writer;
 import java.util.Comparator;
 import java.util.Objects;
 import java.util.Set;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 class SessionListServlet extends HttpServlet implements IsServlet {
 

@@ -30,8 +30,8 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
-import javax.inject.Inject;
-import javax.inject.Provider;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import javax.sql.DataSource;
 
 import static org.assertj.core.api.Fail.fail;

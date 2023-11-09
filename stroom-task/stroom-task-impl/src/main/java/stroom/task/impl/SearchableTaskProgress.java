@@ -38,7 +38,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 class SearchableTaskProgress implements Searchable {
 

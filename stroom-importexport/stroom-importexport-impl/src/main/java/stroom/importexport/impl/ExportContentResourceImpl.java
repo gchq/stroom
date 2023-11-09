@@ -14,8 +14,8 @@ import jakarta.ws.rs.core.StreamingOutput;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import javax.inject.Inject;
-import javax.inject.Provider;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 @AutoLogged
 public class ExportContentResourceImpl implements ExportContentResource {

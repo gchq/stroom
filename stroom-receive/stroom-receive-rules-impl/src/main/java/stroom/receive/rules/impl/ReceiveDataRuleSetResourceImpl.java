@@ -31,8 +31,8 @@ import stroom.util.shared.EntityServiceException;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.Set;
-import javax.inject.Inject;
-import javax.inject.Provider;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 @AutoLogged
 public class ReceiveDataRuleSetResourceImpl implements ReceiveDataRuleSetResource {

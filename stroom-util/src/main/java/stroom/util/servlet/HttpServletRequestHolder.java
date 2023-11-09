@@ -24,8 +24,8 @@ import stroom.util.logging.LogUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 
-import javax.inject.Provider;
-import javax.inject.Singleton;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
 
 @Singleton
 public class HttpServletRequestHolder implements Provider<HttpServletRequest> {

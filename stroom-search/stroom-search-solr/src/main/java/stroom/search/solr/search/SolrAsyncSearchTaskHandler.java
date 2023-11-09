@@ -30,7 +30,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import java.util.concurrent.CompletableFuture;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 public class SolrAsyncSearchTaskHandler {
 

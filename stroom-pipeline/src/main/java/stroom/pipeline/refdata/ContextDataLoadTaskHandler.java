@@ -51,7 +51,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Objects;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 
 class ContextDataLoadTaskHandler {

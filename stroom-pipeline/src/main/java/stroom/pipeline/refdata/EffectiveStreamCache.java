@@ -49,9 +49,9 @@ import java.util.TreeSet;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
 
 // TODO: 14/09/2022 Ideally this class ought to listen for events each time a strm is created/deleted
 //  or a feed is deleted and then evict the appropriate keys, but that is a LOT of events going over the

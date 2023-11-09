@@ -42,7 +42,7 @@ dependencies {
 
     // These source deps are all needed for the GWT transpiling to javascript
     implementation libs.gin
-    implementation libs.guice3
+    implementation libs.guice__gwt
     implementation libs.gwt_dev
     implementation libs.gwt_user
     implementation libs.gwtp_mvp_client

@@ -42,7 +42,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 @SuppressWarnings("unused")
 class SearchableSearchProvider implements SearchProvider {

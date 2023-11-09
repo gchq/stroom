@@ -24,7 +24,7 @@ import stroom.test.CommonTestScenarioCreator;
 
 import org.junit.jupiter.api.Test;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 class TestStreamTaskServiceBatchLocking extends AbstractCoreIntegrationTest {
 

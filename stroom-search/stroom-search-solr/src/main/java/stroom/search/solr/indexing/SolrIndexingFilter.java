@@ -50,7 +50,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 /**
  * The Solr index filter... takes the index XML and sends documents to Solr for indexing.

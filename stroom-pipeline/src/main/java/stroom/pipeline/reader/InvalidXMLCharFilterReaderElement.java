@@ -26,7 +26,7 @@ import stroom.svg.shared.SvgImage;
 import stroom.util.shared.Severity;
 
 import java.io.Reader;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 @ConfigurableElement(
         type = "InvalidXMLCharFilterReader",

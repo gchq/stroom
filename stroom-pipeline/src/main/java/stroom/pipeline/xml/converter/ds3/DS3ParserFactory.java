@@ -30,7 +30,7 @@ import org.xml.sax.XMLReader;
 
 import java.io.IOException;
 import java.io.Reader;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParserFactory;
 

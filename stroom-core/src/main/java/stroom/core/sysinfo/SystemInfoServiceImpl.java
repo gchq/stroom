@@ -19,7 +19,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 // If we make it a singleton due to systemInfoSuppliers then we would
 // probably need the injected set to be a map of providers instead.

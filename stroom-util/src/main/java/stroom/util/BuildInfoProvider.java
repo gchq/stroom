@@ -24,8 +24,8 @@ import stroom.util.shared.BuildInfo;
 import java.io.IOException;
 import java.time.ZonedDateTime;
 import java.util.Properties;
-import javax.inject.Provider;
-import javax.inject.Singleton;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
 
 @Singleton
 public class BuildInfoProvider implements Provider<BuildInfo> {

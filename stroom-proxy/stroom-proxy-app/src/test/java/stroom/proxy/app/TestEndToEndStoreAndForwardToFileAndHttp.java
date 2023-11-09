@@ -14,7 +14,7 @@ import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 public class TestEndToEndStoreAndForwardToFileAndHttp extends AbstractEndToEndTest {
 

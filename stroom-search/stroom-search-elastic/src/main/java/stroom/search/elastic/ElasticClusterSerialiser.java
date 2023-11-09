@@ -7,7 +7,7 @@ import stroom.search.elastic.shared.ElasticClusterDoc;
 
 import java.io.IOException;
 import java.util.Map;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 public class ElasticClusterSerialiser implements DocumentSerialiser2<ElasticClusterDoc> {
 

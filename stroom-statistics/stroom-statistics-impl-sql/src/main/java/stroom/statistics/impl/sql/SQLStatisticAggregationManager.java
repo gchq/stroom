@@ -28,7 +28,7 @@ import org.slf4j.LoggerFactory;
 import java.sql.SQLException;
 import java.time.Instant;
 import java.util.concurrent.locks.ReentrantLock;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 class SQLStatisticAggregationManager {
 

@@ -17,7 +17,7 @@ import org.slf4j.LoggerFactory;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 public class ClusterTaskTerminatorImpl implements ClusterTaskTerminator {
 

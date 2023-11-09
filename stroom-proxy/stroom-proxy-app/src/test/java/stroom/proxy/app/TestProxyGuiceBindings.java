@@ -29,7 +29,7 @@ public class TestProxyGuiceBindings extends AbstractApplicationTest {
         // Test all the constructors to make sure guice can bind them
         // As proxy shares classes with stroom we have no way of knowing which shared classes are used
         // by proxy, so we have to make do with just checking all the non-shared classes.
-        findConstructors(injector::getProvider, "stroom.proxy", javax.inject.Inject.class);
+        findConstructors(injector::getProvider, "stroom.proxy", jakarta.inject.Inject.class);
         findConstructors(injector::getProvider, "stroom.proxy", com.google.inject.Inject.class);
     }
 

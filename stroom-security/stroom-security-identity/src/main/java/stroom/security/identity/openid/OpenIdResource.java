@@ -21,7 +21,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.util.List;
 import java.util.Map;
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 
 @Singleton
 @Tag(name = OpenIdResource.AUTHENTICATION_TAG)

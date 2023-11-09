@@ -15,7 +15,7 @@ import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.util.List;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 public class TestEndToEndForwardToHttp extends AbstractEndToEndTest {
 

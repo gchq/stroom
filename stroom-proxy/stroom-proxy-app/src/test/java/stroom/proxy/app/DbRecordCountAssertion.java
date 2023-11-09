@@ -11,7 +11,7 @@ import stroom.test.common.TestUtil;
 
 import java.time.Duration;
 import java.util.function.Supplier;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 public class DbRecordCountAssertion {
 

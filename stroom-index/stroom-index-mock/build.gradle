@@ -11,9 +11,9 @@ dependencies {
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 
-    implementation libs.guice5
+    implementation libs.guice
     implementation libs.jackson_annotations
-    implementation libs.javax_inject
+    implementation libs.jakarta_inject
     implementation libs.lucene_core
 
     testImplementation project(':stroom-test-common')

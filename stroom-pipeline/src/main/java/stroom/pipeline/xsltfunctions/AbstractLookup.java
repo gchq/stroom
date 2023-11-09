@@ -53,7 +53,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 
 abstract class AbstractLookup extends StroomExtensionFunctionCall {

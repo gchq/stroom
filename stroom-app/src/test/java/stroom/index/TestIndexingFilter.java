@@ -54,8 +54,8 @@ import org.junit.jupiter.api.Test;
 
 import java.io.InputStream;
 import java.util.List;
-import javax.inject.Inject;
-import javax.inject.Provider;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

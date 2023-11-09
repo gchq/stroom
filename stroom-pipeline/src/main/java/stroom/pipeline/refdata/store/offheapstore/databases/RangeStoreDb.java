@@ -47,7 +47,7 @@ import java.util.Iterator;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 public class RangeStoreDb
         extends AbstractLmdbDb<RangeStoreKey, ValueStoreKey>

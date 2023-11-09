@@ -25,8 +25,8 @@ import stroom.util.io.TempDirProvider;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 @Singleton
 public class MockIndexShardWriterCache implements IndexShardWriterCache {

@@ -27,9 +27,9 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.OptionalLong;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
 
 @Singleton
 @EntityEventHandler(type = IndexVolumeServiceImpl.ENTITY_TYPE, action = {

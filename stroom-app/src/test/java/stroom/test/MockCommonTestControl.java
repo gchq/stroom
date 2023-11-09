@@ -20,7 +20,7 @@ import stroom.util.shared.Clearable;
 
 import java.nio.file.Path;
 import java.util.Set;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 /**
  * Version of the test control used with the mocks.

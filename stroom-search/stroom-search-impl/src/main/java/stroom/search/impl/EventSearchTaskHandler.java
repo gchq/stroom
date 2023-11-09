@@ -34,7 +34,7 @@ import stroom.util.logging.LogUtil;
 
 import java.util.Collections;
 import java.util.function.BiConsumer;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 
 public class EventSearchTaskHandler {

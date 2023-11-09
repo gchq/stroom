@@ -12,7 +12,7 @@ import org.xml.sax.helpers.AttributesImpl;
 
 import java.util.List;
 import java.util.Locale;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 public class DetectionWriter implements DetectionConsumer {
 

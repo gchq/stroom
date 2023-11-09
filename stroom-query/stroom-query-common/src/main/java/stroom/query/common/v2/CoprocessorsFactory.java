@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 public class CoprocessorsFactory {
 

@@ -32,8 +32,8 @@ import stroom.util.pipeline.scope.PipelineScopeRunnable;
 
 import java.io.BufferedInputStream;
 import java.io.InputStream;
-import javax.inject.Inject;
-import javax.inject.Provider;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 /**
  * Helper class to validate XML based resources are valid.

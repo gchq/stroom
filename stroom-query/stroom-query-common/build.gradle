@@ -41,7 +41,7 @@ dependencies {
     implementation libs.jackson_databind
     implementation libs.jackson_core
     implementation libs.jakarta_validation_api
-    implementation libs.javax_inject
+    implementation libs.jakarta_inject
     implementation libs.jaxb_api
     implementation libs.kryo
     implementation libs.lmdbjava

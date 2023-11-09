@@ -34,7 +34,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInfo;
 
 import java.nio.file.Path;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 /**
  * This class should be common to all component and integration tests that need a DB.

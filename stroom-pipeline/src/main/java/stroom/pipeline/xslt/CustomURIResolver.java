@@ -25,7 +25,7 @@ import stroom.util.io.StreamUtil;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 import javax.xml.transform.Source;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.URIResolver;

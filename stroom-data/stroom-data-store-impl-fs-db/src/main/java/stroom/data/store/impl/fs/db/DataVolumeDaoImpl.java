@@ -12,7 +12,7 @@ import org.jooq.Condition;
 
 import java.util.Collection;
 import java.util.List;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 import static stroom.data.store.impl.fs.db.jooq.tables.FsMetaVolume.FS_META_VOLUME;
 import static stroom.data.store.impl.fs.db.jooq.tables.FsVolume.FS_VOLUME;

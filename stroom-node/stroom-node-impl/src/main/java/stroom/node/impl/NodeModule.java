@@ -30,7 +30,7 @@ import stroom.util.io.PathCreator;
 
 import com.google.inject.AbstractModule;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 public class NodeModule extends AbstractModule {
 

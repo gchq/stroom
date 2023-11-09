@@ -5,7 +5,7 @@ import stroom.query.api.v2.SearchRequestSource;
 import stroom.security.api.SecurityContext;
 
 import java.util.Objects;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 public final class ResultStoreFactory {
 

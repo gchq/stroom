@@ -16,7 +16,7 @@ import stroom.util.shared.Severity;
 import org.slf4j.MarkerFactory;
 
 import java.io.IOException;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 @PipelineScoped
 public class AnalyticErrorWriter {

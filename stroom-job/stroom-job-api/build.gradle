@@ -5,6 +5,6 @@ dependencies {
 //    implementation project(':stroom-util')
 //    implementation project(':stroom-util-shared')
 
-    implementation libs.guice5
+    implementation libs.guice
 //    implementation project(':stroom-docref')
 }

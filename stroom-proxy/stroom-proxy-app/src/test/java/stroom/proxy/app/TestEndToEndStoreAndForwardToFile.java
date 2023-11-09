@@ -16,7 +16,7 @@ import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
 import java.util.List;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 public class TestEndToEndStoreAndForwardToFile extends AbstractEndToEndTest {
 

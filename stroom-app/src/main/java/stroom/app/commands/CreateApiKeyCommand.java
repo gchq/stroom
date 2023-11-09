@@ -34,7 +34,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Date;
 import java.util.Set;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 /**
  * Creates an API key for a user the internal identity provider

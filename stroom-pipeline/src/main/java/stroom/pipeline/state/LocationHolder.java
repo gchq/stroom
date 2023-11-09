@@ -33,7 +33,7 @@ import org.xml.sax.Locator;
 
 import java.util.ArrayList;
 import java.util.List;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 @PipelineScoped
 public class LocationHolder implements Holder {

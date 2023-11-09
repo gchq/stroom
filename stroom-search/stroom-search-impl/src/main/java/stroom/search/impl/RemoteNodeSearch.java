@@ -21,7 +21,7 @@ import jakarta.ws.rs.core.Response.Status;
 
 import java.io.IOException;
 import java.io.InputStream;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 public class RemoteNodeSearch implements NodeSearch {
 

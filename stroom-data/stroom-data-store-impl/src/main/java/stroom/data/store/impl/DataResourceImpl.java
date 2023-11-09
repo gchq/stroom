@@ -45,8 +45,8 @@ import event.logging.ViewEventAction;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import javax.inject.Inject;
-import javax.inject.Provider;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 @AutoLogged
 class DataResourceImpl implements DataResource, FetchWithLongId<List<DataInfoSection>> {

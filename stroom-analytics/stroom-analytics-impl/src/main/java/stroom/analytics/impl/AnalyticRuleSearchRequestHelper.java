@@ -11,7 +11,7 @@ import stroom.query.api.v2.SearchRequestSource.SourceType;
 import stroom.query.common.v2.ExpressionContextFactory;
 import stroom.query.language.SearchRequestBuilder;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 public class AnalyticRuleSearchRequestHelper {
 

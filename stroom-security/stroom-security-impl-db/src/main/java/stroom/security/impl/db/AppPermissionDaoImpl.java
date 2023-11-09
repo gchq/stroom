@@ -9,7 +9,7 @@ import org.jooq.Record;
 
 import java.util.HashSet;
 import java.util.Set;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 import static stroom.security.impl.db.jooq.Tables.STROOM_USER_GROUP;
 import static stroom.security.impl.db.jooq.tables.AppPermission.APP_PERMISSION;

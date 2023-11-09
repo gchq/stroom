@@ -9,8 +9,8 @@ import stroom.query.shared.ResultStoreResource;
 import stroom.query.shared.ResultStoreResponse;
 import stroom.query.shared.UpdateStoreRequest;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 @AutoLogged(OperationType.UNLOGGED)
 public class ResultStoreResourceImpl implements ResultStoreResource {

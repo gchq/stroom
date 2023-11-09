@@ -7,7 +7,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Comparator;
 import java.util.Set;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 public class ManagedServices {
 

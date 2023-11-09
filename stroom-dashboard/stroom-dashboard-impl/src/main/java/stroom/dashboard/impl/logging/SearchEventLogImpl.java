@@ -48,7 +48,7 @@ import org.slf4j.LoggerFactory;
 import java.math.BigInteger;
 import java.util.Collections;
 import java.util.List;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 public class SearchEventLogImpl implements SearchEventLog {
 

@@ -16,7 +16,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 import static stroom.config.impl.db.jooq.tables.Config.CONFIG;
 import static stroom.config.impl.db.jooq.tables.ConfigUpdateTracker.CONFIG_UPDATE_TRACKER;

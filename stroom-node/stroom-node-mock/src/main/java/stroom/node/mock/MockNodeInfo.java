@@ -18,7 +18,7 @@ package stroom.node.mock;
 
 import stroom.node.api.NodeInfo;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 public class MockNodeInfo implements NodeInfo {
 

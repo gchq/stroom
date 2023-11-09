@@ -33,7 +33,7 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory {
 

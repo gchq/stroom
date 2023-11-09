@@ -30,8 +30,8 @@ import org.apache.solr.client.solrj.SolrServerException;
 import java.io.IOException;
 import java.util.List;
 import java.util.function.Supplier;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 @Singleton
 public class SolrIndexOptimiseExecutor {

@@ -24,9 +24,9 @@ import stroom.security.impl.event.PermissionChangeEvent;
 import stroom.security.impl.event.RemovePermissionEvent;
 import stroom.util.shared.Clearable;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
 
 @Singleton
 public class UserDocumentPermissionsCache implements PermissionChangeEvent.Handler, Clearable {

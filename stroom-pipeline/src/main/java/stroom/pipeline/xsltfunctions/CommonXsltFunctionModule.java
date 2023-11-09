@@ -5,8 +5,8 @@ import stroom.util.pipeline.scope.PipelineScoped;
 import net.sf.saxon.type.BuiltInAtomicType;
 import net.sf.saxon.value.SequenceType;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
 

@@ -40,7 +40,7 @@ import java.io.UncheckedIOException;
 import java.security.PrivilegedExceptionAction;
 import java.util.Optional;
 import java.util.function.Consumer;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 /**
  * Creates an output stream for a file on an Hadoop Distributed File System

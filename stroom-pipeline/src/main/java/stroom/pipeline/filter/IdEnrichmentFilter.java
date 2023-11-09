@@ -36,7 +36,7 @@ import org.xml.sax.helpers.AttributesImpl;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 /**
  * A SAX filter used to count the number of first level elements in an XML

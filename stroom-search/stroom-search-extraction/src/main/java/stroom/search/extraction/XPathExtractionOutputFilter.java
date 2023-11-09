@@ -52,7 +52,7 @@ import org.xml.sax.SAXException;
 
 import java.util.HashMap;
 import java.util.Iterator;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 import static stroom.index.shared.IndexConstants.EVENT_ID;
 import static stroom.index.shared.IndexConstants.STREAM_ID;

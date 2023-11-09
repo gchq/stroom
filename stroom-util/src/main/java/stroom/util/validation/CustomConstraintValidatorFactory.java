@@ -17,9 +17,9 @@ import jakarta.validation.ConstraintValidatorFactory;
 import jakarta.validation.Validation;
 
 import java.util.Map;
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
 
 @Singleton
 public class CustomConstraintValidatorFactory implements ConstraintValidatorFactory {

@@ -7,7 +7,7 @@ import stroom.docrefinfo.api.DocRefInfoService;
 
 import org.jooq.Field;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 public class TermHandlerFactory {
 

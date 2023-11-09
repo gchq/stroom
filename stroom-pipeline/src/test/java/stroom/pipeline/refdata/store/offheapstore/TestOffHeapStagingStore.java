@@ -37,7 +37,7 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.UUID;
 import java.util.function.BiConsumer;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 class TestOffHeapStagingStore extends StroomUnitTest {
 

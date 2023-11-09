@@ -30,7 +30,7 @@ import org.jooq.OrderField;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 import static stroom.node.impl.db.jooq.tables.Node.NODE;
 

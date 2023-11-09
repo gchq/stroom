@@ -13,16 +13,16 @@ dependencies {
     implementation project(':stroom-security:stroom-security-api')
     implementation project(':stroom-util-shared')
     implementation project(':stroom-util')
-    
+
     implementation libs.commons_compress
     implementation libs.dropwizard_metrics_annotation
     implementation libs.dropwizard_metrics_healthchecks
     implementation libs.dropwizard_validation
-    implementation libs.guice3
+    implementation libs.guice__gwt
     implementation libs.hessian
     implementation libs.jackson_annotations
     implementation libs.jakarta_servlet_api
-    implementation libs.javax_inject
+    implementation libs.jakarta_inject
     implementation libs.jaxb_api
     implementation libs.slf4j_api
     implementation libs.swagger_annotations

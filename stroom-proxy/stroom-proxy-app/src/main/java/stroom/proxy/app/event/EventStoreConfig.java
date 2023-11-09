@@ -12,7 +12,7 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 
 import java.util.Objects;
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 
 @Singleton
 @JsonPropertyOrder(alphabetic = true)

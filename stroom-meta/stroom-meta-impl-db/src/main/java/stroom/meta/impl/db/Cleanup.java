@@ -5,7 +5,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Clearable;
 
 import java.util.Set;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 public class Cleanup {
 

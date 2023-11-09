@@ -27,7 +27,7 @@ import com.google.inject.Inject;
 
 import java.util.Optional;
 import java.util.function.Supplier;
-import javax.inject.Provider;
+import jakarta.inject.Provider;
 
 public class MockSecurityContext implements SecurityContext {
 

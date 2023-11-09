@@ -9,7 +9,7 @@ import stroom.util.shared.UserName;
 
 import java.util.List;
 import java.util.Optional;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 class StroomUserNameProvider implements UserNameProvider {
 

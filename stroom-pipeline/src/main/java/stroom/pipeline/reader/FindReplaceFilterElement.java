@@ -29,7 +29,7 @@ import stroom.util.shared.Severity;
 import org.apache.commons.text.StringEscapeUtils;
 
 import java.io.Reader;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 @ConfigurableElement(
         type = "FindReplaceFilter",

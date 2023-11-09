@@ -28,9 +28,9 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.LongAdder;
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
 
 @Singleton // To ensure the localDir delete is done only once and before store creation
 public class LmdbDataStoreFactory implements DataStoreFactory {

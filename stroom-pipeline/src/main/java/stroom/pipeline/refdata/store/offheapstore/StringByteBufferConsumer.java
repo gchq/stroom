@@ -32,7 +32,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 public class StringByteBufferConsumer implements RefDataValueByteBufferConsumer {
 

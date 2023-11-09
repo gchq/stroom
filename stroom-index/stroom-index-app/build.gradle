@@ -26,7 +26,7 @@ dependencies {
     implementation project(':stroom-job:stroom-job-api')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
-    
+
     implementation libs.dropwizard_assets
     implementation libs.dropwizard_core
     implementation libs.dropwizard_jersey
@@ -40,10 +40,10 @@ dependencies {
     implementation libs.flyway_core
     implementation libs.eventLogging
     implementation libs.guava
-    implementation libs.guice5
+    implementation libs.guice
     implementation libs.jackson_annotations
     implementation libs.jakarta_servlet_api
-    implementation libs.javax_inject
+    implementation libs.jakarta_inject
     implementation libs.jcommander
     implementation libs.jetty_server
     implementation libs.jetty_servlets

@@ -26,7 +26,7 @@ import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.svg.shared.SvgImage;
 
 import java.util.List;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 @ConfigurableElement(
         type = "DynamicSearchResultOutputFilter",

@@ -25,8 +25,8 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.ext.ExceptionMapper;
 
 import java.util.Map;
-import javax.inject.Provider;
-import javax.inject.Singleton;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
 
 public class JerseyModule extends AbstractModule {
 

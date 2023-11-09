@@ -13,8 +13,8 @@ import com.google.common.base.Strings;
 
 import java.util.List;
 import java.util.function.Consumer;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 @Singleton
 public class ReceiveStreamHandlers implements StreamHandlers {

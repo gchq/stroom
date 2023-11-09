@@ -45,9 +45,9 @@ import jakarta.ws.rs.core.Response.Status;
 import java.io.IOException;
 import java.util.Optional;
 import java.util.Set;
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
 
 /**
  * Filter to avoid posts to the wrong place (e.g. the root of the app)

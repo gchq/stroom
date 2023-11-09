@@ -24,7 +24,7 @@ import stroom.test.AbstractCoreIntegrationTest;
 import org.junit.jupiter.api.Test;
 
 import java.util.UUID;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 class TestExplorerTree extends AbstractCoreIntegrationTest {
 

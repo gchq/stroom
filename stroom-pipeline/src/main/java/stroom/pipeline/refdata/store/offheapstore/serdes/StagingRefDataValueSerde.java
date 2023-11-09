@@ -13,7 +13,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 /**
  * <pre>{@code

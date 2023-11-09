@@ -55,7 +55,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.inject.Provider;
+import jakarta.inject.Provider;
 
 class TestRestResources {
 

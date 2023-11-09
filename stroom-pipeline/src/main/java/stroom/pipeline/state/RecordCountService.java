@@ -17,7 +17,7 @@
 package stroom.pipeline.state;
 
 import java.util.concurrent.atomic.AtomicLong;
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 
 @Singleton
 public class RecordCountService {

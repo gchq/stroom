@@ -26,7 +26,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Optional;
 import java.util.function.Function;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 
 class ClusterLockHandler {

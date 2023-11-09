@@ -104,7 +104,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecutor {
 

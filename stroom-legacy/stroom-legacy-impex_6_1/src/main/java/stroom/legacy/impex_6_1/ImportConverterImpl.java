@@ -6,7 +6,7 @@ import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 
 import java.util.Map;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 @Deprecated
 class ImportConverterImpl implements ImportConverter {

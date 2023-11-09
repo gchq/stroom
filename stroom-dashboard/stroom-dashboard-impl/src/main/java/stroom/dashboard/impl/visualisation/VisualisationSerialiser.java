@@ -8,7 +8,7 @@ import stroom.visualisation.shared.VisualisationDoc;
 
 import java.io.IOException;
 import java.util.Map;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 public class VisualisationSerialiser implements DocumentSerialiser2<VisualisationDoc> {
 

@@ -10,8 +10,8 @@ import stroom.util.logging.LambdaLoggerFactory;
 
 import java.util.List;
 import java.util.Objects;
-import javax.inject.Inject;
-import javax.inject.Provider;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 public class ExplorerFavServiceImpl implements ExplorerFavService {
 

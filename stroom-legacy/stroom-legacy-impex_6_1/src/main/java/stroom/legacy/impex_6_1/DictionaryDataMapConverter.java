@@ -14,8 +14,8 @@ import stroom.util.string.EncodingUtil;
 import java.io.IOException;
 import java.util.Map;
 import java.util.UUID;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 @Singleton
 @Deprecated

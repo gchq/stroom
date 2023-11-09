@@ -25,8 +25,8 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 import static stroom.proxy.repo.db.jooq.tables.Feed.FEED;
 

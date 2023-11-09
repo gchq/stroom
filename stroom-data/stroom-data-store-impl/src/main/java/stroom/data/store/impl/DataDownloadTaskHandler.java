@@ -51,7 +51,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 public class DataDownloadTaskHandler {
 

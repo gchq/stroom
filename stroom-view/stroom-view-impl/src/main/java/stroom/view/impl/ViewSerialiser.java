@@ -7,7 +7,7 @@ import stroom.view.shared.ViewDoc;
 
 import java.io.IOException;
 import java.util.Map;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 public class ViewSerialiser implements DocumentSerialiser2<ViewDoc> {
 

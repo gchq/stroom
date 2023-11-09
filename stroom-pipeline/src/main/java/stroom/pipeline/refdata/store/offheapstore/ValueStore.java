@@ -34,7 +34,7 @@ import org.slf4j.LoggerFactory;
 import java.nio.ByteBuffer;
 import java.util.Optional;
 import java.util.OptionalInt;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 /**
  * Class to manage all interactions with the {@link ValueStoreDb} and {@link ValueStoreMetaDb}

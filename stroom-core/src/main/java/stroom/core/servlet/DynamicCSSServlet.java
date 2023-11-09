@@ -29,7 +29,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.util.Set;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 public class DynamicCSSServlet extends HttpServlet implements IsServlet {
 

@@ -48,7 +48,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.nio.channels.ClosedByInterruptException;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 public class AnalyticsStreamProcessor {
 

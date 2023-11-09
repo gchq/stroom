@@ -26,8 +26,8 @@ import stroom.security.user.api.UserNameService;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserName;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 @AutoLogged(OperationType.MANUALLY_LOGGED)
 class UserNameResourceImpl implements UserNameResource {

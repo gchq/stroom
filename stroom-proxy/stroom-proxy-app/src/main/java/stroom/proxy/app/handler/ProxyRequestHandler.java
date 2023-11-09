@@ -23,7 +23,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 /**
  * Main entry point to handling proxy requests.

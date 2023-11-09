@@ -32,7 +32,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Set;
 import java.util.UUID;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 /**
  * Wrapper for the ResourceStore that makes sure the user can only access stuff

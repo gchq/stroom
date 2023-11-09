@@ -28,8 +28,8 @@ import org.apache.lucene.store.AlreadyClosedException;
 
 import java.io.IOException;
 import java.util.concurrent.locks.Lock;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 /**
  * Pool API into open index shards.

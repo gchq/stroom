@@ -18,7 +18,7 @@ package stroom.security.impl;
 
 import java.util.HashSet;
 import java.util.Set;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 class UserAndPermissionsHelper {
 

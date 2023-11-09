@@ -32,7 +32,7 @@ import stroom.svg.shared.SvgImage;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 @ConfigurableElement(
         type = "SearchResultOutputFilter",

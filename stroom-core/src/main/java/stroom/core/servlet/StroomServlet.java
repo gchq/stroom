@@ -20,7 +20,7 @@ import stroom.ui.config.shared.UiConfig;
 import stroom.util.shared.IsServlet;
 
 import java.util.Set;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 public class StroomServlet extends AppServlet implements IsServlet {
 

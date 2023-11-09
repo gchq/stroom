@@ -5,7 +5,7 @@ import stroom.security.identity.db.jooq.tables.TokenType;
 import stroom.security.identity.token.KeyTypeDao;
 
 import java.util.Optional;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 class KeyTypeDaoImpl implements KeyTypeDao {
 

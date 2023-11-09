@@ -23,8 +23,8 @@ import stroom.task.api.TaskContextFactory;
 
 import java.util.function.Function;
 import java.util.function.Supplier;
-import javax.inject.Inject;
-import javax.inject.Provider;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 public class ReferenceDataLoaderImpl implements ReferenceDataLoader {
 

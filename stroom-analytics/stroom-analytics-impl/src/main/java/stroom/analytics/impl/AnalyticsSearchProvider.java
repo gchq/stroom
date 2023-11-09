@@ -40,7 +40,7 @@ import stroom.security.api.SecurityContext;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 public class AnalyticsSearchProvider implements SearchProvider, HasDataSourceDocRefs {
 

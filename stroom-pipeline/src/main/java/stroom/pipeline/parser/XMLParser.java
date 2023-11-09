@@ -28,7 +28,7 @@ import stroom.util.xml.SAXParserFactoryFactory;
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;

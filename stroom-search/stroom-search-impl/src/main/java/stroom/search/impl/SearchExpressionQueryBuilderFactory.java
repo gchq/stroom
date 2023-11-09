@@ -6,8 +6,8 @@ import stroom.index.shared.IndexFieldsMap;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 public class SearchExpressionQueryBuilderFactory {
 

@@ -10,7 +10,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 
 @Singleton
 class UserQueryRegistry {

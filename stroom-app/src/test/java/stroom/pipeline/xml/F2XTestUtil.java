@@ -45,7 +45,7 @@ import stroom.util.shared.Severity;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.util.List;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;

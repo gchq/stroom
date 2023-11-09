@@ -11,7 +11,7 @@ import stroom.receive.common.StroomStreamException;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.function.Consumer;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 public class ProxyRepositoryStreamHandlers implements StreamHandlers {
 

@@ -28,7 +28,7 @@ import org.apache.commons.text.StringEscapeUtils;
 import org.xml.sax.SAXException;
 
 import java.io.IOException;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 /**
  * Joins text instances into a single text instance.

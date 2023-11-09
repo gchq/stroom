@@ -56,7 +56,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.util.Optional;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 public class ExtractionTaskHandler {
 

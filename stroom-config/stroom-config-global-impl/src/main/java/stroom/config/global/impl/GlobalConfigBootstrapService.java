@@ -8,8 +8,8 @@ import stroom.util.shared.PropertyPath;
 
 import java.util.ArrayList;
 import java.util.List;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 @Singleton // Needs to be singleton to prevent initialise being called multiple times
 public class GlobalConfigBootstrapService {

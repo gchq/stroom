@@ -16,7 +16,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.HashSet;
 import java.util.Set;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 public class TestAppConfigValidator extends AbstractCoreIntegrationTest {
 

@@ -30,9 +30,9 @@ import java.io.IOException;
 import java.util.IdentityHashMap;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
 
 @Singleton
 public class SolrIndexClientCacheImpl implements SolrIndexClientCache, Clearable {

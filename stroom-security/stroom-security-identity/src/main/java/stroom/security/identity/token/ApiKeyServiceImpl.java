@@ -12,7 +12,7 @@ import stroom.util.shared.PermissionException;
 
 import java.time.Instant;
 import java.util.Optional;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 public class ApiKeyServiceImpl implements ApiKeyService {
 

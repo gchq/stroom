@@ -35,8 +35,8 @@ import stroom.security.shared.PermissionNames;
 import stroom.util.shared.ResultPage;
 
 import java.util.Optional;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 @Singleton
 class ProcessorTaskServiceImpl implements ProcessorTaskService, Searchable {

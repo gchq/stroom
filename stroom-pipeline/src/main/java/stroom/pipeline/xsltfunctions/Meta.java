@@ -25,7 +25,7 @@ import net.sf.saxon.om.Sequence;
 import net.sf.saxon.trans.XPathException;
 import net.sf.saxon.value.StringValue;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 class Meta extends StroomExtensionFunctionCall {
 

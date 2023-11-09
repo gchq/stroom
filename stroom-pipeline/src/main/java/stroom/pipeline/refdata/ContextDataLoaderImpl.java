@@ -26,8 +26,8 @@ import stroom.task.api.TerminateHandlerFactory;
 
 import java.io.InputStream;
 import java.util.function.Consumer;
-import javax.inject.Inject;
-import javax.inject.Provider;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 public class ContextDataLoaderImpl implements ContextDataLoader {
 

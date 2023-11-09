@@ -27,7 +27,7 @@ import net.sf.saxon.om.StructuredQName;
 import net.sf.saxon.value.SequenceType;
 
 import java.util.List;
-import javax.inject.Provider;
+import jakarta.inject.Provider;
 
 class StroomExtensionFunctionDefinition<T extends StroomExtensionFunctionCall> extends ExtensionFunctionDefinition {
 

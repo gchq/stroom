@@ -32,7 +32,7 @@ import org.xml.sax.Attributes;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 /**
  * Splits a single XML instance into separate XML instances that contain

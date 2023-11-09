@@ -38,8 +38,8 @@ import jakarta.ws.rs.client.Entity;
 
 import java.util.Collections;
 import java.util.List;
-import javax.inject.Inject;
-import javax.inject.Provider;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 @AutoLogged
 class TaskResourceImpl implements TaskResource {

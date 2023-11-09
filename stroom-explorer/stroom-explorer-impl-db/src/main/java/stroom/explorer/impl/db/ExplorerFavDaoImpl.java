@@ -12,7 +12,7 @@ import org.jooq.SelectConditionStep;
 import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 import static stroom.explorer.impl.db.jooq.Tables.EXPLORER_FAVOURITE;
 import static stroom.explorer.impl.db.jooq.Tables.EXPLORER_NODE;

@@ -32,8 +32,8 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.Enumeration;
 import java.util.Set;
-import javax.inject.Inject;
-import javax.inject.Provider;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 /**
  * <p>

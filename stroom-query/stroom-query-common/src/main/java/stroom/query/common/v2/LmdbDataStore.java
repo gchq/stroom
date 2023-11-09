@@ -77,7 +77,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import javax.inject.Provider;
+import jakarta.inject.Provider;
 
 public class LmdbDataStore implements DataStore {
 

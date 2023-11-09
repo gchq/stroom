@@ -93,7 +93,7 @@ import java.util.concurrent.Executor;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 @AutoLogged
 class DashboardServiceImpl implements DashboardService {

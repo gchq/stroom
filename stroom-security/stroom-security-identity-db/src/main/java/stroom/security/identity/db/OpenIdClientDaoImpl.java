@@ -6,7 +6,7 @@ import stroom.security.identity.openid.OpenIdClientDao;
 import stroom.security.openid.api.OpenIdClient;
 
 import java.util.Optional;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 public class OpenIdClientDaoImpl implements OpenIdClientDao {
 

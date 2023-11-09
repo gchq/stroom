@@ -29,8 +29,8 @@ import stroom.util.shared.FetchWithUuid;
 
 import java.util.List;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
-import javax.inject.Provider;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 @AutoLogged
 class PipelineResourceImpl implements PipelineResource, FetchWithUuid<PipelineDoc> {

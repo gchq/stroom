@@ -10,9 +10,9 @@ import stroom.util.shared.Severity;
 
 import java.io.IOException;
 import java.util.Map;
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
 
 @Singleton
 @Deprecated

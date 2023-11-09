@@ -36,7 +36,7 @@ import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
-import javax.inject.Provider;
+import jakarta.inject.Provider;
 
 public abstract class AbstractJerseyClientFactory implements JerseyClientFactory {
 

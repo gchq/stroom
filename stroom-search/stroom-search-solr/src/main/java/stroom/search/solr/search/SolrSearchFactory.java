@@ -28,7 +28,7 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.LongAdder;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 public class SolrSearchFactory {
 

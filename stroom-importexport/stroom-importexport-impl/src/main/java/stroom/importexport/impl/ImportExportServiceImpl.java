@@ -30,7 +30,7 @@ import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 /**
  * Service to export standing data in and out from Stroom. It uses a ZIP format to

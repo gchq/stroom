@@ -11,7 +11,7 @@ import stroom.util.shared.ResultPage;
 import jakarta.validation.constraints.NotNull;
 
 import java.util.UUID;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 public class StoredQueryServiceImpl implements StoredQueryService {
 

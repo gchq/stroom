@@ -30,7 +30,7 @@ import net.sf.saxon.value.StringValue;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 class CurrentUser extends StroomExtensionFunctionCall {
 

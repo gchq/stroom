@@ -31,7 +31,7 @@ import net.sf.saxon.om.Sequence;
 import net.sf.saxon.trans.XPathException;
 
 import java.time.Instant;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 class Lookup extends AbstractLookup {
 

@@ -9,7 +9,7 @@ import com.codahale.metrics.health.HealthCheck;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Optional;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 @Deprecated
 public class DbHealthCheck implements HasHealthCheck {

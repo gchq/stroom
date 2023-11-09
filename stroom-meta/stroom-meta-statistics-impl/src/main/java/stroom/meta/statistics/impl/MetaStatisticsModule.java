@@ -26,7 +26,7 @@ import com.google.inject.Provides;
 
 import java.util.Arrays;
 import java.util.Collections;
-import javax.inject.Provider;
+import jakarta.inject.Provider;
 
 public class MetaStatisticsModule extends AbstractModule {
 

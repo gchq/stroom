@@ -26,7 +26,7 @@ import com.google.inject.assistedinject.Assisted;
 import net.sf.saxon.event.PipelineConfiguration;
 import net.sf.saxon.event.Receiver;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 public class RefDataValueProxyConsumerFactory {
 

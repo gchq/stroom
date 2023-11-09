@@ -35,8 +35,8 @@ import stroom.util.logging.LogUtil;
 
 import java.util.Collections;
 import java.util.concurrent.Executor;
-import javax.inject.Inject;
-import javax.inject.Provider;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 public class SolrEventSearchTaskHandler {
 

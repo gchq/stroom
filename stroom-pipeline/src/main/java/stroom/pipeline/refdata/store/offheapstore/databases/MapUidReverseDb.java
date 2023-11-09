@@ -41,7 +41,7 @@ import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 import java.util.Iterator;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 public class MapUidReverseDb extends AbstractLmdbDb<UID, MapDefinition> {
 

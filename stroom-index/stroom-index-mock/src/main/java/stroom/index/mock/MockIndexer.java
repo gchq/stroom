@@ -26,7 +26,7 @@ import org.apache.lucene.document.Document;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 public class MockIndexer implements Indexer {
 

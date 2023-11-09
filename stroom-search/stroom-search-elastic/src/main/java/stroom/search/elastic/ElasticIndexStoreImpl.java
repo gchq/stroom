@@ -34,8 +34,8 @@ import stroom.util.shared.Message;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 @Singleton
 public class ElasticIndexStoreImpl implements ElasticIndexStore {

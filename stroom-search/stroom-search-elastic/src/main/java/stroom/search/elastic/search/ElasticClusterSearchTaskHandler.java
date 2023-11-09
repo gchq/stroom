@@ -42,7 +42,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.LongAdder;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 class ElasticClusterSearchTaskHandler {
 

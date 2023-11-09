@@ -3,7 +3,7 @@ package stroom.meta.impl;
 import stroom.meta.api.PhysicalDelete;
 
 import java.util.Collection;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 class PhysicalDeleteImpl implements PhysicalDelete {
 

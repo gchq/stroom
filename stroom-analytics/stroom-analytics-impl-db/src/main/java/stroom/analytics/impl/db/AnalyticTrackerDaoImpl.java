@@ -11,8 +11,8 @@ import stroom.util.logging.LambdaLoggerFactory;
 import org.jooq.Record;
 
 import java.util.Optional;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 import static stroom.analytics.impl.db.jooq.tables.AnalyticTracker.ANALYTIC_TRACKER;
 

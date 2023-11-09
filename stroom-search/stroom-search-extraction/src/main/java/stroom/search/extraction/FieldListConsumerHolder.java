@@ -4,7 +4,7 @@ import stroom.pipeline.filter.FieldValue;
 import stroom.util.pipeline.scope.PipelineScoped;
 
 import java.util.List;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 @PipelineScoped
 public class FieldListConsumerHolder implements FieldListConsumer {

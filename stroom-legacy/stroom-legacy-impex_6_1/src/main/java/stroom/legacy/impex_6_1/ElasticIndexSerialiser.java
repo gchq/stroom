@@ -7,7 +7,7 @@ import stroom.search.elastic.shared.ElasticIndexDoc;
 
 import java.io.IOException;
 import java.util.Map;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 @Deprecated
 public class ElasticIndexSerialiser implements DocumentSerialiser2<ElasticIndexDoc> {

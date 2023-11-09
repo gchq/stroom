@@ -6,8 +6,8 @@ import stroom.analytics.shared.AnalyticNotificationEmailDestination;
 import stroom.analytics.shared.AnalyticNotificationStreamDestination;
 import stroom.analytics.shared.AnalyticRuleDoc;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 public class DetectionConsumerFactory {
 

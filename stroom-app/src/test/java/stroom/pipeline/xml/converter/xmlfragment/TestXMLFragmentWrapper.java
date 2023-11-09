@@ -26,8 +26,8 @@ import stroom.util.pipeline.scope.PipelineScopeRunnable;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
-import javax.inject.Inject;
-import javax.inject.Provider;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

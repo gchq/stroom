@@ -32,8 +32,8 @@ import java.util.Optional;
 import java.util.Random;
 import java.util.regex.MatchResult;
 import java.util.regex.Pattern;
-import javax.inject.Inject;
-import javax.inject.Provider;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 class TestAppConfigMonitor {
 

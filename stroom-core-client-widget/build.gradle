@@ -6,14 +6,14 @@ dependencies {
     implementation project(':stroom-core-shared')
 
     implementation libs.gin
-    implementation libs.guice3
+    implementation libs.guice__gwt
     implementation libs.gwt_user
     implementation(libs.gwtp_mvp_client) {
         exclude(module: 'persistence-api')
         exclude(module: 'gwtp-crawler-service')
     }
     implementation libs.jackson_annotations
-    implementation libs.javax_inject
+    implementation libs.javax_inject__gwt
     implementation libs.restygwt
 
 

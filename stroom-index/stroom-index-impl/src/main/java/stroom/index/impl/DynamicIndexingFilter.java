@@ -51,7 +51,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 /**
  * The index filter... takes the index XML and builds the LUCENE documents

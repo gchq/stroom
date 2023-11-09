@@ -8,7 +8,7 @@ import stroom.meta.statistics.api.MetaStatistics;
 import stroom.proxy.StroomStatusCode;
 
 import java.util.function.Consumer;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 public class StreamTargetStreamHandlers implements StreamHandlers {
 

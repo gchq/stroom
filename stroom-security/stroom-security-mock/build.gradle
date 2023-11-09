@@ -9,6 +9,6 @@ dependencies {
     implementation project(':stroom-util-shared')
 
     implementation libs.jakarta_servlet_api
-    implementation libs.guice5
+    implementation libs.guice
     implementation libs.ws_rs_api
 }

@@ -53,7 +53,7 @@ import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.LongAdder;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 public class IndexShardSearchTaskHandler {
 

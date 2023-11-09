@@ -25,8 +25,8 @@ import stroom.util.io.StreamUtil;
 import org.xml.sax.ErrorHandler;
 
 import java.io.StringReader;
-import javax.inject.Inject;
-import javax.inject.Provider;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 public class DSChooser {
 

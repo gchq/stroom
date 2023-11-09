@@ -5,7 +5,7 @@ import stroom.task.shared.TaskId;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 
 @Singleton
 class TaskRegistry {

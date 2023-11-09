@@ -30,7 +30,7 @@ import org.slf4j.LoggerFactory;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 /**
  * A SAX filter used to count the number of first level elements in an XML

@@ -28,7 +28,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Optional;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 class HttpCall extends StroomExtensionFunctionCall {
 

@@ -42,7 +42,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Supplier;
-import javax.inject.Provider;
+import jakarta.inject.Provider;
 
 public class ExtractionDecorator {
 

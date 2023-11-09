@@ -36,7 +36,7 @@ import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 
 import java.util.ArrayList;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 /**
  * This class processes XML documents that conform to annotation:1 schema, and creates corresponding Stroom annotations.

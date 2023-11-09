@@ -8,7 +8,7 @@ import stroom.util.string.EncodingUtil;
 
 import java.io.IOException;
 import java.util.Map;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 public class DictionarySerialiser implements DocumentSerialiser2<DictionaryDoc> {
 

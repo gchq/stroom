@@ -24,7 +24,7 @@ import stroom.pipeline.xmlschema.FindXMLSchemaCriteria;
 import stroom.security.api.SecurityContext;
 import stroom.svg.shared.SvgImage;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 import javax.xml.XMLConstants;
 
 /**

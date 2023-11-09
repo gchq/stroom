@@ -27,8 +27,8 @@ import org.jooq.impl.DSL;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 import static stroom.meta.impl.db.jooq.tables.MetaKey.META_KEY;
 

@@ -18,8 +18,8 @@ import stroom.util.logging.LogUtil;
 import stroom.util.shared.SimpleUserName;
 
 import java.util.List;
-import javax.inject.Inject;
-import javax.inject.Provider;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 @AutoLogged(OperationType.MANUALLY_LOGGED)
 class AppPermissionResourceImpl implements AppPermissionResource {

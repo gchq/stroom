@@ -5,7 +5,7 @@ import stroom.docref.DocRef;
 import stroom.pipeline.writer.StreamAppender;
 import stroom.pipeline.writer.XMLWriter;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 public class DetectionsWriter implements DetectionConsumer {
 

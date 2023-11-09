@@ -11,8 +11,8 @@ import event.logging.ComplexLoggedOutcome;
 import event.logging.UpdateEventAction;
 
 import java.util.Objects;
-import javax.inject.Inject;
-import javax.inject.Provider;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 @AutoLogged
 public class UserPreferencesResourceImpl implements UserPreferencesResource {

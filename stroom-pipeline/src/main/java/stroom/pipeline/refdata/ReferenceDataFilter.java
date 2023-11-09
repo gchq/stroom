@@ -53,7 +53,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 /**
  * This XML filter captures XML content that defines key, value maps to be

@@ -19,8 +19,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
-import javax.inject.Inject;
-import javax.inject.Provider;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 import static stroom.index.impl.db.jooq.Tables.INDEX_VOLUME_GROUP;
 

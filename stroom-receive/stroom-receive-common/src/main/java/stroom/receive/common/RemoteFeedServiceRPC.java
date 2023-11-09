@@ -7,7 +7,7 @@ import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.Unauthenticated;
 
 import java.util.Set;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 @Unauthenticated
 // TODO: 31/10/2023 jakarta - Hessian uses javax.servlet so we can't use it (maybe unless we shade it)
