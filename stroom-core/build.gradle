@@ -48,6 +48,7 @@ dependencies {
     implementation libs.dropwizard_metrics_annotation
     implementation libs.eventLogging
     implementation libs.flyway_core
+    implementation libs.flyway_mysql
     implementation libs.guava
     implementation libs.guice
     implementation libs.gwt_servlet

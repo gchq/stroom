@@ -23,6 +23,7 @@ dependencies {
     implementation libs.kafka_clients
     implementation libs.restygwt
     implementation libs.saxon_he
+    implementation libs.slf4j_api
     implementation libs.stroomStatsSchema
     implementation libs.xml_apis
 
@@ -47,3 +48,4 @@ dependencies {
     testRuntimeOnly libs.logback_classic
     testRuntimeOnly libs.logback_core
 }
+

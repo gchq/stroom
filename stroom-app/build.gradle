@@ -221,6 +221,7 @@ dependencies {
     implementation libs.dropwizard_websockets
     implementation libs.eventLogging
     implementation libs.flyway_core
+    implementation libs.flyway_mysql
     implementation libs.guava
     implementation libs.guice
     implementation libs.jakarta_servlet_api

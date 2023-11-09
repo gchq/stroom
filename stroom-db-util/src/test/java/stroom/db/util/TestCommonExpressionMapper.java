@@ -208,7 +208,7 @@ class TestCommonExpressionMapper {
         assertThat(condition.toString())
                 .contains(conditionString(DB_FIELD_NAME_2, FIELD_2_VALUE));
         assertThat(condition.toString())
-                .contains("not ((field1=123))");
+                .contains("not (field1=123)");
     }
 
     @TestFactory

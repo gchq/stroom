@@ -31,7 +31,7 @@ plugins {
 
     id 'nu.studer.jooq' version '7.1.1' apply false
 
-    id 'org.flywaydb.flyway' version '7.5.4' apply false
+    id 'org.flywaydb.flyway' version '10.0.0' apply false
 
     id 'org.kordamp.gradle.jdeps' version '0.16.0'
 
@@ -115,16 +115,16 @@ ext.versions = [
         dropwizard        : '4.0.4', // used to set the dropwizard-bom version, that controls lots of dependency versions
         elasticsearch     : '7.17.14',
         httpcore          : '4.4.16', // Transient dependency of Elasticsearch
+        flyway            : '10.0.0',
         guice             : '7.0.0',
         gwt               : '2.10.0',
-        hikari            : '5.0.0',
         jackson_swagger   : '2.11.1', // Specific version of jackson for use with the swagger plugin
-        jersey            : '2.35', // This is a fudge. We should get it from the dropwiz bom but dropwizard-jersey pulls in 2.33 and metrics-jersey pulls in 2.35. IJ seems to get confused and put both on the classpath. See dependencySubstitution below.
         jmh               : '1.35',
-        jooq              : '3.16.4',
+        jooq              : '3.18.7',
         junit_jupiter     : '5.10.1',
-        kafka             : '2.2.1', // CDH 6.3 uses kafka 2.2.1
+        kafka             : '3.6.0',
         lucene            : '5.5.3',
+        okhttp            : '4.12.0',
         swagger           : '2.1.12',
         unirest           : '1.4.9',
         zookeeper         : '3.4.8', // Roughly pegged to the server version used by Cloudera, see links above. This version is forced below.
@@ -135,6 +135,8 @@ ext.versions = [
 // If the dependency version is controlled by a BOM, e.g. dropwizard-core, then the
 // dependency is specified with no version. Use of the BOMs is configured further down,
 // search for 'platform'.
+// Any deps with the suffix '__gwt' are intended for use ONLY in GWT client side code, i.e. the
+// -client modules. This is to allow GWT to use different versions of some libs to the server side.
 ext.libs = [
         //------Stroom-libs---------------
         eventLogging                        : "uk.gov.gchq.eventlogging:event-logging:$versions.eventLogging",
@@ -150,7 +152,7 @@ ext.libs = [
         caffeine                            : "com.github.ben-manes.caffeine:caffeine", // version controlled by dropwizard-dependencies
         commons_beanutils                   : "commons-beanutils:commons-beanutils:1.9.4",
         commons_codec                       : "commons-codec:commons-codec", // version controlled by dropwizard-dependencies
-        commons_compress                    : "org.apache.commons:commons-compress:1.21",
+        commons_compress                    : "org.apache.commons:commons-compress:1.24.0",
         commons_csv                         : "org.apache.commons:commons-csv:1.8",
         commons_fileupload                  : "org.apache.commons:commons-fileupload2-jakarta:2.0.0-M1",
         commons_io                          : "commons-io:commons-io:2.11.0",
@@ -185,7 +187,8 @@ ext.libs = [
         elasticsearch                       : "org.elasticsearch:elasticsearch:$versions.elasticsearch",
         elasticsearch_core                  : "org.elasticsearch:elasticsearch-core:$versions.elasticsearch",
         fast_infoset                        : "com.sun.xml.fastinfoset:FastInfoset:1.2.18",
-        flyway_core                         : "org.flywaydb:flyway-core:7.5.3",
+        flyway_core                         : "org.flywaydb:flyway-core:${versions.flyway}",
+        flyway_mysql                        : "org.flywaydb:flyway-mysql:${versions.flyway}",
         gin                                 : "com.google.gwt.inject:gin:2.1.2",
         guava                               : "com.google.guava:guava", // version controlled by dropwizard-dependencies
         guice__gwt                          : "com.google.inject:guice:3.0",
@@ -202,7 +205,7 @@ ext.libs = [
         hbase                               : "org.apache.hbase:hbase-common:2.1.5", // should be set to be consistent with CDH version
         hessian                             : "com.caucho:hessian:4.0.65",
         hibernate_jpa                       : "org.hibernate.javax.persistence:hibernate-jpa-2.1-api:1.0.0.Final", // remove when legacy code is removed
-        hikari                              : "com.zaxxer:HikariCP:$versions.hikari",
+        hikari                              : "com.zaxxer:HikariCP:5.1.0",
         http_client                         : "org.apache.httpcomponents.client5:httpclient5", // version controlled by dropwizard-dependencies
         http_client__elastic                : "org.apache.httpcomponents:httpclient:4.5.10", // version controlled by dropwizard-dependencies
         httpcore                            : "org.apache.httpcomponents.core5:httpcore5:$versions.httpcore",
@@ -256,8 +259,8 @@ ext.libs = [
         junit_jupiter_params                : "org.junit.jupiter:junit-jupiter-params", // version controlled by junit-bom
         junit_platform_launcher             : "org.junit.platform:junit-platform-launcher", // version controlled by junit-bom
         kafka_clients                       : "org.apache.kafka:kafka-clients:$versions.kafka", // version controlled by junit-bom
-        kryo                                : "com.esotericsoftware:kryo:5.2.1",
-        lmdbjava                            : "org.lmdbjava:lmdbjava:0.8.2",
+        kryo                                : "com.esotericsoftware:kryo:5.5.0",
+        lmdbjava                            : "org.lmdbjava:lmdbjava:0.8.3",
         log4j_over_slf4j                    : "org.slf4j:log4j-over-slf4j", // version controlled by dropwizard-dependencies
         logback_classic                     : "ch.qos.logback:logback-classic", // version controlled by dropwizard-dependencies
         logback_core                        : "ch.qos.logback:logback-core", // version controlled by dropwizard-dependencies
@@ -269,30 +272,29 @@ ext.libs = [
         mbknor_jackson_jsonSchema           : "com.kjetland:mbknor-jackson-jsonschema_2.12:1.0.36",
         mockito_core                        : "org.mockito:mockito-core", // version controlled by dropwizard-dependencies
         mockito_junit_jupiter               : "org.mockito:mockito-junit-jupiter", // version controlled by dropwizard-dependencies
-        mysql_connector_java                : "mysql:mysql-connector-java:8.0.25",
-        objenesis                           : "org.objenesis:objenesis", // version controlled by dropwizard-dependencies
-        okhttp                              : "com.squareup.okhttp3:okhttp:4.9.3",
-        okhttp_logging_interceptor          : 'com.squareup.okhttp3:logging-interceptor:4.8.1',
+        mysql_connector_java                : "mysql:mysql-connector-java:8.0.33",
+        okhttp                              : "com.squareup.okhttp3:okhttp:${versions.okhttp}",
+        okhttp_logging_interceptor          : "com.squareup.okhttp3:logging-interceptor:${versions.okhttp}",
         poi                                 : "org.apache.poi:poi:4.1.2",
         poi_ooxml                           : "org.apache.poi:poi-ooxml:4.1.2",
         restygwt                            : "org.fusesource.restygwt:restygwt:2.2.7",
         saxon_he                            : "net.sf.saxon:Saxon-HE:9.9.1-8",
         simple_java_mail                    : 'org.simplejavamail:simple-java-mail:4.3.0',
         slf4j_api                           : "org.slf4j:slf4j-api", // version controlled by dropwizard-dependencies
-        snake_yaml                          : "org.yaml:snakeyaml:1.28",
+        snake_yaml                          : "org.yaml:snakeyaml:2.2",
         solrj                               : "org.apache.solr:solr-solrj:8.2.0",
-        sqlite                              : "org.xerial:sqlite-jdbc:3.36.0.3",
+        sqlite                              : "org.xerial:sqlite-jdbc:3.43.2.2",
         stax_api                            : "stax:stax-api:1.0.1",
         swagger_annotations                 : "io.swagger.core.v3:swagger-annotations:$versions.swagger",
         unirest                             : "com.mashape.unirest:unirest-java:$versions.unirest",
         vavr                                : "io.vavr:vavr:0.10.4",
-        wiremock                            : 'com.github.tomakehurst:wiremock-jre8:2.33.1',
-        wix_embedded_mysql                  : "com.wix:wix-embedded-mysql:4.6.1",
+        wiremock                            : 'org.wiremock:wiremock:3.3.1',
+        wix_embedded_mysql                  : "com.wix:wix-embedded-mysql:4.6.2",
         ws_rs_api                           : "jakarta.ws.rs:jakarta.ws.rs-api", // version controlled by dropwizard-dependencies
         ws_rs_api__gwt                      : "javax.ws.rs:javax.ws.rs-api:2.1.1", // For GWT compilation
         xerces                              : "xerces:xercesImpl:2.12.2",
         xml_apis                            : "xml-apis:xml-apis:2.0.2",
-        zero_allocation_hashing             : "net.openhft:zero-allocation-hashing:0.15",
+        zero_allocation_hashing             : "net.openhft:zero-allocation-hashing:0.16",
         zookeeper                           : "org.apache.zookeeper:zookeeper:$versions.zookeeper",
         zzDUMMYzz                           : "makes sorting this array easier"
 ]
@@ -392,13 +394,13 @@ subprojects {
 
                 dependencySubstitution {
                     //println "Slf4j version = $dropwizardBomSlf4jVersion"
-                    substitute module('aopalliance:aopalliance') using module("org.glassfish.hk2.external:aopalliance-repackaged:2.6.1")
+                    //substitute module('aopalliance:aopalliance') using module("org.glassfish.hk2.external:aopalliance-repackaged:3.0.5")
                     //substitute module('com.fasterxml.jackson.datatype:jackson-datatype-joda') using module("com.fasterxml.jackson.datatype:jackson-datatype-joda:2.13.1")
                     //substitute module("com.fasterxml.jackson.core:jackson-databind") using module('com.fasterxml.jackson.core:jackson-databind:2.10.5.1') withoutClassifier()
                     substitute module('com.google.code.findbugs:jsr305') using module("javax.annotation:javax.annotation-api:1.3.2")
 //                    substitute module("io.dropwizard:dropwizard-core") using files("libs/dropwizard-core-2.0.28.jar")
                     //substitute module('javax.inject:javax.inject') using module('org.glassfish.hk2.external:jakarta.inject:2.6.1')
-                    substitute module('javax.inject:javax.inject') using module('org.glassfish.hk2.external:jakarta.inject:2.6.1')
+                    //substitute module('javax.inject:javax.inject') using module('org.glassfish.hk2.external:jakarta.inject:2.6.1')
                     //substitute module('javax.activation:javax.activation-api') using module('jakarta.activation:jakarta.activation-api:1.2.2')
                     //substitute module('jakarta.activation:jakarta.activation-api') using module('javax.activation:javax.activation-api:1.2.0')
                     //substitute module('javax.activation:activation') using module('javax.activation:javax.activation-api:1.2.0')
@@ -433,7 +435,7 @@ subprojects {
 
                 forcedModules = [
                         // This is how to force a dep to a specific version
-                        libs.xerces,
+                        //libs.xerces,
 
                         // Curator will drag in a more recent version of zk but will support older versions so
                         // substitute it here. See NOTE in versions block above.

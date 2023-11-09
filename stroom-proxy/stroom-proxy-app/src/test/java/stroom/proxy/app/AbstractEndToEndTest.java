@@ -4,7 +4,6 @@ import stroom.util.logging.LogUtil;
 import stroom.util.shared.ResourcePaths;
 
 import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
-import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
 import com.google.inject.Injector;
 import io.dropwizard.core.server.DefaultServerFactory;
 import jakarta.ws.rs.core.GenericType;
@@ -32,8 +31,8 @@ public class AbstractEndToEndTest extends AbstractApplicationTest {
     public final WireMockExtension wireMockExtension = mockHttpDestination.createExtension();
 
     @BeforeEach
-    void setup(final WireMockRuntimeInfo wmRuntimeInfo) {
-        LOGGER.info("WireMock running on: {}", wmRuntimeInfo.getHttpBaseUrl());
+    void setup() {
+        LOGGER.info("WireMock running on: {}", wireMockExtension.getRuntimeInfo().getHttpBaseUrl());
         mockHttpDestination.clear();
 
         final App app = getDropwizard().getApplication();

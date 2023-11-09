@@ -131,6 +131,9 @@ dependencies {
 // It adds the modified projects to GWTs compile classpath
 task jakartaReverseTransformSources {
 
+    println 'Deleting modified projects: ' + modifiedProjectsBasePath.toString()
+    delete modifiedProjectsBasePath
+
     projectsToRename.each { prj ->
         dependsOn prj.tasks.getByName('compileJava')
     }
@@ -205,15 +208,15 @@ task gwtCompile(dependsOn: classes, type: JavaExec) {
         delete deployDir
         delete extraDir
 
-        println "Making directory gwtBuildDir $gwtBuildDir"
+        println "Ensuring directory gwtBuildDir $gwtBuildDir"
         new File(gwtBuildDir).mkdirs();
-        println "Making directory tmpDir $tmpDir"
+        println "Ensuring directory tmpDir $tmpDir"
         new File(tmpDir).mkdirs();
-        println "Making directory workDir $workDir"
+        println "Ensuring directory workDir $workDir"
         new File(workDir).mkdirs();
-        println "Making directory deployDir $deployDir"
+        println "Ensuring directory deployDir $deployDir"
         new File(deployDir).mkdirs();
-        println "Making directory extraDir $extraDir"
+        println "Ensuring directory extraDir $extraDir"
         new File(extraDir).mkdirs();
 
         println "gwtSourceDirs count: ${gwtSourceDirs.size()}"
@@ -264,15 +267,15 @@ task gwtDraftCompile(dependsOn: classes, type: JavaExec) {
         println 'Deleting GWT compiled output: ' + outputDir.toString()
         delete outputDir
 
-        println "Making directory gwtBuildDir $gwtBuildDir"
+        println "Ensuring directory gwtBuildDir $gwtBuildDir"
         new File(gwtBuildDir).mkdirs();
-        println "Making directory tmpDir $tmpDir"
+        println "Ensuring directory tmpDir $tmpDir"
         new File(tmpDir).mkdirs();
-        println "Making directory workDir $workDir"
+        println "Ensuring directory workDir $workDir"
         new File(workDir).mkdirs();
-        println "Making directory deployDir $deployDir"
+        println "Ensuring directory deployDir $deployDir"
         new File(deployDir).mkdirs();
-        println "Making directory extraDir $extraDir"
+        println "Ensuring directory extraDir $extraDir"
         new File(extraDir).mkdirs();
     }
 
@@ -308,7 +311,7 @@ task gwtDraftCompile(dependsOn: classes, type: JavaExec) {
 
 task gwtSuperDevMode(dependsOn: classes, type: JavaExec) {
     group "gwt"
-    dependsOn 'jakartaReverseTransformSources'
+    //dependsOn 'jakartaReverseTransformSources'
     def module = 'stroom.app.AppSuperDevModeChrome'
 
 //    def dirs = []
@@ -317,15 +320,15 @@ task gwtSuperDevMode(dependsOn: classes, type: JavaExec) {
 //    println dirs
 
     doFirst {
-        println "Making directory gwtBuildDir $gwtBuildDir"
+        println "Ensuring directory gwtBuildDir $gwtBuildDir"
         new File(gwtBuildDir).mkdirs();
-        println "Making directory tmpDir $tmpDir"
+        println "Ensuring directory tmpDir $tmpDir"
         new File(tmpDir).mkdirs();
-        println "Making directory workDir $workDir"
+        println "Ensuring directory workDir $workDir"
         new File(workDir).mkdirs();
-        println "Making directory deployDir $deployDir"
+        println "Ensuring directory deployDir $deployDir"
         new File(deployDir).mkdirs();
-        println "Making directory extraDir $extraDir"
+        println "Ensuring directory extraDir $extraDir"
         new File(extraDir).mkdirs();
 
         def GREEN = '\033[1;32m'
@@ -377,10 +380,9 @@ task gwtClean {
         println 'Deleting modified projects: ' + modifiedProjectsBasePath.toString()
         delete modifiedProjectsBasePath
 
-        println "Making directory gwtBuildDir $gwtBuildDir"
-        //Files.createDirectories(Paths.get(gwtBuildDir));
+        println "Ensuring directory gwtBuildDir $gwtBuildDir"
         new File(gwtBuildDir).mkdirs();
-        println "Making directory tmpDir $tmpDir"
+        println "Ensuring directory tmpDir $tmpDir"
         new File(tmpDir).mkdirs();
     }
 }

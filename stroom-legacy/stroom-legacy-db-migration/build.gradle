@@ -26,6 +26,7 @@ dependencies {
 
     implementation libs.dropwizard_metrics_healthchecks
     implementation libs.flyway_core
+    implementation libs.flyway_mysql
     implementation libs.guice
     implementation libs.hibernate_jpa
     implementation libs.hikari

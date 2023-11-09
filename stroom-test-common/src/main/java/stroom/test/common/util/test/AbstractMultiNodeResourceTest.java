@@ -6,6 +6,7 @@ import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
 import io.dropwizard.jersey.errors.ErrorMessage;
+import jakarta.inject.Provider;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.client.ClientBuilder;
 import jakarta.ws.rs.client.Entity;
@@ -409,6 +410,10 @@ public abstract class AbstractMultiNodeResourceTest<R extends RestResource> {
         return statusCode >= 200 && statusCode < 300;
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class JerseyTestBuilder<R extends RestResource> {
 
         private final Supplier<R> resourceSupplier;
@@ -440,6 +445,7 @@ public abstract class AbstractMultiNodeResourceTest<R extends RestResource> {
                             LoggingFeature.Verbosity.PAYLOAD_ANY,
                             LoggingFeature.DEFAULT_MAX_ENTITY_SIZE);
 
+
                     return new ResourceConfig()
                             .register(resourceSupplier.get())
                             .register(listener)
@@ -457,7 +463,20 @@ public abstract class AbstractMultiNodeResourceTest<R extends RestResource> {
                 }
             };
         }
+
+        @jakarta.ws.rs.ext.Provider
+        private class MyProvider implements Provider {
+
+            @Override
+            public Object get() {
+                return resourceSupplier.get();
+            }
+        }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public static class TestNode {
 
@@ -514,6 +533,10 @@ public abstract class AbstractMultiNodeResourceTest<R extends RestResource> {
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public static class RequestListener implements ApplicationEventListener {
 
         private final List<RequestEvent> requestLog = new ArrayList<>();
@@ -541,6 +564,10 @@ public abstract class AbstractMultiNodeResourceTest<R extends RestResource> {
             return requestLog;
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class MyExceptionMapper implements ExceptionMapper<Throwable> {
 

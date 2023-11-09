@@ -16,6 +16,7 @@ dependencies {
 
     implementation libs.eventLogging
     implementation libs.flyway_core
+    implementation libs.flyway_mysql
     implementation libs.guice
     implementation libs.hikari
     implementation libs.jackson_annotations
