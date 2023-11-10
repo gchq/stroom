@@ -50,7 +50,7 @@ dependencies {
     implementation libs.jackson_databind
     implementation libs.jakarta_servlet_api
     implementation libs.jakarta_validation_api
-    implementation libs.javax_annotation_api
+    implementation libs.jakarta_annotation_api
     implementation libs.jakarta_inject
     implementation libs.jaxb_api
     implementation libs.jersey_client

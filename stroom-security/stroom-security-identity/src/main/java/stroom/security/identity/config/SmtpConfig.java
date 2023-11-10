@@ -32,7 +32,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
-import org.simplejavamail.mailer.config.TransportStrategy;
+import org.simplejavamail.api.mailer.config.TransportStrategy;
 
 @NotInjectableConfig
 @JsonPropertyOrder(alphabetic = true)
@@ -108,14 +108,11 @@ public class SmtpConfig extends AbstractConfig implements IsStroomConfig {
     @JsonIgnore
     public TransportStrategy getTransportStrategy() {
         switch (transport) {
-            case "TLS":
-                return TransportStrategy.SMTP_TLS;
-            case "SSL":
+            case "TLS", "SSL":
                 return TransportStrategy.SMTP_TLS;
             case "plain":
-                return TransportStrategy.SMTP_PLAIN;
             default:
-                return TransportStrategy.SMTP_PLAIN;
+                return TransportStrategy.SMTP;
         }
     }
 
