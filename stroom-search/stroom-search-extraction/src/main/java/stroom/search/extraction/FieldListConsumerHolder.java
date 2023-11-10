@@ -1,6 +1,5 @@
 package stroom.search.extraction;
 
-import stroom.pipeline.filter.FieldValue;
 import stroom.util.pipeline.scope.PipelineScoped;
 
 import jakarta.inject.Inject;

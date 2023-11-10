@@ -19,6 +19,7 @@ package stroom.query.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.core.client.event.WindowCloseEvent;
+import stroom.dashboard.client.query.QueryInfo;
 import stroom.datasource.shared.DataSourceResource;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
@@ -104,6 +105,7 @@ public class QueryEditPresenter
     private final QueryModel queryModel;
     private final RestFactory restFactory;
     private final QueryResultTabsView linkTabsLayoutView;
+    private final QueryInfo queryInfo;
 
     private final Provider<QueryResultVisPresenter> visPresenterProvider;
 
@@ -121,7 +123,8 @@ public class QueryEditPresenter
                               final IndexLoader indexLoader,
                               final DateTimeSettingsFactory dateTimeSettingsFactory,
                               final ResultStoreModel resultStoreModel,
-                              final QueryResultTabsView linkTabsLayoutView) {
+                              final QueryResultTabsView linkTabsLayoutView,
+                              final QueryInfo queryInfo) {
         super(eventBus, view);
         this.queryHelpPresenter = queryHelpPresenter;
         this.queryToolbarPresenter = queryToolbarPresenter;
@@ -130,7 +133,7 @@ public class QueryEditPresenter
         this.indexLoader = indexLoader;
         this.restFactory = restFactory;
         this.linkTabsLayoutView = linkTabsLayoutView;
-
+        this.queryInfo = queryInfo;
 
         final ResultConsumer resultConsumer = new ResultConsumer() {
             boolean start;
@@ -340,7 +343,7 @@ public class QueryEditPresenter
             public String decorateFieldName(final String fieldName) {
                 return GwtNullSafe.get(fieldName, str ->
                         str.contains(" ")
-                                ? "\"" + str + "\""
+                                ? "${" + str + "}"
                                 : str);
             }
 
@@ -431,7 +434,7 @@ public class QueryEditPresenter
 
     private void run(final boolean incremental,
                      final boolean storeHistory) {
-        run(incremental, storeHistory, Function.identity());
+        queryInfo.prompt(() -> run(incremental, storeHistory, Function.identity()));
     }
 
     private void run(final boolean incremental,
@@ -467,7 +470,7 @@ public class QueryEditPresenter
                 queryToolbarPresenter.getTimeRange(),
                 incremental,
                 storeHistory,
-                null);
+                queryInfo.getMessage());
 //        }
     }
 

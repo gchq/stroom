@@ -56,31 +56,37 @@ public final class ZipUtil {
         zip(zipFile, dir, null, null);
     }
 
-    public static void zip(final Path zipFile, final Path dir, final Pattern includePattern,
+    public static void zip(final Path zipFile,
+                           final Path dir,
+                           final Pattern includePattern,
                            final Pattern excludePattern) throws IOException {
-        final ZipOutputStream zipStream = new ZipOutputStream(new BufferedOutputStream(Files.newOutputStream(zipFile)));
-
-        zip(dir, zipStream, includePattern, excludePattern);
-
-        zipStream.flush();
-        zipStream.close();
+        try (final ZipOutputStream zipOutputStream =
+                new ZipOutputStream(new BufferedOutputStream(Files.newOutputStream(zipFile)))) {
+            zip(zipFile, dir, zipOutputStream, includePattern, excludePattern);
+        }
     }
 
-    private static void zip(final Path parent, final ZipOutputStream zip,
-                            final Pattern includePattern, final Pattern excludePattern) {
+    private static void zip(final Path zipFile,
+                            final Path dir,
+                            final ZipOutputStream zipOutputStream,
+                            final Pattern includePattern,
+                            final Pattern excludePattern) {
         try {
             Files.walkFileTree(
-                    parent,
+                    dir,
                     EnumSet.of(FileVisitOption.FOLLOW_LINKS),
                     Integer.MAX_VALUE,
                     new AbstractFileVisitor() {
                         @Override
                         public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) {
                             try {
-                                final String fullPath = parent.relativize(file).toString();
-                                if ((includePattern == null || includePattern.matcher(fullPath).matches()) &&
-                                        (excludePattern == null || !excludePattern.matcher(fullPath).matches())) {
-                                    putEntry(zip, file, fullPath);
+                                // Make sure we don't include the destination zip file in the zip file.
+                                if (!file.equals(zipFile)) {
+                                    final String fullPath = dir.relativize(file).toString();
+                                    if ((includePattern == null || includePattern.matcher(fullPath).matches()) &&
+                                            (excludePattern == null || !excludePattern.matcher(fullPath).matches())) {
+                                        putEntry(zipOutputStream, file, fullPath);
+                                    }
                                 }
                             } catch (final IOException e) {
                                 LOGGER.error(e.getMessage(), e);

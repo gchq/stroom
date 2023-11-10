@@ -156,6 +156,14 @@ public class NullSafe {
         return val != null && val;
     }
 
+    public static Optional<String> nonBlank(final String str) {
+        if (isBlankString(str)) {
+            return Optional.empty();
+        } else {
+            return Optional.of(str);
+        }
+    }
+
     /**
      * @return True if both str and subStr are non-null and str contains subStr
      */

@@ -26,7 +26,7 @@ import stroom.dashboard.client.input.KeyValueInputPresenter;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentUse;
 import stroom.dashboard.client.main.DashboardPresenter.DashboardView;
-import stroom.dashboard.client.query.QueryInfoPresenter;
+import stroom.dashboard.client.query.QueryInfo;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.DashboardConfig;
@@ -109,14 +109,13 @@ public class DashboardPresenter
     private final FlexLayout layoutPresenter;
     private final Components components;
     private final QueryToolbarPresenter queryToolbarPresenter;
-    private final Provider<QueryInfoPresenter> queryInfoPresenterProvider;
+    private final QueryInfo queryInfo;
     private final Provider<LayoutConstraintPresenter> layoutConstraintPresenterProvider;
     private String lastLabel;
     private boolean loaded;
     private String customTitle;
     private DocRef docRef;
 
-    private String lastUsedQueryInfo;
     private boolean embedded;
     private boolean queryOnOpen;
 
@@ -140,14 +139,14 @@ public class DashboardPresenter
                               final Components components,
                               final QueryToolbarPresenter queryToolbarPresenter,
                               final Provider<RenameTabPresenter> renameTabPresenterProvider,
-                              final Provider<QueryInfoPresenter> queryInfoPresenterProvider,
+                              final QueryInfo queryInfo,
                               final Provider<LayoutConstraintPresenter> layoutConstraintPresenterProvider,
                               final UrlParameters urlParameters) {
         super(eventBus, view);
         this.queryToolbarPresenter = queryToolbarPresenter;
         this.layoutPresenter = flexLayout;
         this.components = components;
-        this.queryInfoPresenterProvider = queryInfoPresenterProvider;
+        this.queryInfo = queryInfo;
         this.layoutConstraintPresenterProvider = layoutConstraintPresenterProvider;
 
         final TabManager tabManager = new TabManager(components, renameTabPresenterProvider, this);
@@ -549,6 +548,7 @@ public class DashboardPresenter
                 final Queryable queryable = (Queryable) component;
                 queryable.addSearchStateListener(this);
                 queryable.addSearchErrorListener(this);
+                queryable.setQueryInfo(queryInfo);
             }
 
             component.read(componentConfig);
@@ -790,18 +790,12 @@ public class DashboardPresenter
                 queryable.stop();
             }
         } else {
-
             // If we have some queryable components then make sure we get query info for them.
             if (queryableComponents.size() > 0) {
-                queryInfoPresenterProvider.get().show(lastUsedQueryInfo, state -> {
-                    if (state.isOk()) {
-                        lastUsedQueryInfo = state.getQueryInfo();
-
-                        for (final Queryable queryable : queryableComponents) {
-                            queryable.setDashboardContext(this);
-                            queryable.setQueryInfo(lastUsedQueryInfo);
-                            queryable.start();
-                        }
+                queryInfo.prompt(() -> {
+                    for (final Queryable queryable : queryableComponents) {
+                        queryable.setDashboardContext(this);
+                        queryable.start();
                     }
                 });
             }

@@ -401,7 +401,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
                     if (!StreamTypeNames.ERROR.equals(streamTypeName)) {
                         processedMeta.add(meta);
                     } else {
-                        try (Source errorStreamSource = streamStore.openSource(streamId)) {
+                        try (final Source errorStreamSource = streamStore.openSource(streamId)) {
                             String errorStreamStr = SourceUtil.readString(errorStreamSource);
 
 //                            try (final InputStreamProvider inputStreamProvider = errorStreamSource.get(0)) {

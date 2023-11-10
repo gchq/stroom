@@ -52,6 +52,10 @@ public class TooltipPresenter extends MyPresenterWidget<TooltipPresenter.Tooltip
                 .fire();
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface TooltipView extends View, Focus {
 
         void setText(String text);

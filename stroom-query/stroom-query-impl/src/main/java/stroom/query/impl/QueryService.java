@@ -4,6 +4,7 @@ import stroom.dashboard.shared.DashboardSearchResponse;
 import stroom.dashboard.shared.ValidateExpressionResult;
 import stroom.datasource.api.v2.DataSource;
 import stroom.docref.DocRef;
+import stroom.docstore.shared.Documentation;
 import stroom.query.shared.DownloadQueryResultsRequest;
 import stroom.query.shared.QueryDoc;
 import stroom.query.shared.QuerySearchRequest;
@@ -31,4 +32,6 @@ public interface QueryService {
     Optional<DataSource> getDataSource(DocRef docRef);
 
     Optional<DataSource> getDataSource(String query);
+
+    Documentation fetchDocumentation(DocRef docRef);
 }

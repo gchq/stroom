@@ -8,6 +8,7 @@ import stroom.processor.shared.CreateProcessFilterRequest;
 import stroom.processor.shared.FetchProcessorRequest;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
+import stroom.processor.shared.ProcessorFilterRow;
 import stroom.processor.shared.ProcessorListRow;
 import stroom.processor.shared.ReprocessDataInfo;
 import stroom.util.shared.ResultPage;
@@ -93,6 +94,11 @@ public class MockProcessorFilterService implements ProcessorFilterService {
 
     @Override
     public ResultPage<ProcessorListRow> find(FetchProcessorRequest request) {
+        return null;
+    }
+
+    @Override
+    public ProcessorFilterRow getRow(final ProcessorFilter processorFilter) {
         return null;
     }
 

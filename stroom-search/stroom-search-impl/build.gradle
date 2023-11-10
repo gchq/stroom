@@ -37,9 +37,6 @@ dependencies {
     implementation libs.jaxb_api
     implementation libs.jakarta_inject
     implementation libs.kryo
-    implementation libs.lucene_analyzers_common
-    implementation libs.lucene_core
-    implementation libs.lucene_queryparser
     implementation libs.slf4j_api
     implementation libs.swagger_annotations
     implementation libs.vavr

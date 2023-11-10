@@ -16,7 +16,6 @@
 
 package stroom.analytics;
 
-import stroom.analytics.impl.StreamingAnalyticExecutor;
 import stroom.analytics.shared.AnalyticProcessType;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.QueryLanguageVersion;
@@ -31,6 +30,7 @@ import stroom.node.api.NodeInfo;
 import stroom.resource.impl.ResourceModule;
 import stroom.security.mock.MockSecurityContextModule;
 import stroom.test.BootstrapTestModule;
+import stroom.test.CommonTranslationTestHelper;
 
 import jakarta.inject.Inject;
 import name.falgout.jeffrey.testing.junit.guice.GuiceExtension;
@@ -53,11 +53,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 class TestStreamingAnalytics extends AbstractAnalyticsTest {
 
     @Inject
-    private StreamingAnalyticExecutor analyticsExecutor;
-    @Inject
     private AnalyticsDataSetup analyticsDataSetup;
     @Inject
     private NodeInfo nodeInfo;
+    @Inject
+    private CommonTranslationTestHelper commonTranslationTestHelper;
 
     @Test
     void testSingleEvent() {
@@ -112,8 +112,8 @@ class TestStreamingAnalytics extends AbstractAnalyticsTest {
                 .build();
         writeRule(analyticRuleDoc);
 
-        // Now run the search process.
-        analyticsExecutor.exec();
+        // Now run the processing.
+        commonTranslationTestHelper.processAll();
 
         // As we have created alerts ensure we now have more streams.
         testDetectionsStream(expectedStreams, expectedRecords);

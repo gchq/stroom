@@ -1,5 +1,6 @@
 package stroom.analytics.impl;
 
+import stroom.analytics.api.NotificationState;
 import stroom.analytics.shared.AnalyticProcessConfig;
 import stroom.analytics.shared.AnalyticProcessType;
 import stroom.analytics.shared.AnalyticRuleDoc;

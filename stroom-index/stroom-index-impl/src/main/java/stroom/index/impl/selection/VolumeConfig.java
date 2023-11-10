@@ -18,7 +18,7 @@ import java.util.List;
 @JsonPropertyOrder(alphabetic = true)
 public class VolumeConfig extends AbstractConfig implements IsStroomConfig {
 
-    public static final String PROP_NAME_DEFUALT_VOLUME_GROUP_NAME = "defaultIndexVolumeGroupName";
+    public static final String PROP_NAME_DEFAULT_VOLUME_GROUP_NAME = "defaultIndexVolumeGroupName";
 
     private final String volumeSelector;
     private final boolean createDefaultIndexVolumesOnStart;
@@ -47,7 +47,7 @@ public class VolumeConfig extends AbstractConfig implements IsStroomConfig {
     public VolumeConfig(
             @JsonProperty("volumeSelector") final String volumeSelector,
             @JsonProperty("createDefaultIndexVolumesOnStart") final boolean createDefaultIndexVolumesOnStart,
-            @JsonProperty(PROP_NAME_DEFUALT_VOLUME_GROUP_NAME) final String defaultIndexVolumeGroupName,
+            @JsonProperty(PROP_NAME_DEFAULT_VOLUME_GROUP_NAME) final String defaultIndexVolumeGroupName,
             @JsonProperty("defaultIndexVolumeGroupPaths") final List<String> defaultIndexVolumeGroupPaths,
             @JsonProperty("defaultIndexVolumeFilesystemUtilisation") final double defaultIndexVolumeFilesystemUtilisation,
             @JsonProperty("volumeSelectorCache") final CacheConfig volumeSelectorCache) {

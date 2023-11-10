@@ -30,6 +30,7 @@ import stroom.util.NullSafe;
 import stroom.util.concurrent.DurationAdder;
 import stroom.util.concurrent.WorkQueue;
 import stroom.util.io.FileUtil;
+import stroom.util.io.PathCreator;
 import stroom.util.logging.DurationTimer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -42,7 +43,6 @@ import jakarta.inject.Provider;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Comparator;
@@ -77,6 +77,7 @@ public class PhysicalDeleteExecutor {
     private final TaskContextFactory taskContextFactory;
     private final ExecutorProvider executorProvider;
     private final FsFileDeleter fsFileDeleter;
+    private final PathCreator pathCreator;
 
     @Inject
     PhysicalDeleteExecutor(
@@ -88,7 +89,8 @@ public class PhysicalDeleteExecutor {
             final DataVolumeDao dataVolumeDao,
             final TaskContextFactory taskContextFactory,
             final ExecutorProvider executorProvider,
-            final FsFileDeleter fsFileDeleter) {
+            final FsFileDeleter fsFileDeleter,
+            final PathCreator pathCreator) {
         this.clusterLockService = clusterLockService;
         this.dataStoreServiceConfigProvider = dataStoreServiceConfigProvider;
         this.fileSystemStreamPathHelper = fileSystemStreamPathHelper;
@@ -98,6 +100,7 @@ public class PhysicalDeleteExecutor {
         this.taskContextFactory = taskContextFactory;
         this.executorProvider = executorProvider;
         this.fsFileDeleter = fsFileDeleter;
+        this.pathCreator = pathCreator;
     }
 
     public void exec() {
@@ -433,26 +436,38 @@ public class PhysicalDeleteExecutor {
                                 LOGGER.warn(() -> TASK_NAME + " - Unable to find any volume for " + simpleMeta);
                                 isSuccessful = true;
                             } else {
-                                final Path volumePath = Paths.get(dataVolume.getVolumePath());
-                                final Path file = fileSystemStreamPathHelper.getRootPath(
-                                        volumePath,
-                                        simpleMeta,
-                                        simpleMeta.getTypeName());
-                                final Path dir = file.getParent();
-                                String baseName = file.getFileName().toString();
-                                baseName = baseName.substring(0, baseName.indexOf("."));
+                                switch (dataVolume.getVolume().getVolumeType()) {
+                                    case STANDARD -> {
+                                        final Path volumePath = pathCreator.toAppPath(dataVolume.getVolume().getPath());
+                                        final Path file = fileSystemStreamPathHelper.getRootPath(
+                                                volumePath,
+                                                simpleMeta,
+                                                simpleMeta.getTypeName());
+                                        final Path dir = file.getParent();
+                                        String baseName = file.getFileName().toString();
+                                        baseName = baseName.substring(0, baseName.indexOf("."));
 
-                                if (Files.isDirectory(dir)) {
-                                    isSuccessful = fsFileDeleter.deleteFilesByBaseName(
-                                            simpleMeta.getId(), dir, baseName, progress::addFileDeletes);
+                                        if (Files.isDirectory(dir)) {
+                                            isSuccessful = fsFileDeleter.deleteFilesByBaseName(
+                                                    simpleMeta.getId(), dir, baseName, progress::addFileDeletes);
 
-                                    dirToVolPathMap.put(dir, volumePath);
-                                } else {
-                                    isSuccessful = true;
-                                    LOGGER.warn(TASK_NAME + " - Directory does not exist '" +
-                                            FileUtil.getCanonicalPath(dir) +
-                                            "'");
+                                            dirToVolPathMap.put(dir, volumePath);
+                                        } else {
+                                            isSuccessful = true;
+                                            LOGGER.warn(TASK_NAME + " - Directory does not exist '" +
+                                                    FileUtil.getCanonicalPath(dir) +
+                                                    "'");
+                                        }
+                                    }
+                                    case S3 -> {
+                                        // FIXME: Add something.
+                                        isSuccessful = false;
+                                    }
+                                    default -> {
+                                        isSuccessful = false;
+                                    }
                                 }
+
                             }
 
                             if (isSuccessful) {

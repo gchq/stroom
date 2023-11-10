@@ -1,5 +1,6 @@
 package stroom.processor.client.presenter;
 
+import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.processor.shared.Processor;
@@ -9,6 +10,7 @@ import stroom.processor.shared.ProcessorFilterTracker;
 import stroom.processor.shared.ProcessorFilterTrackerStatus;
 import stroom.processor.shared.ProcessorListRow;
 import stroom.processor.shared.ProcessorRow;
+import stroom.processor.shared.QueryData;
 import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
@@ -72,6 +74,17 @@ public class ProcessorInfoBuilder {
             addRowDateString(tb, "Created On", filter.getCreateTimeMs());
             tb.row("Updated By", filter.getUpdateUser());
             addRowDateString(tb, "Updated On", filter.getUpdateTimeMs());
+
+            // Provide analytic details.
+            final QueryData queryData = filter.getQueryData();
+            if (queryData != null) {
+                final DocRef analyticRule = queryData.getAnalyticRule();
+                if (analyticRule != null) {
+                    tb.row("Analytic",
+                            DocRefUtil.createSimpleDocRefString(analyticRule));
+                }
+            }
+
             tb.row("Pipeline",
                     DocRefUtil.createSimpleDocRefString(filter.getPipeline()));
 

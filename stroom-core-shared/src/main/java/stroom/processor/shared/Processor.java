@@ -35,7 +35,6 @@ import java.util.Objects;
 public class Processor implements HasAuditInfo, HasUuid {
 
     public static final String ENTITY_TYPE = "Processor";
-    private static final String PIPELINE_STREAM_PROCESSOR_TASK_TYPE = "pipelineStreamProcessor";
 
     // standard id, OCC and audit fields
     @JsonProperty
@@ -55,7 +54,7 @@ public class Processor implements HasAuditInfo, HasUuid {
 
     // Only One type for the moment
     @JsonProperty
-    private String taskType;
+    private ProcessorType processorType;
     @JsonProperty
     private String pipelineUuid;
     @JsonProperty
@@ -66,11 +65,11 @@ public class Processor implements HasAuditInfo, HasUuid {
     private boolean deleted;
 
     public Processor() {
-        taskType = PIPELINE_STREAM_PROCESSOR_TASK_TYPE;
+        processorType = ProcessorType.PIPELINE;
     }
 
     public Processor(final DocRef pipelineRef) {
-        taskType = PIPELINE_STREAM_PROCESSOR_TASK_TYPE;
+        processorType = ProcessorType.PIPELINE;
         this.pipelineUuid = pipelineRef.getUuid();
     }
 
@@ -82,7 +81,7 @@ public class Processor implements HasAuditInfo, HasUuid {
                      @JsonProperty("updateTimeMs") final Long updateTimeMs,
                      @JsonProperty("updateUser") final String updateUser,
                      @JsonProperty("uuid") final String uuid,
-                     @JsonProperty("taskType") final String taskType,
+                     @JsonProperty("processorType") final ProcessorType processorType,
                      @JsonProperty("pipelineUuid") final String pipelineUuid,
                      @JsonProperty("pipelineName") final String pipelineName,
                      @JsonProperty("enabled") final boolean enabled,
@@ -94,7 +93,7 @@ public class Processor implements HasAuditInfo, HasUuid {
         this.updateTimeMs = updateTimeMs;
         this.updateUser = updateUser;
         this.uuid = uuid;
-        this.taskType = taskType;
+        this.processorType = processorType;
         this.pipelineUuid = pipelineUuid;
         this.pipelineName = pipelineName;
         this.enabled = enabled;
@@ -162,12 +161,12 @@ public class Processor implements HasAuditInfo, HasUuid {
         this.uuid = uuid;
     }
 
-    public String getTaskType() {
-        return taskType;
+    public ProcessorType getProcessorType() {
+        return processorType;
     }
 
-    public void setTaskType(String taskType) {
-        this.taskType = taskType;
+    public void setProcessorType(ProcessorType processorType) {
+        this.processorType = processorType;
     }
 
     public String getPipelineUuid() {
@@ -230,7 +229,7 @@ public class Processor implements HasAuditInfo, HasUuid {
                 ", createUser='" + createUser + '\'' +
                 ", updateTimeMs=" + updateTimeMs +
                 ", updateUser='" + updateUser + '\'' +
-                ", taskType='" + taskType + '\'' +
+                ", processorType='" + processorType + '\'' +
                 ", pipelineUuid='" + pipelineUuid + '\'' +
                 ", enabled=" + enabled +
                 ", deleted=" + deleted +

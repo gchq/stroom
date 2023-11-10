@@ -25,17 +25,13 @@ import stroom.util.logging.LambdaLoggerFactory;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-import org.apache.lucene.document.Document;
-import org.apache.lucene.store.AlreadyClosedException;
-
-import java.io.IOException;
 import java.util.concurrent.locks.Lock;
 
 /**
  * Pool API into open index shards.
  */
 @Singleton
-public class IndexerImpl implements Indexer {
+class IndexerImpl implements Indexer {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexerImpl.class);
     private static final int MAX_ATTEMPTS = 10000;
@@ -46,14 +42,14 @@ public class IndexerImpl implements Indexer {
     private final StripedLock keyLocks = new StripedLock();
 
     @Inject
-    public IndexerImpl(final IndexShardWriterCache indexShardWriterCache,
-                       final IndexShardManager indexShardManager) {
+    IndexerImpl(final IndexShardWriterCache indexShardWriterCache,
+                final IndexShardManager indexShardManager) {
         this.indexShardWriterCache = indexShardWriterCache;
         this.indexShardManager = indexShardManager;
     }
 
     @Override
-    public void addDocument(final IndexShardKey indexShardKey, final Document document) {
+    public void addDocument(final IndexShardKey indexShardKey, final IndexDocument document) {
         if (document != null) {
             // Try and add the document silently without locking.
             boolean success = false;
@@ -61,7 +57,7 @@ public class IndexerImpl implements Indexer {
                 final IndexShardWriter indexShardWriter = indexShardWriterCache.getWriterByShardKey(indexShardKey);
                 indexShardWriter.addDocument(document);
                 success = true;
-            } catch (final IOException | RuntimeException e) {
+            } catch (final RuntimeException e) {
                 LOGGER.trace(e::getMessage, e);
             }
 
@@ -101,14 +97,14 @@ public class IndexerImpl implements Indexer {
                     indexShardWriter.addDocument(document);
                 } catch (final IndexException e) {
                     throw e;
-                } catch (final IOException | RuntimeException e) {
+                } catch (final RuntimeException e) {
                     throw new IndexException(e.getMessage(), e);
                 }
             }
         }
     }
 
-    private boolean addDocument(final IndexShardWriter indexShardWriter, final Document document) {
+    private boolean addDocument(final IndexShardWriter indexShardWriter, final IndexDocument document) {
         boolean success = false;
         try {
             indexShardWriter.addDocument(document);
@@ -116,10 +112,10 @@ public class IndexerImpl implements Indexer {
         } catch (final ShardFullException e) {
             LOGGER.debug(e::getMessage, e);
 
-        } catch (final AlreadyClosedException | IndexException e) {
+        } catch (final IndexException e) {
             LOGGER.trace(e::getMessage, e);
 
-        } catch (final IOException | RuntimeException e) {
+        } catch (final RuntimeException e) {
             LOGGER.error(e::getMessage, e);
 
             // Mark the shard as corrupt as this should be the

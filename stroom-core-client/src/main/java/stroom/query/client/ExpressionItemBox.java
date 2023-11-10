@@ -29,7 +29,6 @@ public class ExpressionItemBox extends Box<Item> {
     private final TreeLayout<Item> treeLayout;
     private final Item expressionItem;
     private boolean selected;
-    private Widget innerWidget;
 
     public ExpressionItemBox(final TreeLayout<Item> treeLayout, final Item expressionItem,
                              final boolean allowSelection) {
@@ -46,7 +45,6 @@ public class ExpressionItemBox extends Box<Item> {
     }
 
     public void setInnerWidget(final Widget innerWidget) {
-        this.innerWidget = innerWidget;
         background.setWidget(innerWidget);
     }
 

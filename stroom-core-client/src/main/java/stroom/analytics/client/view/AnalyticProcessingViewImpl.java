@@ -56,11 +56,13 @@ public class AnalyticProcessingViewImpl
     @UiField
     CustomCheckBox enabled;
     @UiField
+    SelectionBox<AnalyticProcessType> processingType;
+    @UiField
+    FormGroup nodeContainer;
+    @UiField
     SelectionBox<String> node;
     @UiField
     SimplePanel errorFeed;
-    @UiField
-    SelectionBox<AnalyticProcessType> processingType;
     @UiField
     FormGroup analyticProcessingMinMetaCreateTimeMs;
     @UiField
@@ -100,6 +102,7 @@ public class AnalyticProcessingViewImpl
     public AnalyticProcessingViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
         refresh.setIcon(SvgImage.REFRESH);
+        nodeContainer.setVisible(false);
 
         processingType.addItem(AnalyticProcessType.STREAMING);
         processingType.addItem(AnalyticProcessType.TABLE_BUILDER);
@@ -156,6 +159,11 @@ public class AnalyticProcessingViewImpl
             selectedNode = node;
             this.node.setValue(node);
         }
+    }
+
+    @Override
+    public void setNodeVisible(final boolean visible) {
+        nodeContainer.setVisible(visible);
     }
 
     @Override

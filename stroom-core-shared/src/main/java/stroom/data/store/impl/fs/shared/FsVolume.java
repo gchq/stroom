@@ -59,12 +59,21 @@ public class FsVolume implements HasAuditInfo, HasIntegerId, HasCapacity {
     private Long byteLimit;
     @JsonProperty
     private FsVolumeState volumeState;
+    @JsonProperty
+    private FsVolumeType volumeType;
+    @JsonProperty
+    private S3ClientConfig s3ClientConfig;
+    @JsonProperty
+    private String s3ClientConfigData;
+    @JsonProperty
+    private Integer volumeGroupId;
 
     @JsonIgnore
     private final HasCapacityInfo capacityInfo = new CapacityInfo();
 
     public FsVolume() {
         status = VolumeUseStatus.ACTIVE;
+        volumeType = FsVolumeType.STANDARD;
     }
 
     @JsonCreator
@@ -77,7 +86,11 @@ public class FsVolume implements HasAuditInfo, HasIntegerId, HasCapacity {
                     @JsonProperty("path") final String path,
                     @JsonProperty("status") final VolumeUseStatus status,
                     @JsonProperty("byteLimit") final Long byteLimit,
-                    @JsonProperty("volumeState") final FsVolumeState volumeState) {
+                    @JsonProperty("volumeState") final FsVolumeState volumeState,
+                    @JsonProperty("volumeType") final FsVolumeType volumeType,
+                    @JsonProperty("s3ClientConfig") final S3ClientConfig s3ClientConfig,
+                    @JsonProperty("s3ClientConfigData") final String s3ClientConfigData,
+                    @JsonProperty("volumeGroupId") final Integer volumeGroupId) {
         this.id = id;
         this.version = version;
         this.createTimeMs = createTimeMs;
@@ -88,6 +101,12 @@ public class FsVolume implements HasAuditInfo, HasIntegerId, HasCapacity {
         this.status = status;
         this.byteLimit = byteLimit;
         this.volumeState = volumeState;
+        this.volumeType = volumeType == null
+                ? FsVolumeType.STANDARD
+                : volumeType;
+        this.s3ClientConfig = s3ClientConfig;
+        this.s3ClientConfigData = s3ClientConfigData;
+        this.volumeGroupId = volumeGroupId;
     }
 
     public static FsVolume create(final String path) {
@@ -212,6 +231,38 @@ public class FsVolume implements HasAuditInfo, HasIntegerId, HasCapacity {
         this.volumeState = volumeState;
     }
 
+    public FsVolumeType getVolumeType() {
+        return volumeType;
+    }
+
+    public void setVolumeType(final FsVolumeType volumeType) {
+        this.volumeType = volumeType;
+    }
+
+    public Integer getVolumeGroupId() {
+        return volumeGroupId;
+    }
+
+    public void setVolumeGroupId(final Integer volumeGroupId) {
+        this.volumeGroupId = volumeGroupId;
+    }
+
+    public S3ClientConfig getS3ClientConfig() {
+        return s3ClientConfig;
+    }
+
+    public void setS3ClientConfig(final S3ClientConfig s3ClientConfig) {
+        this.s3ClientConfig = s3ClientConfig;
+    }
+
+    public String getS3ClientConfigData() {
+        return s3ClientConfigData;
+    }
+
+    public void setS3ClientConfigData(final String s3ClientConfigData) {
+        this.s3ClientConfigData = s3ClientConfigData;
+    }
+
     @JsonIgnore
     @Override
     public HasCapacityInfo getCapacityInfo() {
@@ -232,32 +283,39 @@ public class FsVolume implements HasAuditInfo, HasIntegerId, HasCapacity {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        final FsVolume that = (FsVolume) o;
-        return Objects.equals(id, that.id) &&
-                Objects.equals(version, that.version) &&
-                Objects.equals(createTimeMs, that.createTimeMs) &&
-                Objects.equals(createUser, that.createUser) &&
-                Objects.equals(updateTimeMs, that.updateTimeMs) &&
-                Objects.equals(updateUser, that.updateUser) &&
-                Objects.equals(path, that.path) &&
-                status == that.status &&
-                Objects.equals(byteLimit, that.byteLimit);
+        final FsVolume volume = (FsVolume) o;
+        return Objects.equals(id, volume.id) &&
+                Objects.equals(version, volume.version) &&
+                Objects.equals(createTimeMs, volume.createTimeMs) &&
+                Objects.equals(createUser, volume.createUser) &&
+                Objects.equals(updateTimeMs, volume.updateTimeMs) &&
+                Objects.equals(updateUser, volume.updateUser) &&
+                Objects.equals(path, volume.path) &&
+                status == volume.status &&
+                Objects.equals(byteLimit, volume.byteLimit) &&
+                volumeType == volume.volumeType &&
+                Objects.equals(s3ClientConfig, volume.s3ClientConfig) &&
+                Objects.equals(s3ClientConfigData, volume.s3ClientConfigData) &&
+                Objects.equals(volumeGroupId, volume.volumeGroupId);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, version, createTimeMs, createUser, updateTimeMs, updateUser, path, status, byteLimit);
+        return Objects.hash(id,
+                version,
+                createTimeMs,
+                createUser,
+                updateTimeMs,
+                updateUser,
+                path,
+                status,
+                byteLimit,
+                volumeType,
+                s3ClientConfig,
+                s3ClientConfigData,
+                volumeGroupId);
     }
 
-    @Override
-    public String toString() {
-        return "FileSystemVolume{" +
-                "path='" + path + '\'' +
-                ", status=" + status +
-                ", byteLimit=" + byteLimit +
-                ", volumeState=" + volumeState +
-                '}';
-    }
 
     public FsVolume copy() {
         final FsVolume volume = new FsVolume();
@@ -265,6 +323,10 @@ public class FsVolume implements HasAuditInfo, HasIntegerId, HasCapacity {
         volume.status = status;
         volume.byteLimit = byteLimit;
         volume.volumeState = volumeState;
+        volume.volumeType = volumeType;
+        volume.s3ClientConfig = s3ClientConfig;
+        volume.s3ClientConfigData = s3ClientConfigData;
+        volume.volumeGroupId = volumeGroupId;
         return volume;
     }
 

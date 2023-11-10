@@ -52,10 +52,11 @@ plugins {
 apply plugin: 'de.undercouch.download'
 //apply plugin: 'com.vanniktech.dependency.graph.generator'
 
-def javaVersion = JavaVersion.VERSION_17;
-if (JavaVersion.current() != javaVersion) {
-    throw new GradleException(
-            "This build must be run with Java " + javaVersion + " (current = " + JavaVersion.current() + ")")
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+        vendor = JvmVendorSpec.ADOPTIUM
+    }
 }
 
 //if the project has a value for the passed property (i.e from the cmd line via -PpropName=xxx)
@@ -110,7 +111,7 @@ ext.versions = [
         // 6.1.x - https://www.cloudera.com/documentation/enterprise/6/release-notes/topics/rg_cdh_61_maven_artifacts.html
 
         //------------3rd-party------------
-        aws               : '2.17.253',
+        aws               : '2.20.157',
         curator           : '4.2.0', // Curator 4 works with ZK 3.4.x in soft compatibility mode, i.e. you must exlude its dep on ZK and explicitly add one for 3.4.x
         dropwizard        : '4.0.4', // used to set the dropwizard-bom version, that controls lots of dependency versions
         elasticsearch     : '7.17.14',
@@ -123,7 +124,6 @@ ext.versions = [
         jooq              : '3.18.7',
         junit_jupiter     : '5.10.1',
         kafka             : '3.6.0',
-        lucene            : '5.5.3',
         okhttp            : '4.12.0',
         swagger           : '2.1.12',
         unirest           : '1.4.9',
@@ -146,7 +146,9 @@ ext.libs = [
 
         //------3rd Party-libs---------------
         assertj_core                        : "org.assertj:assertj-core", // version controlled by dropwizard-dependencies
-        aws_dependencies                    : "software.amazon.awssdk:bom:$versions.aws",
+        aws_bom                             : "software.amazon.awssdk:bom:$versions.aws",
+        aws_crt                             : "software.amazon.awssdk.crt:aws-crt:0.27.3",
+        aws_s3_transfer_manager             : "software.amazon.awssdk:s3-transfer-manager", // version controlled by AWS BOM
         aws_sqs                             : "software.amazon.awssdk:sqs", // version controlled by AWS BOM
         bcrypt                              : 'de.svenkubiak:jBCrypt:0.4.1',
         caffeine                            : "com.github.ben-manes.caffeine:caffeine", // version controlled by dropwizard-dependencies
@@ -202,7 +204,7 @@ ext.libs = [
         gwt_user                            : "org.gwtproject:gwt-user:$versions.gwt",
         gwtp_mvp_client                     : "com.gwtplatform:gwtp-mvp-client:0.7",
         gson                                : 'com.google.code.gson:gson:2.6.2',
-        hbase                               : "org.apache.hbase:hbase-common:2.1.5", // should be set to be consistent with CDH version
+        hbase                               : "org.apache.hbase:hbase-common:2.1.10", // should be set to be consistent with CDH version
         hessian                             : "com.caucho:hessian:4.0.65",
         hibernate_jpa                       : "org.hibernate.javax.persistence:hibernate-jpa-2.1-api:1.0.0.Final", // remove when legacy code is removed
         hikari                              : "com.zaxxer:HikariCP:5.1.0",
@@ -264,11 +266,6 @@ ext.libs = [
         log4j_over_slf4j                    : "org.slf4j:log4j-over-slf4j", // version controlled by dropwizard-dependencies
         logback_classic                     : "ch.qos.logback:logback-classic", // version controlled by dropwizard-dependencies
         logback_core                        : "ch.qos.logback:logback-core", // version controlled by dropwizard-dependencies
-        lucene_analyzers_common             : "org.apache.lucene:lucene-analyzers-common:$versions.lucene",
-        lucene_backward_codecs              : "org.apache.lucene:lucene-backward-codecs:$versions.lucene",
-        lucene_core                         : "org.apache.lucene:lucene-core:$versions.lucene",
-        lucene_memory                       : "org.apache.lucene:lucene-memory:$versions.lucene",
-        lucene_queryparser                  : "org.apache.lucene:lucene-queryparser:$versions.lucene",
         mbknor_jackson_jsonSchema           : "com.kjetland:mbknor-jackson-jsonschema_2.12:1.0.36",
         mockito_core                        : "org.mockito:mockito-core", // version controlled by dropwizard-dependencies
         mockito_junit_jupiter               : "org.mockito:mockito-junit-jupiter", // version controlled by dropwizard-dependencies
@@ -352,14 +349,11 @@ subprojects {
 ////        rules +=  'all-dependency'
 //    }
 
-    sourceCompatibility = javaVersion
-    targetCompatibility = javaVersion
-
     // This bit makes all sub projects have access to the BOMs for the dependency versions
     dependencies {
         implementation platform(libs.dropwizard_dependencies)
         implementation platform(libs.dropwizard_bom)
-        implementation platform(libs.aws_dependencies)
+        implementation platform(libs.aws_bom)
     }
 
     //println project.getConfigurations().getByName("implementation").getAllDependencies()
@@ -411,15 +405,6 @@ subprojects {
                     //substitute module('org.glassfish.jersey.core:jersey-common') using module("org.glassfish.jersey.core:jersey-common:$versions.jersey")
                     //substitute module('org.glassfish.jersey.core:jersey-server') using module("org.glassfish.jersey.core:jersey-server:$versions.jersey")
                     //substitute module('org.glassfish.jersey.core:jersey-client') using module("org.glassfish.jersey.core:jersey-client:$versions.jersey")
-
-
-                    //substitute module("javax.servlet:javax.servlet-api") using module("jakarta.servlet:jakarta.servlet-api:*")
-
-//                    substitute module('org.apache.lucene:lucene-analyzers-common') with module("org.apache.lucene:lucene-analyzers-common:$versions.lucene")
-//                    substitute module('org.apache.lucene:lucene-backward-codecs') with module("org.apache.lucene:lucene-backward-codecs:$versions.lucene")
-//                    substitute module('org.apache.lucene:lucene-core') with module("org.apache.lucene:lucene-core:$versions.lucene")
-//                    substitute module('org.apache.lucene:lucene-queryparser') with module("org.apache.lucene:lucene-queryparser:$versions.lucene")
-                    // substitute module('javax.validation:validation-api') with module("javax.validation:validation-api:1.1.0.Final")
                 }
 
                 // Stop stroom libs from dragging in a different version of dropwizard

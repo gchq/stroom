@@ -384,7 +384,7 @@ public class ManageGlobalPropertyListPresenter
                 75);
 
         // Description
-        dataGrid.addResizableColumn(
+        dataGrid.addAutoResizableColumn(
                 DataGridUtil.htmlColumnBuilder(ConfigPropertyRow::getDescription, SafeHtmlUtils::fromString)
                         .topAligned()
                         .withStyleName(MyDataGrid.RESOURCES.dataGridStyle().dataGridCellWrapText())

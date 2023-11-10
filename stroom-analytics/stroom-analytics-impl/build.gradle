@@ -5,6 +5,7 @@ dependencies {
     implementation project(':stroom-analytics:stroom-analytics-rule-impl')
     implementation project(':stroom-annotation:stroom-annotation-api')
     implementation project(':stroom-config:stroom-config-common')
+    implementation project(':stroom-core')
     implementation project(':stroom-core-shared')
     implementation project(':stroom-cluster:stroom-cluster-task-api')
     implementation project(':stroom-data:stroom-data-store-api')
@@ -16,12 +17,12 @@ dependencies {
     implementation project(':stroom-explorer:stroom-explorer-api')
     implementation project(':stroom-feed:stroom-feed-api')
     implementation project(':stroom-importexport:stroom-importexport-api')
-    implementation project(':stroom-index:stroom-index-impl')
     implementation project(':stroom-job:stroom-job-api')
     implementation project(':stroom-lmdb')
     implementation project(':stroom-meta:stroom-meta-api')
     implementation project(':stroom-node:stroom-node-api')
     implementation project(':stroom-pipeline')
+    implementation project(':stroom-processor:stroom-processor-api')
     implementation project(':stroom-query:stroom-query-api')
     implementation project(':stroom-query:stroom-query-language')
     implementation project(':stroom-query:stroom-query-language-api')
@@ -31,6 +32,7 @@ dependencies {
     implementation project(':stroom-search:stroom-search-extraction')
     implementation project(':stroom-search:stroom-searchable-api')
     implementation project(':stroom-security:stroom-security-api')
+    implementation project(':stroom-statistics:stroom-statistics-api')
     implementation project(':stroom-task:stroom-task-api')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
@@ -41,7 +43,6 @@ dependencies {
     implementation libs.jackson_annotations
     implementation libs.jakarta_validation_api
     implementation libs.jaxb_api
-    implementation libs.lucene_memory
     implementation libs.restygwt
     implementation libs.saxon_he
     implementation libs.simple_java_mail

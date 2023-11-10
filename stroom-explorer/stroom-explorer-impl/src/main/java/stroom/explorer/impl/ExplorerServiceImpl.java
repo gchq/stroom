@@ -33,6 +33,7 @@ import stroom.explorer.shared.ExplorerFields;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerNode.Builder;
 import stroom.explorer.shared.ExplorerNodeKey;
+import stroom.explorer.shared.ExplorerResource.TagFetchMode;
 import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.explorer.shared.FetchExplorerNodeResult;
 import stroom.explorer.shared.FindExplorerNodeCriteria;
@@ -1143,25 +1144,62 @@ class ExplorerServiceImpl
     public ExplorerNode updateTags(final ExplorerNode explorerNode) {
         Objects.requireNonNull(explorerNode);
         final DocRef docRef = explorerNode.getDocRef();
+        return updateTags(docRef, explorerNode.getTags());
+    }
+
+    public ExplorerNode updateTags(final DocRef docRef, final Set<String> tags) {
+        Objects.requireNonNull(docRef);
         ExplorerNode beforeNode = null;
+        ExplorerNode afterNode = null;
         try {
-            beforeNode = explorerNodeService.getNode(explorerNode.getDocRef())
+            beforeNode = explorerNodeService.getNode(docRef)
                     .orElse(null);
 
-            explorerNodeService.updateTags(docRef, explorerNode.getTags());
+            explorerNodeService.updateTags(docRef, tags);
 
-            final ExplorerNode afterNode = explorerNodeService.getNode(docRef)
+            afterNode = explorerNodeService.getNode(docRef)
                     .orElseThrow(() -> new RuntimeException(LogUtil.message(
                             "Can't find node {} after updating it", docRef)));
 
-            explorerEventLog.update(beforeNode, explorerNode, null);
+            explorerEventLog.update(beforeNode, afterNode, null);
 
             // Make sure the tree model is rebuilt.
-            EntityEvent.fire(entityEventBus, afterNode.getDocRef(), EntityAction.UPDATE_EXPLORER_NODE);
+            EntityEvent.fire(entityEventBus, docRef, EntityAction.UPDATE_EXPLORER_NODE);
             return afterNode;
         } catch (final Exception e) {
-            explorerEventLog.update(beforeNode, explorerNode, e);
+            explorerEventLog.update(beforeNode, afterNode, e);
             throw e;
+        }
+    }
+
+    @Override
+    public void addTags(final List<DocRef> docRefs, final Set<String> tags) {
+        addRemoveTags(docRefs, tags, TagOperation.ADD);
+    }
+
+    @Override
+    public void removeTags(final List<DocRef> docRefs, final Set<String> tags) {
+        addRemoveTags(docRefs, tags, TagOperation.REMOVE);
+    }
+
+    private void addRemoveTags(final List<DocRef> docRefs,
+                               final Set<String> tags,
+                               final TagOperation tagOperation) {
+
+        if (NullSafe.hasItems(tags)) {
+            for (final DocRef docRef : NullSafe.list(docRefs)) {
+
+                explorerNodeService.getNode(docRef).ifPresent(node -> {
+                    final Set<String> nodeTags = new HashSet<>(NullSafe.set(node.getTags()));
+                    if (TagOperation.ADD.equals(tagOperation)) {
+                        nodeTags.addAll(tags);
+                    } else {
+                        nodeTags.removeAll(tags);
+                    }
+
+                    updateTags(docRef, nodeTags);
+                });
+            }
         }
     }
 
@@ -1287,6 +1325,48 @@ class ExplorerServiceImpl
         // Add in all known tags from the exp tree model, i.e. user added ones
         tags.addAll(modelTags);
         return Collections.unmodifiableSet(tags);
+    }
+
+    @Override
+    public Set<String> getTags(final Collection<DocRef> docRefs, final TagFetchMode fetchMode) {
+
+        if (NullSafe.hasItems(docRefs)) {
+            final UnmodifiableTreeModel treeModel = explorerTreeModel.getModel();
+            if (TagFetchMode.OR.equals(fetchMode) || docRefs.size() == 1) {
+                return NullSafe.stream(docRefs)
+                        .filter(Objects::nonNull)
+                        .map(docRef ->
+                                treeModel.getNode(docRef.getUuid()))
+                        .filter(Objects::nonNull)
+                        .flatMap(node ->
+                                NullSafe.stream(node.getTags()))
+                        .collect(Collectors.toUnmodifiableSet());
+            } else {
+                // Find the tags common to ALL nodes
+                Set<String> commonTags = null;
+                for (final DocRef docRef : docRefs) {
+                    if (docRef != null) {
+                        final ExplorerNode node = treeModel.getNode(docRef.getUuid());
+                        final Set<String> nodeTags = new HashSet<>(NullSafe.getOrElseGet(
+                                node,
+                                ExplorerNode::getTags,
+                                Collections::emptySet));
+                        if (nodeTags.isEmpty()) {
+                            // A node has no tags so no common tags
+                            commonTags = nodeTags;
+                            break;
+                        }
+                        if (commonTags != null) {
+                            nodeTags.retainAll(commonTags);
+                        }
+                        commonTags = nodeTags;
+                    }
+                }
+                return Collections.unmodifiableSet(NullSafe.set(commonTags));
+            }
+        } else {
+            return Collections.emptySet();
+        }
     }
 
     @Override
@@ -1448,5 +1528,14 @@ class ExplorerServiceImpl
                               boolean containsFilterMatch,
                               Set<ExplorerNodeKey> openNodes) {
 
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private enum TagOperation {
+        ADD,
+        REMOVE;
     }
 }

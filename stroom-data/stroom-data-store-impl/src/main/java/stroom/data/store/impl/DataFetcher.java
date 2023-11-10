@@ -185,21 +185,15 @@ public class DataFetcher {
     }
 
     public Set<String> getAvailableChildStreamTypes(final long id, final long partNo) {
-
         return securityContext.useAsReadResult(() -> {
-            final Source source = streamStore.openSource(id, true);
+            try (final Source source = streamStore.openSource(id, true)) {
+                if (source == null) {
+                    throw new RuntimeException(LogUtil.message("Error opening stream {} - meta not found.", id));
+                }
 
-            if (source == null) {
-                throw new RuntimeException(LogUtil.message("Error opening stream {} - meta not found.", id));
-            }
-
-            try {
-                final InputStreamProvider inputStreamProvider = source.get(partNo);
-
-                final Set<String> childTypes = inputStreamProvider.getChildTypes();
-
-                return childTypes;
-
+                try (final InputStreamProvider inputStreamProvider = source.get(partNo)) {
+                    return inputStreamProvider.getChildTypes();
+                }
             } catch (IOException e) {
                 throw new RuntimeException(LogUtil.message("Error opening stream {}, part {}", id, partNo), e);
             }

@@ -15,6 +15,7 @@ import org.jose4j.jwt.MalformedClaimException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.Delayed;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BooleanSupplier;

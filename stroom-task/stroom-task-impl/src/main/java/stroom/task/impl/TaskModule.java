@@ -72,6 +72,10 @@ public class TaskModule extends AbstractModule {
         return 0;
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class TaskManagerStartup extends RunnableWrapper {
 
         @Inject
@@ -79,6 +83,10 @@ public class TaskModule extends AbstractModule {
             super(taskManager::startup);
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class TaskManagerShutdown extends RunnableWrapper {
 

@@ -4,10 +4,6 @@
 package stroom.data.store.impl.fs.db.jooq.tables;
 
 
-import stroom.data.store.impl.fs.db.jooq.Keys;
-import stroom.data.store.impl.fs.db.jooq.Stroom;
-import stroom.data.store.impl.fs.db.jooq.tables.records.FsVolumeStateRecord;
-
 import org.jooq.Field;
 import org.jooq.ForeignKey;
 import org.jooq.Identity;
@@ -22,6 +18,10 @@ import org.jooq.UniqueKey;
 import org.jooq.impl.DSL;
 import org.jooq.impl.SQLDataType;
 import org.jooq.impl.TableImpl;
+
+import stroom.data.store.impl.fs.db.jooq.Keys;
+import stroom.data.store.impl.fs.db.jooq.Stroom;
+import stroom.data.store.impl.fs.db.jooq.tables.records.FsVolumeStateRecord;
 
 
 /**

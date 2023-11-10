@@ -35,10 +35,13 @@ public class FindFsVolumeCriteria extends BaseCriteria {
     public static final String FIELD_ID = "Id";
 
     @JsonProperty
+    private final FsVolumeGroup group;
+    @JsonProperty
     private final Selection<VolumeUseStatus> selection;
 
     public static FindFsVolumeCriteria matchAll() {
         return new FindFsVolumeCriteria(
+                null,
                 null,
                 null,
                 Selection.selectAll());
@@ -48,15 +51,22 @@ public class FindFsVolumeCriteria extends BaseCriteria {
         return new FindFsVolumeCriteria(
                 null,
                 null,
+                null,
                 Selection.selectNone());
     }
 
     @JsonCreator
     public FindFsVolumeCriteria(@JsonProperty("pageRequest") final PageRequest pageRequest,
+                                @JsonProperty("group")  final FsVolumeGroup group,
                                 @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,
                                 @JsonProperty("selection") final Selection<VolumeUseStatus> selection) {
         super(pageRequest, sortList);
+        this.group = group;
         this.selection = selection;
+    }
+
+    public FsVolumeGroup getGroup() {
+        return group;
     }
 
     public Selection<VolumeUseStatus> getSelection() {

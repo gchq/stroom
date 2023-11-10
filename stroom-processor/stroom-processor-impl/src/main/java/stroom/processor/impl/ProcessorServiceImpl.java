@@ -19,7 +19,6 @@ package stroom.processor.impl;
 
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
-import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorService;
 import stroom.processor.shared.Processor;
 import stroom.security.api.SecurityContext;
@@ -45,17 +44,14 @@ public class ProcessorServiceImpl implements ProcessorService {
     private final SecurityContext securityContext;
     private final ProcessorDao processorDao;
     private final ProcessorTaskDao processorTaskDao;
-    private final ProcessorFilterService processorFilterService;
 
     @Inject
     ProcessorServiceImpl(final SecurityContext securityContext,
                          final ProcessorDao processorDao,
-                         final ProcessorTaskDao processorTaskDao,
-                         final ProcessorFilterService processorFilterService) {
+                         final ProcessorTaskDao processorTaskDao) {
         this.securityContext = securityContext;
         this.processorDao = processorDao;
         this.processorTaskDao = processorTaskDao;
-        this.processorFilterService = processorFilterService;
     }
 
     @Override

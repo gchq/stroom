@@ -18,7 +18,7 @@
 package stroom.index;
 
 import stroom.docref.DocRef;
-import stroom.index.impl.FieldTypeFactory;
+import stroom.index.impl.IndexDocument;
 import stroom.index.impl.IndexShardKeyUtil;
 import stroom.index.impl.IndexShardManager;
 import stroom.index.impl.IndexShardManager.IndexShardAction;
@@ -30,17 +30,17 @@ import stroom.index.impl.Indexer;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexException;
+import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.index.shared.IndexShardKey;
+import stroom.query.language.functions.ValString;
+import stroom.search.extraction.FieldValue;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
 import stroom.test.CommonTestScenarioCreator;
 
 import jakarta.inject.Inject;
-import org.apache.lucene.document.Document;
-import org.apache.lucene.document.Field;
-import org.apache.lucene.document.FieldType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -76,10 +76,8 @@ class TestIndexShardWriterImpl extends AbstractCoreIntegrationTest {
         assertThat(indexShardService.find(FindIndexShardCriteria.matchAll()).size()).isZero();
 
         // Do some work.
-        final FieldType fieldType = FieldTypeFactory.createBasic();
-        final Field field = new Field("test", "test", fieldType);
-        final Document document = new Document();
-        document.add(field);
+        final IndexDocument document = new IndexDocument();
+        document.add(new FieldValue(IndexField.createField("test"), ValString.create("test")));
 
         // Create an index
         final DocRef indexRef1 = commonTestScenarioCreator.createIndex("TEST_2010a");
@@ -125,10 +123,8 @@ class TestIndexShardWriterImpl extends AbstractCoreIntegrationTest {
         assertThat(indexShardService.find(FindIndexShardCriteria.matchAll()).size()).isZero();
 
         // Do some work.
-        final FieldType fieldType = FieldTypeFactory.createBasic();
-        final Field field = new Field("test", "test", fieldType);
-        final Document document = new Document();
-        document.add(field);
+        final IndexDocument document = new IndexDocument();
+        document.add(new FieldValue(IndexField.createField("test"), ValString.create("test")));
 
         final DocRef indexRef1 = commonTestScenarioCreator.createIndex("TEST_2010");
         final IndexDoc index1 = indexStore.readDocument(indexRef1);
@@ -209,10 +205,8 @@ class TestIndexShardWriterImpl extends AbstractCoreIntegrationTest {
     @Test
     void testSimpleRoll() throws IOException {
         // Do some work.
-        final FieldType fieldType = FieldTypeFactory.createBasic();
-        final Field field = new Field("test", "test", fieldType);
-        final Document document = new Document();
-        document.add(field);
+        final IndexDocument document = new IndexDocument();
+        document.add(new FieldValue(IndexField.createField("test"), ValString.create("test")));
 
         final DocRef indexRef1 = commonTestScenarioCreator.createIndex("TEST_2010",
                 commonTestScenarioCreator.createIndexFields(),

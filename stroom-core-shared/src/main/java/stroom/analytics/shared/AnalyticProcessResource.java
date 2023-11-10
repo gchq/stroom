@@ -16,6 +16,7 @@
 
 package stroom.analytics.shared;
 
+import stroom.processor.shared.ProcessorFilterRow;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
@@ -41,6 +42,14 @@ public interface AnalyticProcessResource
     @Operation(
             summary = "Find the analytic process tracker for the specified process",
             operationId = "findAnalyticProcessTracker")
-    AnalyticTracker getTracker(@Parameter(description = "processUuid", required = true)
-                               String processUuid);
+    AnalyticTracker getTracker(@Parameter(description = "analyticUuid", required = true)
+                               String analyticUuid);
+
+    @POST
+    @Path("/filter")
+    @Operation(
+            summary = "Find the process filter for the specified process",
+            operationId = "findAnalyticProcessFilter")
+    ProcessorFilterRow getFilter(@Parameter(description = "analyticRuleDoc", required = true)
+                                 AnalyticRuleDoc analyticRuleDoc);
 }

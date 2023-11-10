@@ -35,7 +35,7 @@ import stroom.util.logging.LogExecutionTime;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
-import org.apache.lucene.search.Query;
+import org.apache.lucene553.search.Query;
 import org.apache.solr.client.solrj.SolrServerException;
 
 import java.io.IOException;

@@ -23,5 +23,8 @@
         <form:FormGroup identity="feedSettingsContextEncoding" label="Context Encoding">
             <l:SelectionBox ui:field="contextEncoding"/>
         </form:FormGroup>
+        <form:FormGroup identity="feedVolumeGroup" label="Volume Group">
+            <l:SelectionBox ui:field="volumeGroup"/>
+        </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder> 

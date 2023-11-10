@@ -118,7 +118,9 @@ public class AuthenticationService {
 
         return userDao.tryCreate(user, createdUser -> {
             LOGGER.info("Created new stroom_user record, type: '{}', subjectId: '{}', userUuid: '{}'",
-                    (isGroup ? "group" : "user"),
+                    (isGroup
+                            ? "group"
+                            : "user"),
                     createdUser.getSubjectId(),
                     createdUser.getUuid());
         });

@@ -74,7 +74,17 @@ public class AceEditor extends Composite implements RequiresResize, HasText, Tak
     /**
      * Get the editor's ID
      */
-    public native String getId() /*-{
+    public String getId() {
+        if (editor == null) {
+            throw new RuntimeException("Trying to use editor before startEditor has been called.");
+        }
+        return getIdNative();
+	}
+
+    /**
+     * Get the editor's ID
+     */
+    private native String getIdNative() /*-{
 		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
         return editor.id;
 	}-*/;

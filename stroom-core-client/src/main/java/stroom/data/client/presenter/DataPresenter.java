@@ -328,11 +328,12 @@ public class DataPresenter
         } else {
             editorMode = AceEditorMode.XML;
         }
+        textPresenter.setOptionsToDefaultAvailability();
 
         // Set up hex viewing availability and state
         // If the source location has a data range then it means we are viewing a preview of
         // a sub-set of the data (i.e. from DataDisplaySupport) and it makes no sense to
-        // see hex of this sub-set when the sub-set lotaion is reliant on chars being decodeable.
+        // see hex of this sub-set when the sub-set location is reliant on chars being decodeable.
         if (INFO_TAB_NAME.equals(currentTabName)
                 || ERROR_TAB_NAME.equals(currentTabName)
                 || currentSourceLocation.getDataRange() != null) {
@@ -1019,7 +1020,7 @@ public class DataPresenter
                     ? lastResult.getDisplayMode().name().toLowerCase()
                     : "text");
             final String errorText = String.join("\n", lastResult.getErrors());
-            textPresenter.setErrorText(title, errorText);
+            setErrorText(title, errorText);
             textPresenter.setControlsVisible(playButtonVisible);
         } else {
             final boolean shouldFormatData = lastResult != null
@@ -1029,7 +1030,26 @@ public class DataPresenter
             textPresenter.setMode(editorMode);
             textPresenter.setText(data, shouldFormatData);
             textPresenter.setControlsVisible(playButtonVisible);
+            // Resets the context menu states to default
+            textPresenter.setOptionsToDefaultAvailability();
         }
+    }
+
+    private void setErrorText(final String title, final String errorText) {
+        textPresenter.setErrorText(title, errorText);
+        // Hide a load of the editor options that make no sense for an error msg
+        textPresenter.setReadOnly(true);
+        textPresenter.getShowIndentGuides().setUnavailable();
+        textPresenter.getIndicatorsOption().setUnavailable();
+        textPresenter.getLineNumbersOption().setUnavailable();
+        textPresenter.getLineWrapOption().setUnavailable();
+        textPresenter.getShowActiveLineOption().setUnavailable();
+        textPresenter.getShowInvisiblesOption().setUnavailable();
+        textPresenter.getStylesOption().setUnavailable();
+        textPresenter.getUseVimBindingsOption().setUnavailable();
+
+        // Need to be able to view as hex to diagnose what the data is
+        textPresenter.getViewAsHexOption().setAvailable();
     }
 
     private void refreshMetaInfoPresenterContent(final Long metaId) {
@@ -1191,12 +1211,13 @@ public class DataPresenter
                                 "hexadecimal form."))
                 .collect(Collectors.joining("\n"));
 
-        textPresenter.setErrorText(title, errorText);
         dataView.setSourceLinkVisible(false, false);
+        setErrorText(title, errorText);
         showTextPresenter();
     }
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 
     public interface DataView extends View, Focus {
 

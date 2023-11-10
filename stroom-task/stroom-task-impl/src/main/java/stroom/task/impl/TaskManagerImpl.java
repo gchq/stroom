@@ -43,6 +43,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -354,12 +355,17 @@ class TaskManagerImpl implements TaskManager {
                 .map(tuple2 -> {
                     String taskName = tuple2._1();
                     TaskId taskId = tuple2._2();
+                    String taskInfo = "taskInfo-" + taskName;
+                    // Make a long taskInfo so we can test cell wrapping
+                    for (int i = 0; i < 3; i++) {
+                        taskInfo = taskInfo + " " + taskInfo;
+                    }
                     final TaskProgress taskProgress = new TaskProgress();
                     taskProgress.setId(taskId);
                     taskProgress.setTaskName(taskName);
                     taskProgress.setUserName(users.get(id.get() % 2));
-                    taskProgress.setThreadName("threadX");
-                    taskProgress.setTaskInfo("taskInfo-" + taskName);
+                    taskProgress.setThreadName("thread-" + (ThreadLocalRandom.current().nextInt(20) + 1));
+                    taskProgress.setTaskInfo(taskInfo);
                     taskProgress.setSubmitTimeMs(now.minus(timeDelta.incrementAndGet(), ChronoUnit.DAYS)
                             .toEpochMilli());
                     taskProgress.setTimeNowMs(now.toEpochMilli());

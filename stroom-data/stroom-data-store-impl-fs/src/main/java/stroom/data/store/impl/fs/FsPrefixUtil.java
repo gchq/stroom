@@ -130,4 +130,16 @@ final class FsPrefixUtil {
         }
         return result;
     }
+
+    static String getIdPath(final String id) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < id.length() - PAD_SIZE; i += PAD_SIZE) {
+            final String part = id.substring(i, i + PAD_SIZE);
+            if (sb.length() > 0) {
+                sb.append("/");
+            }
+            sb.append(part);
+        }
+        return sb.toString();
+    }
 }

@@ -45,7 +45,7 @@ public class TestFsVolumeService extends AbstractCoreIntegrationTest {
                 .getDefaultStreamVolumePaths();
 
         // Make sure we have a vol
-        final FsVolume volume = fsVolumeService.getVolume();
+        final FsVolume volume = fsVolumeService.getVolume(null);
         Assertions.assertThat(volume)
                 .isNotNull();
 
@@ -61,7 +61,7 @@ public class TestFsVolumeService extends AbstractCoreIntegrationTest {
         // Delete any default vols first
         FsVolume fsVolume;
         do {
-            fsVolume = fsVolumeService.getVolume();
+            fsVolume = fsVolumeService.getVolume(null);
             if (fsVolume != null) {
                 fsVolumeService.delete(fsVolume.getId());
             }
@@ -107,7 +107,7 @@ public class TestFsVolumeService extends AbstractCoreIntegrationTest {
 
         // Now test vol selection
         for (int i = 0; i < 5; i++) {
-            fsVolume = fsVolumeService.getVolume();
+            fsVolume = fsVolumeService.getVolume(null);
             Assertions.assertThat(fsVolume)
                     .isNotNull();
             LOGGER.info("Path: " + fsVolume.getPath());

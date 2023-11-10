@@ -49,10 +49,11 @@ import stroom.explorer.client.event.ExplorerTreeDeleteEvent;
 import stroom.explorer.client.event.ExplorerTreeSelectEvent;
 import stroom.explorer.client.event.HighlightExplorerNodeEvent;
 import stroom.explorer.client.event.RefreshExplorerTreeEvent;
+import stroom.explorer.client.event.ShowEditNodeTagsDialogEvent;
 import stroom.explorer.client.event.ShowExplorerMenuEvent;
-import stroom.explorer.client.event.ShowExplorerNodeTagsDialogEvent;
 import stroom.explorer.client.event.ShowFindEvent;
 import stroom.explorer.client.event.ShowNewMenuEvent;
+import stroom.explorer.client.event.ShowRemoveNodeTagsDialogEvent;
 import stroom.explorer.client.presenter.DocumentTypeCache;
 import stroom.explorer.shared.BulkActionResult;
 import stroom.explorer.shared.DocumentType;
@@ -83,6 +84,7 @@ import stroom.security.shared.PermissionNames;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
 import stroom.util.client.ClipboardUtil;
+import stroom.util.shared.GwtNullSafe;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.IconParentMenuItem;
 import stroom.widget.menu.client.presenter.Item;
@@ -906,7 +908,7 @@ public class DocumentPluginEventManager extends Plugin {
         final boolean allowUpdate = updatableItems.size() > 0;
         final boolean allowDelete = deletableItems.size() > 0;
         final boolean isInfoEnabled = singleSelection & allowRead;
-        final boolean isEditTagsEnabled = singleSelection & allowUpdate;
+        final boolean isRemoveTagsEnabled = updatableItems.size() > 1;
 
         // Feeds are a special case so can't be copied or renamed, see https://github.com/gchq/stroom/issues/3048
         final boolean hasFeed = readableItems.stream()
@@ -928,17 +930,20 @@ public class DocumentPluginEventManager extends Plugin {
         }
 
         menuItems.add(createInfoMenuItem(singleReadableItem, 20, isInfoEnabled));
-        menuItems.add(createEditTagsMenuItem(singleReadableItem, 21, isEditTagsEnabled));
-        menuItems.add(createCopyMenuItem(readableItems, 22, isCopyEnabled));
-        menuItems.add(createMoveMenuItem(updatableItems, 23, allowUpdate));
-        menuItems.add(createRenameMenuItem(updatableItems, 24, isRenameEnabled));
-        menuItems.add(createDeleteMenuItem(deletableItems, 25, allowDelete));
+        menuItems.add(createEditOrAddTagsMenuItem(updatableItems, 21, allowUpdate));
+        if (updatableItems.size() > 1) {
+            menuItems.add(createRemoveTagsMenuItem(updatableItems, 22, isRemoveTagsEnabled));
+        }
+        menuItems.add(createCopyMenuItem(readableItems, 23, isCopyEnabled));
+        menuItems.add(createMoveMenuItem(updatableItems, 24, allowUpdate));
+        menuItems.add(createRenameMenuItem(updatableItems, 25, isRenameEnabled));
+        menuItems.add(createDeleteMenuItem(deletableItems, 26, allowDelete));
 
         if (securityContext.hasAppPermission(PermissionNames.IMPORT_CONFIGURATION)) {
-            menuItems.add(createImportMenuItem(26));
+            menuItems.add(createImportMenuItem(27));
         }
         if (securityContext.hasAppPermission(PermissionNames.EXPORT_CONFIGURATION)) {
-            menuItems.add(createExportMenuItem(27, readableItems));
+            menuItems.add(createExportMenuItem(28, readableItems));
         }
 
         // Only allow users to change permissions if they have a single item selected.
@@ -1068,18 +1073,38 @@ public class DocumentPluginEventManager extends Plugin {
                 null);
     }
 
-    private MenuItem createEditTagsMenuItem(final ExplorerNode explorerNode,
-                                            final int priority,
-                                            final boolean enabled) {
-        final Command command = enabled && explorerNode != null
-                ? () -> ShowExplorerNodeTagsDialogEvent.fire(DocumentPluginEventManager.this, explorerNode)
+    private MenuItem createEditOrAddTagsMenuItem(final List<ExplorerNode> explorerNodes,
+                                                 final int priority,
+                                                 final boolean enabled) {
+        final Command command = enabled && explorerNodes != null
+                ? () -> ShowEditNodeTagsDialogEvent.fire(DocumentPluginEventManager.this, explorerNodes)
+                : null;
+
+        final String text = GwtNullSafe.size(explorerNodes) > 1
+                ? "Add Tags"
+                : "Edit Tags";
+
+        return new IconMenuItem.Builder()
+                .priority(priority)
+                .icon(SvgImage.TAGS)
+                .text(text)
+                .enabled(enabled && explorerNodes != null)
+                .command(command)
+                .build();
+    }
+
+    private MenuItem createRemoveTagsMenuItem(final List<ExplorerNode> explorerNodes,
+                                              final int priority,
+                                              final boolean enabled) {
+        final Command command = enabled && explorerNodes != null
+                ? () -> ShowRemoveNodeTagsDialogEvent.fire(DocumentPluginEventManager.this, explorerNodes)
                 : null;
 
         return new IconMenuItem.Builder()
                 .priority(priority)
                 .icon(SvgImage.TAGS)
-                .text("Tags")
-                .enabled(enabled && explorerNode != null)
+                .text("Remove Tags")
+                .enabled(enabled && explorerNodes != null)
                 .command(command)
                 .build();
     }

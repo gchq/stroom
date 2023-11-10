@@ -339,21 +339,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
                                     processorFilter.setPipelineName(processor.getPipelineName());
                                 }
 
-                                String userDisplayName;
-                                try {
-                                    final String ownerUuid = securityContext
-                                            .getDocumentOwnerUuid(processorFilter.asDocRef());
-                                    userDisplayName = Optional.ofNullable(ownerUuid)
-                                            .flatMap(userNameService::getByUuid)
-                                            .map(UserName::getUserIdentityForAudit)
-                                            .orElse(null);
-                                } catch (final RuntimeException e) {
-                                    userDisplayName = e.getMessage();
-                                    LOGGER.debug(e::getMessage, e);
-                                }
-
-                                final ProcessorFilterRow processorFilterRow = new ProcessorFilterRow(
-                                        processorFilter, userDisplayName);
+                                final ProcessorFilterRow processorFilterRow = getRow(processorFilter);
                                 values.add(processorFilterRow);
                             }
                         }
@@ -363,6 +349,24 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
 
             return ResultPage.createUnboundedList(values);
         });
+    }
+
+    @Override
+    public ProcessorFilterRow getRow(final ProcessorFilter processorFilter) {
+        String userDisplayName;
+        try {
+            final String ownerUuid = securityContext
+                    .getDocumentOwnerUuid(processorFilter.asDocRef());
+            userDisplayName = Optional.ofNullable(ownerUuid)
+                    .flatMap(userNameService::getByUuid)
+                    .map(UserName::getUserIdentityForAudit)
+                    .orElse(null);
+        } catch (final RuntimeException e) {
+            userDisplayName = e.getMessage();
+            LOGGER.debug(e::getMessage, e);
+        }
+
+        return new ProcessorFilterRow(processorFilter, userDisplayName);
     }
 
     private void updatePipelineName(final Processor processor) {
