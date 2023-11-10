@@ -21,6 +21,7 @@ import stroom.util.sysinfo.SystemInfoResult;
 
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
+import jakarta.inject.Inject;
 import org.apache.lucene980.document.Document;
 import org.apache.lucene980.document.LongField;
 import org.apache.lucene980.index.IndexWriter;
@@ -40,7 +41,6 @@ import java.util.Objects;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
 
 class Lucene980SystemInfoProvider implements IndexSystemInfoProvider {
 

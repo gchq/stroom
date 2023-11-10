@@ -14,7 +14,6 @@ import org.jooq.Condition;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
-
 import java.util.Map;
 
 import static stroom.data.store.impl.fs.db.jooq.tables.FsMetaVolume.FS_META_VOLUME;

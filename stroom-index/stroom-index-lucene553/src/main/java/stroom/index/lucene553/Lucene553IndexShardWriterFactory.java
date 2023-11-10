@@ -8,8 +8,8 @@ import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
 import stroom.util.io.PathCreator;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 class Lucene553IndexShardWriterFactory {
     private final IndexShardManager indexShardManager;

@@ -13,10 +13,9 @@ import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContextFactory;
 import stroom.util.io.PathCreator;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import org.apache.lucene980.search.IndexSearcher;
-
-import javax.inject.Inject;
-import javax.inject.Provider;
 
 class Lucene980ShardSearcherFactory {
 

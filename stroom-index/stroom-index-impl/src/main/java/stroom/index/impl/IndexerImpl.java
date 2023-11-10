@@ -25,6 +25,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+
 import java.util.concurrent.locks.Lock;
 
 /**

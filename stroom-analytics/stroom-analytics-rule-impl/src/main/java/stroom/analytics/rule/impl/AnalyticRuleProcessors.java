@@ -28,12 +28,13 @@ import stroom.util.shared.ResultPage;
 import stroom.view.api.ViewStore;
 import stroom.view.shared.ViewDoc;
 
+import jakarta.inject.Inject;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
-import javax.inject.Inject;
 
 public class AnalyticRuleProcessors {
 

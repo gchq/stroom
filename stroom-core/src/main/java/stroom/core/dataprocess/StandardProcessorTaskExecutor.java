@@ -40,7 +40,7 @@ import stroom.pipeline.state.StreamProcessorHolder;
 import stroom.processor.api.ProcessorTaskService;
 import stroom.statistics.api.InternalStatisticsReceiver;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 public class StandardProcessorTaskExecutor extends AbstractProcessorTaskExecutor {
 

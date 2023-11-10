@@ -14,8 +14,8 @@ import stroom.index.shared.LuceneVersion;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.QueryKey;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 @Singleton
 class Lucene553Provider implements LuceneProvider {
