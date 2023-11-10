@@ -355,6 +355,7 @@ public class NullSafe {
     /**
      * Returns the passed array of items or varargs items as a non-null set.
      * Does not support null items in the array.
+     *
      * @return A non-null unmodifiable set of items.
      */
     public static <T> Set<T> asSet(final T... items) {
@@ -568,6 +569,23 @@ public class NullSafe {
     }
 
     /**
+     * If value is non-null pass it to the consumer, else execute runnable.
+     */
+    public static <T> void consumeOr(final T value,
+                                     final Consumer<T> consumer,
+                                     final Runnable runnable) {
+        if (value != null) {
+            if (consumer != null) {
+                consumer.accept(value);
+            }
+        } else {
+            if (runnable != null) {
+                runnable.run();
+            }
+        }
+    }
+
+    /**
      * Allows you to test a value without worrying if the value is null, e.g.
      * <pre><code>
      *    boolean hasValues = NullSafe.test(myList, list -> !list.isEmpty());
@@ -758,9 +776,38 @@ public class NullSafe {
                                         final Function<T1, T2> getter1,
                                         final Consumer<T2> consumer) {
         if (value != null && consumer != null) {
-            final T2 value2 = Objects.requireNonNull(getter1).apply(value);
+            final T2 value2 = Objects.requireNonNull(getter1)
+                    .apply(value);
             if (value2 != null) {
                 consumer.accept(value2);
+            }
+        }
+    }
+
+    /**
+     * If value and the result of passing value to getter are both non-null then pass the result
+     * of getter to consumer, else call runnable.
+     * consume and runnable can both be null for a no-op.
+     */
+    public static <T1, T2> void consumeOr(final T1 value,
+                                          final Function<T1, T2> getter,
+                                          final Consumer<T2> consumer,
+                                          final Runnable runnable) {
+        if (value != null) {
+            final T2 value2 = Objects.requireNonNull(getter)
+                    .apply(value);
+            if (value2 != null) {
+                if (consumer != null) {
+                    consumer.accept(value2);
+                }
+            } else {
+                if (runnable != null) {
+                    runnable.run();
+                }
+            }
+        } else {
+            if (runnable != null) {
+                runnable.run();
             }
         }
     }

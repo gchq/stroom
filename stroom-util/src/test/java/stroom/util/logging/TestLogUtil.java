@@ -9,6 +9,7 @@ import org.junit.jupiter.api.TestFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.file.Path;
 import java.time.Duration;
 import java.util.List;
 import java.util.stream.Stream;
@@ -206,5 +207,18 @@ class TestLogUtil {
                     ", anInt=" + anInt +
                     '}';
         }
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testPath() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputType(Path.class)
+                .withOutputType(String.class)
+                .withSingleArgTestFunction(LogUtil::path)
+                .withSimpleEqualityAssertion()
+                .addCase(null, null)
+                .addCase(Path.of("/tmp"), "/tmp")
+                .addCase(Path.of("/tmp/../tmp/"), "/tmp")
+                .build();
     }
 }

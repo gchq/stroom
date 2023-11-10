@@ -32,6 +32,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
@@ -959,8 +960,10 @@ class TestNullSafe {
     @TestFactory
     Stream<DynamicTest> testAsSet() {
         return TestUtil.buildDynamicTestStream()
-                .withWrappedInputType(new TypeLiteral<String[]>() { })
-                .withWrappedOutputType(new TypeLiteral<Set<String>>() { })
+                .withWrappedInputType(new TypeLiteral<String[]>() {
+                })
+                .withWrappedOutputType(new TypeLiteral<Set<String>>() {
+                })
                 .withTestFunction(testCase ->
                         NullSafe.asSet(testCase.getInput()))
                 .withSimpleEqualityAssertion()
@@ -1225,6 +1228,100 @@ class TestNullSafe {
                         -1L)
                 .build();
     }
+
+    @TestFactory
+    Stream<DynamicTest> testConsumeOr1() {
+        final AtomicBoolean consumerCalled = new AtomicBoolean(false);
+        final Consumer<Level1> consumer = level1 -> {
+            Objects.requireNonNull(level1);
+            consumerCalled.set(true);
+        };
+        final AtomicBoolean runnableCalled = new AtomicBoolean(false);
+        final Runnable runnable = () ->
+                runnableCalled.set(true);
+
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(
+                        new TypeLiteral<Tuple3<Level1, Consumer<Level1>, Runnable>>() {
+                        })
+                .withWrappedOutputType(new TypeLiteral<Tuple2<Boolean, Boolean>>() {
+                })
+                .withTestFunction(testCase -> {
+                    NullSafe.consumeOr(
+                            testCase.getInput()._1,
+                            testCase.getInput()._2,
+                            testCase.getInput()._3);
+                    return Tuple.of(consumerCalled.get(), runnableCalled.get());
+                })
+                .withSimpleEqualityAssertion()
+                .withBeforeTestCaseAction(() -> {
+                    consumerCalled.set(false);
+                    runnableCalled.set(false);
+                })
+                .addCase(Tuple.of(nonNullLevel1, null, null), Tuple.of(false, false))
+                .addCase(Tuple.of(nonNullLevel1, consumer, null), Tuple.of(true, false))
+                .addCase(Tuple.of(nonNullLevel1, null, runnable), Tuple.of(false, false))
+                .addCase(Tuple.of(nonNullLevel1, consumer, runnable), Tuple.of(true, false))
+                .addCase(Tuple.of(nullLevel1, null, null), Tuple.of(false, false))
+                .addCase(Tuple.of(nullLevel1, consumer, null), Tuple.of(false, false))
+                .addCase(Tuple.of(nullLevel1, null, runnable), Tuple.of(false, true))
+                .addCase(Tuple.of(nullLevel1, consumer, runnable), Tuple.of(false, true))
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testConsumeOr2() {
+        final AtomicBoolean consumerCalled = new AtomicBoolean(false);
+        final Consumer<Level2> consumer = level2 -> {
+            Objects.requireNonNull(level2);
+            consumerCalled.set(true);
+        };
+        final AtomicBoolean runnableCalled = new AtomicBoolean(false);
+        final Runnable runnable = () ->
+                runnableCalled.set(true);
+
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(
+                        new TypeLiteral<Tuple4<Level1, Function<Level1, Level2>, Consumer<Level2>, Runnable>>() {
+                        })
+                .withWrappedOutputType(new TypeLiteral<Tuple2<Boolean, Boolean>>() {
+                })
+                .withTestFunction(testCase -> {
+                    NullSafe.consumeOr(
+                            testCase.getInput()._1,
+                            testCase.getInput()._2,
+                            testCase.getInput()._3,
+                            testCase.getInput()._4);
+                    return Tuple.of(consumerCalled.get(), runnableCalled.get());
+                })
+                .withSimpleEqualityAssertion()
+                .withBeforeTestCaseAction(() -> {
+                    consumerCalled.set(false);
+                    runnableCalled.set(false);
+                })
+                .addCase(Tuple.of(nonNullLevel1, Level1::getNonNullLevel2, null, null), Tuple.of(false, false))
+                .addCase(Tuple.of(nonNullLevel1, Level1::getNonNullLevel2, consumer, null), Tuple.of(true, false))
+                .addCase(Tuple.of(nonNullLevel1, Level1::getNonNullLevel2, null, runnable), Tuple.of(false, false))
+                .addCase(Tuple.of(nonNullLevel1, Level1::getNonNullLevel2, consumer, runnable), Tuple.of(true, false))
+
+                .addCase(Tuple.of(nonNullLevel1, Level1::getNullLevel2, null, null), Tuple.of(false, false))
+                .addCase(Tuple.of(nonNullLevel1, Level1::getNullLevel2, consumer, null), Tuple.of(false, false))
+                .addCase(Tuple.of(nonNullLevel1, Level1::getNullLevel2, null, runnable), Tuple.of(false, true))
+                .addCase(Tuple.of(nonNullLevel1, Level1::getNullLevel2, consumer, runnable), Tuple.of(false, true))
+
+                .addCase(Tuple.of(nullLevel1, Level1::getNonNullLevel2, null, null), Tuple.of(false, false))
+                .addCase(Tuple.of(nullLevel1, Level1::getNonNullLevel2, consumer, null), Tuple.of(false, false))
+                .addCase(Tuple.of(nullLevel1, Level1::getNonNullLevel2, null, runnable), Tuple.of(false, true))
+                .addCase(Tuple.of(nullLevel1, Level1::getNonNullLevel2, consumer, runnable), Tuple.of(false, true))
+
+                .addCase(Tuple.of(nullLevel1, Level1::getNullLevel2, null, null), Tuple.of(false, false))
+                .addCase(Tuple.of(nullLevel1, Level1::getNullLevel2, consumer, null), Tuple.of(false, false))
+                .addCase(Tuple.of(nullLevel1, Level1::getNullLevel2, null, runnable), Tuple.of(false, true))
+                .addCase(Tuple.of(nullLevel1, Level1::getNullLevel2, consumer, runnable), Tuple.of(false, true))
+
+                .build();
+    }
+
 
     @TestFactory
     Stream<DynamicTest> testTest3() {
