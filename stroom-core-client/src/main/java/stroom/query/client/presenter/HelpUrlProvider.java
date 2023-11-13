@@ -3,9 +3,9 @@ package stroom.query.client.presenter;
 import stroom.alert.client.event.AlertEvent;
 import stroom.ui.config.client.UiConfigCache;
 
-import com.google.web.bindery.event.shared.EventBus;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
+import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.function.Consumer;
 import javax.inject.Inject;

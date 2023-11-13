@@ -20,7 +20,6 @@ package stroom.search.solr.search;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.DateField;
 import stroom.datasource.api.v2.FieldInfo;
-import stroom.query.common.v2.FieldInfoResultPageBuilder;
 import stroom.datasource.api.v2.FindFieldInfoCriteria;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
@@ -33,6 +32,7 @@ import stroom.query.common.v2.CoprocessorSettings;
 import stroom.query.common.v2.CoprocessorsFactory;
 import stroom.query.common.v2.CoprocessorsImpl;
 import stroom.query.common.v2.DataStoreSettings;
+import stroom.query.common.v2.FieldInfoResultPageBuilder;
 import stroom.query.common.v2.ResultStore;
 import stroom.query.common.v2.ResultStoreFactory;
 import stroom.query.common.v2.SearchProvider;
@@ -106,6 +106,7 @@ public class SolrSearchProvider implements SearchProvider {
         this.securityContext = securityContext;
         this.solrSearchExecutor = solrSearchExecutor;
     }
+
     @Override
     public ResultPage<FieldInfo> getFieldInfo(final FindFieldInfoCriteria criteria) {
         return securityContext.useAsReadResult(() -> {

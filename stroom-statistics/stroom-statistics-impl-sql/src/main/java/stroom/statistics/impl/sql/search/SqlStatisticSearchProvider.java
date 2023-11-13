@@ -3,7 +3,6 @@ package stroom.statistics.impl.sql.search;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.DateField;
 import stroom.datasource.api.v2.FieldInfo;
-import stroom.query.common.v2.FieldInfoResultPageBuilder;
 import stroom.datasource.api.v2.FindFieldInfoCriteria;
 import stroom.datasource.api.v2.LongField;
 import stroom.datasource.api.v2.TextField;
@@ -15,6 +14,7 @@ import stroom.query.api.v2.SearchTaskProgress;
 import stroom.query.common.v2.CoprocessorsFactory;
 import stroom.query.common.v2.CoprocessorsImpl;
 import stroom.query.common.v2.DataStoreSettings;
+import stroom.query.common.v2.FieldInfoResultPageBuilder;
 import stroom.query.common.v2.ResultStore;
 import stroom.query.common.v2.ResultStoreFactory;
 import stroom.query.common.v2.SearchProcess;
@@ -84,6 +84,7 @@ public class SqlStatisticSearchProvider implements SearchProvider {
         this.resultStoreFactory = resultStoreFactory;
         this.statistics = statistics;
     }
+
     @Override
     public ResultPage<FieldInfo> getFieldInfo(final FindFieldInfoCriteria criteria) {
         final FieldInfoResultPageBuilder builder = FieldInfoResultPageBuilder.builder(criteria);

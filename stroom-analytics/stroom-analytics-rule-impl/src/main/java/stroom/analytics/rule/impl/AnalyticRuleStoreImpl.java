@@ -185,7 +185,8 @@ class AnalyticRuleStoreImpl implements AnalyticRuleStore {
                     searchRequestBuilder.extractDataSourceOnly(doc.getQuery(), docRef -> {
                         try {
                             if (docRef != null) {
-                                final DataSourceProviderRegistry dataSourceProviderRegistry = dataSourceProviderRegistryProvider.get();
+                                final DataSourceProviderRegistry dataSourceProviderRegistry =
+                                        dataSourceProviderRegistryProvider.get();
                                 final Optional<DocRef> optional = dataSourceProviderRegistry
                                         .list()
                                         .stream()

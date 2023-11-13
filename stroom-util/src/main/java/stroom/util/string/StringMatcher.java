@@ -47,41 +47,41 @@ public class StringMatcher {
 
     public Optional<Match> match(final String string) {
         switch (matchType) {
-            case ANY: {
+            case ANY -> {
                 return Optional.of(new Match(0, string.length()));
             }
-            case NULL: {
+            case NULL -> {
                 if (string == null) {
                     return Optional.of(new Match(0, 0));
                 }
             }
-            case NON_NULL: {
+            case NON_NULL -> {
                 if (string != null && string.isBlank()) {
                     return Optional.of(new Match(0, 0));
                 }
             }
-            case EMPTY: {
+            case EMPTY -> {
                 if (string != null && string.isEmpty()) {
                     return Optional.of(new Match(0, 0));
                 }
             }
-            case NULL_OR_BLANK: {
+            case NULL_OR_BLANK -> {
                 if (NullSafe.isBlankString(string)) {
                     return Optional.of(new Match(0, 0));
                 }
             }
-            case NULL_OR_EMPTY: {
+            case NULL_OR_EMPTY -> {
                 if (NullSafe.isEmptyString(string)) {
                     return Optional.of(new Match(0, 0));
                 }
             }
-            case CONTAINS: {
+            case CONTAINS -> {
                 return contains(string);
             }
-            case EQUALS: {
+            case EQUALS -> {
                 return equals(string);
             }
-            case REGEX: {
+            case REGEX -> {
                 return regex(string);
             }
         }

@@ -2,10 +2,10 @@ package stroom.meta.impl;
 
 import stroom.datasource.api.v2.DataSourceProvider;
 import stroom.datasource.api.v2.FieldInfo;
-import stroom.query.common.v2.FieldInfoResultPageBuilder;
 import stroom.datasource.api.v2.FindFieldInfoCriteria;
 import stroom.docref.DocRef;
 import stroom.meta.shared.MetaFields;
+import stroom.query.common.v2.FieldInfoResultPageBuilder;
 import stroom.util.shared.ResultPage;
 
 import java.util.List;

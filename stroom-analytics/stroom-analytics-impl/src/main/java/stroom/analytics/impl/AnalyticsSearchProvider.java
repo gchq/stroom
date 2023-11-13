@@ -19,7 +19,6 @@ package stroom.analytics.impl;
 
 import stroom.datasource.api.v2.DateField;
 import stroom.datasource.api.v2.FieldInfo;
-import stroom.query.common.v2.FieldInfoResultPageBuilder;
 import stroom.datasource.api.v2.FindFieldInfoCriteria;
 import stroom.docref.DocRef;
 import stroom.explorer.api.HasDataSourceDocRefs;
@@ -32,6 +31,7 @@ import stroom.query.common.v2.CoprocessorSettings;
 import stroom.query.common.v2.CoprocessorsFactory;
 import stroom.query.common.v2.CoprocessorsImpl;
 import stroom.query.common.v2.DataStoreSettings;
+import stroom.query.common.v2.FieldInfoResultPageBuilder;
 import stroom.query.common.v2.ResultStore;
 import stroom.query.common.v2.ResultStoreFactory;
 import stroom.query.common.v2.SearchProvider;

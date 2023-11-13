@@ -65,8 +65,8 @@ public class DataSourceClient {
 
         if (dataSourceDocRef != null) {
             final Rest<Documentation> rest = restFactory.create();
-            rest.onSuccess(documentation -> {
-//                                GWT.log("Description:\n" + documentation);
+            rest
+                    .onSuccess(documentation -> {
                         final Optional<String> optMarkDown = GwtNullSafe.getAsOptional(documentation,
                                 Documentation::getMarkdown);
                         if (descriptionConsumer != null) {
@@ -81,7 +81,7 @@ public class DataSourceClient {
     public void fetchDefaultExtractionPipeline(DocRef dataSourceRef, Consumer<DocRef> consumer) {
         final Rest<DocRef> rest = restFactory.create();
         rest
-                .onSuccess(consumer::accept)
+                .onSuccess(consumer)
                 .call(DATA_SOURCE_RESOURCE)
                 .fetchDefaultExtractionPipeline(dataSourceRef);
     }
