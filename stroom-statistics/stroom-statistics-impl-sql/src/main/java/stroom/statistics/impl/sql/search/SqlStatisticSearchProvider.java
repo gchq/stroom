@@ -1,8 +1,10 @@
 package stroom.statistics.impl.sql.search;
 
 import stroom.datasource.api.v2.AbstractField;
-import stroom.datasource.api.v2.DataSource;
 import stroom.datasource.api.v2.DateField;
+import stroom.datasource.api.v2.FieldInfo;
+import stroom.query.common.v2.FieldInfoResultPageBuilder;
+import stroom.datasource.api.v2.FindFieldInfoCriteria;
 import stroom.datasource.api.v2.LongField;
 import stroom.datasource.api.v2.TextField;
 import stroom.docref.DocRef;
@@ -20,6 +22,7 @@ import stroom.query.common.v2.SearchProvider;
 import stroom.query.common.v2.Sizes;
 import stroom.statistics.impl.sql.Statistics;
 import stroom.statistics.impl.sql.entity.StatisticStoreCache;
+import stroom.statistics.impl.sql.entity.StatisticStoreStore;
 import stroom.statistics.impl.sql.shared.StatisticField;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import stroom.statistics.impl.sql.shared.StatisticType;
@@ -29,6 +32,7 @@ import stroom.task.shared.TaskProgress;
 import stroom.ui.config.shared.UiConfig;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.ResultPage;
 
 import com.google.common.base.Preconditions;
 
@@ -36,6 +40,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
@@ -47,6 +52,7 @@ public class SqlStatisticSearchProvider implements SearchProvider {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SqlStatisticSearchProvider.class);
     public static final String TASK_NAME = "Sql Statistic Search";
 
+    private final StatisticStoreStore statisticStoreStore;
     private final StatisticStoreCache statisticStoreCache;
     private final StatisticsSearchService statisticsSearchService;
     private final TaskContextFactory taskContextFactory;
@@ -57,7 +63,8 @@ public class SqlStatisticSearchProvider implements SearchProvider {
     private final Statistics statistics;
 
     @Inject
-    public SqlStatisticSearchProvider(final StatisticStoreCache statisticStoreCache,
+    public SqlStatisticSearchProvider(final StatisticStoreStore statisticStoreStore,
+                                      final StatisticStoreCache statisticStoreCache,
                                       final StatisticsSearchService statisticsSearchService,
                                       final TaskContextFactory taskContextFactory,
                                       final Executor executor,
@@ -67,6 +74,7 @@ public class SqlStatisticSearchProvider implements SearchProvider {
                                       final CoprocessorsFactory coprocessorsFactory,
                                       final ResultStoreFactory resultStoreFactory,
                                       final Statistics statistics) {
+        this.statisticStoreStore = statisticStoreStore;
         this.statisticStoreCache = statisticStoreCache;
         this.statisticsSearchService = statisticsSearchService;
         this.taskContextFactory = taskContextFactory;
@@ -76,21 +84,25 @@ public class SqlStatisticSearchProvider implements SearchProvider {
         this.resultStoreFactory = resultStoreFactory;
         this.statistics = statistics;
     }
+    @Override
+    public ResultPage<FieldInfo> getFieldInfo(final FindFieldInfoCriteria criteria) {
+        final FieldInfoResultPageBuilder builder = FieldInfoResultPageBuilder.builder(criteria);
+        final StatisticStoreDoc entity = statisticStoreCache.getStatisticsDataSource(criteria.getDataSourceRef());
+        if (entity != null) {
+            builder.addAll(buildFields(entity));
+        }
+        return builder.build();
+    }
 
     @Override
-    public DataSource getDataSource(final DocRef docRef) {
-        final StatisticStoreDoc entity = statisticStoreCache.getStatisticsDataSource(docRef);
-        if (entity == null) {
-            return null;
-        }
+    public Optional<String> fetchDocumentation(final DocRef docRef) {
+        return Optional.ofNullable(statisticStoreCache.getStatisticsDataSource(docRef))
+                .map(StatisticStoreDoc::getDescription);
+    }
 
-        final List<AbstractField> fields = buildFields(entity);
-
-        return DataSource
-                .builder()
-                .docRef(docRef)
-                .fields(fields)
-                .build();
+    @Override
+    public DocRef fetchDefaultExtractionPipeline(final DocRef dataSourceRef) {
+        return null;
     }
 
     @Override
@@ -257,6 +269,11 @@ public class SqlStatisticSearchProvider implements SearchProvider {
             }
         }
         return Sizes.unlimited();
+    }
+
+    @Override
+    public List<DocRef> list() {
+        return statisticStoreStore.list();
     }
 
     @Override

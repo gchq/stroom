@@ -20,10 +20,10 @@ package stroom.analytics.rule.impl;
 import stroom.analytics.shared.AnalyticProcessConfig;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.AnalyticRuleDoc.Builder;
-import stroom.datasource.api.v2.DataSource;
 import stroom.docref.DocContentMatch;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
+import stroom.docref.StringMatch;
 import stroom.docstore.api.AuditFieldFilter;
 import stroom.docstore.api.DependencyRemapper;
 import stroom.docstore.api.Store;
@@ -185,10 +185,14 @@ class AnalyticRuleStoreImpl implements AnalyticRuleStore {
                     searchRequestBuilder.extractDataSourceOnly(doc.getQuery(), docRef -> {
                         try {
                             if (docRef != null) {
-                                final Optional<DataSource> optional = dataSourceProviderRegistryProvider
-                                        .get().getDataSource(docRef);
-                                optional.ifPresent(dataSource -> {
-                                    final DocRef remapped = dependencyRemapper.remap(dataSource.getDocRef());
+                                final DataSourceProviderRegistry dataSourceProviderRegistry = dataSourceProviderRegistryProvider.get();
+                                final Optional<DocRef> optional = dataSourceProviderRegistry
+                                        .list()
+                                        .stream()
+                                        .filter(dr -> dr.equals(docRef))
+                                        .findAny();
+                                optional.ifPresent(dataSourceRef -> {
+                                    final DocRef remapped = dependencyRemapper.remap(dataSourceRef);
                                     if (remapped != null) {
                                         String query = doc.getQuery();
                                         if (remapped.getName() != null &&
@@ -296,8 +300,8 @@ class AnalyticRuleStoreImpl implements AnalyticRuleStore {
     }
 
     @Override
-    public List<DocContentMatch> findByContent(final String pattern, final boolean regex, final boolean matchCase) {
-        return store.findByContent(pattern, regex, matchCase);
+    public List<DocContentMatch> findByContent(final StringMatch filter) {
+        return store.findByContent(filter);
     }
 
     private void updateProcessorFilter(final DocRef docRef) {

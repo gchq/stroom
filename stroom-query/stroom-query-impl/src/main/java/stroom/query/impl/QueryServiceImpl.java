@@ -20,10 +20,10 @@ import stroom.dashboard.impl.SearchResponseMapper;
 import stroom.dashboard.impl.logging.SearchEventLog;
 import stroom.dashboard.shared.DashboardSearchResponse;
 import stroom.dashboard.shared.ValidateExpressionResult;
-import stroom.datasource.api.v2.DataSource;
+import stroom.datasource.api.v2.FieldInfo;
+import stroom.datasource.api.v2.FindFieldInfoCriteria;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
-import stroom.docstore.shared.Documentation;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.expression.api.DateTimeSettings;
 import stroom.expression.api.ExpressionContext;
@@ -50,14 +50,13 @@ import stroom.security.api.SecurityContext;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TerminateHandlerFactory;
-import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.servlet.HttpServletRequestHolder;
 import stroom.util.shared.ResourceGeneration;
+import stroom.util.shared.ResultPage;
 import stroom.util.string.ExceptionStringUtil;
 import stroom.view.api.ViewStore;
-import stroom.view.shared.ViewDoc;
 
 import java.time.ZoneId;
 import java.util.ArrayList;
@@ -495,17 +494,17 @@ class QueryServiceImpl implements QueryService {
     }
 
     @Override
-    public Optional<DataSource> getDataSource(final DocRef dataSourceRef) {
-        return securityContext.useAsReadResult(() -> dataSourceProviderRegistry.getDataSource(dataSourceRef));
+    public DocRef fetchDefaultExtractionPipeline(final DocRef dataSourceRef) {
+        return securityContext.useAsReadResult(() ->
+                dataSourceProviderRegistry.fetchDefaultExtractionPipeline(dataSourceRef));
     }
 
     @Override
-    public Optional<DataSource> getDataSource(final String query) {
+    public Optional<DocRef> getReferencedDataSource(final String query) {
         return securityContext.useAsReadResult(() -> {
-            final AtomicReference<DataSource> ref = new AtomicReference<>();
+            final AtomicReference<DocRef> ref = new AtomicReference<>();
             try {
-                searchRequestBuilder.extractDataSourceOnly(query, docRef ->
-                        ref.set(getDataSource(docRef).orElse(null)));
+                searchRequestBuilder.extractDataSourceOnly(query, ref::set);
             } catch (final RuntimeException e) {
                 LOGGER.debug(e::getMessage, e);
             }
@@ -514,11 +513,12 @@ class QueryServiceImpl implements QueryService {
     }
 
     @Override
-    public Documentation fetchDocumentation(final DocRef docRef) {
-        return securityContext.useAsReadResult(() -> {
-            final String markdown = NullSafe.get(viewStore.readDocument(docRef),
-                    ViewDoc::getDescription);
-            return Documentation.of(markdown);
-        });
+    public ResultPage<FieldInfo> getFieldInfo(final FindFieldInfoCriteria criteria) {
+        return securityContext.useAsReadResult(() -> dataSourceProviderRegistry.getFieldInfo(criteria));
+    }
+
+    @Override
+    public Optional<String> fetchDocumentation(final DocRef docRef) {
+        return securityContext.useAsReadResult(() -> dataSourceProviderRegistry.fetchDocumentation(docRef));
     }
 }

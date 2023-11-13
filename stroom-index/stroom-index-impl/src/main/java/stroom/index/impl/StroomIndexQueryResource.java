@@ -16,9 +16,7 @@
 
 package stroom.index.impl;
 
-import stroom.datasource.api.v2.DataSource;
 import stroom.datasource.api.v2.DataSourceResource;
-import stroom.docref.DocRef;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
@@ -40,13 +38,6 @@ import javax.ws.rs.core.MediaType;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public interface StroomIndexQueryResource extends DataSourceResource, RestResource {
-
-    @POST
-    @Path("/dataSource")
-    @Operation(
-            summary = "Submit a request for a data source definition, supplying the DocRef for the data source",
-            operationId = "getStroomIndexDataSource")
-    DataSource getDataSource(@Parameter(description = "DocRef", required = true) DocRef docRef);
 
     @POST
     @Path("/search")

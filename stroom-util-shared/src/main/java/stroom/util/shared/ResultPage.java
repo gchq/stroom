@@ -376,4 +376,11 @@ public class ResultPage<T> implements Serializable {
                 ", pageResponse=" + pageResponse +
                 '}';
     }
+
+    public interface ResultConsumer<T> {
+
+        boolean add(T t);
+
+        void skip(int count);
+    }
 }

@@ -18,7 +18,6 @@
 package stroom.statistics.impl.sql;
 
 
-import stroom.datasource.api.v2.DataSource;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.explorer.api.ExplorerService;
@@ -138,9 +137,5 @@ class TestStatisticsDataSourceImportExportSerializer extends AbstractCoreIntegra
         assertThat(statisticsDataSource3.getConfig()).isNotNull();
 
         DocRef statisticDataSource3DocRef = DocRefUtil.create(statisticsDataSource3);
-
-        final DataSource dataSource = searchResponseCreatorManager.getDataSource(statisticDataSource3DocRef);
-
-        assertThat(dataSource.getFields()).isNotNull();
     }
 }

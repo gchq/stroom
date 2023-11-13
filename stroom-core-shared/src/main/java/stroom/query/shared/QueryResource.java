@@ -17,13 +17,12 @@
 package stroom.query.shared;
 
 import stroom.dashboard.shared.DashboardSearchResponse;
-import stroom.dashboard.shared.FunctionSignature;
-import stroom.dashboard.shared.StructureElement;
 import stroom.dashboard.shared.ValidateExpressionResult;
 import stroom.util.shared.FetchWithUuid;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
+import stroom.util.shared.ResultPage;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -92,14 +91,6 @@ public interface QueryResource extends RestResource, DirectRestService, FetchWit
     DashboardSearchResponse search(
             @PathParam("nodeName") String nodeName,
             @Parameter(description = "request", required = true) QuerySearchRequest request);
-//
-//    @POST
-//    @Path("/destroy")
-//    @Operation(
-//            summary = "Destroy a running query",
-//            operationId = "queryDestroySearch")
-//    Boolean destroy(
-//            @Parameter(description = "request", required = true) DestroyQueryRequest request);
 
     @GET
     @Path("/fetchTimeZones")
@@ -108,25 +99,11 @@ public interface QueryResource extends RestResource, DirectRestService, FetchWit
             operationId = "fetchTimeZones")
     List<String> fetchTimeZones();
 
-    @GET
-    @Path("/functions")
-    @Operation(
-            summary = "Fetch all expression functions",
-            operationId = "fetchFunctions")
-    List<FunctionSignature> fetchFunctions();
-
-    @GET
-    @Path("/structure")
-    @Operation(
-            summary = "Fetch all structure element descriptions",
-            operationId = "fetchStructureElements")
-    List<StructureElement> fetchStructureElements();
-
     @POST
     @Path("/helpItems")
     @Operation(
             summary = "Fetch all (optionally filtered) query help items",
             operationId = "fetchHelpItems")
-    QueryHelpItemsResult fetchQueryHelpItems(
-            @Parameter(description = "request", required = true) final QueryHelpItemsRequest request);
+    ResultPage<QueryHelpRow> fetchQueryHelpItems(
+            @Parameter(description = "request", required = true) QueryHelpRequest request);
 }

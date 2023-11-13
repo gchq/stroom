@@ -1,9 +1,9 @@
 package stroom.view.impl;
 
-import stroom.datasource.api.v2.AbstractField;
-import stroom.datasource.api.v2.DataSource;
 import stroom.datasource.api.v2.DataSourceProvider;
 import stroom.datasource.api.v2.DateField;
+import stroom.datasource.api.v2.FieldInfo;
+import stroom.datasource.api.v2.FindFieldInfoCriteria;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.query.api.v2.Query;
@@ -17,10 +17,12 @@ import stroom.query.common.v2.StoreFactoryRegistry;
 import stroom.security.api.SecurityContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.ResultPage;
 import stroom.view.api.ViewStore;
 import stroom.view.shared.ViewDoc;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import javax.inject.Inject;
@@ -48,37 +50,40 @@ public class ViewSearchProvider implements SearchProvider {
     }
 
     @Override
-    public DataSource getDataSource(final DocRef docRef) {
-        return securityContext.useAsReadResult(() -> {
-            final ViewDoc viewDoc = getView(docRef);
-            return DataSource
-                    .builder()
-                    .docRef(viewDoc.asDocRef())
-                    .fields(getInheritedFields(viewDoc)) // Temporary inheritance of index fields.
-                    .defaultExtractionPipeline(viewDoc.getPipeline())
-                    .build();
+    public ResultPage<FieldInfo> getFieldInfo(final FindFieldInfoCriteria criteria) {
+        final Optional<ResultPage<FieldInfo>> optional = securityContext.useAsReadResult(() -> {
+            final ViewDoc viewDoc = viewStore.readDocument(criteria.getDataSourceRef());
+            if (viewDoc != null) {
+                // Find the referenced data source.
+                final DocRef docRef = viewDoc.getDataSource();
+                if (docRef != null) {
+                    final Optional<DataSourceProvider> delegate =
+                            dataSourceProviderRegistry.get().getDataSourceProvider(docRef.getType());
+                    return delegate.map(dataSourceProvider -> dataSourceProvider.getFieldInfo(criteria));
+                }
+            }
+            return Optional.empty();
+        });
+        return optional.orElseGet(() -> {
+            final List<FieldInfo> list = Collections.emptyList();
+            return ResultPage.createCriterialBasedList(list, criteria);
         });
     }
 
-    private List<AbstractField> getInheritedFields(final ViewDoc viewDoc) {
-        // Find the referenced data source.
-        final DocRef docRef = viewDoc.getDataSource();
-        if (docRef == null) {
-            throw new RuntimeException("Null datasource in view " + DocRefUtil.create(viewDoc));
-        }
+    @Override
+    public Optional<String> fetchDocumentation(final DocRef docRef) {
+        return Optional.ofNullable(viewStore.readDocument(docRef)).map(ViewDoc::getDescription);
+    }
 
-        final Optional<DataSourceProvider> delegate =
-                dataSourceProviderRegistry.get().getDataSourceProvider(docRef.getType());
-        if (delegate.isEmpty()) {
-            throw new RuntimeException("No data source provider found for view " + docRef);
-        }
-
-        final DataSource dataSource = delegate.get().getDataSource(docRef);
-        if (dataSource == null) {
-            throw new RuntimeException("No data source found for view " + docRef);
-        }
-
-        return dataSource.getFields();
+    @Override
+    public DocRef fetchDefaultExtractionPipeline(final DocRef dataSourceRef) {
+        return securityContext.useAsReadResult(() -> {
+            final ViewDoc viewDoc = viewStore.readDocument(dataSourceRef);
+            if (viewDoc != null) {
+                return viewDoc.getPipeline();
+            }
+            return null;
+        });
     }
 
     @Override
@@ -156,6 +161,11 @@ public class ViewSearchProvider implements SearchProvider {
     public DateField getTimeField(final DocRef docRef) {
         final ViewDoc viewDoc = getView(docRef);
         return getDelegateStoreFactory(viewDoc).getTimeField(viewDoc.getDataSource());
+    }
+
+    @Override
+    public List<DocRef> list() {
+        return viewStore.list();
     }
 
     @Override

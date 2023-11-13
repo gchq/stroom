@@ -1,6 +1,5 @@
 package stroom.query.common.v2;
 
-import stroom.datasource.api.v2.DataSource;
 import stroom.datasource.api.v2.DateField;
 import stroom.docref.DocRef;
 import stroom.expression.api.DateTimeSettings;
@@ -130,17 +129,6 @@ public final class ResultStoreManager implements Clearable, HasResultStoreInfo {
 
     public Optional<ResultStore> getIfPresent(final QueryKey key) {
         return Optional.ofNullable(resultStoreMap.get(key));
-    }
-
-    public DataSource getDataSource(final DocRef docRef) {
-        if (LOGGER.isDebugEnabled()) {
-            String json = JsonUtil.writeValueAsString(docRef);
-            LOGGER.debug("/dataSource called with docRef:\n{}", json);
-        }
-        final Optional<SearchProvider> optionalStoreFactory = storeFactoryRegistry.getStoreFactory(docRef);
-        return optionalStoreFactory
-                .map(sf -> sf.getDataSource(docRef))
-                .orElseThrow(() -> new RuntimeException("Unknown data source type: " + docRef));
     }
 
     public SearchResponse search(final SearchRequest searchRequest) {

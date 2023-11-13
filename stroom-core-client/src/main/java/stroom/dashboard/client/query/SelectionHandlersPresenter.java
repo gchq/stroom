@@ -17,7 +17,6 @@
 
 package stroom.dashboard.client.query;
 
-import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.dashboard.client.HasSelection;
 import stroom.dashboard.client.main.AbstractSettingsTabPresenter;
@@ -26,11 +25,6 @@ import stroom.dashboard.client.query.SelectionHandlersPresenter.SelectionHandler
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentSelectionHandler;
 import stroom.dashboard.shared.QueryComponentSettings;
-import stroom.datasource.api.v2.AbstractField;
-import stroom.datasource.api.v2.DataSource;
-import stroom.datasource.shared.DataSourceResource;
-import stroom.dispatch.client.Rest;
-import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
@@ -42,7 +36,6 @@ import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.BorderStyle;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
@@ -53,18 +46,14 @@ import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class SelectionHandlersPresenter
         extends AbstractSettingsTabPresenter<SelectionHandlersView>
         implements HasDirtyHandlers, Focus {
 
-    private static final DataSourceResource DATA_SOURCE_RESOURCE = GWT.create(DataSourceResource.class);
-
     private final SelectionHandlerListPresenter listPresenter;
     private final Provider<SelectionHandlerPresenter> editRulePresenterProvider;
-    private final RestFactory restFactory;
     private List<ComponentSelectionHandler> selectionHandlers = new ArrayList<>();
 
     private final ButtonView addButton;
@@ -79,20 +68,15 @@ public class SelectionHandlersPresenter
     private List<Component> componentList;
     private BasicQuerySettingsPresenter basicQuerySettingsPresenter;
 
-    private DocRef currentDataSource;
-    private List<AbstractField> currentFields;
-
     @Inject
     public SelectionHandlersPresenter(final EventBus eventBus,
                                       final SelectionHandlersView view,
                                       final SelectionHandlerListPresenter listPresenter,
-                                      final Provider<SelectionHandlerPresenter> editRulePresenterProvider,
-                                      final RestFactory restFactory) {
+                                      final Provider<SelectionHandlerPresenter> editRulePresenterProvider) {
         super(eventBus, view);
         this.listPresenter = listPresenter;
 //        this.expressionPresenter = expressionPresenter;
         this.editRulePresenterProvider = editRulePresenterProvider;
-        this.restFactory = restFactory;
 
         getView().setTableView(listPresenter.getView());
 //        getView().setExpressionView(expressionPresenter.getView());
@@ -217,93 +201,64 @@ public class SelectionHandlersPresenter
     }
 
     private void add() {
-        loadFields(fields -> {
-            final ComponentSelectionHandler newRule = ComponentSelectionHandler
-                    .builder()
-                    .id(RandomId.createId(5))
-                    .enabled(true)
-                    .build();
-            final SelectionHandlerPresenter editSelectionHandlerPresenter = editRulePresenterProvider.get();
-            editSelectionHandlerPresenter.read(newRule, componentList, fields);
+        final DocRef dataSource = basicQuerySettingsPresenter.getDataSource();
+        final ComponentSelectionHandler newRule = ComponentSelectionHandler
+                .builder()
+                .id(RandomId.createId(5))
+                .enabled(true)
+                .build();
+        final SelectionHandlerPresenter editSelectionHandlerPresenter = editRulePresenterProvider.get();
+        editSelectionHandlerPresenter.read(newRule, componentList, dataSource);
 
-            final PopupSize popupSize = PopupSize.resizable(800, 400);
-            ShowPopupEvent.builder(editSelectionHandlerPresenter)
-                    .popupType(PopupType.OK_CANCEL_DIALOG)
-                    .popupSize(popupSize)
-                    .caption("Add New Selection Handler")
-                    .onShow(e -> editSelectionHandlerPresenter.focus())
-                    .onHideRequest(e -> {
-                        if (e.isOk()) {
-                            final ComponentSelectionHandler rule = editSelectionHandlerPresenter.write();
-                            selectionHandlers.add(rule);
-                            update();
-                            listPresenter.getSelectionModel().setSelected(rule);
-                            setDirty(true);
-                        }
-                        e.hide();
-                    })
-                    .fire();
-        });
+        final PopupSize popupSize = PopupSize.resizable(800, 400);
+        ShowPopupEvent.builder(editSelectionHandlerPresenter)
+                .popupType(PopupType.OK_CANCEL_DIALOG)
+                .popupSize(popupSize)
+                .caption("Add New Selection Handler")
+                .onShow(e -> editSelectionHandlerPresenter.focus())
+                .onHideRequest(e -> {
+                    if (e.isOk()) {
+                        final ComponentSelectionHandler rule = editSelectionHandlerPresenter.write();
+                        selectionHandlers.add(rule);
+                        update();
+                        listPresenter.getSelectionModel().setSelected(rule);
+                        setDirty(true);
+                    }
+                    e.hide();
+                })
+                .fire();
     }
 
     private void edit(final ComponentSelectionHandler existingRule) {
-        loadFields(fields -> {
-            final SelectionHandlerPresenter editSelectionHandlerPresenter = editRulePresenterProvider.get();
-
-            editSelectionHandlerPresenter.read(existingRule, componentList, fields);
-
-            final PopupSize popupSize = PopupSize.resizable(800, 400);
-            ShowPopupEvent.builder(editSelectionHandlerPresenter)
-                    .popupType(PopupType.OK_CANCEL_DIALOG)
-                    .popupSize(popupSize)
-                    .caption("Edit Selection Handler")
-                    .onShow(e -> editSelectionHandlerPresenter.focus())
-                    .onHideRequest(e -> {
-                        if (e.isOk()) {
-                            final ComponentSelectionHandler rule = editSelectionHandlerPresenter.write();
-                            final int index = selectionHandlers.indexOf(existingRule);
-                            selectionHandlers.remove(index);
-                            selectionHandlers.add(index, rule);
-
-                            update();
-                            listPresenter.getSelectionModel().setSelected(rule);
-
-                            // Only mark the policies as dirty if the rule was actually changed.
-                            if (!existingRule.equals(rule)) {
-                                setDirty(true);
-                            }
-                        }
-                        e.hide();
-                    })
-                    .fire();
-        });
-    }
-
-    private void loadFields(final Consumer<List<AbstractField>> consumer) {
         final DocRef dataSource = basicQuerySettingsPresenter.getDataSource();
-        if (dataSource == null) {
-            consumer.accept(new ArrayList<>());
-        } else if (!dataSource.equals(currentDataSource)) {
-            final Rest<DataSource> rest = restFactory.create();
-            rest
-                    .onSuccess(result -> {
-                        currentFields = result.getFields();
-                        currentDataSource = dataSource;
-                        consumer.accept(currentFields);
-                    })
-                    .onFailure(caught -> {
-                        currentFields = new ArrayList<>();
-                        currentDataSource = dataSource;
-                        AlertEvent.fireError(this,
-                                "Unable to locate datasource " + dataSource.getUuid(),
-                                () -> consumer.accept(currentFields));
-                    })
-                    .call(DATA_SOURCE_RESOURCE)
-                    .fetch(dataSource);
+        final SelectionHandlerPresenter editSelectionHandlerPresenter = editRulePresenterProvider.get();
 
-        } else {
-            consumer.accept(currentFields);
-        }
+        editSelectionHandlerPresenter.read(existingRule, componentList, dataSource);
+
+        final PopupSize popupSize = PopupSize.resizable(800, 400);
+        ShowPopupEvent.builder(editSelectionHandlerPresenter)
+                .popupType(PopupType.OK_CANCEL_DIALOG)
+                .popupSize(popupSize)
+                .caption("Edit Selection Handler")
+                .onShow(e -> editSelectionHandlerPresenter.focus())
+                .onHideRequest(e -> {
+                    if (e.isOk()) {
+                        final ComponentSelectionHandler rule = editSelectionHandlerPresenter.write();
+                        final int index = selectionHandlers.indexOf(existingRule);
+                        selectionHandlers.remove(index);
+                        selectionHandlers.add(index, rule);
+
+                        update();
+                        listPresenter.getSelectionModel().setSelected(rule);
+
+                        // Only mark the policies as dirty if the rule was actually changed.
+                        if (!existingRule.equals(rule)) {
+                            setDirty(true);
+                        }
+                    }
+                    e.hide();
+                })
+                .fire();
     }
 
     @Override
@@ -390,7 +345,5 @@ public class SelectionHandlersPresenter
     public interface SelectionHandlersView extends View {
 
         void setTableView(View view);
-
-//        void setExpressionView(View view);
     }
 }

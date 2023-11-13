@@ -16,8 +16,6 @@
 
 package stroom.search.impl;
 
-import stroom.datasource.api.v2.DataSource;
-import stroom.docref.DocRef;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.index.impl.StroomIndexQueryResource;
@@ -42,12 +40,6 @@ public class StroomIndexQueryResourceImpl implements StroomIndexQueryResource {
     public StroomIndexQueryResourceImpl(
             final Provider<ResultStoreManager> searchResponseCreatorManagerProvider) {
         this.searchResponseCreatorManagerProvider = searchResponseCreatorManagerProvider;
-    }
-
-    @Timed
-    @Override
-    public DataSource getDataSource(final DocRef docRef) {
-        return searchResponseCreatorManagerProvider.get().getDataSource(docRef);
     }
 
     @Timed

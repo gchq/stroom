@@ -16,11 +16,13 @@
 
 package stroom.datasource.shared;
 
-import stroom.datasource.api.v2.DataSource;
+import stroom.datasource.api.v2.FieldInfo;
+import stroom.datasource.api.v2.FindFieldInfoCriteria;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.Documentation;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
+import stroom.util.shared.ResultPage;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -40,24 +42,26 @@ import javax.ws.rs.core.MediaType;
 public interface DataSourceResource extends RestResource, DirectRestService {
 
     @POST
-    @Path("/fetchFields")
+    @Path("/findFields")
     @Operation(
-            summary = "Fetch data source fields",
-            operationId = "fetchDataSourceFields")
-    DataSource fetch(@Parameter(description = "dataSourceRef", required = true) DocRef dataSourceRef);
-
-    @POST
-    @Path("/fetchFieldsFromQuery")
-    @Operation(
-            summary = "Fetch data source fields",
-            operationId = "fetchDataSourceFieldsFromQuery")
-    DataSource fetchFromQuery(@Parameter(description = "query", required = true) String query);
+            summary = "Find data source fields",
+            operationId = "findDataSourceFields")
+    ResultPage<FieldInfo> findFields(
+            @Parameter(description = "criteria", required = true) FindFieldInfoCriteria criteria);
 
     @POST
     @Path("/fetchDocumentation")
     @Operation(
             summary = "Fetch documentation for a data source",
             operationId = "fetchDocumentation")
-    Documentation fetchDocumentation(@Parameter(description = "docRef", required = true) DocRef docRef);
+    Documentation fetchDocumentation(
+            @Parameter(description = "dataSourceRef", required = true) DocRef dataSourceRef);
 
+    @POST
+    @Path("/fetchDefaultExtractionPipeline")
+    @Operation(
+            summary = "Fetch default extraction pipeline",
+            operationId = "fetchDefaultExtractionPipeline")
+    DocRef fetchDefaultExtractionPipeline(
+            @Parameter(description = "dataSourceRef", required = true) DocRef dataSourceRef);
 }

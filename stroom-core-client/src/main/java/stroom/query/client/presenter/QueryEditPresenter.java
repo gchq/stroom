@@ -17,14 +17,10 @@
 
 package stroom.query.client.presenter;
 
-import stroom.alert.client.event.AlertEvent;
 import stroom.core.client.event.WindowCloseEvent;
 import stroom.dashboard.client.query.QueryInfo;
-import stroom.datasource.shared.DataSourceResource;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.docstore.shared.Documentation;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
@@ -39,23 +35,14 @@ import stroom.query.api.v2.QLVisResult;
 import stroom.query.api.v2.Result;
 import stroom.query.api.v2.SearchRequestSource.SourceType;
 import stroom.query.client.presenter.QueryEditPresenter.QueryEditView;
-import stroom.query.client.presenter.QueryHelpPresenter.QueryHelpDataSupplier;
 import stroom.query.client.view.QueryResultTabsView;
-import stroom.query.shared.QueryHelpItemsRequest;
-import stroom.query.shared.QueryHelpItemsRequest.HelpItemType;
-import stroom.query.shared.QueryHelpItemsResult;
-import stroom.query.shared.QueryResource;
 import stroom.util.shared.DefaultLocation;
-import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.Indicators;
 import stroom.util.shared.Severity;
 import stroom.util.shared.StoredError;
-import stroom.view.client.presenter.DataSourceFieldsMap;
-import stroom.view.client.presenter.IndexLoader;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
@@ -71,11 +58,8 @@ import edu.ycp.cs.dh.acegwt.client.ace.AceMarkerType;
 import edu.ycp.cs.dh.acegwt.client.ace.AceRange;
 
 import java.util.Collections;
-import java.util.EnumSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import javax.inject.Provider;
 
@@ -83,14 +67,6 @@ public class QueryEditPresenter
         extends MyPresenterWidget<QueryEditView>
         implements HasDirtyHandlers, HasToolbar, HasHandlers {
 
-    private static final Set<HelpItemType> SUPPORTED_HELP_TYPES = EnumSet.of(
-            HelpItemType.DATA_SOURCE,
-            HelpItemType.STRUCTURE,
-            HelpItemType.FIELD,
-            HelpItemType.FUNCTION);
-
-    private static final QueryResource QUERY_RESOURCE = GWT.create(QueryResource.class);
-    private static final DataSourceResource DATA_SOURCE_RESOURCE = GWT.create(DataSourceResource.class);
     private static final TabData TABLE = new TabDataImpl("Table");
     private static final TabData VISUALISATION = new TabDataImpl("Visualisation");
 
@@ -98,12 +74,10 @@ public class QueryEditPresenter
     private final QueryToolbarPresenter queryToolbarPresenter;
     private final EditorPresenter editorPresenter;
     private final QueryResultTableSplitPresenter queryResultPresenter;
-    private final IndexLoader indexLoader;
     private boolean dirty;
     private boolean reading;
     private boolean readOnly = true;
     private final QueryModel queryModel;
-    private final RestFactory restFactory;
     private final QueryResultTabsView linkTabsLayoutView;
     private final QueryInfo queryInfo;
 
@@ -120,7 +94,6 @@ public class QueryEditPresenter
                               final QueryResultTableSplitPresenter queryResultPresenter,
                               final Provider<QueryResultVisPresenter> visPresenterProvider,
                               final RestFactory restFactory,
-                              final IndexLoader indexLoader,
                               final DateTimeSettingsFactory dateTimeSettingsFactory,
                               final ResultStoreModel resultStoreModel,
                               final QueryResultTabsView linkTabsLayoutView,
@@ -130,8 +103,6 @@ public class QueryEditPresenter
         this.queryToolbarPresenter = queryToolbarPresenter;
         this.queryResultPresenter = queryResultPresenter;
         this.visPresenterProvider = visPresenterProvider;
-        this.indexLoader = indexLoader;
-        this.restFactory = restFactory;
         this.linkTabsLayoutView = linkTabsLayoutView;
         this.queryInfo = queryInfo;
 
@@ -291,7 +262,7 @@ public class QueryEditPresenter
     protected void onBind() {
         super.onBind();
         registerHandler(editorPresenter.addValueChangeHandler(event -> {
-            queryHelpPresenter.updateQuery(editorPresenter.getText(), indexLoader::loadDataSource);
+            queryHelpPresenter.setQuery(editorPresenter.getText());
             setDirty(true);
         }));
         registerHandler(editorPresenter.getView().asWidget().addDomHandler(e -> {
@@ -316,8 +287,6 @@ public class QueryEditPresenter
         }));
         registerHandler(linkTabsLayoutView.getTabBar().addSelectionHandler(e ->
                 selectTab(e.getSelectedItem())));
-
-        setupQueryHelpDataSupplier();
     }
 
     @Override
@@ -334,74 +303,6 @@ public class QueryEditPresenter
             linkTabsLayoutView.getTabBar().selectTab(tabData);
             linkTabsLayoutView.getLayerContainer().show(currentVisPresenter);
         }
-    }
-
-    private void setupQueryHelpDataSupplier() {
-        queryHelpPresenter.setQueryHelpDataSupplier(new QueryHelpDataSupplier() {
-
-            @Override
-            public String decorateFieldName(final String fieldName) {
-                return GwtNullSafe.get(fieldName, str ->
-                        str.contains(" ")
-                                ? "\"" + str + "\""
-                                : str);
-            }
-
-            @Override
-            public void registerChangeHandler(final Consumer<DataSourceFieldsMap> onChange) {
-                registerHandler(indexLoader.addChangeDataHandler(e ->
-                        onChange.accept(indexLoader.getDataSourceFieldsMap())));
-            }
-
-            @Override
-            public boolean isSupported(final HelpItemType helpItemType) {
-                return helpItemType != null && SUPPORTED_HELP_TYPES.contains(helpItemType);
-            }
-
-            @Override
-            public void fetchQueryHelpItems(final String filterInput,
-                                            final Consumer<QueryHelpItemsResult> resultConsumer) {
-                final QueryHelpItemsRequest queryHelpItemsRequest = QueryHelpItemsRequest.fromQuery(
-                        getQuery(),
-                        filterInput,
-                        SUPPORTED_HELP_TYPES);
-
-                final Rest<QueryHelpItemsResult> rest = restFactory.create();
-                rest
-                        .onSuccess(result ->
-                                GwtNullSafe.consume(result, resultConsumer))
-                        .onFailure(throwable -> AlertEvent.fireError(
-                                QueryEditPresenter.this,
-                                throwable.getMessage(),
-                                null))
-                        .call(QUERY_RESOURCE)
-                        .fetchQueryHelpItems(queryHelpItemsRequest);
-            }
-
-            @Override
-            public void fetchDataSourceDescription(final DocRef dataSourceDocRef,
-                                                   final Consumer<Optional<String>> descriptionConsumer) {
-
-                if (dataSourceDocRef != null) {
-                    final Rest<Documentation> rest = restFactory.create();
-                    rest
-                            .onSuccess(documentation -> {
-//                                GWT.log("Description:\n" + documentation);
-                                final Optional<String> optMarkDown = GwtNullSafe.getAsOptional(documentation,
-                                        Documentation::getMarkdown);
-                                if (descriptionConsumer != null) {
-                                    descriptionConsumer.accept(optMarkDown);
-                                }
-                            })
-                            .onFailure(throwable -> AlertEvent.fireError(
-                                    QueryEditPresenter.this,
-                                    throwable.getMessage(),
-                                    null))
-                            .call(DATA_SOURCE_RESOURCE)
-                            .fetchDocumentation(dataSourceDocRef);
-                }
-            }
-        });
     }
 
     private void setDirty(final boolean dirty) {
@@ -440,21 +341,6 @@ public class QueryEditPresenter
     private void run(final boolean incremental,
                      final boolean storeHistory,
                      final Function<ExpressionOperator, ExpressionOperator> expressionDecorator) {
-//        final DocRef dataSourceRef = getQuerySettings().getDataSource();
-//
-//        if (dataSourceRef == null) {
-//            warnNoDataSource();
-//        } else {
-//            currentWarnings = null;
-//            expressionPresenter.clearSelection();
-//
-//            warningsButton.setVisible(false);
-//
-//            // Write expression.
-//            final ExpressionOperator root = expressionPresenter.write();
-//            final ExpressionOperator decorated = expressionDecorator.apply(root);
-
-
         // Clear the table selection and any markers.
         queryResultPresenter.clear();
         editorPresenter.setMarkers(Collections.emptyList());
@@ -482,7 +368,7 @@ public class QueryEditPresenter
             reading = true;
             if (editorPresenter.getText().length() == 0 || !editorPresenter.getText().equals(query)) {
                 editorPresenter.setText(query);
-                queryHelpPresenter.setQuery(query, indexLoader::loadDataSource);
+                queryHelpPresenter.setQuery(query);
             }
             reading = false;
         }

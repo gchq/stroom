@@ -17,12 +17,12 @@
 package stroom.query.client;
 
 import stroom.data.grid.client.MouseHelper;
-import stroom.datasource.api.v2.AbstractField;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
 import stroom.pipeline.structure.client.view.Box;
 import stroom.pipeline.structure.client.view.TreePanel;
+import stroom.query.client.presenter.FieldSelectionListModel;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.widget.htree.client.BracketConnectorRenderer;
 import stroom.widget.htree.client.ConnectorRenderer;
@@ -44,8 +44,6 @@ import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.view.client.SelectionModel;
 import com.google.inject.Provider;
-
-import java.util.List;
 
 public class ExpressionTreePanel extends TreePanel<Item> {
 
@@ -167,8 +165,10 @@ public class ExpressionTreePanel extends TreePanel<Item> {
         }
     }
 
-    public void init(final RestFactory restFactory, final DocRef dataSource, final List<AbstractField> fields) {
-        termEditor.init(restFactory, dataSource, fields);
+    public void init(final RestFactory restFactory,
+                     final DocRef dataSource,
+                     final FieldSelectionListModel fieldSelectionListModel) {
+        termEditor.init(restFactory, dataSource, fieldSelectionListModel);
     }
 
     public void endEditing() {

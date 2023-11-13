@@ -18,9 +18,11 @@
 package stroom.data.client.presenter;
 
 import stroom.datasource.api.v2.AbstractField;
+import stroom.datasource.api.v2.FieldInfo;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.client.presenter.SimpleFieldSelectionListModel;
 
 import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
@@ -29,6 +31,7 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class ExpressionPresenter
         extends MyPresenterWidget<ExpressionPresenter.ExpressionView>
@@ -54,7 +57,9 @@ public class ExpressionPresenter
     }
 
     public void read(final ExpressionOperator expression, final DocRef dataSource, final List<AbstractField> fields) {
-        editExpressionPresenter.init(restFactory, dataSource, fields);
+        final SimpleFieldSelectionListModel fieldSelectionBoxModel = new SimpleFieldSelectionListModel();
+        fieldSelectionBoxModel.addItems(fields.stream().map(FieldInfo::create).collect(Collectors.toList()));
+        editExpressionPresenter.init(restFactory, dataSource, fieldSelectionBoxModel);
 
         if (expression != null) {
             editExpressionPresenter.read(expression);
@@ -66,10 +71,6 @@ public class ExpressionPresenter
     public ExpressionOperator write() {
         return editExpressionPresenter.write();
     }
-
-
-    // --------------------------------------------------------------------------------
-
 
     public interface ExpressionView extends View {
 

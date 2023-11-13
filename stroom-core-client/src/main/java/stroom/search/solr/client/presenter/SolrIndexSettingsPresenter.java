@@ -27,11 +27,11 @@ import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.client.presenter.DynamicFieldSelectionListModel;
 import stroom.search.solr.client.presenter.SolrIndexSettingsPresenter.SolrIndexSettingsView;
 import stroom.search.solr.shared.SolrConnectionConfig;
 import stroom.search.solr.shared.SolrConnectionConfig.InstanceType;
 import stroom.search.solr.shared.SolrConnectionTestResponse;
-import stroom.search.solr.shared.SolrIndexDataSourceFieldUtil;
 import stroom.search.solr.shared.SolrIndexDoc;
 import stroom.search.solr.shared.SolrIndexResource;
 import stroom.security.shared.DocumentPermissionNames;
@@ -53,6 +53,7 @@ public class SolrIndexSettingsPresenter extends DocumentEditPresenter<SolrIndexS
     private final EditExpressionPresenter editExpressionPresenter;
     private final EntityDropDownPresenter pipelinePresenter;
     private final RestFactory restFactory;
+    private final DynamicFieldSelectionListModel fieldSelectionBoxModel;
     private DocRef defaultExtractionPipeline;
 
     @Inject
@@ -60,11 +61,13 @@ public class SolrIndexSettingsPresenter extends DocumentEditPresenter<SolrIndexS
                                       final SolrIndexSettingsView view,
                                       final EditExpressionPresenter editExpressionPresenter,
                                       final EntityDropDownPresenter pipelinePresenter,
-                                      final RestFactory restFactory) {
+                                      final RestFactory restFactory,
+                                      final DynamicFieldSelectionListModel fieldSelectionBoxModel) {
         super(eventBus, view);
         this.editExpressionPresenter = editExpressionPresenter;
         this.pipelinePresenter = pipelinePresenter;
         this.restFactory = restFactory;
+        this.fieldSelectionBoxModel = fieldSelectionBoxModel;
 
         pipelinePresenter.setIncludedTypes(PipelineDoc.DOCUMENT_TYPE);
         pipelinePresenter.setRequiredPermissions(DocumentPermissionNames.READ);
@@ -124,7 +127,9 @@ public class SolrIndexSettingsPresenter extends DocumentEditPresenter<SolrIndexS
         if (index.getRetentionExpression() == null) {
             index.setRetentionExpression(ExpressionOperator.builder().build());
         }
-        editExpressionPresenter.init(restFactory, docRef, SolrIndexDataSourceFieldUtil.getDataSourceFields(index));
+
+        fieldSelectionBoxModel.setDataSourceRef(docRef);
+        editExpressionPresenter.init(restFactory, docRef, fieldSelectionBoxModel);
         editExpressionPresenter.read(index.getRetentionExpression());
 
         defaultExtractionPipeline = index.getDefaultExtractionPipeline();
@@ -153,6 +158,7 @@ public class SolrIndexSettingsPresenter extends DocumentEditPresenter<SolrIndexS
 
     public interface SolrIndexSettingsView
             extends View, ReadOnlyChangeHandler, HasUiHandlers<SolrIndexSettingsUiHandlers> {
+
         String getCollection();
 
         void setCollection(String collection);

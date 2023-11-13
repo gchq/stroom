@@ -1,18 +1,22 @@
 package stroom.task.impl;
 
 import stroom.datasource.api.v2.AbstractField;
-import stroom.datasource.api.v2.DataSource;
 import stroom.datasource.api.v2.DateField;
+import stroom.datasource.api.v2.FieldInfo;
+import stroom.datasource.api.v2.FindFieldInfoCriteria;
 import stroom.datasource.api.v2.TextField;
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
+import stroom.query.common.v2.FieldInfoResultPageBuilder;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValString;
 import stroom.query.language.functions.ValuesConsumer;
 import stroom.searchable.api.Searchable;
+import stroom.util.shared.ResultPage;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 public class SearchableDual implements Searchable {
 
@@ -26,16 +30,19 @@ public class SearchableDual implements Searchable {
 
     private static final List<AbstractField> FIELDS = Collections.singletonList(DUMMY_FIELD);
 
-    private static final DataSource DATA_SOURCE = DataSource.builder().docRef(DOC_REF).fields(FIELDS).build();
-
     @Override
     public DocRef getDocRef() {
         return DOC_REF;
     }
 
     @Override
-    public DataSource getDataSource() {
-        return DATA_SOURCE;
+    public ResultPage<FieldInfo> getFieldInfo(final FindFieldInfoCriteria criteria) {
+        return FieldInfoResultPageBuilder.builder(criteria).addAll(FIELDS).build();
+    }
+
+    @Override
+    public Optional<String> fetchDocumentation(final DocRef docRef) {
+        return Optional.empty();
     }
 
     @Override

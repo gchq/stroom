@@ -16,12 +16,14 @@
 
 package stroom.query.impl.datasource;
 
-import stroom.datasource.api.v2.DataSource;
+import stroom.datasource.api.v2.FieldInfo;
+import stroom.datasource.api.v2.FindFieldInfoCriteria;
 import stroom.datasource.shared.DataSourceResource;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.Documentation;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.query.impl.QueryService;
+import stroom.util.shared.ResultPage;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -37,17 +39,17 @@ class DataSourceResourceImpl implements DataSourceResource {
     }
 
     @Override
-    public DataSource fetch(final DocRef dataSourceRef) {
-        return queryServiceProvider.get().getDataSource(dataSourceRef).orElse(null);
+    public ResultPage<FieldInfo> findFields(final FindFieldInfoCriteria criteria) {
+        return queryServiceProvider.get().getFieldInfo(criteria);
     }
 
     @Override
-    public DataSource fetchFromQuery(final String query) {
-        return queryServiceProvider.get().getDataSource(query).orElse(null);
+    public Documentation fetchDocumentation(final DocRef dataSourceRef) {
+        return Documentation.of(queryServiceProvider.get().fetchDocumentation(dataSourceRef).orElse(""));
     }
 
     @Override
-    public Documentation fetchDocumentation(final DocRef docRef) {
-        return queryServiceProvider.get().fetchDocumentation(docRef);
+    public DocRef fetchDefaultExtractionPipeline(final DocRef dataSourceRef) {
+        return queryServiceProvider.get().fetchDefaultExtractionPipeline(dataSourceRef);
     }
 }

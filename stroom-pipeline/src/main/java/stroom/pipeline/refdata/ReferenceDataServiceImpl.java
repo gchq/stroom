@@ -3,8 +3,10 @@ package stroom.pipeline.refdata;
 import stroom.bytebuffer.ByteBufferPool;
 import stroom.data.shared.StreamTypeNames;
 import stroom.datasource.api.v2.AbstractField;
-import stroom.datasource.api.v2.DataSource;
 import stroom.datasource.api.v2.DateField;
+import stroom.datasource.api.v2.FieldInfo;
+import stroom.query.common.v2.FieldInfoResultPageBuilder;
+import stroom.datasource.api.v2.FindFieldInfoCriteria;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
 import stroom.docrefinfo.api.DocRefInfoService;
@@ -48,6 +50,7 @@ import stroom.util.pipeline.scope.PipelineScopeRunnable;
 import stroom.util.rest.RestUtil;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResourcePaths;
+import stroom.util.shared.ResultPage;
 import stroom.util.time.StroomDuration;
 
 import com.google.common.base.Strings;
@@ -80,12 +83,6 @@ import javax.ws.rs.client.SyncInvoker;
 public class ReferenceDataServiceImpl implements ReferenceDataService {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ReferenceDataServiceImpl.class);
-
-    private static final DataSource DATA_SOURCE = DataSource
-            .builder()
-            .docRef(ReferenceDataFields.REF_STORE_PSEUDO_DOC_REF)
-            .fields(ReferenceDataFields.FIELDS)
-            .build();
     private static final Map<String, AbstractField> FIELD_NAME_TO_FIELD_MAP = ReferenceDataFields.FIELDS.stream()
             .collect(Collectors.toMap(AbstractField::getName, Function.identity()));
 
@@ -682,8 +679,13 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
     }
 
     @Override
-    public DataSource getDataSource() {
-        return DATA_SOURCE;
+    public ResultPage<FieldInfo> getFieldInfo(final FindFieldInfoCriteria criteria) {
+        return FieldInfoResultPageBuilder.builder(criteria).addAll(ReferenceDataFields.FIELDS).build();
+    }
+
+    @Override
+    public Optional<String> fetchDocumentation(final DocRef docRef) {
+        return Optional.empty();
     }
 
     @Override

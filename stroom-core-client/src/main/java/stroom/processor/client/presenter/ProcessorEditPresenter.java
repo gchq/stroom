@@ -4,6 +4,7 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.data.client.presenter.EditExpressionPresenter;
 import stroom.datasource.api.v2.AbstractField;
+import stroom.datasource.api.v2.FieldInfo;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
@@ -16,6 +17,7 @@ import stroom.processor.shared.QueryData;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.ExpressionValidator;
+import stroom.query.client.presenter.SimpleFieldSelectionListModel;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -29,6 +31,7 @@ import com.gwtplatform.mvp.client.View;
 
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView> {
 
@@ -56,7 +59,9 @@ public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView>
                      final List<AbstractField> fields,
                      final Long minMetaCreateTimeMs,
                      final Long maxMetaCreateTimeMs) {
-        editExpressionPresenter.init(restFactory, dataSource, fields);
+        final SimpleFieldSelectionListModel selectionBoxModel = new SimpleFieldSelectionListModel();
+        selectionBoxModel.addItems(fields.stream().map(FieldInfo::create).collect(Collectors.toList()));
+        editExpressionPresenter.init(restFactory, dataSource, selectionBoxModel);
 
         if (expression != null) {
             editExpressionPresenter.read(expression);

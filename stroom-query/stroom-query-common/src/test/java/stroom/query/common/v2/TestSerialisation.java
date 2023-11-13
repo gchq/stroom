@@ -16,9 +16,6 @@
 
 package stroom.query.common.v2;
 
-import stroom.datasource.api.v2.DataSource;
-import stroom.datasource.api.v2.LongField;
-import stroom.datasource.api.v2.TextField;
 import stroom.docref.DocRef;
 import stroom.expression.api.DateTimeSettings;
 import stroom.expression.api.TimeZone;
@@ -71,13 +68,6 @@ import javax.xml.bind.annotation.XmlType;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestSerialisation {
-
-    private static DataSource getDataSource() {
-        return DataSource
-                .builder()
-                .fields(List.of(new TextField("field1"), new LongField("field2")))
-                .build();
-    }
 
     private static SearchRequest getSearchRequest() {
         return SearchRequest.builder()
@@ -161,11 +151,6 @@ class TestSerialisation {
         final Multi multi = new Multi(list);
 
         test(multi, Multi.class, "testPolymorphic2");
-    }
-
-    @Test
-    void testDataSourceSerialisation() throws IOException, JAXBException {
-        test(getDataSource(), DataSource.class, "testDataSourceSerialisation");
     }
 
     @Test

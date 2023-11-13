@@ -23,10 +23,12 @@ import stroom.dashboard.client.table.TablePresenter;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.TableComponentSettings;
 import stroom.datasource.api.v2.AbstractField;
+import stroom.datasource.api.v2.FieldInfo;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.query.api.v2.ConditionalFormattingRule;
+import stroom.query.client.presenter.SimpleFieldSelectionListModel;
 import stroom.svg.client.SvgPresets;
 import stroom.util.shared.RandomId;
 import stroom.widget.button.client.ButtonView;
@@ -198,7 +200,9 @@ public class RulesPresenter
                 .enabled(true)
                 .build();
         final RulePresenter editRulePresenter = editRulePresenterProvider.get();
-        editRulePresenter.read(newRule, fields);
+        final SimpleFieldSelectionListModel selectionBoxModel = new SimpleFieldSelectionListModel();
+        selectionBoxModel.addItems(fields.stream().map(FieldInfo::create).collect(Collectors.toList()));
+        editRulePresenter.read(newRule, selectionBoxModel);
 
         final PopupSize popupSize = PopupSize.resizable(800, 550);
         ShowPopupEvent.builder(editRulePresenter)
@@ -221,7 +225,9 @@ public class RulesPresenter
 
     private void edit(final ConditionalFormattingRule existingRule) {
         final RulePresenter editRulePresenter = editRulePresenterProvider.get();
-        editRulePresenter.read(existingRule, fields);
+        final SimpleFieldSelectionListModel selectionBoxModel = new SimpleFieldSelectionListModel();
+        selectionBoxModel.addItems(fields.stream().map(FieldInfo::create).collect(Collectors.toList()));
+        editRulePresenter.read(existingRule, selectionBoxModel);
 
         final PopupSize popupSize = PopupSize.resizable(800, 400);
         ShowPopupEvent.builder(editRulePresenter)

@@ -3,6 +3,7 @@ package stroom.documentation.impl;
 import stroom.docref.DocContentMatch;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
+import stroom.docref.StringMatch;
 import stroom.docstore.api.AuditFieldFilter;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
@@ -177,9 +178,7 @@ public class DocumentationStoreImpl implements DocumentationStore {
     }
 
     @Override
-    public List<DocContentMatch> findByContent(final String pattern,
-                                               final boolean regex,
-                                               final boolean matchCase) {
-        return store.findByContent(pattern, regex, matchCase);
+    public List<DocContentMatch> findByContent(final StringMatch filter) {
+        return store.findByContent(filter);
     }
 }

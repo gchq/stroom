@@ -1,6 +1,5 @@
 package stroom.query.language;
 
-import stroom.datasource.api.v2.DataSource;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.docrefinfo.api.DocRefInfoService;
@@ -8,7 +7,6 @@ import stroom.query.common.v2.DataSourceProviderRegistry;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
@@ -67,42 +65,29 @@ public class DocResolver {
 
     private DocRef getDataSourceRefFromUuid(final String uuid) {
         final DataSourceProviderRegistry dataSourceProviderRegistry = dataSourceProviderRegistryProvider.get();
-        for (final String type : dataSourceProviderRegistry.getTypes()) {
-            final DocRef docRef = new DocRef(type, uuid);
-            final Optional<DataSource> optional =
-                    dataSourceProviderRegistry.getDataSource(docRef);
-            if (optional.isPresent()) {
-                return docRef;
-            }
+        final Optional<DocRef> optional = dataSourceProviderRegistry
+                .list()
+                .stream()
+                .filter(docRef -> docRef.getUuid().equals(uuid))
+                .findAny();
+        if (optional.isPresent()) {
+            return optional.get();
         }
         throw new RuntimeException("Data source not found with uuid \"" + uuid + "\"");
     }
 
     private DocRef getDataSourceRefFromName(final String name) {
-        final DocRefInfoService docRefInfoService = docRefInfoServiceProvider.get();
         final DataSourceProviderRegistry dataSourceProviderRegistry = dataSourceProviderRegistryProvider.get();
-        final List<DocRef> docRefs = docRefInfoService.findByName(
-                null,
-                name,
-                false);
-        if (docRefs == null || docRefs.size() == 0) {
+        final List<DocRef> docRefs = dataSourceProviderRegistry
+                .list()
+                .stream()
+                .filter(docRef -> docRef.getName().equals(name))
+                .toList();
+        if (docRefs.size() == 0) {
             throw new RuntimeException("Data source \"" + name + "\" not found");
-        }
-
-        final List<DocRef> result = new ArrayList<>();
-        for (final DocRef docRef : docRefs) {
-            final Optional<DataSource> optional =
-                    dataSourceProviderRegistry.getDataSource(docRef);
-            if (optional.isPresent()) {
-                result.add(docRef);
-            }
-        }
-
-        if (result.size() == 0) {
-            throw new RuntimeException("Data source \"" + name + "\" not found");
-        } else if (result.size() > 1) {
+        } else if (docRefs.size() > 1) {
             throw new RuntimeException("Multiple data sources found for \"" + name + "\"");
         }
-        return result.get(0);
+        return docRefs.get(0);
     }
 }

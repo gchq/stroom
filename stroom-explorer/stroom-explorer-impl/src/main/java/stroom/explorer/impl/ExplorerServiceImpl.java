@@ -1447,9 +1447,7 @@ class ExplorerServiceImpl
         for (final DocumentType documentType : explorerActionHandlers.getTypes()) {
             final ExplorerActionHandler explorerActionHandler =
                     explorerActionHandlers.getHandler(documentType.getType());
-            final List<DocContentMatch> matches = explorerActionHandler
-                    .findByContent(request.getPattern(), request.isRegex(), request.isMatchCase());
-
+            final List<DocContentMatch> matches = explorerActionHandler.findByContent(request.getFilter());
             for (final DocContentMatch docContentMatch : matches) {
                 final List<String> parents = new ArrayList<>();
                 parents.add(docContentMatch.getDocRef().getName());

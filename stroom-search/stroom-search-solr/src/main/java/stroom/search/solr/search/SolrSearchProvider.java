@@ -17,11 +17,13 @@
 
 package stroom.search.solr.search;
 
-import stroom.datasource.api.v2.DataSource;
+import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.DateField;
+import stroom.datasource.api.v2.FieldInfo;
+import stroom.query.common.v2.FieldInfoResultPageBuilder;
+import stroom.datasource.api.v2.FindFieldInfoCriteria;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
-import stroom.docstore.shared.DocRefUtil;
 import stroom.expression.api.DateTimeSettings;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionUtil;
@@ -43,6 +45,7 @@ import stroom.search.solr.shared.SolrIndexDoc;
 import stroom.search.solr.shared.SolrIndexField;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContextFactory;
+import stroom.util.shared.ResultPage;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,6 +53,7 @@ import org.slf4j.LoggerFactory;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.function.Function;
@@ -102,17 +106,32 @@ public class SolrSearchProvider implements SearchProvider {
         this.securityContext = securityContext;
         this.solrSearchExecutor = solrSearchExecutor;
     }
+    @Override
+    public ResultPage<FieldInfo> getFieldInfo(final FindFieldInfoCriteria criteria) {
+        return securityContext.useAsReadResult(() -> {
+            final FieldInfoResultPageBuilder builder = FieldInfoResultPageBuilder.builder(criteria);
+            final SolrIndexDoc index = solrIndexStore.readDocument(criteria.getDataSourceRef());
+            if (index != null) {
+                final List<AbstractField> fields = SolrIndexDataSourceFieldUtil.getDataSourceFields(index);
+                builder.addAll(fields);
+            }
+            return builder.build();
+        });
+    }
 
     @Override
-    public DataSource getDataSource(final DocRef docRef) {
+    public Optional<String> fetchDocumentation(final DocRef docRef) {
+        return Optional.ofNullable(solrIndexStore.readDocument(docRef)).map(SolrIndexDoc::getDescription);
+    }
+
+    @Override
+    public DocRef fetchDefaultExtractionPipeline(final DocRef dataSourceRef) {
         return securityContext.useAsReadResult(() -> {
-            final SolrIndexDoc index = solrIndexStore.readDocument(docRef);
-            return DataSource
-                    .builder()
-                    .docRef(DocRefUtil.create(index))
-                    .fields(SolrIndexDataSourceFieldUtil.getDataSourceFields(index))
-                    .defaultExtractionPipeline(index.getDefaultExtractionPipeline())
-                    .build();
+            final SolrIndexDoc index = solrIndexStore.readDocument(dataSourceRef);
+            if (index != null) {
+                return index.getDefaultExtractionPipeline();
+            }
+            return null;
         });
     }
 
@@ -210,6 +229,11 @@ public class SolrSearchProvider implements SearchProvider {
         }
 
         return highlights;
+    }
+
+    @Override
+    public List<DocRef> list() {
+        return solrIndexStore.list();
     }
 
     @Override

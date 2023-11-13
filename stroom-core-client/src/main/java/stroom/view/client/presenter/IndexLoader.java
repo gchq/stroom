@@ -16,8 +16,6 @@
 
 package stroom.view.client.presenter;
 
-import stroom.alert.client.event.AlertEvent;
-import stroom.datasource.api.v2.DataSource;
 import stroom.datasource.shared.DataSourceResource;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
@@ -31,9 +29,7 @@ import com.google.gwt.event.shared.GwtEvent;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.function.Consumer;
 import javax.inject.Inject;
 
 public class IndexLoader implements HasChangeDataHandlers<IndexLoader> {
@@ -44,9 +40,6 @@ public class IndexLoader implements HasChangeDataHandlers<IndexLoader> {
     private final EventBus eventBus;
 
     private DocRef loadedDataSourceRef;
-    private List<String> indexFieldNames;
-    private DocRef defaultExtractionPipeline;
-    private DataSourceFieldsMap dataSourceFieldsMap;
 
     @Inject
     public IndexLoader(final EventBus eventBus, final RestFactory restFactory) {
@@ -65,105 +58,19 @@ public class IndexLoader implements HasChangeDataHandlers<IndexLoader> {
     }
 
     public void loadDataSource(final DocRef dataSourceRef) {
-        if (dataSourceRef != null) {
-            final Rest<DataSource> rest = restFactory.create();
-            rest
-                    .onSuccess(result -> {
-                        if (result != null) {
-                            loadedDataSourceRef = result.getDocRef();
-                            dataSourceFieldsMap = new DataSourceFieldsMap(result.getFields());
-                            indexFieldNames = new ArrayList<>(dataSourceFieldsMap.keySet());
-                            defaultExtractionPipeline = result.getDefaultExtractionPipeline();
-                            Collections.sort(indexFieldNames);
-                        } else {
-                            loadedDataSourceRef = dataSourceRef;
-                            dataSourceFieldsMap = new DataSourceFieldsMap();
-                            indexFieldNames = new ArrayList<>();
-                            defaultExtractionPipeline = null;
-                        }
-
-                        ChangeDataEvent.fire(IndexLoader.this, IndexLoader.this);
-                    })
-                    .onFailure(caught -> {
-                        loadedDataSourceRef = null;
-                        indexFieldNames = null;
-                        defaultExtractionPipeline = null;
-                        dataSourceFieldsMap = null;
-
-                        AlertEvent.fireError(IndexLoader.this,
-                                "Unable to locate datasource " + dataSourceRef.getUuid(),
-                                null);
-                        ChangeDataEvent.fire(IndexLoader.this, IndexLoader.this);
-
-                    })
-                    .call(DATA_SOURCE_RESOURCE)
-                    .fetch(dataSourceRef);
-        } else {
-            loadedDataSourceRef = null;
-            indexFieldNames = null;
-            defaultExtractionPipeline = null;
-            dataSourceFieldsMap = null;
-            ChangeDataEvent.fire(IndexLoader.this, IndexLoader.this);
-        }
-    }
-
-    public void loadDataSource(final String query) {
-        if (query != null) {
-            final Rest<DataSource> rest = restFactory.create();
-            rest
-                    .onSuccess(result -> {
-                        if (result != null) {
-                            loadedDataSourceRef = result.getDocRef();
-                            dataSourceFieldsMap = new DataSourceFieldsMap(result.getFields());
-                            indexFieldNames = new ArrayList<>(dataSourceFieldsMap.keySet());
-                            defaultExtractionPipeline = result.getDefaultExtractionPipeline();
-                            Collections.sort(indexFieldNames);
-                        } else {
-                            loadedDataSourceRef = null;
-                            dataSourceFieldsMap = new DataSourceFieldsMap();
-                            indexFieldNames = new ArrayList<>();
-                            defaultExtractionPipeline = null;
-                        }
-
-                        ChangeDataEvent.fire(IndexLoader.this, IndexLoader.this);
-                    })
-                    .onFailure(caught -> {
-                        loadedDataSourceRef = null;
-                        indexFieldNames = null;
-                        defaultExtractionPipeline = null;
-                        dataSourceFieldsMap = null;
-
-//                        AlertEvent.fireError(IndexLoader.this,
-//                                "Unable to locate datasource " + dataSourceRef.getUuid(),
-//                                null);
-                        ChangeDataEvent.fire(IndexLoader.this, IndexLoader.this);
-                    })
-                    .call(DATA_SOURCE_RESOURCE)
-                    .fetchFromQuery(query);
-        } else {
-            loadedDataSourceRef = null;
-            indexFieldNames = null;
-            defaultExtractionPipeline = null;
-            dataSourceFieldsMap = null;
-            ChangeDataEvent.fire(IndexLoader.this, IndexLoader.this);
-        }
+        loadedDataSourceRef = dataSourceRef;
+        ChangeDataEvent.fire(IndexLoader.this, IndexLoader.this);
     }
 
     public DocRef getLoadedDataSourceRef() {
         return loadedDataSourceRef;
     }
 
-    public List<String> getIndexFieldNames() {
-        return indexFieldNames;
+    public void fetchDefaultExtractionPipeline(DocRef dataSourceRef, Consumer<DocRef> consumer) {
+        final Rest<DocRef> rest = restFactory.create();
+        rest
+                .onSuccess(consumer::accept)
+                .call(DATA_SOURCE_RESOURCE)
+                .fetchDefaultExtractionPipeline(dataSourceRef);
     }
-
-    public DocRef getDefaultExtractionPipeline() {
-        return defaultExtractionPipeline;
-    }
-
-    public DataSourceFieldsMap getDataSourceFieldsMap() {
-        return dataSourceFieldsMap;
-    }
-
-
 }

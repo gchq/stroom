@@ -18,10 +18,11 @@
 package stroom.search.elastic.search;
 
 import stroom.datasource.api.v2.AbstractField;
-import stroom.datasource.api.v2.DataSource;
 import stroom.datasource.api.v2.DateField;
+import stroom.datasource.api.v2.FieldInfo;
+import stroom.query.common.v2.FieldInfoResultPageBuilder;
+import stroom.datasource.api.v2.FindFieldInfoCriteria;
 import stroom.docref.DocRef;
-import stroom.docstore.shared.DocRefUtil;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.SearchRequest;
@@ -45,6 +46,7 @@ import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.ResultPage;
 
 import org.elasticsearch.action.support.IndicesOptions;
 import org.elasticsearch.client.RequestOptions;
@@ -148,15 +150,32 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
     }
 
     @Override
-    public DataSource getDataSource(final DocRef docRef) {
+    public ResultPage<FieldInfo> getFieldInfo(final FindFieldInfoCriteria criteria) {
         return securityContext.useAsReadResult(() -> {
-            final ElasticIndexDoc index = elasticIndexStore.readDocument(docRef);
-            return DataSource.builder()
-                    .docRef(DocRefUtil.create(index))
-                    .fields(getDataSourceFields(index))
-                    .defaultExtractionPipeline(index.getDefaultExtractionPipeline())
-                    .build();
+            final FieldInfoResultPageBuilder builder = FieldInfoResultPageBuilder.builder(criteria);
+            final ElasticIndexDoc index = elasticIndexStore.readDocument(criteria.getDataSourceRef());
+            if (index != null) {
+                final List<AbstractField> fields = getDataSourceFields(index);
+                builder.addAll(fields);
+            }
+            return builder.build();
         });
+    }
+
+    @Override
+    public DocRef fetchDefaultExtractionPipeline(final DocRef dataSourceRef) {
+        return securityContext.useAsReadResult(() -> {
+            final ElasticIndexDoc index = elasticIndexStore.readDocument(dataSourceRef);
+            if (index != null) {
+                return index.getDefaultExtractionPipeline();
+            }
+            return null;
+        });
+    }
+
+    @Override
+    public Optional<String> fetchDocumentation(final DocRef docRef) {
+        return Optional.ofNullable(elasticIndexStore.readDocument(docRef)).map(ElasticIndexDoc::getDescription);
     }
 
     @Override
@@ -371,6 +390,10 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
         return result;
     }
 
+    @Override
+    public List<DocRef> list() {
+        return elasticClusterStore.list();
+    }
 
     @Override
     public String getType() {

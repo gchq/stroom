@@ -113,7 +113,7 @@ public class MarkdownConverter {
         return converter;
     }-*/;
 
-    private native String nativeConvertMarkdownToHtml(final String rawMarkdown) /*-{
+    public native String nativeConvertMarkdownToHtml(final String rawMarkdown) /*-{
         var converter = this.@stroom.entity.client.presenter.MarkdownConverter::showdownConverter;
         var markdownAsHtml = converter.makeHtml(rawMarkdown);
 

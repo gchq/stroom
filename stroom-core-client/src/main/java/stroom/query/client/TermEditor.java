@@ -18,12 +18,17 @@ package stroom.query.client;
 
 import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.DocRefField;
+import stroom.datasource.api.v2.FieldInfo;
 import stroom.datasource.api.v2.FieldType;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
+import stroom.item.client.AbstractSelectionBox;
 import stroom.item.client.SelectionBox;
+import stroom.item.client.SelectionItem;
 import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.query.client.presenter.FieldInfoSelectionItem;
+import stroom.query.client.presenter.FieldSelectionListModel;
 import stroom.util.shared.EqualsUtil;
 import stroom.util.shared.StringUtil;
 import stroom.widget.customdatebox.client.MyDateBox;
@@ -52,7 +57,7 @@ public class TermEditor extends Composite {
     private static final String NARROW_CLASS_NAME = "narrow";
 
     private final FlowPanel layout;
-    private final SelectionBox<AbstractField> fieldListBox;
+    private final AbstractSelectionBox<FieldInfo> fieldListBox;
     private final SelectionBox<Condition> conditionListBox;
     private final Label andLabel;
     private final SuggestBox value;
@@ -68,12 +73,12 @@ public class TermEditor extends Composite {
     private final List<HandlerRegistration> registrations = new ArrayList<>();
 
     private Term term;
-    private List<AbstractField> fields;
     private boolean reading;
     private boolean editing;
     private ExpressionUiHandlers uiHandlers;
 
     private final AsyncSuggestOracle suggestOracle = new AsyncSuggestOracle();
+    private FieldSelectionListModel fieldSelectionListModel;
 
     public TermEditor(final EntityDropDownPresenter docRefPresenter) {
         this.docRefPresenter = docRefPresenter;
@@ -137,14 +142,14 @@ public class TermEditor extends Composite {
         dateTo.setUtc(utc);
     }
 
-    public void init(final RestFactory restFactory, final DocRef dataSource, final List<AbstractField> fields) {
+    public void init(final RestFactory restFactory,
+                     final DocRef dataSource,
+                     final FieldSelectionListModel fieldSelectionListModel) {
         suggestOracle.setRestFactory(restFactory);
         suggestOracle.setDataSource(dataSource);
-        this.fields = fields;
-        fieldListBox.clear();
-        if (fields != null) {
-            fieldListBox.addItems(fields);
-        }
+
+        this.fieldSelectionListModel = fieldSelectionListModel;
+        fieldListBox.setModel(fieldSelectionListModel);
     }
 
     public void startEdit(final Term term) {
@@ -175,29 +180,22 @@ public class TermEditor extends Composite {
         reading = true;
 
         // Select the current value.
-        AbstractField termField = null;
-        if (fields != null && fields.size() > 0) {
-            termField = fields.get(0);
-            for (final AbstractField field : fields) {
-                if (field.getName().equals(term.getField())) {
-                    termField = field;
-                    break;
-                }
-            }
-        }
-
-        fieldListBox.setValue(termField);
         conditionListBox.setValue(null);
-        changeField(termField, false);
+        changeField(null, false);
+        fieldSelectionListModel.fetchFieldByName(term.getField(), fieldInfo -> {
+            fieldListBox.setValue(fieldInfo);
+            changeField(unwrapField(fieldInfo), false);
+        });
 
         reading = false;
     }
 
     private void write(final Term term) {
-        if (fieldListBox.getValue() != null && conditionListBox.getValue() != null) {
+        final FieldInfo selectedField = fieldListBox.getValue();
+        if (selectedField != null && conditionListBox.getValue() != null) {
             DocRef docRef = null;
 
-            term.setField(fieldListBox.getValue().getName());
+            term.setField(selectedField.getTitle());
             term.setCondition(conditionListBox.getValue());
 
             final StringBuilder sb = new StringBuilder();
@@ -320,9 +318,10 @@ public class TermEditor extends Composite {
 
     private void changeCondition(final AbstractField field,
                                  final Condition condition) {
+        final FieldInfo selectedField = fieldListBox.getValue();
         FieldType indexFieldType = null;
-        if (fieldListBox.getValue() != null) {
-            indexFieldType = fieldListBox.getValue().getFieldType();
+        if (selectedField != null && selectedField.getField() != null) {
+            indexFieldType = selectedField.getField().getFieldType();
         }
 
         if (indexFieldType == null) {
@@ -480,34 +479,6 @@ public class TermEditor extends Composite {
                 }
             }
         }
-
-
-//        if (term.getValue() != null) {
-//            // Set the current data.
-//            final String[] vals = term.getValue().split(",");
-//            if (vals.length > 0) {
-//                if (date != null) {
-//                    final Date d = date.getFormat().parse(date, vals[0], false);
-//                    if (d != null) {
-//                        date.setValue(d);
-//                    }
-//                }
-//                if (dateFrom != null) {
-//                    final Date d = dateFrom.getFormat().parse(dateFrom, vals[0], false);
-//                    if (d != null) {
-//                        dateFrom.setValue(d);
-//                    }
-//                }
-//            }
-//            if (vals.length > 1) {
-//                if (dateTo != null) {
-//                    final Date d = dateTo.getFormat().parse(dateTo, vals[1], false);
-//                    if (d != null) {
-//                        dateTo.setValue(d);
-//                    }
-//                }
-//            }
-//        }
     }
 
     private void bind() {
@@ -552,17 +523,24 @@ public class TermEditor extends Composite {
         registerHandler(fieldListBox.addValueChangeHandler(event -> {
             if (!reading) {
                 write(term);
-                changeField(event.getValue(), true);
+                changeField(unwrapField(event.getValue()), true);
                 fireDirty();
             }
         }));
         registerHandler(conditionListBox.addValueChangeHandler(event -> {
             if (!reading) {
                 write(term);
-                changeCondition(fieldListBox.getValue(), event.getValue());
+                changeCondition(unwrapField(fieldListBox.getValue()), event.getValue());
                 fireDirty();
             }
         }));
+    }
+
+    private AbstractField unwrapField(final FieldInfo fieldInfo) {
+        if (fieldInfo != null && fieldInfo.getField() != null) {
+            return fieldInfo.getField();
+        }
+        return null;
     }
 
     private void unbind() {
@@ -576,8 +554,24 @@ public class TermEditor extends Composite {
         registrations.add(handlerRegistration);
     }
 
-    private SelectionBox<AbstractField> createFieldBox() {
-        final SelectionBox<AbstractField> fieldListBox = new SelectionBox<>();
+    private AbstractSelectionBox<FieldInfo> createFieldBox() {
+        final AbstractSelectionBox<FieldInfo> fieldListBox = new AbstractSelectionBox<FieldInfo>() {
+            @Override
+            protected SelectionItem wrap(final FieldInfo item) {
+                if (item == null) {
+                    return null;
+                }
+                return new FieldInfoSelectionItem(item);
+            }
+
+            @Override
+            protected FieldInfo unwrap(final SelectionItem selectionItem) {
+                if (selectionItem == null) {
+                    return null;
+                }
+                return ((FieldInfoSelectionItem) selectionItem).getFieldInfo();
+            }
+        };
         fieldListBox.addStyleName(ITEM_CLASS_NAME);
         fieldListBox.addStyleName(DROPDOWN_CLASS_NAME);
         fieldListBox.addStyleName("field");
@@ -614,7 +608,6 @@ public class TermEditor extends Composite {
     }
 
     private Label createLabel(final String text) {
-//        GWT.log("label: " + text);
         final Label label = new Label(text, false);
         label.addStyleName("termEditor-label");
         return label;

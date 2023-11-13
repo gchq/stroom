@@ -3,6 +3,7 @@ package stroom.explorer.shared;
 import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.PageRequest;
+import stroom.docref.StringMatch;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -16,34 +17,18 @@ import java.util.Objects;
 public class FindExplorerNodeQuery extends BaseCriteria {
 
     @JsonProperty
-    private final String pattern;
-    @JsonProperty
-    private final boolean matchCase;
-    @JsonProperty
-    private final boolean regex;
+    private final StringMatch filter;
 
     @JsonCreator
     public FindExplorerNodeQuery(@JsonProperty("pageRequest") final PageRequest pageRequest,
                                  @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,
-                                 @JsonProperty("pattern") final String pattern,
-                                 @JsonProperty("matchCase") final boolean matchCase,
-                                 @JsonProperty("regex") final boolean regex) {
+                                 @JsonProperty("filter") final StringMatch filter) {
         super(pageRequest, sortList);
-        this.pattern = pattern;
-        this.regex = regex;
-        this.matchCase = matchCase;
+        this.filter = filter;
     }
 
-    public String getPattern() {
-        return pattern;
-    }
-
-    public boolean isMatchCase() {
-        return matchCase;
-    }
-
-    public boolean isRegex() {
-        return regex;
+    public StringMatch getFilter() {
+        return filter;
     }
 
     @Override
@@ -51,18 +36,18 @@ public class FindExplorerNodeQuery extends BaseCriteria {
         if (this == o) {
             return true;
         }
-        if (o == null || getClass() != o.getClass()) {
+        if (!(o instanceof FindExplorerNodeQuery)) {
             return false;
         }
         if (!super.equals(o)) {
             return false;
         }
-        final FindExplorerNodeQuery that = (FindExplorerNodeQuery) o;
-        return regex == that.regex && matchCase == that.matchCase && Objects.equals(pattern, that.pattern);
+        final FindExplorerNodeQuery findExplorerNodeQuery = (FindExplorerNodeQuery) o;
+        return Objects.equals(filter, findExplorerNodeQuery.filter);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), pattern, regex, matchCase);
+        return Objects.hash(super.hashCode(), filter);
     }
 }

@@ -17,7 +17,6 @@
 
 package stroom.data.client.presenter;
 
-import stroom.datasource.api.v2.AbstractField;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
@@ -26,6 +25,7 @@ import stroom.document.client.event.HasDirtyHandlers;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.client.ExpressionTreePresenter;
 import stroom.query.client.ExpressionUiHandlers;
+import stroom.query.client.presenter.FieldSelectionListModel;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
@@ -122,8 +122,10 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
         addTermButton.focus();
     }
 
-    public void init(final RestFactory restFactory, final DocRef dataSource, final List<AbstractField> fields) {
-        expressionPresenter.init(restFactory, dataSource, fields);
+    public void init(final RestFactory restFactory,
+                     final DocRef dataSource,
+                     final FieldSelectionListModel fieldSelectionListModel) {
+        expressionPresenter.init(restFactory, dataSource, fieldSelectionListModel);
     }
 
     private void setButtonsEnabled() {

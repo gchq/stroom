@@ -37,4 +37,9 @@ class SearchableProviderImpl implements SearchableProvider, HasDataSourceDocRefs
                 .findFirst()
                 .orElse(null);
     }
+
+    @Override
+    public List<DocRef> list() {
+        return searchables.stream().map(Searchable::getDocRef).toList();
+    }
 }

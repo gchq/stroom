@@ -3,6 +3,7 @@ package stroom.explorer.impl;
 import stroom.docref.DocContentMatch;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
+import stroom.docref.StringMatch;
 import stroom.docstore.api.UniqueNameUtil;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.explorer.shared.DocumentType;
@@ -125,7 +126,7 @@ class SystemExplorerActionHandler implements ExplorerActionHandler {
     }
 
     @Override
-    public List<DocContentMatch> findByContent(final String pattern, final boolean regex, final boolean matchCase) {
+    public List<DocContentMatch> findByContent(final StringMatch filter) {
         return Collections.emptyList();
     }
 
