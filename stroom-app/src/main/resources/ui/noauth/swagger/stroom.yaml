@@ -1664,29 +1664,9 @@ paths:
       summary: Stop a running query
       tags:
       - Data Retention Rules
-  /dataSource/v1/fetchDocumentation:
+  /dataSource/v1/fetchDefaultExtractionPipeline:
     post:
-      operationId: fetchDocumentation
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/DocRef'
-        description: docRef
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Documentation'
-          description: default response
-      summary: Fetch documentation for a data source
-      tags:
-      - Data Sources
-  /dataSource/v1/fetchFields:
-    post:
-      operationId: fetchDataSourceFields
+      operationId: fetchDefaultExtractionPipeline
       requestBody:
         content:
           application/json:
@@ -1699,29 +1679,49 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DataSource'
+                $ref: '#/components/schemas/DocRef'
           description: default response
-      summary: Fetch data source fields
+      summary: Fetch default extraction pipeline
       tags:
       - Data Sources
-  /dataSource/v1/fetchFieldsFromQuery:
+  /dataSource/v1/fetchDocumentation:
     post:
-      operationId: fetchDataSourceFieldsFromQuery
+      operationId: fetchDocumentation
       requestBody:
         content:
           application/json:
             schema:
-              type: string
-        description: query
+              $ref: '#/components/schemas/DocRef'
+        description: dataSourceRef
         required: true
       responses:
         default:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DataSource'
+                $ref: '#/components/schemas/Documentation'
           description: default response
-      summary: Fetch data source fields
+      summary: Fetch documentation for a data source
+      tags:
+      - Data Sources
+  /dataSource/v1/findFields:
+    post:
+      operationId: findDataSourceFields
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FindFieldInfoCriteria'
+        description: criteria
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultPageFieldInfo'
+          description: default response
+      summary: Find data source fields
       tags:
       - Data Sources
   /dbStatus/v1:
@@ -4584,21 +4584,6 @@ paths:
       summary: Fetch time zone data from the server
       tags:
       - Queries
-  /query/v1/functions:
-    get:
-      operationId: fetchFunctions
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/FunctionSignature'
-          description: default response
-      summary: Fetch all expression functions
-      tags:
-      - Queries
   /query/v1/helpItems:
     post:
       operationId: fetchHelpItems
@@ -4606,7 +4591,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/QueryHelpItemsRequest'
+              $ref: '#/components/schemas/QueryHelpRequest'
         description: request
         required: true
       responses:
@@ -4614,7 +4599,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/QueryHelpItemsResult'
+                $ref: '#/components/schemas/ResultPageQueryHelpRow'
           description: default response
       summary: Fetch all (optionally filtered) query help items
       tags:
@@ -4643,21 +4628,6 @@ paths:
                 $ref: '#/components/schemas/DashboardSearchResponse'
           description: default response
       summary: Perform a new search or get new results
-      tags:
-      - Queries
-  /query/v1/structure:
-    get:
-      operationId: fetchStructureElements
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/StructureElement'
-          description: default response
-      summary: Fetch all structure element descriptions
       tags:
       - Queries
   /query/v1/validateQuery:
@@ -5294,27 +5264,6 @@ paths:
       summary: Update a script doc
       tags:
       - Scripts
-  /searchable/v2/dataSource:
-    post:
-      operationId: getSearchableDataSource
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/DocRef'
-        description: DocRef
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DataSource'
-          description: default response
-      summary: Submit a request for a data source definition, supplying the DocRef
-        for the data source
-      tags:
-      - Searchable
   /searchable/v2/destroy:
     post:
       operationId: destroySearchableQuery
@@ -5511,27 +5460,6 @@ paths:
       summary: Update a solr index doc
       tags:
       - Solr Indices
-  /sqlstatistics/v2/dataSource:
-    post:
-      operationId: getSqlStatisticsDataSource
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/DocRef'
-        description: DocRef
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DataSource'
-          description: default response
-      summary: Submit a request for a data source definition, supplying the DocRef
-        for the data source
-      tags:
-      - Sql Statistics Query
   /sqlstatistics/v2/destroy:
     post:
       operationId: destroySqlStatisticsQuery
@@ -5946,27 +5874,6 @@ paths:
       summary: Update a stored query
       tags:
       - Stored Queries
-  /stroom-elastic-index/v2/dataSource:
-    post:
-      operationId: getElasticIndexDataSource
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/DocRef'
-        description: DocRef
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DataSource'
-          description: default response
-      summary: Submit a request for a data source definition, supplying the DocRef
-        for the data source
-      tags:
-      - Elasticsearch Queries
   /stroom-elastic-index/v2/destroy:
     post:
       operationId: destroyElasticIndexQuery
@@ -6007,27 +5914,6 @@ paths:
       summary: Submit a search request
       tags:
       - Elasticsearch Queries
-  /stroom-index/v2/dataSource:
-    post:
-      operationId: getStroomIndexDataSource
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/DocRef'
-        description: DocRef
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DataSource'
-          description: default response
-      summary: Submit a request for a data source definition, supplying the DocRef
-        for the data source
-      tags:
-      - Stroom-Index Queries
   /stroom-index/v2/destroy:
     post:
       operationId: destroyStroomIndexQuery
@@ -6068,27 +5954,6 @@ paths:
       summary: Submit a search request
       tags:
       - Stroom-Index Queries
-  /stroom-solr-index/v2/dataSource:
-    post:
-      operationId: getSolrIndexDataSource
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/DocRef'
-        description: DocRef
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DataSource'
-          description: default response
-      summary: Submit a request for a data source definition, supplying the DocRef
-        for the data source
-      tags:
-      - Solr Queries
   /stroom-solr-index/v2/destroy:
     post:
       operationId: destroySolrIndexQuery
@@ -8205,17 +8070,6 @@ components:
           type: string
       xml:
         name: dataRetentionPolicy
-    DataSource:
-      type: object
-      properties:
-        defaultExtractionPipeline:
-          $ref: '#/components/schemas/DocRef'
-        docRef:
-          $ref: '#/components/schemas/DocRef'
-        fields:
-          type: array
-          items:
-            $ref: '#/components/schemas/AbstractField'
     DateField:
       type: object
       allOf:
@@ -9780,6 +9634,17 @@ components:
           $ref: '#/components/schemas/Sort'
       required:
       - expression
+    FieldInfo:
+      type: object
+      properties:
+        field:
+          $ref: '#/components/schemas/AbstractField'
+        hasChildren:
+          type: boolean
+        id:
+          type: string
+        title:
+          type: string
     Filter:
       type: object
       description: A pair of regular expression filters (inclusion and exclusion)
@@ -9894,14 +9759,10 @@ components:
     FindExplorerNodeQuery:
       type: object
       properties:
-        matchCase:
-          type: boolean
+        filter:
+          $ref: '#/components/schemas/StringMatch'
         pageRequest:
           $ref: '#/components/schemas/PageRequest'
-        pattern:
-          type: string
-        regex:
-          type: boolean
         sort:
           type: string
           writeOnly: true
@@ -9909,6 +9770,24 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CriteriaFieldSort'
+    FindFieldInfoCriteria:
+      type: object
+      properties:
+        dataSourceRef:
+          $ref: '#/components/schemas/DocRef'
+        pageRequest:
+          $ref: '#/components/schemas/PageRequest'
+        parentPath:
+          type: string
+        sort:
+          type: string
+          writeOnly: true
+        sortList:
+          type: array
+          items:
+            $ref: '#/components/schemas/CriteriaFieldSort'
+        stringMatch:
+          $ref: '#/components/schemas/StringMatch'
     FindFsVolumeCriteria:
       type: object
       properties:
@@ -10250,47 +10129,6 @@ components:
         version:
           type: integer
           format: int32
-    FunctionSignature:
-      type: object
-      properties:
-        aliases:
-          type: array
-          items:
-            type: string
-        args:
-          type: array
-          items:
-            $ref: '#/components/schemas/Arg'
-        categoryPath:
-          type: array
-          items:
-            type: string
-        description:
-          type: string
-        helpAnchor:
-          type: string
-        name:
-          type: string
-        overloadType:
-          type: string
-          enum:
-          - NOT_OVERLOADED
-          - OVERLOADED_IN_CATEGORY
-          - OVERLOADED_GLOBALLY
-        returnDescription:
-          type: string
-        returnType:
-          type: string
-          enum:
-          - UNKNOWN
-          - BOOLEAN
-          - DOUBLE
-          - ERROR
-          - INTEGER
-          - LONG
-          - "NULL"
-          - NUMBER
-          - STRING
     GetAnalyticShardDataRequest:
       type: object
       properties:
@@ -12116,44 +11954,312 @@ components:
           type: string
         version:
           type: string
-    QueryHelpItemsRequest:
+    QueryHelpData:
+      type: object
+      discriminator:
+        propertyName: type
+      properties:
+        type:
+          type: string
+      required:
+      - type
+    QueryHelpDataSource:
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/QueryHelpData'
+      - type: object
+        properties:
+          docRef:
+            $ref: '#/components/schemas/DocRef'
+    QueryHelpField:
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/QueryHelpData'
+      - type: object
+        properties:
+          field:
+            $ref: '#/components/schemas/AbstractField'
+    QueryHelpFunctionSignature:
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/QueryHelpData'
+      - type: object
+        properties:
+          aliases:
+            type: array
+            items:
+              type: string
+          args:
+            type: array
+            items:
+              $ref: '#/components/schemas/Arg'
+          categoryPath:
+            type: array
+            items:
+              type: string
+          description:
+            type: string
+          helpAnchor:
+            type: string
+          name:
+            type: string
+          overloadType:
+            type: string
+            enum:
+            - NOT_OVERLOADED
+            - OVERLOADED_IN_CATEGORY
+            - OVERLOADED_GLOBALLY
+          returnDescription:
+            type: string
+          returnType:
+            type: string
+            enum:
+            - UNKNOWN
+            - BOOLEAN
+            - DOUBLE
+            - ERROR
+            - INTEGER
+            - LONG
+            - "NULL"
+            - NUMBER
+            - STRING
+    QueryHelpRequest:
       type: object
       properties:
         dataSourceRef:
           $ref: '#/components/schemas/DocRef'
-        filterInput:
+        pageRequest:
+          $ref: '#/components/schemas/PageRequest'
+        parentPath:
           type: string
         query:
           type: string
-        requestedTypes:
+        sort:
+          type: string
+          writeOnly: true
+        sortList:
           type: array
           items:
-            type: string
-            enum:
-            - DATA_SOURCE
-            - STRUCTURE
-            - FIELD
-            - FUNCTION
-          uniqueItems: true
-    QueryHelpItemsResult:
+            $ref: '#/components/schemas/CriteriaFieldSort'
+        stringMatch:
+          $ref: '#/components/schemas/StringMatch'
+    QueryHelpRow:
       type: object
       properties:
-        dataSourceFields:
-          type: array
-          items:
-            $ref: '#/components/schemas/AbstractField'
-        dataSources:
-          type: array
-          items:
-            $ref: '#/components/schemas/DocRef'
-        functionSignatures:
-          type: array
-          items:
-            $ref: '#/components/schemas/FunctionSignature'
-        structureElements:
-          type: array
-          items:
-            $ref: '#/components/schemas/StructureElement'
+        data:
+          $ref: '#/components/schemas/QueryHelpData'
+        hasChildren:
+          type: boolean
+        icon:
+          type: string
+          enum:
+          - ADD
+          - ADD_ABOVE
+          - ADD_BELOW
+          - ADD_MULTIPLE
+          - ALERT
+          - ALERT_SIMPLE
+          - ARROW_DOWN
+          - ARROW_LEFT
+          - ARROW_RIGHT
+          - ARROW_UP
+          - AUTO_REFRESH
+          - BACKWARD
+          - BORDERED_CIRCLE
+          - CANCEL
+          - CASE_SENSITIVE
+          - CLEAR
+          - CLIPBOARD
+          - CLOSE
+          - CODE
+          - COLLAPSE_UP
+          - COPY
+          - DATABASE
+          - DELETE
+          - DEPENDENCIES
+          - DISABLE
+          - DOCUMENT_ANALYTIC_OUTPUT_STORE
+          - DOCUMENT_ANALYTIC_RULE
+          - DOCUMENT_ANNOTATIONS_INDEX
+          - DOCUMENT_DASHBOARD
+          - DOCUMENT_DICTIONARY
+          - DOCUMENT_DOCUMENTATION
+          - DOCUMENT_ELASTIC_CLUSTER
+          - DOCUMENT_ELASTIC_INDEX
+          - DOCUMENT_FAVOURITES
+          - DOCUMENT_FEED
+          - DOCUMENT_FOLDER
+          - DOCUMENT_INDEX
+          - DOCUMENT_KAFKA_CONFIG
+          - DOCUMENT_PIPELINE
+          - DOCUMENT_QUERY
+          - DOCUMENT_RECEIVE_DATA_RULE_SET
+          - DOCUMENT_SCRIPT
+          - DOCUMENT_SEARCHABLE
+          - DOCUMENT_SELECT_ALL_OR_NONE
+          - DOCUMENT_SIGMA_RULE
+          - DOCUMENT_SOLR_INDEX
+          - DOCUMENT_STATISTIC_STORE
+          - DOCUMENT_STROOM_STATS_STORE
+          - DOCUMENT_SYSTEM
+          - DOCUMENT_TEXT_CONVERTER
+          - DOCUMENT_VIEW
+          - DOCUMENT_VISUALISATION
+          - DOCUMENT_XMLSCHEMA
+          - DOCUMENT_XSLT
+          - DOT
+          - DOUBLE_ARROW
+          - DOWN
+          - DOWNLOAD
+          - DROP_DOWN
+          - EDIT
+          - ELLIPSES_HORIZONTAL
+          - ELLIPSES_VERTICAL
+          - ERROR
+          - EXCLAMATION
+          - EXPAND_DOWN
+          - EXPLORER
+          - FAST_BACKWARD
+          - FAST_FORWARD
+          - FATAL
+          - FATAL_DARK
+          - FAVOURITES
+          - FAVOURITES_OUTLINE
+          - FEED
+          - FIELD
+          - FIELDS_EXPRESSION
+          - FIELDS_FILTER
+          - FIELDS_FORMAT
+          - FIELDS_GROUP
+          - FIELDS_SORTAZ
+          - FIELDS_SORTZA
+          - FILE
+          - FILE_FORMATTED
+          - FILE_RAW
+          - FILTER
+          - FIND
+          - FOLDER
+          - FOLDER_TREE
+          - FORMAT
+          - FORWARD
+          - FUNCTION
+          - GENERATE
+          - HELP
+          - HIDE
+          - HIDE_MENU
+          - HISTORY
+          - INFO
+          - INSERT
+          - JOBS
+          - KEY
+          - LOCKED
+          - LOGO
+          - LOGOUT
+          - MENU
+          - MONITORING
+          - MOVE
+          - NODES
+          - OK
+          - OO
+          - OPEN
+          - OPERATOR
+          - PASSWORD
+          - PAUSE
+          - PEN
+          - PIPELINE_ELASTIC_INDEX
+          - PIPELINE_FILE
+          - PIPELINE_FILES
+          - PIPELINE_HADOOP
+          - PIPELINE_ID
+          - PIPELINE_INDEX
+          - PIPELINE_JSON
+          - PIPELINE_KAFKA
+          - PIPELINE_RECORD_COUNT
+          - PIPELINE_RECORD_OUTPUT
+          - PIPELINE_REFERENCE_DATA
+          - PIPELINE_SEARCH_OUTPUT
+          - PIPELINE_SOLR
+          - PIPELINE_SPLIT
+          - PIPELINE_STATISTICS
+          - PIPELINE_STREAM
+          - PIPELINE_STROOM_STATS
+          - PIPELINE_STROOM_STATS_STORE
+          - PIPELINE_TEXT
+          - PIPELINE_XML
+          - PIPELINE_XML_SEARCH
+          - PIPELINE_XSD
+          - PIPELINE_XSLT
+          - PLAY
+          - PROCESS
+          - PROPERTIES
+          - QUESTION
+          - RAW
+          - REFRESH
+          - REGEX
+          - REMOVE
+          - RESIZE
+          - RESIZE_HANDLE
+          - SAVE
+          - SAVEAS
+          - SEARCH
+          - SETTINGS
+          - SHARD_CLOSE
+          - SHARD_FLUSH
+          - SHARE
+          - SHIELD
+          - SHOW
+          - SHOW_MENU
+          - STEP
+          - STEPPING
+          - STEPPING_CIRCLE
+          - STEP_BACKWARD
+          - STEP_FORWARD
+          - STOP
+          - TABLE
+          - TABLE_NESTED
+          - TAB_CLOSE
+          - TAGS
+          - TICK
+          - UNDO
+          - UNLOCK
+          - UP
+          - UPLOAD
+          - USER
+          - USERS
+          - VOLUMES
+          - WARNING
+        id:
+          type: string
+        title:
+          type: string
+        type:
+          type: string
+          enum:
+          - DATA_SOURCE
+          - FIELD
+          - FUNCTION
+          - TITLE
+          - STRUCTURE
+    QueryHelpStructureElement:
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/QueryHelpData'
+      - type: object
+        properties:
+          description:
+            type: string
+          snippets:
+            type: array
+            items:
+              type: string
+    QueryHelpTitle:
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/QueryHelpData'
+      - type: object
+        properties:
+          documentation:
+            type: string
     QueryKey:
       type: object
       description: A unique key to identify the instance of the search by. This key
@@ -12499,6 +12605,16 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ExplorerDocContentMatch'
+    ResultPageFieldInfo:
+      type: object
+      description: A page of results.
+      properties:
+        pageResponse:
+          $ref: '#/components/schemas/PageResponse'
+        values:
+          type: array
+          items:
+            $ref: '#/components/schemas/FieldInfo'
     ResultPageFsVolume:
       type: object
       description: A page of results.
@@ -12599,6 +12715,16 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ProcessorTaskSummary'
+    ResultPageQueryHelpRow:
+      type: object
+      description: A page of results.
+      properties:
+        pageResponse:
+          $ref: '#/components/schemas/PageResponse'
+        values:
+          type: array
+          items:
+            $ref: '#/components/schemas/QueryHelpRow'
     ResultPageStoredQuery:
       type: object
       description: A page of results.
@@ -13704,6 +13830,26 @@ components:
         properties:
           value:
             type: string
+    StringMatch:
+      type: object
+      properties:
+        caseSensitive:
+          type: boolean
+        matchType:
+          type: string
+          enum:
+          - ANY
+          - "NULL"
+          - NON_NULL
+          - BLANK
+          - EMPTY
+          - NULL_OR_BLANK
+          - NULL_OR_EMPTY
+          - CONTAINS
+          - EQUALS
+          - REGEX
+        pattern:
+          type: string
     StroomStatsStoreDoc:
       type: object
       properties:
@@ -13769,17 +13915,6 @@ components:
           $ref: '#/components/schemas/StroomStatsStoreEntityData'
         oldEntityData:
           $ref: '#/components/schemas/StroomStatsStoreEntityData'
-    StructureElement:
-      type: object
-      properties:
-        description:
-          type: string
-        snippets:
-          type: array
-          items:
-            type: string
-        title:
-          type: string
     Suggestions:
       type: object
       properties:
