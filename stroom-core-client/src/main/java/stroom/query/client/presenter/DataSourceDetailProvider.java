@@ -1,12 +1,8 @@
 package stroom.query.client.presenter;
 
-import stroom.alert.client.event.AlertEvent;
-import stroom.datasource.shared.DataSourceResource;
-import stroom.dispatch.client.Rest;
-import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.docstore.shared.Documentation;
 import stroom.entity.client.presenter.MarkdownConverter;
+import stroom.query.client.DataSourceClient;
 import stroom.query.shared.QueryHelpDataSource;
 import stroom.query.shared.QueryHelpRow;
 import stroom.util.shared.GwtNullSafe;
@@ -15,12 +11,11 @@ import stroom.widget.util.client.HtmlBuilder.Attribute;
 import stroom.widget.util.client.SafeHtmlUtil;
 import stroom.widget.util.client.TableBuilder;
 
-import com.google.gwt.core.client.GWT;
-import com.google.web.bindery.event.shared.EventBus;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.AbstractMap.SimpleEntry;
 import java.util.Arrays;
@@ -36,19 +31,18 @@ public class DataSourceDetailProvider implements DetailProvider, HasHandlers {
     private static final String DETAIL_DESCRIPTION_CLASS = DETAIL_BASE_CLASS + "-description";
 
     private static final String DETAIL_TABLE_CLASS = DETAIL_BASE_CLASS + "-table";
-    private static final DataSourceResource DATA_SOURCE_RESOURCE = GWT.create(DataSourceResource.class);
 
     private final EventBus eventBus;
     private final MarkdownConverter markdownConverter;
-    private final RestFactory restFactory;
+    private final DataSourceClient dataSourceClient;
 
     @Inject
     public DataSourceDetailProvider(final EventBus eventBus,
                                     final MarkdownConverter markdownConverter,
-                                    final RestFactory restFactory) {
+                                    final DataSourceClient dataSourceClient) {
         this.eventBus = eventBus;
         this.markdownConverter = markdownConverter;
-        this.restFactory = restFactory;
+        this.dataSourceClient = dataSourceClient;
     }
 
     @Override
@@ -57,7 +51,7 @@ public class DataSourceDetailProvider implements DetailProvider, HasHandlers {
         // Special case for dataSource items to lazily load the markdown documentation.
         // This is the name/type/uuid of the docref as a minimum
         final SafeHtml detailSafeHtml = createDataSourceHtml(dataSource.getDocRef());
-        fetchDataSourceDescription(
+        dataSourceClient.fetchDataSourceDescription(
                 dataSource.getDocRef(),
                 optMarkdown -> {
                     final InsertType insertType = GwtNullSafe.isBlankString(row.getTitle())
@@ -90,31 +84,6 @@ public class DataSourceDetailProvider implements DetailProvider, HasHandlers {
 
             htmlBuilder2.para(htmlBuilder3 -> htmlBuilder3.append(docRefBuilder.toSafeHtml()),
                     Attribute.className(DETAIL_DESCRIPTION_CLASS));
-
-//                    final boolean addedArgs = addArgsBlockToInfo(signature, hb1);
-//
-//                    if (addedArgs) {
-//                        hb1.br();
-//                    }
-//
-//                    final List<String> aliases = signature.getAliases();
-//                    if (!aliases.isEmpty()) {
-//                        hb1.para(hb2 -> hb2.append("Aliases: " +
-//                                aliases.stream()
-//                                        .collect(Collectors.joining(", "))));
-//                    }
-
-//                if (helpUrlBase != null) {
-//                    hb1.append("For more information see the ");
-//                    hb1.appendLink(
-//                            helpUrlBase +
-//                                    "/user-guide/stroom-query-language/structure/" +
-//                                    title.toLowerCase().replace(" ", "-") +
-//                                    "#" +
-//                                    title,
-//                            "Help Documentation");
-//                    hb1.append(".");
-//                }
         }, Attribute.className(DETAIL_BASE_CLASS));
 
         return htmlBuilder.toSafeHtml();
@@ -132,28 +101,6 @@ public class DataSourceDetailProvider implements DetailProvider, HasHandlers {
                     SafeHtmlUtil.from(entry.getValue()));
         }
         htmlBuilder.div(tableBuilder::write, Attribute.className(DETAIL_TABLE_CLASS));
-    }
-
-    public void fetchDataSourceDescription(final DocRef dataSourceDocRef,
-                                           final Consumer<Optional<String>> descriptionConsumer) {
-
-        if (dataSourceDocRef != null) {
-            final Rest<Documentation> rest = restFactory.create();
-            rest.onSuccess(documentation -> {
-//                                GWT.log("Description:\n" + documentation);
-                        final Optional<String> optMarkDown = GwtNullSafe.getAsOptional(documentation,
-                                Documentation::getMarkdown);
-                        if (descriptionConsumer != null) {
-                            descriptionConsumer.accept(optMarkDown);
-                        }
-                    })
-                    .onFailure(throwable -> AlertEvent.fireError(
-                            DataSourceDetailProvider.this,
-                            throwable.getMessage(),
-                            null))
-                    .call(DATA_SOURCE_RESOURCE)
-                    .fetchDocumentation(dataSourceDocRef);
-        }
     }
 
     private SafeHtml buildDatasourceDescription(final Optional<String> optMarkdown,

@@ -4,9 +4,6 @@ import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.FieldInfo;
 import stroom.datasource.api.v2.FieldType;
 import stroom.datasource.api.v2.FindFieldInfoCriteria;
-import stroom.datasource.shared.DataSourceResource;
-import stroom.dispatch.client.Rest;
-import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docref.StringMatch;
 import stroom.item.client.NavigationModel;
@@ -16,13 +13,11 @@ import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Field.Builder;
 import stroom.query.api.v2.Format;
 import stroom.query.api.v2.ParamSubstituteUtil;
+import stroom.query.client.DataSourceClient;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.PageRequest;
-import stroom.util.shared.ResultPage;
-import stroom.util.shared.StringCriteria;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.view.client.AbstractDataProvider;
 import com.google.gwt.view.client.AsyncDataProvider;
 import com.google.gwt.view.client.HasData;
@@ -35,19 +30,15 @@ import javax.inject.Inject;
 
 public class DynamicColumnSelectionListModel implements SelectionListModel {
 
-
-    private static final DataSourceResource DATA_SOURCE_RESOURCE = GWT.create(DataSourceResource.class);
-
-    private final RestFactory restFactory;
+    private final DataSourceClient dataSourceClient;
     private final AsyncDataProvider<SelectionItem> dataProvider;
     private final NavigationModel navigationModel = new NavigationModel();
     private DocRef dataSourceRef;
     private StringMatch filter;
 
     @Inject
-    public DynamicColumnSelectionListModel(final RestFactory restFactory) {
-        this.restFactory = restFactory;
-
+    public DynamicColumnSelectionListModel(final DataSourceClient dataSourceClient) {
+        this.dataSourceClient = dataSourceClient;
         dataProvider = new AsyncDataProvider<SelectionItem>() {
             @Override
             protected void onRangeChanged(final HasData<SelectionItem> display) {
@@ -111,19 +102,15 @@ public class DynamicColumnSelectionListModel implements SelectionListModel {
                         dataSourceRef,
                         FieldInfo.FIELDS_PARENT,
                         StringMatch.contains("annotation:"));
-                final Rest<ResultPage<FieldInfo>> rest = restFactory.create();
-                rest
-                        .onSuccess(result -> {
-                            final List<SelectionItem> items = result
-                                    .getValues()
-                                    .stream()
-                                    .map(ColumnSelectionItem::create)
-                                    .collect(Collectors.toList());
-                            display.setRowData(0, items);
-                            display.setRowCount(result.getPageResponse().getLength(), true);
-                        })
-                        .call(DATA_SOURCE_RESOURCE)
-                        .findFields(findFieldInfoCriteria);
+                dataSourceClient.findFields(findFieldInfoCriteria, result -> {
+                    final List<SelectionItem> items = result
+                            .getValues()
+                            .stream()
+                            .map(ColumnSelectionItem::create)
+                            .collect(Collectors.toList());
+                    display.setRowData(0, items);
+                    display.setRowCount(result.getPageResponse().getLength(), true);
+                });
 
             } else if (FieldInfo.FIELDS_PARENT.equals(parentPath)) {
                 final FindFieldInfoCriteria findFieldInfoCriteria = new FindFieldInfoCriteria(
@@ -132,19 +119,15 @@ public class DynamicColumnSelectionListModel implements SelectionListModel {
                         dataSourceRef,
                         FieldInfo.FIELDS_PARENT,
                         filter);
-                final Rest<ResultPage<FieldInfo>> rest = restFactory.create();
-                rest
-                        .onSuccess(result -> {
-                            final List<SelectionItem> items = result
-                                    .getValues()
-                                    .stream()
-                                    .map(ColumnSelectionItem::create)
-                                    .collect(Collectors.toList());
-                            display.setRowData(0, items);
-                            display.setRowCount(result.getPageResponse().getLength(), true);
-                        })
-                        .call(DATA_SOURCE_RESOURCE)
-                        .findFields(findFieldInfoCriteria);
+                dataSourceClient.findFields(findFieldInfoCriteria, result -> {
+                    final List<SelectionItem> items = result
+                            .getValues()
+                            .stream()
+                            .map(ColumnSelectionItem::create)
+                            .collect(Collectors.toList());
+                    display.setRowData(0, items);
+                    display.setRowCount(result.getPageResponse().getLength(), true);
+                });
             }
         }
     }

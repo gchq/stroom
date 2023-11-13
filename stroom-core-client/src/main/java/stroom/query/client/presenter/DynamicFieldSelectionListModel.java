@@ -2,17 +2,13 @@ package stroom.query.client.presenter;
 
 import stroom.datasource.api.v2.FieldInfo;
 import stroom.datasource.api.v2.FindFieldInfoCriteria;
-import stroom.datasource.shared.DataSourceResource;
-import stroom.dispatch.client.Rest;
-import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docref.StringMatch;
 import stroom.item.client.NavigationModel;
 import stroom.item.client.SelectionItem;
+import stroom.query.client.DataSourceClient;
 import stroom.util.shared.PageRequest;
-import stroom.util.shared.ResultPage;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.view.client.AbstractDataProvider;
 import com.google.gwt.view.client.AsyncDataProvider;
 import com.google.gwt.view.client.HasData;
@@ -25,18 +21,15 @@ import javax.inject.Inject;
 
 public class DynamicFieldSelectionListModel implements FieldSelectionListModel {
 
-    private static final DataSourceResource DATA_SOURCE_RESOURCE = GWT.create(DataSourceResource.class);
-
-    private final RestFactory restFactory;
+    private final DataSourceClient dataSourceClient;
     private final AsyncDataProvider<SelectionItem> dataProvider;
     private final NavigationModel navigationModel = new NavigationModel();
     private DocRef dataSourceRef;
     private StringMatch filter;
 
     @Inject
-    public DynamicFieldSelectionListModel(final RestFactory restFactory) {
-        this.restFactory = restFactory;
-
+    public DynamicFieldSelectionListModel(final DataSourceClient dataSourceClient) {
+        this.dataSourceClient = dataSourceClient;
         dataProvider = new AsyncDataProvider<SelectionItem>() {
             @Override
             protected void onRangeChanged(final HasData<SelectionItem> display) {
@@ -54,19 +47,15 @@ public class DynamicFieldSelectionListModel implements FieldSelectionListModel {
                     dataSourceRef,
                     FieldInfo.FIELDS_PARENT,
                     filter);
-            final Rest<ResultPage<FieldInfo>> rest = restFactory.create();
-            rest
-                    .onSuccess(result -> {
-                        final List<SelectionItem> items = result
-                                .getValues()
-                                .stream()
-                                .map(FieldInfoSelectionItem::new)
-                                .collect(Collectors.toList());
-                        display.setRowData(0, items);
-                        display.setRowCount(result.getPageResponse().getLength(), true);
-                    })
-                    .call(DATA_SOURCE_RESOURCE)
-                    .findFields(findFieldInfoCriteria);
+            dataSourceClient.findFields(findFieldInfoCriteria, result -> {
+                final List<SelectionItem> items = result
+                        .getValues()
+                        .stream()
+                        .map(FieldInfoSelectionItem::new)
+                        .collect(Collectors.toList());
+                display.setRowData(0, items);
+                display.setRowCount(result.getPageResponse().getLength(), true);
+            });
         }
     }
 
@@ -103,24 +92,8 @@ public class DynamicFieldSelectionListModel implements FieldSelectionListModel {
     }
 
     @Override
-    public void fetchFieldByName(final String fieldName, final Consumer<FieldInfo> consumer) {
-        if (dataSourceRef != null) {
-            final FindFieldInfoCriteria findFieldInfoCriteria = new FindFieldInfoCriteria(
-                    new PageRequest(0, 1),
-                    null,
-                    dataSourceRef,
-                    FieldInfo.FIELDS_PARENT,
-                    StringMatch.contains(fieldName));
-            final Rest<ResultPage<FieldInfo>> rest = restFactory.create();
-            rest
-                    .onSuccess(result -> {
-                        if (result.getValues().size() > 0) {
-                            consumer.accept(result.getFirst());
-                        }
-                    })
-                    .call(DATA_SOURCE_RESOURCE)
-                    .findFields(findFieldInfoCriteria);
-        }
+    public void findFieldByName(final String fieldName, final Consumer<FieldInfo> consumer) {
+        dataSourceClient.findFieldByName(dataSourceRef, fieldName, consumer);
     }
 
     @Override

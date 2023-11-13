@@ -182,7 +182,7 @@ public class TermEditor extends Composite {
         // Select the current value.
         conditionListBox.setValue(null);
         changeField(null, false);
-        fieldSelectionListModel.fetchFieldByName(term.getField(), fieldInfo -> {
+        fieldSelectionListModel.findFieldByName(term.getField(), fieldInfo -> {
             fieldListBox.setValue(fieldInfo);
             changeField(unwrapField(fieldInfo), false);
         });

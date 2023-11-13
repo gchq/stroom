@@ -10,7 +10,7 @@ public class SimpleFieldSelectionListModel
         implements FieldSelectionListModel {
 
     @Override
-    public void fetchFieldByName(final String fieldName, final Consumer<FieldInfo> consumer) {
+    public void findFieldByName(final String fieldName, final Consumer<FieldInfo> consumer) {
         if (fieldName != null) {
             items.stream()
                     .filter(fieldInfo -> fieldInfo.getLabel().equals(fieldName))

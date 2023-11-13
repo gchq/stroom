@@ -75,7 +75,7 @@ import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResourceGeneration;
-import stroom.view.client.presenter.IndexLoader;
+import stroom.dashboard.client.main.IndexLoader;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;

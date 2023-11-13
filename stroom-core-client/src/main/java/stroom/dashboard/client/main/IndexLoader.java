@@ -14,37 +14,28 @@
  * limitations under the License.
  */
 
-package stroom.view.client.presenter;
+package stroom.dashboard.client.main;
 
-import stroom.datasource.shared.DataSourceResource;
-import stroom.dispatch.client.Rest;
-import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.pipeline.client.event.ChangeDataEvent;
 import stroom.pipeline.client.event.ChangeDataEvent.ChangeDataHandler;
 import stroom.pipeline.client.event.HasChangeDataHandlers;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 
-import java.util.function.Consumer;
 import javax.inject.Inject;
 
 public class IndexLoader implements HasChangeDataHandlers<IndexLoader> {
 
-    private static final DataSourceResource DATA_SOURCE_RESOURCE = GWT.create(DataSourceResource.class);
-
-    private final RestFactory restFactory;
     private final EventBus eventBus;
 
     private DocRef loadedDataSourceRef;
 
     @Inject
-    public IndexLoader(final EventBus eventBus, final RestFactory restFactory) {
+    public IndexLoader(final EventBus eventBus) {
         this.eventBus = eventBus;
-        this.restFactory = restFactory;
     }
 
     @Override
@@ -64,13 +55,5 @@ public class IndexLoader implements HasChangeDataHandlers<IndexLoader> {
 
     public DocRef getLoadedDataSourceRef() {
         return loadedDataSourceRef;
-    }
-
-    public void fetchDefaultExtractionPipeline(DocRef dataSourceRef, Consumer<DocRef> consumer) {
-        final Rest<DocRef> rest = restFactory.create();
-        rest
-                .onSuccess(consumer::accept)
-                .call(DATA_SOURCE_RESOURCE)
-                .fetchDefaultExtractionPipeline(dataSourceRef);
     }
 }
