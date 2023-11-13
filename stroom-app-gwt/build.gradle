@@ -165,7 +165,7 @@ task jakartaReverseTransformSources {
                 args = [
                     inputProjectPath,
                     outputProjectPath,
-                    '-tr', propFilePath
+                    '-tr', propFilePath,
                 ]
             }
             // Now add the dirs from out modified (jakarta => javax) stroom-core-shared temp dir
