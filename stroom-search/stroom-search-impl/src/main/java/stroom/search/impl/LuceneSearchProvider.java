@@ -17,10 +17,11 @@
 
 package stroom.search.impl;
 
-import stroom.datasource.api.v2.DataSource;
+import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.DateField;
+import stroom.datasource.api.v2.FieldInfo;
+import stroom.datasource.api.v2.FindFieldInfoCriteria;
 import stroom.docref.DocRef;
-import stroom.docstore.shared.DocRefUtil;
 import stroom.index.impl.IndexStore;
 import stroom.index.impl.LuceneProviderFactory;
 import stroom.index.shared.IndexDoc;
@@ -32,20 +33,16 @@ import stroom.query.common.v2.CoprocessorSettings;
 import stroom.query.common.v2.CoprocessorsFactory;
 import stroom.query.common.v2.CoprocessorsImpl;
 import stroom.query.common.v2.DataStoreSettings;
+import stroom.query.common.v2.FieldInfoResultPageBuilder;
 import stroom.query.common.v2.ResultStore;
 import stroom.query.common.v2.ResultStoreFactory;
 import stroom.query.common.v2.SearchProvider;
 import stroom.security.api.SecurityContext;
-import stroom.task.api.ExecutorProvider;
-import stroom.task.api.TaskContextFactory;
-import stroom.task.api.TerminateHandlerFactory;
+import stroom.util.shared.ResultPage;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
-import java.util.function.Supplier;
 import javax.inject.Inject;
 
 public class LuceneSearchProvider implements SearchProvider {
@@ -82,27 +79,31 @@ public class LuceneSearchProvider implements SearchProvider {
     }
 
     @Override
-    public DataSource getDataSource(final DocRef docRef) {
+    public ResultPage<FieldInfo> getFieldInfo(final FindFieldInfoCriteria criteria) {
         return securityContext.useAsReadResult(() -> {
-            final Supplier<DataSource> supplier = taskContextFactory.contextResult(
-                    "Getting Data Source",
-                    TerminateHandlerFactory.NOOP_FACTORY,
-                    taskContext -> {
-                        final IndexDoc index = indexStore.readDocument(docRef);
-                        return DataSource
-                                .builder()
-                                .docRef(DocRefUtil.create(index))
-                                .fields(IndexDataSourceFieldUtil.getDataSourceFields(index, securityContext))
-                                .defaultExtractionPipeline(index.getDefaultExtractionPipeline())
-                                .build();
-                    });
-            final Executor executor = executorProvider.get();
-            final CompletableFuture<DataSource> completableFuture = CompletableFuture.supplyAsync(supplier, executor);
-            try {
-                return completableFuture.get();
-            } catch (final InterruptedException | ExecutionException e) {
-                throw new RuntimeException(e.getMessage(), e);
+            final FieldInfoResultPageBuilder builder = FieldInfoResultPageBuilder.builder(criteria);
+            final IndexDoc index = indexStore.readDocument(criteria.getDataSourceRef());
+            if (index != null) {
+                final List<AbstractField> fields = IndexDataSourceFieldUtil.getDataSourceFields(index, securityContext);
+                builder.addAll(fields);
             }
+            return builder.build();
+        });
+    }
+
+    @Override
+    public Optional<String> fetchDocumentation(final DocRef docRef) {
+        return Optional.ofNullable(indexStore.readDocument(docRef)).map(IndexDoc::getDescription);
+    }
+
+    @Override
+    public DocRef fetchDefaultExtractionPipeline(final DocRef dataSourceRef) {
+        return securityContext.useAsReadResult(() -> {
+            final IndexDoc index = indexStore.readDocument(dataSourceRef);
+            if (index != null) {
+                return index.getDefaultExtractionPipeline();
+            }
+            return null;
         });
     }
 
@@ -169,6 +170,11 @@ public class LuceneSearchProvider implements SearchProvider {
         federatedSearchExecutor.start(federatedSearchTask, resultStore, nodeSearchTaskCreator);
 
         return resultStore;
+    }
+
+    @Override
+    public List<DocRef> list() {
+        return indexStore.list();
     }
 
     @Override
