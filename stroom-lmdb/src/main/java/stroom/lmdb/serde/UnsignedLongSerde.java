@@ -13,6 +13,9 @@ public class UnsignedLongSerde implements Serde<UnsignedLong> {
     }
 
     public UnsignedLongSerde(final int len, final UnsignedBytes unsignedBytes) {
+        if (len != unsignedBytes.length()) {
+            throw new RuntimeException("Length mismatch, " + len + " vs " + unsignedBytes.length());
+        }
         this.len = len;
         this.unsignedBytes = unsignedBytes;
     }
@@ -31,6 +34,11 @@ public class UnsignedLongSerde implements Serde<UnsignedLong> {
     }
 
     public int getLength() {
+        return len;
+    }
+
+    @Override
+    public int getBufferCapacity() {
         return len;
     }
 
