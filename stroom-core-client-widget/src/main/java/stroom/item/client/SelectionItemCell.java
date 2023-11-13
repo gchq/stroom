@@ -21,7 +21,7 @@ public class SelectionItemCell extends AbstractCell<SelectionItem> {
     }
 
     private String getCellClassName() {
-        return "queryHelpItemCell";
+        return "selectionItemCell";
     }
 
     @Override

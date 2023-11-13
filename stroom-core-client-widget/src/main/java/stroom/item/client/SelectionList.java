@@ -97,10 +97,10 @@ public class SelectionList extends Composite {
         quickFilter.addStyleName("dock-min");
 
         links = new FlowPanel();
-        links.setStyleName("dock-min queryHelp-links");
+        links.setStyleName("dock-min selectionList-links");
 
         final SimplePanel elementChooser = new SimplePanel();
-        elementChooser.setStyleName("dock-max queryHelpTree");
+        elementChooser.setStyleName("dock-max selectionList");
         elementChooser.add(pagerView.asWidget());
 
         final FlowPanel inner = new FlowPanel();

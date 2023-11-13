@@ -55,16 +55,9 @@ public class ColumnFunctionEditorPresenter
 
     private static final DashboardResource DASHBOARD_RESOURCE = GWT.create(DashboardResource.class);
 
-    private static final Set<HelpItemType> SUPPORTED_HELP_TYPES = EnumSet.of(
-            HelpItemType.FIELD,
-            HelpItemType.FUNCTION);
-
-    private static final QueryResource QUERY_RESOURCE = GWT.create(QueryResource.class);
-
     private final RestFactory restFactory;
     private final EditorPresenter editorPresenter;
     private final QueryHelpPresenter queryHelpPresenter;
-    private AceCompletionProvider functionsCompletionProvider;
     private TablePresenter tablePresenter;
     private Field field;
     private BiConsumer<Field, Field> fieldChangeConsumer;

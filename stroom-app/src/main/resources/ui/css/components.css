@@ -1889,74 +1889,51 @@ button.main-menu svg {
     visibility: hidden;
 }
 
-
-
-
-.queryHelpItemCell {
-/*
-    padding: 5px;
-    min-width: 200px;
-    */
+.selectionList {
+    overflow: hidden;
 }
 
-.queryHelpItem-heading.queryHelpItem-topLevel {
-    font-size: var(--font-size-15);
-    color: var(--heading-color);
+.selectionList .cellTableCell {
+     display: flex;
+     align-items: center;
 }
 
-.queryHelpItem-heading {
-    font-size: var(--font-size-13);
-    font-weight: 500;
-}
-
-.queryHelpItem-heading.queryHelpItem-functionCategory {
-    font-size: var(--font-size-13);
-    font-weight: 500;
-}
-
-.queryHelpItem-functionHeading,
-.queryHelpItem-leaf {
-    font-style: italic;
-    font-size: var(--font-size-13);
-    font-weight: 400;
-}
-
- .queryHelpTree {
-    width: 100%;
- }
-
-.queryHelpTree-container {
-    overflow: auto;
+.selectionList-links {
     display: flex;
-    flex-grow: 1;
-    height: 0;
+    gap: 5px;
+    flex-wrap: wrap;
+    padding: 3px;
+    padding-top: 7px;
 }
 
-.queryHelpItemCell {
+.selectionList-links .gwt-Label {
+    opacity: 0.8;
+}
+
+.selectionList-links .gwt-HyperLink:hover {
+    text-decoration: underline;
+}
+
+.selectionItemCell {
     display: flex;
     align-items: center;
     cursor: pointer;
     gap: var(--row__gap--horizontal);
 }
 
-.queryHelpItemCell-expander {
+.selectionItemCell-expander {
     color: var(--grey-600);
 	display: flex;
 }
 
-.queryHelpItemCell-expander svg {
+.selectionItemCell-expander svg {
     width: .7rem;
     height: .7rem;
 }
 
-.queryHelpItemCell-text {
+.selectionItemCell-text {
 	white-space: nowrap;
 }
-
- .queryHelpTree .cellTableCell {
-    display: flex;
-    align-items: center;
- }
 
 .queryHelp-details {
     padding: 5px;
