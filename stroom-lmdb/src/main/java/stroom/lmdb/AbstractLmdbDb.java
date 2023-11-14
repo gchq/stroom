@@ -42,6 +42,7 @@ import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
@@ -1008,5 +1009,29 @@ public abstract class AbstractLmdbDb<K, V>
 
     public CursorIterable<ByteBuffer> iterate(final Txn<ByteBuffer> txn, final KeyRange<ByteBuffer> range) {
         return lmdbDbi.iterate(txn, range);
+    }
+
+    public Optional<Entry<K, V>> firstEntry(final Txn<ByteBuffer> txn) {
+        Entry<K, V> entry = null;
+        try (CursorIterable<ByteBuffer> cursorIterable = iterate(txn, KeyRange.all())) {
+            final Iterator<KeyVal<ByteBuffer>> iterator = cursorIterable.iterator();
+            if (iterator.hasNext()) {
+                final KeyVal<ByteBuffer> keyVal = iterator.next();
+                entry = Map.entry(deserializeKey(keyVal.key()), deserializeValue(keyVal.val()));
+            }
+        }
+        return Optional.ofNullable(entry);
+    }
+
+    public Optional<Entry<K, V>> lastEntry(final Txn<ByteBuffer> txn) {
+        Entry<K, V> entry = null;
+        try (CursorIterable<ByteBuffer> cursorIterable = iterate(txn, KeyRange.allBackward())) {
+            final Iterator<KeyVal<ByteBuffer>> iterator = cursorIterable.iterator();
+            if (iterator.hasNext()) {
+                final KeyVal<ByteBuffer> keyVal = iterator.next();
+                entry = Map.entry(deserializeKey(keyVal.key()), deserializeValue(keyVal.val()));
+            }
+        }
+        return Optional.ofNullable(entry);
     }
 }
