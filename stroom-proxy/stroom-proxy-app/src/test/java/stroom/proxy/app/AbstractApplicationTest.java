@@ -30,6 +30,7 @@ import jakarta.ws.rs.client.Client;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.parallel.Isolated;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,6 +43,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
 
+@Isolated // Can't run >1 at once due to network ports
 public abstract class AbstractApplicationTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractApplicationTest.class);
