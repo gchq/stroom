@@ -1026,6 +1026,13 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>, HasKeyboardP
             // a useful edge case that provides consistency in the way data is
             // pushed to the view.
             redrawRequired = true;
+        } else {
+            for (final Range r : modifiedRanges) {
+               if (r.getStart() >= newState.rowData.size() || r.getStart() + r.getLength() >= newState.rowData.size()) {
+                   redrawRequired = true;
+                   break;
+               }
+            }
         }
 
         // Update the loading state in the view.

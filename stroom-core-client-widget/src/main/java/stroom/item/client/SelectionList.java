@@ -17,6 +17,7 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.user.cellview.client.AbstractHasData;
 import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Hyperlink;
@@ -80,6 +81,7 @@ public class SelectionList extends Composite {
 //        selectionModel = new MySingleSelectionModel<>();
 //        selectionEventManager = new SelectionEventManager(cellTable, selectionModel);
         cellTable.setSelectionModel(selectionModel, selectionEventManager);
+        cellTable.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.BOUND_TO_SELECTION);
 
         final Column<SelectionItem, SelectionItem> expanderColumn =
                 new Column<SelectionItem, SelectionItem>(new SelectionItemCell()) {
@@ -240,13 +242,6 @@ public class SelectionList extends Composite {
         @Override
         protected void onMouseDown(final CellPreviewEvent<SelectionItem> e) {
             final NativeEvent nativeEvent = e.getNativeEvent();
-            final int row = cellTable.getVisibleItems().indexOf(e.getValue());
-            if (row >= 0) {
-                cellTable.setKeyboardSelectedRow(row, true);
-            } else {
-                cellTable.setKeyboardSelectedRow(cellTable.getKeyboardSelectedRow(), true);
-            }
-
             if (MouseUtil.isSecondary(nativeEvent)) {
 //                showMenu(e);
 
@@ -347,13 +342,23 @@ public class SelectionList extends Composite {
                                 model.refresh();
                             }
                         } else {
-                            MultiSelectEvent.fire(cellTable, selectionType);
+                            fireSelectEvent(row, selectionType);
                         }
                     }
                 } else {
-                    MultiSelectEvent.fire(cellTable, selectionType);
+                    fireSelectEvent(row, selectionType);
                 }
             }
+        }
+
+        private void fireSelectEvent(final SelectionItem value, final SelectionType selectionType) {
+            final int row = cellTable.getVisibleItems().indexOf(value);
+            if (row >= 0) {
+                cellTable.setKeyboardSelectedRow(row, true);
+            } else {
+                cellTable.setKeyboardSelectedRow(cellTable.getKeyboardSelectedRow(), true);
+            }
+            MultiSelectEvent.fire(cellTable, selectionType);
         }
     }
 
