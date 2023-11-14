@@ -15,6 +15,7 @@ import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.view.client.AbstractDataProvider;
 import com.google.gwt.view.client.AsyncDataProvider;
 import com.google.gwt.view.client.HasData;
@@ -22,6 +23,7 @@ import com.google.gwt.view.client.Range;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Stack;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
@@ -35,6 +37,7 @@ public class DynamicQueryHelpSelectionListModel implements SelectionListModel {
     private final NavigationModel navigationModel = new NavigationModel();
     private StringMatch filter;
 
+    private Timer requestTimer;
     private String currentQuery;
 
     @Inject
@@ -101,7 +104,21 @@ public class DynamicQueryHelpSelectionListModel implements SelectionListModel {
     }
 
     public void setCurrentQuery(final String currentQuery) {
-        this.currentQuery = currentQuery;
+        // Debounce requests so we don't spam the backend
+        if (requestTimer != null) {
+            requestTimer.cancel();
+        }
+
+        requestTimer = new Timer() {
+            @Override
+            public void run() {
+                if (!Objects.equals(DynamicQueryHelpSelectionListModel.this.currentQuery, currentQuery)) {
+                    DynamicQueryHelpSelectionListModel.this.currentQuery = currentQuery;
+                    refresh();
+                }
+            }
+        };
+        requestTimer.schedule(400);
     }
 
     @Override
