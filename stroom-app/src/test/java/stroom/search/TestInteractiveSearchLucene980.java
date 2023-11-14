@@ -26,12 +26,17 @@ import javax.inject.Inject;
 
 class TestInteractiveSearchLucene980 extends AbstractInteractiveSearchTest {
 
+    private static boolean doneSetup;
+
     @Inject
     private IndexShardService indexShardService;
 
     @BeforeEach
     void setup() {
         indexShardService.setIndexVersion(LuceneVersion.LUCENE_9_8_0);
-        super.setup();
+        if (!doneSetup) {
+            super.setup();
+            doneSetup = true;
+        }
     }
 }
