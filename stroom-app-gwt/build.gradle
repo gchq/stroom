@@ -87,13 +87,6 @@ dependencies {
     gwtSourceImplementation libs.swagger_annotations // needed so gwt can compile the stroom-query code that contains swagger annotations
     gwtSourceImplementation libs.restygwt
     gwtSourceImplementation libs.ws_rs_api__gwt
-
-//    gwtSourceImplementation libs.stroomDocRef
-//    gwtSourceCompile "${libs.stroomDocRef}:sources"
-//    gwtSourceImplementation libs.stroomQueryApi
-//    gwtSourceCompile "${libs.stroomQueryApi}:sources"
-//    gwtSourceImplementation libs.stroomQueryCommon
-//    gwtSourceCompile "${libs.stroomQueryCommon}:sources"
 }
 
 // Define a list of projects that contain the source code we want to compile with GWT.
@@ -126,7 +119,7 @@ configurations {
             // It seems eclipse are reluctant to uplift bnd to 7.0.0 as that is J17 and they want to support J8
             // See https://github.com/eclipse/transformer/issues/475 and https://github.com/bndtools/bnd/issues/5886
             dependencySubstitution {
-                substitute module('biz.aQute.bnd:biz.aQute.bnd.transform') using module('biz.aQute.bnd:biz.aQute.bnd.transform:7.0.0')
+                substitute module('biz.aQute.bnd:biz.aQute.bnd.transform') using module("biz.aQute.bnd:biz.aQute.bnd.transform:${versions.bnd}")
             }
         }
     }
@@ -134,7 +127,7 @@ configurations {
 
 dependencies {
     // Note the dependencySubstitution on this dep above
-    jakartaTransformerConfiguration "org.eclipse.transformer:org.eclipse.transformer.cli:0.5.0"
+    jakartaTransformerConfiguration libs.eclipse_transformer_cli
 }
 
 // Task to make a copy of each project in projectsToRename then change all imports
