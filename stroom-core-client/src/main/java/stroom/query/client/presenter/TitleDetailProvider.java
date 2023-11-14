@@ -18,7 +18,7 @@ public class TitleDetailProvider implements DetailProvider {
         final InsertType insertType = InsertType.NOT_INSERTABLE;
         final String insertText = row.getTitle();
         final SafeHtml documentation;
-        if (GwtNullSafe.isBlankString(queryHelpTitle.getDocumentation())) {
+        if (queryHelpTitle == null || GwtNullSafe.isBlankString(queryHelpTitle.getDocumentation())) {
             documentation = SafeHtmlUtils.EMPTY_SAFE_HTML;
         } else {
             documentation = SafeHtmlUtil.from(queryHelpTitle.getDocumentation());
