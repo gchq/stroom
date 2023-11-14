@@ -25,12 +25,17 @@ import org.junit.jupiter.api.BeforeEach;
 
 class TestInteractiveSearchLucene553 extends AbstractInteractiveSearchTest {
 
+    private static boolean doneSetup;
+
     @Inject
     private IndexShardService indexShardService;
 
     @BeforeEach
     void setup() {
         indexShardService.setIndexVersion(LuceneVersion.LUCENE_5_5_3);
-        super.setup();
+        if (!doneSetup) {
+            super.setup();
+            doneSetup = true;
+        }
     }
 }

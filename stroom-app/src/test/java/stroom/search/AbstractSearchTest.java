@@ -78,6 +78,10 @@ public abstract class AbstractSearchTest extends AbstractCoreIntegrationTest {
             final IndexStore indexStore,
             final ResultStoreManager searchResponseCreatorManager) {
 
+        assertThat(indexStore.list())
+                .as("Check indexStore is not empty")
+                .isNotEmpty();
+
         final DocRef indexRef = indexStore.list().get(0);
         final IndexDoc index = indexStore.readDocument(indexRef);
         assertThat(index).as("Index is null").isNotNull();
