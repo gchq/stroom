@@ -14,7 +14,6 @@ buildscript {
         classpath 'javax.activation:activation:1.1.1'
         classpath 'javax.xml.bind:jaxb-api:2.3.1'
         classpath 'org.glassfish.jaxb:jaxb-runtime:2.3.1'
-        classpath 'org.eclipse.transformer:org.eclipse.transformer.cli:0.5.0'
     }
 }
 
@@ -126,10 +125,9 @@ ext.versions = [
         kafka             : '3.6.0',
         okhttp            : '4.12.0',
         poi               : '5.2.4',
-        swagger           : '2.1.12',
+        swagger           : '2.2.18',
         unirest           : '1.4.9',
         zookeeper         : '3.4.8', // Roughly pegged to the server version used by Cloudera, see links above. This version is forced below.
-        zzDUMMYzz         : 'makes sorting easier'
 ]
 
 // Dependency strings for use in sub projects
@@ -283,7 +281,9 @@ ext.libs = [
         solrj                               : "org.apache.solr:solr-solrj:8.2.0",
         sqlite                              : "org.xerial:sqlite-jdbc:3.43.2.2",
         stax_api                            : "stax:stax-api:1.0.1",
-        swagger_annotations                 : "io.swagger.core.v3:swagger-annotations:$versions.swagger",
+        swagger_annotations                 : "io.swagger.core.v3:swagger-annotations-jakarta:$versions.swagger",
+        swagger_core                        : "io.swagger.core.v3:swagger-core-jakarta:$versions.swagger",
+        swagger_jaxrs                       : "io.swagger.core.v3:swagger-jaxrs2-jakarta:$versions.swagger",
         unirest                             : "com.mashape.unirest:unirest-java:$versions.unirest",
         vavr                                : "io.vavr:vavr:0.10.4",
         wiremock                            : 'org.wiremock:wiremock:3.3.1',
@@ -294,7 +294,6 @@ ext.libs = [
         xml_apis                            : "xml-apis:xml-apis:2.0.2",
         zero_allocation_hashing             : "net.openhft:zero-allocation-hashing:0.16",
         zookeeper                           : "org.apache.zookeeper:zookeeper:$versions.zookeeper",
-        zzDUMMYzz                           : "makes sorting this array easier"
 ]
 
 // Defines the content packs that will be donwloaded/copied for SetupSampleData,

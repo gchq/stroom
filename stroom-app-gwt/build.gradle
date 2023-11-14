@@ -119,10 +119,21 @@ def projectsToRename = [
 ]
 
 configurations {
-    jakartaTransformerConfiguration
+    jakartaTransformerConfiguration {
+        resolutionStrategy {
+            // org.eclipse.transformer.cli:0.5.0 uses biz.aQute.bnd:biz.aQute.bnd.transform:6.3.1 which does not work
+            // on J21 compiled classes/jars, so we need to uplift to bnd 7.0.0 which does.
+            // It seems eclipse are reluctant to uplift bnd to 7.0.0 as that is J17 and they want to support J8
+            // See https://github.com/eclipse/transformer/issues/475 and https://github.com/bndtools/bnd/issues/5886
+            dependencySubstitution {
+                substitute module('biz.aQute.bnd:biz.aQute.bnd.transform') using module('biz.aQute.bnd:biz.aQute.bnd.transform:7.0.0')
+            }
+        }
+    }
 }
 
 dependencies {
+    // Note the dependencySubstitution on this dep above
     jakartaTransformerConfiguration "org.eclipse.transformer:org.eclipse.transformer.cli:0.5.0"
 }
 
