@@ -4,6 +4,7 @@ import stroom.proxy.app.forwarder.ForwardFileConfig;
 import stroom.proxy.repo.ForwardRetryConfig;
 import stroom.proxy.repo.ProxyDbConfig;
 import stroom.proxy.repo.ProxyRepoConfig;
+import stroom.test.common.TestResourceLocks;
 import stroom.util.NullSafe;
 import stroom.util.config.AbstractConfigUtil;
 import stroom.util.exception.ThrowingConsumer;
@@ -29,7 +30,7 @@ import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.RegisterExtension;
-import org.junit.jupiter.api.parallel.Isolated;
+import org.junit.jupiter.api.parallel.ResourceLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,7 +44,7 @@ import java.util.Map;
 import java.util.function.Consumer;
 import javax.ws.rs.client.Client;
 
-@Isolated // Can't run >1 at once due to network ports
+@ResourceLock(TestResourceLocks.STROOM_PROXY_APP_PORT_8090)
 public abstract class AbstractApplicationTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractApplicationTest.class);
