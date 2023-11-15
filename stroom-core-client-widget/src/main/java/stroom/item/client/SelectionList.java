@@ -6,6 +6,7 @@ import stroom.widget.dropdowntree.client.view.QuickFilter;
 import stroom.widget.util.client.AbstractSelectionEventManager;
 import stroom.widget.util.client.DoubleSelectTester;
 import stroom.widget.util.client.MouseUtil;
+import stroom.widget.util.client.MultiSelectEvent;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 import stroom.widget.util.client.SelectionType;
@@ -239,6 +240,8 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
             if (selectionModel != null) {
                 if (!selectionModel.isSelected(row)) {
                     selectionModel.setSelected(row);
+                } else {
+                    MultiSelectEvent.fire(cellTable, selectionType);
                 }
 
                 if (selectionType.isDoubleSelect()) {
