@@ -1802,8 +1802,8 @@ button.main-menu svg {
 .find-buttons {
     display: flex;
     position: absolute;
-    right: 5px;
-    top: 5px;
+    right: 3px;
+    top: 3px;
 }
 
 .find-buttons .icon-button .face {
