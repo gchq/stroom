@@ -19,37 +19,37 @@ package stroom.lmdb.serde;
 
 import java.nio.ByteBuffer;
 
-public class IntegerSerde implements Serde<Integer> {
+public class LongSerde implements Serde<Long> {
 
     @Override
-    public Integer deserialize(final ByteBuffer byteBuffer) {
-        Integer val = byteBuffer.getInt();
+    public Long deserialize(final ByteBuffer byteBuffer) {
+        Long val = byteBuffer.getLong();
         byteBuffer.flip();
         return val;
     }
 
     @Override
-    public void serialize(final ByteBuffer byteBuffer, final Integer val) {
-        byteBuffer.putInt(val);
+    public void serialize(final ByteBuffer byteBuffer, final Long val) {
+        byteBuffer.putLong(val);
         byteBuffer.flip();
     }
 
     public void increment(final ByteBuffer byteBuffer) {
         int val = byteBuffer.getInt();
         byteBuffer.flip();
-        byteBuffer.putInt(val + 1);
+        byteBuffer.putLong(val + 1);
         byteBuffer.flip();
     }
 
     public void decrement(final ByteBuffer byteBuffer) {
         int val = byteBuffer.getInt();
         byteBuffer.flip();
-        byteBuffer.putInt(val - 1);
+        byteBuffer.putLong(val - 1);
         byteBuffer.flip();
     }
 
     @Override
     public int getBufferCapacity() {
-        return Integer.BYTES;
+        return Long.BYTES;
     }
 }
