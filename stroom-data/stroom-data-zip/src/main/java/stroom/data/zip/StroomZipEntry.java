@@ -1,6 +1,8 @@
 package stroom.data.zip;
 
+import stroom.util.NullSafe;
 import stroom.util.io.FileName;
+import stroom.util.logging.LogUtil;
 
 public class StroomZipEntry {
 
@@ -16,21 +18,31 @@ public class StroomZipEntry {
     private final String fullName;
     private final StroomZipFileType stroomZipFileType;
 
-    public StroomZipEntry(final String baseName,
-                          final String fullName,
-                          final StroomZipFileType stroomZipFileType) {
+    private StroomZipEntry(final String baseName,
+                           final String fullName,
+                           final StroomZipFileType stroomZipFileType) {
         this.baseName = baseName;
         this.fullName = fullName;
+        if (baseName != null && fullName != null && !fullName.startsWith(baseName)) {
+            throw new RuntimeException(LogUtil.message("baseName '{}' is not a prefix of fullName '{}'",
+                    baseName, fullName));
+        }
         this.stroomZipFileType = stroomZipFileType;
     }
 
     public static StroomZipEntry createFromFileName(final String fileName) {
-        final FileName fn = FileName.parse(fileName);
         if (fileName.endsWith(".")) {
             // We can't cope with zip entries that end with `.` as we are splitting base name and extension.
             throw new RuntimeException("Zip entries ending with '.' are not supported");
         }
-        if (fn.getExtension().contains(REPO_EXTENSION_DELIMITER)) {
+
+        FileName fn = FileName.parse(fileName);
+        if (!StroomZipFileType.isKnownExtension(fn.getExtension())) {
+            // Extension is not a known one so treat the whole fileName as the baseName
+            // e.g. a fileName with dots in, '2023-11-15.xyz.1001' or no extension at all '001'.
+            fn = FileName.fromParts(fileName, null);
+        }
+        if (NullSafe.contains(fn.getExtension(), REPO_EXTENSION_DELIMITER)) {
             // We can't cope with zip entries that have extensions that contain `,` as we delimit extensions in the DB.
             throw new RuntimeException("Zip entries with extensions containing ',' are not supported");
         }
@@ -38,8 +50,20 @@ public class StroomZipEntry {
         return new StroomZipEntry(fn.getBaseName(), fn.getFullName(), stroomZipFileType);
     }
 
-    public static StroomZipEntry createFromBaseName(final String baseName, final StroomZipFileType stroomZipFileType) {
-        return new StroomZipEntry(baseName, baseName + stroomZipFileType.getDotExtension(), stroomZipFileType);
+    public static StroomZipEntry createFromBaseName(final String baseName,
+                                                    final StroomZipFileType stroomZipFileType) {
+        return new StroomZipEntry(
+                baseName,
+                baseName + stroomZipFileType.getDotExtension(),
+                stroomZipFileType);
+    }
+
+    public StroomZipEntry cloneWithNewBaseName(final String newBaseName) {
+        if (!this.baseName.startsWith(newBaseName)) {
+            throw new RuntimeException(LogUtil.message("newBaseName '{}' is not a prefix of baseName '{}'",
+                    newBaseName, baseName));
+        }
+        return new StroomZipEntry(newBaseName, fullName, stroomZipFileType);
     }
 
     public String getBaseName() {
@@ -56,6 +80,15 @@ public class StroomZipEntry {
 
     @Override
     public String toString() {
-        return fullName;
+        return fullName + " (baseName: "
+                + baseName + ", type: "
+                + stroomZipFileType + ")";
+    }
+
+    /**
+     * @return True if the fullName has a known stroom extension
+     */
+    public boolean hasKnownExtension() {
+        return stroomZipFileType.hasExtension(fullName);
     }
 }

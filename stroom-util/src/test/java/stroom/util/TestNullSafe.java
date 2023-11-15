@@ -817,6 +817,30 @@ class TestNullSafe {
                 .addCase(Tuple.of("foobar", "foo"), true)
                 .addCase(Tuple.of("foobar", "ob"), true)
                 .addCase(Tuple.of("foobar", "foobar"), true)
+                .addCase(Tuple.of("foobar", "fooBAR"), false)
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testContainsIgnoringCase() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputTypes(String.class, String.class)
+                .withOutputType(Boolean.class)
+                .withTestFunction(testCase -> {
+                    var str = testCase.getInput()._1;
+                    var subStr = testCase.getInput()._2;
+                    return NullSafe.containsIgnoringCase(str, subStr);
+                })
+                .withSimpleEqualityAssertion()
+                .addCase(Tuple.of(null, null), false)
+                .addCase(Tuple.of("foorbar", null), false)
+                .addCase(Tuple.of(null, "foobar"), false)
+                .addCase(Tuple.of("foobar", "foo"), true)
+                .addCase(Tuple.of("foobar", "ob"), true)
+                .addCase(Tuple.of("foobar", "foobar"), true)
+                .addCase(Tuple.of("foobar", "fooBAR"), true)
+                .addCase(Tuple.of("FOOBAR", "fooBAR"), true)
+                .addCase(Tuple.of("FOOBAR", "foobar"), true)
                 .build();
     }
 
