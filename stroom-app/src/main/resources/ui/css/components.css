@@ -488,7 +488,7 @@
 
 .curveTabLayoutViewImpl-tabBarOuter {
     height: 33px;
-    margin-right: 42px;
+    margin-right: 66px;
     flex-grow: 1;
 }
 
@@ -1169,10 +1169,10 @@
 
 .mainViewImpl-spinner {
     position: absolute;
-    top: 7px;
-    right: 2px;
-    width: 32px;
-    height: 32px;
+    top: 2px;
+    right: 36px;
+    width: 28px;
+    height: 28px;
     z-index: 1;
 }
 
