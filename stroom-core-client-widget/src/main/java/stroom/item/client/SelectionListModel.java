@@ -16,6 +16,10 @@ public interface SelectionListModel<T, I extends SelectionItem> {
 
     boolean displayPager();
 
+    default String getPathRoot() {
+        return "Help";
+    }
+
     I wrap(T item);
 
     T unwrap(I selectionItem);

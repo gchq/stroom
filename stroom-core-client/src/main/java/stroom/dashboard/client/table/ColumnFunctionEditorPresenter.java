@@ -18,6 +18,8 @@ package stroom.dashboard.client.table;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
+import stroom.dashboard.client.main.IndexLoader;
+import stroom.dashboard.client.main.SearchModel;
 import stroom.dashboard.client.table.ColumnFunctionEditorPresenter.ColumnFunctionEditorView;
 import stroom.dashboard.shared.DashboardResource;
 import stroom.dashboard.shared.ValidateExpressionResult;
@@ -101,7 +103,16 @@ public class ColumnFunctionEditorPresenter
         } else {
             editorPresenter.setText("");
         }
+        final SearchModel searchModel = tablePresenter.getCurrentSearchModel();
+        if (searchModel != null) {
+            final IndexLoader indexLoader = searchModel.getIndexLoader();
+            if (indexLoader != null) {
+                queryHelpPresenter.setDataSourceRef(indexLoader.getLoadedDataSourceRef());
+            }
+        }
+        queryHelpPresenter.setShowAll(false);
         queryHelpPresenter.linkToEditor(this.editorPresenter);
+        queryHelpPresenter.refresh();
 
         final PopupSize popupSize = PopupSize.resizable(800, 700);
         ShowPopupEvent.builder(this)

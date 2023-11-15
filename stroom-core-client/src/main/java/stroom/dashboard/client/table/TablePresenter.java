@@ -1168,6 +1168,10 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         addFieldButton.setVisible(designMode);
     }
 
+    public SearchModel getCurrentSearchModel() {
+        return currentSearchModel;
+    }
+
     public interface TableView extends View, HasUiHandlers<TableUiHandlers> {
 
         void setTableView(View view);

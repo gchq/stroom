@@ -56,7 +56,7 @@ public class DynamicColumnSelectionListModel implements SelectionListModel<Field
             if (!navigationModel.getPath().isEmpty()) {
                 final ColumnSelectionItem lastItem = navigationModel.getPath().peek();
                 if (lastItem.getField() != null) {
-                    parentPath = FieldInfo.FIELDS_PARENT + lastItem.getField().getName();
+                    parentPath = "Data Source" + ".";
                 } else {
                     parentPath = lastItem.getLabel() + ".";
                 }
@@ -64,14 +64,14 @@ public class DynamicColumnSelectionListModel implements SelectionListModel<Field
 
             if (GwtNullSafe.isBlankString(parentPath)) {
                 final List<ColumnSelectionItem> list = new ArrayList<>();
+                list.add(ColumnSelectionItem.createParent("Annotations"));
                 list.add(ColumnSelectionItem.createParent("Counts"));
                 list.add(ColumnSelectionItem.createParent("Data Source"));
-                list.add(ColumnSelectionItem.createParent("Annotations"));
 
                 display.setRowData(0, list);
                 display.setRowCount(list.size(), true);
 
-            } else if ("counts.".equals(parentPath)) {
+            } else if ("Counts.".equals(parentPath)) {
                 final List<ColumnSelectionItem> list = new ArrayList<>();
                 final Field count = Field.builder()
                         .name("Count")
@@ -95,7 +95,7 @@ public class DynamicColumnSelectionListModel implements SelectionListModel<Field
                 display.setRowData(0, list);
                 display.setRowCount(list.size(), true);
 
-            } else if ("annotations.".equals(parentPath)) {
+            } else if ("Annotations.".equals(parentPath)) {
                 final FindFieldInfoCriteria findFieldInfoCriteria = new FindFieldInfoCriteria(
                         pageRequest,
                         null,
@@ -113,7 +113,7 @@ public class DynamicColumnSelectionListModel implements SelectionListModel<Field
                             response.getPageResponse().isExact());
                 });
 
-            } else if (FieldInfo.FIELDS_PARENT.equals(parentPath)) {
+            } else if ("Data Source.".equals(parentPath)) {
                 final FindFieldInfoCriteria findFieldInfoCriteria = new FindFieldInfoCriteria(
                         pageRequest,
                         null,
@@ -136,6 +136,10 @@ public class DynamicColumnSelectionListModel implements SelectionListModel<Field
 
     public void setDataSourceRef(final DocRef dataSourceRef) {
         this.dataSourceRef = dataSourceRef;
+    }
+
+    public void reset() {
+        navigationModel.reset();
     }
 
     @Override
@@ -164,6 +168,11 @@ public class DynamicColumnSelectionListModel implements SelectionListModel<Field
         for (final HasData<ColumnSelectionItem> display : dataProvider.getDataDisplays()) {
             refresh(display);
         }
+    }
+
+    @Override
+    public String getPathRoot() {
+        return "Columns";
     }
 
     @Override

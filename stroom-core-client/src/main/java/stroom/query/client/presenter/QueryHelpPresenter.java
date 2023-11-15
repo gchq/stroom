@@ -17,6 +17,7 @@
 
 package stroom.query.client.presenter;
 
+import stroom.docref.DocRef;
 import stroom.editor.client.presenter.ChangeCurrentPreferencesEvent;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.editor.client.presenter.KeyedAceCompletionProvider;
@@ -28,6 +29,7 @@ import stroom.widget.util.client.MultiSelectionModel;
 
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
+import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
@@ -58,6 +60,7 @@ public class QueryHelpPresenter
         this.detailProviders = detailProviders;
         this.model = model;
 
+        view.getSelectionList().setKeyboardSelectionPolicy(KeyboardSelectionPolicy.BOUND_TO_SELECTION);
         view.getSelectionList().setModel(model);
     }
 
@@ -162,6 +165,14 @@ public class QueryHelpPresenter
         // else it moans about the id not being a thing on the AceEditor
         editorPresenter.getWidget().addAttachHandler(event ->
                 editorPresenter.registerCompletionProviders(getKeyedAceCompletionProvider()));
+    }
+
+    public void setDataSourceRef(final DocRef dataSourceRef) {
+        model.setDataSourceRef(dataSourceRef);
+    }
+
+    public void setShowAll(final boolean showAll) {
+        model.setShowAll(showAll);
     }
 
     public interface QueryHelpView extends View, HasUiHandlers<QueryHelpUiHandlers> {

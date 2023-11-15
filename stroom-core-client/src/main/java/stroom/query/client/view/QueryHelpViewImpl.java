@@ -18,7 +18,9 @@ package stroom.query.client.view;
 
 import stroom.item.client.SelectionList;
 import stroom.query.client.presenter.QueryHelpPresenter.QueryHelpView;
+import stroom.query.client.presenter.QueryHelpSelectionItem;
 import stroom.query.client.presenter.QueryHelpUiHandlers;
+import stroom.query.shared.QueryHelpRow;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.InlineSvgButton;
 
@@ -37,7 +39,7 @@ public class QueryHelpViewImpl extends ViewWithUiHandlers<QueryHelpUiHandlers> i
     private final Widget widget;
 
     @UiField
-    SelectionList selectionList;
+    SelectionList<QueryHelpRow, QueryHelpSelectionItem> selectionList;
     @UiField
     SimplePanel details;
     @UiField
@@ -59,7 +61,7 @@ public class QueryHelpViewImpl extends ViewWithUiHandlers<QueryHelpUiHandlers> i
     }
 
     @Override
-    public SelectionList getSelectionList() {
+    public SelectionList<QueryHelpRow, QueryHelpSelectionItem> getSelectionList() {
         return selectionList;
     }
 

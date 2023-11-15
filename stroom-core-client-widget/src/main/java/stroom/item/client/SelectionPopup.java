@@ -8,6 +8,7 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -28,6 +29,7 @@ public class SelectionPopup<T, I extends SelectionItem> extends Composite {
     public SelectionPopup() {
         popupPanel = new PopupPanel();
         selectionList = new SelectionList<>();
+        selectionList.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.ENABLED);
 
         final SimplePopupLayout simplePopupLayout = new SimplePopupLayout();
         simplePopupLayout.setContent(selectionList);

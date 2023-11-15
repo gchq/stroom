@@ -2,6 +2,7 @@ package stroom.query.client.presenter;
 
 import stroom.datasource.api.v2.FindFieldInfoCriteria;
 import stroom.dispatch.client.RestFactory;
+import stroom.docref.DocRef;
 import stroom.docref.StringMatch;
 import stroom.item.client.NavigationModel;
 import stroom.item.client.SelectionListModel;
@@ -37,7 +38,9 @@ public class DynamicQueryHelpSelectionListModel implements SelectionListModel<Qu
     private StringMatch filter;
 
     private Timer requestTimer;
+    private DocRef dataSourceRef;
     private String currentQuery;
+    private boolean showAll = true;
 
     @Inject
     public DynamicQueryHelpSelectionListModel(final RestFactory restFactory) {
@@ -70,9 +73,10 @@ public class DynamicQueryHelpSelectionListModel implements SelectionListModel<Qu
                 pageRequest,
                 Collections.singletonList(sort),
                 currentQuery,
-                null,
+                dataSourceRef,
                 parentId,
-                filter);
+                filter,
+                showAll);
         restFactory.builder()
                 .forResultPageOf(QueryHelpRow.class)
                 .onSuccess(response -> {
@@ -169,5 +173,13 @@ public class DynamicQueryHelpSelectionListModel implements SelectionListModel<Qu
             return null;
         }
         return selectionItem.getQueryHelpRow();
+    }
+
+    public void setDataSourceRef(final DocRef dataSourceRef) {
+        this.dataSourceRef = dataSourceRef;
+    }
+
+    public void setShowAll(final boolean showAll) {
+        this.showAll = showAll;
     }
 }

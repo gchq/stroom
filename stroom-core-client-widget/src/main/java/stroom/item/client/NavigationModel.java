@@ -37,4 +37,8 @@ public class NavigationModel<I extends SelectionItem> {
     public Stack<I> getPath() {
         return openItems;
     }
+
+    public void reset() {
+        openItems.clear();
+    }
 }

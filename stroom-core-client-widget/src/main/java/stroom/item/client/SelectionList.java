@@ -67,7 +67,6 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
         selectionModel = new MultiSelectionModelImpl<>(cellTable);
         selectionEventManager = new ExplorerTreeSelectionEventManager<>(cellTable, selectionModel);
         cellTable.setSelectionModel(selectionModel, selectionEventManager);
-        cellTable.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.BOUND_TO_SELECTION);
 
         final Column<I, I> expanderColumn =
                 new Column<I, I>(new SelectionItemCell<>()) {
@@ -102,6 +101,10 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
         outer.add(inner);
 
         initWidget(outer);
+    }
+
+    public void setKeyboardSelectionPolicy(final KeyboardSelectionPolicy policy) {
+        cellTable.setKeyboardSelectionPolicy(policy);
     }
 
     public void focus() {
@@ -279,9 +282,9 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
     private void setPath(final List<I> path) {
         links.clear();
         if (path.size() == 0) {
-            links.add(new Label("Help"));
+            links.add(new Label(model.getPathRoot()));
         } else {
-            links.add(createLink("Help", null));
+            links.add(createLink(model.getPathRoot(), null));
         }
         for (int i = 0; i < path.size(); i++) {
             links.add(new Label("/"));

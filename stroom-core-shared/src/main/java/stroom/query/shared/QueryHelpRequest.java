@@ -26,7 +26,8 @@ public class QueryHelpRequest extends BaseCriteria {
     private final String parentPath;
     @JsonProperty
     private final StringMatch stringMatch;
-
+    @JsonProperty
+    private final boolean showAll;
 
     @JsonCreator
     public QueryHelpRequest(@JsonProperty("pageRequest") final PageRequest pageRequest,
@@ -34,12 +35,14 @@ public class QueryHelpRequest extends BaseCriteria {
                             @JsonProperty("query") final String query,
                             @JsonProperty("dataSourceRef") final DocRef dataSourceRef,
                             @JsonProperty("parentPath") final String parentPath,
-                            @JsonProperty("stringMatch") final StringMatch stringMatch) {
+                            @JsonProperty("stringMatch") final StringMatch stringMatch,
+                            @JsonProperty("showAll") final boolean showAll) {
         super(pageRequest, sortList);
         this.query = query;
         this.dataSourceRef = dataSourceRef;
         this.parentPath = parentPath;
         this.stringMatch = stringMatch;
+        this.showAll = showAll;
     }
 
     public DocRef getDataSourceRef() {
@@ -56,5 +59,9 @@ public class QueryHelpRequest extends BaseCriteria {
 
     public StringMatch getStringMatch() {
         return stringMatch;
+    }
+
+    public boolean isShowAll() {
+        return showAll;
     }
 }

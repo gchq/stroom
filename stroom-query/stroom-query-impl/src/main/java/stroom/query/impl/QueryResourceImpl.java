@@ -30,7 +30,6 @@ import stroom.query.shared.QueryResource;
 import stroom.query.shared.QuerySearchRequest;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.resultpage.ExactResultPageBuilder;
 import stroom.util.resultpage.InexactResultPageBuilder;
 import stroom.util.resultpage.ResultPageBuilder;
 import stroom.util.shared.EntityServiceException;
@@ -162,11 +161,13 @@ class QueryResourceImpl implements QueryResource {
         final ResultPageBuilder<QueryHelpRow> resultPageBuilder =
                 new InexactResultPageBuilder<>(request.getPageRequest());
         PageRequest pageRequest = request.getPageRequest();
-        dataSourcesProvider.get().addRows(pageRequest, parentPath, stringMatcher, resultPageBuilder);
-        pageRequest = reducePageRequest(pageRequest, resultPageBuilder.size());
-        structuresProvider.get().addRows(pageRequest, parentPath, stringMatcher, resultPageBuilder);
-        pageRequest = reducePageRequest(pageRequest, resultPageBuilder.size());
-        request.setPageRequest(pageRequest);
+        if (request.isShowAll()) {
+            dataSourcesProvider.get().addRows(pageRequest, parentPath, stringMatcher, resultPageBuilder);
+            pageRequest = reducePageRequest(pageRequest, resultPageBuilder.size());
+            structuresProvider.get().addRows(pageRequest, parentPath, stringMatcher, resultPageBuilder);
+            pageRequest = reducePageRequest(pageRequest, resultPageBuilder.size());
+            request.setPageRequest(pageRequest);
+        }
         fieldsProvider.get().addRows(request, resultPageBuilder);
         pageRequest = reducePageRequest(pageRequest, resultPageBuilder.size());
         functionsProvider.get().addRows(pageRequest, parentPath, stringMatcher, resultPageBuilder);
