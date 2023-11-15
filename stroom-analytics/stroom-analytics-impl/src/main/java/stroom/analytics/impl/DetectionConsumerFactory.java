@@ -51,11 +51,7 @@ public class DetectionConsumerFactory {
                 return () -> new DetectionConsumer() {
                     @Override
                     public void accept(final Detection detection) {
-                        emailSenderProvider.get()
-                                .send(
-                                        emailDestination.getEmailAddress(),
-                                        emailDestination.getEmailAddress(),
-                                        detection);
+                        emailSenderProvider.get().send(emailDestination, detection);
                     }
 
                     @Override

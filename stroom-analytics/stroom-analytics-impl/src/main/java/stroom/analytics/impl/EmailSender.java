@@ -18,6 +18,7 @@
 
 package stroom.analytics.impl;
 
+import stroom.analytics.shared.AnalyticNotificationEmailDestination;
 import stroom.util.json.JsonUtil;
 
 import com.google.common.base.Preconditions;
@@ -29,10 +30,11 @@ import org.simplejavamail.mailer.config.TransportStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.function.Consumer;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
-import javax.mail.Message;
+import javax.mail.Message.RecipientType;
 
 @Singleton
 class EmailSender {
@@ -46,7 +48,7 @@ class EmailSender {
         this.analyticsConfigProvider = analyticsConfigProvider;
     }
 
-    public void send(final String name, final String emailAddress, final Detection detection) {
+    public void send(final AnalyticNotificationEmailDestination emailDestination, final Detection detection) {
         final AnalyticsConfig analyticsConfig = analyticsConfigProvider.get();
         final EmailConfig emailConfig = analyticsConfig.getEmailConfig();
         Preconditions.checkNotNull(emailConfig, "Missing 'email' section in config");
@@ -72,7 +74,12 @@ class EmailSender {
         final Email email = new Email();
         email.setFromAddress(emailConfig.getFromName(), emailConfig.getFromAddress());
         email.setReplyToAddress(emailConfig.getFromName(), emailConfig.getFromAddress());
-        email.addRecipient(name, emailAddress, Message.RecipientType.TO);
+        addAddresses(emailDestination.getTo(), address ->
+                email.addRecipient(address, address, RecipientType.TO));
+        addAddresses(emailDestination.getCc(), address ->
+                email.addRecipient(address, address, RecipientType.CC));
+        addAddresses(emailDestination.getBcc(), address ->
+                email.addRecipient(address, address, RecipientType.BCC));
         email.setSubject(detection.getDetectorName());
 
         try {
@@ -85,5 +92,17 @@ class EmailSender {
         LOGGER.info("Sending reset email to user {} at {}:{}",
                 serverConfig.getHost(), serverConfig.getPort(), serverConfig.getUsername());
         new Mailer(serverConfig, transportStrategy).sendMail(email);
+    }
+
+    private void addAddresses(final String addresses, final Consumer<String> consumer) {
+        if (addresses != null) {
+            final String[] emailAddresses = addresses.split(";");
+            for (final String emailAddress : emailAddresses) {
+                final String trimmed = emailAddress.trim();
+                if (trimmed.length() > 0) {
+                    consumer.accept(trimmed);
+                }
+            }
+        }
     }
 }
