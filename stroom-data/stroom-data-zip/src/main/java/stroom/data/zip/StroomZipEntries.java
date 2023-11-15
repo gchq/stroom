@@ -137,7 +137,7 @@ public class StroomZipEntries {
             return baseName;
         }
 
-        private boolean hasEntries() {
+        boolean hasEntries() {
             return Arrays.stream(entries)
                     .anyMatch(Objects::nonNull);
         }

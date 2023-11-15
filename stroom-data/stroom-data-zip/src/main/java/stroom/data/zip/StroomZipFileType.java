@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public enum StroomZipFileType {
+    // index values MUST be zero based and contiguous as they are used as array positions
     MANIFEST(0, "mf", "manifest"),
     META(1, "meta", "hdr", "header", "met"),
     CONTEXT(2, "ctx", "context"),

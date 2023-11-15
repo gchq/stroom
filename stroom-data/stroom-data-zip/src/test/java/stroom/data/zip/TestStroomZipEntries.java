@@ -14,6 +14,8 @@ import org.junit.jupiter.api.TestFactory;
 import java.util.List;
 import java.util.stream.Stream;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 class TestStroomZipEntries {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestStroomZipEntries.class);
@@ -121,13 +123,104 @@ class TestStroomZipEntries {
 
         final StroomZipEntry newZipEntry = newZipEntryGroup.getByType(StroomZipFileType.DATA).orElseThrow();
 
-        Assertions.assertThat(newZipEntry.getBaseName())
+        assertThat(newZipEntry.getBaseName())
                 .isEqualTo("001");
-        Assertions.assertThat(newZipEntry.getFullName())
+        assertThat(newZipEntry.getFullName())
                 .isEqualTo("001.mydata")
                 .isEqualTo(oldZipEntry.getFullName());
-        Assertions.assertThat(newZipEntry.getStroomZipFileType())
+        assertThat(newZipEntry.getStroomZipFileType())
                 .isEqualTo(StroomZipFileType.DATA)
                 .isEqualTo(oldZipEntry.getStroomZipFileType());
+    }
+
+    @Test
+    void testGetByType() {
+        final StroomZipEntries stroomZipEntries = new StroomZipEntries();
+        stroomZipEntries.addFile("001");
+        stroomZipEntries.addFile("001.ctx");
+        stroomZipEntries.addFile("001.meta");
+
+        stroomZipEntries.addFile("002.dat");
+        stroomZipEntries.addFile("002.ctx");
+        stroomZipEntries.addFile("002.meta");
+
+        assertThat(stroomZipEntries.getByType("001", StroomZipFileType.DATA))
+                .hasValue(StroomZipEntry.createFromFileName("001"));
+        assertThat(stroomZipEntries.getByType("001", StroomZipFileType.CONTEXT))
+                .hasValue(StroomZipEntry.createFromFileName("001.ctx"));
+        assertThat(stroomZipEntries.getByType("001", StroomZipFileType.META))
+                .hasValue(StroomZipEntry.createFromFileName("001.meta"));
+        assertThat(stroomZipEntries.getByType("001", StroomZipFileType.MANIFEST))
+                .isEmpty();
+
+        assertThat(stroomZipEntries.getByType("002", StroomZipFileType.DATA))
+                .hasValue(StroomZipEntry.createFromFileName("002.dat"));
+        assertThat(stroomZipEntries.getByType("002", StroomZipFileType.CONTEXT))
+                .hasValue(StroomZipEntry.createFromFileName("002.ctx"));
+        assertThat(stroomZipEntries.getByType("002", StroomZipFileType.META))
+                .hasValue(StroomZipEntry.createFromFileName("002.meta"));
+        assertThat(stroomZipEntries.getByType("002", StroomZipFileType.MANIFEST))
+                .isEmpty();
+
+        assertThat(stroomZipEntries.getGroups())
+                .hasSize(2);
+    }
+
+    // --------------------------------------------------------------------------------
+
+
+    @Test
+    void testStroomZipEntryGroup_Add() {
+        final StroomZipEntryGroup zipEntryGroup = new StroomZipEntryGroup("001");
+        // base name mismatch
+        final StroomZipEntry entryDat = StroomZipEntry.createFromFileName("001");
+        zipEntryGroup.add(entryDat);
+        final StroomZipEntry entryCtx = StroomZipEntry.createFromFileName("001.ctx");
+        zipEntryGroup.add(entryCtx);
+        final StroomZipEntry entryMeta = StroomZipEntry.createFromFileName("001.meta");
+        zipEntryGroup.add(entryMeta);
+
+        assertThat(zipEntryGroup.getByType(StroomZipFileType.DATA))
+                .hasValue(entryDat);
+        assertThat(zipEntryGroup.getByType(StroomZipFileType.CONTEXT))
+                .hasValue(entryCtx);
+        assertThat(zipEntryGroup.getByType(StroomZipFileType.META))
+                .hasValue(entryMeta);
+    }
+
+    @Test
+    void testStroomZipEntryGroup_Add_fail_mismatch() {
+        final StroomZipEntryGroup zipEntryGroup = new StroomZipEntryGroup("001");
+        // base name mismatch
+        Assertions.assertThatThrownBy(() -> {
+                    zipEntryGroup.add(StroomZipEntry.createFromFileName("002.dat"));
+                })
+                .isInstanceOf(RuntimeException.class);
+    }
+
+    @Test
+    void testStroomZipEntryGroup_Add_fail_dup() {
+        final StroomZipEntryGroup zipEntryGroup = new StroomZipEntryGroup("001");
+        zipEntryGroup.add(StroomZipEntry.createFromFileName("001.dat"));
+        // base name mismatch
+        Assertions.assertThatThrownBy(() -> {
+                    zipEntryGroup.add(StroomZipEntry.createFromFileName("001.dat"));
+                }).isInstanceOf(StroomZipNameException.class)
+                .hasMessageContaining("Duplicate");
+    }
+
+    @Test
+    void testStroomZipEntryGroup_HasEntries_true() {
+        final StroomZipEntryGroup zipEntryGroup = new StroomZipEntryGroup("001");
+        zipEntryGroup.add(StroomZipEntry.createFromFileName("001.dat"));
+        assertThat(zipEntryGroup.hasEntries())
+                .isTrue();
+    }
+
+    @Test
+    void testStroomZipEntryGroup_HasEntries_false() {
+        final StroomZipEntryGroup zipEntryGroup = new StroomZipEntryGroup("001");
+        assertThat(zipEntryGroup.hasEntries())
+                .isFalse();
     }
 }

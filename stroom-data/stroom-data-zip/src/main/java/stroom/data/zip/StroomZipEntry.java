@@ -4,6 +4,8 @@ import stroom.util.NullSafe;
 import stroom.util.io.FileName;
 import stroom.util.logging.LogUtil;
 
+import java.util.Objects;
+
 public class StroomZipEntry {
 
     private static final String SINGLE_ENTRY_ZIP_BASE_NAME = "001";
@@ -76,6 +78,24 @@ public class StroomZipEntry {
 
     public String getFullName() {
         return fullName;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        final StroomZipEntry zipEntry = (StroomZipEntry) o;
+        return Objects.equals(baseName, zipEntry.baseName) && Objects.equals(fullName,
+                zipEntry.fullName) && stroomZipFileType == zipEntry.stroomZipFileType;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(baseName, fullName, stroomZipFileType);
     }
 
     @Override

@@ -31,8 +31,10 @@ class TestStroomZipEntry {
                         new ZipEntryParts("001.unknown", "001.unknown", StroomZipFileType.DATA))
                 .addCase("001.ctx",
                         new ZipEntryParts("001", "001.ctx", StroomZipFileType.CONTEXT))
+                // Unknown extension so it is part of basename
                 .addCase("abc.001",
                         new ZipEntryParts("abc.001", "abc.001", StroomZipFileType.DATA))
+                // Unknown extension so it is part of basename
                 .addCase("abc.001.unknown",
                         new ZipEntryParts(
                                 "abc.001.unknown", "abc.001.unknown", StroomZipFileType.DATA))
