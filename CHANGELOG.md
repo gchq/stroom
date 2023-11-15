@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2.6] - 2023-11-15
+
+* Issue **#3909** : Add multiple recipients to rule notification emails.
+
+
 ## [v7.2.5] - 2023-11-10
 
 * Issue **#3898** : Improve task info and debug logging for `Index Shard Delete` job.
@@ -6157,7 +6162,8 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2.5...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2.6...HEAD
+[v7.2.6]: https://github.com/gchq/stroom/compare/v7.2.5...v7.2.6
 [v7.2.5]: https://github.com/gchq/stroom/compare/v7.2.4...v7.2.5
 [v7.2.4]: https://github.com/gchq/stroom/compare/v7.2.3...v7.2.4
 [v7.2.3]: https://github.com/gchq/stroom/compare/v7.2.2...v7.2.3
