@@ -12,10 +12,10 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.Widget;
 
-public class SelectionPopup extends Composite {
+public class SelectionPopup<T, I extends SelectionItem> extends Composite {
 
     private final PopupPanel popupPanel;
-    private final SelectionList selectionList;
+    private final SelectionList<T, I> selectionList;
 
     private final EventBinder eventBinder = new EventBinder() {
         @Override
@@ -27,7 +27,7 @@ public class SelectionPopup extends Composite {
 
     public SelectionPopup() {
         popupPanel = new PopupPanel();
-        selectionList = new SelectionList();
+        selectionList = new SelectionList<>();
 
         final SimplePopupLayout simplePopupLayout = new SimplePopupLayout();
         simplePopupLayout.setContent(selectionList);
@@ -41,11 +41,11 @@ public class SelectionPopup extends Composite {
         popupPanel.addAutoHidePartner(partner);
     }
 
-    public void setModel(final SelectionListModel model) {
+    public void setModel(final SelectionListModel<T, I> model) {
         selectionList.setModel(model);
     }
 
-    public MultiSelectionModel<SelectionItem> getSelectionModel() {
+    public MultiSelectionModel<I> getSelectionModel() {
         return selectionList.getSelectionModel();
     }
 

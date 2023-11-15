@@ -10,7 +10,7 @@ import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 
-public class SelectionItemCell extends AbstractCell<SelectionItem> {
+public class SelectionItemCell<I extends SelectionItem> extends AbstractCell<I> {
 
     private static Template template;
 
@@ -25,7 +25,7 @@ public class SelectionItemCell extends AbstractCell<SelectionItem> {
     }
 
     @Override
-    public void render(final Context context, final SelectionItem row, final SafeHtmlBuilder sb) {
+    public void render(final Context context, final I row, final SafeHtmlBuilder sb) {
         if (row != null) {
             final SafeHtmlBuilder content = new SafeHtmlBuilder();
             if (row.getIcon() != null) {

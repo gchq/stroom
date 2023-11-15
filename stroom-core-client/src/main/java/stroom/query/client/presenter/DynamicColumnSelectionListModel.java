@@ -14,6 +14,7 @@ import stroom.query.api.v2.Field.Builder;
 import stroom.query.api.v2.Format;
 import stroom.query.api.v2.ParamSubstituteUtil;
 import stroom.query.client.DataSourceClient;
+import stroom.query.client.presenter.DynamicColumnSelectionListModel.ColumnSelectionItem;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.PageRequest;
@@ -28,37 +29,36 @@ import java.util.List;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 
-public class DynamicColumnSelectionListModel implements SelectionListModel {
+public class DynamicColumnSelectionListModel implements SelectionListModel<Field, ColumnSelectionItem> {
 
     private final DataSourceClient dataSourceClient;
-    private final AsyncDataProvider<SelectionItem> dataProvider;
-    private final NavigationModel navigationModel = new NavigationModel();
+    private final AsyncDataProvider<ColumnSelectionItem> dataProvider;
+    private final NavigationModel<ColumnSelectionItem> navigationModel = new NavigationModel<>();
     private DocRef dataSourceRef;
     private StringMatch filter;
 
     @Inject
     public DynamicColumnSelectionListModel(final DataSourceClient dataSourceClient) {
         this.dataSourceClient = dataSourceClient;
-        dataProvider = new AsyncDataProvider<SelectionItem>() {
+        dataProvider = new AsyncDataProvider<ColumnSelectionItem>() {
             @Override
-            protected void onRangeChanged(final HasData<SelectionItem> display) {
+            protected void onRangeChanged(final HasData<ColumnSelectionItem> display) {
                 refresh(display);
             }
         };
     }
 
-    private void refresh(final HasData<SelectionItem> display) {
+    private void refresh(final HasData<ColumnSelectionItem> display) {
         if (dataSourceRef != null) {
             final Range range = display.getVisibleRange();
             final PageRequest pageRequest = new PageRequest(range.getStart(), range.getLength());
             String parentPath = "";
             if (!navigationModel.getPath().isEmpty()) {
-                final SelectionItem lastItem = navigationModel.getPath().peek();
-                final ColumnSelectionItem columnSelectionItem = (ColumnSelectionItem) lastItem;
-                if (columnSelectionItem.getField() != null) {
-                    parentPath = FieldInfo.FIELDS_PARENT + columnSelectionItem.getField().getName();
+                final ColumnSelectionItem lastItem = navigationModel.getPath().peek();
+                if (lastItem.getField() != null) {
+                    parentPath = FieldInfo.FIELDS_PARENT + lastItem.getField().getName();
                 } else {
-                    parentPath = columnSelectionItem.getLabel() + ".";
+                    parentPath = lastItem.getLabel() + ".";
                 }
             }
 
@@ -102,14 +102,15 @@ public class DynamicColumnSelectionListModel implements SelectionListModel {
                         dataSourceRef,
                         FieldInfo.FIELDS_PARENT,
                         StringMatch.contains("annotation:"));
-                dataSourceClient.findFields(findFieldInfoCriteria, result -> {
-                    final List<SelectionItem> items = result
+                dataSourceClient.findFields(findFieldInfoCriteria, response -> {
+                    final List<ColumnSelectionItem> items = response
                             .getValues()
                             .stream()
                             .map(ColumnSelectionItem::create)
                             .collect(Collectors.toList());
-                    display.setRowData(0, items);
-                    display.setRowCount(result.getPageResponse().getLength(), true);
+                    display.setRowData((int) response.getPageResponse().getOffset(), items);
+                    display.setRowCount(response.getPageResponse().getTotal().intValue(),
+                            response.getPageResponse().isExact());
                 });
 
             } else if (FieldInfo.FIELDS_PARENT.equals(parentPath)) {
@@ -119,14 +120,15 @@ public class DynamicColumnSelectionListModel implements SelectionListModel {
                         dataSourceRef,
                         FieldInfo.FIELDS_PARENT,
                         filter);
-                dataSourceClient.findFields(findFieldInfoCriteria, result -> {
-                    final List<SelectionItem> items = result
+                dataSourceClient.findFields(findFieldInfoCriteria, response -> {
+                    final List<ColumnSelectionItem> items = response
                             .getValues()
                             .stream()
                             .map(ColumnSelectionItem::create)
                             .collect(Collectors.toList());
-                    display.setRowData(0, items);
-                    display.setRowCount(result.getPageResponse().getLength(), true);
+                    display.setRowData((int) response.getPageResponse().getOffset(), items);
+                    display.setRowCount(response.getPageResponse().getTotal().intValue(),
+                            response.getPageResponse().isExact());
                 });
             }
         }
@@ -137,12 +139,12 @@ public class DynamicColumnSelectionListModel implements SelectionListModel {
     }
 
     @Override
-    public AbstractDataProvider<SelectionItem> getDataProvider() {
+    public AbstractDataProvider<ColumnSelectionItem> getDataProvider() {
         return dataProvider;
     }
 
     @Override
-    public NavigationModel getNavigationModel() {
+    public NavigationModel<ColumnSelectionItem> getNavigationModel() {
         return navigationModel;
     }
 
@@ -159,7 +161,7 @@ public class DynamicColumnSelectionListModel implements SelectionListModel {
 
     @Override
     public void refresh() {
-        for (final HasData<SelectionItem> display : dataProvider.getDataDisplays()) {
+        for (final HasData<ColumnSelectionItem> display : dataProvider.getDataDisplays()) {
             refresh(display);
         }
     }
@@ -172,6 +174,19 @@ public class DynamicColumnSelectionListModel implements SelectionListModel {
     @Override
     public boolean displayPager() {
         return true;
+    }
+
+    @Override
+    public ColumnSelectionItem wrap(final Field item) {
+        return new ColumnSelectionItem(item, item.getDisplayValue(), false);
+    }
+
+    @Override
+    public Field unwrap(final ColumnSelectionItem selectionItem) {
+        if (selectionItem == null) {
+            return null;
+        }
+        return selectionItem.getField();
     }
 
     public static class ColumnSelectionItem implements SelectionItem {

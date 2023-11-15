@@ -23,9 +23,8 @@ import stroom.datasource.api.v2.FieldType;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
-import stroom.item.client.AbstractSelectionBox;
+import stroom.item.client.BaseSelectionBox;
 import stroom.item.client.SelectionBox;
-import stroom.item.client.SelectionItem;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.client.presenter.FieldInfoSelectionItem;
 import stroom.query.client.presenter.FieldSelectionListModel;
@@ -57,7 +56,7 @@ public class TermEditor extends Composite {
     private static final String NARROW_CLASS_NAME = "narrow";
 
     private final FlowPanel layout;
-    private final AbstractSelectionBox<FieldInfo> fieldListBox;
+    private final BaseSelectionBox<FieldInfo, FieldInfoSelectionItem> fieldListBox;
     private final SelectionBox<Condition> conditionListBox;
     private final Label andLabel;
     private final SuggestBox value;
@@ -554,24 +553,9 @@ public class TermEditor extends Composite {
         registrations.add(handlerRegistration);
     }
 
-    private AbstractSelectionBox<FieldInfo> createFieldBox() {
-        final AbstractSelectionBox<FieldInfo> fieldListBox = new AbstractSelectionBox<FieldInfo>() {
-            @Override
-            protected SelectionItem wrap(final FieldInfo item) {
-                if (item == null) {
-                    return null;
-                }
-                return new FieldInfoSelectionItem(item);
-            }
-
-            @Override
-            protected FieldInfo unwrap(final SelectionItem selectionItem) {
-                if (selectionItem == null) {
-                    return null;
-                }
-                return ((FieldInfoSelectionItem) selectionItem).getFieldInfo();
-            }
-        };
+    private BaseSelectionBox<FieldInfo, FieldInfoSelectionItem> createFieldBox() {
+        final BaseSelectionBox<FieldInfo, FieldInfoSelectionItem> fieldListBox =
+                new BaseSelectionBox<FieldInfo, FieldInfoSelectionItem>();
         fieldListBox.addStyleName(ITEM_CLASS_NAME);
         fieldListBox.addStyleName(DROPDOWN_CLASS_NAME);
         fieldListBox.addStyleName("field");

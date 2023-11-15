@@ -6,7 +6,6 @@ import stroom.widget.dropdowntree.client.view.QuickFilter;
 import stroom.widget.util.client.AbstractSelectionEventManager;
 import stroom.widget.util.client.DoubleSelectTester;
 import stroom.widget.util.client.MouseUtil;
-import stroom.widget.util.client.MultiSelectEvent;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 import stroom.widget.util.client.SelectionType;
@@ -27,21 +26,17 @@ import com.google.gwt.view.client.CellPreviewEvent;
 
 import java.util.List;
 
-public class SelectionList extends Composite {
-
+public class SelectionList<T, I extends SelectionItem> extends Composite {
 
     private final QuickFilter quickFilter;
     private final FlowPanel links;
-    private final CellTable<SelectionItem> cellTable;
-    private SelectionListModel model;
+    private final CellTable<I> cellTable;
+    private SelectionListModel<T, I> model;
 
 
-    private final ExplorerTreeSelectionEventManager selectionEventManager;
-    private final MultiSelectionModelImpl<SelectionItem> selectionModel;
+    private final ExplorerTreeSelectionEventManager<T, I> selectionEventManager;
+    private final MultiSelectionModelImpl<I> selectionModel;
 
-
-    //    private final MySingleSelectionModel<SelectionItem> selectionModel;
-//    private final SelectionEventManager selectionEventManager;
     private final EventBinder eventBinder = new EventBinder() {
         @Override
         protected void onBind() {
@@ -54,17 +49,9 @@ public class SelectionList extends Composite {
     };
 
     public SelectionList() {
-//        uiConfigCache.get()
-//                .onSuccess(uiConfig ->
-//                        quickFilter.registerPopupTextProvider(() ->
-//                                QuickFilterTooltipUtil.createTooltip(
-//                                        "Query Item Quick Filter",
-//                                        ExplorerTreeFilter.FIELD_DEFINITIONS,
-//                                        uiConfig.getHelpUrl())));
-
-        cellTable = new MyCellTable<SelectionItem>(100) {
+        cellTable = new MyCellTable<I>(100) {
             @Override
-            public void setRowData(final int start, final List<? extends SelectionItem> values) {
+            public void setRowData(final int start, final List<? extends I> values) {
                 super.setRowData(start, values);
 
                 // Only update the path when we get data.
@@ -76,17 +63,14 @@ public class SelectionList extends Composite {
         };
 
         selectionModel = new MultiSelectionModelImpl<>(cellTable);
-        selectionEventManager = new ExplorerTreeSelectionEventManager(cellTable, selectionModel);
-
-//        selectionModel = new MySingleSelectionModel<>();
-//        selectionEventManager = new SelectionEventManager(cellTable, selectionModel);
+        selectionEventManager = new ExplorerTreeSelectionEventManager<>(cellTable, selectionModel);
         cellTable.setSelectionModel(selectionModel, selectionEventManager);
         cellTable.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.BOUND_TO_SELECTION);
 
-        final Column<SelectionItem, SelectionItem> expanderColumn =
-                new Column<SelectionItem, SelectionItem>(new SelectionItemCell()) {
+        final Column<I, I> expanderColumn =
+                new Column<I, I>(new SelectionItemCell<>()) {
                     @Override
-                    public SelectionItem getValue(final SelectionItem object) {
+                    public I getValue(final I object) {
                         return object;
                     }
                 };
@@ -136,51 +120,37 @@ public class SelectionList extends Composite {
         eventBinder.unbind();
     }
 
-    public void setModel(final SelectionListModel model) {
+    public void setModel(final SelectionListModel<T, I> model) {
         this.model = model;
         selectionEventManager.setModel(model);
         model.getDataProvider().addDataDisplay(cellTable);
     }
 
-    public MultiSelectionModel<SelectionItem> getSelectionModel() {
+    public MultiSelectionModel<I> getSelectionModel() {
         return selectionModel;
     }
 
-    private static class ExplorerTreeSelectionEventManager extends AbstractSelectionEventManager<SelectionItem> {
+    private static class ExplorerTreeSelectionEventManager<T, I extends SelectionItem>
+            extends AbstractSelectionEventManager<I> {
 
-        private final MultiSelectionModelImpl<SelectionItem> selectionModel;
+        private final MultiSelectionModelImpl<I> selectionModel;
         private final DoubleSelectTester doubleClickTest = new DoubleSelectTester();
         private final boolean allowMultiSelect = false;
-        //        private SelectionItem multiSelectStart;
-        private SelectionListModel model;
+        private SelectionListModel<T, I> model;
 
-        public ExplorerTreeSelectionEventManager(final AbstractHasData<SelectionItem> cellTable,
-                                                 final MultiSelectionModelImpl<SelectionItem> selectionModel) {
+        public ExplorerTreeSelectionEventManager(final AbstractHasData<I> cellTable,
+                                                 final MultiSelectionModelImpl<I> selectionModel) {
             super(cellTable);
             this.selectionModel = selectionModel;
         }
 
-        public void setModel(final SelectionListModel model) {
+        public void setModel(final SelectionListModel<T, I> model) {
             this.model = model;
         }
 
-//    @Override
-//        protected void onMoveRight(final CellPreviewEvent<SelectionItem> e) {
-////            if (e.getValue().hasNodeFlags(NodeFlag.LEAF)) {
-////                showMenu(e);
-////            } else {
-////                treeModel.setItemOpen(e.getValue(), true);
-////            }
-//        }
-//
-//        @Override
-//        protected void onMoveLeft(final CellPreviewEvent<SelectionItem> e) {
-////            treeModel.setItemOpen(e.getValue(), false);
-//        }
-
         @Override
-        protected void onMoveRight(final CellPreviewEvent<SelectionItem> e) {
-            final SelectionItem value = e.getValue();
+        protected void onMoveRight(final CellPreviewEvent<I> e) {
+            final I value = e.getValue();
             if (value != null && value.isHasChildren()) {
                 if (model != null &&
                         model.getNavigationModel() != null &&
@@ -191,24 +161,18 @@ public class SelectionList extends Composite {
         }
 
         @Override
-        protected void onMoveLeft(final CellPreviewEvent<SelectionItem> e) {
+        protected void onMoveLeft(final CellPreviewEvent<I> e) {
             if (model != null &&
                     model.getNavigationModel() != null &&
                     model.getNavigationModel().navigateBack()) {
                 model.refresh();
             }
-
-
-//                if (!openItems.empty()) {
-//                    openItems.pop();
-//                    model.refresh();
-//                }
         }
 
         @Override
-        protected void onExecute(final CellPreviewEvent<SelectionItem> e) {
+        protected void onExecute(final CellPreviewEvent<I> e) {
             final NativeEvent nativeEvent = e.getNativeEvent();
-            final SelectionItem item = e.getValue();
+            final I item = e.getValue();
             doSelect(item,
                     new SelectionType(true,
                             false,
@@ -218,7 +182,7 @@ public class SelectionList extends Composite {
         }
 
         @Override
-        protected void onSelect(final CellPreviewEvent<SelectionItem> e) {
+        protected void onSelect(final CellPreviewEvent<I> e) {
             final NativeEvent nativeEvent = e.getNativeEvent();
             // Change the selection.
             doSelect(e.getValue(),
@@ -230,29 +194,26 @@ public class SelectionList extends Composite {
         }
 
         @Override
-        protected void onMenu(final CellPreviewEvent<SelectionItem> e) {
+        protected void onMenu(final CellPreviewEvent<I> e) {
 //            showMenu(e);
         }
 
         @Override
-        protected void onSelectAll(final CellPreviewEvent<SelectionItem> e) {
+        protected void onSelectAll(final CellPreviewEvent<I> e) {
 //            selectAll();
         }
 
         @Override
-        protected void onMouseDown(final CellPreviewEvent<SelectionItem> e) {
+        protected void onMouseDown(final CellPreviewEvent<I> e) {
             final NativeEvent nativeEvent = e.getNativeEvent();
-            if (MouseUtil.isSecondary(nativeEvent)) {
-//                showMenu(e);
-
-            } else if (MouseUtil.isPrimary(nativeEvent)) {
+            if (MouseUtil.isPrimary(nativeEvent)) {
                 select(e);
             }
         }
 
-        private void select(final CellPreviewEvent<SelectionItem> e) {
+        private void select(final CellPreviewEvent<I> e) {
             final NativeEvent nativeEvent = e.getNativeEvent();
-            final SelectionItem selectedItem = e.getValue();
+            final I selectedItem = e.getValue();
             if (selectedItem != null && MouseUtil.isPrimary(nativeEvent)) {
                 if (!selectedItem.isHasChildren()) {
                     final boolean doubleClick = doubleClickTest.test(selectedItem);
@@ -263,12 +224,6 @@ public class SelectionList extends Composite {
                                     nativeEvent.getCtrlKey(),
                                     nativeEvent.getShiftKey()));
                 } else {
-//                    final Element element = nativeEvent.getEventTarget().cast();
-//
-//                    // Expander
-//                    if ((ElementUtil.hasClassName(element, expanderClassName, 0, 5))) {
-//                        treeModel.toggleOpenState(selectedItem);
-//                    } else {
                     final boolean doubleClick = doubleClickTest.test(selectedItem);
                     doSelect(selectedItem,
                             new SelectionType(doubleClick,
@@ -276,59 +231,13 @@ public class SelectionList extends Composite {
                                     allowMultiSelect,
                                     nativeEvent.getCtrlKey(),
                                     nativeEvent.getShiftKey()));
-//                    }
                 }
             }
         }
 
-        void doSelect(final SelectionItem row, final SelectionType selectionType) {
+        void doSelect(final I row, final SelectionType selectionType) {
             if (selectionModel != null) {
-//                final Selection<SelectionItem> selection = selectionModel.getSelection();
-//
-//                if (allowMultiSelect) {
-//                    if (row == null) {
-//                        multiSelectStart = null;
-//                        selection.clear();
-//                    } else if (selectionType.isAllowMultiSelect() &&
-//                            selectionType.isShiftPressed() &&
-//                            multiSelectStart != null) {
-//                        // If control isn't pressed as well as shift then we are selecting a new range so clear.
-//                        if (!selectionType.isControlPressed()) {
-//                            selection.clear();
-//                        }
-//
-//                        final int index1 = rows.indexOf(multiSelectStart);
-//                        final int index2 = rows.indexOf(row);
-//                        if (index1 != -1 && index2 != -1) {
-//                            final int start = Math.min(index1, index2);
-//                            final int end = Math.max(index1, index2);
-//                            for (int i = start; i <= end; i++) {
-//                                selection.setSelected(rows.get(i), true);
-//                            }
-//                        } else if (selectionType.isControlPressed()) {
-//                            multiSelectStart = row;
-//                            selection.setSelected(row, !selection.isSelected(row));
-//                        } else {
-//                            multiSelectStart = row;
-//                            selection.setSelected(row);
-//                        }
-//                    } else if (selectionType.isAllowMultiSelect() && selectionType.isControlPressed()) {
-//                        multiSelectStart = row;
-//                        selection.setSelected(row, !selection.isSelected(row));
-//                    } else {
-//                        multiSelectStart = row;
-//                        selection.setSelected(row);
-//                    }
-//
-//                    selectionModel.setSelection(selection, selectionType);
-//
-//                } else if (!selectionModel.isSelected(row)) {
-//                    selectionModel.clear();
-//                    selectionModel.setSelected(row);
-//                }
-
                 if (!selectionModel.isSelected(row)) {
-                    selectionModel.clear();
                     selectionModel.setSelected(row);
                 }
 
@@ -342,177 +251,26 @@ public class SelectionList extends Composite {
                                 model.refresh();
                             }
                         } else {
-                            fireSelectEvent(row, selectionType);
+                            setKeyboardSelection(row);
                         }
                     }
                 } else {
-                    fireSelectEvent(row, selectionType);
+                    setKeyboardSelection(row);
                 }
             }
         }
 
-        private void fireSelectEvent(final SelectionItem value, final SelectionType selectionType) {
+        private void setKeyboardSelection(final I value) {
             final int row = cellTable.getVisibleItems().indexOf(value);
             if (row >= 0) {
                 cellTable.setKeyboardSelectedRow(row, true);
             } else {
                 cellTable.setKeyboardSelectedRow(cellTable.getKeyboardSelectedRow(), true);
             }
-            MultiSelectEvent.fire(cellTable, selectionType);
         }
     }
 
-//    private static class SelectionEventManager extends AbstractSelectionEventManager<SelectionItem> {
-//
-//        private final MySingleSelectionModel<SelectionItem> selectionModel;
-//        private final DoubleSelectTester doubleClickTest = new DoubleSelectTester();
-//        private SelectionListModel model;
-//
-//        public SelectionEventManager(final AbstractHasData<SelectionItem> cellTable,
-//                                     final MySingleSelectionModel<SelectionItem> selectionModel) {
-//            super(cellTable);
-//            this.selectionModel = selectionModel;
-//        }
-//
-//        public void setModel(final SelectionListModel model) {
-//            this.model = model;
-//        }
-//
-//        @Override
-//        protected void onSelect(final CellPreviewEvent<SelectionItem> e) {
-//            select(e.getValue());
-//        }
-//
-//        @Override
-//        protected void onMouseDown(final CellPreviewEvent<SelectionItem> e) {
-//            final NativeEvent nativeEvent = e.getNativeEvent();
-//            final SelectionItem value = e.getValue();
-//            final int row = cellTable.getVisibleItems().indexOf(value);
-//            if (row >= 0) {
-//                cellTable.setKeyboardSelectedRow(row, true);
-//            } else {
-//                cellTable.setKeyboardSelectedRow(cellTable.getKeyboardSelectedRow(), true);
-//            }
-//
-//            if (MouseUtil.isPrimary(nativeEvent)) {
-//                select(value);
-//                if (doubleClickTest.test(value)) {
-//                    if (value != null) {
-//                        if (value.isHasChildren()) {
-//                            // Open item.
-//                            if (model != null &&
-//                                    model.getNavigationModel() != null &&
-//                                    model.getNavigationModel().navigate(value)) {
-//                                model.refresh();
-//                            }
-//                        } else {
-//                            exec(e.getValue());
-//                        }
-//                    }
-//                }
-//            }
-//
-//
-////                // We set focus here so that we can use the keyboard to navigate once we have focus.
-////                cellTable.setFocus(true);
-////
-////                final SelectionItem value = e.getValue();
-////                select(value);
-////
-////                // Set current keyboard selection.
-////                if (value != null) {
-////                    final int row = cellTable.getVisibleItems().indexOf(e.getValue());
-////                    if (row >= 0) {
-////                        cellTable.setKeyboardSelectedRow(row, true);
-////                    }
-////                }
-////
-////                if (doubleSelectTest.test(value)) {
-////                    if (value != null) {
-////                        if (value.isHasChildren()) {
-////                            // Open item.
-////                            if (model != null &&
-////                                    model.getNavigationModel() != null &&
-////                                    model.getNavigationModel().navigate(value)) {
-////                                model.refresh();
-////                            }
-////                        } else {
-////                            exec(e.getValue());
-////                        }
-////                    }
-////                }
-//        }
-//
-//        @Override
-//        protected void onMoveRight(final CellPreviewEvent<SelectionItem> e) {
-//            final SelectionItem value = e.getValue();
-//            if (value != null && value.isHasChildren()) {
-//                if (model != null &&
-//                        model.getNavigationModel() != null &&
-//                        model.getNavigationModel().navigate(value)) {
-//                    model.refresh();
-//                }
-//            }
-//        }
-//
-//        @Override
-//        protected void onMoveLeft(final CellPreviewEvent<SelectionItem> e) {
-//            if (model != null &&
-//                    model.getNavigationModel() != null &&
-//                    model.getNavigationModel().navigateBack()) {
-//                model.refresh();
-//            }
-//
-//
-////                if (!openItems.empty()) {
-////                    openItems.pop();
-////                    model.refresh();
-////                }
-//        }
-//
-//        @Override
-//        protected void onMoveDown(final CellPreviewEvent<SelectionItem> e) {
-//            super.onMoveDown(e);
-//            final SelectionItem keyboardSelectedItem = cellTable.getVisibleItem(
-//                    cellTable.getKeyboardSelectedRow());
-//            select(keyboardSelectedItem);
-//        }
-//
-//        @Override
-//        protected void onMoveUp(final CellPreviewEvent<SelectionItem> e) {
-//            super.onMoveUp(e);
-//            final SelectionItem keyboardSelectedItem = cellTable.getVisibleItem(
-//                    cellTable.getKeyboardSelectedRow());
-//            select(keyboardSelectedItem);
-//        }
-//
-//        @Override
-//        protected void onExecute(final CellPreviewEvent<SelectionItem> e) {
-//            exec(e.getValue());
-//        }
-//
-//        private void exec(final SelectionItem row) {
-//            if (selectionModel != null) {
-//                // Simulate double select.
-//                selectionModel.setSelected(row, true);
-//                selectionModel.setSelected(row, true);
-//            }
-//        }
-//
-//        private void select(final SelectionItem row) {
-//            if (selectionModel != null) {
-//                if (row == null) {
-//                    selectionModel.clear();
-//                } else {
-//                    selectionModel.setSelected(row, true);
-//                }
-////        updateDetails(row);
-//            }
-//        }
-//    }
-
-
-    private void setPath(final List<SelectionItem> path) {
+    private void setPath(final List<I> path) {
         links.clear();
         if (path.size() == 0) {
             links.add(new Label("Help"));
@@ -521,7 +279,7 @@ public class SelectionList extends Composite {
         }
         for (int i = 0; i < path.size(); i++) {
             links.add(new Label("/"));
-            final SelectionItem row = path.get(i);
+            final I row = path.get(i);
             if (i < path.size() - 1) {
                 links.add(createLink(row.getLabel(), row));
             } else {
@@ -530,7 +288,7 @@ public class SelectionList extends Composite {
         }
     }
 
-    private Hyperlink createLink(final String label, final SelectionItem row) {
+    private Hyperlink createLink(final String label, final I row) {
         final Hyperlink link = new Hyperlink();
         link.setText(label);
         link.addHandler(event -> {

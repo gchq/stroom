@@ -1893,9 +1893,38 @@ button.main-menu svg {
     overflow: hidden;
 }
 
+.SelectionPopup .simplePopup-content {
+    width: 300px;
+    height: 400px;
+}
+
 .selectionList .cellTableCell {
      display: flex;
      align-items: center;
+     min-height: 20px;
+}
+
+.selectionList .cellTableSelectedRow {
+	background-color: var(--row__background-color--selected);
+	color: var(--row__text-color--selected);
+}
+
+.selectionList .cellTableOddRow:hover,
+.selectionList .cellTableEvenRow:hover {
+    background-color: var(--row__background-color--hovered);
+}
+
+.selectionList .cellTableSelectedRow:hover {
+    background-color: var(--row__background-color--selected--hovered);
+}
+
+.selectionList .cellTableOddRow:focus-within,
+.selectionList .cellTableEvenRow:focus-within {
+    background-color: var(--row__background-color--focussed);
+}
+
+.selectionList .cellTableSelectedRow:focus-within {
+    background-color: var(--row__background-color--selected--focussed);
 }
 
 .selectionList-links {
@@ -1922,7 +1951,6 @@ button.main-menu svg {
 }
 
 .selectionItemCell-expander {
-    color: var(--grey-600);
 	display: flex;
 }
 

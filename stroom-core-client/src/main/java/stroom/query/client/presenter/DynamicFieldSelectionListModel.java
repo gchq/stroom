@@ -5,7 +5,6 @@ import stroom.datasource.api.v2.FindFieldInfoCriteria;
 import stroom.docref.DocRef;
 import stroom.docref.StringMatch;
 import stroom.item.client.NavigationModel;
-import stroom.item.client.SelectionItem;
 import stroom.query.client.DataSourceClient;
 import stroom.util.shared.PageRequest;
 
@@ -22,23 +21,23 @@ import javax.inject.Inject;
 public class DynamicFieldSelectionListModel implements FieldSelectionListModel {
 
     private final DataSourceClient dataSourceClient;
-    private final AsyncDataProvider<SelectionItem> dataProvider;
-    private final NavigationModel navigationModel = new NavigationModel();
+    private final AsyncDataProvider<FieldInfoSelectionItem> dataProvider;
+    private final NavigationModel<FieldInfoSelectionItem> navigationModel = new NavigationModel<>();
     private DocRef dataSourceRef;
     private StringMatch filter;
 
     @Inject
     public DynamicFieldSelectionListModel(final DataSourceClient dataSourceClient) {
         this.dataSourceClient = dataSourceClient;
-        dataProvider = new AsyncDataProvider<SelectionItem>() {
+        dataProvider = new AsyncDataProvider<FieldInfoSelectionItem>() {
             @Override
-            protected void onRangeChanged(final HasData<SelectionItem> display) {
+            protected void onRangeChanged(final HasData<FieldInfoSelectionItem> display) {
                 refresh(display);
             }
         };
     }
 
-    private void refresh(final HasData<SelectionItem> display) {
+    private void refresh(final HasData<FieldInfoSelectionItem> display) {
         if (dataSourceRef != null) {
             final Range range = display.getVisibleRange();
             final FindFieldInfoCriteria findFieldInfoCriteria = new FindFieldInfoCriteria(
@@ -47,14 +46,15 @@ public class DynamicFieldSelectionListModel implements FieldSelectionListModel {
                     dataSourceRef,
                     FieldInfo.FIELDS_PARENT,
                     filter);
-            dataSourceClient.findFields(findFieldInfoCriteria, result -> {
-                final List<SelectionItem> items = result
+            dataSourceClient.findFields(findFieldInfoCriteria, response -> {
+                final List<FieldInfoSelectionItem> items = response
                         .getValues()
                         .stream()
-                        .map(FieldInfoSelectionItem::new)
+                        .map(this::wrap)
                         .collect(Collectors.toList());
-                display.setRowData(0, items);
-                display.setRowCount(result.getPageResponse().getLength(), true);
+                display.setRowData((int) response.getPageResponse().getOffset(), items);
+                display.setRowCount(response.getPageResponse().getTotal().intValue(),
+                        response.getPageResponse().isExact());
             });
         }
     }
@@ -64,12 +64,12 @@ public class DynamicFieldSelectionListModel implements FieldSelectionListModel {
     }
 
     @Override
-    public AbstractDataProvider<SelectionItem> getDataProvider() {
+    public AbstractDataProvider<FieldInfoSelectionItem> getDataProvider() {
         return dataProvider;
     }
 
     @Override
-    public NavigationModel getNavigationModel() {
+    public NavigationModel<FieldInfoSelectionItem> getNavigationModel() {
         return navigationModel;
     }
 
@@ -86,7 +86,7 @@ public class DynamicFieldSelectionListModel implements FieldSelectionListModel {
 
     @Override
     public void refresh() {
-        for (final HasData<SelectionItem> display : dataProvider.getDataDisplays()) {
+        for (final HasData<FieldInfoSelectionItem> display : dataProvider.getDataDisplays()) {
             refresh(display);
         }
     }
@@ -104,5 +104,18 @@ public class DynamicFieldSelectionListModel implements FieldSelectionListModel {
     @Override
     public boolean displayPager() {
         return true;
+    }
+
+    @Override
+    public FieldInfoSelectionItem wrap(final FieldInfo item) {
+        return new FieldInfoSelectionItem(item);
+    }
+
+    @Override
+    public FieldInfo unwrap(final FieldInfoSelectionItem selectionItem) {
+        if (selectionItem == null) {
+            return null;
+        }
+        return selectionItem.getFieldInfo();
     }
 }

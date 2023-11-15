@@ -5,6 +5,6 @@ import stroom.item.client.SelectionListModel;
 
 import java.util.function.Consumer;
 
-public interface FieldSelectionListModel extends SelectionListModel {
+public interface FieldSelectionListModel extends SelectionListModel<FieldInfo, FieldInfoSelectionItem> {
     void findFieldByName(String fieldName, Consumer<FieldInfo> consumer);
 }

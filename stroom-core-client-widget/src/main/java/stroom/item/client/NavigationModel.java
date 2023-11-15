@@ -2,11 +2,11 @@ package stroom.item.client;
 
 import java.util.Stack;
 
-public class NavigationModel {
+public class NavigationModel<I extends SelectionItem> {
 
-    private final Stack<SelectionItem> openItems = new Stack<>();
+    private final Stack<I> openItems = new Stack<>();
 
-    public boolean navigate(SelectionItem selectionItem) {
+    public boolean navigate(I selectionItem) {
         openItems.push(selectionItem);
         return true;
     }
@@ -19,7 +19,7 @@ public class NavigationModel {
         return false;
     }
 
-    public boolean navigateBack(SelectionItem selectionItem) {
+    public boolean navigateBack(I selectionItem) {
         if (!openItems.empty()) {
             if (selectionItem == null) {
                 openItems.clear();
@@ -34,7 +34,7 @@ public class NavigationModel {
         return false;
     }
 
-    public Stack<SelectionItem> getPath() {
+    public Stack<I> getPath() {
         return openItems;
     }
 }

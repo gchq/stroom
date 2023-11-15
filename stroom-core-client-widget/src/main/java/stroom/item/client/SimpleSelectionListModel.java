@@ -1,5 +1,7 @@
 package stroom.item.client;
 
+import stroom.docref.HasDisplayValue;
+
 import com.google.gwt.view.client.AbstractDataProvider;
 import com.google.gwt.view.client.ListDataProvider;
 
@@ -8,23 +10,24 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 
-public class SimpleSelectionListModel<T> implements SelectionListModel {
+public class SimpleSelectionListModel<T> implements SelectionListModel<T, SimpleSelectionItemWrapper<T>> {
 
-    protected final List<SelectionItem> items = new ArrayList<>();
+    protected final List<SimpleSelectionItemWrapper<T>> items = new ArrayList<>();
 
     private String lastFilter;
-    private final ListDataProvider<SelectionItem> dataProvider = new ListDataProvider<>();
-    private String nonSelectString;
+    private final ListDataProvider<SimpleSelectionItemWrapper<T>> dataProvider = new ListDataProvider<>();
 
     @Override
-    public AbstractDataProvider<SelectionItem> getDataProvider() {
+    public AbstractDataProvider<SimpleSelectionItemWrapper<T>> getDataProvider() {
         return dataProvider;
     }
 
     @Override
-    public NavigationModel getNavigationModel() {
+    public NavigationModel<SimpleSelectionItemWrapper<T>> getNavigationModel() {
         return null;
     }
+
+    private SimpleSelectionItemWrapper<T> nonSelectItem;
 
     @Override
     public void setFilter(final String filter) {
@@ -37,8 +40,8 @@ public class SimpleSelectionListModel<T> implements SelectionListModel {
     @Override
     public void refresh() {
         if (lastFilter != null && !lastFilter.isEmpty()) {
-            final List<SelectionItem> filteredItems = new ArrayList<>(items.size());
-            for (final SelectionItem item : items) {
+            final List<SimpleSelectionItemWrapper<T>> filteredItems = new ArrayList<>(items.size());
+            for (final SimpleSelectionItemWrapper<T> item : items) {
                 if (item.getLabel().toLowerCase().contains(lastFilter)) {
                     filteredItems.add(item);
                 }
@@ -53,12 +56,8 @@ public class SimpleSelectionListModel<T> implements SelectionListModel {
     }
 
     public void setNonSelectString(final String nonSelectString) {
-        this.nonSelectString = nonSelectString;
-    }
-
-    @Override
-    public String getNonSelectString() {
-        return nonSelectString;
+        nonSelectItem = new SimpleSelectionItemWrapper<>(nonSelectString, null);
+        items.add(nonSelectItem);
     }
 
     public void addItems(final Collection<T> items) {
@@ -75,7 +74,7 @@ public class SimpleSelectionListModel<T> implements SelectionListModel {
 
     public void addItem(final T item) {
         if (item != null) {
-            items.add(new SimpleSelectionItemWrapper<>(item));
+            items.add(wrap(item));
         }
     }
 
@@ -91,5 +90,28 @@ public class SimpleSelectionListModel<T> implements SelectionListModel {
     @Override
     public boolean displayPager() {
         return items.size() > 100;
+    }
+
+    @Override
+    public SimpleSelectionItemWrapper<T> wrap(final T item) {
+        if (item == null) {
+            if (nonSelectItem != null) {
+                return nonSelectItem;
+            }
+            return null;
+        }
+
+        if (item instanceof HasDisplayValue) {
+            return new SimpleSelectionItemWrapper<>(((HasDisplayValue) item).getDisplayValue(), item);
+        }
+        return new SimpleSelectionItemWrapper<>(item.toString(), item);
+    }
+
+    @Override
+    public T unwrap(final SimpleSelectionItemWrapper<T> selectionItem) {
+        if (selectionItem == null) {
+            return null;
+        }
+        return selectionItem.getItem();
     }
 }

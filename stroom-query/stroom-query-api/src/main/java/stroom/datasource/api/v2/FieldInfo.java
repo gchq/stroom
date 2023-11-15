@@ -1,6 +1,9 @@
 package stroom.datasource.api.v2;
 
+import stroom.docref.HasDisplayValue;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -8,7 +11,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 @JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
-public class FieldInfo {
+public class FieldInfo implements HasDisplayValue {
 
     public static final String FIELDS_ID = "fields";
     public static final String FIELDS_PARENT = FIELDS_ID + ".";
@@ -51,6 +54,12 @@ public class FieldInfo {
 
     public AbstractField getField() {
         return field;
+    }
+
+    @JsonIgnore
+    @Override
+    public String getDisplayValue() {
+        return title;
     }
 
     public Builder copy() {

@@ -16,15 +16,15 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class AbstractSelectionBox<T>
+public class BaseSelectionBox<T, I extends SelectionItem>
         extends Composite
-        implements SelectionBoxView, Focus, HasValueChangeHandlers<T> {
+        implements SelectionBoxView<T, I>, Focus, HasValueChangeHandlers<T> {
 
     private final TextBox textBox;
     private final SvgIconBox svgIconBox;
-    private SelectionListModel model;
+    private SelectionListModel<T, I> model;
 
-    private SelectionPopup popup;
+    private SelectionPopup<T, I> currentPopup;
     private T value;
 
     private final EventBinder eventBinder = new EventBinder() {
@@ -41,7 +41,7 @@ public abstract class AbstractSelectionBox<T>
         }
     };
 
-    public AbstractSelectionBox() {
+    public BaseSelectionBox() {
         textBox = new TextBox();
         textBox.setReadOnly(true);
         textBox.addStyleName("SelectionBox-textBox stroom-control allow-focus");
@@ -64,9 +64,8 @@ public abstract class AbstractSelectionBox<T>
     }
 
     @Override
-    public void setModel(final SelectionListModel model) {
+    public void setModel(final SelectionListModel<T, I> model) {
         this.model = model;
-//        model.setSelectionBox(this);
     }
 
     public TextBox getTextBox() {
@@ -74,16 +73,17 @@ public abstract class AbstractSelectionBox<T>
     }
 
     private void showPopup() {
-        if (popup != null) {
+        if (currentPopup != null) {
             GWT.log("Hiding popup");
             hidePopup();
         } else {
-            popup = new SelectionPopup();
+            final SelectionPopup<T, I> popup = new SelectionPopup<>();
             popup.addAutoHidePartner(textBox.getElement());
             popup.setModel(model);
             model.refresh();
-            if (value != null) {
-                popup.getSelectionModel().setSelected(wrap(value), true);
+            final I selectionItem = model.wrap(value);
+            if (selectionItem != null) {
+                popup.getSelectionModel().setSelected(selectionItem, true);
             }
             final List<HandlerRegistration> handlerRegistrations = new ArrayList<>();
             handlerRegistrations.add(popup.addCloseHandler(event -> {
@@ -92,26 +92,27 @@ public abstract class AbstractSelectionBox<T>
                     handlerRegistration.removeHandler();
                 }
                 handlerRegistrations.clear();
-                popup = null;
+                currentPopup = null;
             }));
             handlerRegistrations.add(popup.getSelectionModel().addSelectionHandler(e -> {
-                final SelectionItem selectionItem = popup.getSelectionModel().getSelected();
-                if (selectionItem == null) {
-                    setValue(null);
+                final I selected = popup.getSelectionModel().getSelected();
+                if (selected == null) {
+                    setValue(null, true);
                 } else {
-                    setValue(unwrap(selectionItem));
+                    setValue(model.unwrap(selected), true);
                 }
                 hidePopup();
             }));
 
             popup.show(textBox);
+            currentPopup = popup;
         }
     }
 
     private void hidePopup() {
-        if (popup != null) {
-            popup.hide();
-            popup = null;
+        if (currentPopup != null) {
+            currentPopup.hide();
+            currentPopup = null;
         }
     }
 
@@ -133,11 +134,19 @@ public abstract class AbstractSelectionBox<T>
     }
 
     public void setValue(final T value) {
+        setValue(value, false);
+    }
+
+    public void setValue(final T value, final boolean fireEvents) {
         this.value = value;
         if (value != null) {
-            textBox.setValue(wrap(value).getLabel());
+            textBox.setValue(model.wrap(value).getLabel());
         } else {
             textBox.setValue("");
+        }
+
+        if (fireEvents) {
+            ValueChangeEvent.fire(this, value);
         }
     }
 
@@ -145,8 +154,4 @@ public abstract class AbstractSelectionBox<T>
     public com.google.gwt.event.shared.HandlerRegistration addValueChangeHandler(final ValueChangeHandler<T> handler) {
         return addHandler(handler, ValueChangeEvent.getType());
     }
-
-    protected abstract T unwrap(SelectionItem selectionItem);
-
-    protected abstract SelectionItem wrap(T item);
 }

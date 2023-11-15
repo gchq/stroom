@@ -20,7 +20,6 @@ package stroom.query.client.presenter;
 import stroom.editor.client.presenter.ChangeCurrentPreferencesEvent;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.editor.client.presenter.KeyedAceCompletionProvider;
-import stroom.item.client.SelectionItem;
 import stroom.item.client.SelectionList;
 import stroom.query.client.presenter.QueryHelpPresenter.QueryHelpView;
 import stroom.query.shared.QueryHelpRow;
@@ -70,7 +69,7 @@ public class QueryHelpPresenter
             // Rebuild the structure menu items as they contain markdown
             refresh();
         }));
-        final MultiSelectionModel<SelectionItem> selectionModel = getView().getSelectionList().getSelectionModel();
+        final MultiSelectionModel<QueryHelpSelectionItem> selectionModel = getView().getSelectionList().getSelectionModel();
         registerHandler(selectionModel.addSelectionHandler(e -> {
             if (e.getSelectionType().isDoubleSelect()) {
                 onInsert();
@@ -85,11 +84,11 @@ public class QueryHelpPresenter
     }
 
     private QueryHelpRow getSelectedItem() {
-        final SelectionItem selectionItem = getView().getSelectionList().getSelectionModel().getSelected();
+        final QueryHelpSelectionItem selectionItem = getView().getSelectionList().getSelectionModel().getSelected();
         if (selectionItem == null) {
             return null;
         }
-        return ((QueryHelpSelectionItem) selectionItem).getQueryHelpRow();
+        return selectionItem.getQueryHelpRow();
     }
 
     private void updateDetails() {
@@ -167,7 +166,7 @@ public class QueryHelpPresenter
 
     public interface QueryHelpView extends View, HasUiHandlers<QueryHelpUiHandlers> {
 
-        SelectionList getSelectionList();
+        SelectionList<QueryHelpRow, QueryHelpSelectionItem> getSelectionList();
 
         void setDetails(SafeHtml details);
 

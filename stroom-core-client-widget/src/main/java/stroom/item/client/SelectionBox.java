@@ -2,7 +2,7 @@ package stroom.item.client;
 
 import java.util.Collection;
 
-public class SelectionBox<T> extends AbstractSelectionBox<T> {
+public class SelectionBox<T> extends BaseSelectionBox<T, SimpleSelectionItemWrapper<T>> {
 
     private final SimpleSelectionListModel<T> model = new SimpleSelectionListModel<>();
 
@@ -29,21 +29,5 @@ public class SelectionBox<T> extends AbstractSelectionBox<T> {
 
     public void clear() {
         model.clear();
-    }
-
-    @Override
-    protected SelectionItem wrap(final T item) {
-        if (item == null) {
-            return null;
-        }
-        return new SimpleSelectionItemWrapper<>(item);
-    }
-
-    @Override
-    protected T unwrap(final SelectionItem selectionItem) {
-        if (selectionItem == null) {
-            return null;
-        }
-        return ((SimpleSelectionItemWrapper<T>) selectionItem).getItem();
     }
 }

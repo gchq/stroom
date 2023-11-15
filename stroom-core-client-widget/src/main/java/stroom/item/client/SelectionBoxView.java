@@ -1,6 +1,6 @@
 package stroom.item.client;
 
-public interface SelectionBoxView {
+public interface SelectionBoxView<T, I extends SelectionItem> {
 
-    void setModel(SelectionListModel model);
+    void setModel(SelectionListModel<T, I> model);
 }

@@ -1,12 +1,12 @@
 package stroom.query.client.presenter;
 
 import stroom.datasource.api.v2.FieldInfo;
-import stroom.item.client.SimpleSelectionListModel;
+import stroom.item.client.AbstractSelectionListModel;
 
 import java.util.function.Consumer;
 
 public class SimpleFieldSelectionListModel
-        extends SimpleSelectionListModel<FieldInfo>
+        extends AbstractSelectionListModel<FieldInfo, FieldInfoSelectionItem>
         implements FieldSelectionListModel {
 
     @Override
@@ -17,5 +17,18 @@ public class SimpleFieldSelectionListModel
                     .findAny()
                     .ifPresent(item -> consumer.accept(((FieldInfoSelectionItem) consumer).getFieldInfo()));
         }
+    }
+
+    @Override
+    public FieldInfoSelectionItem wrap(final FieldInfo item) {
+        return new FieldInfoSelectionItem(item);
+    }
+
+    @Override
+    public FieldInfo unwrap(final FieldInfoSelectionItem selectionItem) {
+        if (selectionItem == null) {
+            return null;
+        }
+        return selectionItem.getFieldInfo();
     }
 }

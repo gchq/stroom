@@ -2,11 +2,11 @@ package stroom.item.client;
 
 import com.google.gwt.view.client.AbstractDataProvider;
 
-public interface SelectionListModel {
+public interface SelectionListModel<T, I extends SelectionItem> {
 
-    AbstractDataProvider<SelectionItem> getDataProvider();
+    AbstractDataProvider<I> getDataProvider();
 
-    NavigationModel getNavigationModel();
+    NavigationModel<I> getNavigationModel();
 
     void setFilter(String filter);
 
@@ -16,7 +16,7 @@ public interface SelectionListModel {
 
     boolean displayPager();
 
-    default String getNonSelectString() {
-        return null;
-    }
+    I wrap(T item);
+
+    T unwrap(I selectionItem);
 }
