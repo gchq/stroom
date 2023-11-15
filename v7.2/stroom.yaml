@@ -7027,7 +7027,11 @@ components:
       - $ref: '#/components/schemas/AnalyticNotificationDestination'
       - type: object
         properties:
-          emailAddress:
+          bcc:
+            type: string
+          cc:
+            type: string
+          to:
             type: string
     AnalyticNotificationStreamDestination:
       type: object
