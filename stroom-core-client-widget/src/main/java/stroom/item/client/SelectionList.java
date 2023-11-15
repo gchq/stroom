@@ -31,6 +31,7 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
 
     private final QuickFilter quickFilter;
     private final FlowPanel links;
+    private final PagerViewImpl pagerView;
     private final CellTable<I> cellTable;
     private SelectionListModel<T, I> model;
 
@@ -77,7 +78,7 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
                 };
         cellTable.addColumn(expanderColumn);
 
-        final PagerViewImpl pagerView = new PagerViewImpl(GWT.create(PagerViewImpl.Binder.class));
+        pagerView = new PagerViewImpl(GWT.create(PagerViewImpl.Binder.class));
         pagerView.setDataWidget(cellTable);
 
         quickFilter = new QuickFilter();
@@ -108,6 +109,8 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
     }
 
     public void reset() {
+        links.setVisible(model.displayPath());
+        pagerView.setPagerVisible(model.displayPager());
         quickFilter.clear();
     }
 

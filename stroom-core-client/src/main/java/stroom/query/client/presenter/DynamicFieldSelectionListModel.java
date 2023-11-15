@@ -98,7 +98,7 @@ public class DynamicFieldSelectionListModel implements FieldSelectionListModel {
 
     @Override
     public boolean displayPath() {
-        return true;
+        return false;
     }
 
     @Override

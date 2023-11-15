@@ -5,7 +5,7 @@
              xmlns:p="urn:import:stroom.data.pager.client"
              xmlns:b="urn:import:stroom.widget.button.client">
     <g:FlowPanel addStyleNames="max dock-container-vertical">
-        <g:FlowPanel styleName="pager dock-container-horizontal dock-min">
+        <g:FlowPanel ui:field="pagerContainer" styleName="pager dock-container-horizontal dock-min">
             <b:ButtonPanel ui:field="buttonPanel" addStyleNames="dock-max"/>
             <p:Pager ui:field="pager" addStyleNames="dock-min"/>
         </g:FlowPanel>
