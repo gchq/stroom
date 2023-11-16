@@ -1,5 +1,6 @@
 package stroom.data.zip;
 
+import stroom.util.NullSafe;
 import stroom.util.io.FileName;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -11,6 +12,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -26,9 +28,16 @@ public class StroomZipEntries {
     private final Map<String, FileName> unknownExtensionFileNames = new HashMap<>();
 
     public StroomZipEntry addFile(final String fileName) {
-        // This treats unknown extensions as part of the base name, e.g.
+        // createFromFileName treats unknown extensions as part of the base name, e.g.
         // '001.unknown' has baseName '001.unknown' but
-        // '001.meta' has baseName '001'
+        // '001.meta' has baseName '001' as '.meta' is a known extension
+        // If we see '001.unknown' then '001.meta' then we have two base names for the same group
+        // so, we need to re-classify '001.unknown' from baseName '001.unknown' => '001'.
+        // However we could receive files like:
+        //   2023.11.15.10001
+        //   2023.11.15.10002
+        //   2023.11.15.10003
+        // In which case we want the baseName to be the whole filename as 1000X is not an extension.
         StroomZipEntry stroomZipEntry = StroomZipEntry.createFromFileName(fileName);
         LOGGER.debug("addFile - fileName: '{}', stroomZipEntry: {}", fileName, stroomZipEntry);
 
@@ -39,20 +48,30 @@ public class StroomZipEntries {
             // e.g. some random extension '001.mydata'
             // but they may have '001.mydata' and '001.meta' which would have different base names
             // ('001.mydata' and '001') so we need to link them up
+
+            // This parse knows nothing about known extension so just splits the filename up
+            // to give us '001' as a basename
             final FileName fn = FileName.parse(stroomZipEntry.getFullName());
             if (map.containsKey(fn.getBaseName())) {
-                // re-classify our stroomZipEntry with the other baseName
+                // We already have a group for this baseName so assume that our belongs to that and
+                // re-classify our stroomZipEntry with the existing baseName
                 final StroomZipEntry newZipEntry = stroomZipEntry.cloneWithNewBaseName(fn.getBaseName());
                 LOGGER.debug("Re-classifying {} as {}", stroomZipEntry, newZipEntry);
                 stroomZipEntry = newZipEntry;
             } else {
+                // No existing groups with the '001' baseName so keep a record of it so, we can
+                // deal with it if say a '001.meta' is added.
                 LOGGER.debug("Found unknown extension, baseName: '{}', fn: {}", baseName, fn);
                 unknownExtensionFileNames.put(baseName, fn);
             }
         } else {
             // A known extension or no extension at all, so check if its baseName is the stem or one in
             // unknownExtensionBaseNames
-            unknownExtensionFileNames.forEach((zipEntryBaseName, fn2) -> {
+            String baseNameToRemove = null;
+
+            for (final Entry<String, FileName> entry : unknownExtensionFileNames.entrySet()) {
+                final String zipEntryBaseName = entry.getKey();
+                final FileName fn2 = entry.getValue();
                 if (Objects.equals(baseName, fn2.getBaseName())) {
                     // Common base name, e.g. '001' in '001.ctx' and '001.mydata', so need to re-classify it
                     final int idx = baseNames.indexOf(zipEntryBaseName);
@@ -64,10 +83,13 @@ public class StroomZipEntries {
                             final StroomZipEntryGroup newZipEntryGroup = zipEntryGroup.cloneWithNewBaseName(baseName);
                             LOGGER.debug("Cloning group, {} => {}", zipEntryGroup, newZipEntryGroup);
                             map.put(baseName, newZipEntryGroup);
+                            baseNameToRemove = zipEntryBaseName;
                         }
                     }
                 }
-            });
+            }
+            // We' dealt with this one so remove it
+            NullSafe.consume(baseNameToRemove, unknownExtensionFileNames::remove);
         }
 
         LOGGER.debug("Adding stroomZipEntry {}", stroomZipEntry);

@@ -5,7 +5,6 @@ import stroom.test.common.TestUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
-import com.google.inject.TypeLiteral;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
@@ -32,10 +31,8 @@ class TestStroomZipEntries {
     @TestFactory
     Stream<DynamicTest> testAddFile() {
         return TestUtil.buildDynamicTestStream()
-                .withWrappedInputType(new TypeLiteral<List<String>>() {
-                })
-                .withWrappedOutputType(new TypeLiteral<List<String>>() {
-                })
+                .withListItemInputType(String.class)
+                .withListItemOutputType(String.class)
                 .withSingleArgTestFunction(fileNames -> {
                     final StroomZipEntries stroomZipEntries = new StroomZipEntries();
                     for (final String fileName : fileNames) {
