@@ -100,8 +100,8 @@ public class StroomZipEntry {
 
     @Override
     public String toString() {
-        return fullName + " (baseName: "
-                + baseName + ", type: "
+        return "'" + fullName + "' (baseName: '"
+                + baseName + "', type: "
                 + stroomZipFileType + ")";
     }
 

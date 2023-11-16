@@ -75,4 +75,13 @@ public class FileName {
     public int hashCode() {
         return Objects.hash(fullName, baseName, extension);
     }
+
+    @Override
+    public String toString() {
+        return "FileName{" +
+                "fullName='" + fullName + '\'' +
+                ", baseName='" + baseName + '\'' +
+                ", extension='" + extension + '\'' +
+                '}';
+    }
 }

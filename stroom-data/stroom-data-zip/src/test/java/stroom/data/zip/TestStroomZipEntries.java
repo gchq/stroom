@@ -39,7 +39,15 @@ class TestStroomZipEntries {
                         stroomZipEntries.addFile(fileName);
                     }
                     LOGGER.info("stroomZipEntries: {}", stroomZipEntries);
-                    return stroomZipEntries.getBaseNames();
+                    final List<String> baseNames = stroomZipEntries.getBaseNames();
+                    final List<String> baseNamesFromGroups = stroomZipEntries.getGroups()
+                            .stream().map(StroomZipEntryGroup::getBaseName)
+                            .toList();
+                    // If this fails then there is a problem in how we track the ordered base names seen
+                    assertThat(baseNames)
+                            .as("These two lists should match, but neither is the source of truth")
+                            .containsExactlyInAnyOrderElementsOf(baseNamesFromGroups);
+                    return baseNames;
                 })
                 .withSimpleEqualityAssertion()
                 // This case should work
@@ -107,6 +115,15 @@ class TestStroomZipEntries {
                 .addCase(List.of("2.dat", "1.dat", "2.meta", "1.meta"),
                         List.of("2", "1"))
                 .addThrowsCase(List.of("001", "001.ctx", "001.dat"), StroomZipNameException.class)
+                // Test with different orders as that affects logic
+                .addThrowsCase(List.of("001.ctx", "001.foo", "001.bar", "001.meta"), StroomZipNameException.class)
+                .addThrowsCase(List.of("001.foo", "001.bar", "001.ctx", "001.meta"), StroomZipNameException.class)
+                .addThrowsCase(List.of("001.foo", "001.ctx", "001.bar", "001.meta"), StroomZipNameException.class)
+                .addThrowsCase(List.of("001.meta", "001.ctx", "001.foo", "001.bar"), StroomZipNameException.class)
+                .addCase(List.of("001.ctx", "001.foo", "001.meta"),
+                        List.of("001"))
+                .addCase(List.of("001.foo", "001.ctx", "001.meta"),
+                        List.of("001"))
                 .build();
     }
 

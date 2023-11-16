@@ -16,13 +16,43 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 
+/**
+ * This class is responsible for grouping file entries in a stroom format zip by their common base name.
+ * It relies on the standard file extensions defined in {@link StroomZipFileType}.
+ * Files with no extension or a non-standard extension are treated as data files.
+ * There can be only one of each file type in a group, identified by its base name.
+ * <pre>
+ *  Filename        Group BaseName      Notes
+ *  001             1     001           # No ext so treated as 001.dat
+ *  001.ctx         1     001
+ *
+ *  002.dat         2     002
+ *  002.ctx         2     002
+ *
+ *  003.unknown     3     003           # Non-standard ext, initially treated as 003.unknown.dat
+ *  003.ctx         3     003           # At this point we re-classify the one above as 003.dat
+ *
+ *  abc.xyz.004     4     abc.xyz.004   # Non-standard ext, so treated as abc.xyz.004.dat
+ *
+ *  abc.xyz.005     5     abc.xyz.005   # Non-standard ext, so treated as abc.xyz.005.dat
+ *
+ *  abc.xyz.006     6     abc.xyz.006   # Non-standard ext, so treated as abc.xyz.006.dat
+ *  abc.xyz.006.ctx 6     abc.xyz.006
+ *
+ *  007.foo         7     007           # Non-standard ext, so treated as 007.foo.dat
+ *  007.bar         7     007           # Non-standard ext, so treated as 007.bar.dat
+ *  007.ctx         7     007           # Now we re-classify the two above as 007.dat and 007.dat and
+ *                                        raise dup file error
+ *  </pre>
+ */
 public class StroomZipEntries {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StroomZipEntries.class);
 
+
     // baseName => StroomZipEntryGroup
     private final Map<String, StroomZipEntryGroup> map = new HashMap<>();
-    // baseNames in the order seen in the zip
+    // baseNames in the order they are seen in the zip
     private final List<String> baseNames = new ArrayList<>();
     // StroomZipEntry basename => FileName (the baseName in FileName may differ)
     private final Map<String, FileName> unknownExtensionFileNames = new HashMap<>();
@@ -68,11 +98,16 @@ public class StroomZipEntries {
             // A known extension or no extension at all, so check if its baseName is the stem or one in
             // unknownExtensionBaseNames
             String baseNameToRemove = null;
-
+            boolean foundMatch = false;
             for (final Entry<String, FileName> entry : unknownExtensionFileNames.entrySet()) {
                 final String zipEntryBaseName = entry.getKey();
                 final FileName fn2 = entry.getValue();
                 if (Objects.equals(baseName, fn2.getBaseName())) {
+                    if (foundMatch) {
+                        // Already have a data file with this base name
+                        throw StroomZipNameException.createDuplicateFileNameException(fn2.getFullName());
+                    }
+                    foundMatch = true;
                     // Common base name, e.g. '001' in '001.ctx' and '001.mydata', so need to re-classify it
                     final int idx = baseNames.indexOf(zipEntryBaseName);
                     if (idx >= 0) {
