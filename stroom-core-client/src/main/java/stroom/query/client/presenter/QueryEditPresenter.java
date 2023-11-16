@@ -343,7 +343,7 @@ public class QueryEditPresenter
             public String decorateFieldName(final String fieldName) {
                 return GwtNullSafe.get(fieldName, str ->
                         str.contains(" ")
-                                ? "\"" + str + "\""
+                                ? "${" + str + "}"
                                 : str);
             }
 

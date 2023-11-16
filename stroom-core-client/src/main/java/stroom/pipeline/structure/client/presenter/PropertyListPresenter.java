@@ -145,13 +145,13 @@ public class PropertyListPresenter
 
     private void addValueColumn() {
         // Value.
-        dataGrid.addResizableColumn(new Column<PipelineProperty, SafeHtml>(new SafeHtmlCell()) {
+        dataGrid.addAutoResizableColumn(new Column<PipelineProperty, SafeHtml>(new SafeHtmlCell()) {
             @Override
             public SafeHtml getValue(final PipelineProperty property) {
                 final String value = getVal(property);
                 return getSafeHtmlWithState(property, value, true);
             }
-        }, "Value", 500);
+        }, "Value", 30, 200);
     }
 
     private Source getSource(final PipelineProperty property) {
@@ -198,12 +198,12 @@ public class PropertyListPresenter
 
     private void addDescriptionColumn() {
         // Default Value.
-        dataGrid.addResizableColumn(new Column<PipelineProperty, SafeHtml>(new SafeHtmlCell()) {
+        dataGrid.addAutoResizableColumn(new Column<PipelineProperty, SafeHtml>(new SafeHtmlCell()) {
             @Override
             public SafeHtml getValue(final PipelineProperty property) {
                 return getSafeHtml(property.getPropertyType().getDescription());
             }
-        }, "Description", 600);
+        }, "Description", 70, 200);
     }
 
     private SafeHtml getSafeHtmlWithState(final PipelineProperty property, final String string,

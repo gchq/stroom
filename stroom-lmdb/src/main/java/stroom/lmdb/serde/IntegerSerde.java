@@ -47,4 +47,9 @@ public class IntegerSerde implements Serde<Integer> {
         byteBuffer.putInt(val - 1);
         byteBuffer.flip();
     }
+
+    @Override
+    public int getBufferCapacity() {
+        return Integer.BYTES;
+    }
 }

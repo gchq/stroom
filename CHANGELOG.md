@@ -12,6 +12,18 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
+* Change the tables on the following screens to initially fill the available space: Server Tasks, App Permissions, Dependencies, Pipeline Structure properties, Properties, Jobs.
+
+* Issue **#3892** : Add a toggle button to enable/disable line wrapping in Server Tasks Name and Info cells.
+
+* Issue **#3893** : Change Query Helper and editor code completion to insert `$field with spaces}` rather than `"field with spaces"` for field names with spaces.
+
+* Fix Hard coded XSLT editor snippets.
+
+* Add editor snippets for StroomQL. `ids` => `eval StreamId = first(StreamId)
+eval EventId = first(EventId)`, `evt` => `eval EventId = first(EventId)` and `str` => `eval StreamId = first(StreamId)`.
+
+* Add XSLT completion snippets for stroom identity skeletons.
 
 * Issue **#3887** : Add option to use default extraction pipeline to dashboard table.
 

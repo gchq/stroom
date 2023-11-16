@@ -77,6 +77,9 @@ var StroomQueryHighlightRules = function() {
             token : "constant.numeric", // Duration
             regex : "[+-]?\\d+[yMwdhms]"
         }, {
+            token : ["variable", "variable", "text", "variable" ], // Functions
+            regex : '(\\$)(\\{)(.*?)(})'
+        },  {
             token : ["support.function", "paren.lparen" ], // Functions
             regex : "(\\w+)(\\s*\\()"
         },  {
@@ -127,7 +130,7 @@ oop.inherits(Mode, TextMode);
 //    this.lineCommentStart = "--";
 
     this.$id = "ace/mode/stroom_query";
-//    this.snippetFileId = "ace/snippets/stroom_query";
+    this.snippetFileId = "ace/snippets/stroom_query";
 }).call(Mode.prototype);
 
 exports.Mode = Mode;

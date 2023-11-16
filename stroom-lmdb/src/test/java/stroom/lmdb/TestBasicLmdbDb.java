@@ -63,7 +63,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -123,7 +122,7 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
         basicLmdbDb4 = new BasicLmdbDb<>(
                 lmdbEnv,
                 byteBufferPool,
-                new IntegerSerde(),
+                Serde.usingNativeOrder(new IntegerSerde()), // MDB_INTEGERKEY needs native byte order
                 new StringSerde(),
                 "MyBasicLmdb4",
                 DbiFlags.MDB_CREATE,
@@ -1140,10 +1139,7 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
     @Test
     void testLoadOrderAndIntKeyPerformance() {
 
-        // TODO: 18/04/2023 I think this test is wrong, see https://github.com/lmdbjava/lmdbjava/wiki/Keys#numeric-keys
-        //  Think it needs to be long not integer and ensure the correct endianness.
-
-//        final int iterations = 10_000_000;
+//        final int iterations = 1_000_000;
         final int iterations = 10;
 
         LOGGER.info("info {}", basicLmdbDb3.getDbInfo());
@@ -1158,13 +1154,12 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
         assertThat(ascendingData)
                 .hasSize(iterations);
 
-        Random random = new Random();
         final List<Tuple2<Integer, String>> randomData = IntStream
                 .range(Integer.MAX_VALUE - iterations, Integer.MAX_VALUE)
                 .boxed()
-                .sorted(Comparator.comparingInt(i -> random.nextInt(iterations)))
                 .map(i -> Tuple.of(i, String.format("Val %010d", i)))
-                .collect(Collectors.toList());
+                .collect(Collectors.toCollection(ArrayList::new));
+        Collections.shuffle(randomData);
 
         assertThat(ascendingData)
                 .hasSize(iterations);
@@ -1185,6 +1180,8 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
             });
         }, "Random");
 
+        // If you want to use MDB_INTEGERKEY then you MUST set the byte buffer to nativeOrder before
+        // writing/reading. See https://github.com/lmdbjava/lmdbjava/issues/51
         LOGGER.logDurationIfInfoEnabled(() -> {
             lmdbEnv.doWithWriteTxn(writeTxn -> {
                 ascendingData.forEach(tuple -> {

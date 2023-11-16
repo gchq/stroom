@@ -106,6 +106,7 @@ public class TaskManagerListPresenter
     private final ButtonView collapseAllButton;
     private final ButtonView warningsButton;
     private final InlineSvgToggleButton autoRefreshButton;
+    private final InlineSvgToggleButton wrapToggleButton;
 
     private String currentWarnings;
     private Column<TaskProgress, Expander> expanderColumn;
@@ -147,6 +148,12 @@ public class TaskManagerListPresenter
         collapseAllButton = getView().addButton(SvgPresets.COLLAPSE_UP.with("Collapse All", false));
         warningsButton = getView().addButton(SvgPresets.ALERT.title("Show Warnings"));
         warningsButton.setVisible(false);
+
+        wrapToggleButton = new InlineSvgToggleButton();
+        wrapToggleButton.setSvg(SvgImage.TEXT_WRAP);
+        wrapToggleButton.setTitle("Toggle wrapping of Info column");
+        wrapToggleButton.setOff();
+        getView().addButton(wrapToggleButton);
 
         updateButtonStates();
 
@@ -211,6 +218,17 @@ public class TaskManagerListPresenter
                 } else {
                     autoRefreshButton.setTitle("Turn Auto Refresh On");
                 }
+            }
+        }));
+
+        registerHandler(wrapToggleButton.addClickHandler(event -> {
+            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                if (wrapToggleButton.isOff()) {
+                    wrapToggleButton.setTitle("Turn Cell Line Wrapping On");
+                } else {
+                    wrapToggleButton.setTitle("Turn Cell Line Wrapping Off");
+                }
+                internalRefresh();
             }
         }));
     }
@@ -308,12 +326,12 @@ public class TaskManagerListPresenter
 
         // Name.
         dataGrid.addResizableColumn(
-                DataGridUtil.htmlColumnBuilder(getColouredCellFunc(TaskProgress::getTaskName))
+                DataGridUtil.htmlColumnBuilder(getWrapableColouredCellFunc(TaskProgress::getTaskName))
                         .withSorting(FindTaskProgressCriteria.FIELD_NAME)
                         .withStyleName(MyDataGrid.RESOURCES.dataGridStyle().dataGridCellVerticalTop())
                         .build(),
                 FindTaskProgressCriteria.FIELD_NAME,
-                150);
+                250);
 
         // User.
         dataGrid.addResizableColumn(
@@ -345,14 +363,13 @@ public class TaskManagerListPresenter
                 ColumnSizeConstants.SMALL_COL);
 
         // Info
-        dataGrid.addResizableColumn(
-                DataGridUtil.htmlColumnBuilder(getColouredCellFunc(TaskProgress::getTaskInfo))
+        dataGrid.addAutoResizableColumn(
+                DataGridUtil.htmlColumnBuilder(getWrapableColouredCellFunc(TaskProgress::getTaskInfo))
                         .withSorting(FindTaskProgressCriteria.FIELD_INFO)
-                        .withStyleName(MyDataGrid.RESOURCES.dataGridStyle().dataGridCellWrapText())
                         .withStyleName(MyDataGrid.RESOURCES.dataGridStyle().dataGridCellVerticalTop())
                         .build(),
                 FindTaskProgressCriteria.FIELD_INFO,
-                700);
+                200);
 
         dataGrid.addEndColumn(new EndColumn<>());
     }
@@ -390,6 +407,24 @@ public class TaskManagerListPresenter
         return DataGridUtil.highlightedCellExtractor(
                 extractor,
                 TaskProgress::isMatchedInFilter);
+    }
+
+    private Function<TaskProgress, SafeHtml> getWrapableColouredCellFunc(
+            final Function<TaskProgress, String> extractor) {
+        final Function<TaskProgress, SafeHtml> colouredCellFunc = getColouredCellFunc(extractor);
+
+        return (TaskProgress row) -> {
+            final Attribute wrapClassAttr = Attribute.className(
+                    MyDataGrid.RESOURCES.dataGridStyle().dataGridCellWrapText());
+            final SafeHtml colouredText = colouredCellFunc.apply(row);
+            if (wrapToggleButton.isOn()) {
+                return HtmlBuilder.builder()
+                        .div(htmlBuilder -> htmlBuilder.append(colouredText), wrapClassAttr)
+                        .toSafeHtml();
+            } else {
+                return colouredText;
+            }
+        };
     }
 
     private Expander buildExpander(final TaskProgress row) {
