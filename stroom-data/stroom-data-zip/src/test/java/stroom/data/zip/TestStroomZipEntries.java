@@ -124,6 +124,8 @@ class TestStroomZipEntries {
                         List.of("001"))
                 .addCase(List.of("001.foo", "001.ctx", "001.meta"),
                         List.of("001"))
+                .addCase(List.of("001.dat", "001.dat.ctx", "001.dat.meta"),
+                        List.of("001", "001.dat"))
                 .build();
     }
 
