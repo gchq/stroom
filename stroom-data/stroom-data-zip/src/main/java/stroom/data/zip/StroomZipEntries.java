@@ -49,7 +49,6 @@ public class StroomZipEntries {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StroomZipEntries.class);
 
-
     // baseName => StroomZipEntryGroup
     private final Map<String, StroomZipEntryGroup> map = new HashMap<>();
     // baseNames in the order they are seen in the zip
@@ -127,13 +126,18 @@ public class StroomZipEntries {
             NullSafe.consume(baseNameToRemove, unknownExtensionFileNames::remove);
         }
 
-        LOGGER.debug("Adding stroomZipEntry {}", stroomZipEntry);
+        addZipEntry(stroomZipEntry);
+        return stroomZipEntry;
+    }
+
+    private void addZipEntry(final StroomZipEntry stroomZipEntry) {
+        final String baseName = stroomZipEntry.getBaseName();
+        LOGGER.debug("Adding stroomZipEntry {} to group", stroomZipEntry);
         map.computeIfAbsent(stroomZipEntry.getBaseName(), k -> {
-            LOGGER.debug("Adding baseName '{}'", baseName);
+            LOGGER.debug("Creating group with baseName '{}'", baseName);
             baseNames.add(k);
             return new StroomZipEntryGroup(k);
         }).add(stroomZipEntry);
-        return stroomZipEntry;
     }
 
     public Optional<StroomZipEntry> getByType(final String baseName, final StroomZipFileType stroomZipFileType) {

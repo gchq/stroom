@@ -86,7 +86,7 @@ class DynamicTestBuilder {
          * <pre>{@code withListItemInputType(String.class)}</pre>
          */
         @SuppressWarnings("unused")
-        public <I> InputBuilder<List<I>> withListItemInputType(final Class<I> inputItemType) {
+        public <I> InputBuilder<List<I>> withListInputItemType(final Class<I> inputItemType) {
             final TypeLiteral<List<I>> typeLiteral = new TypeLiteral<>() {
             };
             return new InputBuilder<>(typeLiteral);
@@ -97,7 +97,7 @@ class DynamicTestBuilder {
          * <pre>{@code withSetItemInputType(String.class)}</pre>
          */
         @SuppressWarnings("unused")
-        public <I> InputBuilder<Set<I>> withSetItemInputType(final Class<I> inputItemType) {
+        public <I> InputBuilder<Set<I>> withSetInputItemType(final Class<I> inputItemType) {
             final TypeLiteral<Set<I>> typeLiteral = new TypeLiteral<>() {
             };
             return new InputBuilder<>(typeLiteral);
@@ -195,7 +195,7 @@ class DynamicTestBuilder {
          * <pre>{@code withListItemOutputType(String.class)}</pre>
          */
         @SuppressWarnings("unused")
-        public <O> OutputBuilder<I, List<O>> withListItemOutputType(final Class<O> outputItemType) {
+        public <O> OutputBuilder<I, List<O>> withListOutputItemType(final Class<O> outputItemType) {
             final TypeLiteral<List<O>> typeLiteral = new TypeLiteral<List<O>>() {
             };
             return new OutputBuilder<>(this, typeLiteral);
@@ -206,7 +206,7 @@ class DynamicTestBuilder {
          * <pre>{@code withSetItemOutputType(String.class)}</pre>
          */
         @SuppressWarnings("unused")
-        public <O> OutputBuilder<I, Set<O>> withSetItemOutputType(final Class<O> outputItemType) {
+        public <O> OutputBuilder<I, Set<O>> withSetOutputItemType(final Class<O> outputItemType) {
             final TypeLiteral<Set<O>> typeLiteral = new TypeLiteral<>() {
             };
             return new OutputBuilder<>(this, typeLiteral);

@@ -31,8 +31,8 @@ class TestStroomZipEntries {
     @TestFactory
     Stream<DynamicTest> testAddFile() {
         return TestUtil.buildDynamicTestStream()
-                .withListItemInputType(String.class)
-                .withListItemOutputType(String.class)
+                .withListInputItemType(String.class)
+                .withListOutputItemType(String.class)
                 .withSingleArgTestFunction(fileNames -> {
                     final StroomZipEntries stroomZipEntries = new StroomZipEntries();
                     for (final String fileName : fileNames) {
