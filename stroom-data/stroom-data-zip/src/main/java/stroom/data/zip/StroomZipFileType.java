@@ -96,7 +96,7 @@ public enum StroomZipFileType {
     public static boolean isKnownExtension(final String extension) {
         if (NullSafe.isEmptyString(extension)) {
             return false;
-        }else {
+        } else {
             return EXTENSION_MAP.containsKey(extension.toLowerCase(Locale.ROOT));
         }
     }

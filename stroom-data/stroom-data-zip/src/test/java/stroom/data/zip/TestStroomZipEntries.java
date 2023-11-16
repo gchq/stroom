@@ -206,9 +206,8 @@ class TestStroomZipEntries {
     void testStroomZipEntryGroup_Add_fail_mismatch() {
         final StroomZipEntryGroup zipEntryGroup = new StroomZipEntryGroup("001");
         // base name mismatch
-        Assertions.assertThatThrownBy(() -> {
-                    zipEntryGroup.add(StroomZipEntry.createFromFileName("002.dat"));
-                })
+        Assertions.assertThatThrownBy(() ->
+                        zipEntryGroup.add(StroomZipEntry.createFromFileName("002.dat")))
                 .isInstanceOf(RuntimeException.class);
     }
 
@@ -217,9 +216,9 @@ class TestStroomZipEntries {
         final StroomZipEntryGroup zipEntryGroup = new StroomZipEntryGroup("001");
         zipEntryGroup.add(StroomZipEntry.createFromFileName("001.dat"));
         // base name mismatch
-        Assertions.assertThatThrownBy(() -> {
-                    zipEntryGroup.add(StroomZipEntry.createFromFileName("001.dat"));
-                }).isInstanceOf(StroomZipNameException.class)
+        Assertions.assertThatThrownBy(() ->
+                        zipEntryGroup.add(StroomZipEntry.createFromFileName("001.dat")))
+                .isInstanceOf(StroomZipNameException.class)
                 .hasMessageContaining("Duplicate");
     }
 
