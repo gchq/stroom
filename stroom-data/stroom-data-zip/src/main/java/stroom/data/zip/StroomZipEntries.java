@@ -53,7 +53,8 @@ public class StroomZipEntries {
     private final Map<String, StroomZipEntryGroup> map = new HashMap<>();
     // baseNames in the order they are seen in the zip
     private final List<String> baseNames = new ArrayList<>();
-    // StroomZipEntry basename => FileName (the baseName in FileName may differ)
+    // StroomZipEntry basename => FileName (the baseName in FileName may differ from the key)
+    // e.g. 001.unknown => filename('001.unknown', '001', 'unknown')
     private final Map<String, FileName> unknownExtensionFileNames = new HashMap<>();
 
     public StroomZipEntry addFile(final String fileName) {
@@ -88,7 +89,7 @@ public class StroomZipEntries {
                 LOGGER.debug("Re-classifying {} as {}", stroomZipEntry, newZipEntry);
                 stroomZipEntry = newZipEntry;
             } else {
-                // No existing groups with the '001' baseName so keep a record of it so, we can
+                // No existing groups with e.g. '001' baseName so keep a record of it so, we can
                 // deal with it if say a '001.meta' is added.
                 LOGGER.debug("Found unknown extension, baseName: '{}', fn: {}", baseName, fn);
                 unknownExtensionFileNames.put(baseName, fn);
@@ -122,7 +123,7 @@ public class StroomZipEntries {
                     }
                 }
             }
-            // We' dealt with this one so remove it
+            // We've dealt with this one so remove it
             NullSafe.consume(baseNameToRemove, unknownExtensionFileNames::remove);
         }
 
