@@ -20,9 +20,9 @@ import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 
 import com.codahale.metrics.annotation.Timed;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
 import javax.ws.rs.core.StreamingOutput;
 
 @AutoLogged(OperationType.UNLOGGED)

@@ -30,10 +30,11 @@ import stroom.util.filter.QuickFilterPredicateFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+
 import java.util.List;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
-import javax.inject.Provider;
 
 @AutoLogged(OperationType.MANUALLY_LOGGED)
 class AnnotationResourceImpl implements AnnotationResource {

@@ -23,7 +23,7 @@ import stroom.docstore.shared.Doc;
 import stroom.security.api.SecurityContext;
 import stroom.util.shared.PermissionException;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 public class DocumentResourceHelperImpl implements DocumentResourceHelper {
 

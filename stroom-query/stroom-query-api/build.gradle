@@ -20,7 +20,6 @@ dependencies {
     //--------Stroom libs------
     implementation project(':stroom-docref')
     implementation project(':stroom-query:stroom-query-language-api')
-    implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 
     //--------3rd party--------
@@ -37,7 +36,7 @@ dependencies {
     testImplementation libs.assertj_core
     testImplementation libs.junit_jupiter_api
     testImplementation libs.vavr
-    testImplementation libs.guice5
+    testImplementation libs.guice7
 
     testRuntimeOnly libs.junit_jupiter_engine
 }

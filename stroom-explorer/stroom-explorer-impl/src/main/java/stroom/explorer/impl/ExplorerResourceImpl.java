@@ -55,6 +55,8 @@ import com.google.common.base.Strings;
 import event.logging.ComplexLoggedOutcome;
 import event.logging.Query;
 import event.logging.SearchEventAction;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 import java.util.HashSet;
 import java.util.List;
@@ -62,8 +64,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
-import javax.inject.Provider;
 
 @AutoLogged(OperationType.MANUALLY_LOGGED)
 class ExplorerResourceImpl implements ExplorerResource {

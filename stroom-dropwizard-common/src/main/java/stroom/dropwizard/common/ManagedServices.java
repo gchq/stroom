@@ -2,12 +2,12 @@ package stroom.dropwizard.common;
 
 import io.dropwizard.lifecycle.Managed;
 import io.dropwizard.setup.Environment;
+import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Comparator;
 import java.util.Set;
-import javax.inject.Inject;
 
 public class ManagedServices {
 

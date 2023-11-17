@@ -25,10 +25,11 @@ import stroom.util.entityevent.EntityEventBus;
 import stroom.util.entityevent.EntityEventHandler;
 import stroom.util.shared.Clearable;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
+
 import java.util.Set;
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.inject.Singleton;
 
 @Singleton
 @EntityEventHandler(type = UserDocRefUtil.USER, action = {

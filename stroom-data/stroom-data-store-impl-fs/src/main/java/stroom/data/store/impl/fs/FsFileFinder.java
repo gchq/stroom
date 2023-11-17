@@ -5,13 +5,14 @@ import stroom.meta.shared.Meta;
 import stroom.meta.shared.SimpleMeta;
 import stroom.util.io.PathCreator;
 
+import jakarta.inject.Inject;
+
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import javax.inject.Inject;
 
 public class FsFileFinder {
 

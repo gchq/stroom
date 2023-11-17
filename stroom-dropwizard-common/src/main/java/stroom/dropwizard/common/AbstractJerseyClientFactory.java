@@ -20,6 +20,7 @@ import io.dropwizard.client.proxy.ProxyConfiguration;
 import io.dropwizard.client.ssl.TlsConfiguration;
 import io.dropwizard.setup.Environment;
 import io.dropwizard.util.Duration;
+import jakarta.inject.Provider;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -34,7 +35,6 @@ import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
-import javax.inject.Provider;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.WebTarget;
 

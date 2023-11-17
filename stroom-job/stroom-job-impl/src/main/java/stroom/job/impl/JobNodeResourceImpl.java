@@ -36,10 +36,10 @@ import event.logging.And;
 import event.logging.Query;
 import event.logging.Term;
 import event.logging.TermCondition;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 import java.util.function.Consumer;
-import javax.inject.Inject;
-import javax.inject.Provider;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;

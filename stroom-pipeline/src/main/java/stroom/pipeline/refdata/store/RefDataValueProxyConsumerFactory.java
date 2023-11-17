@@ -23,10 +23,9 @@ import stroom.pipeline.refdata.store.onheapstore.OnHeapRefDataValueProxyConsumer
 import stroom.util.logging.LogUtil;
 
 import com.google.inject.assistedinject.Assisted;
+import jakarta.inject.Inject;
 import net.sf.saxon.event.PipelineConfiguration;
 import net.sf.saxon.event.Receiver;
-
-import javax.inject.Inject;
 
 public class RefDataValueProxyConsumerFactory {
 

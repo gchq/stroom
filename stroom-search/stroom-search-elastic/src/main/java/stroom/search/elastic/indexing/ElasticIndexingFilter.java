@@ -45,6 +45,8 @@ import stroom.util.shared.Severity;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.action.DocWriteRequest.OpType;
 import org.elasticsearch.action.bulk.BulkItemResponse.Failure;
@@ -85,8 +87,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
-import javax.inject.Provider;
 import javax.ws.rs.NotFoundException;
 
 /**

@@ -5,8 +5,9 @@ import stroom.security.identity.db.jooq.tables.OauthClient;
 import stroom.security.identity.openid.OpenIdClientDao;
 import stroom.security.openid.api.OpenIdClient;
 
+import jakarta.inject.Inject;
+
 import java.util.Optional;
-import javax.inject.Inject;
 
 public class OpenIdClientDaoImpl implements OpenIdClientDao {
 

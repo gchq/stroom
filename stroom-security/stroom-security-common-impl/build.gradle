@@ -18,13 +18,13 @@ dependencies {
     implementation libs.slf4j_api
     implementation libs.ws_rs_api
     implementation libs.jakarta_servlet_api
-    implementation libs.javax_inject
+    implementation libs.jakarta_inject
     implementation libs.vavr
 
     testImplementation project(':stroom-test-common')
     testImplementation libs.assertj_core
     testImplementation libs.dropwizard_testing
-    testImplementation libs.guice5
+    testImplementation libs.guice7
     testImplementation libs.junit_jupiter_api
     testImplementation libs.mockito_core
     testImplementation libs.mockito_junit_jupiter

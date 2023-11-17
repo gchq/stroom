@@ -35,6 +35,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ResultPage;
 
 import com.google.common.base.Preconditions;
+import jakarta.inject.Inject;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -43,7 +44,6 @@ import java.util.Optional;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
 
 @SuppressWarnings("unused")
 public class SqlStatisticSearchProvider implements SearchProvider {
@@ -122,15 +122,16 @@ public class SqlStatisticSearchProvider implements SearchProvider {
         // TODO currently only BETWEEN is supported, but need to add support for
         // more conditions like >, >=, <, <=, =
         fields.add(new DateField(StatisticStoreDoc.FIELD_NAME_DATE_TIME,
-                true,
-                Conditions.STAT_DATE));
+                Conditions.STAT_DATE,
+                null,
+                true));
 
         // one field per tag
         if (entity.getConfig() != null) {
             for (final StatisticField statisticField : entity.getStatisticFields()) {
                 // TODO currently only EQUALS is supported, but need to add
                 // support for more conditions like CONTAINS
-                fields.add(new TextField(statisticField.getFieldName(), true, Conditions.STAT_TEXT));
+                fields.add(new TextField(statisticField.getFieldName(), Conditions.STAT_TEXT, null, true));
             }
         }
 

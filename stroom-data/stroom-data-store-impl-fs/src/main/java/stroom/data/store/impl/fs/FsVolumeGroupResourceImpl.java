@@ -6,8 +6,8 @@ import stroom.entity.shared.ExpressionCriteria;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.util.shared.ResultPage;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 @AutoLogged
 class FsVolumeGroupResourceImpl implements FsVolumeGroupResource {

@@ -47,6 +47,8 @@ import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.util.shared.ResultPage;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,8 +60,6 @@ import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
-import javax.inject.Provider;
 
 // used by DI
 @SuppressWarnings("unused")

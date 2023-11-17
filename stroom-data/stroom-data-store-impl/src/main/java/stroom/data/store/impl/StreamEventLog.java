@@ -36,12 +36,12 @@ import event.logging.Query.Builder;
 import event.logging.Resource;
 import event.logging.ViewEventAction;
 import event.logging.util.EventLoggingUtil;
+import jakarta.inject.Inject;
 import org.apache.commons.fileupload.FileItem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.math.BigInteger;
-import javax.inject.Inject;
 
 public class StreamEventLog {
 

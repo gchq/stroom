@@ -35,9 +35,10 @@ public class IntegerField extends AbstractNumericField {
 
     @JsonCreator
     public IntegerField(@JsonProperty("name") final String name,
-                        @JsonProperty("queryable") final Boolean queryable,
-                        @JsonProperty("conditions") final Conditions conditions) {
-        super(name, queryable, conditions);
+                        @JsonProperty("conditions") final Conditions conditions,
+                        @JsonProperty("docRefType") final String docRefType,
+                        @JsonProperty("queryable") final Boolean queryable) {
+        super(name, conditions, docRefType, queryable);
     }
 
     @JsonIgnore

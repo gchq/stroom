@@ -10,11 +10,11 @@ import stroom.receive.common.StreamHandler;
 import stroom.receive.common.StreamHandlers;
 
 import com.google.common.base.Strings;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 import java.util.List;
 import java.util.function.Consumer;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 @Singleton
 public class ReceiveStreamHandlers implements StreamHandlers {

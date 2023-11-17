@@ -35,13 +35,13 @@ import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.io.PathCreator;
 import stroom.util.shared.ResultPage;
 
+import jakarta.inject.Inject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -77,7 +77,7 @@ class TestBasicSearch_EndToEnd extends AbstractCoreIntegrationTest {
                 .collect(Collectors.toMap(QueryField::getName, Function.identity()));
         final QueryField actual = dataSourceFieldsMap.get("Action");
 
-        final QueryField expected = new TextField("Action", true, actual.getConditions());
+        final QueryField expected = new TextField("Action", actual.getConditions(), null, true);
 
         assertThat(actual).as("Expected to index action").isEqualTo(expected);
     }

@@ -26,6 +26,9 @@ import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage.ResultConsumer;
 import stroom.util.string.StringMatcher;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -37,8 +40,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 @Singleton
 public class Functions {

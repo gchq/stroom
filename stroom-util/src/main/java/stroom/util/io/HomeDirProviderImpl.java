@@ -4,13 +4,14 @@ import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Optional;
 import java.util.regex.Pattern;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 @Singleton
 public class HomeDirProviderImpl implements HomeDirProvider {

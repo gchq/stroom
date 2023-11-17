@@ -4,11 +4,12 @@ import stroom.util.date.DateUtil;
 import stroom.util.shared.BuildInfo;
 import stroom.util.shared.IsServlet;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+
 import java.io.IOException;
 import java.io.Writer;
 import java.util.Set;
-import javax.inject.Inject;
-import javax.inject.Provider;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;

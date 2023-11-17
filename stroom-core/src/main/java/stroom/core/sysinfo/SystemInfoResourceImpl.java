@@ -13,6 +13,8 @@ import stroom.util.sysinfo.SystemInfoResultList;
 
 import event.logging.Resource;
 import event.logging.ViewEventAction;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,8 +22,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
-import javax.inject.Provider;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.UriInfo;

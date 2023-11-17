@@ -21,12 +21,13 @@ import stroom.util.shared.ResultPage;
 import stroom.view.api.ViewStore;
 import stroom.view.shared.ViewDoc;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import javax.inject.Inject;
-import javax.inject.Provider;
 
 @SuppressWarnings("unused")
 public class ViewSearchProvider implements SearchProvider {

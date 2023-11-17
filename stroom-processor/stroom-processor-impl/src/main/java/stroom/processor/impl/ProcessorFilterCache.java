@@ -23,10 +23,11 @@ import stroom.processor.shared.ProcessorFilter;
 import stroom.security.api.SecurityContext;
 import stroom.util.shared.Clearable;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
+
 import java.util.Optional;
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.inject.Singleton;
 
 @Singleton
 public class ProcessorFilterCache implements Clearable {

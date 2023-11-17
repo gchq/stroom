@@ -24,7 +24,7 @@ import stroom.proxy.feed.remote.GetFeedStatusResponse;
 import stroom.receive.common.FeedStatusService;
 import stroom.security.api.SecurityContext;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 class FeedStatusServiceImpl implements FeedStatusService {
 

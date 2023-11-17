@@ -20,14 +20,14 @@ import event.logging.ComplexLoggedOutcome;
 import event.logging.Query;
 import event.logging.SearchEventAction;
 import event.logging.ViewEventAction;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Objects;
-import javax.inject.Inject;
-import javax.inject.Provider;
 
 @AutoLogged
 class ActivityResourceImpl implements ActivityResource {

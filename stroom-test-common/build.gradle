@@ -14,7 +14,7 @@ dependencies {
     implementation libs.dropwizard_testing
     implementation libs.flyway_core
     implementation libs.guava
-    implementation libs.guice5
+    implementation libs.guice7
     implementation libs.hikari
     implementation libs.jgit
     implementation libs.jooq

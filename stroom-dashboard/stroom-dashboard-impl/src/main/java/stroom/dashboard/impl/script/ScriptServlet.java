@@ -22,6 +22,8 @@ import stroom.script.shared.ScriptDoc;
 import stroom.security.api.SecurityContext;
 import stroom.util.shared.IsServlet;
 
+import jakarta.inject.Inject;
+
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.UncheckedIOException;
@@ -29,7 +31,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import javax.inject.Inject;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;

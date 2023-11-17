@@ -19,7 +19,8 @@ package stroom.processor.impl.db;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.QueryData;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
+
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 

@@ -1,8 +1,7 @@
 ext.moduleName = 'stroom.query.field.api'
 
 dependencies {
-    implementation project(':stroom-docref')
-
-    implementation project(':stroom-core-shared')
-    implementation project(':stroom-util-shared')
+//    implementation project(':stroom-docref')
+//    implementation project(':stroom-core-shared')
+//    implementation project(':stroom-util-shared')
 }

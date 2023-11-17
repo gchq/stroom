@@ -29,12 +29,13 @@ import stroom.util.net.UrlUtils;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.ServletAuthenticationChecker;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
+
 import java.io.IOException;
 import java.util.Optional;
 import java.util.Set;
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.inject.Singleton;
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;

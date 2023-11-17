@@ -46,21 +46,21 @@ public final class SolrIndexDataSourceFieldUtil {
     private static QueryField convert(final SolrIndexField field) {
         switch (field.getFieldUse()) {
             case ID:
-                return new IdField(field.getFieldName(), field.isIndexed(), Conditions.SOLR_NUMERIC);
+                return new IdField(field.getFieldName(), Conditions.SOLR_NUMERIC, null, field.isIndexed());
             case BOOLEAN_FIELD:
-                return new BooleanField(field.getFieldName(), field.isIndexed(), Conditions.SOLR_BOOLEAN);
+                return new BooleanField(field.getFieldName(), Conditions.SOLR_BOOLEAN, null, field.isIndexed());
             case INTEGER_FIELD:
-                return new IntegerField(field.getFieldName(), field.isIndexed(), Conditions.SOLR_NUMERIC);
+                return new IntegerField(field.getFieldName(), Conditions.SOLR_NUMERIC, null, field.isIndexed());
             case LONG_FIELD:
-                return new LongField(field.getFieldName(), field.isIndexed(), Conditions.SOLR_NUMERIC);
+                return new LongField(field.getFieldName(), Conditions.SOLR_NUMERIC, null, field.isIndexed());
             case FLOAT_FIELD:
-                return new FloatField(field.getFieldName(), field.isIndexed(), Conditions.SOLR_NUMERIC);
+                return new FloatField(field.getFieldName(), Conditions.SOLR_NUMERIC, null, field.isIndexed());
             case DOUBLE_FIELD:
-                return new DoubleField(field.getFieldName(), field.isIndexed(), Conditions.SOLR_NUMERIC);
+                return new DoubleField(field.getFieldName(), Conditions.SOLR_NUMERIC, null, field.isIndexed());
             case DATE_FIELD:
-                return new DateField(field.getFieldName(), field.isIndexed(), Conditions.SOLR_DATE);
+                return new DateField(field.getFieldName(), Conditions.SOLR_DATE, null, field.isIndexed());
             case FIELD:
-                return new TextField(field.getFieldName(), field.isIndexed(), Conditions.SOLR_TEXT);
+                return new TextField(field.getFieldName(), Conditions.SOLR_TEXT, null, field.isIndexed());
         }
 
         return null;

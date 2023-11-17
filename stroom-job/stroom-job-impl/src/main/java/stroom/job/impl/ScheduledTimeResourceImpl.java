@@ -21,8 +21,8 @@ import stroom.job.shared.GetScheduledTimesRequest;
 import stroom.job.shared.ScheduledTimeResource;
 import stroom.job.shared.ScheduledTimes;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 @AutoLogged
 public class ScheduledTimeResourceImpl implements ScheduledTimeResource {

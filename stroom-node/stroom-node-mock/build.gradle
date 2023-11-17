@@ -3,9 +3,9 @@ ext.moduleName = 'stroom.node.mock'
 dependencies {
     implementation project(':stroom-node:stroom-node-api')
 
-    implementation libs.guice5
+    implementation libs.guice7
     implementation libs.jackson_annotations
-    implementation libs.javax_inject
+    implementation libs.jakarta_inject
     implementation libs.ws_rs_api
     
     testImplementation libs.assertj_core

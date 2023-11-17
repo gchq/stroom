@@ -38,6 +38,8 @@ import stroom.util.shared.UserName;
 import stroom.util.time.StroomDuration;
 
 import com.google.common.base.Preconditions;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -53,8 +55,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 @Singleton
 public final class ResultStoreManager implements Clearable, HasResultStoreInfo {

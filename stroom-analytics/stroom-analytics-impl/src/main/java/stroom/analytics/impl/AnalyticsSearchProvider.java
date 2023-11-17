@@ -40,11 +40,12 @@ import stroom.search.impl.FederatedSearchTask;
 import stroom.security.api.SecurityContext;
 import stroom.util.shared.ResultPage;
 
+import jakarta.inject.Inject;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import javax.inject.Inject;
 
 public class AnalyticsSearchProvider implements SearchProvider, HasDataSourceDocRefs {
 

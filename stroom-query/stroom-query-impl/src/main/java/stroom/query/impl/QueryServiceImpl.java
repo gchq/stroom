@@ -58,6 +58,8 @@ import stroom.util.shared.ResultPage;
 import stroom.util.string.ExceptionStringUtil;
 import stroom.view.api.ViewStore;
 
+import jakarta.inject.Inject;
+
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -69,7 +71,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
-import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 
 @AutoLogged

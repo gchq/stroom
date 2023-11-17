@@ -227,10 +227,10 @@ dependencies {
     implementation libs.eventLogging
     implementation libs.flyway_core
     implementation libs.guava
-    implementation libs.guice5
+    implementation libs.guice7
     implementation libs.jakarta_servlet_api
     implementation libs.jakarta_validation_api
-    implementation libs.javax_inject
+    implementation libs.jakarta_inject
     implementation libs.jaxb_api
     implementation libs.jcommander
     implementation libs.jersey_common
@@ -300,7 +300,7 @@ dependencies {
     testImplementation libs.commons_io
     testImplementation libs.classgraph
     testImplementation libs.data_faker
-    testImplementation libs.guice5
+    testImplementation libs.guice7
     testImplementation libs.guice_extension
     testImplementation libs.guice_grapher
     testImplementation libs.hibernate_jpa

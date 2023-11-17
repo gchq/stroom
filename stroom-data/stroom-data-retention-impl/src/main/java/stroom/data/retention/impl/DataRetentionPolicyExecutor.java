@@ -37,6 +37,8 @@ import stroom.util.time.TimeUtils;
 import com.google.common.collect.Ordering;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.time.Duration;
@@ -55,8 +57,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
-import javax.inject.Provider;
 
 /**
  * See also stroom-data/stroom-data-retention-impl/docs/design.md

@@ -21,12 +21,12 @@
 
 package stroom.dropwizard.common;
 
+import jakarta.inject.Inject;
 import org.glassfish.jersey.spi.ExtendedExceptionMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Set;
-import javax.inject.Inject;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;

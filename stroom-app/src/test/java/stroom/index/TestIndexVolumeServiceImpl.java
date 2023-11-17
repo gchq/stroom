@@ -12,6 +12,8 @@ import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.io.ByteSizeUnit;
 import stroom.util.io.PathCreator;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -22,8 +24,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import javax.inject.Inject;
-import javax.inject.Provider;
 
 public class TestIndexVolumeServiceImpl extends AbstractCoreIntegrationTest {
 

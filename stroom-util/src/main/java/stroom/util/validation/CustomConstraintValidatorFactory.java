@@ -12,11 +12,11 @@ import stroom.util.shared.validation.ValidRegexValidator;
 import stroom.util.shared.validation.ValidSimpleCronValidator;
 
 import com.google.inject.ConfigurationException;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
 
 import java.util.Map;
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.inject.Singleton;
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorFactory;
 import javax.validation.Validation;

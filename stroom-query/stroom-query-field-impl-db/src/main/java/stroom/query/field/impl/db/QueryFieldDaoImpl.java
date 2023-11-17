@@ -26,6 +26,7 @@ import stroom.docref.StringMatch;
 import stroom.query.field.impl.QueryFieldDao;
 import stroom.util.shared.ResultPage;
 
+import jakarta.inject.Inject;
 import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.impl.DSL;
@@ -34,7 +35,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import javax.inject.Inject;
 
 import static stroom.query.field.impl.db.jooq.tables.FieldInfo.FIELD_INFO;
 import static stroom.query.field.impl.db.jooq.tables.FieldSource.FIELD_SOURCE;

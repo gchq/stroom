@@ -23,7 +23,7 @@ import stroom.index.impl.Indexer;
 import stroom.index.shared.IndexShardKey;
 import stroom.util.io.TempDirProvider;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 public class MockIndexer implements Indexer {
 

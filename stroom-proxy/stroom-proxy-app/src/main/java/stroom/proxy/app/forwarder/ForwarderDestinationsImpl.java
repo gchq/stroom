@@ -7,6 +7,8 @@ import stroom.receive.common.StreamHandlers;
 import stroom.util.io.PathCreator;
 
 import com.google.common.base.Strings;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,8 +19,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 /**
  * Handler class that forwards the request to a URL.

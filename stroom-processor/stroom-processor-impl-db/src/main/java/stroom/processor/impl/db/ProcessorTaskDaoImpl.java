@@ -44,6 +44,8 @@ import stroom.util.logging.LogUtil;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import org.jooq.BatchBindStep;
 import org.jooq.Condition;
 import org.jooq.Cursor;
@@ -74,8 +76,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 import static java.util.Map.entry;
 import static stroom.processor.impl.db.jooq.tables.Processor.PROCESSOR;

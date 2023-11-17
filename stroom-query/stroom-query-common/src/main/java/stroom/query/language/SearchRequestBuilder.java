@@ -34,6 +34,8 @@ import stroom.query.language.token.TokenGroup;
 import stroom.query.language.token.TokenType;
 import stroom.query.language.token.Tokeniser;
 
+import jakarta.inject.Inject;
+
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -47,7 +49,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
 
 public class SearchRequestBuilder {
 

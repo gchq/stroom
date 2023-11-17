@@ -32,12 +32,13 @@ import stroom.util.logging.LogExecutionTime;
 import stroom.util.time.StroomDuration;
 import stroom.util.time.TimeUtils;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+
 import java.time.Duration;
 import java.time.Instant;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 @Singleton
 class ProcessorTaskDeleteExecutorImpl implements ProcessorTaskDeleteExecutor {

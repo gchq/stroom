@@ -22,12 +22,12 @@ import stroom.util.logging.LambdaLoggerFactory;
 
 import com.google.common.base.Strings;
 import com.google.common.net.HttpHeaders;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 import java.io.IOException;
 import java.util.Objects;
 import java.util.function.Supplier;
-import javax.inject.Inject;
-import javax.inject.Provider;
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;

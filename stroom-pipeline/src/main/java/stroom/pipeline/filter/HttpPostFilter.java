@@ -29,11 +29,11 @@ import stroom.util.jersey.JerseyClientName;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.Severity;
 
+import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
 
-import javax.inject.Inject;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;

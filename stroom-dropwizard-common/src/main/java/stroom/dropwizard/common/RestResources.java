@@ -9,6 +9,8 @@ import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
 import io.dropwizard.setup.Environment;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import org.apache.commons.lang3.StringUtils;
 import org.glassfish.hk2.api.Factory;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
@@ -22,8 +24,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
-import javax.inject.Provider;
 import javax.ws.rs.Path;
 
 public class RestResources {

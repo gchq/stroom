@@ -23,8 +23,8 @@ import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.shared.XsltResource;
 import stroom.util.shared.EntityServiceException;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 @AutoLogged
 class XsltResourceImpl implements XsltResource {

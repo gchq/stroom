@@ -25,6 +25,7 @@ import stroom.job.shared.Job;
 import stroom.util.shared.HasIntCrud;
 import stroom.util.shared.ResultPage;
 
+import jakarta.inject.Inject;
 import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.OrderField;
@@ -35,7 +36,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import javax.inject.Inject;
 import javax.validation.constraints.NotNull;
 
 import static org.jooq.impl.DSL.select;

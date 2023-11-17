@@ -10,6 +10,7 @@ import com.codahale.metrics.json.HealthCheckModule;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.google.common.base.Strings;
+import jakarta.inject.Inject;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -20,7 +21,6 @@ import java.util.Set;
 import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;

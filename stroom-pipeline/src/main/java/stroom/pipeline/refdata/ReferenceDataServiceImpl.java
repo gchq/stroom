@@ -55,6 +55,8 @@ import stroom.util.shared.ResultPage;
 import stroom.util.time.StroomDuration;
 
 import com.google.common.base.Strings;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import net.sf.saxon.Configuration;
 import net.sf.saxon.event.PipelineConfiguration;
 import net.sf.saxon.event.Receiver;
@@ -76,8 +78,6 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
-import javax.inject.Provider;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.client.SyncInvoker;
 

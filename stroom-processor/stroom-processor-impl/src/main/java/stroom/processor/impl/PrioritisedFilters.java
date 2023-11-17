@@ -15,13 +15,14 @@ import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+
 import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 @Singleton
 public class PrioritisedFilters {

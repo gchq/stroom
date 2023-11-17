@@ -17,6 +17,7 @@
 package stroom.util.io;
 
 import com.google.common.base.Strings;
+import jakarta.inject.Inject;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -28,7 +29,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.function.LongSupplier;
 import java.util.function.Supplier;
-import javax.inject.Inject;
 
 public class SimplePathCreator implements PathCreator {
 

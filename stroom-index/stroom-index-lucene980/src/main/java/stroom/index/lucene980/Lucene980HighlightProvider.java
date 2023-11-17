@@ -11,12 +11,12 @@ import stroom.search.impl.SearchConfig;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import org.apache.lucene980.search.IndexSearcher;
 
 import java.util.Collections;
 import java.util.Set;
-import javax.inject.Inject;
-import javax.inject.Provider;
 
 class Lucene980HighlightProvider implements HighlightProvider {
 

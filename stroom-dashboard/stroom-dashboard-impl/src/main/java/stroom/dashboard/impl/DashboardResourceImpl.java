@@ -32,8 +32,9 @@ import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourcePaths;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+
 import javax.ws.rs.client.Entity;
 
 @AutoLogged

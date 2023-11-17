@@ -20,12 +20,13 @@ package stroom.node.mock;
 import stroom.node.api.FindNodeCriteria;
 import stroom.node.api.NodeService;
 
+import jakarta.inject.Singleton;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import javax.inject.Singleton;
 import javax.ws.rs.client.Invocation.Builder;
 import javax.ws.rs.core.Response;
 

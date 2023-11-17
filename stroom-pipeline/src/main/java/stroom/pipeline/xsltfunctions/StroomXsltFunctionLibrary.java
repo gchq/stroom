@@ -20,11 +20,11 @@ import stroom.pipeline.LocationFactory;
 import stroom.pipeline.errorhandler.ErrorReceiver;
 import stroom.pipeline.shared.data.PipelineReference;
 
+import jakarta.inject.Inject;
 import net.sf.saxon.Configuration;
 
 import java.util.List;
 import java.util.Set;
-import javax.inject.Inject;
 
 public class StroomXsltFunctionLibrary {
 

@@ -18,10 +18,10 @@ import stroom.util.logging.LogUtil;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
 
 import java.util.Map;
-import javax.inject.Provider;
-import javax.inject.Singleton;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Invocation.Builder;
 import javax.ws.rs.client.WebTarget;

@@ -33,12 +33,13 @@ import stroom.importexport.shared.ImportState;
 import stroom.util.shared.Message;
 import stroom.visualisation.shared.VisualisationDoc;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.BiConsumer;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 @Singleton
 class VisualisationStoreImpl implements VisualisationStore {

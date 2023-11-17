@@ -8,11 +8,12 @@ import stroom.util.authentication.DefaultOpenIdCredentials;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
+
 import java.time.Duration;
 import java.time.Instant;
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.inject.Singleton;
 
 // Overrides some internal IDP config
 @Singleton

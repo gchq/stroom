@@ -34,7 +34,7 @@ dependencies {
     implementation libs.dropwizard_metrics_annotation
     implementation libs.dropwizard_metrics_healthchecks
     implementation libs.eventLogging
-    implementation libs.guice5
+    implementation libs.guice7
     implementation libs.jackson_annotations
     implementation libs.jackson_core
     implementation libs.jackson_databind

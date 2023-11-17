@@ -8,9 +8,9 @@ import stroom.util.time.StroomDuration;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import jakarta.inject.Singleton;
 
 import java.util.Objects;
-import javax.inject.Singleton;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 

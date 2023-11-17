@@ -33,6 +33,8 @@ import stroom.util.servlet.UserAgentSessionUtil;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.UserName;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,8 +42,6 @@ import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import javax.servlet.http.HttpSession;
 import javax.servlet.http.HttpSessionEvent;
 import javax.servlet.http.HttpSessionListener;

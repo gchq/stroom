@@ -15,11 +15,12 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.ResultPage;
 
+import jakarta.inject.Inject;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import javax.inject.Inject;
 import javax.ws.rs.client.Entity;
 
 public class ResultStoreService {

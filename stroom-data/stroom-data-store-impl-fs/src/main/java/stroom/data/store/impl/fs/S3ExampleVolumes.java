@@ -9,9 +9,10 @@ import stroom.data.store.impl.fs.shared.FsVolumeType;
 import stroom.data.store.impl.fs.shared.S3ClientConfig;
 import stroom.util.json.JsonUtil;
 
+import jakarta.inject.Inject;
+
 import java.util.Objects;
 import java.util.Optional;
-import javax.inject.Inject;
 
 public class S3ExampleVolumes {
 

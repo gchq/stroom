@@ -25,13 +25,13 @@ import stroom.test.CommonTestScenarioCreator;
 import stroom.test.common.util.test.FileSystemTestUtil;
 import stroom.util.io.FileUtil;
 
+import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
 import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
-import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

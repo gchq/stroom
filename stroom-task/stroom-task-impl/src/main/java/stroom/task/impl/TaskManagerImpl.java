@@ -36,6 +36,8 @@ import stroom.util.servlet.SessionIdProvider;
 import stroom.util.shared.ResultPage;
 
 import io.vavr.Tuple;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -46,8 +48,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 @Singleton
 class TaskManagerImpl implements TaskManager {

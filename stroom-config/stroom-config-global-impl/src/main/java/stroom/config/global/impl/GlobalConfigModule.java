@@ -9,8 +9,7 @@ import stroom.util.guice.RestResourcesBinder;
 
 import com.google.inject.AbstractModule;
 import io.dropwizard.lifecycle.Managed;
-
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 import static stroom.job.api.Schedule.ScheduleType.PERIODIC;
 

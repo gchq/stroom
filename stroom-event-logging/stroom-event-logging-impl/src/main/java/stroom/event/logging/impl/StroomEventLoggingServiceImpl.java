@@ -62,6 +62,9 @@ import event.logging.SystemDetail;
 import event.logging.User;
 import event.logging.impl.DefaultEventLoggingService;
 import event.logging.util.DeviceUtil;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -81,9 +84,6 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.inject.Singleton;
 import javax.servlet.http.HttpServletRequest;
 
 @Singleton

@@ -131,25 +131,25 @@ public enum ElasticIndexFieldType implements HasDisplayValue {
             throws IllegalArgumentException {
         switch (dataSourceFieldType) {
             case ID:
-                return new IdField(fieldName, isIndexed, supportedConditions);
+                return new IdField(fieldName, supportedConditions, null, isIndexed);
             case BOOLEAN:
-                return new BooleanField(fieldName, isIndexed, supportedConditions);
+                return new BooleanField(fieldName, supportedConditions, null, isIndexed);
             case INTEGER:
-                return new IntegerField(fieldName, isIndexed, supportedConditions);
+                return new IntegerField(fieldName, supportedConditions, null, isIndexed);
             case LONG:
-                return new LongField(fieldName, isIndexed, supportedConditions);
+                return new LongField(fieldName, supportedConditions, null, isIndexed);
             case FLOAT:
-                return new FloatField(fieldName, isIndexed, supportedConditions);
+                return new FloatField(fieldName, supportedConditions, null, isIndexed);
             case DOUBLE:
-                return new DoubleField(fieldName, isIndexed, supportedConditions);
+                return new DoubleField(fieldName, supportedConditions, null, isIndexed);
             case DATE:
-                return new DateField(fieldName, isIndexed, supportedConditions);
+                return new DateField(fieldName, supportedConditions, null, isIndexed);
             case TEXT:
-                return new TextField(fieldName, isIndexed, supportedConditions);
+                return new TextField(fieldName, supportedConditions, null, isIndexed);
             case KEYWORD:
-                return new KeywordField(fieldName, isIndexed, supportedConditions);
+                return new KeywordField(fieldName, supportedConditions, null, isIndexed);
             case IPV4_ADDRESS:
-                return new IpV4AddressField(fieldName, isIndexed, supportedConditions);
+                return new IpV4AddressField(fieldName, supportedConditions, null, isIndexed);
             default:
                 return null;
         }

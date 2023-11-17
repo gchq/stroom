@@ -58,9 +58,9 @@ public final class XMLMarshallerUtil {
                 try {
                     clone = clazz.getConstructor().newInstance();
                 } catch (final NoSuchMethodException
-                        | InvocationTargetException
-                        | InstantiationException
-                        | IllegalAccessException e) {
+                               | InvocationTargetException
+                               | InstantiationException
+                               | IllegalAccessException e) {
                     return obj;
                 }
 
@@ -80,7 +80,7 @@ public final class XMLMarshallerUtil {
                                         if (Array.getLength(o) == 0) {
                                             o = null;
                                         }
-                                    } else {
+                                    } else if (!field.getType().equals(String.class)) {
                                         o = deepClone(o, depth + 1);
                                     }
                                 }

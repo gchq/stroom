@@ -18,7 +18,7 @@ package stroom.node.impl;
 
 import stroom.node.api.NodeInfo;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 class NodeInfoImpl implements NodeInfo {
 

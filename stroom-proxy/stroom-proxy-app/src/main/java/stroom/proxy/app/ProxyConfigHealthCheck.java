@@ -4,10 +4,10 @@ import stroom.util.HasHealthCheck;
 import stroom.util.HealthCheckUtils;
 
 import com.codahale.metrics.health.HealthCheck.Result;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 import java.util.Map;
-import javax.inject.Inject;
-import javax.inject.Provider;
 
 // TODO should not be a healthcheck, should be HasSystemInfo if we can get it to
 //   work on the admin port as there is no auth in proxy

@@ -115,7 +115,7 @@ ext.versions = [
         dropwizard        : '2.0.28', // used to set the dropwizard-bom version, that controls lots of dependency versions
         elasticsearch     : '7.17.12',
         httpcore          : '4.4.12', // Transient dependency of Elasticsearch
-        guice5            : '5.1.0',
+        guice7            : '7.0.0',
         gwt               : '2.10.0',
         hikari            : '5.0.0',
         jackson_swagger   : '2.11.1', // Specific version of jackson for use with the swagger plugin
@@ -190,11 +190,11 @@ ext.libs = [
         gin                                 : "com.google.gwt.inject:gin:2.1.2",
         guava                               : "com.google.guava:guava", // version controlled by dropwizard-dependencies
         guice3                              : "com.google.inject:guice:3.0",
-        guice5                              : "com.google.inject:guice:$versions.guice5",
-        guice_assistedinject                : "com.google.inject.extensions:guice-assistedinject:$versions.guice5",
+        guice7                              : "com.google.inject:guice:$versions.guice7",
+        guice_assistedinject                : "com.google.inject.extensions:guice-assistedinject:$versions.guice7",
         guice_extension                     : "name.falgout.jeffrey.testing.junit5:guice-extension:1.2.1",
-        guice_multibindings                 : "com.google.inject.extensions:guice-multibindings:$versions.guice5",
-        guice_grapher                       : "com.google.inject.extensions:guice-grapher:$versions.guice5",
+        guice_multibindings                 : "com.google.inject.extensions:guice-multibindings:$versions.guice7",
+        guice_grapher                       : "com.google.inject.extensions:guice-grapher:$versions.guice7",
         gwt_dev                             : "org.gwtproject:gwt-dev:$versions.gwt",
         gwt_servlet                         : "org.gwtproject:gwt-servlet:$versions.gwt",
         gwt_user                            : "org.gwtproject:gwt-user:$versions.gwt",
@@ -215,6 +215,7 @@ ext.libs = [
         jakarta_activation                  : "jakarta.activation:jakarta.activation-api", // version controlled by dropwizard-dependencies
         jakarta_annotation_api              : "jakarta.annotation:jakarta.annotation-api:1.3.5", // FIXME : Version should be resolved from BOM but doesn't seem to work
         jakarta_el                          : "org.glassfish:jakarta.el", // version controlled by dropwizard-dependencies
+        jakarta_inject                      : "jakarta.inject:jakarta.inject-api:2.0.1",
         jakarta_servlet_api                 : "jakarta.servlet:jakarta.servlet-api", // version controlled by dropwizard-dependencies
         jakarta_validation_api              : "jakarta.validation:jakarta.validation-api", // version controlled by dropwizard-dependencies
         java_diff_utils                     : "io.github.java-diff-utils:java-diff-utils:4.11",

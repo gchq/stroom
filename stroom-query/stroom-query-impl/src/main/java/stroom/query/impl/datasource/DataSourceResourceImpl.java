@@ -25,8 +25,8 @@ import stroom.event.logging.rs.api.AutoLogged;
 import stroom.query.impl.QueryService;
 import stroom.util.shared.ResultPage;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 @AutoLogged
 class DataSourceResourceImpl implements DataSourceResource {

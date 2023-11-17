@@ -35,9 +35,10 @@ import stroom.util.shared.DataRange;
 import stroom.util.shared.DefaultLocation;
 import stroom.util.shared.TextRange;
 
+import jakarta.inject.Inject;
+
 import java.util.HashSet;
 import java.util.Set;
-import javax.inject.Inject;
 
 @PipelineScoped
 public class SteppingController {

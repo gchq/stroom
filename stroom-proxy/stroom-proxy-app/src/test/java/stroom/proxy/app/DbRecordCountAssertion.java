@@ -9,9 +9,10 @@ import stroom.proxy.repo.dao.SourceDao;
 import stroom.proxy.repo.dao.SourceItemDao;
 import stroom.test.common.TestUtil;
 
+import jakarta.inject.Inject;
+
 import java.time.Duration;
 import java.util.function.Supplier;
-import javax.inject.Inject;
 
 public class DbRecordCountAssertion {
 

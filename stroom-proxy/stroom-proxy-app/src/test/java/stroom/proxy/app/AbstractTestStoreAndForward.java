@@ -23,6 +23,7 @@ import stroom.util.time.StroomDuration;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import jakarta.inject.Inject;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -32,7 +33,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
-import javax.inject.Inject;
 
 abstract class AbstractTestStoreAndForward {
 

@@ -36,6 +36,9 @@ import stroom.util.NullSafe;
 import stroom.util.shared.Message;
 import stroom.util.string.StringUtil;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -43,8 +46,6 @@ import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 @Singleton
 class DictionaryStoreImpl implements DictionaryStore, WordListProvider {

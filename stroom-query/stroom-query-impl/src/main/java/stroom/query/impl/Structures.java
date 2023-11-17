@@ -9,11 +9,12 @@ import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage.ResultConsumer;
 import stroom.util.string.StringMatcher;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 @Singleton
 class Structures {

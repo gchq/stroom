@@ -4,6 +4,7 @@ import stroom.proxy.repo.ProxyRepoTestModule;
 import stroom.proxy.repo.RepoSource;
 import stroom.proxy.repo.queue.Batch;
 
+import jakarta.inject.Inject;
 import name.falgout.jeffrey.testing.junit.guice.GuiceExtension;
 import name.falgout.jeffrey.testing.junit.guice.IncludeModule;
 import org.junit.jupiter.api.BeforeEach;
@@ -19,7 +20,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
-import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

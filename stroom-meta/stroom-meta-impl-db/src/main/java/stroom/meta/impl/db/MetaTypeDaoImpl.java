@@ -31,6 +31,9 @@ import stroom.util.logging.LogUtil;
 import stroom.util.shared.Clearable;
 import stroom.util.string.PatternUtil;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
 import org.jooq.Condition;
 
 import java.util.List;
@@ -39,9 +42,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.inject.Singleton;
 
 import static stroom.meta.impl.db.jooq.tables.MetaType.META_TYPE;
 

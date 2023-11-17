@@ -5,7 +5,7 @@ dependencies {
     implementation project(':stroom-processor:stroom-processor-api')
     implementation project(':stroom-util-shared')
 
-    implementation libs.guice5
+    implementation libs.guice7
     implementation libs.jackson_annotations
-    implementation libs.javax_inject
+    implementation libs.jakarta_inject
 }

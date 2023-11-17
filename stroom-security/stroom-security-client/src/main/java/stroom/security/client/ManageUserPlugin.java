@@ -27,7 +27,6 @@ import stroom.security.client.presenter.UsersAndGroupsPresenter;
 import stroom.security.shared.PermissionNames;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.menu.client.presenter.IconMenuItem;
-import stroom.widget.menu.client.presenter.KeyedParentMenuItem;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;

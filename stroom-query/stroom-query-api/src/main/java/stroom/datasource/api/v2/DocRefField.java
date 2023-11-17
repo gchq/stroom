@@ -33,10 +33,10 @@ public class DocRefField extends QueryField {
     }
 
     @JsonCreator
-    public DocRefField(@JsonProperty("docRefType") final String docRefType,
-                       @JsonProperty("name") final String name,
-                       @JsonProperty("queryable") final Boolean queryable,
-                       @JsonProperty("conditions") final Conditions conditions) {
+    public DocRefField(@JsonProperty("name") final String name,
+                       @JsonProperty("conditions") final Conditions conditions,
+                       @JsonProperty("docRefType") final String docRefType,
+                       @JsonProperty("queryable") final Boolean queryable) {
         super(name, conditions, docRefType, queryable);
     }
 
@@ -46,7 +46,7 @@ public class DocRefField extends QueryField {
      */
     public static DocRefField byUniqueName(final String docRefType,
                                            final String name) {
-        return new DocRefField(docRefType, name, Boolean.TRUE, Conditions.DOC_REF_ALL);
+        return new DocRefField(name, Conditions.DOC_REF_ALL, docRefType, Boolean.TRUE);
     }
 
     /**
@@ -56,7 +56,7 @@ public class DocRefField extends QueryField {
      */
     public static DocRefField byNonUniqueName(final String docRefType,
                                               final String name) {
-        return new DocRefField(docRefType, name, Boolean.TRUE, Conditions.DOC_REF_NAME);
+        return new DocRefField(name, Conditions.DOC_REF_NAME, docRefType, Boolean.TRUE);
     }
 
     /**
@@ -67,7 +67,7 @@ public class DocRefField extends QueryField {
      */
     public static DocRefField byUuid(final String docRefType,
                                      final String name) {
-        return new DocRefField(docRefType, name, Boolean.TRUE, Conditions.DOC_REF_UUID);
+        return new DocRefField(name, Conditions.DOC_REF_UUID, docRefType, Boolean.TRUE);
     }
 
     @JsonIgnore

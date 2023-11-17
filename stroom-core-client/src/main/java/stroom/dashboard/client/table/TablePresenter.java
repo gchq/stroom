@@ -532,7 +532,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
                 default:
                     // CONTAINS only supported for legacy content, not for use in UI
-                    return new TextField(field.getName(), true, Conditions.BASIC_TEXT);
+                    return new TextField(field.getName(), Conditions.BASIC_TEXT, null, true);
 
             }
         } catch (Exception e) {

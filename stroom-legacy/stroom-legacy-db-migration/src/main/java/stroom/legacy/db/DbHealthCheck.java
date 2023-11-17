@@ -5,11 +5,11 @@ import stroom.config.common.ConnectionConfig;
 import stroom.util.HasHealthCheck;
 
 import com.codahale.metrics.health.HealthCheck;
+import jakarta.inject.Inject;
 
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Optional;
-import javax.inject.Inject;
 
 @Deprecated
 public class DbHealthCheck implements HasHealthCheck {

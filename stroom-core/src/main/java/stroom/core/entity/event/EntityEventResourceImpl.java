@@ -25,9 +25,10 @@ import stroom.util.entityevent.EntityEvent;
 import stroom.util.jersey.WebTargetFactory;
 import stroom.util.shared.ResourcePaths;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+
 import java.util.Objects;
-import javax.inject.Inject;
-import javax.inject.Provider;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;

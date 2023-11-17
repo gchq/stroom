@@ -51,25 +51,25 @@ public final class ElasticIndexDataSourceFieldUtil {
         final Conditions supportedConditions = fieldType.getSupportedConditions();
         switch (fieldType) {
             case ID:
-                return new IdField(fieldName, field.isIndexed(), supportedConditions);
+                return new IdField(fieldName, supportedConditions, null, field.isIndexed());
             case BOOLEAN:
-                return new BooleanField(fieldName, field.isIndexed(), supportedConditions);
+                return new BooleanField(fieldName, supportedConditions, null, field.isIndexed());
             case INTEGER:
-                return new IntegerField(fieldName, field.isIndexed(), supportedConditions);
+                return new IntegerField(fieldName, supportedConditions, null, field.isIndexed());
             case LONG:
-                return new LongField(fieldName, field.isIndexed(), supportedConditions);
+                return new LongField(fieldName, supportedConditions, null, field.isIndexed());
             case FLOAT:
-                return new FloatField(fieldName, field.isIndexed(), supportedConditions);
+                return new FloatField(fieldName, supportedConditions, null, field.isIndexed());
             case DOUBLE:
-                return new DoubleField(fieldName, field.isIndexed(), supportedConditions);
+                return new DoubleField(fieldName, supportedConditions, null, field.isIndexed());
             case DATE:
-                return new DateField(fieldName, field.isIndexed(), supportedConditions);
+                return new DateField(fieldName, supportedConditions, null, field.isIndexed());
             case TEXT:
-                return new TextField(fieldName, field.isIndexed(), supportedConditions);
+                return new TextField(fieldName, supportedConditions, null, field.isIndexed());
             case KEYWORD:
-                return new KeywordField(fieldName, field.isIndexed(), supportedConditions);
+                return new KeywordField(fieldName, supportedConditions, null, field.isIndexed());
             case IPV4_ADDRESS:
-                return new IpV4AddressField(fieldName, field.isIndexed(), supportedConditions);
+                return new IpV4AddressField(fieldName, supportedConditions, null, field.isIndexed());
         }
         return null;
     }

@@ -8,13 +8,13 @@ import stroom.db.util.JooqUtil;
 import stroom.util.NullSafe;
 import stroom.util.shared.ResultPage;
 
+import jakarta.inject.Inject;
 import org.jooq.Condition;
 
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import javax.inject.Inject;
 
 import static stroom.data.store.impl.fs.db.jooq.tables.FsMetaVolume.FS_META_VOLUME;
 

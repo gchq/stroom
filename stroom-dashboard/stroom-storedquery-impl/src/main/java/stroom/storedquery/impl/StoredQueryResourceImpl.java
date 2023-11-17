@@ -30,11 +30,11 @@ import event.logging.And;
 import event.logging.Query;
 import event.logging.Term;
 import event.logging.TermCondition;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
 
 import java.util.function.Supplier;
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.inject.Singleton;
 
 @Singleton
 @AutoLogged(OperationType.MANUALLY_LOGGED)

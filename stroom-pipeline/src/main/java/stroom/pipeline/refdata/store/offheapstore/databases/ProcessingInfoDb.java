@@ -17,6 +17,7 @@ import stroom.util.logging.LogUtil;
 import com.google.inject.assistedinject.Assisted;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
+import jakarta.inject.Inject;
 import org.lmdbjava.CursorIterable;
 import org.lmdbjava.KeyRange;
 import org.lmdbjava.Txn;
@@ -28,7 +29,6 @@ import java.time.Instant;
 import java.util.Optional;
 import java.util.concurrent.atomic.LongAccumulator;
 import java.util.function.Predicate;
-import javax.inject.Inject;
 
 public class ProcessingInfoDb extends AbstractLmdbDb<RefStreamDefinition, RefDataProcessingInfo> {
 

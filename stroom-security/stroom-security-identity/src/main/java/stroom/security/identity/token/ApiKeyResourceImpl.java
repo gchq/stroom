@@ -31,10 +31,10 @@ import com.codahale.metrics.annotation.Timed;
 import event.logging.ComplexLoggedOutcome;
 import event.logging.Query;
 import event.logging.SearchEventAction;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 import java.util.Objects;
-import javax.inject.Inject;
-import javax.inject.Provider;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.NotFoundException;
 

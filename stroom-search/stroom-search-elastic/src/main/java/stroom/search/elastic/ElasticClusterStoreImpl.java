@@ -32,11 +32,12 @@ import stroom.importexport.shared.ImportState;
 import stroom.search.elastic.shared.ElasticClusterDoc;
 import stroom.util.shared.Message;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 @Singleton
 public class ElasticClusterStoreImpl implements ElasticClusterStore {

@@ -22,6 +22,9 @@ import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.logging.LogExecutionTime;
 
 import io.dropwizard.lifecycle.Managed;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,9 +38,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.inject.Singleton;
 
 @Singleton
 class LifecycleService implements Managed {

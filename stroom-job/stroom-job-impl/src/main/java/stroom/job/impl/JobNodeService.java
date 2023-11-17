@@ -29,12 +29,12 @@ import stroom.util.scheduler.Scheduler;
 import stroom.util.scheduler.SimpleCron;
 import stroom.util.shared.ModelStringUtil;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Optional;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 @Singleton
 class JobNodeService {

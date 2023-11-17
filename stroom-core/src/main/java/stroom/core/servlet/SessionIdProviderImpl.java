@@ -18,8 +18,9 @@ package stroom.core.servlet;
 
 import stroom.util.servlet.SessionIdProvider;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 

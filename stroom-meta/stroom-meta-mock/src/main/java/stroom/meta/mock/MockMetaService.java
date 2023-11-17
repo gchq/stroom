@@ -24,6 +24,8 @@ import stroom.util.shared.Clearable;
 import stroom.util.shared.ResultPage;
 import stroom.util.time.TimePeriod;
 
+import jakarta.inject.Singleton;
+
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -36,7 +38,6 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
-import javax.inject.Singleton;
 
 @Singleton
 public class MockMetaService implements MetaService, Clearable {

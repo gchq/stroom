@@ -4,13 +4,13 @@ import stroom.query.common.v2.Sizes;
 import stroom.query.common.v2.SizesProvider;
 import stroom.ui.config.shared.UiConfig;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
-import javax.inject.Provider;
 
 public class SizesProviderImpl implements SizesProvider {
 

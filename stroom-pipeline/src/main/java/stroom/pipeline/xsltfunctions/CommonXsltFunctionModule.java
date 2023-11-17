@@ -2,11 +2,10 @@ package stroom.pipeline.xsltfunctions;
 
 import stroom.util.pipeline.scope.PipelineScoped;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import net.sf.saxon.type.BuiltInAtomicType;
 import net.sf.saxon.value.SequenceType;
-
-import javax.inject.Inject;
-import javax.inject.Provider;
 
 public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
 

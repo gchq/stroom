@@ -12,6 +12,7 @@ import stroom.util.logging.LogUtil;
 
 import com.google.common.base.Preconditions;
 import com.google.inject.assistedinject.Assisted;
+import jakarta.inject.Inject;
 import org.lmdbjava.KeyRange;
 import org.lmdbjava.Txn;
 
@@ -25,7 +26,6 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.inject.Inject;
 
 /**
  * This class provides a front door for all interactions with the {@link MapUidForwardDb} and

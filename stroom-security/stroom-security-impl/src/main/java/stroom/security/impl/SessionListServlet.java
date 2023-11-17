@@ -26,13 +26,14 @@ import stroom.util.logging.LogUtil;
 import stroom.util.shared.IsServlet;
 import stroom.util.shared.UserName;
 
+import jakarta.inject.Inject;
+
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.io.Writer;
 import java.util.Comparator;
 import java.util.Objects;
 import java.util.Set;
-import javax.inject.Inject;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;

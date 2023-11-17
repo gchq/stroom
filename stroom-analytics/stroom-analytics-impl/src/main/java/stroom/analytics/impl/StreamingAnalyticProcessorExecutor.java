@@ -43,7 +43,7 @@ import stroom.processor.api.ProcessorTaskService;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.statistics.api.InternalStatisticsReceiver;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 public class StreamingAnalyticProcessorExecutor extends AbstractProcessorTaskExecutor {
 

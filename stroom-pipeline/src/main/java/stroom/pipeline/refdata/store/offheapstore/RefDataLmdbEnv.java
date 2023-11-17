@@ -13,6 +13,8 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
 import com.google.inject.assistedinject.Assisted;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.lmdbjava.Dbi;
 import org.lmdbjava.DbiFlags;
@@ -33,8 +35,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import javax.inject.Inject;
-import javax.inject.Provider;
 
 public class RefDataLmdbEnv {
 

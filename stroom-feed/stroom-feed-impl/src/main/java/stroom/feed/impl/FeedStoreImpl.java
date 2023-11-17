@@ -35,12 +35,13 @@ import stroom.security.api.SecurityContext;
 import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.Message;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 @Singleton
 public class FeedStoreImpl implements FeedStore {

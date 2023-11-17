@@ -28,11 +28,12 @@ import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterRow;
 import stroom.view.shared.ViewDoc;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import javax.inject.Inject;
-import javax.inject.Provider;
 
 @AutoLogged(OperationType.UNLOGGED)
 class AnalyticProcessResourceImpl implements AnalyticProcessResource {

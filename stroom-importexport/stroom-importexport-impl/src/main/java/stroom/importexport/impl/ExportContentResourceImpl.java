@@ -7,11 +7,12 @@ import stroom.resource.api.ResourceStore;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.ResourceKey;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import javax.inject.Inject;
-import javax.inject.Provider;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;

@@ -8,10 +8,11 @@ import stroom.security.openid.api.IdpType;
 import stroom.security.openid.api.OpenIdConfigurationResponse;
 import stroom.util.NullSafe;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+
 import java.util.List;
 import java.util.Set;
-import javax.inject.Inject;
-import javax.inject.Provider;
 
 /**
  * A front for the internal and external OIDC config providers. The useInternal prop in local

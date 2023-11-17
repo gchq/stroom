@@ -4,6 +4,8 @@ import stroom.proxy.app.ProxyConfig;
 import stroom.util.io.HomeDirProvider;
 import stroom.util.net.HostNameUtil;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -11,8 +13,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.UUID;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 @Singleton
 public class ProxyId {

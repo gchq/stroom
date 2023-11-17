@@ -14,10 +14,10 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.pipeline.scope.PipelineScoped;
 import stroom.util.shared.Severity;
 
+import jakarta.inject.Inject;
 import org.slf4j.MarkerFactory;
 
 import java.io.IOException;
-import javax.inject.Inject;
 
 @PipelineScoped
 public class AnalyticErrorWriter {

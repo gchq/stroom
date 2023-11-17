@@ -48,11 +48,12 @@ import stroom.util.date.DateUtil;
 import stroom.util.io.IgnoreCloseInputStream;
 import stroom.util.shared.Severity;
 
+import jakarta.inject.Inject;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Writer;
 import java.util.List;
-import javax.inject.Inject;
 
 
 class CliTranslationTaskHandler {

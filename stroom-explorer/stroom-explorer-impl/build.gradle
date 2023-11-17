@@ -24,10 +24,10 @@ dependencies {
 
     implementation libs.dropwizard_validation
     implementation libs.eventLogging
-    implementation libs.guice5
+    implementation libs.guice7
     implementation libs.jackson_annotations
     implementation libs.jakarta_servlet_api
-    implementation libs.javax_inject
+    implementation libs.jakarta_inject
     implementation libs.jersey_common
     implementation libs.jaxb_api
     implementation libs.restygwt

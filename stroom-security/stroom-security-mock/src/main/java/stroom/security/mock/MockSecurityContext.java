@@ -24,10 +24,10 @@ import stroom.security.shared.User;
 import stroom.util.shared.UserName;
 
 import com.google.inject.Inject;
+import jakarta.inject.Provider;
 
 import java.util.Optional;
 import java.util.function.Supplier;
-import javax.inject.Provider;
 
 public class MockSecurityContext implements SecurityContext {
 

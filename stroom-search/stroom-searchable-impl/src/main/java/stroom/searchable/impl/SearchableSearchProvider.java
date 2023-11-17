@@ -33,6 +33,7 @@ import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 
 import com.google.common.base.Preconditions;
+import jakarta.inject.Inject;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -44,7 +45,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
 
 @SuppressWarnings("unused")
 class SearchableSearchProvider implements SearchProvider {

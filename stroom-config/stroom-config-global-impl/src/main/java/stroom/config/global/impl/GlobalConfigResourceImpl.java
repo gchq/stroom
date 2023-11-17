@@ -31,14 +31,14 @@ import event.logging.ComplexLoggedOutcome;
 import event.logging.Query;
 import event.logging.SearchEventAction;
 import event.logging.UpdateEventAction;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
-import javax.inject.Provider;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.SyncInvoker;

@@ -13,6 +13,7 @@ import event.logging.AuthenticateOutcome;
 import event.logging.User;
 import event.logging.util.EventLoggingUtil;
 import io.dropwizard.setup.Bootstrap;
+import jakarta.inject.Inject;
 import net.sourceforge.argparse4j.inf.Namespace;
 import net.sourceforge.argparse4j.inf.Subparser;
 import org.slf4j.Logger;
@@ -20,7 +21,6 @@ import org.slf4j.LoggerFactory;
 
 import java.nio.file.Path;
 import java.util.Set;
-import javax.inject.Inject;
 
 /**
  * Resets the password of an account in the internal identity provider

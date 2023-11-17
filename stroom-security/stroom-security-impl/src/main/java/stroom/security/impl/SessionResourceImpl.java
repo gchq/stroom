@@ -10,14 +10,14 @@ import stroom.security.shared.SessionResource;
 import stroom.security.shared.UrlResponse;
 import stroom.security.shared.ValidateSessionResponse;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
-import javax.inject.Inject;
-import javax.inject.Provider;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 

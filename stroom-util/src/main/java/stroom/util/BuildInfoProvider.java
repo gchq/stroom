@@ -21,11 +21,12 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.BuildInfo;
 
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
+
 import java.io.IOException;
 import java.time.ZonedDateTime;
 import java.util.Properties;
-import javax.inject.Provider;
-import javax.inject.Singleton;
 
 @Singleton
 public class BuildInfoProvider implements Provider<BuildInfo> {

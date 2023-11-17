@@ -50,6 +50,9 @@ import stroom.util.shared.Severity;
 import stroom.util.string.StringMatcher;
 import stroom.util.string.StringMatcher.Match;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.lang.reflect.InvocationTargetException;
@@ -67,8 +70,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
-import javax.inject.Provider;
 
 public class StoreImpl<D extends Doc> implements Store<D> {
 

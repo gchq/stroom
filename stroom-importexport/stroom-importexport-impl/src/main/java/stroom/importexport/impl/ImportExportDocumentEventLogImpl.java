@@ -27,10 +27,9 @@ import event.logging.ExportEventAction;
 import event.logging.MultiObject;
 import event.logging.OtherObject;
 import event.logging.util.EventLoggingUtil;
+import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.inject.Inject;
 
 class ImportExportDocumentEventLogImpl implements ImportExportDocumentEventLog {
     private static final Logger LOGGER = LoggerFactory.getLogger(ImportExportDocumentEventLogImpl.class);

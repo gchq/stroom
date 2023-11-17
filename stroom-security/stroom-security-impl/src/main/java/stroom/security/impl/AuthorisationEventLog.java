@@ -26,10 +26,9 @@ import event.logging.Group;
 import event.logging.Outcome;
 import event.logging.RemoveGroups;
 import event.logging.User;
+import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.inject.Inject;
 
 public class AuthorisationEventLog {
     private static final Logger LOGGER = LoggerFactory.getLogger(AuthorisationEventLog.class);

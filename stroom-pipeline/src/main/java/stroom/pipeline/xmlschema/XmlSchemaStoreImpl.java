@@ -33,6 +33,8 @@ import stroom.util.shared.Message;
 import stroom.util.shared.ResultPage;
 import stroom.xmlschema.shared.XmlSchemaDoc;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,8 +42,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 @Singleton
 public class XmlSchemaStoreImpl implements XmlSchemaStore {

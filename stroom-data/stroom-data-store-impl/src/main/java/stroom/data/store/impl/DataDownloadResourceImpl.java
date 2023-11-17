@@ -17,14 +17,14 @@ import event.logging.ComplexLoggedOutcome;
 import event.logging.ExportEventAction;
 import event.logging.File;
 import event.logging.MultiObject;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigInteger;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import javax.inject.Inject;
-import javax.inject.Provider;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;

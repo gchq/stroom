@@ -11,10 +11,10 @@ import stroom.util.logging.LambdaLoggerFactory;
 
 import event.logging.MultiObject;
 import event.logging.UpdateEventAction;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 import java.util.List;
-import javax.inject.Inject;
-import javax.inject.Provider;
 
 import static stroom.event.logging.rs.api.AutoLogged.OperationType.UNLOGGED;
 

@@ -33,7 +33,7 @@ dependencies {
     implementation project(':stroom-view:stroom-view-api')
 
     implementation libs.eventLogging
-    implementation libs.guice5
+    implementation libs.guice7
     implementation libs.restygwt
     implementation libs.slf4j_api
 

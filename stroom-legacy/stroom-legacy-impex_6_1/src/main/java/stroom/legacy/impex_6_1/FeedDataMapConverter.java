@@ -12,12 +12,13 @@ import stroom.util.NullSafe;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.Severity;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
+
 import java.io.IOException;
 import java.util.Map;
 import java.util.UUID;
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.inject.Singleton;
 
 @Singleton
 @Deprecated

@@ -25,6 +25,7 @@ import stroom.test.AbstractStatisticsCoreIntegrationTest;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.time.StroomDuration;
 
+import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,7 +39,6 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
-import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

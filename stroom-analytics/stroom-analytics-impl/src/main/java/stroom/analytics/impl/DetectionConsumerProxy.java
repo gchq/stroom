@@ -18,6 +18,8 @@ import stroom.util.NullSafe;
 import stroom.util.date.DateUtil;
 import stroom.util.shared.Severity;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,8 +27,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
-import javax.inject.Inject;
-import javax.inject.Provider;
 
 public class DetectionConsumerProxy implements ValuesConsumer, ProcessLifecycleAware {
 

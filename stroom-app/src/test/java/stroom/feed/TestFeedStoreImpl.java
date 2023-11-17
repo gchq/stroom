@@ -24,10 +24,10 @@ import stroom.feed.shared.FeedDoc;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.common.util.test.FileSystemTestUtil;
 
+import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

@@ -20,10 +20,10 @@ package stroom.security.identity.exceptions.mappers;
 
 import stroom.security.identity.exceptions.NoSuchUserException;
 
+import jakarta.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Singleton;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;

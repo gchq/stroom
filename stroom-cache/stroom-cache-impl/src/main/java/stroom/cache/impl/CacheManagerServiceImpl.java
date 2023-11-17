@@ -24,6 +24,7 @@ import stroom.security.shared.PermissionNames;
 import stroom.task.api.TaskContextFactory;
 import stroom.util.shared.Clearable;
 
+import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,7 +33,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
 
 public class CacheManagerServiceImpl implements CacheManagerService, Clearable {
 

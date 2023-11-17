@@ -22,12 +22,13 @@ import stroom.util.servlet.HttpServletRequestHolder;
 import stroom.util.shared.IsServlet;
 import stroom.util.shared.ResourceKey;
 
+import jakarta.inject.Inject;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Set;
 import java.util.UUID;
-import javax.inject.Inject;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;

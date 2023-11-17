@@ -32,12 +32,13 @@ import stroom.util.io.PathCreator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Map;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 /**
  * A file system stream store.

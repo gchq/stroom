@@ -8,11 +8,11 @@ import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import org.jooq.Record;
 
 import java.util.Optional;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 import static stroom.analytics.impl.db.jooq.tables.AnalyticTracker.ANALYTIC_TRACKER;
 

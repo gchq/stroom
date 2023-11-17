@@ -5,11 +5,10 @@ import stroom.data.store.impl.fs.db.jooq.tables.records.FsOrphanedMetaTrackerRec
 import stroom.db.util.JooqUtil;
 import stroom.util.logging.LogUtil;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 import static stroom.data.store.impl.fs.db.jooq.tables.FsOrphanedMetaTracker.FS_ORPHANED_META_TRACKER;
 

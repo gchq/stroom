@@ -27,10 +27,11 @@ import stroom.explorer.shared.ExplorerNodePermissions;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 
+import jakarta.inject.Inject;
+
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import javax.inject.Inject;
 
 public class ExplorerNodePermissionsServiceImpl implements ExplorerNodePermissionsService {
 

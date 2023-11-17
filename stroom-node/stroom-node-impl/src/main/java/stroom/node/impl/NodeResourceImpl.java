@@ -38,6 +38,8 @@ import stroom.util.shared.StringCriteria;
 import event.logging.AdvancedQuery;
 import event.logging.And;
 import event.logging.Query;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 import java.util.Comparator;
 import java.util.List;
@@ -46,8 +48,6 @@ import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
-import javax.inject.Provider;
 import javax.ws.rs.client.SyncInvoker;
 
 @AutoLogged

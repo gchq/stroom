@@ -12,7 +12,7 @@ dependencies {
 
     testImplementation libs.assertj_core
     testImplementation libs.commons_lang
-    testImplementation libs.guice5
+    testImplementation libs.guice7
     testImplementation libs.jackson_core
     testImplementation libs.jackson_databind
     testImplementation libs.junit_jupiter_api

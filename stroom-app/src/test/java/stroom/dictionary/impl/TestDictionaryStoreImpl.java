@@ -23,11 +23,11 @@ import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docref.DocRef;
 import stroom.test.AbstractCoreIntegrationTest;
 
+import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
 import java.util.List;
-import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

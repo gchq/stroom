@@ -27,13 +27,13 @@ import stroom.test.StoreCreationTool;
 import stroom.test.common.StroomPipelineTestFileUtil;
 import stroom.util.shared.Severity;
 
+import jakarta.inject.Inject;
 import org.assertj.core.api.Assertions;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.OptionalInt;
-import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

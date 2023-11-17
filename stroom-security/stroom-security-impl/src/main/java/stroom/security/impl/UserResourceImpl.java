@@ -18,12 +18,12 @@ import stroom.util.user.UserNameUtil;
 
 import event.logging.CreateEventAction;
 import event.logging.Outcome;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
-import javax.inject.Provider;
 import javax.ws.rs.NotFoundException;
 
 @AutoLogged

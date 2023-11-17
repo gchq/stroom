@@ -1,6 +1,7 @@
 package stroom.util.jersey;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
+
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.WebTarget;

@@ -11,7 +11,6 @@ dependencies {
 
     implementation libs.jackson_annotations
     implementation libs.jakarta_validation_api
-    implementation libs.javax_inject
     implementation libs.jaxb_api
     implementation libs.restygwt
     implementation libs.swagger_annotations
@@ -20,7 +19,7 @@ dependencies {
     testImplementation project(':stroom-test-common')
 
     testImplementation libs.assertj_core
-    testImplementation libs.guice5 // For TypeLiteral in DynamicTestBuilder
+    testImplementation libs.guice7 // For TypeLiteral in DynamicTestBuilder
     testImplementation libs.jackson_core
     testImplementation libs.junit_jupiter_api
     testImplementation libs.slf4j_api

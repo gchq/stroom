@@ -16,6 +16,8 @@ import com.google.common.base.Strings;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import org.flywaydb.core.api.MigrationVersion;
 import org.flywaydb.core.internal.util.ExceptionUtils;
 import org.jooq.Record;
@@ -30,8 +32,6 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
-import javax.inject.Inject;
-import javax.inject.Provider;
 import javax.sql.DataSource;
 
 import static org.assertj.core.api.Fail.fail;

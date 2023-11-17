@@ -8,6 +8,7 @@ import stroom.search.impl.SearchException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
+import jakarta.inject.Inject;
 import org.apache.lucene553.analysis.Analyzer;
 import org.apache.lucene553.analysis.TokenStream;
 import org.apache.lucene553.index.IndexableField;
@@ -17,7 +18,6 @@ import org.apache.lucene553.search.TopDocs;
 
 import java.io.IOException;
 import java.util.List;
-import javax.inject.Inject;
 
 class MemoryIndexImpl implements stroom.search.extraction.MemoryIndex {
 

@@ -39,9 +39,10 @@ import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.ResultPage;
 import stroom.util.string.StringMatcher;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+
 import java.util.List;
-import javax.inject.Inject;
-import javax.inject.Provider;
 import javax.ws.rs.client.Entity;
 
 @AutoLogged

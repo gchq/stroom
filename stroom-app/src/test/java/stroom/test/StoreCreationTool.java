@@ -69,6 +69,7 @@ import stroom.util.io.StreamUtil;
 
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
+import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -86,7 +87,6 @@ import java.util.OptionalInt;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

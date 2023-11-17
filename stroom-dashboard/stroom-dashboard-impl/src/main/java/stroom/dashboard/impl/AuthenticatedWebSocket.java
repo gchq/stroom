@@ -5,10 +5,11 @@ import stroom.security.api.UserIdentity;
 import stroom.util.shared.IsWebSocket;
 import stroom.util.shared.WebSocketMessage;
 
+import jakarta.inject.Inject;
+
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.Optional;
-import javax.inject.Inject;
 import javax.websocket.CloseReason;
 import javax.websocket.OnClose;
 import javax.websocket.OnError;

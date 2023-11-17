@@ -6,13 +6,13 @@ import stroom.index.shared.IndexVolumeGroup;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.io.capacity.RoundRobinCapacitySelector;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
-import javax.inject.Inject;
-import javax.inject.Provider;
 
 public class TestIndexVolumeGroupServiceImpl extends AbstractCoreIntegrationTest {
 

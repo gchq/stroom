@@ -32,10 +32,10 @@ import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.ResultPage;
 
 import event.logging.Query;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.inject.Singleton;
 import javax.ws.rs.client.Entity;
 
 @Singleton

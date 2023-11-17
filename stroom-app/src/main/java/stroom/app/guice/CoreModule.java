@@ -89,8 +89,8 @@ public class CoreModule extends AbstractModule {
         install(new stroom.processor.impl.ProcessorModule());
         install(new stroom.processor.impl.db.ProcessorDaoModule());
         install(new stroom.suggestions.impl.SuggestModule());
-        install(new QueryFieldModule());
-        install(new QueryFieldDbModule());
+        install(new stroom.query.field.impl.QueryFieldModule());
+        install(new stroom.query.field.impl.db.QueryFieldDaoModule());
         install(new stroom.query.impl.QueryModule());
         install(new stroom.receive.common.RemoteFeedModule());
         install(new stroom.receive.rules.impl.ReceiveDataRuleSetModule());

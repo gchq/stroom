@@ -43,12 +43,13 @@ import stroom.util.logging.LogExecutionTime;
 import stroom.util.logging.LogUtil;
 import stroom.view.shared.ViewDoc;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
-import javax.inject.Inject;
-import javax.inject.Provider;
 
 public class StreamingAnalyticDataProcessorDecorator {
 

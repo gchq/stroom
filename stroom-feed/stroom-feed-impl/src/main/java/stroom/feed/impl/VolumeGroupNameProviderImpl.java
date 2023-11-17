@@ -3,9 +3,10 @@ package stroom.feed.impl;
 import stroom.feed.api.VolumeGroupNameProvider;
 import stroom.feed.shared.FeedDoc;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+
 import java.util.Optional;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 @Singleton
 public class VolumeGroupNameProviderImpl implements VolumeGroupNameProvider {

@@ -44,12 +44,12 @@ import event.logging.UpdateEventAction;
 import event.logging.User;
 import event.logging.ViewEventAction;
 import event.logging.util.EventLoggingUtil;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 import java.math.BigInteger;
 import java.util.Objects;
 import java.util.Optional;
-import javax.inject.Inject;
-import javax.inject.Provider;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.NotFoundException;
 

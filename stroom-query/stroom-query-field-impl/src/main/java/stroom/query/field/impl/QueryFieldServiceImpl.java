@@ -6,8 +6,9 @@ import stroom.datasource.api.v2.QueryFieldService;
 import stroom.docref.DocRef;
 import stroom.util.shared.ResultPage;
 
+import jakarta.inject.Inject;
+
 import java.util.Collection;
-import javax.inject.Inject;
 
 public class QueryFieldServiceImpl implements QueryFieldService {
 

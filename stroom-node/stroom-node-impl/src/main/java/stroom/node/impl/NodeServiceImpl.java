@@ -38,6 +38,9 @@ import stroom.util.rest.RestUtil;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -46,8 +49,6 @@ import java.util.Objects;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.Invocation.Builder;

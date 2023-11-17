@@ -7,9 +7,9 @@ import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.Unauthenticated;
 
 import com.caucho.hessian.server.HessianServlet;
+import jakarta.inject.Inject;
 
 import java.util.Set;
-import javax.inject.Inject;
 
 @Unauthenticated
 public class RemoteFeedServiceRPC extends HessianServlet implements IsServlet {

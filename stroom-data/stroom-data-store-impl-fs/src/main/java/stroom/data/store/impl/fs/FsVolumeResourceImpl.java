@@ -29,9 +29,8 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ResultPage;
 
 import event.logging.Query;
-
-import javax.inject.Inject;
-import javax.inject.Provider;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 @AutoLogged(OperationType.MANUALLY_LOGGED)
 class FsVolumeResourceImpl implements FsVolumeResource {

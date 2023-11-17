@@ -19,7 +19,6 @@ package stroom.datasource.api.v2;
 import stroom.docref.HasDisplayValue;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -60,11 +59,10 @@ public abstract class QueryField implements HasDisplayValue {
     @JsonProperty
     private final Boolean queryable;
 
-    @JsonCreator
-    public QueryField(@JsonProperty("name") final String name,
-                      @JsonProperty("conditions") final Conditions conditions,
-                      @JsonProperty("docRefType") final String docRefType,
-                      @JsonProperty("queryable") final Boolean queryable) {
+    public QueryField(final String name,
+                      final Conditions conditions,
+                      final String docRefType,
+                      final Boolean queryable) {
         this.name = name;
         this.conditions = conditions;
         this.docRefType = docRefType;

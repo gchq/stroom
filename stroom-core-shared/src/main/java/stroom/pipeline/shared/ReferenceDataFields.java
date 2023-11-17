@@ -20,23 +20,23 @@ public class ReferenceDataFields {
             "Reference Data Store",
             "Reference Data Store (This Node Only)");
     public static final QueryField FEED_NAME_FIELD = new TextField(
-            "Feed Name", true, Conditions.REF_DATA_TEXT);
+            "Feed Name", Conditions.REF_DATA_TEXT, null, true);
     public static final QueryField KEY_FIELD = new TextField(
-            "Key", true, Conditions.REF_DATA_TEXT);
+            "Key", Conditions.REF_DATA_TEXT, null, true);
     public static final QueryField VALUE_FIELD = new TextField(
-            "Value", true, Conditions.REF_DATA_TEXT);
+            "Value", Conditions.REF_DATA_TEXT, null, true);
     public static final QueryField VALUE_REF_COUNT_FIELD = new IntegerField(
             "Value Reference Count", false);
     public static final QueryField MAP_NAME_FIELD = new TextField(
-            "Map Name", true, Conditions.REF_DATA_TEXT);
+            "Map Name", Conditions.REF_DATA_TEXT, null, true);
     public static final QueryField CREATE_TIME_FIELD = new DateField(
             "Create Time", true);
     public static final QueryField EFFECTIVE_TIME_FIELD = new DateField(
             "Effective Time", true);
     public static final QueryField LAST_ACCESSED_TIME_FIELD = new DateField(
             "Last Accessed Time", true);
-    public static final QueryField PIPELINE_FIELD = new DocRefField(PipelineDoc.DOCUMENT_TYPE,
-            "Reference Loader Pipeline", true, Conditions.REF_DATA_DOC_REF);
+    public static final QueryField PIPELINE_FIELD = new DocRefField(
+            "Reference Loader Pipeline", Conditions.REF_DATA_DOC_REF, PipelineDoc.DOCUMENT_TYPE, true);
     public static final QueryField PROCESSING_STATE_FIELD = new TextField(
             "Processing State", false);
     public static final QueryField STREAM_ID_FIELD = new IdField(
