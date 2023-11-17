@@ -66,7 +66,7 @@ dependencies {
     implementation libs.slf4j_api
     implementation libs.swagger_annotations
     implementation libs.ws_rs_api
-    implementation libs.xml_apis
+    //implementation libs.xml_apis
 
     runtimeOnly libs.jackson_annotations
     runtimeOnly libs.jackson_core

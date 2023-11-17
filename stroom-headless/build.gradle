@@ -49,7 +49,7 @@ dependencies {
     implementation libs.jaxb_api
     implementation libs.saxon_he
     implementation libs.slf4j_api
-    implementation libs.xml_apis
+    //implementation libs.xml_apis
 
     runtimeOnly libs.logback_classic
 }

@@ -42,5 +42,5 @@ dependencies {
     implementation libs.jakarta_inject
     implementation libs.jaxb_api
     implementation libs.ws_rs_api
-    implementation libs.xml_apis
+    //implementation libs.xml_apis
 }
