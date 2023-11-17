@@ -51,14 +51,18 @@ class TestAttributeMapUtil {
 
     @TestFactory
     Stream<DynamicTest> testCreate_fromString() {
-        final AttributeMap attributeMap1 = new AttributeMap();
-        attributeMap1.putAll(Map.of(
+        final AttributeMap attributeMap1 = new AttributeMap(Map.of(
                 "foo", "123"));
 
-        final AttributeMap attributeMap2 = new AttributeMap();
-        attributeMap2.putAll(Map.of(
+        final AttributeMap attributeMap2 = new AttributeMap(Map.of(
                 "foo", "123",
                 "bar", "456"));
+        final AttributeMap attributeMap3 = new AttributeMap(Map.of(
+                "files", """
+                        /some/path/file1
+                        /some/path/file2
+                        /some/path/file3""",
+                "foo", "123"));
 
         final AttributeMap attributeMapEmpty = new AttributeMap();
 
@@ -98,17 +102,19 @@ class TestAttributeMapUtil {
                         BAR:456
 
                         """, attributeMap2) // empty lines
+                .addCase("""
+                        files:/some/path/file1,/some/path/file2,/some/path/file3
+                        foo:123
+                        """, attributeMap3) // empty lines
                 .build();
     }
 
     @TestFactory
     Stream<DynamicTest> testCreate_fromInputStream() {
-        final AttributeMap attributeMap1 = new AttributeMap();
-        attributeMap1.putAll(Map.of(
+        final AttributeMap attributeMap1 = new AttributeMap(Map.of(
                 "foo", "123"));
 
-        final AttributeMap attributeMap2 = new AttributeMap();
-        attributeMap2.putAll(Map.of(
+        final AttributeMap attributeMap2 = new AttributeMap(Map.of(
                 "foo", "123",
                 "bar", "456"));
 

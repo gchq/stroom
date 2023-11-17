@@ -84,15 +84,36 @@ class TestAttributeMap {
 
     @Test
     void testTrim() {
-        AttributeMap attributeMap = new AttributeMap();
-        attributeMap.put(" person ", "person1");
-        attributeMap.put("PERSON", "person2");
-        attributeMap.put("FOOBAR", "1");
-        attributeMap.put("F OOBAR", "2");
-        attributeMap.put(" foobar ", " 3 ");
+        AttributeMap attributeMap = AttributeMap.builder()
+                .put(" person ", "person1")
+                .put("PERSON", "person2")
+                .put("FOOBAR", "1")
+                .put("F OOBAR", "2")
+                .put(" foobar ", " 3 ")
+                .build();
 
         assertThat(attributeMap.get("PERSON ")).isEqualTo("person2");
         assertThat(attributeMap.get("FOOBAR")).isEqualTo("3");
+    }
+
+    @Test
+    void testWriteMultiLineValues() throws IOException {
+        AttributeMap attributeMap = AttributeMap.builder()
+                .put("foo", "123")
+                .put("files", """
+                        /some/path/file1
+                        /some/path/file2
+                        /some/path/file3""")
+                .put("bar", "456")
+                .build();
+        final String str = new String(AttributeMapUtil.toByteArray(attributeMap), AttributeMapUtil.DEFAULT_CHARSET);
+
+        assertThat(str)
+                .isEqualTo("""
+                        bar:456
+                        files:/some/path/file1,/some/path/file2,/some/path/file3
+                        foo:123
+                        """);
     }
 
     @Test

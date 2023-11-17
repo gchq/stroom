@@ -81,7 +81,14 @@ public class AttributeMapUtil {
             .appendZoneText(TextStyle.SHORT)
             .toFormatter(Locale.ENGLISH);
 
+    // Delimiter between key and value
     private static final String HEADER_DELIMITER = ":";
+    // Delimiter within a de-serialised value (i.e in an AttributeMap)
+    private static final String DE_SERIALISED_VALUE_DELIMITER = "\n";
+    // Delimiter within a serialised value (i.e in a file)
+    private static final String SERIALISED_VALUE_DELIMITER = ",";
+    // Delimiter between attributes
+    private static final String ATTRIBUTE_DELIMITER = "\n";
     static final Charset DEFAULT_CHARSET = StandardCharsets.UTF_8;
 
     public static AttributeMap cloneAllowable(final AttributeMap in) {
@@ -130,7 +137,10 @@ public class AttributeMapUtil {
                     final int splitPos = line.indexOf(HEADER_DELIMITER);
                     if (splitPos != -1) {
                         final String key = line.substring(0, splitPos);
-                        final String value = line.substring(splitPos + 1);
+                        String value = line.substring(splitPos + 1);
+                        // Some values (e.g. for 'Files') have multiple parts so, they are delimited in the
+                        // file with a ',' but delimited in the AttributeMap with '\n'
+                        value = value.replace(SERIALISED_VALUE_DELIMITER, DE_SERIALISED_VALUE_DELIMITER);
                         attributeMap.put(key.trim(), value.trim());
                     } else {
                         attributeMap.put(line, null);
@@ -186,10 +196,11 @@ public class AttributeMapUtil {
                             writer.write(e.getKey());
                             final String value = e.getValue();
                             if (value != null) {
-                                writer.write(":");
-                                writer.write(value);
+                                writer.write(HEADER_DELIMITER);
+                                // Some attributes (e.g. 'Files') have multi line values so change to comma delimited
+                                writer.write(value.replace(DE_SERIALISED_VALUE_DELIMITER, SERIALISED_VALUE_DELIMITER));
                             }
-                            writer.write("\n");
+                            writer.write(ATTRIBUTE_DELIMITER);
                         } catch (final IOException ioe) {
                             throw new UncheckedIOException(ioe);
                         }
