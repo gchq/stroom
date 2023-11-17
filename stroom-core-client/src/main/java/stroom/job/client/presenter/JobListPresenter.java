@@ -133,12 +133,12 @@ public class JobListPresenter extends MyPresenterWidget<PagerView> {
 
         }, "<br/>", 20);
 
-        dataGrid.addResizableColumn(new Column<Job, SafeHtml>(new SafeHtmlCell()) {
+        dataGrid.addAutoResizableColumn(new Column<Job, SafeHtml>(new SafeHtmlCell()) {
             @Override
             public SafeHtml getValue(final Job row) {
                 return TableUtil.getSafeHtml(row, Job::getDescription);
             }
-        }, "Description", 800);
+        }, "Description", 200);
 
         dataGrid.addEndColumn(new EndColumn<>());
 

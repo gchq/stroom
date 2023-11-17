@@ -1,5 +1,6 @@
 package stroom.proxy.app;
 
+import stroom.test.common.TestResourceLocks;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.ResourcePaths;
 
@@ -9,6 +10,7 @@ import com.google.inject.Injector;
 import io.dropwizard.server.DefaultServerFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.parallel.ResourceLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,6 +22,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status.Family;
 
 
+@ResourceLock(TestResourceLocks.STROOM_APP_PORT_8080)
 public class AbstractEndToEndTest extends AbstractApplicationTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractEndToEndTest.class);

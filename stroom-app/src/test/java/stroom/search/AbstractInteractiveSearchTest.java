@@ -43,7 +43,6 @@ import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TerminateHandlerFactory;
 import stroom.task.impl.ExecutorProviderImpl;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
@@ -63,7 +62,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 abstract class AbstractInteractiveSearchTest extends AbstractSearchTest {
 
-    private static boolean doneSetup;
     @Inject
     private CommonIndexingTestHelper commonIndexingTestHelper;
     @Inject
@@ -79,12 +77,8 @@ abstract class AbstractInteractiveSearchTest extends AbstractSearchTest {
     @Inject
     private ExecutorProviderImpl executorProvider;
 
-    @BeforeEach
     void setup() {
-        if (!doneSetup) {
-            commonIndexingTestHelper.setup();
-            doneSetup = true;
-        }
+        commonIndexingTestHelper.setup();
     }
 
     @Override
@@ -457,6 +451,10 @@ abstract class AbstractInteractiveSearchTest extends AbstractSearchTest {
 //        "stroom.search.impl.shard.concurrentTasks", "1", StroomProperties.Source.TEST);
 //        StroomProperties.setOverrideProperty(
 //        "stroom.search.impl.extraction.concurrentTasks", "1", StroomProperties.Source.TEST);
+
+        assertThat(indexStore.list())
+                .as("Check indexStore is not empty")
+                .isNotEmpty();
 
         final DocRef indexRef = indexStore.list().get(0);
         assertThat(indexRef).as("Index is null").isNotNull();
