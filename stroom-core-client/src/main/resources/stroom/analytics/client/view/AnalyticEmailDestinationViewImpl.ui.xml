@@ -3,8 +3,14 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form">
-        <form:FormGroup identity="analyticEmailDestinationEmailAddress" label="Email Address">
-            <g:TextBox ui:field="emailAddress"/>
+        <form:FormGroup identity="analyticEmailDestinationEmailAddress" label="To">
+            <g:TextBox ui:field="to"/>
+        </form:FormGroup>
+        <form:FormGroup identity="analyticEmailDestinationEmailAddress" label="Cc">
+            <g:TextBox ui:field="cc"/>
+        </form:FormGroup>
+        <form:FormGroup identity="analyticEmailDestinationEmailAddress" label="Bcc">
+            <g:TextBox ui:field="bcc"/>
         </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder> 

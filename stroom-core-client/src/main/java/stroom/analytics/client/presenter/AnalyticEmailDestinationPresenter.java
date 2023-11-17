@@ -44,12 +44,19 @@ public class AnalyticEmailDestinationPresenter
 
     public void read(final AnalyticNotificationEmailDestination destination) {
         if (destination != null) {
-            getView().setEmailAddress(destination.getEmailAddress());
+            getView().setTo(destination.getTo());
+            getView().setCc(destination.getCc());
+            getView().setBcc(destination.getBcc());
         }
     }
 
     public AnalyticNotificationEmailDestination write() {
-        return new AnalyticNotificationEmailDestination(getView().getEmailAddress());
+        return AnalyticNotificationEmailDestination
+                .builder()
+                .to(getView().getTo())
+                .cc(getView().getCc())
+                .bcc(getView().getBcc())
+                .build();
     }
 
     @Override
@@ -64,8 +71,16 @@ public class AnalyticEmailDestinationPresenter
 
     public interface AnalyticEmailDestinationView extends View, HasUiHandlers<DirtyUiHandlers> {
 
-        String getEmailAddress();
+        String getTo();
 
-        void setEmailAddress(String emailAddress);
+        void setTo(String to);
+
+        String getCc();
+
+        void setCc(String cc);
+
+        String getBcc();
+
+        void setBcc(String bcc);
     }
 }

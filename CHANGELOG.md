@@ -12,6 +12,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
+* Issue **#3909** : Add multiple recipients to rule notification emails.
+
+* Issue **#3898** : Improve task info and debug logging for `Index Shard Delete` job.
+
+* Issue **#3903** : Fix index deadlock.
+
+* Issue **#3901** : Fix concurrent modification exception.
+
 * Change the tables on the following screens to initially fill the available space: Server Tasks, App Permissions, Dependencies, Pipeline Structure properties, Properties, Jobs.
 
 * Issue **#3892** : Add a toggle button to enable/disable line wrapping in Server Tasks Name and Info cells.

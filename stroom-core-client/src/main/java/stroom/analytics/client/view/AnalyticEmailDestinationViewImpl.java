@@ -35,7 +35,11 @@ public class AnalyticEmailDestinationViewImpl
     private final Widget widget;
 
     @UiField
-    TextBox emailAddress;
+    TextBox to;
+    @UiField
+    TextBox cc;
+    @UiField
+    TextBox bcc;
 
     @Inject
     public AnalyticEmailDestinationViewImpl(final Binder binder) {
@@ -48,18 +52,47 @@ public class AnalyticEmailDestinationViewImpl
     }
 
     @Override
-    public String getEmailAddress() {
-        return this.emailAddress.getValue();
+    public String getTo() {
+        return this.to.getValue();
     }
 
     @Override
-    public void setEmailAddress(final String emailAddress) {
-        this.emailAddress.setValue(emailAddress);
+    public void setTo(final String to) {
+        this.to.setValue(to);
     }
 
+    @Override
+    public String getCc() {
+        return this.cc.getValue();
+    }
 
-    @UiHandler("emailAddress")
-    public void onEmailAddress(final KeyUpEvent event) {
+    @Override
+    public void setCc(final String cc) {
+        this.cc.setValue(cc);
+    }
+
+    @Override
+    public String getBcc() {
+        return this.bcc.getValue();
+    }
+
+    @Override
+    public void setBcc(final String bcc) {
+        this.bcc.setValue(bcc);
+    }
+
+    @UiHandler("to")
+    public void onTo(final KeyUpEvent event) {
+        getUiHandlers().onDirty();
+    }
+
+    @UiHandler("cc")
+    public void onCc(final KeyUpEvent event) {
+        getUiHandlers().onDirty();
+    }
+
+    @UiHandler("bcc")
+    public void onBcc(final KeyUpEvent event) {
         getUiHandlers().onDirty();
     }
 

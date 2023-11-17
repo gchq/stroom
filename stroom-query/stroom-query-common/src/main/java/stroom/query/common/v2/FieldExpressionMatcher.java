@@ -37,6 +37,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
 public class FieldExpressionMatcher {
@@ -44,7 +45,7 @@ public class FieldExpressionMatcher {
     private static final Logger LOGGER = LoggerFactory.getLogger(FieldExpressionMatcher.class);
     private static final String DELIMITER = ",";
 
-    private final Map<String, Pattern> patternCache = new HashMap<>();
+    private final Map<String, Pattern> patternCache = new ConcurrentHashMap<>();
 
     private final Map<String, Field> fieldNameToFieldMap;
 

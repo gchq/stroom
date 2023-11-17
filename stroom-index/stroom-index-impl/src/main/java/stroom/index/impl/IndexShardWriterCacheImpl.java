@@ -113,28 +113,36 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
     }
 
     public IndexShardWriter getWriterByShardKey(final IndexShardKey indexShardKey) {
+        IndexShardWriter writer = openWritersByShardKey.get(indexShardKey);
+        if (writer != null) {
+            return writer;
+        }
+
+        // We are going to add a new item to the cache so try to make room.
+        makeRoom();
+
         return openWritersByShardKey.compute(indexShardKey, (k, v) -> {
             // If there is already a value in this map for the provided key just return the value.
             if (v != null) {
                 return v;
             }
-
-            // Make sure we have room to add a new writer.
-            makeRoom();
-
-            IndexShardWriter indexShardWriter = openExistingShard(k);
-            if (indexShardWriter == null) {
-                indexShardWriter = openNewShard(k);
-            }
-
-            if (indexShardWriter == null) {
-                throw new IndexException("Unable to create writer for " + indexShardKey);
-            }
-
-            openWritersByShardId.put(indexShardWriter.getIndexShardId(), indexShardWriter);
-
-            return indexShardWriter;
+            return openOrCreateShard(k);
         });
+    }
+
+    private IndexShardWriter openOrCreateShard(final IndexShardKey indexShardKey) {
+        IndexShardWriter indexShardWriter = openExistingShard(indexShardKey);
+        if (indexShardWriter == null) {
+            indexShardWriter = openNewShard(indexShardKey);
+        }
+
+        if (indexShardWriter == null) {
+            throw new IndexException("Unable to create writer for " + indexShardKey);
+        }
+
+        openWritersByShardId.put(indexShardWriter.getIndexShardId(), indexShardWriter);
+
+        return indexShardWriter;
     }
 
     /**
@@ -412,72 +420,80 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
 
     private void close(final IndexShardWriter indexShardWriter,
                        final Executor executor) {
-        final long indexShardId = indexShardWriter.getIndexShardId();
+        // Remove the shard from the map if it exists.
+        final IndexShardWriter existingWriter = openWritersByShardKey.get(indexShardWriter.getIndexShardKey());
+        if (existingWriter != null && existingWriter == indexShardWriter) {
+            openWritersByShardKey.compute(indexShardWriter.getIndexShardKey(), (indexShardKey, v) -> {
+                // If there is no value associated with the key or the value is not the one we expect it to be then
+                // just return the current value.
+                if (v == null || v != indexShardWriter) {
+                    return v;
+                }
 
-        // Remove the shard from the map.
-        openWritersByShardKey.compute(indexShardWriter.getIndexShardKey(), (indexShardKey, v) -> {
-            // If there is no value associated with the key or the value is not the one we expect it to be then
-            // just return the current value.
-            if (v == null || v != indexShardWriter) {
-                return v;
-            }
+                closeWriter(indexShardKey, v, executor);
+
+                // Return null to remove the writer from the map.
+                return null;
+            });
+        }
+    }
+
+    private void closeWriter(final IndexShardKey indexShardKey,
+                             final IndexShardWriter indexShardWriter,
+                             final Executor executor) {
+        final long indexShardId = indexShardWriter.getIndexShardId();
+        try {
+            // Set the status of the shard to closing so it won't be used again immediately when removed
+            // from the map.
+            indexShardManager.setStatus(indexShardId, IndexShardStatus.CLOSING);
 
             try {
-                // Set the status of the shard to closing so it won't be used again immediately when removed
-                // from the map.
-                indexShardManager.setStatus(indexShardId, IndexShardStatus.CLOSING);
-
-                try {
-                    // Close the shard.
-                    final Supplier<IndexShardWriter> supplier = taskContextFactory.contextResult(
-                            "Closing writer",
-                            TerminateHandlerFactory.NOOP_FACTORY,
-                            taskContext -> {
+                // Close the shard.
+                final Supplier<IndexShardWriter> supplier = taskContextFactory.contextResult(
+                        "Closing writer",
+                        TerminateHandlerFactory.NOOP_FACTORY,
+                        taskContext -> {
+                            try {
                                 try {
-                                    try {
-                                        LOGGER.debug(() ->
-                                                "Closing " + indexShardId);
-                                        LOGGER.trace(() ->
-                                                "Closing " + indexShardId + " - " + indexShardKey.toString());
+                                    LOGGER.debug(() ->
+                                            "Closing " + indexShardId);
+                                    LOGGER.trace(() ->
+                                            "Closing " + indexShardId + " - " + indexShardKey.toString());
 
-                                        taskContext.info(() -> "Closing writer for index shard " + indexShardId);
+                                    taskContext.info(() -> "Closing writer for index shard " + indexShardId);
 
-                                        // Close the shard.
-                                        indexShardWriter.close();
-                                    } finally {
-                                        // Remove the writer from ones that can be used by readers.
-                                        openWritersByShardId.remove(indexShardId);
+                                    // Close the shard.
+                                    indexShardWriter.close();
+                                } finally {
+                                    // Remove the writer from ones that can be used by readers.
+                                    openWritersByShardId.remove(indexShardId);
 
-                                        // Update the shard status.
-                                        indexShardManager.setStatus(indexShardId, IndexShardStatus.CLOSED);
-                                    }
-                                } catch (final RuntimeException e) {
-                                    LOGGER.error(e::getMessage, e);
+                                    // Update the shard status.
+                                    indexShardManager.setStatus(indexShardId, IndexShardStatus.CLOSED);
                                 }
+                            } catch (final RuntimeException e) {
+                                LOGGER.error(e::getMessage, e);
+                            }
 
-                                return null;
-                            });
-                    final CompletableFuture<IndexShardWriter> completableFuture = CompletableFuture.supplyAsync(
-                            supplier,
-                            executor);
-                    completableFuture.thenRun(closing::decrementAndGet);
-                    completableFuture.exceptionally(t -> {
-                        LOGGER.error(t::getMessage, t);
-                        closing.decrementAndGet();
-                        return null;
-                    });
-                    closing.incrementAndGet();
-                } catch (final RuntimeException e) {
-                    LOGGER.error(e::getMessage, e);
+                            return null;
+                        });
+                final CompletableFuture<IndexShardWriter> completableFuture = CompletableFuture.supplyAsync(
+                        supplier,
+                        executor);
+                completableFuture.thenRun(closing::decrementAndGet);
+                completableFuture.exceptionally(t -> {
+                    LOGGER.error(t::getMessage, t);
                     closing.decrementAndGet();
-                }
+                    return null;
+                });
+                closing.incrementAndGet();
             } catch (final RuntimeException e) {
                 LOGGER.error(e::getMessage, e);
+                closing.decrementAndGet();
             }
-
-            // Return null to remove the writer from the map.
-            return null;
-        });
+        } catch (final RuntimeException e) {
+            LOGGER.error(e::getMessage, e);
+        }
     }
 
     synchronized void startup() {
