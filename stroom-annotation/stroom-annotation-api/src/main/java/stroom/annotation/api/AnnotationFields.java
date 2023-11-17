@@ -1,8 +1,8 @@
 package stroom.annotation.api;
 
-import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.DateField;
 import stroom.datasource.api.v2.IdField;
+import stroom.datasource.api.v2.QueryField;
 import stroom.datasource.api.v2.TextField;
 
 import java.util.Arrays;
@@ -43,7 +43,7 @@ public interface AnnotationFields {
     TextField COMMENT_FIELD = new TextField(COMMENT);
     TextField HISTORY_FIELD = new TextField(HISTORY);
 
-    List<AbstractField> FIELDS = Arrays.asList(
+    List<QueryField> FIELDS = Arrays.asList(
             ID_FIELD,
 //            STREAM_ID_FIELD,
 //            EVENT_ID_FIELD,
@@ -57,6 +57,6 @@ public interface AnnotationFields {
             ASSIGNED_TO_FIELD,
             COMMENT_FIELD,
             HISTORY_FIELD);
-    Map<String, AbstractField> FIELD_MAP = FIELDS.stream()
-            .collect(Collectors.toMap(AbstractField::getName, Function.identity()));
+    Map<String, QueryField> FIELD_MAP = FIELDS.stream()
+            .collect(Collectors.toMap(QueryField::getName, Function.identity()));
 }

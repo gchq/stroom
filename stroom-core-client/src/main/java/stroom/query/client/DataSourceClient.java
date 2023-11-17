@@ -46,7 +46,6 @@ public class DataSourceClient {
                     new PageRequest(0, 1),
                     null,
                     dataSourceRef,
-                    FieldInfo.FIELDS_PARENT,
                     StringMatch.contains(fieldName));
             final Rest<ResultPage<FieldInfo>> rest = restFactory.create();
             rest

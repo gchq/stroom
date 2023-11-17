@@ -1,6 +1,6 @@
 package stroom.processor.impl.db;
 
-import stroom.datasource.api.v2.AbstractField;
+import stroom.datasource.api.v2.QueryField;
 import stroom.db.util.ExpressionMapper;
 import stroom.db.util.ExpressionMapperFactory;
 import stroom.db.util.JooqUtil;
@@ -30,6 +30,7 @@ import stroom.processor.shared.TaskStatus;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.common.v2.DateExpressionParser;
+import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValInteger;
 import stroom.query.language.functions.ValLong;
@@ -785,35 +786,35 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
         return ResultPage.createCriterialBasedList(list, criteria);
     }
 
-    private boolean isUsed(final Set<AbstractField> fieldSet,
-                           final List<AbstractField> resultFields,
+    private boolean isUsed(final Set<String> fieldSet,
+                           final String[] resultFields,
                            final ExpressionCriteria criteria) {
-        return resultFields.stream().filter(Objects::nonNull).anyMatch(fieldSet::contains) ||
+        return Arrays.stream(resultFields).filter(Objects::nonNull).anyMatch(fieldSet::contains) ||
                 ExpressionUtil.termCount(criteria.getExpression(), fieldSet) > 0;
     }
 
     @Override
     public void search(final ExpressionCriteria criteria,
-                       final AbstractField[] fields,
+                       final FieldIndex fieldIndex,
                        final ValuesConsumer consumer) {
-        final Set<AbstractField> processorFields = Set.of(
-                ProcessorTaskFields.PROCESSOR_FILTER_ID,
-                ProcessorTaskFields.PROCESSOR_FILTER_PRIORITY);
+        final Set<String> processorFields = Set.of(
+                ProcessorTaskFields.PROCESSOR_FILTER_ID.getName(),
+                ProcessorTaskFields.PROCESSOR_FILTER_PRIORITY.getName());
 
         validateExpressionTerms(criteria.getExpression());
 
-        final List<AbstractField> fieldList = Arrays.asList(fields);
-        final boolean nodeUsed = isUsed(Set.of(ProcessorTaskFields.NODE_NAME), fieldList, criteria);
-        final boolean feedUsed = isUsed(Set.of(ProcessorTaskFields.FEED), fieldList, criteria);
-        final boolean processorFilterUsed = isUsed(processorFields, fieldList, criteria);
-        final boolean processorUsed = isUsed(Set.of(ProcessorTaskFields.PROCESSOR_ID), fieldList, criteria);
-        final boolean pipelineUsed = isUsed(Set.of(ProcessorTaskFields.PIPELINE), fieldList, criteria);
+        final String[] fieldNames = fieldIndex.getFields();
+        final boolean nodeUsed = isUsed(Set.of(ProcessorTaskFields.NODE_NAME.getName()), fieldNames, criteria);
+        final boolean feedUsed = isUsed(Set.of(ProcessorTaskFields.FEED.getName()), fieldNames, criteria);
+        final boolean processorFilterUsed = isUsed(processorFields, fieldNames, criteria);
+        final boolean processorUsed = isUsed(Set.of(ProcessorTaskFields.PROCESSOR_ID.getName()), fieldNames, criteria);
+        final boolean pipelineUsed = isUsed(Set.of(ProcessorTaskFields.PIPELINE.getName()), fieldNames, criteria);
 
         final PageRequest pageRequest = criteria.getPageRequest();
         final Condition condition = expressionMapper.apply(criteria.getExpression());
         final Collection<OrderField<?>> orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
-        final List<Field<?>> dbFields = new ArrayList<>(valueMapper.getFields(fieldList));
-        final Mapper<?>[] mappers = valueMapper.getMappers(fields);
+        final List<Field<?>> dbFields = new ArrayList<>(valueMapper.getDbFieldsByName(fieldNames));
+        final Mapper<?>[] mappers = valueMapper.getMappersForFieldNames(fieldNames);
 
         JooqUtil.context(processorDbConnProvider, context -> {
             Integer offset = null;
@@ -852,8 +853,8 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                     final Result<?> result = cursor.fetchNext(BATCH_SIZE);
 
                     result.forEach(r -> {
-                        final Val[] arr = new Val[fields.length];
-                        for (int i = 0; i < fields.length; i++) {
+                        final Val[] arr = new Val[fieldNames.length];
+                        for (int i = 0; i < fieldNames.length; i++) {
                             Val val = ValNull.INSTANCE;
                             final Mapper<?> mapper = mappers[i];
                             if (mapper != null) {
@@ -1064,10 +1065,10 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
         if (expressionItem == null) {
             return true;
         } else {
-            final Map<String, AbstractField> fieldMap = ProcessorTaskFields.getFieldMap();
+            final Map<String, QueryField> fieldMap = ProcessorTaskFields.getFieldMap();
 
             return ExpressionUtil.validateExpressionTerms(expressionItem, term -> {
-                final AbstractField field = fieldMap.get(term.getField());
+                final QueryField field = fieldMap.get(term.getField());
                 if (field == null) {
                     throw new RuntimeException(LogUtil.message("Unknown field {} in term {}, in expression {}",
                             term.getField(), term, expressionItem));

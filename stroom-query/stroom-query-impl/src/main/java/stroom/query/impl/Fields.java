@@ -21,9 +21,12 @@ import javax.inject.Singleton;
 @Singleton
 public class Fields {
 
+    public static final String FIELDS_ID = "fields";
+    public static final String FIELDS_PARENT = FIELDS_ID + ".";
+
     private static final QueryHelpRow ROOT = QueryHelpRow.builder()
             .type(QueryHelpType.TITLE)
-            .id(FieldInfo.FIELDS_ID)
+            .id(FIELDS_ID)
             .hasChildren(true)
             .title("Fields")
             .data(new QueryHelpTitle(
@@ -54,42 +57,29 @@ public class Fields {
                             new PageRequest(0, 1),
                             Collections.emptyList(),
                             optional.get(),
-                            FieldInfo.FIELDS_PARENT,
                             request.getStringMatch());
                     hasChildren = queryService.getFieldInfo(criteria).size() > 0;
                 }
                 resultConsumer.add(ROOT.copy().hasChildren(hasChildren).build());
 
-            } else if (request.getParentPath().startsWith(FieldInfo.FIELDS_PARENT) && optional.isPresent()) {
+            } else if (request.getParentPath().startsWith(FIELDS_PARENT) && optional.isPresent()) {
                 // Figure out if there are children.
                 final FindFieldInfoCriteria criteria = new FindFieldInfoCriteria(
                         new PageRequest(request.getPageRequest().getOffset(),
                                 request.getPageRequest().getLength() + 1),
                         request.getSortList(),
                         optional.get(),
-                        request.getParentPath(),
                         request.getStringMatch());
                 final ResultPage<FieldInfo> resultPage = queryService.getFieldInfo(criteria);
                 resultConsumer.skip(resultPage.getPageStart());
                 resultPage.getValues().forEach(fieldInfo -> {
-                    final QueryHelpRow row;
-                    if (fieldInfo.getField() == null) {
-                        row = new QueryHelpRow(
-                                QueryHelpType.TITLE,
-                                fieldInfo.getId(),
-                                fieldInfo.isHasChildren(),
-                                null,
-                                fieldInfo.getTitle(),
-                                null);
-                    } else {
-                        row = new QueryHelpRow(
-                                QueryHelpType.FIELD,
-                                fieldInfo.getId(),
-                                fieldInfo.isHasChildren(),
-                                null,
-                                fieldInfo.getTitle(),
-                                new QueryHelpField(fieldInfo.getField()));
-                    }
+                    final QueryHelpRow row = new QueryHelpRow(
+                            QueryHelpType.FIELD,
+                            "fields." + fieldInfo.getFieldName(),
+                            false,
+                            null,
+                            fieldInfo.getFieldName(),
+                            new QueryHelpField(fieldInfo));
                     resultConsumer.add(row);
                 });
             }

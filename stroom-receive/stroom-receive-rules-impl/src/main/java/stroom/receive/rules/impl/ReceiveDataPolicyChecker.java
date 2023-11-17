@@ -17,7 +17,7 @@
 
 package stroom.receive.rules.impl;
 
-import stroom.datasource.api.v2.AbstractField;
+import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.expression.matcher.ExpressionMatcher;
 import stroom.expression.matcher.ExpressionMatcherFactory;
@@ -91,9 +91,9 @@ class ReceiveDataPolicyChecker {
                     && dataReceiptPolicy.getRules() != null
                     && dataReceiptPolicy.getFields() != null) {
                 // Create a map of fields.
-                final Map<String, AbstractField> fieldMap = dataReceiptPolicy.getFields()
+                final Map<String, QueryField> fieldMap = dataReceiptPolicy.getFields()
                         .stream()
-                        .collect(Collectors.toMap(AbstractField::getName, Function.identity()));
+                        .collect(Collectors.toMap(QueryField::getName, Function.identity()));
 
                 // Also make sure we create a list of rules that are enabled and have at least one enabled term.
                 final Set<String> fieldSet = new HashSet<>();
@@ -111,11 +111,11 @@ class ReceiveDataPolicyChecker {
                 });
 
                 // Create a map of fields that are valid fields and have been used in the expressions.
-                final Map<String, AbstractField> usedFieldMap = fieldSet
+                final Map<String, QueryField> usedFieldMap = fieldSet
                         .stream()
                         .map(fieldMap::get)
                         .filter(Objects::nonNull)
-                        .collect(Collectors.toMap(AbstractField::getName, Function.identity()));
+                        .collect(Collectors.toMap(QueryField::getName, Function.identity()));
 
                 final ExpressionMatcher expressionMatcher = expressionMatcherFactory.create(usedFieldMap);
                 checker = new CheckerImpl(expressionMatcher, activeRules, fieldMap);
@@ -151,11 +151,11 @@ class ReceiveDataPolicyChecker {
 
         private final ExpressionMatcher expressionMatcher;
         private final List<ReceiveDataRule> activeRules;
-        private final Map<String, AbstractField> fieldMap;
+        private final Map<String, QueryField> fieldMap;
 
         CheckerImpl(final ExpressionMatcher expressionMatcher,
                     final List<ReceiveDataRule> activeRules,
-                    final Map<String, AbstractField> fieldMap) {
+                    final Map<String, QueryField> fieldMap) {
             this.expressionMatcher = expressionMatcher;
             this.activeRules = activeRules;
             this.fieldMap = fieldMap;
@@ -175,7 +175,7 @@ class ReceiveDataPolicyChecker {
         }
 
         private Map<String, Object> createAttributeMap(final AttributeMap attributeMap,
-                                                       final Map<String, AbstractField> fieldMap) {
+                                                       final Map<String, QueryField> fieldMap) {
             final Map<String, Object> map = new HashMap<>();
             fieldMap.forEach((fieldName, field) -> {
                 try {

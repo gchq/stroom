@@ -1,6 +1,6 @@
 package stroom.search.elastic;
 
-import stroom.datasource.api.v2.AbstractField;
+import stroom.datasource.api.v2.QueryField;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.search.elastic.shared.ElasticIndexField;
 
@@ -9,7 +9,7 @@ import java.util.Map;
 
 public interface ElasticIndexService {
 
-    List<AbstractField> getDataSourceFields(ElasticIndexDoc index);
+    List<QueryField> getDataSourceFields(ElasticIndexDoc index);
 
     List<ElasticIndexField> getFields(ElasticIndexDoc index);
 

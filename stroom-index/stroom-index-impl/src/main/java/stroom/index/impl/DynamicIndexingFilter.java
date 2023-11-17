@@ -147,6 +147,11 @@ class DynamicIndexingFilter extends AbstractFieldFilter {
 
     @Override
     public void endProcessing() {
+        flushFields();
+        super.endProcessing();
+    }
+
+    private void flushFields() {
         try {
             // Flush found fields to the index.
             final IndexStructure indexStructure = indexStructureCache.get(indexRef);
@@ -163,13 +168,11 @@ class DynamicIndexingFilter extends AbstractFieldFilter {
                         .sorted(Comparator.comparing(IndexField::getFieldName))
                         .toList());
                 indexStore.writeDocument(indexDoc);
-                indexStructureCache.remove(indexRef);
+                foundFields.clear();
             }
         } catch (final RuntimeException e) {
             LOGGER.error("Error updating fields for: " + indexRef + " " + e.getMessage(), e);
         }
-
-        super.endProcessing();
     }
 
     /**
@@ -189,6 +192,10 @@ class DynamicIndexingFilter extends AbstractFieldFilter {
         for (final FieldValue fieldValue : fieldValues) {
             final IndexField indexField = fieldValue.field();
             foundFields.add(indexField);
+            if (foundFields.size() > 10_000) {
+                flushFields();
+            }
+
             if (indexField.isIndexed() || indexField.isStored()) {
                 // Set the current event time if this is a recognised event time field.
                 if (currentEventTime == null && indexField.getFieldName().equals(index.getTimeField())) {

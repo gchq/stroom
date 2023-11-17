@@ -22,8 +22,8 @@ import stroom.dashboard.client.main.AbstractSettingsTabPresenter;
 import stroom.dashboard.client.table.TablePresenter;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.TableComponentSettings;
-import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.FieldInfo;
+import stroom.datasource.api.v2.QueryField;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
@@ -55,7 +55,7 @@ public class RulesPresenter
     private final RuleListPresenter listPresenter;
     private final Provider<RulePresenter> editRulePresenterProvider;
 
-    private List<AbstractField> fields;
+    private List<QueryField> fields;
     private List<ConditionalFormattingRule> rules = new ArrayList<>();
 
     private final ButtonView addButton;

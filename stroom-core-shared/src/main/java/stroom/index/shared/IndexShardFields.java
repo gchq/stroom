@@ -1,10 +1,10 @@
 package stroom.index.shared;
 
-import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.DateField;
 import stroom.datasource.api.v2.DocRefField;
 import stroom.datasource.api.v2.IntegerField;
 import stroom.datasource.api.v2.LongField;
+import stroom.datasource.api.v2.QueryField;
 import stroom.datasource.api.v2.TextField;
 import stroom.docref.DocRef;
 
@@ -44,7 +44,7 @@ public class IndexShardFields {
     public static final DateField FIELD_LAST_COMMIT = new DateField(FIELD_NAME_LAST_COMMIT);
 
     // GWT so no List.of
-    private static final List<AbstractField> FIELDS = Arrays.asList(
+    private static final List<QueryField> FIELDS = Arrays.asList(
             FIELD_NODE,
             FIELD_INDEX,
             FIELD_INDEX_NAME,
@@ -56,14 +56,14 @@ public class IndexShardFields {
             FIELD_STATUS,
             FIELD_LAST_COMMIT);
 
-    private static final Map<String, AbstractField> FIELD_MAP = FIELDS.stream()
-            .collect(Collectors.toMap(AbstractField::getName, Function.identity()));
+    private static final Map<String, QueryField> FIELD_MAP = FIELDS.stream()
+            .collect(Collectors.toMap(QueryField::getName, Function.identity()));
 
-    public static List<AbstractField> getFields() {
+    public static List<QueryField> getFields() {
         return new ArrayList<>(FIELDS);
     }
 
-    public static Map<String, AbstractField> getFieldMap() {
+    public static Map<String, QueryField> getFieldMap() {
         return FIELD_MAP;
     }
 }

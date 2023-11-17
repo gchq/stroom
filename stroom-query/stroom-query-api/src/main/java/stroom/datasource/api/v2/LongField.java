@@ -16,14 +16,10 @@
 
 package stroom.datasource.api.v2;
 
-import stroom.query.api.v2.ExpressionTerm.Condition;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-
-import java.util.List;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class LongField extends AbstractNumericField {
@@ -39,7 +35,7 @@ public class LongField extends AbstractNumericField {
     @JsonCreator
     public LongField(@JsonProperty("name") final String name,
                      @JsonProperty("queryable") final Boolean queryable,
-                     @JsonProperty("conditions") final List<Condition> conditions) {
+                     @JsonProperty("conditions") final Conditions conditions) {
         super(name, queryable, conditions);
     }
 

@@ -7,7 +7,7 @@ import stroom.data.retention.shared.DataRetentionDeleteSummary;
 import stroom.data.retention.shared.DataRetentionRule;
 import stroom.data.retention.shared.DataRetentionRules;
 import stroom.data.retention.shared.FindDataRetentionImpactCriteria;
-import stroom.datasource.api.v2.AbstractField;
+import stroom.datasource.api.v2.QueryField;
 import stroom.db.util.ExpressionMapper;
 import stroom.db.util.ExpressionMapperFactory;
 import stroom.db.util.JooqUtil;
@@ -38,6 +38,7 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.common.v2.DateExpressionParser;
+import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValInteger;
 import stroom.query.language.functions.ValLong;
@@ -1207,40 +1208,45 @@ public class MetaDaoImpl implements MetaDao {
         return (Integer) result;
     }
 
-    private boolean isUsed(final Set<AbstractField> fieldSet,
-                           final List<AbstractField> resultFields,
+    private boolean isUsed(final Set<String> fieldSet,
+                           final String[] resultFields,
                            final ExpressionCriteria criteria) {
-        return resultFields.stream().anyMatch(fieldSet::contains) ||
+        return Arrays.stream(resultFields).filter(Objects::nonNull).anyMatch(fieldSet::contains) ||
                 ExpressionUtil.termCount(criteria.getExpression(), fieldSet) > 0;
     }
 
     @Override
     public void search(final ExpressionCriteria criteria,
-                       final AbstractField[] fields,
+                       final FieldIndex fieldIndex,
                        final ValuesConsumer consumer) {
-        final List<AbstractField> fieldList = Arrays.asList(fields);
-        final boolean feedUsed = isUsed(Set.of(MetaFields.FEED), fieldList, criteria);
-        final boolean typeUsed = isUsed(Set.of(MetaFields.TYPE), fieldList, criteria);
-        final boolean pipelineUsed = isUsed(Set.of(MetaFields.PIPELINE), fieldList, criteria);
-        final boolean extendedValuesUsed = isUsed(Set.copyOf(MetaFields.getExtendedFields()), fieldList, criteria);
+        final String[] fieldNames = fieldIndex.getFields();
+        final boolean feedUsed = isUsed(Set.of(MetaFields.FEED.getName()), fieldNames, criteria);
+        final boolean typeUsed = isUsed(Set.of(MetaFields.TYPE.getName()), fieldNames, criteria);
+        final boolean pipelineUsed = isUsed(Set.of(MetaFields.PIPELINE.getName()), fieldNames, criteria);
+        final Set<String> extendedFieldNames = MetaFields
+                .getExtendedFields()
+                .stream()
+                .map(QueryField::getName)
+                .collect(Collectors.toSet());
+        final boolean extendedValuesUsed = isUsed(extendedFieldNames, fieldNames, criteria);
 
         final PageRequest pageRequest = criteria.getPageRequest();
         final Collection<Condition> conditions = createCondition(criteria.getExpression());
         final Collection<OrderField<?>> orderFields = createOrderFields(criteria);
-        final List<Field<?>> dbFields = new ArrayList<>(valueMapper.getFields(fieldList));
-        final Mapper<?>[] mappers = valueMapper.getMappers(fields);
+        final List<Field<?>> dbFields = valueMapper.getDbFieldsByName(fieldNames);
+        final Mapper<?>[] mappers = valueMapper.getMappersForFieldNames(fieldNames);
 
         // Deal with extended fields.
-        final int[] extendedFieldKeys = new int[fields.length];
+        final int[] extendedFieldKeys = new int[fieldNames.length];
         final List<Integer> extendedFieldKeyIdList = new ArrayList<>();
         final Map<Long, Map<Integer, Long>> extendedFieldValueMap = new HashMap<>();
-        for (int i = 0; i < fields.length; i++) {
+        for (int i = 0; i < fieldNames.length; i++) {
             final int index = i;
-            final AbstractField field = fields[i];
+            final String fieldName = fieldNames[i];
             extendedFieldKeys[i] = -1;
 
-            if (MetaFields.getExtendedFields().contains(field)) {
-                final Optional<Integer> keyId = metaKeyDao.getIdForName(field.getName());
+            if (extendedFieldNames.contains(fieldName)) {
+                final Optional<Integer> keyId = metaKeyDao.getIdForName(fieldName);
                 keyId.ifPresent(id -> {
                     extendedFieldKeys[index] = id;
                     extendedFieldKeyIdList.add(id);
@@ -1297,14 +1303,14 @@ public class MetaDaoImpl implements MetaDao {
                     }
 
                     result.forEach(r -> {
-                        final Val[] arr = new Val[fields.length];
+                        final Val[] arr = new Val[fieldNames.length];
 
                         Map<Integer, Long> extendedValues = null;
                         if (extendedValuesUsed) {
                             extendedValues = extendedFieldValueMap.get(r.get(meta.ID));
                         }
 
-                        for (int i = 0; i < fields.length; i++) {
+                        for (int i = 0; i < fieldNames.length; i++) {
                             Val val = ValNull.INSTANCE;
                             final Mapper<?> mapper = mappers[i];
                             if (mapper != null) {
@@ -1382,7 +1388,7 @@ public class MetaDaoImpl implements MetaDao {
     }
 
     private final Collection<String> extendedFieldNames =
-            MetaFields.getExtendedFields().stream().map(AbstractField::getName).collect(Collectors.toList());
+            MetaFields.getExtendedFields().stream().map(QueryField::getName).collect(Collectors.toList());
 
     private Set<Integer> identifyExtendedAttributesFields(final ExpressionOperator expr,
                                                           final Set<Integer> identified) {
@@ -1874,10 +1880,10 @@ public class MetaDaoImpl implements MetaDao {
         if (expressionItem == null) {
             return true;
         } else {
-            final Map<String, AbstractField> fieldMap = MetaFields.getAllFieldMap();
+            final Map<String, QueryField> fieldMap = MetaFields.getAllFieldMap();
 
             return ExpressionUtil.validateExpressionTerms(expressionItem, term -> {
-                final AbstractField field = fieldMap.get(term.getField());
+                final QueryField field = fieldMap.get(term.getField());
                 if (field == null) {
                     throw new RuntimeException(LogUtil.message("Unknown field {} in term {}, in expression {}",
                             term.getField(), term, expressionItem));

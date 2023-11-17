@@ -1,13 +1,14 @@
 package stroom.task.impl;
 
-import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.DateField;
 import stroom.datasource.api.v2.FieldInfo;
 import stroom.datasource.api.v2.FindFieldInfoCriteria;
+import stroom.datasource.api.v2.QueryField;
 import stroom.datasource.api.v2.TextField;
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.query.common.v2.FieldInfoResultPageBuilder;
+import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValString;
 import stroom.query.language.functions.ValuesConsumer;
@@ -25,10 +26,10 @@ public class SearchableDual implements Searchable {
             "Dual",
             "Dual");
 
-    private static final AbstractField DUMMY_FIELD = new TextField(
+    private static final QueryField DUMMY_FIELD = new TextField(
             "Dummy", true);
 
-    private static final List<AbstractField> FIELDS = Collections.singletonList(DUMMY_FIELD);
+    private static final List<QueryField> FIELDS = Collections.singletonList(DUMMY_FIELD);
 
     @Override
     public DocRef getDocRef() {
@@ -52,8 +53,9 @@ public class SearchableDual implements Searchable {
 
     @Override
     public void search(final ExpressionCriteria criteria,
-                       final AbstractField[] fields,
+                       final FieldIndex fieldIndex,
                        final ValuesConsumer consumer) {
+        final String[] fields = fieldIndex.getFields();
         final Val[] valArr = new Val[fields.length];
         for (int i = 0; i < fields.length; i++) {
             valArr[i] = ValString.create("X");

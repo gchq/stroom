@@ -1,8 +1,8 @@
 package stroom.task.impl;
 
-import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.DateField;
 import stroom.datasource.api.v2.LongField;
+import stroom.datasource.api.v2.QueryField;
 import stroom.datasource.api.v2.TextField;
 
 import java.util.ArrayList;
@@ -20,8 +20,8 @@ public class TaskManagerFields {
     public static final String FIELD_AGE = "Age";
     public static final String FIELD_INFO = "Info";
 
-    private static final List<AbstractField> FIELDS = new ArrayList<>();
-    private static final Map<String, AbstractField> FIELD_MAP;
+    private static final List<QueryField> FIELDS = new ArrayList<>();
+    private static final Map<String, QueryField> FIELD_MAP;
 
     public static final TextField NODE = new TextField(FIELD_NODE);
     public static final TextField NAME = new TextField(FIELD_NAME);
@@ -38,14 +38,14 @@ public class TaskManagerFields {
         FIELDS.add(AGE);
         FIELDS.add(INFO);
 
-        FIELD_MAP = FIELDS.stream().collect(Collectors.toMap(AbstractField::getName, Function.identity()));
+        FIELD_MAP = FIELDS.stream().collect(Collectors.toMap(QueryField::getName, Function.identity()));
     }
 
-    public static List<AbstractField> getFields() {
+    public static List<QueryField> getFields() {
         return new ArrayList<>(FIELDS);
     }
 
-    public static Map<String, AbstractField> getFieldMap() {
+    public static Map<String, QueryField> getFieldMap() {
         return FIELD_MAP;
     }
 }

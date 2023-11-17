@@ -1,6 +1,5 @@
 package stroom.query.client.presenter;
 
-import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.FieldInfo;
 import stroom.datasource.api.v2.FieldType;
 import stroom.datasource.api.v2.FindFieldInfoCriteria;
@@ -26,6 +25,7 @@ import com.google.gwt.view.client.Range;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 
@@ -100,7 +100,6 @@ public class DynamicColumnSelectionListModel implements SelectionListModel<Field
                         pageRequest,
                         null,
                         dataSourceRef,
-                        FieldInfo.FIELDS_PARENT,
                         StringMatch.contains("annotation:"));
                 dataSourceClient.findFields(findFieldInfoCriteria, response -> {
                     final List<ColumnSelectionItem> items = response
@@ -118,7 +117,6 @@ public class DynamicColumnSelectionListModel implements SelectionListModel<Field
                         pageRequest,
                         null,
                         dataSourceRef,
-                        FieldInfo.FIELDS_PARENT,
                         filter);
                 dataSourceClient.findFields(findFieldInfoCriteria, response -> {
                     final List<ColumnSelectionItem> items = response
@@ -225,10 +223,10 @@ public class DynamicColumnSelectionListModel implements SelectionListModel<Field
             return new ColumnSelectionItem(field, field.getDisplayValue(), false);
         }
 
-        private static String buildAnnotationFieldExpression(final AbstractField dataSourceField,
+        private static String buildAnnotationFieldExpression(final FieldType fieldType,
                                                              final String indexFieldName) {
             String fieldParam = ParamSubstituteUtil.makeParam(indexFieldName);
-            if (dataSourceField != null && FieldType.DATE.equals(dataSourceField.getFieldType())) {
+            if (FieldType.DATE.equals(fieldType)) {
                 fieldParam = "formatDate(" + fieldParam + ")";
             }
 
@@ -248,13 +246,13 @@ public class DynamicColumnSelectionListModel implements SelectionListModel<Field
         }
 
         private static Field convertFieldInfo(final FieldInfo fieldInfo) {
-            final String indexFieldName = fieldInfo.getTitle();
+            final String indexFieldName = fieldInfo.getFieldName();
             final Builder fieldBuilder = Field.builder();
             fieldBuilder.name(indexFieldName);
 
-            final AbstractField indexField = fieldInfo.getField();
-            if (indexField != null) {
-                switch (indexField.getFieldType()) {
+            final FieldType fieldType = fieldInfo.getFieldType();
+            if (fieldType != null) {
+                switch (fieldType) {
                     case DATE:
                         fieldBuilder.format(Format.DATE_TIME);
                         break;
@@ -276,7 +274,7 @@ public class DynamicColumnSelectionListModel implements SelectionListModel<Field
                 // Turn 'annotation:.*' fields into annotation links that make use of either the special
                 // eventId/streamId fields (so event results can link back to annotations) OR
                 // the annotation:Id field so Annotations datasource results can link back.
-                expression = buildAnnotationFieldExpression(fieldInfo.getField(), indexFieldName);
+                expression = buildAnnotationFieldExpression(fieldInfo.getFieldType(), indexFieldName);
                 fieldBuilder.expression(expression);
             } else {
                 expression = ParamSubstituteUtil.makeParam(indexFieldName);
@@ -327,6 +325,32 @@ public class DynamicColumnSelectionListModel implements SelectionListModel<Field
 
         public Field getField() {
             return field;
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (!(o instanceof ColumnSelectionItem)) {
+                return false;
+            }
+            final ColumnSelectionItem that = (ColumnSelectionItem) o;
+            return Objects.equals(field, that.field);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(field);
+        }
+
+        @Override
+        public String toString() {
+            return "ColumnSelectionItem{" +
+                    "field=" + field +
+                    ", label='" + label + '\'' +
+                    ", hasChildren=" + hasChildren +
+                    '}';
         }
     }
 }

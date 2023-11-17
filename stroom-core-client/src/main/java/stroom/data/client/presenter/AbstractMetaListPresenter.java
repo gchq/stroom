@@ -31,7 +31,7 @@ import stroom.data.grid.client.OrderByColumn;
 import stroom.data.grid.client.PagerView;
 import stroom.data.shared.DataResource;
 import stroom.data.table.client.Refreshable;
-import stroom.datasource.api.v2.AbstractField;
+import stroom.datasource.api.v2.QueryField;
 import stroom.dispatch.client.ExportFileCompleteUtil;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
@@ -416,7 +416,7 @@ public abstract class AbstractMetaListPresenter
     }
 
     void addAttributeColumn(final String name,
-                            final AbstractField attribute,
+                            final QueryField attribute,
                             final Function<String, String> formatter,
                             final int size) {
 
@@ -433,7 +433,7 @@ public abstract class AbstractMetaListPresenter
     }
 
     void addRightAlignedAttributeColumn(final String name,
-                                        final AbstractField attribute,
+                                        final QueryField attribute,
                                         final Function<String, String> formatter,
                                         final int size) {
 
@@ -451,7 +451,7 @@ public abstract class AbstractMetaListPresenter
     }
 
     void addColouredSizeAttributeColumn(final String name,
-                                        final AbstractField attribute,
+                                        final QueryField attribute,
                                         final Function<String, String> formatter,
                                         final int size) {
 

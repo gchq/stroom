@@ -17,7 +17,6 @@
 package stroom.search.solr.shared;
 
 import stroom.docref.HasDisplayValue;
-import stroom.query.api.v2.ExpressionTerm.Condition;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -27,8 +26,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
 
 /**
@@ -55,14 +52,12 @@ import java.util.Objects;
         "termOffsets",
         "termPayloads",
         "sortMissingFirst",
-        "sortMissingLast",
-        "supportedConditions"
+        "sortMissingLast"
 })
 @JsonInclude(Include.NON_NULL)
 public class SolrIndexField implements HasDisplayValue, Comparable<SolrIndexField>, Serializable {
 
     public static final String VALID_FIELD_NAME_PATTERN = "[a-zA-Z_](?:[a-zA-Z0-9_])*";
-    private static final long serialVersionUID = 3100770758821157580L;
 
     @JsonProperty
     private SolrIndexFieldType fieldUse;
@@ -103,14 +98,6 @@ public class SolrIndexField implements HasDisplayValue, Comparable<SolrIndexFiel
     @JsonProperty
     private boolean sortMissingLast;
 
-    /**
-     * Defines a list of the {@link Condition} values supported by this field,
-     * can be null in which case a default set will be returned. Not persisted
-     * in the XML
-     */
-    @JsonProperty
-    private List<Condition> supportedConditions;
-
     public SolrIndexField() {
         fieldUse = SolrIndexFieldType.FIELD;
         indexed = true;
@@ -120,16 +107,12 @@ public class SolrIndexField implements HasDisplayValue, Comparable<SolrIndexFiel
                            final String fieldName,
                            final boolean stored,
                            final boolean indexed,
-                           final boolean termPositions,
-                           final List<Condition> supportedConditions) {
+                           final boolean termPositions) {
         this.fieldUse = fieldUse;
         this.fieldName = fieldName;
         this.stored = stored;
         this.indexed = indexed;
         this.termPositions = termPositions;
-        if (supportedConditions != null) {
-            this.supportedConditions = new ArrayList<>(supportedConditions);
-        }
     }
 
     @JsonCreator
@@ -151,8 +134,7 @@ public class SolrIndexField implements HasDisplayValue, Comparable<SolrIndexFiel
                           @JsonProperty("termOffsets") final boolean termOffsets,
                           @JsonProperty("termPayloads") final boolean termPayloads,
                           @JsonProperty("sortMissingFirst") final boolean sortMissingFirst,
-                          @JsonProperty("sortMissingLast") final boolean sortMissingLast,
-                          @JsonProperty("supportedConditions") final List<Condition> supportedConditions) {
+                          @JsonProperty("sortMissingLast") final boolean sortMissingLast) {
         if (fieldUse != null) {
             this.fieldUse = fieldUse;
         } else {
@@ -180,42 +162,35 @@ public class SolrIndexField implements HasDisplayValue, Comparable<SolrIndexFiel
         this.termPayloads = termPayloads;
         this.sortMissingFirst = sortMissingFirst;
         this.sortMissingLast = sortMissingLast;
-        this.supportedConditions = supportedConditions;
     }
 
     public static SolrIndexField createIdField(final String fieldName) {
-        return new SolrIndexField(SolrIndexFieldType.ID, fieldName, true, true, false, null);
+        return new SolrIndexField(SolrIndexFieldType.ID, fieldName, true, true, false);
     }
 
     public static SolrIndexField createBooleanField(final String fieldName) {
-        return new SolrIndexField(SolrIndexFieldType.BOOLEAN_FIELD, fieldName, false, true, false,
-                null);
+        return new SolrIndexField(SolrIndexFieldType.BOOLEAN_FIELD, fieldName, false, true, false);
     }
 
     public static SolrIndexField createIntegerField(final String fieldName) {
-        return new SolrIndexField(SolrIndexFieldType.INTEGER_FIELD, fieldName, false, true, false,
-                null);
+        return new SolrIndexField(SolrIndexFieldType.INTEGER_FIELD, fieldName, false, true, false);
     }
 
     public static SolrIndexField createLongField(final String fieldName) {
-        return new SolrIndexField(SolrIndexFieldType.LONG_FIELD, fieldName, false, true, false,
-                null);
+        return new SolrIndexField(SolrIndexFieldType.LONG_FIELD, fieldName, false, true, false);
     }
 
     public static SolrIndexField createFloatField(final String fieldName) {
-        return new SolrIndexField(SolrIndexFieldType.FLOAT_FIELD, fieldName, false, true, false,
-                null);
+        return new SolrIndexField(SolrIndexFieldType.FLOAT_FIELD, fieldName, false, true, false);
     }
 
     public static SolrIndexField createDoubleField(final String fieldName) {
-        return new SolrIndexField(SolrIndexFieldType.DOUBLE_FIELD, fieldName, false, true, false,
-                null);
+        return new SolrIndexField(SolrIndexFieldType.DOUBLE_FIELD, fieldName, false, true, false);
     }
 
 
     public static SolrIndexField createDateField(final String fieldName) {
-        return new SolrIndexField(SolrIndexFieldType.DATE_FIELD, fieldName, false, true,
-                false, null);
+        return new SolrIndexField(SolrIndexFieldType.DATE_FIELD, fieldName, false, true, false);
     }
 
     public static SolrIndexField createTextField(final String fieldName) {
@@ -226,21 +201,13 @@ public class SolrIndexField implements HasDisplayValue, Comparable<SolrIndexFiel
                                                  final boolean stored,
                                                  final boolean indexed,
                                                  final boolean termPositions) {
-        return new SolrIndexField(SolrIndexFieldType.FIELD, fieldName, stored, indexed,
-                termPositions, null);
+        return new SolrIndexField(SolrIndexFieldType.FIELD, fieldName, stored, indexed, termPositions);
     }
 
     public static SolrIndexField create(final SolrIndexFieldType fieldType, final String fieldName,
                                         final boolean stored, final boolean indexed,
                                         final boolean termPositions) {
-        return new SolrIndexField(fieldType, fieldName, stored, indexed, termPositions, null);
-    }
-
-    public static SolrIndexField create(final SolrIndexFieldType fieldType, final String fieldName,
-                                        final boolean stored, final boolean indexed,
-                                        final boolean termPositions, final List<Condition> supportedConditions) {
-        return new SolrIndexField(fieldType, fieldName, stored, indexed, termPositions,
-                supportedConditions);
+        return new SolrIndexField(fieldType, fieldName, stored, indexed, termPositions);
     }
 
     public SolrIndexFieldType getFieldUse() {
@@ -398,22 +365,6 @@ public class SolrIndexField implements HasDisplayValue, Comparable<SolrIndexFiel
         this.sortMissingLast = sortMissingLast;
     }
 
-    public List<Condition> getSupportedConditions() {
-        if (supportedConditions == null) {
-            return getDefaultConditions();
-        } else {
-            return supportedConditions;
-        }
-    }
-
-    public void setSupportedConditions(final List<Condition> supportedConditions) {
-        if (supportedConditions == null) {
-            this.supportedConditions = null;
-        } else {
-            this.supportedConditions = new ArrayList<>(supportedConditions);
-        }
-    }
-
     @JsonIgnore
     @Override
     public String getDisplayValue() {
@@ -447,8 +398,7 @@ public class SolrIndexField implements HasDisplayValue, Comparable<SolrIndexFiel
                 fieldUse == that.fieldUse &&
                 Objects.equals(fieldName, that.fieldName) &&
                 Objects.equals(fieldType, that.fieldType) &&
-                Objects.equals(defaultValue, that.defaultValue) &&
-                Objects.equals(supportedConditions, that.supportedConditions);
+                Objects.equals(defaultValue, that.defaultValue);
     }
 
     @Override
@@ -471,8 +421,7 @@ public class SolrIndexField implements HasDisplayValue, Comparable<SolrIndexFiel
                 termOffsets,
                 termPayloads,
                 sortMissingFirst,
-                sortMissingLast,
-                supportedConditions);
+                sortMissingLast);
     }
 
     @Override
@@ -483,51 +432,6 @@ public class SolrIndexField implements HasDisplayValue, Comparable<SolrIndexFiel
     @Override
     public int compareTo(final SolrIndexField o) {
         return fieldName.compareToIgnoreCase(o.fieldName);
-    }
-
-    private List<Condition> getDefaultConditions() {
-        final List<Condition> conditions = new ArrayList<>();
-
-        if (fieldUse != null) {
-            // First make sure the operator is set.
-            switch (fieldUse) {
-                case ID:
-                    conditions.add(Condition.EQUALS);
-                    conditions.add(Condition.IN);
-                    conditions.add(Condition.IN_DICTIONARY);
-                    break;
-                case FIELD:
-                    conditions.add(Condition.EQUALS);
-                    conditions.add(Condition.IN);
-                    conditions.add(Condition.IN_DICTIONARY);
-                    break;
-
-                case DATE_FIELD:
-                    conditions.add(Condition.EQUALS);
-                    conditions.add(Condition.GREATER_THAN);
-                    conditions.add(Condition.GREATER_THAN_OR_EQUAL_TO);
-                    conditions.add(Condition.LESS_THAN);
-                    conditions.add(Condition.LESS_THAN_OR_EQUAL_TO);
-                    conditions.add(Condition.BETWEEN);
-                    conditions.add(Condition.IN);
-                    conditions.add(Condition.IN_DICTIONARY);
-                    break;
-                default:
-                    if (fieldUse.isNumeric()) {
-                        conditions.add(Condition.EQUALS);
-                        conditions.add(Condition.GREATER_THAN);
-                        conditions.add(Condition.GREATER_THAN_OR_EQUAL_TO);
-                        conditions.add(Condition.LESS_THAN);
-                        conditions.add(Condition.LESS_THAN_OR_EQUAL_TO);
-                        conditions.add(Condition.BETWEEN);
-                        conditions.add(Condition.IN);
-                        conditions.add(Condition.IN_DICTIONARY);
-                    }
-                    break;
-            }
-        }
-
-        return conditions;
     }
 
     public static Builder builder() {
@@ -559,7 +463,6 @@ public class SolrIndexField implements HasDisplayValue, Comparable<SolrIndexFiel
         private boolean termPayloads;
         private boolean sortMissingFirst;
         private boolean sortMissingLast;
-        private List<Condition> supportedConditions;
 
         private Builder() {
         }
@@ -584,7 +487,6 @@ public class SolrIndexField implements HasDisplayValue, Comparable<SolrIndexFiel
             this.termPayloads = solrIndexField.termPayloads;
             this.sortMissingFirst = solrIndexField.sortMissingFirst;
             this.sortMissingLast = solrIndexField.sortMissingLast;
-            this.supportedConditions = solrIndexField.supportedConditions;
         }
 
         public Builder fieldUse(final SolrIndexFieldType fieldUse) {
@@ -683,11 +585,6 @@ public class SolrIndexField implements HasDisplayValue, Comparable<SolrIndexFiel
             return this;
         }
 
-        public Builder supportedConditions(final List<Condition> supportedConditions) {
-            this.supportedConditions = new ArrayList<>(supportedConditions);
-            return this;
-        }
-
         public SolrIndexField build() {
             return new SolrIndexField(
                     fieldUse,
@@ -708,8 +605,7 @@ public class SolrIndexField implements HasDisplayValue, Comparable<SolrIndexFiel
                     termOffsets,
                     termPayloads,
                     sortMissingFirst,
-                    sortMissingLast,
-                    supportedConditions);
+                    sortMissingLast);
         }
     }
 }

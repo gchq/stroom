@@ -25,40 +25,6 @@ export interface AbstractFetchDataResult {
   type: string;
 }
 
-export interface AbstractField {
-  conditions?: (
-    | "CONTAINS"
-    | "EQUALS"
-    | "GREATER_THAN"
-    | "GREATER_THAN_OR_EQUAL_TO"
-    | "LESS_THAN"
-    | "LESS_THAN_OR_EQUAL_TO"
-    | "BETWEEN"
-    | "IN"
-    | "IN_DICTIONARY"
-    | "IN_FOLDER"
-    | "IS_DOC_REF"
-    | "IS_NULL"
-    | "IS_NOT_NULL"
-    | "MATCHES_REGEX"
-  )[];
-  fieldType?:
-    | "ID"
-    | "BOOLEAN"
-    | "INTEGER"
-    | "LONG"
-    | "FLOAT"
-    | "DOUBLE"
-    | "DATE"
-    | "TEXT"
-    | "KEYWORD"
-    | "IPV4_ADDRESS"
-    | "DOC_REF";
-  name?: string;
-  queryable?: boolean;
-  type: string;
-}
-
 export interface Account {
   comments?: string;
 
@@ -395,7 +361,7 @@ export interface Base64EncodedDocumentData {
   docRef?: DocRef;
 }
 
-export type BooleanField = AbstractField;
+export type BooleanField = QueryField;
 
 export interface BuildInfo {
   /** @format int64 */
@@ -811,16 +777,7 @@ export interface DataRetentionRules {
   version?: string;
 }
 
-export interface DataSource {
-  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
-  defaultExtractionPipeline?: DocRef;
-
-  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
-  docRef?: DocRef;
-  fields?: AbstractField[];
-}
-
-export type DateField = AbstractField;
+export type DateField = QueryField;
 
 /**
  * The string formatting to apply to a date value
@@ -934,7 +891,7 @@ export interface DocRef {
   uuid: string;
 }
 
-export type DocRefField = AbstractField & { docRefType?: string };
+export type DocRefField = QueryField;
 
 export interface DocRefInfo {
   /** @format int64 */
@@ -1168,7 +1125,7 @@ export interface DocumentationDoc {
   version?: string;
 }
 
-export type DoubleField = AbstractField;
+export type DoubleField = QueryField;
 
 export interface DownloadQueryResultsRequest {
   componentId?: string;
@@ -1932,7 +1889,7 @@ export interface FetchPropertyTypesResult {
 export interface FetchSuggestionsRequest {
   /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   dataSource: DocRef;
-  field: AbstractField;
+  field: FieldInfo;
   text?: string;
 }
 
@@ -1959,6 +1916,37 @@ export interface Field {
 
   /** Describes the sorting applied to a field */
   sort?: Sort;
+}
+
+export interface FieldInfo {
+  conditions?:
+    | "'=', 'between', '>', '>=', '<', '<='"
+    | "'=', 'in', 'in dictionary', 'between', '>', '>=', '<', '<='"
+    | "'='"
+    | "'=', 'in', 'in dictionary'"
+    | "'is', 'in folder'"
+    | "'is', 'in folder', '=', 'in', 'in dictionary'"
+    | "'=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'"
+    | "'=', 'in', 'in dictionary', 'matches regex'"
+    | "'is', '='"
+    | "'between'"
+    | "'=', 'in'"
+    | "'=', 'in', 'in dictionary', 'is'";
+  docRefType?: string;
+  fieldName?: string;
+  fieldType?:
+    | "ID"
+    | "BOOLEAN"
+    | "INTEGER"
+    | "LONG"
+    | "FLOAT"
+    | "DOUBLE"
+    | "DATE"
+    | "TEXT"
+    | "KEYWORD"
+    | "IPV4_ADDRESS"
+    | "DOC_REF";
+  queryable?: boolean;
 }
 
 /**
@@ -2030,12 +2018,19 @@ export interface FindExplorerNodeCriteria {
 }
 
 export interface FindExplorerNodeQuery {
-  matchCase?: boolean;
+  filter?: StringMatch;
   pageRequest?: PageRequest;
-  pattern?: string;
-  regex?: boolean;
   sort?: string;
   sortList?: CriteriaFieldSort[];
+}
+
+export interface FindFieldInfoCriteria {
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
+  dataSourceRef?: DocRef;
+  pageRequest?: PageRequest;
+  sort?: string;
+  sortList?: CriteriaFieldSort[];
+  stringMatch?: StringMatch;
 }
 
 export interface FindFsVolumeCriteria {
@@ -2142,7 +2137,7 @@ export interface FindUserNameCriteria {
  */
 export type FlatResult = Result & { size?: number; structure?: Field[]; values?: object[][] };
 
-export type FloatField = AbstractField;
+export type FloatField = QueryField;
 
 /**
  * Describes the formatting that will be applied to values in a field
@@ -2228,18 +2223,6 @@ export interface FsVolumeState {
   version?: number;
 }
 
-export interface FunctionSignature {
-  aliases?: string[];
-  args?: Arg[];
-  categoryPath?: string[];
-  description?: string;
-  helpAnchor?: string;
-  name?: string;
-  overloadType?: "NOT_OVERLOADED" | "OVERLOADED_IN_CATEGORY" | "OVERLOADED_GLOBALLY";
-  returnDescription?: string;
-  returnType?: "UNKNOWN" | "BOOLEAN" | "DOUBLE" | "ERROR" | "INTEGER" | "LONG" | "NULL" | "NUMBER" | "STRING";
-}
-
 export interface GetAnalyticShardDataRequest {
   analyticDocUuid?: string;
 
@@ -2306,7 +2289,7 @@ export interface GlobalConfigCriteria {
 
 export type HoppingWindow = Window & { advanceSize?: string; timeField?: string; windowSize?: string };
 
-export type IdField = AbstractField;
+export type IdField = QueryField;
 
 export interface ImportConfigRequest {
   confirmList?: ImportState[];
@@ -2495,9 +2478,9 @@ export interface InfoPopupConfig {
   validationRegex?: string;
 }
 
-export type IntegerField = AbstractField;
+export type IntegerField = QueryField;
 
-export type IpV4AddressField = AbstractField;
+export type IpV4AddressField = QueryField;
 
 export interface Job {
   advanced?: boolean;
@@ -2573,7 +2556,7 @@ export interface KafkaConfigDoc {
 
 export type KeyValueInputComponentSettings = ComponentSettings & { text?: string };
 
-export type KeywordField = AbstractField;
+export type KeywordField = QueryField;
 
 export interface LayoutConfig {
   preferredSize?: Size;
@@ -2643,7 +2626,7 @@ export interface LoginResponse {
   requirePasswordChange?: boolean;
 }
 
-export type LongField = AbstractField;
+export type LongField = QueryField;
 
 export interface MapDefinition {
   mapName?: string;
@@ -3450,20 +3433,257 @@ export interface QueryDoc {
   version?: string;
 }
 
-export interface QueryHelpItemsRequest {
-  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
-  dataSourceRef?: DocRef;
-  filterInput?: string;
-  query?: string;
-  requestedTypes?: ("DATA_SOURCE" | "STRUCTURE" | "FIELD" | "FUNCTION")[];
+export interface QueryField {
+  conditions?:
+    | "'=', 'between', '>', '>=', '<', '<='"
+    | "'=', 'in', 'in dictionary', 'between', '>', '>=', '<', '<='"
+    | "'='"
+    | "'=', 'in', 'in dictionary'"
+    | "'is', 'in folder'"
+    | "'is', 'in folder', '=', 'in', 'in dictionary'"
+    | "'=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'"
+    | "'=', 'in', 'in dictionary', 'matches regex'"
+    | "'is', '='"
+    | "'between'"
+    | "'=', 'in'"
+    | "'=', 'in', 'in dictionary', 'is'";
+  docRefType?: string;
+  fieldType?:
+    | "ID"
+    | "BOOLEAN"
+    | "INTEGER"
+    | "LONG"
+    | "FLOAT"
+    | "DOUBLE"
+    | "DATE"
+    | "TEXT"
+    | "KEYWORD"
+    | "IPV4_ADDRESS"
+    | "DOC_REF";
+  name?: string;
+  queryable?: boolean;
+  type: string;
 }
 
-export interface QueryHelpItemsResult {
-  dataSourceFields?: AbstractField[];
-  dataSources?: DocRef[];
-  functionSignatures?: FunctionSignature[];
-  structureElements?: StructureElement[];
+export interface QueryHelpData {
+  type: string;
 }
+
+export type QueryHelpDataSource = QueryHelpData & { docRef?: DocRef };
+
+export type QueryHelpField = QueryHelpData & { fieldInfo?: FieldInfo };
+
+export type QueryHelpFunctionSignature = QueryHelpData & {
+  aliases?: string[];
+  args?: Arg[];
+  categoryPath?: string[];
+  description?: string;
+  helpAnchor?: string;
+  name?: string;
+  overloadType?: "NOT_OVERLOADED" | "OVERLOADED_IN_CATEGORY" | "OVERLOADED_GLOBALLY";
+  returnDescription?: string;
+  returnType?: "UNKNOWN" | "BOOLEAN" | "DOUBLE" | "ERROR" | "INTEGER" | "LONG" | "NULL" | "NUMBER" | "STRING";
+};
+
+export interface QueryHelpRequest {
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
+  dataSourceRef?: DocRef;
+  pageRequest?: PageRequest;
+  parentPath?: string;
+  query?: string;
+  showAll?: boolean;
+  sort?: string;
+  sortList?: CriteriaFieldSort[];
+  stringMatch?: StringMatch;
+}
+
+export interface QueryHelpRow {
+  data?: QueryHelpData;
+  hasChildren?: boolean;
+  icon?:
+    | "ADD"
+    | "ADD_ABOVE"
+    | "ADD_BELOW"
+    | "ADD_MULTIPLE"
+    | "ALERT"
+    | "ALERT_SIMPLE"
+    | "ARROW_DOWN"
+    | "ARROW_LEFT"
+    | "ARROW_RIGHT"
+    | "ARROW_UP"
+    | "AUTO_REFRESH"
+    | "BACKWARD"
+    | "BORDERED_CIRCLE"
+    | "CANCEL"
+    | "CASE_SENSITIVE"
+    | "CLEAR"
+    | "CLIPBOARD"
+    | "CLOSE"
+    | "CODE"
+    | "COLLAPSE_UP"
+    | "COPY"
+    | "DATABASE"
+    | "DELETE"
+    | "DEPENDENCIES"
+    | "DISABLE"
+    | "DOCUMENT_ANALYTIC_OUTPUT_STORE"
+    | "DOCUMENT_ANALYTIC_RULE"
+    | "DOCUMENT_ANNOTATIONS_INDEX"
+    | "DOCUMENT_DASHBOARD"
+    | "DOCUMENT_DICTIONARY"
+    | "DOCUMENT_DOCUMENTATION"
+    | "DOCUMENT_ELASTIC_CLUSTER"
+    | "DOCUMENT_ELASTIC_INDEX"
+    | "DOCUMENT_FAVOURITES"
+    | "DOCUMENT_FEED"
+    | "DOCUMENT_FOLDER"
+    | "DOCUMENT_INDEX"
+    | "DOCUMENT_KAFKA_CONFIG"
+    | "DOCUMENT_PIPELINE"
+    | "DOCUMENT_QUERY"
+    | "DOCUMENT_RECEIVE_DATA_RULE_SET"
+    | "DOCUMENT_SCRIPT"
+    | "DOCUMENT_SEARCHABLE"
+    | "DOCUMENT_SELECT_ALL_OR_NONE"
+    | "DOCUMENT_SIGMA_RULE"
+    | "DOCUMENT_SOLR_INDEX"
+    | "DOCUMENT_STATISTIC_STORE"
+    | "DOCUMENT_STROOM_STATS_STORE"
+    | "DOCUMENT_SYSTEM"
+    | "DOCUMENT_TEXT_CONVERTER"
+    | "DOCUMENT_VIEW"
+    | "DOCUMENT_VISUALISATION"
+    | "DOCUMENT_XMLSCHEMA"
+    | "DOCUMENT_XSLT"
+    | "DOT"
+    | "DOUBLE_ARROW"
+    | "DOWN"
+    | "DOWNLOAD"
+    | "DROP_DOWN"
+    | "EDIT"
+    | "ELLIPSES_HORIZONTAL"
+    | "ELLIPSES_VERTICAL"
+    | "ERROR"
+    | "EXCLAMATION"
+    | "EXPAND_DOWN"
+    | "EXPLORER"
+    | "FAST_BACKWARD"
+    | "FAST_FORWARD"
+    | "FATAL"
+    | "FATAL_DARK"
+    | "FAVOURITES"
+    | "FAVOURITES_OUTLINE"
+    | "FEED"
+    | "FIELD"
+    | "FIELDS_EXPRESSION"
+    | "FIELDS_FILTER"
+    | "FIELDS_FORMAT"
+    | "FIELDS_GROUP"
+    | "FIELDS_SORTAZ"
+    | "FIELDS_SORTZA"
+    | "FILE"
+    | "FILE_FORMATTED"
+    | "FILE_RAW"
+    | "FILTER"
+    | "FIND"
+    | "FOLDER"
+    | "FOLDER_TREE"
+    | "FORMAT"
+    | "FORWARD"
+    | "FUNCTION"
+    | "GENERATE"
+    | "HELP"
+    | "HIDE"
+    | "HIDE_MENU"
+    | "HISTORY"
+    | "INFO"
+    | "INSERT"
+    | "JOBS"
+    | "KEY"
+    | "LOCKED"
+    | "LOGO"
+    | "LOGOUT"
+    | "MENU"
+    | "MONITORING"
+    | "MOVE"
+    | "NODES"
+    | "OK"
+    | "OO"
+    | "OPEN"
+    | "OPERATOR"
+    | "PASSWORD"
+    | "PAUSE"
+    | "PEN"
+    | "PIPELINE_ELASTIC_INDEX"
+    | "PIPELINE_FILE"
+    | "PIPELINE_FILES"
+    | "PIPELINE_HADOOP"
+    | "PIPELINE_ID"
+    | "PIPELINE_INDEX"
+    | "PIPELINE_JSON"
+    | "PIPELINE_KAFKA"
+    | "PIPELINE_RECORD_COUNT"
+    | "PIPELINE_RECORD_OUTPUT"
+    | "PIPELINE_REFERENCE_DATA"
+    | "PIPELINE_SEARCH_OUTPUT"
+    | "PIPELINE_SOLR"
+    | "PIPELINE_SPLIT"
+    | "PIPELINE_STATISTICS"
+    | "PIPELINE_STREAM"
+    | "PIPELINE_STROOM_STATS"
+    | "PIPELINE_STROOM_STATS_STORE"
+    | "PIPELINE_TEXT"
+    | "PIPELINE_XML"
+    | "PIPELINE_XML_SEARCH"
+    | "PIPELINE_XSD"
+    | "PIPELINE_XSLT"
+    | "PLAY"
+    | "PROCESS"
+    | "PROPERTIES"
+    | "QUESTION"
+    | "RAW"
+    | "REFRESH"
+    | "REGEX"
+    | "REMOVE"
+    | "RESIZE"
+    | "RESIZE_HANDLE"
+    | "SAVE"
+    | "SAVEAS"
+    | "SEARCH"
+    | "SETTINGS"
+    | "SHARD_CLOSE"
+    | "SHARD_FLUSH"
+    | "SHARE"
+    | "SHIELD"
+    | "SHOW"
+    | "SHOW_MENU"
+    | "STEP"
+    | "STEPPING"
+    | "STEPPING_CIRCLE"
+    | "STEP_BACKWARD"
+    | "STEP_FORWARD"
+    | "STOP"
+    | "TABLE"
+    | "TABLE_NESTED"
+    | "TAB_CLOSE"
+    | "TAGS"
+    | "TICK"
+    | "UNDO"
+    | "UNLOCK"
+    | "UP"
+    | "UPLOAD"
+    | "USER"
+    | "USERS"
+    | "VOLUMES"
+    | "WARNING";
+  id?: string;
+  title?: string;
+  type?: "DATA_SOURCE" | "FIELD" | "FUNCTION" | "TITLE" | "STRUCTURE";
+}
+
+export type QueryHelpStructureElement = QueryHelpData & { description?: string; snippets?: string[] };
+
+export type QueryHelpTitle = QueryHelpData & { documentation?: string };
 
 /**
  * A unique key to identify the instance of the search by. This key is used to identify multiple requests for the same search when running in incremental mode.
@@ -3540,7 +3760,7 @@ export interface ReceiveDataRules {
   createTimeMs?: number;
   createUser?: string;
   description?: string;
-  fields?: AbstractField[];
+  fields?: QueryField[];
   name?: string;
   rules?: ReceiveDataRule[];
   type?: string;
@@ -3716,6 +3936,15 @@ export interface ResultPageExplorerDocContentMatch {
 /**
  * A page of results.
  */
+export interface ResultPageFieldInfo {
+  /** Details of the page of results being returned. */
+  pageResponse?: PageResponse;
+  values?: FieldInfo[];
+}
+
+/**
+ * A page of results.
+ */
 export interface ResultPageFsVolume {
   /** Details of the page of results being returned. */
   pageResponse?: PageResponse;
@@ -3801,6 +4030,15 @@ export interface ResultPageProcessorTaskSummary {
   /** Details of the page of results being returned. */
   pageResponse?: PageResponse;
   values?: ProcessorTaskSummary[];
+}
+
+/**
+ * A page of results.
+ */
+export interface ResultPageQueryHelpRow {
+  /** Details of the page of results being returned. */
+  pageResponse?: PageResponse;
+  values?: QueryHelpRow[];
 }
 
 /**
@@ -4252,22 +4490,6 @@ export interface SolrIndexField {
   sortMissingFirst?: boolean;
   sortMissingLast?: boolean;
   stored?: boolean;
-  supportedConditions?: (
-    | "CONTAINS"
-    | "EQUALS"
-    | "GREATER_THAN"
-    | "GREATER_THAN_OR_EQUAL_TO"
-    | "LESS_THAN"
-    | "LESS_THAN_OR_EQUAL_TO"
-    | "BETWEEN"
-    | "IN"
-    | "IN_DICTIONARY"
-    | "IN_FOLDER"
-    | "IS_DOC_REF"
-    | "IS_NULL"
-    | "IS_NOT_NULL"
-    | "MATCHES_REGEX"
-  )[];
   termOffsets?: boolean;
   termPayloads?: boolean;
   termPositions?: boolean;
@@ -4473,6 +4695,22 @@ export interface StringCriteria {
 
 export type StringEntryValue = EntryValue & { value?: string };
 
+export interface StringMatch {
+  caseSensitive?: boolean;
+  matchType?:
+    | "ANY"
+    | "NULL"
+    | "NON_NULL"
+    | "BLANK"
+    | "EMPTY"
+    | "NULL_OR_BLANK"
+    | "NULL_OR_EMPTY"
+    | "CONTAINS"
+    | "EQUALS"
+    | "REGEX";
+  pattern?: string;
+}
+
 export interface StroomStatsStoreDoc {
   config?: StroomStatsStoreEntityData;
 
@@ -4502,12 +4740,6 @@ export interface StroomStatsStoreEntityData {
 export interface StroomStatsStoreFieldChangeRequest {
   newEntityData?: StroomStatsStoreEntityData;
   oldEntityData?: StroomStatsStoreEntityData;
-}
-
-export interface StructureElement {
-  description?: string;
-  snippets?: string[];
-  title?: string;
 }
 
 export interface Suggestions {
@@ -4694,7 +4926,7 @@ export interface TextConverterDoc {
   version?: string;
 }
 
-export type TextField = AbstractField;
+export type TextField = QueryField;
 
 export interface ThemeConfig {
   backgroundColour?: string;
@@ -6752,6 +6984,25 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Data Sources
+     * @name FetchDefaultExtractionPipeline
+     * @summary Fetch default extraction pipeline
+     * @request POST:/dataSource/v1/fetchDefaultExtractionPipeline
+     * @secure
+     */
+    fetchDefaultExtractionPipeline: (data: DocRef, params: RequestParams = {}) =>
+      this.request<any, DocRef>({
+        path: `/dataSource/v1/fetchDefaultExtractionPipeline`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Data Sources
      * @name FetchDocumentation
      * @summary Fetch documentation for a data source
      * @request POST:/dataSource/v1/fetchDocumentation
@@ -6771,33 +7022,14 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Data Sources
-     * @name FetchDataSourceFields
-     * @summary Fetch data source fields
-     * @request POST:/dataSource/v1/fetchFields
+     * @name FindDataSourceFields
+     * @summary Find data source fields
+     * @request POST:/dataSource/v1/findFields
      * @secure
      */
-    fetchDataSourceFields: (data: DocRef, params: RequestParams = {}) =>
-      this.request<any, DataSource>({
-        path: `/dataSource/v1/fetchFields`,
-        method: "POST",
-        body: data,
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags Data Sources
-     * @name FetchDataSourceFieldsFromQuery
-     * @summary Fetch data source fields
-     * @request POST:/dataSource/v1/fetchFieldsFromQuery
-     * @secure
-     */
-    fetchDataSourceFieldsFromQuery: (data: string, params: RequestParams = {}) =>
-      this.request<any, DataSource>({
-        path: `/dataSource/v1/fetchFieldsFromQuery`,
+    findDataSourceFields: (data: FindFieldInfoCriteria, params: RequestParams = {}) =>
+      this.request<any, ResultPageFieldInfo>({
+        path: `/dataSource/v1/findFields`,
         method: "POST",
         body: data,
         secure: true,
@@ -9412,30 +9644,13 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Queries
-     * @name FetchFunctions
-     * @summary Fetch all expression functions
-     * @request GET:/query/v1/functions
-     * @secure
-     */
-    fetchFunctions: (params: RequestParams = {}) =>
-      this.request<any, FunctionSignature[]>({
-        path: `/query/v1/functions`,
-        method: "GET",
-        secure: true,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags Queries
      * @name FetchHelpItems
      * @summary Fetch all (optionally filtered) query help items
      * @request POST:/query/v1/helpItems
      * @secure
      */
-    fetchHelpItems: (data: QueryHelpItemsRequest, params: RequestParams = {}) =>
-      this.request<any, QueryHelpItemsResult>({
+    fetchHelpItems: (data: QueryHelpRequest, params: RequestParams = {}) =>
+      this.request<any, ResultPageQueryHelpRow>({
         path: `/query/v1/helpItems`,
         method: "POST",
         body: data,
@@ -9460,23 +9675,6 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
         body: data,
         secure: true,
         type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags Queries
-     * @name FetchStructureElements
-     * @summary Fetch all structure element descriptions
-     * @request GET:/query/v1/structure
-     * @secure
-     */
-    fetchStructureElements: (params: RequestParams = {}) =>
-      this.request<any, StructureElement[]>({
-        path: `/query/v1/structure`,
-        method: "GET",
-        secure: true,
         ...params,
       }),
 
@@ -10016,25 +10214,6 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Searchable
-     * @name GetSearchableDataSource
-     * @summary Submit a request for a data source definition, supplying the DocRef for the data source
-     * @request POST:/searchable/v2/dataSource
-     * @secure
-     */
-    getSearchableDataSource: (data: DocRef, params: RequestParams = {}) =>
-      this.request<any, DataSource>({
-        path: `/searchable/v2/dataSource`,
-        method: "POST",
-        body: data,
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags Searchable
      * @name DestroySearchableQuery
      * @summary Destroy a running query
      * @request POST:/searchable/v2/destroy
@@ -10218,25 +10397,6 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
       }),
   };
   sqlstatistics = {
-    /**
-     * No description
-     *
-     * @tags Sql Statistics Query
-     * @name GetSqlStatisticsDataSource
-     * @summary Submit a request for a data source definition, supplying the DocRef for the data source
-     * @request POST:/sqlstatistics/v2/dataSource
-     * @secure
-     */
-    getSqlStatisticsDataSource: (data: DocRef, params: RequestParams = {}) =>
-      this.request<any, DataSource>({
-        path: `/sqlstatistics/v2/dataSource`,
-        method: "POST",
-        body: data,
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
     /**
      * No description
      *
@@ -10622,25 +10782,6 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Elasticsearch Queries
-     * @name GetElasticIndexDataSource
-     * @summary Submit a request for a data source definition, supplying the DocRef for the data source
-     * @request POST:/stroom-elastic-index/v2/dataSource
-     * @secure
-     */
-    getElasticIndexDataSource: (data: DocRef, params: RequestParams = {}) =>
-      this.request<any, DataSource>({
-        path: `/stroom-elastic-index/v2/dataSource`,
-        method: "POST",
-        body: data,
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags Elasticsearch Queries
      * @name DestroyElasticIndexQuery
      * @summary Destroy a running query
      * @request POST:/stroom-elastic-index/v2/destroy
@@ -10680,25 +10821,6 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Stroom-Index Queries
-     * @name GetStroomIndexDataSource
-     * @summary Submit a request for a data source definition, supplying the DocRef for the data source
-     * @request POST:/stroom-index/v2/dataSource
-     * @secure
-     */
-    getStroomIndexDataSource: (data: DocRef, params: RequestParams = {}) =>
-      this.request<any, DataSource>({
-        path: `/stroom-index/v2/dataSource`,
-        method: "POST",
-        body: data,
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags Stroom-Index Queries
      * @name DestroyStroomIndexQuery
      * @summary Destroy a running query
      * @request POST:/stroom-index/v2/destroy
@@ -10734,25 +10856,6 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
       }),
   };
   stroomSolrIndex = {
-    /**
-     * No description
-     *
-     * @tags Solr Queries
-     * @name GetSolrIndexDataSource
-     * @summary Submit a request for a data source definition, supplying the DocRef for the data source
-     * @request POST:/stroom-solr-index/v2/dataSource
-     * @secure
-     */
-    getSolrIndexDataSource: (data: DocRef, params: RequestParams = {}) =>
-      this.request<any, DataSource>({
-        path: `/stroom-solr-index/v2/dataSource`,
-        method: "POST",
-        body: data,
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
     /**
      * No description
      *

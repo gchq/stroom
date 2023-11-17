@@ -4,7 +4,6 @@ import stroom.data.retention.api.DataRetentionRuleAction;
 import stroom.data.retention.shared.DataRetentionDeleteSummary;
 import stroom.data.retention.shared.DataRetentionRules;
 import stroom.data.retention.shared.FindDataRetentionImpactCriteria;
-import stroom.datasource.api.v2.AbstractField;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.meta.api.EffectiveMeta;
 import stroom.meta.api.EffectiveMetaDataCriteria;
@@ -14,6 +13,7 @@ import stroom.meta.shared.Meta;
 import stroom.meta.shared.SelectionSummary;
 import stroom.meta.shared.SimpleMeta;
 import stroom.meta.shared.Status;
+import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.ValuesConsumer;
 import stroom.util.shared.ResultPage;
 import stroom.util.time.TimePeriod;
@@ -29,7 +29,7 @@ public interface MetaDao {
 
     Meta create(MetaProperties metaProperties);
 
-    void search(ExpressionCriteria criteria, AbstractField[] fields, ValuesConsumer consumer);
+    void search(ExpressionCriteria criteria, FieldIndex fieldIndex, ValuesConsumer consumer);
 
     int count(FindMetaCriteria criteria);
 
@@ -117,6 +117,7 @@ public interface MetaDao {
 
     /**
      * Check if ids exist.
+     *
      * @param ids A list of IDs to check the presence of
      * @return The sub-set of ids that exist in the database
      */

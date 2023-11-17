@@ -18,7 +18,7 @@
 package stroom.search;
 
 
-import stroom.datasource.api.v2.AbstractField;
+import stroom.datasource.api.v2.QueryField;
 import stroom.datasource.api.v2.TextField;
 import stroom.docref.DocRef;
 import stroom.index.impl.IndexShardService;
@@ -72,12 +72,12 @@ class TestBasicSearch_EndToEnd extends AbstractCoreIntegrationTest {
         final IndexDoc index = indexStore.readDocument(indexRef);
 
         // Create a map of index fields keyed by name.
-        final Map<String, AbstractField> dataSourceFieldsMap = IndexDataSourceFieldUtil.getDataSourceFields(index, null)
+        final Map<String, QueryField> dataSourceFieldsMap = IndexDataSourceFieldUtil.getDataSourceFields(index, null)
                 .stream()
-                .collect(Collectors.toMap(AbstractField::getName, Function.identity()));
-        final AbstractField actual = dataSourceFieldsMap.get("Action");
+                .collect(Collectors.toMap(QueryField::getName, Function.identity()));
+        final QueryField actual = dataSourceFieldsMap.get("Action");
 
-        final AbstractField expected = new TextField("Action", true, actual.getConditions());
+        final QueryField expected = new TextField("Action", true, actual.getConditions());
 
         assertThat(actual).as("Expected to index action").isEqualTo(expected);
     }

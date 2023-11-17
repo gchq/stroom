@@ -6796,52 +6796,6 @@ components:
           type: string
       required:
       - type
-    AbstractField:
-      type: object
-      discriminator:
-        propertyName: type
-      properties:
-        conditions:
-          type: array
-          items:
-            type: string
-            enum:
-            - CONTAINS
-            - EQUALS
-            - GREATER_THAN
-            - GREATER_THAN_OR_EQUAL_TO
-            - LESS_THAN
-            - LESS_THAN_OR_EQUAL_TO
-            - BETWEEN
-            - IN
-            - IN_DICTIONARY
-            - IN_FOLDER
-            - IS_DOC_REF
-            - IS_NULL
-            - IS_NOT_NULL
-            - MATCHES_REGEX
-        fieldType:
-          type: string
-          enum:
-          - ID
-          - BOOLEAN
-          - INTEGER
-          - LONG
-          - FLOAT
-          - DOUBLE
-          - DATE
-          - TEXT
-          - KEYWORD
-          - IPV4_ADDRESS
-          - DOC_REF
-        name:
-          type: string
-        queryable:
-          type: boolean
-        type:
-          type: string
-      required:
-      - type
     Account:
       type: object
       properties:
@@ -7390,7 +7344,7 @@ components:
     BooleanField:
       type: object
       allOf:
-      - $ref: '#/components/schemas/AbstractField'
+      - $ref: '#/components/schemas/QueryField'
     BuildInfo:
       type: object
       properties:
@@ -8073,7 +8027,7 @@ components:
     DateField:
       type: object
       allOf:
-      - $ref: '#/components/schemas/AbstractField'
+      - $ref: '#/components/schemas/QueryField'
     DateTimeFormatSettings:
       type: object
       allOf:
@@ -8230,11 +8184,7 @@ components:
     DocRefField:
       type: object
       allOf:
-      - $ref: '#/components/schemas/AbstractField'
-      - type: object
-        properties:
-          docRefType:
-            type: string
+      - $ref: '#/components/schemas/QueryField'
     DocRefInfo:
       type: object
       properties:
@@ -8519,7 +8469,7 @@ components:
     DoubleField:
       type: object
       allOf:
-      - $ref: '#/components/schemas/AbstractField'
+      - $ref: '#/components/schemas/QueryField'
     DownloadQueryResultsRequest:
       type: object
       properties:
@@ -9604,7 +9554,7 @@ components:
         dataSource:
           $ref: '#/components/schemas/DocRef'
         field:
-          $ref: '#/components/schemas/AbstractField'
+          $ref: '#/components/schemas/FieldInfo'
         text:
           type: string
       required:
@@ -9637,14 +9587,55 @@ components:
     FieldInfo:
       type: object
       properties:
-        field:
-          $ref: '#/components/schemas/AbstractField'
-        hasChildren:
+        conditions:
+          type: string
+          enum:
+          - '''='', ''between'', ''>'', ''>='', ''<'', ''<='''
+          - '''='', ''in'', ''in dictionary'', ''between'', ''>'', ''>='', ''<'',
+            ''<='''
+          - '''='''
+          - '''='', ''between'', ''>'', ''>='', ''<'', ''<='''
+          - '''='', ''in'', ''in dictionary'''
+          - '''is'', ''in folder'''
+          - '''='', ''in'', ''in dictionary'''
+          - '''is'', ''in folder'', ''='', ''in'', ''in dictionary'''
+          - '''='', ''in'', ''in dictionary'''
+          - '''='', ''>'', ''>='', ''<'', ''<='', ''between'', ''in'', ''in dictionary'''
+          - '''='', ''in'', ''in dictionary'', ''matches regex'''
+          - '''='', ''in'', ''in dictionary'''
+          - '''='', ''in'', ''in dictionary'''
+          - '''='', ''>'', ''>='', ''<'', ''<='', ''between'', ''in'', ''in dictionary'''
+          - '''='''
+          - '''='', ''>'', ''>='', ''<'', ''<='', ''between'', ''in'', ''in dictionary'''
+          - '''='', ''in'', ''in dictionary'''
+          - '''is'', ''='''
+          - '''between'''
+          - '''='', ''in'''
+          - '''='', ''in'''
+          - '''='', ''in'', ''in dictionary'''
+          - '''='', ''in'', ''in dictionary'', ''is'''
+          - '''='', ''>'', ''>='', ''<'', ''<='', ''between'', ''in'', ''in dictionary'''
+          - '''='', ''>'', ''>='', ''<'', ''<='', ''between'', ''in'', ''in dictionary'''
+        docRefType:
+          type: string
+        fieldName:
+          type: string
+        fieldType:
+          type: string
+          enum:
+          - ID
+          - BOOLEAN
+          - INTEGER
+          - LONG
+          - FLOAT
+          - DOUBLE
+          - DATE
+          - TEXT
+          - KEYWORD
+          - IPV4_ADDRESS
+          - DOC_REF
+        queryable:
           type: boolean
-        id:
-          type: string
-        title:
-          type: string
     Filter:
       type: object
       description: A pair of regular expression filters (inclusion and exclusion)
@@ -9777,8 +9768,6 @@ components:
           $ref: '#/components/schemas/DocRef'
         pageRequest:
           $ref: '#/components/schemas/PageRequest'
-        parentPath:
-          type: string
         sort:
           type: string
           writeOnly: true
@@ -10012,7 +10001,7 @@ components:
     FloatField:
       type: object
       allOf:
-      - $ref: '#/components/schemas/AbstractField'
+      - $ref: '#/components/schemas/QueryField'
     Format:
       type: object
       description: Describes the formatting that will be applied to values in a field
@@ -10234,7 +10223,7 @@ components:
     IdField:
       type: object
       allOf:
-      - $ref: '#/components/schemas/AbstractField'
+      - $ref: '#/components/schemas/QueryField'
     ImportConfigRequest:
       type: object
       properties:
@@ -10532,11 +10521,11 @@ components:
     IntegerField:
       type: object
       allOf:
-      - $ref: '#/components/schemas/AbstractField'
+      - $ref: '#/components/schemas/QueryField'
     IpV4AddressField:
       type: object
       allOf:
-      - $ref: '#/components/schemas/AbstractField'
+      - $ref: '#/components/schemas/QueryField'
     Job:
       type: object
       properties:
@@ -10649,7 +10638,7 @@ components:
     KeywordField:
       type: object
       allOf:
-      - $ref: '#/components/schemas/AbstractField'
+      - $ref: '#/components/schemas/QueryField'
     LayoutConfig:
       type: object
       discriminator:
@@ -10759,7 +10748,7 @@ components:
     LongField:
       type: object
       allOf:
-      - $ref: '#/components/schemas/AbstractField'
+      - $ref: '#/components/schemas/QueryField'
     MapDefinition:
       type: object
       properties:
@@ -11954,6 +11943,64 @@ components:
           type: string
         version:
           type: string
+    QueryField:
+      type: object
+      discriminator:
+        propertyName: type
+      properties:
+        conditions:
+          type: string
+          enum:
+          - '''='', ''between'', ''>'', ''>='', ''<'', ''<='''
+          - '''='', ''in'', ''in dictionary'', ''between'', ''>'', ''>='', ''<'',
+            ''<='''
+          - '''='''
+          - '''='', ''between'', ''>'', ''>='', ''<'', ''<='''
+          - '''='', ''in'', ''in dictionary'''
+          - '''is'', ''in folder'''
+          - '''='', ''in'', ''in dictionary'''
+          - '''is'', ''in folder'', ''='', ''in'', ''in dictionary'''
+          - '''='', ''in'', ''in dictionary'''
+          - '''='', ''>'', ''>='', ''<'', ''<='', ''between'', ''in'', ''in dictionary'''
+          - '''='', ''in'', ''in dictionary'', ''matches regex'''
+          - '''='', ''in'', ''in dictionary'''
+          - '''='', ''in'', ''in dictionary'''
+          - '''='', ''>'', ''>='', ''<'', ''<='', ''between'', ''in'', ''in dictionary'''
+          - '''='''
+          - '''='', ''>'', ''>='', ''<'', ''<='', ''between'', ''in'', ''in dictionary'''
+          - '''='', ''in'', ''in dictionary'''
+          - '''is'', ''='''
+          - '''between'''
+          - '''='', ''in'''
+          - '''='', ''in'''
+          - '''='', ''in'', ''in dictionary'''
+          - '''='', ''in'', ''in dictionary'', ''is'''
+          - '''='', ''>'', ''>='', ''<'', ''<='', ''between'', ''in'', ''in dictionary'''
+          - '''='', ''>'', ''>='', ''<'', ''<='', ''between'', ''in'', ''in dictionary'''
+        docRefType:
+          type: string
+        fieldType:
+          type: string
+          enum:
+          - ID
+          - BOOLEAN
+          - INTEGER
+          - LONG
+          - FLOAT
+          - DOUBLE
+          - DATE
+          - TEXT
+          - KEYWORD
+          - IPV4_ADDRESS
+          - DOC_REF
+        name:
+          type: string
+        queryable:
+          type: boolean
+        type:
+          type: string
+      required:
+      - type
     QueryHelpData:
       type: object
       discriminator:
@@ -11977,8 +12024,8 @@ components:
       - $ref: '#/components/schemas/QueryHelpData'
       - type: object
         properties:
-          field:
-            $ref: '#/components/schemas/AbstractField'
+          fieldInfo:
+            $ref: '#/components/schemas/FieldInfo'
     QueryHelpFunctionSignature:
       type: object
       allOf:
@@ -12034,6 +12081,8 @@ components:
           type: string
         query:
           type: string
+        showAll:
+          type: boolean
         sort:
           type: string
           writeOnly: true
@@ -12364,7 +12413,7 @@ components:
         fields:
           type: array
           items:
-            $ref: '#/components/schemas/AbstractField'
+            $ref: '#/components/schemas/QueryField'
         name:
           type: string
         rules:
@@ -13466,25 +13515,6 @@ components:
           type: boolean
         stored:
           type: boolean
-        supportedConditions:
-          type: array
-          items:
-            type: string
-            enum:
-            - CONTAINS
-            - EQUALS
-            - GREATER_THAN
-            - GREATER_THAN_OR_EQUAL_TO
-            - LESS_THAN
-            - LESS_THAN_OR_EQUAL_TO
-            - BETWEEN
-            - IN
-            - IN_DICTIONARY
-            - IN_FOLDER
-            - IS_DOC_REF
-            - IS_NULL
-            - IS_NOT_NULL
-            - MATCHES_REGEX
         termOffsets:
           type: boolean
         termPayloads:
@@ -14299,7 +14329,7 @@ components:
     TextField:
       type: object
       allOf:
-      - $ref: '#/components/schemas/AbstractField'
+      - $ref: '#/components/schemas/QueryField'
     ThemeConfig:
       type: object
       properties:

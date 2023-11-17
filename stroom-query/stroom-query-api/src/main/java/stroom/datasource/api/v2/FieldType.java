@@ -7,36 +7,49 @@ import java.util.Arrays;
 import java.util.List;
 
 public enum FieldType implements HasDisplayValue {
-    ID("Id",
+    ID(0,
+            "Id",
             "id", "ID field type\n" +
             "\n" +
-            "Represents the numeric identifier of a record or other Stroom entity."),
-    BOOLEAN("Boolean",
+            "Represents the numeric identifier of a record or other Stroom entity.",
+            true),
+    BOOLEAN(1,
+            "Boolean",
             "bool",
             "Boolean field type\n" +
                     "\n" +
-                    "Accepts either 'true' or 'false' values."),
-    INTEGER("Integer",
+                    "Accepts either 'true' or 'false' values.",
+            false),
+    INTEGER(2,
+            "Integer",
             "int",
             "Integer field type\n" +
                     "\n" +
-                    "Non-fractional numeric value supporting equality and range queries."),
-    LONG("Long",
+                    "Non-fractional numeric value supporting equality and range queries.",
+            true),
+    LONG(3,
+            "Long",
             "long",
             "Long field type\n" +
                     "\n" +
-                    "Non-fractional numeric value supporting equality and range queries."),
-    FLOAT("Float",
+                    "Non-fractional numeric value supporting equality and range queries.",
+            true),
+    FLOAT(4,
+            "Float",
             "float",
             "Floating-point field type\n" +
                     "\n" +
-                    "Decimal value supporting equality and range queries."),
-    DOUBLE("Double",
+                    "Decimal value supporting equality and range queries.",
+            true),
+    DOUBLE(5,
+            "Double",
             "double",
             "Double-precision floating point field type\n" +
                     "\n" +
-                    "Decimal value supporting equality and range queries."),
-    DATE("Date",
+                    "Decimal value supporting equality and range queries.",
+            true),
+    DATE(6,
+            "Date",
             "date",
             "Date field type\n" +
                     "\n" +
@@ -46,8 +59,10 @@ public enum FieldType implements HasDisplayValue {
                     "Examples (omit quotes):\n" +
                     " * Current time plus 2 days: 'now() + 2d'\n" +
                     " * Current time minus 1 hour: 'now() - 1h'\n" +
-                    " * Current time plus 2 weeks, minus 1 day 10 hours: 'now() + 2w - 1d10h'"),
-    TEXT("Text",
+                    " * Current time plus 2 weeks, minus 1 day 10 hours: 'now() + 2w - 1d10h'",
+            true),
+    TEXT(7,
+            "Text",
             "text",
             "Text field type\n" +
                     "\n" +
@@ -58,8 +73,10 @@ public enum FieldType implements HasDisplayValue {
                     "\n" +
                     "Examples (omit single quotes):\n" +
                     " * Match one or more terms in any order: 'the cat sat on the mat'\n" +
-                    " * Match an exact phrase (use double quotes): \"the cat sat\""),
-    KEYWORD("Keyword",
+                    " * Match an exact phrase (use double quotes): \"the cat sat\"",
+            false),
+    KEYWORD(8,
+            "Keyword",
             "keyword",
             "Keyword field type\n" +
                     "\n" +
@@ -71,8 +88,10 @@ public enum FieldType implements HasDisplayValue {
                     " * Starts with: 'the quick brown *'\n" +
                     " * Ends with: '* lazy dog'\n" +
                     " * Contains: '*cat sat*'\n" +
-                    " * Substitute a single character: 'Joe.?loggs1'"),
-    IPV4_ADDRESS("IpV4Address",
+                    " * Substitute a single character: 'Joe.?loggs1'",
+            false),
+    IPV4_ADDRESS(9,
+            "IpV4Address",
             "ip",
             "IPv4 address field type\n" +
                     "\n" +
@@ -80,13 +99,16 @@ public enum FieldType implements HasDisplayValue {
                     "\n" +
                     "Examples (omit quotes):\n" +
                     " * Exact match: '192.168.1.2'\n" +
-                    " * CIDR comparison: '192.168.1.0/24'"),
-    DOC_REF("DocRef",
+                    " * CIDR comparison: '192.168.1.0/24'",
+            true),
+    DOC_REF(10,
+            "DocRef",
             "docRef",
             "Document reference field type\n" +
                     "\n" +
                     "This is a reference to a Stroom object such as a Dictionary.\n" +
-                    "Click in the selection box to select the desired object.");
+                    "Click in the selection box to select the desired object.",
+            false);
 
     public static final List<FieldType> TYPES = new ArrayList<>(Arrays.asList(
             ID,
@@ -100,14 +122,43 @@ public enum FieldType implements HasDisplayValue {
             IPV4_ADDRESS,
             DOC_REF));
 
+    public static final FieldType[] TYPE_ARRAY = new FieldType[]{
+            ID,
+            BOOLEAN,
+            INTEGER,
+            LONG,
+            FLOAT,
+            DOUBLE,
+            DATE,
+            TEXT,
+            KEYWORD,
+            IPV4_ADDRESS,
+            DOC_REF};
+
+    public static FieldType get(final int index) {
+        return TYPE_ARRAY[index];
+    }
+
+    private final int index;
     private final String typeName;
     private final String shortTypeName;
     private final String description;
+    private final boolean numeric;
 
-    FieldType(final String typeName, final String shortTypeName, final String description) {
+    FieldType(final int index,
+              final String typeName,
+              final String shortTypeName,
+              final String description,
+              final boolean numeric) {
+        this.index = index;
         this.typeName = typeName;
         this.shortTypeName = shortTypeName;
         this.description = description;
+        this.numeric = numeric;
+    }
+
+    public int getIndex() {
+        return index;
     }
 
     public String getTypeName() {
@@ -125,5 +176,9 @@ public enum FieldType implements HasDisplayValue {
     @Override
     public String getDisplayValue() {
         return typeName;
+    }
+
+    public boolean isNumeric() {
+        return numeric;
     }
 }

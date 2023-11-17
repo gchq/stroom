@@ -26,6 +26,7 @@ import stroom.lmdb.LmdbLibraryConfig;
 import stroom.node.impl.NodeConfig;
 import stroom.pipeline.PipelineConfig;
 import stroom.processor.impl.ProcessorConfig;
+import stroom.query.field.impl.QueryFieldConfig;
 import stroom.receive.common.ReceiveDataConfig;
 import stroom.search.elastic.ElasticConfig;
 import stroom.search.impl.SearchConfig;
@@ -87,6 +88,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     public static final String PROP_NAME_PIPELINE = "pipeline";
     public static final String PROP_NAME_PROCESSOR = "processor";
     public static final String PROP_NAME_PROPERTIES = "properties";
+    public static final String PROP_NAME_QUERY_DATASOURCE = "queryDataSource";
     public static final String PROP_NAME_PUBLIC_URI = "publicUri";
     public static final String PROP_NAME_QUERY_HISTORY = "queryHistory";
     public static final String PROP_NAME_RECEIVE = "receive";
@@ -129,6 +131,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     private final ProcessorConfig processorConfig;
     private final PropertyServiceConfig propertyServiceConfig;
     private final PublicUriConfig publicUri;
+    private final QueryFieldConfig queryDataSourceConfig;
     private final ReceiveDataConfig receiveDataConfig;
     private final SearchConfig searchConfig;
     private final SecurityConfig securityConfig;
@@ -174,6 +177,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
                 new ProcessorConfig(),
                 new PropertyServiceConfig(),
                 new PublicUriConfig(),
+                new QueryFieldConfig(),
                 new ReceiveDataConfig(),
                 new SearchConfig(),
                 new SecurityConfig(),
@@ -218,6 +222,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
                      @JsonProperty(PROP_NAME_PROCESSOR) final ProcessorConfig processorConfig,
                      @JsonProperty(PROP_NAME_PROPERTIES) final PropertyServiceConfig propertyServiceConfig,
                      @JsonProperty(PROP_NAME_PUBLIC_URI) final PublicUriConfig publicUri,
+                     @JsonProperty(PROP_NAME_QUERY_DATASOURCE) final QueryFieldConfig queryDataSourceConfig,
                      @JsonProperty(PROP_NAME_RECEIVE) final ReceiveDataConfig receiveDataConfig,
                      @JsonProperty(PROP_NAME_SEARCH) final SearchConfig searchConfig,
                      @JsonProperty(PROP_NAME_SECURITY) final SecurityConfig securityConfig,
@@ -258,6 +263,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
         this.processorConfig = processorConfig;
         this.propertyServiceConfig = propertyServiceConfig;
         this.publicUri = publicUri;
+        this.queryDataSourceConfig = queryDataSourceConfig;
         this.receiveDataConfig = receiveDataConfig;
         this.searchConfig = searchConfig;
         this.securityConfig = securityConfig;
@@ -429,6 +435,12 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     @JsonProperty(PROP_NAME_PUBLIC_URI)
     public PublicUriConfig getPublicUri() {
         return publicUri;
+    }
+
+    @JsonProperty(PROP_NAME_QUERY_DATASOURCE)
+    @JsonPropertyDescription("Configuration for the stroom query datasource service")
+    public QueryFieldConfig getQueryDataSourceConfig() {
+        return queryDataSourceConfig;
     }
 
     @JsonProperty(PROP_NAME_QUERY_HISTORY)

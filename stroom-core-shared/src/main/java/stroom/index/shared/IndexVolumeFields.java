@@ -1,7 +1,7 @@
 package stroom.index.shared;
 
-import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.IdField;
+import stroom.datasource.api.v2.QueryField;
 import stroom.datasource.api.v2.TextField;
 
 import java.util.ArrayList;
@@ -18,8 +18,8 @@ public class IndexVolumeFields {
     public static final String FIELD_NODE_NAME = "Node";
     public static final String FIELD_PATH = "Path";
 
-    private static final List<AbstractField> FIELDS = new ArrayList<>();
-    private static final Map<String, AbstractField> FIELD_MAP;
+    private static final List<QueryField> FIELDS = new ArrayList<>();
+    private static final Map<String, QueryField> FIELD_MAP;
 
     public static final IdField GROUP_ID = new IdField(FIELD_GROUP_ID);
     public static final TextField NODE_NAME = new TextField(FIELD_NODE_NAME);
@@ -37,14 +37,14 @@ public class IndexVolumeFields {
         // Id's
         FIELDS.add(ID);
 
-        FIELD_MAP = FIELDS.stream().collect(Collectors.toMap(AbstractField::getName, Function.identity()));
+        FIELD_MAP = FIELDS.stream().collect(Collectors.toMap(QueryField::getName, Function.identity()));
     }
 
-    public static List<AbstractField> getFields() {
+    public static List<QueryField> getFields() {
         return new ArrayList<>(FIELDS);
     }
 
-    public static Map<String, AbstractField> getFieldMap() {
+    public static Map<String, QueryField> getFieldMap() {
         return FIELD_MAP;
     }
 }

@@ -18,7 +18,7 @@ package stroom.data.store.impl.fs;
 
 import stroom.data.store.api.DataException;
 import stroom.data.store.api.OutputStreamProvider;
-import stroom.datasource.api.v2.AbstractField;
+import stroom.datasource.api.v2.QueryField;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.MetaService;
@@ -146,7 +146,7 @@ final class FsTarget implements InternalTarget, SegmentOutputStreamProviderFacto
         }
     }
 
-    private void updateAttribute(final FsTarget target, final AbstractField key, final String value) {
+    private void updateAttribute(final FsTarget target, final QueryField key, final String value) {
         if (!target.getAttributes().containsKey(key.getName())) {
             target.getAttributes().put(key.getName(), value);
         }

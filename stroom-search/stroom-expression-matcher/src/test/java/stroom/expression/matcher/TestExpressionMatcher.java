@@ -17,8 +17,8 @@
 package stroom.expression.matcher;
 
 import stroom.data.shared.StreamTypeNames;
-import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.DocRefField;
+import stroom.datasource.api.v2.QueryField;
 import stroom.datasource.api.v2.TextField;
 import stroom.dictionary.api.WordListProvider;
 import stroom.dictionary.shared.DictionaryDoc;
@@ -59,7 +59,7 @@ class TestExpressionMatcher {
     public static final DocRefField FEED = DocRefField.byUniqueName("Feed", "Feed");
     private static final TextField TYPE = new TextField("Type");
     private static final TextField FRUIT = new TextField("Fruit");
-    private static final Map<String, AbstractField> FIELD_MAP = Map.of(
+    private static final Map<String, QueryField> FIELD_MAP = Map.of(
             FEED.getName(),
             FEED,
             TYPE.getName(),

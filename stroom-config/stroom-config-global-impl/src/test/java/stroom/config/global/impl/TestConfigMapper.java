@@ -37,6 +37,7 @@ import stroom.node.impl.NodeConfig;
 import stroom.pipeline.PipelineConfig;
 import stroom.pipeline.refdata.ReferenceDataLmdbConfig;
 import stroom.processor.impl.ProcessorConfig;
+import stroom.query.field.impl.QueryFieldConfig;
 import stroom.receive.common.ReceiveDataConfig;
 import stroom.search.elastic.ElasticConfig;
 import stroom.search.impl.SearchConfig;
@@ -938,6 +939,7 @@ class TestConfigMapper {
                 @JsonProperty(PROP_NAME_PROCESSOR) final ProcessorConfig processorConfig,
                 @JsonProperty(PROP_NAME_PROPERTIES) final PropertyServiceConfig propertyServiceConfig,
                 @JsonProperty(PROP_NAME_PUBLIC_URI) final PublicUriConfig publicUri,
+                @JsonProperty(PROP_NAME_QUERY_DATASOURCE) final QueryFieldConfig queryDataSourceConfig,
                 @JsonProperty(PROP_NAME_RECEIVE) final ReceiveDataConfig receiveDataConfig,
                 @JsonProperty(PROP_NAME_SEARCH) final SearchConfig searchConfig,
                 @JsonProperty(PROP_NAME_SECURITY) final SecurityConfig securityConfig,
@@ -993,6 +995,7 @@ class TestConfigMapper {
                     processorConfig,
                     propertyServiceConfig,
                     publicUri,
+                    queryDataSourceConfig,
                     receiveDataConfig,
                     searchConfig,
                     securityConfig,

@@ -57,6 +57,15 @@ public class FieldIndex {
         return posToField.get(pos);
     }
 
+    public String[] getFields() {
+        final String[] fieldArray = new String[size()];
+        for (int i = 0; i < fieldArray.length; i++) {
+            final String fieldName = getField(i);
+            fieldArray[i] = fieldName;
+        }
+        return fieldArray;
+    }
+
     public int size() {
         return fieldToPos.size();
     }

@@ -20,7 +20,7 @@ import stroom.alert.client.event.ConfirmEvent;
 import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.data.client.event.HasDataSelectionHandlers;
 import stroom.data.client.presenter.MetaPresenter.MetaView;
-import stroom.datasource.api.v2.AbstractField;
+import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.explorer.shared.ExplorerConstants;
@@ -364,7 +364,7 @@ public class MetaPresenter extends MyPresenterWidget<MetaView>
         return streamStatuses;
     }
 
-    private static Set<String> getTerms(final ExpressionOperator expression, final AbstractField field) {
+    private static Set<String> getTerms(final ExpressionOperator expression, final QueryField field) {
         final Set<String> terms = new HashSet<>();
         if (expression != null) {
             getTerms(expression, field, terms);
@@ -373,7 +373,7 @@ public class MetaPresenter extends MyPresenterWidget<MetaView>
     }
 
     private static void getTerms(final ExpressionOperator expressionOperator,
-                                 final AbstractField field,
+                                 final QueryField field,
                                  final Set<String> terms) {
         if (expressionOperator.enabled() && expressionOperator.getChildren() != null) {
             for (final ExpressionItem item : expressionOperator.getChildren()) {

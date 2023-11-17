@@ -93,7 +93,7 @@ public class MetaSuggestionsQueryHandlerImpl implements MetaSuggestionsQueryHand
         return securityContext.secureResult(() -> {
             List<String> result = Collections.emptyList();
 
-            final String fieldName = request.getField().getName();
+            final String fieldName = request.getField().getFieldName();
             final Function<String, List<String>> suggestionFunc = getSuggestionFunc(request, fieldName);
             if (suggestionFunc != null) {
                 result = suggestionFunc.apply(request.getText());
@@ -101,7 +101,8 @@ public class MetaSuggestionsQueryHandlerImpl implements MetaSuggestionsQueryHand
 
             // Determine if we are going to allow the client to cache the suggestions.
             final boolean cache = ((request.getText() == null || request.getText().isBlank()) &&
-                    (request.getField().equals(MetaFields.TYPE) || request.getField().equals(MetaFields.STATUS)));
+                    (request.getField().getFieldName().equals(MetaFields.TYPE.getName()) ||
+                            request.getField().getFieldName().equals(MetaFields.STATUS.getName())));
 
             return new Suggestions(result, cache);
         });

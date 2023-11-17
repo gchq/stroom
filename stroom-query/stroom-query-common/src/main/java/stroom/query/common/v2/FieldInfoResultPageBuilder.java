@@ -1,8 +1,8 @@
 package stroom.query.common.v2;
 
-import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.FieldInfo;
 import stroom.datasource.api.v2.FindFieldInfoCriteria;
+import stroom.datasource.api.v2.QueryField;
 import stroom.util.resultpage.InexactResultPageBuilder;
 import stroom.util.resultpage.ResultPageBuilder;
 import stroom.util.shared.ResultPage;
@@ -27,8 +27,8 @@ public class FieldInfoResultPageBuilder {
         return new FieldInfoResultPageBuilder(criteria);
     }
 
-    public FieldInfoResultPageBuilder addAll(final List<AbstractField> fields) {
-        for (final AbstractField field : fields) {
+    public FieldInfoResultPageBuilder addAll(final List<QueryField> fields) {
+        for (final QueryField field : fields) {
             if (!add(field)) {
                 break;
             }
@@ -36,11 +36,9 @@ public class FieldInfoResultPageBuilder {
         return this;
     }
 
-    public boolean add(final AbstractField field) {
+    public boolean add(final QueryField field) {
         if (stringMatcher.match(field.getName()).isPresent()) {
-            final FieldInfo fieldInfo =
-                    new FieldInfo(FieldInfo.FIELDS_PARENT + field.getName(), false, field.getName(), field);
-            addMore = resultPageBuilder.add(fieldInfo);
+            addMore = resultPageBuilder.add(FieldInfo.create(field));
         }
         return addMore;
     }

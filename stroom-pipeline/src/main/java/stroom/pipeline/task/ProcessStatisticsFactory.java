@@ -16,7 +16,7 @@
 
 package stroom.pipeline.task;
 
-import stroom.datasource.api.v2.AbstractField;
+import stroom.datasource.api.v2.QueryField;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.shared.MetaFields;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
@@ -69,7 +69,7 @@ public class ProcessStatisticsFactory {
     }
 
     public static class ProcessStatistics {
-        private final Map<AbstractField, Long> map = new HashMap<>();
+        private final Map<QueryField, Long> map = new HashMap<>();
 
         public void write(final AttributeMap attributeMap) {
             map.forEach((k, v) -> attributeMap.put(k.getName(), String.valueOf(v)));

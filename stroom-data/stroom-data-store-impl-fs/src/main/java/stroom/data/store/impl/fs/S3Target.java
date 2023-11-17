@@ -21,7 +21,7 @@ import stroom.data.store.api.OutputStreamProvider;
 import stroom.data.store.api.SegmentOutputStream;
 import stroom.data.store.api.Target;
 import stroom.data.store.impl.fs.DataVolumeDao.DataVolume;
-import stroom.datasource.api.v2.AbstractField;
+import stroom.datasource.api.v2.QueryField;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.MetaService;
@@ -101,7 +101,7 @@ final class S3Target implements Target {
         }
     }
 
-    private void updateAttribute(final S3Target target, final AbstractField key, final String value) {
+    private void updateAttribute(final S3Target target, final QueryField key, final String value) {
         if (!target.getAttributes().containsKey(key.getName())) {
             target.getAttributes().put(key.getName(), value);
         }

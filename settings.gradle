@@ -207,6 +207,12 @@ include 'stroom-proxy:stroom-proxy-repo'
 include 'stroom-proxy:stroom-proxy-repo-db-jooq'
 include 'stroom-proxy:stroom-proxy-remote-api'
 
+// Query Field
+include 'stroom-query:stroom-query-field-api'
+include 'stroom-query:stroom-query-field-impl'
+include 'stroom-query:stroom-query-field-impl-db'
+include 'stroom-query:stroom-query-field-impl-db-jooq'
+
 // Query
 include 'stroom-query:stroom-query-api'
 include 'stroom-query:stroom-query-common'

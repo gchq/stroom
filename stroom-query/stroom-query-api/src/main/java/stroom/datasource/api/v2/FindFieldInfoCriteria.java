@@ -5,7 +5,6 @@ import stroom.docref.StringMatch;
 import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.PageRequest;
-import stroom.util.shared.StringCriteria;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -24,28 +23,20 @@ public class FindFieldInfoCriteria extends BaseCriteria {
     @JsonProperty
     private final DocRef dataSourceRef;
     @JsonProperty
-    private final String parentPath;
-    @JsonProperty
     private final StringMatch stringMatch;
 
     @JsonCreator
     public FindFieldInfoCriteria(@JsonProperty("pageRequest") final PageRequest pageRequest,
                                  @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,
                                  @JsonProperty("dataSourceRef") final DocRef dataSourceRef,
-                                 @JsonProperty("parentPath") final String parentPath,
                                  @JsonProperty("stringMatch") final StringMatch stringMatch) {
         super(pageRequest, sortList);
         this.dataSourceRef = dataSourceRef;
-        this.parentPath = parentPath;
         this.stringMatch = stringMatch;
     }
 
     public DocRef getDataSourceRef() {
         return dataSourceRef;
-    }
-
-    public String getParentPath() {
-        return parentPath;
     }
 
     public StringMatch getStringMatch() {

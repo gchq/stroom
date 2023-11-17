@@ -1,11 +1,11 @@
 package stroom.searchable.api;
 
-import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.DateField;
 import stroom.datasource.api.v2.FieldInfo;
 import stroom.datasource.api.v2.FindFieldInfoCriteria;
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
+import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.ValuesConsumer;
 import stroom.util.shared.ResultPage;
 
@@ -21,5 +21,5 @@ public interface Searchable {
 
     DateField getTimeField();
 
-    void search(ExpressionCriteria criteria, AbstractField[] fields, ValuesConsumer consumer);
+    void search(ExpressionCriteria criteria, FieldIndex fieldIndex, ValuesConsumer consumer);
 }

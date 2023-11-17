@@ -1,6 +1,8 @@
 package stroom.app.guice;
 
 import stroom.analytics.rule.impl.AnalyticRuleModule;
+import stroom.query.field.impl.QueryFieldModule;
+import stroom.query.field.impl.db.QueryFieldDbModule;
 import stroom.query.impl.datasource.DataSourceModule;
 
 import com.google.inject.AbstractModule;
@@ -87,6 +89,8 @@ public class CoreModule extends AbstractModule {
         install(new stroom.processor.impl.ProcessorModule());
         install(new stroom.processor.impl.db.ProcessorDaoModule());
         install(new stroom.suggestions.impl.SuggestModule());
+        install(new QueryFieldModule());
+        install(new QueryFieldDbModule());
         install(new stroom.query.impl.QueryModule());
         install(new stroom.receive.common.RemoteFeedModule());
         install(new stroom.receive.rules.impl.ReceiveDataRuleSetModule());

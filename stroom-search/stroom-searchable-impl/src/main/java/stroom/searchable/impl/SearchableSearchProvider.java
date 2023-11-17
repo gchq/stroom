@@ -1,6 +1,5 @@
 package stroom.searchable.impl;
 
-import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.DateField;
 import stroom.datasource.api.v2.FieldInfo;
 import stroom.datasource.api.v2.FindFieldInfoCriteria;
@@ -18,7 +17,6 @@ import stroom.query.common.v2.ResultStoreFactory;
 import stroom.query.common.v2.SearchProcess;
 import stroom.query.common.v2.SearchProvider;
 import stroom.query.common.v2.Sizes;
-import stroom.query.language.functions.FieldIndex;
 import stroom.searchable.api.Searchable;
 import stroom.searchable.api.SearchableProvider;
 import stroom.security.api.SecurityContext;
@@ -41,13 +39,10 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 
@@ -180,28 +175,8 @@ class SearchableSearchProvider implements SearchProvider {
                 new PageRequest(0, 1000),
                 null,
                 docRef,
-                FieldInfo.FIELDS_PARENT,
                 null);
         final ResultPage<FieldInfo> resultPage = searchable.getFieldInfo(findFieldInfoCriteria);
-        final Map<String, AbstractField> fieldMap = resultPage
-                .getValues()
-                .stream()
-                .map(FieldInfo::getField)
-                .filter(Objects::nonNull)
-                .collect(Collectors.toMap(AbstractField::getName, Function.identity()));
-
-        final FieldIndex fieldIndex = coprocessors.getFieldIndex();
-        final AbstractField[] fieldArray = new AbstractField[fieldIndex.size()];
-        for (int i = 0; i < fieldArray.length; i++) {
-            final String fieldName = fieldIndex.getField(i);
-            final AbstractField field = fieldMap.get(fieldName);
-            if (field == null) {
-                throw new RuntimeException("Field '" + fieldName + "' is not valid for this datasource");
-            } else {
-                fieldArray[i] = field;
-            }
-        }
-
         final Runnable runnable = taskContextFactory.context(taskName, taskContext -> {
             final AtomicBoolean destroyed = new AtomicBoolean();
 
@@ -240,7 +215,7 @@ class SearchableSearchProvider implements SearchProvider {
                 final Instant queryStart = Instant.now();
                 try {
                     // Give the data array to each of our coprocessors
-                    searchable.search(criteria, fieldArray, coprocessors);
+                    searchable.search(criteria, coprocessors.getFieldIndex(), coprocessors);
 
                 } catch (final RuntimeException e) {
                     LOGGER.debug(e::getMessage, e);

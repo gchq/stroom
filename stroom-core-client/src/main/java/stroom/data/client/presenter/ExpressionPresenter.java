@@ -17,8 +17,8 @@
 
 package stroom.data.client.presenter;
 
-import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.FieldInfo;
+import stroom.datasource.api.v2.QueryField;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
@@ -56,7 +56,7 @@ public class ExpressionPresenter
         editExpressionPresenter.focus();
     }
 
-    public void read(final ExpressionOperator expression, final DocRef dataSource, final List<AbstractField> fields) {
+    public void read(final ExpressionOperator expression, final DocRef dataSource, final List<QueryField> fields) {
         final SimpleFieldSelectionListModel fieldSelectionBoxModel = new SimpleFieldSelectionListModel();
         fieldSelectionBoxModel.addItems(fields.stream().map(FieldInfo::create).collect(Collectors.toList()));
         editExpressionPresenter.init(restFactory, dataSource, fieldSelectionBoxModel);

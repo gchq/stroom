@@ -44,9 +44,10 @@ import stroom.dashboard.shared.TableComponentSettings;
 import stroom.dashboard.shared.TableResultRequest;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
-import stroom.datasource.api.v2.AbstractField;
+import stroom.datasource.api.v2.Conditions;
 import stroom.datasource.api.v2.DateField;
 import stroom.datasource.api.v2.LongField;
+import stroom.datasource.api.v2.QueryField;
 import stroom.datasource.api.v2.TextField;
 import stroom.dispatch.client.ExportFileCompleteUtil;
 import stroom.dispatch.client.Rest;
@@ -63,7 +64,6 @@ import stroom.processor.shared.ProcessorExpressionUtil;
 import stroom.query.api.v2.ConditionalFormattingRule;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionTerm;
-import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Format;
 import stroom.query.api.v2.Format.Type;
@@ -626,7 +626,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         ignoreRangeChange = false;
     }
 
-    public static AbstractField buildDsField(final Field field) {
+    public static QueryField buildDsField(final Field field) {
         Type colType = Optional.ofNullable(field.getFormat())
                 .map(Format::getType)
                 .orElse(Type.GENERAL);
@@ -641,10 +641,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
                 default:
                     // CONTAINS only supported for legacy content, not for use in UI
-                    final List<Condition> conditionList = new ArrayList<>();
-                    conditionList.add(Condition.IN);
-                    conditionList.add(Condition.EQUALS);
-                    return new TextField(field.getName(), true, conditionList);
+                    return new TextField(field.getName(), true, Conditions.BASIC_TEXT);
 
             }
         } catch (Exception e) {
@@ -1087,8 +1084,8 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     }
 
     @Override
-    public List<AbstractField> getFields() {
-        final List<AbstractField> abstractFields = new ArrayList<>();
+    public List<QueryField> getFields() {
+        final List<QueryField> abstractFields = new ArrayList<>();
         final List<Field> fields = getTableSettings().getFields();
         if (fields != null && fields.size() > 0) {
             for (final Field field : fields) {

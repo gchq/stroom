@@ -1,8 +1,9 @@
 package stroom.db.util;
 
 
-import stroom.datasource.api.v2.AbstractField;
+import stroom.datasource.api.v2.Conditions;
 import stroom.datasource.api.v2.FieldType;
+import stroom.datasource.api.v2.QueryField;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
@@ -316,14 +317,12 @@ class TestCommonExpressionMapper {
         return "(" + DB_FIELD_NAME_1 + "=" + FIELD_1_VALUE + ")";
     }
 
-    private static class MyDbField extends AbstractField {
+    private static class MyDbField extends QueryField {
 
         private final String name;
 
         public MyDbField(String name) {
-            super(name, true, List.of(
-                    ExpressionTerm.Condition.EQUALS,
-                    ExpressionTerm.Condition.IN));
+            super(name, true, Conditions.DEFAULT_ID);
             this.name = name;
         }
 

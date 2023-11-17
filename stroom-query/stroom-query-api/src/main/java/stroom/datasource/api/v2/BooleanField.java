@@ -16,39 +16,28 @@
 
 package stroom.datasource.api.v2;
 
-import stroom.query.api.v2.ExpressionTerm.Condition;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.util.ArrayList;
-import java.util.List;
-
 @JsonInclude(Include.NON_NULL)
-public class BooleanField extends AbstractField {
-
-    private static final List<Condition> DEFAULT_CONDITIONS = new ArrayList<>();
-
-    static {
-        DEFAULT_CONDITIONS.add(Condition.EQUALS);
-    }
+public class BooleanField extends QueryField {
 
     public BooleanField(final String name) {
-        super(name, Boolean.TRUE, DEFAULT_CONDITIONS);
+        super(name, Boolean.TRUE, Conditions.DEFAULT_BOOLEAN);
     }
 
     public BooleanField(final String name,
                         final Boolean queryable) {
-        super(name, queryable, DEFAULT_CONDITIONS);
+        super(name, queryable, Conditions.DEFAULT_BOOLEAN);
     }
 
     @JsonCreator
     public BooleanField(@JsonProperty("name") final String name,
                         @JsonProperty("queryable") final Boolean queryable,
-                        @JsonProperty("conditions") final List<Condition> conditions) {
+                        @JsonProperty("conditions") final Conditions conditions) {
         super(name, queryable, conditions);
     }
 

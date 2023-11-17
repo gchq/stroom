@@ -16,8 +16,8 @@
 
 package stroom.search.elastic.shared;
 
-import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.BooleanField;
+import stroom.datasource.api.v2.Conditions;
 import stroom.datasource.api.v2.DateField;
 import stroom.datasource.api.v2.DoubleField;
 import stroom.datasource.api.v2.FloatField;
@@ -26,14 +26,15 @@ import stroom.datasource.api.v2.IntegerField;
 import stroom.datasource.api.v2.IpV4AddressField;
 import stroom.datasource.api.v2.KeywordField;
 import stroom.datasource.api.v2.LongField;
+import stroom.datasource.api.v2.QueryField;
 import stroom.datasource.api.v2.TextField;
-import stroom.query.api.v2.ExpressionTerm.Condition;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 public final class ElasticIndexDataSourceFieldUtil {
-    public static List<AbstractField> getDataSourceFields(final ElasticIndexDoc index) {
+
+    public static List<QueryField> getDataSourceFields(final ElasticIndexDoc index) {
         if (index == null || index.getFields() == null) {
             return null;
         }
@@ -44,10 +45,10 @@ public final class ElasticIndexDataSourceFieldUtil {
                 .collect(Collectors.toList());
     }
 
-    private static AbstractField convert(final ElasticIndexField field) {
+    private static QueryField convert(final ElasticIndexField field) {
         final ElasticIndexFieldType fieldType = field.getFieldUse();
         final String fieldName = field.getFieldName();
-        final List<Condition> supportedConditions = fieldType.getSupportedConditions();
+        final Conditions supportedConditions = fieldType.getSupportedConditions();
         switch (fieldType) {
             case ID:
                 return new IdField(fieldName, field.isIndexed(), supportedConditions);

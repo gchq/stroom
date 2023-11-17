@@ -1,7 +1,7 @@
 package stroom.db.util;
 
 import stroom.collection.api.CollectionService;
-import stroom.datasource.api.v2.AbstractField;
+import stroom.datasource.api.v2.QueryField;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docrefinfo.api.DocRefInfoService;
 
@@ -24,13 +24,13 @@ public class TermHandlerFactory {
         this.docRefInfoService = docRefInfoService;
     }
 
-    public <T> TermHandler<T> create(final AbstractField dataSourceField,
+    public <T> TermHandler<T> create(final QueryField dataSourceField,
                                      final Field<T> field,
                                      final ExpressionMapper.MultiConverter<T> converter) {
         return create(dataSourceField, field, converter, false);
     }
 
-    public <T> TermHandler<T> create(final AbstractField dataSourceField,
+    public <T> TermHandler<T> create(final QueryField dataSourceField,
                                      final Field<T> field,
                                      final ExpressionMapper.MultiConverter<T> converter,
                                      final boolean useName) {

@@ -17,7 +17,6 @@
 
 package stroom.index.impl;
 
-import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.DateField;
 import stroom.datasource.api.v2.FieldInfo;
 import stroom.datasource.api.v2.FindFieldInfoCriteria;
@@ -32,6 +31,7 @@ import stroom.index.shared.IndexVolume;
 import stroom.index.shared.LuceneVersion;
 import stroom.index.shared.LuceneVersionUtil;
 import stroom.query.common.v2.FieldInfoResultPageBuilder;
+import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.ValuesConsumer;
 import stroom.searchable.api.Searchable;
 import stroom.security.api.SecurityContext;
@@ -161,10 +161,10 @@ public class IndexShardServiceImpl implements IndexShardService, Searchable {
 
     @Override
     public void search(final ExpressionCriteria criteria,
-                       final AbstractField[] fields,
+                       final FieldIndex fieldIndex,
                        final ValuesConsumer consumer) {
         securityContext.secure(PERMISSION, () ->
-                indexShardDao.search(criteria, fields, consumer));
+                indexShardDao.search(criteria, fieldIndex, consumer));
     }
 
     @Override

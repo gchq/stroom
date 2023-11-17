@@ -22,13 +22,13 @@ import stroom.query.api.v2.ExpressionTerm.Condition;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
-import java.util.List;
 import java.util.Objects;
 
 @JsonPropertyOrder({"type", "docRefType", "name", "queryable", "conditions"})
@@ -48,29 +48,56 @@ import java.util.Objects;
         @Type(value = IpV4AddressField.class, name = "IpV4Address"),
         @Type(value = DocRefField.class, name = "DocRef")
 })
-@JsonInclude(JsonInclude.Include.NON_NULL)
-public abstract class AbstractField implements HasDisplayValue {
+@JsonInclude(Include.NON_NULL)
+public abstract class QueryField implements HasDisplayValue {
 
     @JsonProperty
     private final String name;
     @JsonProperty
-    private final Boolean queryable;
+    private final Conditions conditions;
     @JsonProperty
-    private final List<Condition> conditions;
+    private final String docRefType;
+    @JsonProperty
+    private final Boolean queryable;
 
     @JsonCreator
-    public AbstractField(@JsonProperty("name") final String name,
-                         @JsonProperty("queryable") final Boolean queryable,
-                         @JsonProperty("conditions") final List<Condition> conditions) {
+    public QueryField(@JsonProperty("name") final String name,
+                      @JsonProperty("conditions") final Conditions conditions,
+                      @JsonProperty("docRefType") final String docRefType,
+                      @JsonProperty("queryable") final Boolean queryable) {
         this.name = name;
-        this.queryable = queryable;
         this.conditions = conditions;
+        this.docRefType = docRefType;
+        this.queryable = queryable;
+    }
+
+    public QueryField(final String name,
+                      final Boolean queryable,
+                      final Conditions conditions) {
+        this(name, conditions, null, queryable);
     }
 
     public abstract FieldType getFieldType();
 
     public String getName() {
         return name;
+    }
+
+    public Conditions getConditions() {
+        return conditions;
+    }
+
+    public boolean supportsCondition(final Condition condition) {
+        Objects.requireNonNull(condition);
+        if (conditions == null) {
+            return false;
+        } else {
+            return conditions.supportsCondition(condition);
+        }
+    }
+
+    public String getDocRefType() {
+        return docRefType;
     }
 
     public Boolean getQueryable() {
@@ -81,22 +108,9 @@ public abstract class AbstractField implements HasDisplayValue {
         return queryable != null && queryable;
     }
 
-    public List<Condition> getConditions() {
-        return conditions;
-    }
-
-    public boolean supportsCondition(final Condition condition) {
-        Objects.requireNonNull(condition);
-        if (conditions == null) {
-            return false;
-        } else {
-            return conditions.contains(condition);
-        }
-    }
-
     @JsonIgnore
     public boolean isNumeric() {
-        return false;
+        return getFieldType().isNumeric();
     }
 
     @JsonIgnore
@@ -110,10 +124,10 @@ public abstract class AbstractField implements HasDisplayValue {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof AbstractField)) {
+        if (!(o instanceof QueryField)) {
             return false;
         }
-        final AbstractField that = (AbstractField) o;
+        final QueryField that = (QueryField) o;
         return Objects.equals(name, that.name);
     }
 

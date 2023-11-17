@@ -1,6 +1,5 @@
 package stroom.query.api.v2;
 
-import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.BooleanField;
 import stroom.datasource.api.v2.DateField;
 import stroom.datasource.api.v2.DocRefField;
@@ -99,51 +98,41 @@ public class ExpressionUtil {
         return terms(expressionOperator, null).size();
     }
 
-    public static int termCount(final ExpressionOperator expressionOperator, final AbstractField field) {
-        return terms(expressionOperator, Collections.singleton(field)).size();
+    public static int termCount(final ExpressionOperator expressionOperator,
+                                final String fieldName) {
+        return termCount(expressionOperator, Collections.singleton(fieldName));
     }
 
-    public static int termCount(final ExpressionOperator expressionOperator, final Collection<AbstractField> fields) {
-        return terms(expressionOperator, fields).size();
+    public static int termCount(final ExpressionOperator expressionOperator,
+                                final Collection<String> fieldNames) {
+        return terms(expressionOperator, fieldNames).size();
     }
 
     public static List<String> fields(final ExpressionOperator expressionOperator) {
-        return terms(expressionOperator, null).stream().map(ExpressionTerm::getField).collect(Collectors.toList());
-    }
-
-    public static List<String> fields(final ExpressionOperator expressionOperator, final AbstractField field) {
-        return terms(expressionOperator, Collections.singleton(field)).stream().map(ExpressionTerm::getField).collect(
-                Collectors.toList());
-    }
-
-    public static List<String> fields(final ExpressionOperator expressionOperator,
-                                      final Collection<AbstractField> fields) {
-        return terms(expressionOperator, fields).stream().map(ExpressionTerm::getField).collect(Collectors.toList());
+        return terms(expressionOperator,
+                null).stream().map(ExpressionTerm::getField).collect(Collectors.toList());
     }
 
     public static List<String> values(final ExpressionOperator expressionOperator) {
-        return terms(expressionOperator, null).stream().map(ExpressionTerm::getValue).collect(Collectors.toList());
+        return terms(expressionOperator,
+                null).stream().map(ExpressionTerm::getValue).collect(Collectors.toList());
     }
 
-    public static List<String> values(final ExpressionOperator expressionOperator, final AbstractField field) {
-        return terms(expressionOperator, Collections.singleton(field)).stream().map(ExpressionTerm::getValue).collect(
+    public static List<String> values(final ExpressionOperator expressionOperator, final String fieldName) {
+        return terms(expressionOperator,
+                Collections.singleton(fieldName)).stream().map(ExpressionTerm::getValue).collect(
                 Collectors.toList());
     }
 
-    public static List<String> values(final ExpressionOperator expressionOperator,
-                                      final Collection<AbstractField> fields) {
-        return terms(expressionOperator, fields).stream().map(ExpressionTerm::getValue).collect(Collectors.toList());
-    }
-
     public static List<ExpressionTerm> terms(final ExpressionOperator expressionOperator,
-                                             final Collection<AbstractField> fields) {
+                                             final Collection<String> fieldNames) {
         final List<ExpressionTerm> terms = new ArrayList<>();
-        addTerms(expressionOperator, fields, terms);
+        addTerms(expressionOperator, fieldNames, terms);
         return terms;
     }
 
     private static void addTerms(final ExpressionOperator expressionOperator,
-                                 final Collection<AbstractField> fields,
+                                 final Collection<String> fieldNames,
                                  final List<ExpressionTerm> terms) {
         if (expressionOperator != null &&
                 expressionOperator.enabled() &&
@@ -153,9 +142,9 @@ public class ExpressionUtil {
                 if (item.enabled()) {
                     if (item instanceof ExpressionTerm) {
                         final ExpressionTerm expressionTerm = (ExpressionTerm) item;
-                        if (fields == null || fields.stream()
-                                .anyMatch(field ->
-                                        field.getName().equals(expressionTerm.getField()) &&
+                        if (fieldNames == null || fieldNames.stream()
+                                .anyMatch(fieldName ->
+                                        fieldName.equals(expressionTerm.getField()) &&
                                                 (Condition.IS_DOC_REF.equals(expressionTerm.getCondition()) &&
                                                         expressionTerm.getDocRef() != null &&
                                                         expressionTerm.getDocRef().getUuid() != null) ||
@@ -164,7 +153,7 @@ public class ExpressionUtil {
                             terms.add(expressionTerm);
                         }
                     } else if (item instanceof ExpressionOperator) {
-                        addTerms((ExpressionOperator) item, fields, terms);
+                        addTerms((ExpressionOperator) item, fieldNames, terms);
                     }
                 }
             }

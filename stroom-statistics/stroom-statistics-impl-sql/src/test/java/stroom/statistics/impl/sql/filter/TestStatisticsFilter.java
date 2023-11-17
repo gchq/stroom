@@ -17,7 +17,7 @@
 
 package stroom.statistics.impl.sql.filter;
 
-import stroom.datasource.api.v2.AbstractField;
+import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.docrefinfo.mock.MockDocRefInfoService;
 import stroom.docstore.impl.Persistence;
@@ -501,7 +501,7 @@ class TestStatisticsFilter implements Statistics {
     }
 
     @Override
-    public List<AbstractField> getSupportedFields(final List<AbstractField> indexFields) {
+    public List<QueryField> getSupportedFields(final List<QueryField> indexFields) {
         throw new UnsupportedOperationException("Not used in this test class");
     }
 

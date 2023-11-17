@@ -18,7 +18,6 @@
 package stroom.receive.rules.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.BooleanField;
 import stroom.datasource.api.v2.DateField;
 import stroom.datasource.api.v2.DocRefField;
@@ -29,6 +28,7 @@ import stroom.datasource.api.v2.IdField;
 import stroom.datasource.api.v2.IntegerField;
 import stroom.datasource.api.v2.IpV4AddressField;
 import stroom.datasource.api.v2.LongField;
+import stroom.datasource.api.v2.QueryField;
 import stroom.datasource.api.v2.TextField;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -52,13 +52,13 @@ public class FieldEditPresenter extends MyPresenterWidget<FieldEditPresenter.Fie
         super(eventBus, view);
     }
 
-    public void read(final AbstractField field, final Set<String> otherFieldNames) {
+    public void read(final QueryField field, final Set<String> otherFieldNames) {
         this.otherFieldNames = otherFieldNames;
         getView().setFieldType(field.getFieldType());
         getView().setName(field.getName());
     }
 
-    public AbstractField write() {
+    public QueryField write() {
         String name = getView().getName();
         name = name.trim();
 
@@ -96,7 +96,7 @@ public class FieldEditPresenter extends MyPresenterWidget<FieldEditPresenter.Fie
         void setName(final String name);
     }
 
-    private AbstractField create(final FieldType type, final String name) {
+    private QueryField create(final FieldType type, final String name) {
         switch (type) {
             case ID:
                 return new IdField(name);

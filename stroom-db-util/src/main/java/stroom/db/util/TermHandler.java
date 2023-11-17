@@ -1,8 +1,8 @@
 package stroom.db.util;
 
 import stroom.collection.api.CollectionService;
-import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.DocRefField;
+import stroom.datasource.api.v2.QueryField;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
 import stroom.docrefinfo.api.DocRefInfoService;
@@ -35,7 +35,7 @@ public final class TermHandler<T> implements Function<ExpressionTerm, Condition>
     private static final String PERCENT = "%";
     private static final Pattern ASTERISK_PATTERN = Pattern.compile("\\*");
 
-    private final AbstractField dataSourceField;
+    private final QueryField dataSourceField;
     private final Field<T> field;
     private final ExpressionMapper.MultiConverter<T> converter;
     private final WordListProvider wordListProvider;
@@ -43,7 +43,7 @@ public final class TermHandler<T> implements Function<ExpressionTerm, Condition>
     private final DocRefInfoService docRefInfoService;
     private final boolean useName;
 
-    TermHandler(final AbstractField dataSourceField,
+    TermHandler(final QueryField dataSourceField,
                 final Field<T> field,
                 final ExpressionMapper.MultiConverter<T> converter,
                 final WordListProvider wordListProvider,

@@ -17,10 +17,12 @@
 
 package stroom.search.impl;
 
-import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.DateField;
 import stroom.datasource.api.v2.FieldInfo;
 import stroom.datasource.api.v2.FindFieldInfoCriteria;
+import stroom.datasource.api.v2.IdField;
+import stroom.datasource.api.v2.QueryField;
+import stroom.datasource.api.v2.QueryFieldService;
 import stroom.docref.DocRef;
 import stroom.index.impl.IndexStore;
 import stroom.index.impl.LuceneProviderFactory;
@@ -33,16 +35,20 @@ import stroom.query.common.v2.CoprocessorSettings;
 import stroom.query.common.v2.CoprocessorsFactory;
 import stroom.query.common.v2.CoprocessorsImpl;
 import stroom.query.common.v2.DataStoreSettings;
-import stroom.query.common.v2.FieldInfoResultPageBuilder;
 import stroom.query.common.v2.ResultStore;
 import stroom.query.common.v2.ResultStoreFactory;
 import stroom.query.common.v2.SearchProvider;
 import stroom.security.api.SecurityContext;
+import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.shared.ResultPage;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import javax.inject.Inject;
 
 public class LuceneSearchProvider implements SearchProvider {
@@ -56,6 +62,9 @@ public class LuceneSearchProvider implements SearchProvider {
     private final FederatedSearchExecutor federatedSearchExecutor;
     private final NodeSearchTaskCreator nodeSearchTaskCreator;
     private final LuceneProviderFactory luceneProviderFactory;
+    private final QueryFieldService queryFieldService;
+
+    private static final Map<DocRef, Integer> FIELD_SOURCE_MAP = new ConcurrentHashMap<>();
 
     @Inject
     public LuceneSearchProvider(final IndexStore indexStore,
@@ -66,7 +75,8 @@ public class LuceneSearchProvider implements SearchProvider {
                                 final ExecutorProvider executorProvider,
                                 final FederatedSearchExecutor federatedSearchExecutor,
                                 final NodeSearchTaskCreator nodeSearchTaskCreator,
-                                final LuceneProviderFactory luceneProviderFactory) {
+                                final LuceneProviderFactory luceneProviderFactory,
+                                final QueryFieldService queryFieldService) {
         this.indexStore = indexStore;
         this.securityContext = securityContext;
         this.coprocessorsFactory = coprocessorsFactory;
@@ -76,18 +86,53 @@ public class LuceneSearchProvider implements SearchProvider {
         this.federatedSearchExecutor = federatedSearchExecutor;
         this.nodeSearchTaskCreator = nodeSearchTaskCreator;
         this.luceneProviderFactory = luceneProviderFactory;
+        this.queryFieldService = queryFieldService;
     }
 
     @Override
     public ResultPage<FieldInfo> getFieldInfo(final FindFieldInfoCriteria criteria) {
         return securityContext.useAsReadResult(() -> {
-            final FieldInfoResultPageBuilder builder = FieldInfoResultPageBuilder.builder(criteria);
-            final IndexDoc index = indexStore.readDocument(criteria.getDataSourceRef());
-            if (index != null) {
-                final List<AbstractField> fields = IndexDataSourceFieldUtil.getDataSourceFields(index, securityContext);
-                builder.addAll(fields);
+            final DocRef docRef = criteria.getDataSourceRef();
+
+            // Check for read permission.
+            if (!securityContext.hasDocumentPermission(docRef.getUuid(), DocumentPermissionNames.READ)) {
+                // If there is no read permission then return no fields.
+                return ResultPage.createCriterialBasedList(Collections.emptyList(), criteria);
             }
-            return builder.build();
+
+            if (!FIELD_SOURCE_MAP.containsKey(docRef)) {
+                // Load fields.
+                final IndexDoc index = indexStore.readDocument(docRef);
+                if (index == null) {
+                    // We can't read the index so return no fields.
+                    return ResultPage.createCriterialBasedList(Collections.emptyList(), criteria);
+                }
+
+                final List<QueryField> fields = IndexDataSourceFieldUtil
+                        .getDataSourceFields(index, securityContext);
+                final int fieldSourceId = queryFieldService.getOrCreateFieldSource(docRef);
+                final List<FieldInfo> mapped = fields.stream().map(FieldInfo::create).toList();
+                queryFieldService.addFields(fieldSourceId, mapped);
+
+                // TEST DATA
+                final List<QueryField> list = new ArrayList<>();
+                for (int i = 0; i < 1000; i++) {
+                    list.add(new IdField("test" + i));
+                    for (int j = 0; j < 1000; j++) {
+                        list.add(new IdField("test" + i + ".test" + j));
+                        for (int k = 0; k < 1000; k++) {
+                            list.add(new IdField("test" + i + ".test" + j + ".test" + k));
+                        }
+                    }
+                }
+                final List<FieldInfo> mapped2 = list.stream().map(FieldInfo::create).toList();
+                queryFieldService.addFields(fieldSourceId, mapped2);
+
+
+                FIELD_SOURCE_MAP.put(docRef, fieldSourceId);
+            }
+
+            return queryFieldService.findFieldInfo(criteria);
         });
     }
 

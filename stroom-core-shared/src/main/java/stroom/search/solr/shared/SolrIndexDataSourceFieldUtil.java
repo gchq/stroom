@@ -16,14 +16,15 @@
 
 package stroom.search.solr.shared;
 
-import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.BooleanField;
+import stroom.datasource.api.v2.Conditions;
 import stroom.datasource.api.v2.DateField;
 import stroom.datasource.api.v2.DoubleField;
 import stroom.datasource.api.v2.FloatField;
 import stroom.datasource.api.v2.IdField;
 import stroom.datasource.api.v2.IntegerField;
 import stroom.datasource.api.v2.LongField;
+import stroom.datasource.api.v2.QueryField;
 import stroom.datasource.api.v2.TextField;
 
 import java.util.List;
@@ -31,7 +32,7 @@ import java.util.stream.Collectors;
 
 public final class SolrIndexDataSourceFieldUtil {
 
-    public static List<AbstractField> getDataSourceFields(final SolrIndexDoc index) {
+    public static List<QueryField> getDataSourceFields(final SolrIndexDoc index) {
         if (index == null || index.getFields() == null) {
             return null;
         }
@@ -42,24 +43,24 @@ public final class SolrIndexDataSourceFieldUtil {
                 .collect(Collectors.toList());
     }
 
-    private static AbstractField convert(final SolrIndexField field) {
+    private static QueryField convert(final SolrIndexField field) {
         switch (field.getFieldUse()) {
             case ID:
-                return new IdField(field.getFieldName(), field.isIndexed(), field.getSupportedConditions());
+                return new IdField(field.getFieldName(), field.isIndexed(), Conditions.SOLR_NUMERIC);
             case BOOLEAN_FIELD:
-                return new BooleanField(field.getFieldName(), field.isIndexed(), field.getSupportedConditions());
+                return new BooleanField(field.getFieldName(), field.isIndexed(), Conditions.SOLR_BOOLEAN);
             case INTEGER_FIELD:
-                return new IntegerField(field.getFieldName(), field.isIndexed(), field.getSupportedConditions());
+                return new IntegerField(field.getFieldName(), field.isIndexed(), Conditions.SOLR_NUMERIC);
             case LONG_FIELD:
-                return new LongField(field.getFieldName(), field.isIndexed(), field.getSupportedConditions());
+                return new LongField(field.getFieldName(), field.isIndexed(), Conditions.SOLR_NUMERIC);
             case FLOAT_FIELD:
-                return new FloatField(field.getFieldName(), field.isIndexed(), field.getSupportedConditions());
+                return new FloatField(field.getFieldName(), field.isIndexed(), Conditions.SOLR_NUMERIC);
             case DOUBLE_FIELD:
-                return new DoubleField(field.getFieldName(), field.isIndexed(), field.getSupportedConditions());
+                return new DoubleField(field.getFieldName(), field.isIndexed(), Conditions.SOLR_NUMERIC);
             case DATE_FIELD:
-                return new DateField(field.getFieldName(), field.isIndexed(), field.getSupportedConditions());
+                return new DateField(field.getFieldName(), field.isIndexed(), Conditions.SOLR_DATE);
             case FIELD:
-                return new TextField(field.getFieldName(), field.isIndexed(), field.getSupportedConditions());
+                return new TextField(field.getFieldName(), field.isIndexed(), Conditions.SOLR_TEXT);
         }
 
         return null;

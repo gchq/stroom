@@ -44,7 +44,6 @@ public class DynamicFieldSelectionListModel implements FieldSelectionListModel {
                     new PageRequest(range.getStart(), range.getLength()),
                     null,
                     dataSourceRef,
-                    FieldInfo.FIELDS_PARENT,
                     filter);
             dataSourceClient.findFields(findFieldInfoCriteria, response -> {
                 final List<FieldInfoSelectionItem> items = response

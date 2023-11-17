@@ -1,7 +1,6 @@
 package stroom.query.client.presenter;
 
-import stroom.datasource.api.v2.AbstractField;
-import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.datasource.api.v2.FieldInfo;
 import stroom.query.shared.QueryHelpField;
 import stroom.query.shared.QueryHelpRow;
 import stroom.util.shared.GwtNullSafe;
@@ -17,7 +16,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 public class FieldDetailProvider implements DetailProvider {
 
@@ -38,7 +36,7 @@ public class FieldDetailProvider implements DetailProvider {
             hb1.hr();
 
             final QueryHelpField field = (QueryHelpField) row.getData();
-            hb1.para(hb2 -> hb2.append(buildFieldDetails(field.getField())),
+            hb1.para(hb2 -> hb2.append(buildFieldDetails(field.getFieldInfo())),
                     Attribute.className(DETAIL_DESCRIPTION_CLASS));
         }, Attribute.className(DETAIL_BASE_CLASS));
         final Detail detail = new Detail(insertType, insertText, documentation.toSafeHtml());
@@ -50,14 +48,10 @@ public class FieldDetailProvider implements DetailProvider {
                 "${" + str + "}");
     }
 
-    private SafeHtml buildFieldDetails(final AbstractField field) {
-        final String fieldName = field.getName();
-        final String fieldType = field.getFieldType().getDisplayValue();
-        final String supportedConditions = field.getConditions()
-                .stream()
-                .map(Condition::getDisplayValue)
-                .map(str -> "'" + str + "'")
-                .collect(Collectors.joining(", "));
+    private SafeHtml buildFieldDetails(final FieldInfo fieldInfo) {
+        final String fieldName = fieldInfo.getFieldName();
+        final String fieldType = fieldInfo.getFieldType().getDisplayValue();
+        final String supportedConditions = fieldInfo.getConditions().toString();
 
         final HtmlBuilder htmlBuilder = HtmlBuilder.builder();
         appendKeyValueTable(htmlBuilder,
@@ -65,8 +59,8 @@ public class FieldDetailProvider implements DetailProvider {
                         new SimpleEntry<>("Name:", fieldName),
                         new SimpleEntry<>("Type:", fieldType),
                         new SimpleEntry<>("Supported Conditions:", supportedConditions),
-                        new SimpleEntry<>("Is queryable:", asDisplayValue(field.queryable())),
-                        new SimpleEntry<>("Is numeric:", asDisplayValue(field.isNumeric()))));
+                        new SimpleEntry<>("Is queryable:", asDisplayValue(fieldInfo.queryable())),
+                        new SimpleEntry<>("Is numeric:", asDisplayValue(fieldInfo.getFieldType().isNumeric()))));
         return htmlBuilder.toSafeHtml();
     }
 

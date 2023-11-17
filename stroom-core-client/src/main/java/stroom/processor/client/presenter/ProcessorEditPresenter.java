@@ -3,8 +3,8 @@ package stroom.processor.client.presenter;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.data.client.presenter.EditExpressionPresenter;
-import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.FieldInfo;
+import stroom.datasource.api.v2.QueryField;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
@@ -56,7 +56,7 @@ public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView>
 
     public void read(final ExpressionOperator expression,
                      final DocRef dataSource,
-                     final List<AbstractField> fields,
+                     final List<QueryField> fields,
                      final Long minMetaCreateTimeMs,
                      final Long maxMetaCreateTimeMs) {
         final SimpleFieldSelectionListModel selectionBoxModel = new SimpleFieldSelectionListModel();
@@ -82,7 +82,7 @@ public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView>
         this.consumer = consumer;
 
         final QueryData queryData = getOrCreateQueryData(filter);
-        final List<AbstractField> fields = MetaFields.getAllFields();
+        final List<QueryField> fields = MetaFields.getAllFields();
 
         final Long minMetaCreateTimeMs;
         final Long maxMetaCreateTimeMs;
@@ -206,11 +206,11 @@ public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView>
         }
     }
 
-    private int termCount(final QueryData queryData, final AbstractField field) {
+    private int termCount(final QueryData queryData, final QueryField field) {
         if (queryData == null || queryData.getExpression() == null) {
             return 0;
         }
-        return ExpressionUtil.termCount(queryData.getExpression(), field);
+        return ExpressionUtil.termCount(queryData.getExpression(), field.getName());
     }
 
     private void createOrUpdateProcessor(final ProcessorFilter filter,

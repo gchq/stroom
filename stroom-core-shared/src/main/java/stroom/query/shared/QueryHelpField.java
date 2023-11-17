@@ -1,6 +1,6 @@
 package stroom.query.shared;
 
-import stroom.datasource.api.v2.AbstractField;
+import stroom.datasource.api.v2.FieldInfo;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -16,18 +16,14 @@ public class QueryHelpField extends QueryHelpData {
 
     @JsonProperty
     @JsonPropertyDescription("A field of a data source.")
-    private AbstractField field;
+    private final FieldInfo fieldInfo;
 
     @JsonCreator
-    public QueryHelpField(@JsonProperty("field") final AbstractField field) {
-        this.field = field;
+    public QueryHelpField(@JsonProperty("fieldInfo") final FieldInfo fieldInfo) {
+        this.fieldInfo = fieldInfo;
     }
 
-    public AbstractField getField() {
-        return field;
-    }
-
-    public void setField(final AbstractField field) {
-        this.field = field;
+    public FieldInfo getFieldInfo() {
+        return fieldInfo;
     }
 }

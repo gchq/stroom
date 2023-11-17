@@ -3,7 +3,6 @@ package stroom.task.impl;
 import stroom.cluster.task.api.NodeNotFoundException;
 import stroom.cluster.task.api.NullClusterStateException;
 import stroom.cluster.task.api.TargetNodeSetFactory;
-import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.DateField;
 import stroom.datasource.api.v2.FieldInfo;
 import stroom.datasource.api.v2.FindFieldInfoCriteria;
@@ -12,6 +11,7 @@ import stroom.entity.shared.ExpressionCriteria;
 import stroom.expression.matcher.ExpressionMatcher;
 import stroom.expression.matcher.ExpressionMatcherFactory;
 import stroom.query.common.v2.FieldInfoResultPageBuilder;
+import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValInteger;
 import stroom.query.language.functions.ValLong;
@@ -95,7 +95,7 @@ class SearchableTaskProgress implements Searchable {
 
     @Override
     public void search(final ExpressionCriteria criteria,
-                       final AbstractField[] fields,
+                       final FieldIndex fieldIndex,
                        final ValuesConsumer consumer) {
         securityContext.secure(PermissionNames.MANAGE_TASKS_PERMISSION, () -> {
             final Map<String, TaskProgressResponse> nodeResponses = searchAllNodes();
@@ -119,12 +119,13 @@ class SearchableTaskProgress implements Searchable {
                     })
                     .filter(attributeMap -> expressionMatcher.match(attributeMap, criteria.getExpression()))
                     .forEach(attributeMap -> {
+                        final String[] fields = fieldIndex.getFields();
                         final Val[] arr = new Val[fields.length];
                         for (int i = 0; i < fields.length; i++) {
-                            final AbstractField field = fields[i];
+                            final String fieldName = fields[i];
                             Val val = ValNull.INSTANCE;
-                            if (field != null) {
-                                final Object o = attributeMap.get(field.getName());
+                            if (fieldName != null) {
+                                final Object o = attributeMap.get(fieldName);
                                 if (o != null) {
                                     if (o instanceof String) {
                                         val = ValString.create((String) o);

@@ -16,8 +16,7 @@
 
 package stroom.query.client;
 
-import stroom.datasource.api.v2.AbstractField;
-import stroom.datasource.api.v2.DocRefField;
+import stroom.datasource.api.v2.Conditions;
 import stroom.datasource.api.v2.FieldInfo;
 import stroom.datasource.api.v2.FieldType;
 import stroom.dispatch.client.RestFactory;
@@ -45,7 +44,6 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class TermEditor extends Composite {
@@ -183,7 +181,7 @@ public class TermEditor extends Composite {
         changeField(null, false);
         fieldSelectionListModel.findFieldByName(term.getField(), fieldInfo -> {
             fieldListBox.setValue(fieldInfo);
-            changeField(unwrapField(fieldInfo), false);
+            changeField(fieldInfo, false);
         });
 
         reading = false;
@@ -194,7 +192,7 @@ public class TermEditor extends Composite {
         if (selectedField != null && conditionListBox.getValue() != null) {
             DocRef docRef = null;
 
-            term.setField(selectedField.getTitle());
+            term.setField(selectedField.getFieldName());
             term.setCondition(conditionListBox.getValue());
 
             final StringBuilder sb = new StringBuilder();
@@ -225,7 +223,7 @@ public class TermEditor extends Composite {
         }
     }
 
-    private void changeField(final AbstractField field, final boolean useDefaultCondition) {
+    private void changeField(final FieldInfo field, final boolean useDefaultCondition) {
         suggestOracle.setField(field);
         final List<Condition> conditions = getConditions(field);
 
@@ -257,70 +255,28 @@ public class TermEditor extends Composite {
         }
     }
 
-    private List<Condition> getConditions(final AbstractField field) {
-        List<Condition> conditions;
-
-        if (field == null) {
-            conditions = Arrays.asList(
-                    Condition.EQUALS,
-                    Condition.IN,
-                    Condition.IN_DICTIONARY
-            );
-
-        } else if (field.getConditions() != null && field.getConditions().size() > 0) {
+    private List<Condition> getConditions(final FieldInfo field) {
+        Conditions conditions;
+        if (field != null && field.getConditions() != null) {
             conditions = field.getConditions();
+
         } else {
-            if (FieldType.DOC_REF.equals(field.getFieldType())) {
-                conditions = Arrays.asList(
-                        Condition.EQUALS,
-                        Condition.IN,
-                        Condition.IN_DICTIONARY,
-                        Condition.IS_DOC_REF);
-            } else if (field.isNumeric()) {
-                conditions = Arrays.asList(
-                        Condition.EQUALS,
-                        Condition.GREATER_THAN,
-                        Condition.GREATER_THAN_OR_EQUAL_TO,
-                        Condition.LESS_THAN,
-                        Condition.LESS_THAN_OR_EQUAL_TO,
-                        Condition.BETWEEN,
-                        Condition.IN,
-                        Condition.IN_DICTIONARY
-                );
-
-            } else if (FieldType.DATE.equals(field.getFieldType())) {
-                conditions = Arrays.asList(
-                        Condition.EQUALS,
-                        Condition.GREATER_THAN,
-                        Condition.GREATER_THAN_OR_EQUAL_TO,
-                        Condition.LESS_THAN,
-                        Condition.LESS_THAN_OR_EQUAL_TO,
-                        Condition.BETWEEN,
-                        Condition.IN,
-                        Condition.IN_DICTIONARY
-                );
-
-            } else {
-                conditions = Arrays.asList(
-                        Condition.EQUALS,
-                        Condition.IN,
-                        Condition.IN_DICTIONARY
-                );
+            FieldType fieldType = null;
+            if (field != null) {
+                fieldType = field.getFieldType();
             }
+            conditions = Conditions.getUiDefaultConditions(fieldType);
         }
 
-        // We no longer use CONTAINS.
-        conditions.remove(Condition.CONTAINS);
-
-        return conditions;
+        return conditions.getConditionList();
     }
 
-    private void changeCondition(final AbstractField field,
+    private void changeCondition(final FieldInfo field,
                                  final Condition condition) {
         final FieldInfo selectedField = fieldListBox.getValue();
         FieldType indexFieldType = null;
-        if (selectedField != null && selectedField.getField() != null) {
-            indexFieldType = selectedField.getField().getFieldType();
+        if (selectedField != null && selectedField.getFieldType() != null) {
+            indexFieldType = selectedField.getFieldType();
         }
 
         if (indexFieldType == null) {
@@ -412,7 +368,7 @@ public class TermEditor extends Composite {
         updateDateBoxes();
     }
 
-    private void enterDocRefMode(final AbstractField field, final Condition condition) {
+    private void enterDocRefMode(final FieldInfo field, final Condition condition) {
         setActiveWidgets(docRefWidget);
 
         if (docRefPresenter != null) {
@@ -422,8 +378,8 @@ public class TermEditor extends Composite {
             } else if (Condition.IN_FOLDER.equals(condition)) {
                 docRefPresenter.setIncludedTypes("Folder");
                 docRefPresenter.setAllowFolderSelection(true);
-            } else if (field instanceof DocRefField) {
-                docRefPresenter.setIncludedTypes(((DocRefField) field).getDocRefType());
+            } else if (FieldType.DOC_REF.equals(field.getFieldType())) {
+                docRefPresenter.setIncludedTypes(field.getDocRefType());
             }
             docRefPresenter.setSelectedEntityReference(term.getDocRef());
         }
@@ -522,24 +478,17 @@ public class TermEditor extends Composite {
         registerHandler(fieldListBox.addValueChangeHandler(event -> {
             if (!reading) {
                 write(term);
-                changeField(unwrapField(event.getValue()), true);
+                changeField(event.getValue(), true);
                 fireDirty();
             }
         }));
         registerHandler(conditionListBox.addValueChangeHandler(event -> {
             if (!reading) {
                 write(term);
-                changeCondition(unwrapField(fieldListBox.getValue()), event.getValue());
+                changeCondition(fieldListBox.getValue(), event.getValue());
                 fireDirty();
             }
         }));
-    }
-
-    private AbstractField unwrapField(final FieldInfo fieldInfo) {
-        if (fieldInfo != null && fieldInfo.getField() != null) {
-            return fieldInfo.getField();
-        }
-        return null;
     }
 
     private void unbind() {

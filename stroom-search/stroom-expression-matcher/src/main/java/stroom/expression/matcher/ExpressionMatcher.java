@@ -18,9 +18,9 @@
 package stroom.expression.matcher;
 
 import stroom.collection.api.CollectionService;
-import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.DocRefField;
 import stroom.datasource.api.v2.FieldType;
+import stroom.datasource.api.v2.QueryField;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
 import stroom.expression.api.DateTimeSettings;
@@ -41,21 +41,21 @@ public class ExpressionMatcher {
 
     private static final String DELIMITER = ",";
 
-    private final Map<String, AbstractField> fieldMap;
+    private final Map<String, QueryField> fieldMap;
     private final WordListProvider wordListProvider;
     private final CollectionService collectionService;
     private final Map<DocRef, String[]> wordMap = new ConcurrentHashMap<>();
     private final Map<String, Pattern> patternMap = new ConcurrentHashMap<>();
     private final DateTimeSettings dateTimeSettings;
 
-    public ExpressionMatcher(final Map<String, AbstractField> fieldMap) {
+    public ExpressionMatcher(final Map<String, QueryField> fieldMap) {
         this.fieldMap = fieldMap;
         this.wordListProvider = null;
         this.collectionService = null;
         this.dateTimeSettings = DateTimeSettings.builder().build();
     }
 
-    public ExpressionMatcher(final Map<String, AbstractField> fieldMap,
+    public ExpressionMatcher(final Map<String, QueryField> fieldMap,
                              final WordListProvider wordListProvider,
                              final CollectionService collectionService,
                              final DateTimeSettings dateTimeSettings) {
@@ -137,7 +137,7 @@ public class ExpressionMatcher {
         if (termField == null || termField.length() == 0) {
             throw new MatchException("Field not set");
         }
-        final AbstractField field = fieldMap.get(termField);
+        final QueryField field = fieldMap.get(termField);
         if (field == null) {
             throw new MatchException("Field not found in index: " + termField);
         }
@@ -351,7 +351,7 @@ public class ExpressionMatcher {
     }
 
     private boolean isInDictionary(final String fieldName, final DocRef docRef,
-                                   final AbstractField field, final Object attribute) {
+                                   final QueryField field, final Object attribute) {
         final String[] lines = loadWords(docRef);
         if (lines != null) {
             for (final String line : lines) {
@@ -375,7 +375,7 @@ public class ExpressionMatcher {
     }
 
     private boolean isInFolder(final String fieldName, final DocRef docRef,
-                               final AbstractField field, final Object attribute) {
+                               final QueryField field, final Object attribute) {
         if (field instanceof DocRefField) {
             final String type = ((DocRefField) field).getDocRefType();
             if (type != null && collectionService != null) {
@@ -399,7 +399,7 @@ public class ExpressionMatcher {
     }
 
     private boolean isDocRef(final String fieldName, final DocRef docRef,
-                             final AbstractField field, final Object attribute) {
+                             final QueryField field, final Object attribute) {
         if (attribute instanceof DocRef) {
             final String uuid = ((DocRef) attribute).getUuid();
             return (null != uuid && uuid.equals(docRef.getUuid()));

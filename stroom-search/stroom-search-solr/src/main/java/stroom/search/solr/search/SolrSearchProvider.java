@@ -17,10 +17,10 @@
 
 package stroom.search.solr.search;
 
-import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.DateField;
 import stroom.datasource.api.v2.FieldInfo;
 import stroom.datasource.api.v2.FindFieldInfoCriteria;
+import stroom.datasource.api.v2.QueryField;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
 import stroom.expression.api.DateTimeSettings;
@@ -113,7 +113,7 @@ public class SolrSearchProvider implements SearchProvider {
             final FieldInfoResultPageBuilder builder = FieldInfoResultPageBuilder.builder(criteria);
             final SolrIndexDoc index = solrIndexStore.readDocument(criteria.getDataSourceRef());
             if (index != null) {
-                final List<AbstractField> fields = SolrIndexDataSourceFieldUtil.getDataSourceFields(index);
+                final List<QueryField> fields = SolrIndexDataSourceFieldUtil.getDataSourceFields(index);
                 builder.addAll(fields);
             }
             return builder.build();

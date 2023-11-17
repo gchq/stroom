@@ -1,6 +1,6 @@
 package stroom.query.api.v2;
 
-import stroom.datasource.api.v2.AbstractField;
+import stroom.datasource.api.v2.QueryField;
 
 import java.util.List;
 import java.util.Map;
@@ -9,10 +9,10 @@ import java.util.stream.Collectors;
 
 public class ExpressionValidator {
 
-    private final Map<String, AbstractField> fieldMap;
+    private final Map<String, QueryField> fieldMap;
 
-    public ExpressionValidator(final List<AbstractField> fields) {
-        fieldMap = fields.stream().collect(Collectors.toMap(AbstractField::getName, Function.identity()));
+    public ExpressionValidator(final List<QueryField> fields) {
+        fieldMap = fields.stream().collect(Collectors.toMap(QueryField::getName, Function.identity()));
     }
 
     public void validate(final ExpressionOperator operator) throws ExpressionValidationException {
@@ -33,7 +33,7 @@ public class ExpressionValidator {
                 throw new ExpressionValidationException("" +
                         "Expression term has a missing field");
             }
-            final AbstractField field = fieldMap.get(term.getField());
+            final QueryField field = fieldMap.get(term.getField());
             if (field == null) {
                 throw new ExpressionValidationException("" +
                         "Expression term has an unknown field '" +

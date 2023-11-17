@@ -72,7 +72,8 @@ public class QueryHelpPresenter
             // Rebuild the structure menu items as they contain markdown
             refresh();
         }));
-        final MultiSelectionModel<QueryHelpSelectionItem> selectionModel = getView().getSelectionList().getSelectionModel();
+        final MultiSelectionModel<QueryHelpSelectionItem> selectionModel =
+                getView().getSelectionList().getSelectionModel();
         registerHandler(selectionModel.addSelectionHandler(e -> {
             if (e.getSelectionType().isDoubleSelect()) {
                 onInsert();

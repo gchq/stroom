@@ -2,10 +2,10 @@ package stroom.pipeline.refdata;
 
 import stroom.bytebuffer.ByteBufferPool;
 import stroom.data.shared.StreamTypeNames;
-import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.DateField;
 import stroom.datasource.api.v2.FieldInfo;
 import stroom.datasource.api.v2.FindFieldInfoCriteria;
+import stroom.datasource.api.v2.QueryField;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
 import stroom.docrefinfo.api.DocRefInfoService;
@@ -30,6 +30,7 @@ import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.common.v2.DateExpressionParser;
 import stroom.query.common.v2.FieldInfoResultPageBuilder;
+import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValInteger;
 import stroom.query.language.functions.ValLong;
@@ -83,8 +84,8 @@ import javax.ws.rs.client.SyncInvoker;
 public class ReferenceDataServiceImpl implements ReferenceDataService {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ReferenceDataServiceImpl.class);
-    private static final Map<String, AbstractField> FIELD_NAME_TO_FIELD_MAP = ReferenceDataFields.FIELDS.stream()
-            .collect(Collectors.toMap(AbstractField::getName, Function.identity()));
+    private static final Map<String, QueryField> FIELD_NAME_TO_FIELD_MAP = ReferenceDataFields.FIELDS.stream()
+            .collect(Collectors.toMap(QueryField::getName, Function.identity()));
 
     private static final Map<String, Function<RefStoreEntry, Object>> FIELD_TO_EXTRACTOR_MAP = Map.ofEntries(
             Map.entry(ReferenceDataFields.FEED_NAME_FIELD.getName(),
@@ -694,19 +695,16 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
     }
 
     @Override
-    public void search(final ExpressionCriteria criteria,
-                       final AbstractField[] fields,
-                       final ValuesConsumer consumer) {
-
+    public void search(final ExpressionCriteria criteria, final FieldIndex fieldIndex, final ValuesConsumer consumer) {
         withPermissionCheck(() -> LOGGER.logDurationIfInfoEnabled(
                 () -> taskContextFactory.context("Querying reference data store", taskContext ->
-                                doSearch(criteria, fields, consumer, taskContext))
+                                doSearch(criteria, fieldIndex, consumer, taskContext))
                         .run(),
                 "Querying ref store"));
     }
 
     private void doSearch(final ExpressionCriteria criteria,
-                          final AbstractField[] fields,
+                          final FieldIndex fieldIndex,
                           final ValuesConsumer consumer,
                           final TaskContext taskContext) {
         // TODO @AT This is a temporary very crude impl to see if it works.
@@ -753,19 +751,20 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                 throw new TaskTerminatedException();
             }
             if (skipTest.getAsBoolean()) {
-
+                final String[] fields = fieldIndex.getFields();
                 final Val[] valArr = new Val[fields.length];
 
                 // Useful for slowing down the search in dev to test termination
                 //ThreadUtil.sleepIgnoringInterrupts(50);
 
                 for (int i = 0; i < fields.length; i++) {
-                    AbstractField field = fields[i];
+                    final String fieldName = fields[i];
+                    final QueryField field = FIELD_NAME_TO_FIELD_MAP.get(fieldName);
                     // May be a custom field that we obvs can't extract
                     if (field != null) {
-                        final Object value = FIELD_TO_EXTRACTOR_MAP.get(fields[i].getName())
+                        final Object value = FIELD_TO_EXTRACTOR_MAP.get(field.getName())
                                 .apply(refStoreEntry);
-                        valArr[i] = convertToVal(value, fields[i]);
+                        valArr[i] = convertToVal(value, field);
                     }
                 }
                 consumer.accept(Val.of(valArr));
@@ -936,7 +935,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
 
         // name => field
         // field => fieldType
-        AbstractField abstractField = FIELD_NAME_TO_FIELD_MAP.get(expressionTerm.getField());
+        QueryField abstractField = FIELD_NAME_TO_FIELD_MAP.get(expressionTerm.getField());
 
         return switch (abstractField.getFieldType()) {
             case TEXT -> buildTextFieldPredicate(expressionTerm, refStoreEntry ->
@@ -1062,7 +1061,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
         }
     }
 
-    private Val convertToVal(final Object object, final AbstractField field) {
+    private Val convertToVal(final Object object, final QueryField field) {
         return switch (field.getFieldType()) {
             case TEXT -> ValString.create((String) object);
             case INTEGER -> ValInteger.create((Integer) object);

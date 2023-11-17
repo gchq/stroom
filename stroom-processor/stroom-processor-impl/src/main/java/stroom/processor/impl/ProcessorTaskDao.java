@@ -1,6 +1,5 @@
 package stroom.processor.impl;
 
-import stroom.datasource.api.v2.AbstractField;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.meta.shared.Meta;
 import stroom.processor.api.InclusiveRanges;
@@ -10,6 +9,7 @@ import stroom.processor.shared.ProcessorFilterTracker;
 import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.ProcessorTaskSummary;
 import stroom.processor.shared.TaskStatus;
+import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.ValuesConsumer;
 import stroom.util.shared.ResultPage;
 
@@ -105,7 +105,7 @@ public interface ProcessorTaskDao {
 
     ResultPage<ProcessorTaskSummary> findSummary(final ExpressionCriteria criteria);
 
-    void search(ExpressionCriteria criteria, AbstractField[] fields, ValuesConsumer consumer);
+    void search(ExpressionCriteria criteria, FieldIndex fieldIndex, ValuesConsumer consumer);
 
     int logicalDeleteByProcessorId(int processorId);
 

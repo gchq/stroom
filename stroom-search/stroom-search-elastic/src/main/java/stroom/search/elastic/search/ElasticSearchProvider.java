@@ -17,10 +17,10 @@
 
 package stroom.search.elastic.search;
 
-import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.DateField;
 import stroom.datasource.api.v2.FieldInfo;
 import stroom.datasource.api.v2.FindFieldInfoCriteria;
+import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.Query;
@@ -155,7 +155,7 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
             final FieldInfoResultPageBuilder builder = FieldInfoResultPageBuilder.builder(criteria);
             final ElasticIndexDoc index = elasticIndexStore.readDocument(criteria.getDataSourceRef());
             if (index != null) {
-                final List<AbstractField> fields = getDataSourceFields(index);
+                final List<QueryField> fields = getDataSourceFields(index);
                 builder.addAll(fields);
             }
             return builder.build();
@@ -193,7 +193,7 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
     }
 
     @Override
-    public List<AbstractField> getDataSourceFields(ElasticIndexDoc index) {
+    public List<QueryField> getDataSourceFields(ElasticIndexDoc index) {
         final Map<String, FieldMappingMetadata> fieldMappings = getFieldMappings(index);
 
         return fieldMappings
