@@ -168,10 +168,10 @@ public class IndexShardManager {
                             final Iterator<IndexShard> iter = shards.getValues().iterator();
                             while (!Thread.currentThread().isInterrupted() && iter.hasNext()) {
                                 final IndexShard shard = iter.next();
-                                            final IndexShardWriter indexShardWriter =
-                                                    indexShardWriterCache.getWriterByShardId(shard.getId());
+                                final IndexShardWriter indexShardWriter =
+                                        indexShardWriterCache.getWriterByShardId(shard.getId());
                                 try {
-                                                if (indexShardWriter != null) {
+                                    if (indexShardWriter != null) {
                                         LOGGER.debug(() ->
                                                 "deleteShardsFromDisk() - Unable to delete index " +
                                                         "shard " + shard.getId() + " as it is currently " +
