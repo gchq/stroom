@@ -18,6 +18,7 @@
 
 package stroom.analytics.impl;
 
+import stroom.analytics.shared.AnalyticNotificationEmailDestination;
 import stroom.util.NullSafe;
 import stroom.util.json.JsonUtil;
 
@@ -34,6 +35,8 @@ import org.simplejavamail.mailer.internal.MailerRegularBuilderImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.function.Consumer;
+
 class EmailSender {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(EmailSender.class);
@@ -45,7 +48,8 @@ class EmailSender {
         this.analyticsConfigProvider = analyticsConfigProvider;
     }
 
-    public void send(final String name, final String emailAddress, final Detection detection) {
+    public void send(final AnalyticNotificationEmailDestination emailDestination,
+                     final Detection detection) {
         final AnalyticsConfig analyticsConfig = analyticsConfigProvider.get();
         final EmailConfig emailConfig = analyticsConfig.getEmailConfig();
         Preconditions.checkNotNull(emailConfig, "Missing 'email' section in config");
@@ -55,8 +59,14 @@ class EmailSender {
         final EmailPopulatingBuilder emailBuilder = EmailBuilder.startingBlank()
                 .from(emailConfig.getFromName(), emailConfig.getFromAddress())
                 .withReplyTo(emailConfig.getFromName(), emailConfig.getFromAddress())
-                .withRecipient(name, emailAddress, RecipientType.TO)
                 .withSubject(detection.getDetectorName());
+
+        addAddresses(emailDestination.getTo(), address ->
+                emailBuilder.withRecipient(address, address, RecipientType.TO));
+        addAddresses(emailDestination.getCc(), address ->
+                emailBuilder.withRecipient(address, address, RecipientType.CC));
+        addAddresses(emailDestination.getBcc(), address ->
+                emailBuilder.withRecipient(address, address, RecipientType.BCC));
 
         try {
             final String text = JsonUtil.writeValueAsString(detection);
@@ -83,22 +93,35 @@ class EmailSender {
                     smtpConfig.getPort());
         }
 
-        LOGGER.info("Sending alert email to user {} ({}) at {}:{}",
+        LOGGER.info("Sending alert email {} using user ({}) at {}:{}",
+                email,
                 smtpConfig.getUsername(),
-                emailAddress,
                 smtpConfig.getHost(),
                 smtpConfig.getPort());
 
         try (Mailer mailer = mailerBuilder.buildMailer()) {
             mailer.sendMail(email);
         } catch (Exception e) {
-            LOGGER.error("Error sending reset email to user {} ({}) at {}:{} - {}",
+            LOGGER.error("Error sending alert email {} using user ({}) at {}:{} - {}",
+                    email,
                     smtpConfig.getUsername(),
-                    emailAddress,
                     smtpConfig.getHost(),
                     smtpConfig.getPort(),
                     e.getMessage(),
                     e);
+        }
+    }
+
+    private void addAddresses(final String addresses,
+                              final Consumer<String> consumer) {
+        if (addresses != null) {
+            final String[] emailAddresses = addresses.split(";");
+            for (final String emailAddress : emailAddresses) {
+                final String trimmed = emailAddress.trim();
+                if (!trimmed.isEmpty()) {
+                    consumer.accept(trimmed);
+                }
+            }
         }
     }
 }

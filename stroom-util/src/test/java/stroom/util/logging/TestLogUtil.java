@@ -9,6 +9,7 @@ import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
 
+import java.nio.file.Path;
 import java.time.Duration;
 import java.util.List;
 import java.util.Random;
@@ -323,5 +324,18 @@ class TestLogUtil {
                     ", anInt=" + anInt +
                     '}';
         }
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testPath() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputType(Path.class)
+                .withOutputType(String.class)
+                .withSingleArgTestFunction(LogUtil::path)
+                .withSimpleEqualityAssertion()
+                .addCase(null, null)
+                .addCase(Path.of("/tmp"), "/tmp")
+                .addCase(Path.of("/tmp/../tmp/"), "/tmp")
+                .build();
     }
 }
