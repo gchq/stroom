@@ -57,8 +57,6 @@ public class LuceneSearchProvider implements SearchProvider {
     private final SecurityContext securityContext;
     private final CoprocessorsFactory coprocessorsFactory;
     private final ResultStoreFactory resultStoreFactory;
-    private final TaskContextFactory taskContextFactory;
-    private final ExecutorProvider executorProvider;
     private final FederatedSearchExecutor federatedSearchExecutor;
     private final NodeSearchTaskCreator nodeSearchTaskCreator;
     private final LuceneProviderFactory luceneProviderFactory;
@@ -71,8 +69,6 @@ public class LuceneSearchProvider implements SearchProvider {
                                 final SecurityContext securityContext,
                                 final CoprocessorsFactory coprocessorsFactory,
                                 final ResultStoreFactory resultStoreFactory,
-                                final TaskContextFactory taskContextFactory,
-                                final ExecutorProvider executorProvider,
                                 final FederatedSearchExecutor federatedSearchExecutor,
                                 final NodeSearchTaskCreator nodeSearchTaskCreator,
                                 final LuceneProviderFactory luceneProviderFactory,
@@ -81,8 +77,6 @@ public class LuceneSearchProvider implements SearchProvider {
         this.securityContext = securityContext;
         this.coprocessorsFactory = coprocessorsFactory;
         this.resultStoreFactory = resultStoreFactory;
-        this.taskContextFactory = taskContextFactory;
-        this.executorProvider = executorProvider;
         this.federatedSearchExecutor = federatedSearchExecutor;
         this.nodeSearchTaskCreator = nodeSearchTaskCreator;
         this.luceneProviderFactory = luceneProviderFactory;
