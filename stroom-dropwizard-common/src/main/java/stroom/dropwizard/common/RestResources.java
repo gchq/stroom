@@ -8,9 +8,10 @@ import stroom.util.logging.LogUtil;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
-import io.dropwizard.setup.Environment;
+import io.dropwizard.core.setup.Environment;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
+import jakarta.ws.rs.Path;
 import org.apache.commons.lang3.StringUtils;
 import org.glassfish.hk2.api.Factory;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
@@ -24,7 +25,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-import javax.ws.rs.Path;
 
 public class RestResources {
 
@@ -63,13 +63,13 @@ public class RestResources {
                             provider,
                             getResourcePath(resourceClass).orElse(""));
                 })
-                .sorted(Comparator.comparing(ResourceProvider::getResourcePath))
+                .sorted(Comparator.comparing(ResourceProvider::resourcePath))
                 .filter(resourceProvider -> filter(maxNameLength, allPaths, resourceProvider))
                 .collect(Collectors.toList());
 
         environment.jersey().register(new HK2toGuiceModule(resourceProviders));
         resourceProviders.forEach(resourceProvider ->
-                environment.jersey().register(resourceProvider.getResourceClass()));
+                environment.jersey().register(resourceProvider.resourceClass()));
     }
 
     private Optional<String> getResourcePath(final Class<?> restResourceClass) {
@@ -88,24 +88,28 @@ public class RestResources {
     private boolean filter(final int maxNameLength,
                            final Set<String> allPaths,
                            final ResourceProvider resourceProvider) {
-        final String name = resourceProvider.getResourceClass().getName();
-        if (allPaths.contains(resourceProvider.getResourcePath())) {
+        final String name = resourceProvider.resourceClass().getName();
+        if (allPaths.contains(resourceProvider.resourcePath())) {
             LOGGER.error("\t{} => {}   {}",
                     StringUtils.rightPad(name, maxNameLength, " "),
-                    resourceProvider.getResourcePath(),
+                    resourceProvider.resourcePath(),
                     ConsoleColour.red("**Duplicate path**"));
             throw new RuntimeException(LogUtil.message(
                     "Duplicate REST resource path {}",
-                    resourceProvider.getResourcePath()));
+                    resourceProvider.resourcePath()));
         } else {
             LOGGER.info("\t{} => {}",
                     StringUtils.rightPad(name, maxNameLength, " "),
-                    resourceProvider.getResourcePath());
+                    resourceProvider.resourcePath());
         }
 
-        allPaths.add(resourceProvider.getResourcePath());
+        allPaths.add(resourceProvider.resourcePath());
         return true;
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class HK2toGuiceModule extends AbstractBinder {
 
@@ -118,17 +122,15 @@ public class RestResources {
         @Override
         protected void configure() {
             resourceProviders.forEach(resourceProvider ->
-                    bindFactory(new ServiceFactory<>(resourceProvider.getProvider()))
-                            .to(resourceProvider.getResourceClass()));
+                    bindFactory(new ServiceFactory<>(resourceProvider.provider()))
+                            .to(resourceProvider.resourceClass()));
         }
 
-        private static class ServiceFactory<T> implements Factory<T> {
 
-            private final Provider<T> provider;
+        // --------------------------------------------------------------------------------
 
-            ServiceFactory(final Provider<T> provider) {
-                this.provider = provider;
-            }
+
+        private record ServiceFactory<T>(Provider<T> provider) implements Factory<T> {
 
             @Override
             public T provide() {
@@ -141,30 +143,13 @@ public class RestResources {
         }
     }
 
-    private static class ResourceProvider {
 
-        private final Class<?> resourceClass;
-        private final Provider<RestResource> provider;
-        private final String resourcePath;
+    // --------------------------------------------------------------------------------
 
-        public ResourceProvider(final Class<?> resourceClass,
-                                final Provider<RestResource> provider,
-                                final String resourcePath) {
-            this.resourceClass = resourceClass;
-            this.provider = provider;
-            this.resourcePath = resourcePath;
-        }
 
-        public Class<?> getResourceClass() {
-            return resourceClass;
-        }
+    private record ResourceProvider(Class<?> resourceClass,
+                                    Provider<RestResource> provider,
+                                    String resourcePath) {
 
-        public Provider<RestResource> getProvider() {
-            return provider;
-        }
-
-        public String getResourcePath() {
-            return resourcePath;
-        }
     }
 }

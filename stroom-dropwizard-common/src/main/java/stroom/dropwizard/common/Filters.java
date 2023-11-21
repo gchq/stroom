@@ -2,8 +2,10 @@ package stroom.dropwizard.common;
 
 import stroom.util.guice.FilterInfo;
 
-import io.dropwizard.setup.Environment;
+import io.dropwizard.core.setup.Environment;
 import jakarta.inject.Inject;
+import jakarta.servlet.DispatcherType;
+import jakarta.servlet.Filter;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletContextHandler;
@@ -13,8 +15,6 @@ import org.slf4j.LoggerFactory;
 import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.Map;
-import javax.servlet.DispatcherType;
-import javax.servlet.Filter;
 
 public class Filters {
 

@@ -20,7 +20,6 @@ import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.event.dom.client.HasMouseDownHandlers;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.Widget;
-import com.gwtplatform.mvp.client.View;
 
 public interface ButtonView extends HasClickHandlers, HasMouseDownHandlers, Focus {
 

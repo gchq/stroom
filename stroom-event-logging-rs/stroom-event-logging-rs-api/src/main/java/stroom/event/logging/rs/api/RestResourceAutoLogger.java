@@ -16,9 +16,9 @@
 
 package stroom.event.logging.rs.api;
 
-import javax.ws.rs.container.ContainerRequestFilter;
-import javax.ws.rs.ext.ExceptionMapper;
-import javax.ws.rs.ext.WriterInterceptor;
+import jakarta.ws.rs.container.ContainerRequestFilter;
+import jakarta.ws.rs.ext.ExceptionMapper;
+import jakarta.ws.rs.ext.WriterInterceptor;
 
 /**
  * Interface implemented in order to support Automatic logging for Java RS Remote resource method calls.

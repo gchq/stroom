@@ -26,20 +26,20 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class BooleanField extends QueryField {
 
     public BooleanField(final String name) {
-        super(name, Boolean.TRUE, Conditions.DEFAULT_BOOLEAN);
+        super(name, Boolean.TRUE, ConditionSet.DEFAULT_BOOLEAN);
     }
 
     public BooleanField(final String name,
                         final Boolean queryable) {
-        super(name, queryable, Conditions.DEFAULT_BOOLEAN);
+        super(name, queryable, ConditionSet.DEFAULT_BOOLEAN);
     }
 
     @JsonCreator
     public BooleanField(@JsonProperty("name") final String name,
-                        @JsonProperty("conditions") final Conditions conditions,
+                        @JsonProperty("conditionSet") final ConditionSet conditionSet,
                         @JsonProperty("docRefType") final String docRefType,
                         @JsonProperty("queryable") final Boolean queryable) {
-        super(name, conditions, docRefType, queryable);
+        super(name, conditionSet, docRefType, queryable);
     }
 
     @JsonIgnore

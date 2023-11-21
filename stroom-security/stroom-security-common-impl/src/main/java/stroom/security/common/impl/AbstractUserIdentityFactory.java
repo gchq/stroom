@@ -27,6 +27,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.dropwizard.lifecycle.Managed;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.client.WebTarget;
 import org.jose4j.jwt.JwtClaims;
 import org.jose4j.jwt.NumericDate;
 import org.jose4j.jwt.consumer.JwtContext;
@@ -42,9 +45,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.WebTarget;
 
 @Singleton
 public abstract class AbstractUserIdentityFactory implements UserIdentityFactory, Managed {

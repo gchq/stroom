@@ -77,7 +77,7 @@ class TestBasicSearch_EndToEnd extends AbstractCoreIntegrationTest {
                 .collect(Collectors.toMap(QueryField::getName, Function.identity()));
         final QueryField actual = dataSourceFieldsMap.get("Action");
 
-        final QueryField expected = new TextField("Action", actual.getConditions(), null, true);
+        final QueryField expected = new TextField("Action", actual.getConditionSet(), null, true);
 
         assertThat(actual).as("Expected to index action").isEqualTo(expected);
     }

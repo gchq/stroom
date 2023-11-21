@@ -26,7 +26,7 @@ dependencies {
 
     implementation libs.dropwizard_validation
     implementation libs.eventLogging
-    implementation libs.guice7
+    implementation libs.guice
     implementation libs.jackson_annotations
     implementation libs.jakarta_validation_api
     implementation libs.jakarta_inject
@@ -37,12 +37,12 @@ dependencies {
     implementation libs.ws_rs_api
 
     runtimeOnly libs.mysql_connector_java
-    
+
     testImplementation project(':stroom-security:stroom-security-mock')
-    
+
     testImplementation libs.assertj_core
     testImplementation libs.junit_jupiter_api
-    
+
     // the following logging libs are needed when running junits outside dropwizard
     testRuntimeOnly libs.jakarta_activation
     testRuntimeOnly libs.jaxb_impl

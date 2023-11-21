@@ -9,13 +9,13 @@ import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.Param;
 import stroom.query.api.v2.TimeRange;
 
+import jakarta.xml.bind.JAXBException;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
-import javax.xml.bind.JAXBException;
 
 class TestProcessorFilterMarshaller {
 

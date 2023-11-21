@@ -20,8 +20,7 @@ import stroom.meta.api.AttributeMap;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 @Singleton
 public class EventResourceImpl implements EventResource {

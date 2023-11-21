@@ -21,7 +21,7 @@ dependencies {
     implementation project(':stroom-util-shared')
 
     implementation libs.eventLogging
-    implementation libs.guice7
+    implementation libs.guice
     implementation libs.jackson_annotations
     implementation libs.jackson_core
     implementation libs.jackson_databind
@@ -32,14 +32,14 @@ dependencies {
     implementation libs.restygwt
     implementation libs.slf4j_api
     implementation libs.ws_rs_api
-    
+
     testImplementation project(':stroom-test-common')
     testImplementation libs.assertj_core
     testImplementation libs.jersey_server
     testImplementation libs.junit_jupiter_api
     testImplementation libs.mockito_core
     testImplementation libs.mockito_junit_jupiter
-    
+
     // the following logging libs are needed when running junits outside dropwizard
     testRuntimeOnly libs.jakarta_activation
     testRuntimeOnly libs.jaxb_impl

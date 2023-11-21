@@ -4,6 +4,6 @@ dependencies {
     implementation project(':stroom-activity:stroom-activity-api')
     implementation project(':stroom-core-shared')
     
-    implementation libs.guice7
+    implementation libs.guice
     implementation libs.jackson_annotations
 }

@@ -6,14 +6,14 @@ import stroom.util.shared.IsServlet;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
 import java.io.Writer;
 import java.util.Set;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 public class ProxyWelcomeServlet extends HttpServlet implements IsServlet {
 

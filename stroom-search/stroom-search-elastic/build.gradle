@@ -30,9 +30,9 @@ dependencies {
 
     implementation libs.dropwizard_metrics_annotation
     implementation libs.eventLogging
-    implementation libs.guice7
-    implementation libs.httpcore
-    implementation libs.http_client
+    implementation libs.guice
+    implementation libs.httpcore__elastic
+    implementation libs.http_client__elastic
     implementation libs.jackson_annotations
     implementation libs.jakarta_inject
     implementation libs.restygwt
@@ -40,7 +40,7 @@ dependencies {
     implementation libs.slf4j_api
     implementation libs.swagger_annotations
     implementation libs.ws_rs_api
-    implementation libs.xml_apis
+    //implementation libs.xml_apis
 
     testImplementation project(':stroom-test-common')
 

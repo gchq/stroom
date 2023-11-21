@@ -8,9 +8,9 @@ import stroom.util.time.StroomDuration;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import jakarta.validation.constraints.NotNull;
 
 import java.util.Objects;
-import javax.validation.constraints.NotNull;
 
 @JsonPropertyOrder(alphabetic = true)
 @NotInjectableConfig

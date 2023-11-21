@@ -18,7 +18,7 @@ dependencies {
     implementation project(':stroom-util-shared')
 
     implementation libs.guava
-    implementation libs.guice7
+    implementation libs.guice
     implementation libs.jackson_annotations
     implementation libs.jakarta_validation_api
     implementation libs.jakarta_inject
@@ -28,7 +28,7 @@ dependencies {
     implementation libs.saxon_he
     implementation libs.slf4j_api
     implementation libs.vavr
-    implementation libs.xml_apis
+    //implementation libs.xml_apis
 
     testImplementation libs.assertj_core
     testImplementation libs.junit_jupiter_api

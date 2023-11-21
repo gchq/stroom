@@ -10165,7 +10165,13 @@
         }, {
           "type" : "object",
           "properties" : {
-            "emailAddress" : {
+            "bcc" : {
+              "type" : "string"
+            },
+            "cc" : {
+              "type" : "string"
+            },
+            "to" : {
               "type" : "string"
             }
           }
@@ -15918,7 +15924,7 @@
           "propertyName" : "type"
         },
         "properties" : {
-          "conditions" : {
+          "conditionSet" : {
             "type" : "string",
             "enum" : [ "'=', 'between', '>', '>=', '<', '<='", "'=', 'in', 'in dictionary', 'between', '>', '>=', '<', '<='", "'='", "'=', 'between', '>', '>=', '<', '<='", "'=', 'in', 'in dictionary'", "'is', 'in folder'", "'=', 'in', 'in dictionary'", "'is', 'in folder', '=', 'in', 'in dictionary'", "'=', 'in', 'in dictionary'", "'=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', 'in', 'in dictionary', 'matches regex'", "'=', 'in', 'in dictionary'", "'=', 'in', 'in dictionary'", "'=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'='", "'=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', 'in', 'in dictionary'", "'is', '='", "'between'", "'=', 'in'", "'=', 'in'", "'=', 'in', 'in dictionary'", "'=', 'in', 'in dictionary', 'is'", "'=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'" ]
           },

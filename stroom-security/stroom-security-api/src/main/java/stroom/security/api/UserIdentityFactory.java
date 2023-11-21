@@ -1,8 +1,9 @@
 package stroom.security.api;
 
+import jakarta.servlet.http.HttpServletRequest;
+
 import java.util.Map;
 import java.util.Optional;
-import javax.servlet.http.HttpServletRequest;
 
 public interface UserIdentityFactory {
 

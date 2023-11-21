@@ -16,7 +16,7 @@
 
 package stroom.query.field.impl.db;
 
-import stroom.datasource.api.v2.Conditions;
+import stroom.datasource.api.v2.ConditionSet;
 import stroom.datasource.api.v2.FieldInfo;
 import stroom.datasource.api.v2.FieldType;
 import stroom.datasource.api.v2.FindFieldInfoCriteria;
@@ -136,7 +136,7 @@ public class QueryFieldDaoImpl implements QueryFieldDao {
                     final byte typeId = r.get(FIELD_INFO.FIELD_TYPE);
                     final String name = r.get(FIELD_INFO.FIELD_NAME);
                     final FieldType fieldType = FieldType.get(typeId);
-                    final Conditions conditions = Conditions.getDefault(fieldType);
+                    final ConditionSet conditions = ConditionSet.getDefault(fieldType);
                     return new FieldInfo(fieldType, name, conditions, null, null);
                 });
         return ResultPage.createCriterialBasedList(fieldInfoList, criteria);

@@ -14,8 +14,6 @@ import org.jooq.impl.SchemaImpl;
 
 import java.util.Arrays;
 import java.util.List;
-import stroom.explorer.impl.db.jooq.tables.ExplorerNode;
-import stroom.explorer.impl.db.jooq.tables.ExplorerPath;
 
 
 /**

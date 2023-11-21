@@ -26,20 +26,20 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public abstract class AbstractNumericField extends QueryField {
 
     public AbstractNumericField(final String name) {
-        super(name, Boolean.TRUE, Conditions.DEFAULT_NUMERIC);
+        super(name, Boolean.TRUE, ConditionSet.DEFAULT_NUMERIC);
     }
 
     public AbstractNumericField(final String name,
                                 final Boolean queryable) {
-        super(name, queryable, Conditions.DEFAULT_NUMERIC);
+        super(name, queryable, ConditionSet.DEFAULT_NUMERIC);
     }
 
     @JsonCreator
     public AbstractNumericField(@JsonProperty("name") final String name,
-                                @JsonProperty("conditions") final Conditions conditions,
+                                @JsonProperty("conditionSet") final ConditionSet conditionSet,
                                 @JsonProperty("docRefType") final String docRefType,
                                 @JsonProperty("queryable") final Boolean queryable) {
-        super(name, conditions, docRefType, queryable);
+        super(name, conditionSet, docRefType, queryable);
     }
 
     @JsonIgnore

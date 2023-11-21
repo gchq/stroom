@@ -9,7 +9,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public enum Conditions {
+public enum ConditionSet {
     DEFAULT_NUMERIC(
             Condition.EQUALS,
             Condition.BETWEEN,
@@ -156,46 +156,46 @@ public enum Conditions {
     private final List<Condition> conditionList;
     private final Set<Condition> conditionSet;
 
-    public static Conditions getDefault(final FieldType fieldType) {
+    public static ConditionSet getDefault(final FieldType fieldType) {
         switch (fieldType) {
             case ID: {
-                return Conditions.DEFAULT_ID;
+                return ConditionSet.DEFAULT_ID;
             }
             case BOOLEAN: {
-                return Conditions.DEFAULT_BOOLEAN;
+                return ConditionSet.DEFAULT_BOOLEAN;
             }
             case INTEGER: {
-                return Conditions.DEFAULT_NUMERIC;
+                return ConditionSet.DEFAULT_NUMERIC;
             }
             case LONG: {
-                return Conditions.DEFAULT_NUMERIC;
+                return ConditionSet.DEFAULT_NUMERIC;
             }
             case FLOAT: {
-                return Conditions.DEFAULT_NUMERIC;
+                return ConditionSet.DEFAULT_NUMERIC;
             }
             case DOUBLE: {
-                return Conditions.DEFAULT_NUMERIC;
+                return ConditionSet.DEFAULT_NUMERIC;
             }
             case DATE: {
-                return Conditions.DEFAULT_DATE;
+                return ConditionSet.DEFAULT_DATE;
             }
             case TEXT: {
-                return Conditions.DEFAULT_TEXT;
+                return ConditionSet.DEFAULT_TEXT;
             }
             case KEYWORD: {
-                return Conditions.DEFAULT_KEYWORD;
+                return ConditionSet.DEFAULT_KEYWORD;
             }
             case IPV4_ADDRESS: {
-                return Conditions.DEFAULT_NUMERIC;
+                return ConditionSet.DEFAULT_NUMERIC;
             }
             case DOC_REF: {
-                return Conditions.DOC_REF_ALL;
+                return ConditionSet.DOC_REF_ALL;
             }
         }
         throw new RuntimeException("Unknown field type");
     }
 
-    public static Conditions getUiDefaultConditions(final FieldType fieldType) {
+    public static ConditionSet getUiDefaultConditions(final FieldType fieldType) {
         if (fieldType != null) {
             if (FieldType.DOC_REF.equals(fieldType)) {
                 return UI_DOC_REF;
@@ -209,7 +209,7 @@ public enum Conditions {
         return UI_TEXT;
     }
 
-    Conditions(Condition... arr) {
+    ConditionSet(Condition... arr) {
         conditionList = Arrays.asList(arr);
         conditionSet = new HashSet<>(conditionList);
     }

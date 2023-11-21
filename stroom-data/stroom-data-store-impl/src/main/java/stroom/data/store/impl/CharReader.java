@@ -3,6 +3,7 @@ package stroom.data.store.impl;
 import stroom.pipeline.reader.ByteStreamDecoder;
 import stroom.pipeline.reader.ByteStreamDecoder.DecodedChar;
 
+import jakarta.validation.constraints.NotNull;
 import org.apache.commons.io.ByteOrderMark;
 import org.apache.commons.io.input.BOMInputStream;
 import org.slf4j.Logger;
@@ -15,7 +16,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Supplier;
-import javax.validation.constraints.NotNull;
 
 /**
  * Reads the bytes in an {@link InputStream} and decodes them into {@link DecodedChar} instances

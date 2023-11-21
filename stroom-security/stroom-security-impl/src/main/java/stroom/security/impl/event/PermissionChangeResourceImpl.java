@@ -24,8 +24,7 @@ import stroom.util.shared.ResourcePaths;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
-
-import javax.ws.rs.client.Entity;
+import jakarta.ws.rs.client.Entity;
 
 @Singleton
 @AutoLogged(OperationType.UNLOGGED) //Perm changes logged by DocPermissionResourceImpl

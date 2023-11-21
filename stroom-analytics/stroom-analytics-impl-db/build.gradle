@@ -23,7 +23,7 @@ dependencies {
 
     implementation libs.dropwizard_metrics_healthchecks
     implementation libs.flyway_core
-    implementation libs.guice7
+    implementation libs.guice
     implementation libs.hikari
     implementation libs.jackson_annotations
     implementation libs.jackson_core

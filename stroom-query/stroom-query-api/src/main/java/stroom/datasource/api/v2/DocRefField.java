@@ -23,21 +23,21 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-@JsonPropertyOrder({"type", "docRefType", "name", "queryable", "conditions"})
+@JsonPropertyOrder({"type", "docRefType", "name", "queryable", "conditionSet"})
 @JsonInclude(Include.NON_NULL)
 public class DocRefField extends QueryField {
 
     public DocRefField(final String docRefType,
                        final String name) {
-        super(name, Conditions.DOC_REF_UUID, docRefType, Boolean.TRUE);
+        super(name, ConditionSet.DOC_REF_UUID, docRefType, Boolean.TRUE);
     }
 
     @JsonCreator
     public DocRefField(@JsonProperty("name") final String name,
-                       @JsonProperty("conditions") final Conditions conditions,
+                       @JsonProperty("conditionSet") final ConditionSet conditionSet,
                        @JsonProperty("docRefType") final String docRefType,
                        @JsonProperty("queryable") final Boolean queryable) {
-        super(name, conditions, docRefType, queryable);
+        super(name, conditionSet, docRefType, queryable);
     }
 
     /**
@@ -46,7 +46,7 @@ public class DocRefField extends QueryField {
      */
     public static DocRefField byUniqueName(final String docRefType,
                                            final String name) {
-        return new DocRefField(name, Conditions.DOC_REF_ALL, docRefType, Boolean.TRUE);
+        return new DocRefField(name, ConditionSet.DOC_REF_ALL, docRefType, Boolean.TRUE);
     }
 
     /**
@@ -56,7 +56,7 @@ public class DocRefField extends QueryField {
      */
     public static DocRefField byNonUniqueName(final String docRefType,
                                               final String name) {
-        return new DocRefField(name, Conditions.DOC_REF_NAME, docRefType, Boolean.TRUE);
+        return new DocRefField(name, ConditionSet.DOC_REF_NAME, docRefType, Boolean.TRUE);
     }
 
     /**
@@ -67,7 +67,7 @@ public class DocRefField extends QueryField {
      */
     public static DocRefField byUuid(final String docRefType,
                                      final String name) {
-        return new DocRefField(name, Conditions.DOC_REF_UUID, docRefType, Boolean.TRUE);
+        return new DocRefField(name, ConditionSet.DOC_REF_UUID, docRefType, Boolean.TRUE);
     }
 
     @JsonIgnore

@@ -12,9 +12,11 @@ dependencies {
     implementation libs.data_faker
     implementation libs.dropwizard_jersey
     implementation libs.dropwizard_testing
+    implementation libs.dropwizard_validation
     implementation libs.flyway_core
+    implementation libs.flyway_mysql
     implementation libs.guava
-    implementation libs.guice7
+    implementation libs.guice
     implementation libs.hikari
     implementation libs.jgit
     implementation libs.jooq

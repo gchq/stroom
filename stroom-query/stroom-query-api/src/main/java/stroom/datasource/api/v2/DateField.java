@@ -26,20 +26,20 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class DateField extends QueryField {
 
     public DateField(final String name) {
-        super(name, Boolean.TRUE, Conditions.DEFAULT_DATE);
+        super(name, Boolean.TRUE, ConditionSet.DEFAULT_DATE);
     }
 
     public DateField(final String name,
                      final Boolean queryable) {
-        super(name, queryable, Conditions.DEFAULT_DATE);
+        super(name, queryable, ConditionSet.DEFAULT_DATE);
     }
 
     @JsonCreator
     public DateField(@JsonProperty("name") final String name,
-                     @JsonProperty("conditions") final Conditions conditions,
+                     @JsonProperty("conditionSet") final ConditionSet conditionSet,
                      @JsonProperty("docRefType") final String docRefType,
                      @JsonProperty("queryable") final Boolean queryable) {
-        super(name, conditions, docRefType, queryable);
+        super(name, conditionSet, docRefType, queryable);
     }
 
     @JsonIgnore

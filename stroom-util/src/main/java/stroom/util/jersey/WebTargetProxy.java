@@ -1,12 +1,13 @@
 package stroom.util.jersey;
 
+import jakarta.ws.rs.client.Invocation.Builder;
+import jakarta.ws.rs.client.WebTarget;
+import jakarta.ws.rs.core.Configuration;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.UriBuilder;
+
 import java.net.URI;
 import java.util.Map;
-import javax.ws.rs.client.Invocation.Builder;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.Configuration;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.UriBuilder;
 
 public class WebTargetProxy implements WebTarget {
 

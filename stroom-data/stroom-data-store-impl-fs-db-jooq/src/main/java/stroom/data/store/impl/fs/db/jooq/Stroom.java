@@ -4,13 +4,6 @@
 package stroom.data.store.impl.fs.db.jooq;
 
 
-import java.util.Arrays;
-import java.util.List;
-
-import org.jooq.Catalog;
-import org.jooq.Table;
-import org.jooq.impl.SchemaImpl;
-
 import stroom.data.store.impl.fs.db.jooq.tables.FsFeedPath;
 import stroom.data.store.impl.fs.db.jooq.tables.FsMetaVolume;
 import stroom.data.store.impl.fs.db.jooq.tables.FsOrphanedMetaTracker;
@@ -18,6 +11,13 @@ import stroom.data.store.impl.fs.db.jooq.tables.FsTypePath;
 import stroom.data.store.impl.fs.db.jooq.tables.FsVolume;
 import stroom.data.store.impl.fs.db.jooq.tables.FsVolumeGroup;
 import stroom.data.store.impl.fs.db.jooq.tables.FsVolumeState;
+
+import org.jooq.Catalog;
+import org.jooq.Table;
+import org.jooq.impl.SchemaImpl;
+
+import java.util.Arrays;
+import java.util.List;
 
 
 /**

@@ -12,12 +12,12 @@ import stroom.util.logging.LambdaLoggerFactory;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
-import javax.servlet.http.HttpServletRequest;
 
 public class RequestAuthenticatorImpl implements RequestAuthenticator {
 

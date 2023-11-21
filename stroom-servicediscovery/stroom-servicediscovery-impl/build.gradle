@@ -17,7 +17,7 @@ dependencies {
     implementation libs.curator_x_discovery
     implementation libs.dropwizard_metrics_healthchecks
     implementation libs.guava
-    implementation libs.guice7
+    implementation libs.guice
     implementation libs.vavr
     implementation libs.jackson_annotations
     implementation libs.jakarta_inject

@@ -26,8 +26,7 @@ import stroom.util.servlet.SessionIdProvider;
 import stroom.util.shared.ResourcePaths;
 
 import com.google.inject.AbstractModule;
-
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 public class ServletModule extends AbstractModule {
 

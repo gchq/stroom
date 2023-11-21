@@ -18,7 +18,7 @@ dependencies {
 //    implementation project(':stroom-docref')
 
 //    implementation libs.flyway_core
-    implementation libs.guice7
+    implementation libs.guice
 //    implementation libs.hikari
     implementation libs.jackson_annotations
 //    implementation libs.jackson_databind

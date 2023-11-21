@@ -1267,7 +1267,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ConfigProperty'
           description: default response
-      summary: Fetch a property by its name, e.g. 'stroom.path.home'
+      summary: "Fetch a property by its name, e.g. 'stroom.path.home'"
       tags:
       - Global Config
   /content/v1/export:
@@ -2109,7 +2109,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/DocRef'
           description: default response
-      summary: Decorate the docRef will all values, e.g. add the name
+      summary: "Decorate the docRef will all values, e.g. add the name"
       tags:
       - Explorer (v2)
   /explorer/v2/delete:
@@ -2292,8 +2292,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/ExplorerNode'
           description: default response
-      summary: Get a node from a document reference, decorated with its root node
-        UUID
+      summary: "Get a node from a document reference, decorated with its root node\
+        \ UUID"
       tags:
       - Explorer (v2)
   /explorer/v2/info:
@@ -3208,9 +3208,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/NodeSetJobsEnabledResponse'
           description: default response
-      summary: Sets the enabled state of jobs for the selected node. If both `includeJobs`
-        and `excludeJobs` are unspecified or empty, this action will apply to ALL
-        jobs.
+      summary: "Sets the enabled state of jobs for the selected node. If both `includeJobs`\
+        \ and `excludeJobs` are unspecified or empty, this action will apply to ALL\
+        \ jobs."
       tags:
       - Jobs
   /job/v1/{id}/enabled:
@@ -3553,7 +3553,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Meta'
           description: default response
-      summary: Get a meta record for a given id, if permitted.
+      summary: "Get a meta record for a given id, if permitted."
       tags:
       - Meta
   /node/v1/all:
@@ -4785,8 +4785,8 @@ paths:
               schema:
                 type: boolean
           description: default response
-      summary: Explicitly delete all entries that are older than purgeAge. Performed
-        on the named node, or all nodes if null.
+      summary: "Explicitly delete all entries that are older than purgeAge. Performed\
+        \ on the named node, or all nodes if null."
       tags:
       - Reference Data
   /refData/v1/purgeByFeedByAge/{feedName}/{purgeAge}:
@@ -4814,8 +4814,8 @@ paths:
               schema:
                 type: boolean
           description: default response
-      summary: Explicitly delete all entries belonging to a feed that are older than
-        purgeAge.Performed on the named node, or all nodes if null.
+      summary: "Explicitly delete all entries belonging to a feed that are older than\
+        \ purgeAge.Performed on the named node, or all nodes if null."
       tags:
       - Reference Data
   /refData/v1/purgeByStream/{refStreamId}:
@@ -5319,8 +5319,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/SessionListResponse'
           description: default response
-      summary: Lists user sessions for a node, or all nodes in the cluster if nodeName
-        is null
+      summary: "Lists user sessions for a node, or all nodes in the cluster if nodeName\
+        \ is null"
       tags:
       - Sessions
   /session/v1/logout:
@@ -5358,7 +5358,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ValidateSessionResponse'
           description: default response
-      summary: Validate the current session, return a redirect Uri if invalid.
+      summary: "Validate the current session, return a redirect Uri if invalid."
       tags:
       - Sessions
   /sessionInfo/v1:
@@ -6422,8 +6422,9 @@ paths:
                 items:
                   $ref: '#/components/schemas/User'
           description: default response
-      summary: Creates a batch of users from a list of CSV entries. Each line is of
-        the form 'id,displayName,fullName', where displayName and fullName are optional
+      summary: "Creates a batch of users from a list of CSV entries. Each line is\
+        \ of the form 'id,displayName,fullName', where displayName and fullName are\
+        \ optional"
       tags:
       - Authorisation
   /users/v1/find:
@@ -6988,7 +6989,11 @@ components:
       - $ref: '#/components/schemas/AnalyticNotificationDestination'
       - type: object
         properties:
-          emailAddress:
+          bcc:
+            type: string
+          cc:
+            type: string
+          to:
             type: string
     AnalyticNotificationStreamDestination:
       type: object
@@ -7862,17 +7867,18 @@ components:
         timeout:
           type: integer
           format: int64
-          description: Set the maximum time (in ms) for the server to wait for a complete
-            result set. The timeout applies to both incremental and non incremental
-            queries, though the behaviour is slightly different. The timeout will
-            make the server wait for which ever comes first out of the query completing
-            or the timeout period being reached. If no value is supplied then for
-            an incremental query a default value of 0 will be used (i.e. returning
-            immediately) and for a non-incremental query the server's default timeout
-            period will be used. For an incremental query, if the query has not completed
-            by the end of the timeout period, it will return the currently know results
-            with complete=false, however for a non-incremental query it will return
-            no results, complete=false and details of the timeout in the error field
+          description: "Set the maximum time (in ms) for the server to wait for a\
+            \ complete result set. The timeout applies to both incremental and non\
+            \ incremental queries, though the behaviour is slightly different. The\
+            \ timeout will make the server wait for which ever comes first out of\
+            \ the query completing or the timeout period being reached. If no value\
+            \ is supplied then for an incremental query a default value of 0 will\
+            \ be used (i.e. returning immediately) and for a non-incremental query\
+            \ the server's default timeout period will be used. For an incremental\
+            \ query, if the query has not completed by the end of the timeout period,\
+            \ it will return the currently know results with complete=false, however\
+            \ for a non-incremental query it will return no results, complete=false\
+            \ and details of the timeout in the error field"
     DashboardSearchResponse:
       type: object
       properties:
@@ -9565,13 +9571,14 @@ components:
       - field
     Field:
       type: object
-      description: Describes a field in a result set. The field can have various expressions
-        applied to it, e.g. SUM(), along with sorting, filtering, formatting and grouping
+      description: "Describes a field in a result set. The field can have various\
+        \ expressions applied to it, e.g. SUM(), along with sorting, filtering, formatting\
+        \ and grouping"
       properties:
         expression:
           type: string
           description: The expression to use to generate the value for this field
-          example: SUM(${count})
+          example: "SUM(${count})"
         filter:
           $ref: '#/components/schemas/Filter'
         format:
@@ -9593,32 +9600,31 @@ components:
         conditions:
           type: string
           enum:
-          - '''='', ''between'', ''>'', ''>='', ''<'', ''<='''
-          - '''='', ''in'', ''in dictionary'', ''between'', ''>'', ''>='', ''<'',
-            ''<='''
+          - "'=', 'between', '>', '>=', '<', '<='"
+          - "'=', 'in', 'in dictionary', 'between', '>', '>=', '<', '<='"
           - '''='''
-          - '''='', ''between'', ''>'', ''>='', ''<'', ''<='''
-          - '''='', ''in'', ''in dictionary'''
-          - '''is'', ''in folder'''
-          - '''='', ''in'', ''in dictionary'''
-          - '''is'', ''in folder'', ''='', ''in'', ''in dictionary'''
-          - '''='', ''in'', ''in dictionary'''
-          - '''='', ''>'', ''>='', ''<'', ''<='', ''between'', ''in'', ''in dictionary'''
-          - '''='', ''in'', ''in dictionary'', ''matches regex'''
-          - '''='', ''in'', ''in dictionary'''
-          - '''='', ''in'', ''in dictionary'''
-          - '''='', ''>'', ''>='', ''<'', ''<='', ''between'', ''in'', ''in dictionary'''
+          - "'=', 'between', '>', '>=', '<', '<='"
+          - "'=', 'in', 'in dictionary'"
+          - "'is', 'in folder'"
+          - "'=', 'in', 'in dictionary'"
+          - "'is', 'in folder', '=', 'in', 'in dictionary'"
+          - "'=', 'in', 'in dictionary'"
+          - "'=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'"
+          - "'=', 'in', 'in dictionary', 'matches regex'"
+          - "'=', 'in', 'in dictionary'"
+          - "'=', 'in', 'in dictionary'"
+          - "'=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'"
           - '''='''
-          - '''='', ''>'', ''>='', ''<'', ''<='', ''between'', ''in'', ''in dictionary'''
-          - '''='', ''in'', ''in dictionary'''
-          - '''is'', ''='''
+          - "'=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'"
+          - "'=', 'in', 'in dictionary'"
+          - "'is', '='"
           - '''between'''
-          - '''='', ''in'''
-          - '''='', ''in'''
-          - '''='', ''in'', ''in dictionary'''
-          - '''='', ''in'', ''in dictionary'', ''is'''
-          - '''='', ''>'', ''>='', ''<'', ''<='', ''between'', ''in'', ''in dictionary'''
-          - '''='', ''>'', ''>='', ''<'', ''<='', ''between'', ''in'', ''in dictionary'''
+          - "'=', 'in'"
+          - "'=', 'in'"
+          - "'=', 'in', 'in dictionary'"
+          - "'=', 'in', 'in dictionary', 'is'"
+          - "'=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'"
+          - "'=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'"
         docRefType:
           type: string
         fieldName:
@@ -9647,11 +9653,11 @@ components:
         excludes:
           type: string
           description: Only results NOT matching this filter will be included
-          example: ^[0-9]{3}$
+          example: "^[0-9]{3}$"
         includes:
           type: string
           description: Only results matching this filter will be included
-          example: ^[0-9]{3}$
+          example: "^[0-9]{3}$"
     FilterFieldDefinition:
       type: object
       properties:
@@ -10976,8 +10982,8 @@ components:
         offset:
           type: integer
           format: int64
-          description: The start offset for this sub-set of data, where zero is the
-            offset of the first record in the full result set
+          description: "The start offset for this sub-set of data, where zero is the\
+            \ offset of the first record in the full result set"
           example: 0
       required:
       - length
@@ -11952,35 +11958,34 @@ components:
       discriminator:
         propertyName: type
       properties:
-        conditions:
+        conditionSet:
           type: string
           enum:
-          - '''='', ''between'', ''>'', ''>='', ''<'', ''<='''
-          - '''='', ''in'', ''in dictionary'', ''between'', ''>'', ''>='', ''<'',
-            ''<='''
+          - "'=', 'between', '>', '>=', '<', '<='"
+          - "'=', 'in', 'in dictionary', 'between', '>', '>=', '<', '<='"
           - '''='''
-          - '''='', ''between'', ''>'', ''>='', ''<'', ''<='''
-          - '''='', ''in'', ''in dictionary'''
-          - '''is'', ''in folder'''
-          - '''='', ''in'', ''in dictionary'''
-          - '''is'', ''in folder'', ''='', ''in'', ''in dictionary'''
-          - '''='', ''in'', ''in dictionary'''
-          - '''='', ''>'', ''>='', ''<'', ''<='', ''between'', ''in'', ''in dictionary'''
-          - '''='', ''in'', ''in dictionary'', ''matches regex'''
-          - '''='', ''in'', ''in dictionary'''
-          - '''='', ''in'', ''in dictionary'''
-          - '''='', ''>'', ''>='', ''<'', ''<='', ''between'', ''in'', ''in dictionary'''
+          - "'=', 'between', '>', '>=', '<', '<='"
+          - "'=', 'in', 'in dictionary'"
+          - "'is', 'in folder'"
+          - "'=', 'in', 'in dictionary'"
+          - "'is', 'in folder', '=', 'in', 'in dictionary'"
+          - "'=', 'in', 'in dictionary'"
+          - "'=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'"
+          - "'=', 'in', 'in dictionary', 'matches regex'"
+          - "'=', 'in', 'in dictionary'"
+          - "'=', 'in', 'in dictionary'"
+          - "'=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'"
           - '''='''
-          - '''='', ''>'', ''>='', ''<'', ''<='', ''between'', ''in'', ''in dictionary'''
-          - '''='', ''in'', ''in dictionary'''
-          - '''is'', ''='''
+          - "'=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'"
+          - "'=', 'in', 'in dictionary'"
+          - "'is', '='"
           - '''between'''
-          - '''='', ''in'''
-          - '''='', ''in'''
-          - '''='', ''in'', ''in dictionary'''
-          - '''='', ''in'', ''in dictionary'', ''is'''
-          - '''='', ''>'', ''>='', ''<'', ''<='', ''between'', ''in'', ''in dictionary'''
-          - '''='', ''>'', ''>='', ''<'', ''<='', ''between'', ''in'', ''in dictionary'''
+          - "'=', 'in'"
+          - "'=', 'in'"
+          - "'=', 'in', 'in dictionary'"
+          - "'=', 'in', 'in dictionary', 'is'"
+          - "'=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'"
+          - "'=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'"
         docRefType:
           type: string
         fieldType:
@@ -12811,8 +12816,8 @@ components:
             $ref: '#/components/schemas/UserName'
     ResultRequest:
       type: object
-      description: A definition for how to return the raw results of the query in
-        the SearchResponse, e.g. sorted, grouped, limited, etc.
+      description: "A definition for how to return the raw results of the query in\
+        \ the SearchResponse, e.g. sorted, grouped, limited, etc."
       properties:
         componentId:
           type: string
@@ -12841,8 +12846,8 @@ components:
           $ref: '#/components/schemas/OffsetRange'
         resultStyle:
           type: string
-          description: The style of results required. FLAT will provide a FlatResult
-            object, while TABLE will provide a TableResult object
+          description: "The style of results required. FLAT will provide a FlatResult\
+            \ object, while TABLE will provide a TableResult object"
           enum:
           - FLAT
           - TABLE
@@ -12903,8 +12908,8 @@ components:
         depth:
           type: integer
           format: int32
-          description: The grouping depth, where 0 is the top level of grouping, or
-            where there is no grouping
+          description: "The grouping depth, where 0 is the top level of grouping,\
+            \ or where there is no grouping"
           example: 0
         groupKey:
           type: string
@@ -13114,11 +13119,11 @@ components:
           $ref: '#/components/schemas/DateTimeSettings'
         incremental:
           type: boolean
-          description: If true the response will contain all results found so far,
-            typically no results on the first request. Future requests for the same
-            query key may return more results. Intended for use on longer running
-            searches to allow partial result sets to be returned as soon as they are
-            available rather than waiting for the full result set.
+          description: "If true the response will contain all results found so far,\
+            \ typically no results on the first request. Future requests for the same\
+            \ query key may return more results. Intended for use on longer running\
+            \ searches to allow partial result sets to be returned as soon as they\
+            \ are available rather than waiting for the full result set."
         key:
           $ref: '#/components/schemas/QueryKey'
         query:
@@ -13134,17 +13139,18 @@ components:
         timeout:
           type: integer
           format: int64
-          description: Set the maximum time (in ms) for the server to wait for a complete
-            result set. The timeout applies to both incremental and non incremental
-            queries, though the behaviour is slightly different. The timeout will
-            make the server wait for which ever comes first out of the query completing
-            or the timeout period being reached. If no value is supplied then for
-            an incremental query a default value of 0 will be used (i.e. returning
-            immediately) and for a non-incremental query the server's default timeout
-            period will be used. For an incremental query, if the query has not completed
-            by the end of the timeout period, it will return the currently know results
-            with complete=false, however for a non-incremental query it will return
-            no results, complete=false and details of the timeout in the error field
+          description: "Set the maximum time (in ms) for the server to wait for a\
+            \ complete result set. The timeout applies to both incremental and non\
+            \ incremental queries, though the behaviour is slightly different. The\
+            \ timeout will make the server wait for which ever comes first out of\
+            \ the query completing or the timeout period being reached. If no value\
+            \ is supplied then for an incremental query a default value of 0 will\
+            \ be used (i.e. returning immediately) and for a non-incremental query\
+            \ the server's default timeout period will be used. For an incremental\
+            \ query, if the query has not completed by the end of the timeout period,\
+            \ it will return the currently know results with complete=false, however\
+            \ for a non-incremental query it will return no results, complete=false\
+            \ and details of the timeout in the error field"
       required:
       - incremental
       - query
@@ -13169,8 +13175,9 @@ components:
           - BATCH_SEARCH
     SearchResponse:
       type: object
-      description: The response to a search request, that may or may not contain results.
-        The results may only be a partial set if an iterative screech was requested
+      description: "The response to a search request, that may or may not contain\
+        \ results. The results may only be a partial set if an iterative screech was\
+        \ requested"
       properties:
         complete:
           type: boolean
@@ -13546,7 +13553,7 @@ components:
       properties:
         direction:
           type: string
-          description: The direction to sort in, ASCENDING or DESCENDING
+          description: "The direction to sort in, ASCENDING or DESCENDING"
           enum:
           - ASCENDING
           - DESCENDING
@@ -13554,8 +13561,8 @@ components:
         order:
           type: integer
           format: int32
-          description: Where multiple fields are sorted this value describes the sort
-            order, with 0 being the first field to sort on
+          description: "Where multiple fields are sorted this value describes the\
+            \ sort order, with 0 being the first field to sort on"
           example: 0
       required:
       - direction
@@ -14084,18 +14091,18 @@ components:
             $ref: '#/components/schemas/Field'
         maxResults:
           type: array
-          description: Defines the maximum number of results to return at each grouping
-            level, e.g. '1000,10,1' means 1000 results at group level 0, 10 at level
-            1 and 1 at level 2. In the absence of this field system defaults will
-            apply
-          example: 1000,10,1
+          description: "Defines the maximum number of results to return at each grouping\
+            \ level, e.g. '1000,10,1' means 1000 results at group level 0, 10 at level\
+            \ 1 and 1 at level 2. In the absence of this field system defaults will\
+            \ apply"
+          example: "1000,10,1"
           items:
             type: integer
             format: int64
-            description: Defines the maximum number of results to return at each grouping
-              level, e.g. '1000,10,1' means 1000 results at group level 0, 10 at level
-              1 and 1 at level 2. In the absence of this field system defaults will
-              apply
+            description: "Defines the maximum number of results to return at each\
+              \ grouping level, e.g. '1000,10,1' means 1000 results at group level\
+              \ 0, 10 at level 1 and 1 at level 2. In the absence of this field system\
+              \ defaults will apply"
         pageSize:
           type: integer
           format: int32
@@ -14171,9 +14178,9 @@ components:
       - componentId
     TableSettings:
       type: object
-      description: An object to describe how the query results should be returned,
-        including which fields should be included and what sorting, grouping, filtering,
-        limiting, etc. should be applied
+      description: "An object to describe how the query results should be returned,\
+        \ including which fields should be included and what sorting, grouping, filtering,\
+        \ limiting, etc. should be applied"
       properties:
         aggregateFilter:
           $ref: '#/components/schemas/ExpressionOperator'
@@ -14187,18 +14194,18 @@ components:
             $ref: '#/components/schemas/Field'
         maxResults:
           type: array
-          description: Defines the maximum number of results to return at each grouping
-            level, e.g. '1000,10,1' means 1000 results at group level 0, 10 at level
-            1 and 1 at level 2. In the absence of this field system defaults will
-            apply
-          example: 1000,10,1
+          description: "Defines the maximum number of results to return at each grouping\
+            \ level, e.g. '1000,10,1' means 1000 results at group level 0, 10 at level\
+            \ 1 and 1 at level 2. In the absence of this field system defaults will\
+            \ apply"
+          example: "1000,10,1"
           items:
             type: integer
             format: int64
-            description: Defines the maximum number of results to return at each grouping
-              level, e.g. '1000,10,1' means 1000 results at group level 0, 10 at level
-              1 and 1 at level 2. In the absence of this field system defaults will
-              apply
+            description: "Defines the maximum number of results to return at each\
+              \ grouping level, e.g. '1000,10,1' means 1000 results at group level\
+              \ 0, 10 at level 1 and 1 at level 2. In the absence of this field system\
+              \ defaults will apply"
         queryId:
           type: string
           description: TODO
@@ -14387,7 +14394,7 @@ components:
       properties:
         id:
           type: string
-          description: The id of the time zone, conforming to java.time.ZoneId
+          description: "The id of the time zone, conforming to java.time.ZoneId"
           example: GMT
         offsetHours:
           type: integer
@@ -14401,9 +14408,9 @@ components:
           example: -30
         use:
           type: string
-          description: How the time zone will be specified, e.g. from provided client
-            'Local' time, 'UTC', a recognised timezone 'Id' or an 'Offset' from UTC
-            in hours and minutes.
+          description: "How the time zone will be specified, e.g. from provided client\
+            \ 'Local' time, 'UTC', a recognised timezone 'Id' or an 'Offset' from\
+            \ UTC in hours and minutes."
           enum:
           - Local
           - UTC

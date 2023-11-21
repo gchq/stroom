@@ -1,7 +1,7 @@
 package stroom.db.util;
 
 
-import stroom.datasource.api.v2.Conditions;
+import stroom.datasource.api.v2.ConditionSet;
 import stroom.datasource.api.v2.FieldType;
 import stroom.datasource.api.v2.QueryField;
 import stroom.query.api.v2.ExpressionItem;
@@ -209,7 +209,7 @@ class TestCommonExpressionMapper {
         assertThat(condition.toString())
                 .contains(conditionString(DB_FIELD_NAME_2, FIELD_2_VALUE));
         assertThat(condition.toString())
-                .contains("not ((field1=123))");
+                .contains("not (field1=123)");
     }
 
     @TestFactory
@@ -322,7 +322,7 @@ class TestCommonExpressionMapper {
         private final String name;
 
         public MyDbField(String name) {
-            super(name, true, Conditions.DEFAULT_ID);
+            super(name, true, ConditionSet.DEFAULT_ID);
             this.name = name;
         }
 

@@ -8,11 +8,11 @@ import stroom.explorer.shared.NodeFlag;
 import stroom.util.json.JsonUtil;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.ws.rs.core.Response;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Set;
-import javax.ws.rs.core.Response;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

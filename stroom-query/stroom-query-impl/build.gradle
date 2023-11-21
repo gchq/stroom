@@ -44,7 +44,7 @@ dependencies {
     implementation libs.eventLogging
 //
 //    implementation libs.guava
-    implementation libs.guice7
+    implementation libs.guice
 //    implementation libs.jackson_annotations
 //    implementation libs.jackson_core
 //    implementation libs.jackson_databind

@@ -20,7 +20,7 @@ dependencies {
     implementation project(':stroom-util')
 
     implementation libs.eventLogging
-    implementation libs.guice7
+    implementation libs.guice
     implementation libs.jakarta_inject
     implementation libs.jakarta_servlet_api
     implementation libs.jaxb_api

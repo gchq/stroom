@@ -42,15 +42,14 @@ import event.logging.ViewEventAction;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.ws.rs.NotAuthorizedException;
+import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.RedirectionException;
+import jakarta.ws.rs.core.Response.Status;
+import jakarta.ws.rs.core.UriBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.NotAuthorizedException;
-import javax.ws.rs.NotFoundException;
-import javax.ws.rs.RedirectionException;
-import javax.ws.rs.core.Response.Status;
-import javax.ws.rs.core.UriBuilder;
 
 @Singleton
 @AutoLogged(OperationType.MANUALLY_LOGGED)

@@ -1,8 +1,9 @@
 package stroom.node.api;
 
+import jakarta.ws.rs.ProcessingException;
+import jakarta.ws.rs.WebApplicationException;
+
 import java.net.ConnectException;
-import javax.ws.rs.ProcessingException;
-import javax.ws.rs.WebApplicationException;
 
 public final class NodeCallUtil {
 

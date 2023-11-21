@@ -20,7 +20,7 @@ public class FieldInfo implements HasDisplayValue {
     @JsonProperty
     private final String fieldName;
     @JsonProperty
-    private final Conditions conditions;
+    private final ConditionSet conditions;
     @JsonProperty
     private final String docRefType;
     @JsonProperty
@@ -29,7 +29,7 @@ public class FieldInfo implements HasDisplayValue {
     @JsonCreator
     public FieldInfo(@JsonProperty("fieldType") final FieldType fieldType,
                      @JsonProperty("fieldName") final String fieldName,
-                     @JsonProperty("conditions") final Conditions conditions,
+                     @JsonProperty("conditions") final ConditionSet conditions,
                      @JsonProperty("docRefType") final String docRefType,
                      @JsonProperty("queryable") final Boolean queryable) {
         this.fieldType = fieldType;
@@ -43,7 +43,7 @@ public class FieldInfo implements HasDisplayValue {
         return builder()
                 .fieldType(field.getFieldType())
                 .fieldName(field.getName())
-                .conditions(field.getConditions())
+                .conditions(field.getConditionSet())
                 .docRefType(field.getDocRefType())
                 .build();
     }
@@ -56,7 +56,7 @@ public class FieldInfo implements HasDisplayValue {
         return fieldName;
     }
 
-    public Conditions getConditions() {
+    public ConditionSet getConditions() {
         return conditions;
     }
 
@@ -108,7 +108,7 @@ public class FieldInfo implements HasDisplayValue {
 
         private FieldType fieldType;
         private String fieldName;
-        private Conditions conditions;
+        private ConditionSet conditions;
         private String docRefType;
         private Boolean queryable;
 
@@ -133,7 +133,7 @@ public class FieldInfo implements HasDisplayValue {
             return this;
         }
 
-        public Builder conditions(final Conditions conditions) {
+        public Builder conditions(final ConditionSet conditions) {
             this.conditions = conditions;
             return this;
         }

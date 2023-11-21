@@ -27,12 +27,12 @@ import stroom.util.shared.ResourcePaths;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
+import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 
 import java.util.Objects;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 
 @AutoLogged(OperationType.UNLOGGED)
 class EntityEventResourceImpl implements EntityEventResource {

@@ -41,9 +41,9 @@ import stroom.util.string.StringMatcher;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
+import jakarta.ws.rs.client.Entity;
 
 import java.util.List;
-import javax.ws.rs.client.Entity;
 
 @AutoLogged
 class QueryResourceImpl implements QueryResource {

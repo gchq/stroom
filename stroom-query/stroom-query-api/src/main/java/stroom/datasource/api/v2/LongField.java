@@ -19,9 +19,10 @@ package stroom.datasource.api.v2;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(Include.NON_NULL)
 public class LongField extends AbstractNumericField {
 
     public LongField(final String name) {
@@ -34,10 +35,10 @@ public class LongField extends AbstractNumericField {
 
     @JsonCreator
     public LongField(@JsonProperty("name") final String name,
-                     @JsonProperty("conditions") final Conditions conditions,
+                     @JsonProperty("conditionSet") final ConditionSet conditionSet,
                      @JsonProperty("docRefType") final String docRefType,
                      @JsonProperty("queryable") final Boolean queryable) {
-        super(name, conditions, docRefType, queryable);
+        super(name, conditionSet, docRefType, queryable);
     }
 
     @JsonIgnore

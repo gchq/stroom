@@ -25,7 +25,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @JsonInclude(Include.NON_NULL)
 public class IdField extends AbstractNumericField {
     public IdField(final String name) {
-        super(name, Conditions.DEFAULT_ID, null, Boolean.TRUE);
+        super(name, ConditionSet.DEFAULT_ID, null, Boolean.TRUE);
     }
 
     public IdField(final String name, final Boolean queryable) {
@@ -34,10 +34,10 @@ public class IdField extends AbstractNumericField {
 
     @JsonCreator
     public IdField(@JsonProperty("name") final String name,
-                   @JsonProperty("conditions") final Conditions conditions,
+                   @JsonProperty("conditionSet") final ConditionSet conditionSet,
                    @JsonProperty("docRefType") final String docRefType,
                    @JsonProperty("queryable") final Boolean queryable) {
-        super(name, conditions, docRefType, queryable);
+        super(name, conditionSet, docRefType, queryable);
     }
 
     @JsonIgnore

@@ -432,6 +432,7 @@ public class StoreImpl<D extends Doc> implements Store<D> {
                 dirty.set(true);
 
             } catch (final IOException e) {
+                LOGGER.error(e::getMessage, e);
                 throw new UncheckedIOException(e);
             }
         });

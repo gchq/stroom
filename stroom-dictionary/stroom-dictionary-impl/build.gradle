@@ -15,7 +15,7 @@ dependencies {
     implementation project(':stroom-importexport:stroom-importexport-api')
 
     implementation libs.dropwizard_metrics_annotation
-    implementation libs.guice7
+    implementation libs.guice
     implementation libs.jakarta_inject
     implementation libs.jaxb_api
     implementation libs.restygwt

@@ -13,11 +13,11 @@ dependencies {
     runtimeOnly project(':stroom-security:stroom-security-client')
 
     implementation libs.gin
-    implementation libs.guice3
+    implementation libs.guice__gwt
     implementation libs.gwt_user
     implementation libs.gwtp_mvp_client
     implementation libs.jackson_annotations
-    implementation libs.javax_inject
+    implementation libs.javax_inject__gwt
     implementation libs.jaxb_api
     implementation libs.restygwt
 }

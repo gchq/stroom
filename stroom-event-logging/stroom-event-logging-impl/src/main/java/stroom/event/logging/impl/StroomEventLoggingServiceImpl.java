@@ -65,6 +65,7 @@ import event.logging.util.DeviceUtil;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -84,7 +85,6 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.servlet.http.HttpServletRequest;
 
 @Singleton
 public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService implements StroomEventLoggingService {

@@ -43,7 +43,7 @@ import stroom.util.shared.Clearable;
 
 import com.google.inject.AbstractModule;
 import io.dropwizard.lifecycle.Managed;
-import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 
 public class SecurityModule extends AbstractModule {
 

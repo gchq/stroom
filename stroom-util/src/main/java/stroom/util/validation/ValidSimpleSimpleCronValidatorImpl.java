@@ -5,7 +5,7 @@ import stroom.util.scheduler.SimpleCron;
 import stroom.util.shared.validation.ValidSimpleCron;
 import stroom.util.shared.validation.ValidSimpleCronValidator;
 
-import javax.validation.ConstraintValidatorContext;
+import jakarta.validation.ConstraintValidatorContext;
 
 public class ValidSimpleSimpleCronValidatorImpl implements ValidSimpleCronValidator {
 

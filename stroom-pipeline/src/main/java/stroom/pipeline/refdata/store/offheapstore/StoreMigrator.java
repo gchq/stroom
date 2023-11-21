@@ -13,7 +13,6 @@ import stroom.pipeline.refdata.store.offheapstore.databases.ProcessingInfoDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.RangeStoreDb;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskTerminatedException;
-import stroom.util.concurrent.ThreadUtil;
 import stroom.util.logging.DurationTimer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -74,10 +73,6 @@ public class StoreMigrator {
         this.sourceStore = sourceStore;
         LOGGER.debug(() -> LogUtil.message("Initialising StoreMigrator for stream: {}, destinationStore: {}",
                 refStreamId, destinationStore.getName()));
-
-        LOGGER.warn("Init StoreMigrator");
-        ThreadUtil.sleep(5_000);
-        LOGGER.warn("Done sleeping");
     }
 
     /**

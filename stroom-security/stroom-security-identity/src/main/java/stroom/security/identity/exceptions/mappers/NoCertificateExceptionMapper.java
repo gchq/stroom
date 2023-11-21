@@ -25,11 +25,10 @@ import stroom.security.identity.config.IdentityConfig;
 import stroom.security.identity.exceptions.NoCertificateException;
 
 import jakarta.inject.Inject;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.ext.ExceptionMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.ws.rs.core.Response;
-import javax.ws.rs.ext.ExceptionMapper;
 
 @SuppressWarnings("unused")
 class NoCertificateExceptionMapper implements ExceptionMapper<NoCertificateException> {

@@ -30,7 +30,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 import java.util.Objects;
 
-@JsonPropertyOrder({"type", "docRefType", "name", "queryable", "conditions"})
+@JsonPropertyOrder({"type", "docRefType", "name", "queryable", "conditionSet"})
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
         property = "type")
@@ -53,26 +53,26 @@ public abstract class QueryField implements HasDisplayValue {
     @JsonProperty
     private final String name;
     @JsonProperty
-    private final Conditions conditions;
+    private final ConditionSet conditionSet;
     @JsonProperty
     private final String docRefType;
     @JsonProperty
     private final Boolean queryable;
 
     public QueryField(final String name,
-                      final Conditions conditions,
+                      final ConditionSet conditionSet,
                       final String docRefType,
                       final Boolean queryable) {
         this.name = name;
-        this.conditions = conditions;
+        this.conditionSet = conditionSet;
         this.docRefType = docRefType;
         this.queryable = queryable;
     }
 
     public QueryField(final String name,
                       final Boolean queryable,
-                      final Conditions conditions) {
-        this(name, conditions, null, queryable);
+                      final ConditionSet conditionSet) {
+        this(name, conditionSet, null, queryable);
     }
 
     public abstract FieldType getFieldType();
@@ -81,16 +81,16 @@ public abstract class QueryField implements HasDisplayValue {
         return name;
     }
 
-    public Conditions getConditions() {
-        return conditions;
+    public ConditionSet getConditionSet() {
+        return conditionSet;
     }
 
     public boolean supportsCondition(final Condition condition) {
         Objects.requireNonNull(condition);
-        if (conditions == null) {
+        if (conditionSet == null) {
             return false;
         } else {
-            return conditions.supportsCondition(condition);
+            return conditionSet.supportsCondition(condition);
         }
     }
 

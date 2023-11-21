@@ -7,7 +7,7 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.grapher.graphviz.GraphvizGrapher;
 import com.google.inject.grapher.graphviz.GraphvizModule;
-import io.dropwizard.setup.Environment;
+import io.dropwizard.core.setup.Environment;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;

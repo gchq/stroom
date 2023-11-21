@@ -15,12 +15,12 @@ import stroom.util.jersey.JerseyClientFactory;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
+import jakarta.servlet.http.HttpServletRequest;
 import org.jose4j.jwt.JwtClaims;
 import org.jose4j.jwt.consumer.JwtContext;
 
 import java.util.Objects;
 import java.util.Optional;
-import javax.servlet.http.HttpServletRequest;
 
 @Singleton
 public class ProxyUserIdentityFactory extends AbstractUserIdentityFactory {

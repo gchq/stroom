@@ -19,8 +19,7 @@ package stroom.event.logging.rs.impl;
 import stroom.event.logging.impl.LoggingConfig;
 
 import com.google.inject.AbstractModule;
-
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 public class MockRsLoggingModule extends AbstractModule {
 

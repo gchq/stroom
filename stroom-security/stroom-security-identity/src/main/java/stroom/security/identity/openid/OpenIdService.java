@@ -16,6 +16,9 @@ import stroom.security.openid.api.TokenResponse;
 import com.google.common.base.Objects;
 import event.logging.AuthenticateOutcomeReason;
 import jakarta.inject.Inject;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.ws.rs.core.MultivaluedMap;
+import jakarta.ws.rs.core.UriBuilder;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,9 +31,6 @@ import java.time.temporal.TemporalAmount;
 import java.util.Base64;
 import java.util.Optional;
 import java.util.regex.Pattern;
-import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.core.UriBuilder;
 
 
 class OpenIdService {

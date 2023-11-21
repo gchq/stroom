@@ -5,6 +5,6 @@ dependencies {
     implementation project(':stroom-docref')
 
     implementation libs.jackson_annotations
-    implementation libs.guice7
+    implementation libs.guice
     implementation libs.jaxb_api
 }

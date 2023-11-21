@@ -17,7 +17,7 @@
 package stroom.search.solr.shared;
 
 import stroom.datasource.api.v2.BooleanField;
-import stroom.datasource.api.v2.Conditions;
+import stroom.datasource.api.v2.ConditionSet;
 import stroom.datasource.api.v2.DateField;
 import stroom.datasource.api.v2.DoubleField;
 import stroom.datasource.api.v2.FloatField;
@@ -46,21 +46,21 @@ public final class SolrIndexDataSourceFieldUtil {
     private static QueryField convert(final SolrIndexField field) {
         switch (field.getFieldUse()) {
             case ID:
-                return new IdField(field.getFieldName(), Conditions.SOLR_NUMERIC, null, field.isIndexed());
+                return new IdField(field.getFieldName(), ConditionSet.SOLR_NUMERIC, null, field.isIndexed());
             case BOOLEAN_FIELD:
-                return new BooleanField(field.getFieldName(), Conditions.SOLR_BOOLEAN, null, field.isIndexed());
+                return new BooleanField(field.getFieldName(), ConditionSet.SOLR_BOOLEAN, null, field.isIndexed());
             case INTEGER_FIELD:
-                return new IntegerField(field.getFieldName(), Conditions.SOLR_NUMERIC, null, field.isIndexed());
+                return new IntegerField(field.getFieldName(), ConditionSet.SOLR_NUMERIC, null, field.isIndexed());
             case LONG_FIELD:
-                return new LongField(field.getFieldName(), Conditions.SOLR_NUMERIC, null, field.isIndexed());
+                return new LongField(field.getFieldName(), ConditionSet.SOLR_NUMERIC, null, field.isIndexed());
             case FLOAT_FIELD:
-                return new FloatField(field.getFieldName(), Conditions.SOLR_NUMERIC, null, field.isIndexed());
+                return new FloatField(field.getFieldName(), ConditionSet.SOLR_NUMERIC, null, field.isIndexed());
             case DOUBLE_FIELD:
-                return new DoubleField(field.getFieldName(), Conditions.SOLR_NUMERIC, null, field.isIndexed());
+                return new DoubleField(field.getFieldName(), ConditionSet.SOLR_NUMERIC, null, field.isIndexed());
             case DATE_FIELD:
-                return new DateField(field.getFieldName(), Conditions.SOLR_DATE, null, field.isIndexed());
+                return new DateField(field.getFieldName(), ConditionSet.SOLR_DATE, null, field.isIndexed());
             case FIELD:
-                return new TextField(field.getFieldName(), Conditions.SOLR_TEXT, null, field.isIndexed());
+                return new TextField(field.getFieldName(), ConditionSet.SOLR_TEXT, null, field.isIndexed());
         }
 
         return null;

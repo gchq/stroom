@@ -44,7 +44,7 @@ import stroom.dashboard.shared.TableComponentSettings;
 import stroom.dashboard.shared.TableResultRequest;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
-import stroom.datasource.api.v2.Conditions;
+import stroom.datasource.api.v2.ConditionSet;
 import stroom.datasource.api.v2.DateField;
 import stroom.datasource.api.v2.LongField;
 import stroom.datasource.api.v2.QueryField;
@@ -532,7 +532,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
                 default:
                     // CONTAINS only supported for legacy content, not for use in UI
-                    return new TextField(field.getName(), Conditions.BASIC_TEXT, null, true);
+                    return new TextField(field.getName(), ConditionSet.BASIC_TEXT, null, true);
 
             }
         } catch (Exception e) {
@@ -757,47 +757,45 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     }
 
     private void ensureSpecialFields(final String... indexFieldNames) {
-        // FIXME: RESTORE THIS
-//        // Remove all special fields as we will re-add them with the right names if there are any.
-//        getTableSettings().getFields().removeIf(Field::isSpecial);
-//
-//        // Get special fields from the current data source.
-//        final List<AbstractField> requiredSpecialDsFields = new ArrayList<>();
-//        final List<Field> requiredSpecialFields = new ArrayList<>();
-//        // Get all index fields provided by the datasource
-//        final DataSourceFieldsMap dataSourceFieldsMap = getIndexFieldsMap();
-//        if (dataSourceFieldsMap != null) {
-//            for (final String indexFieldName : indexFieldNames) {
-//                final AbstractField indexField = dataSourceFieldsMap.get(indexFieldName);
-//                if (indexField != null) {
-//                    requiredSpecialDsFields.add(indexField);
-//                    final Field specialField = buildSpecialField(indexFieldName);
-//                    requiredSpecialFields.add(specialField);
-//                }
-//            }
-//
-//            // If the fields we want to make special do exist in the current data source then
-//            // add them.
-//            if (requiredSpecialFields.size() > 0) {
-//                // Prior to the introduction of the special field concept, special fields were
-//                // treated as invisible fields. For this reason we need to remove old invisible
-//                // fields if we haven't yet turned them into special fields.
-//                final Version version = Version.parse(getTableSettings().getModelVersion());
-//                final boolean old = version.lt(CURRENT_MODEL_VERSION);
-//                if (old) {
-//                    requiredSpecialDsFields.forEach(requiredSpecialDsField ->
-//                            getTableSettings().getFields().removeIf(field ->
-//                                    !field.isVisible() && field.getName().equals(requiredSpecialDsField.getName())));
-//                    setSettings(getTableSettings()
-//                            .copy()
-//                            .modelVersion(CURRENT_MODEL_VERSION.toString())
-//                            .build());
-//                }
-//
-//                // Add special fields.
-//                requiredSpecialFields.forEach(field ->
-//                        getTableSettings().getFields().add(field));
-//            }
+        // Remove all special fields as we will re-add them.
+        getTableSettings().getFields().removeIf(Field::isSpecial);
+
+        final Optional<Integer> maxGroup = getTableSettings()
+                .getFields()
+                .stream()
+                .map(Field::getGroup)
+                .filter(Objects::nonNull)
+                .max(Integer::compareTo);
+        if (getTableSettings().getShowDetail() || maxGroup.isEmpty()) {
+            final List<Field> requiredSpecialFields = new ArrayList<>();
+            for (final String indexFieldName : indexFieldNames) {
+                final Field specialField = buildSpecialField(indexFieldName);
+                requiredSpecialFields.add(specialField);
+            }
+
+            // If the fields we want to make special do exist in the current data source then
+            // add them.
+            if (requiredSpecialFields.size() > 0) {
+                // Prior to the introduction of the special field concept, special fields were
+                // treated as invisible fields. For this reason we need to remove old invisible
+                // fields if we haven't yet turned them into special fields.
+                final Version version = Version.parse(getTableSettings().getModelVersion());
+                final boolean old = version.lt(CURRENT_MODEL_VERSION);
+                if (old) {
+                    requiredSpecialFields.forEach(requiredSpecialDsField ->
+                            getTableSettings().getFields().removeIf(field ->
+                                    !field.isVisible() && field.getName().equals(requiredSpecialDsField.getName())));
+                    setSettings(getTableSettings()
+                            .copy()
+                            .modelVersion(CURRENT_MODEL_VERSION.toString())
+                            .build());
+                }
+
+                // Add special fields.
+                requiredSpecialFields.forEach(field ->
+                        getTableSettings().getFields().add(field));
+            }
+        }
 
 //        GWT.log(tableSettings.getFields().stream()
 //                .map(field ->
@@ -821,16 +819,6 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 .special(true)
                 .build();
     }
-
-//    DataSourceFieldsMap getIndexFieldsMap() {
-//        if (currentSearchModel != null
-//                && currentSearchModel.getIndexLoader() != null
-//                && currentSearchModel.getIndexLoader().getDataSourceFieldsMap() != null) {
-//            return currentSearchModel.getIndexLoader().getDataSourceFieldsMap();
-//        }
-//
-//        return null;
-//    }
 
     void updateColumns() {
         // Now make sure special fields exist for stream id and event id.

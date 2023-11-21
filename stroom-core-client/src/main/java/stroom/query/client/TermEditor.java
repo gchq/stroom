@@ -16,7 +16,7 @@
 
 package stroom.query.client;
 
-import stroom.datasource.api.v2.Conditions;
+import stroom.datasource.api.v2.ConditionSet;
 import stroom.datasource.api.v2.FieldInfo;
 import stroom.datasource.api.v2.FieldType;
 import stroom.dispatch.client.RestFactory;
@@ -256,7 +256,7 @@ public class TermEditor extends Composite {
     }
 
     private List<Condition> getConditions(final FieldInfo field) {
-        Conditions conditions;
+        ConditionSet conditions;
         if (field != null && field.getConditions() != null) {
             conditions = field.getConditions();
 
@@ -265,7 +265,7 @@ public class TermEditor extends Composite {
             if (field != null) {
                 fieldType = field.getFieldType();
             }
-            conditions = Conditions.getUiDefaultConditions(fieldType);
+            conditions = ConditionSet.getUiDefaultConditions(fieldType);
         }
 
         return conditions.getConditionList();

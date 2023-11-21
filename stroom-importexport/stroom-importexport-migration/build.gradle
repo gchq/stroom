@@ -10,7 +10,7 @@ dependencies {
     implementation project(':stroom-docref')
 //    //implementation libs.eventLogging
 ////    implementation libs.flyway_core
-//    //implementation libs.guice7
+//    //implementation libs.guice
 //    //implementation libs.jakarta_inject
 //
     implementation libs.jaxb_api

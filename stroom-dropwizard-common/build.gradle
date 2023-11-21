@@ -12,8 +12,8 @@ dependencies {
     implementation libs.dropwizard_jetty
     implementation libs.dropwizard_lifecycle
     implementation libs.dropwizard_metrics_healthchecks
-    implementation libs.dropwizard_websockets
-    implementation libs.guice7
+    //implementation libs.dropwizard_websockets
+    implementation libs.guice
     implementation libs.jakarta_servlet_api
     implementation libs.jakarta_inject
     implementation libs.jetty_servlet

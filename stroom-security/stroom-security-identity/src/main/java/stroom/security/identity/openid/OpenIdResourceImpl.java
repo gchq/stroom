@@ -24,6 +24,11 @@ import event.logging.OtherObject;
 import event.logging.ViewEventAction;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.ws.rs.RedirectionException;
+import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.core.MultivaluedMap;
+import jakarta.ws.rs.core.Response.Status;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.jose4j.jwk.JsonWebKey;
 import org.jose4j.jwk.PublicJsonWebKey;
@@ -34,11 +39,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.RedirectionException;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.core.Response.Status;
 
 @AutoLogged
 class OpenIdResourceImpl implements OpenIdResource {

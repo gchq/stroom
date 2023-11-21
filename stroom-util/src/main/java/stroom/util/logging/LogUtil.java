@@ -10,6 +10,7 @@ import org.slf4j.helpers.MessageFormatter;
 import java.math.BigDecimal;
 import java.math.MathContext;
 import java.math.RoundingMode;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Collection;
@@ -378,5 +379,15 @@ public final class LogUtil {
             sb.append(pluralSuffix);
         }
         return sb.toString();
+    }
+
+    /**
+     * @return The path as an absolute and normalised path or null if path is null
+     */
+    public static String path(final Path path) {
+        return NullSafe.toString(
+                path,
+                Path::toAbsolutePath,
+                Path::normalize);
     }
 }

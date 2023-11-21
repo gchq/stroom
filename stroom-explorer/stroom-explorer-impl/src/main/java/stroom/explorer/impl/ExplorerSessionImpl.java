@@ -6,10 +6,10 @@ import stroom.util.logging.LogUtil;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 
 import java.util.Optional;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
 
 class ExplorerSessionImpl implements ExplorerSession {
 

@@ -9,8 +9,8 @@ dependencies {
     implementation project(':stroom-task:stroom-task-api')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
-    
-    implementation libs.guice7
+
+    implementation libs.guice
     implementation libs.jakarta_inject
     implementation libs.restygwt
     implementation libs.slf4j_api

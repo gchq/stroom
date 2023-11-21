@@ -5,9 +5,11 @@ import stroom.util.logging.LogUtil;
 import stroom.util.shared.ResourcePaths;
 
 import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
-import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
 import com.google.inject.Injector;
-import io.dropwizard.server.DefaultServerFactory;
+import io.dropwizard.core.server.DefaultServerFactory;
+import jakarta.ws.rs.core.GenericType;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response.Status.Family;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.api.parallel.ResourceLock;
@@ -17,9 +19,6 @@ import org.slf4j.LoggerFactory;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Map;
-import javax.ws.rs.core.GenericType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.Status.Family;
 
 
 @ResourceLock(TestResourceLocks.STROOM_APP_PORT_8080)
@@ -35,8 +34,8 @@ public class AbstractEndToEndTest extends AbstractApplicationTest {
     public final WireMockExtension wireMockExtension = mockHttpDestination.createExtension();
 
     @BeforeEach
-    void setup(final WireMockRuntimeInfo wmRuntimeInfo) {
-        LOGGER.info("WireMock running on: {}", wmRuntimeInfo.getHttpBaseUrl());
+    void setup() {
+        LOGGER.info("WireMock running on: {}", wireMockExtension.getRuntimeInfo().getHttpBaseUrl());
         mockHttpDestination.clear();
 
         final App app = getDropwizard().getApplication();

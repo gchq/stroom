@@ -8,13 +8,13 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.dropwizard.validation.ValidationMethod;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Pattern;
 
 
 @JsonPropertyOrder(alphabetic = true)

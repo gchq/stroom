@@ -6,7 +6,7 @@ import stroom.util.NullSafe;
 import stroom.util.io.PathCreator;
 import stroom.util.shared.BuildInfo;
 
-import io.dropwizard.setup.Environment;
+import io.dropwizard.core.setup.Environment;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;

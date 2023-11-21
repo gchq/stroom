@@ -12,11 +12,11 @@ import stroom.util.logging.LogUtil;
 import stroom.util.shared.SimpleUserName;
 import stroom.util.shared.UserName;
 
+import jakarta.servlet.http.HttpSession;
 import org.jose4j.jwt.JwtClaims;
 
 import java.util.Objects;
 import java.util.Optional;
-import javax.servlet.http.HttpSession;
 
 public class UserIdentityImpl
         implements UserIdentity, HasSession, HasStroomUserIdentity, HasUpdatableToken {

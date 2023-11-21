@@ -5,6 +5,8 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
+import jakarta.validation.constraints.NotNull;
+
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
@@ -16,7 +18,6 @@ import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.validation.constraints.NotNull;
 
 /**
  * Useful methods to create various {@link Predicate<String>}

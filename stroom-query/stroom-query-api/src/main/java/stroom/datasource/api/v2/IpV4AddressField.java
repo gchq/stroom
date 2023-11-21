@@ -35,10 +35,10 @@ public class IpV4AddressField extends AbstractNumericField {
 
     @JsonCreator
     public IpV4AddressField(@JsonProperty("name") final String name,
-                            @JsonProperty("conditions") final Conditions conditions,
+                            @JsonProperty("conditionSet") final ConditionSet conditionSet,
                             @JsonProperty("docRefType") final String docRefType,
                             @JsonProperty("queryable") final Boolean queryable) {
-        super(name, conditions, docRefType, queryable);
+        super(name, conditionSet, docRefType, queryable);
     }
 
     @JsonIgnore

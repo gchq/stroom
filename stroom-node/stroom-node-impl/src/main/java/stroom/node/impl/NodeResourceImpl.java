@@ -40,6 +40,7 @@ import event.logging.And;
 import event.logging.Query;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
+import jakarta.ws.rs.client.SyncInvoker;
 
 import java.util.Comparator;
 import java.util.List;
@@ -48,7 +49,6 @@ import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import javax.ws.rs.client.SyncInvoker;
 
 @AutoLogged
 class NodeResourceImpl implements NodeResource {

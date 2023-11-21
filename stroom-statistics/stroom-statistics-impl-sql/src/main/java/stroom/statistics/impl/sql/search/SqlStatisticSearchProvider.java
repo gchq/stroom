@@ -1,6 +1,6 @@
 package stroom.statistics.impl.sql.search;
 
-import stroom.datasource.api.v2.Conditions;
+import stroom.datasource.api.v2.ConditionSet;
 import stroom.datasource.api.v2.DateField;
 import stroom.datasource.api.v2.FieldInfo;
 import stroom.datasource.api.v2.FindFieldInfoCriteria;
@@ -122,7 +122,7 @@ public class SqlStatisticSearchProvider implements SearchProvider {
         // TODO currently only BETWEEN is supported, but need to add support for
         // more conditions like >, >=, <, <=, =
         fields.add(new DateField(StatisticStoreDoc.FIELD_NAME_DATE_TIME,
-                Conditions.STAT_DATE,
+                ConditionSet.STAT_DATE,
                 null,
                 true));
 
@@ -131,7 +131,7 @@ public class SqlStatisticSearchProvider implements SearchProvider {
             for (final StatisticField statisticField : entity.getStatisticFields()) {
                 // TODO currently only EQUALS is supported, but need to add
                 // support for more conditions like CONTAINS
-                fields.add(new TextField(statisticField.getFieldName(), Conditions.STAT_TEXT, null, true));
+                fields.add(new TextField(statisticField.getFieldName(), ConditionSet.STAT_TEXT, null, true));
             }
         }
 

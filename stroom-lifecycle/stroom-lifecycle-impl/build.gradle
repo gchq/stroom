@@ -4,9 +4,9 @@ dependencies {
     implementation project(':stroom-lifecycle:stroom-lifecycle-api')
     implementation project(':stroom-util-shared')
     implementation project(':stroom-util')
-    
+
     implementation libs.dropwizard_lifecycle
-    implementation libs.guice7
+    implementation libs.guice
     implementation libs.jackson_annotations
     implementation libs.jakarta_inject
     implementation libs.slf4j_api

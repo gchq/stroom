@@ -4,16 +4,16 @@
 package stroom.config.impl.db.jooq;
 
 
-import java.util.Arrays;
-import java.util.List;
+import stroom.config.impl.db.jooq.tables.Config;
+import stroom.config.impl.db.jooq.tables.ConfigUpdateTracker;
+import stroom.config.impl.db.jooq.tables.Preferences;
 
 import org.jooq.Catalog;
 import org.jooq.Table;
 import org.jooq.impl.SchemaImpl;
 
-import stroom.config.impl.db.jooq.tables.Config;
-import stroom.config.impl.db.jooq.tables.ConfigUpdateTracker;
-import stroom.config.impl.db.jooq.tables.Preferences;
+import java.util.Arrays;
+import java.util.List;
 
 
 /**

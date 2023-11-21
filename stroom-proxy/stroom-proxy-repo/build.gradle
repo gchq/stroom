@@ -23,7 +23,7 @@ dependencies {
     implementation libs.dropwizard_lifecycle
     implementation libs.dropwizard_metrics_healthchecks
     implementation libs.guava
-    implementation libs.guice7
+    implementation libs.guice
     implementation libs.jackson_annotations
     implementation libs.jackson_core
     implementation libs.jackson_databind

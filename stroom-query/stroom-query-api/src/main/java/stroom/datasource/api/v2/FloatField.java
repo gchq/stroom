@@ -35,10 +35,10 @@ public class FloatField extends AbstractNumericField {
 
     @JsonCreator
     public FloatField(@JsonProperty("name") final String name,
-                      @JsonProperty("conditions") final Conditions conditions,
+                      @JsonProperty("conditionSet") final ConditionSet conditionSet,
                       @JsonProperty("docRefType") final String docRefType,
                       @JsonProperty("queryable") final Boolean queryable) {
-        super(name, conditions, docRefType, queryable);
+        super(name, conditionSet, docRefType, queryable);
     }
 
     @JsonIgnore

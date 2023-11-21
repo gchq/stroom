@@ -33,16 +33,16 @@ import event.logging.SearchEventAction;
 import event.logging.UpdateEventAction;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
+import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.client.SyncInvoker;
+import jakarta.ws.rs.core.GenericType;
 
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import javax.ws.rs.NotFoundException;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.client.SyncInvoker;
-import javax.ws.rs.core.GenericType;
 
 @AutoLogged
 public class GlobalConfigResourceImpl implements GlobalConfigResource {

@@ -4,7 +4,7 @@ dependencies {
     implementation project(':stroom-dictionary:stroom-dictionary-api')
     implementation project(':stroom-docref')
 
-    implementation libs.guice7
+    implementation libs.guice
     implementation libs.jackson_annotations
     implementation libs.jaxb_api
 }

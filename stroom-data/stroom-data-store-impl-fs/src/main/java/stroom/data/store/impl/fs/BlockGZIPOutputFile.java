@@ -21,6 +21,8 @@ import stroom.util.io.FileUtil;
 import stroom.util.io.SeekableOutputStream;
 import stroom.util.io.StreamCloser;
 
+import jakarta.validation.constraints.NotNull;
+
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -30,7 +32,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.zip.GZIPOutputStream;
-import javax.validation.constraints.NotNull;
 
 /**
  * @see BlockGZIPConstants

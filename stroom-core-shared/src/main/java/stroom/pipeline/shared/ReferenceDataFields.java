@@ -1,6 +1,6 @@
 package stroom.pipeline.shared;
 
-import stroom.datasource.api.v2.Conditions;
+import stroom.datasource.api.v2.ConditionSet;
 import stroom.datasource.api.v2.DateField;
 import stroom.datasource.api.v2.DocRefField;
 import stroom.datasource.api.v2.IdField;
@@ -20,15 +20,15 @@ public class ReferenceDataFields {
             "Reference Data Store",
             "Reference Data Store (This Node Only)");
     public static final QueryField FEED_NAME_FIELD = new TextField(
-            "Feed Name", Conditions.REF_DATA_TEXT, null, true);
+            "Feed Name", ConditionSet.REF_DATA_TEXT, null, true);
     public static final QueryField KEY_FIELD = new TextField(
-            "Key", Conditions.REF_DATA_TEXT, null, true);
+            "Key", ConditionSet.REF_DATA_TEXT, null, true);
     public static final QueryField VALUE_FIELD = new TextField(
-            "Value", Conditions.REF_DATA_TEXT, null, true);
+            "Value", ConditionSet.REF_DATA_TEXT, null, true);
     public static final QueryField VALUE_REF_COUNT_FIELD = new IntegerField(
             "Value Reference Count", false);
     public static final QueryField MAP_NAME_FIELD = new TextField(
-            "Map Name", Conditions.REF_DATA_TEXT, null, true);
+            "Map Name", ConditionSet.REF_DATA_TEXT, null, true);
     public static final QueryField CREATE_TIME_FIELD = new DateField(
             "Create Time", true);
     public static final QueryField EFFECTIVE_TIME_FIELD = new DateField(
@@ -36,7 +36,7 @@ public class ReferenceDataFields {
     public static final QueryField LAST_ACCESSED_TIME_FIELD = new DateField(
             "Last Accessed Time", true);
     public static final QueryField PIPELINE_FIELD = new DocRefField(
-            "Reference Loader Pipeline", Conditions.REF_DATA_DOC_REF, PipelineDoc.DOCUMENT_TYPE, true);
+            "Reference Loader Pipeline", ConditionSet.REF_DATA_DOC_REF, PipelineDoc.DOCUMENT_TYPE, true);
     public static final QueryField PROCESSING_STATE_FIELD = new TextField(
             "Processing State", false);
     public static final QueryField STREAM_ID_FIELD = new IdField(

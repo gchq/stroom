@@ -6,13 +6,14 @@ import stroom.util.shared.IsServlet;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.Unauthenticated;
 
-import com.caucho.hessian.server.HessianServlet;
 import jakarta.inject.Inject;
 
 import java.util.Set;
 
 @Unauthenticated
-public class RemoteFeedServiceRPC extends HessianServlet implements IsServlet {
+// TODO: 31/10/2023 jakarta - Hessian uses javax.servlet so we can't use it (maybe unless we shade it)
+//public class RemoteFeedServiceRPC extends HessianServlet implements IsServlet {
+public class RemoteFeedServiceRPC implements IsServlet {
 
     private static final Set<String> PATH_SPECS = Set.of(
             ResourcePaths.addUnauthenticatedPrefix("/remoting/remotefeedservice.rpc"));

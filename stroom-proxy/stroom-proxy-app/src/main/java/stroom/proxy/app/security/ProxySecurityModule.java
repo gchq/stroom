@@ -19,7 +19,7 @@ import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.HasHealthCheckBinder;
 
 import com.google.inject.AbstractModule;
-import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 
 public class ProxySecurityModule extends AbstractModule {
 

@@ -33,10 +33,10 @@ import event.logging.Query;
 import event.logging.SearchEventAction;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.ws.rs.NotFoundException;
 
 import java.util.Objects;
-import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.NotFoundException;
 
 @AutoLogged
 public class ApiKeyResourceImpl implements ApiKeyResource {

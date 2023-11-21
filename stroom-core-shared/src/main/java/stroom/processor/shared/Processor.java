@@ -26,9 +26,9 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.xml.bind.annotation.XmlRootElement;
 
 import java.util.Objects;
-import javax.xml.bind.annotation.XmlRootElement;
 
 @JsonInclude(Include.NON_NULL)
 @XmlRootElement(name = "parameters")

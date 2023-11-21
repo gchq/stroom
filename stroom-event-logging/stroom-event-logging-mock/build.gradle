@@ -5,7 +5,7 @@ dependencies {
     implementation project(':stroom-event-logging:stroom-event-logging-api')
 
     implementation libs.eventLogging
-    implementation libs.guice7
+    implementation libs.guice
     implementation libs.jackson_annotations
     implementation libs.jaxb_api
     implementation libs.mockito_core

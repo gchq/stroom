@@ -59,6 +59,10 @@ public class DynamicAssetsBundle extends AssetsBundle {
         return new DynamicAssetsServlet(getResourcePath(), getUriPath(), getIndexFile(), StandardCharsets.UTF_8);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class DynamicAssetsServlet extends AssetServlet {
 
         public DynamicAssetsServlet(String resourcePath,
@@ -69,7 +73,7 @@ public class DynamicAssetsBundle extends AssetsBundle {
         }
 
         @Override
-        protected URL getResourceUrl(final String absoluteRequestedResourcePath) {
+        protected URL getResourceURL(final String absoluteRequestedResourcePath) {
             if (assetPath != null) {
                 final Path path = assetPath.resolve(absoluteRequestedResourcePath);
                 try {
@@ -79,7 +83,7 @@ public class DynamicAssetsBundle extends AssetsBundle {
                 }
             }
 
-            return super.getResourceUrl(absoluteRequestedResourcePath);
+            return super.getResourceURL(absoluteRequestedResourcePath);
         }
     }
 }

@@ -12,7 +12,7 @@ class DataSourceFieldBuilderTest {
         final String name = "someField";
 
         // When
-        final TextField field = new TextField(name, Conditions.DEFAULT_ID, null, true);
+        final TextField field = new TextField(name, ConditionSet.DEFAULT_ID, null, true);
 
         // Then
         assertThat(field.getName()).isEqualTo(name);

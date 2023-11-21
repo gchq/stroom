@@ -32,7 +32,7 @@ dependencies {
 
     implementation libs.dropwizard_metrics_annotation
     implementation libs.eventLogging
-    implementation libs.guice7
+    implementation libs.guice
     implementation libs.jackson_annotations
     implementation libs.jaxb_api
     implementation libs.jakarta_inject

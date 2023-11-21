@@ -34,8 +34,7 @@ import stroom.util.shared.ResourcePaths;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
-
-import javax.ws.rs.client.Entity;
+import jakarta.ws.rs.client.Entity;
 
 @AutoLogged
 class DashboardResourceImpl implements DashboardResource {

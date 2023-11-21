@@ -12,7 +12,8 @@ dependencies {
 
     implementation libs.bcrypt
     implementation libs.flyway_core
-    implementation libs.guice7
+    implementation libs.flyway_mysql
+    implementation libs.guice
     implementation libs.hikari
     implementation libs.jackson_annotations
     implementation libs.jakarta_inject

@@ -13,7 +13,7 @@ dependencies {
     implementation project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
     implementation project(':stroom-resource:stroom-resource-api')
 
-    implementation libs.guice7
+    implementation libs.guice
     implementation libs.restygwt
     implementation libs.jakarta_inject
     implementation libs.slf4j_api

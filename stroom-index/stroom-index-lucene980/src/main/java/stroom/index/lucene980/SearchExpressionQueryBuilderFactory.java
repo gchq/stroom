@@ -20,7 +20,7 @@ class SearchExpressionQueryBuilderFactory {
 
     @Inject
     SearchExpressionQueryBuilderFactory(final WordListProvider wordListProvider,
-                                               final Provider<SearchConfig> searchConfigProvider) {
+                                        final Provider<SearchConfig> searchConfigProvider) {
         this.wordListProvider = wordListProvider;
         this.searchConfigProvider = searchConfigProvider;
     }

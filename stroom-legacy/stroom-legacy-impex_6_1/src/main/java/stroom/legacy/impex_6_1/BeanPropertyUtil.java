@@ -20,7 +20,8 @@ import stroom.legacy.model_6_1.DocumentEntity;
 import stroom.legacy.model_6_1.ExtensionProvider;
 import stroom.legacy.model_6_1.ExternalFile;
 
-import javax.xml.bind.annotation.XmlTransient;
+import jakarta.xml.bind.annotation.XmlTransient;
+
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;

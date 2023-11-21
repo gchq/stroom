@@ -17,7 +17,7 @@
 package stroom.search.elastic.shared;
 
 import stroom.datasource.api.v2.BooleanField;
-import stroom.datasource.api.v2.Conditions;
+import stroom.datasource.api.v2.ConditionSet;
 import stroom.datasource.api.v2.DateField;
 import stroom.datasource.api.v2.DoubleField;
 import stroom.datasource.api.v2.FloatField;
@@ -48,7 +48,7 @@ public final class ElasticIndexDataSourceFieldUtil {
     private static QueryField convert(final ElasticIndexField field) {
         final ElasticIndexFieldType fieldType = field.getFieldUse();
         final String fieldName = field.getFieldName();
-        final Conditions supportedConditions = fieldType.getSupportedConditions();
+        final ConditionSet supportedConditions = fieldType.getSupportedConditions();
         switch (fieldType) {
             case ID:
                 return new IdField(fieldName, supportedConditions, null, field.isIndexed());

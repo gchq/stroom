@@ -6,18 +6,15 @@
   "fields" : [ {
     "type" : "Text",
     "name" : "One",
-    "queryable" : true,
-    "conditions" : [ "CONTAINS", "EQUALS", "IN", "IN_DICTIONARY" ]
+    "queryable" : true
   }, {
     "type" : "Boolean",
     "name" : "Two",
-    "queryable" : true,
-    "conditions" : [ "EQUALS" ]
+    "queryable" : true
   }, {
     "type" : "Long",
     "name" : "Three",
-    "queryable" : true,
-    "conditions" : [ "EQUALS", "BETWEEN", "GREATER_THAN", "GREATER_THAN_OR_EQUAL_TO", "LESS_THAN", "LESS_THAN_OR_EQUAL_TO" ]
+    "queryable" : true
   } ],
   "rules" : [ {
     "ruleNumber" : 1,

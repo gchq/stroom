@@ -4,17 +4,17 @@
 package stroom.security.impl.db.jooq;
 
 
-import java.util.Arrays;
-import java.util.List;
+import stroom.security.impl.db.jooq.tables.AppPermission;
+import stroom.security.impl.db.jooq.tables.DocPermission;
+import stroom.security.impl.db.jooq.tables.StroomUser;
+import stroom.security.impl.db.jooq.tables.StroomUserGroup;
 
 import org.jooq.Catalog;
 import org.jooq.Table;
 import org.jooq.impl.SchemaImpl;
 
-import stroom.security.impl.db.jooq.tables.AppPermission;
-import stroom.security.impl.db.jooq.tables.DocPermission;
-import stroom.security.impl.db.jooq.tables.StroomUser;
-import stroom.security.impl.db.jooq.tables.StroomUserGroup;
+import java.util.Arrays;
+import java.util.List;
 
 
 /**

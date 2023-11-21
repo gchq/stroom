@@ -17,7 +17,7 @@
 package stroom.search.elastic.shared;
 
 import stroom.datasource.api.v2.BooleanField;
-import stroom.datasource.api.v2.Conditions;
+import stroom.datasource.api.v2.ConditionSet;
 import stroom.datasource.api.v2.DateField;
 import stroom.datasource.api.v2.DoubleField;
 import stroom.datasource.api.v2.FieldType;
@@ -72,7 +72,7 @@ public enum ElasticIndexFieldType implements HasDisplayValue {
     private final String displayValue;
     private final boolean numeric;
     private final Set<String> nativeTypes;
-    private final Conditions supportedConditions;
+    private final ConditionSet supportedConditions;
 
     ElasticIndexFieldType(final FieldType dataSourceFieldType,
                           final String displayValue,
@@ -91,7 +91,7 @@ public enum ElasticIndexFieldType implements HasDisplayValue {
         return numeric;
     }
 
-    public Conditions getSupportedConditions() {
+    public ConditionSet getSupportedConditions() {
         return supportedConditions;
     }
 
@@ -103,13 +103,13 @@ public enum ElasticIndexFieldType implements HasDisplayValue {
     /**
      * Determine the query expression conditions that apply to this field type
      */
-    private Conditions getConditions() {
+    private ConditionSet getConditions() {
         if (FieldType.DATE.equals(dataSourceFieldType) ||
                 FieldType.IPV4_ADDRESS.equals(dataSourceFieldType) ||
                 numeric) {
-            return Conditions.ELASTIC_NUMERIC;
+            return ConditionSet.ELASTIC_NUMERIC;
         }
-        return Conditions.ELASTIC_TEXT;
+        return ConditionSet.ELASTIC_TEXT;
     }
 
     /**

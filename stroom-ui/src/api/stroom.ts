@@ -148,7 +148,11 @@ export interface AnalyticNotificationDestination {
   type: string;
 }
 
-export type AnalyticNotificationEmailDestination = AnalyticNotificationDestination & { emailAddress?: string };
+export type AnalyticNotificationEmailDestination = AnalyticNotificationDestination & {
+  bcc?: string;
+  cc?: string;
+  to?: string;
+};
 
 export type AnalyticNotificationStreamDestination = AnalyticNotificationDestination & {
   destinationFeed?: DocRef;
@@ -3438,7 +3442,7 @@ export interface QueryDoc {
 }
 
 export interface QueryField {
-  conditions?:
+  conditionSet?:
     | "'=', 'between', '>', '>=', '<', '<='"
     | "'=', 'in', 'in dictionary', 'between', '>', '>=', '<', '<='"
     | "'='"

@@ -8,11 +8,11 @@ import stroom.util.NullSafe;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
+import jakarta.servlet.http.HttpServletRequest;
 import org.jose4j.jwt.consumer.JwtContext;
 
 import java.util.Map;
 import java.util.Optional;
-import javax.servlet.http.HttpServletRequest;
 
 ///**
 // * A front for {@link InternalJwtContextFactory} and {@link StandardJwtContextFactory}

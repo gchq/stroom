@@ -16,12 +16,12 @@ import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
+import jakarta.ws.rs.client.Entity;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import javax.ws.rs.client.Entity;
 
 public class ResultStoreService {
 

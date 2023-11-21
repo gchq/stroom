@@ -15,11 +15,11 @@ import com.google.inject.ConfigurationException;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
+import jakarta.validation.ConstraintValidator;
+import jakarta.validation.ConstraintValidatorFactory;
+import jakarta.validation.Validation;
 
 import java.util.Map;
-import javax.validation.ConstraintValidator;
-import javax.validation.ConstraintValidatorFactory;
-import javax.validation.Validation;
 
 @Singleton
 public class CustomConstraintValidatorFactory implements ConstraintValidatorFactory {

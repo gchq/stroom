@@ -7,7 +7,7 @@ dependencies {
     implementation project(':stroom-query:stroom-query-api')
     implementation project(':stroom-util-shared')
 
-    implementation libs.guice7
+    implementation libs.guice
     implementation libs.jackson_annotations
     implementation libs.jaxb_api
     implementation project(':stroom-docref')
