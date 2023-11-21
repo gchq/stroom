@@ -9,7 +9,7 @@ dependencies {
     implementation project(':stroom-query:stroom-query-common')
 
     implementation libs.jackson_annotations
-    implementation libs.javax_inject
+    implementation libs.jakarta_inject
     implementation libs.jaxb_api
 
     testImplementation project(':stroom-core-shared')

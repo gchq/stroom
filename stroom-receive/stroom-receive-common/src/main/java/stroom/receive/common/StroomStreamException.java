@@ -24,6 +24,8 @@ import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
+import jakarta.servlet.http.HttpServletResponse;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -31,7 +33,6 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.util.zip.DataFormatException;
 import java.util.zip.ZipException;
-import javax.servlet.http.HttpServletResponse;
 
 public class StroomStreamException extends RuntimeException {
 

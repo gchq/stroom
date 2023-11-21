@@ -5,9 +5,10 @@ import stroom.docstore.api.DocumentSerialiser2;
 import stroom.docstore.api.Serialiser2;
 import stroom.docstore.api.Serialiser2Factory;
 
+import jakarta.inject.Inject;
+
 import java.io.IOException;
 import java.util.Map;
-import javax.inject.Inject;
 
 public class AnalyticRuleSerialiser implements DocumentSerialiser2<AnalyticRuleDoc> {
 

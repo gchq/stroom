@@ -23,6 +23,7 @@ import stroom.activity.shared.Activity;
 import stroom.db.util.GenericDao;
 import stroom.db.util.JooqUtil;
 
+import jakarta.inject.Inject;
 import org.jooq.Condition;
 
 import java.util.Collection;
@@ -31,7 +32,6 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.inject.Inject;
 
 import static stroom.activity.impl.db.jooq.tables.Activity.ACTIVITY;
 

@@ -30,6 +30,10 @@ import stroom.util.shared.Version;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
+import jakarta.validation.constraints.NotNull;
 import org.flywaydb.core.Flyway;
 import org.flywaydb.core.api.FlywayException;
 import org.flywaydb.core.api.configuration.FluentConfiguration;
@@ -47,11 +51,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.stream.Stream;
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.inject.Singleton;
 import javax.sql.DataSource;
-import javax.validation.constraints.NotNull;
 
 /**
  * Configures anything related to persistence, e.g. transaction management, the

@@ -29,6 +29,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Severity;
 
+import jakarta.inject.Inject;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
@@ -36,7 +37,6 @@ import org.xml.sax.helpers.AttributesImpl;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
-import javax.inject.Inject;
 
 /**
  * A SAX filter used to count the number of first level elements in an XML

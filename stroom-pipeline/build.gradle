@@ -40,7 +40,7 @@ dependencies {
     implementation libs.eventLogging
     implementation libs.fast_infoset
     implementation libs.guava
-    implementation libs.guice5
+    implementation libs.guice
     implementation libs.guice_assistedinject
     implementation libs.hadoopCommonShaded
     implementation libs.hadoopHdfsShaded
@@ -50,8 +50,8 @@ dependencies {
     implementation libs.jackson_databind
     implementation libs.jakarta_servlet_api
     implementation libs.jakarta_validation_api
-    implementation libs.javax_annotation_api
-    implementation libs.javax_inject
+    implementation libs.jakarta_annotation_api
+    implementation libs.jakarta_inject
     implementation libs.jaxb_api
     implementation libs.jersey_client
     implementation libs.jetty_http
@@ -64,7 +64,7 @@ dependencies {
     implementation libs.swagger_annotations
     implementation libs.vavr
     implementation libs.ws_rs_api
-    implementation libs.xml_apis
+    //implementation libs.xml_apis
     implementation libs.zero_allocation_hashing
 
     testImplementation project(':stroom-cache:stroom-cache-api')

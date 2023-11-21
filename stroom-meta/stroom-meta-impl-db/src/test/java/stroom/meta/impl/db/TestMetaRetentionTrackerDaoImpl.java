@@ -28,12 +28,12 @@ import stroom.task.mock.MockTaskModule;
 import stroom.test.common.util.db.DbTestModule;
 
 import com.google.inject.Guice;
+import jakarta.inject.Inject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
 import java.util.List;
-import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

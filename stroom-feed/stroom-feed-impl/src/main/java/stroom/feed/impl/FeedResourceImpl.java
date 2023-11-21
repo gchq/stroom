@@ -23,11 +23,12 @@ import stroom.feed.shared.FeedDoc;
 import stroom.feed.shared.FeedResource;
 import stroom.util.shared.EntityServiceException;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
-import javax.inject.Inject;
-import javax.inject.Provider;
 
 @AutoLogged
 class FeedResourceImpl implements FeedResource {

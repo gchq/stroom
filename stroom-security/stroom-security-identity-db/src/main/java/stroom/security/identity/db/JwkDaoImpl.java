@@ -9,12 +9,12 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import org.jose4j.jwk.PublicJsonWebKey;
 
 import java.util.List;
 import java.util.UUID;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 import static stroom.security.identity.db.jooq.tables.JsonWebKey.JSON_WEB_KEY;
 

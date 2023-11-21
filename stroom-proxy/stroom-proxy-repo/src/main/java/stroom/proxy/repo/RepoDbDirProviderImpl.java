@@ -3,10 +3,10 @@ package stroom.proxy.repo;
 import stroom.util.io.PathCreator;
 
 import com.google.common.base.Strings;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 import java.nio.file.Path;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 @Singleton
 public class RepoDbDirProviderImpl implements RepoDbDirProvider {

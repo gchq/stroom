@@ -4,13 +4,14 @@ import stroom.docref.HasUuid;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.HasIntegerId;
 
+import jakarta.ws.rs.BadRequestException;
+import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response.Status;
+
 import java.util.Optional;
 import java.util.function.Supplier;
-import javax.ws.rs.BadRequestException;
-import javax.ws.rs.NotFoundException;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.Status;
 
 public class RestUtil {
 

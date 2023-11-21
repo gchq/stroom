@@ -1,10 +1,11 @@
 package stroom.proxy.repo.queue;
 
+import jakarta.inject.Singleton;
+
 import java.util.Comparator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
-import javax.inject.Singleton;
 
 @Singleton
 public class QueueMonitors {

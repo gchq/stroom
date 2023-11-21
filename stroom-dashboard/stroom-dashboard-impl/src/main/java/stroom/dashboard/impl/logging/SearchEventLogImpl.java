@@ -42,13 +42,13 @@ import event.logging.MultiObject;
 import event.logging.Purpose;
 import event.logging.SearchEventAction;
 import event.logging.util.EventLoggingUtil;
+import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.math.BigInteger;
 import java.util.Collections;
 import java.util.List;
-import javax.inject.Inject;
 
 public class SearchEventLogImpl implements SearchEventLog {
 

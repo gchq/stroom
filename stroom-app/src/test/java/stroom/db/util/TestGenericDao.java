@@ -6,12 +6,12 @@ import stroom.job.shared.Job;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.AuditUtil;
 
+import jakarta.inject.Inject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
-import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static stroom.job.impl.db.jooq.Tables.JOB;

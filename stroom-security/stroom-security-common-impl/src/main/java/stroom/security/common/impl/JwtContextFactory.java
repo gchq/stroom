@@ -1,10 +1,10 @@
 package stroom.security.common.impl;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.jose4j.jwt.consumer.JwtContext;
 
 import java.util.Map;
 import java.util.Optional;
-import javax.servlet.http.HttpServletRequest;
 
 public interface JwtContextFactory {
 

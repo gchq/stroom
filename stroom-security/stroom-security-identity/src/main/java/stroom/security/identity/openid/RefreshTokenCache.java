@@ -4,10 +4,11 @@ import stroom.cache.api.CacheManager;
 import stroom.cache.api.StroomCache;
 import stroom.security.identity.config.OpenIdConfig;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
+
 import java.util.Optional;
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.inject.Singleton;
 
 @Singleton
 class RefreshTokenCache {

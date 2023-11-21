@@ -50,6 +50,7 @@ import stroom.util.shared.time.SimpleDuration;
 
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
+import jakarta.inject.Provider;
 import org.lmdbjava.CursorIterable;
 import org.lmdbjava.CursorIterable.KeyVal;
 import org.lmdbjava.Dbi;
@@ -77,7 +78,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import javax.inject.Provider;
 
 public class LmdbDataStore implements DataStore {
 

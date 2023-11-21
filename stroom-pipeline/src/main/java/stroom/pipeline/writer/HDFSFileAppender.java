@@ -26,6 +26,7 @@ import stroom.svg.shared.SvgImage;
 import stroom.util.io.ByteCountOutputStream;
 import stroom.util.io.PathCreator;
 
+import jakarta.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -40,7 +41,6 @@ import java.io.UncheckedIOException;
 import java.security.PrivilegedExceptionAction;
 import java.util.Optional;
 import java.util.function.Consumer;
-import javax.inject.Inject;
 
 /**
  * Creates an output stream for a file on an Hadoop Distributed File System

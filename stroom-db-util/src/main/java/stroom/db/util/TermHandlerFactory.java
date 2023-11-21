@@ -5,9 +5,8 @@ import stroom.datasource.api.v2.AbstractField;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docrefinfo.api.DocRefInfoService;
 
+import jakarta.inject.Inject;
 import org.jooq.Field;
-
-import javax.inject.Inject;
 
 public class TermHandlerFactory {
 

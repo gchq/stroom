@@ -8,12 +8,12 @@ import stroom.util.logging.LambdaLoggerFactory;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
 
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import javax.inject.Provider;
-import javax.inject.Singleton;
 import javax.sql.DataSource;
 
 /**

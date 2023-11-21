@@ -7,6 +7,9 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
 import org.lmdbjava.Env;
 import org.lmdbjava.Env.Builder;
 import org.lmdbjava.EnvFlags;
@@ -22,9 +25,6 @@ import java.util.EnumSet;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.inject.Singleton;
 
 @Singleton // The LMDB lib is dealt with statically by LMDB java so only want to initialise it once
 public class LmdbEnvFactory {
@@ -105,7 +105,7 @@ public class LmdbEnvFactory {
                     throw new RuntimeException("Unable to read LMDB system library at " +
                             lmdbSystemLibraryPath.toAbsolutePath().normalize());
                 }
-                // javax.validation should ensure the path is valid if set
+                // jakarta.validation should ensure the path is valid if set
                 final String lmdbNativeLibProp = LmdbLibraryConfig.LMDB_NATIVE_LIB_PROP;
                 System.setProperty(lmdbNativeLibProp, lmdbSystemLibraryPath.toAbsolutePath().normalize().toString());
                 LOGGER.info("Using provided LMDB system library file. Setting prop {} to '{}'",

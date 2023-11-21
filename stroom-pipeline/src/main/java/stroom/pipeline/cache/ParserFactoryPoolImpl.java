@@ -33,13 +33,12 @@ import stroom.util.io.StreamUtil;
 import stroom.util.shared.Severity;
 import stroom.util.xml.ParserConfig;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.ErrorHandler;
-
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.inject.Singleton;
 
 @Singleton
 @EntityEventHandler(

@@ -2,8 +2,9 @@ package stroom.search.extraction;
 
 import stroom.util.pipeline.scope.PipelineScoped;
 
+import jakarta.inject.Inject;
+
 import java.util.List;
-import javax.inject.Inject;
 
 @PipelineScoped
 public class FieldListConsumerHolder implements FieldListConsumer {

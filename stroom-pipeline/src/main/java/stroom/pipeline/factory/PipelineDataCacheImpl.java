@@ -34,13 +34,14 @@ import stroom.util.entityevent.EntityEventHandler;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.PermissionException;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.inject.Singleton;
 
 @Singleton
 @EntityEventHandler(type = PipelineDoc.DOCUMENT_TYPE)

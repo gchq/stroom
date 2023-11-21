@@ -6,6 +6,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.Severity;
 
+import jakarta.inject.Inject;
 import net.sf.saxon.Configuration;
 import net.sf.saxon.event.Builder;
 import net.sf.saxon.event.PipelineConfiguration;
@@ -28,7 +29,6 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Optional;
-import javax.inject.Inject;
 
 class HttpCall extends StroomExtensionFunctionCall {
 

@@ -11,10 +11,9 @@ import stroom.util.logging.LambdaLoggerFactory;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import org.jose4j.jwt.JwtClaims;
-
-import javax.inject.Inject;
-import javax.inject.Provider;
 
 public class ExternalServiceUserFactory implements ServiceUserFactory {
 

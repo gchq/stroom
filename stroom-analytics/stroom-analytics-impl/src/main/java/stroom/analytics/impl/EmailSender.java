@@ -19,24 +19,24 @@
 package stroom.analytics.impl;
 
 import stroom.analytics.shared.AnalyticNotificationEmailDestination;
+import stroom.util.NullSafe;
 import stroom.util.json.JsonUtil;
 
 import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
-import org.simplejavamail.email.Email;
-import org.simplejavamail.mailer.Mailer;
-import org.simplejavamail.mailer.config.ServerConfig;
-import org.simplejavamail.mailer.config.TransportStrategy;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.mail.Message.RecipientType;
+import org.simplejavamail.api.email.Email;
+import org.simplejavamail.api.email.EmailPopulatingBuilder;
+import org.simplejavamail.api.mailer.Mailer;
+import org.simplejavamail.email.EmailBuilder;
+import org.simplejavamail.mailer.MailerBuilder;
+import org.simplejavamail.mailer.internal.MailerRegularBuilderImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.function.Consumer;
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.inject.Singleton;
-import javax.mail.Message.RecipientType;
 
-@Singleton
 class EmailSender {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(EmailSender.class);
@@ -48,58 +48,77 @@ class EmailSender {
         this.analyticsConfigProvider = analyticsConfigProvider;
     }
 
-    public void send(final AnalyticNotificationEmailDestination emailDestination, final Detection detection) {
+    public void send(final AnalyticNotificationEmailDestination emailDestination,
+                     final Detection detection) {
         final AnalyticsConfig analyticsConfig = analyticsConfigProvider.get();
         final EmailConfig emailConfig = analyticsConfig.getEmailConfig();
         Preconditions.checkNotNull(emailConfig, "Missing 'email' section in config");
-        final SmtpConfig smtpConfig = Preconditions.checkNotNull(emailConfig,
-                        "Missing 'email' section in config")
-                .getSmtpConfig();
+        final SmtpConfig smtpConfig = Preconditions.checkNotNull(emailConfig.getSmtpConfig(),
+                "Missing 'smtp' section in email config");
 
-        final ServerConfig serverConfig;
-        if (!Strings.isNullOrEmpty(smtpConfig.getUsername()) && !Strings.isNullOrEmpty(smtpConfig.getPassword())) {
-            serverConfig = new ServerConfig(
+        final EmailPopulatingBuilder emailBuilder = EmailBuilder.startingBlank()
+                .from(emailConfig.getFromName(), emailConfig.getFromAddress())
+                .withReplyTo(emailConfig.getFromName(), emailConfig.getFromAddress())
+                .withSubject(detection.getDetectorName());
+
+        addAddresses(emailDestination.getTo(), address ->
+                emailBuilder.withRecipient(address, address, RecipientType.TO));
+        addAddresses(emailDestination.getCc(), address ->
+                emailBuilder.withRecipient(address, address, RecipientType.CC));
+        addAddresses(emailDestination.getBcc(), address ->
+                emailBuilder.withRecipient(address, address, RecipientType.BCC));
+
+        try {
+            final String text = JsonUtil.writeValueAsString(detection);
+            emailBuilder.withPlainText(text);
+        } catch (final RuntimeException e) {
+            LOGGER.error(e.getMessage(), e);
+        }
+
+        final Email email = emailBuilder.buildEmail();
+
+        final MailerRegularBuilderImpl mailerBuilder = MailerBuilder
+                .withTransportStrategy(smtpConfig.getTransportStrategy());
+
+        if (!NullSafe.isEmptyString(smtpConfig.getUsername())
+                && !NullSafe.isEmptyString(smtpConfig.getPassword())) {
+            mailerBuilder.withSMTPServer(
                     smtpConfig.getHost(),
                     smtpConfig.getPort(),
                     smtpConfig.getUsername(),
                     smtpConfig.getPassword());
         } else {
-            serverConfig = new ServerConfig(
+            mailerBuilder.withSMTPServer(
                     smtpConfig.getHost(),
                     smtpConfig.getPort());
         }
 
-        final TransportStrategy transportStrategy = smtpConfig.getTransportStrategy();
+        LOGGER.info("Sending alert email {} using user ({}) at {}:{}",
+                email,
+                smtpConfig.getUsername(),
+                smtpConfig.getHost(),
+                smtpConfig.getPort());
 
-        final Email email = new Email();
-        email.setFromAddress(emailConfig.getFromName(), emailConfig.getFromAddress());
-        email.setReplyToAddress(emailConfig.getFromName(), emailConfig.getFromAddress());
-        addAddresses(emailDestination.getTo(), address ->
-                email.addRecipient(address, address, RecipientType.TO));
-        addAddresses(emailDestination.getCc(), address ->
-                email.addRecipient(address, address, RecipientType.CC));
-        addAddresses(emailDestination.getBcc(), address ->
-                email.addRecipient(address, address, RecipientType.BCC));
-        email.setSubject(detection.getDetectorName());
-
-        try {
-            final String text = JsonUtil.writeValueAsString(detection);
-            email.setText(text);
-        } catch (final RuntimeException e) {
-            LOGGER.error(e.getMessage(), e);
+        try (Mailer mailer = mailerBuilder.buildMailer()) {
+            mailer.sendMail(email);
+        } catch (Exception e) {
+            LOGGER.error("Error sending alert email {} using user ({}) at {}:{} - {}",
+                    email,
+                    smtpConfig.getUsername(),
+                    smtpConfig.getHost(),
+                    smtpConfig.getPort(),
+                    e.getMessage(),
+                    e);
         }
-
-        LOGGER.info("Sending reset email to user {} at {}:{}",
-                serverConfig.getHost(), serverConfig.getPort(), serverConfig.getUsername());
-        new Mailer(serverConfig, transportStrategy).sendMail(email);
     }
 
-    private void addAddresses(final String addresses, final Consumer<String> consumer) {
+    private void addAddresses(final String addresses,
+                              final Consumer<String> consumer) {
         if (addresses != null) {
             final String[] emailAddresses = addresses.split(";");
             for (final String emailAddress : emailAddresses) {
                 final String trimmed = emailAddress.trim();
-                if (trimmed.length() > 0) {
+                if (!trimmed.isEmpty()) {
                     consumer.accept(trimmed);
                 }
             }

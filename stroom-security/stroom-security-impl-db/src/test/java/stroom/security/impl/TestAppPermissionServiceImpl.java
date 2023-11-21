@@ -20,6 +20,7 @@ import stroom.security.shared.PermissionNames;
 import stroom.security.shared.User;
 import stroom.test.common.util.test.FileSystemTestUtil;
 
+import jakarta.inject.Inject;
 import name.falgout.jeffrey.testing.junit.guice.GuiceExtension;
 import name.falgout.jeffrey.testing.junit.guice.IncludeModule;
 import org.junit.jupiter.api.Test;
@@ -31,7 +32,6 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
-import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

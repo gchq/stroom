@@ -32,12 +32,11 @@ import stroom.security.mock.MockSecurityContextModule;
 import stroom.test.BootstrapTestModule;
 import stroom.test.CommonTranslationTestHelper;
 
+import jakarta.inject.Inject;
 import name.falgout.jeffrey.testing.junit.guice.GuiceExtension;
 import name.falgout.jeffrey.testing.junit.guice.IncludeModule;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-
-import javax.inject.Inject;
 
 @ExtendWith(GuiceExtension.class)
 @IncludeModule(UriFactoryModule.class)

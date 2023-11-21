@@ -5,13 +5,13 @@ import stroom.util.io.SimplePathCreator;
 import stroom.util.shared.validation.ValidFilePath;
 import stroom.util.shared.validation.ValidFilePathValidator;
 
+import jakarta.inject.Inject;
+import jakarta.validation.ConstraintValidatorContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import javax.inject.Inject;
-import javax.validation.ConstraintValidatorContext;
 
 public class ValidFilePathValidatorImpl implements ValidFilePathValidator {
 

@@ -4,8 +4,9 @@ import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.ui.config.shared.UserPreferences;
 
+import jakarta.inject.Inject;
+
 import java.util.Optional;
-import javax.inject.Inject;
 
 public class UserPreferencesService {
 

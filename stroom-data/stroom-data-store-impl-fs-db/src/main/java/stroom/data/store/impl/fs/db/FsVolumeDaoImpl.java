@@ -15,6 +15,8 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Selection;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import org.jooq.Condition;
 import org.jooq.Record;
 import org.jooq.Result;
@@ -28,8 +30,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 import static stroom.data.store.impl.fs.db.jooq.tables.FsVolume.FS_VOLUME;
 import static stroom.data.store.impl.fs.db.jooq.tables.FsVolumeGroup.FS_VOLUME_GROUP;

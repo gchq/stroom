@@ -7,7 +7,6 @@ import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerNode.NodeInfo;
 import stroom.explorer.shared.NodeFlag;
-import stroom.explorer.shared.NodeFlag.NodeFlagGroups;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.GwtNullSafe;
 import stroom.widget.util.client.SvgImageUtil;

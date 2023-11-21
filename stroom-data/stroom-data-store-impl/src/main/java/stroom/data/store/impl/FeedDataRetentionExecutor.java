@@ -20,10 +20,9 @@ package stroom.data.store.impl;
 import stroom.cluster.lock.api.ClusterLockService;
 import stroom.meta.api.MetaService;
 
+import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.inject.Inject;
 
 //import stroom.entity.util.PeriodUtil;
 

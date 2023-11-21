@@ -15,10 +15,10 @@ dependencies {
     implementation project(':stroom-docref')
 
     // 3rd party libs
-    implementation libs.guice5
+    implementation libs.guice
     implementation libs.jackson_annotations
     implementation libs.jaxb_api
-    implementation libs.javax_inject
+    implementation libs.jakarta_inject
 
     testImplementation libs.assertj_core
     testImplementation libs.junit_jupiter_api

@@ -31,13 +31,13 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
 import com.google.inject.assistedinject.Assisted;
+import jakarta.inject.Inject;
 import net.sf.saxon.event.PipelineConfiguration;
 import net.sf.saxon.event.Receiver;
 
 import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.Objects;
-import javax.inject.Inject;
 
 public class OnHeapRefDataValueProxyConsumer
         extends AbstractConsumer

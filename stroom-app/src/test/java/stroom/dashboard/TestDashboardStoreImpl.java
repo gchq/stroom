@@ -34,11 +34,11 @@ import stroom.script.shared.ScriptDoc;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.visualisation.shared.VisualisationDoc;
 
+import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
-import javax.inject.Inject;
 
 class TestDashboardStoreImpl extends AbstractCoreIntegrationTest {
 

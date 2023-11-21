@@ -7,10 +7,9 @@ import stroom.search.impl.SearchConfig;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import org.apache.lucene980.search.IndexSearcher;
-
-import javax.inject.Inject;
-import javax.inject.Provider;
 
 class SearchExpressionQueryBuilderFactory {
 
@@ -21,7 +20,7 @@ class SearchExpressionQueryBuilderFactory {
 
     @Inject
     SearchExpressionQueryBuilderFactory(final WordListProvider wordListProvider,
-                                               final Provider<SearchConfig> searchConfigProvider) {
+                                        final Provider<SearchConfig> searchConfigProvider) {
         this.wordListProvider = wordListProvider;
         this.searchConfigProvider = searchConfigProvider;
     }

@@ -55,12 +55,12 @@ dependencies {
     implementation libs.dropwizard_configuration
     implementation libs.eventLogging
     implementation libs.guava
-    implementation libs.guice5
+    implementation libs.guice
     implementation libs.jackson_annotations
     implementation libs.jackson_core
     implementation libs.jackson_databind
     implementation libs.jakarta_servlet_api
-    implementation libs.javax_inject
+    implementation libs.jakarta_inject
     implementation libs.jaxb_api
     implementation libs.jetty_server
     implementation libs.jose4j
@@ -74,6 +74,7 @@ dependencies {
     testImplementation libs.classgraph
     testImplementation libs.commons_compress
     testImplementation libs.dropwizard_testing
+    testImplementation libs.dropwizard_validation
     testImplementation libs.guice_extension
     testImplementation libs.guice_grapher
     testImplementation libs.jinjava

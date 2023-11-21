@@ -25,7 +25,7 @@ import stroom.security.api.SecurityContext;
 import stroom.util.AuditUtil;
 import stroom.util.shared.ResultPage;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 /**
  * The job manager is used to update the database with the status of all job

@@ -14,6 +14,7 @@ import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.svg.shared.SvgImage;
 
+import jakarta.inject.Inject;
 import org.jooq.Condition;
 import org.jooq.impl.DSL;
 
@@ -26,7 +27,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
 
 import static stroom.explorer.impl.db.jooq.tables.ExplorerNode.EXPLORER_NODE;
 import static stroom.explorer.impl.db.jooq.tables.ExplorerPath.EXPLORER_PATH;

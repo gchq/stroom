@@ -22,7 +22,8 @@ import event.logging.Group;
 import event.logging.Outcome;
 import event.logging.RemoveGroups;
 import event.logging.User;
-import io.dropwizard.setup.Bootstrap;
+import io.dropwizard.core.setup.Bootstrap;
+import jakarta.inject.Inject;
 import net.sourceforge.argparse4j.impl.Arguments;
 import net.sourceforge.argparse4j.inf.Namespace;
 import net.sourceforge.argparse4j.inf.Subparser;
@@ -35,7 +36,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
 
 /**
  * Creates an account in the internal identity provider

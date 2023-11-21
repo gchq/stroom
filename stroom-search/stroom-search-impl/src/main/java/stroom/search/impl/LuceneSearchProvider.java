@@ -40,13 +40,14 @@ import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TerminateHandlerFactory;
 
+import jakarta.inject.Inject;
+
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.function.Supplier;
-import javax.inject.Inject;
 
 public class LuceneSearchProvider implements SearchProvider {
 

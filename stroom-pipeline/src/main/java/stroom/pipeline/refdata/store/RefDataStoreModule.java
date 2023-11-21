@@ -48,10 +48,9 @@ import stroom.util.guice.HasSystemInfoBinder;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
+import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.inject.Inject;
 
 public class RefDataStoreModule extends AbstractModule {
 

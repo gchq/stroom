@@ -46,6 +46,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.util.concurrent.Striped;
 import com.google.inject.assistedinject.Assisted;
+import jakarta.inject.Inject;
 import org.lmdbjava.Txn;
 
 import java.nio.ByteBuffer;
@@ -63,7 +64,6 @@ import java.util.concurrent.locks.Lock;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
 
 /**
  * Class for adding multiple items to the {@link RefDataOffHeapStore} within a single

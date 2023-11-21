@@ -18,8 +18,9 @@ package stroom.task.api;
 
 import stroom.task.shared.ThreadPool;
 
+import jakarta.inject.Provider;
+
 import java.util.concurrent.Executor;
-import javax.inject.Provider;
 
 public interface ExecutorProvider extends Provider<Executor> {
 

@@ -14,9 +14,9 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import jakarta.validation.constraints.Min;
 
 import java.util.Objects;
-import javax.validation.constraints.Min;
 
 // The descriptions have mostly been taken from the Caffine javadoc
 @NotInjectableConfig

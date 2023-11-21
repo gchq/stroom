@@ -6,7 +6,7 @@ import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValuesConsumer;
 import stroom.util.pipeline.scope.PipelineScoped;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 @PipelineScoped
 public class ValueConsumerHolder implements ValuesConsumer {

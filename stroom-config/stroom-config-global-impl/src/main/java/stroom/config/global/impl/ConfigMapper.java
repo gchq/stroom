@@ -57,6 +57,8 @@ import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -80,8 +82,6 @@ import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 
 /**

@@ -12,9 +12,12 @@ import stroom.util.shared.Unauthenticated;
 
 import com.codahale.metrics.health.HealthCheck;
 import com.codahale.metrics.health.HealthCheckRegistry;
-import io.dropwizard.setup.Environment;
+import io.dropwizard.core.setup.Environment;
 import io.vavr.Tuple;
 import io.vavr.Tuple3;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+import jakarta.servlet.Servlet;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jetty.http.pathmap.PathMappings;
 import org.eclipse.jetty.http.pathmap.PathSpec;
@@ -30,9 +33,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
-import javax.inject.Singleton;
-import javax.servlet.Servlet;
 
 @Singleton
 public class Servlets implements ServletAuthenticationChecker {

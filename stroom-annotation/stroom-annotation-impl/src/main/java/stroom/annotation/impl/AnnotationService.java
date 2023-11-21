@@ -23,8 +23,9 @@ import stroom.security.user.api.UserNameService;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.UserName;
 
+import jakarta.inject.Inject;
+
 import java.util.List;
-import javax.inject.Inject;
 
 public class AnnotationService implements Searchable, AnnotationCreator {
 

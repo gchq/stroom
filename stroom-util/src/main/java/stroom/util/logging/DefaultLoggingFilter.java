@@ -1,5 +1,18 @@
 package stroom.util.logging;
 
+import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.client.ClientRequestContext;
+import jakarta.ws.rs.client.ClientRequestFilter;
+import jakarta.ws.rs.client.ClientResponseContext;
+import jakarta.ws.rs.client.ClientResponseFilter;
+import jakarta.ws.rs.container.ContainerRequestContext;
+import jakarta.ws.rs.container.ContainerRequestFilter;
+import jakarta.ws.rs.container.ContainerResponseContext;
+import jakarta.ws.rs.container.ContainerResponseFilter;
+import jakarta.ws.rs.core.FeatureContext;
+import jakarta.ws.rs.core.MultivaluedMap;
+import jakarta.ws.rs.ext.WriterInterceptor;
+import jakarta.ws.rs.ext.WriterInterceptorContext;
 import org.glassfish.jersey.logging.LoggingFeature;
 import org.glassfish.jersey.message.MessageUtils;
 
@@ -15,19 +28,6 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.client.ClientRequestContext;
-import javax.ws.rs.client.ClientRequestFilter;
-import javax.ws.rs.client.ClientResponseContext;
-import javax.ws.rs.client.ClientResponseFilter;
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.container.ContainerRequestFilter;
-import javax.ws.rs.container.ContainerResponseContext;
-import javax.ws.rs.container.ContainerResponseFilter;
-import javax.ws.rs.core.FeatureContext;
-import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.ext.WriterInterceptor;
-import javax.ws.rs.ext.WriterInterceptorContext;
 
 /**
  * This custom logging feature class extends built-in Jersey logging by providing control over when response body
@@ -38,8 +38,10 @@ import javax.ws.rs.ext.WriterInterceptorContext;
  * For endpoints returning sensitive or binary data, it doesn't make sense to log this information, so in such cases,
  * the API method should be annotated with `@NoResponseBodyLogging`.
  */
-public class DefaultLoggingFilter extends LoggingFeature implements ContainerRequestFilter, ContainerResponseFilter,
-        ClientRequestFilter, ClientResponseFilter, WriterInterceptor {
+public class DefaultLoggingFilter
+        extends LoggingFeature
+        implements ContainerRequestFilter, ContainerResponseFilter, ClientRequestFilter,
+        ClientResponseFilter, WriterInterceptor {
 
     public static final String ENTITY_LOGGER_PROPERTY = LoggingFeature.class.getName();
     private static final Logger LOGGER = Logger.getLogger(ENTITY_LOGGER_PROPERTY);

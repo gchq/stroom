@@ -23,9 +23,10 @@ import stroom.util.concurrent.StripedLock;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+
 import java.util.concurrent.locks.Lock;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 /**
  * Pool API into open index shards.

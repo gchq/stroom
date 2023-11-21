@@ -29,9 +29,8 @@ import stroom.query.common.v2.ResultStoreManager;
 import stroom.query.common.v2.TerminateDecorator;
 
 import com.codahale.metrics.annotation.Timed;
-
-import javax.inject.Inject;
-import javax.inject.Provider;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 @AutoLogged
 public class StroomIndexQueryResourceImpl implements StroomIndexQueryResource {

@@ -22,14 +22,14 @@ import stroom.cluster.task.api.TargetNodeSetFactory;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContextFactory;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 @Singleton
 class PermissionChangeEventBusImpl implements PermissionChangeEventBus {

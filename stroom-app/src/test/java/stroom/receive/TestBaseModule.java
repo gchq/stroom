@@ -26,10 +26,10 @@ import stroom.util.pipeline.scope.PipelineScopeModule;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.util.Providers;
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.Collections;
 import java.util.Map;
-import javax.servlet.http.HttpServletRequest;
 
 public class TestBaseModule extends AbstractModule {
 

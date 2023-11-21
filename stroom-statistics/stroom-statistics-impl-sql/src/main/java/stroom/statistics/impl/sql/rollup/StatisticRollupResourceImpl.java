@@ -20,20 +20,15 @@ import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.statistics.impl.sql.shared.CustomRollUpMask;
 import stroom.statistics.impl.sql.shared.CustomRollUpMaskFields;
-import stroom.statistics.impl.sql.shared.StatisticField;
 import stroom.statistics.impl.sql.shared.StatisticRollupResource;
 import stroom.statistics.impl.sql.shared.StatisticsDataSourceData;
 import stroom.statistics.impl.sql.shared.StatisticsDataSourceFieldChangeRequest;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
+
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.inject.Singleton;
 
 //Utility functions without side effects (at least by design)
 @AutoLogged(OperationType.UNLOGGED)

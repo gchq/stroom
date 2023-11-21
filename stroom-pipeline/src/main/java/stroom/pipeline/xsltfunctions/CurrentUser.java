@@ -21,6 +21,7 @@ import stroom.security.api.UserIdentity;
 import stroom.util.NullSafe;
 import stroom.util.shared.Severity;
 
+import jakarta.inject.Inject;
 import net.sf.saxon.expr.XPathContext;
 import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
@@ -30,7 +31,6 @@ import net.sf.saxon.value.StringValue;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
-import javax.inject.Inject;
 
 class CurrentUser extends StroomExtensionFunctionCall {
 

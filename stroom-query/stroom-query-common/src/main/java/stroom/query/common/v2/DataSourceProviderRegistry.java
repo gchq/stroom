@@ -4,12 +4,13 @@ import stroom.datasource.api.v2.DataSource;
 import stroom.datasource.api.v2.DataSourceProvider;
 import stroom.docref.DocRef;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 @Singleton
 @SuppressWarnings("unused")

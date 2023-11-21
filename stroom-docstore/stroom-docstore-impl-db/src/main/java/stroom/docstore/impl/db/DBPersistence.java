@@ -7,6 +7,8 @@ import stroom.docstore.impl.Persistence;
 import stroom.util.logging.LogUtil;
 import stroom.util.string.PatternUtil;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,8 +20,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import javax.sql.DataSource;
 
 @Singleton

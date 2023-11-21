@@ -27,13 +27,13 @@ dependencies {
     implementation libs.dropwizard_validation
     implementation libs.eventLogging
     implementation libs.guava
-    implementation libs.guice5
+    implementation libs.guice
     implementation libs.http_client
     implementation libs.jackson_core
     implementation libs.jackson_databind
     implementation libs.jakarta_servlet_api
     implementation libs.jakarta_validation_api
-    implementation libs.javax_inject
+    implementation libs.jakarta_inject
     implementation libs.jaxb_api
     implementation libs.jetty_http
     implementation libs.jose4j

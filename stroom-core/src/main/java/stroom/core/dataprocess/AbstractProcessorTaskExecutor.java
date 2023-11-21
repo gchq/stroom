@@ -92,6 +92,7 @@ import stroom.util.shared.ResultPage;
 import stroom.util.shared.Severity;
 
 import com.google.common.collect.ImmutableSortedMap;
+import jakarta.inject.Inject;
 import org.slf4j.MarkerFactory;
 
 import java.io.IOException;

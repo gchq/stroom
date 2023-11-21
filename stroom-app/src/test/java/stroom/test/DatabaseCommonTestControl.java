@@ -35,6 +35,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.Clearable;
 
+import jakarta.inject.Inject;
 import org.assertj.core.api.Assertions;
 
 import java.nio.file.Path;
@@ -43,7 +44,6 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
 
 /**
  * <p>

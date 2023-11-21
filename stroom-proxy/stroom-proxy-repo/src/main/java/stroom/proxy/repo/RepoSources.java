@@ -11,6 +11,8 @@ import stroom.proxy.repo.store.SequentialFileStore;
 import stroom.receive.common.StroomStreamException;
 import stroom.util.shared.Clearable;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,8 +21,6 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 @Singleton
 public class RepoSources implements Clearable {

@@ -12,10 +12,9 @@ import stroom.pipeline.refdata.store.offheapstore.serdes.RangeStoreKeySerde;
 import stroom.pipeline.refdata.store.offheapstore.serdes.StagingValueSerde;
 
 import com.google.inject.assistedinject.Assisted;
+import jakarta.inject.Inject;
 import org.lmdbjava.DbiFlags;
 import org.lmdbjava.Env;
-
-import javax.inject.Inject;
 
 public class RangeValueStagingDb
         extends AbstractLmdbDb<UnSortedDupKey<RangeStoreKey>, StagingValue> {

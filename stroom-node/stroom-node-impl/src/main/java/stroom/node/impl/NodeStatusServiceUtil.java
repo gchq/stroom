@@ -30,6 +30,8 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import com.google.common.collect.ImmutableSortedMap;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryMXBean;
@@ -42,8 +44,6 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 /**
  * Utility class to split out the query of the node status in a separate read

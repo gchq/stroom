@@ -33,6 +33,7 @@ import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.common.StroomCoreServerTestFileUtil;
 import stroom.util.zip.ZipUtil;
 
+import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -45,7 +46,6 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

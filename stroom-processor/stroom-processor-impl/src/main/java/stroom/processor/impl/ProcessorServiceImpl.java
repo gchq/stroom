@@ -28,12 +28,12 @@ import stroom.util.AuditUtil;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
 
+import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Optional;
 import java.util.UUID;
-import javax.inject.Inject;
 
 public class ProcessorServiceImpl implements ProcessorService {
 

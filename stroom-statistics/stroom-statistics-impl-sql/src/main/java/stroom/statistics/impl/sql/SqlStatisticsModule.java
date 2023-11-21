@@ -6,8 +6,7 @@ import stroom.util.RunnableWrapper;
 import stroom.util.guice.HasSystemInfoBinder;
 
 import com.google.inject.AbstractModule;
-
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 import static stroom.job.api.Schedule.ScheduleType.CRON;
 import static stroom.job.api.Schedule.ScheduleType.PERIODIC;

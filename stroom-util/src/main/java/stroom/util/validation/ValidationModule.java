@@ -16,11 +16,10 @@ import stroom.util.shared.validation.ValidSimpleCronValidator;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
-
-import javax.inject.Singleton;
-import javax.validation.Validation;
-import javax.validation.Validator;
-import javax.validation.ValidatorFactory;
+import jakarta.inject.Singleton;
+import jakarta.validation.Validation;
+import jakarta.validation.Validator;
+import jakarta.validation.ValidatorFactory;
 
 public class ValidationModule extends AbstractModule {
 

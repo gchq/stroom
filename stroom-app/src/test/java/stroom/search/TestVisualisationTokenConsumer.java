@@ -13,12 +13,12 @@ import stroom.task.impl.ExecutorProviderImpl;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.ContentImportService;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.Executor;
-import javax.inject.Inject;
-import javax.inject.Provider;
 
 public class TestVisualisationTokenConsumer extends AbstractCoreIntegrationTest {
     private static boolean doneSetup;

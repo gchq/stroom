@@ -6,9 +6,10 @@ import stroom.docstore.api.Serialiser2;
 import stroom.docstore.api.Serialiser2Factory;
 import stroom.util.string.EncodingUtil;
 
+import jakarta.inject.Inject;
+
 import java.io.IOException;
 import java.util.Map;
-import javax.inject.Inject;
 
 public class DictionarySerialiser implements DocumentSerialiser2<DictionaryDoc> {
 

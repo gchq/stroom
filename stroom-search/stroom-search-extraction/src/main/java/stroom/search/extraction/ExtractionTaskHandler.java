@@ -52,11 +52,12 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.StoredError;
 
+import jakarta.inject.Inject;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.util.Optional;
-import javax.inject.Inject;
 
 public class ExtractionTaskHandler {
 

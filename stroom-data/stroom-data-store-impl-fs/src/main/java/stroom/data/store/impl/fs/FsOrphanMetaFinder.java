@@ -32,6 +32,9 @@ import stroom.util.logging.LogUtil;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Selection;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
@@ -40,8 +43,6 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
-import javax.inject.Provider;
 
 /**
  * API used by the tasks to interface to the stream store under the bonnet.

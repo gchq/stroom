@@ -41,12 +41,12 @@ import event.logging.ExportEventAction;
 import event.logging.ImportEventAction;
 import event.logging.MultiObject;
 import event.logging.ViewEventAction;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import javax.inject.Inject;
-import javax.inject.Provider;
 
 @AutoLogged
 class DataResourceImpl implements DataResource, FetchWithLongId<List<DataInfoSection>> {

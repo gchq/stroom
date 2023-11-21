@@ -19,6 +19,7 @@ package stroom.pipeline.writer;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.util.io.StreamUtil;
 
+import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,7 +28,6 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.util.zip.DataFormatException;
 import java.util.zip.ZipException;
-import javax.servlet.http.HttpServletResponse;
 
 public class StroomStreamException extends RuntimeException {
 

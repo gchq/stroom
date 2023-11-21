@@ -22,6 +22,8 @@ import stroom.task.shared.ThreadPool;
 import stroom.util.thread.CustomThreadFactory;
 import stroom.util.thread.StroomThreadGroup;
 
+import jakarta.inject.Singleton;
+
 import java.util.Iterator;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
@@ -31,7 +33,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
-import javax.inject.Singleton;
 
 @Singleton
 public class ExecutorProviderImpl implements ExecutorProvider {

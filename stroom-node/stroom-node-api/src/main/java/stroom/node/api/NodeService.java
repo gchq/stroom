@@ -17,13 +17,14 @@
 
 package stroom.node.api;
 
+import jakarta.ws.rs.client.Invocation;
+import jakarta.ws.rs.core.Response;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import javax.ws.rs.client.Invocation;
-import javax.ws.rs.core.Response;
 
 /**
  * <p>

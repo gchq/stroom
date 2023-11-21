@@ -21,6 +21,7 @@ import stroom.util.cert.CertificateExtractor;
 import stroom.util.date.DateUtil;
 import stroom.util.io.StreamUtil;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,7 +52,6 @@ import java.util.Optional;
 import java.util.StringTokenizer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import javax.servlet.http.HttpServletRequest;
 
 // TODO: 08/12/2022 This should be an injectable class with instance methods to make test mocking possible
 public class AttributeMapUtil {

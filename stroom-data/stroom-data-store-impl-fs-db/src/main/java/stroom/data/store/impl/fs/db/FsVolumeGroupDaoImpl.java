@@ -6,6 +6,7 @@ import stroom.data.store.impl.fs.shared.FsVolumeGroup;
 import stroom.db.util.GenericDao;
 import stroom.db.util.JooqUtil;
 
+import jakarta.inject.Inject;
 import org.jooq.Record;
 import org.jooq.exception.DataAccessException;
 
@@ -14,7 +15,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
-import javax.inject.Inject;
 
 import static stroom.data.store.impl.fs.db.jooq.tables.FsVolumeGroup.FS_VOLUME_GROUP;
 

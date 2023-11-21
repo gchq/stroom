@@ -16,10 +16,11 @@
 
 package stroom.legacy.model_6_1;
 
+import jakarta.validation.constraints.Size;
+
 import javax.persistence.Column;
 import javax.persistence.MappedSuperclass;
 import javax.persistence.Transient;
-import javax.validation.constraints.Size;
 
 @MappedSuperclass
 @Deprecated

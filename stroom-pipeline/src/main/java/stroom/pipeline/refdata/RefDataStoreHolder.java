@@ -29,11 +29,12 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.pipeline.scope.PipelineScoped;
 
+import jakarta.inject.Inject;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import javax.inject.Inject;
 
 @PipelineScoped
 class RefDataStoreHolder {

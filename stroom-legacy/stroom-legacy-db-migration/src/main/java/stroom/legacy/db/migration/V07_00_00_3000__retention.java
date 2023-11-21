@@ -18,7 +18,6 @@ package stroom.legacy.db.migration;
 
 import stroom.data.retention.shared.DataRetentionRule;
 import stroom.data.retention.shared.DataRetentionRules;
-import stroom.util.shared.time.TimeUnit;
 import stroom.docstore.api.Serialiser2;
 import stroom.docstore.impl.Serialiser2FactoryImpl;
 import stroom.feed.shared.FeedDoc;
@@ -27,6 +26,7 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.util.shared.time.TimeUnit;
 
 import org.flywaydb.core.api.migration.BaseJavaMigration;
 import org.flywaydb.core.api.migration.Context;

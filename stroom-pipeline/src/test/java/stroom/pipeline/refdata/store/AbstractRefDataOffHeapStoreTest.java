@@ -26,11 +26,10 @@ import stroom.util.time.StroomDuration;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import jakarta.inject.Inject;
 import org.junit.jupiter.api.BeforeEach;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.inject.Inject;
 
 public abstract class AbstractRefDataOffHeapStoreTest extends AbstractStoreDbTest {
 

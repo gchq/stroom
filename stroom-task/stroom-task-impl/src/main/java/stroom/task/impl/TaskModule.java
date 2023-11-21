@@ -26,10 +26,10 @@ import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.RestResourcesBinder;
 
 import com.google.inject.AbstractModule;
+import jakarta.inject.Inject;
+import jakarta.servlet.http.HttpSessionListener;
 
 import java.util.concurrent.Executor;
-import javax.inject.Inject;
-import javax.servlet.http.HttpSessionListener;
 
 public class TaskModule extends AbstractModule {
 

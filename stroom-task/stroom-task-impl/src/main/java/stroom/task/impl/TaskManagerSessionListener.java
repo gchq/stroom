@@ -19,14 +19,13 @@ package stroom.task.impl;
 import stroom.security.api.SecurityContext;
 import stroom.task.shared.FindTaskCriteria;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
+import jakarta.servlet.http.HttpSessionEvent;
+import jakarta.servlet.http.HttpSessionListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.inject.Singleton;
-import javax.servlet.http.HttpSessionEvent;
-import javax.servlet.http.HttpSessionListener;
 
 @Singleton
 class TaskManagerSessionListener implements HttpSessionListener {

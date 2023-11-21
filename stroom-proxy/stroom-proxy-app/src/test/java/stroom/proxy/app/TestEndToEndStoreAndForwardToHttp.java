@@ -8,13 +8,13 @@ import stroom.security.openid.api.IdpType;
 import stroom.util.time.StroomDuration;
 
 import com.github.tomakehurst.wiremock.client.WireMock;
+import jakarta.inject.Inject;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
-import javax.inject.Inject;
 
 public class TestEndToEndStoreAndForwardToHttp extends AbstractEndToEndTest {
 

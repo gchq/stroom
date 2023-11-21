@@ -10,9 +10,10 @@ import stroom.security.shared.PermissionNames;
 import stroom.util.AuditUtil;
 import stroom.util.shared.PermissionException;
 
+import jakarta.inject.Inject;
+
 import java.time.Instant;
 import java.util.Optional;
-import javax.inject.Inject;
 
 public class ApiKeyServiceImpl implements ApiKeyService {
 

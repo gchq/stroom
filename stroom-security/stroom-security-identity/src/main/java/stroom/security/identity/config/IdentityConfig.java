@@ -33,10 +33,9 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
-
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotNull;
 
 @JsonPropertyOrder(alphabetic = true)
 public class IdentityConfig extends AbstractConfig implements IsStroomConfig, HasDbConfig {

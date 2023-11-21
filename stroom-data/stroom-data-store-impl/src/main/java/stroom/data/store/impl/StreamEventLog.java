@@ -36,12 +36,12 @@ import event.logging.Query.Builder;
 import event.logging.Resource;
 import event.logging.ViewEventAction;
 import event.logging.util.EventLoggingUtil;
-import org.apache.commons.fileupload.FileItem;
+import jakarta.inject.Inject;
+import org.apache.commons.fileupload2.core.DiskFileItem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.math.BigInteger;
-import javax.inject.Inject;
 
 public class StreamEventLog {
 
@@ -57,7 +57,7 @@ public class StreamEventLog {
         this.securityContext = securityContext;
     }
 
-    public void importStream(final FileItem sourceFileItem,
+    public void importStream(final DiskFileItem sourceFileItem,
                              final String destPath,
                              final Throwable th) {
 

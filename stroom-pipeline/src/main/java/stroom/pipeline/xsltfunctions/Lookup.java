@@ -26,12 +26,12 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.Severity;
 
+import jakarta.inject.Inject;
 import net.sf.saxon.expr.XPathContext;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.trans.XPathException;
 
 import java.time.Instant;
-import javax.inject.Inject;
 
 class Lookup extends AbstractLookup {
 

@@ -38,6 +38,7 @@ import com.google.inject.Injector;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import io.vavr.Tuple3;
+import jakarta.inject.Inject;
 import org.junit.jupiter.api.BeforeEach;
 
 import java.io.IOException;
@@ -53,7 +54,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

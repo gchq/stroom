@@ -59,6 +59,7 @@ import stroom.util.NullSafe;
 import stroom.util.date.DateUtil;
 import stroom.util.shared.Indicators;
 
+import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -71,7 +72,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import javax.inject.Inject;
 
 class SteppingRequestHandler {
 

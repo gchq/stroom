@@ -31,14 +31,14 @@ import stroom.processor.shared.ProcessorTaskResource;
 import stroom.task.api.ThreadPoolImpl;
 import stroom.task.shared.ThreadPool;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
-import javax.inject.Provider;
 
 @DistributedTaskFactoryDescription(
         jobName = JobNames.DATA_PROCESSOR,

@@ -31,6 +31,8 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.pipeline.scope.PipelineScopeRunnable;
 
+import jakarta.inject.Provider;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -42,7 +44,6 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Supplier;
-import javax.inject.Provider;
 
 public class ExtractionDecorator {
 

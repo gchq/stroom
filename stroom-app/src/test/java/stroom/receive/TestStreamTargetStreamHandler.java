@@ -34,12 +34,12 @@ import stroom.receive.common.StreamTargetStreamHandlers;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.common.util.test.FileSystemTestUtil;
 
+import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

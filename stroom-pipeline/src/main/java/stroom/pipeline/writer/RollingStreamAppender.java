@@ -41,8 +41,7 @@ import stroom.pipeline.state.MetaHolder;
 import stroom.svg.shared.SvgImage;
 
 import com.google.common.base.Strings;
-
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 /**
  * Joins text instances into a single text instance.

@@ -8,12 +8,13 @@ import stroom.query.common.v2.DataSourceProviderRegistry;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
-import javax.inject.Inject;
-import javax.inject.Provider;
 
 public class DocResolver {
 

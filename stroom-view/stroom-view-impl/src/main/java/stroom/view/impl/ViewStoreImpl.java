@@ -34,12 +34,13 @@ import stroom.util.shared.Message;
 import stroom.view.api.ViewStore;
 import stroom.view.shared.ViewDoc;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.BiConsumer;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 @Singleton
 class ViewStoreImpl implements ViewStore {

@@ -22,6 +22,7 @@ import stroom.pipeline.state.LocationHolder.FunctionType;
 import stroom.pipeline.state.MetaHolder;
 import stroom.util.shared.Severity;
 
+import jakarta.inject.Inject;
 import net.sf.saxon.Configuration;
 import net.sf.saxon.event.Builder;
 import net.sf.saxon.event.PipelineConfiguration;
@@ -32,8 +33,6 @@ import net.sf.saxon.om.Sequence;
 import net.sf.saxon.tree.tiny.TinyBuilder;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
-
-import javax.inject.Inject;
 
 class Source extends StroomExtensionFunctionCall {
 

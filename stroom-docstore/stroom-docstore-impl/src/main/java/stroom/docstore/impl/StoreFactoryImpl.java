@@ -9,8 +9,8 @@ import stroom.importexport.api.ImportConverter;
 import stroom.security.api.SecurityContext;
 import stroom.util.entityevent.EntityEventBus;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 public class StoreFactoryImpl implements StoreFactory {
 

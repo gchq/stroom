@@ -16,7 +16,6 @@
 
 package stroom.widget.tickbox.client.view;
 
-import stroom.widget.form.client.FormGroup;
 import stroom.widget.form.client.FormLabel;
 
 import com.google.gwt.dom.client.Document;
@@ -41,10 +40,12 @@ import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.ButtonBase;
 import com.google.gwt.user.client.ui.DirectionalTextHelper;
+import com.google.gwt.user.client.ui.FormPanel;
 import com.google.gwt.user.client.ui.HasDirectionalSafeHtml;
 import com.google.gwt.user.client.ui.HasName;
 import com.google.gwt.user.client.ui.HasValue;
 import com.google.gwt.user.client.ui.HasWordWrap;
+import com.google.gwt.user.client.ui.Widget;
 
 /**
  * A standard check box widget.

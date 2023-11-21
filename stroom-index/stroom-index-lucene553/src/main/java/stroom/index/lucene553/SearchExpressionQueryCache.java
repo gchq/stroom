@@ -8,11 +8,11 @@ import stroom.query.api.v2.SearchRequest;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
+import jakarta.inject.Inject;
 import org.apache.lucene553.analysis.Analyzer;
 
 import java.util.HashMap;
 import java.util.Map;
-import javax.inject.Inject;
 
 class SearchExpressionQueryCache {
 

@@ -7,12 +7,12 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
+import jakarta.inject.Inject;
 import org.jooq.DSLContext;
 import org.jooq.Record;
 
 import java.util.Optional;
 import java.util.function.Function;
-import javax.inject.Inject;
 
 import static stroom.processor.impl.db.jooq.tables.ProcessorFilterTracker.PROCESSOR_FILTER_TRACKER;
 

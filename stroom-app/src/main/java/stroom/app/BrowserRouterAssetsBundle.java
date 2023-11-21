@@ -1,8 +1,9 @@
 package stroom.app;
 
-import io.dropwizard.Bundle;
-import io.dropwizard.setup.Bootstrap;
-import io.dropwizard.setup.Environment;
+import io.dropwizard.core.Configuration;
+import io.dropwizard.core.ConfiguredBundle;
+import io.dropwizard.core.setup.Bootstrap;
+import io.dropwizard.core.setup.Environment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,7 +14,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 /**
  * A bundle for serving static asset files from the classpath.
  */
-public class BrowserRouterAssetsBundle implements Bundle {
+public class BrowserRouterAssetsBundle implements ConfiguredBundle<Configuration> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BrowserRouterAssetsBundle.class);
 
@@ -47,7 +48,7 @@ public class BrowserRouterAssetsBundle implements Bundle {
     }
 
     @Override
-    public void run(Environment environment) {
+    public void run(Configuration configuration, Environment environment) {
         LOGGER.info("Registering AssetBundle with name: {} for path {}", assetsName, uriPath + '*');
         environment.servlets().addServlet(assetsName, createServlet()).addMapping(uriPath + '*');
     }

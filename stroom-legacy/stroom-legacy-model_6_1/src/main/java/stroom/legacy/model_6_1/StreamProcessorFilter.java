@@ -16,6 +16,9 @@
 
 package stroom.legacy.model_6_1;
 
+import jakarta.xml.bind.annotation.XmlTransient;
+
+import java.util.Comparator;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -24,8 +27,6 @@ import javax.persistence.Lob;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToOne;
 import javax.persistence.Transient;
-import javax.xml.bind.annotation.XmlTransient;
-import java.util.Comparator;
 
 @Entity(name = "STRM_PROC_FILT")
 @Deprecated

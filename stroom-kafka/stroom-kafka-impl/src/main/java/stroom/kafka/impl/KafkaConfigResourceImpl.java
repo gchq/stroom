@@ -12,6 +12,8 @@ import stroom.util.shared.FetchWithUuid;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,8 +22,6 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import javax.inject.Inject;
-import javax.inject.Provider;
 
 @AutoLogged
 public class KafkaConfigResourceImpl implements KafkaConfigResource, FetchWithUuid<KafkaConfigDoc> {

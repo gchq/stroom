@@ -8,8 +8,8 @@ import stroom.util.shared.BuildInfo;
 import stroom.util.shared.SessionInfo;
 import stroom.util.shared.UserName;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 @AutoLogged
 public class SessionInfoResourceImpl implements SessionInfoResource {

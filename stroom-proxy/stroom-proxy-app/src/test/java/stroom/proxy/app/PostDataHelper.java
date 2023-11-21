@@ -2,6 +2,11 @@ package stroom.proxy.app;
 
 import stroom.util.shared.ModelStringUtil;
 
+import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.client.Invocation.Builder;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -12,11 +17,6 @@ import java.util.Map;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.client.Invocation.Builder;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 
 public class PostDataHelper {
 

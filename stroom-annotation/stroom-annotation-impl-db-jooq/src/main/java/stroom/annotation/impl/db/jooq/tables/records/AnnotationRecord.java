@@ -4,13 +4,13 @@
 package stroom.annotation.impl.db.jooq.tables.records;
 
 
+import stroom.annotation.impl.db.jooq.tables.Annotation;
+
 import org.jooq.Field;
 import org.jooq.Record1;
 import org.jooq.Record12;
 import org.jooq.Row12;
 import org.jooq.impl.UpdatableRecordImpl;
-
-import stroom.annotation.impl.db.jooq.tables.Annotation;
 
 
 /**

@@ -3,13 +3,13 @@ package stroom.util.validation;
 import stroom.test.common.AbstractValidatorTest;
 import stroom.util.shared.validation.ValidRegex;
 
+import jakarta.validation.ConstraintViolation;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Set;
-import javax.validation.ConstraintViolation;
 
 class TestValidRegexValidatorImpl extends AbstractValidatorTest {
 

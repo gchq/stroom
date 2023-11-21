@@ -9,7 +9,7 @@ import stroom.task.api.TerminateHandlerFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 public class LocalNodeSearch implements NodeSearch {
 

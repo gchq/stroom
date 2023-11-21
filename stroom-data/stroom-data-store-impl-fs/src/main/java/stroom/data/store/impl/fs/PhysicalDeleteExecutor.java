@@ -38,6 +38,9 @@ import stroom.util.logging.LogUtil;
 import stroom.util.time.StroomDuration;
 import stroom.util.time.TimeUtils;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -57,8 +60,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
-import javax.inject.Provider;
 
 public class PhysicalDeleteExecutor {
 

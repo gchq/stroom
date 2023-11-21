@@ -20,9 +20,8 @@ package stroom.search;
 import stroom.index.impl.IndexShardService;
 import stroom.index.shared.LuceneVersion;
 
+import jakarta.inject.Inject;
 import org.junit.jupiter.api.BeforeEach;
-
-import javax.inject.Inject;
 
 class TestInteractiveSearchLucene980 extends AbstractInteractiveSearchTest {
 

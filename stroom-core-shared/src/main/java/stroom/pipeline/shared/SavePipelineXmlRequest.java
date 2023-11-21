@@ -17,9 +17,7 @@
 package stroom.pipeline.shared;
 
 import stroom.docref.DocRef;
-import stroom.docref.HasType;
 import stroom.docref.HasUuid;
-import stroom.util.shared.FetchWithUuid;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;

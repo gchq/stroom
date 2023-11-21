@@ -5,7 +5,7 @@ import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.security.api.SecurityContext;
 import stroom.util.shared.ResultPage;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 public class DataVolumeService {
 

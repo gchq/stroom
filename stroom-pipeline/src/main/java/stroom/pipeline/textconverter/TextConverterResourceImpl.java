@@ -23,8 +23,8 @@ import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.TextConverterResource;
 import stroom.util.shared.EntityServiceException;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 @AutoLogged
 class TextConverterResourceImpl implements TextConverterResource {
