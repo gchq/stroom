@@ -77,21 +77,6 @@ public class QueryFieldDaoImpl implements QueryFieldDao {
                 .execute());
     }
 
-//    public void addField(final int datasourceId, final IndexField field) {
-//        JooqUtil.context(queryDatasourceDbConnProvider, context -> context
-//                .insertInto(QUERY_DATASOURCE_FIELD)
-//                .set(QUERY_DATASOURCE_FIELD.FK_QUERY_DATASOURCE_ID, datasourceId)
-//                .set(QUERY_DATASOURCE_FIELD.FIELD_TYPE, field.getFieldType().getId())
-//                .set(QUERY_DATASOURCE_FIELD.FIELD_NAME, field.getFieldName())
-//                .set(QUERY_DATASOURCE_FIELD.ANALYZER_TYPE, field.getAnalyzerType().getId())
-//                .set(QUERY_DATASOURCE_FIELD.INDEXED, field.isIndexed())
-//                .set(QUERY_DATASOURCE_FIELD.STORED, field.isStored())
-//                .set(QUERY_DATASOURCE_FIELD.TERM_POSITIONS, field.isTermPositions())
-//                .set(QUERY_DATASOURCE_FIELD.CASE_SENSITIVE, field.isCaseSensitive())
-//                .onDuplicateKeyIgnore()
-//                .execute());
-//    }
-
     public void addFields(final int fieldSourceId, final Collection<FieldInfo> fields) {
         JooqUtil.context(queryDatasourceDbConnProvider, context -> {
             var c = context.insertInto(FIELD_INFO,

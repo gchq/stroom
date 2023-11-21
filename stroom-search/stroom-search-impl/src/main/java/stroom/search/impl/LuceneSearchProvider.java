@@ -44,7 +44,6 @@ import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -109,26 +108,26 @@ public class LuceneSearchProvider implements SearchProvider {
                 final List<FieldInfo> mapped = fields.stream().map(FieldInfo::create).toList();
                 queryFieldService.addFields(fieldSourceId, mapped);
 
-                // TEST DATA
-                final List<QueryField> list = new ArrayList<>();
-                for (int i = 0; i < 1000; i++) {
-                    list.add(new IdField("test" + i));
-                    for (int j = 0; j < 1000; j++) {
-                        list.add(new IdField("test" + i + ".test" + j));
-                        for (int k = 0; k < 1000; k++) {
-                            list.add(new IdField("test" + i + ".test" + j + ".test" + k));
-                        }
-                    }
-                }
-                final List<FieldInfo> mapped2 = list.stream().map(FieldInfo::create).toList();
-                queryFieldService.addFields(fieldSourceId, mapped2);
-
-
+//                // TEST DATA
+//                for (int i = 0; i < 1000; i++) {
+//                    addField(fieldSourceId, new IdField("test" + i));
+//                    for (int j = 0; j < 1000; j++) {
+//                        addField(fieldSourceId, new IdField("test" + i + ".test" + j));
+//                        for (int k = 0; k < 1000; k++) {
+//                            addField(fieldSourceId, new IdField("test" + i + ".test" + j + ".test" + k));
+//                        }
+//                    }
+//                }
                 FIELD_SOURCE_MAP.put(docRef, fieldSourceId);
             }
 
             return queryFieldService.findFieldInfo(criteria);
         });
+    }
+
+    private void addField(final int fieldSourceId, final QueryField field) {
+        queryFieldService.addFields(fieldSourceId,
+                Collections.singletonList(FieldInfo.create(field)));
     }
 
     @Override
