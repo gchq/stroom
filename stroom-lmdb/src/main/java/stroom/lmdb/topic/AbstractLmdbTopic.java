@@ -8,15 +8,18 @@ import stroom.lmdb.BasicLmdbDb;
 import stroom.lmdb.LmdbEnv;
 import stroom.lmdb.serde.Serde;
 
+import org.lmdbjava.Cursor;
 import org.lmdbjava.CursorIterable;
 import org.lmdbjava.CursorIterable.KeyVal;
 import org.lmdbjava.DbiFlags;
+import org.lmdbjava.GetOp;
 import org.lmdbjava.KeyRange;
 import org.lmdbjava.Txn;
 
 import java.nio.ByteBuffer;
 import java.util.Iterator;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLong;
 
 public abstract class AbstractLmdbTopic<K, V> {
@@ -166,24 +169,20 @@ public abstract class AbstractLmdbTopic<K, V> {
         final long offset = lastConsumerOffset.incrementAndGet();
 
         lmdbEnvironment.getWithReadTxn(readTxn -> {
-            try (PooledByteBufferPair pooledBufferPair = topicDb.getPooledBufferPair();
-                    PooledByteBuffer pooledStartKeyBuffer = topicDb.getPooledKeyBuffer()) {
+            try (PooledByteBuffer pooledStartKeyBuffer = topicDb.getPooledKeyBuffer()) {
+                // Partial key with offset only
                 final TopicKey startKey = TopicKey.asStartKey(offset);
-
                 final ByteBuffer startKeyBuffer = pooledStartKeyBuffer.getByteBuffer();
                 topicDb.serializeKey(startKeyBuffer, startKey);
-                final KeyRange<ByteBuffer> keyRange = KeyRange.atLeast(startKeyBuffer);
 
-                try (CursorIterable<ByteBuffer> cursorIterable = topicDb.iterate(readTxn, keyRange)) {
-                    final Iterator<KeyVal<ByteBuffer>> iterator = cursorIterable.iterator();
-//                    if (!iterator.hasNext()) {
-//
-//                    }
-//                    iterator.next()
-
+                try (Cursor<ByteBuffer> cursor = topicDb.getLmdbDbi().openCursor(readTxn)) {
+                    // Set cursor at >= start key, i.e. at the offset
+                    cursor.get(startKeyBuffer, GetOp.MDB_SET_RANGE);
+                    final V val = topicDb.deserializeValue(cursor.val());
+                    Objects.requireNonNull(val, () -> "No value for offset " + offset);
+                    return val;
                 }
             }
-            return null;
         });
         return null;
     }

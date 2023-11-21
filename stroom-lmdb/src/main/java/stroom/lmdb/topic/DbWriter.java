@@ -13,6 +13,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedTransferQueue;
 import java.util.concurrent.TransferQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 class DbWriter {
@@ -38,36 +39,46 @@ class DbWriter {
     }
 
     private void consumeActions() {
-        while (!Thread.currentThread().isInterrupted()) {
-            final TxnAction txnAction = actionTransferQueue.poll(2, TimeUnit);
-            if (txnAction != null) {
+        // Keep on looping checking for things
+        TxnAction txnAction = null;
+        try {
+            while (!Thread.currentThread().isInterrupted()) {
                 try {
-                    if (writeTxn == null) {
-                        writeTxn = lmdbEnv.openWriteTxn();
-                    }
-                    txnAction.run(writeTxn.getTxn());
-                    if (txnAction.shouldCommit()
-                            || actionsSinceLastCommit > MAX_ACTIONS_UNCOMMITTED
-                            || (nextCommitTimeEpochMs != null
-                            && System.currentTimeMillis() > nextCommitTimeEpochMs)) {
-                        writeTxn.commit();
-                        writeTxn.close();
-                        writeTxn = null;
-                        nextCommitTimeEpochMs = null;
-                        actionsSinceLastCommit = 0;
-                    } else {
-                        if (nextCommitTimeEpochMs == null) {
-                            nextCommitTimeEpochMs = System.currentTimeMillis() + MAX_TIME_BETWEEN_COMMITS_MS;
+                    txnAction = actionTransferQueue.poll(2L, TimeUnit.SECONDS);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    LOGGER.error("Thread interrupted");
+                    break;
+                }
+                if (txnAction != null) {
+                    try {
+                        if (writeTxn == null) {
+                            writeTxn = lmdbEnv.openWriteTxn();
                         }
-                        actionsSinceLastCommit++;
+                        txnAction.run(writeTxn.getTxn());
+                        if (txnAction.shouldCommit()
+                                || actionsSinceLastCommit > MAX_ACTIONS_UNCOMMITTED
+                                || (nextCommitTimeEpochMs != null
+                                && System.currentTimeMillis() > nextCommitTimeEpochMs)) {
+                            writeTxn.commit();
+                            writeTxn.close();
+                            writeTxn = null;
+                            nextCommitTimeEpochMs = null;
+                            actionsSinceLastCommit = 0;
+                        } else {
+                            if (nextCommitTimeEpochMs == null) {
+                                nextCommitTimeEpochMs = System.currentTimeMillis() + MAX_TIME_BETWEEN_COMMITS_MS;
+                            }
+                            actionsSinceLastCommit++;
+                        }
+                    } catch (Exception e) {
+                        LOGGER.error("Error running action: {}", e.getMessage(), e);
+                        // TODO Can't throw, need to put ex in a future or similar
                     }
-                } catch (Exception e) {
-                    LOGGER.error("Error running action: {}", e.getMessage(), e);
-                    // TODO Can't throw, need to put ex in a future or similar
-                } finally {
-                    NullSafe.consume(writeTxn, WriteTxn::close);
                 }
             }
+        } finally {
+            NullSafe.consume(writeTxn, WriteTxn::close);
         }
     }
 
