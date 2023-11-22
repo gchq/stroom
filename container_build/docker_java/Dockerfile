@@ -68,7 +68,7 @@ RUN apk add --no-cache \
       docker-cli \
       git \
       graphviz \
-      rsynz \
+      rsync \
       su-exec \
       tini \
       font-droid \
