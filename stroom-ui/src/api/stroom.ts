@@ -481,6 +481,33 @@ export interface ClusterNodeInfoItem {
   nodeName?: string;
 }
 
+export interface CompletionValue {
+  caption?: string;
+  meta?: string;
+
+  /** @format int32 */
+  score?: number;
+  tooltip?: string;
+  value?: string;
+}
+
+export interface CompletionsRequest {
+  /** @format int32 */
+  column?: number;
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
+  dataSourceRef?: DocRef;
+  pageRequest?: PageRequest;
+
+  /** @format int32 */
+  row?: number;
+  showAll?: boolean;
+  sort?: string;
+  sortList?: CriteriaFieldSort[];
+  stringMatch?: StringMatch;
+  text?: string;
+}
+
 export interface ComponentConfig {
   id?: string;
   name?: string;
@@ -3479,6 +3506,12 @@ export interface QueryHelpData {
 
 export type QueryHelpDataSource = QueryHelpData & { docRef?: DocRef };
 
+export interface QueryHelpDetail {
+  documentation?: string;
+  insertText?: string;
+  insertType?: "PLAIN_TEXT" | "SNIPPET" | "BLANK" | "NOT_INSERTABLE";
+}
+
 export type QueryHelpField = QueryHelpData & { fieldInfo?: FieldInfo };
 
 export type QueryHelpFunctionSignature = QueryHelpData & {
@@ -3690,10 +3723,6 @@ export interface QueryHelpRow {
   type?: "DATA_SOURCE" | "FIELD" | "FUNCTION" | "TITLE" | "STRUCTURE";
 }
 
-export type QueryHelpStructureElement = QueryHelpData & { description?: string; snippets?: string[] };
-
-export type QueryHelpTitle = QueryHelpData & { documentation?: string };
-
 /**
  * A unique key to identify the instance of the search by. This key is used to identify multiple requests for the same search when running in incremental mode.
  */
@@ -3895,6 +3924,15 @@ export interface ResultPageAnalyticDataShard {
   /** Details of the page of results being returned. */
   pageResponse?: PageResponse;
   values?: AnalyticDataShard[];
+}
+
+/**
+ * A page of results.
+ */
+export interface ResultPageCompletionValue {
+  /** Details of the page of results being returned. */
+  pageResponse?: PageResponse;
+  values?: CompletionValue[];
 }
 
 /**
@@ -4716,6 +4754,8 @@ export interface StringMatch {
     | "NULL_OR_EMPTY"
     | "CONTAINS"
     | "EQUALS"
+    | "STARTS_WITH"
+    | "ENDS_WITH"
     | "REGEX";
   pattern?: string;
 }
@@ -9625,6 +9665,44 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     downloadQuerySearchResults: (nodeName: string, data: DownloadQueryResultsRequest, params: RequestParams = {}) =>
       this.request<any, ResourceGeneration>({
         path: `/query/v1/downloadSearchResults/${nodeName}`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Queries
+     * @name FetchCompletions
+     * @summary Fetch completions for the query
+     * @request POST:/query/v1/fetchCompletions
+     * @secure
+     */
+    fetchCompletions: (data: CompletionsRequest, params: RequestParams = {}) =>
+      this.request<any, ResultPageCompletionValue>({
+        path: `/query/v1/fetchCompletions`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Queries
+     * @name FetchDetail
+     * @summary Fetch detail for help item
+     * @request POST:/query/v1/fetchDetail
+     * @secure
+     */
+    fetchDetail: (data: QueryHelpRow, params: RequestParams = {}) =>
+      this.request<any, QueryHelpDetail>({
+        path: `/query/v1/fetchDetail`,
         method: "POST",
         body: data,
         secure: true,

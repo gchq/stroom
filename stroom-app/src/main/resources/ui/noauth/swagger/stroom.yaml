@@ -4569,6 +4569,42 @@ paths:
       summary: Download search results
       tags:
       - Queries
+  /query/v1/fetchCompletions:
+    post:
+      operationId: fetchCompletions
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompletionsRequest'
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultPageCompletionValue'
+          description: default response
+      summary: Fetch completions for the query
+      tags:
+      - Queries
+  /query/v1/fetchDetail:
+    post:
+      operationId: fetchDetail
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueryHelpRow'
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryHelpDetail'
+          description: default response
+      summary: Fetch detail for help item
+      tags:
+      - Queries
   /query/v1/fetchTimeZones:
     get:
       operationId: fetchTimeZones
@@ -7547,6 +7583,46 @@ components:
         master:
           type: boolean
         nodeName:
+          type: string
+    CompletionValue:
+      type: object
+      properties:
+        caption:
+          type: string
+        meta:
+          type: string
+        score:
+          type: integer
+          format: int32
+        tooltip:
+          type: string
+        value:
+          type: string
+    CompletionsRequest:
+      type: object
+      properties:
+        column:
+          type: integer
+          format: int32
+        dataSourceRef:
+          $ref: '#/components/schemas/DocRef'
+        pageRequest:
+          $ref: '#/components/schemas/PageRequest'
+        row:
+          type: integer
+          format: int32
+        showAll:
+          type: boolean
+        sort:
+          type: string
+          writeOnly: true
+        sortList:
+          type: array
+          items:
+            $ref: '#/components/schemas/CriteriaFieldSort'
+        stringMatch:
+          $ref: '#/components/schemas/StringMatch'
+        text:
           type: string
     ComponentConfig:
       type: object
@@ -12027,6 +12103,20 @@ components:
         properties:
           docRef:
             $ref: '#/components/schemas/DocRef'
+    QueryHelpDetail:
+      type: object
+      properties:
+        documentation:
+          type: string
+        insertText:
+          type: string
+        insertType:
+          type: string
+          enum:
+          - PLAIN_TEXT
+          - SNIPPET
+          - BLANK
+          - NOT_INSERTABLE
     QueryHelpField:
       type: object
       allOf:
@@ -12299,26 +12389,6 @@ components:
           - FUNCTION
           - TITLE
           - STRUCTURE
-    QueryHelpStructureElement:
-      type: object
-      allOf:
-      - $ref: '#/components/schemas/QueryHelpData'
-      - type: object
-        properties:
-          description:
-            type: string
-          snippets:
-            type: array
-            items:
-              type: string
-    QueryHelpTitle:
-      type: object
-      allOf:
-      - $ref: '#/components/schemas/QueryHelpData'
-      - type: object
-        properties:
-          documentation:
-            type: string
     QueryKey:
       type: object
       description: A unique key to identify the instance of the search by. This key
@@ -12614,6 +12684,16 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/AnalyticDataShard'
+    ResultPageCompletionValue:
+      type: object
+      description: A page of results.
+      properties:
+        pageResponse:
+          $ref: '#/components/schemas/PageResponse'
+        values:
+          type: array
+          items:
+            $ref: '#/components/schemas/CompletionValue'
     ResultPageCustomRollUpMask:
       type: object
       description: A page of results.
@@ -13889,6 +13969,8 @@ components:
           - NULL_OR_EMPTY
           - CONTAINS
           - EQUALS
+          - STARTS_WITH
+          - ENDS_WITH
           - REGEX
         pattern:
           type: string
