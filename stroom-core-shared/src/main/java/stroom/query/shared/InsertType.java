@@ -1,4 +1,4 @@
-package stroom.query.client.presenter;
+package stroom.query.shared;
 
 public enum InsertType {
     PLAIN_TEXT(true),

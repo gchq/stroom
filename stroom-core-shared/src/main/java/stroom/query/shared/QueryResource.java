@@ -113,4 +113,11 @@ public interface QueryResource extends RestResource, DirectRestService, FetchWit
             summary = "Fetch completions for the query",
             operationId = "fetchCompletions")
     ResultPage<CompletionValue> fetchCompletions(CompletionsRequest completionsRequest);
+
+    @POST
+    @Path("/fetchDetail")
+    @Operation(
+            summary = "Fetch detail for help item",
+            operationId = "fetchDetail")
+    QueryHelpDetail fetchDetail(QueryHelpRow row);
 }

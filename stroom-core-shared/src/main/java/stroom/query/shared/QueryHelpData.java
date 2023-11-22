@@ -12,9 +12,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 @JsonSubTypes({
         @JsonSubTypes.Type(value = QueryHelpDataSource.class, name = "dataSource"),
         @JsonSubTypes.Type(value = QueryHelpField.class, name = "field"),
-        @JsonSubTypes.Type(value = QueryHelpFunctionSignature.class, name = "functionSignature"),
-        @JsonSubTypes.Type(value = QueryHelpTitle.class, name = "title"),
-        @JsonSubTypes.Type(value = QueryHelpStructureElement.class, name = "structureElement")
+        @JsonSubTypes.Type(value = QueryHelpFunctionSignature.class, name = "functionSignature")
 })
 @JsonInclude(Include.NON_NULL)
 public abstract class QueryHelpData {

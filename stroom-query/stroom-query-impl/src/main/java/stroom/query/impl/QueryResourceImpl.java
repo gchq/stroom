@@ -26,6 +26,7 @@ import stroom.query.shared.CompletionValue;
 import stroom.query.shared.CompletionsRequest;
 import stroom.query.shared.DownloadQueryResultsRequest;
 import stroom.query.shared.QueryDoc;
+import stroom.query.shared.QueryHelpDetail;
 import stroom.query.shared.QueryHelpRequest;
 import stroom.query.shared.QueryHelpRow;
 import stroom.query.shared.QueryResource;
@@ -47,6 +48,7 @@ import jakarta.ws.rs.client.Entity;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @AutoLogged
 class QueryResourceImpl implements QueryResource {
@@ -179,6 +181,7 @@ class QueryResourceImpl implements QueryResource {
     }
 
     @Override
+    @AutoLogged(OperationType.UNLOGGED)
     public ResultPage<CompletionValue> fetchCompletions(final CompletionsRequest request) {
         final List<CompletionValue> list = new ArrayList<>();
         final PageRequest pageRequest = request.getPageRequest();
@@ -189,6 +192,22 @@ class QueryResourceImpl implements QueryResource {
         fieldsProvider.get().addCompletions(request, reducePageRequest(pageRequest, list.size()), list);
         functionsProvider.get().addCompletions(request, reducePageRequest(pageRequest, list.size()), list);
         return ResultPage.createCriterialBasedList(list, request);
+    }
+
+    @Override
+    @AutoLogged(OperationType.UNLOGGED)
+    public QueryHelpDetail fetchDetail(final QueryHelpRow row) {
+        if (row == null) {
+            return null;
+        }
+
+        Optional<QueryHelpDetail> result = Optional.empty();
+        result = result.or(() -> dataSourcesProvider.get().fetchDetail(row));
+        result = result.or(() -> structuresProvider.get().fetchDetail(row));
+        result = result.or(() -> fieldsProvider.get().fetchDetail(row));
+        result = result.or(() -> functionsProvider.get().fetchDetail(row));
+        
+        return result.orElse(null);
     }
 
     private PageRequest reducePageRequest(final PageRequest pageRequest, final int size) {

@@ -70,7 +70,9 @@ public class MarkdownConverter {
                     .appendHtmlConstant("<link rel=\"stylesheet\" href=\"css/app.css\" type=\"text/css\" />")
                     .appendHtmlConstant("</head>")
                     .appendHtmlConstant("<body>")
+                    .appendHtmlConstant("<div class=\"max info-page markdown-container\">")
                     .append(markdownSafeHtml)
+                    .appendHtmlConstant("</div>")
                     .appendHtmlConstant("</body>")
                     .appendHtmlConstant("</html>")
                     .toSafeHtml();
@@ -139,7 +141,7 @@ public class MarkdownConverter {
      */
     private String getMarkdownContainerClasses() {
         final String prismThemeClassName = getPrismThemeClassName();
-        return "max info-page markdown-container markdown " + prismThemeClassName;
+        return "markdown " + prismThemeClassName;
     }
 
     private String getPrismThemeClassName() {

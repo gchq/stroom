@@ -5,11 +5,13 @@ import stroom.explorer.api.ExplorerActionHandler;
 import stroom.query.common.v2.DataSourceProviderRegistry;
 import stroom.query.shared.CompletionValue;
 import stroom.query.shared.CompletionsRequest;
+import stroom.query.shared.InsertType;
 import stroom.query.shared.QueryHelpDataSource;
+import stroom.query.shared.QueryHelpDetail;
 import stroom.query.shared.QueryHelpRow;
-import stroom.query.shared.QueryHelpTitle;
 import stroom.query.shared.QueryHelpType;
 import stroom.svg.shared.SvgImage;
+import stroom.util.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage.ResultConsumer;
 import stroom.util.string.StringMatcher;
@@ -36,8 +38,6 @@ public class DataSources {
             .id(DATA_SOURCE_ID)
             .hasChildren(true)
             .title("Data Sources")
-            .data(new QueryHelpTitle(
-                    "A list of data sources that can be queried by specifying them in the 'from' clause."))
             .build();
 
     private final Provider<DataSourceProviderRegistry> dataSourceProviderRegistryProvider;
@@ -107,7 +107,47 @@ public class DataSources {
         }
     }
 
+    public Optional<QueryHelpDetail> fetchDetail(final QueryHelpRow row) {
+        if (DATA_SOURCE_ID.equals(row.getId())) {
+            final InsertType insertType = InsertType.NOT_INSERTABLE;
+            final String insertText = null;
+            final String documentation =
+                    "A list of data sources that can be queried by specifying them in the 'from' clause.";
+            return Optional.of(new QueryHelpDetail(insertType, insertText, documentation));
+
+        } else if (row.getId().startsWith(DATA_SOURCE_ID + ".")) {
+            final QueryHelpDataSource dataSource = (QueryHelpDataSource) row.getData();
+            final DocRef docRef = dataSource.getDocRef();
+            final InsertType insertType = NullSafe.isBlankString(docRef.getName())
+                    ? InsertType.BLANK
+                    : InsertType.PLAIN_TEXT;
+            final String insertText = getInsertText(docRef);
+            final String documentation = getDetail(docRef);
+            return Optional.of(new QueryHelpDetail(insertType, insertText, documentation));
+        }
+
+        return Optional.empty();
+    }
+
     private CompletionValue createCompletionValue(final DocRef docRef) {
+        final String caption = docRef.getName();
+        final String insertText = getInsertText(docRef);
+        final String tooltip = getDetail(docRef);
+        return new CompletionValue(
+                caption,
+                insertText,
+                500,
+                "Data Source",
+                tooltip);
+    }
+
+    private String getInsertText(final DocRef docRef) {
+        return docRef.getName().contains(" ")
+                ? "\"" + docRef.getName() + "\""
+                : docRef.getName();
+    }
+
+    private String getDetail(final DocRef docRef) {
         final DetailBuilder detail = new DetailBuilder();
         detail.title(docRef.getName());
         detail.description(description -> description
@@ -120,18 +160,7 @@ public class DataSources {
                 dataSourceProviderRegistryProvider.get();
         final Optional<String> documentation = dataSourceProviderRegistry.fetchDocumentation(docRef);
         documentation.ifPresent(detail::append);
-
-        final String caption = docRef.getName();
-        final String insertText = caption.contains(" ")
-                ? "\"" + caption + "\""
-                : caption;
-
-        return new CompletionValue(
-                caption,
-                insertText,
-                500,
-                "Data Source",
-                detail.build());
+        return detail.build();
     }
 
     private boolean hasChildren(final StringMatcher stringMatcher) {

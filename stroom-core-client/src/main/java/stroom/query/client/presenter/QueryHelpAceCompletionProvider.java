@@ -14,6 +14,7 @@ import stroom.util.shared.ResultPage;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import edu.ycp.cs.dh.acegwt.client.ace.AceCompletion;
 import edu.ycp.cs.dh.acegwt.client.ace.AceCompletionCallback;
 import edu.ycp.cs.dh.acegwt.client.ace.AceCompletionProvider;
@@ -65,7 +66,7 @@ public class QueryHelpAceCompletionProvider implements AceCompletionProvider {
                             .getValues()
                             .stream()
                             .map(completion -> {
-                                final SafeHtml markDownSafeHtml = markdownConverter.convertMarkdownToHtmlInFrame(
+                                final SafeHtml markDownSafeHtml = markdownConverter.convertMarkdownToHtml(
                                         completion.getTooltip());
                                 return new AceCompletionValue(
                                         completion.getCaption(),

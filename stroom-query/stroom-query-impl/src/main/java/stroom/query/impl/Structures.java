@@ -2,40 +2,48 @@ package stroom.query.impl;
 
 import stroom.query.shared.CompletionValue;
 import stroom.query.shared.CompletionsRequest;
+import stroom.query.shared.InsertType;
+import stroom.query.shared.QueryHelpDetail;
 import stroom.query.shared.QueryHelpRow;
-import stroom.query.shared.QueryHelpStructureElement;
-import stroom.query.shared.QueryHelpTitle;
 import stroom.query.shared.QueryHelpType;
+import stroom.ui.config.shared.UiConfig;
 import stroom.util.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage.ResultConsumer;
 import stroom.util.string.StringMatcher;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 @Singleton
 class Structures {
 
     private static final String SECTION_ID = "structure";
 
+    private final Provider<UiConfig> uiConfigProvider;
     private final QueryHelpRow root;
     private final List<QueryHelpRow> list = new ArrayList<>();
+    private final Map<String, StructureElement> map = new HashMap<>();
 
     @SuppressWarnings({"checkstyle:LineLength", "checkstyle:RegexpSingleline"})
     @Inject
-    Structures() {
+    Structures(final Provider<UiConfig> uiConfigProvider) {
+        this.uiConfigProvider = uiConfigProvider;
+
         root = QueryHelpRow
                 .builder()
                 .type(QueryHelpType.TITLE)
                 .id(SECTION_ID)
                 .hasChildren(true)
                 .title("Structure")
-                .data(new QueryHelpTitle("A list of the keywords available in the Stroom Query Language."))
                 .build();
 
         // Note 'stroomql' is not a thing, but using it in the hope that we create a language definition
@@ -227,9 +235,8 @@ class Structures {
                 .type(QueryHelpType.STRUCTURE)
                 .id(SECTION_ID + "." + title)
                 .title(title)
-                .data(new QueryHelpStructureElement(detail,
-                        NullSafe.asList(snippets)))
                 .build());
+        map.put(title, new StructureElement(title, detail, snippets));
     }
 
     public void addRows(final PageRequest pageRequest,
@@ -284,17 +291,60 @@ class Structures {
     }
 
     private CompletionValue createCompletionValue(final QueryHelpRow row) {
-        final QueryHelpStructureElement structureElement = (QueryHelpStructureElement) row.getData();
-
-        final DetailBuilder detail = new DetailBuilder();
-        detail.title(row.getTitle());
-        detail.description(description -> description.append(structureElement.getDescription()));
-
+        final StructureElement structureElement = map.get(row.getTitle());
+        final String detail = getDetail(structureElement);
         return new CompletionValue(
                 row.getTitle(),
-                structureElement.getSnippets().get(0),
+                structureElement.snippets[0],
                 400,
                 "Structure",
-                detail.build());
+                detail);
+    }
+
+    private String getDetail(final StructureElement structureElement) {
+        final DetailBuilder detail = new DetailBuilder();
+        detail.title(structureElement.title);
+        detail.description(description -> description.append(structureElement.detail));
+
+        final UiConfig uiConfig = uiConfigProvider.get();
+        if (uiConfig.getHelpUrl() != null && uiConfig.getHelpSubPathStroomQueryLanguage() != null) {
+            detail.append("For more information see the ");
+            detail.appendLink(
+                    uiConfig.getHelpUrl() +
+                            uiConfig.getHelpSubPathStroomQueryLanguage() +
+                            "#" + structureElement.title.toLowerCase().replace(" ", "-"),
+                    "Help Documentation");
+            detail.append(".");
+        }
+
+        return detail.build();
+    }
+
+    public Optional<QueryHelpDetail> fetchDetail(final QueryHelpRow row) {
+        if (SECTION_ID.equals(row.getId())) {
+            final InsertType insertType = InsertType.NOT_INSERTABLE;
+            final String documentation = "A list of the keywords available in the Stroom Query Language.";
+            return Optional.of(new QueryHelpDetail(insertType, null, documentation));
+
+        } else if (row.getId().startsWith(SECTION_ID + ".")) {
+            final StructureElement structureElement = map.get(row.getTitle());
+            if (structureElement == null) {
+                return Optional.empty();
+            }
+
+            final List<String> snippets = NullSafe.asList(structureElement.snippets);
+            final InsertType insertType = NullSafe.hasItems(snippets)
+                    ? InsertType.SNIPPET
+                    : InsertType.BLANK;
+            final String insertText = snippets.get(0);
+            final String documentation = getDetail(structureElement);
+            return Optional.of(new QueryHelpDetail(insertType, insertText, documentation));
+        }
+
+        return Optional.empty();
+    }
+
+    private record StructureElement(String title, String detail, String... snippets) {
+
     }
 }

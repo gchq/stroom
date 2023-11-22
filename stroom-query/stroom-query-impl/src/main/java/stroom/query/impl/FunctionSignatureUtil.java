@@ -1,4 +1,4 @@
-package stroom.query.shared;
+package stroom.query.impl;
 
 import stroom.query.shared.QueryHelpFunctionSignature.Arg;
 
@@ -81,16 +81,14 @@ public class FunctionSignatureUtil {
         // No need to quote args as when you tab through you can surround with quotes
         // just by hitting the ' or " key. Also, more often than not, the arg value
         // is another func call or a field.
-        final StringBuilder stringBuilder = new StringBuilder()
-                .append("${")
-                .append(position)
-                .append(":")
-                .append(snippetDefault
-                        .replace("$", "\\$")
-                        .replace("}", "\\}"))
-                .append("}");
 
-        return stringBuilder.toString();
+        return "${" +
+                position +
+                ":" +
+                snippetDefault
+                        .replace("$", "\\$")
+                        .replace("}", "\\}") +
+                "}";
     }
 
     public static String buildSignatureStr(final String name,

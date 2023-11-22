@@ -16,14 +16,15 @@ import stroom.query.language.functions.ValNumber;
 import stroom.query.language.functions.ValString;
 import stroom.query.shared.CompletionValue;
 import stroom.query.shared.CompletionsRequest;
-import stroom.query.shared.FunctionSignatureUtil;
+import stroom.query.shared.InsertType;
+import stroom.query.shared.QueryHelpDetail;
 import stroom.query.shared.QueryHelpFunctionSignature;
 import stroom.query.shared.QueryHelpFunctionSignature.Arg;
 import stroom.query.shared.QueryHelpFunctionSignature.OverloadType;
 import stroom.query.shared.QueryHelpFunctionSignature.Type;
 import stroom.query.shared.QueryHelpRow;
-import stroom.query.shared.QueryHelpTitle;
 import stroom.query.shared.QueryHelpType;
+import stroom.ui.config.shared.UiConfig;
 import stroom.util.NullSafe;
 import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.PageRequest;
@@ -31,6 +32,7 @@ import stroom.util.shared.ResultPage.ResultConsumer;
 import stroom.util.string.StringMatcher;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
 import java.util.ArrayList;
@@ -42,6 +44,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
@@ -50,10 +53,14 @@ import java.util.stream.Collectors;
 public class Functions {
 
     private static final String ROOT_ID = "functions";
+
+    private final Provider<UiConfig> uiConfigProvider;
     private final Map<String, List<QueryHelpRow>> map;
 
     @Inject
-    public Functions() {
+    public Functions(final Provider<UiConfig> uiConfigProvider) {
+        this.uiConfigProvider = uiConfigProvider;
+
         final Map<String, Set<QueryHelpRow>> localMap = new HashMap<>();
 
         // Flatten the nested FunctionDef objects into signatures
@@ -63,7 +70,6 @@ public class Functions {
                 .id(ROOT_ID)
                 .hasChildren(true)
                 .title("Functions")
-                .data(new QueryHelpTitle("A list of functions available to use in the Stroom Query Language."))
                 .build();
         localMap.computeIfAbsent("", k -> new HashSet<>()).add(root);
 
@@ -399,7 +405,7 @@ public class Functions {
         } else {
             meta = "Func (" + signature.getPrimaryCategory() + ")";
         }
-        final String html = buildInfoHtml(signature, null);
+        final String html = buildInfoHtml(signature);
 
         return new CompletionValue(
                 name,
@@ -409,8 +415,8 @@ public class Functions {
                 html);
     }
 
-    private static boolean addArgsBlockToInfo(final QueryHelpFunctionSignature signature,
-                                              final DetailBuilder htmlBuilder) {
+    private boolean addArgsBlockToInfo(final QueryHelpFunctionSignature signature,
+                                       final DetailBuilder htmlBuilder) {
         AtomicBoolean addedContent = new AtomicBoolean(false);
         addedContent.set(!signature.getArgs().isEmpty());
 
@@ -484,7 +490,7 @@ public class Functions {
         return addedContent.get();
     }
 
-    private static String convertType(final Type type) {
+    private String convertType(final Type type) {
         final String number = "Number";
         return switch (type) {
             case LONG, DOUBLE, INTEGER, NUMBER -> number;
@@ -493,15 +499,14 @@ public class Functions {
         };
     }
 
-    private static StringBuilder appendSpaceIfNeeded(final StringBuilder stringBuilder) {
+    private StringBuilder appendSpaceIfNeeded(final StringBuilder stringBuilder) {
         if (stringBuilder.length() > 0) {
             stringBuilder.append(" ");
         }
         return stringBuilder;
     }
 
-    public static String buildInfoHtml(final QueryHelpFunctionSignature signature,
-                                       final String helpUrlBase) {
+    public String buildInfoHtml(final QueryHelpFunctionSignature signature) {
         final DetailBuilder detail = new DetailBuilder();
         if (signature != null) {
             detail.title(FunctionSignatureUtil.buildSignatureStr(signature.getName(), signature.getArgs()));
@@ -523,8 +528,10 @@ public class Functions {
                         .append("Aliases: " + String.join(", ", aliases)));
             }
 
-            if (helpUrlBase != null) {
-                addHelpLinkToInfo(signature, helpUrlBase, detail);
+            final UiConfig uiConfig = uiConfigProvider.get();
+            if (uiConfig.getHelpUrl() != null && uiConfig.getHelpSubPathStroomQueryLanguage() != null) {
+                addHelpLinkToInfo(signature, uiConfig.getHelpUrl() +
+                        uiConfig.getHelpSubPathStroomQueryLanguage(), detail);
             }
         }
         return detail.build();
@@ -563,5 +570,24 @@ public class Functions {
             }
         }
         return stringBuilder.toString();
+    }
+
+    public Optional<QueryHelpDetail> fetchDetail(final QueryHelpRow row) {
+        if (ROOT_ID.equals(row.getId())) {
+            final InsertType insertType = InsertType.NOT_INSERTABLE;
+            final String documentation = "A list of functions available to use in the Stroom Query Language.";
+            return Optional.of(new QueryHelpDetail(insertType, null, documentation));
+
+        } else if (row.getId().startsWith(ROOT_ID + ".") && row.getData() instanceof
+                final QueryHelpFunctionSignature signature) {
+            final InsertType insertType = NullSafe.isBlankString(row.getTitle())
+                    ? InsertType.BLANK
+                    : InsertType.PLAIN_TEXT;
+            final String insertText = FunctionSignatureUtil.buildSnippetText(signature.getName(), signature.getArgs());
+            final String html = buildInfoHtml(signature);
+            return Optional.of(new QueryHelpDetail(insertType, insertText, html));
+        }
+
+        return Optional.empty();
     }
 }

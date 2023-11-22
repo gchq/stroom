@@ -20,8 +20,10 @@ package stroom.query.client.presenter;
 import stroom.docref.DocRef;
 import stroom.editor.client.presenter.ChangeCurrentPreferencesEvent;
 import stroom.editor.client.presenter.EditorPresenter;
+import stroom.entity.client.presenter.MarkdownConverter;
 import stroom.item.client.SelectionList;
 import stroom.query.client.presenter.QueryHelpPresenter.QueryHelpView;
+import stroom.query.shared.InsertType;
 import stroom.query.shared.QueryHelpRow;
 import stroom.util.client.ClipboardUtil;
 import stroom.widget.util.client.MultiSelectionModel;
@@ -45,19 +47,22 @@ public class QueryHelpPresenter
 
     private final DynamicQueryHelpSelectionListModel model;
     private final QueryHelpAceCompletionProvider keyedAceCompletionProvider;
-    private final DetailProviders detailProviders;
+    private final QueryHelpDetailProvider detailProvider;
+    private final MarkdownConverter markdownConverter;
 
     @Inject
     public QueryHelpPresenter(final EventBus eventBus,
                               final QueryHelpView view,
                               final QueryHelpAceCompletionProvider keyedAceCompletionProvider,
-                              final DetailProviders detailProviders,
-                              final DynamicQueryHelpSelectionListModel model) {
+                              final QueryHelpDetailProvider detailProvider,
+                              final DynamicQueryHelpSelectionListModel model,
+                              final MarkdownConverter markdownConverter) {
         super(eventBus, view);
         view.setUiHandlers(this);
         this.keyedAceCompletionProvider = keyedAceCompletionProvider;
-        this.detailProviders = detailProviders;
+        this.detailProvider = detailProvider;
         this.model = model;
+        this.markdownConverter = markdownConverter;
 
         view.getSelectionList().setKeyboardSelectionPolicy(KeyboardSelectionPolicy.BOUND_TO_SELECTION);
         view.getSelectionList().setModel(model);
@@ -99,9 +104,11 @@ public class QueryHelpPresenter
         getView().enableButtons(false);
         final QueryHelpRow row = getSelectedItem();
         if (row != null) {
-            detailProviders.getDetail(row, detail -> {
+            detailProvider.getDetail(row, detail -> {
                 if (detail != null) {
-                    getView().setDetails(detail.getDocumentation());
+                    final SafeHtml markDownSafeHtml = markdownConverter.convertMarkdownToHtml(
+                            detail.getDocumentation());
+                    getView().setDetails(markDownSafeHtml);
                     getView().enableButtons(detail.getInsertType().isInsertable());
                 }
             });
@@ -116,8 +123,14 @@ public class QueryHelpPresenter
     public void onCopy() {
         final QueryHelpRow row = getSelectedItem();
         if (row != null) {
-            detailProviders.getDetail(row, detail ->
-                    ClipboardUtil.copy(detail.getInsertText()));
+            detailProvider.getDetail(row, detail -> {
+                if (detail != null &&
+                        detail.getInsertType() != null &&
+                        detail.getInsertType().isInsertable() &&
+                        detail.getInsertText() != null) {
+                    ClipboardUtil.copy(detail.getInsertText());
+                }
+            });
         }
     }
 
@@ -125,11 +138,17 @@ public class QueryHelpPresenter
     public void onInsert() {
         final QueryHelpRow row = getSelectedItem();
         if (row != null) {
-            detailProviders.getDetail(row, detail ->
+            detailProvider.getDetail(row, detail -> {
+                if (detail != null &&
+                        detail.getInsertType() != null &&
+                        detail.getInsertType().isInsertable() &&
+                        detail.getInsertText() != null) {
                     InsertEditorTextEvent.fire(
                             this,
                             detail.getInsertText(),
-                            detail.getInsertType()));
+                            detail.getInsertType());
+                }
+            });
         }
     }
 

@@ -17,6 +17,7 @@
 package stroom.query.client.presenter;
 
 import stroom.query.client.presenter.InsertEditorTextEvent.Handler;
+import stroom.query.shared.InsertType;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.EventHandler;

@@ -5,11 +5,13 @@ import stroom.datasource.api.v2.FindFieldInfoCriteria;
 import stroom.docref.DocRef;
 import stroom.query.shared.CompletionValue;
 import stroom.query.shared.CompletionsRequest;
+import stroom.query.shared.InsertType;
+import stroom.query.shared.QueryHelpDetail;
 import stroom.query.shared.QueryHelpField;
 import stroom.query.shared.QueryHelpRequest;
 import stroom.query.shared.QueryHelpRow;
-import stroom.query.shared.QueryHelpTitle;
 import stroom.query.shared.QueryHelpType;
+import stroom.util.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.ResultPage.ResultConsumer;
@@ -33,10 +35,6 @@ public class Fields {
             .id(FIELDS_ID)
             .hasChildren(true)
             .title("Fields")
-            .data(new QueryHelpTitle(
-                    "A list of the fields available to 'select' from the specified data source. " +
-                            "The fields will only become available one the data source has been " +
-                            "specified using the 'from' keyword."))
             .build();
     private final Provider<QueryService> queryServiceProvider;
 
@@ -109,18 +107,27 @@ public class Fields {
     }
 
     private CompletionValue createCompletionValue(final FieldInfo fieldInfo) {
-        final DetailBuilder detail = new DetailBuilder();
-        detail.title(fieldInfo.getFieldName());
-        detail.description(description -> addFieldDetails(description, fieldInfo));
-        final String insertText = fieldInfo.getFieldName().contains(" ")
-                ? "${" + fieldInfo.getFieldName() + "}"
-                : fieldInfo.getFieldName();
+        final String insertText = getInsertText(fieldInfo.getFieldName());
+        final String tooltip = getDetail(fieldInfo);
         return new CompletionValue(
                 fieldInfo.getFieldName(),
                 insertText,
                 300,
                 "Field",
-                detail.build());
+                tooltip);
+    }
+
+    private String getDetail(final FieldInfo fieldInfo) {
+        final DetailBuilder detail = new DetailBuilder();
+        detail.title(fieldInfo.getFieldName());
+        detail.description(description -> addFieldDetails(description, fieldInfo));
+        return detail.build();
+    }
+
+    private String getInsertText(final String fieldName) {
+        return fieldName.contains(" ")
+                ? "${" + fieldName + "}"
+                : fieldName;
     }
 
     private void addFieldDetails(final DetailBuilder detail, final FieldInfo field) {
@@ -139,5 +146,27 @@ public class Fields {
         return bool
                 ? "True"
                 : "False";
+    }
+
+    public Optional<QueryHelpDetail> fetchDetail(final QueryHelpRow row) {
+        if (FIELDS_ID.equals(row.getId())) {
+            final InsertType insertType = InsertType.NOT_INSERTABLE;
+            final String documentation = "A list of the fields available to 'select' from the specified data source. " +
+                    "The fields will only become available one the data source has been " +
+                    "specified using the 'from' keyword.";
+            return Optional.of(new QueryHelpDetail(insertType, null, documentation));
+
+        } else if (row.getId().startsWith(FIELDS_ID + ".") && row.getData() instanceof
+                final QueryHelpField queryHelpField) {
+            final FieldInfo fieldInfo = queryHelpField.getFieldInfo();
+            final InsertType insertType = NullSafe.isBlankString(row.getTitle())
+                    ? InsertType.BLANK
+                    : InsertType.PLAIN_TEXT;
+            final String insertText = getInsertText(row.getTitle());
+            final String documentation = getDetail(fieldInfo);
+            return Optional.of(new QueryHelpDetail(insertType, insertText, documentation));
+        }
+
+        return Optional.empty();
     }
 }
