@@ -81,6 +81,12 @@ public class StringMatcher {
             case EQUALS -> {
                 return equals(string);
             }
+            case STARTS_WITH -> {
+                return startsWith(string);
+            }
+            case ENDS_WITH -> {
+                return endsWith(string);
+            }
             case REGEX -> {
                 return regex(string);
             }
@@ -108,18 +114,43 @@ public class StringMatcher {
         if (string == null) {
             return Optional.empty();
         }
-        if (caseSensitive) {
-            final int index = string.indexOf(pattern);
-            if (index != -1) {
-                return Optional.of(new Match(index, pattern.length()));
-            }
-        } else {
-            final int index = string.toLowerCase(Locale.ROOT).indexOf(pattern);
-            if (index != -1) {
-                return Optional.of(new Match(index, pattern.length()));
-            }
+        final int index = indexOf(string);
+        if (index != -1) {
+            return Optional.of(new Match(index, pattern.length()));
         }
         return Optional.empty();
+    }
+
+    private Optional<Match> startsWith(final String string) {
+        if (string == null) {
+            return Optional.empty();
+        }
+        final int index = indexOf(string);
+        if (index == 0) {
+            return Optional.of(new Match(index, pattern.length()));
+        }
+        return Optional.empty();
+    }
+
+    private Optional<Match> endsWith(final String string) {
+        if (string == null) {
+            return Optional.empty();
+        }
+        final int index = indexOf(string);
+        if (index == string.length() - pattern.length()) {
+            return Optional.of(new Match(index, pattern.length()));
+        }
+        return Optional.empty();
+    }
+
+    private int indexOf(final String string) {
+        final int index;
+        if (caseSensitive) {
+            index = string.indexOf(pattern);
+        } else {
+            index = string.toLowerCase(Locale.ROOT).indexOf(pattern);
+        }
+        return index;
     }
 
     private Optional<Match> regex(final String string) {

@@ -22,6 +22,8 @@ import stroom.docref.DocRef;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.node.api.NodeService;
+import stroom.query.shared.CompletionValue;
+import stroom.query.shared.CompletionsRequest;
 import stroom.query.shared.DownloadQueryResultsRequest;
 import stroom.query.shared.QueryDoc;
 import stroom.query.shared.QueryHelpRequest;
@@ -43,6 +45,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.ws.rs.client.Entity;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @AutoLogged
@@ -173,6 +176,19 @@ class QueryResourceImpl implements QueryResource {
         pageRequest = reducePageRequest(pageRequest, resultPageBuilder.size());
         functionsProvider.get().addRows(pageRequest, parentPath, stringMatcher, resultPageBuilder);
         return resultPageBuilder.build();
+    }
+
+    @Override
+    public ResultPage<CompletionValue> fetchCompletions(final CompletionsRequest request) {
+        final List<CompletionValue> list = new ArrayList<>();
+        final PageRequest pageRequest = request.getPageRequest();
+        if (request.isShowAll()) {
+            dataSourcesProvider.get().addCompletions(request, reducePageRequest(pageRequest, list.size()), list);
+            structuresProvider.get().addCompletions(request, reducePageRequest(pageRequest, list.size()), list);
+        }
+        fieldsProvider.get().addCompletions(request, reducePageRequest(pageRequest, list.size()), list);
+        functionsProvider.get().addCompletions(request, reducePageRequest(pageRequest, list.size()), list);
+        return ResultPage.createCriterialBasedList(list, request);
     }
 
     private PageRequest reducePageRequest(final PageRequest pageRequest, final int size) {

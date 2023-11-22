@@ -106,4 +106,11 @@ public interface QueryResource extends RestResource, DirectRestService, FetchWit
             operationId = "fetchHelpItems")
     ResultPage<QueryHelpRow> fetchQueryHelpItems(
             @Parameter(description = "request", required = true) QueryHelpRequest request);
+
+    @POST
+    @Path("/fetchCompletions")
+    @Operation(
+            summary = "Fetch completions for the query",
+            operationId = "fetchCompletions")
+    ResultPage<CompletionValue> fetchCompletions(CompletionsRequest completionsRequest);
 }

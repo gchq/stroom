@@ -4,6 +4,7 @@ import stroom.query.language.functions.FunctionArg;
 import stroom.query.language.functions.FunctionCategory;
 import stroom.query.language.functions.FunctionDef;
 import stroom.query.language.functions.FunctionFactory;
+import stroom.query.language.functions.FunctionSignature;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValBoolean;
 import stroom.query.language.functions.ValDouble;
@@ -13,6 +14,8 @@ import stroom.query.language.functions.ValLong;
 import stroom.query.language.functions.ValNull;
 import stroom.query.language.functions.ValNumber;
 import stroom.query.language.functions.ValString;
+import stroom.query.shared.CompletionValue;
+import stroom.query.shared.CompletionsRequest;
 import stroom.query.shared.FunctionSignatureUtil;
 import stroom.query.shared.QueryHelpFunctionSignature;
 import stroom.query.shared.QueryHelpFunctionSignature.Arg;
@@ -22,6 +25,7 @@ import stroom.query.shared.QueryHelpRow;
 import stroom.query.shared.QueryHelpTitle;
 import stroom.query.shared.QueryHelpType;
 import stroom.util.NullSafe;
+import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage.ResultConsumer;
 import stroom.util.string.StringMatcher;
@@ -39,6 +43,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 @Singleton
@@ -342,5 +347,217 @@ public class Functions {
         } else {
             return Type.UNKNOWN;
         }
+    }
+
+    public void addCompletions(final CompletionsRequest request,
+                               final PageRequest pageRequest,
+                               final List<CompletionValue> resultList) {
+        int count = 0;
+        final StringMatcher stringMatcher = new StringMatcher(request.getStringMatch());
+        for (final FunctionDef functionDef : FunctionFactory.getFunctionDefinitions()) {
+            if (functionDef != null && count < pageRequest.getOffset() + pageRequest.getLength()) {
+                try {
+                    final Map<List<String>, Long> countsByCategoryPath = Arrays
+                            .stream(functionDef.signatures())
+                            .collect(Collectors.groupingBy(
+                                    sig -> buildCategoryPath(functionDef, sig),
+                                    Collectors.counting()));
+
+                    for (final FunctionSignature functionSignature : functionDef.signatures()) {
+                        final QueryHelpFunctionSignature row =
+                                convertSignature(functionDef, functionSignature, countsByCategoryPath);
+                        if (stringMatcher.match(row.getName()).isPresent()) {
+                            if (count >= pageRequest.getOffset()) {
+                                if (count < pageRequest.getOffset() + pageRequest.getLength()) {
+                                    resultList.add(createCompletionValue(row));
+                                } else {
+                                    break;
+                                }
+                            }
+                            count++;
+                        }
+                    }
+                } catch (Exception e) {
+                    throw new RuntimeException("Error converting FunctionDef " + functionDef.name(), e);
+                }
+            }
+        }
+    }
+
+    private CompletionValue createCompletionValue(final QueryHelpFunctionSignature signature) {
+        final String name = FunctionSignatureUtil.buildSignatureStr(signature.getName(), signature.getArgs());
+        final String snippetText = FunctionSignatureUtil.buildSnippetText(signature.getName(), signature.getArgs());
+        final String meta;
+        if ("Value".equals(signature.getPrimaryCategory())) {
+            meta = signature.getPrimaryCategory();
+        } else if (signature.getArgs().isEmpty()) {
+            meta = signature.getPrimaryCategory() + " Value";
+        } else {
+            meta = "Func (" + signature.getPrimaryCategory() + ")";
+        }
+        final String html = buildInfoHtml(signature, null);
+
+        return new CompletionValue(
+                name,
+                snippetText,
+                300,
+                meta,
+                html);
+    }
+
+    private static boolean addArgsBlockToInfo(final QueryHelpFunctionSignature signature,
+                                              final HtmlBuilder htmlBuilder) {
+        AtomicBoolean addedContent = new AtomicBoolean(false);
+        addedContent.set(!signature.getArgs().isEmpty());
+
+        htmlBuilder.elem("div", "queryHelpDetail-table", div ->
+                div.elem("table", table -> {
+                    // Add heading row.
+                    table.elem("tr", tr -> {
+                        tr.elem("th", th -> th.append("Parameter"));
+                        tr.elem("th", th -> th.append("Type"));
+                        tr.elem("th", th -> th.append("Description"));
+                    });
+
+                    // Add details.
+                    signature.getArgs()
+                            .forEach(arg -> {
+                                final String argName;
+
+                                if (arg.isVarargs()) {
+                                    argName = arg.getName() + "1...N";
+                                } else if (arg.isOptional()) {
+                                    argName = "[" + arg.getName() + "]";
+                                } else {
+                                    argName = arg.getName();
+                                }
+
+                                final StringBuilder descriptionBuilder = new StringBuilder();
+                                descriptionBuilder.append(arg.getDescription());
+                                if (!arg.getAllowedValues().isEmpty()) {
+                                    appendSpaceIfNeeded(descriptionBuilder)
+                                            .append("Allowed values: ")
+                                            .append(arg.getAllowedValues()
+                                                    .stream()
+                                                    .map(str -> "\"" + str + "\"")
+                                                    .collect(Collectors.joining(", ")))
+                                            .append(".");
+                                }
+
+                                if (arg.getDefaultValue() != null && !arg.getDefaultValue().isEmpty()) {
+                                    appendSpaceIfNeeded(descriptionBuilder)
+                                            .append("Default value: '")
+                                            .append(arg.getDefaultValue())
+                                            .append("'.");
+                                }
+
+                                if (arg.isOptional()) {
+                                    appendSpaceIfNeeded(descriptionBuilder)
+                                            .append("Optional argument.");
+                                }
+
+                                table.elem("tr", tr -> {
+                                    tr.elem("td", td -> td.append(argName));
+                                    tr.elem("td", td -> td.append(convertType(arg.getArgType())));
+                                    tr.elem("td", td -> td.append(descriptionBuilder.toString()));
+                                });
+                            });
+                    if (signature.getReturnType() != null) {
+                        if (!signature.getArgs().isEmpty()) {
+                            table.elem("tr", tr -> {
+                            });
+                        }
+                        table.elem("tr", tr -> {
+                            tr.elem("td", td -> td.append("Return"));
+                            tr.elem("td", td -> td.append(convertType(signature.getReturnType())));
+                            tr.elem("td", td -> td.append(signature.getReturnDescription()));
+                        });
+
+                        addedContent.set(true);
+                    }
+                }));
+
+        return addedContent.get();
+    }
+
+    private static String convertType(final Type type) {
+        final String number = "Number";
+        return switch (type) {
+            case LONG, DOUBLE, INTEGER, NUMBER -> number;
+            case STRING -> "Text";
+            default -> type.getName();
+        };
+    }
+
+    private static StringBuilder appendSpaceIfNeeded(final StringBuilder stringBuilder) {
+        if (stringBuilder.length() > 0) {
+            stringBuilder.append(" ");
+        }
+        return stringBuilder;
+    }
+
+    public static String buildInfoHtml(final QueryHelpFunctionSignature signature,
+                                       final String helpUrlBase) {
+        final DetailBuilder detail = new DetailBuilder();
+        if (signature != null) {
+            detail.title(FunctionSignatureUtil.buildSignatureStr(signature.getName(), signature.getArgs()));
+
+            if (signature.getDescription() != null && !signature.getDescription().isEmpty()) {
+                detail.elem("p", "queryHelpDetail-description", p -> p
+                        .append(signature.getDescription()));
+            }
+
+            final boolean addedArgs = addArgsBlockToInfo(signature, detail);
+
+            if (addedArgs) {
+                detail.emptyElem("br");
+            }
+
+            final List<String> aliases = signature.getAliases();
+            if (!aliases.isEmpty()) {
+                detail.elem("p", p -> p
+                        .append("Aliases: " + String.join(", ", aliases)));
+            }
+
+            if (helpUrlBase != null) {
+                addHelpLinkToInfo(signature, helpUrlBase, detail);
+            }
+        }
+        return detail.build();
+    }
+
+    private static void addHelpLinkToInfo(final QueryHelpFunctionSignature signature,
+                                          final String helpUrlBase,
+                                          final HtmlBuilder htmlBuilder) {
+        htmlBuilder.append("For more information see the ");
+        htmlBuilder.appendLink(
+                helpUrlBase +
+                        signature.getPrimaryCategory().toLowerCase().replace(" ", "-") +
+                        "#" +
+                        functionSignatureToAnchor(signature),
+                "Help Documentation");
+        htmlBuilder.append(".");
+    }
+
+    private static String functionSignatureToAnchor(final QueryHelpFunctionSignature signature) {
+        final String helpAnchor = signature.getHelpAnchor();
+        if (GwtNullSafe.isBlankString(helpAnchor)) {
+            return functionNameToAnchor(signature.getName());
+        } else {
+            return helpAnchor;
+        }
+    }
+
+    private static String functionNameToAnchor(final String name) {
+        final StringBuilder stringBuilder = new StringBuilder();
+        for (final char chr : name.toCharArray()) {
+            if (Character.isUpperCase(chr)) {
+                stringBuilder.append("-")
+                        .append(String.valueOf(chr).toLowerCase());
+            } else {
+                stringBuilder.append(chr);
+            }
+        }
+        return stringBuilder.toString();
     }
 }

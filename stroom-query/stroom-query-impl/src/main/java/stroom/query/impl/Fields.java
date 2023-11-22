@@ -3,6 +3,8 @@ package stroom.query.impl;
 import stroom.datasource.api.v2.FieldInfo;
 import stroom.datasource.api.v2.FindFieldInfoCriteria;
 import stroom.docref.DocRef;
+import stroom.query.shared.CompletionValue;
+import stroom.query.shared.CompletionsRequest;
 import stroom.query.shared.QueryHelpField;
 import stroom.query.shared.QueryHelpRequest;
 import stroom.query.shared.QueryHelpRow;
@@ -17,6 +19,7 @@ import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 @Singleton
@@ -85,5 +88,56 @@ public class Fields {
                 });
             }
         }
+    }
+
+    public void addCompletions(final CompletionsRequest request,
+                               final PageRequest pageRequest,
+                               final List<CompletionValue> resultList) {
+        final QueryService queryService = queryServiceProvider.get();
+        final Optional<DocRef> optional = Optional.ofNullable(request.getDataSourceRef())
+                .or(() -> queryService.getReferencedDataSource(request.getText()));
+        optional.ifPresent(docRef -> {
+            final FindFieldInfoCriteria criteria = new FindFieldInfoCriteria(
+                    pageRequest,
+                    request.getSortList(),
+                    docRef,
+                    request.getStringMatch());
+
+            final ResultPage<FieldInfo> resultPage = queryService.getFieldInfo(criteria);
+            resultPage.getValues().forEach(fieldInfo -> resultList.add(createCompletionValue(fieldInfo)));
+        });
+    }
+
+    private CompletionValue createCompletionValue(final FieldInfo fieldInfo) {
+        final DetailBuilder detail = new DetailBuilder();
+        detail.title(fieldInfo.getFieldName());
+        detail.description(description -> addFieldDetails(description, fieldInfo));
+        final String insertText = fieldInfo.getFieldName().contains(" ")
+                ? "${" + fieldInfo.getFieldName() + "}"
+                : fieldInfo.getFieldName();
+        return new CompletionValue(
+                fieldInfo.getFieldName(),
+                insertText,
+                300,
+                "Field",
+                detail.build());
+    }
+
+    private void addFieldDetails(final DetailBuilder detail, final FieldInfo field) {
+        final String fieldName = field.getFieldName();
+        final String fieldType = field.getFieldType().getDisplayValue();
+        final String supportedConditions = field.getConditions().toString();
+
+        detail.table(table -> table.appendKVRow("Name:", fieldName)
+                .appendKVRow("Type:", fieldType)
+                .appendKVRow("Supported Conditions:", supportedConditions)
+                .appendKVRow("Is queryable:", asDisplayValue(field.queryable()))
+                .appendKVRow("Is numeric:", asDisplayValue(field.getFieldType().isNumeric())));
+    }
+
+    private String asDisplayValue(final boolean bool) {
+        return bool
+                ? "True"
+                : "False";
     }
 }

@@ -113,6 +113,8 @@ public class StringMatch {
         NULL_OR_EMPTY,
         CONTAINS,
         EQUALS,
+        STARTS_WITH,
+        ENDS_WITH,
         REGEX
     }
 }

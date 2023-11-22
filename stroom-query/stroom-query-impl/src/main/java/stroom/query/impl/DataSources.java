@@ -3,6 +3,8 @@ package stroom.query.impl;
 import stroom.docref.DocRef;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.query.common.v2.DataSourceProviderRegistry;
+import stroom.query.shared.CompletionValue;
+import stroom.query.shared.CompletionsRequest;
 import stroom.query.shared.QueryHelpDataSource;
 import stroom.query.shared.QueryHelpRow;
 import stroom.query.shared.QueryHelpTitle;
@@ -16,8 +18,11 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -80,6 +85,53 @@ public class DataSources {
                 }
             }
         }
+    }
+
+    public void addCompletions(final CompletionsRequest request,
+                               final PageRequest pageRequest,
+                               final List<CompletionValue> resultList) {
+        final DataSourceProviderRegistry dataSourceProviderRegistry =
+                dataSourceProviderRegistryProvider.get();
+        final StringMatcher stringMatcher = new StringMatcher(request.getStringMatch());
+        List<DocRef> sortedList = new ArrayList<>();
+        for (final DocRef docRef : dataSourceProviderRegistry.list()) {
+            if (stringMatcher.match(docRef.getName()).isPresent()) {
+                sortedList.add(docRef);
+            }
+        }
+        sortedList.sort(Comparator.comparing(DocRef::getName));
+        for (int i = pageRequest.getOffset();
+             i < pageRequest.getOffset() + pageRequest.getLength() && i < sortedList.size();
+             i++) {
+            resultList.add(createCompletionValue(sortedList.get(i)));
+        }
+    }
+
+    private CompletionValue createCompletionValue(final DocRef docRef) {
+        final DetailBuilder detail = new DetailBuilder();
+        detail.title(docRef.getName());
+        detail.description(description -> description
+                .table(table -> table
+                        .appendKVRow("Name:", docRef.getName())
+                        .appendKVRow("Type:", docRef.getType())
+                        .appendKVRow("UUID:", docRef.getUuid())));
+
+        final DataSourceProviderRegistry dataSourceProviderRegistry =
+                dataSourceProviderRegistryProvider.get();
+        final Optional<String> documentation = dataSourceProviderRegistry.fetchDocumentation(docRef);
+        documentation.ifPresent(detail::append);
+
+        final String caption = docRef.getName();
+        final String insertText = caption.contains(" ")
+                ? "\"" + caption + "\""
+                : caption;
+
+        return new CompletionValue(
+                caption,
+                insertText,
+                500,
+                "Data Source",
+                detail.build());
     }
 
     private boolean hasChildren(final StringMatcher stringMatcher) {

@@ -1,5 +1,7 @@
 package stroom.query.impl;
 
+import stroom.query.shared.CompletionValue;
+import stroom.query.shared.CompletionsRequest;
 import stroom.query.shared.QueryHelpRow;
 import stroom.query.shared.QueryHelpStructureElement;
 import stroom.query.shared.QueryHelpTitle;
@@ -260,5 +262,39 @@ class Structures {
             }
         }
         return false;
+    }
+
+    public void addCompletions(final CompletionsRequest request,
+                               final PageRequest pageRequest,
+                               final List<CompletionValue> resultList) {
+        final StringMatcher stringMatcher = new StringMatcher(request.getStringMatch());
+        int count = 0;
+        for (final QueryHelpRow row : list) {
+            if (stringMatcher.match(row.getTitle()).isPresent()) {
+                if (count >= pageRequest.getOffset()) {
+                    if (count < pageRequest.getOffset() + pageRequest.getLength()) {
+                        resultList.add(createCompletionValue(row));
+                    } else {
+                        break;
+                    }
+                }
+                count++;
+            }
+        }
+    }
+
+    private CompletionValue createCompletionValue(final QueryHelpRow row) {
+        final QueryHelpStructureElement structureElement = (QueryHelpStructureElement) row.getData();
+
+        final DetailBuilder detail = new DetailBuilder();
+        detail.title(row.getTitle());
+        detail.description(description -> description.append(structureElement.getDescription()));
+
+        return new CompletionValue(
+                row.getTitle(),
+                structureElement.getSnippets().get(0),
+                400,
+                "Structure",
+                detail.build());
     }
 }

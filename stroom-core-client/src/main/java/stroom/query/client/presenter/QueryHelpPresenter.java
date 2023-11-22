@@ -20,7 +20,6 @@ package stroom.query.client.presenter;
 import stroom.docref.DocRef;
 import stroom.editor.client.presenter.ChangeCurrentPreferencesEvent;
 import stroom.editor.client.presenter.EditorPresenter;
-import stroom.editor.client.presenter.KeyedAceCompletionProvider;
 import stroom.item.client.SelectionList;
 import stroom.query.client.presenter.QueryHelpPresenter.QueryHelpView;
 import stroom.query.shared.QueryHelpRow;
@@ -45,13 +44,13 @@ public class QueryHelpPresenter
         implements QueryHelpUiHandlers {
 
     private final DynamicQueryHelpSelectionListModel model;
-    private final KeyedAceCompletionProvider keyedAceCompletionProvider;
+    private final QueryHelpAceCompletionProvider keyedAceCompletionProvider;
     private final DetailProviders detailProviders;
 
     @Inject
     public QueryHelpPresenter(final EventBus eventBus,
                               final QueryHelpView view,
-                              final KeyedAceCompletionProvider keyedAceCompletionProvider,
+                              final QueryHelpAceCompletionProvider keyedAceCompletionProvider,
                               final DetailProviders detailProviders,
                               final DynamicQueryHelpSelectionListModel model) {
         super(eventBus, view);
@@ -170,10 +169,12 @@ public class QueryHelpPresenter
 
     public void setDataSourceRef(final DocRef dataSourceRef) {
         model.setDataSourceRef(dataSourceRef);
+        keyedAceCompletionProvider.setDataSourceRef(dataSourceRef);
     }
 
     public void setShowAll(final boolean showAll) {
         model.setShowAll(showAll);
+        keyedAceCompletionProvider.setShowAll(showAll);
     }
 
     public interface QueryHelpView extends View, HasUiHandlers<QueryHelpUiHandlers> {
