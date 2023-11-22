@@ -66,10 +66,10 @@ ext.getPropertyOrDefault = { propName, defaultValue ->
             && project.getProperty(propName) != "unspecified"
             && project.getProperty(propName) != "") {
         val = project.getProperty(propName)
-        println "Using property [$propName] with value [$val]"
+        logger.info("Using property [$propName] with value [$val]")
     } else {
         val = defaultValue
-        println "Property [$propName] has no value, using default value [$val]"
+        logger.info("Property [$propName] has no value, using default value [$val]")
     }
     return val;
 }
@@ -382,7 +382,7 @@ subprojects {
                             if (details.requested.group == 'org.slf4j' && details.requested.name == "log4j-over-slf4j") {
                                 //if (details.requested.group == 'org.slf4j') {
                                 dropwizardBomSlf4jVersion = details.getTarget().getVersion()
-                                println "Slf4j version = $dropwizardBomSlf4jVersion ${details.requested}"
+                                logger.info("Slf4j version = $dropwizardBomSlf4jVersion ${details.requested}")
                             }
                         }
                     }
