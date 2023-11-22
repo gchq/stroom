@@ -382,6 +382,9 @@ task gwtSuperDevMode(dependsOn: classes, type: JavaExec) {
           * Visit the 'code server' (link further down) and copy the dev mode buttons to your browser bookmarks
           * Visit stroom at http://localhost:8080 (NOTE: http, not https), or https://localhost if running Nginx
           * Click 'Dev Mode On'${NC}
+
+          If you change any code shared between client and server, you will need to run :stroom-app-gwt:jakarta to
+          update GWT's view of the code.
         """.stripIndent().trim()
     }
 
@@ -416,18 +419,19 @@ task gwtClean {
     doLast {
 //        println 'Deleting GWT unit cache: ' + unitCacheDir.toString()
 //        delete unitCacheDir
-        println 'Deleting GWT compiled output: ' + outputDir.toString()
+
+        logger.info('Deleting GWT compiled output: ' + outputDir.toString())
         delete outputDir
-        println 'Deleting GWT build dir: ' + gwtBuildDir.toString()
+        logger.info('Deleting GWT build dir: ' + gwtBuildDir.toString())
         delete gwtBuildDir
-        println 'Deleting modified projects: ' + modifiedProjectsBasePath.toString()
+        logger.info('Deleting modified projects: ' + modifiedProjectsBasePath.toString())
         delete modifiedProjectsBasePath
-        println 'Deleting modified projects (GWT copy): ' + modifiedProjectsBasePathGwt.toString()
+        logger.info('Deleting modified projects (GWT copy): ' + modifiedProjectsBasePathGwt.toString())
         delete modifiedProjectsBasePathGwt
 
-        println "Ensuring directory gwtBuildDir ${gwtBuildDir}"
+        logger.info("Ensuring directory gwtBuildDir ${gwtBuildDir}")
         new File(gwtBuildDir).mkdirs();
-        println "Ensuring directory gwtTmpDir ${gwtTmpDir}"
+        logger.info("Ensuring directory gwtTmpDir ${gwtTmpDir}")
         new File(gwtTmpDir).mkdirs();
     }
 }
