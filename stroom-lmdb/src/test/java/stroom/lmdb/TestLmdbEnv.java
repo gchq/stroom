@@ -303,17 +303,17 @@ public class TestLmdbEnv {
 
             LOGGER.info("env size: {}", ModelStringUtil.formatIECByteSizeString(lmdbEnv.getSizeOnDisk()));
 
-            Assertions.assertThatThrownBy(() -> {
-                        lmdbEnv.doWithWriteTxn(writeTxn -> {
-                            for (int i = 0; i < 1_000; i++) {
-                                db.put(writeTxn,
-                                        "this is my key " + i,
-                                        "this is my value " + i,
-                                        false,
-                                        false);
-                            }
-                        });
-                    })
+            // Tiny max env size so put a load of entries to blow the limit
+            Assertions.assertThatThrownBy(() ->
+                            lmdbEnv.doWithWriteTxn(writeTxn -> {
+                                for (int i = 0; i < 1_000; i++) {
+                                    db.put(writeTxn,
+                                            "this is my key " + i,
+                                            "this is my value " + i,
+                                            false,
+                                            false);
+                                }
+                            }))
                     .rootCause()
                     .isInstanceOf(MapFullException.class)
                     .message()
