@@ -6,10 +6,10 @@ def getSysPropertyOrDefault = { propName, defaultValue ->
             && System.getProperty(propName) != "unspecified"
             && System.getProperty(propName) != "") {
         val = System.getProperty(propName)
-        println "Using property [$propName] with value [$val]"
+        println "Using property [${propName}] with value [${val}]"
     } else {
         val = defaultValue
-        println "Property [$propName] has no value, using default value [$val]"
+        println "Property [${propName}] has no value, using default value [${val}]"
     }
     return val;
 }
@@ -25,12 +25,15 @@ def gwtBuildDir = javaIoTmpDir + "/app-gwt_build/" + rootDir
 gwtBuildDir = gwtBuildDir.replaceAll('//', '/')
 println 'gwtBuildDir: ' + gwtBuildDir
 
-def tmpDir = "${gwtBuildDir}/tmp"
-println 'tmpDir: ' + tmpDir
+def gwtTmpDir = "${gwtBuildDir}/tmp"
+println 'gwtTmpDir: ' + gwtTmpDir
 def workDir = "${gwtBuildDir}/work"
 def deployDir = "${gwtBuildDir}/deploy"
 def extraDir = "${gwtBuildDir}/extra"
+// This is where eclipse transformer outputs to
 def modifiedProjectsBasePath = "${gwtBuildDir}/modified_projects"
+// This will contain a copy of modifiedProjectsBasePath that GWT uses on its classpath
+def modifiedProjectsBasePathGwt = "${gwtBuildDir}/modified_projects_gwt"
 
 def gwtSourceDirs = []
 def modifiedCoreSharedJarPath = null
@@ -133,10 +136,11 @@ dependencies {
 // Task to make a copy of each project in projectsToRename then change all imports
 // from jakarta => javax (in source/classses/resources) so that GWT can use them.
 // It adds the modified projects to GWTs compile classpath
-task jakartaReverseTransformSources {
+task jakarta {
 
-    println 'Deleting modified projects: ' + modifiedProjectsBasePath.toString()
-    delete modifiedProjectsBasePath
+    // Eclipse transformer won't run unless the output dir is empty
+    //println 'Deleting modified projects: ' + modifiedProjectsBasePath.toString()
+    //delete modifiedProjectsBasePath
 
     projectsToRename.each { prj ->
         dependsOn prj.tasks.getByName('compileJava')
@@ -154,7 +158,12 @@ task jakartaReverseTransformSources {
 
     projectsToRename.each { prj ->
         def inputProjectPath = prj.projectDir
+        inputs.dir inputProjectPath
+
+        // This is where eclipse transformer outputs the modified source/classes to
         def outputProjectPath = new File(modifiedProjectsBasePath).toPath().resolve(prj.name)
+        // This dir will be a copy of outputProjectPath that GWT uses for its classpath
+        def gwtProjectSourcePath = new File(modifiedProjectsBasePathGwt).toPath().resolve(prj.name)
 
         doLast {
             println 'Running eclipse TransformerCLI on ' + prj.name
@@ -162,6 +171,10 @@ task jakartaReverseTransformSources {
             println 'outputProjectPath: ' + outputProjectPath
             println 'modifiedProjectsBasePath: ' + modifiedProjectsBasePath
             new File(modifiedProjectsBasePath).mkdirs();
+            new File(modifiedProjectsBasePathGwt).mkdirs();
+
+            println 'Deleting outputProjectPath: ' + outputProjectPath.toString()
+            delete outputProjectPath
 
             javaexec {
                 classpath configurations.jakartaTransformerConfiguration
@@ -172,10 +185,25 @@ task jakartaReverseTransformSources {
                     '-tr', propFilePath,
                 ]
             }
+
+            // Rsync the output from the eclipse transformer to the dir that GWT is using for its
+            // classpath. This means we don't delete all the files that superdev is monitoring, which
+            // it doesn't like. Rsync should only change the files that have actually changed in their
+            // original modules, i.e. when doing superdev code changes.
+            println "rsync-ing from ${outputProjectPath} to ${gwtProjectSourcePath}"
+            exec {
+                executable "rsync"
+                args = [
+                    "--archive", 
+                    "${outputProjectPath}/",
+                    "${gwtProjectSourcePath}/",
+                ]
+            }
+
             // Now add the dirs from out modified (jakarta => javax) stroom-core-shared temp dir
-            gwtSourceDirs.add(outputProjectPath.resolve('build').resolve('classes').resolve('java').resolve('main'))
-            gwtSourceDirs.add(outputProjectPath.resolve('src').resolve('main').resolve('java'))
-            gwtSourceDirs.add(outputProjectPath.resolve('src').resolve('main').resolve('resources'))
+            gwtSourceDirs.add(gwtProjectSourcePath.resolve('build').resolve('classes').resolve('java').resolve('main'))
+            gwtSourceDirs.add(gwtProjectSourcePath.resolve('src').resolve('main').resolve('java'))
+            gwtSourceDirs.add(gwtProjectSourcePath.resolve('src').resolve('main').resolve('resources'))
         }
     }
 
@@ -190,7 +218,7 @@ task jakartaReverseTransformSources {
         // Add all of the library sources from the gwtSource source set defined above.
         gwtSourceDirs.addAll(sourceSets.gwtSource.compileClasspath)
 
-        println "Dumping $gwtSourceDirs.size gwtSourceDirs"
+        println "Dumping ${gwtSourceDirs.size} gwtSourceDirs"
         gwtSourceDirs.each {
             println "${it.toString()}"
         }
@@ -200,27 +228,27 @@ task jakartaReverseTransformSources {
 task gwtCompile(dependsOn: classes, type: JavaExec) {
     group "gwt"
     dependsOn 'gwtClean'
-    dependsOn 'jakartaReverseTransformSources'
+    dependsOn 'jakarta'
     //finalizedBy 'cleanTempFiles'
 
     def module = 'stroom.app.App'
 
     doFirst {
         println 'Deleting GWT build dirs in ' + gwtBuildDir.toString()
-        delete tmpDir
+        delete gwtTmpDir
         delete workDir
         delete deployDir
         delete extraDir
 
-        println "Ensuring directory gwtBuildDir $gwtBuildDir"
+        println "Ensuring directory gwtBuildDir ${gwtBuildDir}"
         new File(gwtBuildDir).mkdirs();
-        println "Ensuring directory tmpDir $tmpDir"
-        new File(tmpDir).mkdirs();
-        println "Ensuring directory workDir $workDir"
+        println "Ensuring directory gwtTmpDir ${gwtTmpDir}"
+        new File(gwtTmpDir).mkdirs();
+        println "Ensuring directory workDir ${workDir}"
         new File(workDir).mkdirs();
-        println "Ensuring directory deployDir $deployDir"
+        println "Ensuring directory deployDir ${deployDir}"
         new File(deployDir).mkdirs();
-        println "Ensuring directory extraDir $extraDir"
+        println "Ensuring directory extraDir ${extraDir}"
         new File(extraDir).mkdirs();
 
         println "gwtSourceDirs count: ${gwtSourceDirs.size()}"
@@ -253,7 +281,7 @@ task gwtCompile(dependsOn: classes, type: JavaExec) {
     ]
 
     jvmArgs = [
-            "-Djava.io.tmpdir=${tmpDir}",
+            "-Djava.io.tmpdir=${gwtTmpDir}",
             //'-Dgwt.persistentunitcache=false',
             '--add-opens', 'java.base/java.lang=ALL-UNNAMED',  // needed for GWT
     ]
@@ -263,7 +291,7 @@ task gwtCompile(dependsOn: classes, type: JavaExec) {
 
 task gwtDraftCompile(dependsOn: classes, type: JavaExec) {
     group "gwt"
-    dependsOn 'jakartaReverseTransformSources'
+    dependsOn 'jakarta'
     //finalizedBy 'cleanTempFiles'
     def module = 'stroom.app.AppSuperDevModeChrome'
 
@@ -271,15 +299,15 @@ task gwtDraftCompile(dependsOn: classes, type: JavaExec) {
         println 'Deleting GWT compiled output: ' + outputDir.toString()
         delete outputDir
 
-        println "Ensuring directory gwtBuildDir $gwtBuildDir"
+        println "Ensuring directory gwtBuildDir ${gwtBuildDir}"
         new File(gwtBuildDir).mkdirs();
-        println "Ensuring directory tmpDir $tmpDir"
-        new File(tmpDir).mkdirs();
-        println "Ensuring directory workDir $workDir"
+        println "Ensuring directory gwtTmpDir ${gwtTmpDir}"
+        new File(gwtTmpDir).mkdirs();
+        println "Ensuring directory workDir ${workDir}"
         new File(workDir).mkdirs();
-        println "Ensuring directory deployDir $deployDir"
+        println "Ensuring directory deployDir ${deployDir}"
         new File(deployDir).mkdirs();
-        println "Ensuring directory extraDir $extraDir"
+        println "Ensuring directory extraDir ${extraDir}"
         new File(extraDir).mkdirs();
     }
 
@@ -306,7 +334,7 @@ task gwtDraftCompile(dependsOn: classes, type: JavaExec) {
     ]
 
     jvmArgs = [
-            "-Djava.io.tmpdir=${tmpDir}",
+            "-Djava.io.tmpdir=${gwtTmpDir}",
             '--add-opens', 'java.base/java.lang=ALL-UNNAMED',  // needed for GWT
     ]
     minHeapSize = '1G'
@@ -315,7 +343,7 @@ task gwtDraftCompile(dependsOn: classes, type: JavaExec) {
 
 task gwtSuperDevMode(dependsOn: classes, type: JavaExec) {
     group "gwt"
-    dependsOn 'jakartaReverseTransformSources'
+    dependsOn 'jakarta'
     def module = 'stroom.app.AppSuperDevModeChrome'
 
 //    def dirs = []
@@ -324,15 +352,15 @@ task gwtSuperDevMode(dependsOn: classes, type: JavaExec) {
 //    println dirs
 
     doFirst {
-        println "Ensuring directory gwtBuildDir $gwtBuildDir"
+        println "Ensuring directory gwtBuildDir ${gwtBuildDir}"
         new File(gwtBuildDir).mkdirs();
-        println "Ensuring directory tmpDir $tmpDir"
-        new File(tmpDir).mkdirs();
-        println "Ensuring directory workDir $workDir"
+        println "Ensuring directory gwtTmpDir ${gwtTmpDir}"
+        new File(gwtTmpDir).mkdirs();
+        println "Ensuring directory workDir ${workDir}"
         new File(workDir).mkdirs();
-        println "Ensuring directory deployDir $deployDir"
+        println "Ensuring directory deployDir ${deployDir}"
         new File(deployDir).mkdirs();
-        println "Ensuring directory extraDir $extraDir"
+        println "Ensuring directory extraDir ${extraDir}"
         new File(extraDir).mkdirs();
 
         def GREEN = '\033[1;32m'
@@ -365,7 +393,7 @@ task gwtSuperDevMode(dependsOn: classes, type: JavaExec) {
     ]
 
     jvmArgs = [
-            "-Djava.io.tmpdir=${tmpDir}",
+            "-Djava.io.tmpdir=${gwtTmpDir}",
             '--add-opens', 'java.base/java.lang=ALL-UNNAMED',  // needed for GWT
     ]
     minHeapSize = gwtCompilerProps.minHeap
@@ -383,11 +411,13 @@ task gwtClean {
         delete gwtBuildDir
         println 'Deleting modified projects: ' + modifiedProjectsBasePath.toString()
         delete modifiedProjectsBasePath
+        println 'Deleting modified projects (GWT copy): ' + modifiedProjectsBasePathGwt.toString()
+        delete modifiedProjectsBasePathGwt
 
-        println "Ensuring directory gwtBuildDir $gwtBuildDir"
+        println "Ensuring directory gwtBuildDir ${gwtBuildDir}"
         new File(gwtBuildDir).mkdirs();
-        println "Ensuring directory tmpDir $tmpDir"
-        new File(tmpDir).mkdirs();
+        println "Ensuring directory gwtTmpDir ${gwtTmpDir}"
+        new File(gwtTmpDir).mkdirs();
     }
 }
 
