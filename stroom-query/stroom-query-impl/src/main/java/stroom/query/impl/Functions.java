@@ -355,7 +355,11 @@ public class Functions {
         int count = 0;
         final StringMatcher stringMatcher = new StringMatcher(request.getStringMatch());
         for (final FunctionDef functionDef : FunctionFactory.getFunctionDefinitions()) {
-            if (functionDef != null && count < pageRequest.getOffset() + pageRequest.getLength()) {
+            if (count >= pageRequest.getOffset() + pageRequest.getLength()) {
+                break;
+            }
+
+            if (functionDef != null) {
                 try {
                     final Map<List<String>, Long> countsByCategoryPath = Arrays
                             .stream(functionDef.signatures())
@@ -364,15 +368,15 @@ public class Functions {
                                     Collectors.counting()));
 
                     for (final FunctionSignature functionSignature : functionDef.signatures()) {
+                        if (count >= pageRequest.getOffset() + pageRequest.getLength()) {
+                            break;
+                        }
+
                         final QueryHelpFunctionSignature row =
                                 convertSignature(functionDef, functionSignature, countsByCategoryPath);
                         if (stringMatcher.match(row.getName()).isPresent()) {
                             if (count >= pageRequest.getOffset()) {
-                                if (count < pageRequest.getOffset() + pageRequest.getLength()) {
-                                    resultList.add(createCompletionValue(row));
-                                } else {
-                                    break;
-                                }
+                                resultList.add(createCompletionValue(row));
                             }
                             count++;
                         }
@@ -406,7 +410,7 @@ public class Functions {
     }
 
     private static boolean addArgsBlockToInfo(final QueryHelpFunctionSignature signature,
-                                              final HtmlBuilder htmlBuilder) {
+                                              final DetailBuilder htmlBuilder) {
         AtomicBoolean addedContent = new AtomicBoolean(false);
         addedContent.set(!signature.getArgs().isEmpty());
 
@@ -528,7 +532,7 @@ public class Functions {
 
     private static void addHelpLinkToInfo(final QueryHelpFunctionSignature signature,
                                           final String helpUrlBase,
-                                          final HtmlBuilder htmlBuilder) {
+                                          final DetailBuilder htmlBuilder) {
         htmlBuilder.append("For more information see the ");
         htmlBuilder.appendLink(
                 helpUrlBase +

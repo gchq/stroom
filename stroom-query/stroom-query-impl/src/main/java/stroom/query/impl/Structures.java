@@ -270,13 +270,13 @@ class Structures {
         final StringMatcher stringMatcher = new StringMatcher(request.getStringMatch());
         int count = 0;
         for (final QueryHelpRow row : list) {
+            if (count >= pageRequest.getOffset() + pageRequest.getLength()) {
+                break;
+            }
+
             if (stringMatcher.match(row.getTitle()).isPresent()) {
                 if (count >= pageRequest.getOffset()) {
-                    if (count < pageRequest.getOffset() + pageRequest.getLength()) {
-                        resultList.add(createCompletionValue(row));
-                    } else {
-                        break;
-                    }
+                    resultList.add(createCompletionValue(row));
                 }
                 count++;
             }

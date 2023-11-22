@@ -3,62 +3,62 @@ package stroom.query.impl;
 import java.util.Objects;
 import java.util.function.Consumer;
 
-public class HtmlBuilder {
+public abstract class AbstractHtmlBuilder<B extends AbstractHtmlBuilder<?>>  {
 
     private final StringBuilder sb = new StringBuilder();
 
-    public HtmlBuilder append(final String text) {
+    public B append(final String text) {
         sb.append(text);
-        return this;
+        return self();
     }
 
-    public HtmlBuilder startElem(final String element) {
+    public B startElem(final String element) {
         sb.append("<");
         sb.append(element);
         sb.append(">");
-        return this;
+        return self();
     }
 
-    public HtmlBuilder startElem(final String element, final String className) {
+    public B startElem(final String element, final String className) {
         sb.append("<");
         sb.append(element);
         sb.append(" ");
         className(className);
         sb.append(">");
-        return this;
+        return self();
     }
 
-    public HtmlBuilder endElem(final String element) {
+    public B endElem(final String element) {
         sb.append("</");
         sb.append(element);
         sb.append(">");
-        return this;
+        return self();
     }
 
-    public HtmlBuilder emptyElem(final String element) {
+    public B emptyElem(final String element) {
         sb.append("<");
         sb.append(element);
         sb.append(" />");
-        return this;
+        return self();
     }
 
-    public HtmlBuilder emptyElem(final String element, final String className) {
+    public B emptyElem(final String element, final String className) {
         sb.append("<");
         sb.append(element);
         sb.append(" ");
         className(className);
         sb.append(" />");
-        return this;
+        return self();
     }
 
-    public HtmlBuilder className(final String className) {
+    private B className(final String className) {
         sb.append("class=\"");
         sb.append(className);
         sb.append("\"");
-        return this;
+        return self();
     }
 
-    public HtmlBuilder appendLink(final String url, final String title) {
+    public B appendLink(final String url, final String title) {
         Objects.requireNonNull(url);
         sb.append("<a href=\"");
         append(url);
@@ -67,22 +67,36 @@ public class HtmlBuilder {
             append(title);
         }
         sb.append("</a>");
-        return this;
+        return self();
     }
 
-    public void elem(final String name, final String className, final Consumer<HtmlBuilder> consumer) {
+    public void elem(final String name, final String className, final Consumer<B> consumer) {
         startElem(name, className);
-        consumer.accept(this);
+        consumer.accept(self());
         endElem(name);
     }
 
-    public void elem(final String name, final Consumer<HtmlBuilder> consumer) {
+    public void elem(final String name, final Consumer<B> consumer) {
         startElem(name);
-        consumer.accept(this);
+        consumer.accept(self());
         endElem(name);
     }
 
     public String toString() {
         return sb.toString();
+    }
+
+    public abstract B self();
+
+    public static HtmlBuilderImpl builder() {
+        return new HtmlBuilderImpl();
+    }
+
+    private static class HtmlBuilderImpl extends AbstractHtmlBuilder<HtmlBuilderImpl> {
+
+        @Override
+        public HtmlBuilderImpl self() {
+            return this;
+        }
     }
 }
