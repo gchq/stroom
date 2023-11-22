@@ -1964,7 +1964,7 @@ button.main-menu svg {
 }
 
 .queryHelp-details {
-    padding: 5px;
+    overflow: hidden;
 }
 
 .duration-picker {

@@ -66,7 +66,7 @@ public class QueryHelpAceCompletionProvider implements AceCompletionProvider {
                             .getValues()
                             .stream()
                             .map(completion -> {
-                                final SafeHtml markDownSafeHtml = markdownConverter.convertMarkdownToHtml(
+                                final SafeHtml markDownSafeHtml = markdownConverter.convertMarkdownToHtmlInFrame(
                                         completion.getTooltip());
                                 return new AceCompletionValue(
                                         completion.getCaption(),

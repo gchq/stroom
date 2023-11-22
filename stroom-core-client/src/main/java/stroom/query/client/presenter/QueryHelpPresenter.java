@@ -106,7 +106,7 @@ public class QueryHelpPresenter
         if (row != null) {
             detailProvider.getDetail(row, detail -> {
                 if (detail != null) {
-                    final SafeHtml markDownSafeHtml = markdownConverter.convertMarkdownToHtml(
+                    final SafeHtml markDownSafeHtml = markdownConverter.convertMarkdownToHtmlInFrame(
                             detail.getDocumentation());
                     getView().setDetails(markDownSafeHtml);
                     getView().enableButtons(detail.getInsertType().isInsertable());
