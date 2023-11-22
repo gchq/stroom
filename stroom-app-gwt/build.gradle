@@ -6,10 +6,10 @@ def getSysPropertyOrDefault = { propName, defaultValue ->
             && System.getProperty(propName) != "unspecified"
             && System.getProperty(propName) != "") {
         val = System.getProperty(propName)
-        println "Using property [${propName}] with value [${val}]"
+        logger.info("Using property [${propName}] with value [${val}]")
     } else {
         val = defaultValue
-        println "Property [${propName}] has no value, using default value [${val}]"
+        logger.info("Property [${propName}] has no value, using default value [${val}]")
     }
     return val;
 }
@@ -19,14 +19,14 @@ def warDir = "${resourcesDir}/ui"
 def outputDir = "${warDir}/stroom"
 
 def javaIoTmpDir = getSysPropertyOrDefault("java.io.tmpdir", "/tmp")
-println 'javaIoTmpDir: ' + javaIoTmpDir
+logger.info('javaIoTmpDir: ' + javaIoTmpDir)
 // Append the rootDir so gwt builds from different dirs don't conflict
 def gwtBuildDir = javaIoTmpDir + "/app-gwt_build/" + rootDir
 gwtBuildDir = gwtBuildDir.replaceAll('//', '/')
-println 'gwtBuildDir: ' + gwtBuildDir
+logger.info('gwtBuildDir: ' + gwtBuildDir)
 
 def gwtTmpDir = "${gwtBuildDir}/tmp"
-println 'gwtTmpDir: ' + gwtTmpDir
+logger.info('gwtTmpDir: ' + gwtTmpDir)
 def workDir = "${gwtBuildDir}/work"
 def deployDir = "${gwtBuildDir}/deploy"
 def extraDir = "${gwtBuildDir}/extra"
@@ -38,6 +38,7 @@ def modifiedProjectsBasePathGwt = "${gwtBuildDir}/modified_projects_gwt"
 def gwtSourceDirs = []
 def modifiedCoreSharedJarPath = null
 def modifiedCoreSharedSourcePath = null
+def dynamicJakartaTasks = []
 
 configurations.all {
     resolutionStrategy {
@@ -135,76 +136,86 @@ dependencies {
 
 // Task to make a copy of each project in projectsToRename then change all imports
 // from jakarta => javax (in source/classses/resources) so that GWT can use them.
-// It adds the modified projects to GWTs compile classpath
+// It adds the modified projects to GWTs compile classpath.
+// This is a temporary hack until there is a jakarta friendly version of GWT.
+// See https://github.com/gwtproject/gwt/issues/9727 for details on jakarta progress but
+// be aware that restgwt is not jakarta friendly and is a dormant project so that will need
+// sorting somehow.
 task jakarta {
 
-    // Eclipse transformer won't run unless the output dir is empty
-    //println 'Deleting modified projects: ' + modifiedProjectsBasePath.toString()
-    //delete modifiedProjectsBasePath
-
-    projectsToRename.each { prj ->
-        dependsOn prj.tasks.getByName('compileJava')
-    }
-
-    doFirst {
-        // Create a list of source directories where source for GWT can be found.
-        gwtSourceDirs = []
-    }
+    gwtSourceDirs = []
 
     // This file has all the rename mappings for TransformerCLI to use
     def propFilePath = rootDir.toPath().resolve('jakarta-renames-reverse.properties')
-    println 'modifiedProjectsBasePath: ' + modifiedProjectsBasePath
-    println 'propFilePath: ' + propFilePath
+    logger.info('modifiedProjectsBasePath: ' + modifiedProjectsBasePath)
+    logger.info('propFilePath: ' + propFilePath)
 
     projectsToRename.each { prj ->
-        def inputProjectPath = prj.projectDir
-        inputs.dir inputProjectPath
+        // Dynamically create a task for each shared project
+        def dynamicTaskName =  "jakarta-${prj.name}"
+        logger.info('Registering task: ' + dynamicTaskName)
+        tasks.register(dynamicTaskName) {
+            dependsOn prj.tasks.getByName('compileJava')
 
-        // This is where eclipse transformer outputs the modified source/classes to
-        def outputProjectPath = new File(modifiedProjectsBasePath).toPath().resolve(prj.name)
-        // This dir will be a copy of outputProjectPath that GWT uses for its classpath
-        def gwtProjectSourcePath = new File(modifiedProjectsBasePathGwt).toPath().resolve(prj.name)
+            // This is where eclipse transformer outputs the modified source/classes to
+            def outputProjectPath = new File(modifiedProjectsBasePath).toPath().resolve(prj.name)
+            // This dir will be a copy of outputProjectPath that GWT uses for its classpath
+            def gwtProjectSourcePath = new File(modifiedProjectsBasePathGwt).toPath().resolve(prj.name)
 
-        doLast {
-            println 'Running eclipse TransformerCLI on ' + prj.name
-            println 'inputProjectPath: ' + inputProjectPath
-            println 'outputProjectPath: ' + outputProjectPath
-            println 'modifiedProjectsBasePath: ' + modifiedProjectsBasePath
-            new File(modifiedProjectsBasePath).mkdirs();
-            new File(modifiedProjectsBasePathGwt).mkdirs();
-
-            println 'Deleting outputProjectPath: ' + outputProjectPath.toString()
-            delete outputProjectPath
-
-            javaexec {
-                classpath configurations.jakartaTransformerConfiguration
-                mainClass = "org.eclipse.transformer.cli.TransformerCLI"
-                args = [
-                    inputProjectPath,
-                    outputProjectPath,
-                    '-tr', propFilePath,
-                ]
-            }
-
-            // Rsync the output from the eclipse transformer to the dir that GWT is using for its
-            // classpath. This means we don't delete all the files that superdev is monitoring, which
-            // it doesn't like. Rsync should only change the files that have actually changed in their
-            // original modules, i.e. when doing superdev code changes.
-            println "rsync-ing from ${outputProjectPath} to ${gwtProjectSourcePath}"
-            exec {
-                executable "rsync"
-                args = [
-                    "--archive", 
-                    "${outputProjectPath}/",
-                    "${gwtProjectSourcePath}/",
-                ]
-            }
+            def inputProjectPath = prj.projectDir
+            // Define the inputs/outputs of this dynamic task so gradle knows if anything has changed, so
+            // can skip the task if not.
+            inputs.dir inputProjectPath
+            outputs.dir gwtProjectSourcePath
 
             // Now add the dirs from out modified (jakarta => javax) stroom-core-shared temp dir
+            // We have to do this in the configuration stage rather than in doLast so they get
+            // added even if the dynamic task is skipped due to no change.
             gwtSourceDirs.add(gwtProjectSourcePath.resolve('build').resolve('classes').resolve('java').resolve('main'))
             gwtSourceDirs.add(gwtProjectSourcePath.resolve('src').resolve('main').resolve('java'))
             gwtSourceDirs.add(gwtProjectSourcePath.resolve('src').resolve('main').resolve('resources'))
+
+            doLast {
+                println 'Running eclipse TransformerCLI on ' + prj.name
+                logger.info('inputProjectPath: ' + inputProjectPath)
+                logger.info('outputProjectPath: ' + outputProjectPath)
+                logger.info('modifiedProjectsBasePath: ' + modifiedProjectsBasePath)
+                new File(modifiedProjectsBasePath).mkdirs();
+                new File(modifiedProjectsBasePathGwt).mkdirs();
+
+                // Eclipse transformer won't run unless the output dir is empty
+                logger.info('Deleting outputProjectPath: ' + outputProjectPath.toString())
+                delete outputProjectPath
+
+                javaexec {
+                    classpath configurations.jakartaTransformerConfiguration
+                    mainClass = "org.eclipse.transformer.cli.TransformerCLI"
+                    args = [
+                        inputProjectPath,
+                        outputProjectPath,
+                        '-tr', propFilePath,
+                    ]
+                }
+
+                // Rsync the output from the eclipse transformer to the dir that GWT is using for its
+                // classpath. This means we don't delete all the files that superdev is monitoring, which
+                // it doesn't like. Rsync should only change the files that have actually changed in their
+                // original modules, i.e. when doing superdev code changes.
+                println "rsync-ing from ${outputProjectPath} to ${gwtProjectSourcePath}"
+                exec {
+                    executable "rsync"
+                    args = [
+                        "--archive", 
+                        "${outputProjectPath}/",
+                        "${gwtProjectSourcePath}/",
+                    ]
+                }
+            }
         }
+        // Run this dynamic task after the one that registred it
+        finalizedBy dynamicTaskName
+        // Make a note of the dynamic task so we can add dependencies on it later
+        dynamicJakartaTasks.add(tasks.getByName(dynamicTaskName))
     }
 
     doLast {
@@ -218,10 +229,10 @@ task jakarta {
         // Add all of the library sources from the gwtSource source set defined above.
         gwtSourceDirs.addAll(sourceSets.gwtSource.compileClasspath)
 
-        println "Dumping ${gwtSourceDirs.size} gwtSourceDirs"
-        gwtSourceDirs.each {
-            println "${it.toString()}"
-        }
+        //println "Dumping ${gwtSourceDirs.size} gwtSourceDirs"
+        //gwtSourceDirs.each {
+            //println "${it.toString()}"
+        //}
     }
 }
 
@@ -240,24 +251,24 @@ task gwtCompile(dependsOn: classes, type: JavaExec) {
         delete deployDir
         delete extraDir
 
-        println "Ensuring directory gwtBuildDir ${gwtBuildDir}"
+        logger.info("Ensuring directory gwtBuildDir ${gwtBuildDir}")
         new File(gwtBuildDir).mkdirs();
-        println "Ensuring directory gwtTmpDir ${gwtTmpDir}"
+        logger.info("Ensuring directory gwtTmpDir ${gwtTmpDir}")
         new File(gwtTmpDir).mkdirs();
-        println "Ensuring directory workDir ${workDir}"
+        logger.info("Ensuring directory workDir ${workDir}")
         new File(workDir).mkdirs();
-        println "Ensuring directory deployDir ${deployDir}"
+        logger.info("Ensuring directory deployDir ${deployDir}")
         new File(deployDir).mkdirs();
-        println "Ensuring directory extraDir ${extraDir}"
+        logger.info("Ensuring directory extraDir ${extraDir}")
         new File(extraDir).mkdirs();
 
-        println "gwtSourceDirs count: ${gwtSourceDirs.size()}"
+        logger.info("gwtSourceDirs count: ${gwtSourceDirs.size()}")
 
         //println "Dumping $gwtSourceDirs.size gwtSourceDirs"
         //gwtSourceDirs.each {
             //println "${it.toString()}"
         //}
-        println 'modifiedProjectsBasePath: ' + modifiedProjectsBasePath
+        logger.info('modifiedProjectsBasePath: ' + modifiedProjectsBasePath)
     }
 
     mainClass = gwtCompilerProps.mainClass
@@ -299,15 +310,15 @@ task gwtDraftCompile(dependsOn: classes, type: JavaExec) {
         println 'Deleting GWT compiled output: ' + outputDir.toString()
         delete outputDir
 
-        println "Ensuring directory gwtBuildDir ${gwtBuildDir}"
+        logger.info("Ensuring directory gwtBuildDir ${gwtBuildDir}")
         new File(gwtBuildDir).mkdirs();
-        println "Ensuring directory gwtTmpDir ${gwtTmpDir}"
+        logger.info("Ensuring directory gwtTmpDir ${gwtTmpDir}")
         new File(gwtTmpDir).mkdirs();
-        println "Ensuring directory workDir ${workDir}"
+        logger.info("Ensuring directory workDir ${workDir}")
         new File(workDir).mkdirs();
-        println "Ensuring directory deployDir ${deployDir}"
+        logger.info("Ensuring directory deployDir ${deployDir}")
         new File(deployDir).mkdirs();
-        println "Ensuring directory extraDir ${extraDir}"
+        logger.info("Ensuring directory extraDir ${extraDir}")
         new File(extraDir).mkdirs();
     }
 
@@ -352,15 +363,15 @@ task gwtSuperDevMode(dependsOn: classes, type: JavaExec) {
 //    println dirs
 
     doFirst {
-        println "Ensuring directory gwtBuildDir ${gwtBuildDir}"
+        logger.info("Ensuring directory gwtBuildDir ${gwtBuildDir}")
         new File(gwtBuildDir).mkdirs();
-        println "Ensuring directory gwtTmpDir ${gwtTmpDir}"
+        logger.info("Ensuring directory gwtTmpDir ${gwtTmpDir}")
         new File(gwtTmpDir).mkdirs();
-        println "Ensuring directory workDir ${workDir}"
+        logger.info("Ensuring directory workDir ${workDir}")
         new File(workDir).mkdirs();
-        println "Ensuring directory deployDir ${deployDir}"
+        logger.info("Ensuring directory deployDir ${deployDir}")
         new File(deployDir).mkdirs();
-        println "Ensuring directory extraDir ${extraDir}"
+        logger.info("Ensuring directory extraDir ${extraDir}")
         new File(extraDir).mkdirs();
 
         def GREEN = '\033[1;32m'
@@ -419,6 +430,14 @@ task gwtClean {
         println "Ensuring directory gwtTmpDir ${gwtTmpDir}"
         new File(gwtTmpDir).mkdirs();
     }
+}
+
+// Now all the tasks are configured, we need to add dependencies on our dynamically
+// registered tasks to ensure they get run
+dynamicJakartaTasks.each { dynamicTask ->
+    tasks.getByName('gwtDraftCompile').dependsOn dynamicTask
+    tasks.getByName('gwtCompile').dependsOn dynamicTask
+    tasks.getByName('gwtSuperDevMode').dependsOn dynamicTask
 }
 
 //import com.vanniktech.dependency.graph.generator.DependencyGraphGeneratorPlugin
