@@ -55,6 +55,7 @@ ENV CONTAINER_USER_ID=$USER_ID \
 CMD id
 
 # graphviz, ttf-* for plantuml
+# rsync for gradle task :stroom-app:gwt:jakarta
 # As this container will be trying to use the docker cli to run/interact with other
 # containers we need to add our non-root user to the docker group i.e. the same gid as
 # on the host, but may have a different name or that gid in the container or none at all.
@@ -67,6 +68,7 @@ RUN apk add --no-cache \
       docker-cli \
       git \
       graphviz \
+      rsynz \
       su-exec \
       tini \
       font-droid \

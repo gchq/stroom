@@ -18,13 +18,6 @@ jobs:
       SSH_AUTH_SOCK: "/tmp/ssh-agent-stroom.sock"
     steps:
 
-      # rsync needed for :stroom-app-gwt:jakarta gradle task
-      - name: Install Binaries
-        id: install_binaries
-        run: |
-          echo "Installing rsync"
-          sudo apt-get install rsync
-
       - name: Checkout code
         id: checkout_code
         uses: actions/checkout@v2
