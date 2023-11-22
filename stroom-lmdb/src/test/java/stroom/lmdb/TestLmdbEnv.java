@@ -10,10 +10,12 @@ import stroom.util.io.FileUtil;
 import stroom.util.io.PathCreator;
 import stroom.util.io.SimplePathCreator;
 import stroom.util.io.TempDirProvider;
+import stroom.util.shared.ModelStringUtil;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
+import org.lmdbjava.Env.MapFullException;
 import org.lmdbjava.EnvFlags;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -274,6 +276,48 @@ public class TestLmdbEnv {
             LOGGER.debug("Closing {}", envs.get(i).getLocalDir().toAbsolutePath());
             envs.get(i).close();
             FileUtil.deleteDir(dbDirs.get(i));
+        }
+    }
+
+
+    @Test
+    void testMaxEnvSizeReached() throws IOException {
+
+        final Path dbDir = Files.createTempDirectory("stroom");
+        final PathCreator pathCreator = new SimplePathCreator(() -> dbDir, () -> dbDir);
+        final TempDirProvider tempDirProvider = () -> dbDir;
+        try (LmdbEnv lmdbEnv = new LmdbEnvFactory(pathCreator, tempDirProvider, LmdbLibraryConfig::new)
+                .builder(dbDir)
+                .withMapSize(ByteSize.ofKibibytes(30))
+                .withMaxDbCount(1)
+                .withMaxReaderCount(MAX_READERS)
+                .addEnvFlag(EnvFlags.MDB_NOTLS)
+                .build()) {
+
+            BasicLmdbDb<String, String> db = new BasicLmdbDb<>(
+                    lmdbEnv,
+                    BYTE_BUFFER_POOL,
+                    new StringSerde(),
+                    new StringSerde(),
+                    "testMaxEnvSizeReached");
+
+            LOGGER.info("env size: {}", ModelStringUtil.formatIECByteSizeString(lmdbEnv.getSizeOnDisk()));
+
+            // Tiny max env size so put a load of entries to blow the limit
+            Assertions.assertThatThrownBy(() ->
+                            lmdbEnv.doWithWriteTxn(writeTxn -> {
+                                for (int i = 0; i < 1_000; i++) {
+                                    db.put(writeTxn,
+                                            "this is my key " + i,
+                                            "this is my value " + i,
+                                            false,
+                                            false);
+                                }
+                            }))
+                    .rootCause()
+                    .isInstanceOf(MapFullException.class)
+                    .message()
+                    .containsIgnoringCase("Environment mapsize reached");
         }
     }
 
