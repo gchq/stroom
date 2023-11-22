@@ -101,7 +101,7 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
         // Do we need to filter based on annotation attributes?
         final Function<Annotation, Boolean> filter = createFilter(query.getExpression());
 
-        final Set<String> usedFields = new HashSet<>(fieldIndex.getFieldNames());
+        final Set<String> usedFields = new HashSet<>(Set.of(fieldIndex.getFields()));
         usedFields.retainAll(AnnotationFields.FIELD_MAP.keySet());
 
         if (filter == null && usedFields.size() == 0) {

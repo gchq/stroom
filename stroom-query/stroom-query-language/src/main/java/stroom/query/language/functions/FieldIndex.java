@@ -16,11 +16,12 @@
 
 package stroom.query.language.functions;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
@@ -34,19 +35,22 @@ public class FieldIndex {
     public static final String FALLBACK_EVENT_ID_FIELD_NAME = "EventId";
 
     private final Map<String, Integer> fieldToPos = new ConcurrentHashMap<>();
-    private final Map<Integer, String> posToField = new ConcurrentHashMap<>();
-    private int index;
+
+    private final List<String> fieldList = new ArrayList<>();
+    private volatile String[] posToField = new String[0];
 
     private Integer timeFieldIndex;
     private Integer streamIdFieldIndex;
     private Integer eventIdFieldIndex;
 
     public int create(final String fieldName) {
-        return fieldToPos.computeIfAbsent(fieldName, k -> {
-            final int pos = index++;
-            posToField.put(pos, k);
-            return pos;
-        });
+        return fieldToPos.computeIfAbsent(fieldName, k -> addField(fieldName));
+    }
+
+    private synchronized int addField(final String fieldName) {
+        fieldList.add(fieldName);
+        posToField = fieldList.toArray(new String[0]);
+        return posToField.length - 1;
     }
 
     public Integer getPos(final String fieldName) {
@@ -54,24 +58,19 @@ public class FieldIndex {
     }
 
     public String getField(final int pos) {
-        return posToField.get(pos);
+        final String[] arr = posToField;
+        if (pos >= 0 && pos < arr.length) {
+            return arr[pos];
+        }
+        return null;
     }
 
     public String[] getFields() {
-        final String[] fieldArray = new String[size()];
-        for (int i = 0; i < fieldArray.length; i++) {
-            final String fieldName = getField(i);
-            fieldArray[i] = fieldName;
-        }
-        return fieldArray;
+        return posToField;
     }
 
     public int size() {
         return fieldToPos.size();
-    }
-
-    public Set<String> getFieldNames() {
-        return fieldToPos.keySet();
     }
 
     public Stream<Entry<String, Integer>> stream() {

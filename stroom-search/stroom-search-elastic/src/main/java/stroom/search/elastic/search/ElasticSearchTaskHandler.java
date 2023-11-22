@@ -208,7 +208,7 @@ public class ElasticSearchTaskHandler {
 
             // Limit the returned fields to what the values consumers require
             final FieldIndex fieldIndex = coprocessors.getFieldIndex();
-            for (String field : fieldIndex.getFieldNames()) {
+            for (String field : fieldIndex.getFields()) {
                 searchSourceBuilder.fetchField(field);
             }
 
@@ -285,7 +285,7 @@ public class ElasticSearchTaskHandler {
                 final Map<String, DocumentField> mapSearchHit = searchHit.getFields();
                 Val[] values = null;
 
-                for (final String fieldName : fieldIndex.getFieldNames()) {
+                for (final String fieldName : fieldIndex.getFields()) {
                     final Integer insertAt = fieldIndex.getPos(fieldName);
                     Object fieldValue = getFieldValue(mapSearchHit, fieldName);
 
