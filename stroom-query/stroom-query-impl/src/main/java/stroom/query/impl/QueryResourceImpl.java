@@ -206,7 +206,7 @@ class QueryResourceImpl implements QueryResource {
         result = result.or(() -> structuresProvider.get().fetchDetail(row));
         result = result.or(() -> fieldsProvider.get().fetchDetail(row));
         result = result.or(() -> functionsProvider.get().fetchDetail(row));
-        
+
         return result.orElse(null);
     }
 

@@ -3,7 +3,7 @@ package stroom.query.impl;
 import java.util.function.Consumer;
 
 public class DetailBuilder extends AbstractHtmlBuilder<DetailBuilder> {
-    
+
     public DetailBuilder() {
         startElem("div");
     }
@@ -15,30 +15,20 @@ public class DetailBuilder extends AbstractHtmlBuilder<DetailBuilder> {
     }
 
     public DetailBuilder description(final Consumer<DetailBuilder> consumer) {
-        startElem("p", "queryHelpDetail-description");
-        consumer.accept(this);
-        endElem("p");
+        elem("p", "queryHelpDetail-description", consumer);
         return self();
     }
 
     public DetailBuilder table(final Consumer<DetailBuilder> consumer) {
-        startElem("table");
-        consumer.accept(this);
-        endElem("table");
+        elem("table", consumer);
         return self();
     }
 
     public DetailBuilder appendKVRow(final String key, final String value) {
-        startElem("tr");
-        startElem("td");
-        startElem("b");
-        append(key);
-        endElem("b");
-        endElem("td");
-        startElem("td");
-        append(value);
-        endElem("td");
-        endElem("tr");
+        elem("tr", tr -> {
+            tr.elem("td", td -> td.elem("b", b -> b.append(key)));
+            tr.elem("td", td -> td.append(value));
+        });
         return self();
     }
 
