@@ -766,7 +766,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 .map(Field::getGroup)
                 .filter(Objects::nonNull)
                 .max(Integer::compareTo);
-        if (getTableSettings().getShowDetail() || maxGroup.isEmpty()) {
+        if (getTableSettings().showDetail() || maxGroup.isEmpty()) {
             final List<Field> requiredSpecialFields = new ArrayList<>();
             for (final String indexFieldName : indexFieldNames) {
                 final Field specialField = buildSpecialField(indexFieldName);

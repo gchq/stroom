@@ -51,9 +51,8 @@ public class DynamicFieldSelectionListModel implements FieldSelectionListModel {
                         .stream()
                         .map(this::wrap)
                         .collect(Collectors.toList());
-                display.setRowData((int) response.getPageResponse().getOffset(), items);
-                display.setRowCount(response.getPageResponse().getTotal().intValue(),
-                        response.getPageResponse().isExact());
+                display.setRowData(response.getPageStart(), items);
+                display.setRowCount(response.getPageSize(), response.isExact());
             });
         }
     }
