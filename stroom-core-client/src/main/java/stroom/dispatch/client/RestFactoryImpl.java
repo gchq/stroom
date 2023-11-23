@@ -102,7 +102,8 @@ class RestFactoryImpl implements RestFactory, HasHandlers {
 
         @Override
         public <R> Rest<R> forType(final Class<R> type) {
-            return createRest(TypeLiteral.get(type));
+            return createRest(new TypeLiteral<R>() {
+            });
         }
 
         @Override
