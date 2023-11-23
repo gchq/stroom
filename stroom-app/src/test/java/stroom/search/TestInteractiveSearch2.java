@@ -22,7 +22,7 @@ import stroom.dictionary.impl.DictionaryStore;
 import stroom.docref.DocRef;
 import stroom.index.impl.IndexStore;
 import stroom.index.shared.IndexConstants;
-import stroom.query.api.v2.Field;
+import stroom.query.api.v2.Column;
 import stroom.query.api.v2.Format;
 import stroom.query.api.v2.ParamSubstituteUtil;
 import stroom.query.api.v2.Row;
@@ -443,33 +443,33 @@ class TestInteractiveSearch2 extends AbstractSearchTest2 {
     }
 
     private TableSettings createTableSettings(final boolean extractValues) {
-        final Field streamIdField = Field.builder()
+        final Column streamIdColumn = Column.builder()
                 .name("Stream Id")
                 .expression(ParamSubstituteUtil.makeParam(IndexConstants.STREAM_ID))
                 .build();
 
-        final Field eventIdField = Field.builder()
+        final Column eventIdColumn = Column.builder()
                 .name("Event Id")
                 .expression(ParamSubstituteUtil.makeParam(IndexConstants.EVENT_ID))
                 .build();
 
-        final Field timeField = Field.builder()
+        final Column timeColumn = Column.builder()
                 .name("Event Time")
                 .expression(ParamSubstituteUtil.makeParam("EventTime"))
                 .format(Format.DATE_TIME)
                 .build();
 
-        final Field statusField = Field.builder()
+        final Column statusColumn = Column.builder()
                 .name("Status")
                 .expression(ParamSubstituteUtil.makeParam(AnnotationFields.STATUS))
                 .build();
 
         final DocRef resultPipeline = commonIndexingTestHelper.getSearchResultPipeline();
         return TableSettings.builder()
-                .addFields(streamIdField)
-                .addFields(eventIdField)
-                .addFields(timeField)
-                .addFields(statusField)
+                .addColumns(streamIdColumn)
+                .addColumns(eventIdColumn)
+                .addColumns(timeColumn)
+                .addColumns(statusColumn)
                 .extractValues(extractValues)
                 .extractionPipeline(resultPipeline)
                 .build();

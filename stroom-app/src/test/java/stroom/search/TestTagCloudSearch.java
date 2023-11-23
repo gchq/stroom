@@ -22,9 +22,9 @@ import stroom.docref.DocRef;
 import stroom.expression.api.DateTimeSettings;
 import stroom.index.impl.IndexStore;
 import stroom.index.shared.IndexDoc;
+import stroom.query.api.v2.Column;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Format;
 import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.ParamSubstituteUtil;
@@ -76,16 +76,16 @@ class TestTagCloudSearch extends AbstractSearchTest {
         final IndexDoc index = indexStore.readDocument(indexRef);
         assertThat(index).as("Index is null").isNotNull();
 
-        // Create text field.
-        final Field fldText = Field.builder()
+        // Create text column.
+        final Column columnText = Column.builder()
                 .name("Text")
                 .expression(ParamSubstituteUtil.makeParam("Text"))
                 .group(0)
                 .format(Format.TEXT)
                 .build();
 
-        // Create count field.
-        final Field fldCount = Field.builder()
+        // Create count column.
+        final Column columnCount = Column.builder()
                 .name("Count")
                 .expression("count()")
                 .format(Format.NUMBER)
@@ -93,8 +93,8 @@ class TestTagCloudSearch extends AbstractSearchTest {
 
         final DocRef resultPipeline = commonIndexingTestHelper.getSearchResultTextPipeline();
         final TableSettings tableSettings = TableSettings.builder()
-                .addFields(fldText)
-                .addFields(fldCount)
+                .addColumns(columnText)
+                .addColumns(columnCount)
                 .extractValues(true)
                 .extractionPipeline(resultPipeline)
                 .build();

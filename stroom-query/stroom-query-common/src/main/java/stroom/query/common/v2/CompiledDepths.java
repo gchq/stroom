@@ -26,20 +26,20 @@ class CompiledDepths {
     private final boolean[][] groupIndicesByDepth;
     private final boolean[][] valueIndicesByDepth;
 
-    CompiledDepths(final CompiledField[] compiledFields,
+    CompiledDepths(final CompiledColumn[] compiledColumns,
                    final boolean showDetail) {
         int maxGroupDepth = -1;
         int maxDepth = -1;
         int length = 0;
 
-        if (compiledFields == null) {
+        if (compiledColumns == null) {
             groupSizeByDepth = new int[length];
             groupIndicesByDepth = new boolean[length][];
             valueIndicesByDepth = new boolean[length][];
         } else {
             // Get the max group depth.
-            for (final CompiledField field : compiledFields) {
-                maxGroupDepth = Math.max(maxGroupDepth, field.getGroupDepth());
+            for (final CompiledColumn column : compiledColumns) {
+                maxGroupDepth = Math.max(maxGroupDepth, column.getGroupDepth());
             }
 
             // If we are showing details below grouped levels then add one to the max depth,
@@ -51,8 +51,8 @@ class CompiledDepths {
                 maxDepth = maxGroupDepth + 1;
             } else {
                 final boolean requireChildren = Arrays
-                        .stream(compiledFields)
-                        .anyMatch(CompiledField::requiresChildData);
+                        .stream(compiledColumns)
+                        .anyMatch(CompiledColumn::requiresChildData);
                 if (requireChildren) {
                     maxDepth = maxGroupDepth + 1;
                 } else {
@@ -66,24 +66,24 @@ class CompiledDepths {
             valueIndicesByDepth = new boolean[length][];
 
             for (int depth = 0; depth <= maxDepth; depth++) {
-                final boolean[] valueIndices = new boolean[compiledFields.length];
-                final boolean[] groupIndices = new boolean[compiledFields.length];
+                final boolean[] valueIndices = new boolean[compiledColumns.length];
+                final boolean[] groupIndices = new boolean[compiledColumns.length];
 
-                for (int i = 0; i < compiledFields.length; i++) {
-                    final CompiledField field = compiledFields[i];
+                for (int i = 0; i < compiledColumns.length; i++) {
+                    final CompiledColumn column = compiledColumns[i];
 
                     // Add a flag for each field index included in this group depth.
-                    if (field.getGroupDepth() == depth) {
+                    if (column.getGroupDepth() == depth) {
                         groupIndices[i] = true;
                         groupSizeByDepth[depth] = groupSizeByDepth[depth] + 1;
                         valueIndices[i] = true;
-                    } else if (field.getGroupDepth() != -1 && field.getGroupDepth() < depth) {
+                    } else if (column.getGroupDepth() != -1 && column.getGroupDepth() < depth) {
                         valueIndices[i] = true;
                     } else if (depth > maxGroupDepth) {
                         valueIndices[i] = true;
                     } else {
-                        if (field.getGenerator() != null) {
-                            if (field.hasAggregate()) {
+                        if (column.getGenerator() != null) {
+                            if (column.hasAggregate()) {
                                 valueIndices[i] = true;
                             }
                         }
@@ -128,7 +128,7 @@ class CompiledDepths {
         return "CompiledDepths{" +
                 "maxGroupDepth=" + maxGroupDepth +
                 ", levels=" + maxDepth +
-                ", fieldIndicesByDepth=" + Arrays.toString(groupIndicesByDepth) +
+                ", groupIndicesByDepth=" + Arrays.toString(groupIndicesByDepth) +
                 '}';
     }
 }

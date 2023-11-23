@@ -277,7 +277,7 @@ public class RulesPresenter
         // exp tree code only has a single field/term name so can't cope with working with
         // ids and mapping to col name for the ui.
         this.fields = settings
-                .getFields()
+                .getColumns()
                 .stream()
 //                .filter(nonSpecialFieldsPredicate) // ignore the special EventId/StreamId
 //                .map(field -> new DataSourceField.Builder()

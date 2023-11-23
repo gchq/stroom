@@ -26,7 +26,7 @@ import stroom.query.api.v2.SearchRequestSource.SourceType;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.api.v2.TimeFilter;
 import stroom.query.api.v2.TimeRange;
-import stroom.query.common.v2.CompiledFields;
+import stroom.query.common.v2.CompiledColumns;
 import stroom.query.common.v2.DataStore;
 import stroom.query.common.v2.ErrorConsumerImpl;
 import stroom.query.common.v2.ExpressionContextFactory;
@@ -37,7 +37,7 @@ import stroom.query.common.v2.OpenGroups;
 import stroom.query.common.v2.ResultStoreManager;
 import stroom.query.common.v2.ResultStoreManager.RequestAndStore;
 import stroom.query.common.v2.SimpleRowCreator;
-import stroom.query.common.v2.format.FieldFormatter;
+import stroom.query.common.v2.format.ColumnFormatter;
 import stroom.query.common.v2.format.FormatterFactory;
 import stroom.query.language.SearchRequestBuilder;
 import stroom.query.language.functions.FieldIndex;
@@ -285,17 +285,17 @@ public class ScheduledQueryAnalyticExecutor {
                         final TableSettings tableSettings = resultRequest.getMappings().get(0);
                         final Map<String, String> paramMap = ParamUtil
                                 .createParamMap(mappedRequest.getQuery().getParams());
-                        final CompiledFields compiledFields = CompiledFields.create(
+                        final CompiledColumns compiledColumns = CompiledColumns.create(
                                 expressionContext,
-                                tableSettings.getFields(),
+                                tableSettings.getColumns(),
                                 paramMap);
-                        final FieldIndex fieldIndex = compiledFields.getFieldIndex();
+                        final FieldIndex fieldIndex = compiledColumns.getFieldIndex();
 
                         final Provider<DetectionConsumer> detectionConsumerProvider =
                                 detectionConsumerFactory.create(analytic.analyticRuleDoc);
                         final DetectionConsumerProxy detectionConsumerProxy = detectionConsumerProxyProvider.get();
                         detectionConsumerProxy.setAnalyticRuleDoc(analytic.analyticRuleDoc());
-                        detectionConsumerProxy.setCompiledFields(compiledFields);
+                        detectionConsumerProxy.setCompiledColumns(compiledColumns);
                         detectionConsumerProxy.setFieldIndex(fieldIndex);
                         detectionConsumerProxy.setDetectionsConsumerProvider(detectionConsumerProvider);
 
@@ -310,17 +310,17 @@ public class ScheduledQueryAnalyticExecutor {
                                     Long streamId = null;
                                     Long eventId = null;
                                     final List<DetectionValue> values = new ArrayList<>();
-                                    for (int i = 0; i < dataStore.getFields().size(); i++) {
+                                    for (int i = 0; i < dataStore.getColumns().size(); i++) {
                                         if (i < row.getValues().size()) {
-                                            final String fieldName = dataStore.getFields().get(i).getName();
+                                            final String columnName = dataStore.getColumns().get(i).getName();
                                             final String value = row.getValues().get(i);
                                             if (value != null) {
-                                                if (IndexConstants.STREAM_ID.equals(fieldName)) {
+                                                if (IndexConstants.STREAM_ID.equals(columnName)) {
                                                     streamId = DetectionConsumerProxy.getSafeLong(value);
-                                                } else if (IndexConstants.EVENT_ID.equals(fieldName)) {
+                                                } else if (IndexConstants.EVENT_ID.equals(columnName)) {
                                                     eventId = DetectionConsumerProxy.getSafeLong(value);
                                                 }
-                                                values.add(new DetectionValue(fieldName, value));
+                                                values.add(new DetectionValue(columnName, value));
                                             }
                                         }
                                     }
@@ -352,8 +352,8 @@ public class ScheduledQueryAnalyticExecutor {
                             };
 
                             final KeyFactory keyFactory = dataStore.getKeyFactory();
-                            final FieldFormatter fieldFormatter =
-                                    new FieldFormatter(
+                            final ColumnFormatter fieldFormatter =
+                                    new ColumnFormatter(
                                             new FormatterFactory(sampleRequest.getDateTimeSettings()));
 
                             // Create the row creator.
@@ -361,7 +361,7 @@ public class ScheduledQueryAnalyticExecutor {
                                     fieldFormatter,
                                     keyFactory,
                                     tableSettings.getAggregateFilter(),
-                                    dataStore.getFields(),
+                                    dataStore.getColumns(),
                                     errorConsumer);
 
                             if (optionalRowCreator.isEmpty()) {

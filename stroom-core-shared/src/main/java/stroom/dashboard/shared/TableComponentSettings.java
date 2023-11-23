@@ -17,11 +17,12 @@
 package stroom.dashboard.shared;
 
 import stroom.docref.DocRef;
+import stroom.query.api.v2.Column;
 import stroom.query.api.v2.ConditionalFormattingRule;
-import stroom.query.api.v2.Field;
 import stroom.query.api.v2.TableSettings;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -50,16 +51,16 @@ public class TableComponentSettings implements ComponentSettings {
 
     public static final long[] DEFAULT_MAX_RESULTS = {};
 
-    @Schema(description = "TODO", required = true)
+    @Schema(description = "TODO")
     @JsonProperty
     private final String queryId;
 
     @JsonProperty
     private final DocRef dataSourceRef;
 
-    @Schema(required = true)
+    @Schema
     @JsonProperty
-    private final List<Field> fields;
+    private final List<Column> fields;
 
     @Schema(description = "TODO")
     @JsonProperty
@@ -103,7 +104,7 @@ public class TableComponentSettings implements ComponentSettings {
     public TableComponentSettings(
             @JsonProperty("queryId") final String queryId,
             @JsonProperty("dataSourceRef") final DocRef dataSourceRef,
-            @JsonProperty("fields") final List<Field> fields,
+            @JsonProperty("fields") final List<Column> fields, // Kept as fields for backward compatibility.
             @JsonProperty("extractValues") final Boolean extractValues,
             @JsonProperty("useDefaultExtractionPipeline") final Boolean useDefaultExtractionPipeline,
             @JsonProperty("extractionPipeline") final DocRef extractionPipeline,
@@ -135,7 +136,13 @@ public class TableComponentSettings implements ComponentSettings {
         return dataSourceRef;
     }
 
-    public List<Field> getFields() {
+    @Deprecated // Kept as fields for backward compatibility.
+    public List<Column> getFields() {
+        return fields;
+    }
+
+    @JsonIgnore // Kept as fields for backward compatibility.
+    public List<Column> getColumns() {
         return fields;
     }
 
@@ -235,7 +242,7 @@ public class TableComponentSettings implements ComponentSettings {
         return "TableSettings{" +
                 "queryId='" + queryId + '\'' +
                 ", dataSourceRef=" + dataSourceRef +
-                ", fields=" + fields +
+                ", columns=" + fields +
                 ", extractValues=" + extractValues +
                 ", useDefaultExtractionPipeline=" + useDefaultExtractionPipeline +
                 ", extractionPipeline=" + extractionPipeline +
@@ -263,7 +270,7 @@ public class TableComponentSettings implements ComponentSettings {
 
         private String queryId;
         private DocRef dataSourceRef;
-        private List<Field> fields;
+        private List<Column> columns;
         private Boolean extractValues;
         private Boolean useDefaultExtractionPipeline = Boolean.TRUE;
         private DocRef extractionPipeline;
@@ -279,7 +286,7 @@ public class TableComponentSettings implements ComponentSettings {
         private Builder(final TableComponentSettings tableSettings) {
             this.queryId = tableSettings.queryId;
             this.dataSourceRef = tableSettings.dataSourceRef;
-            this.fields = tableSettings.fields == null
+            this.columns = tableSettings.fields == null
                     ? null
                     : new ArrayList<>(tableSettings.fields);
             this.extractValues = tableSettings.extractValues;
@@ -310,30 +317,30 @@ public class TableComponentSettings implements ComponentSettings {
             return this;
         }
 
-        public Builder fields(final List<Field> fields) {
-            this.fields = fields;
+        public Builder columns(final List<Column> columns) {
+            this.columns = columns;
             return this;
         }
 
         /**
-         * @param values Add expected fields to the output table
+         * @param values Add expected columns to the output table
          * @return The {@link TableSettings.Builder}, enabling method chaining
          */
-        public Builder addFields(final Field... values) {
-            return addFields(Arrays.asList(values));
+        public Builder addColumn(final Column... values) {
+            return addColumn(Arrays.asList(values));
         }
 
         /**
          * Convenience function for adding multiple fields that are already in a collection.
          *
-         * @param values The fields to add
-         * @return this builder, with the fields added.
+         * @param values The columns to add
+         * @return this builder, with the columns added.
          */
-        public Builder addFields(final Collection<Field> values) {
-            if (this.fields == null) {
-                this.fields = new ArrayList<>(values);
+        public Builder addColumn(final Collection<Column> values) {
+            if (this.columns == null) {
+                this.columns = new ArrayList<>(values);
             } else {
-                this.fields.addAll(values);
+                this.columns.addAll(values);
             }
             return this;
         }
@@ -420,7 +427,7 @@ public class TableComponentSettings implements ComponentSettings {
             return new TableComponentSettings(
                     queryId,
                     dataSourceRef,
-                    fields,
+                    columns,
                     extractValues,
                     useDefaultExtractionPipeline,
                     extractionPipeline,
@@ -434,7 +441,7 @@ public class TableComponentSettings implements ComponentSettings {
         public TableSettings buildTableSettings() {
             return new TableSettings(
                     queryId,
-                    fields,
+                    columns,
                     null,
                     null,
                     null,

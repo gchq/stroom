@@ -28,7 +28,7 @@ import stroom.processor.shared.ProcessorFilter;
 import stroom.query.api.v2.ParamUtil;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.TableSettings;
-import stroom.query.common.v2.CompiledFields;
+import stroom.query.common.v2.CompiledColumns;
 import stroom.query.common.v2.ExpressionContextFactory;
 import stroom.query.language.functions.FieldIndex;
 import stroom.search.extraction.AnalyticFieldListConsumer;
@@ -132,10 +132,10 @@ public class StreamingAnalyticDataProcessorDecorator {
                 .createContext(searchRequest);
         final TableSettings tableSettings = searchRequest.getResultRequests().get(0).getMappings().get(0);
         final Map<String, String> paramMap = ParamUtil.createParamMap(searchRequest.getQuery().getParams());
-        final CompiledFields compiledFields = CompiledFields.create(expressionContext,
-                tableSettings.getFields(),
+        final CompiledColumns compiledColumns = CompiledColumns.create(expressionContext,
+                tableSettings.getColumns(),
                 paramMap);
-        final FieldIndex fieldIndex = compiledFields.getFieldIndex();
+        final FieldIndex fieldIndex = compiledColumns.getFieldIndex();
 
         // Determine if notifications have been disabled.
         final NotificationState notificationState = notificationStateService.getState(analytic.analyticRuleDoc);
@@ -146,7 +146,7 @@ public class StreamingAnalyticDataProcessorDecorator {
                 final Provider<DetectionConsumer> detectionConsumerProvider =
                         detectionConsumerFactory.create(analytic.analyticRuleDoc);
                 detectionConsumerProxy.setAnalyticRuleDoc(analytic.analyticRuleDoc());
-                detectionConsumerProxy.setCompiledFields(compiledFields);
+                detectionConsumerProxy.setCompiledColumns(compiledColumns);
                 detectionConsumerProxy.setFieldIndex(fieldIndex);
                 detectionConsumerProxy.setDetectionsConsumerProvider(detectionConsumerProvider);
 

@@ -27,7 +27,7 @@ import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.editor.client.presenter.EditorView;
-import stroom.query.api.v2.Field;
+import stroom.query.api.v2.Column;
 import stroom.query.client.presenter.QueryHelpPresenter;
 import stroom.util.shared.EqualsUtil;
 import stroom.widget.popup.client.event.HidePopupEvent;
@@ -61,8 +61,8 @@ public class ColumnFunctionEditorPresenter
     private final EditorPresenter editorPresenter;
     private final QueryHelpPresenter queryHelpPresenter;
     private TablePresenter tablePresenter;
-    private Field field;
-    private BiConsumer<Field, Field> fieldChangeConsumer;
+    private Column column;
+    private BiConsumer<Column, Column> columnChangeConsumer;
 
     @Inject
     public ColumnFunctionEditorPresenter(final EventBus eventBus,
@@ -92,14 +92,14 @@ public class ColumnFunctionEditorPresenter
     }
 
     public void show(final TablePresenter tablePresenter,
-                     final Field field,
-                     final BiConsumer<Field, Field> fieldChangeConsumer) {
+                     final Column column,
+                     final BiConsumer<Column, Column> columnChangeConsumer) {
         this.tablePresenter = tablePresenter;
-        this.field = field;
-        this.fieldChangeConsumer = fieldChangeConsumer;
+        this.column = column;
+        this.columnChangeConsumer = columnChangeConsumer;
 
-        if (field.getExpression() != null) {
-            editorPresenter.setText(field.getExpression());
+        if (column.getExpression() != null) {
+            editorPresenter.setText(column.getExpression());
         } else {
             editorPresenter.setText("");
         }
@@ -118,7 +118,7 @@ public class ColumnFunctionEditorPresenter
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(popupSize)
-                .caption("Set Expression For '" + field.getName() + "'")
+                .caption("Set Expression For '" + column.getName() + "'")
                 .onShow(this)
                 .onHideRequest(this)
                 .onHide(this)
@@ -139,11 +139,11 @@ public class ColumnFunctionEditorPresenter
     public void onHideRequest(final HidePopupRequestEvent e) {
         if (e.isOk()) {
             final String expression = editorPresenter.getText();
-            if (EqualsUtil.isEquals(expression, field.getExpression())) {
+            if (EqualsUtil.isEquals(expression, column.getExpression())) {
                 e.hide();
             } else {
                 if (expression == null) {
-                    fieldChangeConsumer.accept(field, field.copy().expression(null).build());
+                    columnChangeConsumer.accept(column, column.copy().expression(null).build());
                     e.hide();
                 } else {
                     // Check the validity of the expression.
@@ -151,7 +151,7 @@ public class ColumnFunctionEditorPresenter
                     rest
                             .onSuccess(result -> {
                                 if (result.isOk()) {
-                                    fieldChangeConsumer.accept(field, field
+                                    columnChangeConsumer.accept(column, column
                                             .copy()
                                             .expression(expression)
                                             .build());

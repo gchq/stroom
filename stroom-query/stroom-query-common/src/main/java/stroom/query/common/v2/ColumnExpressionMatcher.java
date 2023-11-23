@@ -17,11 +17,11 @@
 
 package stroom.query.common.v2;
 
+import stroom.query.api.v2.Column;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Format;
 import stroom.query.api.v2.Format.Type;
 import stroom.query.language.functions.DateUtil;
@@ -40,21 +40,21 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
-public class FieldExpressionMatcher {
+public class ColumnExpressionMatcher {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(FieldExpressionMatcher.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ColumnExpressionMatcher.class);
     private static final String DELIMITER = ",";
 
     private final Map<String, Pattern> patternCache = new ConcurrentHashMap<>();
 
-    private final Map<String, Field> fieldNameToFieldMap;
+    private final Map<String, Column> fieldNameToFieldMap;
 
-    public FieldExpressionMatcher(final List<Field> fields) {
+    public ColumnExpressionMatcher(final List<Column> columns) {
         this.fieldNameToFieldMap = new HashMap<>();
-        for (final Field field : NullSafe.list(fields)) {
+        for (final Column column : NullSafe.list(columns)) {
             // Allow match by id and name.
-            fieldNameToFieldMap.putIfAbsent(field.getId(), field);
-            fieldNameToFieldMap.putIfAbsent(field.getName(), field);
+            fieldNameToFieldMap.putIfAbsent(column.getId(), column);
+            fieldNameToFieldMap.putIfAbsent(column.getName(), column);
         }
     }
 
@@ -130,11 +130,11 @@ public class FieldExpressionMatcher {
         if (termField == null || termField.length() == 0) {
             throw new MatchException("Field not set");
         }
-        final Field field = fieldNameToFieldMap.get(termField);
-        if (field == null) {
+        final Column column = fieldNameToFieldMap.get(termField);
+        if (column == null) {
             throw new MatchException("Field not found in index: " + termField);
         }
-        final String fieldName = field.getName();
+        final String columnName = column.getName();
         if (termValue == null || termValue.length() == 0) {
             throw new MatchException("Value not set");
         }
@@ -152,10 +152,10 @@ public class FieldExpressionMatcher {
         }
 
         // Create a query based on the field type and condition.
-        if (matchesFormatType(field, Format.Type.NUMBER)) {
-            return matchNumericField(condition, termValue, field, fieldName, attribute);
-        } else if (matchesFormatType(field, Format.Type.DATE_TIME)) {
-            return matchDateField(condition, termValue, field, fieldName, attribute);
+        if (matchesFormatType(column, Format.Type.NUMBER)) {
+            return matchNumericColumn(condition, termValue, column, columnName, attribute);
+        } else if (matchesFormatType(column, Format.Type.DATE_TIME)) {
+            return matchDateField(condition, termValue, column, columnName, attribute);
         } else {
             switch (condition) {
                 case EQUALS:
@@ -167,14 +167,14 @@ public class FieldExpressionMatcher {
                     return isIn(termValue, attribute);
                 default:
                     // Try to treat as a numeric field.
-                    return matchNumericField(condition, termValue, field, fieldName, attribute);
+                    return matchNumericColumn(condition, termValue, column, columnName, attribute);
             }
         }
     }
 
-    private boolean matchesFormatType(final Field field, final Type type) {
-        return Optional.ofNullable(field)
-                .map(Field::getFormat)
+    private boolean matchesFormatType(final Column column, final Type type) {
+        return Optional.ofNullable(column)
+                .map(Column::getFormat)
                 .map(Format::getType)
                 .filter(fieldType -> fieldType.equals(type))
                 .isPresent();
@@ -182,7 +182,7 @@ public class FieldExpressionMatcher {
 
     private boolean matchDateField(final Condition condition,
                                    final String termValue,
-                                   final Field field,
+                                   final Column column,
                                    final String fieldName,
                                    final Object attribute) {
         switch (condition) {
@@ -225,24 +225,24 @@ public class FieldExpressionMatcher {
             }
             default:
                 throw new MatchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
-                        + field.getFormat().getType().getDisplayValue() + " field type");
+                        + column.getFormat().getType().getDisplayValue() + " field type");
         }
     }
 
-    private boolean matchNumericField(final Condition condition,
-                                      final String termValue,
-                                      final Field field,
-                                      final String fieldName,
-                                      final Object attribute) {
+    private boolean matchNumericColumn(final Condition condition,
+                                       final String termValue,
+                                       final Column column,
+                                       final String columnName,
+                                       final Object attribute) {
         switch (condition) {
             case EQUALS: {
-                final BigDecimal num1 = getNumber(fieldName, attribute);
-                final BigDecimal num2 = getNumber(fieldName, termValue);
+                final BigDecimal num1 = getNumber(columnName, attribute);
+                final BigDecimal num2 = getNumber(columnName, termValue);
                 return Objects.equals(num1, num2);
             }
             case GREATER_THAN: {
-                final BigDecimal num1 = getNumber(fieldName, attribute);
-                final BigDecimal num2 = getNumber(fieldName, termValue);
+                final BigDecimal num1 = getNumber(columnName, attribute);
+                final BigDecimal num2 = getNumber(columnName, termValue);
                 int compVal = CompareUtil.compareBigDecimal(num1, num2);
 
                 LOGGER.debug(num1 + " " + num2 + " " + compVal);
@@ -250,37 +250,37 @@ public class FieldExpressionMatcher {
                 return compVal > 0;
             }
             case GREATER_THAN_OR_EQUAL_TO: {
-                final BigDecimal num1 = getNumber(fieldName, attribute);
-                final BigDecimal num2 = getNumber(fieldName, termValue);
+                final BigDecimal num1 = getNumber(columnName, attribute);
+                final BigDecimal num2 = getNumber(columnName, termValue);
                 return CompareUtil.compareBigDecimal(num1, num2) >= 0;
             }
             case LESS_THAN: {
-                final BigDecimal num1 = getNumber(fieldName, attribute);
-                final BigDecimal num2 = getNumber(fieldName, termValue);
+                final BigDecimal num1 = getNumber(columnName, attribute);
+                final BigDecimal num2 = getNumber(columnName, termValue);
                 return CompareUtil.compareBigDecimal(num1, num2) < 0;
             }
             case LESS_THAN_OR_EQUAL_TO: {
-                final BigDecimal num1 = getNumber(fieldName, attribute);
-                final BigDecimal num2 = getNumber(fieldName, termValue);
+                final BigDecimal num1 = getNumber(columnName, attribute);
+                final BigDecimal num2 = getNumber(columnName, termValue);
                 return CompareUtil.compareBigDecimal(num1, num2) <= 0;
             }
             case BETWEEN: {
-                final BigDecimal[] between = getNumbers(fieldName, termValue);
+                final BigDecimal[] between = getNumbers(columnName, termValue);
                 if (between.length != 2) {
                     throw new MatchException("2 numbers needed for between query");
                 }
                 if (CompareUtil.compareBigDecimal(between[0], between[1]) >= 0) {
                     throw new MatchException("From number must be lower than to number");
                 }
-                final BigDecimal num = getNumber(fieldName, attribute);
+                final BigDecimal num = getNumber(columnName, attribute);
                 return CompareUtil.compareBigDecimal(num, between[0]) >= 0
                         && CompareUtil.compareBigDecimal(num, between[1]) <= 0;
             }
             case IN:
-                return isNumericIn(fieldName, termValue, attribute);
+                return isNumericIn(columnName, termValue, attribute);
             default:
                 throw new MatchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
-                        + field.getFormat().getType().getDisplayValue() + " field type");
+                        + column.getFormat().getType().getDisplayValue() + " field type");
         }
     }
 

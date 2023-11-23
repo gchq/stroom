@@ -28,7 +28,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
 import stroom.preferences.client.UserPreferencesManager;
-import stroom.query.api.v2.Field;
+import stroom.query.api.v2.Column;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.client.JSONUtil;
 import stroom.util.shared.EqualsUtil;
@@ -108,11 +108,11 @@ public class BasicVisSettingsPresenter extends BasicSettingsTabPresenter<BasicVi
         fieldNames = new ArrayList<>();
         if (component instanceof TablePresenter) {
             final TablePresenter tablePresenter = (TablePresenter) component;
-            final List<Field> fields = tablePresenter.getTableSettings().getFields();
-            if (fields != null && fields.size() > 0) {
-                for (final Field field : fields) {
-                    if (!fieldNames.contains(field.getName())) {
-                        fieldNames.add(field.getName());
+            final List<Column> columns = tablePresenter.getTableSettings().getColumns();
+            if (columns != null && columns.size() > 0) {
+                for (final Column column : columns) {
+                    if (!fieldNames.contains(column.getName())) {
+                        fieldNames.add(column.getName());
                     }
                 }
             }

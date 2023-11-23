@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,23 +14,21 @@
  * limitations under the License.
  */
 
-package stroom.query.client.presenter;
-
-import stroom.query.api.v2.Field;
+package stroom.dashboard.client.table;
 
 import com.google.gwt.user.cellview.client.Header;
 
-public class FieldHeader extends Header<Field> {
+public class ColumnsHeader extends Header<Boolean> {
 
-    private final Field field;
+    private final Boolean optionsVisible;
 
-    public FieldHeader(final Field field) {
-        super(FieldCell.create());
-        this.field = field;
+    public ColumnsHeader(final ColumnsManager columnsManager, final Boolean optionsVisible) {
+        super(new ColumnsCell(columnsManager));
+        this.optionsVisible = optionsVisible;
     }
 
     @Override
-    public Field getValue() {
-        return field;
+    public Boolean getValue() {
+        return optionsVisible;
     }
 }

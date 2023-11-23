@@ -16,7 +16,7 @@
 
 package stroom.query.common.v2;
 
-import stroom.query.api.v2.Field;
+import stroom.query.api.v2.Column;
 import stroom.query.api.v2.Format;
 import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.ParamSubstituteUtil;
@@ -28,7 +28,7 @@ import stroom.query.api.v2.Sort;
 import stroom.query.api.v2.Sort.SortDirection;
 import stroom.query.api.v2.TableResult;
 import stroom.query.api.v2.TableSettings;
-import stroom.query.common.v2.format.FieldFormatter;
+import stroom.query.common.v2.format.ColumnFormatter;
 import stroom.query.common.v2.format.FormatterFactory;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValLong;
@@ -56,10 +56,10 @@ abstract class AbstractDataStoreTest {
 
     void basicTest() {
         final FormatterFactory formatterFactory = new FormatterFactory(null);
-        final FieldFormatter fieldFormatter = new FieldFormatter(formatterFactory);
+        final ColumnFormatter fieldFormatter = new ColumnFormatter(formatterFactory);
 
         final TableSettings tableSettings = TableSettings.builder()
-                .addFields(Field.builder()
+                .addColumns(Column.builder()
                         .id("Text")
                         .name("Text")
                         .expression(ParamSubstituteUtil.makeParam("Text"))
@@ -97,10 +97,10 @@ abstract class AbstractDataStoreTest {
 
     void nestedTest() {
         final FormatterFactory formatterFactory = new FormatterFactory(null);
-        final FieldFormatter fieldFormatter = new FieldFormatter(formatterFactory);
+        final ColumnFormatter fieldFormatter = new ColumnFormatter(formatterFactory);
 
         final TableSettings tableSettings = TableSettings.builder()
-                .addFields(Field.builder()
+                .addColumns(Column.builder()
                         .id("Col1")
                         .name("Col1")
                         .expression(ParamSubstituteUtil.makeParam("Col1"))
@@ -108,7 +108,7 @@ abstract class AbstractDataStoreTest {
                         .group(0)
                         .sort(Sort.builder().order(0).build())
                         .build())
-                .addFields(Field.builder()
+                .addColumns(Column.builder()
                         .id("Col2")
                         .name("Col2")
                         .expression(ParamSubstituteUtil.makeParam("Col2"))
@@ -116,7 +116,7 @@ abstract class AbstractDataStoreTest {
                         .group(1)
                         .sort(Sort.builder().order(1).build())
                         .build())
-                .addFields(Field.builder()
+                .addColumns(Column.builder()
                         .id("Col3")
                         .name("Col3")
                         .expression(ParamSubstituteUtil.makeParam("Col3"))
@@ -234,10 +234,10 @@ abstract class AbstractDataStoreTest {
 
     void noValuesTest() {
         final FormatterFactory formatterFactory = new FormatterFactory(null);
-        final FieldFormatter fieldFormatter = new FieldFormatter(formatterFactory);
+        final ColumnFormatter fieldFormatter = new ColumnFormatter(formatterFactory);
 
         final TableSettings tableSettings = TableSettings.builder()
-                .addFields(Field.builder()
+                .addColumns(Column.builder()
                         .id("currentUser")
                         .name("currentUser")
                         .expression("currentUser()")
@@ -283,17 +283,17 @@ abstract class AbstractDataStoreTest {
 
     void testBigResult() {
         final FormatterFactory formatterFactory = new FormatterFactory(null);
-        final FieldFormatter fieldFormatter = new FieldFormatter(formatterFactory);
+        final ColumnFormatter fieldFormatter = new ColumnFormatter(formatterFactory);
 
         final TableSettings tableSettings = TableSettings.builder()
-                .addFields(Field.builder()
+                .addColumns(Column.builder()
                         .id("Text")
                         .name("Text")
                         .expression(ParamSubstituteUtil.makeParam("Text"))
                         .format(Format.TEXT)
                         .group(0)
                         .build())
-                .addFields(Field.builder()
+                .addColumns(Column.builder()
                         .id("Text2")
                         .name("Text2")
                         .expression(ParamSubstituteUtil.makeParam("Text2"))
@@ -361,7 +361,7 @@ abstract class AbstractDataStoreTest {
         final Sort sort = new Sort(0, SortDirection.ASCENDING);
 
         final TableSettings tableSettings = TableSettings.builder()
-                .addFields(Field.builder()
+                .addColumns(Column.builder()
                         .id("Text")
                         .name("Text")
                         .expression(ParamSubstituteUtil.makeParam("Text"))
@@ -396,7 +396,7 @@ abstract class AbstractDataStoreTest {
         final Sort sort = new Sort(0, SortDirection.ASCENDING);
 
         final TableSettings tableSettings = TableSettings.builder()
-                .addFields(Field.builder()
+                .addColumns(Column.builder()
                         .id("Number")
                         .name("Number")
                         .expression(ParamSubstituteUtil.makeParam("Number"))
@@ -432,13 +432,13 @@ abstract class AbstractDataStoreTest {
         final Sort sort = new Sort(0, SortDirection.ASCENDING);
 
         final TableSettings tableSettings = TableSettings.builder()
-                .addFields(Field.builder()
+                .addColumns(Column.builder()
                         .id("Count")
                         .name("Count")
                         .expression("count()")
                         .sort(sort)
                         .build())
-                .addFields(Field.builder()
+                .addColumns(Column.builder()
                         .id("Text")
                         .name("Text")
                         .expression(ParamSubstituteUtil.makeParam("Text"))
@@ -474,12 +474,12 @@ abstract class AbstractDataStoreTest {
         final Sort sort = new Sort(0, SortDirection.ASCENDING);
 
         final TableSettings tableSettings = TableSettings.builder()
-                .addFields(Field.builder()
+                .addColumns(Column.builder()
                         .id("Count")
                         .name("Count")
                         .expression("count()")
                         .build())
-                .addFields(Field.builder()
+                .addColumns(Column.builder()
                         .id("Text")
                         .name("Text")
                         .expression(ParamSubstituteUtil.makeParam("Text"))
@@ -516,12 +516,12 @@ abstract class AbstractDataStoreTest {
         final Sort sort = new Sort(0, SortDirection.ASCENDING);
 
         final TableSettings tableSettings = TableSettings.builder()
-                .addFields(Field.builder()
+                .addColumns(Column.builder()
                         .id("Count")
                         .name("Count")
                         .expression("count()")
                         .build())
-                .addFields(Field.builder()
+                .addColumns(Column.builder()
                         .id("Text")
                         .name("Text")
                         .expression(ParamSubstituteUtil.makeParam("Text"))
@@ -559,18 +559,18 @@ abstract class AbstractDataStoreTest {
 
         final String param = ParamSubstituteUtil.makeParam("Number");
         final TableSettings tableSettings = TableSettings.builder()
-                .addFields(Field.builder()
+                .addColumns(Column.builder()
                         .id("Group")
                         .name("Group")
                         .expression("${group}")
                         .group(0)
                         .build())
-                .addFields(Field.builder()
+                .addColumns(Column.builder()
                         .id("Number")
                         .name("Number")
                         .expression("concat(first(" + param + "), ' ', last(" + param + "))")
                         .build())
-                .addFields(Field.builder()
+                .addColumns(Column.builder()
                         .id("Number Sorted")
                         .name("Number Sorted")
                         .expression(param)
@@ -600,7 +600,7 @@ abstract class AbstractDataStoreTest {
                         .build();
 
         final FormatterFactory formatterFactory = new FormatterFactory(null);
-        final FieldFormatter fieldFormatter = new FieldFormatter(formatterFactory);
+        final ColumnFormatter fieldFormatter = new ColumnFormatter(formatterFactory);
 
         final TableResultCreator tableComponentResultCreator = new TableResultCreator(fieldFormatter);
         final TableResult searchResult = (TableResult) tableComponentResultCreator.create(dataStore,
@@ -620,7 +620,7 @@ abstract class AbstractDataStoreTest {
                               final int sortCol,
                               final boolean numeric) {
         final FormatterFactory formatterFactory = new FormatterFactory(null);
-        final FieldFormatter fieldFormatter = new FieldFormatter(formatterFactory);
+        final ColumnFormatter fieldFormatter = new ColumnFormatter(formatterFactory);
 
         // Make sure we only get 2000 results.
         final TableResultCreator tableComponentResultCreator = new TableResultCreator(fieldFormatter);

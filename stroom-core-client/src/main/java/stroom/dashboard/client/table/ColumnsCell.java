@@ -22,13 +22,13 @@ import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 
-public class FieldsCell extends AbstractCell<Boolean> {
+public class ColumnsCell extends AbstractCell<Boolean> {
 
     private static Template template;
-    private final FieldsManager fieldsManager;
+    private final ColumnsManager columnsManager;
 
-    public FieldsCell(final FieldsManager fieldsManager) {
-        this.fieldsManager = fieldsManager;
+    public ColumnsCell(final ColumnsManager columnsManager) {
+        this.columnsManager = columnsManager;
         if (template == null) {
             template = GWT.create(Template.class);
         }

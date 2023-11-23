@@ -17,6 +17,7 @@
 package stroom.query.api.v2;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -36,7 +37,7 @@ public class TableResult extends Result {
 
     @Schema(required = true)
     @JsonProperty
-    private final List<Field> fields;
+    private final List<Column> fields;
 
     @Schema(required = true)
     @JsonProperty
@@ -52,7 +53,7 @@ public class TableResult extends Result {
 
     @JsonCreator
     public TableResult(@JsonProperty("componentId") final String componentId,
-                       @JsonProperty("fields") final List<Field> fields,
+                       @JsonProperty("fields") final List<Column> fields, // Kept as fields for backward compatibility.
                        @JsonProperty("rows") final List<Row> rows,
                        @JsonProperty("resultRange") final OffsetRange resultRange,
                        @JsonProperty("totalResults") final Long totalResults,
@@ -64,7 +65,13 @@ public class TableResult extends Result {
         this.totalResults = totalResults;
     }
 
-    public List<Field> getFields() {
+    @Deprecated // Kept as fields for backward compatibility.
+    public List<Column> getFields() {
+        return fields;
+    }
+
+    @JsonIgnore // Kept as fields for backward compatibility.
+    public List<Column> getColumns() {
         return fields;
     }
 
@@ -127,7 +134,7 @@ public class TableResult extends Result {
             implements TableResultBuilder {
 
         private String componentId;
-        private List<Field> fields;
+        private List<Column> columns;
         private final List<Row> rows;
         private List<String> errors;
         private OffsetRange resultRange;
@@ -140,7 +147,7 @@ public class TableResult extends Result {
 
         private TableResultBuilderImpl(final TableResult tableResult) {
             componentId = tableResult.getComponentId();
-            fields = tableResult.fields;
+            columns = tableResult.fields;
             rows = new ArrayList<>(tableResult.rows);
             errors = tableResult.getErrors();
             resultRange = tableResult.resultRange;
@@ -153,8 +160,8 @@ public class TableResult extends Result {
         }
 
         @Override
-        public TableResultBuilderImpl fields(final List<Field> fields) {
-            this.fields = fields;
+        public TableResultBuilderImpl columns(final List<Column> columns) {
+            this.columns = columns;
             return this;
         }
 
@@ -188,7 +195,7 @@ public class TableResult extends Result {
             if (totalResults == null && rows != null) {
                 totalResults = (long) rows.size();
             }
-            return new TableResult(componentId, fields, rows, resultRange, totalResults, errors);
+            return new TableResult(componentId, columns, rows, resultRange, totalResults, errors);
         }
     }
 }

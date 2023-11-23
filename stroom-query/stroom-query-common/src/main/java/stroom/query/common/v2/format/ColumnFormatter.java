@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,29 +14,24 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.impl.format;
+package stroom.query.common.v2.format;
 
-import stroom.query.api.v2.Field;
+import stroom.query.api.v2.Column;
 import stroom.query.language.functions.Val;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public class FieldFormatter {
+public class ColumnFormatter {
 
     private final FormatterFactory formatterFactory;
-    private final Map<Field, Formatter> formatterCache = new HashMap<>();
+    private final Map<Column, Formatter> formatterCache = new HashMap<>();
 
-    public FieldFormatter(final FormatterFactory formatterFactory) {
+    public ColumnFormatter(final FormatterFactory formatterFactory) {
         this.formatterFactory = formatterFactory;
     }
 
-    public String format(final Field field, final Val value) {
-        Formatter formatter = formatterCache.get(field);
-        if (formatter == null) {
-            formatter = formatterFactory.create(field);
-            formatterCache.put(field, formatter);
-        }
-        return formatter.format(value);
+    public String format(final Column column, final Val value) {
+        return formatterCache.computeIfAbsent(column, k -> formatterFactory.create(column)).format(value);
     }
 }

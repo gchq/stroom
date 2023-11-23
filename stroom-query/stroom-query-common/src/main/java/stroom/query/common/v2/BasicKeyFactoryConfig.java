@@ -3,7 +3,7 @@ package stroom.query.common.v2;
 public class BasicKeyFactoryConfig implements KeyFactoryConfig {
 
     @Override
-    public int getTimeFieldIndex() {
+    public int getTimeColumnIndex() {
         return -1;
     }
 

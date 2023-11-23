@@ -33,7 +33,7 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 @Schema(description = "Describes a field in a result set. The field can have various expressions applied to it, " +
         "e.g. SUM(), along with sorting, filtering, formatting and grouping")
-public final class Field implements HasDisplayValue {
+public final class Column implements HasDisplayValue {
 
     @JsonPropertyDescription("The internal id of the field for equality purposes")
     @JsonProperty
@@ -78,16 +78,16 @@ public final class Field implements HasDisplayValue {
     private final Boolean special;
 
     @JsonCreator
-    public Field(@JsonProperty("id") final String id,
-                 @JsonProperty("name") final String name,
-                 @JsonProperty("expression") final String expression,
-                 @JsonProperty("sort") final Sort sort,
-                 @JsonProperty("filter") final Filter filter,
-                 @JsonProperty("format") final Format format,
-                 @JsonProperty("group") final Integer group,
-                 @JsonProperty("width") final Integer width,
-                 @JsonProperty("visible") final Boolean visible,
-                 @JsonProperty("special") final Boolean special) {
+    public Column(@JsonProperty("id") final String id,
+                  @JsonProperty("name") final String name,
+                  @JsonProperty("expression") final String expression,
+                  @JsonProperty("sort") final Sort sort,
+                  @JsonProperty("filter") final Filter filter,
+                  @JsonProperty("format") final Format format,
+                  @JsonProperty("group") final Integer group,
+                  @JsonProperty("width") final Integer width,
+                  @JsonProperty("visible") final Boolean visible,
+                  @JsonProperty("special") final Boolean special) {
         this.id = id;
         this.name = name;
         this.expression = expression;
@@ -158,7 +158,7 @@ public final class Field implements HasDisplayValue {
         return name;
     }
 
-    public static boolean equalsId(final Field lhs, final Field rhs) {
+    public static boolean equalsId(final Column lhs, final Column rhs) {
         if (lhs == null && rhs == null) {
             return true;
         }
@@ -176,7 +176,7 @@ public final class Field implements HasDisplayValue {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        final Field field = (Field) o;
+        final Column field = (Column) o;
         return Objects.equals(id, field.id) &&
                 Objects.equals(name, field.name) &&
                 Objects.equals(expression, field.expression) &&
@@ -219,7 +219,7 @@ public final class Field implements HasDisplayValue {
     }
 
     /**
-     * Builder for constructing a {@link Field}
+     * Builder for constructing a {@link Column}
      */
     public static final class Builder {
 
@@ -250,7 +250,7 @@ public final class Field implements HasDisplayValue {
         private Builder() {
         }
 
-        private Builder(final Field field) {
+        private Builder(final Column field) {
             this.id = field.id;
             this.name = field.name;
             this.expression = field.expression;
@@ -343,8 +343,8 @@ public final class Field implements HasDisplayValue {
             return this;
         }
 
-        public Field build() {
-            return new Field(id, name, expression, sort, filter, format, group, width, visible, special);
+        public Column build() {
+            return new Column(id, name, expression, sort, filter, format, group, width, visible, special);
         }
     }
 }

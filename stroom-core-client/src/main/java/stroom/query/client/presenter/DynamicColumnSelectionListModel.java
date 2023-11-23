@@ -8,8 +8,8 @@ import stroom.docref.StringMatch;
 import stroom.item.client.NavigationModel;
 import stroom.item.client.SelectionItem;
 import stroom.item.client.SelectionListModel;
-import stroom.query.api.v2.Field;
-import stroom.query.api.v2.Field.Builder;
+import stroom.query.api.v2.Column;
+import stroom.query.api.v2.Column.Builder;
 import stroom.query.api.v2.Format;
 import stroom.query.api.v2.ParamSubstituteUtil;
 import stroom.query.client.DataSourceClient;
@@ -29,7 +29,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 
-public class DynamicColumnSelectionListModel implements SelectionListModel<Field, ColumnSelectionItem> {
+public class DynamicColumnSelectionListModel implements SelectionListModel<Column, ColumnSelectionItem> {
 
     private final DataSourceClient dataSourceClient;
     private final AsyncDataProvider<ColumnSelectionItem> dataProvider;
@@ -55,7 +55,7 @@ public class DynamicColumnSelectionListModel implements SelectionListModel<Field
             String parentPath = "";
             if (!navigationModel.getPath().isEmpty()) {
                 final ColumnSelectionItem lastItem = navigationModel.getPath().peek();
-                if (lastItem.getField() != null) {
+                if (lastItem.getColumn() != null) {
                     parentPath = "Data Source" + ".";
                 } else {
                     parentPath = lastItem.getLabel() + ".";
@@ -73,21 +73,21 @@ public class DynamicColumnSelectionListModel implements SelectionListModel<Field
 
             } else if ("Counts.".equals(parentPath)) {
                 final List<ColumnSelectionItem> list = new ArrayList<>();
-                final Field count = Field.builder()
+                final Column count = Column.builder()
                         .name("Count")
                         .format(Format.NUMBER)
                         .expression("count()")
                         .build();
                 list.add(ColumnSelectionItem.create(count));
 
-                final Field countGroups = Field.builder()
+                final Column countGroups = Column.builder()
                         .name("Count Groups")
                         .format(Format.NUMBER)
                         .expression("countGroups()")
                         .build();
                 list.add(ColumnSelectionItem.create(countGroups));
 
-                final Field custom = Field.builder()
+                final Column custom = Column.builder()
                         .name("Custom")
                         .build();
                 list.add(ColumnSelectionItem.create(custom));
@@ -182,28 +182,28 @@ public class DynamicColumnSelectionListModel implements SelectionListModel<Field
     }
 
     @Override
-    public ColumnSelectionItem wrap(final Field item) {
-        return new ColumnSelectionItem(item, item.getDisplayValue(), false);
+    public ColumnSelectionItem wrap(final Column column) {
+        return new ColumnSelectionItem(column, column.getDisplayValue(), false);
     }
 
     @Override
-    public Field unwrap(final ColumnSelectionItem selectionItem) {
+    public Column unwrap(final ColumnSelectionItem selectionItem) {
         if (selectionItem == null) {
             return null;
         }
-        return selectionItem.getField();
+        return selectionItem.getColumn();
     }
 
     public static class ColumnSelectionItem implements SelectionItem {
 
-        private final Field field;
+        private final Column column;
         private final String label;
         private final boolean hasChildren;
 
-        public ColumnSelectionItem(final Field field,
+        public ColumnSelectionItem(final Column column,
                                    final String label,
                                    final boolean hasChildren) {
-            this.field = field;
+            this.column = column;
             this.label = label;
             this.hasChildren = hasChildren;
         }
@@ -212,13 +212,13 @@ public class DynamicColumnSelectionListModel implements SelectionListModel<Field
             return new ColumnSelectionItem(null, label, true);
         }
 
-        public static ColumnSelectionItem create(final Field field) {
-            return new ColumnSelectionItem(field, field.getDisplayValue(), false);
+        public static ColumnSelectionItem create(final Column column) {
+            return new ColumnSelectionItem(column, column.getDisplayValue(), false);
         }
 
         public static ColumnSelectionItem create(final FieldInfo fieldInfo) {
-            final Field field = convertFieldInfo(fieldInfo);
-            return new ColumnSelectionItem(field, field.getDisplayValue(), false);
+            final Column column = convertFieldInfo(fieldInfo);
+            return new ColumnSelectionItem(column, column.getDisplayValue(), false);
         }
 
         private static String buildAnnotationFieldExpression(final FieldType fieldType,
@@ -243,26 +243,26 @@ public class DynamicColumnSelectionListModel implements SelectionListModel<Field
             params.add(ParamSubstituteUtil.makeParam(fieldName));
         }
 
-        private static Field convertFieldInfo(final FieldInfo fieldInfo) {
+        private static Column convertFieldInfo(final FieldInfo fieldInfo) {
             final String indexFieldName = fieldInfo.getFieldName();
-            final Builder fieldBuilder = Field.builder();
-            fieldBuilder.name(indexFieldName);
+            final Builder columnBuilder = Column.builder();
+            columnBuilder.name(indexFieldName);
 
             final FieldType fieldType = fieldInfo.getFieldType();
             if (fieldType != null) {
                 switch (fieldType) {
                     case DATE:
-                        fieldBuilder.format(Format.DATE_TIME);
+                        columnBuilder.format(Format.DATE_TIME);
                         break;
                     case INTEGER:
                     case LONG:
                     case FLOAT:
                     case DOUBLE:
                     case ID:
-                        fieldBuilder.format(Format.NUMBER);
+                        columnBuilder.format(Format.NUMBER);
                         break;
                     default:
-                        fieldBuilder.format(Format.GENERAL);
+                        columnBuilder.format(Format.GENERAL);
                         break;
                 }
             }
@@ -273,37 +273,13 @@ public class DynamicColumnSelectionListModel implements SelectionListModel<Field
                 // eventId/streamId fields (so event results can link back to annotations) OR
                 // the annotation:Id field so Annotations datasource results can link back.
                 expression = buildAnnotationFieldExpression(fieldInfo.getFieldType(), indexFieldName);
-                fieldBuilder.expression(expression);
+                columnBuilder.expression(expression);
             } else {
                 expression = ParamSubstituteUtil.makeParam(indexFieldName);
-                fieldBuilder.expression(expression);
+                columnBuilder.expression(expression);
             }
 
-            return fieldBuilder.build();
-
-//        final Field count = Field.builder()
-//                .name("Count")
-//                .format(Format.NUMBER)
-//                .expression("count()")
-//                .build();
-//        otherFields.add(count);
-//
-//        final Field countGroups = Field.builder()
-//                .name("Count Groups")
-//                .format(Format.NUMBER)
-//                .expression("countGroups()")
-//                .build();
-//        otherFields.add(countGroups);
-//
-//        final Field custom = Field.builder()
-//                .name("Custom")
-//                .build();
-//        otherFields.add(custom);
-//
-//        final SimpleSelectionBoxModel<Field> model = new SimpleSelectionBoxModel<>();
-//        addFieldGroup(model, otherFields, "Counts");
-//        addFieldGroup(model, dataFields, "Data Source");
-//        addFieldGroup(model, annotationFields, "Annotations");
+            return columnBuilder.build();
         }
 
         @Override
@@ -321,8 +297,8 @@ public class DynamicColumnSelectionListModel implements SelectionListModel<Field
             return hasChildren;
         }
 
-        public Field getField() {
-            return field;
+        public Column getColumn() {
+            return column;
         }
 
         @Override
@@ -334,18 +310,20 @@ public class DynamicColumnSelectionListModel implements SelectionListModel<Field
                 return false;
             }
             final ColumnSelectionItem that = (ColumnSelectionItem) o;
-            return Objects.equals(field, that.field);
+            return hasChildren == that.hasChildren && Objects.equals(column, that.column) && Objects.equals(
+                    label,
+                    that.label);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(field);
+            return Objects.hash(column, label, hasChildren);
         }
 
         @Override
         public String toString() {
             return "ColumnSelectionItem{" +
-                    "field=" + field +
+                    "column=" + column +
                     ", label='" + label + '\'' +
                     ", hasChildren=" + hasChildren +
                     '}';

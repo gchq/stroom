@@ -22,8 +22,8 @@ import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.annotation.api.AnnotationFields;
 import stroom.datasource.api.v2.QueryField;
 import stroom.expression.matcher.ExpressionMatcher;
+import stroom.query.api.v2.Column;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.Field;
 import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.ResultRequest;
@@ -39,7 +39,7 @@ import stroom.query.common.v2.LmdbDataStore;
 import stroom.query.common.v2.SearchProgressLog;
 import stroom.query.common.v2.SearchProgressLog.SearchPhase;
 import stroom.query.common.v2.TableResultCreator;
-import stroom.query.common.v2.format.FieldFormatter;
+import stroom.query.common.v2.format.ColumnFormatter;
 import stroom.query.common.v2.format.FormatterFactory;
 import stroom.query.language.functions.DateUtil;
 import stroom.query.language.functions.FieldIndex;
@@ -246,8 +246,8 @@ class AnalyticsNodeSearchTaskHandler implements NodeSearchTaskHandler {
 
                     final TableResultConsumer tableResultConsumer = new TableResultConsumer(
                             doc, fieldArray, hitCount, valuesConsumer, expression, expressionMatcher);
-                    final FieldFormatter fieldFormatter =
-                            new FieldFormatter(new FormatterFactory(null));
+                    final ColumnFormatter fieldFormatter =
+                            new ColumnFormatter(new FormatterFactory(null));
                     final TableResultCreator resultCreator = new TableResultCreator(fieldFormatter) {
                         @Override
                         public TableResultBuilder createTableResultBuilder() {
@@ -298,7 +298,7 @@ class AnalyticsNodeSearchTaskHandler implements NodeSearchTaskHandler {
         private final ExpressionOperator expression;
         private final ExpressionMatcher expressionMatcher;
 
-        private List<Field> fields;
+        private List<Column> columns;
 
         public TableResultConsumer(final AnalyticRuleDoc analyticRuleDoc,
                                    final QueryField[] requestedFields,
@@ -328,10 +328,10 @@ class AnalyticsNodeSearchTaskHandler implements NodeSearchTaskHandler {
         }
 
         @Override
-        public TableResultConsumer fields(final List<Field> fields) {
-            this.fields = fields;
+        public TableResultConsumer columns(final List<Column> columns) {
+            this.columns = columns;
             fieldIndex = new FieldIndex();
-            fields.forEach(field -> fieldIndex.create(field.getName()));
+            columns.forEach(field -> fieldIndex.create(field.getName()));
             return this;
         }
 
@@ -346,12 +346,12 @@ class AnalyticsNodeSearchTaskHandler implements NodeSearchTaskHandler {
 
                 // Get value.
                 final StringBuilder sb = new StringBuilder();
-                for (int j = 0; j < fields.size(); j++) {
-                    final Field f = fields.get(j);
+                for (int j = 0; j < columns.size(); j++) {
+                    final Column column = columns.get(j);
                     if (sb.length() > 0) {
                         sb.append(", ");
                     }
-                    sb.append(f.getName());
+                    sb.append(column.getName());
                     sb.append(": ");
                     sb.append(row.getValues().get(j));
                 }

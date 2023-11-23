@@ -43,7 +43,7 @@ public class UniqueUtil {
         return id;
     }
 
-    public static String createUniqueFieldId(final String componentId, final Set<String> usedFieldIds) {
+    public static String createUniqueColumnId(final String componentId, final Set<String> usedFieldIds) {
         String id = componentId + "|" + RandomId.createId(5);
         // Make sure we don't duplicate ids.
         while (usedFieldIds.contains(id)) {

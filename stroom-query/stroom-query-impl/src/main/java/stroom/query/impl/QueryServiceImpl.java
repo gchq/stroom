@@ -28,7 +28,7 @@ import stroom.event.logging.rs.api.AutoLogged;
 import stroom.expression.api.DateTimeSettings;
 import stroom.expression.api.ExpressionContext;
 import stroom.node.api.NodeInfo;
-import stroom.query.api.v2.Field;
+import stroom.query.api.v2.Column;
 import stroom.query.api.v2.Param;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.QueryKey;
@@ -140,9 +140,9 @@ class QueryServiceImpl implements QueryService {
             int fieldCount = 0;
             for (final ResultRequest resultRequest : mappedRequest.getResultRequests()) {
                 for (final TableSettings tableSettings : resultRequest.getMappings()) {
-                    for (final Field field : tableSettings.getFields()) {
+                    for (final Column column : tableSettings.getColumns()) {
                         fieldCount++;
-                        if (field.getGroup() != null) {
+                        if (column.getGroup() != null) {
                             groupBy = true;
                         }
                     }

@@ -2,7 +2,7 @@ package stroom.query.common.v2;
 
 import stroom.bytebuffer.ByteBufferUtils;
 import stroom.expression.api.ExpressionContext;
-import stroom.query.api.v2.Field;
+import stroom.query.api.v2.Column;
 import stroom.query.api.v2.TimeFilter;
 import stroom.query.common.v2.LmdbRowKeyFactoryFactory.FlatGroupedLmdbRowKeyFactory;
 import stroom.query.common.v2.LmdbRowKeyFactoryFactory.FlatTimeGroupedLmdbRowKeyFactory;
@@ -132,19 +132,19 @@ public class TestLmdbRowKeyFactoryFactory {
     }
 
     private CompiledDepths getCompiledDepths() {
-        final Field field = Field
+        final Column column = Column
                 .builder()
                 .id("test")
                 .name("test")
                 .expression("${Number}")
                 .group(0)
                 .build();
-        final List<Field> fields = List.of(field);
+        final List<Column> columns = List.of(column);
         final FieldIndex fieldIndex = new FieldIndex();
-        final CompiledFields compiledFields = CompiledFields.create(new ExpressionContext(),
-                fields, fieldIndex, Collections.emptyMap());
-        final CompiledField[] compiledFieldArray = compiledFields.getCompiledFields();
-        return new CompiledDepths(compiledFieldArray, false);
+        final CompiledColumns compiledColumns = CompiledColumns.create(new ExpressionContext(),
+                columns, fieldIndex, Collections.emptyMap());
+        final CompiledColumn[] compiledColumnArray = compiledColumns.getCompiledColumns();
+        return new CompiledDepths(compiledColumnArray, false);
     }
 
     private ValHasher getValHasher() {

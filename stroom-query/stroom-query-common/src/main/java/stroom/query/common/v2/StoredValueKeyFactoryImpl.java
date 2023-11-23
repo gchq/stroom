@@ -15,7 +15,7 @@ class StoredValueKeyFactoryImpl implements StoredValueKeyFactory {
     private final ValHasher valHasher;
 
     StoredValueKeyFactoryImpl(final CompiledDepths compiledDepths,
-                              final CompiledField[] compiledFieldArray,
+                              final CompiledColumn[] compiledColumnArray,
                               final KeyFactoryConfig keyFactoryConfig,
                               final ValHasher valHasher) {
         this.compiledDepths = compiledDepths;
@@ -29,16 +29,16 @@ class StoredValueKeyFactoryImpl implements StoredValueKeyFactory {
         for (int depth = 0; depth < groupIndicesByDepth.length; depth++) {
             final boolean[] groupIndices = groupIndicesByDepth[depth];
             final List<Generator> list = new ArrayList<>(groupSizeByDepth[depth]);
-            for (int i = 0; i < compiledFieldArray.length; i++) {
-                final CompiledField compiledField = compiledFieldArray[i];
-                final Generator generator = compiledField.getGenerator();
+            for (int i = 0; i < compiledColumnArray.length; i++) {
+                final CompiledColumn compiledColumn = compiledColumnArray[i];
+                final Generator generator = compiledColumn.getGenerator();
                 // If we are grouping at this level then evaluate the expression and add to the group values.
                 if (groupIndices[i]) {
                     list.add(generator);
                 }
 
                 // Get the value if this is a special field.
-                if (i == keyFactoryConfig.getTimeFieldIndex()) {
+                if (i == keyFactoryConfig.getTimeColumnIndex()) {
                     timeGenerator = generator;
                 }
             }

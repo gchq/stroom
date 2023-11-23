@@ -22,9 +22,9 @@ package stroom.search.manualtesting;
 import stroom.docref.DocRef;
 import stroom.index.impl.IndexShardSearchConfig;
 import stroom.index.impl.IndexStore;
+import stroom.query.api.v2.Column;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
-import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Format;
 import stroom.query.api.v2.ParamSubstituteUtil;
 import stroom.query.api.v2.Row;
@@ -172,23 +172,23 @@ class TestGroupedCountsInteractiveSearch extends AbstractCoreIntegrationTest {
 
     private TableSettings createTableSettings(Boolean extractValues) {
 
-        final Field groupedUserId = Field.builder()
+        final Column groupedUserId = Column.builder()
                 .name("User")
                 .expression(ParamSubstituteUtil.makeParam("User"))
                 .group(0)
                 .build();
 
-        final Field countField = Field.builder()
+        final Column countColumn = Column.builder()
                 .name("Count")
                 .expression("count()")
                 .format(Format.NUMBER)
                 .build();
 
-        List<Field> fields = Arrays.asList(groupedUserId, countField);
+        List<Column> columns = Arrays.asList(groupedUserId, countColumn);
         final DocRef resultPipeline = commonIndexingTestHelper.getSearchResultPipeline();
 
         return TableSettings.builder()
-                .addFields(fields)
+                .addColumns(columns)
                 .extractValues(extractValues)
                 .extractionPipeline(resultPipeline)
                 .build();

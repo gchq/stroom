@@ -14,26 +14,26 @@
         <form:FormGroup identity="basicTextSettingsTable" label="Table">
             <i:SelectionBox ui:field="table" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup identity="basicTextSettingsStreamIdField" label="Stream Id Field">
-            <i:SelectionBox ui:field="streamIdField" addStyleNames="w-100"/>
+        <form:FormGroup identity="basicTextSettingsStreamIdColumn" label="Stream Id Column">
+            <i:SelectionBox ui:field="streamIdColumn" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup identity="basicTextSettingsPartNoField" label="Part No Field">
-            <i:SelectionBox ui:field="partNoField" addStyleNames="w-100"/>
+        <form:FormGroup identity="basicTextSettingsPartNoColumn" label="Part No Column">
+            <i:SelectionBox ui:field="partNoColumn" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup identity="basicTextSettingsRecordNoField" label="Record No Field">
-            <i:SelectionBox ui:field="recordNoField" addStyleNames="w-100"/>
+        <form:FormGroup identity="basicTextSettingsRecordNoColumn" label="Record No Column">
+            <i:SelectionBox ui:field="recordNoColumn" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup identity="basicTextSettingsLineFromField" label="Line From Field">
-            <i:SelectionBox ui:field="lineFromField" addStyleNames="w-100"/>
+        <form:FormGroup identity="basicTextSettingsLineFromColumn" label="Line From Column">
+            <i:SelectionBox ui:field="lineFromColumn" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup identity="basicTextSettingsColFromField" label="Col From Field">
-            <i:SelectionBox ui:field="colFromField" addStyleNames="w-100"/>
+        <form:FormGroup identity="basicTextSettingsColFromColumn" label="Col From Column">
+            <i:SelectionBox ui:field="colFromColumn" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup identity="basicTextSettingsLineToField" label="Line To Field">
-            <i:SelectionBox ui:field="lineToField" addStyleNames="w-100"/>
+        <form:FormGroup identity="basicTextSettingsLineToColumn" label="Line To Column">
+            <i:SelectionBox ui:field="lineToColumn" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup identity="basicTextSettingsColToField" label="Col To Field">
-            <i:SelectionBox ui:field="colToField" addStyleNames="w-100"/>
+        <form:FormGroup identity="basicTextSettingsColToColumn" label="Col To Column">
+            <i:SelectionBox ui:field="colToColumn" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup identity="basicTextSettingsPipeline" label="Pipeline">
             <g:SimplePanel ui:field="pipeline" addStyleNames="w-100"/>

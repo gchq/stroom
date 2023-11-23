@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class FieldBuilderTest {
+class ColumnBuilderTest {
     @Test
     void doesBuild() {
         final String name = "someName";
@@ -19,7 +19,7 @@ class FieldBuilderTest {
         final Integer numberFormatDecimalPlaces = 5;
         final Boolean numberFormatUseSeperator = true;
 
-        final Field field = Field
+        final Column column = Column
                 .builder()
                 .id(name)
                 .name(name)
@@ -46,24 +46,24 @@ class FieldBuilderTest {
                 .group(group)
                 .build();
 
-        assertThat(field.getName()).isEqualTo(name);
-        assertThat(field.getExpression()).isEqualTo(expression);
-        assertThat(field.getGroup()).isEqualTo(group);
+        assertThat(column.getName()).isEqualTo(name);
+        assertThat(column.getExpression()).isEqualTo(expression);
+        assertThat(column.getGroup()).isEqualTo(group);
 
-        assertThat(field.getSort()).isNotNull();
-        assertThat(field.getSort().getOrder()).isEqualTo(sortOrder);
-        assertThat(field.getSort().getDirection()).isEqualTo(sortDirection);
+        assertThat(column.getSort()).isNotNull();
+        assertThat(column.getSort().getOrder()).isEqualTo(sortOrder);
+        assertThat(column.getSort().getDirection()).isEqualTo(sortDirection);
 
-        assertThat(field.getFilter()).isNotNull();
-        assertThat(field.getFilter().getExcludes()).isEqualTo(filterExcludes);
-        assertThat(field.getFilter().getIncludes()).isEqualTo(filterIncludes);
+        assertThat(column.getFilter()).isNotNull();
+        assertThat(column.getFilter().getExcludes()).isEqualTo(filterExcludes);
+        assertThat(column.getFilter().getIncludes()).isEqualTo(filterIncludes);
 
-        assertThat(field.getFormat()).isNotNull();
-        assertThat(field.getFormat().getType()).isEqualTo(Format.Type.NUMBER);
-        assertThat(field.getFormat().getSettings()).isNotNull();
-        assertThat(((NumberFormatSettings) field.getFormat().getSettings()).getDecimalPlaces())
+        assertThat(column.getFormat()).isNotNull();
+        assertThat(column.getFormat().getType()).isEqualTo(Format.Type.NUMBER);
+        assertThat(column.getFormat().getSettings()).isNotNull();
+        assertThat(((NumberFormatSettings) column.getFormat().getSettings()).getDecimalPlaces())
                 .isEqualTo(numberFormatDecimalPlaces);
-        assertThat(((NumberFormatSettings) field.getFormat().getSettings()).getUseSeparator())
+        assertThat(((NumberFormatSettings) column.getFormat().getSettings()).getUseSeparator())
                 .isEqualTo(numberFormatUseSeperator);
     }
 }

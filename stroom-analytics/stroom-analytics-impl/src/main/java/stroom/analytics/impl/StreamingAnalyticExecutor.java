@@ -25,7 +25,7 @@ import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.ParamUtil;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.TableSettings;
-import stroom.query.common.v2.CompiledFields;
+import stroom.query.common.v2.CompiledColumns;
 import stroom.query.common.v2.ExpressionContextFactory;
 import stroom.query.language.functions.FieldIndex;
 import stroom.search.extraction.AnalyticFieldListConsumer;
@@ -434,10 +434,10 @@ public class StreamingAnalyticExecutor {
                 .createContext(searchRequest);
         final TableSettings tableSettings = searchRequest.getResultRequests().get(0).getMappings().get(0);
         final Map<String, String> paramMap = ParamUtil.createParamMap(searchRequest.getQuery().getParams());
-        final CompiledFields compiledFields = CompiledFields.create(expressionContext,
-                tableSettings.getFields(),
+        final CompiledColumns compiledColumns = CompiledColumns.create(expressionContext,
+                tableSettings.getColumns(),
                 paramMap);
-        final FieldIndex fieldIndex = compiledFields.getFieldIndex();
+        final FieldIndex fieldIndex = compiledColumns.getFieldIndex();
 
         // Cache the memory index for use across multiple streams.
         final MemoryIndex memoryIndex = memoryIndexProvider.get();
@@ -452,7 +452,7 @@ public class StreamingAnalyticExecutor {
                         detectionConsumerFactory.create(analytic.analyticRuleDoc);
                 final DetectionConsumerProxy detectionConsumerProxy = detectionConsumerProxyProvider.get();
                 detectionConsumerProxy.setAnalyticRuleDoc(analytic.analyticRuleDoc());
-                detectionConsumerProxy.setCompiledFields(compiledFields);
+                detectionConsumerProxy.setCompiledColumns(compiledColumns);
                 detectionConsumerProxy.setFieldIndex(fieldIndex);
                 detectionConsumerProxy.setDetectionsConsumerProvider(detectionConsumerProvider);
 

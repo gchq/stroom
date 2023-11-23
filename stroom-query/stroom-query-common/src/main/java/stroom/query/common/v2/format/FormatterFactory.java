@@ -17,8 +17,8 @@
 package stroom.query.common.v2.format;
 
 import stroom.expression.api.DateTimeSettings;
+import stroom.query.api.v2.Column;
 import stroom.query.api.v2.DateTimeFormatSettings;
-import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Format.Type;
 import stroom.query.api.v2.NumberFormatSettings;
 
@@ -30,21 +30,21 @@ public class FormatterFactory {
         this.dateTimeSettings = dateTimeSettings;
     }
 
-    public Formatter create(final Field field) {
-        if (field == null ||
-                field.getFormat() == null ||
-                field.getFormat().getType() == null) {
+    public Formatter create(final Column column) {
+        if (column == null ||
+                column.getFormat() == null ||
+                column.getFormat().getType() == null) {
             return Unformatted.create();
         }
 
-        final Type type = field.getFormat().getType();
+        final Type type = column.getFormat().getType();
         switch (type) {
             case TEXT:
                 return StringFormatter.create();
             case NUMBER:
-                return NumberFormatter.create((NumberFormatSettings) field.getFormat().getSettings());
+                return NumberFormatter.create((NumberFormatSettings) column.getFormat().getSettings());
             case DATE_TIME:
-                return DateTimeFormatter.create((DateTimeFormatSettings) field.getFormat().getSettings(),
+                return DateTimeFormatter.create((DateTimeFormatSettings) column.getFormat().getSettings(),
                         dateTimeSettings);
             default:
                 return Unformatted.create();

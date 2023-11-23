@@ -16,6 +16,8 @@
 
 package stroom.dashboard.client.table;
 
+import stroom.dashboard.client.table.RenameColumnPresenter.RenameColumnView;
+
 import com.google.gwt.event.dom.client.HasKeyDownHandlers;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -25,14 +27,14 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
 
-public class RenameFieldViewImpl extends ViewImpl implements RenameFieldPresenter.RenameFieldView {
+public class RenameColumnViewImpl extends ViewImpl implements RenameColumnView {
     private final Widget widget;
 
     @UiField
     TextBox name;
 
     @Inject
-    public RenameFieldViewImpl(final Binder binder) {
+    public RenameColumnViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
     }
 
@@ -56,6 +58,6 @@ public class RenameFieldViewImpl extends ViewImpl implements RenameFieldPresente
         return name;
     }
 
-    public interface Binder extends UiBinder<Widget, RenameFieldViewImpl> {
+    public interface Binder extends UiBinder<Widget, RenameColumnViewImpl> {
     }
 }

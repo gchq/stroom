@@ -2,11 +2,11 @@ package stroom.query.language;
 
 import stroom.docref.DocRef;
 import stroom.expression.api.ExpressionContext;
+import stroom.query.api.v2.Column;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Filter;
 import stroom.query.api.v2.Format;
 import stroom.query.api.v2.HoppingWindow;
@@ -752,10 +752,10 @@ public class SearchRequestBuilder {
         // Ensure StreamId and EventId fields exist if there is no grouping.
         if (groupDepth == 0) {
             if (!addedFields.contains(FieldIndex.FALLBACK_STREAM_ID_FIELD_NAME)) {
-                tableSettingsBuilder.addFields(buildSpecialField(FieldIndex.FALLBACK_STREAM_ID_FIELD_NAME));
+                tableSettingsBuilder.addColumns(buildSpecialColumn(FieldIndex.FALLBACK_STREAM_ID_FIELD_NAME));
             }
             if (!addedFields.contains(FieldIndex.FALLBACK_EVENT_ID_FIELD_NAME)) {
-                tableSettingsBuilder.addFields(buildSpecialField(FieldIndex.FALLBACK_EVENT_ID_FIELD_NAME));
+                tableSettingsBuilder.addColumns(buildSpecialColumn(FieldIndex.FALLBACK_EVENT_ID_FIELD_NAME));
             }
         }
 
@@ -805,9 +805,9 @@ public class SearchRequestBuilder {
         }
     }
 
-    public Field buildSpecialField(final String name) {
+    public Column buildSpecialColumn(final String name) {
         addedFields.add(name);
-        return Field.builder()
+        return Column.builder()
                 .id(name)
                 .name(name)
                 .expression(ParamSubstituteUtil.makeParam(name))
@@ -1041,7 +1041,7 @@ public class SearchRequestBuilder {
         }
 
         final String expressionString = expression.toString();
-        final Field field = Field.builder()
+        final Column field = Column.builder()
                 .id(id)
                 .name(columnName != null
                         ? columnName
@@ -1054,7 +1054,7 @@ public class SearchRequestBuilder {
                 .visible(visible)
                 .special(special)
                 .build();
-        tableSettingsBuilder.addFields(field);
+        tableSettingsBuilder.addColumns(field);
     }
 
     private void processLimit(final KeywordGroup keywordGroup,

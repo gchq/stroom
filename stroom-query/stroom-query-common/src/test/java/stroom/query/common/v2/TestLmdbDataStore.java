@@ -20,7 +20,7 @@ import stroom.expression.api.ExpressionContext;
 import stroom.lmdb.LmdbEnvFactory;
 import stroom.lmdb.LmdbEnvFactory.SimpleEnvBuilder;
 import stroom.lmdb.LmdbLibraryConfig;
-import stroom.query.api.v2.Field;
+import stroom.query.api.v2.Column;
 import stroom.query.api.v2.Format;
 import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.ParamSubstituteUtil;
@@ -30,7 +30,7 @@ import stroom.query.api.v2.SearchRequestSource;
 import stroom.query.api.v2.SearchRequestSource.SourceType;
 import stroom.query.api.v2.TableResult;
 import stroom.query.api.v2.TableSettings;
-import stroom.query.common.v2.format.FieldFormatter;
+import stroom.query.common.v2.format.ColumnFormatter;
 import stroom.query.common.v2.format.FormatterFactory;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
@@ -109,17 +109,17 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
     @Test
     void testBigValues() {
         final FormatterFactory formatterFactory = new FormatterFactory(null);
-        final FieldFormatter fieldFormatter = new FieldFormatter(formatterFactory);
+        final ColumnFormatter columnFormatter = new ColumnFormatter(formatterFactory);
 
         final TableSettings tableSettings = TableSettings.builder()
-                .addFields(Field.builder()
+                .addColumns(Column.builder()
                         .id("Text")
                         .name("Text")
                         .expression(ParamSubstituteUtil.makeParam("Text"))
                         .format(Format.TEXT)
                         .group(0)
                         .build())
-                .addFields(Field.builder()
+                .addColumns(Column.builder()
                         .id("Text2")
                         .name("Text2")
                         .expression(ParamSubstituteUtil.makeParam("Text2"))
@@ -153,7 +153,7 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                     .addMappings(tableSettings)
                     .requestedRange(new OffsetRange(0, 3000))
                     .build();
-            final TableResultCreator tableComponentResultCreator = new TableResultCreator(fieldFormatter);
+            final TableResultCreator tableComponentResultCreator = new TableResultCreator(columnFormatter);
             final TableResult searchResult = (TableResult) tableComponentResultCreator.create(
                     dataStore,
                     tableResultRequest);
@@ -166,22 +166,22 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
     @Test
     void testReload() throws Exception {
         final FormatterFactory formatterFactory = new FormatterFactory(null);
-        final FieldFormatter fieldFormatter = new FieldFormatter(formatterFactory);
+        final ColumnFormatter columnFormatter = new ColumnFormatter(formatterFactory);
 
         final TableSettings tableSettings = TableSettings.builder()
-                .addFields(Field.builder()
+                .addColumns(Column.builder()
                         .id("StreamId")
                         .name("StreamId")
                         .expression(ParamSubstituteUtil.makeParam("StreamId"))
                         .format(Format.NUMBER)
                         .build())
-                .addFields(Field.builder()
+                .addColumns(Column.builder()
                         .id("EventId")
                         .name("EventId")
                         .expression(ParamSubstituteUtil.makeParam("EventId"))
                         .format(Format.NUMBER)
                         .build())
-                .addFields(Field.builder()
+                .addColumns(Column.builder()
                         .id("EventTime")
                         .name("EventTime")
                         .expression(ParamSubstituteUtil.makeParam("EventTime"))
@@ -225,7 +225,7 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                 .addMappings(tableSettings)
                 .requestedRange(new OffsetRange(0, 50))
                 .build();
-        final TableResultCreator tableComponentResultCreator = new TableResultCreator(fieldFormatter);
+        final TableResultCreator tableComponentResultCreator = new TableResultCreator(columnFormatter);
         TableResult searchResult = (TableResult) tableComponentResultCreator.create(
                 dataStore,
                 tableResultRequest);

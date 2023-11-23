@@ -24,10 +24,10 @@ import stroom.dashboard.shared.TableComponentSettings;
 import stroom.dashboard.shared.TableResultRequest;
 import stroom.docref.DocRef;
 import stroom.expression.api.TimeZone;
+import stroom.query.api.v2.Column;
 import stroom.query.api.v2.DateTimeFormatSettings;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
-import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Filter;
 import stroom.query.api.v2.Format;
 import stroom.query.api.v2.Format.Type;
@@ -65,7 +65,7 @@ public class SearchRequestTestData {
         final String componentId = "componentSettingsMapKey";
         TableComponentSettings tableSettings = TableComponentSettings.builder()
                 .queryId("someQueryId")
-                .addFields(Field.builder()
+                .addColumn(Column.builder()
                         .id("1")
                         .name("name1")
                         .expression("expression1")
@@ -82,7 +82,7 @@ public class SearchRequestTestData {
                         .visible(true)
                         .special(false)
                         .build())
-                .addFields(Field.builder()
+                .addColumn(Column.builder()
                         .id("2")
                         .name("name2")
                         .expression("expression2")

@@ -20,7 +20,7 @@ import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.text.BasicTextSettingsPresenter.BasicTextSettingsView;
 import stroom.docref.HasDisplayValue;
 import stroom.item.client.SelectionBox;
-import stroom.query.api.v2.Field;
+import stroom.query.api.v2.Column;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 
 import com.google.gwt.dom.client.Style.Unit;
@@ -56,19 +56,19 @@ public class BasicTextSettingsViewImpl extends ViewWithUiHandlers<BasicTextSetti
     @UiField
     SelectionBox<HasDisplayValue> table;
     @UiField
-    SelectionBox<HasDisplayValue> streamIdField;
+    SelectionBox<HasDisplayValue> streamIdColumn;
     @UiField
-    SelectionBox<HasDisplayValue> partNoField;
+    SelectionBox<HasDisplayValue> partNoColumn;
     @UiField
-    SelectionBox<HasDisplayValue> recordNoField;
+    SelectionBox<HasDisplayValue> recordNoColumn;
     @UiField
-    SelectionBox<HasDisplayValue> lineFromField;
+    SelectionBox<HasDisplayValue> lineFromColumn;
     @UiField
-    SelectionBox<HasDisplayValue> colFromField;
+    SelectionBox<HasDisplayValue> colFromColumn;
     @UiField
-    SelectionBox<HasDisplayValue> lineToField;
+    SelectionBox<HasDisplayValue> lineToColumn;
     @UiField
-    SelectionBox<HasDisplayValue> colToField;
+    SelectionBox<HasDisplayValue> colToColumn;
     @UiField
     SimplePanel pipeline;
     @UiField
@@ -141,21 +141,21 @@ public class BasicTextSettingsViewImpl extends ViewWithUiHandlers<BasicTextSetti
     }
 
     @Override
-    public void setFields(final List<Field> fields) {
-        setFieldNames(fields, streamIdField);
-        setFieldNames(fields, partNoField);
-        setFieldNames(fields, recordNoField);
-        setFieldNames(fields, lineFromField);
-        setFieldNames(fields, colFromField);
-        setFieldNames(fields, lineToField);
-        setFieldNames(fields, colToField);
+    public void setColumns(final List<Column> columns) {
+        setFieldNames(columns, streamIdColumn);
+        setFieldNames(columns, partNoColumn);
+        setFieldNames(columns, recordNoColumn);
+        setFieldNames(columns, lineFromColumn);
+        setFieldNames(columns, colFromColumn);
+        setFieldNames(columns, lineToColumn);
+        setFieldNames(columns, colToColumn);
     }
 
-    private void setFieldNames(final List<Field> fields, final SelectionBox<HasDisplayValue> ctrl) {
+    private void setFieldNames(final List<Column> columns, final SelectionBox<HasDisplayValue> ctrl) {
         final HasDisplayValue selected = ctrl.getValue();
         ctrl.clear();
         ctrl.addItem(NONE);
-        final List<HasDisplayValue> newList = fields.stream().map(e -> (HasDisplayValue) e)
+        final List<HasDisplayValue> newList = columns.stream().map(e -> (HasDisplayValue) e)
                 .sorted(Comparator.comparing(HasDisplayValue::getDisplayValue))
                 .collect(Collectors.toList());
         ctrl.addItems(newList);
@@ -163,80 +163,80 @@ public class BasicTextSettingsViewImpl extends ViewWithUiHandlers<BasicTextSetti
     }
 
     @Override
-    public Field getStreamIdField() {
-        return getField(streamIdField);
+    public Column getStreamIdColumn() {
+        return getColumn(streamIdColumn);
     }
 
     @Override
-    public void setStreamIdField(final Field field) {
-        streamIdField.setValue(field);
+    public void setStreamIdColumn(final Column column) {
+        streamIdColumn.setValue(column);
     }
 
     @Override
-    public Field getPartNoField() {
-        return getField(partNoField);
+    public Column getPartNoColumn() {
+        return getColumn(partNoColumn);
     }
 
     @Override
-    public void setPartNoField(final Field field) {
-        partNoField.setValue(field);
+    public void setPartNoColumn(final Column column) {
+        partNoColumn.setValue(column);
     }
 
     @Override
-    public Field getRecordNoField() {
-        return getField(recordNoField);
+    public Column getRecordNoColumn() {
+        return getColumn(recordNoColumn);
     }
 
     @Override
-    public void setRecordNoField(final Field field) {
-        recordNoField.setValue(field);
+    public void setRecordNoColumn(final Column column) {
+        recordNoColumn.setValue(column);
     }
 
     @Override
-    public Field getLineFromField() {
-        return getField(lineFromField);
+    public Column getLineFromColumn() {
+        return getColumn(lineFromColumn);
     }
 
     @Override
-    public void setLineFromField(final Field field) {
-        lineFromField.setValue(field);
+    public void setLineFromColumn(final Column column) {
+        lineFromColumn.setValue(column);
     }
 
     @Override
-    public Field getColFromField() {
-        return getField(colFromField);
+    public Column getColFromColumn() {
+        return getColumn(colFromColumn);
     }
 
     @Override
-    public void setColFromField(final Field field) {
-        colFromField.setValue(field);
+    public void setColFromColumn(final Column column) {
+        colFromColumn.setValue(column);
     }
 
     @Override
-    public Field getLineToField() {
-        return getField(lineToField);
+    public Column getLineToColumn() {
+        return getColumn(lineToColumn);
     }
 
     @Override
-    public void setLineToField(final Field field) {
-        lineToField.setValue(field);
+    public void setLineToColumn(final Column column) {
+        lineToColumn.setValue(column);
     }
 
     @Override
-    public Field getColToField() {
-        return getField(colToField);
+    public Column getColToColumn() {
+        return getColumn(colToColumn);
     }
 
     @Override
-    public void setColToField(final Field field) {
-        colToField.setValue(field);
+    public void setColToColumn(final Column column) {
+        colToColumn.setValue(column);
     }
 
-    private Field getField(final SelectionBox<HasDisplayValue> ctrl) {
+    private Column getColumn(final SelectionBox<HasDisplayValue> ctrl) {
         if (ctrl.getValue() == null || NONE.equals(ctrl.getValue())) {
             return null;
         }
-        return (Field) ctrl.getValue();
+        return (Column) ctrl.getValue();
     }
 
     @Override

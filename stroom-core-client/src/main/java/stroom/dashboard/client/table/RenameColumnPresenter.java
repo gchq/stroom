@@ -17,7 +17,8 @@
 package stroom.dashboard.client.table;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.query.api.v2.Field;
+import stroom.dashboard.client.table.RenameColumnPresenter.RenameColumnView;
+import stroom.query.api.v2.Column;
 import stroom.util.shared.EqualsUtil;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -36,16 +37,16 @@ import com.gwtplatform.mvp.client.View;
 import java.util.Objects;
 import java.util.function.BiConsumer;
 
-public class RenameFieldPresenter
-        extends MyPresenterWidget<RenameFieldPresenter.RenameFieldView>
+public class RenameColumnPresenter
+        extends MyPresenterWidget<RenameColumnView>
         implements HidePopupRequestEvent.Handler {
 
     private TablePresenter tablePresenter;
-    private Field field;
-    private BiConsumer<Field, Field> fieldChangeConsumer;
+    private Column column;
+    private BiConsumer<Column, Column> columnChangeConsumer;
 
     @Inject
-    public RenameFieldPresenter(final EventBus eventBus, final RenameFieldView view) {
+    public RenameColumnPresenter(final EventBus eventBus, final RenameColumnView view) {
         super(eventBus, view);
     }
 
@@ -61,13 +62,13 @@ public class RenameFieldPresenter
     }
 
     public void show(final TablePresenter tablePresenter,
-                     final Field field,
-                     final BiConsumer<Field, Field> fieldChangeConsumer) {
+                     final Column column,
+                     final BiConsumer<Column, Column> columnChangeConsumer) {
         this.tablePresenter = tablePresenter;
-        this.field = field;
-        this.fieldChangeConsumer = fieldChangeConsumer;
+        this.column = column;
+        this.columnChangeConsumer = columnChangeConsumer;
 
-        getView().getName().setText(field.getName());
+        getView().getName().setText(column.getName());
 
         final PopupSize popupSize = PopupSize.resizableX();
 
@@ -86,16 +87,16 @@ public class RenameFieldPresenter
             final String newFieldName = getView().getName().getText();
             if (newFieldName != null
                     && !newFieldName.trim().isEmpty()
-                    && !EqualsUtil.isEquals(newFieldName, field.getName())) {
+                    && !EqualsUtil.isEquals(newFieldName, column.getName())) {
 
                 // Need to ensure any conditional formatting rules that use this field name
                 // are renamed too.
-                tablePresenter.handleFieldRename(field.getName(), newFieldName);
+                tablePresenter.handleFieldRename(column.getName(), newFieldName);
 
                 final boolean isNameInUse = tablePresenter.getTableSettings()
-                        .getFields()
+                        .getColumns()
                         .stream()
-                        .map(Field::getName)
+                        .map(Column::getName)
                         .anyMatch(name -> Objects.equals(name, newFieldName));
 
                 if (isNameInUse) {
@@ -104,7 +105,7 @@ public class RenameFieldPresenter
                             "Field name \"" + newFieldName + "\" is already in use",
                             null);
                 } else {
-                    fieldChangeConsumer.accept(field, field.copy().name(newFieldName).build());
+                    columnChangeConsumer.accept(column, column.copy().name(newFieldName).build());
                     e.hide();
                 }
             } else {
@@ -119,7 +120,7 @@ public class RenameFieldPresenter
         return getView().getName().getText();
     }
 
-    public interface RenameFieldView extends View, Focus {
+    public interface RenameColumnView extends View, Focus {
 
         HasText getName();
 

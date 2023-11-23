@@ -60,10 +60,10 @@ import stroom.expression.api.DateTimeSettings;
 import stroom.item.client.SelectionPopup;
 import stroom.preferences.client.UserPreferencesManager;
 import stroom.processor.shared.ProcessorExpressionUtil;
+import stroom.query.api.v2.Column;
 import stroom.query.api.v2.ConditionalFormattingRule;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionTerm;
-import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Format;
 import stroom.query.api.v2.Format.Type;
 import stroom.query.api.v2.OffsetRange;
@@ -75,9 +75,9 @@ import stroom.query.api.v2.Row;
 import stroom.query.api.v2.TableResult;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.client.DataSourceClient;
+import stroom.query.client.presenter.ColumnHeader;
 import stroom.query.client.presenter.DynamicColumnSelectionListModel;
 import stroom.query.client.presenter.DynamicColumnSelectionListModel.ColumnSelectionItem;
-import stroom.query.client.presenter.FieldHeader;
 import stroom.query.client.presenter.TableRow;
 import stroom.query.client.presenter.TimeZones;
 import stroom.security.client.api.ClientSecurityContext;
@@ -105,7 +105,6 @@ import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.safecss.shared.SafeStylesBuilder;
 import com.google.gwt.safehtml.shared.SafeHtml;
-import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -136,9 +135,9 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     private TableResultRequest tableResultRequest = TableResultRequest.builder()
             .requestedRange(OffsetRange.ZERO_1000)
             .build();
-    private final List<Column<TableRow, ?>> existingColumns = new ArrayList<>();
+    private final List<com.google.gwt.user.cellview.client.Column<TableRow, ?>> existingColumns = new ArrayList<>();
     private final List<HandlerRegistration> searchModelHandlerRegistrations = new ArrayList<>();
-    private final ButtonView addFieldButton;
+    private final ButtonView addColumnButton;
     private final ButtonView downloadButton;
     private final ButtonView annotateButton;
     private final DownloadPresenter downloadPresenter;
@@ -147,10 +146,10 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     private final TimeZones timeZones;
     private final UserPreferencesManager userPreferencesManager;
     private final DynamicColumnSelectionListModel columnSelectionBoxModel;
-    private final FieldsManager fieldsManager;
+    private final ColumnsManager columnsManager;
     private final MyDataGrid<TableRow> dataGrid;
     private final MultiSelectionModelImpl<TableRow> selectionModel;
-    private final Column<TableRow, Expander> expanderColumn;
+    private final com.google.gwt.user.cellview.client.Column<TableRow, Expander> expanderColumn;
 
     private int expanderColumnWidth;
     private SearchModel currentSearchModel;
@@ -165,7 +164,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                           final PagerView pagerView,
                           final ClientSecurityContext securityContext,
                           final LocationManager locationManager,
-                          final Provider<RenameFieldPresenter> renameFieldPresenterProvider,
+                          final Provider<RenameColumnPresenter> renameColumnPresenterProvider,
                           final Provider<ColumnFunctionEditorPresenter> expressionPresenterProvider,
                           final FormatPresenter formatPresenter,
                           final FilterPresenter filterPresenter,
@@ -195,9 +194,9 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         view.setTableView(pagerView);
         view.setUiHandlers(this);
 
-        // Add the 'add field' button.
-        addFieldButton = pagerView.addButton(SvgPresets.ADD);
-        addFieldButton.setTitle("Add Field");
+        // Add the 'add column' button.
+        addColumnButton = pagerView.addButton(SvgPresets.ADD);
+        addColumnButton.setTitle("Add Column");
 
         // Download
         downloadButton = pagerView.addButton(SvgPresets.DOWNLOAD);
@@ -208,13 +207,13 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         annotateButton.setVisible(securityContext.hasAppPermission(PermissionNames.ANNOTATIONS));
         annotateButton.setEnabled(false);
 
-        fieldsManager = new FieldsManager(
+        columnsManager = new ColumnsManager(
                 this,
-                renameFieldPresenterProvider,
+                renameColumnPresenterProvider,
                 expressionPresenterProvider,
                 formatPresenter,
                 filterPresenter);
-        dataGrid.setHeadingListener(fieldsManager);
+        dataGrid.setHeadingListener(columnsManager);
 
         clientPropertyCache.get()
                 .onSuccess(result -> {
@@ -232,7 +231,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
 
         // Expander column.
-        expanderColumn = new Column<TableRow, Expander>(new ExpanderCell()) {
+        expanderColumn = new com.google.gwt.user.cellview.client.Column<TableRow, Expander>(new ExpanderCell()) {
             @Override
             public Expander getValue(final TableRow row) {
                 if (row == null) {
@@ -268,9 +267,9 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
             }
         }));
         registerHandler(dataGrid.addHyperlinkHandler(event -> getEventBus().fireEvent(event)));
-        registerHandler(addFieldButton.addClickHandler(event -> {
+        registerHandler(addColumnButton.addClickHandler(event -> {
             if (MouseUtil.isPrimary(event)) {
-                onAddField(event);
+                onAddColumn(event);
             }
         }));
 
@@ -317,9 +316,9 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         getView().setPaused(this.pause);
     }
 
-    private void onAddField(final ClickEvent event) {
+    private void onAddColumn(final ClickEvent event) {
         if (currentSearchModel != null) {
-            final SelectionPopup<stroom.query.api.v2.Field, ColumnSelectionItem> selectionPopup =
+            final SelectionPopup<Column, ColumnSelectionItem> selectionPopup =
                     new SelectionPopup<>();
             final MultiSelectionModel<ColumnSelectionItem> selectionModel = selectionPopup.getSelectionModel();
             columnSelectionBoxModel.setDataSourceRef(currentSearchModel.getIndexLoader().getLoadedDataSourceRef());
@@ -337,9 +336,9 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
             handlerRegistrations.add(selectionModel.addSelectionHandler(e -> {
                 final ColumnSelectionItem item = selectionModel.getSelected();
                 if (item != null && !item.isHasChildren()) {
-                    final stroom.query.api.v2.Field field = item.getField();
-                    if (field != null) {
-                        fieldsManager.addField(field);
+                    final Column column = item.getColumn();
+                    if (column != null) {
+                        columnsManager.addColumn(column);
                     }
                     selectionPopup.hide();
                 }
@@ -489,7 +488,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 // Don't refresh the table unless the results have changed.
                 final TableResult tableResult = (TableResult) componentResult;
 
-                final List<TableRow> values = processData(tableResult.getFields(), tableResult.getRows());
+                final List<TableRow> values = processData(tableResult.getColumns(), tableResult.getRows());
                 final OffsetRange valuesRange = tableResult.getResultRange();
 
                 // Only set data in the table if we have got some results and
@@ -517,22 +516,22 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         ignoreRangeChange = false;
     }
 
-    public static QueryField buildDsField(final Field field) {
-        Type colType = Optional.ofNullable(field.getFormat())
+    public static QueryField buildDsField(final Column column) {
+        Type colType = Optional.ofNullable(column.getFormat())
                 .map(Format::getType)
                 .orElse(Type.GENERAL);
 
         try {
             switch (colType) {
                 case NUMBER:
-                    return new LongField(field.getName(), true);
+                    return new LongField(column.getName(), true);
 
                 case DATE_TIME:
-                    return new DateField(field.getName(), true);
+                    return new DateField(column.getName(), true);
 
                 default:
                     // CONTAINS only supported for legacy content, not for use in UI
-                    return new TextField(field.getName(), ConditionSet.BASIC_TEXT, null, true);
+                    return new TextField(column.getName(), ConditionSet.BASIC_TEXT, null, true);
 
             }
         } catch (Exception e) {
@@ -541,14 +540,14 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         }
     }
 
-    private List<TableRow> processData(final List<Field> fields, final List<Row> values) {
+    private List<TableRow> processData(final List<Column> columns, final List<Row> values) {
         // See if any fields have more than 1 level. If they do then we will add
         // an expander column.
         int maxGroup = -1;
         final boolean showDetail = getTableSettings().showDetail();
-        for (final Field field : fields) {
-            if (field.getGroup() != null) {
-                maxGroup = Math.max(maxGroup, field.getGroup());
+        for (final Column column : columns) {
+            if (column.getGroup() != null) {
+                maxGroup = Math.max(maxGroup, column.getGroup());
             }
         }
 
@@ -576,8 +575,8 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
             }
 
             final Map<String, TableRow.Cell> cellsMap = new HashMap<>();
-            for (int i = 0; i < fields.size() && i < row.getValues().size(); i++) {
-                final Field field = fields.get(i);
+            for (int i = 0; i < columns.size() && i < row.getValues().size(); i++) {
+                final Column column = columns.get(i);
                 final String value = row.getValues().get(i) != null
                         ? row.getValues().get(i)
                         : "";
@@ -586,18 +585,20 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 stylesBuilder.append(rowStyle.toSafeStyles());
 
                 // Wrap
-                if (field.getFormat() != null && field.getFormat().getWrap() != null && field.getFormat().getWrap()) {
+                if (column.getFormat() != null &&
+                        column.getFormat().getWrap() != null &&
+                        column.getFormat().getWrap()) {
                     stylesBuilder.whiteSpace(Style.WhiteSpace.NORMAL);
                 }
                 // Grouped
-                if (field.getGroup() != null && field.getGroup() >= row.getDepth()) {
+                if (column.getGroup() != null && column.getGroup() >= row.getDepth()) {
                     stylesBuilder.fontWeight(Style.FontWeight.BOLD);
                 }
 
                 final String style = stylesBuilder.toSafeStyles().asString();
 
                 final TableRow.Cell cell = new TableRow.Cell(value, style);
-                cellsMap.put(field.getId(), cell);
+                cellsMap.put(column.getId(), cell);
             }
 
             // Create an expander for the row.
@@ -624,21 +625,22 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         existingColumns.add(expanderColumn);
     }
 
-    private void addColumn(final Field field) {
-        final Column<TableRow, SafeHtml> column = new Column<TableRow, SafeHtml>(new SafeHtmlCell()) {
-            @Override
-            public SafeHtml getValue(final TableRow row) {
-                if (row == null) {
-                    return SafeHtmlUtil.NBSP;
-                }
+    private void addColumn(final Column column) {
+        final com.google.gwt.user.cellview.client.Column<TableRow, SafeHtml> col =
+                new com.google.gwt.user.cellview.client.Column<TableRow, SafeHtml>(new SafeHtmlCell()) {
+                    @Override
+                    public SafeHtml getValue(final TableRow row) {
+                        if (row == null) {
+                            return SafeHtmlUtil.NBSP;
+                        }
 
-                return row.getValue(field.getId());
-            }
-        };
+                        return row.getValue(column.getId());
+                    }
+                };
 
-        final FieldHeader fieldHeader = new FieldHeader(field);
-        dataGrid.addResizableColumn(column, fieldHeader, field.getWidth());
-        existingColumns.add(column);
+        final ColumnHeader columnHeader = new ColumnHeader(column);
+        dataGrid.addResizableColumn(col, columnHeader, column.getWidth());
+        existingColumns.add(col);
     }
 
     void handleFieldRename(final String oldName,
@@ -726,8 +728,8 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     }
 
     private void updateFields() {
-        if (getTableSettings().getFields() == null) {
-            setSettings(getTableSettings().copy().fields(new ArrayList<>()).build());
+        if (getTableSettings().getColumns() == null) {
+            setSettings(getTableSettings().copy().columns(new ArrayList<>()).build());
         }
 
         if (currentSearchModel != null) {
@@ -758,33 +760,33 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
     private void ensureSpecialFields(final String... indexFieldNames) {
         // Remove all special fields as we will re-add them.
-        getTableSettings().getFields().removeIf(Field::isSpecial);
+        getTableSettings().getColumns().removeIf(Column::isSpecial);
 
         final Optional<Integer> maxGroup = getTableSettings()
-                .getFields()
+                .getColumns()
                 .stream()
-                .map(Field::getGroup)
+                .map(Column::getGroup)
                 .filter(Objects::nonNull)
                 .max(Integer::compareTo);
         if (getTableSettings().showDetail() || maxGroup.isEmpty()) {
-            final List<Field> requiredSpecialFields = new ArrayList<>();
+            final List<Column> requiredSpecialColumns = new ArrayList<>();
             for (final String indexFieldName : indexFieldNames) {
-                final Field specialField = buildSpecialField(indexFieldName);
-                requiredSpecialFields.add(specialField);
+                final Column specialColumn = buildSpecialColumn(indexFieldName);
+                requiredSpecialColumns.add(specialColumn);
             }
 
             // If the fields we want to make special do exist in the current data source then
             // add them.
-            if (requiredSpecialFields.size() > 0) {
+            if (requiredSpecialColumns.size() > 0) {
                 // Prior to the introduction of the special field concept, special fields were
                 // treated as invisible fields. For this reason we need to remove old invisible
                 // fields if we haven't yet turned them into special fields.
                 final Version version = Version.parse(getTableSettings().getModelVersion());
                 final boolean old = version.lt(CURRENT_MODEL_VERSION);
                 if (old) {
-                    requiredSpecialFields.forEach(requiredSpecialDsField ->
-                            getTableSettings().getFields().removeIf(field ->
-                                    !field.isVisible() && field.getName().equals(requiredSpecialDsField.getName())));
+                    requiredSpecialColumns.forEach(requiredSpecialDsColumn ->
+                            getTableSettings().getColumns().removeIf(column ->
+                                    !column.isVisible() && column.getName().equals(requiredSpecialDsColumn.getName())));
                     setSettings(getTableSettings()
                             .copy()
                             .modelVersion(CURRENT_MODEL_VERSION.toString())
@@ -792,8 +794,8 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 }
 
                 // Add special fields.
-                requiredSpecialFields.forEach(field ->
-                        getTableSettings().getFields().add(field));
+                requiredSpecialColumns.forEach(column ->
+                        getTableSettings().getColumns().add(column));
             }
         }
 
@@ -809,9 +811,9 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 //        }
     }
 
-    public static Field buildSpecialField(final String indexFieldName) {
+    public static Column buildSpecialColumn(final String indexFieldName) {
         final String obfuscatedColumnName = IndexConstants.generateObfuscatedColumnName(indexFieldName);
-        return Field.builder()
+        return Column.builder()
                 .id(obfuscatedColumnName)
                 .name(obfuscatedColumnName)
                 .expression(ParamSubstituteUtil.makeParam(indexFieldName))
@@ -825,20 +827,20 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         ensureSpecialFields(IndexConstants.STREAM_ID, IndexConstants.EVENT_ID, "Id");
 
         // Remove existing columns.
-        for (final Column<TableRow, ?> column : existingColumns) {
+        for (final com.google.gwt.user.cellview.client.Column<TableRow, ?> column : existingColumns) {
             dataGrid.removeColumn(column);
         }
         existingColumns.clear();
 
-        final List<Field> fields = getTableSettings().getFields();
+        final List<Column> columns = getTableSettings().getColumns();
         addExpanderColumn();
-        fieldsManager.setFieldsStartIndex(1);
+        columnsManager.setColumnsStartIndex(1);
 
         // Add fields as columns.
-        for (final Field field : fields) {
+        for (final Column column : columns) {
             // Only include the field if it is supposed to be visible.
-            if (field.isVisible()) {
-                addColumn(field);
+            if (column.isVisible()) {
+                addColumn(column);
             }
         }
 
@@ -874,24 +876,24 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
         // Ensure all fields have ids.
         final Set<String> usedFieldIds = new HashSet<>();
-        if (getTableSettings().getFields() != null) {
+        if (getTableSettings().getColumns() != null) {
             final String obfuscatedStreamId = IndexConstants.generateObfuscatedColumnName(IndexConstants.STREAM_ID);
             final String obfuscatedEventId = IndexConstants.generateObfuscatedColumnName(IndexConstants.EVENT_ID);
 
-            final List<Field> fields = new ArrayList<>();
-            getTableSettings().getFields().forEach(field -> {
-                Field f = field;
-                if (obfuscatedStreamId.equals(f.getName())) {
-                    f = buildSpecialField(IndexConstants.STREAM_ID);
-                } else if (obfuscatedEventId.equals(f.getName())) {
-                    f = buildSpecialField(IndexConstants.EVENT_ID);
-                } else if (field.getId() == null) {
-                    f = field.copy().id(fieldsManager.createRandomFieldId(usedFieldIds)).build();
+            final List<Column> columns = new ArrayList<>();
+            getTableSettings().getColumns().forEach(column -> {
+                Column col = column;
+                if (obfuscatedStreamId.equals(col.getName())) {
+                    col = buildSpecialColumn(IndexConstants.STREAM_ID);
+                } else if (obfuscatedEventId.equals(col.getName())) {
+                    col = buildSpecialColumn(IndexConstants.EVENT_ID);
+                } else if (column.getId() == null) {
+                    col = column.copy().id(columnsManager.createRandomColumnId(usedFieldIds)).build();
                 }
-                usedFieldIds.add(field.getId());
-                fields.add(f);
+                usedFieldIds.add(column.getId());
+                columns.add(col);
             });
-            setSettings(getTableSettings().copy().fields(fields).build());
+            setSettings(getTableSettings().copy().columns(columns).build());
         }
     }
 
@@ -966,10 +968,10 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     @Override
     public List<QueryField> getFields() {
         final List<QueryField> abstractFields = new ArrayList<>();
-        final List<Field> fields = getTableSettings().getFields();
-        if (fields != null && fields.size() > 0) {
-            for (final Field field : fields) {
-                abstractFields.add(new TextField(field.getName(), true));
+        final List<Column> columns = getTableSettings().getColumns();
+        if (columns != null && columns.size() > 0) {
+            for (final Column column : columns) {
+                abstractFields.add(new TextField(column.getName(), true));
             }
         }
         return abstractFields;
@@ -978,11 +980,11 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     @Override
     public List<Map<String, String>> getSelection() {
         final List<Map<String, String>> list = new ArrayList<>();
-        final List<Field> fields = getTableSettings().getFields();
+        final List<Column> columns = getTableSettings().getColumns();
         for (final TableRow tableRow : getSelectedRows()) {
             final Map<String, String> map = new HashMap<>();
-            for (final Field field : fields) {
-                map.put(field.getName(), tableRow.getText(field.getId()));
+            for (final Column column : columns) {
+                map.put(column.getName(), tableRow.getText(column.getId()));
             }
             list.add(map);
         }
@@ -1042,7 +1044,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         super.setDesignMode(designMode);
         dataGrid.setAllowMove(designMode);
         dataGrid.setAllowHeaderSelection(designMode);
-        addFieldButton.setVisible(designMode);
+        addColumnButton.setVisible(designMode);
     }
 
     public SearchModel getCurrentSearchModel() {

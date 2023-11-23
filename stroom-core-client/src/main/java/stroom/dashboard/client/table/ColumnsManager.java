@@ -20,7 +20,7 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.dashboard.client.main.UniqueUtil;
 import stroom.data.grid.client.Heading;
 import stroom.data.grid.client.HeadingListener;
-import stroom.query.api.v2.Field;
+import stroom.query.api.v2.Column;
 import stroom.query.api.v2.Sort;
 import stroom.query.api.v2.Sort.SortDirection;
 import stroom.svg.shared.SvgImage;
@@ -47,24 +47,24 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class FieldsManager implements HeadingListener {
+public class ColumnsManager implements HeadingListener {
 
     private final TablePresenter tablePresenter;
-    private final Provider<RenameFieldPresenter> renameFieldPresenterProvider;
+    private final Provider<RenameColumnPresenter> renameColumnPresenterProvider;
     private final Provider<ColumnFunctionEditorPresenter> expressionPresenterProvider;
     private final FormatPresenter formatPresenter;
     private final FilterPresenter filterPresenter;
-    private int fieldsStartIndex;
+    private int columnsStartIndex;
     private int currentColIndex = -1;
     private boolean ignoreNext;
 
-    public FieldsManager(final TablePresenter tablePresenter,
-                         final Provider<RenameFieldPresenter> renameFieldPresenterProvider,
-                         final Provider<ColumnFunctionEditorPresenter> expressionPresenterProvider,
-                         final FormatPresenter formatPresenter,
-                         final FilterPresenter filterPresenter) {
+    public ColumnsManager(final TablePresenter tablePresenter,
+                          final Provider<RenameColumnPresenter> renameColumnPresenterProvider,
+                          final Provider<ColumnFunctionEditorPresenter> expressionPresenterProvider,
+                          final FormatPresenter formatPresenter,
+                          final FilterPresenter filterPresenter) {
         this.tablePresenter = tablePresenter;
-        this.renameFieldPresenterProvider = renameFieldPresenterProvider;
+        this.renameColumnPresenterProvider = renameColumnPresenterProvider;
         this.expressionPresenterProvider = expressionPresenterProvider;
         this.formatPresenter = formatPresenter;
         this.filterPresenter = filterPresenter;
@@ -85,11 +85,11 @@ public class FieldsManager implements HeadingListener {
 
     @Override
     public void onMouseUp(final NativeEvent event, final Heading heading) {
-        if (heading != null && heading.getColIndex() >= fieldsStartIndex) {
+        if (heading != null && heading.getColIndex() >= columnsStartIndex) {
             final int colIndex = heading.getColIndex();
 
-            final Field field = getField(colIndex);
-            if (field != null && !ignoreNext) {
+            final Column column = getColumn(colIndex);
+            if (column != null && !ignoreNext) {
                 new Timer() {
                     @Override
                     public void run() {
@@ -102,7 +102,7 @@ public class FieldsManager implements HeadingListener {
                             currentColIndex = colIndex;
                             final Element target = heading.getElement();
 
-                            final List<Item> menuItems = getMenuItems(field);
+                            final List<Item> menuItems = getMenuItems(column);
 
                             Element element = event.getEventTarget().cast();
                             while (!element.getTagName().equalsIgnoreCase("th")) {
@@ -131,18 +131,18 @@ public class FieldsManager implements HeadingListener {
 
     @Override
     public void moveColumn(final int fromIndex, final int toIndex) {
-        final Field field = getField(fromIndex);
-        if (field != null) {
-            final List<Field> fields = tablePresenter.getTableSettings().getFields();
-            fields.remove(field);
+        final Column column = getColumn(fromIndex);
+        if (column != null) {
+            final List<Column> columns = tablePresenter.getTableSettings().getColumns();
+            columns.remove(column);
 
-            final int destIndex = toIndex - fieldsStartIndex;
-            if (fields.size() <= destIndex) {
-                fields.add(field);
+            final int destIndex = toIndex - columnsStartIndex;
+            if (columns.size() <= destIndex) {
+                columns.add(column);
             } else if (destIndex > fromIndex) {
-                fields.add(destIndex - 1, field);
+                columns.add(destIndex - 1, column);
             } else {
-                fields.add(destIndex, field);
+                columns.add(destIndex, column);
             }
 
             tablePresenter.setDirty(true);
@@ -151,41 +151,41 @@ public class FieldsManager implements HeadingListener {
 
     @Override
     public void resizeColumn(final int colIndex, final int size) {
-        final Field field = getField(colIndex);
-        if (field != null) {
-            replaceField(field, field.copy().width(size).build());
+        final Column column = getColumn(colIndex);
+        if (column != null) {
+            replaceColumn(column, column.copy().width(size).build());
             tablePresenter.setDirty(true);
         }
     }
 
-    private void changeSort(final Field field, final SortDirection direction) {
-        final List<Field> fields = tablePresenter.getTableSettings().getFields();
+    private void changeSort(final Column column, final SortDirection direction) {
+        final List<Column> columns = tablePresenter.getTableSettings().getColumns();
         boolean change = false;
 
         if (direction == null) {
-            if (field.getSort() != null) {
-                final int order = field.getSort().getOrder();
-                replaceField(field, field.copy().sort(null).build());
-                increaseSortOrder(fields, order);
+            if (column.getSort() != null) {
+                final int order = column.getSort().getOrder();
+                replaceColumn(column, column.copy().sort(null).build());
+                increaseSortOrder(columns, order);
                 change = true;
             }
         } else {
-            final Sort sort = field.getSort();
+            final Sort sort = column.getSort();
             if (sort == null) {
-                final int lowestSortOrder = getLowestSortOrder(fields);
+                final int lowestSortOrder = getLowestSortOrder(columns);
                 final Sort newSort = new Sort(lowestSortOrder + 1, direction);
-                replaceField(field, field.copy().sort(newSort).build());
+                replaceColumn(column, column.copy().sort(newSort).build());
                 change = true;
             } else {
-                final int lowestSortOrder = getLowestSortOrder(fields);
+                final int lowestSortOrder = getLowestSortOrder(columns);
                 if (sort.getDirection() != direction || sort.getOrder() != lowestSortOrder) {
-                    // Increase sort order on all fields where the sort order is
-                    // lower than this fields sort order as this field will now
+                    // Increase sort order on all columns where the sort order is
+                    // lower than this columns sort order as this column will now
                     // have the lowest order.
-                    increaseSortOrder(fields, field.getSort().getOrder());
+                    increaseSortOrder(columns, column.getSort().getOrder());
 
                     final Sort newSort = new Sort(lowestSortOrder, direction);
-                    replaceField(field, field.copy().sort(newSort).build());
+                    replaceColumn(column, column.copy().sort(newSort).build());
 
                     change = true;
                 }
@@ -200,12 +200,12 @@ public class FieldsManager implements HeadingListener {
         }
     }
 
-    private int getLowestSortOrder(final List<Field> fields) {
+    private int getLowestSortOrder(final List<Column> columns) {
         int lowestOrder = -1;
-        for (final Field field : fields) {
-            if (field.getSort() != null) {
-                if (lowestOrder < field.getSort().getOrder()) {
-                    lowestOrder = field.getSort().getOrder();
+        for (final Column column : columns) {
+            if (column.getSort() != null) {
+                if (lowestOrder < column.getSort().getOrder()) {
+                    lowestOrder = column.getSort().getOrder();
                 }
             }
         }
@@ -213,178 +213,178 @@ public class FieldsManager implements HeadingListener {
         return lowestOrder;
     }
 
-    private void increaseSortOrder(final List<Field> fields, final int order) {
-        for (final Field field : fields) {
-            final Sort sort = field.getSort();
+    private void increaseSortOrder(final List<Column> columns, final int order) {
+        for (final Column column : columns) {
+            final Sort sort = column.getSort();
             if (sort != null && sort.getOrder() > order) {
                 final Sort newSort = new Sort(sort.getOrder() - 1, sort.getDirection());
-                replaceField(field, field.copy().sort(newSort).build());
+                replaceColumn(column, column.copy().sort(newSort).build());
             }
         }
     }
 
-    public void showRename(final Field field) {
-        renameFieldPresenterProvider.get().show(tablePresenter, field, (oldField, newField) -> {
-            replaceField(oldField, newField);
+    public void showRename(final Column column) {
+        renameColumnPresenterProvider.get().show(tablePresenter, column, (oldField, newField) -> {
+            replaceColumn(oldField, newField);
             tablePresenter.setDirty(true);
             tablePresenter.updateColumns();
         });
     }
 
-    public void showExpression(final Field field) {
-        expressionPresenterProvider.get().show(tablePresenter, field, (oldField, newField) -> {
-            replaceField(oldField, newField);
+    public void showExpression(final Column column) {
+        expressionPresenterProvider.get().show(tablePresenter, column, (oldField, newField) -> {
+            replaceColumn(oldField, newField);
             tablePresenter.setDirty(true);
             tablePresenter.clear();
         });
     }
 
-    public void showFormat(final Field field) {
-        formatPresenter.show(field, (oldField, newField) -> {
-            replaceField(oldField, newField);
+    public void showFormat(final Column column) {
+        formatPresenter.show(column, (oldField, newField) -> {
+            replaceColumn(oldField, newField);
             tablePresenter.setDirty(true);
             tablePresenter.clear();
         });
     }
 
-    private void filterField(final Field field) {
-        filterPresenter.show(tablePresenter, field, (oldField, newField) -> {
-            replaceField(oldField, newField);
+    private void filterField(final Column column) {
+        filterPresenter.show(tablePresenter, column, (oldField, newField) -> {
+            replaceColumn(oldField, newField);
             tablePresenter.setDirty(true);
             tablePresenter.updateColumns();
             tablePresenter.clear();
         });
     }
 
-    public void addField(final Field templateField) {
-        addField(getFields().size(), templateField);
+    public void addColumn(final Column templateColumn) {
+        addColumn(getColumns().size(), templateColumn);
     }
 
-    public void addField(final int index, final Field templateField) {
-        final String fieldName = makeUniqueFieldName(templateField.getName());
-        final Field newField = templateField.copy()
-                .name(fieldName)
-                .id(createRandomFieldId())
+    public void addColumn(final int index, final Column templateColumn) {
+        final String columnName = makeUniqueColumnName(templateColumn.getName());
+        final Column newColumn = templateColumn.copy()
+                .name(columnName)
+                .id(createRandomColumnId())
                 .build();
 
-        final List<Field> fields = getFields();
-        fields.add(index, newField);
-        updateFields(fields);
+        final List<Column> columns = getColumns();
+        columns.add(index, newColumn);
+        updateColumns(columns);
 
         tablePresenter.setDirty(true);
         tablePresenter.updateColumns();
     }
 
-    private void duplicateField(final Field field) {
-        final List<Field> fields = getFields();
-        final int index = fields.indexOf(field);
-        addField(index + 1, field);
+    private void duplicateColumn(final Column column) {
+        final List<Column> columns = getColumns();
+        final int index = columns.indexOf(column);
+        addColumn(index + 1, column);
     }
 
-    private void moveFirst(final Field field) {
-        final List<Field> fields = getFields();
-        fields.remove(field);
-        fields.add(0, field);
-        updateFields(fields);
+    private void moveFirst(final Column column) {
+        final List<Column> columns = getColumns();
+        columns.remove(column);
+        columns.add(0, column);
+        updateColumns(columns);
         tablePresenter.setDirty(true);
         tablePresenter.updateColumns();
     }
 
-    private void moveLast(final Field field) {
-        final List<Field> fields = getFields();
-        fields.remove(field);
-        fields.add(field);
-        updateFields(fields);
+    private void moveLast(final Column column) {
+        final List<Column> columns = getColumns();
+        columns.remove(column);
+        columns.add(column);
+        updateColumns(columns);
         tablePresenter.setDirty(true);
         tablePresenter.updateColumns();
     }
 
-    private String makeUniqueFieldName(final String fieldName) {
-        final Set<String> currentFields = getFields().stream().map(Field::getName).collect(
+    private String makeUniqueColumnName(final String columnName) {
+        final Set<String> currentColumns = getColumns().stream().map(Column::getName).collect(
                 Collectors.toSet());
-        return UniqueUtil.makeUniqueName(fieldName, currentFields);
+        return UniqueUtil.makeUniqueName(columnName, currentColumns);
     }
 
-    private String createRandomFieldId() {
-        final Set<String> usedFieldIds = getFields().stream().map(Field::getId).collect(Collectors.toSet());
-        return createRandomFieldId(usedFieldIds);
+    private String createRandomColumnId() {
+        final Set<String> usedColumnIds = getColumns().stream().map(Column::getId).collect(Collectors.toSet());
+        return createRandomColumnId(usedColumnIds);
     }
 
-    public String createRandomFieldId(final Set<String> usedFieldIds) {
+    public String createRandomColumnId(final Set<String> usedColumnIds) {
         final String componentId = tablePresenter.getComponentConfig().getId();
-        return UniqueUtil.createUniqueFieldId(componentId, usedFieldIds);
+        return UniqueUtil.createUniqueColumnId(componentId, usedColumnIds);
     }
 
-    private void deleteField(final Field field) {
-        if (getVisibleFieldCount() <= 1) {
-            AlertEvent.fireError(tablePresenter, "You cannot remove or hide all fields", null);
+    private void deleteColumn(final Column column) {
+        if (getVisibleColumnCount() <= 1) {
+            AlertEvent.fireError(tablePresenter, "You cannot remove or hide all columns", null);
         } else {
-            replaceField(field, null);
+            replaceColumn(column, null);
 
             tablePresenter.setDirty(true);
             tablePresenter.updateColumns();
         }
     }
 
-    private void replaceField(final Field oldField, final Field newField) {
-        final List<Field> fields = new ArrayList<>();
-        for (final Field field : getFields()) {
-            if (field.getId().equals(oldField.getId())) {
-                if (newField != null) {
-                    fields.add(newField);
+    private void replaceColumn(final Column oldColumn, final Column newColumn) {
+        final List<Column> columns = new ArrayList<>();
+        for (final Column column : getColumns()) {
+            if (column.getId().equals(oldColumn.getId())) {
+                if (newColumn != null) {
+                    columns.add(newColumn);
                 }
             } else {
-                fields.add(field);
+                columns.add(column);
             }
         }
-        updateFields(fields);
+        updateColumns(columns);
     }
 
-    private List<Field> getFields() {
-        if (tablePresenter.getSettings() != null && tablePresenter.getTableSettings().getFields() != null) {
-            return new ArrayList<>(tablePresenter.getTableSettings().getFields());
+    private List<Column> getColumns() {
+        if (tablePresenter.getSettings() != null && tablePresenter.getTableSettings().getColumns() != null) {
+            return new ArrayList<>(tablePresenter.getTableSettings().getColumns());
         }
         return new ArrayList<>();
     }
 
-    private void updateFields(final List<Field> fields) {
+    private void updateColumns(final List<Column> columns) {
         tablePresenter.setSettings(
                 tablePresenter.getTableSettings()
                         .copy()
-                        .fields(fields)
+                        .columns(columns)
                         .build());
     }
 
-    private void showField(final Field field) {
-        replaceField(field, field.copy().visible(true).build());
+    private void showColumn(final Column column) {
+        replaceColumn(column, column.copy().visible(true).build());
         tablePresenter.setDirty(true);
         tablePresenter.updateColumns();
     }
 
-    private void hideField(final Field field) {
-        if (getVisibleFieldCount() <= 1) {
-            AlertEvent.fireError(tablePresenter, "You cannot remove or hide all fields", null);
+    private void hideColumn(final Column column) {
+        if (getVisibleColumnCount() <= 1) {
+            AlertEvent.fireError(tablePresenter, "You cannot remove or hide all columns", null);
         } else {
-            replaceField(field, field.copy().visible(false).build());
+            replaceColumn(column, column.copy().visible(false).build());
             tablePresenter.setDirty(true);
             tablePresenter.updateColumns();
         }
     }
 
-    private long getVisibleFieldCount() {
-        final List<Field> fields = getFields();
-        return fields.stream()
-                .filter(Field::isVisible)
+    private long getVisibleColumnCount() {
+        final List<Column> columns = getColumns();
+        return columns.stream()
+                .filter(Column::isVisible)
                 .count();
     }
 
-    private Field getField(final int colIndex) {
-        final List<Field> fields = getFields();
-        int index = fieldsStartIndex;
-        for (Field field : fields) {
-            if (field.isVisible()) {
+    private Column getColumn(final int colIndex) {
+        final List<Column> columns = getColumns();
+        int index = columnsStartIndex;
+        for (Column column : columns) {
+            if (column.isVisible()) {
                 if (index == colIndex) {
-                    return field;
+                    return column;
                 }
                 index++;
             }
@@ -392,35 +392,35 @@ public class FieldsManager implements HeadingListener {
         return null;
     }
 
-    public void setFieldsStartIndex(final int fieldsStartIndex) {
-        this.fieldsStartIndex = fieldsStartIndex;
+    public void setColumnsStartIndex(final int columnsStartIndex) {
+        this.columnsStartIndex = columnsStartIndex;
     }
 
-    private List<Item> getMenuItems(final Field field) {
+    private List<Item> getMenuItems(final Column column) {
         final List<Item> menuItems = new ArrayList<>();
 
         // Create rename menu.
-        menuItems.add(createRenameMenu(field));
+        menuItems.add(createRenameMenu(column));
         // Create expression menu.
-        menuItems.add(createExpressionMenu(field));
+        menuItems.add(createExpressionMenu(column));
         // Create sort menu.
-        menuItems.add(createSortMenu(field));
+        menuItems.add(createSortMenu(column));
         // Create group by menu.
-        menuItems.add(createGroupByMenu(field));
+        menuItems.add(createGroupByMenu(column));
         // Create format menu.
-        menuItems.add(createFormatMenu(field));
+        menuItems.add(createFormatMenu(column));
         // Add filter menu item.
-        menuItems.add(createFilterMenu(field));
+        menuItems.add(createFilterMenu(column));
 
         // Create move menu.
-        menuItems.add(createMoveFirstMenu(field));
-        menuItems.add(createMoveLastMenu(field));
+        menuItems.add(createMoveFirstMenu(column));
+        menuItems.add(createMoveLastMenu(column));
 
         // Create duplicate menu.
-        menuItems.add(createDuplicateMenu(field));
+        menuItems.add(createDuplicateMenu(column));
 
         // Create hide menu.
-        menuItems.add(createHideMenu(field));
+        menuItems.add(createHideMenu(column));
 
         // Create show menu.
         Item showMenu = createShowMenu();
@@ -429,24 +429,24 @@ public class FieldsManager implements HeadingListener {
         }
 
         // Create remove menu.
-        menuItems.add(createRemoveMenu(field));
+        menuItems.add(createRemoveMenu(column));
 
         return menuItems;
     }
 
-    private Item createRenameMenu(final Field field) {
+    private Item createRenameMenu(final Column column) {
         return new IconMenuItem.Builder()
                 .priority(0)
                 .icon(SvgImage.EDIT)
                 .text("Rename")
-                .command(() -> showRename(field))
+                .command(() -> showRename(column))
                 .build();
     }
 
-    private Item createExpressionMenu(final Field field) {
+    private Item createExpressionMenu(final Column column) {
         boolean highlight = false;
-        if (field.getExpression() != null) {
-            String expression = field.getExpression();
+        if (column.getExpression() != null) {
+            String expression = column.getExpression();
             expression = expression.replaceAll("\\$\\{[^\\{\\}]*\\}", "");
             expression = expression.trim();
             if (expression.length() > 0) {
@@ -458,36 +458,36 @@ public class FieldsManager implements HeadingListener {
                 .priority(1)
                 .icon(SvgImage.FIELDS_EXPRESSION)
                 .text("Expression")
-                .command(() -> showExpression(field))
+                .command(() -> showExpression(column))
                 .highlight(highlight)
                 .build();
     }
 
-    private Item createSortMenu(final Field field) {
+    private Item createSortMenu(final Column column) {
         final List<Item> menuItems = new ArrayList<>();
         menuItems.add(
-                createSortOption(field,
+                createSortOption(column,
                         0,
                         SvgImage.FIELDS_SORTAZ,
                         "Sort A to Z",
                         SortDirection.ASCENDING));
         menuItems.add(
-                createSortOption(field,
+                createSortOption(column,
                         1,
                         SvgImage.FIELDS_SORTZA,
                         "Sort Z to A",
                         SortDirection.DESCENDING));
-        menuItems.add(createSortOption(field, 2, null, "Unsorted", null));
+        menuItems.add(createSortOption(column, 2, null, "Unsorted", null));
         return new IconParentMenuItem.Builder()
                 .priority(2)
                 .icon(SvgImage.FIELDS_SORTAZ)
                 .text("Sort")
                 .children(menuItems)
-                .highlight(field.getSort() != null)
+                .highlight(column.getSort() != null)
                 .build();
     }
 
-    private Item createSortOption(final Field field,
+    private Item createSortOption(final Column column,
                                   final int pos,
                                   final SvgImage icon,
                                   final String text,
@@ -496,34 +496,34 @@ public class FieldsManager implements HeadingListener {
                 .priority(pos)
                 .icon(icon)
                 .text(text)
-                .command(() -> changeSort(field, sortDirection))
-                .highlight(field.getSort() != null && field.getSort().getDirection() == sortDirection)
+                .command(() -> changeSort(column, sortDirection))
+                .highlight(column.getSort() != null && column.getSort().getDirection() == sortDirection)
                 .build();
     }
 
-    private Item createGroupByMenu(final Field field) {
+    private Item createGroupByMenu(final Column column) {
         final List<Item> menuItems = new ArrayList<>();
-        final int maxGroup = fixGroups(getFields());
+        final int maxGroup = fixGroups(getColumns());
         for (int i = 0; i < maxGroup; i++) {
             final int group = i;
             final Item item = new IconMenuItem.Builder()
                     .priority(i)
                     .icon(SvgImage.FIELDS_GROUP)
                     .text("Level " + (i + 1))
-                    .command(() -> setGroup(field, group))
-                    .highlight(field.getGroup() != null && field.getGroup() == i)
+                    .command(() -> setGroup(column, group))
+                    .highlight(column.getGroup() != null && column.getGroup() == i)
                     .build();
             menuItems.add(item);
         }
 
-        // Add the next possible group if the field isn't the only field in the
+        // Add the next possible group if the column isn't the only column in the
         // next group.
-        if (addNextGroup(maxGroup, field)) {
+        if (addNextGroup(maxGroup, column)) {
             final Item item = new IconMenuItem.Builder()
                     .priority(maxGroup)
                     .icon(SvgImage.FIELDS_GROUP)
                     .text("Level " + (maxGroup + 1))
-                    .command(() -> setGroup(field, maxGroup))
+                    .command(() -> setGroup(column, maxGroup))
                     .build();
             menuItems.add(item);
         }
@@ -531,7 +531,7 @@ public class FieldsManager implements HeadingListener {
         final Item item = new IconMenuItem.Builder()
                 .priority(maxGroup + 1)
                 .text("Not grouped")
-                .command(() -> setGroup(field, null))
+                .command(() -> setGroup(column, null))
                 .build();
         menuItems.add(item);
 
@@ -540,37 +540,37 @@ public class FieldsManager implements HeadingListener {
                 .icon(SvgImage.FIELDS_GROUP)
                 .text("Group")
                 .children(menuItems)
-                .highlight(field.getGroup() != null)
+                .highlight(column.getGroup() != null)
                 .build();
     }
 
-    private void setGroup(final Field field, final Integer group) {
-        if (!Objects.equals(field.getGroup(), group)) {
-            replaceField(field, field.copy().group(group).build());
-            fixGroups(getFields());
+    private void setGroup(final Column column, final Integer group) {
+        if (!Objects.equals(column.getGroup(), group)) {
+            replaceColumn(column, column.copy().group(group).build());
+            fixGroups(getColumns());
             tablePresenter.setDirty(true);
             tablePresenter.updateColumns();
             tablePresenter.clear();
         }
     }
 
-    private boolean addNextGroup(final int maxGroup, final Field field) {
-        // If the field we are dragging has no group then add the next possible
+    private boolean addNextGroup(final int maxGroup, final Column column) {
+        // If the column we are dragging has no group then add the next possible
         // group.
-        if (field.getGroup() == null) {
+        if (column.getGroup() == null) {
             return true;
         }
 
-        // If the group the dragging field belongs to is not the current max
+        // If the group the dragging column belongs to is not the current max
         // group then add the next possible group.
-        if (field.getGroup() < maxGroup - 1) {
+        if (column.getGroup() < maxGroup - 1) {
             return true;
         }
 
-        // If there is another field with the same group level as the dragging
+        // If there is another column with the same group level as the dragging
         // group then add the next possible group.
-        for (final Field fld : getFields()) {
-            if (fld != field && fld.getGroup() != null && fld.getGroup() >= field.getGroup()) {
+        for (final Column col : getColumns()) {
+            if (col != column && col.getGroup() != null && col.getGroup() >= column.getGroup()) {
                 return true;
             }
         }
@@ -578,90 +578,90 @@ public class FieldsManager implements HeadingListener {
         return false;
     }
 
-    private int fixGroups(final List<Field> fields) {
-        // Make a map that groups fields by group depth.
-        final Map<Integer, List<Field>> map = new HashMap<>();
-        for (final Field field : fields) {
-            final Integer group = field.getGroup();
+    private int fixGroups(final List<Column> columns) {
+        // Make a map that groups columns by group depth.
+        final Map<Integer, List<Column>> map = new HashMap<>();
+        for (final Column column : columns) {
+            final Integer group = column.getGroup();
             if (group != null) {
-                map.computeIfAbsent(group, k -> new ArrayList<>()).add(field);
+                map.computeIfAbsent(group, k -> new ArrayList<>()).add(column);
             }
         }
 
-        // Fix group depths and add fields to grouped fields list.
+        // Fix group depths and add columns to grouped columns list.
         final List<Integer> depths = new ArrayList<>(map.keySet());
         Collections.sort(depths);
 
         for (int i = 0; i < depths.size(); i++) {
             final Integer depth = depths.get(i);
-            final List<Field> groupedFields = map.get(depth);
-            for (final Field field : groupedFields) {
-                replaceField(field, field.copy().group(i).build());
+            final List<Column> groupedColumns = map.get(depth);
+            for (final Column column : groupedColumns) {
+                replaceColumn(column, column.copy().group(i).build());
             }
         }
 
         return depths.size();
     }
 
-    private Item createFilterMenu(final Field field) {
+    private Item createFilterMenu(final Column column) {
         return new IconMenuItem.Builder()
                 .priority(4)
                 .icon(SvgImage.FILTER)
                 .disabledIcon(SvgImage.FILTER)
                 .text("Filter")
-                .command(() -> filterField(field))
-                .highlight(field.getFilter() != null
-                        && ((field.getFilter().getIncludes() != null
-                        && field.getFilter().getIncludes().trim().length() > 0)
-                        || (field.getFilter().getExcludes() != null
-                        && field.getFilter().getExcludes().trim().length() > 0)))
+                .command(() -> filterField(column))
+                .highlight(column.getFilter() != null
+                        && ((column.getFilter().getIncludes() != null
+                        && column.getFilter().getIncludes().trim().length() > 0)
+                        || (column.getFilter().getExcludes() != null
+                        && column.getFilter().getExcludes().trim().length() > 0)))
                 .build();
     }
 
-    private Item createFormatMenu(final Field field) {
+    private Item createFormatMenu(final Column column) {
         return new IconMenuItem.Builder()
                 .priority(5)
                 .icon(SvgImage.FIELDS_FORMAT)
                 .text("Format")
-                .command(() -> showFormat(field))
-                .highlight(field.getFormat() != null && field.getFormat().getSettings() != null
-                        && !field.getFormat().getSettings().isDefault())
+                .command(() -> showFormat(column))
+                .highlight(column.getFormat() != null && column.getFormat().getSettings() != null
+                        && !column.getFormat().getSettings().isDefault())
                 .build();
     }
 
-    private Item createMoveFirstMenu(final Field field) {
+    private Item createMoveFirstMenu(final Column column) {
         return new IconMenuItem.Builder()
                 .priority(6)
                 .icon(SvgImage.STEP_BACKWARD)
                 .text("Move First")
-                .command(() -> moveFirst(field))
+                .command(() -> moveFirst(column))
                 .build();
     }
 
-    private Item createMoveLastMenu(final Field field) {
+    private Item createMoveLastMenu(final Column column) {
         return new IconMenuItem.Builder()
                 .priority(7)
                 .icon(SvgImage.STEP_FORWARD)
                 .text("Move Last")
-                .command(() -> moveLast(field))
+                .command(() -> moveLast(column))
                 .build();
     }
 
-    private Item createDuplicateMenu(final Field field) {
+    private Item createDuplicateMenu(final Column column) {
         return new IconMenuItem.Builder()
                 .priority(8)
                 .icon(SvgImage.COPY)
                 .text("Duplicate")
-                .command(() -> duplicateField(field))
+                .command(() -> duplicateColumn(column))
                 .build();
     }
 
-    private Item createHideMenu(final Field field) {
+    private Item createHideMenu(final Column column) {
         return new IconMenuItem.Builder()
                 .priority(9)
                 .icon(SvgImage.HIDE)
                 .text("Hide")
-                .command(() -> hideField(field))
+                .command(() -> hideColumn(column))
                 .build();
     }
 
@@ -669,13 +669,13 @@ public class FieldsManager implements HeadingListener {
         final List<Item> menuItems = new ArrayList<>();
 
         int i = 0;
-        for (final Field field : getFields()) {
-            if (!field.isVisible() && !field.isSpecial()) {
+        for (final Column column : getColumns()) {
+            if (!column.isVisible() && !column.isSpecial()) {
                 final Item item2 = new IconMenuItem.Builder()
                         .priority(i++)
                         .icon(SvgImage.SHOW)
-                        .text(field.getName())
-                        .command(() -> showField(field))
+                        .text(column.getName())
+                        .command(() -> showColumn(column))
                         .build();
                 menuItems.add(item2);
             }
@@ -693,12 +693,12 @@ public class FieldsManager implements HeadingListener {
                 .build();
     }
 
-    private Item createRemoveMenu(final Field field) {
+    private Item createRemoveMenu(final Column column) {
         return new IconMenuItem.Builder()
                 .priority(11)
                 .icon(SvgImage.DELETE)
                 .text("Remove")
-                .command(() -> deleteField(field))
+                .command(() -> deleteColumn(column))
                 .build();
     }
 }

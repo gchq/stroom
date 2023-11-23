@@ -25,7 +25,7 @@ import stroom.dashboard.shared.IndexConstants;
 import stroom.dashboard.shared.TableComponentSettings;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
-import stroom.query.api.v2.Field;
+import stroom.query.api.v2.Column;
 import stroom.query.client.presenter.TableRow;
 import stroom.security.shared.UserNameResource;
 import stroom.svg.shared.SvgImage;
@@ -148,9 +148,9 @@ public class AnnotationManager {
     }
 
     private String getFieldId(final TableComponentSettings tableComponentSettings, final String fieldName) {
-        for (final Field field : tableComponentSettings.getFields()) {
-            if (field.getName().equalsIgnoreCase(fieldName)) {
-                return field.getId();
+        for (final Column column : tableComponentSettings.getColumns()) {
+            if (column.getName().equalsIgnoreCase(fieldName)) {
+                return column.getId();
             }
         }
         return null;

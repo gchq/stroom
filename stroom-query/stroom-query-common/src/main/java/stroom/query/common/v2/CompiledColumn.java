@@ -16,25 +16,25 @@
 
 package stroom.query.common.v2;
 
-import stroom.query.api.v2.Field;
+import stroom.query.api.v2.Column;
 import stroom.query.language.functions.Generator;
 
-public class CompiledField {
+public class CompiledColumn {
 
-    private final Field field;
+    private final Column column;
     private final int groupDepth;
     private final Generator generator;
     private final boolean hasAggregate;
     private final boolean requiresChildData;
     private final CompiledFilter compiledFilter;
 
-    public CompiledField(final Field field,
-                         final int groupDepth,
-                         final Generator generator,
-                         final boolean hasAggregate,
-                         final boolean requiresChildData,
-                         final CompiledFilter compiledFilter) {
-        this.field = field;
+    public CompiledColumn(final Column column,
+                          final int groupDepth,
+                          final Generator generator,
+                          final boolean hasAggregate,
+                          final boolean requiresChildData,
+                          final CompiledFilter compiledFilter) {
+        this.column = column;
         this.groupDepth = groupDepth;
         this.generator = generator;
         this.hasAggregate = hasAggregate;
@@ -42,8 +42,8 @@ public class CompiledField {
         this.compiledFilter = compiledFilter;
     }
 
-    public Field getField() {
-        return field;
+    public Column getColumn() {
+        return column;
     }
 
     public int getGroupDepth() {
@@ -81,7 +81,7 @@ public class CompiledField {
     @Override
     public String toString() {
         return "CompiledField{" +
-                "field=" + field +
+                "column=" + column +
                 ", groupDepth=" + groupDepth +
                 ", generator=" + generator +
                 ", compiledFilter=" + compiledFilter +

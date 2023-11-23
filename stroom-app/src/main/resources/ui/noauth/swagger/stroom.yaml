@@ -7584,6 +7584,31 @@ components:
           type: boolean
         nodeName:
           type: string
+    Column:
+      type: object
+      description: "Describes a field in a result set. The field can have various\
+        \ expressions applied to it, e.g. SUM(), along with sorting, filtering, formatting\
+        \ and grouping"
+      properties:
+        expression:
+          type: string
+          description: The expression to use to generate the value for this field
+          example: "SUM(${count})"
+        filter:
+          $ref: '#/components/schemas/Filter'
+        format:
+          $ref: '#/components/schemas/Format'
+        group:
+          type: integer
+          format: int32
+        id:
+          type: string
+        name:
+          type: string
+        sort:
+          $ref: '#/components/schemas/Sort'
+      required:
+      - expression
     CompletionValue:
       type: object
       properties:
@@ -9645,31 +9670,6 @@ components:
       required:
       - dataSource
       - field
-    Field:
-      type: object
-      description: "Describes a field in a result set. The field can have various\
-        \ expressions applied to it, e.g. SUM(), along with sorting, filtering, formatting\
-        \ and grouping"
-      properties:
-        expression:
-          type: string
-          description: The expression to use to generate the value for this field
-          example: "SUM(${count})"
-        filter:
-          $ref: '#/components/schemas/Filter'
-        format:
-          $ref: '#/components/schemas/Format'
-        group:
-          type: integer
-          format: int32
-        id:
-          type: string
-        name:
-          type: string
-        sort:
-          $ref: '#/components/schemas/Sort'
-      required:
-      - expression
     FieldInfo:
       type: object
       properties:
@@ -10073,7 +10073,7 @@ components:
           structure:
             type: array
             items:
-              $ref: '#/components/schemas/Field'
+              $ref: '#/components/schemas/Column'
           values:
             type: array
             items:
@@ -14170,7 +14170,7 @@ components:
         fields:
           type: array
           items:
-            $ref: '#/components/schemas/Field'
+            $ref: '#/components/schemas/Column'
         maxResults:
           type: array
           description: "Defines the maximum number of results to return at each grouping\
@@ -14198,9 +14198,6 @@ components:
           type: boolean
         useDefaultExtractionPipeline:
           type: boolean
-      required:
-      - fields
-      - queryId
     TableCoprocessorSettings:
       type: object
       allOf:
@@ -14222,7 +14219,7 @@ components:
           fields:
             type: array
             items:
-              $ref: '#/components/schemas/Field'
+              $ref: '#/components/schemas/Column'
           resultRange:
             $ref: '#/components/schemas/OffsetRange'
           rows:
@@ -14273,7 +14270,7 @@ components:
         fields:
           type: array
           items:
-            $ref: '#/components/schemas/Field'
+            $ref: '#/components/schemas/Column'
         maxResults:
           type: array
           description: "Defines the maximum number of results to return at each grouping\
@@ -14303,9 +14300,6 @@ components:
           $ref: '#/components/schemas/QLVisSettings'
         window:
           $ref: '#/components/schemas/Window'
-      required:
-      - fields
-      - queryId
     TaskId:
       type: object
       properties:
@@ -14366,27 +14360,27 @@ components:
       - type: object
         properties:
           colFromField:
-            $ref: '#/components/schemas/Field'
+            $ref: '#/components/schemas/Column'
           colToField:
-            $ref: '#/components/schemas/Field'
+            $ref: '#/components/schemas/Column'
           lineFromField:
-            $ref: '#/components/schemas/Field'
+            $ref: '#/components/schemas/Column'
           lineToField:
-            $ref: '#/components/schemas/Field'
+            $ref: '#/components/schemas/Column'
           modelVersion:
             type: string
           partNoField:
-            $ref: '#/components/schemas/Field'
+            $ref: '#/components/schemas/Column'
           pipeline:
             $ref: '#/components/schemas/DocRef'
           recordNoField:
-            $ref: '#/components/schemas/Field'
+            $ref: '#/components/schemas/Column'
           showAsHtml:
             type: boolean
           showStepping:
             type: boolean
           streamIdField:
-            $ref: '#/components/schemas/Field'
+            $ref: '#/components/schemas/Column'
           tableId:
             type: string
     TextConverterDoc:

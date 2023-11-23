@@ -16,7 +16,7 @@
 
 package stroom.query.common.v2;
 
-import stroom.query.api.v2.Field;
+import stroom.query.api.v2.Column;
 import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.Result;
 import stroom.query.api.v2.ResultRequest;
@@ -25,7 +25,7 @@ import stroom.query.api.v2.Row;
 import stroom.query.api.v2.TableResult;
 import stroom.query.api.v2.TableResultBuilder;
 import stroom.query.api.v2.TableSettings;
-import stroom.query.common.v2.format.FieldFormatter;
+import stroom.query.common.v2.format.ColumnFormatter;
 import stroom.query.language.functions.ref.ErrorConsumer;
 import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.logging.LambdaLogger;
@@ -40,19 +40,19 @@ public class TableResultCreator implements ResultCreator {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TableResultCreator.class);
 
-    private final FieldFormatter fieldFormatter;
+    private final ColumnFormatter columnFormatter;
 
     private final ErrorConsumer errorConsumer = new ErrorConsumerImpl();
     private final boolean cacheLastResult;
     private TableResult lastResult;
 
-    public TableResultCreator(final FieldFormatter fieldFormatter) {
-        this(fieldFormatter, false);
+    public TableResultCreator(final ColumnFormatter columnFormatter) {
+        this(columnFormatter, false);
     }
 
-    public TableResultCreator(final FieldFormatter fieldFormatter,
+    public TableResultCreator(final ColumnFormatter columnFormatter,
                               final boolean cacheLastResult) {
-        this.fieldFormatter = fieldFormatter;
+        this.columnFormatter = columnFormatter;
         this.cacheLastResult = cacheLastResult;
     }
 
@@ -76,33 +76,33 @@ public class TableResultCreator implements ResultCreator {
             // What is the interaction between the paging and the maxResults? The assumption is that
             // maxResults defines the max number of records to come back and the paging can happen up to
             // that maxResults threshold
-            final List<Field> fields = dataStore.getFields();
+            final List<Column> columns = dataStore.getColumns();
             TableSettings tableSettings = resultRequest.getMappings().get(0);
 
-            resultBuilder.fields(fields);
+            resultBuilder.columns(columns);
 
             // Create the row creator.
             Optional<ItemMapper<Row>> optionalRowCreator = Optional.empty();
             if (tableSettings != null) {
                 optionalRowCreator = ConditionalFormattingRowCreator.create(
-                        fieldFormatter,
+                        columnFormatter,
                         keyFactory,
                         tableSettings.getAggregateFilter(),
                         tableSettings.getConditionalFormattingRules(),
-                        fields,
+                        columns,
                         errorConsumer);
                 if (optionalRowCreator.isEmpty()) {
                     optionalRowCreator = FilteredRowCreator.create(
-                            fieldFormatter,
+                            columnFormatter,
                             keyFactory,
                             tableSettings.getAggregateFilter(),
-                            fields,
+                            columns,
                             errorConsumer);
                 }
             }
 
             if (optionalRowCreator.isEmpty()) {
-                optionalRowCreator = SimpleRowCreator.create(fieldFormatter, keyFactory, errorConsumer);
+                optionalRowCreator = SimpleRowCreator.create(columnFormatter, keyFactory, errorConsumer);
             }
 
             final ItemMapper<Row> rowCreator = optionalRowCreator.orElse(null);

@@ -21,8 +21,8 @@ import stroom.expression.api.ExpressionContext;
 import stroom.lmdb.LmdbEnv;
 import stroom.lmdb.LmdbEnv.BatchingWriteTxn;
 import stroom.lmdb.LmdbEnvFactory.SimpleEnvBuilder;
+import stroom.query.api.v2.Column;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.Field;
 import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.SearchRequestSource;
@@ -87,12 +87,12 @@ public class LmdbDataStore implements DataStore {
 
     private final LmdbEnv lmdbEnv;
     private final Dbi<ByteBuffer> dbi;
-    private final FieldExpressionMatcher fieldExpressionMatcher;
+    private final ColumnExpressionMatcher columnExpressionMatcher;
     private final ExpressionOperator valueFilter;
     private final ValueReferenceIndex valueReferenceIndex;
-    private final List<Field> fields;
-    private final CompiledFields compiledFields;
-    private final CompiledField[] compiledFieldArray;
+    private final List<Column> columns;
+    private final CompiledColumns compiledColumns;
+    private final CompiledColumn[] compiledColumnArray;
     private final CompiledSorter<Item>[] compiledSorters;
     private final CompiledDepths compiledDepths;
     private final LmdbPutFilter putFilter;
@@ -158,21 +158,21 @@ public class LmdbDataStore implements DataStore {
 
         this.windowSupport = new WindowSupport(tableSettings);
         final TableSettings modifiedTableSettings = windowSupport.getTableSettings();
-        fields = Objects.requireNonNullElse(modifiedTableSettings.getFields(), Collections.emptyList());
+        columns = Objects.requireNonNullElse(modifiedTableSettings.getColumns(), Collections.emptyList());
         queue = new LmdbWriteQueue(resultStoreConfig.getValueQueueSize());
         valueFilter = modifiedTableSettings.getValueFilter();
-        fieldExpressionMatcher = new FieldExpressionMatcher(fields);
-        this.compiledFields = CompiledFields.create(expressionContext, fields, fieldIndex, paramMap);
-        this.compiledFieldArray = compiledFields.getCompiledFields();
-        valueReferenceIndex = compiledFields.getValueReferenceIndex();
-        compiledDepths = new CompiledDepths(this.compiledFieldArray, modifiedTableSettings.showDetail());
-        compiledSorters = CompiledSorter.create(compiledDepths.getMaxDepth(), this.compiledFieldArray);
-        keyFactoryConfig = new KeyFactoryConfigImpl(sourceType, this.compiledFieldArray, compiledDepths);
+        columnExpressionMatcher = new ColumnExpressionMatcher(columns);
+        this.compiledColumns = CompiledColumns.create(expressionContext, columns, fieldIndex, paramMap);
+        this.compiledColumnArray = compiledColumns.getCompiledColumns();
+        valueReferenceIndex = compiledColumns.getValueReferenceIndex();
+        compiledDepths = new CompiledDepths(this.compiledColumnArray, modifiedTableSettings.showDetail());
+        compiledSorters = CompiledSorter.create(compiledDepths.getMaxDepth(), this.compiledColumnArray);
+        keyFactoryConfig = new KeyFactoryConfigImpl(sourceType, this.compiledColumnArray, compiledDepths);
         keyFactory = KeyFactoryFactory.create(keyFactoryConfig, compiledDepths);
         final ValHasher valHasher = new ValHasher(serialisers.getOutputFactory(), errorConsumer);
         storedValueKeyFactory = new StoredValueKeyFactoryImpl(
                 compiledDepths,
-                compiledFieldArray,
+                compiledColumnArray,
                 keyFactoryConfig,
                 valHasher);
         lmdbRowKeyFactory = LmdbRowKeyFactoryFactory
@@ -220,10 +220,10 @@ public class LmdbDataStore implements DataStore {
         // Filter incoming data.
         final StoredValues storedValues = valueReferenceIndex.createStoredValues();
         Map<String, Object> fieldIdToValueMap = null;
-        for (final CompiledField compiledField : compiledFieldArray) {
-            final Generator generator = compiledField.getGenerator();
+        for (final CompiledColumn compiledColumn : compiledColumnArray) {
+            final Generator generator = compiledColumn.getGenerator();
             if (generator != null) {
-                final CompiledFilter compiledFilter = compiledField.getCompiledFilter();
+                final CompiledFilter compiledFilter = compiledColumn.getCompiledFilter();
                 String string = null;
                 if (compiledFilter != null || valueFilter != null) {
                     generator.set(values, storedValues);
@@ -237,7 +237,7 @@ public class LmdbDataStore implements DataStore {
                     if (fieldIdToValueMap == null) {
                         fieldIdToValueMap = new HashMap<>();
                     }
-                    fieldIdToValueMap.put(compiledField.getField().getName(),
+                    fieldIdToValueMap.put(compiledColumn.getColumn().getName(),
                             string);
                 }
             }
@@ -246,7 +246,7 @@ public class LmdbDataStore implements DataStore {
         if (fieldIdToValueMap != null) {
             try {
                 // If the value filter doesn't match then get out of here now.
-                if (!fieldExpressionMatcher.match(fieldIdToValueMap, valueFilter)) {
+                if (!columnExpressionMatcher.match(fieldIdToValueMap, valueFilter)) {
                     return;
                 }
             } catch (final RuntimeException e) {
@@ -284,13 +284,13 @@ public class LmdbDataStore implements DataStore {
             final StoredValues storedValues = valueReferenceIndex.createStoredValues();
             final boolean[] valueIndices = valueIndicesByDepth[depth];
 
-            for (int fieldIndex = 0; fieldIndex < compiledFieldArray.length; fieldIndex++) {
-                final CompiledField compiledField = compiledFieldArray[fieldIndex];
-                final Generator generator = compiledField.getGenerator();
+            for (int columnIndex = 0; columnIndex < compiledColumnArray.length; columnIndex++) {
+                final CompiledColumn compiledColumn = compiledColumnArray[columnIndex];
+                final Generator generator = compiledColumn.getGenerator();
 
                 // If we need a value at this level then set the raw values.
-                if (valueIndices[fieldIndex] ||
-                        fieldIndex == keyFactoryConfig.getTimeFieldIndex()) {
+                if (valueIndices[columnIndex] ||
+                        columnIndex == keyFactoryConfig.getTimeColumnIndex()) {
                     if (iteration != -1) {
                         if (generator instanceof CountPrevious.Gen gen) {
                             if (gen.getIteration() == iteration) {
@@ -507,8 +507,8 @@ public class LmdbDataStore implements DataStore {
 
                                 // If this is the same value then update it and reinsert.
                                 if (Arrays.equals(existingGroupValues, newGroupValues)) {
-                                    for (final CompiledField compiledField : compiledFieldArray) {
-                                        compiledField.getGenerator().merge(existingStoredValues, newStoredValues);
+                                    for (final CompiledColumn compiledColumn : compiledColumnArray) {
+                                        compiledColumn.getGenerator().merge(existingStoredValues, newStoredValues);
                                     }
 
                                     LOGGER.trace(() -> "Merging combined value to output");
@@ -587,8 +587,8 @@ public class LmdbDataStore implements DataStore {
     }
 
     @Override
-    public List<Field> getFields() {
-        return compiledFields.getFields();
+    public List<Column> getColumns() {
+        return compiledColumns.getColumns();
     }
 
     public synchronized void close() {
@@ -938,7 +938,7 @@ public class LmdbDataStore implements DataStore {
                                     readContext,
                                     key,
                                     storedValues);
-                            final R row = mapper.create(fields, item);
+                            final R row = mapper.create(columns, item);
                             if (row != null) {
                                 childCount++;
                                 fetchState.totalRowCount++;
@@ -995,7 +995,7 @@ public class LmdbDataStore implements DataStore {
                                     readContext,
                                     key,
                                     storedValues);
-                            final R row = mapper.create(fields, item);
+                            final R row = mapper.create(columns, item);
                             if (row != null) {
                                 childCount++;
                                 fetchState.totalRowCount++;
@@ -1092,7 +1092,7 @@ public class LmdbDataStore implements DataStore {
                         final Key key = lmdbRowKeyFactory.createKey(parentKey, storedValues, keyBuffer);
                         final ItemImpl item = new ItemImpl(readContext, key, storedValues);
                         if (mapper.hidesRows()) {
-                            final R row = mapper.create(fields, item);
+                            final R row = mapper.create(columns, item);
                             if (row != null) {
                                 totalRowCount++;
                                 sortedItems.add(new ItemImpl(readContext, key, storedValues));
@@ -1119,7 +1119,7 @@ public class LmdbDataStore implements DataStore {
 
             if (!fetchState.reachedRowLimit) {
                 if (range.getOffset() <= fetchState.offset) {
-                    final R row = mapper.create(fields, item);
+                    final R row = mapper.create(columns, item);
                     resultConsumer.accept(row);
                     fetchState.length++;
                     fetchState.reachedRowLimit = fetchState.length >= range.getLength();
@@ -1226,7 +1226,7 @@ public class LmdbDataStore implements DataStore {
                 val = ValNull.INSTANCE;
 
             } else {
-                final Generator generator = dataStore.compiledFieldArray[index].getGenerator();
+                final Generator generator = dataStore.compiledColumnArray[index].getGenerator();
                 if (key.isGrouped()) {
                     final Supplier<ChildData> childDataSupplier = () -> {
                         // If we don't have any children at the requested depth then return null.

@@ -16,7 +16,7 @@
 
 package stroom.dashboard.client.table;
 
-import stroom.query.api.v2.Field;
+import stroom.query.api.v2.Column;
 import stroom.query.api.v2.Filter;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -32,8 +32,8 @@ import java.util.function.BiConsumer;
 
 public class FilterPresenter extends MyPresenterWidget<FilterPresenter.FilterView> {
 
-    private Field field;
-    private BiConsumer<Field, Field> fieldChangeConsumer;
+    private Column column;
+    private BiConsumer<Column, Column> columnChangeConsumer;
 
     @Inject
     public FilterPresenter(final EventBus eventBus, final FilterView view) {
@@ -41,20 +41,20 @@ public class FilterPresenter extends MyPresenterWidget<FilterPresenter.FilterVie
     }
 
     public void show(final TablePresenter tablePresenter,
-                     final Field field,
-                     final BiConsumer<Field, Field> fieldChangeConsumer) {
-        this.field = field;
-        this.fieldChangeConsumer = fieldChangeConsumer;
+                     final Column column,
+                     final BiConsumer<Column, Column> columnChangeConsumer) {
+        this.column = column;
+        this.columnChangeConsumer = columnChangeConsumer;
 
         String includes = "";
         String excludes = "";
 
-        if (field.getFilter() != null) {
-            if (field.getFilter().getIncludes() != null) {
-                includes = field.getFilter().getIncludes();
+        if (column.getFilter() != null) {
+            if (column.getFilter().getIncludes() != null) {
+                includes = column.getFilter().getIncludes();
             }
-            if (field.getFilter().getExcludes() != null) {
-                excludes = field.getFilter().getExcludes();
+            if (column.getFilter().getExcludes() != null) {
+                excludes = column.getFilter().getExcludes();
             }
         }
 
@@ -65,15 +65,15 @@ public class FilterPresenter extends MyPresenterWidget<FilterPresenter.FilterVie
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(popupSize)
-                .caption("Filter '" + field.getName() + "'")
+                .caption("Filter '" + column.getName() + "'")
                 .modal(true)
                 .onShow(e -> getView().focus())
                 .onHideRequest(e -> {
                     if (e.isOk()) {
                         final Filter filter = getFilter();
-                        if ((filter == null && field.getFilter() != null)
-                                || (filter != null && !filter.equals(field.getFilter()))) {
-                            fieldChangeConsumer.accept(field, field.copy().filter(filter).build());
+                        if ((filter == null && column.getFilter() != null)
+                                || (filter != null && !filter.equals(column.getFilter()))) {
+                            columnChangeConsumer.accept(column, column.copy().filter(filter).build());
                         }
                     }
                     e.hide();

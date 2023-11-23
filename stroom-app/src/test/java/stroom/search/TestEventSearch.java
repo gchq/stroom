@@ -22,9 +22,9 @@ import stroom.docref.DocRef;
 import stroom.expression.api.DateTimeSettings;
 import stroom.index.impl.IndexStore;
 import stroom.index.shared.IndexDoc;
+import stroom.query.api.v2.Column;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Format;
 import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.ParamSubstituteUtil;
@@ -185,12 +185,12 @@ class TestEventSearch extends AbstractSearchTest {
     }
 
     private TableSettings createTableSettings(final IndexDoc index, final boolean extractValues) {
-        final Field idField = Field.builder()
+        final Column idColumn = Column.builder()
                 .name("IdTreeNode")
                 .expression(ParamSubstituteUtil.makeParam("StreamId"))
                 .build();
 
-        final Field timeField = Field.builder()
+        final Column timeColumn = Column.builder()
                 .name("Event Time")
                 .expression(ParamSubstituteUtil.makeParam("EventTime"))
                 .format(Format.DATE_TIME)
@@ -198,8 +198,8 @@ class TestEventSearch extends AbstractSearchTest {
 
         final DocRef resultPipeline = commonIndexingTestHelper.getSearchResultPipeline();
         return TableSettings.builder()
-                .addFields(idField)
-                .addFields(timeField)
+                .addColumns(idColumn)
+                .addColumns(timeColumn)
                 .extractValues(extractValues)
                 .extractionPipeline(resultPipeline)
                 .build();

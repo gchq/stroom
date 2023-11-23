@@ -19,10 +19,10 @@ package stroom.query.common.v2;
 import stroom.docref.DocRef;
 import stroom.expression.api.DateTimeSettings;
 import stroom.expression.api.TimeZone;
+import stroom.query.api.v2.Column;
 import stroom.query.api.v2.DateTimeFormatSettings;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Filter;
 import stroom.query.api.v2.FlatResult;
 import stroom.query.api.v2.Format;
@@ -89,7 +89,7 @@ class TestSerialisation {
                                 .build())
                         .addMappings(TableSettings.builder()
                                 .queryId("someQueryId")
-                                .addFields(Field.builder()
+                                .addColumns(Column.builder()
                                         .id("id1")
                                         .name("name1")
                                         .expression("expression1")
@@ -101,7 +101,7 @@ class TestSerialisation {
                                                 .build())
                                         .group(1)
                                         .build())
-                                .addFields(Field.builder()
+                                .addColumns(Column.builder()
                                         .id("id2")
                                         .name("name2")
                                         .expression("expression2")
@@ -273,7 +273,7 @@ class TestSerialisation {
     }
 
     private SearchResponse getSearchResponse() {
-        final List<Field> fields = Collections.singletonList(Field.builder()
+        final List<Column> columns = Collections.singletonList(Column.builder()
                 .id("test")
                 .name("test")
                 .expression("${test}")
@@ -285,7 +285,7 @@ class TestSerialisation {
                 .depth(5)
                 .build());
         final TableResult tableResult = new TableResult("table-1234",
-                fields,
+                columns,
                 rows,
                 new OffsetRange(1, 2),
                 1L,
@@ -299,26 +299,26 @@ class TestSerialisation {
     }
 
     private FlatResult getVisResult1() {
-        final List<Field> structure = new ArrayList<>();
-        structure.add(Field.builder()
+        final List<Column> structure = new ArrayList<>();
+        structure.add(Column.builder()
                 .id("val1")
                 .name("val1")
                 .expression("${val1}")
                 .format(Format.GENERAL)
                 .build());
-        structure.add(Field.builder()
+        structure.add(Column.builder()
                 .id("val2")
                 .name("val2")
                 .expression("${val2}")
                 .format(Format.NUMBER)
                 .build());
-        structure.add(Field.builder()
+        structure.add(Column.builder()
                 .id("val3")
                 .name("val3")
                 .expression("${val3}")
                 .format(Format.NUMBER)
                 .build());
-        structure.add(Field.builder()
+        structure.add(Column.builder()
                 .id("val4")
                 .name("val4")
                 .expression("${val4}")

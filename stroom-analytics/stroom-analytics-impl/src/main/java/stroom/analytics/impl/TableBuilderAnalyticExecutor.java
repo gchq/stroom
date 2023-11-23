@@ -21,9 +21,9 @@ import stroom.pipeline.PipelineStore;
 import stroom.pipeline.factory.PipelineDataCache;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineData;
+import stroom.query.api.v2.Column;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionUtil;
-import stroom.query.api.v2.Field;
 import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.ResultRequest;
@@ -37,7 +37,7 @@ import stroom.query.common.v2.DeleteCommand;
 import stroom.query.common.v2.Key;
 import stroom.query.common.v2.LmdbDataStore;
 import stroom.query.common.v2.TableResultCreator;
-import stroom.query.common.v2.format.FieldFormatter;
+import stroom.query.common.v2.format.ColumnFormatter;
 import stroom.query.common.v2.format.FormatterFactory;
 import stroom.query.language.functions.FieldIndex;
 import stroom.search.extraction.AnalyticFieldListConsumer;
@@ -636,9 +636,9 @@ public class TableBuilderAnalyticExecutor {
             final TableResultConsumer tableResultConsumer =
                     new TableResultConsumer(analytic.analyticRuleDoc(), notificationState, detectionConsumer);
 
-            final FieldFormatter fieldFormatter =
-                    new FieldFormatter(new FormatterFactory(null));
-            final TableResultCreator resultCreator = new TableResultCreator(fieldFormatter) {
+            final ColumnFormatter columnFormatter =
+                    new ColumnFormatter(new FormatterFactory(null));
+            final TableResultCreator resultCreator = new TableResultCreator(columnFormatter) {
                 @Override
                 public TableResultBuilder createTableResultBuilder() {
                     return tableResultConsumer;
@@ -709,7 +709,7 @@ public class TableBuilderAnalyticExecutor {
         private final NotificationState notificationState;
         private final DetectionConsumer detectionConsumer;
 
-        private List<Field> fields;
+        private List<Column> columns;
 
         public TableResultConsumer(final AnalyticRuleDoc analyticRuleDoc,
                                    final NotificationState notificationState,
@@ -733,8 +733,8 @@ public class TableBuilderAnalyticExecutor {
         }
 
         @Override
-        public TableResultConsumer fields(final List<Field> fields) {
-            this.fields = fields;
+        public TableResultConsumer columns(final List<Column> columns) {
+            this.columns = columns;
             return this;
         }
 
@@ -747,10 +747,10 @@ public class TableBuilderAnalyticExecutor {
                     int index = 0;
                     Long streamId = null;
                     Long eventId = null;
-                    for (final Field field : fields) {
+                    for (final Column column : columns) {
                         final String fieldValue = row.getValues().get(index);
                         if (fieldValue != null) {
-                            final String fieldName = field.getDisplayValue();
+                            final String fieldName = column.getDisplayValue();
 
                             if (IndexConstants.STREAM_ID.equals(fieldName)) {
                                 try {

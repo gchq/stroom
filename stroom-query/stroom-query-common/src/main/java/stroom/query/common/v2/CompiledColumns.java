@@ -17,7 +17,7 @@
 package stroom.query.common.v2;
 
 import stroom.expression.api.ExpressionContext;
-import stroom.query.api.v2.Field;
+import stroom.query.api.v2.Column;
 import stroom.query.language.functions.Expression;
 import stroom.query.language.functions.ExpressionParser;
 import stroom.query.language.functions.FieldIndex;
@@ -32,57 +32,57 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class CompiledFields {
+public class CompiledColumns {
 
-    private final List<Field> fields;
-    private final CompiledField[] compiledFields;
+    private final List<Column> columns;
+    private final CompiledColumn[] compiledColumns;
     private final FieldIndex fieldIndex;
     private final ValueReferenceIndex valueReferenceIndex;
 
-    private CompiledFields(final List<Field> fields,
-                           final CompiledField[] compiledFields,
-                           final FieldIndex fieldIndex,
-                           final ValueReferenceIndex valueReferenceIndex) {
-        this.fields = fields;
-        this.compiledFields = compiledFields;
+    private CompiledColumns(final List<Column> columns,
+                            final CompiledColumn[] compiledColumns,
+                            final FieldIndex fieldIndex,
+                            final ValueReferenceIndex valueReferenceIndex) {
+        this.columns = columns;
+        this.compiledColumns = compiledColumns;
         this.fieldIndex = fieldIndex;
         this.valueReferenceIndex = valueReferenceIndex;
     }
 
-    public static CompiledFields create(final ExpressionContext expressionContext,
-                                        final List<Field> fields,
-                                        final Map<String, String> paramMap) {
-        return create(expressionContext, fields, new FieldIndex(), paramMap);
+    public static CompiledColumns create(final ExpressionContext expressionContext,
+                                         final List<Column> columns,
+                                         final Map<String, String> paramMap) {
+        return create(expressionContext, columns, new FieldIndex(), paramMap);
     }
 
-    public static CompiledFields create(final ExpressionContext expressionContext,
-                                        final List<Field> fields,
-                                        final FieldIndex fieldIndex,
-                                        final Map<String, String> paramMap) {
+    public static CompiledColumns create(final ExpressionContext expressionContext,
+                                         final List<Column> columns,
+                                         final FieldIndex fieldIndex,
+                                         final Map<String, String> paramMap) {
         final ValueReferenceIndex valueReferenceIndex = new ValueReferenceIndex();
-        if (fields == null) {
-            return new CompiledFields(Collections.emptyList(), new CompiledField[0], fieldIndex, valueReferenceIndex);
+        if (columns == null) {
+            return new CompiledColumns(Collections.emptyList(), new CompiledColumn[0], fieldIndex, valueReferenceIndex);
         }
 
         final ExpressionParser expressionParser = new ExpressionParser(new ParamFactory(new HashMap<>()));
-        final CompiledField[] compiledFields = new CompiledField[fields.size()];
+        final CompiledColumn[] compiledFields = new CompiledColumn[columns.size()];
         int i = 0;
 
-        for (final Field field : fields) {
+        for (final Column column : columns) {
             // Create compiled field.
             int groupDepth = -1;
-            if (field.getGroup() != null) {
-                groupDepth = field.getGroup();
+            if (column.getGroup() != null) {
+                groupDepth = column.getGroup();
             }
             Generator generator = Null.GEN;
             boolean hasAggregate = false;
             boolean requiresChildData = false;
-            if (field.getExpression() != null && field.getExpression().trim().length() > 0) {
+            if (column.getExpression() != null && column.getExpression().trim().length() > 0) {
                 try {
                     final Expression expression = expressionParser.parse(
                             expressionContext,
                             fieldIndex,
-                            field.getExpression());
+                            column.getExpression());
                     expression.setStaticMappedValues(paramMap);
                     expression.addValueReferences(valueReferenceIndex);
                     generator = expression.createGenerator();
@@ -94,27 +94,27 @@ public class CompiledFields {
             }
 
             CompiledFilter filter = null;
-            if (field.getFilter() != null) {
-                filter = new CompiledFilter(field.getFilter(), paramMap);
+            if (column.getFilter() != null) {
+                filter = new CompiledFilter(column.getFilter(), paramMap);
             }
 
-            final CompiledField compiledField =
-                    new CompiledField(field, groupDepth, generator, hasAggregate, requiresChildData, filter);
+            final CompiledColumn compiledField =
+                    new CompiledColumn(column, groupDepth, generator, hasAggregate, requiresChildData, filter);
 
             // Only include this field if it is used for display, grouping,
             // sorting.
             compiledFields[i++] = compiledField;
         }
 
-        return new CompiledFields(fields, compiledFields, fieldIndex, valueReferenceIndex);
+        return new CompiledColumns(columns, compiledFields, fieldIndex, valueReferenceIndex);
     }
 
-    public List<Field> getFields() {
-        return fields;
+    public List<Column> getColumns() {
+        return columns;
     }
 
-    public CompiledField[] getCompiledFields() {
-        return compiledFields;
+    public CompiledColumn[] getCompiledColumns() {
+        return compiledColumns;
     }
 
     public FieldIndex getFieldIndex() {

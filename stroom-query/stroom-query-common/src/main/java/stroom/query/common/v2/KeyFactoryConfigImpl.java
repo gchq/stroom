@@ -11,26 +11,26 @@ public class KeyFactoryConfigImpl implements KeyFactoryConfig {
     private boolean addTimeToKey;
 
     public KeyFactoryConfigImpl(final SourceType sourceType,
-                                final CompiledField[] compiledFields,
+                                final CompiledColumn[] compiledColumns,
                                 final CompiledDepths compiledDepths) {
         boolean timeGrouped = false;
 
-        for (int i = 0; i < compiledFields.length; i++) {
-            final CompiledField field = compiledFields[i];
+        for (int i = 0; i < compiledColumns.length; i++) {
+            final CompiledColumn column = compiledColumns[i];
             if (sourceType.isRequireTimeValue() &&
-                    DEFAULT_TIME_FIELD_NAME.equalsIgnoreCase(field.getField().getName())) {
+                    DEFAULT_TIME_FIELD_NAME.equalsIgnoreCase(column.getColumn().getName())) {
                 timeFieldIndex = i;
-                if (field.getGroupDepth() >= 0) {
+                if (column.getGroupDepth() >= 0) {
                     timeGrouped = true;
                 }
             }
         }
 
-        for (int i = 0; i < compiledFields.length; i++) {
-            final CompiledField field = compiledFields[i];
+        for (int i = 0; i < compiledColumns.length; i++) {
+            final CompiledColumn column = compiledColumns[i];
             if (sourceType.isRequireTimeValue() &&
-                    FALLBACK_TIME_FIELD_NAME.equalsIgnoreCase(field.getField().getName())) {
-                if (field.getGroupDepth() >= 0) {
+                    FALLBACK_TIME_FIELD_NAME.equalsIgnoreCase(column.getColumn().getName())) {
+                if (column.getGroupDepth() >= 0) {
                     if (!timeGrouped) {
                         timeFieldIndex = i;
                         timeGrouped = true;
@@ -53,7 +53,7 @@ public class KeyFactoryConfigImpl implements KeyFactoryConfig {
     }
 
     @Override
-    public int getTimeFieldIndex() {
+    public int getTimeColumnIndex() {
         return timeFieldIndex;
     }
 

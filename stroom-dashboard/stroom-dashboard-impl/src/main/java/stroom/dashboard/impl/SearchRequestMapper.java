@@ -29,6 +29,7 @@ import stroom.dashboard.shared.TableResultRequest;
 import stroom.dashboard.shared.VisComponentSettings;
 import stroom.dashboard.shared.VisResultRequest;
 import stroom.docref.DocRef;
+import stroom.query.api.v2.Column;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.Format;
 import stroom.query.api.v2.Param;
@@ -400,9 +401,9 @@ public class SearchRequestMapper {
 //        return tableSettings;
 //    }
 
-    private stroom.query.api.v2.Field.Builder convertField(final VisField visField,
-                                                           final Map<String, stroom.query.api.v2.Format> formatMap) {
-        final stroom.query.api.v2.Field.Builder builder = stroom.query.api.v2.Field.builder();
+    private Column.Builder convertField(final VisField visField,
+                                        final Map<String, stroom.query.api.v2.Format> formatMap) {
+        final Column.Builder builder = Column.builder();
 
         builder.format(Format.GENERAL);
 
@@ -447,15 +448,15 @@ public class SearchRequestMapper {
             if (structure != null) {
 
                 final Map<String, stroom.query.api.v2.Format> formatMap = new HashMap<>();
-                if (parentTableSettings.getFields() != null) {
-                    for (final stroom.query.api.v2.Field field : parentTableSettings.getFields()) {
-                        if (field != null) {
-                            formatMap.put(field.getName(), field.getFormat());
+                if (parentTableSettings.getColumns() != null) {
+                    for (final Column column : parentTableSettings.getColumns()) {
+                        if (column != null) {
+                            formatMap.put(column.getName(), column.getFormat());
                         }
                     }
                 }
 
-                List<stroom.query.api.v2.Field> fields = new ArrayList<>();
+                List<Column> columns = new ArrayList<>();
                 List<Long> limits = new ArrayList<>();
 
                 VisNest nest = mapNest(structure.getNest(), settingResolver);
@@ -463,10 +464,10 @@ public class SearchRequestMapper {
 
                 int group = 0;
                 while (nest != null) {
-                    final stroom.query.api.v2.Field.Builder builder = convertField(nest.getKey(), formatMap);
+                    final Column.Builder builder = convertField(nest.getKey(), formatMap);
                     builder.group(group++);
 
-                    fields.add(builder.build());
+                    columns.add(builder.build());
 
                     // Get limit from nest.
                     Long limit = null;
@@ -489,13 +490,13 @@ public class SearchRequestMapper {
 
                     if (values.getFields() != null) {
                         for (final VisField visField : values.getFields()) {
-                            fields.add(convertField(visField, formatMap).build());
+                            columns.add(convertField(visField, formatMap).build());
                         }
                     }
                 }
 
                 tableSettings = TableSettings.builder()
-                        .addFields(fields)
+                        .addColumns(columns)
                         .addMaxResults(limits)
                         .showDetail(true)
                         .build();

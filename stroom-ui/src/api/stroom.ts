@@ -481,6 +481,31 @@ export interface ClusterNodeInfoItem {
   nodeName?: string;
 }
 
+/**
+ * Describes a field in a result set. The field can have various expressions applied to it, e.g. SUM(), along with sorting, filtering, formatting and grouping
+ */
+export interface Column {
+  /**
+   * The expression to use to generate the value for this field
+   * @example SUM(${count})
+   */
+  expression: string;
+
+  /** A pair of regular expression filters (inclusion and exclusion) to apply to the field.  Either or both can be supplied */
+  filter?: Filter;
+
+  /** Describes the formatting that will be applied to values in a field */
+  format?: Format;
+
+  /** @format int32 */
+  group?: number;
+  id?: string;
+  name?: string;
+
+  /** Describes the sorting applied to a field */
+  sort?: Sort;
+}
+
 export interface CompletionValue {
   caption?: string;
   meta?: string;
@@ -1927,31 +1952,6 @@ export interface FetchSuggestionsRequest {
   text?: string;
 }
 
-/**
- * Describes a field in a result set. The field can have various expressions applied to it, e.g. SUM(), along with sorting, filtering, formatting and grouping
- */
-export interface Field {
-  /**
-   * The expression to use to generate the value for this field
-   * @example SUM(${count})
-   */
-  expression: string;
-
-  /** A pair of regular expression filters (inclusion and exclusion) to apply to the field.  Either or both can be supplied */
-  filter?: Filter;
-
-  /** Describes the formatting that will be applied to values in a field */
-  format?: Format;
-
-  /** @format int32 */
-  group?: number;
-  id?: string;
-  name?: string;
-
-  /** Describes the sorting applied to a field */
-  sort?: Sort;
-}
-
 export interface FieldInfo {
   conditions?:
     | "'=', 'between', '>', '>=', '<', '<='"
@@ -2169,7 +2169,7 @@ export interface FindUserNameCriteria {
 /**
  * A result structure used primarily for visualisation data
  */
-export type FlatResult = Result & { size?: number; structure?: Field[]; values?: object[][] };
+export type FlatResult = Result & { size?: number; structure?: Column[]; values?: object[][] };
 
 export type FloatField = QueryField;
 
@@ -4843,7 +4843,7 @@ export interface TableComponentSettings {
 
   /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   extractionPipeline?: DocRef;
-  fields: Field[];
+  fields?: Column[];
 
   /**
    * Defines the maximum number of results to return at each grouping level, e.g. '1000,10,1' means 1000 results at group level 0, 10 at level 1 and 1 at level 2. In the absence of this field system defaults will apply
@@ -4859,7 +4859,7 @@ export interface TableComponentSettings {
   pageSize?: number;
 
   /** TODO */
-  queryId: string;
+  queryId?: string;
   showDetail?: boolean;
   useDefaultExtractionPipeline?: boolean;
 }
@@ -4869,7 +4869,12 @@ export type TableCoprocessorSettings = CoprocessorSettings & { componentIds?: st
 /**
  * Object for describing a set of results in a table form that supports grouped data
  */
-export type TableResult = Result & { fields?: Field[]; resultRange?: OffsetRange; rows?: Row[]; totalResults?: number };
+export type TableResult = Result & {
+  fields?: Column[];
+  resultRange?: OffsetRange;
+  rows?: Row[];
+  totalResults?: number;
+};
 
 export type TableResultRequest = ComponentResultRequest & {
   openGroups?: string[];
@@ -4888,7 +4893,7 @@ export interface TableSettings {
 
   /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   extractionPipeline?: DocRef;
-  fields: Field[];
+  fields?: Column[];
 
   /**
    * Defines the maximum number of results to return at each grouping level, e.g. '1000,10,1' means 1000 results at group level 0, 10 at level 1 and 1 at level 2. In the absence of this field system defaults will apply
@@ -4897,7 +4902,7 @@ export interface TableSettings {
   maxResults?: number[];
 
   /** TODO */
-  queryId: string;
+  queryId?: string;
 
   /** When grouping is used a value of true indicates that the results will include the full detail of any results aggregated into a group as well as their aggregates. A value of false will only include the aggregated values for each group. Defaults to false. */
   showDetail?: boolean;
@@ -4943,17 +4948,17 @@ export interface TerminateTaskProgressRequest {
 }
 
 export type TextComponentSettings = ComponentSettings & {
-  colFromField?: Field;
-  colToField?: Field;
-  lineFromField?: Field;
-  lineToField?: Field;
+  colFromField?: Column;
+  colToField?: Column;
+  lineFromField?: Column;
+  lineToField?: Column;
   modelVersion?: string;
-  partNoField?: Field;
+  partNoField?: Column;
   pipeline?: DocRef;
-  recordNoField?: Field;
+  recordNoField?: Column;
   showAsHtml?: boolean;
   showStepping?: boolean;
-  streamIdField?: Field;
+  streamIdField?: Column;
   tableId?: string;
 };
 
