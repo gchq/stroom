@@ -49,19 +49,16 @@ import java.util.Set;
 
 public class AnalyticsSearchProvider implements SearchProvider, HasDataSourceDocRefs {
 
-    private final SecurityContext securityContext;
     private final CoprocessorsFactory coprocessorsFactory;
     private final ResultStoreFactory resultStoreFactory;
     private final FederatedSearchExecutor federatedSearchExecutor;
     private final AnalyticsNodeSearchTaskCreator nodeSearchTaskCreator;
 
     @Inject
-    public AnalyticsSearchProvider(final SecurityContext securityContext,
-                                   final CoprocessorsFactory coprocessorsFactory,
+    public AnalyticsSearchProvider(final CoprocessorsFactory coprocessorsFactory,
                                    final ResultStoreFactory resultStoreFactory,
                                    final FederatedSearchExecutor federatedSearchExecutor,
                                    final AnalyticsNodeSearchTaskCreator nodeSearchTaskCreator) {
-        this.securityContext = securityContext;
         this.coprocessorsFactory = coprocessorsFactory;
         this.resultStoreFactory = resultStoreFactory;
         this.federatedSearchExecutor = federatedSearchExecutor;

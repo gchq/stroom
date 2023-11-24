@@ -339,7 +339,6 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                     if (column != null) {
                         columnsManager.addColumn(column);
                     }
-                    addColumnPopup.destroy();
                     addColumnPopup.hide();
                 }
             }));

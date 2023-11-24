@@ -39,7 +39,7 @@ import java.util.stream.Collectors;
 
 public final class IndexDataSourceFieldUtil {
 
-    public static List<QueryField> getDataSourceFields(final IndexDoc index, final SecurityContext securityContext) {
+    public static List<QueryField> getDataSourceFields(final IndexDoc index) {
         if (index == null || index.getFields() == null) {
             return null;
         }
@@ -47,19 +47,7 @@ public final class IndexDataSourceFieldUtil {
         final List<IndexField> indexFields = index.getFields();
         final List<QueryField> dataSourceFields = new ArrayList<>(indexFields.size());
         for (final IndexField indexField : indexFields) {
-            // TODO should index fields include doc refs?
             dataSourceFields.add(convert(indexField));
-        }
-
-        // Add annotation fields if this index has stream and event ids.
-        if (securityContext == null || securityContext.hasAppPermission(PermissionNames.ANNOTATIONS)) {
-            final Set<String> names = indexFields
-                    .stream()
-                    .map(IndexField::getFieldName)
-                    .collect(Collectors.toSet());
-            if (names.contains(IndexConstants.STREAM_ID) && names.contains(IndexConstants.EVENT_ID)) {
-                dataSourceFields.addAll(AnnotationFields.FIELDS);
-            }
         }
 
         return dataSourceFields;

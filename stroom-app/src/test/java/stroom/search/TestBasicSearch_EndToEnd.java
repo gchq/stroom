@@ -72,13 +72,11 @@ class TestBasicSearch_EndToEnd extends AbstractCoreIntegrationTest {
         final IndexDoc index = indexStore.readDocument(indexRef);
 
         // Create a map of index fields keyed by name.
-        final Map<String, QueryField> dataSourceFieldsMap = IndexDataSourceFieldUtil.getDataSourceFields(index, null)
+        final Map<String, QueryField> dataSourceFieldsMap = IndexDataSourceFieldUtil.getDataSourceFields(index)
                 .stream()
                 .collect(Collectors.toMap(QueryField::getName, Function.identity()));
         final QueryField actual = dataSourceFieldsMap.get("Action");
-
         final QueryField expected = new TextField("Action", actual.getConditionSet(), null, true);
-
         assertThat(actual).as("Expected to index action").isEqualTo(expected);
     }
 

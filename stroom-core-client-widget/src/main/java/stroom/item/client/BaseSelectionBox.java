@@ -104,7 +104,6 @@ public class BaseSelectionBox<T, I extends SelectionItem>
     }
 
     private void hidePopup() {
-        popup.destroy();
         popup.hide();
         popup = null;
     }

@@ -47,10 +47,6 @@ public class SelectionPopup<T, I extends SelectionItem> extends Composite {
         selectionList.init(model);
     }
 
-    public void destroy() {
-        selectionList.destroy();
-    }
-
     public MultiSelectionModel<I> getSelectionModel() {
         return selectionList.getSelectionModel();
     }
@@ -88,6 +84,7 @@ public class SelectionPopup<T, I extends SelectionItem> extends Composite {
     public void hide() {
         eventBinder.unbind();
         popupPanel.hide();
+        selectionList.destroy();
     }
 
     public HandlerRegistration addCloseHandler(final CloseHandler<PopupPanel> handler) {

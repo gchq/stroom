@@ -5,6 +5,7 @@ import stroom.datasource.api.v2.FieldType;
 import stroom.datasource.api.v2.FindFieldInfoCriteria;
 import stroom.docref.DocRef;
 import stroom.docref.StringMatch;
+import stroom.docref.StringMatch.MatchType;
 import stroom.item.client.NavigationModel;
 import stroom.item.client.SelectionItem;
 import stroom.item.client.SelectionListModel;
@@ -14,9 +15,12 @@ import stroom.query.api.v2.Format;
 import stroom.query.api.v2.ParamSubstituteUtil;
 import stroom.query.client.DataSourceClient;
 import stroom.query.client.presenter.DynamicColumnSelectionListModel.ColumnSelectionItem;
+import stroom.security.client.api.ClientSecurityContext;
+import stroom.security.shared.PermissionNames;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.PageRequest;
+import stroom.util.shared.ResultPage;
 
 import com.google.gwt.view.client.AbstractDataProvider;
 import com.google.gwt.view.client.AsyncDataProvider;
@@ -25,6 +29,7 @@ import com.google.gwt.view.client.Range;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
@@ -32,15 +37,19 @@ import javax.inject.Inject;
 public class DynamicColumnSelectionListModel implements SelectionListModel<Column, ColumnSelectionItem> {
 
     private final DataSourceClient dataSourceClient;
+    private final ClientSecurityContext clientSecurityContext;
     private final AsyncDataProvider<ColumnSelectionItem> dataProvider;
     private final NavigationModel<ColumnSelectionItem> navigationModel = new NavigationModel<>();
     private DocRef dataSourceRef;
     private StringMatch filter;
     private FindFieldInfoCriteria lastCriteria;
+    private String lastPath;
 
     @Inject
-    public DynamicColumnSelectionListModel(final DataSourceClient dataSourceClient) {
+    public DynamicColumnSelectionListModel(final DataSourceClient dataSourceClient,
+                                           final ClientSecurityContext clientSecurityContext) {
         this.dataSourceClient = dataSourceClient;
+        this.clientSecurityContext = clientSecurityContext;
         dataProvider = new AsyncDataProvider<ColumnSelectionItem>() {
             @Override
             protected void onRangeChanged(final HasData<ColumnSelectionItem> display) {
@@ -50,106 +59,130 @@ public class DynamicColumnSelectionListModel implements SelectionListModel<Colum
     }
 
     private void refresh(final HasData<ColumnSelectionItem> display) {
+        final String parentPath = getParentPath();
         if (dataSourceRef != null) {
             final Range range = display.getVisibleRange();
             final PageRequest pageRequest = new PageRequest(range.getStart(), range.getLength());
-            String parentPath = "";
-            if (!navigationModel.getPath().isEmpty()) {
-                final ColumnSelectionItem lastItem = navigationModel.getPath().peek();
-                if (lastItem.getColumn() != null) {
-                    parentPath = "Data Source" + ".";
-                } else {
-                    parentPath = lastItem.getLabel() + ".";
-                }
+
+            final FindFieldInfoCriteria findFieldInfoCriteria = new FindFieldInfoCriteria(
+                    pageRequest,
+                    null,
+                    dataSourceRef,
+                    filter);
+
+            // Only fetch if the request has changed.
+            if (!parentPath.equals(lastPath) || !findFieldInfoCriteria.equals(lastCriteria)) {
+                lastPath = parentPath;
+                lastCriteria = findFieldInfoCriteria;
+
+                dataSourceClient.findFields(findFieldInfoCriteria, response -> {
+                    // Only update if the request is still current.
+                    if (findFieldInfoCriteria == lastCriteria) {
+                        setResponse(parentPath, pageRequest, response, display);
+                    }
+                });
             }
+        }
+    }
 
-            if (GwtNullSafe.isBlankString(parentPath)) {
-                lastCriteria = null;
-
-                final List<ColumnSelectionItem> list = new ArrayList<>();
-                list.add(ColumnSelectionItem.createParent("Annotations"));
-                list.add(ColumnSelectionItem.createParent("Counts"));
-                list.add(ColumnSelectionItem.createParent("Data Source"));
-
-                display.setRowData(0, list);
-                display.setRowCount(list.size(), true);
-
-            } else if ("Counts.".equals(parentPath)) {
-                lastCriteria = null;
-
-                final List<ColumnSelectionItem> list = new ArrayList<>();
-                final Column count = Column.builder()
-                        .name("Count")
-                        .format(Format.NUMBER)
-                        .expression("count()")
-                        .build();
-                list.add(ColumnSelectionItem.create(count));
-
-                final Column countGroups = Column.builder()
-                        .name("Count Groups")
-                        .format(Format.NUMBER)
-                        .expression("countGroups()")
-                        .build();
-                list.add(ColumnSelectionItem.create(countGroups));
-
-                final Column custom = Column.builder()
-                        .name("Custom")
-                        .build();
-                list.add(ColumnSelectionItem.create(custom));
-
-                display.setRowData(0, list);
-                display.setRowCount(list.size(), true);
-
-            } else if ("Annotations.".equals(parentPath)) {
-                final FindFieldInfoCriteria findFieldInfoCriteria = new FindFieldInfoCriteria(
-                        pageRequest,
-                        null,
-                        dataSourceRef,
-                        StringMatch.contains("annotation:"));
-
-                // Only fetch if the request has changed.
-                if (!findFieldInfoCriteria.equals(lastCriteria)) {
-                    lastCriteria = findFieldInfoCriteria;
-
-                    dataSourceClient.findFields(findFieldInfoCriteria, response -> {
-                        // Only update if the request is still current.
-                        if (findFieldInfoCriteria == lastCriteria) {
-                            final List<ColumnSelectionItem> items = response
-                                    .getValues()
-                                    .stream()
-                                    .map(ColumnSelectionItem::create)
-                                    .collect(Collectors.toList());
-                            display.setRowData(response.getPageStart(), items);
-                            display.setRowCount(response.getPageSize(), response.isExact());
-                        }
-                    });
-                }
-
-            } else if ("Data Source.".equals(parentPath)) {
-                final FindFieldInfoCriteria findFieldInfoCriteria = new FindFieldInfoCriteria(
-                        pageRequest,
-                        null,
-                        dataSourceRef,
-                        filter);
-
-                // Only fetch if the request has changed.
-                if (!findFieldInfoCriteria.equals(lastCriteria)) {
-                    lastCriteria = findFieldInfoCriteria;
-
-                    dataSourceClient.findFields(findFieldInfoCriteria, response -> {
-                        // Only update if the request is still current.
-                        if (findFieldInfoCriteria == lastCriteria) {
-                            final List<ColumnSelectionItem> items = response
-                                    .getValues()
-                                    .stream()
-                                    .map(ColumnSelectionItem::create)
-                                    .collect(Collectors.toList());
-                            display.setRowData(response.getPageStart(), items);
-                            display.setRowCount(response.getPageSize(), response.isExact());
-                        }
-                    });
-                }
+    private String getParentPath() {
+        String parentPath = "";
+        if (!navigationModel.getPath().isEmpty()) {
+            final ColumnSelectionItem lastItem = navigationModel.getPath().peek();
+            if (lastItem.getColumn() != null) {
+                parentPath = "Data Source" + ".";
+            } else {
+                parentPath = lastItem.getLabel() + ".";
             }
+        }
+        return parentPath;
+    }
+
+    private void setResponse(final String parentPath,
+                             final PageRequest pageRequest,
+                             final ResultPage<FieldInfo> response,
+                             final HasData<ColumnSelectionItem> display) {
+        final ResultPage<ColumnSelectionItem> counts = getCounts(pageRequest);
+        final ResultPage<ColumnSelectionItem> annotations = getAnnotations(pageRequest);
+
+        if (GwtNullSafe.isBlankString(parentPath)) {
+            final ExactResultPageBuilder<ColumnSelectionItem> builder = new ExactResultPageBuilder<>(pageRequest);
+            add(new ColumnSelectionItem(null, "Annotations", annotations.size() > 0), builder);
+            add(new ColumnSelectionItem(null, "Counts", counts.size() > 0), builder);
+            add(new ColumnSelectionItem(null, "Data Source", response.getValues().size() > 0), builder);
+
+            final ResultPage<ColumnSelectionItem> resultPage = builder.build();
+            display.setRowData(resultPage.getPageStart(), resultPage.getValues());
+            display.setRowCount(resultPage.getPageSize(), resultPage.isExact());
+
+        } else if ("Counts.".equals(parentPath)) {
+            display.setRowData(counts.getPageStart(), counts.getValues());
+            display.setRowCount(counts.getPageSize(), counts.isExact());
+
+        } else if ("Annotations.".equals(parentPath)) {
+            display.setRowData(annotations.getPageStart(), annotations.getValues());
+            display.setRowCount(annotations.getPageSize(), annotations.isExact());
+
+        } else if ("Data Source.".equals(parentPath)) {
+            final List<ColumnSelectionItem> items = response
+                    .getValues()
+                    .stream()
+                    .map(ColumnSelectionItem::create)
+                    .collect(Collectors.toList());
+            display.setRowData(response.getPageStart(), items);
+            display.setRowCount(response.getPageSize(), response.isExact());
+        }
+    }
+
+    private ResultPage<ColumnSelectionItem> getCounts(final PageRequest pageRequest) {
+        final ExactResultPageBuilder<ColumnSelectionItem> builder = new ExactResultPageBuilder<>(pageRequest);
+        final Column count = Column.builder()
+                .name("Count")
+                .format(Format.NUMBER)
+                .expression("count()")
+                .build();
+        add(ColumnSelectionItem.create(count), builder);
+        final Column countGroups = Column.builder()
+                .name("Count Groups")
+                .format(Format.NUMBER)
+                .expression("countGroups()")
+                .build();
+        add(ColumnSelectionItem.create(countGroups), builder);
+        final Column custom = Column.builder()
+                .name("Custom")
+                .build();
+        add(ColumnSelectionItem.create(custom), builder);
+        return builder.build();
+    }
+
+    private ResultPage<ColumnSelectionItem> getAnnotations(final PageRequest pageRequest) {
+        final ExactResultPageBuilder<ColumnSelectionItem> builder = new ExactResultPageBuilder<>(pageRequest);
+        if (dataSourceRef != null &&
+                dataSourceRef.getType() != null &&
+                clientSecurityContext.hasAppPermission(PermissionNames.ANNOTATIONS)) {
+            if ("Index".equals(dataSourceRef.getType()) ||
+                    "SolrIndex".equals(dataSourceRef.getType()) ||
+                    "ElasticIndex".equals(dataSourceRef.getType())) {
+                AnnotationFields.FIELDS.forEach(field -> {
+                    final FieldInfo fieldInfo = FieldInfo.create(field);
+                    final ColumnSelectionItem columnSelectionItem = ColumnSelectionItem.create(fieldInfo);
+                    add(columnSelectionItem, builder);
+                });
+            }
+        }
+        return builder.build();
+    }
+
+    private void add(final ColumnSelectionItem item,
+                     final ExactResultPageBuilder<ColumnSelectionItem> resultPageBuilder) {
+        if (item.isHasChildren()) {
+            resultPageBuilder.add(item);
+        } else if (filter != null && filter.getPattern() != null && MatchType.CONTAINS.equals(filter.getMatchType())) {
+            if (item.getLabel().toLowerCase().contains(filter.getPattern().toLowerCase(Locale.ROOT))) {
+                resultPageBuilder.add(item);
+            }
+        } else {
+            resultPageBuilder.add(item);
         }
     }
 
@@ -162,6 +195,7 @@ public class DynamicColumnSelectionListModel implements SelectionListModel<Colum
         navigationModel.reset();
         this.filter = StringMatch.any();
         lastCriteria = null;
+        lastPath = null;
     }
 
     @Override
@@ -232,10 +266,6 @@ public class DynamicColumnSelectionListModel implements SelectionListModel<Colum
             this.column = column;
             this.label = label;
             this.hasChildren = hasChildren;
-        }
-
-        public static ColumnSelectionItem createParent(final String label) {
-            return new ColumnSelectionItem(null, label, true);
         }
 
         public static ColumnSelectionItem create(final Column column) {

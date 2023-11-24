@@ -20,7 +20,6 @@ package stroom.search.impl;
 import stroom.datasource.api.v2.DateField;
 import stroom.datasource.api.v2.FieldInfo;
 import stroom.datasource.api.v2.FindFieldInfoCriteria;
-import stroom.datasource.api.v2.IdField;
 import stroom.datasource.api.v2.QueryField;
 import stroom.datasource.api.v2.QueryFieldService;
 import stroom.docref.DocRef;
@@ -102,8 +101,7 @@ public class LuceneSearchProvider implements SearchProvider {
                     return ResultPage.createCriterialBasedList(Collections.emptyList(), criteria);
                 }
 
-                final List<QueryField> fields = IndexDataSourceFieldUtil
-                        .getDataSourceFields(index, securityContext);
+                final List<QueryField> fields = IndexDataSourceFieldUtil.getDataSourceFields(index);
                 final int fieldSourceId = queryFieldService.getOrCreateFieldSource(docRef);
                 final List<FieldInfo> mapped = fields.stream().map(FieldInfo::create).toList();
                 queryFieldService.addFields(fieldSourceId, mapped);
