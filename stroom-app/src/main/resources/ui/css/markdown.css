@@ -8,7 +8,7 @@
 }
 
 .markdown-container {
-  overflow-y: scroll;
+  overflow: auto;
   background-color: var(--markdown-background__color);
   white-space: normal !important;
   user-select: text !important;
