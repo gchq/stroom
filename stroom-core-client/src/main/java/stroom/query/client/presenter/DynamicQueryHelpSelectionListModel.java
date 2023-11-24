@@ -147,12 +147,7 @@ public class DynamicQueryHelpSelectionListModel implements SelectionListModel<Qu
     public void reset() {
         navigationModel.reset();
         filter = StringMatch.any();
-        for (final HasData<?> display : dataProvider.getDataDisplays()) {
-            final Range range = display.getVisibleRange();
-            if (range.getStart() != 0 || range.getLength() != 100) {
-                display.setVisibleRange(0, 100);
-            }
-        }
+        lastRequest = null;
     }
 
     @Override

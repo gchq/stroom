@@ -145,12 +145,11 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     private final RestFactory restFactory;
     private final TimeZones timeZones;
     private final UserPreferencesManager userPreferencesManager;
-    private final Provider<DynamicColumnSelectionListModel> columnSelectionListModelProvider;
+    private final DynamicColumnSelectionListModel columnSelectionListModel;
     private final ColumnsManager columnsManager;
     private final MyDataGrid<TableRow> dataGrid;
     private final MultiSelectionModelImpl<TableRow> selectionModel;
     private final com.google.gwt.user.cellview.client.Column<TableRow, Expander> expanderColumn;
-    private SelectionPopup<Column, ColumnSelectionItem> addColumnPopup;
 
     private int expanderColumnWidth;
     private SearchModel currentSearchModel;
@@ -176,7 +175,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                           final UiConfigCache clientPropertyCache,
                           final TimeZones timeZones,
                           final UserPreferencesManager userPreferencesManager,
-                          final Provider<DynamicColumnSelectionListModel> columnSelectionListModelProvider,
+                          final DynamicColumnSelectionListModel columnSelectionListModel,
                           final DataSourceClient dataSourceClient) {
         super(eventBus, view, settingsPresenterProvider);
         this.locationManager = locationManager;
@@ -185,7 +184,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         this.restFactory = restFactory;
         this.timeZones = timeZones;
         this.userPreferencesManager = userPreferencesManager;
-        this.columnSelectionListModelProvider = columnSelectionListModelProvider;
+        this.columnSelectionListModel = columnSelectionListModel;
         this.dataSourceClient = dataSourceClient;
 
         dataGrid = new MyDataGrid<>();
@@ -319,14 +318,10 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
     private void onAddColumn(final ClickEvent event) {
         if (currentSearchModel != null) {
-            if (addColumnPopup == null) {
-                final DynamicColumnSelectionListModel model = columnSelectionListModelProvider.get();
-                addColumnPopup = new SelectionPopup<>();
-                addColumnPopup.setModel(model);
-            }
+            columnSelectionListModel.setDataSourceRef(currentSearchModel.getIndexLoader().getLoadedDataSourceRef());
 
-            final DynamicColumnSelectionListModel model = (DynamicColumnSelectionListModel) addColumnPopup.getModel();
-            model.setDataSourceRef(currentSearchModel.getIndexLoader().getLoadedDataSourceRef());
+            final SelectionPopup<Column, ColumnSelectionItem> addColumnPopup = new SelectionPopup<>();
+            addColumnPopup.init(columnSelectionListModel);
 
             final Element target = event.getNativeEvent().getEventTarget().cast();
             addColumnPopup.addAutoHidePartner(target);
@@ -344,6 +339,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                     if (column != null) {
                         columnsManager.addColumn(column);
                     }
+                    addColumnPopup.destroy();
                     addColumnPopup.hide();
                 }
             }));

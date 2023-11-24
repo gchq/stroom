@@ -34,12 +34,6 @@ public class SimpleSelectionListModel<T> implements SelectionListModel<T, Simple
     @Override
     public void reset() {
         lastFilter = null;
-        for (final HasData<?> display : dataProvider.getDataDisplays()) {
-            final Range range = display.getVisibleRange();
-            if (range.getStart() != 0 || range.getLength() != 100) {
-                display.setVisibleRange(0, 100);
-            }
-        }
     }
 
     @Override

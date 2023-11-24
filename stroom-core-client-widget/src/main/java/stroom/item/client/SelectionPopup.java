@@ -43,12 +43,12 @@ public class SelectionPopup<T, I extends SelectionItem> extends Composite {
         popupPanel.addAutoHidePartner(partner);
     }
 
-    public void setModel(final SelectionListModel<T, I> model) {
-        selectionList.setModel(model);
+    public void init(final SelectionListModel<T, I> model) {
+        selectionList.init(model);
     }
 
-    public SelectionListModel<T, I> getModel() {
-        return selectionList.getModel();
+    public void destroy() {
+        selectionList.destroy();
     }
 
     public MultiSelectionModel<I> getSelectionModel() {
@@ -71,8 +71,6 @@ public class SelectionPopup<T, I extends SelectionItem> extends Composite {
         if (popupPanel.isShowing()) {
             hide();
         } else {
-            selectionList.reset();
-
             eventBinder.bind();
             popupPanel.setPopupPositionAndShow((offsetWidth, offsetHeight) -> {
                 popupPanel.setPopupPosition(

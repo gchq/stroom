@@ -58,6 +58,9 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
             public void setRowData(final int start, final List<? extends I> values) {
                 super.setRowData(start, values);
 
+                links.setVisible(model.displayPath());
+                pagerView.setPagerVisible(model.displayPager());
+
                 // Only update the path when we get data.
                 if (model != null && model.getNavigationModel() != null) {
                     setPath(model.getNavigationModel().getPath());
@@ -131,16 +134,6 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
         quickFilter.focus();
     }
 
-    public void reset() {
-        if (model != null) {
-            links.setVisible(model.displayPath());
-            pagerView.setPagerVisible(model.displayPager());
-            quickFilter.reset();
-            model.reset();
-            model.refresh();
-        }
-    }
-
     @Override
     protected void onLoad() {
         eventBinder.bind();
@@ -151,26 +144,27 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
         eventBinder.unbind();
     }
 
-    public void setModel(final SelectionListModel<T, I> model) {
-        if (this.model == null) {
-            this.model = model;
-            selectionEventManager.setModel(model);
+    public void init(final SelectionListModel<T, I> model) {
+        if (this.model != null) {
+            throw new RuntimeException("Already initialised.");
+        }
+        if (model.getDataProvider().getDataDisplays().size() > 0) {
+            throw new RuntimeException("Display already attached.");
         }
 
-        refresh();
+        this.model = model;
+        selectionEventManager.setModel(model);
+        links.setVisible(model.displayPath());
+        pagerView.setPagerVisible(model.displayPager());
+
+        model.getDataProvider().addDataDisplay(cellTable);
+        model.refresh();
     }
 
-    public SelectionListModel<T, I> getModel() {
-        return model;
-    }
-
-    private void refresh() {
+    public void destroy() {
         if (model != null) {
-            if (model.getDataProvider().getDataDisplays().size() > 0) {
-                model.refresh();
-            } else {
-                model.getDataProvider().addDataDisplay(cellTable);
-            }
+            model.getDataProvider().removeDataDisplay(cellTable);
+            model.reset();
         }
     }
 
@@ -330,7 +324,7 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
                 if (model != null &&
                         model.getNavigationModel() != null &&
                         model.getNavigationModel().navigateBack(row)) {
-                    refresh();
+                    model.refresh();
                 }
             }
         }, ClickEvent.getType());

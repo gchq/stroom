@@ -23,9 +23,8 @@ public class BaseSelectionBox<T, I extends SelectionItem>
     private final TextBox textBox;
     private final SvgIconBox svgIconBox;
     private SelectionListModel<T, I> model;
-    private final SelectionPopup<T, I> popup;
     private T value;
-    private boolean showing;
+    private SelectionPopup<T, I> popup;
 
     private final EventBinder eventBinder = new EventBinder() {
         @Override
@@ -50,9 +49,6 @@ public class BaseSelectionBox<T, I extends SelectionItem>
         svgIconBox.addStyleName("SelectionBox");
         svgIconBox.setWidget(textBox, SvgImage.DROP_DOWN);
 
-        popup = new SelectionPopup<>();
-        popup.addAutoHidePartner(textBox.getElement());
-
         initWidget(svgIconBox);
     }
 
@@ -69,15 +65,18 @@ public class BaseSelectionBox<T, I extends SelectionItem>
     @Override
     public void setModel(final SelectionListModel<T, I> model) {
         this.model = model;
-        popup.setModel(model);
     }
 
     private void showPopup() {
-        if (showing) {
+        if (popup != null) {
             GWT.log("Hiding popup");
             hidePopup();
 
         } else {
+            popup = new SelectionPopup<>();
+            popup.init(model);
+            popup.addAutoHidePartner(textBox.getElement());
+
             final I selectionItem = model.wrap(value);
             if (selectionItem != null) {
                 popup.getSelectionModel().setSelected(selectionItem, true);
@@ -89,7 +88,6 @@ public class BaseSelectionBox<T, I extends SelectionItem>
                     handlerRegistration.removeHandler();
                 }
                 handlerRegistrations.clear();
-                showing = false;
             }));
             handlerRegistrations.add(popup.getSelectionModel().addSelectionHandler(e -> {
                 final I selected = popup.getSelectionModel().getSelected();
@@ -102,13 +100,13 @@ public class BaseSelectionBox<T, I extends SelectionItem>
             }));
 
             popup.show(textBox);
-            showing = true;
         }
     }
 
     private void hidePopup() {
+        popup.destroy();
         popup.hide();
-        showing = false;
+        popup = null;
     }
 
     @Override

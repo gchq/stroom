@@ -161,12 +161,7 @@ public class DynamicColumnSelectionListModel implements SelectionListModel<Colum
     public void reset() {
         navigationModel.reset();
         this.filter = StringMatch.any();
-        for (final HasData<?> display : dataProvider.getDataDisplays()) {
-            final Range range = display.getVisibleRange();
-            if (range.getStart() != 0 || range.getLength() != 100) {
-                display.setVisibleRange(0, 100);
-            }
-        }
+        lastCriteria = null;
     }
 
     @Override
