@@ -84,7 +84,7 @@ public class AttributeMapUtil {
     // Delimiter between key and value
     private static final String HEADER_DELIMITER = ":";
     // Delimiter within a de-serialised value (i.e in an AttributeMap)
-    private static final String DE_SERIALISED_VALUE_DELIMITER = "\n";
+    static final String DE_SERIALISED_VALUE_DELIMITER = "\n";
     // Delimiter within a serialised value (i.e in a file)
     private static final String SERIALISED_VALUE_DELIMITER = ",";
     // Delimiter between attributes

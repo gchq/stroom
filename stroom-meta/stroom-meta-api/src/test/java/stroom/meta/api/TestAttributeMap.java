@@ -14,6 +14,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
@@ -114,6 +115,51 @@ class TestAttributeMap {
                         files:/some/path/file1,/some/path/file2,/some/path/file3
                         foo:123
                         """);
+    }
+
+    @Test
+    void testPutCollection() throws IOException {
+        AttributeMap attributeMap = AttributeMap.builder()
+                .put("foo", "123")
+                .putCollection("files", List.of(
+                        "/some/path/file1",
+                        "/some/path/file2",
+                        "/some/path/file3"))
+                .put("bar", "456")
+                .build();
+        final String str = new String(AttributeMapUtil.toByteArray(attributeMap), AttributeMapUtil.DEFAULT_CHARSET);
+
+        assertThat(str)
+                .isEqualTo("""
+                        bar:456
+                        files:/some/path/file1,/some/path/file2,/some/path/file3
+                        foo:123
+                        """);
+    }
+
+    @Test
+    void testGetAsCollection() throws IOException {
+        AttributeMap attributeMap = AttributeMap.builder()
+                .put("foo", "123")
+                .putCollection("files", List.of(
+                        "/some/path/file1",
+                        "/some/path/file2",
+                        "/some/path/file3"))
+                .put("bar", "456")
+                .build();
+
+        assertThat(attributeMap.get("files"))
+                .isEqualTo("""
+                        /some/path/file1
+                        /some/path/file2
+                        /some/path/file3""");
+        assertThat(attributeMap.getAsCollection("files"))
+                .containsExactly(
+                        "/some/path/file1",
+                        "/some/path/file2",
+                        "/some/path/file3");
+        assertThat(attributeMap.getAsCollection("foo"))
+                .containsExactly("123");
     }
 
     @Test
