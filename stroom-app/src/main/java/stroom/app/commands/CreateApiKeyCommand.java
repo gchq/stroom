@@ -39,7 +39,7 @@ import javax.inject.Inject;
 /**
  * Creates an API key for a user the internal identity provider
  */
-public class CreateApiKeyCommand extends AbstractStroomAccountConfiguredCommand {
+public class CreateApiKeyCommand extends AbstractStroomAppCommand {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CreateApiKeyCommand.class);
     private static final String COMMAND_NAME = "create_api_key";
@@ -77,19 +77,19 @@ public class CreateApiKeyCommand extends AbstractStroomAccountConfiguredCommand 
     public void configure(final Subparser subparser) {
         super.configure(subparser);
 
-        subparser.addArgument("-u", "--" + USER_ID_ARG_NAME)
+        subparser.addArgument(asArg('u', USER_ID_ARG_NAME))
                 .dest(USER_ID_ARG_NAME)
                 .type(String.class)
                 .required(true)
                 .help("The user id of the account to issue the API key against, e.g. 'admin'");
 
-        subparser.addArgument("-e", "--" + EXPIRY_DAYS_ARG_NAME)
+        subparser.addArgument(asArg('e', EXPIRY_DAYS_ARG_NAME))
                 .dest(EXPIRY_DAYS_ARG_NAME)
                 .type(Integer.class)
                 .required(false)
                 .help("Expiry (in days) from the creation time");
 
-        subparser.addArgument("-o", "--" + OUTPUT_FILE_PATH_ARG_NAME)
+        subparser.addArgument(asArg('o', OUTPUT_FILE_PATH_ARG_NAME))
                 .dest(OUTPUT_FILE_PATH_ARG_NAME)
                 .type(String.class)
                 .required(false)
@@ -102,10 +102,10 @@ public class CreateApiKeyCommand extends AbstractStroomAccountConfiguredCommand 
     }
 
     @Override
-    protected void runCommand(final Bootstrap<Config> bootstrap,
-                              final Namespace namespace,
-                              final Config config,
-                              final Injector injector) {
+    protected void runSecuredCommand(final Bootstrap<Config> bootstrap,
+                                     final Namespace namespace,
+                                     final Config config,
+                                     final Injector injector) {
 
         injector.injectMembers(this);
 

@@ -19,6 +19,7 @@ package stroom.app;
 import stroom.app.commands.CreateAccountCommand;
 import stroom.app.commands.CreateApiKeyCommand;
 import stroom.app.commands.DbMigrationCommand;
+import stroom.app.commands.FetchAccessTokenCommand;
 import stroom.app.commands.ManageUsersCommand;
 import stroom.app.commands.ResetPasswordCommand;
 import stroom.app.guice.AppModule;
@@ -191,6 +192,7 @@ public class App extends Application<Config> {
         bootstrap.addCommand(new CreateApiKeyCommand(configFile));
         bootstrap.addCommand(new ResetPasswordCommand(configFile));
         bootstrap.addCommand(new ManageUsersCommand(configFile));
+        bootstrap.addCommand(new FetchAccessTokenCommand(configFile));
     }
 
     @Override

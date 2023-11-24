@@ -28,12 +28,10 @@ import net.sourceforge.argparse4j.inf.Namespace;
 import net.sourceforge.argparse4j.inf.Subparser;
 
 import java.nio.file.Path;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 
@@ -46,7 +44,7 @@ import javax.inject.Inject;
  * --addToGroup admin Administrators
  * --grantPermission Administrators Administrator
  */
-public class ManageUsersCommand extends AbstractStroomAccountConfiguredCommand {
+public class ManageUsersCommand extends AbstractStroomAppCommand {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ManageUsersCommand.class);
 
@@ -159,10 +157,10 @@ public class ManageUsersCommand extends AbstractStroomAccountConfiguredCommand {
     }
 
     @Override
-    protected void runCommand(final Bootstrap<Config> bootstrap,
-                              final Namespace namespace,
-                              final Config config,
-                              final Injector injector) {
+    protected void runSecuredCommand(final Bootstrap<Config> bootstrap,
+                                     final Namespace namespace,
+                                     final Config config,
+                                     final Injector injector) {
 
         LOGGER.debug("Namespace {}", namespace);
         injector.injectMembers(this);
@@ -226,13 +224,13 @@ public class ManageUsersCommand extends AbstractStroomAccountConfiguredCommand {
                             user -> {
                                 final String outcomeMsg = LogUtil.message("User '{}' already exists",
                                         UserName.buildCombinedName(userName));
-                                warn(LOGGER, outcomeMsg, "  ");
+                                indentedWarn(LOGGER, outcomeMsg, "  ");
                                 logCreateUserEvent(userName, false, outcomeMsg);
                             },
                             () -> {
                                 userService.getOrCreateUser(userName);
                                 logCreateUserEvent(userName, true, null);
-                                info(LOGGER,
+                                indentedInfo(LOGGER,
                                         "Created user '" + UserName.buildCombinedName(userName) + "'",
                                         "  ");
                             });
@@ -251,13 +249,13 @@ public class ManageUsersCommand extends AbstractStroomAccountConfiguredCommand {
                     .ifPresentOrElse(
                             user -> {
                                 final String outcomeMsg = LogUtil.message("Group '{}' already exists", groupName);
-                                warn(LOGGER, outcomeMsg, "  ");
+                                indentedWarn(LOGGER, outcomeMsg, "  ");
                                 logCreateGroupEvent(groupName, false, outcomeMsg);
                             },
                             () -> {
                                 userService.getOrCreateUserGroup(groupName);
                                 logCreateGroupEvent(groupName, true, null);
-                                info(LOGGER, "Created group '" + groupName + "'", "  ");
+                                indentedInfo(LOGGER, "Created group '" + groupName + "'", "  ");
                             });
         } catch (Exception e) {
             LOGGER.debug("Error", e);
@@ -287,7 +285,7 @@ public class ManageUsersCommand extends AbstractStroomAccountConfiguredCommand {
                         true,
                         null,
                         true);
-                info(LOGGER,
+                indentedInfo(LOGGER,
                         "Added '" + userOrGroup.asCombinedName() + "' to group '"
                                 + targetGroup.asCombinedName() + "'",
                         "  ");
@@ -328,7 +326,7 @@ public class ManageUsersCommand extends AbstractStroomAccountConfiguredCommand {
                         true,
                         null,
                         false);
-                info(LOGGER,
+                indentedInfo(LOGGER,
                         "Removed " + userOrGroup.asCombinedName()
                                 + " from group " + targetGroup.asCombinedName(),
                         "  ");
@@ -364,7 +362,7 @@ public class ManageUsersCommand extends AbstractStroomAccountConfiguredCommand {
                             getTypeName(userOrGroup, true),
                             userOrGroup.asCombinedName(),
                             permissionName);
-                    warn(LOGGER, failMsg, "  ");
+                    indentedWarn(LOGGER, failMsg, "  ");
 
                     logAddOrRemovePermissionEvent(
                             userOrGroup,
@@ -383,7 +381,7 @@ public class ManageUsersCommand extends AbstractStroomAccountConfiguredCommand {
                             true,
                             null,
                             true);
-                    info(LOGGER, LogUtil.message("Granted application permission '{}' to '{}'",
+                    indentedInfo(LOGGER, LogUtil.message("Granted application permission '{}' to '{}'",
                             permissionName, userOrGroup.asCombinedName()), "  ");
                 }
             } catch (Exception e) {
@@ -421,7 +419,7 @@ public class ManageUsersCommand extends AbstractStroomAccountConfiguredCommand {
                             userOrGroup.getUuid(),
                             permissionName);
 
-                    info(LOGGER, LogUtil.message("Revoked application permission '{}' from '{}'",
+                    indentedInfo(LOGGER, LogUtil.message("Revoked application permission '{}' from '{}'",
                             permissionName, userOrGroup.asCombinedName()), "  ");
 
                     logAddOrRemovePermissionEvent(
@@ -435,7 +433,7 @@ public class ManageUsersCommand extends AbstractStroomAccountConfiguredCommand {
                             getTypeName(userOrGroup, true),
                             userOrGroup.asCombinedName(),
                             permissionName);
-                    warn(LOGGER, failMsg, "  ");
+                    indentedWarn(LOGGER, failMsg, "  ");
 
                     logAddOrRemovePermissionEvent(
                             userOrGroupId,
@@ -526,19 +524,6 @@ public class ManageUsersCommand extends AbstractStroomAccountConfiguredCommand {
         return userOrGroup;
     }
 
-    private <T> List<T> extractArgs(final Namespace namespace,
-                                    final String dest,
-                                    final Function<List<String>, T> argsMapper) {
-        final List<List<String>> values = namespace.get(dest);
-        if (values != null) {
-            return values.stream()
-                    .map(argsMapper)
-                    .collect(Collectors.toList());
-        } else {
-            return Collections.emptyList();
-        }
-    }
-
     private List<String> extractStrings(final Namespace namespace, final String dest) {
         return extractArgs(namespace, dest, list -> list.get(0));
     }
@@ -549,10 +534,6 @@ public class ManageUsersCommand extends AbstractStroomAccountConfiguredCommand {
 
     private List<PermissionArgs> extractPermissionArgs(final Namespace namespace, final String dest) {
         return extractArgs(namespace, dest, list -> new PermissionArgs(list.get(0), list.get(1)));
-    }
-
-    private String asArg(final String name) {
-        return "--" + name;
     }
 
     private void logCreateUserEvent(final UserName username,
