@@ -8,6 +8,8 @@ public interface SelectionListModel<T, I extends SelectionItem> {
 
     NavigationModel<I> getNavigationModel();
 
+    void reset();
+
     void setFilter(String filter);
 
     void refresh();

@@ -145,11 +145,12 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     private final RestFactory restFactory;
     private final TimeZones timeZones;
     private final UserPreferencesManager userPreferencesManager;
-    private final DynamicColumnSelectionListModel columnSelectionBoxModel;
+    private final Provider<DynamicColumnSelectionListModel> columnSelectionListModelProvider;
     private final ColumnsManager columnsManager;
     private final MyDataGrid<TableRow> dataGrid;
     private final MultiSelectionModelImpl<TableRow> selectionModel;
     private final com.google.gwt.user.cellview.client.Column<TableRow, Expander> expanderColumn;
+    private SelectionPopup<Column, ColumnSelectionItem> addColumnPopup;
 
     private int expanderColumnWidth;
     private SearchModel currentSearchModel;
@@ -175,7 +176,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                           final UiConfigCache clientPropertyCache,
                           final TimeZones timeZones,
                           final UserPreferencesManager userPreferencesManager,
-                          final DynamicColumnSelectionListModel columnSelectionBoxModel,
+                          final Provider<DynamicColumnSelectionListModel> columnSelectionListModelProvider,
                           final DataSourceClient dataSourceClient) {
         super(eventBus, view, settingsPresenterProvider);
         this.locationManager = locationManager;
@@ -184,7 +185,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         this.restFactory = restFactory;
         this.timeZones = timeZones;
         this.userPreferencesManager = userPreferencesManager;
-        this.columnSelectionBoxModel = columnSelectionBoxModel;
+        this.columnSelectionListModelProvider = columnSelectionListModelProvider;
         this.dataSourceClient = dataSourceClient;
 
         dataGrid = new MyDataGrid<>();
@@ -318,21 +319,24 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
     private void onAddColumn(final ClickEvent event) {
         if (currentSearchModel != null) {
-            final SelectionPopup<Column, ColumnSelectionItem> selectionPopup =
-                    new SelectionPopup<>();
-            final MultiSelectionModel<ColumnSelectionItem> selectionModel = selectionPopup.getSelectionModel();
-            columnSelectionBoxModel.setDataSourceRef(currentSearchModel.getIndexLoader().getLoadedDataSourceRef());
-            columnSelectionBoxModel.reset();
-            selectionPopup.setModel(columnSelectionBoxModel);
+            if (addColumnPopup == null) {
+                final DynamicColumnSelectionListModel model = columnSelectionListModelProvider.get();
+                addColumnPopup = new SelectionPopup<>();
+                addColumnPopup.setModel(model);
+            }
+
+            final DynamicColumnSelectionListModel model = (DynamicColumnSelectionListModel) addColumnPopup.getModel();
+            model.setDataSourceRef(currentSearchModel.getIndexLoader().getLoadedDataSourceRef());
 
             final Element target = event.getNativeEvent().getEventTarget().cast();
-            selectionPopup.addAutoHidePartner(target);
+            addColumnPopup.addAutoHidePartner(target);
             final PopupPosition popupPosition = new PopupPosition(
                     target.getAbsoluteLeft() - 3,
                     target.getAbsoluteTop() + target.getClientHeight() + 1);
-            selectionPopup.show(popupPosition);
+            addColumnPopup.show(popupPosition);
 
             final List<HandlerRegistration> handlerRegistrations = new ArrayList<>();
+            final MultiSelectionModel<ColumnSelectionItem> selectionModel = addColumnPopup.getSelectionModel();
             handlerRegistrations.add(selectionModel.addSelectionHandler(e -> {
                 final ColumnSelectionItem item = selectionModel.getSelected();
                 if (item != null && !item.isHasChildren()) {
@@ -340,10 +344,10 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                     if (column != null) {
                         columnsManager.addColumn(column);
                     }
-                    selectionPopup.hide();
+                    addColumnPopup.hide();
                 }
             }));
-            handlerRegistrations.add(selectionPopup.addCloseHandler(closeEvent -> {
+            handlerRegistrations.add(addColumnPopup.addCloseHandler(closeEvent -> {
                 for (final HandlerRegistration handlerRegistration : handlerRegistrations) {
                     handlerRegistration.removeHandler();
                 }

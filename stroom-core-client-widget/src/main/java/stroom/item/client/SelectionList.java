@@ -14,10 +14,13 @@ import stroom.widget.util.client.SelectionType;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.user.cellview.client.AbstractHasData;
 import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
+import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Hyperlink;
@@ -35,8 +38,7 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
     private final CellTable<I> cellTable;
     private SelectionListModel<T, I> model;
 
-
-    private final ExplorerTreeSelectionEventManager<T, I> selectionEventManager;
+    private final SelectionEventManager<T, I> selectionEventManager;
     private final MultiSelectionModelImpl<I> selectionModel;
 
     private final EventBinder eventBinder = new EventBinder() {
@@ -57,15 +59,24 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
                 super.setRowData(start, values);
 
                 // Only update the path when we get data.
-                if (model != null &&
-                        model.getNavigationModel() != null) {
+                if (model != null && model.getNavigationModel() != null) {
                     setPath(model.getNavigationModel().getPath());
+                }
+            }
+
+            @Override
+            protected void onBrowserEvent2(final Event event) {
+                super.onBrowserEvent2(event);
+                if (event.getTypeInt() == Event.ONKEYDOWN && event.getKeyCode() == KeyCodes.KEY_UP) {
+                    if (cellTable.getKeyboardSelectedRow() == 0) {
+                        quickFilter.focus();
+                    }
                 }
             }
         };
 
         selectionModel = new MultiSelectionModelImpl<>(cellTable);
-        selectionEventManager = new ExplorerTreeSelectionEventManager<>(cellTable, selectionModel);
+        selectionEventManager = new SelectionEventManager<>(cellTable, selectionModel);
         cellTable.setSelectionModel(selectionModel, selectionEventManager);
 
         final Column<I, I> expanderColumn =
@@ -80,7 +91,16 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
         pagerView = new PagerViewImpl(GWT.create(PagerViewImpl.Binder.class));
         pagerView.setDataWidget(cellTable);
 
-        quickFilter = new QuickFilter();
+        quickFilter = new QuickFilter() {
+            @Override
+            protected void onKeyDown(final KeyDownEvent event) {
+                super.onKeyDown(event);
+                if (event.isDownArrow()) {
+                    cellTable.setKeyboardSelectedRow(0, true);
+                }
+            }
+        };
+
         quickFilter.addStyleName("dock-min");
 
         links = new FlowPanel();
@@ -112,9 +132,13 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
     }
 
     public void reset() {
-        links.setVisible(model.displayPath());
-        pagerView.setPagerVisible(model.displayPager());
-        quickFilter.clear();
+        if (model != null) {
+            links.setVisible(model.displayPath());
+            pagerView.setPagerVisible(model.displayPager());
+            quickFilter.reset();
+            model.reset();
+            model.refresh();
+        }
     }
 
     @Override
@@ -128,16 +152,33 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
     }
 
     public void setModel(final SelectionListModel<T, I> model) {
-        this.model = model;
-        selectionEventManager.setModel(model);
-        model.getDataProvider().addDataDisplay(cellTable);
+        if (this.model == null) {
+            this.model = model;
+            selectionEventManager.setModel(model);
+        }
+
+        refresh();
+    }
+
+    public SelectionListModel<T, I> getModel() {
+        return model;
+    }
+
+    private void refresh() {
+        if (model != null) {
+            if (model.getDataProvider().getDataDisplays().size() > 0) {
+                model.refresh();
+            } else {
+                model.getDataProvider().addDataDisplay(cellTable);
+            }
+        }
     }
 
     public MultiSelectionModel<I> getSelectionModel() {
         return selectionModel;
     }
 
-    private static class ExplorerTreeSelectionEventManager<T, I extends SelectionItem>
+    private static class SelectionEventManager<T, I extends SelectionItem>
             extends AbstractSelectionEventManager<I> {
 
         private final MultiSelectionModelImpl<I> selectionModel;
@@ -145,8 +186,8 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
         private final boolean allowMultiSelect = false;
         private SelectionListModel<T, I> model;
 
-        public ExplorerTreeSelectionEventManager(final AbstractHasData<I> cellTable,
-                                                 final MultiSelectionModelImpl<I> selectionModel) {
+        public SelectionEventManager(final AbstractHasData<I> cellTable,
+                                     final MultiSelectionModelImpl<I> selectionModel) {
             super(cellTable);
             this.selectionModel = selectionModel;
         }
@@ -222,23 +263,13 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
             final NativeEvent nativeEvent = e.getNativeEvent();
             final I selectedItem = e.getValue();
             if (selectedItem != null && MouseUtil.isPrimary(nativeEvent)) {
-                if (!selectedItem.isHasChildren()) {
-                    final boolean doubleClick = doubleClickTest.test(selectedItem);
-                    doSelect(selectedItem,
-                            new SelectionType(doubleClick,
-                                    false,
-                                    allowMultiSelect,
-                                    nativeEvent.getCtrlKey(),
-                                    nativeEvent.getShiftKey()));
-                } else {
-                    final boolean doubleClick = doubleClickTest.test(selectedItem);
-                    doSelect(selectedItem,
-                            new SelectionType(doubleClick,
-                                    false,
-                                    allowMultiSelect,
-                                    nativeEvent.getCtrlKey(),
-                                    nativeEvent.getShiftKey()));
-                }
+                final boolean doubleClick = doubleClickTest.test(selectedItem);
+                doSelect(selectedItem,
+                        new SelectionType(doubleClick,
+                                false,
+                                allowMultiSelect,
+                                nativeEvent.getCtrlKey(),
+                                nativeEvent.getShiftKey()));
             }
         }
 
@@ -250,18 +281,12 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
                     MultiSelectEvent.fire(cellTable, selectionType);
                 }
 
-                if (selectionType.isDoubleSelect()) {
-                    if (row != null) {
-                        if (row.isHasChildren()) {
-                            // Open item.
-                            if (model != null &&
-                                    model.getNavigationModel() != null &&
-                                    model.getNavigationModel().navigate(row)) {
-                                model.refresh();
-                            }
-                        } else {
-                            setKeyboardSelection(row);
-                        }
+                if (row != null && row.isHasChildren()) {
+                    // Open item.
+                    if (model != null &&
+                            model.getNavigationModel() != null &&
+                            model.getNavigationModel().navigate(row)) {
+                        model.refresh();
                     }
                 } else {
                     setKeyboardSelection(row);
@@ -305,7 +330,7 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
                 if (model != null &&
                         model.getNavigationModel() != null &&
                         model.getNavigationModel().navigateBack(row)) {
-                    model.refresh();
+                    refresh();
                 }
             }
         }, ClickEvent.getType());

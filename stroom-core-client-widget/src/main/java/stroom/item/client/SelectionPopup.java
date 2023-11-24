@@ -47,6 +47,10 @@ public class SelectionPopup<T, I extends SelectionItem> extends Composite {
         selectionList.setModel(model);
     }
 
+    public SelectionListModel<T, I> getModel() {
+        return selectionList.getModel();
+    }
+
     public MultiSelectionModel<I> getSelectionModel() {
         return selectionList.getSelectionModel();
     }

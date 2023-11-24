@@ -41,6 +41,7 @@ public class DynamicQueryHelpSelectionListModel implements SelectionListModel<Qu
     private DocRef dataSourceRef;
     private String currentQuery;
     private boolean showAll = true;
+    private QueryHelpRequest lastRequest;
 
     @Inject
     public DynamicQueryHelpSelectionListModel(final RestFactory restFactory) {
@@ -77,32 +78,41 @@ public class DynamicQueryHelpSelectionListModel implements SelectionListModel<Qu
                 parentId,
                 filter,
                 showAll);
-        restFactory.builder()
-                .forResultPageOf(QueryHelpRow.class)
-                .onSuccess(response -> {
-                    final ResultPage<QueryHelpRow> resultPage;
-                    if (response.getValues().size() > 0) {
-                        resultPage = response;
-                    } else {
-                        final List<QueryHelpRow> rows = Collections
-                                .singletonList(QueryHelpRow
-                                        .builder()
-                                        .type(QueryHelpType.TITLE)
-                                        .id(parentId + "none")
-                                        .title("[ none ]")
-                                        .build());
-                        resultPage = new ResultPage<>(rows);
-                    }
-                    final List<QueryHelpSelectionItem> items = resultPage
-                            .getValues()
-                            .stream()
-                            .map(this::wrap)
-                            .collect(Collectors.toList());
-                    display.setRowData(response.getPageStart(), items);
-                    display.setRowCount(response.getPageSize(), response.isExact());
-                })
-                .call(QUERY_RESOURCE)
-                .fetchQueryHelpItems(request);
+
+        // Only fetch if the request has changed.
+        if (!request.equals(lastRequest)) {
+            lastRequest = request;
+
+            restFactory.builder()
+                    .forResultPageOf(QueryHelpRow.class)
+                    .onSuccess(response -> {
+                        // Only update if the request is still current.
+                        if (request == lastRequest) {
+                            final ResultPage<QueryHelpRow> resultPage;
+                            if (response.getValues().size() > 0) {
+                                resultPage = response;
+                            } else {
+                                final List<QueryHelpRow> rows = Collections
+                                        .singletonList(QueryHelpRow
+                                                .builder()
+                                                .type(QueryHelpType.TITLE)
+                                                .id(parentId + "none")
+                                                .title("[ none ]")
+                                                .build());
+                                resultPage = new ResultPage<>(rows);
+                            }
+                            final List<QueryHelpSelectionItem> items = resultPage
+                                    .getValues()
+                                    .stream()
+                                    .map(this::wrap)
+                                    .collect(Collectors.toList());
+                            display.setRowData(response.getPageStart(), items);
+                            display.setRowCount(response.getPageSize(), response.isExact());
+                        }
+                    })
+                    .call(QUERY_RESOURCE)
+                    .fetchQueryHelpItems(request);
+        }
     }
 
     public void setCurrentQuery(final String currentQuery) {
@@ -131,6 +141,18 @@ public class DynamicQueryHelpSelectionListModel implements SelectionListModel<Qu
     @Override
     public NavigationModel<QueryHelpSelectionItem> getNavigationModel() {
         return navigationModel;
+    }
+
+    @Override
+    public void reset() {
+        navigationModel.reset();
+        filter = StringMatch.any();
+        for (final HasData<?> display : dataProvider.getDataDisplays()) {
+            final Range range = display.getVisibleRange();
+            if (range.getStart() != 0 || range.getLength() != 100) {
+                display.setVisibleRange(0, 100);
+            }
+        }
     }
 
     @Override

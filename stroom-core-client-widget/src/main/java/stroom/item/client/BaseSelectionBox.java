@@ -23,16 +23,16 @@ public class BaseSelectionBox<T, I extends SelectionItem>
     private final TextBox textBox;
     private final SvgIconBox svgIconBox;
     private SelectionListModel<T, I> model;
-
-    private SelectionPopup<T, I> currentPopup;
+    private final SelectionPopup<T, I> popup;
     private T value;
+    private boolean showing;
 
     private final EventBinder eventBinder = new EventBinder() {
         @Override
         protected void onBind() {
             registerHandler(textBox.addClickHandler(event -> showPopup()));
             registerHandler(svgIconBox.addClickHandler(event -> showPopup()));
-            registerHandler(textBox.addKeyUpHandler(event -> {
+            registerHandler(textBox.addKeyDownHandler(event -> {
                 int keyCode = event.getNativeKeyCode();
                 if (KeyCodes.KEY_ENTER == keyCode || KeyCodes.KEY_SPACE == keyCode) {
                     showPopup();
@@ -50,6 +50,9 @@ public class BaseSelectionBox<T, I extends SelectionItem>
         svgIconBox.addStyleName("SelectionBox");
         svgIconBox.setWidget(textBox, SvgImage.DROP_DOWN);
 
+        popup = new SelectionPopup<>();
+        popup.addAutoHidePartner(textBox.getElement());
+
         initWidget(svgIconBox);
     }
 
@@ -66,21 +69,15 @@ public class BaseSelectionBox<T, I extends SelectionItem>
     @Override
     public void setModel(final SelectionListModel<T, I> model) {
         this.model = model;
-    }
-
-    public TextBox getTextBox() {
-        return textBox;
+        popup.setModel(model);
     }
 
     private void showPopup() {
-        if (currentPopup != null) {
+        if (showing) {
             GWT.log("Hiding popup");
             hidePopup();
+
         } else {
-            final SelectionPopup<T, I> popup = new SelectionPopup<>();
-            popup.addAutoHidePartner(textBox.getElement());
-            popup.setModel(model);
-            model.refresh();
             final I selectionItem = model.wrap(value);
             if (selectionItem != null) {
                 popup.getSelectionModel().setSelected(selectionItem, true);
@@ -92,7 +89,7 @@ public class BaseSelectionBox<T, I extends SelectionItem>
                     handlerRegistration.removeHandler();
                 }
                 handlerRegistrations.clear();
-                currentPopup = null;
+                showing = false;
             }));
             handlerRegistrations.add(popup.getSelectionModel().addSelectionHandler(e -> {
                 final I selected = popup.getSelectionModel().getSelected();
@@ -105,15 +102,13 @@ public class BaseSelectionBox<T, I extends SelectionItem>
             }));
 
             popup.show(textBox);
-            currentPopup = popup;
+            showing = true;
         }
     }
 
     private void hidePopup() {
-        if (currentPopup != null) {
-            currentPopup.hide();
-            currentPopup = null;
-        }
+        popup.hide();
+        showing = false;
     }
 
     @Override

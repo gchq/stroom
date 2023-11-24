@@ -36,6 +36,7 @@ public class DynamicColumnSelectionListModel implements SelectionListModel<Colum
     private final NavigationModel<ColumnSelectionItem> navigationModel = new NavigationModel<>();
     private DocRef dataSourceRef;
     private StringMatch filter;
+    private FindFieldInfoCriteria lastCriteria;
 
     @Inject
     public DynamicColumnSelectionListModel(final DataSourceClient dataSourceClient) {
@@ -63,6 +64,8 @@ public class DynamicColumnSelectionListModel implements SelectionListModel<Colum
             }
 
             if (GwtNullSafe.isBlankString(parentPath)) {
+                lastCriteria = null;
+
                 final List<ColumnSelectionItem> list = new ArrayList<>();
                 list.add(ColumnSelectionItem.createParent("Annotations"));
                 list.add(ColumnSelectionItem.createParent("Counts"));
@@ -72,6 +75,8 @@ public class DynamicColumnSelectionListModel implements SelectionListModel<Colum
                 display.setRowCount(list.size(), true);
 
             } else if ("Counts.".equals(parentPath)) {
+                lastCriteria = null;
+
                 final List<ColumnSelectionItem> list = new ArrayList<>();
                 final Column count = Column.builder()
                         .name("Count")
@@ -101,15 +106,24 @@ public class DynamicColumnSelectionListModel implements SelectionListModel<Colum
                         null,
                         dataSourceRef,
                         StringMatch.contains("annotation:"));
-                dataSourceClient.findFields(findFieldInfoCriteria, response -> {
-                    final List<ColumnSelectionItem> items = response
-                            .getValues()
-                            .stream()
-                            .map(ColumnSelectionItem::create)
-                            .collect(Collectors.toList());
-                    display.setRowData(response.getPageStart(), items);
-                    display.setRowCount(response.getPageSize(), response.isExact());
-                });
+
+                // Only fetch if the request has changed.
+                if (!findFieldInfoCriteria.equals(lastCriteria)) {
+                    lastCriteria = findFieldInfoCriteria;
+
+                    dataSourceClient.findFields(findFieldInfoCriteria, response -> {
+                        // Only update if the request is still current.
+                        if (findFieldInfoCriteria == lastCriteria) {
+                            final List<ColumnSelectionItem> items = response
+                                    .getValues()
+                                    .stream()
+                                    .map(ColumnSelectionItem::create)
+                                    .collect(Collectors.toList());
+                            display.setRowData(response.getPageStart(), items);
+                            display.setRowCount(response.getPageSize(), response.isExact());
+                        }
+                    });
+                }
 
             } else if ("Data Source.".equals(parentPath)) {
                 final FindFieldInfoCriteria findFieldInfoCriteria = new FindFieldInfoCriteria(
@@ -117,15 +131,24 @@ public class DynamicColumnSelectionListModel implements SelectionListModel<Colum
                         null,
                         dataSourceRef,
                         filter);
-                dataSourceClient.findFields(findFieldInfoCriteria, response -> {
-                    final List<ColumnSelectionItem> items = response
-                            .getValues()
-                            .stream()
-                            .map(ColumnSelectionItem::create)
-                            .collect(Collectors.toList());
-                    display.setRowData(response.getPageStart(), items);
-                    display.setRowCount(response.getPageSize(), response.isExact());
-                });
+
+                // Only fetch if the request has changed.
+                if (!findFieldInfoCriteria.equals(lastCriteria)) {
+                    lastCriteria = findFieldInfoCriteria;
+
+                    dataSourceClient.findFields(findFieldInfoCriteria, response -> {
+                        // Only update if the request is still current.
+                        if (findFieldInfoCriteria == lastCriteria) {
+                            final List<ColumnSelectionItem> items = response
+                                    .getValues()
+                                    .stream()
+                                    .map(ColumnSelectionItem::create)
+                                    .collect(Collectors.toList());
+                            display.setRowData(response.getPageStart(), items);
+                            display.setRowCount(response.getPageSize(), response.isExact());
+                        }
+                    });
+                }
             }
         }
     }
@@ -134,8 +157,16 @@ public class DynamicColumnSelectionListModel implements SelectionListModel<Colum
         this.dataSourceRef = dataSourceRef;
     }
 
+    @Override
     public void reset() {
         navigationModel.reset();
+        this.filter = StringMatch.any();
+        for (final HasData<?> display : dataProvider.getDataDisplays()) {
+            final Range range = display.getVisibleRange();
+            if (range.getStart() != 0 || range.getLength() != 100) {
+                display.setVisibleRange(0, 100);
+            }
+        }
     }
 
     @Override

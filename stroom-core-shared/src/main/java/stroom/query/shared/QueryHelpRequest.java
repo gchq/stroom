@@ -13,6 +13,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.List;
+import java.util.Objects;
 
 @JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
@@ -63,5 +64,29 @@ public class QueryHelpRequest extends BaseCriteria {
 
     public boolean isShowAll() {
         return showAll;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof QueryHelpRequest)) {
+            return false;
+        }
+        if (!super.equals(o)) {
+            return false;
+        }
+        final QueryHelpRequest request = (QueryHelpRequest) o;
+        return showAll == request.showAll &&
+                Objects.equals(query, request.query) &&
+                Objects.equals(dataSourceRef, request.dataSourceRef) &&
+                Objects.equals(parentPath, request.parentPath) &&
+                Objects.equals(stringMatch, request.stringMatch);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), query, dataSourceRef, parentPath, stringMatch, showAll);
     }
 }

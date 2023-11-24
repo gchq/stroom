@@ -125,11 +125,15 @@ public class QuickFilter extends FlowPanel
         }
     }
 
-    private void onKeyDown(final KeyDownEvent event) {
+    protected void onKeyDown(final KeyDownEvent event) {
         // Clear the text box if ESC is pressed
         if (event.getNativeKeyCode() == KeyCodes.KEY_ESCAPE) {
             textBox.setText("");
         }
+    }
+
+    public void reset() {
+        textBox.setText("");
     }
 
     @Override

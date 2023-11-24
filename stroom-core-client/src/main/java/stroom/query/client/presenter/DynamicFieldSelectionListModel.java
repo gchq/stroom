@@ -22,9 +22,9 @@ public class DynamicFieldSelectionListModel implements FieldSelectionListModel {
 
     private final DataSourceClient dataSourceClient;
     private final AsyncDataProvider<FieldInfoSelectionItem> dataProvider;
-    private final NavigationModel<FieldInfoSelectionItem> navigationModel = new NavigationModel<>();
     private DocRef dataSourceRef;
     private StringMatch filter;
+    private FindFieldInfoCriteria lastCriteria;
 
     @Inject
     public DynamicFieldSelectionListModel(final DataSourceClient dataSourceClient) {
@@ -45,15 +45,23 @@ public class DynamicFieldSelectionListModel implements FieldSelectionListModel {
                     null,
                     dataSourceRef,
                     filter);
-            dataSourceClient.findFields(findFieldInfoCriteria, response -> {
-                final List<FieldInfoSelectionItem> items = response
-                        .getValues()
-                        .stream()
-                        .map(this::wrap)
-                        .collect(Collectors.toList());
-                display.setRowData(response.getPageStart(), items);
-                display.setRowCount(response.getPageSize(), response.isExact());
-            });
+
+            // Only fetch if the request has changed.
+            if (!findFieldInfoCriteria.equals(lastCriteria)) {
+                lastCriteria = findFieldInfoCriteria;
+                dataSourceClient.findFields(findFieldInfoCriteria, response -> {
+                    // Only update if the request is still current.
+                    if (findFieldInfoCriteria == lastCriteria) {
+                        final List<FieldInfoSelectionItem> items = response
+                                .getValues()
+                                .stream()
+                                .map(this::wrap)
+                                .collect(Collectors.toList());
+                        display.setRowData(response.getPageStart(), items);
+                        display.setRowCount(response.getPageSize(), response.isExact());
+                    }
+                });
+            }
         }
     }
 
@@ -68,7 +76,18 @@ public class DynamicFieldSelectionListModel implements FieldSelectionListModel {
 
     @Override
     public NavigationModel<FieldInfoSelectionItem> getNavigationModel() {
-        return navigationModel;
+        return null;
+    }
+
+    @Override
+    public void reset() {
+        filter = StringMatch.any();
+        for (final HasData<?> display : dataProvider.getDataDisplays()) {
+            final Range range = display.getVisibleRange();
+            if (range.getStart() != 0 || range.getLength() != 100) {
+                display.setVisibleRange(0, 100);
+            }
+        }
     }
 
     @Override

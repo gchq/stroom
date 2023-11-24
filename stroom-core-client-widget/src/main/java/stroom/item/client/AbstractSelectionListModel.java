@@ -1,7 +1,9 @@
 package stroom.item.client;
 
 import com.google.gwt.view.client.AbstractDataProvider;
+import com.google.gwt.view.client.HasData;
 import com.google.gwt.view.client.ListDataProvider;
+import com.google.gwt.view.client.Range;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -23,6 +25,17 @@ public abstract class AbstractSelectionListModel<T, I extends SelectionItem> imp
     @Override
     public NavigationModel<I> getNavigationModel() {
         return null;
+    }
+
+    @Override
+    public void reset() {
+        lastFilter = null;
+        for (final HasData<?> display : dataProvider.getDataDisplays()) {
+            final Range range = display.getVisibleRange();
+            if (range.getStart() != 0 || range.getLength() != 100) {
+                display.setVisibleRange(0, 100);
+            }
+        }
     }
 
     @Override

@@ -14,7 +14,7 @@
                     <b:InlineSvgButton ui:field="insertButton" title="Insert" enabled="false"/>
                     <b:InlineSvgButton ui:field="copyButton" title="Copy" enabled="false"/>
                 </g:FlowPanel>
-                <g:SimplePanel ui:field="details" styleName="dock-max queryHelp-details"/>
+                <g:SimplePanel ui:field="details" styleName="dock-max queryHelpDetail"/>
             </g:FlowPanel>
         </g:center>
     </g:ThinSplitLayoutPanel>
