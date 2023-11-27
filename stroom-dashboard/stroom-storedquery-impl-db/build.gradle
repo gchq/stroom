@@ -17,6 +17,7 @@ dependencies {
     implementation libs.jackson_core
     implementation libs.jackson_databind
     implementation libs.jakarta_validation_api
+    implementation libs.jaxb_api
     implementation libs.jooq
     implementation libs.slf4j_api
 
