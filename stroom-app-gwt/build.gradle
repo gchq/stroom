@@ -1,3 +1,5 @@
+import java.nio.file.Files;
+
 ext.moduleName = 'stroom.app.gwt'
 
 def getSysPropertyOrDefault = { propName, defaultValue ->
@@ -109,10 +111,10 @@ def projectsToRename = [
     project(':stroom-core-shared'),
     project(':stroom-docref'),
     project(':stroom-query:stroom-query-api'),
-    project(':stroom-util-shared'),
     project(':stroom-query:stroom-query-common'),
     project(':stroom-query:stroom-query-language-api'),
     project(':stroom-security:stroom-security-client-api'),
+    project(':stroom-util-shared'),
 ]
 
 configurations {
@@ -152,7 +154,7 @@ task jakarta {
 
     projectsToRename.each { prj ->
         // Dynamically create a task for each shared project
-        def dynamicTaskName =  "jakarta-${prj.name}"
+        def dynamicTaskName =  "jakarta-app-${prj.name}"
         logger.info('Registering task: ' + dynamicTaskName)
         tasks.register(dynamicTaskName) {
             dependsOn prj.tasks.getByName('compileJava')
@@ -165,7 +167,13 @@ task jakarta {
             def inputProjectPath = prj.projectDir
             // Define the inputs/outputs of this dynamic task so gradle knows if anything has changed, so
             // can skip the task if not.
-            inputs.dir inputProjectPath
+            //inputs.dir inputProjectPath
+            inputs.dir inputProjectPath.toPath().resolve('build').resolve('classes').resolve('java').resolve('main')
+            inputs.dir inputProjectPath.toPath().resolve('src').resolve('main').resolve('java')
+
+            if (Files.exists(inputProjectPath.toPath().resolve('src').resolve('main').resolve('resources'))) {
+                inputs.dir inputProjectPath.toPath().resolve('src').resolve('main').resolve('resources')
+            }
             outputs.dir gwtProjectSourcePath
 
             // Now add the dirs from out modified (jakarta => javax) stroom-core-shared temp dir
@@ -173,7 +181,10 @@ task jakarta {
             // added even if the dynamic task is skipped due to no change.
             gwtSourceDirs.add(gwtProjectSourcePath.resolve('build').resolve('classes').resolve('java').resolve('main'))
             gwtSourceDirs.add(gwtProjectSourcePath.resolve('src').resolve('main').resolve('java'))
-            gwtSourceDirs.add(gwtProjectSourcePath.resolve('src').resolve('main').resolve('resources'))
+            // Not all projects have resources
+            if (Files.exists(inputProjectPath.toPath().resolve('src').resolve('main').resolve('resources'))) {
+                gwtSourceDirs.add(gwtProjectSourcePath.resolve('src').resolve('main').resolve('resources'))
+            }
 
             doLast {
                 println 'Running eclipse TransformerCLI on ' + prj.name
@@ -269,6 +280,15 @@ task gwtCompile(dependsOn: classes, type: JavaExec) {
             //println "${it.toString()}"
         //}
         logger.info('modifiedProjectsBasePath: ' + modifiedProjectsBasePath)
+
+        gwtSourceDirs.each {
+            if (it instanceof Path && Files.exists(it)) {
+                println "Can't find gwtSourceDir" + it
+                //throw new GradleException("Can't find gwtSourceDir ${it}")
+            } else if (it instanceof File && !Files.exists(it.toPath())) {
+                println "Can't find gwtSourceDir" + it
+            }
+        }
     }
 
     mainClass = gwtCompilerProps.mainClass
@@ -320,6 +340,15 @@ task gwtDraftCompile(dependsOn: classes, type: JavaExec) {
         new File(deployDir).mkdirs();
         logger.info("Ensuring directory extraDir ${extraDir}")
         new File(extraDir).mkdirs();
+
+        gwtSourceDirs.each {
+            if (it instanceof Path && Files.exists(it)) {
+                println "Can't find gwtSourceDir" + it
+                //throw new GradleException("Can't find gwtSourceDir ${it}")
+            } else if (it instanceof File && !Files.exists(it.toPath())) {
+                println "Can't find gwtSourceDir" + it
+            }
+        }
     }
 
     mainClass = 'com.google.gwt.dev.Compiler'
