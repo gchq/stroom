@@ -119,8 +119,8 @@ tasks.register('copySources') {
     doLast {
         // This file has all the rename mappings for TransformerCLI to use
         def propFilePath = rootDir.toPath().resolve('jakarta-renames-reverse.properties')
-        def inputProjectPath = "${project.projectDir}/build/raw-source"
-        def outputProjectPath = "${project.projectDir}/build/transformed-source"
+        def inputProjectPath = layout.buildDirectory.dir("raw-source").get()
+        def outputProjectPath = layout.buildDirectory.dir("transformed-source").get()
 
         // Delete current source output.
         delete inputProjectPath
@@ -158,8 +158,8 @@ tasks.register('copySources') {
 
 tasks.register('compileSources', JavaCompile) {
     dependsOn copySources
-    def sources = "${project.projectDir}/build/transformed-source"
-    def build = "${project.projectDir}/build/transformed-build"
+    def sources = layout.buildDirectory.dir("transformed-source").get()
+    def build = layout.buildDirectory.dir("transformed-build").get()
 
     source = file(sources)
     destinationDirectory.set(file(build))
@@ -180,10 +180,10 @@ tasks.register('makeGwtSourceDirs') {
 
         gwtSourceDirs.addAll(project(':stroom-gwt').sourceSets.main.output.classesDirs)
 
-        gwtSourceDirs.add(new File("${project.projectDir}/build/transformed-source"))
-        gwtSourceDirs.add(new File("${project.projectDir}/build/transformed-build"))
+        gwtSourceDirs.add(layout.buildDirectory.dir("transformed-source").get())
+        gwtSourceDirs.add(layout.buildDirectory.dir("transformed-build").get())
 
-        println "Dumping ${gwtSourceDirs.size} gwtSourceDirs"
+        println "Dumping ${gwtSourceDirs.size()} gwtSourceDirs"
         gwtSourceDirs.each {
             println "${it.toString()}"
         }

@@ -493,8 +493,8 @@ subprojects {
         delete "out"
     }
 
-    task allDeps(type: DependencyReportTask) {}
-    task allDepInsight(type: DependencyInsightReportTask) {}
+    tasks.register('allDeps', DependencyReportTask) {}
+    tasks.register('allDepInsight', DependencyInsightReportTask) {}
 
 //    // These lines pull the integration test task into our build process.
 //    tasks.check.dependsOn integrationTest
@@ -557,7 +557,7 @@ subprojects {
                 // IJ Idea.
                 def jvmArgsCopy = []
                 for (arg in jvmArgs) {
-                    jvmArgsCopy.add(arg);
+                    jvmArgsCopy.add(arg)
                 }
                 jvmArgsCopy.add("--add-opens")
                 jvmArgsCopy.add("java.base/java.nio=ALL-UNNAMED")
@@ -668,9 +668,11 @@ subprojects {
     }
 
     // These work in tandem with the suppression.xml
-    tasks.withType(Checkstyle) {
-        include("**/stroom/**/*.java")
-        exclude("**/db/jooq/**/*.java")
+    tasks.withType(Checkstyle).tap {
+        configureEach {
+            include("**/stroom/**/*.java")
+            exclude("**/db/jooq/**/*.java")
+        }
     }
 }
 
@@ -683,12 +685,14 @@ configure(projectsToBePublished) {
     group = 'stroom'
     version = versions.stroom
 
-    task sourcesJar(type: Jar, dependsOn: classes) {
+    tasks.register('sourcesJar', Jar) {
+        dependsOn classes
         classifier = 'sources'
         from sourceSets.main.allSource
     }
 
-    task javadocJar(type: Jar, dependsOn: javadoc) {
+    tasks.register('javadocJar', Jar) {
+        dependsOn javadoc
         classifier = 'javadoc'
         from javadoc.destinationDir
     }
@@ -837,7 +841,7 @@ configure(projectsToBePublished) {
 //    }
 //}
 
-task setupSampleData() {
+tasks.register('setupSampleData') {
 //    dependsOn downloadStroomContent
     dependsOn ':stroom-app:setupSampleDataApplication'
 }
@@ -864,7 +868,7 @@ gradle.buildFinished {
     }
 }
 
-task dependenciesPng() {
+tasks.register('dependenciesPng') {
     def reportsDir = new File("build/reports")
     def compileDepsDot = file("$reportsDir/compileDeps.dot")
     inputs.files subprojects.configurations.implementation

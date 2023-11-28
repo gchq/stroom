@@ -37,7 +37,7 @@ def outputDir = "${resourcesDir}/new-ui"
 //    nodeModulesDir = file("${project.projectDir}")
 //}
 
-task generateApi {
+tasks.register('generateApi') {
     // Ensure swagger output is created first as we use it to create the typescript API for the UI.
     dependsOn ":stroom-app:resolve"
 
@@ -51,7 +51,7 @@ task generateApi {
     }
 }
 
-task removeYarnBuild {
+tasks.register('removeYarnBuild') {
     group "yarn"
     doLast {
         println 'Deleting compiled output: ' + outputDir.toString()
@@ -59,7 +59,7 @@ task removeYarnBuild {
     }
 }
 
-task yarnBuild {
+tasks.register('yarnBuild') {
     group "yarn"
     dependsOn removeYarnBuild
     dependsOn generateApi
@@ -74,7 +74,7 @@ task yarnBuild {
     }
 }
 
-task copyYarnBuild(type: Copy) {
+tasks.register('copyYarnBuild', Copy) {
     dependsOn yarnBuild
     dependsOn checkstyleMain
     dependsOn checkstyleTest
@@ -83,6 +83,6 @@ task copyYarnBuild(type: Copy) {
 
     group "yarn"
     outputs.upToDateWhen { false }
-    from "${project.buildDir}"
+    from layout.buildDirectory
     into "${outputDir}"
 }

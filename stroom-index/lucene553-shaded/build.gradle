@@ -18,7 +18,7 @@ dependencies {
     implementation "org.apache.lucene:lucene-queryparser:5.5.3"
 }
 
-task lucene553ShadowJar(type: ShadowJar) {
+tasks.register('lucene553ShadowJar', ShadowJar) {
     archiveClassifier = 'all'
     configurations = [project.configurations.runtimeClasspath]
     zip64 true

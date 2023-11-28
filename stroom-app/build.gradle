@@ -22,7 +22,7 @@ configurations {
 
 ext.moduleName = 'stroom.app'
 
-def uiDir = project.file('src/main/resources/ui')
+//def uiDir = project.file('src/main/resources/ui')
 //def swaggerDir = "${uiDir}/noauth/swagger"
 //def restResourceClassNames = []
 //def jarName = 'stroom-app.jar'
@@ -223,7 +223,6 @@ dependencies {
     implementation libs.mysql_connector_java
     implementation libs.restygwt
     implementation libs.slf4j_api
-    implementation project(':stroom-docref')
     implementation libs.ws_rs_api
 
     runtimeOnly libs.jakarta_el
@@ -382,7 +381,7 @@ runShadow {
 }
 
 // Run the DB migrations then exit
-task migrate(type: JavaExec) {
+tasks.register('migrate', JavaExec) {
     dependsOn ':stroom-config:stroom-config-app:compileJava'
 
     classpath = sourceSets.main.runtimeClasspath
@@ -397,12 +396,12 @@ clean {
 }
 
 // Generate the confi.yml files for the zip and docker distributions
-task generateConfigFiles(type: JavaExec) {
+tasks.register('generateConfigFiles', JavaExec) {
     classpath = sourceSets.test.runtimeClasspath
     mainClass = "stroom.dist.GenerateDistributionConfig"
 }
 
-task downloadStroomContentForDocker(type: JavaExec) {
+tasks.register('downloadStroomContentForDocker', JavaExec) {
     println "Downloading/copying content packs to ${stroomDockerContentPacksDir}"
 
     dependsOn this: compileJava
@@ -415,7 +414,7 @@ task downloadStroomContentForDocker(type: JavaExec) {
     args = [contentPackDefinitionFile, contentPackDownloadDir, stroomDockerContentPacksDir]
 }
 
-task downloadStroomContentForZipDist(type: JavaExec) {
+tasks.register('downloadStroomContentForZipDist', JavaExec) {
     println "Downloading/copying content packs to ${stroomZipDistContentPacksDir}"
 
     dependsOn this: compileJava
@@ -429,7 +428,7 @@ task downloadStroomContentForZipDist(type: JavaExec) {
 }
 
 // Copy all the files needed by the stroom docker build into stroom-app/docker/build
-task copyFilesForStroomDockerBuild() {
+tasks.register('copyFilesForStroomDockerBuild') {
     dependsOn shadowJar
     //dependsOn parent.downloadStroomContent
     dependsOn generateConfigFiles
@@ -439,7 +438,7 @@ task copyFilesForStroomDockerBuild() {
 
         // Copy the stroom app fat jar
         copy {
-            from "${project.buildDir}/libs/${fatJarName}"
+            from layout.buildDirectory.dir("libs/${fatJarName}")
             into stroomDockerBuildDir
         }
 
@@ -592,18 +591,18 @@ resolve {
 //}
 //generateSwaggerDocumentation.dependsOn prepareSwaggerClasses
 
-task copyJar(type: Copy) {
+tasks.register('copyJar', Copy) {
     dependsOn shadowJar
     from shadowJar.outputs.files
     into "${releaseBuildDir}/bin"
 }
 
-task copyCommonSupportingFiles(type: Copy) {
+tasks.register('copyCommonSupportingFiles', Copy) {
     from '../dist'
     into releaseBuildDir
 }
 
-task copySupportingFiles(type: Copy) {
+tasks.register('copySupportingFiles', Copy) {
     dependsOn copyCommonSupportingFiles
 
     from 'src/main/resources/banner.txt'
@@ -626,19 +625,19 @@ task copySupportingFiles(type: Copy) {
     }
 }
 
-task downloadSend(type: Download) {
+tasks.register('downloadSend', Download) {
     dependsOn copySupportingFiles
     src "https://github.com/gchq/stroom-clients/releases/download/${sendToStroomScriptVersion}/send_to_stroom.sh"
     dest "${releaseBuildDir}/bin/"
 }
 
-task downloadSendArgs(type: Download) {
+tasks.register('downloadSendArgs', Download) {
     dependsOn copySupportingFiles
     src "https://github.com/gchq/stroom-clients/releases/download/${sendToStroomScriptVersion}/send_to_stroom_args.sh"
     dest "${releaseBuildDir}/bin/"
 }
 
-task makeSendExecutable {
+tasks.register('makeSendExecutable') {
     dependsOn downloadSend
     doLast {
         // The args script is sourced so doesn't need execute perms
@@ -654,7 +653,7 @@ task makeSendExecutable {
 //}
 
 // Create an example yaml config file from the compile-time defaults
-task generateConfigDefaultsYamlFile(type: JavaExec) {
+tasks.register('generateConfigDefaultsYamlFile', JavaExec) {
     dependsOn ':stroom-config:stroom-config-app:compileJava'
     dependsOn ':stroom-config:stroom-config-app:compileTestJava'
 
@@ -664,7 +663,7 @@ task generateConfigDefaultsYamlFile(type: JavaExec) {
 }
 
 // Build the release distribution zip for stroom
-task buildDistribution(type: Zip) {
+tasks.register('buildDistribution', Zip) {
 
     // run all the tasks that produce content for the zip
     dependsOn copyJar
@@ -728,7 +727,7 @@ shadowDistTar.enabled = false
 ////}
 //}
 
-task setupSampleDataApplication(type: JavaExec) {
+tasks.register('setupSampleDataApplication', JavaExec) {
     dependsOn this: compileJava
     dependsOn this: compileTestJava
     // We need to set the working directory as the stroom root otherwise

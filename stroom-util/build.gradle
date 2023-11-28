@@ -51,7 +51,7 @@ dependencies {
     testRuntimeOnly libs.logback_core
 }
 
-task writeBuildProperties {
+tasks.register('writeBuildProperties') {
     def propertyFile = file "${project.rootDir}/stroom-util/src/main/resources/META-INF/stroom-util-build.properties"
     def props = new Properties()
 

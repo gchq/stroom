@@ -19,7 +19,7 @@ dependencies {
     //implementation libs.http_client__elastic
 }
 
-task elasticShadowJar(type: ShadowJar) {
+tasks.register('elasticShadowJar', ShadowJar) {
     archiveClassifier = 'all'
     configurations = [project.configurations.runtimeClasspath]
     zip64 true

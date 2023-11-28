@@ -126,20 +126,20 @@ clean {
 }
 
 // Generate the confi.yml files for the zip and docker distributions
-task generateConfigFiles(type: JavaExec) {
+tasks.register('generateConfigFiles', JavaExec) {
     classpath = sourceSets.test.runtimeClasspath
     mainClass = "stroom.proxy.dist.GenerateProxyDistributionConfig"
 }
 
 // Copy all the files needed by the stroom-proxy docker build into stroom-app/proxy-docker/build
-task copyFilesForProxyDockerBuild() {
+tasks.register('copyFilesForProxyDockerBuild') {
     dependsOn shadowJar
     dependsOn generateConfigFiles
 
     doFirst {
         // Copy the stroom app fat jar
         copy {
-            from "${project.buildDir}/libs/${fatJarName}"
+            from layout.buildDirectory.dir("libs/${fatJarName}")
             into proxyDockerBuildDir
         }
 
@@ -160,20 +160,20 @@ distTar.enabled = false
 shadowDistZip.enabled = false
 shadowDistTar.enabled = false
 
-task copyJar(type: Copy) {
+tasks.register('copyJar', Copy) {
     dependsOn shadowJar
     from shadowJar.outputs.files
     into "${releaseBuildDir}/bin"
 }
 
-task copyCommonSupportingFiles(type: Copy) {
+tasks.register('copyCommonSupportingFiles', Copy) {
     from '../../dist'
     // migrate is a stroom only thing
     exclude '**/migrate.sh'
     into releaseBuildDir
 }
 
-task copySupportingFiles(type: Copy) {
+tasks.register('copySupportingFiles', Copy) {
     dependsOn copyCommonSupportingFiles
 
     from 'src/main/resources/banner.txt'
@@ -188,13 +188,13 @@ task copySupportingFiles(type: Copy) {
         // This is a sym-link so it seems to go into the zip with +x perms
         // which we don't want
         //exec {
-            //commandLine 'chmod', '644', "${releaseBuildDir}/config/config.yml"
+        //commandLine 'chmod', '644', "${releaseBuildDir}/config/config.yml"
         //}
     }
 }
 
 // Create an example yaml config file from the compile-time defaults
-task generateConfigDefaultsYamlFile(type: JavaExec) {
+tasks.register('generateConfigDefaultsYamlFile', JavaExec) {
     //dependsOn ':stroom-config:stroom-config-app:compileJava'
     //dependsOn ':stroom-config:stroom-config-app:compileTestJava'
 
@@ -204,7 +204,7 @@ task generateConfigDefaultsYamlFile(type: JavaExec) {
 }
 
 // Build the release distribution zip for stroom proxy
-task buildDistribution(type: Zip) {
+tasks.register('buildDistribution', Zip) {
 
     // run all the tasks that produce content for the zip
     dependsOn copyJar
