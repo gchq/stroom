@@ -4,6 +4,8 @@ import stroom.datasource.api.v2.DataSourceProvider;
 import stroom.datasource.api.v2.FieldInfo;
 import stroom.datasource.api.v2.FindFieldInfoCriteria;
 import stroom.docref.DocRef;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
@@ -20,6 +22,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @SuppressWarnings("unused")
 public class DataSourceProviderRegistry {
 
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DataSourceProviderRegistry.class);
     private final Map<String, DataSourceProvider> dataSourceProviders = new ConcurrentHashMap<>();
 
     @Inject
@@ -40,9 +43,14 @@ public class DataSourceProviderRegistry {
     }
 
     public ResultPage<FieldInfo> getFieldInfo(final FindFieldInfoCriteria criteria) {
-        return getDataSourceProvider(criteria.getDataSourceRef().getType())
-                .map(dsp -> dsp.getFieldInfo(criteria))
-                .orElseGet(() -> ResultPage.createCriterialBasedList(Collections.emptyList(), criteria));
+        try {
+            return getDataSourceProvider(criteria.getDataSourceRef().getType())
+                    .map(dsp -> dsp.getFieldInfo(criteria))
+                    .orElseGet(() -> ResultPage.createCriterialBasedList(Collections.emptyList(), criteria));
+        } catch (final RuntimeException e) {
+            LOGGER.debug(e.getMessage(), e);
+            return ResultPage.createCriterialBasedList(Collections.emptyList(), criteria);
+        }
     }
 
     public Optional<String> fetchDocumentation(final DocRef docRef) {

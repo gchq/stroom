@@ -58,9 +58,14 @@ public class ViewSearchProvider implements SearchProvider {
                 // Find the referenced data source.
                 final DocRef docRef = viewDoc.getDataSource();
                 if (docRef != null) {
+                    final FindFieldInfoCriteria findFieldInfoCriteria = new FindFieldInfoCriteria(
+                            criteria.getPageRequest(),
+                            criteria.getSortList(),
+                            docRef,
+                            criteria.getStringMatch());
                     final Optional<DataSourceProvider> delegate =
                             dataSourceProviderRegistry.get().getDataSourceProvider(docRef.getType());
-                    return delegate.map(dataSourceProvider -> dataSourceProvider.getFieldInfo(criteria));
+                    return delegate.map(dataSourceProvider -> dataSourceProvider.getFieldInfo(findFieldInfoCriteria));
                 }
             }
             return Optional.empty();
