@@ -23,6 +23,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.sql.DataSource;
 
+// TODO consider refactoring this into AbstractStroomCommand with an abstract method to return a guice module
+//  to create the child injector with.
 /**
  * Additional DW Command so instead of
  * ... server ../local.yml

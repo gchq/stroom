@@ -1,6 +1,8 @@
 package stroom.security.common.impl;
 
+import stroom.security.api.HasJwt;
 import stroom.security.api.UserIdentity;
+import stroom.util.NullSafe;
 import stroom.util.authentication.HasRefreshable;
 
 import java.util.Objects;
@@ -11,7 +13,7 @@ import java.util.Objects;
  * This user uses the client credentials flow.
  */
 public class ServiceUserIdentity
-        implements UserIdentity, HasJwtClaims, HasUpdatableToken, HasRefreshable<UpdatableToken> {
+        implements UserIdentity, HasJwtClaims, HasJwt, HasUpdatableToken, HasRefreshable<UpdatableToken> {
 
     private final String id;
     private final String displayName;
@@ -70,5 +72,10 @@ public class ServiceUserIdentity
                 "id='" + id + '\'' +
                 ", updatableToken=" + updatableToken +
                 '}';
+    }
+
+    @Override
+    public String getJwt() {
+        return NullSafe.get(updatableToken, UpdatableToken::getJwt);
     }
 }

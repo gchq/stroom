@@ -78,11 +78,8 @@ public class ExcelTarget implements SearchResultWriter.Target {
         // Create a style for headings.
         final Font headingFont = workbook.createFont();
         headingFont.setBold(true);
-        headingFont.setColor(IndexedColors.WHITE.getIndex());
         headingStyle = workbook.createCellStyle();
         headingStyle.setFont(headingFont);
-        headingStyle.setFillBackgroundColor(IndexedColors.BLACK.getIndex());
-        headingStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
     }
 
     @Override
