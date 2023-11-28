@@ -13,6 +13,19 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2.7] - 2023-11-28
+
+* Remove 5s thread sleep left in the code from testing. This sleep happens when a legacy ref data stream is migrated.
+
+* Issue **#3908** : Add config property to change search result download row limit when sorted.
+
+* Issue **#3918** : Revert Excel heading style.
+
+* Issue **#3926** : Add the CLI command `fetch_proc_user_token` to obtain an OIDC access token for the internal processing user. This command is useful for getting a token to be able to call stroom's APIs to manage a cluster.
+
+* Issue **#3929** : Fix stuck searches.
+
+
 ## [v7.2.6] - 2023-11-15
 
 * Issue **#3909** : Add multiple recipients to rule notification emails.
@@ -6162,7 +6175,8 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2.6...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2.7...HEAD
+[v7.2.7]: https://github.com/gchq/stroom/compare/v7.2.6...v7.2.7
 [v7.2.6]: https://github.com/gchq/stroom/compare/v7.2.5...v7.2.6
 [v7.2.5]: https://github.com/gchq/stroom/compare/v7.2.4...v7.2.5
 [v7.2.4]: https://github.com/gchq/stroom/compare/v7.2.3...v7.2.4
