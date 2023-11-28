@@ -1,5 +1,5 @@
 package stroom.util.concurrent;
 
-public class CompleteException extends RuntimeException {
+public class CompleteException extends Exception {
 
 }

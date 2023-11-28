@@ -440,6 +440,7 @@ public class LmdbDataStore implements DataStore {
                 errorConsumer.add(e);
             } finally {
                 // Ensure we complete.
+                queue.clear();
                 complete.countDown();
                 LOGGER.debug(() -> "Finished transfer while loop");
                 transferState.setThread(null);
