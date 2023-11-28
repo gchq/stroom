@@ -1,9 +1,9 @@
-import java.nio.file.Files;
+import java.nio.file.Files
 
 ext.moduleName = 'stroom.dashboard.gwt'
 
 def getSysPropertyOrDefault = { propName, defaultValue ->
-    def val;
+    def val
     if (System.hasProperty(propName)
             && System.getProperty(propName) != "unspecified"
             && System.getProperty(propName) != "") {
@@ -13,7 +13,7 @@ def getSysPropertyOrDefault = { propName, defaultValue ->
         val = defaultValue
         logger.info("Property [${propName}] has no value, using default value [${val}]")
     }
-    return val;
+    return val
 }
 
 def resourcesDir = project(':stroom-app').file('src/main/resources')
@@ -38,11 +38,8 @@ def modifiedProjectsBasePath = "${gwtBuildDir}/modified_projects"
 def modifiedProjectsBasePathGwt = "${gwtBuildDir}/modified_projects_gwt"
 
 def gwtSourceDirs = []
-def modifiedCoreSharedJarPath = null
-def modifiedCoreSharedSourcePath = null
-def dynamicJakartaTasks = []
 
-configurations.all {
+configurations.configureEach {
     resolutionStrategy {
         eachDependency { DependencyResolveDetails details ->
             if (details.requested.group == 'javax.xml.bind') {
@@ -55,9 +52,10 @@ configurations.all {
     }
 }
 
-// Declare a source set just for our GWT compile that is separate from teh Java compilation source set.
+// Declare a source set just for our GWT compile that is separate from the Java compilation source set.
 sourceSets {
     gwtSource
+    jakartaTransformer
 }
 
 dependencies {
@@ -91,6 +89,8 @@ dependencies {
     gwtSourceImplementation libs.swagger_annotations // needed so gwt can compile the stroom-query code that contains swagger annotations
     gwtSourceImplementation libs.restygwt
     gwtSourceImplementation libs.ws_rs_api__gwt
+
+    jakartaTransformerImplementation libs.eclipse_transformer_cli
 }
 
 // Define a list of projects that contain the source code we want to compile with GWT.
@@ -108,25 +108,6 @@ def clientProjects = [
     project(':stroom-util-shared'),
 ]
 
-configurations {
-    jakartaTransformerConfiguration {
-        resolutionStrategy {
-            // org.eclipse.transformer.cli:0.5.0 uses biz.aQute.bnd:biz.aQute.bnd.transform:6.3.1 which does not work
-            // on J21 compiled classes/jars, so we need to uplift to bnd 7.0.0 which does.
-            // It seems eclipse are reluctant to uplift bnd to 7.0.0 as that is J17 and they want to support J8
-            // See https://github.com/eclipse/transformer/issues/475 and https://github.com/bndtools/bnd/issues/5886
-            dependencySubstitution {
-                substitute module('biz.aQute.bnd:biz.aQute.bnd.transform') using module("biz.aQute.bnd:biz.aQute.bnd.transform:${versions.bnd}")
-            }
-        }
-    }
-}
-
-dependencies {
-    // Note the dependencySubstitution on this dep above
-    jakartaTransformerConfiguration libs.eclipse_transformer_cli
-}
-
 // Task to make a copy of each project in projectsToRename then change all imports
 // from jakarta => javax (in source/classses/resources) so that GWT can use them.
 // It adds the modified projects to GWTs compile classpath.
@@ -134,40 +115,37 @@ dependencies {
 // See https://github.com/gwtproject/gwt/issues/9727 for details on jakarta progress but
 // be aware that restgwt is not jakarta friendly and is a dormant project so that will need
 // sorting somehow.
-task copySources {
+tasks.register('copySources') {
     doLast {
         // This file has all the rename mappings for TransformerCLI to use
-        def gwtSource = "${project.projectDir}/build/gwt-source"
-        println('gwtSource: ' + gwtSource)
+        def propFilePath = rootDir.toPath().resolve('jakarta-renames-reverse.properties')
+        def inputProjectPath = "${project.projectDir}/build/raw-source"
+        def outputProjectPath = "${project.projectDir}/build/transformed-source"
 
         // Delete current source output.
-        delete gwtSource
+        delete inputProjectPath
 
         // Copy all code into source output.
         clientProjects.each { prj ->
             println('copy: ' + prj.projectDir)
             copy {
                 from prj.projectDir.toPath().resolve('src').resolve('main').resolve('java')
-                into gwtSource
+                into inputProjectPath
             }
             copy {
                 from prj.projectDir.toPath().resolve('src').resolve('main').resolve('resources')
-                into gwtSource
+                into inputProjectPath
             }
         }
 
         // Transform code.
-        def propFilePath = rootDir.toPath().resolve('jakarta-renames-reverse.properties')
-        def inputProjectPath = gwtSource
-        def outputProjectPath = "${project.projectDir}/build/transformed-source"
-
         println 'Running eclipse TransformerCLI'
         println('inputProjectPath: ' + inputProjectPath)
         println('outputProjectPath: ' + outputProjectPath)
         delete outputProjectPath
 
         javaexec {
-            classpath configurations.jakartaTransformerConfiguration
+            classpath = files(sourceSets.jakartaTransformer.compileClasspath)
             mainClass = "org.eclipse.transformer.cli.TransformerCLI"
             args = [
                     inputProjectPath,
@@ -178,20 +156,20 @@ task copySources {
     }
 }
 
-task compileSources(type: JavaCompile) {
+tasks.register('compileSources', JavaCompile) {
     dependsOn copySources
     def sources = "${project.projectDir}/build/transformed-source"
     def build = "${project.projectDir}/build/transformed-build"
 
     source = file(sources)
-    destinationDir = file(build)
+    destinationDirectory.set(file(build))
     classpath = files(sources, sourceSets.gwtSource.compileClasspath)
     options.sourcepath = files(sources)
 
-    outputs.dir(destinationDir)
+    outputs.dir(destinationDirectory.get())
 }
 
-task makeGwtSourceDirs {
+tasks.register('makeGwtSourceDirs') {
     dependsOn compileSources
 
     doLast {
@@ -212,7 +190,8 @@ task makeGwtSourceDirs {
     }
 }
 
-task gwtCompile(dependsOn: classes, type: JavaExec) {
+tasks.register('gwtCompile', JavaExec) {
+    dependsOn classes
     group "gwt"
     dependsOn 'gwtClean'
     dependsOn 'makeGwtSourceDirs'
@@ -227,26 +206,26 @@ task gwtCompile(dependsOn: classes, type: JavaExec) {
         delete extraDir
 
         logger.info("Ensuring directory gwtBuildDir ${gwtBuildDir}")
-        new File(gwtBuildDir).mkdirs();
+        new File(gwtBuildDir).mkdirs()
         logger.info("Ensuring directory gwtTmpDir ${gwtTmpDir}")
-        new File(gwtTmpDir).mkdirs();
+        new File(gwtTmpDir).mkdirs()
         logger.info("Ensuring directory workDir ${workDir}")
-        new File(workDir).mkdirs();
+        new File(workDir).mkdirs()
         logger.info("Ensuring directory deployDir ${deployDir}")
-        new File(deployDir).mkdirs();
+        new File(deployDir).mkdirs()
         logger.info("Ensuring directory extraDir ${extraDir}")
-        new File(extraDir).mkdirs();
+        new File(extraDir).mkdirs()
 
         logger.info("gwtSourceDirs count: ${gwtSourceDirs.size()}")
 
         //println "Dumping $gwtSourceDirs.size gwtSourceDirs"
         //gwtSourceDirs.each {
-            //println "${it.toString()}"
+        //println "${it.toString()}"
         //}
         logger.info('modifiedProjectsBasePath: ' + modifiedProjectsBasePath)
 
         gwtSourceDirs.each {
-            if (it instanceof Path && Files.exists(it)) {
+            if (it instanceof java.nio.file.Path && Files.exists(it)) {
                 println "Can't find gwtSourceDir" + it
                 //throw new GradleException("Can't find gwtSourceDir ${it}")
             } else if (it instanceof File && !Files.exists(it.toPath())) {
@@ -255,7 +234,7 @@ task gwtCompile(dependsOn: classes, type: JavaExec) {
         }
     }
 
-    mainClass = gwtCompilerProps.mainClass
+    mainClass.set(gwtCompilerProps.mainClass.toString())
 
     classpath {
         gwtSourceDirs
@@ -284,7 +263,8 @@ task gwtCompile(dependsOn: classes, type: JavaExec) {
     maxHeapSize = gwtCompilerProps.maxHeap
 }
 
-task gwtDraftCompile(dependsOn: classes, type: JavaExec) {
+tasks.register('gwtDraftCompile', JavaExec) {
+    dependsOn classes
     group "gwt"
     dependsOn 'makeGwtSourceDirs'
 
@@ -295,18 +275,18 @@ task gwtDraftCompile(dependsOn: classes, type: JavaExec) {
         delete outputDir
 
         logger.info("Ensuring directory gwtBuildDir ${gwtBuildDir}")
-        new File(gwtBuildDir).mkdirs();
+        new File(gwtBuildDir).mkdirs()
         logger.info("Ensuring directory gwtTmpDir ${gwtTmpDir}")
-        new File(gwtTmpDir).mkdirs();
+        new File(gwtTmpDir).mkdirs()
         logger.info("Ensuring directory workDir ${workDir}")
-        new File(workDir).mkdirs();
+        new File(workDir).mkdirs()
         logger.info("Ensuring directory deployDir ${deployDir}")
-        new File(deployDir).mkdirs();
+        new File(deployDir).mkdirs()
         logger.info("Ensuring directory extraDir ${extraDir}")
-        new File(extraDir).mkdirs();
+        new File(extraDir).mkdirs()
 
         gwtSourceDirs.each {
-            if (it instanceof Path && Files.exists(it)) {
+            if (it instanceof java.nio.file.Path && Files.exists(it)) {
                 println "Can't find gwtSourceDir" + it
                 //throw new GradleException("Can't find gwtSourceDir ${it}")
             } else if (it instanceof File && !Files.exists(it.toPath())) {
@@ -345,7 +325,8 @@ task gwtDraftCompile(dependsOn: classes, type: JavaExec) {
     maxHeapSize = '4G'
 }
 
-task gwtSuperDevMode(dependsOn: classes, type: JavaExec) {
+tasks.register('gwtSuperDevMode', JavaExec) {
+    dependsOn classes
     group "gwt"
     dependsOn 'makeGwtSourceDirs'
 
@@ -358,15 +339,15 @@ task gwtSuperDevMode(dependsOn: classes, type: JavaExec) {
 
     doFirst {
         logger.info("Ensuring directory gwtBuildDir ${gwtBuildDir}")
-        new File(gwtBuildDir).mkdirs();
+        new File(gwtBuildDir).mkdirs()
         logger.info("Ensuring directory gwtTmpDir ${gwtTmpDir}")
-        new File(gwtTmpDir).mkdirs();
+        new File(gwtTmpDir).mkdirs()
         logger.info("Ensuring directory workDir ${workDir}")
-        new File(workDir).mkdirs();
+        new File(workDir).mkdirs()
         logger.info("Ensuring directory deployDir ${deployDir}")
-        new File(deployDir).mkdirs();
+        new File(deployDir).mkdirs()
         logger.info("Ensuring directory extraDir ${extraDir}")
-        new File(extraDir).mkdirs();
+        new File(extraDir).mkdirs()
 
         def GREEN = '\033[1;32m'
         def NC = '\033[0m'
@@ -408,7 +389,7 @@ task gwtSuperDevMode(dependsOn: classes, type: JavaExec) {
     maxHeapSize = gwtCompilerProps.maxHeap
 }
 
-task gwtClean {
+tasks.register('gwtClean') {
     group "gwt"
     doLast {
 //        println 'Deleting GWT unit cache: ' + unitCacheDir.toString()
@@ -424,16 +405,8 @@ task gwtClean {
         delete modifiedProjectsBasePathGwt
 
         logger.info("Ensuring directory gwtBuildDir ${gwtBuildDir}")
-        new File(gwtBuildDir).mkdirs();
+        new File(gwtBuildDir).mkdirs()
         logger.info("Ensuring directory gwtTmpDir ${gwtTmpDir}")
-        new File(gwtTmpDir).mkdirs();
+        new File(gwtTmpDir).mkdirs()
     }
-}
-
-// Now all the tasks are configured, we need to add dependencies on our dynamically
-// registered tasks to ensure they get run
-dynamicJakartaTasks.each { dynamicTask ->
-    tasks.getByName('gwtDraftCompile').dependsOn dynamicTask
-    tasks.getByName('gwtCompile').dependsOn dynamicTask
-    tasks.getByName('gwtSuperDevMode').dependsOn dynamicTask
 }
