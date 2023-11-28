@@ -163,7 +163,13 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
 
     public void destroy() {
         if (model != null) {
-            model.getDataProvider().removeDataDisplay(cellTable);
+            if (model.getDataProvider().getDataDisplays().size() > 0) {
+                if (!model.getDataProvider().getDataDisplays().contains(cellTable)) {
+                    throw new RuntimeException("Expected display is not present.");
+                } else {
+                    model.getDataProvider().removeDataDisplay(cellTable);
+                }
+            }
             model.reset();
         }
     }

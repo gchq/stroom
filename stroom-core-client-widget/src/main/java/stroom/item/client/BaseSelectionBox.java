@@ -88,6 +88,7 @@ public class BaseSelectionBox<T, I extends SelectionItem>
                     handlerRegistration.removeHandler();
                 }
                 handlerRegistrations.clear();
+                popup = null;
             }));
             handlerRegistrations.add(popup.getSelectionModel().addSelectionHandler(e -> {
                 final I selected = popup.getSelectionModel().getSelected();

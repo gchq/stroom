@@ -158,7 +158,7 @@ task copySources {
 
         // Transform code.
         def propFilePath = rootDir.toPath().resolve('jakarta-renames-reverse.properties')
-        def inputProjectPath = gwtSource;
+        def inputProjectPath = gwtSource
         def outputProjectPath = "${project.projectDir}/build/transformed-source"
 
         println 'Running eclipse TransformerCLI'
@@ -191,24 +191,8 @@ task compileSources(type: JavaCompile) {
     outputs.dir(destinationDir)
 }
 
-task sourcesJar(type: Jar, dependsOn: copySources) {
-    destinationDirectory = file("${project.projectDir}/build")
-    archiveFileName = "transformed-source.jar"
-    from "${project.projectDir}/build/transformed-source"
-    includeEmptyDirs = false
-}
-
-task buildJar(type: Jar, dependsOn: copySources) {
-    dependsOn compileSources
-    destinationDirectory = file("${project.projectDir}/build")
-    archiveFileName = "transformed-build.jar"
-    from "${project.projectDir}/build/transformed-build"
-    includeEmptyDirs = false
-}
-
 task makeGwtSourceDirs {
-    dependsOn sourcesJar
-    dependsOn buildJar
+    dependsOn compileSources
 
     doLast {
         gwtSourceDirs = []
@@ -218,8 +202,8 @@ task makeGwtSourceDirs {
 
         gwtSourceDirs.addAll(project(':stroom-gwt').sourceSets.main.output.classesDirs)
 
-        gwtSourceDirs.add(new File("${project.projectDir}/build/transformed-source.jar"))
-        gwtSourceDirs.add(new File("${project.projectDir}/build/transformed-build.jar"))
+        gwtSourceDirs.add(new File("${project.projectDir}/build/transformed-source"))
+        gwtSourceDirs.add(new File("${project.projectDir}/build/transformed-build"))
 
         println "Dumping ${gwtSourceDirs.size} gwtSourceDirs"
         gwtSourceDirs.each {
