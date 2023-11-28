@@ -51,7 +51,6 @@ dependencies {
     implementation libs.flyway_mysql
     implementation libs.guava
     implementation libs.guice
-    implementation libs.gwt_servlet
     implementation libs.hikari
     implementation libs.jackson_annotations
     implementation libs.jackson_core

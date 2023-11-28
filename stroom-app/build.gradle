@@ -354,7 +354,7 @@ shadowJar {
     // We want to compile all GWT and React content before we build the fat jar.
     dependsOn ":stroom-ui:copyYarnBuild"
     dependsOn ":stroom-app-gwt:gwtCompile"
-    dependsOn ":stroom-dashboard-gwt:gwtCompile"
+//    dependsOn ":stroom-dashboard-gwt:gwtCompile"
     // The jar needs to include the swagger.(json|yaml) files that swagger gen produces
     dependsOn resolve
 
@@ -742,7 +742,7 @@ task setupSampleDataApplication(type: JavaExec) {
 
 // Make sure GWT compilation doesn't run before processResources.
 tasks.getByPath(':stroom-app-gwt:gwtClean').mustRunAfter processResources
-tasks.getByPath(':stroom-dashboard-gwt:gwtClean').mustRunAfter processResources
+//tasks.getByPath(':stroom-dashboard-gwt:gwtClean').mustRunAfter processResources
 tasks.getByPath(':stroom-ui:removeYarnBuild').mustRunAfter processResources
 
 // We often run out of memory when running the UI builds in parallel so create tasks that will build them one after another.

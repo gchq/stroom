@@ -55,7 +55,6 @@ configurations.all {
     }
 }
 
-
 // Declare a source set just for our GWT compile that is separate from teh Java compilation source set.
 sourceSets {
     gwtSource
@@ -67,9 +66,9 @@ dependencies {
     implementation project(':stroom-core-shared')
     implementation project(':stroom-dashboard:stroom-dashboard-client')
     implementation project(':stroom-docref')
+    implementation project(':stroom-gwt')
     implementation project(':stroom-query:stroom-query-language-api')
     implementation project(':stroom-query:stroom-query-api')
-    implementation project(':stroom-query:stroom-query-common')
     implementation project(':stroom-security:stroom-security-client')
     implementation project(':stroom-security:stroom-security-client-api')
 
@@ -82,6 +81,7 @@ dependencies {
     implementation libs.jackson_annotations
     implementation libs.jaxb_api__gwt
     implementation libs.swagger_annotations // needed so gwt can compile the stroom-query code that contains swagger annotations
+    implementation libs.ws_rs_api__gwt
 
     gwtSourceImplementation libs.gin
     gwtSourceImplementation libs.gwt_dev
@@ -91,33 +91,19 @@ dependencies {
     gwtSourceImplementation libs.swagger_annotations // needed so gwt can compile the stroom-query code that contains swagger annotations
     gwtSourceImplementation libs.restygwt
     gwtSourceImplementation libs.ws_rs_api__gwt
-
-//    gwtSourceImplementation libs.stroomDocRef
-//    gwtSourceCompile "${libs.stroomDocRef}:sources"
-//    gwtSourceImplementation libs.stroomQueryApi
-//    gwtSourceCompile "${libs.stroomQueryApi}:sources"
-//    gwtSourceImplementation libs.stroomQueryCommon
-//    gwtSourceCompile "${libs.stroomQueryCommon}:sources"
 }
 
-
 // Define a list of projects that contain the source code we want to compile with GWT.
-def projList = [
+def clientProjects = [
     project(':stroom-core-client'),
     project(':stroom-core-client-widget'),
     project(':stroom-dashboard-gwt'),
     project(':stroom-dashboard:stroom-dashboard-client'),
-    project(':stroom-security:stroom-security-client'),
-]
-
-// Mutually exclusive with projList
-// List of projects to do the jakarta => javax transform on
-def projectsToRename = [
     project(':stroom-core-shared'),
     project(':stroom-docref'),
     project(':stroom-query:stroom-query-api'),
-    project(':stroom-query:stroom-query-common'),
     project(':stroom-query:stroom-query-language-api'),
+    project(':stroom-security:stroom-security-client'),
     project(':stroom-security:stroom-security-client-api'),
     project(':stroom-util-shared'),
 ]
@@ -148,102 +134,92 @@ dependencies {
 // See https://github.com/gwtproject/gwt/issues/9727 for details on jakarta progress but
 // be aware that restgwt is not jakarta friendly and is a dormant project so that will need
 // sorting somehow.
-task jakarta {
+task copySources {
+    doLast {
+        // This file has all the rename mappings for TransformerCLI to use
+        def gwtSource = "${project.projectDir}/build/gwt-source"
+        println('gwtSource: ' + gwtSource)
 
-    gwtSourceDirs = []
+        // Delete current source output.
+        delete gwtSource
 
-    // This file has all the rename mappings for TransformerCLI to use
-    def propFilePath = rootDir.toPath().resolve('jakarta-renames-reverse.properties')
-    logger.info('modifiedProjectsBasePath: ' + modifiedProjectsBasePath)
-    logger.info('propFilePath: ' + propFilePath)
-
-    projectsToRename.each { prj ->
-        // Dynamically create a task for each shared project
-        def dynamicTaskName =  "jakarta-dash-${prj.name}"
-        logger.info('Registering task: ' + dynamicTaskName)
-        tasks.register(dynamicTaskName) {
-            dependsOn prj.tasks.getByName('compileJava')
-
-            // This is where eclipse transformer outputs the modified source/classes to
-            def outputProjectPath = new File(modifiedProjectsBasePath).toPath().resolve(prj.name)
-            // This dir will be a copy of outputProjectPath that GWT uses for its classpath
-            def gwtProjectSourcePath = new File(modifiedProjectsBasePathGwt).toPath().resolve(prj.name)
-
-            def inputProjectPath = prj.projectDir
-            // Define the inputs/outputs of this dynamic task so gradle knows if anything has changed, so
-            // can skip the task if not.
-            //inputs.dir inputProjectPath
-            inputs.dir inputProjectPath.toPath().resolve('build').resolve('classes').resolve('java').resolve('main')
-            inputs.dir inputProjectPath.toPath().resolve('src').resolve('main').resolve('java')
-
-            if (Files.exists(inputProjectPath.toPath().resolve('src').resolve('main').resolve('resources'))) {
-                inputs.dir inputProjectPath.toPath().resolve('src').resolve('main').resolve('resources')
+        // Copy all code into source output.
+        clientProjects.each { prj ->
+            println('copy: ' + prj.projectDir)
+            copy {
+                from prj.projectDir.toPath().resolve('src').resolve('main').resolve('java')
+                into gwtSource
             }
-            outputs.dir gwtProjectSourcePath
-
-            // Now add the dirs from out modified (jakarta => javax) stroom-core-shared temp dir
-            // We have to do this in the configuration stage rather than in doLast so they get
-            // added even if the dynamic task is skipped due to no change.
-            gwtSourceDirs.add(gwtProjectSourcePath.resolve('build').resolve('classes').resolve('java').resolve('main'))
-            gwtSourceDirs.add(gwtProjectSourcePath.resolve('src').resolve('main').resolve('java'))
-            // Not all projects have resources
-            if (Files.exists(inputProjectPath.toPath().resolve('src').resolve('main').resolve('resources'))) {
-                gwtSourceDirs.add(gwtProjectSourcePath.resolve('src').resolve('main').resolve('resources'))
-            }
-
-            doLast {
-                println 'Running eclipse TransformerCLI on ' + prj.name
-                logger.info('inputProjectPath: ' + inputProjectPath)
-                logger.info('outputProjectPath: ' + outputProjectPath)
-                logger.info('modifiedProjectsBasePath: ' + modifiedProjectsBasePath)
-                new File(modifiedProjectsBasePath).mkdirs();
-                new File(modifiedProjectsBasePathGwt).mkdirs();
-
-                // Eclipse transformer won't run unless the output dir is empty
-                logger.info('Deleting outputProjectPath: ' + outputProjectPath.toString())
-                delete outputProjectPath
-
-                javaexec {
-                    classpath configurations.jakartaTransformerConfiguration
-                    mainClass = "org.eclipse.transformer.cli.TransformerCLI"
-                    args = [
-                        inputProjectPath,
-                        outputProjectPath,
-                        '-tr', propFilePath,
-                    ]
-                }
-
-                // Rsync the output from the eclipse transformer to the dir that GWT is using for its
-                // classpath. This means we don't delete all the files that superdev is monitoring, which
-                // it doesn't like. Rsync should only change the files that have actually changed in their
-                // original modules, i.e. when doing superdev code changes.
-                println "rsync-ing from ${outputProjectPath} to ${gwtProjectSourcePath}"
-                exec {
-                    executable "rsync"
-                    args = [
-                        "--archive", 
-                        "${outputProjectPath}/",
-                        "${gwtProjectSourcePath}/",
-                    ]
-                }
+            copy {
+                from prj.projectDir.toPath().resolve('src').resolve('main').resolve('resources')
+                into gwtSource
             }
         }
-        // Run this dynamic task after the one that registred it
-        finalizedBy dynamicTaskName
-        // Make a note of the dynamic task so we can add dependencies on it later
-        dynamicJakartaTasks.add(tasks.getByName(dynamicTaskName))
+
+        // Transform code.
+        def propFilePath = rootDir.toPath().resolve('jakarta-renames-reverse.properties')
+        def inputProjectPath = gwtSource;
+        def outputProjectPath = "${project.projectDir}/build/transformed-source"
+
+        println 'Running eclipse TransformerCLI'
+        println('inputProjectPath: ' + inputProjectPath)
+        println('outputProjectPath: ' + outputProjectPath)
+        delete outputProjectPath
+
+        javaexec {
+            classpath configurations.jakartaTransformerConfiguration
+            mainClass = "org.eclipse.transformer.cli.TransformerCLI"
+            args = [
+                    inputProjectPath,
+                    outputProjectPath,
+                    '-tr', propFilePath,
+            ]
+        }
     }
+}
+
+task compileSources(type: JavaCompile) {
+    dependsOn copySources
+    def sources = "${project.projectDir}/build/transformed-source"
+    def build = "${project.projectDir}/build/transformed-build"
+
+    source = file(sources)
+    destinationDir = file(build)
+    classpath = files(sources, sourceSets.gwtSource.compileClasspath)
+    options.sourcepath = files(sources)
+
+    outputs.dir(destinationDir)
+}
+
+task sourcesJar(type: Jar, dependsOn: copySources) {
+    destinationDirectory = file("${project.projectDir}/build")
+    archiveFileName = "transformed-source.jar"
+    from "${project.projectDir}/build/transformed-source"
+    includeEmptyDirs = false
+}
+
+task buildJar(type: Jar, dependsOn: copySources) {
+    dependsOn compileSources
+    destinationDirectory = file("${project.projectDir}/build")
+    archiveFileName = "transformed-build.jar"
+    from "${project.projectDir}/build/transformed-build"
+    includeEmptyDirs = false
+}
+
+task makeGwtSourceDirs {
+    dependsOn sourcesJar
+    dependsOn buildJar
 
     doLast {
-        // Add source/classes/resources from each of the non-modified projects.
-        projList.each { prj ->
-            gwtSourceDirs.addAll(prj.sourceSets.main.output.classesDirs)
-            gwtSourceDirs.addAll(prj.sourceSets.main.java.srcDirs)
-            gwtSourceDirs.addAll(prj.sourceSets.main.resources.srcDirs)
-        }
+        gwtSourceDirs = []
 
         // Add all of the library sources from the gwtSource source set defined above.
         gwtSourceDirs.addAll(sourceSets.gwtSource.compileClasspath)
+
+        gwtSourceDirs.addAll(project(':stroom-gwt').sourceSets.main.output.classesDirs)
+
+        gwtSourceDirs.add(new File("${project.projectDir}/build/transformed-source.jar"))
+        gwtSourceDirs.add(new File("${project.projectDir}/build/transformed-build.jar"))
 
         println "Dumping ${gwtSourceDirs.size} gwtSourceDirs"
         gwtSourceDirs.each {
@@ -255,8 +231,7 @@ task jakarta {
 task gwtCompile(dependsOn: classes, type: JavaExec) {
     group "gwt"
     dependsOn 'gwtClean'
-    dependsOn 'jakarta'
-    //finalizedBy 'cleanTempFiles'
+    dependsOn 'makeGwtSourceDirs'
 
     def module = 'stroom.dashboard.DashboardApp'
 
@@ -327,7 +302,8 @@ task gwtCompile(dependsOn: classes, type: JavaExec) {
 
 task gwtDraftCompile(dependsOn: classes, type: JavaExec) {
     group "gwt"
-    dependsOn 'jakarta'
+    dependsOn 'makeGwtSourceDirs'
+
     def module = 'stroom.dashboard.DashboardAppSuperDevModeChrome'
 
     doFirst {
@@ -387,7 +363,8 @@ task gwtDraftCompile(dependsOn: classes, type: JavaExec) {
 
 task gwtSuperDevMode(dependsOn: classes, type: JavaExec) {
     group "gwt"
-    dependsOn 'jakarta'
+    dependsOn 'makeGwtSourceDirs'
+
     def module = 'stroom.dashboard.DashboardAppSuperDevModeChrome'
 
 //    def dirs = []

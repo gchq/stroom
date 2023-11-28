@@ -20,9 +20,6 @@ dependencies {
     implementation libs.restygwt
     implementation libs.ws_rs_api__gwt
 
-    //Needed only for the GwtCompilerWrapper
-    compileOnly libs.gwt_dev
-
     testImplementation project(':stroom-util')
     testImplementation project(':stroom-test-common')
     testImplementation libs.assertj_core

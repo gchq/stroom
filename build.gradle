@@ -201,7 +201,6 @@ ext.libs = [
         guice_multibindings                 : "com.google.inject.extensions:guice-multibindings:$versions.guice",
         guice_grapher                       : "com.google.inject.extensions:guice-grapher:$versions.guice",
         gwt_dev                             : "org.gwtproject:gwt-dev:$versions.gwt",
-        gwt_servlet                         : "org.gwtproject:gwt-servlet:$versions.gwt",
         gwt_user                            : "org.gwtproject:gwt-user:$versions.gwt",
         gwtp_mvp_client                     : "com.gwtplatform:gwtp-mvp-client:0.7",
         gson                                : 'com.google.code.gson:gson:2.6.2',

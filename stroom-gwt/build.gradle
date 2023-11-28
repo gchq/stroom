@@ -1,0 +1,5 @@
+ext.moduleName = 'stroom.gwt'
+
+dependencies {
+    implementation libs.gwt_dev
+}

@@ -42,6 +42,7 @@ include 'stroom-annotation:stroom-annotation-pipeline'
 // App.
 include 'stroom-app'
 include 'stroom-app-gwt'
+include 'stroom-gwt'
 
 // Cache
 include 'stroom-cache:stroom-cache-api'
