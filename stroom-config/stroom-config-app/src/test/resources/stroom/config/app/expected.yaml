@@ -50,6 +50,7 @@ appConfig:
         readAheadEnabled: true
       maxPayloadSize: "1G"
       maxPutsBeforeCommit: 10000
+      maxSortedItems: 500000
       maxStringFieldLength: 1000
       minPayloadSize: "1M"
       offHeapResults: true
@@ -650,6 +651,7 @@ appConfig:
         readAheadEnabled: true
       maxPayloadSize: "1G"
       maxPutsBeforeCommit: 10000
+      maxSortedItems: 500000
       maxStringFieldLength: 1000
       minPayloadSize: "1M"
       offHeapResults: true

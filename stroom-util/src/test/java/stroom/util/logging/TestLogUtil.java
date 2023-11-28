@@ -338,4 +338,9 @@ class TestLogUtil {
                 .addCase(Path.of("/tmp/../tmp/"), "/tmp")
                 .build();
     }
+
+    @Test
+    void message_tooManyArgs() {
+        System.out.println(LogUtil.message("Hello {}", "world", "foo"));
+    }
 }

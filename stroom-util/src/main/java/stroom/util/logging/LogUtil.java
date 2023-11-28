@@ -320,6 +320,10 @@ public final class LogUtil {
         }
     }
 
+    /**
+     * @return The simple class name followed by value.toString().
+     * If value is null, returns null.
+     */
     public static String typedValue(final Object value) {
         if (value == null) {
             return null;

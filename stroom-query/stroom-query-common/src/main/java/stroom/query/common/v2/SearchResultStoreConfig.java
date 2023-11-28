@@ -17,6 +17,7 @@ public class SearchResultStoreConfig extends AbstractResultStoreConfig implement
                 ByteSize.ofGibibytes(1),
                 1000,
                 10_000,
+                500_000,
                 ResultStoreLmdbConfig.builder().localDir("search_results").build());
     }
 
@@ -27,6 +28,7 @@ public class SearchResultStoreConfig extends AbstractResultStoreConfig implement
                                    @JsonProperty("maxPayloadSize") final ByteSize maxPayloadSize,
                                    @JsonProperty("maxStringFieldLength") final int maxStringFieldLength,
                                    @JsonProperty("valueQueueSize") final int valueQueueSize,
+                                   @JsonProperty("maxSortedItems") final int maxSortedItems,
                                    @JsonProperty("lmdb") final ResultStoreLmdbConfig lmdbConfig) {
         super(maxPutsBeforeCommit,
                 offHeapResults,
@@ -34,6 +36,7 @@ public class SearchResultStoreConfig extends AbstractResultStoreConfig implement
                 maxPayloadSize,
                 maxStringFieldLength,
                 valueQueueSize,
+                maxSortedItems,
                 lmdbConfig);
     }
 }

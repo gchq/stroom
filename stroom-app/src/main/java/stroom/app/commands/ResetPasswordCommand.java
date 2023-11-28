@@ -25,7 +25,7 @@ import java.util.Set;
 /**
  * Resets the password of an account in the internal identity provider
  */
-public class ResetPasswordCommand extends AbstractStroomAccountConfiguredCommand {
+public class ResetPasswordCommand extends AbstractStroomAppCommand {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ResetPasswordCommand.class);
 
@@ -58,13 +58,13 @@ public class ResetPasswordCommand extends AbstractStroomAccountConfiguredCommand
     public void configure(final Subparser subparser) {
         super.configure(subparser);
 
-        subparser.addArgument("-u", "--" + USERNAME_ARG_NAME)
+        subparser.addArgument(asArg('u', USERNAME_ARG_NAME))
                 .dest(USERNAME_ARG_NAME)
                 .type(String.class)
                 .required(true)
                 .help("The user id of the account, e.g. 'admin'");
 
-        subparser.addArgument("-p", "--" + PASSWORD_ARG_NAME)
+        subparser.addArgument(asArg('p', PASSWORD_ARG_NAME))
                 .dest(PASSWORD_ARG_NAME)
                 .type(String.class)
                 .required(true)
@@ -77,10 +77,10 @@ public class ResetPasswordCommand extends AbstractStroomAccountConfiguredCommand
     }
 
     @Override
-    protected void runCommand(final Bootstrap<Config> bootstrap,
-                              final Namespace namespace,
-                              final Config config,
-                              final Injector injector) {
+    protected void runSecuredCommand(final Bootstrap<Config> bootstrap,
+                                     final Namespace namespace,
+                                     final Config config,
+                                     final Injector injector) {
 
         final String username = namespace.getString(USERNAME_ARG_NAME);
         final String newPassword = namespace.getString(PASSWORD_ARG_NAME);
@@ -88,7 +88,6 @@ public class ResetPasswordCommand extends AbstractStroomAccountConfiguredCommand
         LOGGER.debug("Resetting password for account {}", username);
 
         injector.injectMembers(this);
-
 
         accountDao.resetPassword(username, newPassword);
 

@@ -1,19 +1,20 @@
 package stroom.app.commands;
 
-import stroom.app.BootstrapUtil;
 import stroom.config.app.Config;
 import stroom.db.util.DataSourceProxy;
 import stroom.util.guice.GuiceUtil;
 
 import com.google.inject.Injector;
 import com.google.inject.Key;
-import io.dropwizard.core.cli.ConfiguredCommand;
+import com.google.inject.Module;
 import io.dropwizard.core.setup.Bootstrap;
 import net.sourceforge.argparse4j.inf.Namespace;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.file.Path;
+import java.util.Collections;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.sql.DataSource;
@@ -25,7 +26,7 @@ import javax.sql.DataSource;
  * ... migrate ../local.yml
  * and it will run all the DB migrations without running up the app
  */
-public class DbMigrationCommand extends ConfiguredCommand<Config> {
+public class DbMigrationCommand extends AbstractStroomBaseCommand {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DbMigrationCommand.class);
     private static final String COMMAND_NAME = "migrate";
@@ -34,45 +35,41 @@ public class DbMigrationCommand extends ConfiguredCommand<Config> {
     private final Path configFile;
 
     public DbMigrationCommand(final Path configFile) {
-        super(COMMAND_NAME, COMMAND_DESCRIPTION);
+        super(configFile, COMMAND_NAME, COMMAND_DESCRIPTION);
         this.configFile = configFile;
     }
 
     @Override
-    protected void run(final Bootstrap bootstrap,
-                       final Namespace namespace,
-                       final Config config) throws Exception {
+    protected void runCommand(final Bootstrap<Config> bootstrap,
+                              final Namespace namespace,
+                              final Config config,
+                              final Injector injector) {
 
-        LOGGER.info("Using application configuration file {}",
-                configFile.toAbsolutePath().normalize());
+        // Force guice to get all datasource instances from the multibinder
+        // so the migration will be run for each stroom module
+        // Relies on all db modules adding an entry to the multibinder
+        final Set<DataSource> dataSources = injector.getInstance(
+                Key.get(GuiceUtil.setOf(DataSource.class)));
 
-        LOGGER.debug("Creating injector");
-        try {
-            LOGGER.debug("Creating bootstrap injector");
-            final Injector bootstrapInjector = BootstrapUtil.bootstrapApplication(
-                    config, configFile);
+        LOGGER.info("Used {} data sources:\n{}",
+                dataSources.size(),
+                dataSources.stream()
+                        .map(dataSource -> dataSource instanceof DataSourceProxy
+                                ? ((DataSourceProxy) dataSource).getName()
+                                : dataSource.getClass().getName())
+                        .map(name -> "  " + name)
+                        .sorted()
+                        .collect(Collectors.joining("\n")));
 
-            // Force guice to get all datasource instances from the multibinder
-            // so the migration will be run for each stroom module
-            // Relies on all db modules adding an entry to the multibinder
-            final Set<DataSource> dataSources = bootstrapInjector.getInstance(
-                    Key.get(GuiceUtil.setOf(DataSource.class)));
+    }
 
-            LOGGER.info("Used {} data sources:\n{}",
-                    dataSources.size(),
-                    dataSources.stream()
-                            .map(dataSource -> dataSource instanceof DataSourceProxy
-                                    ? ((DataSourceProxy) dataSource).getName()
-                                    : dataSource.getClass().getName())
-                            .map(name -> "  " + name)
-                            .sorted()
-                            .collect(Collectors.joining("\n")));
+    @Override
+    protected Set<String> getArgumentNames() {
+        return Collections.emptySet();
+    }
 
-        } catch (Exception e) {
-            LOGGER.error("Error running DB migrations", e);
-            System.exit(1);
-        }
-
-        LOGGER.info("DB migration complete");
+    @Override
+    protected Optional<Module> getChildInjectorModule() {
+        return Optional.empty();
     }
 }

@@ -125,6 +125,7 @@ public class LmdbDataStore implements DataStore {
     private final CurrentDbStateFactory currentDbStateFactory;
 
     private final StoredValueKeyFactory storedValueKeyFactory;
+    private final int maxSortedItems;
 
 
     public LmdbDataStore(final SearchRequestSource searchRequestSource,
@@ -160,6 +161,7 @@ public class LmdbDataStore implements DataStore {
         final TableSettings modifiedTableSettings = windowSupport.getTableSettings();
         columns = Objects.requireNonNullElse(modifiedTableSettings.getColumns(), Collections.emptyList());
         queue = new LmdbWriteQueue(resultStoreConfig.getValueQueueSize());
+        maxSortedItems = resultStoreConfig.getMaxSortedItems();
         valueFilter = modifiedTableSettings.getValueFilter();
         columnExpressionMatcher = new ColumnExpressionMatcher(columns);
         this.compiledColumns = CompiledColumns.create(expressionContext, columns, fieldIndex, paramMap);
@@ -1061,13 +1063,9 @@ public class LmdbDataStore implements DataStore {
 
         final long lengthRemaining = range.getOffset() + range.getLength() - fetchState.length;
 
-        // FIXME : THIS IS HARD CODED AND DOESN'T MATTER FOR NORMAL PAGING, BUT WILL LIMIT RESULTS
-        // DOWNLOADED TO EXCEL ETC IF SORTING IS USED.
-        final int trimmedSize = (int) Math.max(Math.min(Math.min(limit, lengthRemaining), 500_000), 0);
+        final int trimmedSize = (int) Math.max(Math.min(Math.min(limit, lengthRemaining), maxSortedItems), 0);
 
         int maxSize = trimmedSize * 2;
-        // FIXME : SEE ABOVE NOTE ABOUT HARD CODING.
-        maxSize = Math.min(maxSize, 1_000_000);
         maxSize = Math.max(maxSize, 1_000);
 
         final SortedItems sortedItems = new SortedItems(10, maxSize, trimmedSize, trimTop, sorter);
