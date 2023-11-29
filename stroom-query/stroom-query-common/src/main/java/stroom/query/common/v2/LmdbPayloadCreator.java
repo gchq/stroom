@@ -105,6 +105,9 @@ public class LmdbPayloadCreator {
                     // Expected as sometimes the output stream is closed by the receiving node.
                     LOGGER.debug(e::getMessage, e);
                 } catch (final InterruptedException e) {
+                    // Ensure we don't deliver further payloads.
+                    currentPayload.terminate();
+
                     // There will be 0 bytes to read so just write 0.
                     output.writeInt(0);
                     LOGGER.trace(e::getMessage, e);

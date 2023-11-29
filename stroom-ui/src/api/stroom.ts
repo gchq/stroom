@@ -182,7 +182,11 @@ export interface AnalyticNotificationDestination {
   type: string;
 }
 
-export type AnalyticNotificationEmailDestination = AnalyticNotificationDestination & { emailAddress?: string };
+export type AnalyticNotificationEmailDestination = AnalyticNotificationDestination & {
+  bcc?: string;
+  cc?: string;
+  to?: string;
+};
 
 export type AnalyticNotificationStreamDestination = AnalyticNotificationDestination & {
   destinationFeed?: DocRef;
@@ -1090,6 +1094,7 @@ export interface DocumentType {
     | "TABLE_NESTED"
     | "TAB_CLOSE"
     | "TAGS"
+    | "TEXT_WRAP"
     | "TICK"
     | "UNDO"
     | "UNLOCK"
@@ -1468,6 +1473,7 @@ export interface ExplorerDocContentMatch {
     | "TABLE_NESTED"
     | "TAB_CLOSE"
     | "TAGS"
+    | "TEXT_WRAP"
     | "TICK"
     | "UNDO"
     | "UNLOCK"
@@ -1653,6 +1659,7 @@ export interface ExplorerNode {
     | "TABLE_NESTED"
     | "TAB_CLOSE"
     | "TAGS"
+    | "TEXT_WRAP"
     | "TICK"
     | "UNDO"
     | "UNLOCK"
@@ -3005,6 +3012,7 @@ export interface PipelineElementType {
     | "TABLE_NESTED"
     | "TAB_CLOSE"
     | "TAGS"
+    | "TEXT_WRAP"
     | "TICK"
     | "UNDO"
     | "UNLOCK"

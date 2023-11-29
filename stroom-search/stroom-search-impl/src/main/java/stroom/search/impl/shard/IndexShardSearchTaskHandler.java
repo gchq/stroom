@@ -198,6 +198,7 @@ public class IndexShardSearchTaskHandler {
                                         } catch (final TaskTerminatedException e) {
                                             // Expected error on early completion.
                                             LOGGER.trace(e::getMessage, e);
+                                            docIdQueue.terminate();
                                         } catch (final IOException e) {
                                             error(errorConsumer, e);
                                         }
@@ -215,26 +216,26 @@ public class IndexShardSearchTaskHandler {
                         // Uncomment this to slow searches down in dev
 //                            ThreadUtil.sleepAtLeastIgnoreInterrupts(1_000);
 
-                        // Take the next item.
-                        // When we get null we are done.
-                        Integer docId = docIdQueue.take();
                         if (parentContext.isTerminated()) {
-                            // We are terminating so take from the queue until we get null so the process adding to
-                            // the queue has a chance to complete.
-                            while (docId != null) {
-                                docId = docIdQueue.take();
-                            }
+                            // We are terminating so terminate the queue.
+                            docIdQueue.terminate();
                             done = true;
-                        } else if (docId == null) {
-                            done = true;
+
                         } else {
-                            try {
-                                // If we have a doc id then retrieve the stored data for it.
-                                SearchProgressLog.increment(queryKey,
-                                        SearchPhase.INDEX_SHARD_SEARCH_TASK_HANDLER_DOC_ID_STORE_TAKE);
-                                getStoredData(storedFieldNames, valuesConsumer, searcher, docId, errorConsumer);
-                            } catch (final RuntimeException e) {
-                                error(errorConsumer, e);
+                            // Take the next item.
+                            // When we get null we are done.
+                            final Integer docId = docIdQueue.take();
+                            if (docId == null) {
+                                done = true;
+                            } else {
+                                try {
+                                    // If we have a doc id then retrieve the stored data for it.
+                                    SearchProgressLog.increment(queryKey,
+                                            SearchPhase.INDEX_SHARD_SEARCH_TASK_HANDLER_DOC_ID_STORE_TAKE);
+                                    getStoredData(storedFieldNames, valuesConsumer, searcher, docId, errorConsumer);
+                                } catch (final RuntimeException e) {
+                                    error(errorConsumer, e);
+                                }
                             }
                         }
                     }

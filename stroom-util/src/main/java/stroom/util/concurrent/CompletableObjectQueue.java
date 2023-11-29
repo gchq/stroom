@@ -39,8 +39,8 @@ public class CompletableObjectQueue<T> {
         queue.complete();
     }
 
-    public void clear() {
-        queue.clear();
+    public void terminate() {
+        queue.terminate();
     }
 
     public int size() {

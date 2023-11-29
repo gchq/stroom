@@ -161,13 +161,13 @@ public class CompletableQueue<T> {
             }
         } catch (final InterruptedException e) {
             complete = true;
-            clear();
+            terminate();
         } finally {
             lock.unlock();
         }
     }
 
-    public void clear() {
+    public void terminate() {
         // Make sure we don't try to add any more items.
         complete = true;
 
@@ -185,6 +185,10 @@ public class CompletableQueue<T> {
                     notFull.signal();
                 }
             }
+
+            notFull.signalAll();
+            notEmpty.signalAll();
+
         } finally {
             lock.unlock();
         }

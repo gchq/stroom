@@ -92,8 +92,7 @@ public class IndexShardHitCollector extends SimpleCollector {
 
         } else {
             // We are terminating so let follow-on tasks know.
-            docIdQueue.clear();
-            docIdQueue.complete();
+            docIdQueue.terminate();
 
             info(() -> "Quitting...");
             LOGGER.debug("Quitting (terminated). {}, query term [{}]", this, query);
