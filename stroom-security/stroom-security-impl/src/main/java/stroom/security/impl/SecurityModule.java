@@ -64,6 +64,7 @@ public class SecurityModule extends AbstractModule {
         // Now bind OpenIdConfiguration to the iface from prev bind
         bind(OpenIdConfiguration.class).to(IdpConfigurationProvider.class);
         bind(UserNameService.class).to(UserNameServiceImpl.class);
+        bind(IdpProxyService.class).to(IdpProxyServiceImpl.class);
 
         HasHealthCheckBinder.create(binder())
                 .bind(ExternalIdpConfigurationProvider.class);
@@ -112,6 +113,7 @@ public class SecurityModule extends AbstractModule {
                 .bind(DocPermissionResourceImpl.class)
                 .bind(SessionResourceImpl.class)
                 .bind(UserResourceImpl.class)
-                .bind(UserNameResourceImpl.class);
+                .bind(UserNameResourceImpl.class)
+                .bind(IdpProxyResourceImpl.class);
     }
 }
