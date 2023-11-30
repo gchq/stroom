@@ -62,7 +62,8 @@ public class SearchRequestBuilder {
     private final FieldIndex fieldIndex;
     private final Map<String, Expression> expressionMap;
     private final Set<String> addedFields = new HashSet<>();
-    private final List<AbstractToken> havingTokens = new ArrayList<>();
+    private final List<AbstractToken> additionalFields = new ArrayList<>();
+    private boolean inHaving;
 
     @Inject
     public SearchRequestBuilder(final VisualisationTokenConsumer visualisationTokenConsumer,
@@ -76,7 +77,7 @@ public class SearchRequestBuilder {
     public void extractDataSourceOnly(final String string, final Consumer<DocRef> consumer) {
         // Get a list of tokens.
         final List<Token> tokens = Tokeniser.parse(string);
-        if (tokens.size() == 0) {
+        if (tokens.isEmpty()) {
             throw new TokenException(null, "No tokens");
         }
 
@@ -102,7 +103,7 @@ public class SearchRequestBuilder {
 
         // Get a list of tokens.
         final List<Token> tokens = Tokeniser.parse(string);
-        if (tokens.size() == 0) {
+        if (tokens.isEmpty()) {
             throw new TokenException(null, "No tokens");
         }
 
@@ -164,7 +165,7 @@ public class SearchRequestBuilder {
         }
 
         final KeywordGroup keywordGroup = (KeywordGroup) token;
-        if (keywordGroup.getChildren().size() == 0) {
+        if (keywordGroup.getChildren().isEmpty()) {
             throw new TokenException(token, "Expected data source value");
         } else if (keywordGroup.getChildren().size() > 1 && !isLenient) {
             throw new TokenException(keywordGroup.getChildren().get(1),
@@ -220,7 +221,7 @@ public class SearchRequestBuilder {
             }
         }
 
-        if (whereGroup.size() > 0) {
+        if (!whereGroup.isEmpty()) {
             final ExpressionOperator expressionOperator = processLogic(whereGroup);
             expressionConsumer.accept(expressionOperator);
         } else {
@@ -311,6 +312,18 @@ public class SearchRequestBuilder {
                                 .build());
             } else {
                 parentBuilder.addTerm(expressionTerm);
+            }
+        }
+
+        if (inHaving) {
+            // Remember the tokens used for having clauses as we need to ensure they are added.
+            additionalFields.add(fieldToken);
+            if (tokens.size() >= 3) {
+                final AbstractToken valueToken = tokens.get(2);
+                if (TokenType.STRING.equals(valueToken.getTokenType()) ||
+                        TokenType.PARAM.equals(valueToken.getTokenType())) {
+                    additionalFields.add(valueToken);
+                }
             }
         }
     }
@@ -424,7 +437,7 @@ public class SearchRequestBuilder {
     }
 
     private String parseValueTokens(final List<AbstractToken> tokens) {
-        if (tokens.size() == 0) {
+        if (tokens.isEmpty()) {
             return "";
         }
 
@@ -515,7 +528,7 @@ public class SearchRequestBuilder {
                 termTokens.add(token);
             } else {
                 // Add current term.
-                if (termTokens.size() > 0) {
+                if (!termTokens.isEmpty()) {
                     addTerm(termTokens, builder);
                     termTokens.clear();
                 }
@@ -548,7 +561,7 @@ public class SearchRequestBuilder {
         }
 
         // Add remaining term.
-        if (termTokens.size() > 0) {
+        if (!termTokens.isEmpty()) {
             addTerm(termTokens, builder);
             termTokens.clear();
         }
@@ -613,7 +626,7 @@ public class SearchRequestBuilder {
         TableSettings visTableSettings = null;
 
         List<AbstractToken> remaining = new LinkedList<>(tokens);
-        while (remaining.size() > 0) {
+        while (!remaining.isEmpty()) {
             final AbstractToken token = remaining.get(0);
 
             if (token instanceof final KeywordGroup keywordGroup) {
@@ -690,21 +703,18 @@ public class SearchRequestBuilder {
                         remaining.remove(0);
                     }
                     case HAVING -> {
+                        inHaving = true;
                         checkTokenOrder(token,
                                 consumedTokens,
                                 Set.of(TokenType.FROM),
                                 inverse(Set.of(TokenType.LIMIT, TokenType.SELECT, TokenType.VIS)));
-                        // Remember the tokens used for having clauses as we need to ensure they are added.
-                        if (keywordGroup.getChildren() != null &&
-                                keywordGroup.getChildren().size() > 0) {
-                            havingTokens.add(keywordGroup.getChildren().get(0));
-                        }
                         remaining =
                                 addExpression(remaining,
                                         consumedTokens,
                                         inverse(Set.of(TokenType.LIMIT, TokenType.SELECT, TokenType.VIS)),
                                         TokenType.HAVING,
                                         tableSettingsBuilder::aggregateFilter);
+                        inHaving = false;
                     }
                     case SELECT -> {
                         checkTokenOrder(token,
@@ -758,8 +768,8 @@ public class SearchRequestBuilder {
             }
         }
 
-        // Add missing HAVING fields.
-        for (final AbstractToken token : havingTokens) {
+        // Add missing fields if needed.
+        for (final AbstractToken token : additionalFields) {
             final String fieldName = token.getUnescapedText();
             if (!addedFields.contains(fieldName)) {
                 final String id = "__" + fieldName.replaceAll("\\s", "_") + "__";
@@ -824,7 +834,7 @@ public class SearchRequestBuilder {
         String advanceString = null;
 
         // Get field name.
-        if (children.size() > 0) {
+        if (!children.isEmpty()) {
             final AbstractToken token = children.get(0);
             if (!TokenType.isString(token)) {
                 throw new TokenException(token, "Syntax exception");
@@ -893,7 +903,7 @@ public class SearchRequestBuilder {
         final List<AbstractToken> children = keywordGroup.getChildren();
 
         // Check we have a variable name.
-        if (children.size() == 0) {
+        if (children.isEmpty()) {
             throw new TokenException(keywordGroup, "Expected variable name following eval");
         }
         final AbstractToken variableToken = children.get(0);
