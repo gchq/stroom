@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2.8] - 2023-11-30
+
+* Issue **#3935** : The `having` clause can now compare two computed row values.
+
+
 ## [v7.2.7] - 2023-11-28
 
 * Remove 5s thread sleep left in the code from testing. This sleep happens when a legacy ref data stream is migrated.
@@ -6175,7 +6180,8 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2.7...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2.8...HEAD
+[v7.2.8]: https://github.com/gchq/stroom/compare/v7.2.7...v7.2.8
 [v7.2.7]: https://github.com/gchq/stroom/compare/v7.2.6...v7.2.7
 [v7.2.6]: https://github.com/gchq/stroom/compare/v7.2.5...v7.2.6
 [v7.2.5]: https://github.com/gchq/stroom/compare/v7.2.4...v7.2.5
