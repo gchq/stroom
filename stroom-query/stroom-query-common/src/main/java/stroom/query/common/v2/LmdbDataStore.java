@@ -440,6 +440,7 @@ public class LmdbDataStore implements DataStore {
                 errorConsumer.add(e);
             } finally {
                 // Ensure we complete.
+                queue.terminate();
                 complete.countDown();
                 LOGGER.debug(() -> "Finished transfer while loop");
                 transferState.setThread(null);
@@ -602,8 +603,8 @@ public class LmdbDataStore implements DataStore {
             // Let the transfer loop know it should stop ASAP.
             transferState.terminate();
 
-            // Clear the queue.
-            queue.clear();
+            // Terminate the queue.
+            queue.terminate();
 
             // If the transfer loop is waiting on new queue items ensure it loops once more.
             completionState.signalComplete();

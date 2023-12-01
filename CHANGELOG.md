@@ -12,6 +12,27 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
+
+## [v7.2.8] - 2023-11-30
+
+* Issue **#3935** : The `having` clause can now compare two computed row values.
+
+
+## [v7.2.7] - 2023-11-28
+
+* Remove 5s thread sleep left in the code from testing. This sleep happens when a legacy ref data stream is migrated.
+
+* Issue **#3908** : Add config property to change search result download row limit when sorted.
+
+* Issue **#3918** : Revert Excel heading style.
+
+* Issue **#3926** : Add the CLI command `fetch_proc_user_token` to obtain an OIDC access token for the internal processing user. This command is useful for getting a token to be able to call stroom's APIs to manage a cluster.
+
+* Issue **#3929** : Fix stuck searches.
+
+
+## [v7.2.6] - 2023-11-15
+
 * Issue **#3909** : Add multiple recipients to rule notification emails.
 
 * Issue **#3898** : Improve task info and debug logging for `Index Shard Delete` job.

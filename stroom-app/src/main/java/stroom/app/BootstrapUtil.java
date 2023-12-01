@@ -117,12 +117,12 @@ public class BootstrapUtil {
 
         LOGGER.debug("buildVersion: '{}'", buildVersion);
 
-        LOGGER.warn("node: {}", NullSafe.getOrElse(
+        LOGGER.debug(() -> LogUtil.message("node: {}", NullSafe.getOrElse(
                 configuration,
                 Config::getYamlAppConfig,
                 AppConfig::getNodeConfig,
                 NodeConfig::getNodeName,
-                "UNKNOWN NODE"));
+                "UNKNOWN NODE")));
 
         return BootstrapUtil.doWithBootstrapLock(
                 configuration,

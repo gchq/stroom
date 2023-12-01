@@ -164,39 +164,39 @@ public class ExtractionDecorator {
                     try {
                         boolean done = false;
                         while (!done) {
-                            // Poll for the next set of values.
-                            // When we get null we are done.
-                            Val[] values = storedDataQueue.take();
                             if (taskContext.isTerminated()) {
-                                // We are terminating so take from the queue until we get null so the process adding to
-                                // the queue has a chance to complete.
-                                while (values != null) {
-                                    values = storedDataQueue.take();
-                                }
+                                // We are terminating so terminate the queue.
+                                storedDataQueue.terminate();
                                 done = true;
-                            } else if (values == null) {
-                                done = true;
+
                             } else {
-                                try {
-                                    info(taskContext, () ->
-                                            "Creating extraction tasks - stored data queue size: " +
-                                                    storedDataQueue.size() +
-                                                    " stream event map size: " +
-                                                    streamEventMap.size());
+                                // Poll for the next set of values.
+                                // When we get null we are done.
+                                Val[] values = storedDataQueue.take();
+                                if (values == null) {
+                                    done = true;
+                                } else {
+                                    try {
+                                        info(taskContext, () ->
+                                                "Creating extraction tasks - stored data queue size: " +
+                                                        storedDataQueue.size() +
+                                                        " stream event map size: " +
+                                                        streamEventMap.size());
 
-                                    // If we have some values then map them.
-                                    SearchProgressLog.increment(queryKey,
-                                            SearchPhase.EXTRACTION_DECORATOR_FACTORY_STORED_DATA_QUEUE_TAKE);
-                                    final Event event = eventFactory.create(values);
-                                    SearchProgressLog.increment(
-                                            queryKey,
-                                            SearchPhase.EXTRACTION_DECORATOR_FACTORY_STREAM_EVENT_MAP_PUT);
-                                    streamEventMap.put(event);
+                                        // If we have some values then map them.
+                                        SearchProgressLog.increment(queryKey,
+                                                SearchPhase.EXTRACTION_DECORATOR_FACTORY_STORED_DATA_QUEUE_TAKE);
+                                        final Event event = eventFactory.create(values);
+                                        SearchProgressLog.increment(
+                                                queryKey,
+                                                SearchPhase.EXTRACTION_DECORATOR_FACTORY_STREAM_EVENT_MAP_PUT);
+                                        streamEventMap.put(event);
 
-                                } catch (final RuntimeException e) {
-                                    LOGGER.debug(e::getMessage, e);
-                                    receivers.values().forEach(receiver ->
-                                            errorConsumer.add(e));
+                                    } catch (final RuntimeException e) {
+                                        LOGGER.debug(e::getMessage, e);
+                                        receivers.values().forEach(receiver ->
+                                                errorConsumer.add(e));
+                                    }
                                 }
                             }
                         }

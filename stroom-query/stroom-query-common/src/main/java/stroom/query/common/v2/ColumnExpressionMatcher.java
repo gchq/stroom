@@ -84,71 +84,68 @@ public class ColumnExpressionMatcher {
 
     private boolean matchOperator(final Map<String, Object> attributeMap,
                                   final ExpressionOperator operator) {
-        if (operator.getChildren() == null || operator.getChildren().size() == 0) {
+        if (operator.getChildren() == null || operator.getChildren().isEmpty()) {
             return true;
         }
 
-        switch (operator.op()) {
-            case AND:
+        return switch (operator.op()) {
+            case AND -> {
                 for (final ExpressionItem child : operator.getChildren()) {
                     if (!matchItem(attributeMap, child)) {
-                        return false;
+                        yield false;
                     }
                 }
-                return true;
-            case OR:
+                yield true;
+            }
+            case OR -> {
                 for (final ExpressionItem child : operator.getChildren()) {
                     if (matchItem(attributeMap, child)) {
-                        return true;
+                        yield true;
                     }
                 }
-                return false;
-            case NOT:
-                return operator.getChildren().size() == 1
-                        && !matchItem(attributeMap, operator.getChildren().get(0));
-            default:
-                throw new MatchException("Unexpected operator type");
-        }
+                yield false;
+            }
+            case NOT -> operator.getChildren().size() == 1
+                    && !matchItem(attributeMap, operator.getChildren().get(0));
+        };
     }
 
     private boolean matchTerm(final Map<String, Object> attributeMap, final ExpressionTerm term) {
         // The term field is the column name, NOT the index field name
-        String termField = term.getField();
         final Condition condition = term.getCondition();
-        String termValue = term.getValue();
-
-        // Clean strings to remove unwanted whitespace that the user may have
-        // added accidentally.
-        if (termField != null) {
-            termField = termField.trim();
-        }
-        if (termValue != null) {
-            termValue = termValue.trim();
-        }
 
         // Try and find the referenced field.
-        if (termField == null || termField.length() == 0) {
+        String termField = term.getField();
+        if (NullSafe.isBlankString(termField)) {
             throw new MatchException("Field not set");
         }
+        termField = termField.trim();
         final Column column = fieldNameToFieldMap.get(termField);
         if (column == null) {
-            throw new MatchException("Field not found in index: " + termField);
+            throw new MatchException("Column not found: " + termField);
         }
         final String columnName = column.getName();
-        if (termValue == null || termValue.length() == 0) {
-            throw new MatchException("Value not set");
-        }
 
-        final Object attribute = attributeMap.get(term.getField());
+        final Object attribute = attributeMap.get(termField);
         if (Condition.IS_NULL.equals(condition)) {
             return attribute == null;
         } else if (Condition.IS_NOT_NULL.equals(condition)) {
             return attribute != null;
+        } else if (attribute == null) {
+            return false;
         }
 
-        if (attribute == null) {
-            return false;
-//            throw new MatchException("Attribute '" + term.getField() + "' not found");
+        // Try and resolve the term value.
+        String termValue = term.getValue();
+        if (NullSafe.isBlankString(termValue)) {
+            throw new MatchException("Value not set");
+        }
+        termValue = termValue.trim();
+
+        // Substitute with row value if a row value exists.
+        final Object rowValue = attributeMap.get(termValue);
+        if (rowValue != null) {
+            termValue = rowValue.toString();
         }
 
         // Create a query based on the field type and condition.
@@ -157,18 +154,14 @@ public class ColumnExpressionMatcher {
         } else if (matchesFormatType(column, Format.Type.DATE_TIME)) {
             return matchDateField(condition, termValue, column, columnName, attribute);
         } else {
-            switch (condition) {
-                case EQUALS:
-                    return isStringMatch(termValue, attribute);
+            return switch (condition) {
+                case EQUALS -> isStringMatch(termValue, attribute);
                 // CONTAINS only supported for legacy content, not for use in UI
-                case CONTAINS:
-                    return isStringContainsMatch(termValue, attribute);
-                case IN:
-                    return isIn(termValue, attribute);
-                default:
-                    // Try to treat as a numeric field.
-                    return matchNumericColumn(condition, termValue, column, columnName, attribute);
-            }
+                case CONTAINS -> isStringContainsMatch(termValue, attribute);
+                case IN -> isIn(termValue, attribute);
+                // Try to treat as a numeric field.
+                default -> matchNumericColumn(condition, termValue, column, columnName, attribute);
+            };
         }
     }
 
@@ -352,8 +345,7 @@ public class ColumnExpressionMatcher {
         if (value == null) {
             return null;
         } else {
-            if (value instanceof String) {
-                String valueStr = (String) value;
+            if (value instanceof final String valueStr) {
                 try {
                     return DateUtil.parseNormalDateTimeString(valueStr);
                 } catch (final NumberFormatException e) {
@@ -372,8 +364,7 @@ public class ColumnExpressionMatcher {
         if (value == null) {
             return null;
         } else {
-            if (value instanceof String) {
-                String valueStr = (String) value;
+            if (value instanceof final String valueStr) {
                 try {
                     // This is a term value so will be IDO format
                     return DateUtil.parseNormalDateTimeString(valueStr);
