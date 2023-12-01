@@ -105,26 +105,22 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
             }
         };
 
-        quickFilter.addStyleName("dock-min");
+        quickFilter.addStyleName("dock-min selectionList-quickFilter");
 
         links = new FlowPanel();
         links.setStyleName("dock-min selectionList-links");
 
         final SimplePanel elementChooser = new SimplePanel();
-        elementChooser.setStyleName("dock-max selectionList");
+        elementChooser.setStyleName("dock-max selectionList-elementChooser");
         elementChooser.add(pagerView.asWidget());
 
-        final FlowPanel inner = new FlowPanel();
-        inner.setStyleName("max dock-container-vertical");
-        inner.add(quickFilter);
-        inner.add(links);
-        inner.add(elementChooser);
+        final FlowPanel layout = new FlowPanel();
+        layout.setStyleName("selectionList dock-container-vertical");
+        layout.add(quickFilter);
+        layout.add(links);
+        layout.add(elementChooser);
 
-        final SimplePanel outer = new SimplePanel();
-        outer.setStyleName("QueryHelpViewImpl max dashboard-panel");
-        outer.add(inner);
-
-        initWidget(outer);
+        initWidget(layout);
     }
 
     public void setKeyboardSelectionPolicy(final KeyboardSelectionPolicy policy) {

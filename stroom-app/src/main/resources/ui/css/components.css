@@ -1894,13 +1894,24 @@ button.main-menu svg {
     visibility: hidden;
 }
 
-.selectionList {
-    overflow: hidden;
+.SelectionPopup .listContainer {
+    min-width: 200px;
+    max-width: 300px;
+    max-height: 400px;
 }
 
-.SelectionPopup .simplePopup-content {
-    width: 300px;
-    height: 400px;
+.SelectionPopup .selectionList {
+    width: auto;
+    height: auto;
+}
+
+.selectionList {
+    width: 100%;
+    height: 100%;
+}
+
+.selectionList-elementChooser {
+    overflow: hidden;
 }
 
 .selectionList .cellTableCell {
