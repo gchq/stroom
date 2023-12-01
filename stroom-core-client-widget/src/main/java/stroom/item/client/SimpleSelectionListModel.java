@@ -3,9 +3,7 @@ package stroom.item.client;
 import stroom.docref.HasDisplayValue;
 
 import com.google.gwt.view.client.AbstractDataProvider;
-import com.google.gwt.view.client.HasData;
 import com.google.gwt.view.client.ListDataProvider;
-import com.google.gwt.view.client.Range;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -87,6 +85,11 @@ public class SimpleSelectionListModel<T> implements SelectionListModel<T, Simple
 
     public void clear() {
         items.clear();
+    }
+
+    @Override
+    public boolean displayFilter() {
+        return items.size() > 10;
     }
 
     @Override

@@ -169,6 +169,11 @@ public class DynamicQueryHelpSelectionListModel implements SelectionListModel<Qu
     }
 
     @Override
+    public boolean displayFilter() {
+        return true;
+    }
+
+    @Override
     public boolean displayPath() {
         return true;
     }

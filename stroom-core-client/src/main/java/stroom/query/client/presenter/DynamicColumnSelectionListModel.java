@@ -232,6 +232,11 @@ public class DynamicColumnSelectionListModel implements SelectionListModel<Colum
     }
 
     @Override
+    public boolean displayFilter() {
+        return true;
+    }
+
+    @Override
     public boolean displayPath() {
         return true;
     }

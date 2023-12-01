@@ -81,6 +81,11 @@ public abstract class AbstractSelectionListModel<T, I extends SelectionItem> imp
     }
 
     @Override
+    public boolean displayFilter() {
+        return items.size() > 10;
+    }
+
+    @Override
     public boolean displayPath() {
         return false;
     }

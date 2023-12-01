@@ -58,6 +58,7 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
             public void setRowData(final int start, final List<? extends I> values) {
                 super.setRowData(start, values);
 
+                quickFilter.setVisible(model.displayFilter());
                 links.setVisible(model.displayPath());
                 pagerView.setPagerVisible(model.displayPager());
 
@@ -154,6 +155,7 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
 
         this.model = model;
         selectionEventManager.setModel(model);
+        quickFilter.setVisible(model.displayFilter());
         links.setVisible(model.displayPath());
         pagerView.setPagerVisible(model.displayPager());
 

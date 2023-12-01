@@ -109,6 +109,11 @@ public class DynamicFieldSelectionListModel implements FieldSelectionListModel {
     }
 
     @Override
+    public boolean displayFilter() {
+        return true;
+    }
+
+    @Override
     public boolean displayPath() {
         return false;
     }

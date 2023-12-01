@@ -14,6 +14,8 @@ public interface SelectionListModel<T, I extends SelectionItem> {
 
     void refresh();
 
+    boolean displayFilter();
+
     boolean displayPath();
 
     boolean displayPager();
