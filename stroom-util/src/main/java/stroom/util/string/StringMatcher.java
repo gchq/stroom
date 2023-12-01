@@ -171,6 +171,10 @@ public class StringMatcher {
         return Optional.empty();
     }
 
+    public MatchType getMatchType() {
+        return matchType;
+    }
+
     public record Match(int offset, int length) {
 
     }

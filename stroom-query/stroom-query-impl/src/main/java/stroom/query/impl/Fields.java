@@ -3,6 +3,7 @@ package stroom.query.impl;
 import stroom.datasource.api.v2.FieldInfo;
 import stroom.datasource.api.v2.FindFieldInfoCriteria;
 import stroom.docref.DocRef;
+import stroom.docref.StringMatch.MatchType;
 import stroom.query.shared.CompletionValue;
 import stroom.query.shared.CompletionsRequest;
 import stroom.query.shared.InsertType;
@@ -15,6 +16,7 @@ import stroom.util.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.ResultPage.ResultConsumer;
+import stroom.util.string.StringMatcher;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -62,7 +64,13 @@ public class Fields {
                             request.getStringMatch());
                     hasChildren = queryService.getFieldInfo(criteria).size() > 0;
                 }
-                resultConsumer.add(ROOT.copy().hasChildren(hasChildren).build());
+
+                final StringMatcher stringMatcher = new StringMatcher(request.getStringMatch());
+                if (hasChildren ||
+                        MatchType.ANY.equals(stringMatcher.getMatchType()) ||
+                        stringMatcher.match(ROOT.getTitle()).isPresent()) {
+                    resultConsumer.add(ROOT.copy().hasChildren(hasChildren).build());
+                }
 
             } else if (request.getParentPath().startsWith(FIELDS_PARENT) && optional.isPresent()) {
                 // Figure out if there are children.

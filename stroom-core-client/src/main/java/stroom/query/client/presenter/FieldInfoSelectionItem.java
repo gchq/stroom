@@ -16,6 +16,9 @@ public class FieldInfoSelectionItem implements SelectionItem {
 
     @Override
     public String getLabel() {
+        if (fieldInfo == null) {
+            return "[ none ]";
+        }
         return fieldInfo.getFieldName();
     }
 

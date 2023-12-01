@@ -20,6 +20,7 @@ import stroom.security.shared.PermissionNames;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.PageRequest;
+import stroom.util.shared.PageResponse;
 import stroom.util.shared.ResultPage;
 
 import com.google.gwt.view.client.AbstractDataProvider;
@@ -28,6 +29,7 @@ import com.google.gwt.view.client.HasData;
 import com.google.gwt.view.client.Range;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
@@ -105,33 +107,35 @@ public class DynamicColumnSelectionListModel implements SelectionListModel<Colum
         final ResultPage<ColumnSelectionItem> counts = getCounts(pageRequest);
         final ResultPage<ColumnSelectionItem> annotations = getAnnotations(pageRequest);
 
+        ResultPage<ColumnSelectionItem> resultPage = null;
         if (GwtNullSafe.isBlankString(parentPath)) {
             final ExactResultPageBuilder<ColumnSelectionItem> builder = new ExactResultPageBuilder<>(pageRequest);
             add(new ColumnSelectionItem(null, "Annotations", annotations.size() > 0), builder);
             add(new ColumnSelectionItem(null, "Counts", counts.size() > 0), builder);
             add(new ColumnSelectionItem(null, "Data Source", response.getValues().size() > 0), builder);
 
-            final ResultPage<ColumnSelectionItem> resultPage = builder.build();
-            display.setRowData(resultPage.getPageStart(), resultPage.getValues());
-            display.setRowCount(resultPage.getPageSize(), resultPage.isExact());
-
+            resultPage = builder.build();
         } else if ("Counts.".equals(parentPath)) {
-            display.setRowData(counts.getPageStart(), counts.getValues());
-            display.setRowCount(counts.getPageSize(), counts.isExact());
-
+            resultPage = counts;
         } else if ("Annotations.".equals(parentPath)) {
-            display.setRowData(annotations.getPageStart(), annotations.getValues());
-            display.setRowCount(annotations.getPageSize(), annotations.isExact());
-
+            resultPage = annotations;
         } else if ("Data Source.".equals(parentPath)) {
             final List<ColumnSelectionItem> items = response
                     .getValues()
                     .stream()
                     .map(ColumnSelectionItem::create)
                     .collect(Collectors.toList());
-            display.setRowData(response.getPageStart(), items);
-            display.setRowCount(response.getPageSize(), response.isExact());
+            resultPage = new ResultPage<>(items, response.getPageResponse());
         }
+
+        if (resultPage == null || resultPage.getValues().size() == 0) {
+            resultPage = new ResultPage<>(Collections.singletonList(
+                    new ColumnSelectionItem(null, "[ none ]", false)),
+                    new PageResponse(0, 1, 1L, true));
+        }
+
+        display.setRowData(resultPage.getPageStart(), resultPage.getValues());
+        display.setRowCount(resultPage.getPageSize(), resultPage.isExact());
     }
 
     private ResultPage<ColumnSelectionItem> getCounts(final PageRequest pageRequest) {

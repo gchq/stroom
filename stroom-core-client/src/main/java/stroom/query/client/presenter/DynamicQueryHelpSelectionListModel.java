@@ -12,6 +12,7 @@ import stroom.query.shared.QueryHelpType;
 import stroom.query.shared.QueryResource;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.PageRequest;
+import stroom.util.shared.PageResponse;
 import stroom.util.shared.ResultPage;
 
 import com.google.gwt.core.client.GWT;
@@ -88,26 +89,28 @@ public class DynamicQueryHelpSelectionListModel implements SelectionListModel<Qu
                     .onSuccess(response -> {
                         // Only update if the request is still current.
                         if (request == lastRequest) {
-                            final ResultPage<QueryHelpRow> resultPage;
+                            final ResultPage<QueryHelpSelectionItem> resultPage;
                             if (response.getValues().size() > 0) {
-                                resultPage = response;
+                                List<QueryHelpSelectionItem> items = response
+                                        .getValues()
+                                        .stream()
+                                        .map(this::wrap)
+                                        .collect(Collectors.toList());
+
+                                resultPage = new ResultPage<>(items, response.getPageResponse());
                             } else {
-                                final List<QueryHelpRow> rows = Collections
-                                        .singletonList(QueryHelpRow
+                                final List<QueryHelpSelectionItem> rows = Collections
+                                        .singletonList(new QueryHelpSelectionItem(QueryHelpRow
                                                 .builder()
                                                 .type(QueryHelpType.TITLE)
                                                 .id(parentId + "none")
                                                 .title("[ none ]")
-                                                .build());
-                                resultPage = new ResultPage<>(rows);
+                                                .build()));
+                                resultPage = new ResultPage<>(rows, new PageResponse(0, 1, 1L, true));
                             }
-                            final List<QueryHelpSelectionItem> items = resultPage
-                                    .getValues()
-                                    .stream()
-                                    .map(this::wrap)
-                                    .collect(Collectors.toList());
-                            display.setRowData(response.getPageStart(), items);
-                            display.setRowCount(response.getPageSize(), response.isExact());
+
+                            display.setRowData(resultPage.getPageStart(), resultPage.getValues());
+                            display.setRowCount(resultPage.getPageSize(), resultPage.isExact());
                         }
                     })
                     .call(QUERY_RESOURCE)

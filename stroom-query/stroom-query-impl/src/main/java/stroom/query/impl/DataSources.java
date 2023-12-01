@@ -1,6 +1,7 @@
 package stroom.query.impl;
 
 import stroom.docref.DocRef;
+import stroom.docref.StringMatch.MatchType;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.query.common.v2.DataSourceProviderRegistry;
 import stroom.query.shared.CompletionValue;
@@ -60,7 +61,11 @@ public class DataSources {
                         final ResultConsumer<QueryHelpRow> resultConsumer) {
         if (parentPath.isBlank()) {
             final boolean hasChildren = hasChildren(stringMatcher);
-            resultConsumer.add(ROOT.copy().hasChildren(hasChildren).build());
+            if (hasChildren ||
+                    MatchType.ANY.equals(stringMatcher.getMatchType()) ||
+                    stringMatcher.match(ROOT.getTitle()).isPresent()) {
+                resultConsumer.add(ROOT.copy().hasChildren(hasChildren).build());
+            }
         } else if (parentPath.startsWith(DATA_SOURCE_ID + ".")) {
             final DataSourceProviderRegistry dataSourceProviderRegistry =
                     dataSourceProviderRegistryProvider.get();
@@ -115,7 +120,8 @@ public class DataSources {
                     "A list of data sources that can be queried by specifying them in the 'from' clause.";
             return Optional.of(new QueryHelpDetail(insertType, insertText, documentation));
 
-        } else if (row.getId().startsWith(DATA_SOURCE_ID + ".")) {
+        } else if (QueryHelpType.DATA_SOURCE.equals(row.getType()) &&
+                row.getId().startsWith(DATA_SOURCE_ID + ".")) {
             final QueryHelpDataSource dataSource = (QueryHelpDataSource) row.getData();
             final DocRef docRef = dataSource.getDocRef();
             final InsertType insertType = NullSafe.isBlankString(docRef.getName())

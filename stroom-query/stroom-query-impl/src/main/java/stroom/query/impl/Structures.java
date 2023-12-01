@@ -1,5 +1,6 @@
 package stroom.query.impl;
 
+import stroom.docref.StringMatch.MatchType;
 import stroom.query.shared.CompletionValue;
 import stroom.query.shared.CompletionsRequest;
 import stroom.query.shared.InsertType;
@@ -245,7 +246,11 @@ class Structures {
                         final ResultConsumer<QueryHelpRow> resultConsumer) {
         if (parentPath.isBlank()) {
             final boolean hasChildren = hasChildren(stringMatcher);
-            resultConsumer.add(root.copy().hasChildren(hasChildren).build());
+            if (hasChildren ||
+                    MatchType.ANY.equals(stringMatcher.getMatchType()) ||
+                    stringMatcher.match(root.getTitle()).isPresent()) {
+                resultConsumer.add(root.copy().hasChildren(hasChildren).build());
+            }
         } else if (parentPath.startsWith(SECTION_ID + ".")) {
             final ResultPageBuilder<QueryHelpRow> builder =
                     new ResultPageBuilder<>(pageRequest, Comparator.comparing(QueryHelpRow::getTitle));

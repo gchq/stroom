@@ -7,12 +7,15 @@ import stroom.docref.StringMatch;
 import stroom.item.client.NavigationModel;
 import stroom.query.client.DataSourceClient;
 import stroom.util.shared.PageRequest;
+import stroom.util.shared.PageResponse;
+import stroom.util.shared.ResultPage;
 
 import com.google.gwt.view.client.AbstractDataProvider;
 import com.google.gwt.view.client.AsyncDataProvider;
 import com.google.gwt.view.client.HasData;
 import com.google.gwt.view.client.Range;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -52,13 +55,23 @@ public class DynamicFieldSelectionListModel implements FieldSelectionListModel {
                 dataSourceClient.findFields(findFieldInfoCriteria, response -> {
                     // Only update if the request is still current.
                     if (findFieldInfoCriteria == lastCriteria) {
-                        final List<FieldInfoSelectionItem> items = response
-                                .getValues()
-                                .stream()
-                                .map(this::wrap)
-                                .collect(Collectors.toList());
-                        display.setRowData(response.getPageStart(), items);
-                        display.setRowCount(response.getPageSize(), response.isExact());
+                        final ResultPage<FieldInfoSelectionItem> resultPage;
+                        if (response.getValues().size() > 0) {
+                            final List<FieldInfoSelectionItem> items = response
+                                    .getValues()
+                                    .stream()
+                                    .map(this::wrap)
+                                    .collect(Collectors.toList());
+                            resultPage = new ResultPage<>(items, response.getPageResponse());
+                        } else {
+                            // Create empty item.
+                            final List<FieldInfoSelectionItem> items = Collections.singletonList(
+                                    new FieldInfoSelectionItem(null));
+                            resultPage = new ResultPage<>(items, new PageResponse(0, 1, 1L, true));
+                        }
+
+                        display.setRowData(resultPage.getPageStart(), resultPage.getValues());
+                        display.setRowCount(resultPage.getPageSize(), resultPage.isExact());
                     }
                 });
             }

@@ -1,5 +1,6 @@
 package stroom.query.impl;
 
+import stroom.docref.StringMatch.MatchType;
 import stroom.query.language.functions.FunctionArg;
 import stroom.query.language.functions.FunctionCategory;
 import stroom.query.language.functions.FunctionDef;
@@ -168,13 +169,15 @@ public class Functions {
         for (final QueryHelpRow row : rows) {
             if (row.isHasChildren()) {
                 if (!hasChildren(row, stringMatcher)) {
-                    if ("".equals(parentUuid) || stringMatcher.match(row.getTitle()).isPresent()) {
+                    if (MatchType.ANY.equals(stringMatcher.getMatchType()) ||
+                            stringMatcher.match(row.getTitle()).isPresent()) {
                         builder.add(row.copy().hasChildren(false).build());
                     }
                 } else {
                     builder.add(row);
                 }
-            } else if ("".equals(parentUuid) || stringMatcher.match(row.getTitle()).isPresent()) {
+            } else if (MatchType.ANY.equals(stringMatcher.getMatchType()) ||
+                    stringMatcher.match(row.getTitle()).isPresent()) {
                 builder.add(row);
             }
         }

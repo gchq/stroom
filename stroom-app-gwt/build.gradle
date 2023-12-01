@@ -55,6 +55,7 @@ configurations.configureEach {
 // Declare a source set just for our GWT compile that is separate from the Java compilation source set.
 sourceSets {
     gwtSource
+    gwtDevSource
     jakartaTransformer
 }
 
@@ -83,13 +84,14 @@ dependencies {
     implementation libs.ws_rs_api__gwt
 
     gwtSourceImplementation libs.gin
-    gwtSourceImplementation libs.gwt_dev
     gwtSourceImplementation libs.gwt_user
     gwtSourceImplementation libs.gwtp_mvp_client
     gwtSourceImplementation libs.jaxb_api__gwt
     gwtSourceImplementation libs.swagger_annotations // needed so gwt can compile the stroom-query code that contains swagger annotations
     gwtSourceImplementation libs.restygwt
     gwtSourceImplementation libs.ws_rs_api__gwt
+
+    gwtDevSourceImplementation libs.gwt_dev
 
     jakartaTransformerImplementation libs.eclipse_transformer_cli
 }
@@ -155,6 +157,21 @@ tasks.register('copySources') {
                     '-tr', propFilePath,
             ]
         }
+
+        def allSourcePath = layout.buildDirectory.dir("all-source").get()
+        delete allSourcePath
+        // Copy dep jars.
+        sourceSets.gwtSource.compileClasspath.files.forEach {zipFile ->
+            println('copy: ' + zipFile)
+            copy {
+                from zipTree(zipFile)
+                into allSourcePath
+            }
+        }
+        copy {
+            from outputProjectPath
+            into allSourcePath
+        }
     }
 }
 
@@ -178,11 +195,10 @@ tasks.register('makeGwtSourceDirs') {
         gwtSourceDirs = []
 
         // Add all of the library sources from the gwtSource source set defined above.
-        gwtSourceDirs.addAll(sourceSets.gwtSource.compileClasspath)
-
+        gwtSourceDirs.addAll(sourceSets.gwtDevSource.compileClasspath)
         gwtSourceDirs.addAll(project(':stroom-gwt').sourceSets.main.output.classesDirs)
 
-        gwtSourceDirs.add(layout.buildDirectory.dir("transformed-source").get())
+        gwtSourceDirs.add(layout.buildDirectory.dir("all-source").get())
         gwtSourceDirs.add(layout.buildDirectory.dir("transformed-build").get())
 
         println "Dumping ${gwtSourceDirs.size()} gwtSourceDirs"
