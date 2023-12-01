@@ -25,11 +25,13 @@ import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterRow;
 import stroom.processor.shared.ProcessorListRow;
+import stroom.processor.shared.ProcessorType;
 import stroom.processor.shared.ReprocessDataInfo;
 import stroom.util.shared.HasIntCrud;
 import stroom.util.shared.ResultPage;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface ProcessorFilterService extends HasIntCrud<ProcessorFilter> {
 
@@ -55,4 +57,6 @@ public interface ProcessorFilterService extends HasIntCrud<ProcessorFilter> {
     void setEnabled(Integer id, Boolean enabled);
 
     ProcessorFilterRow getRow(ProcessorFilter processorFilter);
+
+    Optional<String> getPipelineName(ProcessorType processorType, String uuid);
 }

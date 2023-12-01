@@ -40,6 +40,7 @@ import stroom.processor.api.ProcessorService;
 import stroom.processor.shared.CreateProcessFilterRequest;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
+import stroom.processor.shared.ProcessorType;
 import stroom.processor.shared.QueryData;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
@@ -199,7 +200,7 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
         QueryData filterConstraints = new QueryData();
         filterConstraints.setExpression(expression);
 
-        Processor processor = processorService.create(pipelineNode.getDocRef(), true);
+        Processor processor = processorService.create(ProcessorType.PIPELINE, pipelineNode.getDocRef(), true);
 
         ProcessorFilter filter = processorFilterService.create(processor,
                 CreateProcessFilterRequest

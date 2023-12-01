@@ -55,6 +55,10 @@ appConfig:
       minPayloadSize: "1M"
       offHeapResults: true
       valueQueueSize: 10000
+    streamingAnalyticCache:
+      expireAfterAccess: "PT10M"
+      expireAfterWrite: null
+      maximumSize: 1000
     timezone: "UTC"
   annotation:
     createText: "Create Annotation"

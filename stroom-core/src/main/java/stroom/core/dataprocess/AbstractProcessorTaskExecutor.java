@@ -23,7 +23,6 @@ import stroom.data.store.api.SegmentInputStream;
 import stroom.data.store.api.Source;
 import stroom.data.store.api.Store;
 import stroom.data.store.api.Target;
-import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.feed.api.FeedProperties;
@@ -204,8 +203,7 @@ public abstract class AbstractProcessorTaskExecutor implements ProcessorTaskExec
         this.processorTask = processorTask;
         this.streamSource = streamSource;
 
-        // Record when processing began so we know how long it took
-        // afterwards.
+        // Record when processing began so we know how long it took afterwards.
         startTime = System.currentTimeMillis();
 
         // Setup the error handler and receiver.
@@ -213,9 +211,10 @@ public abstract class AbstractProcessorTaskExecutor implements ProcessorTaskExec
 
         // Initialise the helper class that will ensure we only keep the latest output for this stream source and
         // processor.
+        final ProcessorTaskDecorator processDecorator = getProcessDecorator();
+        processDecorator.init(processorFilter);
         final Meta meta = streamSource.getMeta();
-
-        final String errorFeedName = getErrorFeedName(processorFilter, meta);
+        final String errorFeedName = getProcessDecorator().getErrorFeedName(meta);
 
         // Setup the process info writer.
         try (final ProcessInfoOutputStreamProvider processInfoOutputStreamProvider =
@@ -235,14 +234,14 @@ public abstract class AbstractProcessorTaskExecutor implements ProcessorTaskExec
                 final DefaultErrorWriter errorWriter = new DefaultErrorWriter();
                 errorWriter.addOutputStreamProvider(processInfoOutputStreamProvider);
                 errorWriterProxy.setErrorWriter(errorWriter);
-                beforeProcessing(processorFilter);
+                processDecorator.beforeProcessing();
                 process(taskContext);
 
             } catch (final Exception e) {
                 outputError(e);
             } finally {
                 try {
-                    afterProcessing(processorFilter);
+                    processDecorator.afterProcessing();
                 } catch (final Exception e) {
                     outputError(e);
                 }
@@ -271,15 +270,7 @@ public abstract class AbstractProcessorTaskExecutor implements ProcessorTaskExec
         return new ProcessorResultImpl(read, written, markerCounts);
     }
 
-    protected String getErrorFeedName(final ProcessorFilter processorFilter, final Meta meta) {
-        return meta.getFeedName();
-    }
-
-    protected void beforeProcessing(final ProcessorFilter processorFilter) {
-    }
-
-    protected void afterProcessing(final ProcessorFilter processorFilter) {
-    }
+    protected abstract ProcessorTaskDecorator getProcessDecorator();
 
     private void process(final TaskContext taskContext) {
         String feedName = null;
@@ -297,7 +288,7 @@ public abstract class AbstractProcessorTaskExecutor implements ProcessorTaskExec
             // with a batch search.
             if (processorFilter != null
                     && processorTask.getData() != null
-                    && processorTask.getData().length() > 0) {
+                    && !processorTask.getData().isEmpty()) {
                 searchIdHolder.setSearchId(Long.toString(processorFilter.getId()));
             }
 
@@ -309,8 +300,7 @@ public abstract class AbstractProcessorTaskExecutor implements ProcessorTaskExec
             metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(metaHolder, pipelineStore));
 
             // Set the pipeline so it can be used by a filter if needed.
-            pipelineDoc = pipelineStore.readDocument(
-                    new DocRef(PipelineDoc.DOCUMENT_TYPE, streamProcessor.getPipelineUuid()));
+            pipelineDoc = pipelineStore.readDocument(getProcessDecorator().getPipeline());
             if (pipelineDoc == null) {
                 final String msg = "Pipeline " + streamProcessor.getPipelineUuid()
                         + " cannot be found for processor with id " + streamProcessor.getId();

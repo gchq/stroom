@@ -10,6 +10,7 @@ import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterRow;
 import stroom.processor.shared.ProcessorListRow;
+import stroom.processor.shared.ProcessorType;
 import stroom.processor.shared.ReprocessDataInfo;
 import stroom.util.shared.ResultPage;
 
@@ -42,7 +43,10 @@ public class MockProcessorFilterService implements ProcessorFilterService {
         filter.setEnabled(request.isEnabled());
         filter.setMinMetaCreateTimeMs(request.getMinMetaCreateTimeMs());
         filter.setMaxMetaCreateTimeMs(request.getMaxMetaCreateTimeMs());
-        Processor processor = processorService.create(request.getPipeline(), request.isEnabled());
+        Processor processor = processorService.create(
+                request.getProcessorType(),
+                request.getPipeline(),
+                request.isEnabled());
 
         filter.setProcessor(processor);
         return dao.create(filter);
@@ -134,5 +138,10 @@ public class MockProcessorFilterService implements ProcessorFilterService {
     @Override
     public boolean delete(int id) {
         return dao.delete(id);
+    }
+
+    @Override
+    public Optional<String> getPipelineName(final ProcessorType processorType, final String uuid) {
+        return Optional.empty();
     }
 }

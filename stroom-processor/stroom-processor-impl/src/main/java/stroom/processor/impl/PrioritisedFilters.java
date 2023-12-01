@@ -1,9 +1,6 @@
 package stroom.processor.impl;
 
-import stroom.docref.DocRef;
-import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.entity.shared.ExpressionCriteria;
-import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.shared.ProcessorFields;
 import stroom.processor.shared.ProcessorFilter;
@@ -21,6 +18,7 @@ import jakarta.inject.Singleton;
 import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
@@ -30,7 +28,6 @@ public class PrioritisedFilters {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(PrioritisedFilters.class);
 
     private final ProcessorFilterService processorFilterService;
-    private final DocRefInfoService docRefInfoService;
     private final TaskContextFactory taskContextFactory;
 
     private final AtomicReference<List<ProcessorFilter>> prioritisedFiltersRef = new AtomicReference<>();
@@ -38,10 +35,8 @@ public class PrioritisedFilters {
 
     @Inject
     public PrioritisedFilters(final ProcessorFilterService processorFilterService,
-                              final DocRefInfoService docRefInfoService,
                               final TaskContextFactory taskContextFactory) {
         this.processorFilterService = processorFilterService;
-        this.docRefInfoService = docRefInfoService;
         this.taskContextFactory = taskContextFactory;
     }
 
@@ -85,17 +80,13 @@ public class PrioritisedFilters {
                 if (filter != null
                         && filter.getPipelineUuid() != null
                         && NullSafe.isEmptyString(filter.getPipelineName())) {
-
-                    final DocRef pipelineDocRef = DocRef.builder()
-                            .type(PipelineDoc.DOCUMENT_TYPE)
-                            .uuid(filter.getPipelineUuid())
-                            .build();
-                    docRefInfoService.name(pipelineDocRef)
-                            .ifPresent(newPipeName -> {
-                                if (!Objects.equals(filter.getPipelineName(), newPipeName)) {
-                                    filter.setPipelineName(newPipeName);
-                                }
-                            });
+                    final Optional<String> pipelineName = processorFilterService
+                            .getPipelineName(filter.getProcessorType(), filter.getPipelineUuid());
+                    pipelineName.ifPresent(newPipeName -> {
+                        if (!Objects.equals(filter.getPipelineName(), newPipeName)) {
+                            filter.setPipelineName(newPipeName);
+                        }
+                    });
                 }
             } catch (final RuntimeException e) {
                 // This error is expected in tests and the pipeline name isn't essential

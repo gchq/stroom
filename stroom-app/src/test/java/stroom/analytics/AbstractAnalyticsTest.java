@@ -114,7 +114,7 @@ class AbstractAnalyticsTest extends StroomIntegrationTest {
         return false;
     }
 
-    protected void writeRule(final AnalyticRuleDoc sample) {
+    protected DocRef writeRule(final AnalyticRuleDoc sample) {
         final DocRef alertRuleDocRef = analyticRuleStore.createDocument("Analytic Rule");
         AnalyticRuleDoc analyticRuleDoc = analyticRuleStore.readDocument(alertRuleDocRef);
         analyticRuleDoc = analyticRuleDoc.copy()
@@ -125,6 +125,7 @@ class AbstractAnalyticsTest extends StroomIntegrationTest {
                 .analyticNotificationConfig(sample.getAnalyticNotificationConfig())
                 .build();
         analyticRuleStore.writeDocument(analyticRuleDoc);
+        return alertRuleDocRef;
     }
 
     protected void testDetectionsStream(final int expectedStreams,

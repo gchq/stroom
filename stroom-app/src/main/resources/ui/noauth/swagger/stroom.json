@@ -522,18 +522,18 @@
         "tags" : [ "AnalyticNotifications" ]
       }
     },
-    "/analyticProcess/v1/filter" : {
+    "/analyticProcess/v1/getDefaultProcessingFilterExpression" : {
       "post" : {
-        "operationId" : "findAnalyticProcessFilter",
+        "operationId" : "getDefaultProcessingFilterExpression",
         "requestBody" : {
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/AnalyticRuleDoc"
+                "type" : "string"
               }
             }
           },
-          "description" : "analyticRuleDoc",
+          "description" : "query",
           "required" : true
         },
         "responses" : {
@@ -541,14 +541,14 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ProcessorFilterRow"
+                  "$ref" : "#/components/schemas/ExpressionOperator"
                 }
               }
             },
             "description" : "default response"
           }
         },
-        "summary" : "Find the process filter for the specified process",
+        "summary" : "Find the default processing filter expression",
         "tags" : [ "AnalyticProcess" ]
       }
     },
@@ -10255,15 +10255,6 @@
           "propertyName" : "type"
         },
         "properties" : {
-          "enabled" : {
-            "type" : "boolean"
-          },
-          "errorFeed" : {
-            "$ref" : "#/components/schemas/DocRef"
-          },
-          "node" : {
-            "type" : "string"
-          },
           "type" : {
             "type" : "string"
           }
@@ -11404,6 +11395,10 @@
           "priority" : {
             "type" : "integer",
             "format" : "int32"
+          },
+          "processorType" : {
+            "type" : "string",
+            "enum" : [ "PIPELINE", "STREAMING_ANALYTIC" ]
           },
           "queryData" : {
             "$ref" : "#/components/schemas/QueryData"
@@ -15575,6 +15570,10 @@
           "processorFilterTracker" : {
             "$ref" : "#/components/schemas/ProcessorFilterTracker"
           },
+          "processorType" : {
+            "type" : "string",
+            "enum" : [ "PIPELINE", "STREAMING_ANALYTIC" ]
+          },
           "processorUuid" : {
             "type" : "string"
           },
@@ -15970,9 +15969,6 @@
       "QueryData" : {
         "type" : "object",
         "properties" : {
-          "analyticRule" : {
-            "$ref" : "#/components/schemas/DocRef"
-          },
           "dataSource" : {
             "$ref" : "#/components/schemas/DocRef"
           },
@@ -17149,6 +17145,12 @@
         }, {
           "type" : "object",
           "properties" : {
+            "enabled" : {
+              "type" : "boolean"
+            },
+            "errorFeed" : {
+              "$ref" : "#/components/schemas/DocRef"
+            },
             "maxEventTimeMs" : {
               "type" : "integer",
               "format" : "int64"
@@ -17156,6 +17158,9 @@
             "minEventTimeMs" : {
               "type" : "integer",
               "format" : "int64"
+            },
+            "node" : {
+              "type" : "string"
             },
             "queryFrequency" : {
               "$ref" : "#/components/schemas/SimpleDuration"
@@ -18240,13 +18245,8 @@
         }, {
           "type" : "object",
           "properties" : {
-            "maxMetaCreateTimeMs" : {
-              "type" : "integer",
-              "format" : "int64"
-            },
-            "minMetaCreateTimeMs" : {
-              "type" : "integer",
-              "format" : "int64"
+            "errorFeed" : {
+              "$ref" : "#/components/schemas/DocRef"
             }
           }
         } ]
@@ -18525,6 +18525,12 @@
             "dataRetention" : {
               "$ref" : "#/components/schemas/SimpleDuration"
             },
+            "enabled" : {
+              "type" : "boolean"
+            },
+            "errorFeed" : {
+              "$ref" : "#/components/schemas/DocRef"
+            },
             "maxMetaCreateTimeMs" : {
               "type" : "integer",
               "format" : "int64"
@@ -18532,6 +18538,9 @@
             "minMetaCreateTimeMs" : {
               "type" : "integer",
               "format" : "int64"
+            },
+            "node" : {
+              "type" : "string"
             },
             "timeToWaitForData" : {
               "$ref" : "#/components/schemas/SimpleDuration"

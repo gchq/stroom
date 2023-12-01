@@ -16,6 +16,7 @@
 
 package stroom.processor.client.presenter;
 
+import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.cell.expander.client.ExpanderCell;
 import stroom.cell.info.client.InfoColumn;
 import stroom.cell.info.client.SvgCell;
@@ -122,8 +123,9 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
             protected void exec(final Range range,
                                 final Consumer<ProcessorListRowResultPage> dataConsumer,
                                 final Consumer<Throwable> throwableConsumer) {
-                final Rest<ProcessorListRowResultPage> rest = restFactory.create();
-                rest
+                restFactory
+                        .builder()
+                        .forType(ProcessorListRowResultPage.class)
                         .onSuccess(dataConsumer)
                         .onFailure(throwableConsumer)
                         .call(PROCESSOR_FILTER_RESOURCE)
@@ -532,6 +534,11 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
         doDataDisplay();
     }
 
+    private void setAnalyticRule(final DocRef analyticRuleRef) {
+        request.setExpression(ProcessorFilterExpressionUtil.createAnalyticRuleExpression(analyticRuleRef));
+        doDataDisplay();
+    }
+
     private void setFolder(final DocRef folder) {
         request.setExpression(ProcessorFilterExpressionUtil.createFolderExpression(folder));
         doDataDisplay();
@@ -548,6 +555,8 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
             setNullCriteria();
         } else if (PipelineDoc.DOCUMENT_TYPE.equals(docRef.getType())) {
             setPipeline(docRef);
+        } else if (AnalyticRuleDoc.DOCUMENT_TYPE.equals(docRef.getType())) {
+            setAnalyticRule(docRef);
         } else {
             setFolder(docRef);
         }

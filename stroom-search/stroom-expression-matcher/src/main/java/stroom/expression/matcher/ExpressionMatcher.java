@@ -377,7 +377,7 @@ public class ExpressionMatcher {
     private boolean isInFolder(final String fieldName, final DocRef docRef,
                                final QueryField field, final Object attribute) {
         if (field instanceof DocRefField) {
-            final String type = ((DocRefField) field).getDocRefType();
+            final String type = field.getDocRefType();
             if (type != null && collectionService != null) {
                 final Set<DocRef> descendants = collectionService.getDescendants(docRef, type);
                 if (descendants != null && descendants.size() > 0) {

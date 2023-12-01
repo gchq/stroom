@@ -20,6 +20,9 @@ package stroom.analytics.rule.impl;
 import stroom.analytics.shared.AnalyticProcessConfig;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.AnalyticRuleDoc.Builder;
+import stroom.analytics.shared.ScheduledQueryAnalyticProcessConfig;
+import stroom.analytics.shared.StreamingAnalyticProcessConfig;
+import stroom.analytics.shared.TableBuilderAnalyticProcessConfig;
 import stroom.docref.DocContentMatch;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
@@ -32,7 +35,6 @@ import stroom.docstore.api.UniqueNameUtil;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.importexport.shared.ImportSettings;
-import stroom.importexport.shared.ImportSettings.ImportMode;
 import stroom.importexport.shared.ImportState;
 import stroom.query.common.v2.DataSourceProviderRegistry;
 import stroom.query.language.SearchRequestBuilder;
@@ -90,7 +92,6 @@ class AnalyticRuleStoreImpl implements AnalyticRuleStore {
         securityContext.asProcessingUser(() -> {
             final AnalyticRuleDoc analyticRuleDoc = store.readDocument(docRef);
             store.writeDocument(analyticRuleDoc);
-            analyticRuleProcessorsProvider.get().updateProcessorFilters(analyticRuleDoc);
         });
         return docRef;
     }
@@ -117,7 +118,20 @@ class AnalyticRuleStoreImpl implements AnalyticRuleStore {
 
                     final AnalyticProcessConfig analyticProcessConfig = document.getAnalyticProcessConfig();
                     if (analyticProcessConfig != null) {
-                        analyticProcessConfig.setEnabled(false);
+                        if (analyticProcessConfig instanceof
+                                final ScheduledQueryAnalyticProcessConfig scheduledQueryAnalyticProcessConfig) {
+                            builder.analyticProcessConfig(
+                                    scheduledQueryAnalyticProcessConfig.copy().enabled(false).build());
+                        } else if (analyticProcessConfig instanceof
+                                final TableBuilderAnalyticProcessConfig tableBuilderAnalyticProcessConfig) {
+                            builder.analyticProcessConfig(
+                                    tableBuilderAnalyticProcessConfig.copy().enabled(false).build());
+                        } else if (analyticProcessConfig instanceof
+                                final StreamingAnalyticProcessConfig streamingAnalyticProcessConfig) {
+//                            builder.analyticProcessConfig(
+//                                    streamingAnalyticProcessConfig.copy().enabled(false).build());
+                        }
+
                         builder.analyticProcessConfig(analyticProcessConfig);
                     }
 
@@ -237,7 +251,6 @@ class AnalyticRuleStoreImpl implements AnalyticRuleStore {
 
     @Override
     public AnalyticRuleDoc writeDocument(final AnalyticRuleDoc document) {
-        analyticRuleProcessorsProvider.get().updateProcessorFilters(document);
         return store.writeDocument(document);
     }
 
@@ -259,12 +272,7 @@ class AnalyticRuleStoreImpl implements AnalyticRuleStore {
                                  final Map<String, byte[]> dataMap,
                                  final ImportState importState,
                                  final ImportSettings importSettings) {
-        final DocRef ref = store.importDocument(docRef, dataMap, importState, importSettings);
-        if (ImportMode.IGNORE_CONFIRMATION.equals(importSettings.getImportMode())
-                || ImportMode.ACTION_CONFIRMATION.equals(importSettings.getImportMode())) {
-            updateProcessorFilter(ref);
-        }
-        return ref;
+        return store.importDocument(docRef, dataMap, importState, importSettings);
     }
 
     @Override
@@ -304,15 +312,6 @@ class AnalyticRuleStoreImpl implements AnalyticRuleStore {
     @Override
     public List<DocContentMatch> findByContent(final StringMatch filter) {
         return store.findByContent(filter);
-    }
-
-    private void updateProcessorFilter(final DocRef docRef) {
-        try {
-            final AnalyticRuleDoc analyticRuleDoc = readDocument(docRef);
-            analyticRuleProcessorsProvider.get().updateProcessorFilters(analyticRuleDoc);
-        } catch (final RuntimeException e) {
-            LOGGER.debug(e::getMessage, e);
-        }
     }
 
     private void deleteProcessorFilter(final DocRef docRef) {

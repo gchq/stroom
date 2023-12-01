@@ -76,6 +76,8 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid, HasIntegerId {
     @JsonProperty
     private QueryData queryData;
     @JsonProperty
+    private ProcessorType processorType;
+    @JsonProperty
     private String processorUuid;
     @JsonProperty
     private String pipelineUuid;
@@ -124,6 +126,7 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid, HasIntegerId {
                            @JsonProperty("reprocess") final boolean reprocess,
                            @JsonProperty("enabled") final boolean enabled,
                            @JsonProperty("deleted") final boolean deleted,
+                           @JsonProperty("processorType") final ProcessorType processorType,
                            @JsonProperty("processorUuid") final String processorUuid,
                            @JsonProperty("pipelineUuid") final String pipelineUuid,
                            @JsonProperty("pipelineName") final String pipelineName,
@@ -149,6 +152,9 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid, HasIntegerId {
         this.reprocess = reprocess;
         this.enabled = enabled;
         this.deleted = deleted;
+        this.processorType = processorType == null
+                ? ProcessorType.PIPELINE
+                : processorType;
         this.processorUuid = processorUuid;
         this.pipelineName = pipelineName;
         this.minMetaCreateTimeMs = minMetaCreateTimeMs;
@@ -241,6 +247,17 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid, HasIntegerId {
         return processor;
     }
 
+    public ProcessorType getProcessorType() {
+        if (processorType == null) {
+            if (processor != null) {
+                processorType = getProcessor().getProcessorType();
+            } else {
+                processorType = ProcessorType.PIPELINE;
+            }
+        }
+        return processorType;
+    }
+
     public String getProcessorUuid() {
         if (processorUuid == null && processor != null) {
             processorUuid = getProcessor().getUuid();
@@ -279,6 +296,7 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid, HasIntegerId {
         this.processor = processor;
 
         if (processor != null) {
+            processorType = processor.getProcessorType();
             processorUuid = processor.getUuid();
             pipelineUuid = processor.getPipelineUuid();
             pipelineName = processor.getPipelineName();

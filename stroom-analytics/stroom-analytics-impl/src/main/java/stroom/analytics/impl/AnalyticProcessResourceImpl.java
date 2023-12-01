@@ -18,37 +18,25 @@ package stroom.analytics.impl;
 
 import stroom.analytics.rule.impl.AnalyticRuleProcessors;
 import stroom.analytics.shared.AnalyticProcessResource;
-import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.AnalyticTracker;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
-import stroom.processor.api.ProcessorFilterService;
-import stroom.processor.shared.Processor;
-import stroom.processor.shared.ProcessorFilter;
-import stroom.processor.shared.ProcessorFilterRow;
-import stroom.view.shared.ViewDoc;
+import stroom.query.api.v2.ExpressionOperator;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
 
 @AutoLogged(OperationType.UNLOGGED)
 class AnalyticProcessResourceImpl implements AnalyticProcessResource {
 
     private final Provider<AnalyticTrackerDao> analyticProcessorTrackerDaoProvider;
     private final Provider<AnalyticRuleProcessors> analyticRuleProcessorsProvider;
-    private final Provider<ProcessorFilterService> processorFilterServiceProvider;
 
     @Inject
     AnalyticProcessResourceImpl(final Provider<AnalyticTrackerDao> analyticProcessorTrackerDaoProvider,
-                                final Provider<AnalyticRuleProcessors> analyticRuleProcessorsProvider,
-                                final Provider<ProcessorFilterService> processorFilterServiceProvider) {
+                                final Provider<AnalyticRuleProcessors> analyticRuleProcessorsProvider) {
         this.analyticProcessorTrackerDaoProvider = analyticProcessorTrackerDaoProvider;
         this.analyticRuleProcessorsProvider = analyticRuleProcessorsProvider;
-        this.processorFilterServiceProvider = processorFilterServiceProvider;
     }
 
     @Override
@@ -59,26 +47,7 @@ class AnalyticProcessResourceImpl implements AnalyticProcessResource {
     }
 
     @Override
-    public ProcessorFilterRow getFilter(final AnalyticRuleDoc analyticRuleDoc) {
-        if (analyticRuleDoc != null) {
-            final List<ProcessorFilter> list = new ArrayList<>();
-            final AnalyticRuleProcessors analyticRuleProcessors = analyticRuleProcessorsProvider.get();
-            final Optional<ViewDoc> optionalViewDoc = analyticRuleProcessors.getViewDoc(analyticRuleDoc);
-            optionalViewDoc.ifPresent(viewDoc -> {
-                final List<Processor> processors = analyticRuleProcessors.getProcessor(viewDoc);
-                if (processors.size() == 1) {
-                    final Processor processor = processors.get(0);
-                    final List<ProcessorFilter> existing = analyticRuleProcessors
-                            .getProcessorFilters(analyticRuleDoc, processor);
-                    list.addAll(existing);
-                }
-            });
-
-            if (list.size() == 1) {
-                return processorFilterServiceProvider.get().getRow(list.get(0));
-            }
-        }
-
-        return null;
+    public ExpressionOperator getDefaultProcessingFilterExpression(final String query) {
+        return analyticRuleProcessorsProvider.get().getDefaultProcessingFilterExpression(query);
     }
 }

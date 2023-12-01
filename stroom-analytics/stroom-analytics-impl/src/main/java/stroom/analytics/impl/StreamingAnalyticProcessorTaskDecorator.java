@@ -18,9 +18,8 @@
 package stroom.analytics.impl;
 
 import stroom.analytics.api.NotificationState;
-import stroom.analytics.rule.impl.AnalyticRuleStore;
 import stroom.analytics.shared.AnalyticRuleDoc;
-import stroom.analytics.shared.StreamingAnalyticProcessConfig;
+import stroom.core.dataprocess.ProcessorTaskDecorator;
 import stroom.docref.DocRef;
 import stroom.expression.api.ExpressionContext;
 import stroom.meta.shared.Meta;
@@ -39,9 +38,6 @@ import stroom.task.api.TaskTerminatedException;
 import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.logging.LogExecutionTime;
-import stroom.util.logging.LogUtil;
-import stroom.view.shared.ViewDoc;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -49,16 +45,13 @@ import jakarta.inject.Provider;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Supplier;
 
-public class StreamingAnalyticDataProcessorDecorator {
+public class StreamingAnalyticProcessorTaskDecorator implements ProcessorTaskDecorator {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory
-            .getLogger(StreamingAnalyticDataProcessorDecorator.class);
+            .getLogger(StreamingAnalyticProcessorTaskDecorator.class);
 
-    private final AnalyticRuleStore analyticRuleStore;
-    private final AnalyticRuleSearchRequestHelper analyticRuleSearchRequestHelper;
-    private final AnalyticHelper analyticHelper;
+    private final StreamingAnalyticCache streamingAnalyticCache;
     private final ExpressionContextFactory expressionContextFactory;
     private final MemoryIndex memoryIndex;
     private final NotificationStateService notificationStateService;
@@ -68,20 +61,18 @@ public class StreamingAnalyticDataProcessorDecorator {
 
     private AnalyticFieldListConsumer fieldListConsumer;
 
+    private StreamingAnalytic analytic;
+    private String userDefinedErrorFeedName;
+
     @Inject
-    public StreamingAnalyticDataProcessorDecorator(final AnalyticRuleStore analyticRuleStore,
-                                                   final AnalyticRuleSearchRequestHelper
-                                                           analyticRuleSearchRequestHelper,
-                                                   final AnalyticHelper analyticHelper,
+    public StreamingAnalyticProcessorTaskDecorator(final StreamingAnalyticCache streamingAnalyticCache,
                                                    final ExpressionContextFactory expressionContextFactory,
                                                    final MemoryIndex memoryIndex,
                                                    final NotificationStateService notificationStateService,
                                                    final DetectionConsumerFactory detectionConsumerFactory,
                                                    final DetectionConsumerProxy detectionConsumerProxy,
                                                    final FieldListConsumerHolder fieldListConsumerHolder) {
-        this.analyticRuleStore = analyticRuleStore;
-        this.analyticRuleSearchRequestHelper = analyticRuleSearchRequestHelper;
-        this.analyticHelper = analyticHelper;
+        this.streamingAnalyticCache = streamingAnalyticCache;
         this.expressionContextFactory = expressionContextFactory;
         this.memoryIndex = memoryIndex;
         this.notificationStateService = notificationStateService;
@@ -90,40 +81,46 @@ public class StreamingAnalyticDataProcessorDecorator {
         this.fieldListConsumerHolder = fieldListConsumerHolder;
     }
 
-    public String getErrorFeedName(final ProcessorFilter processorFilter, final Meta meta) {
-        if (processorFilter != null &&
-                processorFilter.getQueryData() != null &&
-                processorFilter.getQueryData().getAnalyticRule() != null) {
-            // Load rule.
-            final StreamingAnalytic analytic = loadStreamingAnalytic(processorFilter.getQueryData().getAnalyticRule());
-            if (analytic.streamingAnalyticProcessConfig() != null &&
-                    analytic.streamingAnalyticProcessConfig().getErrorFeed() != null &&
-                    analytic.streamingAnalyticProcessConfig().getErrorFeed().getName() != null) {
-                return analytic.streamingAnalyticProcessConfig.getErrorFeed().getName();
-            }
+    @Override
+    public void init(final ProcessorFilter processorFilter) {
+        // Load rule.
+        final DocRef analyticRuleRef = new DocRef(AnalyticRuleDoc.DOCUMENT_TYPE, processorFilter.getPipelineUuid());
+        final Optional<StreamingAnalytic> optional = streamingAnalyticCache.get(analyticRuleRef);
+        if (optional.isEmpty()) {
+            throw new RuntimeException("Unable to get analytic from cache: " + analyticRuleRef);
+        }
+        analytic = optional.get();
+        if (analytic.streamingAnalyticProcessConfig() != null &&
+                analytic.streamingAnalyticProcessConfig().getErrorFeed() != null &&
+                analytic.streamingAnalyticProcessConfig().getErrorFeed().getName() != null) {
+            userDefinedErrorFeedName = analytic.streamingAnalyticProcessConfig().getErrorFeed().getName();
+        }
+    }
+
+    @Override
+    public DocRef getPipeline() {
+        return analytic.viewDoc().getPipeline();
+    }
+
+    @Override
+    public String getErrorFeedName(final Meta meta) {
+        if (userDefinedErrorFeedName != null) {
+            return userDefinedErrorFeedName;
         }
         return meta.getFeedName();
     }
 
-    public void start(final ProcessorFilter processorFilter) {
-        if (processorFilter != null &&
-                processorFilter.getQueryData() != null &&
-                processorFilter.getQueryData().getAnalyticRule() != null) {
-            // Load rule.
-            final StreamingAnalytic analytic = loadStreamingAnalytic(processorFilter.getQueryData().getAnalyticRule());
-            fieldListConsumer = createEventConsumer(analytic).orElse(new NullFieldListConsumer());
-            fieldListConsumerHolder.setFieldListConsumer(fieldListConsumer);
-
-            fieldListConsumer.start();
-        }
+    @Override
+    public void beforeProcessing() {
+        fieldListConsumer = createEventConsumer(analytic).orElse(new NullFieldListConsumer());
+        fieldListConsumerHolder.setFieldListConsumer(fieldListConsumer);
+        fieldListConsumer.start();
     }
 
-    public void end() {
-        if (fieldListConsumer != null) {
-            fieldListConsumer.end();
-        }
+    @Override
+    public void afterProcessing() {
+        fieldListConsumer.end();
     }
-
 
     private Optional<AnalyticFieldListConsumer> createEventConsumer(final StreamingAnalytic analytic) {
         // Create field index.
@@ -138,13 +135,13 @@ public class StreamingAnalyticDataProcessorDecorator {
         final FieldIndex fieldIndex = compiledColumns.getFieldIndex();
 
         // Determine if notifications have been disabled.
-        final NotificationState notificationState = notificationStateService.getState(analytic.analyticRuleDoc);
+        final NotificationState notificationState = notificationStateService.getState(analytic.analyticRuleDoc());
         // Only execute if the state is enabled.
         notificationState.enableIfPossible();
         if (notificationState.isEnabled()) {
             try {
                 final Provider<DetectionConsumer> detectionConsumerProvider =
-                        detectionConsumerFactory.create(analytic.analyticRuleDoc);
+                        detectionConsumerFactory.create(analytic.analyticRuleDoc());
                 detectionConsumerProxy.setAnalyticRuleDoc(analytic.analyticRuleDoc());
                 detectionConsumerProxy.setCompiledColumns(compiledColumns);
                 detectionConsumerProxy.setFieldIndex(fieldIndex);
@@ -168,55 +165,6 @@ public class StreamingAnalyticDataProcessorDecorator {
             }
         }
         return Optional.empty();
-    }
-
-    private StreamingAnalytic loadStreamingAnalytic(final DocRef analyticRule) {
-        final LogExecutionTime logExecutionTime = new LogExecutionTime();
-        info(() -> "Loading rule");
-        final AnalyticRuleDoc analyticRuleDoc = analyticRuleStore.readDocument(analyticRule);
-
-        ViewDoc viewDoc;
-
-        // Try and get view.
-        final String ruleIdentity = AnalyticUtil.getAnalyticRuleIdentity(analyticRuleDoc);
-        final SearchRequest searchRequest = analyticRuleSearchRequestHelper
-                .create(analyticRuleDoc);
-        final DocRef dataSource = searchRequest.getQuery().getDataSource();
-
-        if (dataSource == null || !ViewDoc.DOCUMENT_TYPE.equals(dataSource.getType())) {
-            throw new RuntimeException("Error: Rule needs to reference a view");
-
-        } else {
-            // Load view.
-            viewDoc = analyticHelper.loadViewDoc(ruleIdentity, dataSource);
-        }
-
-        if (!(analyticRuleDoc.getAnalyticProcessConfig()
-                instanceof StreamingAnalyticProcessConfig)) {
-            LOGGER.debug("Error: Invalid process config {}", ruleIdentity);
-            throw new RuntimeException("Error: Invalid process config.");
-
-        } else {
-            info(() -> LogUtil.message("Finished loading rules in {}", logExecutionTime));
-            return new StreamingAnalytic(
-                    ruleIdentity,
-                    analyticRuleDoc,
-                    (StreamingAnalyticProcessConfig) analyticRuleDoc.getAnalyticProcessConfig(),
-                    searchRequest,
-                    viewDoc);
-        }
-    }
-
-    private void info(final Supplier<String> messageSupplier) {
-        LOGGER.info(messageSupplier);
-    }
-
-    private record StreamingAnalytic(String ruleIdentity,
-                                     AnalyticRuleDoc analyticRuleDoc,
-                                     StreamingAnalyticProcessConfig streamingAnalyticProcessConfig,
-                                     SearchRequest searchRequest,
-                                     ViewDoc viewDoc) {
-
     }
 
     private static class NullFieldListConsumer implements AnalyticFieldListConsumer {

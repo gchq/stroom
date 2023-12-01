@@ -160,11 +160,6 @@ export type AnalyticNotificationStreamDestination = AnalyticNotificationDestinat
 };
 
 export interface AnalyticProcessConfig {
-  enabled?: boolean;
-
-  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
-  errorFeed?: DocRef;
-  node?: string;
   type: string;
 }
 
@@ -658,6 +653,7 @@ export interface CreateProcessFilterRequest {
 
   /** @format int32 */
   priority?: number;
+  processorType?: "PIPELINE" | "STREAMING_ANALYTIC";
   queryData?: QueryData;
   reprocess?: boolean;
 }
@@ -3267,6 +3263,7 @@ export interface ProcessorFilter {
   priority?: number;
   processor?: Processor;
   processorFilterTracker?: ProcessorFilterTracker;
+  processorType?: "PIPELINE" | "STREAMING_ANALYTIC";
   processorUuid?: string;
   queryData?: QueryData;
   reprocess?: boolean;
@@ -3439,9 +3436,6 @@ export interface QueryContext {
 }
 
 export interface QueryData {
-  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
-  analyticRule?: DocRef;
-
   /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   dataSource?: DocRef;
 
@@ -4234,8 +4228,11 @@ export interface SavePipelineXmlRequest {
 }
 
 export type ScheduledQueryAnalyticProcessConfig = AnalyticProcessConfig & {
+  enabled?: boolean;
+  errorFeed?: DocRef;
   maxEventTimeMs?: number;
   minEventTimeMs?: number;
+  node?: string;
   queryFrequency?: SimpleDuration;
   timeToWaitForData?: SimpleDuration;
 };
@@ -4719,10 +4716,7 @@ export interface StoredQuery {
 
 export type StreamLocation = Location & { partIndex?: number };
 
-export type StreamingAnalyticProcessConfig = AnalyticProcessConfig & {
-  maxMetaCreateTimeMs?: number;
-  minMetaCreateTimeMs?: number;
-};
+export type StreamingAnalyticProcessConfig = AnalyticProcessConfig & { errorFeed?: DocRef };
 
 export type StreamingAnalyticTrackerData = AnalyticTrackerData & {
   lastExecutionTimeMs?: number;
@@ -4817,8 +4811,11 @@ export type TabLayoutConfig = LayoutConfig & { selected?: number; tabs?: TabConf
 
 export type TableBuilderAnalyticProcessConfig = AnalyticProcessConfig & {
   dataRetention?: SimpleDuration;
+  enabled?: boolean;
+  errorFeed?: DocRef;
   maxMetaCreateTimeMs?: number;
   minMetaCreateTimeMs?: number;
+  node?: string;
   timeToWaitForData?: SimpleDuration;
 };
 
@@ -5853,14 +5850,14 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags AnalyticProcess
-     * @name FindAnalyticProcessFilter
-     * @summary Find the process filter for the specified process
-     * @request POST:/analyticProcess/v1/filter
+     * @name GetDefaultProcessingFilterExpression
+     * @summary Find the default processing filter expression
+     * @request POST:/analyticProcess/v1/getDefaultProcessingFilterExpression
      * @secure
      */
-    findAnalyticProcessFilter: (data: AnalyticRuleDoc, params: RequestParams = {}) =>
-      this.request<any, ProcessorFilterRow>({
-        path: `/analyticProcess/v1/filter`,
+    getDefaultProcessingFilterExpression: (data: string, params: RequestParams = {}) =>
+      this.request<any, ExpressionOperator>({
+        path: `/analyticProcess/v1/getDefaultProcessingFilterExpression`,
         method: "POST",
         body: data,
         secure: true,

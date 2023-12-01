@@ -10,6 +10,7 @@ import stroom.processor.shared.ProcessorFilterTracker;
 import stroom.processor.shared.ProcessorFilterTrackerStatus;
 import stroom.processor.shared.ProcessorListRow;
 import stroom.processor.shared.ProcessorRow;
+import stroom.processor.shared.ProcessorType;
 import stroom.processor.shared.QueryData;
 import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.util.client.HtmlBuilder;
@@ -42,8 +43,13 @@ public class ProcessorInfoBuilder {
             addRowDateString(tb, "Created On", processor.getCreateTimeMs());
             tb.row("Updated By", processor.getUpdateUser());
             addRowDateString(tb, "Updated On", processor.getUpdateTimeMs());
-            tb.row("Pipeline",
-                    DocRefUtil.createSimpleDocRefString(processor.getPipeline()));
+            if (ProcessorType.STREAMING_ANALYTIC.equals(processor.getProcessorType())) {
+                tb.row("Analytic Rule",
+                        DocRefUtil.createSimpleDocRefString(processor.getPipeline()));
+            } else {
+                tb.row("Pipeline",
+                        DocRefUtil.createSimpleDocRefString(processor.getPipeline()));
+            }
 
         } else if (row instanceof ProcessorFilterRow) {
             final ProcessorFilterRow processorFilterRow = (ProcessorFilterRow) row;
@@ -75,18 +81,13 @@ public class ProcessorInfoBuilder {
             tb.row("Updated By", filter.getUpdateUser());
             addRowDateString(tb, "Updated On", filter.getUpdateTimeMs());
 
-            // Provide analytic details.
-            final QueryData queryData = filter.getQueryData();
-            if (queryData != null) {
-                final DocRef analyticRule = queryData.getAnalyticRule();
-                if (analyticRule != null) {
-                    tb.row("Analytic",
-                            DocRefUtil.createSimpleDocRefString(analyticRule));
-                }
+            if (ProcessorType.STREAMING_ANALYTIC.equals(filter.getProcessorType())) {
+                tb.row("Analytic Rule",
+                        DocRefUtil.createSimpleDocRefString(filter.getPipeline()));
+            } else {
+                tb.row("Pipeline",
+                        DocRefUtil.createSimpleDocRefString(filter.getPipeline()));
             }
-
-            tb.row("Pipeline",
-                    DocRefUtil.createSimpleDocRefString(filter.getPipeline()));
 
             final ProcessorFilterTracker tracker = filter.getProcessorFilterTracker();
             if (tracker != null) {

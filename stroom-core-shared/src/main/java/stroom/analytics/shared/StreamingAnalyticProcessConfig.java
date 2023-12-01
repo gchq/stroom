@@ -15,27 +15,15 @@ import java.util.Objects;
 public class StreamingAnalyticProcessConfig extends AnalyticProcessConfig {
 
     @JsonProperty
-    private final Long minMetaCreateTimeMs;
-    @JsonProperty
-    private final Long maxMetaCreateTimeMs;
+    final DocRef errorFeed;
 
     @JsonCreator
-    public StreamingAnalyticProcessConfig(@JsonProperty("enabled") final boolean enabled,
-                                          @JsonProperty("node") final String node,
-                                          @JsonProperty("errorFeed") final DocRef errorFeed,
-                                          @JsonProperty("minMetaCreateTimeMs") final Long minMetaCreateTimeMs,
-                                          @JsonProperty("maxMetaCreateTimeMs") final Long maxMetaCreateTimeMs) {
-        super(enabled, node, errorFeed);
-        this.minMetaCreateTimeMs = minMetaCreateTimeMs;
-        this.maxMetaCreateTimeMs = maxMetaCreateTimeMs;
+    public StreamingAnalyticProcessConfig(@JsonProperty("errorFeed") final DocRef errorFeed) {
+        this.errorFeed = errorFeed;
     }
 
-    public Long getMinMetaCreateTimeMs() {
-        return minMetaCreateTimeMs;
-    }
-
-    public Long getMaxMetaCreateTimeMs() {
-        return maxMetaCreateTimeMs;
+    public DocRef getErrorFeed() {
+        return errorFeed;
     }
 
     @Override
@@ -50,22 +38,18 @@ public class StreamingAnalyticProcessConfig extends AnalyticProcessConfig {
             return false;
         }
         final StreamingAnalyticProcessConfig that = (StreamingAnalyticProcessConfig) o;
-        return Objects.equals(minMetaCreateTimeMs, that.minMetaCreateTimeMs) &&
-                Objects.equals(maxMetaCreateTimeMs, that.maxMetaCreateTimeMs);
+        return Objects.equals(errorFeed, that.errorFeed);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), minMetaCreateTimeMs, maxMetaCreateTimeMs);
+        return Objects.hash(errorFeed);
     }
 
     @Override
     public String toString() {
         return "StreamingAnalyticProcessConfig{" +
-                "enabled=" + enabled +
-                ", node=" + node +
-                ", minMetaCreateTimeMs=" + minMetaCreateTimeMs +
-                ", maxMetaCreateTimeMs=" + maxMetaCreateTimeMs +
+                "errorFeed=" + errorFeed +
                 '}';
     }
 
@@ -77,45 +61,25 @@ public class StreamingAnalyticProcessConfig extends AnalyticProcessConfig {
         return new Builder();
     }
 
-    public static class Builder
-            extends AbstractAnalyticProcessConfigBuilder<StreamingAnalyticProcessConfig, Builder> {
+    public static class Builder {
 
-        private Long minMetaCreateTimeMs;
-        private Long maxMetaCreateTimeMs;
+        private DocRef errorFeed;
 
         private Builder() {
             super();
         }
 
         private Builder(final StreamingAnalyticProcessConfig streamingAnalyticProcessConfig) {
-            super(streamingAnalyticProcessConfig);
-            this.minMetaCreateTimeMs = streamingAnalyticProcessConfig.minMetaCreateTimeMs;
-            this.maxMetaCreateTimeMs = streamingAnalyticProcessConfig.maxMetaCreateTimeMs;
+            this.errorFeed = streamingAnalyticProcessConfig.errorFeed;
         }
 
-        public Builder minMetaCreateTimeMs(final Long minMetaCreateTimeMs) {
-            this.minMetaCreateTimeMs = minMetaCreateTimeMs;
-            return self();
-        }
-
-        public Builder maxMetaCreateTimeMs(final Long maxMetaCreateTimeMs) {
-            this.maxMetaCreateTimeMs = maxMetaCreateTimeMs;
-            return self();
-        }
-
-        @Override
-        protected Builder self() {
+        public Builder errorFeed(final DocRef errorFeed) {
+            this.errorFeed = errorFeed;
             return this;
         }
 
-        @Override
         public StreamingAnalyticProcessConfig build() {
-            return new StreamingAnalyticProcessConfig(
-                    enabled,
-                    node,
-                    errorFeed,
-                    minMetaCreateTimeMs,
-                    maxMetaCreateTimeMs);
+            return new StreamingAnalyticProcessConfig(errorFeed);
         }
     }
 }

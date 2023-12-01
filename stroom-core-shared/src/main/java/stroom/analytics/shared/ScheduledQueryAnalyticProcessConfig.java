@@ -16,6 +16,12 @@ import java.util.Objects;
 public class ScheduledQueryAnalyticProcessConfig extends AnalyticProcessConfig {
 
     @JsonProperty
+    boolean enabled;
+    @JsonProperty
+    final String node;
+    @JsonProperty
+    final DocRef errorFeed;
+    @JsonProperty
     private final Long minEventTimeMs;
     @JsonProperty
     private final Long maxEventTimeMs;
@@ -24,20 +30,38 @@ public class ScheduledQueryAnalyticProcessConfig extends AnalyticProcessConfig {
     @JsonProperty
     private final SimpleDuration queryFrequency;
 
+    @SuppressWarnings({"unused", "checkstyle:LineLength"})
     @JsonCreator
     public ScheduledQueryAnalyticProcessConfig(@JsonProperty("enabled") final boolean enabled,
                                                @JsonProperty("node") final String node,
                                                @JsonProperty("errorFeed") final DocRef errorFeed,
                                                @JsonProperty("minEventTimeMs") final Long minEventTimeMs,
                                                @JsonProperty("maxEventTimeMs") final Long maxEventTimeMs,
-                                               @JsonProperty("timeToWaitForData")
-                                                   final SimpleDuration timeToWaitForData,
+                                               @JsonProperty("timeToWaitForData") final SimpleDuration timeToWaitForData,
                                                @JsonProperty("queryFrequency") final SimpleDuration queryFrequency) {
-        super(enabled, node, errorFeed);
+        this.enabled = enabled;
+        this.node = node;
+        this.errorFeed = errorFeed;
         this.minEventTimeMs = minEventTimeMs;
         this.maxEventTimeMs = maxEventTimeMs;
         this.timeToWaitForData = timeToWaitForData;
         this.queryFrequency = queryFrequency;
+    }
+
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    public void setEnabled(final boolean enabled) {
+        this.enabled = enabled;
+    }
+
+    public String getNode() {
+        return node;
+    }
+
+    public DocRef getErrorFeed() {
+        return errorFeed;
     }
 
     public Long getMinEventTimeMs() {
@@ -68,7 +92,10 @@ public class ScheduledQueryAnalyticProcessConfig extends AnalyticProcessConfig {
             return false;
         }
         final ScheduledQueryAnalyticProcessConfig that = (ScheduledQueryAnalyticProcessConfig) o;
-        return Objects.equals(minEventTimeMs, that.minEventTimeMs) &&
+        return enabled == that.enabled &&
+                Objects.equals(node, that.node) &&
+                Objects.equals(errorFeed, that.errorFeed) &&
+                Objects.equals(minEventTimeMs, that.minEventTimeMs) &&
                 Objects.equals(maxEventTimeMs, that.maxEventTimeMs) &&
                 Objects.equals(timeToWaitForData, that.timeToWaitForData) &&
                 Objects.equals(queryFrequency, that.queryFrequency);
@@ -76,7 +103,14 @@ public class ScheduledQueryAnalyticProcessConfig extends AnalyticProcessConfig {
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), minEventTimeMs, maxEventTimeMs, timeToWaitForData, queryFrequency);
+        return Objects.hash(
+                enabled,
+                node,
+                errorFeed,
+                minEventTimeMs,
+                maxEventTimeMs,
+                timeToWaitForData,
+                queryFrequency);
     }
 
     @Override
@@ -84,6 +118,7 @@ public class ScheduledQueryAnalyticProcessConfig extends AnalyticProcessConfig {
         return "ScheduledQueryAnalyticProcessConfig{" +
                 "enabled=" + enabled +
                 ", node=" + node +
+                ", errorFeed=" + errorFeed +
                 ", minEventTimeMs=" + minEventTimeMs +
                 ", maxEventTimeMs=" + maxEventTimeMs +
                 ", timeToWaitForData=" + timeToWaitForData +
@@ -99,9 +134,11 @@ public class ScheduledQueryAnalyticProcessConfig extends AnalyticProcessConfig {
         return new Builder();
     }
 
-    public static class Builder extends
-            AbstractAnalyticProcessConfigBuilder<ScheduledQueryAnalyticProcessConfig, Builder> {
+    public static class Builder {
 
+        private boolean enabled;
+        private String node;
+        private DocRef errorFeed;
         private Long minEventTimeMs;
         private Long maxEventTimeMs;
         private SimpleDuration timeToWaitForData;
@@ -110,37 +147,48 @@ public class ScheduledQueryAnalyticProcessConfig extends AnalyticProcessConfig {
         private Builder() {
         }
 
-        private Builder(
-                final ScheduledQueryAnalyticProcessConfig scheduledQueryAnalyticProcessConfig) {
-            super(scheduledQueryAnalyticProcessConfig);
+        private Builder(final ScheduledQueryAnalyticProcessConfig scheduledQueryAnalyticProcessConfig) {
+            this.enabled = scheduledQueryAnalyticProcessConfig.enabled;
+            this.node = scheduledQueryAnalyticProcessConfig.node;
+            this.errorFeed = scheduledQueryAnalyticProcessConfig.errorFeed;
             this.minEventTimeMs = scheduledQueryAnalyticProcessConfig.minEventTimeMs;
             this.maxEventTimeMs = scheduledQueryAnalyticProcessConfig.maxEventTimeMs;
             this.timeToWaitForData = scheduledQueryAnalyticProcessConfig.timeToWaitForData;
             this.queryFrequency = scheduledQueryAnalyticProcessConfig.queryFrequency;
         }
 
+        public Builder enabled(final boolean enabled) {
+            this.enabled = enabled;
+            return this;
+        }
+
+        public Builder node(final String node) {
+            this.node = node;
+            return this;
+        }
+
+        public Builder errorFeed(final DocRef errorFeed) {
+            this.errorFeed = errorFeed;
+            return this;
+        }
+
         public Builder minEventTimeMs(final Long minEventTimeMs) {
             this.minEventTimeMs = minEventTimeMs;
-            return self();
+            return this;
         }
 
         public Builder maxEventTimeMs(final Long maxEventTimeMs) {
             this.maxEventTimeMs = maxEventTimeMs;
-            return self();
+            return this;
         }
 
         public Builder timeToWaitForData(final SimpleDuration timeToWaitForData) {
             this.timeToWaitForData = timeToWaitForData;
-            return self();
+            return this;
         }
 
         public Builder queryFrequency(final SimpleDuration queryFrequency) {
             this.queryFrequency = queryFrequency;
-            return self();
-        }
-
-        @Override
-        protected Builder self() {
             return this;
         }
 

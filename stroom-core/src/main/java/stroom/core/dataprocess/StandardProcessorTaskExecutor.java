@@ -44,6 +44,8 @@ import jakarta.inject.Inject;
 
 public class StandardProcessorTaskExecutor extends AbstractProcessorTaskExecutor {
 
+    private final ProcessorTaskDecorator processDecorator;
+
     @Inject
     public StandardProcessorTaskExecutor(final PipelineFactory pipelineFactory,
                                          final Store store,
@@ -89,5 +91,11 @@ public class StandardProcessorTaskExecutor extends AbstractProcessorTaskExecutor
                 pipelineDataCache,
                 internalStatisticsReceiver,
                 volumeGroupNameProvider);
+        this.processDecorator = new StandardProcessorTaskDecorator();
+    }
+
+    @Override
+    protected ProcessorTaskDecorator getProcessDecorator() {
+        return processDecorator;
     }
 }

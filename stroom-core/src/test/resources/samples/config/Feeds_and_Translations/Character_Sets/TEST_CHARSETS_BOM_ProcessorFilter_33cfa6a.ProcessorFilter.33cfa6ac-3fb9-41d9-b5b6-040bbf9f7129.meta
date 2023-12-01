@@ -34,6 +34,7 @@
   "reprocess" : false,
   "enabled" : true,
   "deleted" : false,
+  "processorType" : "PIPELINE",
   "processorUuid" : "c7a1e3fd-11f7-4c1c-a0ee-2f53433605a1",
   "pipelineUuid" : "fe116dc3-d937-45f3-ac74-fb718d5d5644",
   "pipelineName" : "TEST_CHARSETS_BOM"

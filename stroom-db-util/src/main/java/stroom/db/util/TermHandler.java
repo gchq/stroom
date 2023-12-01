@@ -218,7 +218,7 @@ public final class TermHandler<T> implements Function<ExpressionTerm, Condition>
         Condition condition = field.in(Collections.emptyList());
 
         if (dataSourceField instanceof DocRefField) {
-            final String type = ((DocRefField) dataSourceField).getDocRefType();
+            final String type = dataSourceField.getDocRefType();
             if (type != null && collectionService != null) {
                 final Set<DocRef> descendants = collectionService.getDescendants(docRef, type);
                 if (descendants != null && descendants.size() > 0) {

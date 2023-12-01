@@ -21,6 +21,7 @@ import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.processor.api.ProcessorService;
 import stroom.processor.shared.Processor;
+import stroom.processor.shared.ProcessorType;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.PermissionNames;
@@ -55,11 +56,14 @@ public class ProcessorServiceImpl implements ProcessorService {
     }
 
     @Override
-    public Processor create(final DocRef pipelineRef, final boolean enabled) {
+    public Processor create(final ProcessorType processorType,
+                            final DocRef pipelineRef,
+                            final boolean enabled) {
 
         final Processor processor = new Processor();
-        processor.setEnabled(enabled);
+        processor.setProcessorType(processorType);
         processor.setPipeline(pipelineRef);
+        processor.setEnabled(enabled);
 
         // Check the user has read permissions on the pipeline.
         if (!securityContext.hasDocumentPermission(
@@ -89,10 +93,14 @@ public class ProcessorServiceImpl implements ProcessorService {
     }
 
     @Override
-    public Processor create(DocRef processorDocRef, DocRef pipelineDocRef, boolean enabled) {
+    public Processor create(final ProcessorType processorType,
+                            final DocRef processorDocRef,
+                            final DocRef pipelineDocRef,
+                            final boolean enabled) {
         final Processor processor = new Processor();
-        processor.setEnabled(enabled);
+        processor.setProcessorType(processorType);
         processor.setPipeline(pipelineDocRef);
+        processor.setEnabled(enabled);
         processor.setUuid(processorDocRef.getUuid());
 
         // Check the user has read permissions on the pipeline.

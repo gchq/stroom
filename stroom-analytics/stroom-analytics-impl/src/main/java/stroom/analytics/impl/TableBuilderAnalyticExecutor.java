@@ -825,75 +825,77 @@ public class TableBuilderAnalyticExecutor {
         final List<AnalyticRuleDoc> rules = analyticHelper.getRules();
         for (final AnalyticRuleDoc analyticRuleDoc : rules) {
             final AnalyticProcessConfig analyticProcessConfig = analyticRuleDoc.getAnalyticProcessConfig();
-            if (analyticProcessConfig != null &&
-                    analyticProcessConfig.isEnabled() &&
-                    nodeInfo.getThisNodeName().equals(analyticProcessConfig.getNode()) &&
-                    AnalyticProcessType.TABLE_BUILDER.equals(analyticRuleDoc.getAnalyticProcessType())) {
-                final AnalyticTracker tracker = analyticHelper.getTracker(analyticRuleDoc);
+            if (analyticProcessConfig instanceof
+                    final TableBuilderAnalyticProcessConfig tableBuilderAnalyticProcessConfig) {
+                if (tableBuilderAnalyticProcessConfig.isEnabled() &&
+                        nodeInfo.getThisNodeName().equals(tableBuilderAnalyticProcessConfig.getNode()) &&
+                        AnalyticProcessType.TABLE_BUILDER.equals(analyticRuleDoc.getAnalyticProcessType())) {
+                    final AnalyticTracker tracker = analyticHelper.getTracker(analyticRuleDoc);
 
-                TableBuilderAnalyticTrackerData analyticProcessorTrackerData;
-                if (tracker.getAnalyticTrackerData() instanceof
-                        TableBuilderAnalyticTrackerData) {
-                    analyticProcessorTrackerData = (TableBuilderAnalyticTrackerData)
-                            tracker.getAnalyticTrackerData();
-                } else {
-                    analyticProcessorTrackerData = new TableBuilderAnalyticTrackerData();
-                    tracker.setAnalyticTrackerData(analyticProcessorTrackerData);
-                }
-
-                try {
-                    ViewDoc viewDoc = null;
-
-                    // Try and get view.
-                    final String ruleIdentity = AnalyticUtil.getAnalyticRuleIdentity(analyticRuleDoc);
-                    final SearchRequest searchRequest = analyticRuleSearchRequestHelper
-                            .create(analyticRuleDoc);
-                    final DocRef dataSource = searchRequest.getQuery().getDataSource();
-
-                    if (dataSource == null || !ViewDoc.DOCUMENT_TYPE.equals(dataSource.getType())) {
-                        tracker.getAnalyticTrackerData()
-                                .setMessage("Error: Rule needs to reference a view");
-
+                    TableBuilderAnalyticTrackerData analyticProcessorTrackerData;
+                    if (tracker.getAnalyticTrackerData() instanceof
+                            TableBuilderAnalyticTrackerData) {
+                        analyticProcessorTrackerData = (TableBuilderAnalyticTrackerData)
+                                tracker.getAnalyticTrackerData();
                     } else {
-                        // Load view.
-                        viewDoc = analyticHelper.loadViewDoc(ruleIdentity, dataSource);
+                        analyticProcessorTrackerData = new TableBuilderAnalyticTrackerData();
+                        tracker.setAnalyticTrackerData(analyticProcessorTrackerData);
                     }
 
-                    if (!(analyticRuleDoc.getAnalyticProcessConfig()
-                            instanceof TableBuilderAnalyticProcessConfig)) {
-                        LOGGER.debug("Error: Invalid process config {}", ruleIdentity);
-                        tracker.getAnalyticTrackerData()
-                                .setMessage("Error: Invalid process config.");
-
-                    } else {
-                        final AnalyticDataStore dataStore = analyticDataStores.get(analyticRuleDoc);
-
-                        // Get or create LMDB data store.
-                        final LmdbDataStore lmdbDataStore = dataStore.lmdbDataStore();
-                        final CurrentDbState currentDbState = lmdbDataStore.sync();
-
-                        // Update tracker state from LMDB.
-                        updateTrackerWithLmdbState(analyticProcessorTrackerData,
-                                currentDbState);
-
-                        analyticList.add(new TableBuilderAnalytic(
-                                ruleIdentity,
-                                analyticRuleDoc,
-                                (TableBuilderAnalyticProcessConfig) analyticRuleDoc.getAnalyticProcessConfig(),
-                                tracker,
-                                analyticProcessorTrackerData,
-                                searchRequest,
-                                viewDoc,
-                                dataStore));
-                    }
-
-                } catch (final RuntimeException e) {
-                    LOGGER.debug(e.getMessage(), e);
                     try {
-                        tracker.getAnalyticTrackerData().setMessage(e.getMessage());
-                        analyticTrackerDao.update(tracker);
-                    } catch (final RuntimeException e2) {
-                        LOGGER.error(e2::getMessage, e2);
+                        ViewDoc viewDoc = null;
+
+                        // Try and get view.
+                        final String ruleIdentity = AnalyticUtil.getAnalyticRuleIdentity(analyticRuleDoc);
+                        final SearchRequest searchRequest = analyticRuleSearchRequestHelper
+                                .create(analyticRuleDoc);
+                        final DocRef dataSource = searchRequest.getQuery().getDataSource();
+
+                        if (dataSource == null || !ViewDoc.DOCUMENT_TYPE.equals(dataSource.getType())) {
+                            tracker.getAnalyticTrackerData()
+                                    .setMessage("Error: Rule needs to reference a view");
+
+                        } else {
+                            // Load view.
+                            viewDoc = analyticHelper.loadViewDoc(ruleIdentity, dataSource);
+                        }
+
+                        if (!(analyticRuleDoc.getAnalyticProcessConfig()
+                                instanceof TableBuilderAnalyticProcessConfig)) {
+                            LOGGER.debug("Error: Invalid process config {}", ruleIdentity);
+                            tracker.getAnalyticTrackerData()
+                                    .setMessage("Error: Invalid process config.");
+
+                        } else {
+                            final AnalyticDataStore dataStore = analyticDataStores.get(analyticRuleDoc);
+
+                            // Get or create LMDB data store.
+                            final LmdbDataStore lmdbDataStore = dataStore.lmdbDataStore();
+                            final CurrentDbState currentDbState = lmdbDataStore.sync();
+
+                            // Update tracker state from LMDB.
+                            updateTrackerWithLmdbState(analyticProcessorTrackerData,
+                                    currentDbState);
+
+                            analyticList.add(new TableBuilderAnalytic(
+                                    ruleIdentity,
+                                    analyticRuleDoc,
+                                    (TableBuilderAnalyticProcessConfig) analyticRuleDoc.getAnalyticProcessConfig(),
+                                    tracker,
+                                    analyticProcessorTrackerData,
+                                    searchRequest,
+                                    viewDoc,
+                                    dataStore));
+                        }
+
+                    } catch (final RuntimeException e) {
+                        LOGGER.debug(e.getMessage(), e);
+                        try {
+                            tracker.getAnalyticTrackerData().setMessage(e.getMessage());
+                            analyticTrackerDao.update(tracker);
+                        } catch (final RuntimeException e2) {
+                            LOGGER.error(e2::getMessage, e2);
+                        }
                     }
                 }
             }

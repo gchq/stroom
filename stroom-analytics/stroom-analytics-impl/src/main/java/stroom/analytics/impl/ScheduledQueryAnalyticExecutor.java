@@ -380,7 +380,7 @@ public class ScheduledQueryAnalyticExecutor {
 
                         } finally {
                             final List<String> errors = errorConsumer.getErrors();
-                            if (errors != null && errors.size() > 0) {
+                            if (errors != null) {
                                 for (final String error : errors) {
                                     errorReceiverProxyProvider.get()
                                             .getErrorReceiver()
@@ -422,65 +422,67 @@ public class ScheduledQueryAnalyticExecutor {
         final List<AnalyticRuleDoc> rules = analyticHelper.getRules();
         for (final AnalyticRuleDoc analyticRuleDoc : rules) {
             final AnalyticProcessConfig analyticProcessConfig = analyticRuleDoc.getAnalyticProcessConfig();
-            if (analyticProcessConfig != null &&
-                    analyticProcessConfig.isEnabled() &&
-                    nodeInfo.getThisNodeName().equals(analyticProcessConfig.getNode()) &&
-                    AnalyticProcessType.SCHEDULED_QUERY.equals(analyticRuleDoc.getAnalyticProcessType())) {
-                final AnalyticTracker tracker = analyticHelper.getTracker(analyticRuleDoc);
+            if (analyticProcessConfig instanceof
+                    final ScheduledQueryAnalyticProcessConfig scheduledQueryAnalyticProcessConfig) {
+                if (scheduledQueryAnalyticProcessConfig.isEnabled() &&
+                        nodeInfo.getThisNodeName().equals(scheduledQueryAnalyticProcessConfig.getNode()) &&
+                        AnalyticProcessType.SCHEDULED_QUERY.equals(analyticRuleDoc.getAnalyticProcessType())) {
+                    final AnalyticTracker tracker = analyticHelper.getTracker(analyticRuleDoc);
 
 
-                ScheduledQueryAnalyticTrackerData analyticProcessorTrackerData;
-                if (tracker.getAnalyticTrackerData() instanceof
-                        ScheduledQueryAnalyticTrackerData) {
-                    analyticProcessorTrackerData = (ScheduledQueryAnalyticTrackerData)
-                            tracker.getAnalyticTrackerData();
-                } else {
-                    analyticProcessorTrackerData = new ScheduledQueryAnalyticTrackerData();
-                    tracker.setAnalyticTrackerData(analyticProcessorTrackerData);
-                }
-
-                try {
-                    ViewDoc viewDoc = null;
-
-                    // Try and get view.
-                    final String ruleIdentity = AnalyticUtil.getAnalyticRuleIdentity(analyticRuleDoc);
-                    final SearchRequest searchRequest = analyticRuleSearchRequestHelper
-                            .create(analyticRuleDoc);
-                    final DocRef dataSource = searchRequest.getQuery().getDataSource();
-
-                    if (dataSource == null || !ViewDoc.DOCUMENT_TYPE.equals(dataSource.getType())) {
-                        tracker.getAnalyticTrackerData()
-                                .setMessage("Error: Rule needs to reference a view");
-
+                    ScheduledQueryAnalyticTrackerData analyticProcessorTrackerData;
+                    if (tracker.getAnalyticTrackerData() instanceof
+                            ScheduledQueryAnalyticTrackerData) {
+                        analyticProcessorTrackerData = (ScheduledQueryAnalyticTrackerData)
+                                tracker.getAnalyticTrackerData();
                     } else {
-                        // Load view.
-                        viewDoc = analyticHelper.loadViewDoc(ruleIdentity, dataSource);
+                        analyticProcessorTrackerData = new ScheduledQueryAnalyticTrackerData();
+                        tracker.setAnalyticTrackerData(analyticProcessorTrackerData);
                     }
 
-                    if (!(analyticRuleDoc.getAnalyticProcessConfig()
-                            instanceof ScheduledQueryAnalyticProcessConfig)) {
-                        LOGGER.debug("Error: Invalid process config {}", ruleIdentity);
-                        tracker.getAnalyticTrackerData()
-                                .setMessage("Error: Invalid process config.");
-
-                    } else {
-                        analyticList.add(new ScheduledQueryAnalytic(
-                                ruleIdentity,
-                                analyticRuleDoc,
-                                (ScheduledQueryAnalyticProcessConfig) analyticRuleDoc.getAnalyticProcessConfig(),
-                                tracker,
-                                analyticProcessorTrackerData,
-                                searchRequest,
-                                viewDoc));
-                    }
-
-                } catch (final RuntimeException e) {
-                    LOGGER.debug(e.getMessage(), e);
                     try {
-                        tracker.getAnalyticTrackerData().setMessage(e.getMessage());
-                        analyticHelper.updateTracker(tracker);
-                    } catch (final RuntimeException e2) {
-                        LOGGER.error(e2::getMessage, e2);
+                        ViewDoc viewDoc = null;
+
+                        // Try and get view.
+                        final String ruleIdentity = AnalyticUtil.getAnalyticRuleIdentity(analyticRuleDoc);
+                        final SearchRequest searchRequest = analyticRuleSearchRequestHelper
+                                .create(analyticRuleDoc);
+                        final DocRef dataSource = searchRequest.getQuery().getDataSource();
+
+                        if (dataSource == null || !ViewDoc.DOCUMENT_TYPE.equals(dataSource.getType())) {
+                            tracker.getAnalyticTrackerData()
+                                    .setMessage("Error: Rule needs to reference a view");
+
+                        } else {
+                            // Load view.
+                            viewDoc = analyticHelper.loadViewDoc(ruleIdentity, dataSource);
+                        }
+
+                        if (!(analyticRuleDoc.getAnalyticProcessConfig()
+                                instanceof ScheduledQueryAnalyticProcessConfig)) {
+                            LOGGER.debug("Error: Invalid process config {}", ruleIdentity);
+                            tracker.getAnalyticTrackerData()
+                                    .setMessage("Error: Invalid process config.");
+
+                        } else {
+                            analyticList.add(new ScheduledQueryAnalytic(
+                                    ruleIdentity,
+                                    analyticRuleDoc,
+                                    (ScheduledQueryAnalyticProcessConfig) analyticRuleDoc.getAnalyticProcessConfig(),
+                                    tracker,
+                                    analyticProcessorTrackerData,
+                                    searchRequest,
+                                    viewDoc));
+                        }
+
+                    } catch (final RuntimeException e) {
+                        LOGGER.debug(e.getMessage(), e);
+                        try {
+                            tracker.getAnalyticTrackerData().setMessage(e.getMessage());
+                            analyticHelper.updateTracker(tracker);
+                        } catch (final RuntimeException e2) {
+                            LOGGER.error(e2::getMessage, e2);
+                        }
                     }
                 }
             }

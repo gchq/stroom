@@ -16,7 +16,7 @@
 
 package stroom.analytics.shared;
 
-import stroom.processor.shared.ProcessorFilterRow;
+import stroom.query.api.v2.ExpressionOperator;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
@@ -46,10 +46,10 @@ public interface AnalyticProcessResource
                                String analyticUuid);
 
     @POST
-    @Path("/filter")
+    @Path("/getDefaultProcessingFilterExpression")
     @Operation(
-            summary = "Find the process filter for the specified process",
-            operationId = "findAnalyticProcessFilter")
-    ProcessorFilterRow getFilter(@Parameter(description = "analyticRuleDoc", required = true)
-                                 AnalyticRuleDoc analyticRuleDoc);
+            summary = "Find the default processing filter expression",
+            operationId = "getDefaultProcessingFilterExpression")
+    ExpressionOperator getDefaultProcessingFilterExpression(@Parameter(description = "query", required = true)
+                                            String query);
 }

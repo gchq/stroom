@@ -18,11 +18,11 @@
 package stroom.analytics.impl;
 
 import stroom.core.dataprocess.AbstractProcessorTaskExecutor;
+import stroom.core.dataprocess.ProcessorTaskDecorator;
 import stroom.data.store.api.Store;
 import stroom.feed.api.FeedProperties;
 import stroom.feed.api.VolumeGroupNameProvider;
 import stroom.meta.api.MetaService;
-import stroom.meta.shared.Meta;
 import stroom.node.api.NodeInfo;
 import stroom.pipeline.ErrorWriterProxy;
 import stroom.pipeline.LocationFactoryProxy;
@@ -40,14 +40,13 @@ import stroom.pipeline.state.RecordCount;
 import stroom.pipeline.state.SearchIdHolder;
 import stroom.pipeline.state.StreamProcessorHolder;
 import stroom.processor.api.ProcessorTaskService;
-import stroom.processor.shared.ProcessorFilter;
 import stroom.statistics.api.InternalStatisticsReceiver;
 
 import jakarta.inject.Inject;
 
 public class StreamingAnalyticProcessorExecutor extends AbstractProcessorTaskExecutor {
 
-    private final StreamingAnalyticDataProcessorDecorator streamingAnalyticDataProcessorDecorator;
+    private final ProcessorTaskDecorator processorTaskDecorator;
 
     @Inject
     public StreamingAnalyticProcessorExecutor(final PipelineFactory pipelineFactory,
@@ -71,8 +70,8 @@ public class StreamingAnalyticProcessorExecutor extends AbstractProcessorTaskExe
                                               final NodeInfo nodeInfo,
                                               final PipelineDataCache pipelineDataCache,
                                               final InternalStatisticsReceiver internalStatisticsReceiver,
-                                              final StreamingAnalyticDataProcessorDecorator
-                                                          streamingAnalyticDataProcessorDecorator,
+                                              final StreamingAnalyticProcessorTaskDecorator
+                                                      streamingAnalyticDataProcessorDecorator,
                                               final VolumeGroupNameProvider volumeGroupNameProvider) {
         super(pipelineFactory,
                 store,
@@ -96,21 +95,11 @@ public class StreamingAnalyticProcessorExecutor extends AbstractProcessorTaskExe
                 pipelineDataCache,
                 internalStatisticsReceiver,
                 volumeGroupNameProvider);
-        this.streamingAnalyticDataProcessorDecorator = streamingAnalyticDataProcessorDecorator;
+        this.processorTaskDecorator = streamingAnalyticDataProcessorDecorator;
     }
 
     @Override
-    protected String getErrorFeedName(final ProcessorFilter processorFilter, final Meta meta) {
-        return streamingAnalyticDataProcessorDecorator.getErrorFeedName(processorFilter, meta);
-    }
-
-    @Override
-    protected void beforeProcessing(final ProcessorFilter processorFilter) {
-        streamingAnalyticDataProcessorDecorator.start(processorFilter);
-    }
-
-    @Override
-    protected void afterProcessing(final ProcessorFilter processorFilter) {
-        streamingAnalyticDataProcessorDecorator.end();
+    protected ProcessorTaskDecorator getProcessDecorator() {
+        return processorTaskDecorator;
     }
 }

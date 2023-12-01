@@ -40,6 +40,7 @@ import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFields;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterFields;
+import stroom.processor.shared.ProcessorType;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.util.shared.Message;
@@ -144,7 +145,9 @@ public class ProcessorFilterImportExportHandlerImpl implements ImportExportActio
                 processorFilter.setProcessor(findProcessorForFilter(processorFilter));
 
                 // Make sure we can get the processor for this filter.
-                final Processor processor = findProcessor(docRef.getUuid(),
+                final Processor processor = findProcessor(
+                        processorFilter.getProcessorType(),
+                        docRef.getUuid(),
                         processorFilter.getProcessorUuid(),
                         processorFilter.getPipelineUuid(),
                         processorFilter.getPipelineName());
@@ -285,7 +288,9 @@ public class ProcessorFilterImportExportHandlerImpl implements ImportExportActio
     private Processor findProcessorForFilter(final ProcessorFilter filter) {
         Processor processor = filter.getProcessor();
         if (processor == null) {
-            processor = findProcessor(filter.getUuid(),
+            processor = findProcessor(
+                    filter.getProcessorType(),
+                    filter.getUuid(),
                     filter.getProcessorUuid(),
                     filter.getPipelineUuid(),
                     filter.getPipelineName());
@@ -295,7 +300,8 @@ public class ProcessorFilterImportExportHandlerImpl implements ImportExportActio
         return processor;
     }
 
-    private Processor findProcessor(final String filterUuid,
+    private Processor findProcessor(final ProcessorType processorType,
+                                    final String filterUuid,
                                     final String processorUuid,
                                     final String pipelineUuid,
                                     final String pipelineName) {
@@ -313,8 +319,10 @@ public class ProcessorFilterImportExportHandlerImpl implements ImportExportActio
         RuntimeException ex;
         if (page.size() == 0) {
             if (pipelineUuid != null) {
-                //Create the missing processor
-                result = processorService.create(new DocRef(Processor.ENTITY_TYPE, processorUuid),
+                // Create the missing processor
+                result = processorService.create(
+                        processorType,
+                        new DocRef(Processor.ENTITY_TYPE, processorUuid),
                         new DocRef(PipelineDoc.DOCUMENT_TYPE, pipelineUuid, pipelineName),
                         true);
                 ex = null;

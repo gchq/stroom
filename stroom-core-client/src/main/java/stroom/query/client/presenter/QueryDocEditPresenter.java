@@ -199,10 +199,7 @@ public class QueryDocEditPresenter extends DocumentEditPresenter<QueryEditView, 
                                             final String query) {
         final StreamingAnalyticProcessConfig analyticProcessConfig =
                 StreamingAnalyticProcessConfig.builder()
-                        .node(analyticUiDefaultConfig.getDefaultNode())
                         .errorFeed(analyticUiDefaultConfig.getDefaultErrorFeed())
-                        .minMetaCreateTimeMs(System.currentTimeMillis())
-                        .maxMetaCreateTimeMs(null)
                         .build();
         AnalyticRuleDoc updated = doc
                 .copy()

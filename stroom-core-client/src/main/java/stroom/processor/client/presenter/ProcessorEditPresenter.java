@@ -13,6 +13,7 @@ import stroom.processor.client.presenter.ProcessorEditPresenter.ProcessorEditVie
 import stroom.processor.shared.CreateProcessFilterRequest;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterResource;
+import stroom.processor.shared.ProcessorType;
 import stroom.processor.shared.QueryData;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionUtil;
@@ -40,6 +41,7 @@ public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView>
     private final EditExpressionPresenter editExpressionPresenter;
     private final RestFactory restFactory;
 
+    private ProcessorType processorType;
     private DocRef pipelineRef;
     private Consumer<ProcessorFilter> consumer;
 
@@ -77,13 +79,10 @@ public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView>
         return editExpressionPresenter.write();
     }
 
-    public void show(final DocRef pipelineRef, final ProcessorFilter filter, final Consumer<ProcessorFilter> consumer) {
-        this.pipelineRef = pipelineRef;
-        this.consumer = consumer;
-
-        final QueryData queryData = getOrCreateQueryData(filter);
-        final List<QueryField> fields = MetaFields.getAllFields();
-
+    public void show(final ProcessorType processorType,
+                     final DocRef pipelineRef,
+                     final ProcessorFilter filter,
+                     final Consumer<ProcessorFilter> consumer) {
         final Long minMetaCreateTimeMs;
         final Long maxMetaCreateTimeMs;
         if (filter == null) {
@@ -93,7 +92,21 @@ public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView>
             minMetaCreateTimeMs = filter.getMinMetaCreateTimeMs();
             maxMetaCreateTimeMs = filter.getMaxMetaCreateTimeMs();
         }
+        show(processorType, pipelineRef, filter, minMetaCreateTimeMs, maxMetaCreateTimeMs, consumer);
+    }
 
+    public void show(final ProcessorType processorType,
+                     final DocRef pipelineRef,
+                     final ProcessorFilter filter,
+                     final Long minMetaCreateTimeMs,
+                     final Long maxMetaCreateTimeMs,
+                     final Consumer<ProcessorFilter> consumer) {
+        this.processorType = processorType;
+        this.pipelineRef = pipelineRef;
+        this.consumer = consumer;
+
+        final QueryData queryData = getOrCreateQueryData(filter);
+        final List<QueryField> fields = MetaFields.getAllFields();
         read(
                 queryData.getExpression(),
                 MetaFields.STREAM_STORE_DOC_REF,
@@ -230,6 +243,7 @@ public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView>
             // Now create the processor filter using the find stream criteria.
             final CreateProcessFilterRequest request = CreateProcessFilterRequest
                     .builder()
+                    .processorType(processorType)
                     .pipeline(pipelineRef)
                     .queryData(queryData)
                     .autoPriority(true)
