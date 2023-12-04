@@ -51,9 +51,6 @@ public class UpdatableToken implements Refreshable, HasJwtClaims, HasJwt {
      * @param tokenResponse
      * @param jwtClaims
      * @param updateFunction The function to get new up-to-date tokens.
-     *                       //     * @param additionalUpdateCondition A condition that will be tested in addition to token expiry
-     *                       //     *                                  to determine whether a refresh is needed or not, e.g. is the user
-     *                       //     *                                  still in session.
      */
     public UpdatableToken(final TokenResponse tokenResponse,
                           final JwtClaims jwtClaims,

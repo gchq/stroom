@@ -14,7 +14,6 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 
 import java.util.List;
-
 import javax.servlet.http.HttpServletRequest;
 
 import static org.mockito.Mockito.verify;
