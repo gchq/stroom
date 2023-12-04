@@ -19,23 +19,23 @@ package stroom.security.identity.account;
 import stroom.security.api.HasJwt;
 import stroom.security.api.UserIdentity;
 import stroom.util.authentication.HasRefreshable;
+import stroom.util.authentication.PerishableItem;
 import stroom.util.authentication.RefreshableItem;
 
 import java.time.Duration;
 import java.util.Objects;
 import java.util.function.Supplier;
 
-public class InternalIdpProcessingUserIdentity
-        implements HasRefreshable<RefreshableItem<String>>, UserIdentity, HasJwt {
+public class InternalIdpProcessingUserIdentity implements HasRefreshable, UserIdentity, HasJwt {
 
     // The subject of the processing user identity
     public static final String INTERNAL_PROCESSING_USER = "INTERNAL_PROCESSING_USER";
 
-    private RefreshableItem<String> refreshableJws;
+    private final RefreshableItem<String> refreshableJws;
 
-    public InternalIdpProcessingUserIdentity(final Duration maxAgeBeforeRefresh,
-                                             final Supplier<String> jwsSupplier) {
-        this.refreshableJws = new RefreshableItem<>(jwsSupplier, maxAgeBeforeRefresh);
+    public InternalIdpProcessingUserIdentity(final Duration refreshBuffer,
+                                             final Supplier<PerishableItem<String>> jwsSupplier) {
+        this.refreshableJws = new RefreshableItem<>(jwsSupplier, refreshBuffer);
     }
 
     @Override

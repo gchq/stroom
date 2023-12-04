@@ -25,9 +25,9 @@ import java.util.Objects;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
-public class IdpProxyServiceImpl implements IdpProxyService {
+public class AuthProxyServiceImpl implements AuthProxyService {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IdpProxyServiceImpl.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AuthProxyServiceImpl.class);
 
     private final Provider<OpenIdConfiguration> openIdConfigurationProvider;
     private final DefaultOpenIdCredentials defaultOpenIdCredentials;
@@ -35,10 +35,10 @@ public class IdpProxyServiceImpl implements IdpProxyService {
     private final UserIdentityFactory userIdentityFactory;
 
     @Inject
-    public IdpProxyServiceImpl(final Provider<OpenIdConfiguration> openIdConfigurationProvider,
-                               final DefaultOpenIdCredentials defaultOpenIdCredentials,
-                               final JerseyClientFactory jerseyClientFactory,
-                               final UserIdentityFactory userIdentityFactory) {
+    public AuthProxyServiceImpl(final Provider<OpenIdConfiguration> openIdConfigurationProvider,
+                                final DefaultOpenIdCredentials defaultOpenIdCredentials,
+                                final JerseyClientFactory jerseyClientFactory,
+                                final UserIdentityFactory userIdentityFactory) {
         this.openIdConfigurationProvider = openIdConfigurationProvider;
         this.defaultOpenIdCredentials = defaultOpenIdCredentials;
         this.jerseyClientFactory = jerseyClientFactory;
@@ -118,8 +118,10 @@ public class IdpProxyServiceImpl implements IdpProxyService {
 
             Instant expiry = null;
             Duration expiryDuration = null;
-            if (serviceUserIdentity instanceof final HasRefreshable<?> hasRefreshable) {
+
+            if (serviceUserIdentity instanceof final HasRefreshable hasRefreshable) {
                 final Refreshable refreshable = hasRefreshable.getRefreshable();
+
                 expiry = NullSafe.get(refreshable,
                         Refreshable::getExpireTimeEpochMs,
                         Instant::ofEpochMilli);

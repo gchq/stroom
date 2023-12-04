@@ -559,7 +559,7 @@ public class NullSafe {
     }
 
     /**
-     * If value is non-null pass it to the consumer, else it is a no-op.
+     * If value and consumer are non-null pass it to the consumer, else it is a no-op.
      */
     public static <T> void consume(final T value,
                                    final Consumer<T> consumer) {

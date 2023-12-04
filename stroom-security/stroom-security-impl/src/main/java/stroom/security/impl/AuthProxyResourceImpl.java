@@ -9,12 +9,12 @@ import javax.inject.Provider;
 import javax.ws.rs.BadRequestException;
 
 @AutoLogged(OperationType.UNLOGGED) // We are only proxying for the idp so no need to log it
-public class IdpProxyResourceImpl implements IdpProxyResource {
+public class AuthProxyResourceImpl implements AuthProxyResource {
 
-    private final Provider<IdpProxyService> idpProxyServiceProvider;
+    private final Provider<AuthProxyService> idpProxyServiceProvider;
 
     @Inject
-    public IdpProxyResourceImpl(final Provider<IdpProxyService> idpProxyServiceProvider) {
+    public AuthProxyResourceImpl(final Provider<AuthProxyService> idpProxyServiceProvider) {
         this.idpProxyServiceProvider = idpProxyServiceProvider;
     }
 

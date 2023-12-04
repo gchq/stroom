@@ -13,11 +13,17 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-@Path("/idpproxy/v1/noauth")
+/**
+ * Acts as a proxy for the Identity Provider. This is to allow callers with no details of the
+ * identity provider, (other than the {@link ClientCredentials}) to make a token request on the
+ * identity provider.
+ * No authentication required as we are just proxying for unauthenticated endpoints on the IDP.
+ */
+@Path("/authproxy/v1/noauth")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-@Tag(name = "IdpProxy")
-public interface IdpProxyResource extends RestResource {
+@Tag(name = "AuthProxy")
+public interface AuthProxyResource extends RestResource {
 
     @POST
     @Produces(MediaType.TEXT_PLAIN)
@@ -27,5 +33,4 @@ public interface IdpProxyResource extends RestResource {
             operationId = "fetchClientCredsToken")
     String fetchToken(@Parameter(description = "clientCredentials", required = true
     ) final ClientCredentials clientCredentials);
-
 }

@@ -25,6 +25,7 @@ import stroom.security.common.impl.ExternalServiceUserFactory;
 import stroom.security.common.impl.HttpClientProvider;
 import stroom.security.common.impl.IdpConfigurationProvider;
 import stroom.security.common.impl.JwtContextFactory;
+import stroom.security.common.impl.RefreshManager;
 import stroom.security.common.impl.TestCredentialsServiceUserFactory;
 import stroom.security.impl.event.PermissionChangeEvent;
 import stroom.security.impl.event.PermissionChangeEventLifecycleModule;
@@ -64,7 +65,7 @@ public class SecurityModule extends AbstractModule {
         // Now bind OpenIdConfiguration to the iface from prev bind
         bind(OpenIdConfiguration.class).to(IdpConfigurationProvider.class);
         bind(UserNameService.class).to(UserNameServiceImpl.class);
-        bind(IdpProxyService.class).to(IdpProxyServiceImpl.class);
+        bind(AuthProxyService.class).to(AuthProxyServiceImpl.class);
 
         HasHealthCheckBinder.create(binder())
                 .bind(ExternalIdpConfigurationProvider.class);
@@ -89,7 +90,7 @@ public class SecurityModule extends AbstractModule {
                 .addBinding(StroomUserNameProvider.class);
 
         GuiceUtil.buildMultiBinder(binder(), Managed.class)
-                .addBinding(StroomUserIdentityFactory.class);
+                .addBinding(RefreshManager.class);
 
         // Provide object info to the logging service.
         GuiceUtil.buildMultiBinder(binder(), Clearable.class)
@@ -114,6 +115,6 @@ public class SecurityModule extends AbstractModule {
                 .bind(SessionResourceImpl.class)
                 .bind(UserResourceImpl.class)
                 .bind(UserNameResourceImpl.class)
-                .bind(IdpProxyResourceImpl.class);
+                .bind(AuthProxyResourceImpl.class);
     }
 }

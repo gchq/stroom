@@ -5,6 +5,7 @@ import stroom.security.api.UserIdentity;
 import stroom.security.common.impl.AbstractUserIdentityFactory;
 import stroom.security.common.impl.JwtContextFactory;
 import stroom.security.common.impl.JwtUtil;
+import stroom.security.common.impl.RefreshManager;
 import stroom.security.openid.api.OpenId;
 import stroom.security.openid.api.OpenIdConfiguration;
 import stroom.security.openid.api.TokenResponse;
@@ -32,16 +33,16 @@ public class ProxyUserIdentityFactory extends AbstractUserIdentityFactory {
                              final Provider<OpenIdConfiguration> openIdConfigProvider,
                              final DefaultOpenIdCredentials defaultOpenIdCredentials,
                              final CertificateExtractor certificateExtractor,
-//                             final ProcessingUserIdentityProvider processingUserIdentityProvider,
                              final ServiceUserFactory serviceUserFactory,
-                             final JerseyClientFactory jerseyClientFactory) {
+                             final JerseyClientFactory jerseyClientFactory,
+                             final RefreshManager refreshManager) {
         super(jwtContextFactory,
                 openIdConfigProvider,
                 defaultOpenIdCredentials,
                 certificateExtractor,
-//                processingUserIdentityProvider,
                 serviceUserFactory,
-                jerseyClientFactory);
+                jerseyClientFactory,
+                refreshManager);
         this.openIdConfigurationProvider = openIdConfigProvider;
     }
 
