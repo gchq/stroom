@@ -1,60 +1,40 @@
 package stroom.item.client;
 
 import stroom.docref.HasDisplayValue;
-
-import com.google.gwt.view.client.AbstractDataProvider;
-import com.google.gwt.view.client.ListDataProvider;
+import stroom.util.shared.PageRequest;
+import stroom.util.shared.ResultPage;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Objects;
+import java.util.function.Consumer;
 
 public class SimpleSelectionListModel<T> implements SelectionListModel<T, SimpleSelectionItemWrapper<T>> {
 
     protected final List<SimpleSelectionItemWrapper<T>> items = new ArrayList<>();
 
-    private String lastFilter;
-    private final ListDataProvider<SimpleSelectionItemWrapper<T>> dataProvider = new ListDataProvider<>();
-
-    @Override
-    public AbstractDataProvider<SimpleSelectionItemWrapper<T>> getDataProvider() {
-        return dataProvider;
-    }
-
-    @Override
-    public NavigationModel<SimpleSelectionItemWrapper<T>> getNavigationModel() {
-        return null;
-    }
-
     private SimpleSelectionItemWrapper<T> nonSelectItem;
 
     @Override
-    public void reset() {
-        lastFilter = null;
-    }
-
-    @Override
-    public void setFilter(final String filter) {
-        if (!Objects.equals(filter, lastFilter)) {
-            lastFilter = filter;
-            refresh();
-        }
-    }
-
-    @Override
-    public void refresh() {
-        if (lastFilter != null && !lastFilter.isEmpty()) {
+    public void onRangeChange(final SimpleSelectionItemWrapper<T> parent,
+                              final String filter,
+                              final PageRequest pageRequest,
+                              final Consumer<ResultPage<SimpleSelectionItemWrapper<T>>> consumer) {
+        if (filter != null && !filter.isEmpty()) {
             final List<SimpleSelectionItemWrapper<T>> filteredItems = new ArrayList<>(items.size());
             for (final SimpleSelectionItemWrapper<T> item : items) {
-                if (item.getLabel().toLowerCase().contains(lastFilter)) {
+                if (item.getLabel().toLowerCase().contains(filter)) {
                     filteredItems.add(item);
                 }
             }
-            dataProvider.setList(filteredItems);
+            consumer.accept(ResultPage.createUnboundedList(filteredItems));
         } else {
-            dataProvider.setList(items);
+            consumer.accept(ResultPage.createUnboundedList(items));
         }
+    }
+
+    @Override
+    public void reset() {
     }
 
     public SimpleSelectionListModel() {

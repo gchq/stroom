@@ -6,7 +6,6 @@ import stroom.datasource.api.v2.FindFieldInfoCriteria;
 import stroom.docref.DocRef;
 import stroom.docref.StringMatch;
 import stroom.docref.StringMatch.MatchType;
-import stroom.item.client.NavigationModel;
 import stroom.item.client.SelectionItem;
 import stroom.item.client.SelectionListModel;
 import stroom.query.api.v2.Column;
@@ -23,16 +22,12 @@ import stroom.util.shared.PageRequest;
 import stroom.util.shared.PageResponse;
 import stroom.util.shared.ResultPage;
 
-import com.google.gwt.view.client.AbstractDataProvider;
-import com.google.gwt.view.client.AsyncDataProvider;
-import com.google.gwt.view.client.HasData;
-import com.google.gwt.view.client.Range;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 
@@ -40,10 +35,7 @@ public class DynamicColumnSelectionListModel implements SelectionListModel<Colum
 
     private final DataSourceClient dataSourceClient;
     private final ClientSecurityContext clientSecurityContext;
-    private final AsyncDataProvider<ColumnSelectionItem> dataProvider;
-    private final NavigationModel<ColumnSelectionItem> navigationModel = new NavigationModel<>();
     private DocRef dataSourceRef;
-    private StringMatch filter;
     private FindFieldInfoCriteria lastCriteria;
     private String lastPath;
 
@@ -52,25 +44,21 @@ public class DynamicColumnSelectionListModel implements SelectionListModel<Colum
                                            final ClientSecurityContext clientSecurityContext) {
         this.dataSourceClient = dataSourceClient;
         this.clientSecurityContext = clientSecurityContext;
-        dataProvider = new AsyncDataProvider<ColumnSelectionItem>() {
-            @Override
-            protected void onRangeChanged(final HasData<ColumnSelectionItem> display) {
-                refresh(display);
-            }
-        };
     }
 
-    private void refresh(final HasData<ColumnSelectionItem> display) {
-        final String parentPath = getParentPath();
+    @Override
+    public void onRangeChange(final ColumnSelectionItem parent,
+                              final String filter,
+                              final PageRequest pageRequest,
+                              final Consumer<ResultPage<ColumnSelectionItem>> consumer) {
+        final String parentPath = getParentPath(parent);
         if (dataSourceRef != null) {
-            final Range range = display.getVisibleRange();
-            final PageRequest pageRequest = new PageRequest(range.getStart(), range.getLength());
-
+            final StringMatch stringMatch = StringMatch.contains(filter);
             final FindFieldInfoCriteria findFieldInfoCriteria = new FindFieldInfoCriteria(
                     pageRequest,
                     null,
                     dataSourceRef,
-                    filter);
+                    stringMatch);
 
             // Only fetch if the request has changed.
             if (!parentPath.equals(lastPath) || !findFieldInfoCriteria.equals(lastCriteria)) {
@@ -80,39 +68,48 @@ public class DynamicColumnSelectionListModel implements SelectionListModel<Colum
                 dataSourceClient.findFields(findFieldInfoCriteria, response -> {
                     // Only update if the request is still current.
                     if (findFieldInfoCriteria == lastCriteria) {
-                        setResponse(parentPath, pageRequest, response, display);
+                        setResponse(stringMatch, parentPath, pageRequest, response, consumer);
                     }
                 });
             }
         }
     }
 
-    private String getParentPath() {
+    private String getParentPath(final ColumnSelectionItem parent) {
         String parentPath = "";
-        if (!navigationModel.getPath().isEmpty()) {
-            final ColumnSelectionItem lastItem = navigationModel.getPath().peek();
-            if (lastItem.getColumn() != null) {
+        if (parent != null) {
+            if (parent.getColumn() != null) {
                 parentPath = "Data Source" + ".";
             } else {
-                parentPath = lastItem.getLabel() + ".";
+                parentPath = parent.getLabel() + ".";
             }
         }
         return parentPath;
     }
 
-    private void setResponse(final String parentPath,
+    private void setResponse(final StringMatch filter,
+                             final String parentPath,
                              final PageRequest pageRequest,
                              final ResultPage<FieldInfo> response,
-                             final HasData<ColumnSelectionItem> display) {
-        final ResultPage<ColumnSelectionItem> counts = getCounts(pageRequest);
-        final ResultPage<ColumnSelectionItem> annotations = getAnnotations(pageRequest);
+                             final Consumer<ResultPage<ColumnSelectionItem>> consumer) {
+        final ResultPage<ColumnSelectionItem> counts = getCounts(filter, pageRequest);
+        final ResultPage<ColumnSelectionItem> annotations = getAnnotations(filter, pageRequest);
 
         ResultPage<ColumnSelectionItem> resultPage = null;
         if (GwtNullSafe.isBlankString(parentPath)) {
             final ExactResultPageBuilder<ColumnSelectionItem> builder = new ExactResultPageBuilder<>(pageRequest);
-            add(new ColumnSelectionItem(null, "Annotations", annotations.size() > 0), builder);
-            add(new ColumnSelectionItem(null, "Counts", counts.size() > 0), builder);
-            add(new ColumnSelectionItem(null, "Data Source", response.getValues().size() > 0), builder);
+            add(filter, new ColumnSelectionItem(
+                    null,
+                    "Annotations",
+                    annotations.size() > 0), builder);
+            add(filter, new ColumnSelectionItem(
+                    null,
+                    "Counts",
+                    counts.size() > 0), builder);
+            add(filter, new ColumnSelectionItem(
+                    null,
+                    "Data Source",
+                    response.getValues().size() > 0), builder);
 
             resultPage = builder.build();
         } else if ("Counts.".equals(parentPath)) {
@@ -134,32 +131,33 @@ public class DynamicColumnSelectionListModel implements SelectionListModel<Colum
                     new PageResponse(0, 1, 1L, true));
         }
 
-        display.setRowData(resultPage.getPageStart(), resultPage.getValues());
-        display.setRowCount(resultPage.getPageSize(), resultPage.isExact());
+        consumer.accept(resultPage);
     }
 
-    private ResultPage<ColumnSelectionItem> getCounts(final PageRequest pageRequest) {
+    private ResultPage<ColumnSelectionItem> getCounts(final StringMatch filter,
+                                                      final PageRequest pageRequest) {
         final ExactResultPageBuilder<ColumnSelectionItem> builder = new ExactResultPageBuilder<>(pageRequest);
         final Column count = Column.builder()
                 .name("Count")
                 .format(Format.NUMBER)
                 .expression("count()")
                 .build();
-        add(ColumnSelectionItem.create(count), builder);
+        add(filter, ColumnSelectionItem.create(count), builder);
         final Column countGroups = Column.builder()
                 .name("Count Groups")
                 .format(Format.NUMBER)
                 .expression("countGroups()")
                 .build();
-        add(ColumnSelectionItem.create(countGroups), builder);
+        add(filter, ColumnSelectionItem.create(countGroups), builder);
         final Column custom = Column.builder()
                 .name("Custom")
                 .build();
-        add(ColumnSelectionItem.create(custom), builder);
+        add(filter, ColumnSelectionItem.create(custom), builder);
         return builder.build();
     }
 
-    private ResultPage<ColumnSelectionItem> getAnnotations(final PageRequest pageRequest) {
+    private ResultPage<ColumnSelectionItem> getAnnotations(final StringMatch filter,
+                                                           final PageRequest pageRequest) {
         final ExactResultPageBuilder<ColumnSelectionItem> builder = new ExactResultPageBuilder<>(pageRequest);
         if (dataSourceRef != null &&
                 dataSourceRef.getType() != null &&
@@ -170,14 +168,15 @@ public class DynamicColumnSelectionListModel implements SelectionListModel<Colum
                 AnnotationFields.FIELDS.forEach(field -> {
                     final FieldInfo fieldInfo = FieldInfo.create(field);
                     final ColumnSelectionItem columnSelectionItem = ColumnSelectionItem.create(fieldInfo);
-                    add(columnSelectionItem, builder);
+                    add(filter, columnSelectionItem, builder);
                 });
             }
         }
         return builder.build();
     }
 
-    private void add(final ColumnSelectionItem item,
+    private void add(final StringMatch filter,
+                     final ColumnSelectionItem item,
                      final ExactResultPageBuilder<ColumnSelectionItem> resultPageBuilder) {
         if (item.isHasChildren()) {
             resultPageBuilder.add(item);
@@ -196,38 +195,8 @@ public class DynamicColumnSelectionListModel implements SelectionListModel<Colum
 
     @Override
     public void reset() {
-        navigationModel.reset();
-        this.filter = StringMatch.any();
         lastCriteria = null;
         lastPath = null;
-    }
-
-    @Override
-    public AbstractDataProvider<ColumnSelectionItem> getDataProvider() {
-        return dataProvider;
-    }
-
-    @Override
-    public NavigationModel<ColumnSelectionItem> getNavigationModel() {
-        return navigationModel;
-    }
-
-    @Override
-    public void setFilter(final String filter) {
-        if (filter == null) {
-            this.filter = StringMatch.any();
-            refresh();
-        } else {
-            this.filter = StringMatch.contains(filter);
-            refresh();
-        }
-    }
-
-    @Override
-    public void refresh() {
-        for (final HasData<ColumnSelectionItem> display : dataProvider.getDataDisplays()) {
-            refresh(display);
-        }
     }
 
     @Override

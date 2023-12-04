@@ -18,7 +18,6 @@
 package stroom.query.client.presenter;
 
 import stroom.docref.DocRef;
-import stroom.editor.client.presenter.ChangeCurrentPreferencesEvent;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.presenter.MarkdownConverter;
 import stroom.item.client.SelectionList;
@@ -31,6 +30,7 @@ import stroom.widget.util.client.MultiSelectionModel;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
+import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
@@ -49,6 +49,9 @@ public class QueryHelpPresenter
     private final QueryHelpAceCompletionProvider keyedAceCompletionProvider;
     private final QueryHelpDetailProvider detailProvider;
     private final MarkdownConverter markdownConverter;
+
+    private String currentQuery;
+    private Timer requestTimer;
 
     @Inject
     public QueryHelpPresenter(final EventBus eventBus,
@@ -71,11 +74,6 @@ public class QueryHelpPresenter
     @Override
     protected void onBind() {
         super.onBind();
-        // Markdown styling has the light/dark theme baked in so have to rebuild it on theme change
-        registerHandler(getEventBus().addHandler(ChangeCurrentPreferencesEvent.getType(), event -> {
-            // Rebuild the structure menu items as they contain markdown
-            refresh();
-        }));
         final MultiSelectionModel<QueryHelpSelectionItem> selectionModel =
                 getView().getSelectionList().getSelectionModel();
         registerHandler(selectionModel.addSelectionHandler(e -> {
@@ -116,7 +114,7 @@ public class QueryHelpPresenter
     }
 
     public void refresh() {
-        model.refresh();
+        getView().getSelectionList().refresh();
     }
 
     @Override
@@ -153,7 +151,22 @@ public class QueryHelpPresenter
     }
 
     public void setQuery(final String query) {
-        model.setCurrentQuery(query);
+        // Debounce requests so we don't spam the backend
+        if (requestTimer != null) {
+            requestTimer.cancel();
+        }
+
+        requestTimer = new Timer() {
+            @Override
+            public void run() {
+                if (!Objects.equals(currentQuery, query)) {
+                    currentQuery = query;
+                    model.setQuery(query);
+                    refresh();
+                }
+            }
+        };
+        requestTimer.schedule(400);
     }
 
     private HandlerRegistration addInsertHandler(InsertEditorTextEvent.Handler handler) {

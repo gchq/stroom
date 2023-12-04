@@ -1,18 +1,18 @@
 package stroom.item.client;
 
-import com.google.gwt.view.client.AbstractDataProvider;
+import stroom.util.shared.PageRequest;
+import stroom.util.shared.ResultPage;
+
+import java.util.function.Consumer;
 
 public interface SelectionListModel<T, I extends SelectionItem> {
 
-    AbstractDataProvider<I> getDataProvider();
-
-    NavigationModel<I> getNavigationModel();
+    void onRangeChange(I parent,
+                       String filter,
+                       PageRequest pageRequest,
+                       Consumer<ResultPage<I>> consumer);
 
     void reset();
-
-    void setFilter(String filter);
-
-    void refresh();
 
     boolean displayFilter();
 

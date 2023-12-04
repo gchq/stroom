@@ -4,16 +4,10 @@ import stroom.datasource.api.v2.FieldInfo;
 import stroom.datasource.api.v2.FindFieldInfoCriteria;
 import stroom.docref.DocRef;
 import stroom.docref.StringMatch;
-import stroom.item.client.NavigationModel;
 import stroom.query.client.DataSourceClient;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.PageResponse;
 import stroom.util.shared.ResultPage;
-
-import com.google.gwt.view.client.AbstractDataProvider;
-import com.google.gwt.view.client.AsyncDataProvider;
-import com.google.gwt.view.client.HasData;
-import com.google.gwt.view.client.Range;
 
 import java.util.Collections;
 import java.util.List;
@@ -24,30 +18,26 @@ import javax.inject.Inject;
 public class DynamicFieldSelectionListModel implements FieldSelectionListModel {
 
     private final DataSourceClient dataSourceClient;
-    private final AsyncDataProvider<FieldInfoSelectionItem> dataProvider;
     private DocRef dataSourceRef;
-    private StringMatch filter;
     private FindFieldInfoCriteria lastCriteria;
 
     @Inject
     public DynamicFieldSelectionListModel(final DataSourceClient dataSourceClient) {
         this.dataSourceClient = dataSourceClient;
-        dataProvider = new AsyncDataProvider<FieldInfoSelectionItem>() {
-            @Override
-            protected void onRangeChanged(final HasData<FieldInfoSelectionItem> display) {
-                refresh(display);
-            }
-        };
     }
 
-    private void refresh(final HasData<FieldInfoSelectionItem> display) {
+    @Override
+    public void onRangeChange(final FieldInfoSelectionItem parent,
+                              final String filter,
+                              final PageRequest pageRequest,
+                              final Consumer<ResultPage<FieldInfoSelectionItem>> consumer) {
         if (dataSourceRef != null) {
-            final Range range = display.getVisibleRange();
+            final StringMatch stringMatch = StringMatch.contains(filter);
             final FindFieldInfoCriteria findFieldInfoCriteria = new FindFieldInfoCriteria(
-                    new PageRequest(range.getStart(), range.getLength()),
+                    pageRequest,
                     null,
                     dataSourceRef,
-                    filter);
+                    stringMatch);
 
             // Only fetch if the request has changed.
             if (!findFieldInfoCriteria.equals(lastCriteria)) {
@@ -70,8 +60,7 @@ public class DynamicFieldSelectionListModel implements FieldSelectionListModel {
                             resultPage = new ResultPage<>(items, new PageResponse(0, 1, 1L, true));
                         }
 
-                        display.setRowData(resultPage.getPageStart(), resultPage.getValues());
-                        display.setRowCount(resultPage.getPageSize(), resultPage.isExact());
+                        consumer.accept(resultPage);
                     }
                 });
             }
@@ -83,37 +72,8 @@ public class DynamicFieldSelectionListModel implements FieldSelectionListModel {
     }
 
     @Override
-    public AbstractDataProvider<FieldInfoSelectionItem> getDataProvider() {
-        return dataProvider;
-    }
-
-    @Override
-    public NavigationModel<FieldInfoSelectionItem> getNavigationModel() {
-        return null;
-    }
-
-    @Override
     public void reset() {
-        filter = StringMatch.any();
         lastCriteria = null;
-    }
-
-    @Override
-    public void setFilter(final String filter) {
-        if (filter == null) {
-            this.filter = StringMatch.any();
-            refresh();
-        } else {
-            this.filter = StringMatch.contains(filter);
-            refresh();
-        }
-    }
-
-    @Override
-    public void refresh() {
-        for (final HasData<FieldInfoSelectionItem> display : dataProvider.getDataDisplays()) {
-            refresh(display);
-        }
     }
 
     @Override

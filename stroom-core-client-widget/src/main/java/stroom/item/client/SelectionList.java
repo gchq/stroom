@@ -2,6 +2,9 @@ package stroom.item.client;
 
 import stroom.data.grid.client.PagerViewImpl;
 import stroom.data.table.client.MyCellTable;
+import stroom.util.shared.PageRequest;
+import stroom.util.shared.PageResponse;
+import stroom.util.shared.ResultPage;
 import stroom.widget.dropdowntree.client.view.QuickFilter;
 import stroom.widget.util.client.AbstractSelectionEventManager;
 import stroom.widget.util.client.DoubleSelectTester;
@@ -26,9 +29,15 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Hyperlink;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
+import com.google.gwt.view.client.AsyncDataProvider;
 import com.google.gwt.view.client.CellPreviewEvent;
+import com.google.gwt.view.client.HasData;
+import com.google.gwt.view.client.Range;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.Stack;
 
 public class SelectionList<T, I extends SelectionItem> extends Composite {
 
@@ -38,15 +47,18 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
     private final CellTable<I> cellTable;
     private SelectionListModel<T, I> model;
 
-    private final SelectionEventManager<T, I> selectionEventManager;
+    private final Stack<NavigationState<I>> navigationStates = new Stack<>();
     private final MultiSelectionModelImpl<I> selectionModel;
+    private ResultPage<I> currentResult;
+    private String lastFilter;
 
     private final EventBinder eventBinder = new EventBinder() {
         @Override
         protected void onBind() {
             registerHandler(quickFilter.addValueChangeHandler(e -> {
-                if (model != null) {
-                    model.setFilter(e.getValue());
+                if (!Objects.equals(e.getValue(), lastFilter)) {
+                    lastFilter = e.getValue();
+                    refresh();
                 }
             }));
         }
@@ -63,9 +75,7 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
                 pagerView.setPagerVisible(model.displayPager());
 
                 // Only update the path when we get data.
-                if (model != null && model.getNavigationModel() != null) {
-                    setPath(model.getNavigationModel().getPath());
-                }
+                updatePath();
             }
 
             @Override
@@ -80,8 +90,17 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
         };
 
         selectionModel = new MultiSelectionModelImpl<>(cellTable);
-        selectionEventManager = new SelectionEventManager<>(cellTable, selectionModel);
+        SelectionEventManager<T, I> selectionEventManager = new SelectionEventManager<>(cellTable,
+                selectionModel,
+                this);
         cellTable.setSelectionModel(selectionModel, selectionEventManager);
+        final AsyncDataProvider<I> dataProvider = new AsyncDataProvider<I>() {
+            @Override
+            protected void onRangeChanged(final HasData<I> display) {
+                refresh();
+            }
+        };
+        dataProvider.addDataDisplay(cellTable);
 
         final Column<I, I> expanderColumn =
                 new Column<I, I>(new SelectionItemCell<>()) {
@@ -141,33 +160,38 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
         eventBinder.unbind();
     }
 
+    public void refresh() {
+        if (model != null) {
+            final I parentItem = navigationStates.isEmpty()
+                    ? null
+                    : navigationStates.peek().getSelectedItem();
+            final Range range = cellTable.getVisibleRange();
+            final PageRequest pageRequest = new PageRequest(range.getStart(), range.getLength());
+            model.onRangeChange(parentItem, lastFilter, pageRequest, pageResponse -> {
+                currentResult = pageResponse;
+                cellTable.setRowData(pageResponse.getPageStart(), pageResponse.getValues());
+                cellTable.setRowCount(pageResponse.getPageSize(), pageResponse.isExact());
+            });
+        }
+    }
+
     public void init(final SelectionListModel<T, I> model) {
         if (this.model != null) {
             throw new RuntimeException("Already initialised.");
         }
-        if (model.getDataProvider().getDataDisplays().size() > 0) {
-            throw new RuntimeException("Display already attached.");
-        }
 
         this.model = model;
-        selectionEventManager.setModel(model);
         quickFilter.setVisible(model.displayFilter());
         links.setVisible(model.displayPath());
         pagerView.setPagerVisible(model.displayPager());
 
-        model.getDataProvider().addDataDisplay(cellTable);
-        model.refresh();
+        refresh();
     }
 
     public void destroy() {
         if (model != null) {
-            if (model.getDataProvider().getDataDisplays().size() > 0) {
-                if (!model.getDataProvider().getDataDisplays().contains(cellTable)) {
-                    throw new RuntimeException("Expected display is not present.");
-                } else {
-                    model.getDataProvider().removeDataDisplay(cellTable);
-                }
-            }
+            lastFilter = null;
+            navigationStates.clear();
             model.reset();
         }
     }
@@ -180,39 +204,29 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
             extends AbstractSelectionEventManager<I> {
 
         private final MultiSelectionModelImpl<I> selectionModel;
+        private final SelectionList<T, I> selectionList;
         private final DoubleSelectTester doubleClickTest = new DoubleSelectTester();
         private final boolean allowMultiSelect = false;
-        private SelectionListModel<T, I> model;
 
         public SelectionEventManager(final AbstractHasData<I> cellTable,
-                                     final MultiSelectionModelImpl<I> selectionModel) {
+                                     final MultiSelectionModelImpl<I> selectionModel,
+                                     final SelectionList<T, I> selectionList) {
             super(cellTable);
             this.selectionModel = selectionModel;
-        }
-
-        public void setModel(final SelectionListModel<T, I> model) {
-            this.model = model;
+            this.selectionList = selectionList;
         }
 
         @Override
         protected void onMoveRight(final CellPreviewEvent<I> e) {
             final I value = e.getValue();
             if (value != null && value.isHasChildren()) {
-                if (model != null &&
-                        model.getNavigationModel() != null &&
-                        model.getNavigationModel().navigate(value)) {
-                    model.refresh();
-                }
+                selectionList.navigate(value);
             }
         }
 
         @Override
         protected void onMoveLeft(final CellPreviewEvent<I> e) {
-            if (model != null &&
-                    model.getNavigationModel() != null &&
-                    model.getNavigationModel().navigateBack()) {
-                model.refresh();
-            }
+            selectionList.navigateBack();
         }
 
         @Override
@@ -280,42 +294,38 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
                 }
 
                 if (row != null && row.isHasChildren()) {
-                    // Open item.
-                    if (model != null &&
-                            model.getNavigationModel() != null &&
-                            model.getNavigationModel().navigate(row)) {
-                        model.refresh();
-                    }
+                    selectionList.navigate(row);
                 } else {
-                    setKeyboardSelection(row);
+                    selectionList.setKeyboardSelection(row);
                 }
-            }
-        }
-
-        private void setKeyboardSelection(final I value) {
-            final int row = cellTable.getVisibleItems().indexOf(value);
-            if (row >= 0) {
-                cellTable.setKeyboardSelectedRow(row, true);
-            } else {
-                cellTable.setKeyboardSelectedRow(cellTable.getKeyboardSelectedRow(), true);
             }
         }
     }
 
-    private void setPath(final List<I> path) {
+    private void setKeyboardSelection(final I value) {
+        final int row = cellTable.getVisibleItems().indexOf(value);
+        if (row >= 0) {
+            cellTable.setKeyboardSelectedRow(row, true);
+        } else {
+            cellTable.setKeyboardSelectedRow(cellTable.getKeyboardSelectedRow(), true);
+        }
+    }
+
+    private void updatePath() {
         links.clear();
-        if (path.size() == 0) {
+        if (navigationStates.isEmpty()) {
             links.add(new Label(model.getPathRoot()));
         } else {
             links.add(createLink(model.getPathRoot(), null));
         }
-        for (int i = 0; i < path.size(); i++) {
+        for (int i = 0; i < navigationStates.size(); i++) {
             links.add(new Label("/"));
-            final I row = path.get(i);
-            if (i < path.size() - 1) {
-                links.add(createLink(row.getLabel(), row));
+            final NavigationState<I> navigationState = navigationStates.get(i);
+            final I selectedItem = navigationState.getSelectedItem();
+            if (i < navigationStates.size() - 1) {
+                links.add(createLink(selectedItem.getLabel(), selectedItem));
             } else {
-                links.add(new Label(row.getLabel()));
+                links.add(new Label(selectedItem.getLabel()));
             }
         }
     }
@@ -325,13 +335,70 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
         link.setText(label);
         link.addHandler(event -> {
             if (MouseUtil.isPrimary(event)) {
-                if (model != null &&
-                        model.getNavigationModel() != null &&
-                        model.getNavigationModel().navigateBack(row)) {
-                    model.refresh();
-                }
+                navigateBack(row);
             }
         }, ClickEvent.getType());
         return link;
+    }
+
+
+    public void navigate(I selectionItem) {
+        final List<I> list = new ArrayList<>(currentResult.getValues());
+        final PageResponse pageResponse = currentResult.getPageResponse();
+        final PageResponse pageResponseCopy = pageResponse.copy().build();
+        final ResultPage<I> resultPage = new ResultPage<>(list, pageResponseCopy);
+        final NavigationState<I> navigationState = new NavigationState<>(selectionItem, resultPage);
+        navigationStates.push(navigationState);
+        refresh();
+    }
+
+    private void navigateBack() {
+        if (!navigationStates.isEmpty()) {
+            final NavigationState<I> navigationState = navigationStates.pop();
+            setState(navigationState);
+        }
+    }
+
+    private void navigateBack(I selectionItem) {
+        NavigationState<I> navigationState = null;
+        while (!navigationStates.empty() && !navigationStates.peek().getSelectedItem().equals(selectionItem)) {
+            navigationState = navigationStates.pop();
+        }
+        if (navigationState == null && !navigationStates.isEmpty()) {
+            navigationState = navigationStates.peek();
+        }
+        if (navigationState != null) {
+            setState(navigationState);
+        }
+    }
+
+    private void setState(final NavigationState<I> navigationState) {
+        if (navigationState != null) {
+            currentResult = navigationState.getResultPage();
+            cellTable.setRowData(currentResult.getPageStart(), currentResult.getValues());
+            cellTable.setRowCount(currentResult.getPageSize(), currentResult.isExact());
+            selectionModel.setSelected(navigationState.getSelectedItem());
+            setKeyboardSelection(navigationState.getSelectedItem());
+        }
+    }
+
+    private static class NavigationState<I extends SelectionItem> {
+
+        private final I selectedItem;
+        private final ResultPage<I> resultPage;
+
+        public NavigationState(final I selectedItem,
+                               final ResultPage<I> resultPage) {
+            this.selectedItem = selectedItem;
+            this.resultPage = resultPage;
+        }
+
+        public I getSelectedItem() {
+            return selectedItem;
+        }
+
+        public ResultPage<I> getResultPage() {
+            return resultPage;
+        }
     }
 }

@@ -40,15 +40,18 @@ public class StringMatch {
     }
 
     public static StringMatch contains(final String pattern) {
-        return new StringMatch(MatchType.CONTAINS, false, pattern);
+        return contains(pattern, false);
     }
 
     public static StringMatch contains(final String pattern, final boolean caseSensitive) {
+        if (pattern == null || pattern.length() == 0) {
+            return StringMatch.any();
+        }
         return new StringMatch(MatchType.CONTAINS, caseSensitive, pattern);
     }
 
     public static StringMatch equals(final String pattern) {
-        return new StringMatch(MatchType.EQUALS, false, pattern);
+        return equals(pattern, false);
     }
 
     public static StringMatch equals(final String pattern, final boolean caseSensitive) {
@@ -56,7 +59,7 @@ public class StringMatch {
     }
 
     public static StringMatch regex(final String pattern) {
-        return new StringMatch(MatchType.REGEX, false, pattern);
+        return regex(pattern, false);
     }
 
     public static StringMatch regex(final String pattern, final boolean caseSensitive) {

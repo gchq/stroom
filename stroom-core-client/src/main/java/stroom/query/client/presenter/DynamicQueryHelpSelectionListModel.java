@@ -4,7 +4,6 @@ import stroom.datasource.api.v2.FindFieldInfoCriteria;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docref.StringMatch;
-import stroom.item.client.NavigationModel;
 import stroom.item.client.SelectionListModel;
 import stroom.query.shared.QueryHelpRequest;
 import stroom.query.shared.QueryHelpRow;
@@ -16,16 +15,10 @@ import stroom.util.shared.PageResponse;
 import stroom.util.shared.ResultPage;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.client.Timer;
-import com.google.gwt.view.client.AbstractDataProvider;
-import com.google.gwt.view.client.AsyncDataProvider;
-import com.google.gwt.view.client.HasData;
-import com.google.gwt.view.client.Range;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
-import java.util.Stack;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 
@@ -34,39 +27,30 @@ public class DynamicQueryHelpSelectionListModel implements SelectionListModel<Qu
     private static final QueryResource QUERY_RESOURCE = GWT.create(QueryResource.class);
 
     private final RestFactory restFactory;
-    private final AsyncDataProvider<QueryHelpSelectionItem> dataProvider;
-    private final NavigationModel<QueryHelpSelectionItem> navigationModel = new NavigationModel<>();
-    private StringMatch filter;
 
-    private Timer requestTimer;
     private DocRef dataSourceRef;
-    private String currentQuery;
+    private String query;
     private boolean showAll = true;
     private QueryHelpRequest lastRequest;
 
     @Inject
     public DynamicQueryHelpSelectionListModel(final RestFactory restFactory) {
         this.restFactory = restFactory;
-
-        dataProvider = new AsyncDataProvider<QueryHelpSelectionItem>() {
-            @Override
-            protected void onRangeChanged(final HasData<QueryHelpSelectionItem> display) {
-                refresh(display);
-            }
-        };
     }
 
-    private void refresh(final HasData<QueryHelpSelectionItem> display) {
-        final Range range = display.getVisibleRange();
-        final PageRequest pageRequest = new PageRequest(range.getStart(), range.getLength());
+    @Override
+    public void onRangeChange(final QueryHelpSelectionItem parent,
+                              final String filter,
+                              final PageRequest pageRequest,
+                              final Consumer<ResultPage<QueryHelpSelectionItem>> consumer) {
         final String parentId;
-        final Stack<QueryHelpSelectionItem> openItems = navigationModel.getPath();
-        if (!openItems.empty()) {
-            parentId = unwrap(openItems.peek()).getId() + ".";
+        if (parent != null) {
+            parentId = unwrap(parent).getId() + ".";
         } else {
             parentId = "";
         }
 
+        final StringMatch stringMatch = StringMatch.contains(filter);
         final CriteriaFieldSort sort = new CriteriaFieldSort(
                 FindFieldInfoCriteria.SORT_BY_NAME,
                 false,
@@ -74,10 +58,10 @@ public class DynamicQueryHelpSelectionListModel implements SelectionListModel<Qu
         final QueryHelpRequest request = new QueryHelpRequest(
                 pageRequest,
                 Collections.singletonList(sort),
-                currentQuery,
+                query,
                 dataSourceRef,
                 parentId,
-                filter,
+                stringMatch,
                 showAll);
 
         // Only fetch if the request has changed.
@@ -109,8 +93,7 @@ public class DynamicQueryHelpSelectionListModel implements SelectionListModel<Qu
                                 resultPage = new ResultPage<>(rows, new PageResponse(0, 1, 1L, true));
                             }
 
-                            display.setRowData(resultPage.getPageStart(), resultPage.getValues());
-                            display.setRowCount(resultPage.getPageSize(), resultPage.isExact());
+                            consumer.accept(resultPage);
                         }
                     })
                     .call(QUERY_RESOURCE)
@@ -118,57 +101,13 @@ public class DynamicQueryHelpSelectionListModel implements SelectionListModel<Qu
         }
     }
 
-    public void setCurrentQuery(final String currentQuery) {
-        // Debounce requests so we don't spam the backend
-        if (requestTimer != null) {
-            requestTimer.cancel();
-        }
-
-        requestTimer = new Timer() {
-            @Override
-            public void run() {
-                if (!Objects.equals(DynamicQueryHelpSelectionListModel.this.currentQuery, currentQuery)) {
-                    DynamicQueryHelpSelectionListModel.this.currentQuery = currentQuery;
-                    refresh();
-                }
-            }
-        };
-        requestTimer.schedule(400);
-    }
-
-    @Override
-    public AbstractDataProvider<QueryHelpSelectionItem> getDataProvider() {
-        return dataProvider;
-    }
-
-    @Override
-    public NavigationModel<QueryHelpSelectionItem> getNavigationModel() {
-        return navigationModel;
+    public void setQuery(final String query) {
+        this.query = query;
     }
 
     @Override
     public void reset() {
-        navigationModel.reset();
-        filter = StringMatch.any();
         lastRequest = null;
-    }
-
-    @Override
-    public void setFilter(final String filter) {
-        if (filter == null || filter.length() == 0) {
-            this.filter = StringMatch.any();
-            refresh();
-        } else {
-            this.filter = StringMatch.contains(filter);
-            refresh();
-        }
-    }
-
-    @Override
-    public void refresh() {
-        for (final HasData<QueryHelpSelectionItem> display : dataProvider.getDataDisplays()) {
-            refresh(display);
-        }
     }
 
     @Override
