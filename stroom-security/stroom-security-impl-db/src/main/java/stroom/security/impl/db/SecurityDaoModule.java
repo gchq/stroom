@@ -1,5 +1,6 @@
 package stroom.security.impl.db;
 
+import stroom.security.impl.ApiKeyDao;
 import stroom.security.impl.AppPermissionDao;
 import stroom.security.impl.DocumentPermissionDao;
 import stroom.security.impl.UserDao;
@@ -12,6 +13,7 @@ public class SecurityDaoModule extends AbstractModule {
     protected void configure() {
         super.configure();
 
+        bind(ApiKeyDao.class).to(ApiKeyDaoImpl.class);
         bind(UserDao.class).to(UserDaoImpl.class);
         bind(DocumentPermissionDao.class).to(DocumentPermissionDaoImpl.class);
         bind(AppPermissionDao.class).to(AppPermissionDaoImpl.class);

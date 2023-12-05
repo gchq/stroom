@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS `api_key` (
   comments          longtext,
   enabled           tinyint NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`),
-  UNIQUE KEY `api_key_api_key_idx` (`api_key`),
+  UNIQUE KEY `api_key_api_key_enabled_owner_idx` (api_key, enabled, fk_owner_uuid),
   UNIQUE KEY `api_key_owner_name_idx` (`fk_owner_uuid`, `name`),
   CONSTRAINT api_key_fk_owner_uuid
     FOREIGN KEY (fk_owner_uuid)
