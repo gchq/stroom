@@ -4,6 +4,7 @@ import stroom.proxy.repo.FeedKey;
 import stroom.proxy.repo.ProxyRepoTestModule;
 import stroom.proxy.repo.RepoSource;
 import stroom.proxy.repo.RepoSourceItem;
+import stroom.proxy.repo.dao.db.SqliteJooqHelper;
 import stroom.proxy.repo.queue.Batch;
 
 import jakarta.inject.Inject;

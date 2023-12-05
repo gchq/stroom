@@ -11,6 +11,7 @@ import stroom.proxy.repo.FileScannerConfig;
 import stroom.proxy.repo.ForwardRetryConfig;
 import stroom.proxy.repo.LogStreamConfig;
 import stroom.proxy.repo.ProxyDbConfig;
+import stroom.proxy.repo.dao.lmdb.ProxyLmdbConfig;
 import stroom.proxy.repo.ProxyRepoConfig;
 import stroom.receive.common.ReceiveDataConfig;
 import stroom.security.openid.api.AbstractOpenIdConfig;
@@ -44,6 +45,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
     public static final String PROP_NAME_CONTENT_DIR = "contentDir";
     public static final String PROP_NAME_PATH = "path";
     public static final String PROP_NAME_DB = "db";
+    public static final String PROP_NAME_LMDB = "lmdb";
     public static final String PROP_NAME_RECEIVE = "receive";
     public static final String PROP_NAME_REPOSITORY = "repository";
     public static final String PROP_NAME_EVENT_STORE = "eventStore";
@@ -69,6 +71,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
 
     private final ProxyPathConfig pathConfig;
     private final ProxyDbConfig proxyDbConfig;
+    private final ProxyLmdbConfig proxyLmdbConfig;
     private final ReceiveDataConfig receiveDataConfig;
     private final ProxyRepoConfig proxyRepoConfig;
     private final EventStoreConfig eventStoreConfig;
@@ -91,6 +94,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
 
         pathConfig = new ProxyPathConfig();
         proxyDbConfig = new ProxyDbConfig();
+        proxyLmdbConfig = new ProxyLmdbConfig();
         receiveDataConfig = new ReceiveDataConfig();
         proxyRepoConfig = new ProxyRepoConfig();
         eventStoreConfig = new EventStoreConfig();
@@ -116,6 +120,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
             @JsonProperty(PROP_NAME_CONTENT_DIR) final String contentDir,
             @JsonProperty(PROP_NAME_PATH) final ProxyPathConfig pathConfig,
             @JsonProperty(PROP_NAME_DB) final ProxyDbConfig proxyDbConfig,
+            @JsonProperty(PROP_NAME_LMDB) final ProxyLmdbConfig proxyLmdbConfig,
             @JsonProperty(PROP_NAME_RECEIVE) final ReceiveDataConfig receiveDataConfig,
             @JsonProperty(PROP_NAME_REPOSITORY) final ProxyRepoConfig proxyRepoConfig,
             @JsonProperty(PROP_NAME_EVENT_STORE) final EventStoreConfig eventStoreConfig,
@@ -136,6 +141,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         this.contentDir = contentDir;
         this.pathConfig = pathConfig;
         this.proxyDbConfig = proxyDbConfig;
+        this.proxyLmdbConfig = proxyLmdbConfig;
         this.receiveDataConfig = receiveDataConfig;
         this.proxyRepoConfig = proxyRepoConfig;
         this.eventStoreConfig = eventStoreConfig;
@@ -184,6 +190,11 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
     @JsonProperty(PROP_NAME_DB)
     public ProxyDbConfig getProxyDbConfig() {
         return proxyDbConfig;
+    }
+
+    @JsonProperty(PROP_NAME_LMDB)
+    public ProxyLmdbConfig getProxyLmdbConfig() {
+        return proxyLmdbConfig;
     }
 
     @JsonProperty(PROP_NAME_RECEIVE)
@@ -328,6 +339,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
 
         private ProxyPathConfig pathConfig = new ProxyPathConfig();
         private ProxyDbConfig proxyDbConfig = new ProxyDbConfig();
+        private ProxyLmdbConfig proxyLmdbConfig = new ProxyLmdbConfig();
         private ReceiveDataConfig receiveDataConfig = new ReceiveDataConfig();
         private ProxyRepoConfig proxyRepoConfig = new ProxyRepoConfig();
         private EventStoreConfig eventStoreConfig = new EventStoreConfig();
@@ -369,6 +381,11 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
 
         public Builder proxyDbConfig(final ProxyDbConfig proxyDbConfig) {
             this.proxyDbConfig = proxyDbConfig;
+            return this;
+        }
+
+        public Builder proxyLmdbConfig(final ProxyLmdbConfig proxyLmdbConfig) {
+            this.proxyLmdbConfig = proxyLmdbConfig;
             return this;
         }
 
@@ -462,6 +479,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
                     contentDir,
                     pathConfig,
                     proxyDbConfig,
+                    proxyLmdbConfig,
                     receiveDataConfig,
                     proxyRepoConfig,
                     eventStoreConfig,

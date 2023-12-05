@@ -4,6 +4,7 @@ import stroom.db.util.JooqUtil;
 import stroom.proxy.repo.Aggregate;
 import stroom.proxy.repo.ProxyDbConfig;
 import stroom.proxy.repo.RepoSourceItemRef;
+import stroom.proxy.repo.dao.db.SqliteJooqHelper;
 import stroom.proxy.repo.db.jooq.tables.records.AggregateRecord;
 import stroom.proxy.repo.queue.Batch;
 import stroom.proxy.repo.queue.OperationWriteQueue;

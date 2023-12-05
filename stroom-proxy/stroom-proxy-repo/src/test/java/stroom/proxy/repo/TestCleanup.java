@@ -4,7 +4,7 @@ import stroom.db.util.JooqUtil;
 import stroom.proxy.repo.dao.FeedDao;
 import stroom.proxy.repo.dao.SourceDao;
 import stroom.proxy.repo.dao.SourceItemDao;
-import stroom.proxy.repo.dao.SqliteJooqHelper;
+import stroom.proxy.repo.dao.db.SqliteJooqHelper;
 
 import jakarta.inject.Inject;
 import name.falgout.jeffrey.testing.junit.guice.GuiceExtension;

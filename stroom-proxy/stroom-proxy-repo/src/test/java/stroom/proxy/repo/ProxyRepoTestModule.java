@@ -1,6 +1,7 @@
 package stroom.proxy.repo;
 
 import stroom.db.util.DbModule;
+import stroom.proxy.repo.dao.lmdb.ProxyLmdbModule;
 import stroom.test.common.util.test.TestingHomeAndTempProvidersModule;
 
 import com.google.inject.AbstractModule;
@@ -12,6 +13,7 @@ public class ProxyRepoTestModule extends AbstractModule {
     @Override
     protected void configure() {
         install(new ProxyDbModule());
+        install(new ProxyLmdbModule());
         install(new DbModule());
 
         final TestingHomeAndTempProvidersModule homeAndTempProvidersModule = new TestingHomeAndTempProvidersModule();

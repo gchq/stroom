@@ -45,6 +45,7 @@ import stroom.proxy.repo.ForwarderDestinations;
 import stroom.proxy.repo.ProgressLog;
 import stroom.proxy.repo.ProgressLogImpl;
 import stroom.proxy.repo.ProxyDbModule;
+import stroom.proxy.repo.dao.lmdb.ProxyLmdbModule;
 import stroom.proxy.repo.RepoDbDirProvider;
 import stroom.proxy.repo.RepoDbDirProviderImpl;
 import stroom.proxy.repo.RepoDirProvider;
@@ -119,6 +120,7 @@ public class ProxyModule extends AbstractModule {
         install(new DropwizardModule());
         install(new DbModule());
         install(new ProxyDbModule());
+        install(new ProxyLmdbModule());
         install(new DropwizardModule());
         install(new MockCollectionModule());
 

@@ -18,6 +18,7 @@ package stroom.proxy.repo.dao;
 
 import stroom.db.util.JooqUtil;
 import stroom.proxy.repo.ForwardDest;
+import stroom.proxy.repo.dao.db.SqliteJooqHelper;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;

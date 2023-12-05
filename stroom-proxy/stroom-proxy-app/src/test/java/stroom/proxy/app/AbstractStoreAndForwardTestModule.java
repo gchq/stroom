@@ -29,6 +29,7 @@ import stroom.proxy.repo.RepoDbDirProvider;
 import stroom.proxy.repo.RepoDbDirProviderImpl;
 import stroom.proxy.repo.RepoDirProvider;
 import stroom.proxy.repo.RepoDirProviderImpl;
+import stroom.proxy.repo.dao.lmdb.ProxyLmdbModule;
 import stroom.receive.common.DataReceiptPolicyAttributeMapFilterFactory;
 import stroom.receive.common.FeedStatusService;
 import stroom.receive.common.RemoteFeedModule;
@@ -76,6 +77,7 @@ public abstract class AbstractStoreAndForwardTestModule extends AbstractModule {
         install(new ProxyConfigModule(proxyConfigHolder));
         install(new DbModule());
         install(new ProxyDbModule());
+        install(new ProxyLmdbModule());
         install(new MockCollectionModule());
         install(new ProxySecurityModule());
 

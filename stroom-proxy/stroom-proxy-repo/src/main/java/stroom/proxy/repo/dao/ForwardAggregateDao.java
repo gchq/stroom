@@ -5,6 +5,7 @@ import stroom.proxy.repo.Aggregate;
 import stroom.proxy.repo.ForwardAggregate;
 import stroom.proxy.repo.ForwardDest;
 import stroom.proxy.repo.ProxyDbConfig;
+import stroom.proxy.repo.dao.db.SqliteJooqHelper;
 import stroom.proxy.repo.db.jooq.tables.records.ForwardAggregateRecord;
 import stroom.proxy.repo.queue.Batch;
 import stroom.proxy.repo.queue.BindWriteQueue;

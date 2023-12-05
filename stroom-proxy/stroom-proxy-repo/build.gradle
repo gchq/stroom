@@ -8,6 +8,7 @@ dependencies {
     implementation project(':stroom-docref')
     implementation project(':stroom-docstore:stroom-docstore-api')
     implementation project(':stroom-docstore:stroom-docstore-impl-fs')
+    implementation project(':stroom-lmdb')
     implementation project(':stroom-meta:stroom-meta-api')
     implementation project(':stroom-pipeline')
     implementation project(':stroom-proxy:stroom-proxy-remote-api')
@@ -30,6 +31,8 @@ dependencies {
     implementation libs.jakarta_servlet_api
     implementation libs.jakarta_inject
     implementation libs.jooq
+    implementation libs.kryo
+    implementation libs.lmdbjava
     implementation libs.slf4j_api
     implementation libs.sqlite
 

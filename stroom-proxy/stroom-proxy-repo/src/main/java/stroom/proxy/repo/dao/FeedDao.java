@@ -16,100 +16,15 @@
 
 package stroom.proxy.repo.dao;
 
-import stroom.db.util.JooqUtil;
 import stroom.proxy.repo.FeedKey;
 
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+public interface FeedDao {
 
-import java.util.Optional;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
+    long getId(FeedKey feedKey);
 
-import static stroom.proxy.repo.db.jooq.tables.Feed.FEED;
+    FeedKey getKey(long id);
 
-@Singleton
-public class FeedDao {
+    void clear();
 
-    private final SqliteJooqHelper jooq;
-    private final AtomicLong feedId = new AtomicLong();
-    private final Cache<FeedKey, Long> idCache;
-    private final Cache<Long, FeedKey> keyCache;
-
-    @Inject
-    FeedDao(final SqliteJooqHelper jooq) {
-        this.jooq = jooq;
-
-        idCache = Caffeine.newBuilder()
-                .maximumSize(1000)
-                .expireAfterAccess(1, TimeUnit.MINUTES)
-                .build();
-        keyCache = Caffeine.newBuilder()
-                .maximumSize(1000)
-                .expireAfterAccess(1, TimeUnit.MINUTES)
-                .build();
-
-        init();
-    }
-
-    private void init() {
-        jooq.readOnlyTransaction(context -> feedId.set(JooqUtil
-                .getMaxId(context, FEED, FEED.ID)
-                .orElse(0L)));
-    }
-
-    public long getId(final FeedKey feedKey) {
-        final Long result = idCache.get(feedKey, k -> {
-            final Optional<Long> optional = jooq.readOnlyTransactionResult(context -> context
-                    .select(FEED.ID)
-                    .from(FEED)
-                    .where(feedKey.feed() == null
-                            ? FEED.FEED_NAME.isNull()
-                            : FEED.FEED_NAME.eq(k.feed()))
-                    .and(feedKey.type() == null
-                            ? FEED.TYPE_NAME.isNull()
-                            : FEED.TYPE_NAME.eq(k.type()))
-                    .fetchOptional(FEED.ID));
-            if (optional.isPresent()) {
-                return optional.get();
-            }
-
-            return jooq.transactionResult(context -> {
-                final long id = feedId.incrementAndGet();
-                context
-                        .insertInto(FEED, FEED.ID, FEED.FEED_NAME, FEED.TYPE_NAME)
-                        .values(id, feedKey.feed(), feedKey.type())
-                        .execute();
-                return id;
-            });
-        });
-
-        if (result == null) {
-            throw new NullPointerException("Unexpected");
-        }
-        return result;
-    }
-
-    public FeedKey getKey(final long id) {
-        return keyCache.get(id, k -> jooq.readOnlyTransactionResult(context -> context
-                .select(FEED.FEED_NAME, FEED.TYPE_NAME)
-                .from(FEED)
-                .where(FEED.ID.eq(id))
-                .fetchOne(r -> new FeedKey(r.get(FEED.FEED_NAME), r.get(FEED.TYPE_NAME)))));
-    }
-
-    public void clear() {
-        jooq.transaction(context -> {
-            JooqUtil.deleteAll(context, FEED);
-            JooqUtil.checkEmpty(context, FEED);
-        });
-        idCache.invalidateAll();
-        init();
-    }
-
-    public int countFeeds() {
-        return jooq.readOnlyTransactionResult(context -> JooqUtil.count(context, FEED));
-    }
+    int countFeeds();
 }

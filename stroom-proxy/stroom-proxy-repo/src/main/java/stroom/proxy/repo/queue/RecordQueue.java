@@ -1,6 +1,6 @@
 package stroom.proxy.repo.queue;
 
-import stroom.proxy.repo.dao.SqliteJooqHelper;
+import stroom.proxy.repo.dao.db.SqliteJooqHelper;
 import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.shared.Flushable;
 

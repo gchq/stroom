@@ -1,6 +1,6 @@
 package stroom.proxy.app.servlet;
 
-import stroom.proxy.repo.dao.SqliteJooqHelper;
+import stroom.proxy.repo.dao.db.SqliteJooqHelper;
 import stroom.proxy.repo.queue.QueueMonitors;
 import stroom.proxy.repo.store.FileStores;
 import stroom.util.shared.IsServlet;
