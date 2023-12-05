@@ -79,7 +79,7 @@ public abstract class AbstractDaoLmdb<K, V> {
         }
     }
 
-    public Optional<K> getId(final V value) {
+    public Optional<K> getOptionalId(final V value) {
         final ByteBuffer valueByteBuffer = getValueSerde().serialise(value);
         final long hash = ByteBufferUtils.xxHash(valueByteBuffer);
         final ByteBuffer hashByteBuffer = hashSerde.serialise(hash);
