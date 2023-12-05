@@ -310,6 +310,10 @@ public class StreamTargetStreamHandler implements StreamHandler, Closeable {
         });
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class Layer {
 
         private final Set<StroomZipFileType> types = new HashSet<>();

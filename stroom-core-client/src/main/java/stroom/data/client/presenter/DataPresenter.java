@@ -1135,7 +1135,7 @@ public class DataPresenter
                     .forEach(entry ->
                             tableBuilder
                                     .row(SafeHtmlUtils.fromString(entry.getKey()),
-                                            replaceJavaLineBreaks(entry.getValue())));
+                                            toHtmlLineBreaks(entry.getValue())));
         }
 
         final HtmlBuilder htmlBuilder = new HtmlBuilder();
@@ -1143,10 +1143,18 @@ public class DataPresenter
         htmlPresenter.setHtml(htmlBuilder.toSafeHtml().asString());
     }
 
-    private SafeHtml replaceJavaLineBreaks(final String str) {
+    private SafeHtml toHtmlLineBreaks(final String str) {
         if (str != null) {
             HtmlBuilder sb = new HtmlBuilder();
-            sb.appendEscapedLines(str);
+            // Change any line breaks html line breaks
+            final String[] lines = str.split("\n");
+            for (int i = 0; i < lines.length; i++) {
+                final String line = lines[i];
+                if (i > 0) {
+                    sb.appendTrustedString("<br/>");
+                }
+                sb.append(line);
+            }
             return sb.toSafeHtml();
         } else {
             return null;
