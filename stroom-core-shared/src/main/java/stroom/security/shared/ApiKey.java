@@ -77,7 +77,7 @@ public class ApiKey implements HasAuditInfoGetters, HasIntegerId {
         createUser = builder.createUser;
         updateTimeMs = builder.updateTimeMs;
         updateUser = builder.updateUser;
-        owner = builder.owener;
+        owner = builder.owner;
         apiKey = builder.apiKey;
         expireTimeMs = builder.expireTimeMs;
         name = builder.name;
@@ -97,7 +97,7 @@ public class ApiKey implements HasAuditInfoGetters, HasIntegerId {
         builder.createUser = copy.getCreateUser();
         builder.updateTimeMs = copy.getUpdateTimeMs();
         builder.updateUser = copy.getUpdateUser();
-        builder.owener = copy.getOwner();
+        builder.owner = copy.getOwner();
         builder.apiKey = copy.getApiKey();
         builder.expireTimeMs = copy.getExpireTimeMs();
         builder.name = copy.getName();
@@ -108,27 +108,27 @@ public class ApiKey implements HasAuditInfoGetters, HasIntegerId {
 
     @Override
     public Integer getId() {
-        return null;
+        return id;
     }
 
     @Override
     public Long getCreateTimeMs() {
-        return null;
+        return createTimeMs;
     }
 
     @Override
     public String getCreateUser() {
-        return null;
+        return createUser;
     }
 
     @Override
     public Long getUpdateTimeMs() {
-        return null;
+        return updateTimeMs;
     }
 
     @Override
     public String getUpdateUser() {
-        return null;
+        return updateUser;
     }
 
     public int getVersion() {
@@ -159,6 +159,54 @@ public class ApiKey implements HasAuditInfoGetters, HasIntegerId {
         return enabled;
     }
 
+    @Override
+    public boolean equals(final Object object) {
+        if (this == object) {
+            return true;
+        }
+        if (object == null || getClass() != object.getClass()) {
+            return false;
+        }
+        final ApiKey apiKey1 = (ApiKey) object;
+        return version == apiKey1.version && enabled == apiKey1.enabled && Objects.equals(id,
+                apiKey1.id) && Objects.equals(createTimeMs, apiKey1.createTimeMs) && Objects.equals(
+                createUser,
+                apiKey1.createUser) && Objects.equals(updateTimeMs,
+                apiKey1.updateTimeMs) && Objects.equals(updateUser,
+                apiKey1.updateUser) && Objects.equals(owner, apiKey1.owner) && Objects.equals(apiKey,
+                apiKey1.apiKey) && Objects.equals(expireTimeMs, apiKey1.expireTimeMs) && Objects.equals(
+                name,
+                apiKey1.name) && Objects.equals(comments, apiKey1.comments);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id,
+                version,
+                createTimeMs,
+                createUser,
+                updateTimeMs,
+                updateUser,
+                owner,
+                apiKey,
+                expireTimeMs,
+                name,
+                comments,
+                enabled);
+    }
+
+    @Override
+    public String toString() {
+        return "ApiKey{" +
+                "id=" + id +
+                ", version=" + version +
+                ", owner=" + owner +
+                ", apiKey='" + apiKey + '\'' +
+                ", expireTime=" + (expireTimeMs != null ? Instant.ofEpochMilli(expireTimeMs) : null) +
+                ", name='" + name + '\'' +
+                ", enabled=" + enabled +
+                '}';
+    }
 
     // --------------------------------------------------------------------------------
 
@@ -171,12 +219,12 @@ public class ApiKey implements HasAuditInfoGetters, HasIntegerId {
         private String createUser;
         private Long updateTimeMs;
         private String updateUser;
-        private UserName owener;
+        private UserName owner;
         private String apiKey;
         private Long expireTimeMs;
         private String name;
         private String comments;
-        private boolean enabled;
+        private boolean enabled = true;
 
         private Builder() {
         }
@@ -228,7 +276,7 @@ public class ApiKey implements HasAuditInfoGetters, HasIntegerId {
         }
 
         public Builder withOwner(final UserName val) {
-            owener = val;
+            owner = val;
             return this;
         }
 

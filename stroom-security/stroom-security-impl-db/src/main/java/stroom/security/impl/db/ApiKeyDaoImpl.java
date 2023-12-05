@@ -2,8 +2,6 @@ package stroom.security.impl.db;
 
 import stroom.db.util.GenericDao;
 import stroom.db.util.JooqUtil;
-import stroom.security.api.UserIdentity;
-import stroom.security.api.UserIdentityFactory;
 import stroom.security.impl.ApiKeyDao;
 import stroom.security.impl.db.jooq.tables.records.ApiKeyRecord;
 import stroom.security.shared.ApiKey;
@@ -23,6 +21,7 @@ import org.jooq.Field;
 import org.jooq.Record;
 import org.jooq.impl.DSL;
 
+import java.time.Instant;
 import java.util.Map;
 import java.util.Optional;
 import javax.inject.Inject;
@@ -44,13 +43,10 @@ public class ApiKeyDaoImpl implements ApiKeyDao {
     private final SecurityDbConnProvider securityDbConnProvider;
     private final GenericDao<ApiKeyRecord, ApiKey, Integer> genericDao;
     private final UserNameProvider userNameProvider;
-    private final UserIdentityFactory userIdentityFactory;
-    private volatile Condition excludedUsersCondition = null;
 
     @Inject
     public ApiKeyDaoImpl(final UserNameProvider userNameProvider,
-                         final SecurityDbConnProvider securityDbConnProvider,
-                         final UserIdentityFactory userIdentityFactory) {
+                         final SecurityDbConnProvider securityDbConnProvider) {
         this.securityDbConnProvider = securityDbConnProvider;
         this.genericDao = new GenericDao<>(
                 securityDbConnProvider,
@@ -59,7 +55,6 @@ public class ApiKeyDaoImpl implements ApiKeyDao {
                 this::mapApiKeyToRecord,
                 this::mapRecordToApiKey);
         this.userNameProvider = userNameProvider;
-        this.userIdentityFactory = userIdentityFactory;
     }
 
     @Override
@@ -81,7 +76,6 @@ public class ApiKeyDaoImpl implements ApiKeyDao {
                                         .select()
                                         .from(API_KEY)
                                         .where(ownerCondition)
-                                        .and(getExcludedUsersCondition())
                                         .orderBy(API_KEY.NAME)
                                         .fetch())
                                 .stream()
@@ -101,11 +95,13 @@ public class ApiKeyDaoImpl implements ApiKeyDao {
         if (NullSafe.isBlankString(apiKey)) {
             return Optional.empty();
         } else {
+            final long nowMs = Instant.now().toEpochMilli();
             return JooqUtil.contextResult(securityDbConnProvider, context -> context
                     .select(API_KEY.FK_OWNER_UUID)
                     .from(API_KEY)
                     .where(API_KEY.API_KEY_.eq(apiKey.trim()))
                     .and(API_KEY.ENABLED.isTrue())
+                    .and(API_KEY.EXPIRES_ON_MS.greaterThan(nowMs))
                     .fetchOptional(API_KEY.FK_OWNER_UUID));
         }
     }
@@ -167,21 +163,5 @@ public class ApiKeyDaoImpl implements ApiKeyDao {
                 .withComments(record.get(API_KEY.COMMENTS))
                 .withEnabled(record.get(API_KEY.ENABLED))
                 .build();
-    }
-
-    private Condition getExcludedUsersCondition() {
-        if (excludedUsersCondition == null) {
-            synchronized (this) {
-                if (excludedUsersCondition == null) {
-                    excludedUsersCondition = Optional.ofNullable(userIdentityFactory.getServiceUserIdentity())
-                            .map(UserIdentity::getSubjectId)
-                            .flatMap(userNameProvider::getBySubjectId)
-                            .map(UserName::getUuid)
-                            .map(API_KEY.FK_OWNER_UUID::notEqual)
-                            .orElseThrow(() -> new RuntimeException("No processing user identity"));
-                }
-            }
-        }
-        return excludedUsersCondition;
     }
 }
