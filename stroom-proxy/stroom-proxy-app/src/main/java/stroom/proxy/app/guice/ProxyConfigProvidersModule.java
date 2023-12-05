@@ -1,5 +1,7 @@
 package stroom.proxy.app.guice;
 
+import stroom.proxy.repo.dao.db.ProxyDbConfig;
+
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 
@@ -146,10 +148,10 @@ public class ProxyConfigProvidersModule extends AbstractModule {
     @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
-    stroom.proxy.repo.ProxyDbConfig getProxyDbConfig(
+    ProxyDbConfig getProxyDbConfig(
             final ProxyConfigProvider proxyConfigProvider) {
         return proxyConfigProvider.getConfigObject(
-                stroom.proxy.repo.ProxyDbConfig.class);
+                ProxyDbConfig.class);
     }
 
     @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")

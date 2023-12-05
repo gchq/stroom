@@ -10,7 +10,7 @@ import stroom.proxy.repo.AggregatorConfig;
 import stroom.proxy.repo.FileScannerConfig;
 import stroom.proxy.repo.ForwardRetryConfig;
 import stroom.proxy.repo.LogStreamConfig;
-import stroom.proxy.repo.ProxyDbConfig;
+import stroom.proxy.repo.dao.db.ProxyDbConfig;
 import stroom.proxy.repo.dao.lmdb.ProxyLmdbConfig;
 import stroom.proxy.repo.ProxyRepoConfig;
 import stroom.receive.common.ReceiveDataConfig;

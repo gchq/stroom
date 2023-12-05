@@ -1,5 +1,6 @@
 package stroom.proxy.repo;
 
+import stroom.proxy.repo.dao.db.ProxyDbConfig;
 import stroom.util.io.PathCreator;
 
 import com.google.common.base.Strings;

@@ -1,4 +1,4 @@
-package stroom.proxy.repo;
+package stroom.proxy.repo.dao.db;
 
 import stroom.config.common.AbstractDbConfig;
 import stroom.config.common.ConnectionConfig;
@@ -7,6 +7,9 @@ import stroom.db.util.AbstractDataSourceProviderModule;
 import stroom.db.util.DataSourceFactory;
 import stroom.db.util.DataSourceProxy;
 import stroom.db.util.FlywayUtil;
+import stroom.proxy.repo.ProxyRepoDbConnProvider;
+import stroom.proxy.repo.RepoDbDirProvider;
+import stroom.proxy.repo.dao.AggregateDao;
 import stroom.proxy.repo.dao.ForwardAggregateDao;
 import stroom.proxy.repo.dao.ForwardSourceDao;
 import stroom.proxy.repo.dao.SourceDao;
@@ -43,11 +46,17 @@ public class ProxyDbModule extends AbstractModule {
     protected void configure() {
         super.configure();
 
+        bind(AggregateDao.class).to(AggregateDaoImpl.class);
+        bind(ForwardAggregateDao.class).to(TempForwardAggregateDao.class);
+        bind(ForwardSourceDao.class).to(TestForwardSourceDao.class);
+        bind(SourceDao.class).to(SourceDaoImpl.class);
+        bind(SourceItemDao.class).to(SourceItemDaoImpl.class);
+
         GuiceUtil.buildMultiBinder(binder(), Flushable.class)
-                .addBinding(SourceDao.class)
-                .addBinding(SourceItemDao.class)
-                .addBinding(ForwardAggregateDao.class)
-                .addBinding(ForwardSourceDao.class);
+                .addBinding(SourceDaoImpl.class)
+                .addBinding(SourceItemDaoImpl.class)
+                .addBinding(TempForwardAggregateDao.class)
+                .addBinding(TestForwardSourceDao.class);
     }
 
     @Provides

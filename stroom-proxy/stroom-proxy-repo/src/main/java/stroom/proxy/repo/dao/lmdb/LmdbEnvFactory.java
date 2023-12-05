@@ -22,10 +22,11 @@ public class LmdbEnvFactory {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(LmdbEnvFactory.class);
 
     public Env<ByteBuffer> build(final PathCreator pathCreator,
-                                 final LmdbConfig lmdbConfig) {
+                                 final LmdbConfig lmdbConfig,
+                                 final String subDir) {
         final Set<EnvFlags> envFlags = EnumSet.noneOf(EnvFlags.class);
         final boolean isReadAheadEnabled = lmdbConfig.isReadAheadEnabled();
-        final Path envDir = pathCreator.toAppPath(lmdbConfig.getLocalDir());
+        final Path envDir = pathCreator.toAppPath(lmdbConfig.getLocalDir()).resolve(subDir);
 
         LOGGER.debug(() -> "Ensuring existence of directory " + envDir.toAbsolutePath().normalize());
         try {

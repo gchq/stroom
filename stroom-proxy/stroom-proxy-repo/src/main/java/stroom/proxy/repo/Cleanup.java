@@ -21,6 +21,7 @@ import stroom.proxy.repo.dao.ForwardAggregateDao;
 import stroom.proxy.repo.dao.ForwardSourceDao;
 import stroom.proxy.repo.dao.SourceDao;
 import stroom.proxy.repo.dao.SourceItemDao;
+import stroom.proxy.repo.dao.db.ProxyDbConfig;
 import stroom.proxy.repo.store.SequentialFileStore;
 
 import jakarta.inject.Inject;

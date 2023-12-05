@@ -1,4 +1,4 @@
-package stroom.proxy.repo;
+package stroom.proxy.repo.dao.db;
 
 import stroom.util.config.annotations.RequiresProxyRestart;
 import stroom.util.shared.AbstractConfig;

@@ -17,6 +17,7 @@
 package stroom.proxy.repo;
 
 import stroom.proxy.repo.dao.AggregateDao;
+import stroom.proxy.repo.dao.db.ProxyDbConfig;
 import stroom.proxy.repo.queue.Batch;
 import stroom.proxy.repo.queue.BatchUtil;
 

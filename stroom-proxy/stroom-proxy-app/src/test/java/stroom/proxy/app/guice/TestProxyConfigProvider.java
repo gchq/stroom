@@ -4,7 +4,7 @@ import stroom.proxy.app.ProxyConfig;
 import stroom.proxy.app.ProxyPathConfig;
 import stroom.proxy.app.handler.FeedStatusConfig;
 import stroom.proxy.repo.FileScannerConfig;
-import stroom.proxy.repo.ProxyDbConfig;
+import stroom.proxy.repo.dao.db.ProxyDbConfig;
 import stroom.util.cache.CacheConfig;
 import stroom.util.config.AbstractConfigUtil;
 import stroom.util.io.PathConfig;

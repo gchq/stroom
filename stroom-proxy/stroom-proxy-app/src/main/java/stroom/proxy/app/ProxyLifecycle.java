@@ -8,7 +8,7 @@ import stroom.proxy.repo.AggregateForwarder;
 import stroom.proxy.repo.Aggregator;
 import stroom.proxy.repo.AggregatorConfig;
 import stroom.proxy.repo.Cleanup;
-import stroom.proxy.repo.ProxyDbConfig;
+import stroom.proxy.repo.dao.db.ProxyDbConfig;
 import stroom.proxy.repo.ProxyRepoConfig;
 import stroom.proxy.repo.ProxyServices;
 import stroom.proxy.repo.RepoSourceItems;

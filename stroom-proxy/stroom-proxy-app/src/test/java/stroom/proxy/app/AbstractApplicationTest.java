@@ -2,7 +2,7 @@ package stroom.proxy.app;
 
 import stroom.proxy.app.forwarder.ForwardFileConfig;
 import stroom.proxy.repo.ForwardRetryConfig;
-import stroom.proxy.repo.ProxyDbConfig;
+import stroom.proxy.repo.dao.db.ProxyDbConfig;
 import stroom.proxy.repo.ProxyRepoConfig;
 import stroom.test.common.TestResourceLocks;
 import stroom.util.NullSafe;

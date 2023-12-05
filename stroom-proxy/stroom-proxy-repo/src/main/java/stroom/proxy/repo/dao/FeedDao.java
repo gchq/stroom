@@ -24,7 +24,7 @@ public interface FeedDao {
 
     FeedKey getKey(long id);
 
-    void clear();
-
     int countFeeds();
+
+    void clear();
 }

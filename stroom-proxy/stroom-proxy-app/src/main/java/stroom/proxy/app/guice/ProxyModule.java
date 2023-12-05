@@ -44,7 +44,7 @@ import stroom.proxy.repo.FailureDestinations;
 import stroom.proxy.repo.ForwarderDestinations;
 import stroom.proxy.repo.ProgressLog;
 import stroom.proxy.repo.ProgressLogImpl;
-import stroom.proxy.repo.ProxyDbModule;
+import stroom.proxy.repo.dao.db.ProxyDbModule;
 import stroom.proxy.repo.dao.lmdb.ProxyLmdbModule;
 import stroom.proxy.repo.RepoDbDirProvider;
 import stroom.proxy.repo.RepoDbDirProviderImpl;

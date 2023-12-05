@@ -16,77 +16,20 @@
 
 package stroom.proxy.repo.dao;
 
-import stroom.db.util.JooqUtil;
 import stroom.proxy.repo.ForwardDest;
-import stroom.proxy.repo.dao.db.SqliteJooqHelper;
-
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicInteger;
 
-import static stroom.proxy.repo.db.jooq.tables.ForwardDest.FORWARD_DEST;
+public interface ForwardDestDao {
 
-@Singleton
-public class ForwardDestDao {
+    Optional<ForwardDest> get(int id);
 
-    private final SqliteJooqHelper jooq;
-    private final AtomicInteger forwardDestRecordId = new AtomicInteger();
+    List<ForwardDest> getAllForwardDests();
 
-    @Inject
-    ForwardDestDao(final SqliteJooqHelper jooq) {
-        this.jooq = jooq;
-        init();
-    }
+    int getForwardDestId(String name);
 
-    private void init() {
-        jooq.readOnlyTransaction(context -> {
-            final int maxForwardUrlRecordId = JooqUtil.getMaxId(context, FORWARD_DEST, FORWARD_DEST.ID)
-                    .orElse(0);
-            forwardDestRecordId.set(maxForwardUrlRecordId);
-        });
-    }
+    int countForwardDest();
 
-    public void clear() {
-        jooq.transaction(context -> {
-            JooqUtil.deleteAll(context, FORWARD_DEST);
-            JooqUtil.checkEmpty(context, FORWARD_DEST);
-        });
-        init();
-    }
-
-    public List<ForwardDest> getAllForwardDests() {
-        return jooq.readOnlyTransactionResult(context -> context
-                        .select(FORWARD_DEST.ID, FORWARD_DEST.NAME)
-                        .from(FORWARD_DEST)
-                        .fetch())
-                .map(r -> new ForwardDest(r.get(FORWARD_DEST.ID), r.get(FORWARD_DEST.NAME)));
-    }
-
-    public int getForwardDestId(final String name) {
-        Objects.requireNonNull(name, "The forward dest name is null");
-        return jooq.transactionResult(context -> {
-            final Optional<Integer> optionalId = context
-                    .select(FORWARD_DEST.ID)
-                    .from(FORWARD_DEST)
-                    .where(FORWARD_DEST.NAME.equal(name))
-                    .fetchOptional(FORWARD_DEST.ID);
-
-            return optionalId.orElseGet(() -> {
-                final int newId = forwardDestRecordId.incrementAndGet();
-                context
-                        .insertInto(FORWARD_DEST, FORWARD_DEST.ID, FORWARD_DEST.NAME)
-                        .values(newId, name)
-                        .execute();
-                return newId;
-            });
-        });
-    }
-
-    public int countForwardDest() {
-        return jooq.readOnlyTransactionResult(context -> JooqUtil.count(context, FORWARD_DEST));
-    }
+    void clear();
 }

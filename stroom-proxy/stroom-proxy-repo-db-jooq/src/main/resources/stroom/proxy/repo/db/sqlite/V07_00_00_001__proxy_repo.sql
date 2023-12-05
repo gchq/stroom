@@ -81,7 +81,7 @@ CREATE TABLE IF NOT EXISTS forward_source (
   last_try_time_ms          BIGINT DEFAULT 0,
   new_position              BIGINT NULL,
   retry_position            BIGINT NULL,
-  FOREIGN KEY               (fk_forward_dest_id) REFERENCES forward_dest (id),
+--  FOREIGN KEY               (fk_forward_dest_id) REFERENCES forward_dest (id),
   FOREIGN KEY               (fk_source_id) REFERENCES source (id)
 );
 CREATE UNIQUE INDEX new_position_forward_source_index ON forward_source(new_position);
@@ -98,7 +98,7 @@ CREATE TABLE IF NOT EXISTS forward_aggregate (
   last_try_time_ms          BIGINT DEFAULT 0,
   new_position              BIGINT NULL,
   retry_position            BIGINT NULL,
-  FOREIGN KEY               (fk_forward_dest_id) REFERENCES forward_dest (id),
+--  FOREIGN KEY               (fk_forward_dest_id) REFERENCES forward_dest (id),
   FOREIGN KEY               (fk_aggregate_id) REFERENCES aggregate (id)
 );
 CREATE UNIQUE INDEX new_position_forward_aggregate_index ON forward_aggregate(new_position);

@@ -1,6 +1,7 @@
 package stroom.proxy.repo;
 
 import stroom.db.util.DbModule;
+import stroom.proxy.repo.dao.db.ProxyDbModule;
 import stroom.proxy.repo.dao.lmdb.ProxyLmdbModule;
 import stroom.test.common.util.test.TestingHomeAndTempProvidersModule;
 
