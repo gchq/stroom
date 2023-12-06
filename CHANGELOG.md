@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2.9] - 2023-12-06
+
+* Issue **#3938** : Fix `lockInterruptibly` on `CompletableQueue`.
+
+
 ## [v7.2.8] - 2023-11-30
 
 * Issue **#3935** : The `having` clause can now compare two computed row values.
@@ -6180,7 +6185,8 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2.8...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2.9...HEAD
+[v7.2.9]: https://github.com/gchq/stroom/compare/v7.2.8...v7.2.9
 [v7.2.8]: https://github.com/gchq/stroom/compare/v7.2.7...v7.2.8
 [v7.2.7]: https://github.com/gchq/stroom/compare/v7.2.6...v7.2.7
 [v7.2.6]: https://github.com/gchq/stroom/compare/v7.2.5...v7.2.6
