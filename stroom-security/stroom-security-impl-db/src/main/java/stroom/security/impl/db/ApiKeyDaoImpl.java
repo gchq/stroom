@@ -91,15 +91,16 @@ public class ApiKeyDaoImpl implements ApiKeyDao {
     }
 
     @Override
-    public Optional<String> fetchVerifiedIdentity(final String apiKey) {
-        if (NullSafe.isBlankString(apiKey)) {
+    public Optional<String> fetchVerifiedIdentity(final String apiKeyHash) {
+        if (NullSafe.isBlankString(apiKeyHash)) {
             return Optional.empty();
         } else {
             final long nowMs = Instant.now().toEpochMilli();
+            // TODO Change this to use the api_key_hash col. Also add the api_key_suffix col to the tbl.
             return JooqUtil.contextResult(securityDbConnProvider, context -> context
                     .select(API_KEY.FK_OWNER_UUID)
                     .from(API_KEY)
-                    .where(API_KEY.API_KEY_.eq(apiKey.trim()))
+                    .where(API_KEY.API_KEY_.eq(apiKeyHash.trim()))
                     .and(API_KEY.ENABLED.isTrue())
                     .and(API_KEY.EXPIRES_ON_MS.greaterThan(nowMs))
                     .fetchOptional(API_KEY.FK_OWNER_UUID));
