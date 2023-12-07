@@ -36,6 +36,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Map;
+import javax.inject.Provider;
 
 public abstract class AbstractLmdbDbTest extends StroomUnitTest {
 
@@ -59,7 +60,14 @@ public abstract class AbstractLmdbDbTest extends StroomUnitTest {
         final PathCreator pathCreator = new SimplePathCreator(() -> dbDir, () -> dbDir);
         final TempDirProvider tempDirProvider = () -> dbDir;
 
-        lmdbEnv = new LmdbEnvFactory(pathCreator, tempDirProvider, LmdbLibraryConfig::new)
+        lmdbEnv = buildLmdbEnv(pathCreator, tempDirProvider, LmdbLibraryConfig::new, envFlags);
+    }
+
+    protected LmdbEnv buildLmdbEnv(final PathCreator pathCreator,
+                                   final TempDirProvider tempDirProvider,
+                                   final Provider<LmdbLibraryConfig> lmdbLibraryConfig,
+                                   final EnvFlags[] envFlags) {
+        return new LmdbEnvFactory(pathCreator, tempDirProvider, LmdbLibraryConfig::new)
                 .builder(dbDir)
                 .withMapSize(getMaxSizeBytes())
                 .withMaxDbCount(10)

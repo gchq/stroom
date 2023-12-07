@@ -2,27 +2,29 @@ package stroom.lmdb.topic;
 
 import stroom.bytebuffer.ByteBufferPool;
 import stroom.bytebuffer.PooledByteBuffer;
-import stroom.bytebuffer.PooledByteBufferPair;
 import stroom.lmdb.AbstractLmdbDb;
 import stroom.lmdb.BasicLmdbDb;
 import stroom.lmdb.LmdbEnv;
+import stroom.lmdb.serde.IntegerSerde;
+import stroom.lmdb.serde.LongSerde;
 import stroom.lmdb.serde.Serde;
+import stroom.util.logging.LogUtil;
 
 import org.lmdbjava.Cursor;
-import org.lmdbjava.CursorIterable;
-import org.lmdbjava.CursorIterable.KeyVal;
 import org.lmdbjava.DbiFlags;
 import org.lmdbjava.GetOp;
-import org.lmdbjava.KeyRange;
 import org.lmdbjava.Txn;
 
 import java.nio.ByteBuffer;
-import java.util.Iterator;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Consumer;
 
 public abstract class AbstractLmdbTopic<K, V> {
+
+    private static final int DEFAULT_PARTITION = 0;
 
     private final AbstractLmdbDb<TopicKey<K>, V> topicDb;
     private final LmdbEnv lmdbEnvironment;
@@ -34,7 +36,8 @@ public abstract class AbstractLmdbTopic<K, V> {
     private final AtomicLong lastCommittedConsumerOffset = new AtomicLong();
     private final DbWriter dbWriter;
 
-    private final BasicLmdbDb<Long, Void> consumerOffsetDb;
+    // Partition ID to offset
+    private final BasicLmdbDb<Integer, Long> consumerOffsetDb;
 
 
     public AbstractLmdbTopic(final LmdbEnv lmdbEnvironment,
@@ -62,22 +65,24 @@ public abstract class AbstractLmdbTopic<K, V> {
         this.consumerOffsetDb = new BasicLmdbDb<>(
                 lmdbEnvironment,
                 byteBufferPool,
-                new SignedLongSerde(),
-                new VoidSerde(),
+                new IntegerSerde(),
+                new LongSerde(),
                 dbName,
                 dbiFlags);
         dbWriter = new DbWriter(lmdbEnvironment);
 
         lmdbEnvironment.doWithReadTxn(txn -> {
             lastPublishOffset.set(getLastOffset(txn));
-            lastConsumerOffset.set(getLastConsumerOffset(txn));
+            lastConsumerOffset.set(getLastConsumerOffset(txn, DEFAULT_PARTITION));
         });
     }
 
-    private long getLastConsumerOffset(final Txn<ByteBuffer> txn) {
+    private long getLastConsumerOffset(final Txn<ByteBuffer> txn, final int partition) {
         // Get latest offset from the db if there is one
-        return consumerOffsetDb.lastEntry(txn)
-                .map(Entry::getKey)
+//        return consumerOffsetDb.lastEntry(txn)
+//                .map(Entry::getKey)
+//                .orElse(-1L);
+        return consumerOffsetDb.get(txn, partition)
                 .orElse(-1L);
     }
 
@@ -94,7 +99,7 @@ public abstract class AbstractLmdbTopic<K, V> {
      */
     public long publishSync(final K key,
                             final V value,
-                            final boolean commit) {
+                            final boolean commit) throws InterruptedException {
 
         // TODO consider an async version of this method if we need
         final long offset = lastPublishOffset.incrementAndGet();
@@ -147,28 +152,29 @@ public abstract class AbstractLmdbTopic<K, V> {
         return offset;
     }
 
-    /**
-     * Commit the consumer offset position
-     */
-    public void commitOffset() {
-        final long offset = lastConsumerOffset.get();
-        if (offset > lastCommittedConsumerOffset.get()) {
-            dbWriter.putSync(true, writeTxn -> {
-                consumerOffsetDb.put(
-                        writeTxn,
-                        offset,
-                        null,
-                        false,
-                        true);
-            });
-            lastCommittedConsumerOffset.set(offset);
-        }
-    }
+//    /**
+//     * Commit the consumer offset position
+//     */
+//    public void commitConsumerOffset() throws InterruptedException {
+//        final long offset = lastConsumerOffset.get();
+//        if (offset > lastCommittedConsumerOffset.get()) {
+//            dbWriter.putSync(true, writeTxn -> {
+//                consumerOffsetDb.put(
+//                        writeTxn,
+//                        offset,
+//                        null,
+//                        false,
+//                        true);
+//            });
+//            lastCommittedConsumerOffset.set(offset);
+//        }
+//    }
 
     public synchronized Entry<K, V> consume(final boolean commit) {
+        final int partition = DEFAULT_PARTITION;
         final long offset = lastConsumerOffset.incrementAndGet();
 
-        lmdbEnvironment.getWithReadTxn(readTxn -> {
+        final Entry<K, V> entry = lmdbEnvironment.getWithReadTxn(readTxn -> {
             try (PooledByteBuffer pooledStartKeyBuffer = topicDb.getPooledKeyBuffer()) {
                 // Partial key with offset only
                 final TopicKey startKey = TopicKey.asStartKey(offset);
@@ -177,13 +183,37 @@ public abstract class AbstractLmdbTopic<K, V> {
 
                 try (Cursor<ByteBuffer> cursor = topicDb.getLmdbDbi().openCursor(readTxn)) {
                     // Set cursor at >= start key, i.e. at the offset
-                    cursor.get(startKeyBuffer, GetOp.MDB_SET_RANGE);
+                    final boolean keyFound = cursor.get(startKeyBuffer, GetOp.MDB_SET_RANGE);
+                    if (!keyFound) {
+                        throw new RuntimeException(LogUtil.message("Offset {} not found", offset));
+                    }
+                    final TopicKey<K> key = topicDb.deserializeKey(cursor.key());
                     final V val = topicDb.deserializeValue(cursor.val());
                     Objects.requireNonNull(val, () -> "No value for offset " + offset);
-                    return val;
+                    return Map.entry(key.getKey(), val);
                 }
             }
         });
-        return null;
+
+        final Consumer<Txn<ByteBuffer>> action = writeTxn ->
+                consumerOffsetDb.put(
+                        writeTxn,
+                        partition,
+                        offset,
+                        true,
+                        false);
+
+        if (commit) {
+            try {
+                dbWriter.putSync(true, action);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new RuntimeException(e);
+            }
+        } else {
+            dbWriter.putAsync(false, action);
+        }
+
+        return entry;
     }
 }

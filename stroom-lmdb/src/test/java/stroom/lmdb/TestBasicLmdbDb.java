@@ -49,10 +49,12 @@ import io.vavr.Tuple2;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.lmdbjava.Cursor;
 import org.lmdbjava.CursorIterable;
 import org.lmdbjava.CursorIterable.KeyVal;
 import org.lmdbjava.DbiFlags;
 import org.lmdbjava.EnvFlags;
+import org.lmdbjava.GetOp;
 import org.lmdbjava.KeyRange;
 import org.lmdbjava.PutFlags;
 import org.lmdbjava.Txn;
@@ -72,6 +74,7 @@ import java.util.Random;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -764,10 +767,11 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
     @Disabled
     @Test
     void testPutVsAppend_perf() {
+        final AtomicInteger runIndex = new AtomicInteger(0);
         final TimedCase dbWarmUp = TimedCase.of("DB warm up", (round, iterations) -> {
-            final int roundIdx = round - 1;
-            final long fromInc = iterations * roundIdx;
-            final long toExc = iterations * (roundIdx + 1);
+            final int runIdx = runIndex.getAndIncrement();
+            final long fromInc = iterations * runIdx;
+            final long toExc = iterations * (runIdx + 1);
             lmdbEnv.doWithWriteTxn(writeTxn -> {
                 LongStream.range(fromInc, toExc)
                         .forEach(i -> {
@@ -783,9 +787,9 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
         });
 
         final TimedCase putToSameKey = TimedCase.of("Put to same key", (round, iterations) -> {
-            final int roundIdx = round - 1;
-            final long fromInc = iterations * roundIdx;
-            final long toExc = iterations * (roundIdx + 1);
+            final int runIdx = runIndex.getAndIncrement();
+            final long fromInc = iterations * runIdx;
+            final long toExc = iterations * (runIdx + 1);
             lmdbEnv.doWithWriteTxn(writeTxn -> {
                 LongStream.range(fromInc, toExc)
                         .forEach(i -> {
@@ -798,13 +802,14 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
                                     true,
                                     false);
                         });
+//                LOGGER.info("Count: " + basicLmdbDb.getEntryCount(writeTxn));
             });
         });
 
         final TimedCase putNewKeys = TimedCase.of("Put new keys", (round, iterations) -> {
-            final int roundIdx = round - 1;
-            final long fromInc = iterations * roundIdx;
-            final long toExc = iterations * (roundIdx + 1);
+            final int runIdx = runIndex.getAndIncrement();
+            final long fromInc = iterations * runIdx;
+            final long toExc = iterations * (runIdx + 1);
             lmdbEnv.doWithWriteTxn(writeTxn -> {
                 LongStream.range(fromInc, toExc)
                         .forEach(i -> {
@@ -817,8 +822,74 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
                                     false,
                                     true);
                         });
+//                LOGGER.info("Count: " + basicLmdbDb.getEntryCount(writeTxn));
             });
         });
+
+        final TimedCase putThenDelete = TimedCase.of("Put new keys, then delete", (round, iterations) -> {
+            final int runIdx = runIndex.getAndIncrement();
+            final long fromInc = iterations * runIdx;
+            final long toExc = iterations * (runIdx + 1);
+            lmdbEnv.doWithWriteTxn(writeTxn -> {
+                LongStream.range(fromInc, toExc)
+                        .forEach(i -> {
+                            // Same key every time, diff val
+                            basicLmdbDb.put(writeTxn,
+                                    "key-" + Strings.padStart(
+                                            Long.toString(i), 10, '0'),
+                                    "val-" + Strings.padStart(
+                                            Long.toString(i), 10, '0'),
+                                    false,
+                                    true);
+                        });
+//                LOGGER.info("Count: " + basicLmdbDb.getEntryCount(writeTxn));
+                LongStream.range(fromInc, toExc)
+                        .forEach(i -> {
+                            // Same key every time, diff val
+                            basicLmdbDb.delete(writeTxn,
+                                    "key-" + Strings.padStart(
+                                            Long.toString(i), 10, '0'));
+                        });
+//                LOGGER.info("Count: " + basicLmdbDb.getEntryCount(writeTxn));
+            });
+        });
+
+        final TimedCase putThenCursorDelete = TimedCase.of(
+                "Put new keys, then delete (cursor)",
+                (round, iterations) -> {
+                    final int runIdx = runIndex.getAndIncrement();
+                    final long fromInc = iterations * runIdx;
+                    final long toExc = iterations * (runIdx + 1);
+                    lmdbEnv.doWithWriteTxn(writeTxn -> {
+                        LongStream.range(fromInc, toExc)
+                                .forEach(i -> {
+                                    // Same key every time, diff val
+                                    basicLmdbDb.put(writeTxn,
+                                            "key-" + Strings.padStart(
+                                                    Long.toString(i), 10, '0'),
+                                            "val-" + Strings.padStart(
+                                                    Long.toString(i), 10, '0'),
+                                            false,
+                                            true);
+                                });
+                        LOGGER.info("Count: " + basicLmdbDb.getEntryCount(writeTxn));
+                        try (Cursor<ByteBuffer> cursor = basicLmdbDb.getLmdbDbi().openCursor(writeTxn);
+                                PooledByteBuffer pooledByteBuffer = basicLmdbDb.getPooledKeyBuffer()) {
+                            final ByteBuffer byteBuffer = pooledByteBuffer.getByteBuffer();
+                            basicLmdbDb.serializeKey(byteBuffer, "key-" + Strings.padStart(
+                                    Long.toString(fromInc), 10, '0'));
+                            final boolean keyFound = cursor.get(byteBuffer, GetOp.MDB_SET_KEY);
+                            if (keyFound) {
+                                do {
+                                    cursor.delete();
+                                } while (cursor.next());
+                            } else {
+                                throw new RuntimeException("Key not found");
+                            }
+                        }
+                        LOGGER.info("Count: " + basicLmdbDb.getEntryCount(writeTxn));
+                    });
+                });
 
         TestUtil.comparePerformance(
                 3,
@@ -826,7 +897,9 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
                 LOGGER::info,
                 dbWarmUp,
                 putToSameKey,
-                putNewKeys);
+                putNewKeys,
+                putThenDelete,
+                putThenCursorDelete);
     }
 
     @Test
@@ -1522,6 +1595,14 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
 
     private static class MultiKeySerde implements Serde<MultiKey> {
 
+        public static void incrementLong2(final ByteBuffer byteBuffer) {
+            byteBuffer.putLong(byteBuffer.getLong(12) + 1);
+        }
+
+        public static void incrementUnsignedLong(final ByteBuffer byteBuffer) {
+            UNSIGNED_BYTES.increment(byteBuffer, 12);
+        }
+
         @Override
         public MultiKey deserialize(final ByteBuffer byteBuffer) {
             final MultiKey multiKey = new MultiKey(
@@ -1542,14 +1623,6 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
             UNSIGNED_BYTES.put(byteBuffer, multiKey.unsignedLong);
             byteBuffer.put(multiKey.str.getBytes(StandardCharsets.UTF_8));
             byteBuffer.flip();
-        }
-
-        public static void incrementLong2(final ByteBuffer byteBuffer) {
-            byteBuffer.putLong(byteBuffer.getLong(12) + 1);
-        }
-
-        public static void incrementUnsignedLong(final ByteBuffer byteBuffer) {
-            UNSIGNED_BYTES.increment(byteBuffer, 12);
         }
     }
 
