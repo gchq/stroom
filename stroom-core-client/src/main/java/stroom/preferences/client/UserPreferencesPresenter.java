@@ -33,7 +33,6 @@ import stroom.widget.tab.client.presenter.TabBar;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -56,7 +55,7 @@ public final class UserPreferencesPresenter
     private final ThemePreferencesPresenter themePreferencesPresenter;
     private final EditorPreferencesPresenter editorPreferencesPresenter;
     private final TimePreferencesPresenter timePreferencesPresenter;
-    private UserPreferences originalPreferences;
+    private UserPreferences fetchedUserPreferences;
 
     @Inject
     public UserPreferencesPresenter(
@@ -128,8 +127,8 @@ public final class UserPreferencesPresenter
         }
         userPreferencesManager.setCurrentPreferences(after);
 
-        GWT.log("theme: " + userPreferencesManager.getCurrentPreferences().getTheme()
-                + " editorTheme: " + userPreferencesManager.getCurrentPreferences().getEditorTheme());
+//        GWT.log("theme: " + userPreferencesManager.getCurrentPreferences().getTheme()
+//                + ", editorTheme: " + userPreferencesManager.getCurrentPreferences().getEditorTheme());
         triggerThemeChange(userPreferencesManager.getCurrentPreferences());
     }
 
@@ -157,7 +156,7 @@ public final class UserPreferencesPresenter
     }
 
     private void reset(final UserPreferences userPreferences) {
-        originalPreferences = userPreferences;
+        fetchedUserPreferences = userPreferences;
         read(userPreferences);
         userPreferencesManager.setCurrentPreferences(userPreferences);
 //        final String editorTheme = selectEditorTheme(originalPreferences, userPreferences);
@@ -169,7 +168,7 @@ public final class UserPreferencesPresenter
         final String caption = "User Preferences";
 
         userPreferencesManager.fetch(userPreferences -> {
-            originalPreferences = userPreferences;
+            fetchedUserPreferences = userPreferences;
             read(userPreferences);
             ShowPopupEvent.builder(this)
                     .popupType(PopupType.OK_CANCEL_DIALOG)
@@ -180,13 +179,13 @@ public final class UserPreferencesPresenter
                         if (e.isOk()) {
                             final UserPreferences newUserPreferences = write();
                             userPreferencesManager.setCurrentPreferences(newUserPreferences);
-                            if (!Objects.equals(newUserPreferences, originalPreferences)) {
+                            if (!Objects.equals(newUserPreferences, fetchedUserPreferences)) {
                                 userPreferencesManager.update(newUserPreferences, (result) -> e.hide());
                             } else {
                                 e.hide();
                             }
                         } else {
-                            userPreferencesManager.setCurrentPreferences(originalPreferences);
+                            userPreferencesManager.setCurrentPreferences(fetchedUserPreferences);
                             // Ensure screens revert to the old prefs
                             triggerThemeChange(userPreferencesManager.getCurrentPreferences());
                             e.hide();
