@@ -157,12 +157,23 @@ public class NullSafe {
     }
 
     /**
-     * @return True if both str and subStr are non-null and str contains subStr
+     * @return True if both str and subStr are non-null and str contains subStr.
+     * Case-sensitive.
      */
     public static boolean contains(final String str, final String subStr) {
         return str != null
                 && subStr != null
                 && str.contains(subStr);
+    }
+
+    /**
+     * @return True if both str and subStr are non-null and str contains subStr
+     * Case-insensitive.
+     */
+    public static boolean containsIgnoringCase(final String str, final String subStr) {
+        return str != null
+                && subStr != null
+                && str.toLowerCase().contains(subStr.toLowerCase());
     }
 
     /**
