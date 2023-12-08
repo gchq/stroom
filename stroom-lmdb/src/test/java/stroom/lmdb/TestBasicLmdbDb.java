@@ -522,7 +522,8 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
 
     @Test
     void testLoadingSortedKeys() {
-        final List<Entry<String, String>> entries = IntStream.rangeClosed(1, 10)
+        final int entryCount = 1_000_000;
+        final List<Entry<String, String>> entries = IntStream.rangeClosed(1, entryCount)
                 .boxed()
                 .map(i -> new SimpleEntry<>("key-" + i, "value-" + i))
                 .collect(Collectors.toList());
@@ -549,6 +550,9 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
             }, "un-sorted puts");
         });
 
+        assertThat(basicLmdbDb.getEntryCount())
+                .isEqualTo(entryCount);
+
         // Read all entries back out in lmdb sort order
         final List<Entry<String, String>> sortedEntries = lmdbEnv.getWithReadTxn(readTxn ->
                 basicLmdbDb.streamEntries(readTxn, KeyRange.all(), stream ->
@@ -572,8 +576,10 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
                                         PutFlags.MDB_APPEND);
                             }
                         });
-            }, "sorted puts");
+            }, "sorted puts (new keys)");
         });
+        assertThat(basicLmdbDb2.getEntryCount())
+                .isEqualTo(entryCount);
 
         // Now do all the puts again overwriting values
         lmdbEnv.doWithWriteTxn(writeTxn -> {
@@ -592,8 +598,12 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
                                 // Can't user MDB_APPEND now as it will barf when it finds an existing key
                             }
                         });
-            }, "sorted puts 2");
+            }, "sorted puts (overwriting existing)");
         });
+
+        // No change to entry count due to overwrites
+        assertThat(basicLmdbDb2.getEntryCount())
+                .isEqualTo(entryCount);
     }
 
     @Test

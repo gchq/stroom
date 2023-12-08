@@ -2,7 +2,7 @@ package stroom.lmdb;
 
 import stroom.bytebuffer.ByteBufferPool;
 import stroom.bytebuffer.ByteBufferPoolFactory;
-import stroom.lmdb.serde.IntegerSerde;
+import stroom.lmdb.serde.LongSerde;
 import stroom.lmdb.serde.Serde;
 import stroom.lmdb.serde.StringSerde;
 import stroom.util.io.ByteSize;
@@ -29,26 +29,26 @@ public class TestLmdbPerformance extends AbstractDualEnvLmdbTest {
 
     private final ByteBufferPool byteBufferPool = new ByteBufferPoolFactory().getByteBufferPool();
 
-    private BasicLmdbDb<Integer, String> db1;
-    private BasicLmdbDb<Integer, String> db2;
+    private BasicLmdbDb<Long, String> db1;
+    private BasicLmdbDb<Long, String> db2;
 
-    private BasicLmdbDb<Integer, String> createStandardDb(final LmdbEnv lmdbEnv,
-                                                          final String name) {
+    private BasicLmdbDb<Long, String> createStandardDb(final LmdbEnv lmdbEnv,
+                                                       final String name) {
         return new BasicLmdbDb<>(
                 lmdbEnv,
                 byteBufferPool,
-                new IntegerSerde(),
+                new LongSerde(),
                 new StringSerde(),
                 name,
                 DbiFlags.MDB_CREATE);
     }
 
-    private BasicLmdbDb<Integer, String> createIntegerKeyDb(final LmdbEnv lmdbEnv,
-                                                            final String name) {
+    private BasicLmdbDb<Long, String> createIntegerKeyDb(final LmdbEnv lmdbEnv,
+                                                         final String name) {
         return new BasicLmdbDb<>(
                 lmdbEnv,
                 byteBufferPool,
-                Serde.usingNativeOrder(new IntegerSerde()), // Must use native order for MDB_INTEGERKEY
+                Serde.usingNativeOrder(new LongSerde()), // Must use native order for MDB_INTEGERKEY
                 new StringSerde(),
                 name,
                 DbiFlags.MDB_CREATE,
@@ -137,7 +137,7 @@ public class TestLmdbPerformance extends AbstractDualEnvLmdbTest {
         putData(db2, iterations, rounds, true, deleteBetweenRounds);
     }
 
-    private void putData(final AbstractLmdbDb<Integer, String> db,
+    private void putData(final AbstractLmdbDb<Long, String> db,
                          final int iterations,
                          final int rounds,
                          final boolean isOrdered,
@@ -145,12 +145,12 @@ public class TestLmdbPerformance extends AbstractDualEnvLmdbTest {
 
         final LmdbEnv lmdbEnv = db.getLmdbEnvironment();
         int round = 0;
-        final List<Entry<Integer, String>> inputData = new ArrayList<>(iterations);
+        final List<Entry<Long, String>> inputData = new ArrayList<>(iterations);
 
         while (round < rounds) {
             inputData.clear();
-            for (int i = 0; i < iterations; i++) {
-                inputData.add(Map.entry(i + ((int) iterations * round), "value-" + i));
+            for (long i = 0; i < iterations; i++) {
+                inputData.add(Map.entry(i + ((long) iterations * round), "value-" + i));
             }
 
             if (!isOrdered) {
