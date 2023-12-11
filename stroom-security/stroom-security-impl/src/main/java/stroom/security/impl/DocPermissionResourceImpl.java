@@ -45,7 +45,6 @@ import event.logging.Data;
 import event.logging.Data.Builder;
 import event.logging.Document;
 import event.logging.Event;
-import event.logging.Group;
 import event.logging.MultiObject;
 import event.logging.OtherObject;
 import event.logging.Outcome;
@@ -451,29 +450,25 @@ class DocPermissionResourceImpl implements DocPermissionResource {
 
         if (NullSafe.hasEntries(documentPermissions, DocumentPermissions::getPermissions)) {
             documentPermissions.getPermissions().forEach((userUuid, permissions) -> {
-                final Optional<User> user = securityContextProvider.get().asProcessingUserResult(() ->
+                final Optional<User> optUser = securityContextProvider.get().asProcessingUserResult(() ->
                         userServiceProvider.get().loadByUuid(userUuid));
 
                 final Permission.Builder<Void> permissionBuilder = Permission.builder();
-
-                if (user.isEmpty()) {
+                if (optUser.isEmpty()) {
                     LOGGER.warn("Unable to locate user for permission change " + userUuid);
                     permissionBuilder.withUser(event.logging.User.builder()
-                            .withId(docRef.getUuid())
-                            .build());
-                } else if (user.get().isGroup()) {
-                    permissionBuilder.withGroup(Group.builder()
-                            .withId(user.get().getSubjectId())
+                            .withId(userUuid)
                             .build());
                 } else {
-                    permissionBuilder.withUser(event.logging.User.builder()
-                            .withId(user.get().getSubjectId())
-                            .build());
-                }
+                    final User userOrGroup = optUser.get();
+                    if (userOrGroup.isGroup()) {
+                        permissionBuilder.withGroup(StroomEventLoggingUtil.createGroup(userOrGroup));
+                    } else {
+                        permissionBuilder.withUser(StroomEventLoggingUtil.createUser(userOrGroup));
+                    }
 
-                // Have to use Data elements to hold the Create perms as the schema currently has no support
-                // for custom perms. Waiting for https://github.com/gchq/event-logging-schema/issues/76
-                user.ifPresent(userOrGroup -> {
+                    // Have to use Data elements to hold the Create perms as the schema currently has no support
+                    // for custom perms. Waiting for https://github.com/gchq/event-logging-schema/issues/76
                     final Data userData = Data.builder()
                             .withName(userOrGroup.getSubjectId())
                             .withValue(userOrGroup.isGroup()
@@ -493,10 +488,8 @@ class DocPermissionResourceImpl implements DocPermissionResource {
                                 .addData(userData)
                                 .build();
                     }
-                });
-
+                }
                 permissionBuilder.withAllowAttributes(mapChangeItemsToPermissions(permissions));
-
                 permissionsBuilder.addPermissions(permissionBuilder.build());
             });
         }

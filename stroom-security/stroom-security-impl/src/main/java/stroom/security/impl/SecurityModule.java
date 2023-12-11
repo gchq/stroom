@@ -16,6 +16,7 @@
 
 package stroom.security.impl;
 
+import stroom.event.logging.api.ObjectInfoProviderBinder;
 import stroom.security.api.DocumentPermissionService;
 import stroom.security.api.ServiceUserFactory;
 import stroom.security.api.UserIdentityFactory;
@@ -31,6 +32,7 @@ import stroom.security.impl.event.PermissionChangeEventLifecycleModule;
 import stroom.security.impl.event.PermissionChangeEventModule;
 import stroom.security.openid.api.IdpType;
 import stroom.security.openid.api.OpenIdConfiguration;
+import stroom.security.shared.User;
 import stroom.security.shared.UserNameProvider;
 import stroom.security.user.api.UserNameService;
 import stroom.util.entityevent.EntityEvent;
@@ -113,5 +115,8 @@ public class SecurityModule extends AbstractModule {
                 .bind(SessionResourceImpl.class)
                 .bind(UserResourceImpl.class)
                 .bind(UserNameResourceImpl.class);
+
+        ObjectInfoProviderBinder.create(binder())
+                .bind(User.class, UserObjectInfoProvider.class);
     }
 }
