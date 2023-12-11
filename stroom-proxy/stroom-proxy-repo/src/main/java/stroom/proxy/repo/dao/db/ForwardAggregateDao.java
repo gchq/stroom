@@ -4,7 +4,6 @@ import stroom.db.util.JooqUtil;
 import stroom.proxy.repo.Aggregate;
 import stroom.proxy.repo.ForwardAggregate;
 import stroom.proxy.repo.ForwardDest;
-import stroom.proxy.repo.dao.ForwardAggregateDao;
 import stroom.proxy.repo.db.jooq.tables.records.ForwardAggregateRecord;
 import stroom.proxy.repo.queue.Batch;
 import stroom.proxy.repo.queue.BindWriteQueue;
@@ -14,7 +13,6 @@ import stroom.proxy.repo.queue.QueueMonitors;
 import stroom.proxy.repo.queue.ReadQueue;
 import stroom.proxy.repo.queue.RecordQueue;
 import stroom.util.logging.Metrics;
-import stroom.util.shared.Flushable;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -40,7 +38,7 @@ import static stroom.proxy.repo.db.jooq.tables.Source.SOURCE;
 import static stroom.proxy.repo.db.jooq.tables.SourceItem.SOURCE_ITEM;
 
 @Singleton
-public class ForwardAggregateDaoImpl implements ForwardAggregateDao {
+public class ForwardAggregateDao {
 
     private static final Field<?>[] FORWARD_AGGREGATE_COLUMNS = new Field<?>[]{
             FORWARD_AGGREGATE.ID,
@@ -84,9 +82,9 @@ public class ForwardAggregateDaoImpl implements ForwardAggregateDao {
     private final QueueMonitor retryQueueMonitor;
 
     @Inject
-    ForwardAggregateDaoImpl(final SqliteJooqHelper jooq,
-                            final ProxyDbConfig dbConfig,
-                            final QueueMonitors queueMonitors) {
+    ForwardAggregateDao(final SqliteJooqHelper jooq,
+                        final ProxyDbConfig dbConfig,
+                        final QueueMonitors queueMonitors) {
         forwardQueueMonitor = queueMonitors.create(10, "Forward aggregates");
         retryQueueMonitor = queueMonitors.create(11, "Retry forward aggregates");
 
@@ -193,7 +191,6 @@ public class ForwardAggregateDaoImpl implements ForwardAggregateDao {
         return newPosition;
     }
 
-    @Override
     public void clear() {
         jooq.transaction(context -> {
             JooqUtil.deleteAll(context, FORWARD_AGGREGATE);
@@ -209,7 +206,6 @@ public class ForwardAggregateDaoImpl implements ForwardAggregateDao {
      *
      * @param newForwardDests New dests to add forward aggregate entries for.
      */
-    @Override
     public void addNewForwardAggregates(final List<ForwardDest> newForwardDests) {
         if (newForwardDests.size() > 0) {
             final AtomicLong minId = new AtomicLong();
@@ -241,7 +237,6 @@ public class ForwardAggregateDaoImpl implements ForwardAggregateDao {
         }
     }
 
-    @Override
     public void removeOldForwardAggregates(final List<ForwardDest> oldForwardDests) {
         if (oldForwardDests.size() > 0) {
             final List<Integer> oldIdList = oldForwardDests
@@ -285,7 +280,6 @@ public class ForwardAggregateDaoImpl implements ForwardAggregateDao {
     /**
      * Create a record of the fact that we forwarded an aggregate or at least tried to.
      */
-    @Override
     public void createForwardAggregates(final Batch<Aggregate> aggregates,
                                         final List<ForwardDest> forwardDests) {
         recordQueue.add(() -> {
@@ -314,12 +308,10 @@ public class ForwardAggregateDaoImpl implements ForwardAggregateDao {
         });
     }
 
-    @Override
     public Batch<ForwardAggregate> getNewForwardAggregates() {
         return recordQueue.getBatch(forwardAggregateReadQueue);
     }
 
-    @Override
     public Batch<ForwardAggregate> getRetryForwardAggregate() {
         return retryRecordQueue.getBatch(retryReadQueue);
     }
@@ -330,13 +322,11 @@ public class ForwardAggregateDaoImpl implements ForwardAggregateDao {
 //                getForwardAggregateAtQueuePosition(position, positionField));
 //    }
 
-    @Override
     public Batch<ForwardAggregate> getNewForwardAggregates(final long timeout,
                                                            final TimeUnit timeUnit) {
         return recordQueue.getBatch(forwardAggregateReadQueue, timeout, timeUnit);
     }
 
-    @Override
     public Batch<ForwardAggregate> getRetryForwardAggregate(final long timeout,
                                                             final TimeUnit timeUnit) {
         return retryRecordQueue.getBatch(retryReadQueue, timeout, timeUnit);
@@ -387,7 +377,6 @@ public class ForwardAggregateDaoImpl implements ForwardAggregateDao {
 //                });
 //    }
 
-    @Override
     public void update(final ForwardAggregate forwardAggregate) {
         if (forwardAggregate.isSuccess()) {
             final long aggregateId = forwardAggregate.getAggregate().id();
@@ -491,12 +480,10 @@ public class ForwardAggregateDaoImpl implements ForwardAggregateDao {
         });
     }
 
-    @Override
     public int countForwardAggregates() {
         return jooq.readOnlyTransactionResult(context -> JooqUtil.count(context, FORWARD_AGGREGATE));
     }
 
-    @Override
     public void flush() {
         recordQueue.flush();
         retryRecordQueue.flush();

@@ -1,7 +1,8 @@
 package stroom.proxy.repo.dao.lmdb;
 
+import stroom.proxy.repo.dao.lmdb.serde.IntegerSerde;
+
 import org.lmdbjava.Dbi;
-import org.lmdbjava.Env;
 
 import java.nio.ByteBuffer;
 import java.util.Optional;
@@ -11,8 +12,8 @@ public class IntegerRowKey implements RowKey<Integer> {
 
     private final AtomicInteger rowId = new AtomicInteger();
 
-    public IntegerRowKey(final Env<ByteBuffer> env, final Dbi<ByteBuffer> dbi) {
-        final Optional<Integer> maxId = LmdbUtil.getMaxIntegerId(env, dbi);
+    public IntegerRowKey(final LmdbEnv env, final Dbi<ByteBuffer> dbi) {
+        final Optional<Integer> maxId = env.getMaxKey(dbi, new IntegerSerde());
         rowId.set(maxId.orElse(0));
     }
 

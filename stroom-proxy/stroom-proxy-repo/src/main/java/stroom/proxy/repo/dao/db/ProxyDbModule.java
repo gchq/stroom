@@ -9,18 +9,11 @@ import stroom.db.util.DataSourceProxy;
 import stroom.db.util.FlywayUtil;
 import stroom.proxy.repo.ProxyRepoDbConnProvider;
 import stroom.proxy.repo.RepoDbDirProvider;
-import stroom.proxy.repo.dao.AggregateDao;
-import stroom.proxy.repo.dao.ForwardAggregateDao;
-import stroom.proxy.repo.dao.ForwardSourceDao;
-import stroom.proxy.repo.dao.SourceDao;
-import stroom.proxy.repo.dao.SourceItemDao;
 import stroom.util.NullSafe;
-import stroom.util.guice.GuiceUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.PathCreator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.Flushable;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
@@ -46,17 +39,11 @@ public class ProxyDbModule extends AbstractModule {
     protected void configure() {
         super.configure();
 
-        bind(AggregateDao.class).to(AggregateDaoImpl.class);
-        bind(ForwardAggregateDao.class).to(TempForwardAggregateDao.class);
-        bind(ForwardSourceDao.class).to(TestForwardSourceDao.class);
-        bind(SourceDao.class).to(SourceDaoImpl.class);
-        bind(SourceItemDao.class).to(SourceItemDaoImpl.class);
-
-        GuiceUtil.buildMultiBinder(binder(), Flushable.class)
-                .addBinding(SourceDaoImpl.class)
-                .addBinding(SourceItemDaoImpl.class)
-                .addBinding(TempForwardAggregateDao.class)
-                .addBinding(TestForwardSourceDao.class);
+//        GuiceUtil.buildMultiBinder(binder(), Flushable.class)
+//                .addBinding(SourceDaoImpl.class)
+//                .addBinding(SourceItemDaoImpl.class)
+//                .addBinding(TempForwardAggregateDao.class)
+//                .addBinding(TestForwardSourceDao.class);
     }
 
     @Provides

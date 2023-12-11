@@ -1,6 +1,6 @@
 package stroom.proxy.repo;
 
-import stroom.proxy.repo.dao.ForwardDestDao;
+import stroom.proxy.repo.dao.lmdb.ForwardDestDao;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -29,7 +29,7 @@ public class ForwardDestinations {
 
         // Validate.
         if (forwarderDestinations.getDestinationNames() == null ||
-                forwarderDestinations.getDestinationNames().size() == 0) {
+                forwarderDestinations.getDestinationNames().isEmpty()) {
             throw new RuntimeException("No forwarding destinations have been provided");
         }
 

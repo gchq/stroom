@@ -14,6 +14,7 @@ import stroom.proxy.repo.ProxyServices;
 import stroom.proxy.repo.RepoSourceItems;
 import stroom.proxy.repo.RepoSources;
 import stroom.proxy.repo.SourceForwarder;
+import stroom.proxy.repo.queue.TransferUtil;
 import stroom.proxy.repo.store.SequentialFileStore;
 import stroom.util.shared.Flushable;
 
@@ -54,7 +55,7 @@ public class ProxyLifecycle implements Managed {
         // If we aren't storing and forwarding then don't do anything.
         if (proxyRepoConfig.isStoringEnabled() &&
                 forwardDestinations != null &&
-                forwardDestinations.size() > 0) {
+                !forwardDestinations.isEmpty()) {
 
             final long dbFlushFrequencyMs = proxyDbConfig.getFlushFrequency().toMillis();
 
@@ -70,11 +71,11 @@ public class ProxyLifecycle implements Managed {
             // Add file scanners.
             fileScannersProvider.get().register(proxyServices);
 
-            // Start flushing the DB.
-            final Set<Flushable> flushables = flushableProvider.get();
-            proxyServices.addFrequencyExecutor("Flush DB records",
-                    () -> () -> flushables.forEach(Flushable::flush),
-                    dbFlushFrequencyMs);
+//            // Start flushing the DB.
+//            final Set<Flushable> flushables = flushableProvider.get();
+//            proxyServices.addFrequencyExecutor("Flush DB records",
+//                    () -> () -> flushables.forEach(Flushable::flush),
+//                    dbFlushFrequencyMs);
 
             if (aggregatorConfig.isEnabled()) {
                 // We are going to do aggregate forwarding so reset source forwarder.
@@ -89,37 +90,42 @@ public class ProxyLifecycle implements Managed {
                 // Only examine source files if we are aggregating.
 
                 // Add executor to open source files and scan entries
-                proxyServices.addBatchExecutor("RepoSourceItems - examine",
-                        threadConfig.getExamineSourceThreadCount(),
-                        repoSources::getNewSources,
-                        repoSourceItems::examineSource);
+                proxyServices.addParallelExecutor("RepoSourceItems - examine", () -> () ->
+                        TransferUtil.transfer(
+                                repoSources::getNextSource,
+                                repoSourceItems::examineSource),
+                        threadConfig.getExamineSourceThreadCount());
+//                proxyServices.addBatchExecutor("RepoSourceItems - examine",
+//                        threadConfig.getExamineSourceThreadCount(),
+//                        repoSources::getNewSources,
+//                        repoSourceItems::examineSource);
 
-                // Just keep trying to aggregate based on a frequency and not changes to source entries.
-                proxyServices.addFrequencyExecutor("Aggregator - aggregate",
-                        () -> aggregator::aggregateAll,
-                        dbFlushFrequencyMs);
-
-                // Periodically close old aggregates.
-                proxyServices.addFrequencyExecutor("Aggregator - closeOldAggregates",
-                        () -> aggregator::closeOldAggregates,
-                        aggregationFrequencyMs);
-
-                // Create forward records.
-                proxyServices.addFrequencyExecutor("AggregateForwarder - createForwardRecord",
-                        () -> aggregateForwarder::createAllForwardAggregates,
-                        dbFlushFrequencyMs);
-
-                // Forward records.
-                proxyServices.addBatchExecutor("AggregateForwarder - forwardNext",
-                        threadConfig.getForwardThreadCount(),
-                        aggregateForwarder::getNewForwardAggregates,
-                        aggregateForwarder::forward);
-
-                // Retry forward records.
-                proxyServices.addBatchExecutor("AggregateForwarder - forwardRetry",
-                        threadConfig.getForwardRetryThreadCount(),
-                        aggregateForwarder::getRetryForwardAggregates,
-                        aggregateForwarder::forwardRetry);
+//                // Just keep trying to aggregate based on a frequency and not changes to source entries.
+//                proxyServices.addFrequencyExecutor("Aggregator - aggregate",
+//                        () -> aggregator::aggregateAll,
+//                        dbFlushFrequencyMs);
+//
+//                // Periodically close old aggregates.
+//                proxyServices.addFrequencyExecutor("Aggregator - closeOldAggregates",
+//                        () -> aggregator::closeOldAggregates,
+//                        aggregationFrequencyMs);
+//
+//                // Create forward records.
+//                proxyServices.addFrequencyExecutor("AggregateForwarder - createForwardRecord",
+//                        () -> aggregateForwarder::createAllForwardAggregates,
+//                        dbFlushFrequencyMs);
+//
+//                // Forward records.
+//                proxyServices.addBatchExecutor("AggregateForwarder - forwardNext",
+//                        threadConfig.getForwardThreadCount(),
+//                        aggregateForwarder::getNewForwardAggregates,
+//                        aggregateForwarder::forward);
+//
+//                // Retry forward records.
+//                proxyServices.addBatchExecutor("AggregateForwarder - forwardRetry",
+//                        threadConfig.getForwardRetryThreadCount(),
+//                        aggregateForwarder::getRetryForwardAggregates,
+//                        aggregateForwarder::forwardRetry);
 
             } else {
                 // We are going to do source forwarding so reset aggregate forwarder.
@@ -127,28 +133,28 @@ public class ProxyLifecycle implements Managed {
 
                 final SourceForwarder sourceForwarder = sourceForwarderProvider.get();
 
-                // Create forward records.
-                proxyServices.addFrequencyExecutor(
-                        "SourceForwarder - createForwardRecord",
-                        () -> sourceForwarder::createAllForwardSources,
-                        dbFlushFrequencyMs);
-
-                // Forward records.
-                proxyServices.addBatchExecutor("SourceForwarder - forwardNext",
-                        threadConfig.getForwardThreadCount(),
-                        sourceForwarder::getNewForwardSources,
-                        sourceForwarder::forward);
-
-                // Retry forward records.
-                proxyServices.addBatchExecutor("SourceForwarder - forwardRetry",
-                        threadConfig.getForwardRetryThreadCount(),
-                        sourceForwarder::getRetryForwardSources,
-                        sourceForwarder::forwardRetry);
+//                // Create forward records.
+//                proxyServices.addFrequencyExecutor(
+//                        "SourceForwarder - createForwardRecord",
+//                        () -> sourceForwarder::createAllForwardSources,
+//                        dbFlushFrequencyMs);
+//
+//                // Forward records.
+//                proxyServices.addBatchExecutor("SourceForwarder - forwardNext",
+//                        threadConfig.getForwardThreadCount(),
+//                        sourceForwarder::getNewForwardSources,
+//                        sourceForwarder::forward);
+//
+//                // Retry forward records.
+//                proxyServices.addBatchExecutor("SourceForwarder - forwardRetry",
+//                        threadConfig.getForwardRetryThreadCount(),
+//                        sourceForwarder::getRetryForwardSources,
+//                        sourceForwarder::forwardRetry);
             }
 
-            proxyServices.addFrequencyExecutor("Cleanup - cleanupSources",
-                    () -> cleanup::cleanupSources,
-                    proxyDbConfig.getCleanupFrequency().toMillis());
+//            proxyServices.addFrequencyExecutor("Cleanup - cleanupSources",
+//                    () -> cleanup::cleanupSources,
+//                    proxyDbConfig.getCleanupFrequency().toMillis());
         }
 
         // Add executor to roll event store.

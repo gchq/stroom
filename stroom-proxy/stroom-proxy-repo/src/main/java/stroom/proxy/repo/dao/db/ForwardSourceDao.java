@@ -4,8 +4,6 @@ import stroom.db.util.JooqUtil;
 import stroom.proxy.repo.ForwardDest;
 import stroom.proxy.repo.ForwardSource;
 import stroom.proxy.repo.RepoSource;
-import stroom.proxy.repo.dao.ForwardDestDao;
-import stroom.proxy.repo.dao.ForwardSourceDao;
 import stroom.proxy.repo.db.jooq.tables.records.ForwardSourceRecord;
 import stroom.proxy.repo.queue.Batch;
 import stroom.proxy.repo.queue.BindWriteQueue;
@@ -26,17 +24,18 @@ import org.jooq.impl.DSL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 import static stroom.proxy.repo.db.jooq.tables.Aggregate.AGGREGATE;
+import static stroom.proxy.repo.db.jooq.tables.ForwardAggregate.FORWARD_AGGREGATE;
+import static stroom.proxy.repo.db.jooq.tables.ForwardDest.FORWARD_DEST;
 import static stroom.proxy.repo.db.jooq.tables.ForwardSource.FORWARD_SOURCE;
 import static stroom.proxy.repo.db.jooq.tables.Source.SOURCE;
 
 @Singleton
-public class TestForwardSourceDao implements ForwardSourceDao {
+public class ForwardSourceDao {
 
     private static final Field<?>[] FORWARD_SOURCE_COLUMNS = new Field<?>[]{
             FORWARD_SOURCE.ID,
@@ -72,14 +71,11 @@ public class TestForwardSourceDao implements ForwardSourceDao {
 
     private final QueueMonitor forwardQueueMonitor;
     private final QueueMonitor retryQueueMonitor;
-    private final ForwardDestDao forwardDestDao;
 
     @Inject
-    TestForwardSourceDao(final SqliteJooqHelper jooq,
-                         final ProxyDbConfig dbConfig,
-                         final QueueMonitors queueMonitors,
-                         final ForwardDestDao forwardDestDao) {
-        this.forwardDestDao = forwardDestDao;
+    ForwardSourceDao(final SqliteJooqHelper jooq,
+                     final ProxyDbConfig dbConfig,
+                     final QueueMonitors queueMonitors) {
         forwardQueueMonitor = queueMonitors.create(20, "Forward sources");
         retryQueueMonitor = queueMonitors.create(21, "Retry forward sources");
 
@@ -121,47 +117,49 @@ public class TestForwardSourceDao implements ForwardSourceDao {
         queueMonitor.setReadPos(currentReadPos);
 
         final AtomicLong pos = new AtomicLong(currentReadPos);
-        jooq.readOnlyTransactionResult(context -> context
-                        .select(FORWARD_SOURCE.ID,
-                                FORWARD_SOURCE.UPDATE_TIME_MS,
-                                FORWARD_SOURCE.FK_FORWARD_DEST_ID,
-                                FORWARD_SOURCE.FK_SOURCE_ID,
-                                FORWARD_SOURCE.SUCCESS,
-                                FORWARD_SOURCE.ERROR,
-                                FORWARD_SOURCE.TRIES,
-                                FORWARD_SOURCE.LAST_TRY_TIME_MS,
-                                positionField,
-                                SOURCE.FILE_STORE_ID,
-                                SOURCE.FK_FEED_ID)
-                        .from(FORWARD_SOURCE)
-                        .join(SOURCE).on(SOURCE.ID.eq(FORWARD_SOURCE.FK_SOURCE_ID))
-                        .where(positionField.isNotNull())
-                        .and(positionField.gt(currentReadPos))
-                        .orderBy(positionField)
-                        .limit(limit)
-                        .fetch())
-                .forEach(r -> {
-                    final long newPosition = r.get(positionField);
-                    pos.set(newPosition);
-                    queueMonitor.setBufferPos(newPosition);
-
-                    final Optional<ForwardDest> optionalForwardDest = forwardDestDao
-                            .get(r.get(FORWARD_SOURCE.FK_FORWARD_DEST_ID));
-                    final RepoSource source = new RepoSource(
-                            r.get(FORWARD_SOURCE.FK_SOURCE_ID),
-                            r.get(SOURCE.FILE_STORE_ID),
-                            r.get(SOURCE.FK_FEED_ID));
-                    final ForwardSource forwardSource = new ForwardSource(
-                            r.get(FORWARD_SOURCE.ID),
-                            r.get(FORWARD_SOURCE.UPDATE_TIME_MS),
-                            source,
-                            optionalForwardDest.orElse(null),
-                            r.get(FORWARD_SOURCE.SUCCESS),
-                            r.get(FORWARD_SOURCE.ERROR),
-                            r.get(FORWARD_SOURCE.TRIES),
-                            r.get(FORWARD_SOURCE.LAST_TRY_TIME_MS));
-                    readQueue.add(forwardSource);
-                });
+//        jooq.readOnlyTransactionResult(context -> context
+//                        .select(FORWARD_SOURCE.ID,
+//                                FORWARD_SOURCE.UPDATE_TIME_MS,
+//                                FORWARD_SOURCE.FK_FORWARD_DEST_ID,
+//                                FORWARD_SOURCE.FK_SOURCE_ID,
+//                                FORWARD_SOURCE.SUCCESS,
+//                                FORWARD_SOURCE.ERROR,
+//                                FORWARD_SOURCE.TRIES,
+//                                FORWARD_SOURCE.LAST_TRY_TIME_MS,
+//                                positionField,
+//                                FORWARD_DEST.NAME,
+//                                SOURCE.FILE_STORE_ID,
+//                                SOURCE.FK_FEED_ID)
+//                        .from(FORWARD_SOURCE)
+//                        .join(FORWARD_DEST).on(FORWARD_DEST.ID.eq(FORWARD_SOURCE.FK_FORWARD_DEST_ID))
+//                        .join(SOURCE).on(SOURCE.ID.eq(FORWARD_SOURCE.FK_SOURCE_ID))
+//                        .where(positionField.isNotNull())
+//                        .and(positionField.gt(currentReadPos))
+//                        .orderBy(positionField)
+//                        .limit(limit)
+//                        .fetch())
+//                .forEach(r -> {
+//                    final long newPosition = r.get(positionField);
+//                    pos.set(newPosition);
+//                    queueMonitor.setBufferPos(newPosition);
+//
+//                    final ForwardDest forwardDest = new ForwardDest(r.get(FORWARD_AGGREGATE.FK_FORWARD_DEST_ID),
+//                            r.get(FORWARD_DEST.NAME));
+//                    final RepoSource source = new RepoSource(
+//                            r.get(FORWARD_SOURCE.FK_SOURCE_ID),
+//                            r.get(SOURCE.FILE_STORE_ID),
+//                            r.get(SOURCE.FK_FEED_ID));
+//                    final ForwardSource forwardSource = new ForwardSource(
+//                            r.get(FORWARD_SOURCE.ID),
+//                            r.get(FORWARD_SOURCE.UPDATE_TIME_MS),
+//                            source,
+//                            forwardDest,
+//                            r.get(FORWARD_SOURCE.SUCCESS),
+//                            r.get(FORWARD_SOURCE.ERROR),
+//                            r.get(FORWARD_SOURCE.TRIES),
+//                            r.get(FORWARD_SOURCE.LAST_TRY_TIME_MS));
+//                    readQueue.add(forwardSource);
+//                });
         return pos.get();
     }
 
@@ -186,7 +184,6 @@ public class TestForwardSourceDao implements ForwardSourceDao {
         return newPosition;
     }
 
-    @Override
     public void clear() {
         jooq.transaction(context -> {
             JooqUtil.deleteAll(context, FORWARD_SOURCE);
@@ -230,41 +227,39 @@ public class TestForwardSourceDao implements ForwardSourceDao {
      *
      * @param newForwardDests New dests to add forward aggregate entries for.
      */
-    @Override
     public void addNewForwardSources(final List<ForwardDest> newForwardDests) {
         if (newForwardDests.size() > 0) {
-            final AtomicLong minId = new AtomicLong();
-            final int batchSize = dbConfig.getBatchSize();
-            boolean full = true;
-            while (full) {
-                final List<RepoSource> sources = new ArrayList<>();
-                jooq.readOnlyTransactionResult(context -> context
-                                .select(SOURCE.ID,
-                                        SOURCE.FILE_STORE_ID,
-                                        SOURCE.FK_FEED_ID)
-                                .from(SOURCE)
-                                .where(NEW_SOURCE_CONDITION)
-                                .and(SOURCE.ID.gt(minId.get()))
-                                .orderBy(SOURCE.ID)
-                                .limit(batchSize)
-                                .fetch())
-                        .forEach(r -> {
-                            minId.set(r.get(AGGREGATE.ID));
-                            final RepoSource source = new RepoSource(
-                                    r.get(SOURCE.ID),
-                                    r.get(SOURCE.FILE_STORE_ID),
-                                    r.get(SOURCE.FK_FEED_ID));
-                            sources.add(source);
-                        });
-
-                final Batch<RepoSource> batch = new Batch<>(sources, sources.size() == batchSize);
-                createForwardSources(batch, newForwardDests);
-                full = batch.full();
-            }
+//            final AtomicLong minId = new AtomicLong();
+//            final int batchSize = dbConfig.getBatchSize();
+//            boolean full = true;
+//            while (full) {
+//                final List<RepoSource> sources = new ArrayList<>();
+//                jooq.readOnlyTransactionResult(context -> context
+//                                .select(SOURCE.ID,
+//                                        SOURCE.FILE_STORE_ID,
+//                                        SOURCE.FK_FEED_ID)
+//                                .from(SOURCE)
+//                                .where(NEW_SOURCE_CONDITION)
+//                                .and(SOURCE.ID.gt(minId.get()))
+//                                .orderBy(SOURCE.ID)
+//                                .limit(batchSize)
+//                                .fetch())
+//                        .forEach(r -> {
+//                            minId.set(r.get(AGGREGATE.ID));
+//                            final RepoSource source = new RepoSource(
+//                                    r.get(SOURCE.ID),
+//                                    r.get(SOURCE.FILE_STORE_ID),
+//                                    r.get(SOURCE.FK_FEED_ID));
+//                            sources.add(source);
+//                        });
+//
+//                final Batch<RepoSource> batch = new Batch<>(sources, sources.size() == batchSize);
+//                createForwardSources(batch, newForwardDests);
+//                full = batch.full();
+//            }
         }
     }
 
-    @Override
     public void removeOldForwardSources(final List<ForwardDest> oldForwardDests) {
         if (oldForwardDests.size() > 0) {
             final List<Integer> oldIdList = oldForwardDests
@@ -279,44 +274,41 @@ public class TestForwardSourceDao implements ForwardSourceDao {
         }
     }
 
-    /**
-     * Create a record of the fact that we forwarded an aggregate or at least tried to.
-     */
-    @Override
-    public void createForwardSources(final Batch<RepoSource> sources,
-                                     final List<ForwardDest> forwardDests) {
-        recordQueue.add(() -> {
-            for (final RepoSource source : sources.list()) {
-                for (final ForwardDest forwardDest : forwardDests) {
-                    final long newPosition = forwardSourceNewPosition.incrementAndGet();
-                    forwardQueueMonitor.setWritePos(newPosition);
+//    /**
+//     * Create a record of the fact that we forwarded an aggregate or at least tried to.
+//     */
+//    public void createForwardSources(final Batch<RepoSource> sources,
+//                                     final List<ForwardDest> forwardDests) {
+//        recordQueue.add(() -> {
+//            for (final RepoSource source : sources.list()) {
+//                for (final ForwardDest forwardDest : forwardDests) {
+//                    final long newPosition = forwardSourceNewPosition.incrementAndGet();
+//                    forwardQueueMonitor.setWritePos(newPosition);
+//
+//                    final Object[] row = new Object[FORWARD_SOURCE_COLUMNS.length];
+//                    row[0] = forwardAggregateId.incrementAndGet();
+//                    row[1] = System.currentTimeMillis();
+//                    row[2] = forwardDest.getId();
+//                    row[3] = source.id();
+//                    row[4] = false;
+//                    row[5] = newPosition;
+//                    forwardAggregateWriteQueue.add(row);
+//                }
+//
+//                // Remove the queue position from the source so we don't try and create forwarders again.
+//                aggregateUpdateQueue.add(context -> context
+//                        .update(SOURCE)
+//                        .setNull(SOURCE.NEW_POSITION)
+//                        .where(SOURCE.ID.eq(source.id()))
+//                        .execute());
+//            }
+//        });
+//    }
 
-                    final Object[] row = new Object[FORWARD_SOURCE_COLUMNS.length];
-                    row[0] = forwardAggregateId.incrementAndGet();
-                    row[1] = System.currentTimeMillis();
-                    row[2] = forwardDest.getId();
-                    row[3] = source.id();
-                    row[4] = false;
-                    row[5] = newPosition;
-                    forwardAggregateWriteQueue.add(row);
-                }
-
-                // Remove the queue position from the source so we don't try and create forwarders again.
-                aggregateUpdateQueue.add(context -> context
-                        .update(SOURCE)
-                        .setNull(SOURCE.NEW_POSITION)
-                        .where(SOURCE.ID.eq(source.id()))
-                        .execute());
-            }
-        });
-    }
-
-    @Override
     public Batch<ForwardSource> getNewForwardSources() {
         return recordQueue.getBatch(forwardAggregateReadQueue);
     }
 
-    @Override
     public Batch<ForwardSource> getRetryForwardSources() {
         return retryRecordQueue.getBatch(retryReadQueue);
     }
@@ -327,13 +319,11 @@ public class TestForwardSourceDao implements ForwardSourceDao {
 //                getForwardSourceAtQueuePosition(position, positionField));
 //    }
 
-    @Override
     public Batch<ForwardSource> getNewForwardSources(final long timeout,
                                                      final TimeUnit timeUnit) {
         return recordQueue.getBatch(forwardAggregateReadQueue, timeout, timeUnit);
     }
 
-    @Override
     public Batch<ForwardSource> getRetryForwardSources(final long timeout,
                                                        final TimeUnit timeUnit) {
         return retryRecordQueue.getBatch(retryReadQueue, timeout, timeUnit);
@@ -388,33 +378,32 @@ public class TestForwardSourceDao implements ForwardSourceDao {
 //                });
 //    }
 
-    @Override
     public void update(final ForwardSource forwardSource) {
-        if (forwardSource.isSuccess()) {
-            final long sourceId = forwardSource.getSource().id();
-
-            // Mark success and see if we can delete this record and cascade.
-            jooq.transaction(context -> {
-                // We finished forwarding a source so delete all related forward aggregate records.
-                updateForwardSource(context, forwardSource, null);
-
-                final Condition condition = FORWARD_SOURCE.FK_SOURCE_ID
-                        .eq(forwardSource.getSource().id())
-                        .and(FORWARD_SOURCE.SUCCESS.ne(true));
-                final int remainingForwards = context.fetchCount(FORWARD_SOURCE, condition);
-                if (remainingForwards == 0) {
-                    deleteForwardSource(context, sourceId);
-                }
-            });
-        } else {
-            // Update and schedule for retry.
-            retryRecordQueue.add(() ->
-                    retryUpdateQueue.add(context ->
-                            updateForwardSource(
-                                    context,
-                                    forwardSource,
-                                    forwardSourceRetryPosition.incrementAndGet())));
-        }
+//        if (forwardSource.isSuccess()) {
+//            final long sourceId = forwardSource.getSource().id();
+//
+//            // Mark success and see if we can delete this record and cascade.
+//            jooq.transaction(context -> {
+//                // We finished forwarding a source so delete all related forward aggregate records.
+//                updateForwardSource(context, forwardSource, null);
+//
+//                final Condition condition = FORWARD_SOURCE.FK_SOURCE_ID
+//                        .eq(forwardSource.getSource().id())
+//                        .and(FORWARD_SOURCE.SUCCESS.ne(true));
+//                final int remainingForwards = context.fetchCount(FORWARD_SOURCE, condition);
+//                if (remainingForwards == 0) {
+//                    deleteForwardSource(context, sourceId);
+//                }
+//            });
+//        } else {
+//            // Update and schedule for retry.
+//            retryRecordQueue.add(() ->
+//                    retryUpdateQueue.add(context ->
+//                            updateForwardSource(
+//                                    context,
+//                                    forwardSource,
+//                                    forwardSourceRetryPosition.incrementAndGet())));
+//        }
     }
 
     private void updateForwardSource(final DSLContext context,
@@ -454,12 +443,10 @@ public class TestForwardSourceDao implements ForwardSourceDao {
                 .execute();
     }
 
-    @Override
     public int countForwardSource() {
         return jooq.readOnlyTransactionResult(context -> JooqUtil.count(context, FORWARD_SOURCE));
     }
 
-    @Override
     public void flush() {
         recordQueue.flush();
         retryRecordQueue.flush();

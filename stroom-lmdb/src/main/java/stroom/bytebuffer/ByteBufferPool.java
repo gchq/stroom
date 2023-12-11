@@ -27,7 +27,7 @@ public interface ByteBufferPool extends Clearable, HasSystemInfo {
 
     /**
      * Gets a pair of {@link PooledByteBuffer} instances, with capacity >= minKeyCapacity and minValueCapacity
-     * respectively. Intended for use when dealing with keey/value pairs in LMDB.
+     * respectively. Intended for use when dealing with key/value pairs in LMDB.
      */
     PooledByteBufferPair getPooledBufferPair(int minKeyCapacity, int minValueCapacity);
 

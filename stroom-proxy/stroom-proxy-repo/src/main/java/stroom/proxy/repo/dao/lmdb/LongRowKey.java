@@ -1,19 +1,19 @@
 package stroom.proxy.repo.dao.lmdb;
 
+import stroom.proxy.repo.dao.lmdb.serde.LongSerde;
+
 import org.lmdbjava.Dbi;
-import org.lmdbjava.Env;
 
 import java.nio.ByteBuffer;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class LongRowKey implements RowKey<Long> {
 
     private final AtomicLong rowId = new AtomicLong();
 
-    public LongRowKey(final Env<ByteBuffer> env, final Dbi<ByteBuffer> dbi) {
-        final Optional<Long> maxId = LmdbUtil.getMaxLongId(env, dbi);
+    public LongRowKey(final LmdbEnv env, final Dbi<ByteBuffer> dbi) {
+        final Optional<Long> maxId = env.getMaxKey(dbi, new LongSerde());
         rowId.set(maxId.orElse(0L));
     }
 

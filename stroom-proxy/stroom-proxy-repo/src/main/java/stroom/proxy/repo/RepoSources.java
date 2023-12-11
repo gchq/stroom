@@ -4,8 +4,7 @@ import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.StroomStatusCode;
-import stroom.proxy.repo.dao.SourceDao;
-import stroom.proxy.repo.queue.Batch;
+import stroom.proxy.repo.dao.lmdb.SourceDao;
 import stroom.proxy.repo.store.FileSet;
 import stroom.proxy.repo.store.SequentialFileStore;
 import stroom.receive.common.StroomStreamException;
@@ -19,8 +18,6 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 @Singleton
 public class RepoSources implements Clearable {
@@ -86,34 +83,29 @@ public class RepoSources implements Clearable {
         sourceDao.addSource(fileStoreId, feedName, typeName);
     }
 
-    public Batch<RepoSource> getNewSources() {
-        return sourceDao.getNewSources();
+    public RepoSource getNextSource() {
+        return sourceDao.getNextSource();
     }
 
-    public Batch<RepoSource> getNewSources(final long timeout,
-                                           final TimeUnit timeUnit) {
-        return sourceDao.getNewSources(timeout, timeUnit);
-    }
-
-    public void markDeletableSources() {
-        sourceDao.markDeletableSources();
-    }
-
-    public List<RepoSource> getDeletableSources(final long minSourceId,
-                                                final int limit) {
-        return sourceDao.getDeletableSources(minSourceId, limit);
-    }
-
-    public int deleteSources() {
-        return sourceDao.deleteSources();
-    }
+//    public void markDeletableSources() {
+//        sourceDao.markDeletableSources();
+//    }
+//
+//    public List<RepoSource> getDeletableSources(final long minSourceId,
+//                                                final int limit) {
+//        return sourceDao.getDeletableSources(minSourceId, limit);
+//    }
+//
+//    public int deleteSources() {
+//        return sourceDao.deleteSources();
+//    }
 
     @Override
     public void clear() {
         sourceDao.clear();
     }
 
-    public void flush() {
-        sourceDao.flush();
-    }
+//    public void flush() {
+//        sourceDao.flush();
+//    }
 }

@@ -1,12 +1,12 @@
 package stroom.proxy.app;
 
-import stroom.proxy.repo.dao.AggregateDao;
-import stroom.proxy.repo.dao.FeedDao;
-import stroom.proxy.repo.dao.ForwardAggregateDao;
-import stroom.proxy.repo.dao.ForwardDestDao;
-import stroom.proxy.repo.dao.ForwardSourceDao;
-import stroom.proxy.repo.dao.SourceDao;
-import stroom.proxy.repo.dao.SourceItemDao;
+import stroom.proxy.repo.dao.db.AggregateDao;
+import stroom.proxy.repo.dao.db.ForwardAggregateDao;
+import stroom.proxy.repo.dao.db.ForwardSourceDao;
+import stroom.proxy.repo.dao.lmdb.FeedDao;
+import stroom.proxy.repo.dao.lmdb.ForwardDestDao;
+import stroom.proxy.repo.dao.lmdb.SourceDao;
+import stroom.proxy.repo.dao.lmdb.SourceItemDao;
 import stroom.test.common.TestUtil;
 
 import jakarta.inject.Inject;
@@ -53,14 +53,14 @@ public class DbRecordCountAssertion {
                 sourceItemDao.countItems());
     }
 
-    public record DbRecordCounts(int countAggregates,
-                                 int countFeeds,
-                                 int countForwardAggregates,
-                                 int countForwardDest,
-                                 int countForwardSource,
-                                 int countSources,
-                                 int countDeletableSources,
-                                 int countItems) {
+    public record DbRecordCounts(long countAggregates,
+                                 long countFeeds,
+                                 long countForwardAggregates,
+                                 long countForwardDest,
+                                 long countForwardSource,
+                                 long countSources,
+                                 long countDeletableSources,
+                                 long countItems) {
 
     }
 }

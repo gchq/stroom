@@ -18,10 +18,11 @@ package stroom.proxy.repo;
 
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.StandardHeaderArguments;
-import stroom.proxy.repo.dao.FeedDao;
-import stroom.proxy.repo.dao.ForwardSourceDao;
+import stroom.proxy.repo.dao.db.ForwardSourceDao;
+import stroom.proxy.repo.dao.lmdb.FeedDao;
 import stroom.proxy.repo.queue.Batch;
 import stroom.proxy.repo.queue.BatchUtil;
+import stroom.proxy.repo.queue.TransferUtil;
 import stroom.receive.common.StreamHandlers;
 import stroom.util.concurrent.ThreadUtil;
 import stroom.util.logging.LambdaLogger;
@@ -98,13 +99,13 @@ public class SourceForwarder {
 //    }
 
     public synchronized void createAllForwardSources() {
-        BatchUtil.transfer(sources::getNewSources, this::createForwardSources);
+//        TransferUtil.transfer(sources::getNextSources, this::createForwardSource);
     }
 
-    private void createForwardSources(final Batch<RepoSource> batch) {
-        // Forward to all remaining places.
-        progressLog.increment("SourceForwarder - createForwardRecord");
-        forwardSourceDao.createForwardSources(batch, forwardDestinations.getForwardDests());
+    private void createForwardSource(final RepoSource repoSource) {
+//        // Forward to all remaining places.
+//        progressLog.increment("SourceForwarder - createForwardRecord");
+//        forwardSourceDao.createForwardSource(repoSource, forwardDestinations.getForwardDests());
     }
 
 //    public void forwardAll() {

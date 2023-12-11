@@ -16,12 +16,12 @@
 
 package stroom.proxy.repo;
 
-import stroom.proxy.repo.dao.AggregateDao;
-import stroom.proxy.repo.dao.ForwardAggregateDao;
-import stroom.proxy.repo.dao.ForwardSourceDao;
-import stroom.proxy.repo.dao.SourceDao;
-import stroom.proxy.repo.dao.SourceItemDao;
+import stroom.proxy.repo.dao.db.AggregateDao;
+import stroom.proxy.repo.dao.db.ForwardAggregateDao;
+import stroom.proxy.repo.dao.db.ForwardSourceDao;
 import stroom.proxy.repo.dao.db.ProxyDbConfig;
+import stroom.proxy.repo.dao.lmdb.SourceDao;
+import stroom.proxy.repo.dao.lmdb.SourceItemDao;
 import stroom.proxy.repo.store.SequentialFileStore;
 
 import jakarta.inject.Inject;
@@ -67,35 +67,35 @@ public class Cleanup {
     }
 
     public void cleanupSources() {
-        // Mark sources as being ready for deletion.
-        sources.markDeletableSources();
-
-        // Now delete files by getting batches of deleted items and removing the files from the store.
-        long minSourceId = -1;
-        final int batchSize = 100_000;
-        boolean success = true;
-        while (success) {
-            final List<RepoSource> list = sources.getDeletableSources(minSourceId, batchSize);
-            success = list.size() > 0;
-            for (final RepoSource source : list) {
-                try {
-                    sequentialFileStore.deleteSource(source.fileStoreId());
-                    minSourceId = Math.max(minSourceId, source.id());
-                } catch (final IOException e) {
-                    LOGGER.error(e.getMessage(), e);
-                }
-            }
-        }
-
-        // Finally delete the items we have marked for deletion.
-        sources.deleteSources();
+//        // Mark sources as being ready for deletion.
+//        sources.markDeletableSources();
+//
+//        // Now delete files by getting batches of deleted items and removing the files from the store.
+//        long minSourceId = -1;
+//        final int batchSize = 100_000;
+//        boolean success = true;
+//        while (success) {
+//            final List<RepoSource> list = sources.getDeletableSources(minSourceId, batchSize);
+//            success = list.size() > 0;
+//            for (final RepoSource source : list) {
+//                try {
+//                    sequentialFileStore.deleteSource(source.fileStoreId());
+//                    minSourceId = Math.max(minSourceId, source.id());
+//                } catch (final IOException e) {
+//                    LOGGER.error(e.getMessage(), e);
+//                }
+//            }
+//        }
+//
+//        // Finally delete the items we have marked for deletion.
+//        sources.deleteSources();
     }
 
     public void resetAggregateForwarder() {
-        forwardAggregateDao.clear();
-        sourceItemDao.clear();
-        aggregateDao.clear();
-        sourceDao.resetExamined();
+//        forwardAggregateDao.clear();
+//        sourceItemDao.clear();
+//        aggregateDao.clear();
+//        sourceDao.resetExamined();
     }
 
     public void resetSourceForwarder() {

@@ -10,6 +10,11 @@ public class MyByteBufferOutput extends UnsafeByteBufferOutput {
         super(bufferSize, maxBufferSize);
     }
 
+    public MyByteBufferOutput(final ByteBuffer byteBuffer, final int maxBufferSize) {
+        super();
+        setBuffer(byteBuffer, maxBufferSize);
+    }
+
     public void writeByteBuffer(final ByteBuffer byteBuffer) {
         final int length = byteBuffer.remaining();
         require(length);

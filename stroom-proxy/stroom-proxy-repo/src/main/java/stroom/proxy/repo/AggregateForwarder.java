@@ -18,9 +18,9 @@ package stroom.proxy.repo;
 
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.StandardHeaderArguments;
-import stroom.proxy.repo.dao.FeedDao;
-import stroom.proxy.repo.dao.ForwardAggregateDao;
-import stroom.proxy.repo.dao.SourceItemDao;
+import stroom.proxy.repo.dao.db.ForwardAggregateDao;
+import stroom.proxy.repo.dao.lmdb.FeedDao;
+import stroom.proxy.repo.dao.lmdb.SourceItemDao;
 import stroom.proxy.repo.queue.Batch;
 import stroom.proxy.repo.queue.BatchUtil;
 import stroom.receive.common.StreamHandlers;
@@ -167,70 +167,70 @@ public class AggregateForwarder {
     }
 
     public void forward(final ForwardAggregate forwardAggregate) {
-        final Aggregate aggregate = forwardAggregate.getAggregate();
-        final AtomicBoolean success = new AtomicBoolean();
-        final AtomicReference<String> error = new AtomicReference<>();
-
-        final List<SourceItems> items = sourceItemDao.fetchSourceItemsByAggregateId(aggregate.id());
-        if (items.size() > 0) {
-            final FeedKey feedKey = feedDao.getKey(aggregate.feedId());
-            final long thisPostId = proxyForwardId.incrementAndGet();
-            final String info = thisPostId + " " + feedKey.feed() + " - " + feedKey.type();
-            LOGGER.debug(() -> "processFeedFiles() - proxyForwardId " + info);
-
-            final AttributeMap attributeMap = new AttributeMap();
-            attributeMap.put(StandardHeaderArguments.COMPRESSION, StandardHeaderArguments.COMPRESSION_ZIP);
-            attributeMap.put(StandardHeaderArguments.RECEIVED_PATH, getHostName());
-            attributeMap.put(StandardHeaderArguments.FEED, feedKey.feed());
-            if (feedKey.type() != null) {
-                attributeMap.put(StandardHeaderArguments.TYPE, feedKey.type());
-            }
-            if (LOGGER.isDebugEnabled()) {
-                attributeMap.put(PROXY_FORWARD_ID, String.valueOf(thisPostId));
-            }
-
-            final StreamHandlers streamHandlers;
-            // If we have reached the max tried limit then send the data to the failure destination for this forwarder.
-            if (forwardAggregate.getTries() >= forwardRetryConfigProvider.get().getMaxTries()) {
-                attributeMap.put("ForwardError", forwardAggregate.getError());
-                streamHandlers = failureDestinations.getProvider(forwardAggregate.getForwardDest().getName());
-            } else {
-                streamHandlers = forwarderDestinations.getProvider(forwardAggregate.getForwardDest().getName());
-            }
-
-            // Start the POST
-            try {
-                streamHandlers.handle(feedKey.feed(), feedKey.type(), attributeMap, handler -> {
-                    sender.sendDataToHandler(attributeMap, items, handler);
-                    success.set(true);
-                    progressLog.increment("AggregateForwarder - forward");
-                });
-            } catch (final RuntimeException ex) {
-                success.set(false);
-                error.set(ex.getMessage());
-                LOGGER.warn(() -> "Failed to send to feed " +
-                        feedKey.feed() +
-                        " (" +
-                        ex.getMessage() +
-                        ")");
-                LOGGER.debug(() -> "Failed to send to feed " + info, ex);
-            }
-        } else {
-            success.set(true);
-            progressLog.increment("AggregateForwarder - forward");
-        }
-
-        // Record that we sent the data or if there was no data to send.
-        final long now = System.currentTimeMillis();
-        final ForwardAggregate updatedForwardAggregate = forwardAggregate
-                .copy()
-                .updateTimeMs(now)
-                .success(success.get())
-                .error(error.get())
-                .tries(forwardAggregate.getTries() + 1)
-                .lastTryTimeMs(now)
-                .build();
-        forwardAggregateDao.update(updatedForwardAggregate);
+//        final Aggregate aggregate = forwardAggregate.getAggregate();
+//        final AtomicBoolean success = new AtomicBoolean();
+//        final AtomicReference<String> error = new AtomicReference<>();
+//
+//        final List<SourceItems> items = sourceItemDao.fetchSourceItemsByAggregateId(aggregate.id());
+//        if (items.size() > 0) {
+//            final FeedKey feedKey = feedDao.getKey(aggregate.feedId());
+//            final long thisPostId = proxyForwardId.incrementAndGet();
+//            final String info = thisPostId + " " + feedKey.feed() + " - " + feedKey.type();
+//            LOGGER.debug(() -> "processFeedFiles() - proxyForwardId " + info);
+//
+//            final AttributeMap attributeMap = new AttributeMap();
+//            attributeMap.put(StandardHeaderArguments.COMPRESSION, StandardHeaderArguments.COMPRESSION_ZIP);
+//            attributeMap.put(StandardHeaderArguments.RECEIVED_PATH, getHostName());
+//            attributeMap.put(StandardHeaderArguments.FEED, feedKey.feed());
+//            if (feedKey.type() != null) {
+//                attributeMap.put(StandardHeaderArguments.TYPE, feedKey.type());
+//            }
+//            if (LOGGER.isDebugEnabled()) {
+//                attributeMap.put(PROXY_FORWARD_ID, String.valueOf(thisPostId));
+//            }
+//
+//            final StreamHandlers streamHandlers;
+//            // If we have reached the max tried limit then send the data to the failure destination for this forwarder.
+//            if (forwardAggregate.getTries() >= forwardRetryConfigProvider.get().getMaxTries()) {
+//                attributeMap.put("ForwardError", forwardAggregate.getError());
+//                streamHandlers = failureDestinations.getProvider(forwardAggregate.getForwardDest().getName());
+//            } else {
+//                streamHandlers = forwarderDestinations.getProvider(forwardAggregate.getForwardDest().getName());
+//            }
+//
+//            // Start the POST
+//            try {
+//                streamHandlers.handle(feedKey.feed(), feedKey.type(), attributeMap, handler -> {
+//                    sender.sendDataToHandler(attributeMap, items, handler);
+//                    success.set(true);
+//                    progressLog.increment("AggregateForwarder - forward");
+//                });
+//            } catch (final RuntimeException ex) {
+//                success.set(false);
+//                error.set(ex.getMessage());
+//                LOGGER.warn(() -> "Failed to send to feed " +
+//                        feedKey.feed() +
+//                        " (" +
+//                        ex.getMessage() +
+//                        ")");
+//                LOGGER.debug(() -> "Failed to send to feed " + info, ex);
+//            }
+//        } else {
+//            success.set(true);
+//            progressLog.increment("AggregateForwarder - forward");
+//        }
+//
+//        // Record that we sent the data or if there was no data to send.
+//        final long now = System.currentTimeMillis();
+//        final ForwardAggregate updatedForwardAggregate = forwardAggregate
+//                .copy()
+//                .updateTimeMs(now)
+//                .success(success.get())
+//                .error(error.get())
+//                .tries(forwardAggregate.getTries() + 1)
+//                .lastTryTimeMs(now)
+//                .build();
+//        forwardAggregateDao.update(updatedForwardAggregate);
     }
 
     private String getHostName() {

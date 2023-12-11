@@ -1,6 +1,7 @@
 package stroom.proxy.repo.dao;
 
 import stroom.proxy.repo.ProxyRepoTestModule;
+import stroom.proxy.repo.dao.lmdb.ForwardDestDao;
 
 import jakarta.inject.Inject;
 import name.falgout.jeffrey.testing.junit.guice.GuiceExtension;

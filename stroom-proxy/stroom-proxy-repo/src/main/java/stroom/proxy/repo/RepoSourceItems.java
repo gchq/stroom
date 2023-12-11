@@ -5,8 +5,8 @@ import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.repo.RepoSourceItem.RepoSourceItemBuilder;
-import stroom.proxy.repo.dao.FeedDao;
-import stroom.proxy.repo.dao.SourceItemDao;
+import stroom.proxy.repo.dao.lmdb.FeedDao;
+import stroom.proxy.repo.dao.lmdb.SourceItemDao;
 import stroom.proxy.repo.queue.Batch;
 import stroom.proxy.repo.store.FileSet;
 import stroom.proxy.repo.store.SequentialFileStore;
@@ -30,7 +30,6 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Singleton
@@ -138,12 +137,12 @@ public class RepoSourceItems {
                 LOGGER.debug(e::getMessage, e);
             }
 
-            // We now have a map of all source entries so add them to the DB.
-            final List<RepoSourceItem> items = builderList
-                    .stream()
-                    .map(builder -> builder.build(feedDao))
-                    .collect(Collectors.toList());
-            sourceItemDao.addItems(source, items);
+//            // We now have a map of all source entries so add them to the DB.
+//            final List<RepoSourceItem> items = builderList
+//                    .stream()
+//                    .map(builder -> builder.build(feedDao))
+//                    .collect(Collectors.toList());
+//            sourceItemDao.addItem(source, items);
         });
     }
 
@@ -151,12 +150,7 @@ public class RepoSourceItems {
         sourceItemDao.clear();
     }
 
-    public Batch<RepoSourceItemRef> getNewSourceItems() {
-        return sourceItemDao.getNewSourceItems();
-    }
-
-    public Batch<RepoSourceItemRef> getNewSourceItems(final long timeout,
-                                                      final TimeUnit timeUnit) {
-        return sourceItemDao.getNewSourceItems(timeout, timeUnit);
-    }
+//    public Batch<RepoSourceItemRef> getNewSourceItems() {
+//        return sourceItemDao.getNewSourceItems();
+//    }
 }

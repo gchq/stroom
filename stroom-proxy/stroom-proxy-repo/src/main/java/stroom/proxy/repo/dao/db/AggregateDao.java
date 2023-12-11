@@ -3,7 +3,6 @@ package stroom.proxy.repo.dao.db;
 import stroom.db.util.JooqUtil;
 import stroom.proxy.repo.Aggregate;
 import stroom.proxy.repo.RepoSourceItemRef;
-import stroom.proxy.repo.dao.AggregateDao;
 import stroom.proxy.repo.db.jooq.tables.records.AggregateRecord;
 import stroom.proxy.repo.queue.Batch;
 import stroom.proxy.repo.queue.OperationWriteQueue;
@@ -30,7 +29,7 @@ import static stroom.proxy.repo.db.jooq.tables.Aggregate.AGGREGATE;
 import static stroom.proxy.repo.db.jooq.tables.SourceItem.SOURCE_ITEM;
 
 @Singleton
-public class AggregateDaoImpl implements AggregateDao {
+public class AggregateDao {
 
     private final SqliteJooqHelper jooq;
     private final AtomicLong aggregateId = new AtomicLong();
@@ -43,9 +42,9 @@ public class AggregateDaoImpl implements AggregateDao {
     private final QueueMonitor queueMonitor;
 
     @Inject
-    AggregateDaoImpl(final SqliteJooqHelper jooq,
-                     final ProxyDbConfig dbConfig,
-                     final QueueMonitors queueMonitors) {
+    AggregateDao(final SqliteJooqHelper jooq,
+                 final ProxyDbConfig dbConfig,
+                 final QueueMonitors queueMonitors) {
         queueMonitor = queueMonitors.create(4, "Aggregates");
 
         this.jooq = jooq;
@@ -101,7 +100,6 @@ public class AggregateDaoImpl implements AggregateDao {
         });
     }
 
-    @Override
     public void clear() {
         jooq.transaction(context -> {
             JooqUtil.deleteAll(context, AGGREGATE);
@@ -145,7 +143,6 @@ public class AggregateDaoImpl implements AggregateDao {
     /**
      * Close all aggregates that meet the supplied criteria.
      */
-    @Override
     public synchronized long closeAggregates(final int maxItemsPerAggregate,
                                              final long maxUncompressedByteSize,
                                              final long maxAggregateAgeMs,
@@ -193,18 +190,15 @@ public class AggregateDaoImpl implements AggregateDao {
         return list.size();
     }
 
-    @Override
     public Batch<Aggregate> getNewAggregates() {
         return recordQueue.getBatch(aggregateReadQueue);
     }
 
-    @Override
     public Batch<Aggregate> getNewAggregates(final long timeout,
                                              final TimeUnit timeUnit) {
         return recordQueue.getBatch(aggregateReadQueue, timeout, timeUnit);
     }
 
-    @Override
     public synchronized void addItems(final Batch<RepoSourceItemRef> newSourceItems,
                                       final int maxItemsPerAggregate,
                                       final long maxUncompressedByteSize) {
@@ -313,7 +307,6 @@ public class AggregateDaoImpl implements AggregateDao {
                 .fetchOptional());
     }
 
-    @Override
     public int countAggregates() {
         return jooq.readOnlyTransactionResult(context -> JooqUtil.count(context, AGGREGATE));
     }

@@ -1,11 +1,13 @@
 package stroom.proxy.repo.dao.lmdb;
 
-import stroom.lmdb.LmdbConfig;
 import stroom.util.io.PathCreator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
 import org.lmdbjava.Env;
 import org.lmdbjava.Env.Builder;
 import org.lmdbjava.EnvFlags;
@@ -14,20 +16,21 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.EnumSet;
 import java.util.Set;
 
-public class LmdbEnvFactory {
+@Singleton
+public class LmdbEnvProvider implements Provider<LmdbEnv> {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(LmdbEnvFactory.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(LmdbEnvProvider.class);
 
-    public Env<ByteBuffer> build(final PathCreator pathCreator,
-                                 final LmdbConfig lmdbConfig,
-                                 final String subDir) {
-        final Set<EnvFlags> envFlags = EnumSet.noneOf(EnvFlags.class);
-        final boolean isReadAheadEnabled = lmdbConfig.isReadAheadEnabled();
-        final Path envDir = pathCreator.toAppPath(lmdbConfig.getLocalDir()).resolve(subDir);
+    private final LmdbEnv lmdbEnv;
 
+    @Inject
+    public LmdbEnvProvider(final ProxyLmdbConfig lmdbConfig,
+                           final PathCreator pathCreator) {
+        final Path envDir = pathCreator.toAppPath(lmdbConfig.getLocalDir());
         LOGGER.debug(() -> "Ensuring existence of directory " + envDir.toAbsolutePath().normalize());
         try {
             Files.createDirectories(envDir);
@@ -36,6 +39,12 @@ public class LmdbEnvFactory {
                     "Error creating directory {}: {}", envDir.toAbsolutePath().normalize(), e));
         }
 
+        this.lmdbEnv = create(envDir, lmdbConfig);
+        lmdbEnv.setAutoCommit(new AutoCommit(10000, Duration.ofSeconds(10)));
+    }
+
+    public LmdbEnv create(final Path envDir, final ProxyLmdbConfig lmdbConfig) {
+        final Set<EnvFlags> envFlags = EnumSet.noneOf(EnvFlags.class);
         final Env<ByteBuffer> env;
         try {
             final Builder<ByteBuffer> builder = Env.create()
@@ -43,13 +52,13 @@ public class LmdbEnvFactory {
                     .setMaxDbs(100)
                     .setMaxReaders(126);
 
-            if (envFlags.contains(EnvFlags.MDB_NORDAHEAD) && isReadAheadEnabled) {
+            if (envFlags.contains(EnvFlags.MDB_NORDAHEAD) && lmdbConfig.isReadAheadEnabled()) {
                 throw new RuntimeException("Can't set isReadAheadEnabled to true and add flag "
                         + EnvFlags.MDB_NORDAHEAD);
             }
 
             envFlags.add(EnvFlags.MDB_NOTLS);
-            if (!isReadAheadEnabled) {
+            if (!lmdbConfig.isReadAheadEnabled()) {
                 envFlags.add(EnvFlags.MDB_NORDAHEAD);
             }
 
@@ -70,6 +79,11 @@ public class LmdbEnvFactory {
                     "Error creating LMDB env at {}: {}",
                     envDir.toAbsolutePath().normalize(), e.getMessage()), e);
         }
-        return env;
+        return new LmdbEnv(env);
+    }
+
+    @Override
+    public LmdbEnv get() {
+        return lmdbEnv;
     }
 }

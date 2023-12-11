@@ -1,14 +1,14 @@
 package stroom.proxy.repo;
 
 import stroom.data.zip.StroomZipEntry;
-import stroom.proxy.repo.dao.FeedDao;
+import stroom.proxy.repo.dao.lmdb.FeedDao;
 
 public record RepoSourceItem(
         RepoSource repoSource,
         long itemId,
         String name,
         long feedId,
-        Long aggregateId,
+        long aggregateId,
         long totalByteSize,
         String extensions) {
 
@@ -19,7 +19,7 @@ public record RepoSourceItem(
         private String name;
         private String feedName;
         private String typeName;
-        private Long aggregateId;
+        private long aggregateId;
         private long totalByteSize;
         private String extensions = "";
 
@@ -48,7 +48,7 @@ public record RepoSourceItem(
             return this;
         }
 
-        public RepoSourceItemBuilder aggregateId(final Long aggregateId) {
+        public RepoSourceItemBuilder aggregateId(final long aggregateId) {
             this.aggregateId = aggregateId;
             return this;
         }

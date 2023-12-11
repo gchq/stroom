@@ -1,12 +1,14 @@
 package stroom.proxy.repo;
 
-import stroom.proxy.repo.dao.SourceDao;
+import stroom.proxy.repo.dao.lmdb.LmdbEnv;
+import stroom.proxy.repo.dao.lmdb.SourceDao;
 import stroom.proxy.repo.queue.Batch;
 
 import jakarta.inject.Inject;
 import name.falgout.jeffrey.testing.junit.guice.GuiceExtension;
 import name.falgout.jeffrey.testing.junit.guice.IncludeModule;
 import org.jooq.exception.DataAccessException;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -32,15 +34,18 @@ public class TestSource {
     private RepoSources proxyRepoSources;
     @Inject
     private SourceDao sourceDao;
+    @Inject
+    private LmdbEnv lmdbEnv;
 
     @BeforeEach
     void beforeEach() {
+        lmdbEnv.start();
         proxyRepoSources.clear();
     }
 
-    @BeforeEach
-    void cleanup() {
-        proxyRepoSources.clear();
+    @AfterEach
+    void afterEach() {
+        lmdbEnv.stop();
     }
 
     @Test
@@ -54,32 +59,32 @@ public class TestSource {
         }
     }
 
-    @Test
-    void testUniquePathRollback() {
-        proxyRepoSources.addSource(
-                1L,
-                "test",
-                null,
-                null);
-        proxyRepoSources.flush();
-
-        assertThatThrownBy(() -> {
-            proxyRepoSources.addSource(
-                    1L,
-                    "test",
-                    null,
-                    null);
-            proxyRepoSources.flush();
-        }).isInstanceOf(DataAccessException.class);
-        sourceDao.clearQueue();
-
-        proxyRepoSources.addSource(
-                2L,
-                "test",
-                null,
-                null);
-        proxyRepoSources.flush();
-    }
+//    @Test
+//    void testUniquePathRollback() {
+//        proxyRepoSources.addSource(
+//                1L,
+//                "test",
+//                null,
+//                null);
+////        proxyRepoSources.flush();
+//
+//        assertThatThrownBy(() -> {
+//            proxyRepoSources.addSource(
+//                    1L,
+//                    "test",
+//                    null,
+//                    null);
+////            proxyRepoSources.flush();
+//        }).isInstanceOf(DataAccessException.class);
+////        sourceDao.clearQueue();
+//
+//        proxyRepoSources.addSource(
+//                2L,
+//                "test",
+//                null,
+//                null);
+////        proxyRepoSources.flush();
+//    }
 
 //    @Test
 //    void testSourceExists() {
@@ -135,9 +140,9 @@ public class TestSource {
             final CompletableFuture completableFuture = CompletableFuture.runAsync(() -> {
                 boolean consume = true;
                 while (consume) {
-                    final Batch<RepoSource> batch = proxyRepoSources.getNewSources(1, TimeUnit.SECONDS);
+                    final RepoSource repoSource = proxyRepoSources.getNextSource();
 //                    LOGGER.info("CONSUMED SOURCE: " + source.get().getId());
-                    totalConsumed.addAndGet(batch.list().size());
+                    totalConsumed.incrementAndGet();
 //                    LOGGER.info("CONSUMED: " + totalConsumed.get());
                     if (totalConsumed.get() == totalSources) {
                         consume = false;
@@ -147,14 +152,14 @@ public class TestSource {
             all[threads] = completableFuture;
         }
 
-        // Insert thread.
-        final ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(1);
-        scheduledExecutorService.scheduleAtFixedRate(() -> {
-            proxyRepoSources.flush();
-        }, 1, 1, TimeUnit.SECONDS);
+//        // Insert thread.
+//        final ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(1);
+//        scheduledExecutorService.scheduleAtFixedRate(() -> {
+//            proxyRepoSources.flush();
+//        }, 1, 1, TimeUnit.SECONDS);
 
         CompletableFuture.allOf(all).join();
 
-        scheduledExecutorService.shutdownNow();
+//        scheduledExecutorService.shutdownNow();
     }
 }

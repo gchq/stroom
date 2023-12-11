@@ -4,7 +4,7 @@ import java.nio.ByteBuffer;
 
 public interface Serde<T> {
 
-    ByteBuffer serialise(T value);
+    PooledByteBuffer serialise(T value);
 
     T deserialise(ByteBuffer byteBuffer);
 }

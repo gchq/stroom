@@ -1,9 +1,7 @@
-package stroom.proxy.repo.dao;
+package stroom.proxy.repo.dao.lmdb;
 
 import stroom.proxy.repo.ProxyRepoTestModule;
-import stroom.proxy.repo.RepoSource;
-import stroom.proxy.repo.dao.lmdb.LmdbEnv;
-import stroom.proxy.repo.dao.lmdb.SourceDao;
+import stroom.proxy.repo.dao.lmdb.serde.LongSerde;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -12,6 +10,7 @@ import name.falgout.jeffrey.testing.junit.guice.GuiceExtension;
 import name.falgout.jeffrey.testing.junit.guice.IncludeModule;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
@@ -28,70 +27,58 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(GuiceExtension.class)
 @IncludeModule(ProxyRepoTestModule.class)
-public class TestSourceDao {
+public class TestLmdbQueue {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestSourceDao.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestLmdbQueue.class);
 
     @Inject
     private LmdbEnv lmdbEnv;
-    @Inject
-    private SourceDao sourceDao;
-
-    @BeforeEach
-    void beforeEach() {
-        lmdbEnv.start();
-    }
-
-    @AfterEach
-    void afterEach() {
-        sourceDao.clear();
-        lmdbEnv.stop();
-    }
 
     @Test
-    void testSource() {
-        sourceDao.addSource(1L, "test", "test");
-        lmdbEnv.sync();
-
-        final RepoSource repoSource = sourceDao.getNextSource();
-        assertThat(repoSource).isNotNull();
-        assertThat(sourceDao.countSources()).isOne();
-
-        sourceDao.setSourceExamined(repoSource.fileStoreId(), 0);
-        lmdbEnv.sync();
-        final RepoSource deletable = sourceDao.getDeletableSource();
-        sourceDao.deleteSource(deletable.fileStoreId());
-        lmdbEnv.sync();
-
-        assertThat(sourceDao.countSources()).isZero();
+    void testSimple() {
+        test(1, 1, 1, false);
     }
+
+//    @Test
+//    void testSimpleNative() {
+//        test(1, 1, 1, true);
+//    }
 
     @Test
-    void testAddSourcePerformance() {
-        for (long i = 0; i < 1000000; i++) {
-            sourceDao.addSource(i, "test", "test");
-        }
-        lmdbEnv.sync();
+    void testSimpleWithMore() {
+        test(1, 1, 1_000_000, false);
     }
+
+//    @Test
+//    void testSimpleWithMoreNative() {
+//        test(1, 1, 1_000_000, true);
+//    }
 
     @Test
-    void testSourceDirectSimple() {
-        testSourceDirect(1, 1, 1);
+    void testComplex() {
+        test(10, 3, 1_000_000, false);
     }
 
-    @Test
-    void testSourceDirectSimpleWithMoreSources() {
-        testSourceDirect(1, 1, 1_000_000);
-    }
+    void test(final int producerThreads,
+              final int consumerThreads,
+              final long totalSources,
+              final boolean nativeByteOrder) {
+        final LongSerde keySerde = new LongSerde();
+        final LmdbQueue<Long> newSourceQueue = new LmdbQueue<>(
+                lmdbEnv,
+                "new-queue",
+                keySerde,
+                nativeByteOrder);
 
-    @Test
-    void testSourceDirectComplex() {
-        testSourceDirect(10, 3, 1_000_000);
-    }
+        LOGGER.logDurationIfInfoEnabled(() -> {
+            lmdbEnv.start();
+        }, "start");
 
-    private void testSourceDirect(final int producerThreads,
-                                  final int consumerThreads,
-                                  final long totalSources) {
+        Optional<Long> minId = newSourceQueue.getMinId();
+        Optional<Long> maxId = newSourceQueue.getMaxId();
+        minId.ifPresent(id -> assertThat(id).isZero());
+        maxId.ifPresent(id -> assertThat(id).isZero());
+
         final AtomicLong totalAdded = new AtomicLong();
         final AtomicLong totalConsumed = new AtomicLong();
         final List<CompletableFuture<Void>> producers = new ArrayList<>();
@@ -104,10 +91,7 @@ public class TestSourceDao {
             final CompletableFuture<Void> completableFuture = CompletableFuture.runAsync(() -> {
                 long added = totalAdded.incrementAndGet();
                 while (added <= totalSources) {
-                    sourceDao.addSource(
-                            sourceFileStoreId.incrementAndGet(),
-                            "test",
-                            null);
+                    newSourceQueue.put(sourceFileStoreId.incrementAndGet());
                     added = totalAdded.incrementAndGet();
                 }
             });
@@ -119,7 +103,7 @@ public class TestSourceDao {
             final CompletableFuture<Void> completableFuture = CompletableFuture.runAsync(() -> {
                 long consumed = totalConsumed.incrementAndGet();
                 while (consumed <= totalSources) {
-                    final Optional<RepoSource> source = sourceDao.getNextSource(1, TimeUnit.SECONDS);
+                    final Optional<Long> source = newSourceQueue.take(1, TimeUnit.SECONDS);
                     if (source.isPresent()) {
                         consumed = totalConsumed.incrementAndGet();
                     }
@@ -137,5 +121,17 @@ public class TestSourceDao {
             LOGGER.info("Completed consumption in: " + Duration.between(start, Instant.now()).toString());
         });
         CompletableFuture.allOf(all.toArray(new CompletableFuture[0])).join();
+
+        minId = newSourceQueue.getMinId();
+        maxId = newSourceQueue.getMaxId();
+        assertThat(minId).isPresent();
+        assertThat(maxId).isPresent();
+        minId.ifPresent(id -> assertThat(id).isGreaterThan(0));
+        maxId.ifPresent(id -> assertThat(id).isEqualTo(totalSources));
+
+        LOGGER.logDurationIfInfoEnabled(() -> {
+            newSourceQueue.clear();
+            lmdbEnv.stop();
+        }, "stop");
     }
 }
