@@ -148,7 +148,7 @@ class TestApiKeyDaoImpl {
 
     @Test
     void testFind_oneUser() {
-        final FindApiKeyCriteria criteria = new FindApiKeyCriteria(null, user1ApiKey1.getOwner());
+        final FindApiKeyCriteria criteria = FindApiKeyCriteria.create(user1ApiKey1.getOwner());
 
         final ResultPage<ApiKey> resultPage = apiKeyDao.find(criteria);
         assertThat(resultPage.size())
@@ -166,7 +166,7 @@ class TestApiKeyDaoImpl {
 
     @Test
     void testFind_withFilter() {
-        final FindApiKeyCriteria criteria = new FindApiKeyCriteria(
+        final FindApiKeyCriteria criteria = FindApiKeyCriteria.create(
                 "\"user1 key 3 inv\"", user1ApiKey3.getOwner());
 
         final ResultPage<ApiKey> resultPage = apiKeyDao.find(criteria);
@@ -189,8 +189,7 @@ class TestApiKeyDaoImpl {
 
     @Test
     void testFind_withFilter2() {
-        final FindApiKeyCriteria criteria = new FindApiKeyCriteria(
-                "\"key 1\"", null);
+        final FindApiKeyCriteria criteria = FindApiKeyCriteria.create("\"key 1\"");
 
         final ResultPage<ApiKey> resultPage = apiKeyDao.find(criteria);
         assertThat(resultPage.size())

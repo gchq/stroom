@@ -1,6 +1,8 @@
 package stroom.security.shared;
 
 import stroom.util.shared.BaseCriteria;
+import stroom.util.shared.CriteriaFieldSort;
+import stroom.util.shared.PageRequest;
 import stroom.util.shared.UserName;
 import stroom.util.shared.filter.FilterFieldDefinition;
 
@@ -46,10 +48,32 @@ public class FindApiKeyCriteria extends BaseCriteria {
     }
 
     @JsonCreator
-    public FindApiKeyCriteria(@JsonProperty("quickFilter") final String quickFilterInput,
+    public FindApiKeyCriteria(@JsonProperty("pageRequest") final PageRequest pageRequest,
+                              @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,
+                              @JsonProperty("quickFilterInput") final String quickFilterInput,
                               @JsonProperty("owner") final UserName owner) {
+        super(pageRequest, sortList);
         this.quickFilterInput = quickFilterInput;
         this.owner = owner;
+    }
+
+    public static FindApiKeyCriteria create(final String quickFilterInput) {
+        FindApiKeyCriteria findApiKeyCriteria = new FindApiKeyCriteria();
+        findApiKeyCriteria.setQuickFilterInput(quickFilterInput);
+        return findApiKeyCriteria;
+    }
+
+    public static FindApiKeyCriteria create(final UserName owner) {
+        FindApiKeyCriteria findApiKeyCriteria = new FindApiKeyCriteria();
+        findApiKeyCriteria.setOwner(owner);
+        return findApiKeyCriteria;
+    }
+
+    public static FindApiKeyCriteria create(final String quickFilterInput, final UserName owner) {
+        FindApiKeyCriteria findApiKeyCriteria = new FindApiKeyCriteria();
+        findApiKeyCriteria.setQuickFilterInput(quickFilterInput);
+        findApiKeyCriteria.setOwner(owner);
+        return findApiKeyCriteria;
     }
 
     public String getQuickFilterInput() {
