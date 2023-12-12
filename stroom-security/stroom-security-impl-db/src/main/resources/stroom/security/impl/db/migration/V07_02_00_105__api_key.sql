@@ -24,15 +24,18 @@ CREATE TABLE IF NOT EXISTS `api_key` (
   create_user       varchar(255) NOT NULL,
   update_time_ms    bigint NOT NULL,
   update_user       varchar(255) NOT NULL,
-  fk_owner_uuid     varchar(255) NOT NULL,
-  api_key           varchar(255) NOT NULL,
-  expires_on_ms     bigint DEFAULT NULL,
-  name              varchar(255) NOT NULL,
-  comments          longtext,
-  enabled           tinyint NOT NULL DEFAULT '0',
+  fk_owner_uuid     varchar(255) NOT NULL, -- stroom user owner of the key
+  api_key_hash      varchar(255) NOT NULL, -- sha256 hash of the whole api key
+  api_key_salt      varchar(255) NOT NULL, -- random salt for the api key hashing
+  api_key_prefix    varchar(255) NOT NULL, -- the key type and the 7 char checksum, e.g. sak_5youxxe_, allows user to identify key
+  expires_on_ms     bigint DEFAULT NULL,   -- when the key expires
+  name              varchar(255) NOT NULL, -- so the user can give a sensible name to their key
+  comments          longtext,              -- any user comments about the key
+  enabled           tinyint NOT NULL DEFAULT '0', -- allows the key to be disabled, preventing authentication
   PRIMARY KEY (`id`),
-  UNIQUE KEY `api_key_api_key_enabled_owner_idx` (api_key, enabled, fk_owner_uuid),
+  UNIQUE KEY `api_key_api_key_hash_idx` (api_key_hash),
   UNIQUE KEY `api_key_owner_name_idx` (`fk_owner_uuid`, `name`),
+  KEY `api_key_prefix_idx` (api_key_prefix),
   CONSTRAINT api_key_fk_owner_uuid
     FOREIGN KEY (fk_owner_uuid)
     REFERENCES stroom_user (uuid)

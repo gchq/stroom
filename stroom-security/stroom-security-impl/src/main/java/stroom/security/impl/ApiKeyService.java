@@ -1,6 +1,9 @@
 package stroom.security.impl;
 
+import stroom.security.api.UserIdentity;
 import stroom.security.shared.ApiKey;
+import stroom.security.shared.CreateApiKeyRequest;
+import stroom.security.shared.CreateApiKeyResponse;
 import stroom.security.shared.FindApiKeyCriteria;
 import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
@@ -14,10 +17,13 @@ import org.apache.commons.codec.digest.DigestUtils;
 
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -27,15 +33,17 @@ public class ApiKeyService {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ApiKeyService.class);
 
     // Stands for stroom-api-key
-    private static final String API_KEY_PREFIX = "sak";
-    private static final String API_KEY_SEPARATOR = "_";
+    static final String API_KEY_TYPE = "sak";
+    static final String API_KEY_SEPARATOR = "_";
     private static final Pattern API_KEY_SEPARATOR_PATTERN = Pattern.compile(API_KEY_SEPARATOR, Pattern.LITERAL);
     public static final int API_KEY_RANDOM_CODE_LENGTH = 96;
+    public static final int API_KEY_SALT_LENGTH = 48;
     public static final int TRUNCATED_HASH_LENGTH = 7;
-    public static final int API_KEY_TOTAL_LENGTH = API_KEY_PREFIX.length()
-            + (API_KEY_SEPARATOR.length() * 2)
-            + API_KEY_RANDOM_CODE_LENGTH
-            + TRUNCATED_HASH_LENGTH;
+    public static final int API_KEY_TOTAL_LENGTH =
+            API_KEY_TYPE.length()
+                    + (API_KEY_SEPARATOR.length() * 2)
+                    + TRUNCATED_HASH_LENGTH
+                    + API_KEY_RANDOM_CODE_LENGTH;
 
     private static final String BASE_58_ALPHABET = new String(Base58.ALPHABET);
     private static final String BASE_58_CHAR_CLASS = "[" + BASE_58_ALPHABET + "]";
@@ -43,10 +51,10 @@ public class ApiKeyService {
     // A regex pattern that will match a full api key
     private static final Pattern API_KEY_PATTERN = Pattern.compile(
             "^"
-                    + Pattern.quote(API_KEY_PREFIX + API_KEY_SEPARATOR)
-                    + BASE_58_CHAR_CLASS + "{" + API_KEY_RANDOM_CODE_LENGTH + "}"
-                    + Pattern.quote(API_KEY_SEPARATOR)
+                    + Pattern.quote(API_KEY_TYPE + API_KEY_SEPARATOR)
                     + BASE_58_CHAR_CLASS + "{" + TRUNCATED_HASH_LENGTH + "}"
+                    + Pattern.quote(API_KEY_SEPARATOR)
+                    + BASE_58_CHAR_CLASS + "{" + API_KEY_RANDOM_CODE_LENGTH + "}"
                     + "$");
     private static final Predicate<String> API_KEY_MATCH_PREDICATE = API_KEY_PATTERN.asMatchPredicate();
 
@@ -62,15 +70,51 @@ public class ApiKeyService {
 
     public ResultPage<ApiKey> find(final FindApiKeyCriteria criteria) {
 
+        final ResultPage<ApiKey> resultPage = apiKeyDao.find(criteria);
+
         throw new UnsupportedOperationException("TODO");
     }
 
-    public Optional<String> fetchVerifiedIdentity(final String apiKey) {
-        if (!isApiKey(apiKey)) {
+    /**
+     * Fetch the verified {@link UserIdentity} for the passed API key.
+     * If the hash of the API key matches one in the database and that key is enabled
+     * and not expired then the {@link UserIdentity} will be returned, else an empty {@link Optional}
+     * is returned.
+     */
+    public Optional<UserIdentity> fetchVerifiedIdentity(final String apiKeyStr) {
+        if (!isApiKey(apiKeyStr)) {
+            LOGGER.debug("apiKey '{}' is not an API key", apiKeyStr);
             return Optional.empty();
         } else {
-            // sha256 hash the whole key then
-            return apiKeyDao.fetchVerifiedIdentity(apiKey);
+            final String apiKeyPrefix = extractPrefixPart(apiKeyStr);
+            // Each key has its own salt, and we need the salt to hash the incoming key
+            // to compare the hash against the ones in the DB. Therefore, use the key prefix
+            // to find potential key records (likely will hit only one) then test the hash for each.
+            // TODO may want to consider having a cache of apiKeyStr => Optional<UserIdentity> with a
+            //  TTL of 30s or so. This would save all the hashing and db lookups
+            final List<ApiKey> validApiKeys = apiKeyDao.fetchValidApiKeysByPrefix(apiKeyPrefix)
+                    .stream()
+                    .filter(apiKey -> {
+                        final String saltedApiKeyHash = computeApiKeyHash(apiKeyStr, apiKey.getApiKeySalt());
+                        return apiKey.getApiKeyHash().equals(saltedApiKeyHash);
+                    })
+                    .toList();
+
+            if (validApiKeys.isEmpty()) {
+                LOGGER.debug("No valid keys found matching prefix {}", apiKeyPrefix);
+                return Optional.empty();
+            } else if (validApiKeys.size() > 1) {
+                final Set<Integer> ids = validApiKeys.stream()
+                        .map(ApiKey::getId)
+                        .collect(Collectors.toSet());
+                throw new RuntimeException("Found multiple api keys that match on hash " + ids);
+            } else {
+                final ApiKey apiKey = validApiKeys.get(0);
+                final Optional<UserIdentity> optUserIdentity = Optional.of(apiKey.getOwner())
+                        .map(BasicUserIdentity::new);
+                LOGGER.debug("optUserIdentity: {}", optUserIdentity);
+                return optUserIdentity;
+            }
         }
     }
 
@@ -78,8 +122,35 @@ public class ApiKeyService {
         return apiKeyDao.fetch(id);
     }
 
-    public ApiKey create(final ApiKey apiKey) {
-        return apiKeyDao.create(apiKey);
+    public CreateApiKeyResponse create(final CreateApiKeyRequest createApiKeyRequest) {
+        Objects.requireNonNull(createApiKeyRequest);
+
+        String apiKeyStr;
+        HashedApiKeyParts hashedApiKeyParts;
+        // It is possible that we generate a key with a hash-clash, so keep trying.
+        int attempts = 0;
+        do {
+            try {
+                final String salt = StringUtil.createRandomCode(
+                        secureRandom, API_KEY_SALT_LENGTH, StringUtil.ALLOWED_CHARS_BASE_58_STYLE);
+                apiKeyStr = generateRandomApiKey();
+                final String saltedApiKeyHash = computeApiKeyHash(apiKeyStr, salt);
+
+                hashedApiKeyParts = new HashedApiKeyParts(
+                        saltedApiKeyHash, salt, extractPrefixPart(apiKeyStr));
+
+                final ApiKey hashedApiKey = apiKeyDao.create(
+                        createApiKeyRequest,
+                        hashedApiKeyParts);
+
+                return new CreateApiKeyResponse(apiKeyStr, hashedApiKey);
+            } catch (DuplicateHashException e) {
+                LOGGER.debug("Duplicate hash on attempt {}, going round again", attempts);
+            }
+            attempts++;
+        } while (attempts <= 5);
+
+        throw new RuntimeException(LogUtil.message("Unable to create api key after {} attempts", attempts));
     }
 
     public ApiKey update(final ApiKey apiKey) {
@@ -121,12 +192,14 @@ public class ApiKeyService {
                 API_KEY_RANDOM_CODE_LENGTH,
                 StringUtil.ALLOWED_CHARS_BASE_58_STYLE);
 
-        // Generate a short hash of the randomCode
-        final String hash = computeHash(randomCode);
-        return String.join(API_KEY_SEPARATOR, API_KEY_PREFIX, randomCode, hash);
+        // Generate a short hash of the randomCode. This is not THE hash. It just acts as a
+        // checksum for the random code part of the key so you can reasonably confidently
+        // tell if a string is a stroom api key or not.
+        final String randomCodeHash = computeTruncatedHash(randomCode);
+        return String.join(API_KEY_SEPARATOR, API_KEY_TYPE, randomCodeHash, randomCode);
     }
 
-    private static String computeHash(final String randomStr) {
+    private static String computeTruncatedHash(final String randomStr) {
         // Now get a sha1 hash of our random string, encoded in base58 and truncated to 7 chars.
         // This part acts as a checksum of the random code part and provides a means to verify that
         // something that looks like a stroom API key is actually one, e.g. for spotting stroom API keys
@@ -144,7 +217,7 @@ public class ApiKeyService {
      * the key matches the hash computed from the random code part.
      * Note, this method is NOT to be used for authenticating
      * an API key, for that see {@link ApiKeyService#fetchVerifiedIdentity(String)}. It simply verifies
-     * that a string is very likely to be a stroom API key (whether valid or not).
+     * that a string is very likely to be a stroom API key (whether valid/invalid, present/absent, enabled/disabled).
      * It can be used to see if a string passed in the {@code Authorization: Bearer ...} header is a stroom
      * API key before looking in the database to check its validity.
      *
@@ -170,14 +243,54 @@ public class ApiKeyService {
                 LOGGER.debug("Incorrect number of parts: '{}', parts:", (Object) parts);
                 return false;
             }
-            final String codePart = parts[1];
-            final String hashPart = parts[2];
-            final String computedHash = computeHash(codePart);
+            final String hashPart = parts[1];
+            final String codePart = parts[2];
+            final String computedHash = computeTruncatedHash(codePart);
             if (!Objects.equals(hashPart, computedHash)) {
                 LOGGER.debug("Hashes don't match, hashPart: '{}', computedHash: '{}'", hashPart, computedHash);
                 return false;
             }
             return true;
+        }
+    }
+
+    /**
+     * For a key like
+     * <pre>{@code
+     * sak_3kePJfQ_sjYvkpd9dWJinLYzYLingrpWLAtGKsbPXgZYphfQC4PqkweotXHTnnRabxRZacc6Rt9MqncxtGAykzXebGQX9X7nhTHZMys8
+     * }</pre>
+     * return
+     * <pre>{@code
+     * sak_3kePJfQ_
+     * }</pre>
+     * This is to allow a user to identify their key. This prefix part may not be unique as it is only 7 chars of the
+     * hash, however it probably is, so is good enough.
+     */
+    private String extractPrefixPart(final String apiKey) {
+        Objects.requireNonNull(apiKey);
+        final String[] parts = API_KEY_SEPARATOR_PATTERN.split(apiKey.trim());
+        if (parts.length != 3) {
+            throw new IllegalArgumentException("Invalid key format, expecting three parts.");
+        }
+        return parts[0] + API_KEY_SEPARATOR + parts[1] + API_KEY_SEPARATOR;
+    }
+
+    String computeApiKeyHash(final String apiKey, final String salt) {
+        Objects.requireNonNull(apiKey);
+        Objects.requireNonNull(salt);
+        final String input = salt.trim() + apiKey.trim();
+        final String sha256 = DigestUtils.sha3_256Hex(input).trim();
+        return sha256;
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    public static class DuplicateHashException extends Exception {
+
+        public DuplicateHashException(final String message, final Throwable cause) {
+            super(message, cause);
         }
     }
 }

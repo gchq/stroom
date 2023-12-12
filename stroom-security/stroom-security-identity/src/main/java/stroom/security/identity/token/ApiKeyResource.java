@@ -44,6 +44,7 @@ import javax.ws.rs.core.MediaType;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 @Tag(name = "Api Keys")
+@Deprecated
 public interface ApiKeyResource extends RestResource, FetchWithIntegerId<ApiKey> {
 
     FilterFieldDefinition FIELD_DEF_USER_ID = FilterFieldDefinition.defaultField("User Id");

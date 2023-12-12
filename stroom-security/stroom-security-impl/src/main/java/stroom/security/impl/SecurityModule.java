@@ -108,10 +108,11 @@ public class SecurityModule extends AbstractModule {
                 .addBinding(DocumentOwnerPermissionsCache.class);
 
         RestResourcesBinder.create(binder())
+                .bind(ApiKeyResourceImpl.class)
                 .bind(AppPermissionResourceImpl.class)
                 .bind(DocPermissionResourceImpl.class)
                 .bind(SessionResourceImpl.class)
-                .bind(UserResourceImpl.class)
-                .bind(UserNameResourceImpl.class);
+                .bind(UserNameResourceImpl.class)
+                .bind(UserResourceImpl.class);
     }
 }

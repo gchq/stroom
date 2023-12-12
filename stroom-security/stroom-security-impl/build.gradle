@@ -22,6 +22,7 @@ dependencies {
 
     implementation libs.caffeine
     implementation libs.commons_csv
+    implementation libs.commons_lang
     implementation libs.dropwizard_metrics_healthchecks
     implementation libs.dropwizard_lifecycle
     implementation libs.dropwizard_validation

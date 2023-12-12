@@ -14,6 +14,7 @@ import java.time.Instant;
 import java.util.Optional;
 import javax.inject.Inject;
 
+@Deprecated
 public class ApiKeyServiceImpl implements ApiKeyService {
 
     private final ApiKeyDao apiKeyDao;

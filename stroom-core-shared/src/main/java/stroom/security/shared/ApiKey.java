@@ -14,6 +14,9 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import java.time.Instant;
 import java.util.Objects;
 
+/**
+ * A hashed API key. The actual API key is not persisted.
+ */
 @JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
 public class ApiKey implements HasAuditInfoGetters, HasIntegerId {
@@ -33,7 +36,11 @@ public class ApiKey implements HasAuditInfoGetters, HasIntegerId {
     @JsonProperty
     private final UserName owner;
     @JsonProperty
-    private final String apiKey;
+    private final String apiKeyHash;
+    @JsonProperty
+    private final String apiKeySalt;
+    @JsonProperty
+    private final String apiKeyPrefix;
     @JsonProperty
     private final Long expireTimeMs;
     @JsonProperty
@@ -51,7 +58,9 @@ public class ApiKey implements HasAuditInfoGetters, HasIntegerId {
                   @JsonProperty("updateTimeMs") final Long updateTimeMs,
                   @JsonProperty("updateUser") final String updateUser,
                   @JsonProperty("owner") final UserName owner,
-                  @JsonProperty("apiKey") final String apiKey,
+                  @JsonProperty("apiKeyHash") final String apiKeyHash,
+                  @JsonProperty("apiKeySalt") final String apiKeySalt,
+                  @JsonProperty("apiKeyPrefix") final String apiKeyPrefix,
                   @JsonProperty("expireTimeMs") final Long expireTimeMs,
                   @JsonProperty("name") final String name,
                   @JsonProperty("comments") final String comments,
@@ -63,7 +72,9 @@ public class ApiKey implements HasAuditInfoGetters, HasIntegerId {
         this.updateTimeMs = updateTimeMs;
         this.updateUser = updateUser;
         this.owner = owner;
-        this.apiKey = apiKey;
+        this.apiKeyHash = apiKeyHash;
+        this.apiKeySalt = apiKeySalt;
+        this.apiKeyPrefix = apiKeyPrefix;
         this.expireTimeMs = expireTimeMs;
         this.name = name;
         this.comments = comments;
@@ -78,7 +89,9 @@ public class ApiKey implements HasAuditInfoGetters, HasIntegerId {
         updateTimeMs = builder.updateTimeMs;
         updateUser = builder.updateUser;
         owner = builder.owner;
-        apiKey = builder.apiKey;
+        apiKeyHash = builder.apiKeyHash;
+        apiKeySalt = builder.apiKeySalt;
+        apiKeyPrefix = builder.apiKeyPrefix;
         expireTimeMs = builder.expireTimeMs;
         name = builder.name;
         comments = builder.comments;
@@ -98,7 +111,9 @@ public class ApiKey implements HasAuditInfoGetters, HasIntegerId {
         builder.updateTimeMs = copy.getUpdateTimeMs();
         builder.updateUser = copy.getUpdateUser();
         builder.owner = copy.getOwner();
-        builder.apiKey = copy.getApiKey();
+        builder.apiKeyHash = copy.getApiKeyHash();
+        builder.apiKeySalt = copy.getApiKeySalt();
+        builder.apiKeyPrefix = copy.getApiKeyPrefix();
         builder.expireTimeMs = copy.getExpireTimeMs();
         builder.name = copy.getName();
         builder.comments = copy.getComments();
@@ -139,8 +154,16 @@ public class ApiKey implements HasAuditInfoGetters, HasIntegerId {
         return owner;
     }
 
-    public String getApiKey() {
-        return apiKey;
+    public String getApiKeyHash() {
+        return apiKeyHash;
+    }
+
+    public String getApiKeySalt() {
+        return apiKeySalt;
+    }
+
+    public String getApiKeyPrefix() {
+        return apiKeyPrefix;
     }
 
     public Long getExpireTimeMs() {
@@ -173,8 +196,11 @@ public class ApiKey implements HasAuditInfoGetters, HasIntegerId {
                 createUser,
                 apiKey1.createUser) && Objects.equals(updateTimeMs,
                 apiKey1.updateTimeMs) && Objects.equals(updateUser,
-                apiKey1.updateUser) && Objects.equals(owner, apiKey1.owner) && Objects.equals(apiKey,
-                apiKey1.apiKey) && Objects.equals(expireTimeMs, apiKey1.expireTimeMs) && Objects.equals(
+                apiKey1.updateUser) && Objects.equals(owner, apiKey1.owner)
+                && Objects.equals(apiKeyHash, apiKey1.apiKeyHash)
+                && Objects.equals(apiKeySalt, apiKey1.apiKeySalt)
+                && Objects.equals(apiKeyPrefix, apiKey1.apiKeyPrefix)
+                && Objects.equals(expireTimeMs, apiKey1.expireTimeMs) && Objects.equals(
                 name,
                 apiKey1.name) && Objects.equals(comments, apiKey1.comments);
     }
@@ -188,7 +214,9 @@ public class ApiKey implements HasAuditInfoGetters, HasIntegerId {
                 updateTimeMs,
                 updateUser,
                 owner,
-                apiKey,
+                apiKeyHash,
+                apiKeySalt,
+                apiKeyPrefix,
                 expireTimeMs,
                 name,
                 comments,
@@ -201,7 +229,9 @@ public class ApiKey implements HasAuditInfoGetters, HasIntegerId {
                 "id=" + id +
                 ", version=" + version +
                 ", owner=" + owner +
-                ", apiKey='" + apiKey + '\'' +
+                ", apiKeyHash='" + apiKeyHash + '\'' +
+                ", apiKeySalt='" + apiKeySalt + '\'' +
+                ", apiKeyPrefix='" + apiKeyPrefix + '\'' +
                 ", expireTime=" + (expireTimeMs != null ? Instant.ofEpochMilli(expireTimeMs) : null) +
                 ", name='" + name + '\'' +
                 ", enabled=" + enabled +
@@ -220,7 +250,9 @@ public class ApiKey implements HasAuditInfoGetters, HasIntegerId {
         private Long updateTimeMs;
         private String updateUser;
         private UserName owner;
-        private String apiKey;
+        private String apiKeyHash;
+        private String apiKeySalt;
+        private String apiKeyPrefix;
         private Long expireTimeMs;
         private String name;
         private String comments;
@@ -280,8 +312,18 @@ public class ApiKey implements HasAuditInfoGetters, HasIntegerId {
             return this;
         }
 
-        public Builder withApiKey(final String val) {
-            apiKey = val;
+        public Builder withApiKeyHash(final String val) {
+            apiKeyHash = val;
+            return this;
+        }
+
+        public Builder withApiKeySalt(final String val) {
+            apiKeySalt = val;
+            return this;
+        }
+
+        public Builder withApiKeyPrefix(final String val) {
+            apiKeyPrefix = val;
             return this;
         }
 

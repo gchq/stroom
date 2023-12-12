@@ -2,6 +2,7 @@ package stroom.security.identity.token;
 
 import java.util.Optional;
 
+@Deprecated
 public interface ApiKeyService {
 
     ApiKeyResultPage list();

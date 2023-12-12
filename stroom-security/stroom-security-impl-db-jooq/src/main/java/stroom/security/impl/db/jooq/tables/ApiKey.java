@@ -10,9 +10,10 @@ import java.util.List;
 import org.jooq.Field;
 import org.jooq.ForeignKey;
 import org.jooq.Identity;
+import org.jooq.Index;
 import org.jooq.Name;
 import org.jooq.Record;
-import org.jooq.Row12;
+import org.jooq.Row14;
 import org.jooq.Schema;
 import org.jooq.Table;
 import org.jooq.TableField;
@@ -22,6 +23,7 @@ import org.jooq.impl.DSL;
 import org.jooq.impl.SQLDataType;
 import org.jooq.impl.TableImpl;
 
+import stroom.security.impl.db.jooq.Indexes;
 import stroom.security.impl.db.jooq.Keys;
 import stroom.security.impl.db.jooq.Stroom;
 import stroom.security.impl.db.jooq.tables.records.ApiKeyRecord;
@@ -84,9 +86,19 @@ public class ApiKey extends TableImpl<ApiKeyRecord> {
     public final TableField<ApiKeyRecord, String> FK_OWNER_UUID = createField(DSL.name("fk_owner_uuid"), SQLDataType.VARCHAR(255).nullable(false), this, "");
 
     /**
-     * The column <code>stroom.api_key.api_key</code>.
+     * The column <code>stroom.api_key.api_key_hash</code>.
      */
-    public final TableField<ApiKeyRecord, String> API_KEY_ = createField(DSL.name("api_key"), SQLDataType.VARCHAR(255).nullable(false), this, "");
+    public final TableField<ApiKeyRecord, String> API_KEY_HASH = createField(DSL.name("api_key_hash"), SQLDataType.VARCHAR(255).nullable(false), this, "");
+
+    /**
+     * The column <code>stroom.api_key.api_key_salt</code>.
+     */
+    public final TableField<ApiKeyRecord, String> API_KEY_SALT = createField(DSL.name("api_key_salt"), SQLDataType.VARCHAR(255).nullable(false), this, "");
+
+    /**
+     * The column <code>stroom.api_key.api_key_prefix</code>.
+     */
+    public final TableField<ApiKeyRecord, String> API_KEY_PREFIX = createField(DSL.name("api_key_prefix"), SQLDataType.VARCHAR(255).nullable(false), this, "");
 
     /**
      * The column <code>stroom.api_key.expires_on_ms</code>.
@@ -147,6 +159,11 @@ public class ApiKey extends TableImpl<ApiKeyRecord> {
     }
 
     @Override
+    public List<Index> getIndexes() {
+        return Arrays.asList(Indexes.API_KEY_API_KEY_HASH_ENABLED_EXPIRES_OWNER_IDX);
+    }
+
+    @Override
     public Identity<ApiKeyRecord, Integer> getIdentity() {
         return (Identity<ApiKeyRecord, Integer>) super.getIdentity();
     }
@@ -158,7 +175,7 @@ public class ApiKey extends TableImpl<ApiKeyRecord> {
 
     @Override
     public List<UniqueKey<ApiKeyRecord>> getUniqueKeys() {
-        return Arrays.asList(Keys.KEY_API_KEY_API_KEY_OWNER_NAME_IDX, Keys.KEY_API_KEY_API_KEY_API_KEY_IDX);
+        return Arrays.asList(Keys.KEY_API_KEY_API_KEY_OWNER_NAME_IDX, Keys.KEY_API_KEY_API_KEY_API_KEY_HASH_IDX);
     }
 
     @Override
@@ -210,11 +227,11 @@ public class ApiKey extends TableImpl<ApiKeyRecord> {
     }
 
     // -------------------------------------------------------------------------
-    // Row12 type methods
+    // Row14 type methods
     // -------------------------------------------------------------------------
 
     @Override
-    public Row12<Integer, Integer, Long, String, Long, String, String, String, Long, String, String, Boolean> fieldsRow() {
-        return (Row12) super.fieldsRow();
+    public Row14<Integer, Integer, Long, String, Long, String, String, String, String, String, Long, String, String, Boolean> fieldsRow() {
+        return (Row14) super.fieldsRow();
     }
 }

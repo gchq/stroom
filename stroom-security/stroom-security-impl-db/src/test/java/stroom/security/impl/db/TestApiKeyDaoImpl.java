@@ -2,9 +2,12 @@ package stroom.security.impl.db;
 
 import stroom.db.util.JooqUtil;
 import stroom.security.impl.ApiKeyDao;
+import stroom.security.impl.ApiKeyService.DuplicateHashException;
+import stroom.security.impl.HashedApiKeyParts;
 import stroom.security.impl.TestModule;
 import stroom.security.impl.UserDao;
 import stroom.security.shared.ApiKey;
+import stroom.security.shared.CreateApiKeyRequest;
 import stroom.security.shared.FindApiKeyCriteria;
 import stroom.security.shared.FindUserNameCriteria;
 import stroom.security.shared.User;
@@ -14,22 +17,23 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.SimpleUserName;
 import stroom.util.shared.UserName;
+import stroom.util.string.StringUtil;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.security.SecureRandom;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.stream.Collectors;
-
 import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -57,6 +61,8 @@ class TestApiKeyDaoImpl {
     private UserDao userDao;
     @Inject
     private SecurityDbConnProvider dbConnProvider;
+
+    private SecureRandom secureRandom = new SecureRandom();
 
     private ApiKey user1ApiKey1;
     private ApiKey user1ApiKey2;
@@ -196,9 +202,139 @@ class TestApiKeyDaoImpl {
                         user3ApiKey1);
     }
 
+    @Test
+    void testCreate() throws DuplicateHashException {
+        final String salt = "mySalt";
+        final String saltedApiKeyHash = "myHash";
+        final String prefix = "sak_1234567_";
+
+        final UserName owner = SimpleUserName.builder()
+                .subjectId("user1")
+                .uuid("user1_uuid")
+                .build();
+
+        final CreateApiKeyRequest request = CreateApiKeyRequest.builder()
+                .withExpireTimeMs(Instant.now().plus(1, ChronoUnit.DAYS))
+                .withName("myKey")
+                .withOwner(owner)
+                .withEnabled(true)
+                .withComments("myComments")
+                .build();
+
+        final ApiKey apiKey = apiKeyDao.create(
+                request,
+                new HashedApiKeyParts(saltedApiKeyHash, salt, prefix));
+
+        assertThat(apiKey)
+                .isNotNull();
+        assertThat(apiKey.getApiKeySalt())
+                .isEqualTo(salt);
+        assertThat(apiKey.getApiKeyHash())
+                .isEqualTo(saltedApiKeyHash);
+        assertThat(apiKey.getApiKeyPrefix())
+                .isEqualTo(prefix);
+        assertThat(apiKey.getOwner())
+                .isEqualTo(request.getOwner());
+        assertThat(apiKey.getEnabled())
+                .isEqualTo(request.getEnabled());
+        assertThat(apiKey.getName())
+                .isEqualTo(request.getName());
+        assertThat(apiKey.getComments())
+                .isEqualTo(request.getComments());
+        assertThat(apiKey.getExpireTimeMs())
+                .isEqualTo(request.getExpireTimeMs());
+    }
+
+    @Test
+    void testCreate_dupHashes() throws DuplicateHashException {
+        final String salt1 = "mySalt1";
+        final String saltedApiKeyHash1 = "myHash";
+        final String prefix1 = "sak_1234567_";
+
+        final String salt2 = "mySalt2";
+        final String saltedApiKeyHash2 = saltedApiKeyHash1;
+        final String prefix2 = "sak_7654321_";
+
+        final UserName owner = SimpleUserName.builder()
+                .subjectId("user1")
+                .uuid("user1_uuid")
+                .build();
+
+        final CreateApiKeyRequest request1 = CreateApiKeyRequest.builder()
+                .withExpireTimeMs(Instant.now().plus(1, ChronoUnit.DAYS))
+                .withName("myKey1")
+                .withOwner(owner)
+                .withEnabled(true)
+                .withComments("myComments")
+                .build();
+
+        final ApiKey apiKey1 = apiKeyDao.create(
+                request1,
+                new HashedApiKeyParts(saltedApiKeyHash1, salt1, prefix1));
+
+        final CreateApiKeyRequest request2 = CreateApiKeyRequest.builder()
+                .withExpireTimeMs(Instant.now().plus(1, ChronoUnit.DAYS))
+                .withName("myKey2")
+                .withOwner(owner)
+                .withEnabled(true)
+                .withComments("myComments")
+                .build();
+
+        Assertions.assertThatThrownBy(() -> {
+                    apiKeyDao.create(
+                            request2,
+                            new HashedApiKeyParts(saltedApiKeyHash2, salt2, prefix2));
+                })
+                .isInstanceOf(DuplicateHashException.class);
+    }
+
+    @Test
+    void testCreate_dupNames() throws DuplicateHashException {
+        final String salt1 = "mySalt1";
+        final String saltedApiKeyHash1 = "myHash1";
+        final String prefix1 = "sak_1234567_";
+
+        final String salt2 = "mySalt2";
+        final String saltedApiKeyHash2 = "myHash2";
+        final String prefix2 = "sak_7654321_";
+
+        final UserName owner = SimpleUserName.builder()
+                .subjectId("user1")
+                .uuid("user1_uuid")
+                .build();
+
+        final CreateApiKeyRequest request1 = CreateApiKeyRequest.builder()
+                .withExpireTimeMs(Instant.now().plus(1, ChronoUnit.DAYS))
+                .withName("myKey1")
+                .withOwner(owner)
+                .withEnabled(true)
+                .withComments("myComments")
+                .build();
+
+        final ApiKey apiKey1 = apiKeyDao.create(
+                request1,
+                new HashedApiKeyParts(saltedApiKeyHash1, salt1, prefix1));
+
+        final CreateApiKeyRequest request2 = CreateApiKeyRequest.builder()
+                .withExpireTimeMs(Instant.now().plus(1, ChronoUnit.DAYS))
+                .withName("myKey1")
+                .withOwner(owner)
+                .withEnabled(true)
+                .withComments("myComments")
+                .build();
+
+        Assertions.assertThatThrownBy(() -> {
+                    apiKeyDao.create(
+                            request2,
+                            new HashedApiKeyParts(saltedApiKeyHash2, salt2, prefix2));
+                })
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("name");
+    }
+
     private void doFetchVerifiedIdentityTest(final ApiKey apiKey, boolean isValid) {
 
-        final Optional<String> optUuid = apiKeyDao.fetchVerifiedIdentity(apiKey.getApiKey());
+        final Optional<String> optUuid = apiKeyDao.fetchVerifiedUserUuid(apiKey.getApiKeyHash());
         if (isValid) {
             assertThat(optUuid)
                     .hasValue(apiKey.getOwner().getUuid());
@@ -243,23 +379,29 @@ class TestApiKeyDaoImpl {
                           final String userSubjectId,
                           final Instant expiryTime,
                           final boolean enabled) {
-        final long nowMs = Instant.now().toEpochMilli();
-        final ApiKey apiKey = ApiKey.builder()
+        // Doesn't matter what the values are for these tests
+        final String salt = StringUtil.createRandomCode(secureRandom, 10);
+        final String hash = StringUtil.createRandomCode(secureRandom, 20);
+        final String prefixHash = StringUtil.createRandomCode(secureRandom, 7);
+
+        final CreateApiKeyRequest createApiKeyRequest = CreateApiKeyRequest.builder()
                 .withName(keyName)
                 .withOwner(SimpleUserName.builder()
                         .uuid(userSubjectId + "_uuid")
                         .subjectId(userSubjectId)
                         .build())
-                .withApiKey("sak_" + UUID.randomUUID())
-                .withCreateTimeMs(nowMs)
-                .withCreateUser(userSubjectId)
-                .withUpdateTimeMs(nowMs)
-                .withUpdateUser(userSubjectId)
                 .withEnabled(enabled)
                 .withExpireTimeMs(expiryTime)
                 .build();
 
-        return apiKeyDao.create(apiKey);
+        final HashedApiKeyParts hashedApiKeyParts = new HashedApiKeyParts(
+                hash, salt, "sak_" + prefixHash + "_");
+
+        try {
+            return apiKeyDao.create(createApiKeyRequest, hashedApiKeyParts);
+        } catch (DuplicateHashException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 
@@ -267,7 +409,6 @@ class TestApiKeyDaoImpl {
 
 
     private static class MyUserNameProvider implements UserNameProvider {
-
 
         @Override
         public int getPriority() {

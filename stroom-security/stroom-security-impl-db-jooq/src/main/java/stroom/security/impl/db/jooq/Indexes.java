@@ -9,6 +9,7 @@ import org.jooq.OrderField;
 import org.jooq.impl.DSL;
 import org.jooq.impl.Internal;
 
+import stroom.security.impl.db.jooq.tables.ApiKey;
 import stroom.security.impl.db.jooq.tables.DocPermission;
 
 
@@ -22,5 +23,6 @@ public class Indexes {
     // INDEX definitions
     // -------------------------------------------------------------------------
 
+    public static final Index API_KEY_API_KEY_HASH_ENABLED_EXPIRES_OWNER_IDX = Internal.createIndex(DSL.name("api_key_hash_enabled_expires_owner_idx"), ApiKey.API_KEY, new OrderField[] { ApiKey.API_KEY.API_KEY_HASH, ApiKey.API_KEY.ENABLED, ApiKey.API_KEY.EXPIRES_ON_MS, ApiKey.API_KEY.FK_OWNER_UUID }, false);
     public static final Index DOC_PERMISSION_DOC_PERMISSION_DOC_UUID = Internal.createIndex(DSL.name("doc_permission_doc_uuid"), DocPermission.DOC_PERMISSION, new OrderField[] { DocPermission.DOC_PERMISSION.DOC_UUID }, false);
 }

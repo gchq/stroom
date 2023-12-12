@@ -38,6 +38,7 @@ import javax.inject.Provider;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.NotFoundException;
 
+@Deprecated
 @AutoLogged
 public class ApiKeyResourceImpl implements ApiKeyResource {
 
