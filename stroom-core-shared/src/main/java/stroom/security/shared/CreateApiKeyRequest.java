@@ -8,7 +8,6 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import java.time.Instant;
 import java.util.Objects;
 
 @JsonPropertyOrder(alphabetic = true)
@@ -137,11 +136,6 @@ public class CreateApiKeyRequest {
 
         public Builder withExpireTimeMs(final long val) {
             expireTimeMs = val;
-            return this;
-        }
-
-        public Builder withExpireTimeMs(final Instant val) {
-            expireTimeMs = Objects.requireNonNull(val).toEpochMilli();
             return this;
         }
 

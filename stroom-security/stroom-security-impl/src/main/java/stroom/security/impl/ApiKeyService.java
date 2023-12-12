@@ -1,15 +1,19 @@
 package stroom.security.impl;
 
+import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.security.shared.ApiKey;
 import stroom.security.shared.CreateApiKeyRequest;
 import stroom.security.shared.CreateApiKeyResponse;
 import stroom.security.shared.FindApiKeyCriteria;
+import stroom.security.shared.PermissionNames;
 import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.UserName;
 import stroom.util.string.Base58;
 import stroom.util.string.StringUtil;
 
@@ -60,19 +64,22 @@ public class ApiKeyService {
 
     private final ApiKeyDao apiKeyDao;
     private final SecureRandom secureRandom;
+    private final SecurityContext securityContext;
 
     @Inject
-    public ApiKeyService(final ApiKeyDao apiKeyDao) {
+    public ApiKeyService(final ApiKeyDao apiKeyDao,
+                         final SecurityContext securityContext) {
         this.apiKeyDao = apiKeyDao;
+        this.securityContext = securityContext;
         this.secureRandom = new SecureRandom();
         LOGGER.debug("API_KEY_PATTERN: '{}'", API_KEY_PATTERN);
     }
 
     public ResultPage<ApiKey> find(final FindApiKeyCriteria criteria) {
-
-        final ResultPage<ApiKey> resultPage = apiKeyDao.find(criteria);
-
-        throw new UnsupportedOperationException("TODO");
+        return securityContext.secureResult(PermissionNames.MANAGE_API_KEYS, () -> {
+            checkAdditionalPerms(criteria.getOwner());
+            return apiKeyDao.find(criteria);
+        });
     }
 
     /**
@@ -82,6 +89,7 @@ public class ApiKeyService {
      * is returned.
      */
     public Optional<UserIdentity> fetchVerifiedIdentity(final String apiKeyStr) {
+        // This has to be unsecured as we are trying to authenticate
         if (!isApiKey(apiKeyStr)) {
             LOGGER.debug("apiKey '{}' is not an API key", apiKeyStr);
             return Optional.empty();
@@ -119,46 +127,67 @@ public class ApiKeyService {
     }
 
     public Optional<ApiKey> fetch(final int id) {
-        return apiKeyDao.fetch(id);
+        return securityContext.secureResult(PermissionNames.MANAGE_API_KEYS, () -> {
+            final Optional<ApiKey> optApiKey = apiKeyDao.fetch(id);
+
+            optApiKey.ifPresent(apiKey ->
+                    checkAdditionalPerms(apiKey.getOwner()));
+            return optApiKey;
+        });
     }
 
     public CreateApiKeyResponse create(final CreateApiKeyRequest createApiKeyRequest) {
         Objects.requireNonNull(createApiKeyRequest);
 
-        String apiKeyStr;
-        HashedApiKeyParts hashedApiKeyParts;
-        // It is possible that we generate a key with a hash-clash, so keep trying.
-        int attempts = 0;
-        do {
-            try {
-                final String salt = StringUtil.createRandomCode(
-                        secureRandom, API_KEY_SALT_LENGTH, StringUtil.ALLOWED_CHARS_BASE_58_STYLE);
-                apiKeyStr = generateRandomApiKey();
-                final String saltedApiKeyHash = computeApiKeyHash(apiKeyStr, salt);
+        return securityContext.secureResult(PermissionNames.MANAGE_API_KEYS, () -> {
+            checkAdditionalPerms(createApiKeyRequest.getOwner());
+            String apiKeyStr;
+            HashedApiKeyParts hashedApiKeyParts;
+            // It is possible that we generate a key with a hash-clash, so keep trying.
+            int attempts = 0;
+            do {
+                try {
+                    final String salt = StringUtil.createRandomCode(
+                            secureRandom, API_KEY_SALT_LENGTH, StringUtil.ALLOWED_CHARS_BASE_58_STYLE);
+                    apiKeyStr = generateRandomApiKey();
+                    final String saltedApiKeyHash = computeApiKeyHash(apiKeyStr, salt);
 
-                hashedApiKeyParts = new HashedApiKeyParts(
-                        saltedApiKeyHash, salt, extractPrefixPart(apiKeyStr));
+                    hashedApiKeyParts = new HashedApiKeyParts(
+                            saltedApiKeyHash, salt, extractPrefixPart(apiKeyStr));
 
-                final ApiKey hashedApiKey = apiKeyDao.create(
-                        createApiKeyRequest,
-                        hashedApiKeyParts);
+                    final ApiKey hashedApiKey = apiKeyDao.create(
+                            createApiKeyRequest,
+                            hashedApiKeyParts);
 
-                return new CreateApiKeyResponse(apiKeyStr, hashedApiKey);
-            } catch (DuplicateHashException e) {
-                LOGGER.debug("Duplicate hash on attempt {}, going round again", attempts);
-            }
-            attempts++;
-        } while (attempts <= 5);
+                    return new CreateApiKeyResponse(apiKeyStr, hashedApiKey);
+                } catch (DuplicateHashException e) {
+                    LOGGER.debug("Duplicate hash on attempt {}, going round again", attempts);
+                }
+                attempts++;
+            } while (attempts <= 5);
 
-        throw new RuntimeException(LogUtil.message("Unable to create api key after {} attempts", attempts));
+            throw new RuntimeException(LogUtil.message("Unable to create api key after {} attempts", attempts));
+        });
     }
 
     public ApiKey update(final ApiKey apiKey) {
-        return apiKeyDao.update(apiKey);
+        return securityContext.secureResult(PermissionNames.MANAGE_API_KEYS, () -> {
+            checkAdditionalPerms(apiKey.getOwner());
+            return apiKeyDao.update(apiKey);
+        });
     }
 
     public boolean delete(final int id) {
-        return apiKeyDao.delete(id);
+        return securityContext.secureResult(PermissionNames.MANAGE_API_KEYS, () -> {
+            final Optional<ApiKey> optApiKey = fetch(id);
+            if (optApiKey.isPresent()) {
+                checkAdditionalPerms(optApiKey.get().getOwner());
+                return apiKeyDao.delete(id);
+            } else {
+                LOGGER.debug("Nothing to delete");
+                return false;
+            }
+        });
     }
 
     /**
@@ -183,7 +212,7 @@ public class ApiKeyService {
      * Regular_expression('User defined','^$R0$',true,true,false,false,false,false,'Highlight matches')
      * </pre>
      */
-    public String generateRandomApiKey() {
+    String generateRandomApiKey() {
         // This is the meat of the API key. A random string of chars using the
         // base58 character set. THis is so we have a nice simple set of readable chars
         // without visually similar ones like '0OIl'
@@ -224,7 +253,7 @@ public class ApiKeyService {
      * @return True if the hash part of the API key matches a computed hash of the random
      * code part of the API key and the string matches the pattern for an API key.
      */
-    public boolean isApiKey(final String apiKey) {
+    boolean isApiKey(final String apiKey) {
         LOGGER.debug("apiKey: '{}'", apiKey);
         if (NullSafe.isBlankString(apiKey)) {
             return false;
@@ -281,6 +310,21 @@ public class ApiKeyService {
         final String input = salt.trim() + apiKey.trim();
         final String sha256 = DigestUtils.sha3_256Hex(input).trim();
         return sha256;
+    }
+
+    private void checkAdditionalPerms(final UserName owner) {
+
+        if (owner == null
+                || (!Objects.equals(securityContext.getSubjectId(), owner.getSubjectId())
+                && !Objects.equals(securityContext.getUserUuid(), owner.getUuid()))) {
+            // logged-in user is not the same as the owner of the key(s) so more perms needed
+            if (!securityContext.hasAppPermission(PermissionNames.MANAGE_USERS_PERMISSION)) {
+                throw new PermissionException(
+                        securityContext.getUserIdentityForAudit(),
+                        LogUtil.message("'{}' permission is additionally required to manage " +
+                                "the API keys of other users.", PermissionNames.MANAGE_USERS_PERMISSION));
+            }
+        }
     }
 
 

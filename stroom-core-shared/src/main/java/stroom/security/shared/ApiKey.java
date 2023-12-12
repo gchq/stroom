@@ -11,7 +11,6 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import java.time.Instant;
 import java.util.Objects;
 
 /**
@@ -232,7 +231,7 @@ public class ApiKey implements HasAuditInfoGetters, HasIntegerId {
                 ", apiKeyHash='" + apiKeyHash + '\'' +
                 ", apiKeySalt='" + apiKeySalt + '\'' +
                 ", apiKeyPrefix='" + apiKeyPrefix + '\'' +
-                ", expireTime=" + (expireTimeMs != null ? Instant.ofEpochMilli(expireTimeMs) : null) +
+                ", expireTimeMs=" + expireTimeMs + '\'' +
                 ", name='" + name + '\'' +
                 ", enabled=" + enabled +
                 '}';
@@ -329,11 +328,6 @@ public class ApiKey implements HasAuditInfoGetters, HasIntegerId {
 
         public Builder withExpireTimeMs(final long val) {
             expireTimeMs = val;
-            return this;
-        }
-
-        public Builder withExpireTimeMs(final Instant val) {
-            expireTimeMs = Objects.requireNonNull(val).toEpochMilli();
             return this;
         }
 

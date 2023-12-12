@@ -1,6 +1,8 @@
 package stroom.security.impl;
 
+import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
+import stroom.security.mock.MockSecurityContext;
 import stroom.security.shared.ApiKey;
 import stroom.test.common.TestUtil;
 import stroom.util.logging.LambdaLogger;
@@ -29,6 +31,7 @@ class TestApiKeyService {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestApiKeyService.class);
 
+    private final SecurityContext securityContext = new MockSecurityContext();
     @Mock
     private ApiKeyDao mockApiKeyDao;
 
@@ -36,7 +39,7 @@ class TestApiKeyService {
 
     @BeforeEach
     void setUp() {
-        apiKeyService = new ApiKeyService(mockApiKeyDao);
+        apiKeyService = new ApiKeyService(mockApiKeyDao, securityContext);
     }
 
     @Test

@@ -213,7 +213,7 @@ class TestApiKeyDaoImpl {
                 .build();
 
         final CreateApiKeyRequest request = CreateApiKeyRequest.builder()
-                .withExpireTimeMs(Instant.now().plus(1, ChronoUnit.DAYS))
+                .withExpireTimeMs(Instant.now().plus(1, ChronoUnit.DAYS).toEpochMilli())
                 .withName("myKey")
                 .withOwner(owner)
                 .withEnabled(true)
@@ -260,7 +260,7 @@ class TestApiKeyDaoImpl {
                 .build();
 
         final CreateApiKeyRequest request1 = CreateApiKeyRequest.builder()
-                .withExpireTimeMs(Instant.now().plus(1, ChronoUnit.DAYS))
+                .withExpireTimeMs(Instant.now().plus(1, ChronoUnit.DAYS).toEpochMilli())
                 .withName("myKey1")
                 .withOwner(owner)
                 .withEnabled(true)
@@ -272,7 +272,7 @@ class TestApiKeyDaoImpl {
                 new HashedApiKeyParts(saltedApiKeyHash1, salt1, prefix1));
 
         final CreateApiKeyRequest request2 = CreateApiKeyRequest.builder()
-                .withExpireTimeMs(Instant.now().plus(1, ChronoUnit.DAYS))
+                .withExpireTimeMs(Instant.now().plus(1, ChronoUnit.DAYS).toEpochMilli())
                 .withName("myKey2")
                 .withOwner(owner)
                 .withEnabled(true)
@@ -304,7 +304,7 @@ class TestApiKeyDaoImpl {
                 .build();
 
         final CreateApiKeyRequest request1 = CreateApiKeyRequest.builder()
-                .withExpireTimeMs(Instant.now().plus(1, ChronoUnit.DAYS))
+                .withExpireTimeMs(Instant.now().plus(1, ChronoUnit.DAYS).toEpochMilli())
                 .withName("myKey1")
                 .withOwner(owner)
                 .withEnabled(true)
@@ -316,7 +316,7 @@ class TestApiKeyDaoImpl {
                 new HashedApiKeyParts(saltedApiKeyHash1, salt1, prefix1));
 
         final CreateApiKeyRequest request2 = CreateApiKeyRequest.builder()
-                .withExpireTimeMs(Instant.now().plus(1, ChronoUnit.DAYS))
+                .withExpireTimeMs(Instant.now().plus(1, ChronoUnit.DAYS).toEpochMilli())
                 .withName("myKey1")
                 .withOwner(owner)
                 .withEnabled(true)
@@ -392,7 +392,7 @@ class TestApiKeyDaoImpl {
                         .subjectId(userSubjectId)
                         .build())
                 .withEnabled(enabled)
-                .withExpireTimeMs(expiryTime)
+                .withExpireTimeMs(expiryTime.toEpochMilli())
                 .build();
 
         final HashedApiKeyParts hashedApiKeyParts = new HashedApiKeyParts(

@@ -4,15 +4,14 @@ import stroom.db.util.GenericDao;
 import stroom.db.util.JooqUtil;
 import stroom.security.api.SecurityContext;
 import stroom.security.impl.ApiKeyDao;
-import stroom.security.impl.ApiKeyService;
 import stroom.security.impl.ApiKeyService.DuplicateHashException;
 import stroom.security.impl.HashedApiKeyParts;
+import stroom.security.impl.UserCache;
 import stroom.security.impl.db.jooq.tables.records.ApiKeyRecord;
 import stroom.security.shared.ApiKey;
 import stroom.security.shared.ApiKeyResultPage;
 import stroom.security.shared.CreateApiKeyRequest;
 import stroom.security.shared.FindApiKeyCriteria;
-import stroom.security.shared.UserNameProvider;
 import stroom.util.NullSafe;
 import stroom.util.filter.QuickFilterPredicateFactory;
 import stroom.util.logging.LambdaLogger;
@@ -54,12 +53,12 @@ public class ApiKeyDaoImpl implements ApiKeyDao {
 
     private final SecurityDbConnProvider securityDbConnProvider;
     private final GenericDao<ApiKeyRecord, ApiKey, Integer> genericDao;
-    private final UserNameProvider userNameProvider;
+    private final UserCache userCache;
     private final SecurityContext securityContext;
 
     @Inject
-    public ApiKeyDaoImpl(final UserNameProvider userNameProvider,
-                         final SecurityDbConnProvider securityDbConnProvider,
+    public ApiKeyDaoImpl(final SecurityDbConnProvider securityDbConnProvider,
+                         final UserCache userCache,
                          final SecurityContext securityContext) {
         this.securityDbConnProvider = securityDbConnProvider;
         this.genericDao = new GenericDao<>(
@@ -68,7 +67,7 @@ public class ApiKeyDaoImpl implements ApiKeyDao {
                 API_KEY.ID,
                 this::mapApiKeyToRecord,
                 this::mapRecordToApiKey);
-        this.userNameProvider = userNameProvider;
+        this.userCache = userCache;
         this.securityContext = securityContext;
     }
 
@@ -230,7 +229,7 @@ public class ApiKeyDaoImpl implements ApiKeyDao {
 
     private ApiKey mapRecordToApiKey(final Record record) {
         final String ownerUuid = record.get(API_KEY.FK_OWNER_UUID);
-        final UserName owner = userNameProvider.getByUuid(ownerUuid)
+        final UserName owner = userCache.getByUuid(ownerUuid)
                 .orElseThrow(() -> new RuntimeException(LogUtil.message(
                         "User with uuid {} not found", ownerUuid)));
 
