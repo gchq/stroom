@@ -280,11 +280,12 @@ class TestApiKeyDaoImpl {
                 .withComments("myComments")
                 .build();
 
-        Assertions.assertThatThrownBy(() -> {
-                    apiKeyDao.create(
-                            request2,
-                            new HashedApiKeyParts(saltedApiKeyHash2, salt2, prefix2));
-                })
+        Assertions.assertThatThrownBy(
+                        () -> {
+                            apiKeyDao.create(
+                                    request2,
+                                    new HashedApiKeyParts(saltedApiKeyHash2, salt2, prefix2));
+                        })
                 .isInstanceOf(DuplicateHashException.class);
     }
 
@@ -323,11 +324,12 @@ class TestApiKeyDaoImpl {
                 .withComments("myComments")
                 .build();
 
-        Assertions.assertThatThrownBy(() -> {
-                    apiKeyDao.create(
-                            request2,
-                            new HashedApiKeyParts(saltedApiKeyHash2, salt2, prefix2));
-                })
+        Assertions.assertThatThrownBy(
+                        () -> {
+                            apiKeyDao.create(
+                                    request2,
+                                    new HashedApiKeyParts(saltedApiKeyHash2, salt2, prefix2));
+                        })
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("name");
     }
