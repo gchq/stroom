@@ -1,15 +1,9 @@
-package stroom.proxy.repo.dao;
+package stroom.proxy.repo.dao.lmdb;
 
 import stroom.proxy.repo.FeedKey;
 import stroom.proxy.repo.ProxyRepoTestModule;
 import stroom.proxy.repo.RepoSource;
 import stroom.proxy.repo.RepoSourceItem;
-import stroom.proxy.repo.dao.db.SqliteJooqHelper;
-import stroom.proxy.repo.dao.lmdb.FeedDao;
-import stroom.proxy.repo.dao.lmdb.LmdbEnv;
-import stroom.proxy.repo.dao.lmdb.SourceDao;
-import stroom.proxy.repo.dao.lmdb.SourceItemDao;
-import stroom.proxy.repo.queue.Batch;
 
 import jakarta.inject.Inject;
 import name.falgout.jeffrey.testing.junit.guice.GuiceExtension;
@@ -19,15 +13,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(GuiceExtension.class)
 @IncludeModule(ProxyRepoTestModule.class)
-public class TestSourceEntryDao {
+public class TestSourceItemDao {
 
     @Inject
     private FeedDao feedDao;
@@ -55,6 +45,7 @@ public class TestSourceEntryDao {
         assertThat(sourceDao.countSources()).isZero();
 
         sourceDao.addSource(1L, "test", "test");
+        sourceDao.flush();
         lmdbEnv.sync();
 
         final RepoSource source = sourceDao.getNextSource();
@@ -75,6 +66,7 @@ public class TestSourceEntryDao {
             sourceItemDao.addItem(source, sourceItemRecord);
         }
         sourceDao.setSourceExamined(source.fileStoreId(), 100);
+        sourceDao.flush();
         lmdbEnv.sync();
 
 //        assertThat(sourceDao.countDeletableSources()).isZero();

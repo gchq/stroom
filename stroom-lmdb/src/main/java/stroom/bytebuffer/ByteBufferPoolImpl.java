@@ -89,7 +89,7 @@ public class ByteBufferPoolImpl implements ByteBufferPool {
 
     @Override
     public PooledByteBuffer getPooledByteBuffer(final int minCapacity) {
-        return new PooledByteBuffer(() -> getBuffer(minCapacity), this::release);
+        return new PooledByteBufferImpl(() -> getBuffer(minCapacity), this::release);
     }
 
     private ByteBuffer getBuffer(final int minCapacity) {
@@ -193,7 +193,7 @@ public class ByteBufferPoolImpl implements ByteBufferPool {
     public PooledByteBufferPair getPooledBufferPair(final int minKeyCapacity, final int minValueCapacity) {
         final ByteBuffer keyBuffer = getBuffer(minKeyCapacity);
         final ByteBuffer valueBuffer = getBuffer(minValueCapacity);
-        return new PooledByteBufferPair(this::release, keyBuffer, valueBuffer);
+        return new PooledByteBufferPairImpl(this::release, keyBuffer, valueBuffer);
     }
 
     /**

@@ -17,11 +17,14 @@
 
 package stroom.bytebuffer;
 
+import stroom.bytebuffer.impl6.ByteBufferPoolImpl6;
 import stroom.util.logging.LogUtil;
 import stroom.util.sysinfo.SystemInfoResult;
 
 import org.eclipse.jetty.io.MappedByteBufferPool;
+import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -331,6 +334,58 @@ class TestByteBufferPool {
         doPerfTest(new ArrayList<>(), 1, iterations, byteBufferPool, executorService);
     }
 
+    @TestFactory
+    List<DynamicTest> comparePerformance() {
+        final List<ByteBufferPool> byteBufferPools = new ArrayList<>();
+        byteBufferPools.add(new NonPooledByteBufferPool());
+        byteBufferPools.add(new ByteBufferPoolImpl());
+        byteBufferPools.add(new ByteBufferPoolImpl2());
+        byteBufferPools.add(new ByteBufferPoolImpl3());
+        byteBufferPools.add(new ByteBufferPoolImpl4(ByteBufferPoolConfig::new));
+        byteBufferPools.add(new ByteBufferPoolImpl5());
+        byteBufferPools.add(new ByteBufferPoolImpl6(ByteBufferPoolConfig::new));
+        byteBufferPools.add(new JettyByteBufferPool());
+
+        final int threads = 10;
+        // Set to true for profiling in visualvm
+        final boolean inProfilingMode = true;
+
+        final int rounds = 3;
+        final int iterations = inProfilingMode
+                ? 100_000_000
+                : 1_000;
+
+        if (inProfilingMode) {
+//         wait for visualvm to spin up
+            sleep(10_000);
+        }
+
+//        final ExecutorService executorService = Executors.newFixedThreadPool(threads);
+
+        return byteBufferPools
+                .stream()
+                .map(pool -> DynamicTest.dynamicTest(pool.getClass().getSimpleName(), () -> {
+                    for (int i = 0; i < iterations; i++) {
+                        try (final PooledByteBuffer pooledByteBuffer = pool.getPooledByteBuffer(128)) {
+                            pooledByteBuffer.getByteBuffer().putLong(1);
+                        }
+                    }
+
+//                    final List<String> results = new ArrayList<>();
+//                    // Do them all twice so on the second run the jvm is all warmed up and the pools
+//                    // have buffers in the pool
+//                    IntStream.rangeClosed(1, rounds).forEach(testRound -> {
+//                        try {
+//                            doPerfTest(results, testRound, iterations, opType, executorService);
+//                            LOGGER.info("---------------------------------------------------------");
+//                        } catch (ExecutionException | InterruptedException e) {
+//                            throw new RuntimeException(e);
+//                        }
+//                    });
+                }))
+                .collect(Collectors.toList());
+    }
+
     //    @Disabled // for manual perf testing only
     @Test
     void testPoolPerformanceComparison() throws ExecutionException, InterruptedException {
@@ -487,7 +542,7 @@ class TestByteBufferPool {
 
         @Override
         public PooledByteBuffer getPooledByteBuffer(final int minCapacity) {
-            return new PooledByteBuffer(
+            return new PooledByteBufferImpl(
                     () ->
                             this.getBuffer(minCapacity),
                     byteBuffer ->
@@ -496,7 +551,7 @@ class TestByteBufferPool {
 
         @Override
         public PooledByteBufferPair getPooledBufferPair(final int minKeyCapacity, final int minValueCapacity) {
-            return new PooledByteBufferPair(
+            return new PooledByteBufferPairImpl(
                     byteBuffer ->
                             ByteBufferSupport.unmap((MappedByteBuffer) byteBuffer),
                     ByteBuffer.allocateDirect(minKeyCapacity),
@@ -558,7 +613,7 @@ class TestByteBufferPool {
 
         @Override
         public PooledByteBuffer getPooledByteBuffer(final int minCapacity) {
-            return new PooledByteBuffer(
+            return new PooledByteBufferImpl(
                     () ->
                             getBuffer(minCapacity),
                     delegatePool::release);
@@ -566,7 +621,7 @@ class TestByteBufferPool {
 
         @Override
         public PooledByteBufferPair getPooledBufferPair(final int minKeyCapacity, final int minValueCapacity) {
-            return new PooledByteBufferPair(
+            return new PooledByteBufferPairImpl(
                     delegatePool::release,
                     getBuffer(minKeyCapacity),
                     getBuffer(minKeyCapacity));
