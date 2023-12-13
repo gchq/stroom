@@ -1,9 +1,7 @@
-package stroom.proxy.repo.dao;
+package stroom.proxy.repo.dao.lmdb;
 
 import stroom.proxy.repo.ProxyRepoTestModule;
 import stroom.proxy.repo.RepoSource;
-import stroom.proxy.repo.dao.lmdb.LmdbEnv;
-import stroom.proxy.repo.dao.lmdb.SourceDao;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -12,6 +10,7 @@ import name.falgout.jeffrey.testing.junit.guice.GuiceExtension;
 import name.falgout.jeffrey.testing.junit.guice.IncludeModule;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
@@ -48,8 +47,19 @@ public class TestSourceDao {
         lmdbEnv.stop();
     }
 
+    @RepeatedTest(100)
     @Test
     void testSource() {
+        LOGGER.info(() -> "Clear");
+        sourceDao.clear();
+        assertThat(sourceDao.getNewSourceQueue().getMinId()).isNotPresent();
+        assertThat(sourceDao.getNewSourceQueue().getMaxId()).isNotPresent();
+        assertThat(sourceDao.getExaminedSourceQueue().getMinId()).isNotPresent();
+        assertThat(sourceDao.getExaminedSourceQueue().getMaxId()).isNotPresent();
+        assertThat(sourceDao.getDeletableSourceQueue().getMinId()).isNotPresent();
+        assertThat(sourceDao.getDeletableSourceQueue().getMaxId()).isNotPresent();
+
+        LOGGER.info(() -> "Add source");
         sourceDao.addSource(1L, "test", "test");
         lmdbEnv.sync();
 
@@ -57,12 +67,21 @@ public class TestSourceDao {
         assertThat(repoSource).isNotNull();
         assertThat(sourceDao.countSources()).isOne();
 
+        LOGGER.info(() -> "Set source examined");
         sourceDao.setSourceExamined(repoSource.fileStoreId(), 0);
         lmdbEnv.sync();
         final RepoSource deletable = sourceDao.getDeletableSource();
+        LOGGER.info(() -> "Delete source: " + deletable.fileStoreId());
+        assertThat(deletable.fileStoreId()).isOne();
         sourceDao.deleteSource(deletable.fileStoreId());
         lmdbEnv.sync();
 
+//        assertThat(sourceDao.getNewSourceQueue().getMinId()).isNotPresent();
+//        assertThat(sourceDao.getNewSourceQueue().getMaxId()).isNotPresent();
+//        assertThat(sourceDao.getExaminedSourceQueue().getMinId()).isNotPresent();
+//        assertThat(sourceDao.getExaminedSourceQueue().getMaxId()).isNotPresent();
+//        assertThat(sourceDao.getDeletableSourceQueue().getMinId()).isNotPresent();
+//        assertThat(sourceDao.getDeletableSourceQueue().getMaxId()).isNotPresent();
         assertThat(sourceDao.countSources()).isZero();
     }
 

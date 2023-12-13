@@ -12,8 +12,10 @@ public class LongRowKey implements RowKey<Long> {
 
     private final AtomicLong rowId = new AtomicLong();
 
-    public LongRowKey(final LmdbEnv env, final Dbi<ByteBuffer> dbi) {
-        final Optional<Long> maxId = env.getMaxKey(dbi, new LongSerde());
+    public LongRowKey(final LmdbEnv env,
+                      final Dbi<ByteBuffer> dbi,
+                      final LongSerde longSerde) {
+        final Optional<Long> maxId = env.getMaxKey(dbi, longSerde);
         rowId.set(maxId.orElse(0L));
     }
 

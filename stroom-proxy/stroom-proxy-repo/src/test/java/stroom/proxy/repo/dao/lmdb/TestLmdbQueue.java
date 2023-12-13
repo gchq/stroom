@@ -8,9 +8,6 @@ import stroom.util.logging.LambdaLoggerFactory;
 import jakarta.inject.Inject;
 import name.falgout.jeffrey.testing.junit.guice.GuiceExtension;
 import name.falgout.jeffrey.testing.junit.guice.IncludeModule;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
@@ -33,10 +30,14 @@ public class TestLmdbQueue {
 
     @Inject
     private LmdbEnv lmdbEnv;
+    @Inject
+    private LongSerde keySerde;
+    @Inject
+    private LongSerde fkSerde;
 
     @Test
     void testSimple() {
-        test(1, 1, 1, false);
+        test(1, 1, 1);
     }
 
 //    @Test
@@ -46,7 +47,7 @@ public class TestLmdbQueue {
 
     @Test
     void testSimpleWithMore() {
-        test(1, 1, 1_000_000, false);
+        test(1, 1, 1_000_000);
     }
 
 //    @Test
@@ -56,19 +57,17 @@ public class TestLmdbQueue {
 
     @Test
     void testComplex() {
-        test(10, 3, 1_000_000, false);
+        test(10, 3, 1_000_000);
     }
 
     void test(final int producerThreads,
               final int consumerThreads,
-              final long totalSources,
-              final boolean nativeByteOrder) {
-        final LongSerde keySerde = new LongSerde();
+              final long totalSources) {
         final LmdbQueue<Long> newSourceQueue = new LmdbQueue<>(
                 lmdbEnv,
                 "new-queue",
                 keySerde,
-                nativeByteOrder);
+                fkSerde);
 
         LOGGER.logDurationIfInfoEnabled(() -> {
             lmdbEnv.start();

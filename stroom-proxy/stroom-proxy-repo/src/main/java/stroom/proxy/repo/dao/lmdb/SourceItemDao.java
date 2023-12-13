@@ -1,9 +1,9 @@
 package stroom.proxy.repo.dao.lmdb;
 
+import stroom.bytebuffer.PooledByteBuffer;
 import stroom.proxy.repo.RepoSource;
 import stroom.proxy.repo.RepoSourceItem;
 import stroom.proxy.repo.dao.lmdb.serde.LongSerde;
-import stroom.proxy.repo.dao.lmdb.serde.PooledByteBuffer;
 import stroom.proxy.repo.dao.lmdb.serde.RepoSourceItemSerde;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -26,16 +26,20 @@ public class SourceItemDao {
     private RowKey<Long> rowKey;
 
     private final SourceDao sourceDao;
-    private final LongSerde keySerde = new LongSerde();
-    private final RepoSourceItemSerde valueSerde = new RepoSourceItemSerde();
+    private final LongSerde keySerde;
+    private final RepoSourceItemSerde valueSerde;
 
     @Inject
     public SourceItemDao(final LmdbEnv env,
-                         final SourceDao sourceDao) {
+                         final SourceDao sourceDao,
+                         final LongSerde keySerde,
+                         final RepoSourceItemSerde valueSerde) {
         try {
             this.env = env;
             this.dbi = env.openDbi("source-item");
-            rowKey = new LongRowKey(env, dbi);
+            this.keySerde = keySerde;
+            this.valueSerde = valueSerde;
+            rowKey = new LongRowKey(env, dbi, keySerde);
         } catch (final RuntimeException e) {
             LOGGER.error(e::getMessage, e);
             throw e;
@@ -46,7 +50,7 @@ public class SourceItemDao {
 
     public void clear() {
         env.clear(dbi);
-        rowKey = new LongRowKey(env, dbi);
+        rowKey = new LongRowKey(env, dbi, keySerde);
     }
 
     public int countItems() {
@@ -61,11 +65,11 @@ public class SourceItemDao {
                 item.aggregateId(),
                 item.totalByteSize(),
                 item.extensions());
-        final PooledByteBuffer valueByteBuffer = valueSerde.serialise(value);
+        final PooledByteBuffer valueByteBuffer = valueSerde.serialize(value);
         final Long newId = rowKey.next();
-        final PooledByteBuffer idByteBuffer = keySerde.serialise(newId);
+        final PooledByteBuffer idByteBuffer = keySerde.serialize(newId);
         env.write(txn -> {
-            dbi.put(txn, idByteBuffer.get(), valueByteBuffer.get());
+            dbi.put(txn, idByteBuffer.getByteBuffer(), valueByteBuffer.getByteBuffer());
             idByteBuffer.release();
             valueByteBuffer.release();
         });

@@ -1,9 +1,9 @@
 package stroom.proxy.repo.dao.lmdb;
 
+import stroom.lmdb.serde.Serde;
 import stroom.proxy.repo.FeedKey;
 import stroom.proxy.repo.dao.lmdb.serde.FeedKeySerde;
 import stroom.proxy.repo.dao.lmdb.serde.LongSerde;
-import stroom.proxy.repo.dao.lmdb.serde.Serde;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -14,18 +14,23 @@ import java.nio.ByteBuffer;
 @Singleton
 public class FeedDao extends AbstractDaoLmdb<Long, FeedKey> {
 
-    private final LongSerde keySerde = new LongSerde();
-    private final FeedKeySerde valueSerde = new FeedKeySerde();
+    private final LongSerde keySerde;
+    private final FeedKeySerde valueSerde;
 
 
     @Inject
-    public FeedDao(final LmdbEnv env) {
-        super(env, "feed", "feed-index");
+    public FeedDao(final LmdbEnv env,
+                   final LongSerde keySerde,
+                   final FeedKeySerde valueSerde,
+                   final LongSerde hashSerde) {
+        super(env, "feed", "feed-index", hashSerde);
+        this.keySerde = keySerde;
+        this.valueSerde = valueSerde;
     }
 
     @Override
     RowKey<Long> createRowKey(final LmdbEnv env, final Dbi<ByteBuffer> dbi) {
-        return new LongRowKey(env, dbi);
+        return new LongRowKey(env, dbi, keySerde);
     }
 
     @Override

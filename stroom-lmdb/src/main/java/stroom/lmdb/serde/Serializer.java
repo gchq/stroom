@@ -18,6 +18,7 @@
 package stroom.lmdb.serde;
 
 import stroom.bytebuffer.ByteBufferUtils;
+import stroom.bytebuffer.PooledByteBuffer;
 import stroom.bytebuffer.PooledByteBufferOutputStream;
 import stroom.util.logging.LogUtil;
 
@@ -59,6 +60,10 @@ public interface Serializer<T> {
      * is not big enough to hold the serialised form.
      */
     void serialize(final ByteBuffer byteBuffer, final T object);
+
+    default PooledByteBuffer serialize(T value) {
+        throw new UnsupportedOperationException("Not implemented for this serializer");
+    }
 
     /**
      * Method for serialising the value when the length of the serialized form is unknown.

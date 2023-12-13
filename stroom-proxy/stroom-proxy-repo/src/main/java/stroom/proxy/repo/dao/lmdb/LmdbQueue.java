@@ -1,9 +1,8 @@
 package stroom.proxy.repo.dao.lmdb;
 
+import stroom.bytebuffer.PooledByteBuffer;
+import stroom.lmdb.serde.Serde;
 import stroom.proxy.repo.dao.lmdb.serde.LongSerde;
-import stroom.proxy.repo.dao.lmdb.serde.NativeLongSerde;
-import stroom.proxy.repo.dao.lmdb.serde.PooledByteBuffer;
-import stroom.proxy.repo.dao.lmdb.serde.Serde;
 import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -16,7 +15,6 @@ import org.lmdbjava.KeyRange;
 import org.lmdbjava.PutFlags;
 
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.util.Iterator;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -30,6 +28,7 @@ public class LmdbQueue<FK> {
 
     private static final long DELETE_BATCH_SIZE = 10_000;
     private final LmdbEnv env;
+    private final String queueName;
     private final Dbi<ByteBuffer> dbi;
 
     private final LongSerde keySerde;
@@ -47,27 +46,15 @@ public class LmdbQueue<FK> {
 
     public LmdbQueue(final LmdbEnv env,
                      final String queueName,
+                     final LongSerde keySerde,
                      final Serde<FK> fkSerde) {
-        this(env, queueName, fkSerde, false);
-    }
-
-    public LmdbQueue(final LmdbEnv env,
-                     final String queueName,
-                     final Serde<FK> fkSerde,
-                     final boolean nativeByteOrder) {
         try {
             this.env = env;
+            this.queueName = queueName;
+            this.keySerde = keySerde;
             this.fkSerde = fkSerde;
             writeIdByteBuffer = ByteBuffer.allocateDirect(Long.BYTES);
-
-            if (nativeByteOrder) {
-                this.dbi = env.openDbi(queueName, DbiFlags.MDB_CREATE, DbiFlags.MDB_INTEGERKEY);
-                keySerde = new NativeLongSerde();
-                writeIdByteBuffer.order(ByteOrder.nativeOrder());
-            } else {
-                this.dbi = env.openDbi(queueName, DbiFlags.MDB_CREATE);
-                keySerde = new LongSerde();
-            }
+            this.dbi = env.openDbi(queueName, DbiFlags.MDB_CREATE);
 
             // Get the current maximum write id and set.
             initPositions();
@@ -88,12 +75,12 @@ public class LmdbQueue<FK> {
     }
 
     public void put(final FK fk) {
-        final PooledByteBuffer fkBuffer = fkSerde.serialise(fk);
+        final PooledByteBuffer fkBuffer = fkSerde.serialize(fk);
         env.write(txn -> {
             final long id = writeId.incrementAndGet();
             writeIdByteBuffer.putLong(id);
             writeIdByteBuffer.flip();
-            dbi.put(txn, writeIdByteBuffer, fkBuffer.get(), PutFlags.MDB_APPEND);
+            dbi.put(txn, writeIdByteBuffer, fkBuffer.getByteBuffer(), PutFlags.MDB_APPEND);
             fkBuffer.release();
         });
     }
@@ -153,10 +140,15 @@ public class LmdbQueue<FK> {
     }
 
     private FK getAndDelete(final long id) {
-        final PooledByteBuffer keyBuffer = keySerde.serialise(id);
+        final PooledByteBuffer keyBuffer = keySerde.serialize(id);
         final FK fk = env.readResult(txn -> {
-            final ByteBuffer valueBuffer = dbi.get(txn, keyBuffer.get());
-            return fkSerde.deserialise(valueBuffer);
+            final ByteBuffer valueBuffer = dbi.get(txn, keyBuffer.getByteBuffer());
+            if (valueBuffer == null) {
+                LOGGER.error(() -> "ERROR: " + id);
+                LOGGER.error(() -> "Current write: " + currentWriteId);
+                LOGGER.error(() -> "Current read: " + currentReadId);
+            }
+            return fkSerde.deserialize(valueBuffer);
         });
         keyBuffer.release();
 
@@ -173,9 +165,11 @@ public class LmdbQueue<FK> {
     }
 
     private void deleteBatch(final long from, final long to) {
-        final PooledByteBuffer fromByteBuffer = keySerde.serialise(from);
-        final PooledByteBuffer toByteBuffer = keySerde.serialise(to);
-        final KeyRange<ByteBuffer> keyRange = KeyRange.closed(fromByteBuffer.get(), toByteBuffer.get());
+        final PooledByteBuffer fromByteBuffer = keySerde.serialize(from);
+        final PooledByteBuffer toByteBuffer = keySerde.serialize(to);
+        final KeyRange<ByteBuffer> keyRange = KeyRange.closed(
+                fromByteBuffer.getByteBuffer(),
+                toByteBuffer.getByteBuffer());
 
         env.write(txn -> {
             try (final CursorIterable<ByteBuffer> cursorIterable = dbi.iterate(txn, keyRange)) {
@@ -194,13 +188,14 @@ public class LmdbQueue<FK> {
     private void initPositions() {
         readLock.lock();
         try {
-            final Optional<Long> minId = getMinId();
-            minId.ifPresent(id -> {
-                currentReadId = id;
-                lastDeleteId.set(id);
-            });
-            final Optional<Long> maxId = getMaxId();
-            maxId.ifPresent(writeId::set);
+            final long minId = getMinId().orElse(0L);
+            currentReadId = minId;
+            lastDeleteId.set(minId);
+            final long maxId = getMaxId().orElse(0L);
+            currentWriteId = maxId;
+            writeId.set(maxId);
+
+            LOGGER.info(() -> queueName + " initPositions: " + toString());
         } finally {
             readLock.unlock();
         }
@@ -221,5 +216,15 @@ public class LmdbQueue<FK> {
 
     Optional<Long> getMaxId() {
         return env.getMaxKey(dbi, keySerde);
+    }
+
+    @Override
+    public String toString() {
+        return "LmdbQueue{" +
+                "currentWriteId=" + currentWriteId +
+                ", currentReadId=" + currentReadId +
+                ", writeId=" + writeId +
+                ", lastDeleteId=" + lastDeleteId +
+                '}';
     }
 }

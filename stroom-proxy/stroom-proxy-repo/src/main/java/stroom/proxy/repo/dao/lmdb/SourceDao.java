@@ -1,9 +1,9 @@
 package stroom.proxy.repo.dao.lmdb;
 
+import stroom.bytebuffer.PooledByteBuffer;
 import stroom.proxy.repo.FeedKey;
 import stroom.proxy.repo.RepoSource;
 import stroom.proxy.repo.dao.lmdb.serde.LongSerde;
-import stroom.proxy.repo.dao.lmdb.serde.PooledByteBuffer;
 import stroom.proxy.repo.dao.lmdb.serde.RepoSourcePartSerde;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -26,8 +26,8 @@ public class SourceDao {
 
 
     private final FeedDao feedDao;
-    private final LongSerde keySerde = new LongSerde();
-    private final RepoSourcePartSerde valueSerde = new RepoSourcePartSerde();
+    private final LongSerde keySerde;
+    private final RepoSourcePartSerde valueSerde;
 
     private final LmdbQueue<Long> newSourceQueue;
     private final LmdbQueue<Long> examinedSourceQueue;
@@ -162,14 +162,18 @@ public class SourceDao {
 
     @Inject
     public SourceDao(final LmdbEnv env,
-                     final FeedDao feedDao) {
+                     final FeedDao feedDao,
+                     final LongSerde keySerde,
+                     final RepoSourcePartSerde valueSerde) {
         try {
             this.env = env;
             this.dbi = env.openDbi("source");
+            this.keySerde = keySerde;
+            this.valueSerde = valueSerde;
 
-            newSourceQueue = new LmdbQueue<>(env, "new-source", keySerde);
-            examinedSourceQueue = new LmdbQueue<>(env, "examined-source", keySerde);
-            deletableSourceQueue = new LmdbQueue<>(env, "deletable-source", keySerde);
+            newSourceQueue = new LmdbQueue<>(env, "new-source", keySerde, keySerde);
+            examinedSourceQueue = new LmdbQueue<>(env, "examined-source", keySerde, keySerde);
+            deletableSourceQueue = new LmdbQueue<>(env, "deletable-source", keySerde, keySerde);
         } catch (final RuntimeException e) {
             LOGGER.error(e::getMessage, e);
             throw e;
@@ -222,10 +226,10 @@ public class SourceDao {
         final long feedId = feedDao.getId(new FeedKey(feedName, typeName));
 
         final RepoSourceValue value = new RepoSourceValue(feedId, 0);
-        final PooledByteBuffer keyByteBuffer = keySerde.serialise(fileStoreId);
-        final PooledByteBuffer valueByteBuffer = valueSerde.serialise(value);
+        final PooledByteBuffer keyByteBuffer = keySerde.serialize(fileStoreId);
+        final PooledByteBuffer valueByteBuffer = valueSerde.serialize(value);
         env.write(txn -> {
-            dbi.put(txn, keyByteBuffer.get(), valueByteBuffer.get());
+            dbi.put(txn, keyByteBuffer.getByteBuffer(), valueByteBuffer.getByteBuffer());
             keyByteBuffer.release();
             valueByteBuffer.release();
         });
@@ -243,10 +247,10 @@ public class SourceDao {
     }
 
     private RepoSource getSource(long fileStoreId) {
-        final PooledByteBuffer keyBuffer = keySerde.serialise(fileStoreId);
+        final PooledByteBuffer keyBuffer = keySerde.serialize(fileStoreId);
         final RepoSourceValue value = env.readResult(txn -> {
-            final ByteBuffer valueBuffer = dbi.get(txn, keyBuffer.get());
-            return valueSerde.deserialise(valueBuffer);
+            final ByteBuffer valueBuffer = dbi.get(txn, keyBuffer.getByteBuffer());
+            return valueSerde.deserialize(valueBuffer);
         });
         keyBuffer.release();
         return new RepoSource(fileStoreId, value.feedId());
@@ -316,9 +320,10 @@ public class SourceDao {
     }
 
     public void deleteSource(final long fileStoreId) {
-        final PooledByteBuffer keyBuffer = keySerde.serialise(fileStoreId);
+        final PooledByteBuffer keyBuffer = keySerde.serialize(fileStoreId);
         env.write(txn -> {
-            dbi.delete(txn, keyBuffer.get());
+            dbi.delete(txn, keyBuffer.getByteBuffer());
+            LOGGER.info(() -> "DELETE SOURCE: " + fileStoreId);
             keyBuffer.release();
         });
     }
@@ -364,15 +369,15 @@ public class SourceDao {
             deletableSourceQueue.put(fileStoreId);
 
         } else {
-            final PooledByteBuffer keyBuffer = keySerde.serialise(fileStoreId);
+            final PooledByteBuffer keyBuffer = keySerde.serialize(fileStoreId);
             env.write(txn -> {
-                final ByteBuffer value = dbi.get(txn, keyBuffer.get());
-                final RepoSourceValue repoSourcePart = valueSerde.deserialise(value);
+                final ByteBuffer value = dbi.get(txn, keyBuffer.getByteBuffer());
+                final RepoSourceValue repoSourcePart = valueSerde.deserialize(value);
                 final RepoSourceValue newRepoSourcePart = new RepoSourceValue(
                         repoSourcePart.feedId(),
                         itemCount);
-                final PooledByteBuffer newValue = valueSerde.serialise(newRepoSourcePart);
-                dbi.put(txn, keyBuffer.get(), newValue.get());
+                final PooledByteBuffer newValue = valueSerde.serialize(newRepoSourcePart);
+                dbi.put(txn, keyBuffer.getByteBuffer(), newValue.getByteBuffer());
                 keyBuffer.release();
                 newValue.release();
             });
@@ -395,9 +400,25 @@ public class SourceDao {
 //    }
 
     public void clear() {
+        LOGGER.info(() -> "CLEAR DBI");
         env.clear(dbi);
+        LOGGER.info(() -> "CLEAR newSourceQueue");
         newSourceQueue.clear();
+        LOGGER.info(() -> "CLEAR examinedSourceQueue");
         examinedSourceQueue.clear();
+        LOGGER.info(() -> "CLEAR deletableSourceQueue");
         deletableSourceQueue.clear();
+    }
+
+    LmdbQueue<Long> getNewSourceQueue() {
+        return newSourceQueue;
+    }
+
+    LmdbQueue<Long> getDeletableSourceQueue() {
+        return deletableSourceQueue;
+    }
+
+    LmdbQueue<Long> getExaminedSourceQueue() {
+        return examinedSourceQueue;
     }
 }

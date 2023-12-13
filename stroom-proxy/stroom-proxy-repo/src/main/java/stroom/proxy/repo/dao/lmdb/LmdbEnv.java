@@ -1,6 +1,6 @@
 package stroom.proxy.repo.dao.lmdb;
 
-import stroom.proxy.repo.dao.lmdb.serde.Serde;
+import stroom.lmdb.serde.Serde;
 import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -131,6 +131,8 @@ public class LmdbEnv implements Managed {
     }
 
     private Txn<ByteBuffer> commit(final Env<ByteBuffer> env, final Txn<ByteBuffer> writeTxn) {
+        LOGGER.info(() -> "PRE COMMIT");
+
         // Run pre commit hooks.
         for (final Runnable runnable : preCommitHooks) {
             runnable.run();
@@ -141,6 +143,8 @@ public class LmdbEnv implements Managed {
         for (final Runnable runnable : postCommitHooks) {
             runnable.run();
         }
+        LOGGER.info(() -> "POST COMMIT");
+
         // Create a new write transaction.
         return env.txnWrite();
     }
@@ -196,8 +200,6 @@ public class LmdbEnv implements Managed {
     }
 
     public long count(final Dbi<ByteBuffer> dbi) {
-        read(txn -> LOGGER.info(dbi.stat(txn).toString()));
-
         return readResult(txn -> {
             long count = 0;
             try (final CursorIterable<ByteBuffer> cursor = dbi.iterate(txn)) {
@@ -210,8 +212,14 @@ public class LmdbEnv implements Managed {
     }
 
     public void clear(final Dbi<ByteBuffer> dbi) {
+        read(txn -> LOGGER.info(dbi.stat(txn).toString()));
         write(txn -> dbi.drop(txn, false));
+        read(txn -> LOGGER.info(dbi.stat(txn).toString()));
         sync();
+        read(txn -> LOGGER.info(dbi.stat(txn).toString()));
+        if (count(dbi) > 0) {
+            throw new RuntimeException("Failed to clear");
+        }
     }
 
     public <T> Optional<T> getMinKey(final Dbi<ByteBuffer> dbi,
@@ -232,7 +240,7 @@ public class LmdbEnv implements Managed {
         return readResult(txn -> {
             try (final CursorIterable<ByteBuffer> cursor = dbi.iterate(txn, keyRange)) {
                 for (final KeyVal<ByteBuffer> kv : cursor) {
-                    return Optional.of(serde.deserialise(kv.key()));
+                    return Optional.of(serde.deserialize(kv.key()));
                 }
             }
             return Optional.empty();

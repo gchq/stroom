@@ -1,5 +1,6 @@
 package stroom.proxy.repo;
 
+import stroom.bytebuffer.ByteBufferModule;
 import stroom.db.util.DbModule;
 import stroom.proxy.repo.dao.db.ProxyDbModule;
 import stroom.proxy.repo.dao.lmdb.ProxyLmdbModule;
@@ -13,6 +14,7 @@ public class ProxyRepoTestModule extends AbstractModule {
 
     @Override
     protected void configure() {
+        install(new ByteBufferModule());
         install(new ProxyDbModule());
         install(new ProxyLmdbModule());
         install(new DbModule());
