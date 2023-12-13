@@ -83,7 +83,7 @@ public class ByteBufferPoolImpl6 implements ByteBufferPool {
     private final Provider<ByteBufferPoolConfig> byteBufferPoolConfigProvider;
 
     // One queue for each size of buffer
-    private final ByteBufferSet[] pooledBufferQueues;
+    private final PooledByteBufferSet[] pooledBufferQueues;
     //    // One counter for each size of buffer. Keeps track of the number of buffers known to the pool
 //    // whether in the pool or currently on loan. Each AtomicInteger will increase until it hits its
 //    // configured limit then will never go down unless clear() is called.
@@ -127,7 +127,7 @@ public class ByteBufferPoolImpl6 implements ByteBufferPool {
             sizesCount = 0;
         }
 
-        pooledBufferQueues = new ByteBufferSet[sizesCount];
+        pooledBufferQueues = new PooledByteBufferSet[sizesCount];
 
         // initialise all the queues and counters for each size offset, from zero
         // to the max offset in the config, filling the gaps with a default max count
@@ -154,7 +154,7 @@ public class ByteBufferPoolImpl6 implements ByteBufferPool {
             // ArrayBlockingQueue seems to be marginally faster than a LinkedBlockingQueue
             // If the configuredCount is 0 it means we will allocate on demand so no need to hold the queue/counter
             pooledBufferQueues[i] = configuredCount > 1
-                    ? new ByteBufferSet(
+                    ? new PooledByteBufferSet(
                     byteBufferPoolConfigProvider,
                     pooledBufferCounters,
                     configuredCount,
@@ -232,7 +232,7 @@ public class ByteBufferPoolImpl6 implements ByteBufferPool {
             }
 
             if (buffer == null) {
-                final ByteBufferSet byteBufferQueue = pooledBufferQueues[originalOffset];
+                final PooledByteBufferSet byteBufferQueue = pooledBufferQueues[originalOffset];
                 buffer = byteBufferQueue.forceGet();
             }
 
@@ -247,7 +247,7 @@ public class ByteBufferPoolImpl6 implements ByteBufferPool {
 
     @Nullable
     private PooledByteBuffer getBufferByOffset(final int offset) {
-        final ByteBufferSet byteBufferQueue = pooledBufferQueues[offset];
+        final PooledByteBufferSet byteBufferQueue = pooledBufferQueues[offset];
         return byteBufferQueue.get();
 
 //        ByteBuffer buffer = byteBufferQueue.get().getByteBuffer();poll();
@@ -351,7 +351,7 @@ public class ByteBufferPoolImpl6 implements ByteBufferPool {
     public int getCurrentPoolSize() {
         return Arrays.stream(pooledBufferQueues)
                 .filter(Objects::nonNull)
-                .mapToInt(ByteBufferSet::size)
+                .mapToInt(PooledByteBufferSet::size)
                 .sum();
     }
 
@@ -360,7 +360,7 @@ public class ByteBufferPoolImpl6 implements ByteBufferPool {
         // Allows the UI to clear buffers sat in the pool. Buffers on loan are unaffected
         final List<String> msgs = new ArrayList<>();
         for (int offset = 0; offset < pooledBufferQueues.length; offset++) {
-            final ByteBufferSet pooledBufferQueue = pooledBufferQueues[offset];
+            final PooledByteBufferSet pooledBufferQueue = pooledBufferQueues[offset];
             if (pooledBufferQueue != null) {
                 pooledBufferQueue.clear(msgs);
             }
@@ -383,7 +383,7 @@ public class ByteBufferPoolImpl6 implements ByteBufferPool {
                 for (int offset = 0; offset < sizesCount; offset++) {
                     final SortedMap<String, Integer> infoMap = new TreeMap<>();
 
-                    final ByteBufferSet pooledBufferQueue = pooledBufferQueues[offset];
+                    final PooledByteBufferSet pooledBufferQueue = pooledBufferQueues[offset];
                     final int availableBuffersOnQueue = pooledBufferQueue != null
                             ? pooledBufferQueue.size()
                             : -1;

@@ -10,10 +10,10 @@ import java.util.function.Consumer;
 
 class PooledByteBufferImpl6 implements PooledByteBuffer {
 
-    private final ByteBufferSet byteBufferSet;
+    private final PooledByteBufferSet byteBufferSet;
     private ByteBuffer byteBuffer;
 
-    PooledByteBufferImpl6(final ByteBufferSet byteBufferSet,
+    PooledByteBufferImpl6(final PooledByteBufferSet byteBufferSet,
                           final ByteBuffer byteBuffer) {
         this.byteBufferSet = byteBufferSet;
         this.byteBuffer = byteBuffer;

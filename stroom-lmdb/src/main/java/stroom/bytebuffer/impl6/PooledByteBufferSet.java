@@ -18,9 +18,9 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
-class ByteBufferSet {
+class PooledByteBufferSet {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ByteBufferSet.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(PooledByteBufferSet.class);
 
     private final BlockingQueue<ByteBuffer> queue;
 
@@ -36,11 +36,11 @@ class ByteBufferSet {
     // The threshold for the number of created buffers (for each offset) to warn at.
     private final int warningThreshold;
 
-    public ByteBufferSet(final Provider<ByteBufferPoolConfig> byteBufferPoolConfigProvider,
-                         final AtomicInteger pooledBufferCounter,
-                         final int maxBufferCount,
-                         final int bufferSize,
-                         final int warningThreshold) {
+    public PooledByteBufferSet(final Provider<ByteBufferPoolConfig> byteBufferPoolConfigProvider,
+                               final AtomicInteger pooledBufferCounter,
+                               final int maxBufferCount,
+                               final int bufferSize,
+                               final int warningThreshold) {
         this.byteBufferPoolConfigProvider = byteBufferPoolConfigProvider;
         this.pooledBufferCounter = pooledBufferCounter;
         this.maxBufferCount = maxBufferCount;
