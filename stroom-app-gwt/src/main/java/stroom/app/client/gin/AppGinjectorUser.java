@@ -80,6 +80,7 @@ import stroom.search.solr.client.gin.SolrIndexGinjector;
 import stroom.search.solr.client.gin.SolrIndexModule;
 import stroom.security.client.gin.SecurityGinjector;
 import stroom.security.client.gin.SecurityModule;
+import stroom.security.client.presenter.ApiKeysPresenter;
 import stroom.statistics.impl.hbase.client.gin.StroomStatsStoreGinjector;
 import stroom.statistics.impl.hbase.client.gin.StroomStatsStoreModule;
 import stroom.statistics.impl.sql.client.gin.StatisticsGinjector;
@@ -205,4 +206,6 @@ public interface AppGinjectorUser extends
     AsyncProvider<ExplorerNodeEditTagsPresenter> getExplorerNodeEditPresenter();
 
     AsyncProvider<ExplorerNodeRemoveTagsPresenter> getExplorerNodeRemovePresenter();
+
+    AsyncProvider<ApiKeysPresenter> getApiKeysPresenter();
 }

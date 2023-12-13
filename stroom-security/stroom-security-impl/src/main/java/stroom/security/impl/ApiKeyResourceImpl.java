@@ -3,9 +3,11 @@ package stroom.security.impl;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.security.shared.ApiKey;
 import stroom.security.shared.ApiKeyResource;
+import stroom.security.shared.ApiKeyResultPage;
 import stroom.security.shared.CreateApiKeyRequest;
 import stroom.security.shared.CreateApiKeyResponse;
 import stroom.security.shared.FindApiKeyCriteria;
+import stroom.security.shared.FindApiKeysResponse;
 import stroom.util.shared.ResultPage;
 
 import javax.inject.Inject;
@@ -43,7 +45,7 @@ public class ApiKeyResourceImpl implements ApiKeyResource {
     }
 
     @Override
-    public ResultPage<ApiKey> find(final FindApiKeyCriteria criteria) {
+    public ApiKeyResultPage find(final FindApiKeyCriteria criteria) {
         return apiKeyServiceProvider.get().find(criteria);
     }
 }

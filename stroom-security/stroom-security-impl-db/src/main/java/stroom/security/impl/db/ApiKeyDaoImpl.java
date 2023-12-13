@@ -12,6 +12,7 @@ import stroom.security.shared.ApiKey;
 import stroom.security.shared.ApiKeyResultPage;
 import stroom.security.shared.CreateApiKeyRequest;
 import stroom.security.shared.FindApiKeyCriteria;
+import stroom.security.shared.FindApiKeysResponse;
 import stroom.util.NullSafe;
 import stroom.util.filter.QuickFilterPredicateFactory;
 import stroom.util.logging.LambdaLogger;
@@ -72,7 +73,7 @@ public class ApiKeyDaoImpl implements ApiKeyDao {
     }
 
     @Override
-    public ResultPage<ApiKey> find(final FindApiKeyCriteria criteria) {
+    public ApiKeyResultPage find(final FindApiKeyCriteria criteria) {
 
         final Condition ownerCondition = NullSafe.getOrElseGet(
                 criteria.getOwner(),
@@ -83,7 +84,7 @@ public class ApiKeyDaoImpl implements ApiKeyDao {
                 criteria.getQuickFilterInput(),
                 ApiKeyDao.FILTER_FIELD_MAPPERS);
 
-        ResultPage<ApiKey> resultPage = QuickFilterPredicateFactory.filterStream(
+        final ApiKeyResultPage resultPage = QuickFilterPredicateFactory.filterStream(
                         criteria.getQuickFilterInput(),
                         FILTER_FIELD_MAPPERS,
                         JooqUtil.contextResult(securityDbConnProvider, context -> context

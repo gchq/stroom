@@ -3,6 +3,7 @@ package stroom.security.impl;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.security.shared.ApiKey;
+import stroom.security.shared.ApiKeyResultPage;
 import stroom.security.shared.CreateApiKeyRequest;
 import stroom.security.shared.CreateApiKeyResponse;
 import stroom.security.shared.FindApiKeyCriteria;
@@ -12,7 +13,6 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.PermissionException;
-import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserName;
 import stroom.util.string.Base58;
 import stroom.util.string.StringUtil;
@@ -75,7 +75,7 @@ public class ApiKeyService {
         LOGGER.debug("API_KEY_PATTERN: '{}'", API_KEY_PATTERN);
     }
 
-    public ResultPage<ApiKey> find(final FindApiKeyCriteria criteria) {
+    public ApiKeyResultPage find(final FindApiKeyCriteria criteria) {
         return securityContext.secureResult(PermissionNames.MANAGE_API_KEYS, () -> {
             checkAdditionalPerms(criteria.getOwner());
             return apiKeyDao.find(criteria);

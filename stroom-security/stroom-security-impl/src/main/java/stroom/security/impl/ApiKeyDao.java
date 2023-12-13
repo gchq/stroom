@@ -2,12 +2,12 @@ package stroom.security.impl;
 
 import stroom.security.impl.ApiKeyService.DuplicateHashException;
 import stroom.security.shared.ApiKey;
+import stroom.security.shared.ApiKeyResultPage;
 import stroom.security.shared.CreateApiKeyRequest;
 import stroom.security.shared.FindApiKeyCriteria;
 import stroom.util.NullSafe;
 import stroom.util.filter.FilterFieldMapper;
 import stroom.util.filter.FilterFieldMappers;
-import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserName;
 
 import java.util.List;
@@ -25,7 +25,7 @@ public interface ApiKeyDao {
                             ? "Enabled"
                             : "Disabled"));
 
-    ResultPage<ApiKey> find(final FindApiKeyCriteria criteria);
+    ApiKeyResultPage find(final FindApiKeyCriteria criteria);
 
     /**
      * Verify an API key, ensuring it exists and is enabled, returning the stroom user
