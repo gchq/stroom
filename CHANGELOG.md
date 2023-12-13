@@ -13,6 +13,15 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2.11] - 2023-12-13
+
+* Issue **#3913** : Change zip data handling so unknown file extensions are treated as part of the base name, e.g. `001.unknown` gets a base name of `001.unknown` (unless we see a known extension like `001.ctx` in which case `001.unknown` gets a base name of `001`), `abc.xyz.10001` gets a base name of `abc.xyz.10001`.
+
+* Issue **#3945** : Fix light theme colours.
+
+* Issue **#3942** : Fix user identity in audit logging.
+
+
 ## [v7.2.10] - 2023-12-07
 
 * Issue **#3939** : Fix issue changing editor them in user preferences.
@@ -6190,7 +6199,8 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2.10...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2.11...HEAD
+[v7.2.11]: https://github.com/gchq/stroom/compare/v7.2.10...v7.2.11
 [v7.2.10]: https://github.com/gchq/stroom/compare/v7.2.9...v7.2.10
 [v7.2.9]: https://github.com/gchq/stroom/compare/v7.2.8...v7.2.9
 [v7.2.8]: https://github.com/gchq/stroom/compare/v7.2.7...v7.2.8
