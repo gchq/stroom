@@ -17,7 +17,7 @@
 
 package stroom.bytebuffer;
 
-import stroom.bytebuffer.impl6.ByteBufferPoolImpl6;
+import stroom.bytebuffer.impl6.ByteBufferPoolImpl;
 import stroom.util.logging.LogUtil;
 import stroom.util.sysinfo.SystemInfoResult;
 
@@ -338,12 +338,12 @@ class TestByteBufferPool {
     List<DynamicTest> comparePerformance() {
         final List<ByteBufferPool> byteBufferPools = new ArrayList<>();
         byteBufferPools.add(new NonPooledByteBufferPool());
-        byteBufferPools.add(new ByteBufferPoolImpl());
+        byteBufferPools.add(new stroom.bytebuffer.ByteBufferPoolImpl());
         byteBufferPools.add(new ByteBufferPoolImpl2());
         byteBufferPools.add(new ByteBufferPoolImpl3());
         byteBufferPools.add(new ByteBufferPoolImpl4(ByteBufferPoolConfig::new));
         byteBufferPools.add(new ByteBufferPoolImpl5());
-        byteBufferPools.add(new ByteBufferPoolImpl6(ByteBufferPoolConfig::new));
+        byteBufferPools.add(new ByteBufferPoolImpl(ByteBufferPoolConfig::new));
         byteBufferPools.add(new JettyByteBufferPool());
 
         final int threads = 10;
@@ -406,7 +406,7 @@ class TestByteBufferPool {
 
         final ExecutorService executorService = Executors.newFixedThreadPool(threads);
         final ByteBufferPool nonPooledByteBufferPool = new NonPooledByteBufferPool();
-        final ByteBufferPool byteBufferPool = new ByteBufferPoolImpl();
+        final ByteBufferPool byteBufferPool = new stroom.bytebuffer.ByteBufferPoolImpl();
         final ByteBufferPool byteBufferPool2 = new ByteBufferPoolImpl2();
         final ByteBufferPool byteBufferPool3 = new ByteBufferPoolImpl3();
         final ByteBufferPool byteBufferPool4 = new ByteBufferPoolImpl4(ByteBufferPoolConfig::new);

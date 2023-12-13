@@ -70,9 +70,9 @@ import java.util.stream.Collectors;
  * This impl uses {@link ArrayBlockingQueue}
  */
 @Singleton
-public class ByteBufferPoolImpl6 implements ByteBufferPool {
+public class ByteBufferPoolImpl implements ByteBufferPool {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ByteBufferPoolImpl6.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ByteBufferPoolImpl.class);
 
     // If no count is provided for a buffer size in the config then this value is used.
     private static final int DEFAULT_MAX_BUFFERS_PER_QUEUE = 50;
@@ -100,7 +100,7 @@ public class ByteBufferPoolImpl6 implements ByteBufferPool {
     private final int maxOffset;
 
     @Inject
-    public ByteBufferPoolImpl6(final Provider<ByteBufferPoolConfig> byteBufferPoolConfigProvider) {
+    public ByteBufferPoolImpl(final Provider<ByteBufferPoolConfig> byteBufferPoolConfigProvider) {
 
         // Don't use a provider as all the props are RequiresRestart and we want system info to
         // report on config that matches what we init'd with.
@@ -114,7 +114,7 @@ public class ByteBufferPoolImpl6 implements ByteBufferPool {
                 ? OptionalInt.empty()
                 : pooledByteBufferCounts.keySet()
                         .stream()
-                        .filter(ByteBufferPoolImpl6::isPowerOf10)
+                        .filter(ByteBufferPoolImpl::isPowerOf10)
                         .mapToInt(Integer::intValue)
                         .max();
 
@@ -310,7 +310,7 @@ public class ByteBufferPoolImpl6 implements ByteBufferPool {
     public PooledByteBufferPair getPooledBufferPair(final int minKeyCapacity, final int minValueCapacity) {
         final PooledByteBuffer keyBuffer = getBufferByMinCapacity(minKeyCapacity);
         final PooledByteBuffer valueBuffer = getBufferByMinCapacity(minValueCapacity);
-        return new PooledByteBufferPairImpl6(keyBuffer, valueBuffer);
+        return new PooledByteBufferPairImpl(keyBuffer, valueBuffer);
     }
 
     @Override

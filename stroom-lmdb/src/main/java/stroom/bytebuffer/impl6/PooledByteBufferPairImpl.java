@@ -28,13 +28,13 @@ import java.util.function.BiConsumer;
  * Wrapper for a pair of {@link ByteBuffer}s obtained from a {@link ByteBufferPool} that can be used
  * with a try with resources block as it implements {@link AutoCloseable}.
  */
-class PooledByteBufferPairImpl6 implements PooledByteBufferPair {
+class PooledByteBufferPairImpl implements PooledByteBufferPair {
 
     private final PooledByteBuffer keyBuffer;
     private final PooledByteBuffer valueBuffer;
 
-    PooledByteBufferPairImpl6(final PooledByteBuffer keyBuffer,
-                              final PooledByteBuffer valueBuffer) {
+    PooledByteBufferPairImpl(final PooledByteBuffer keyBuffer,
+                             final PooledByteBuffer valueBuffer) {
         this.keyBuffer = keyBuffer;
         this.valueBuffer = valueBuffer;
     }
