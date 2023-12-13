@@ -8,13 +8,13 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
 
-class PooledByteBufferImpl6 implements PooledByteBuffer {
+class PooledByteBufferImpl implements PooledByteBuffer {
 
     private final PooledByteBufferSet byteBufferSet;
     private ByteBuffer byteBuffer;
 
-    PooledByteBufferImpl6(final PooledByteBufferSet byteBufferSet,
-                          final ByteBuffer byteBuffer) {
+    PooledByteBufferImpl(final PooledByteBufferSet byteBufferSet,
+                         final ByteBuffer byteBuffer) {
         this.byteBufferSet = byteBufferSet;
         this.byteBuffer = byteBuffer;
     }
@@ -93,7 +93,7 @@ class PooledByteBufferImpl6 implements PooledByteBuffer {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        final PooledByteBufferImpl6 that = (PooledByteBufferImpl6) o;
+        final PooledByteBufferImpl that = (PooledByteBufferImpl) o;
         return Objects.equals(byteBuffer, that.byteBuffer);
     }
 

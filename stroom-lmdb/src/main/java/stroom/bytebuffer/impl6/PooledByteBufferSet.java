@@ -54,12 +54,12 @@ class PooledByteBufferSet {
         if (buffer == null) {
             return null;
         }
-        return new PooledByteBufferImpl6(this, buffer);
+        return new PooledByteBufferImpl(this, buffer);
     }
 
     public PooledByteBuffer forceGet() {
         final ByteBuffer buffer = getByteBuffer();
-        return new PooledByteBufferImpl6(this, buffer);
+        return new PooledByteBufferImpl(this, buffer);
     }
 
     private ByteBuffer tryGetByteBuffer() {

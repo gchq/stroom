@@ -70,9 +70,9 @@ import java.util.stream.Collectors;
  * This impl uses {@link ArrayBlockingQueue}
  */
 @Singleton
-public class ByteBufferPoolImpl implements ByteBufferPool {
+public class ByteBufferPoolImpl6 implements ByteBufferPool {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ByteBufferPoolImpl.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ByteBufferPoolImpl6.class);
 
     // If no count is provided for a buffer size in the config then this value is used.
     private static final int DEFAULT_MAX_BUFFERS_PER_QUEUE = 50;
@@ -100,7 +100,7 @@ public class ByteBufferPoolImpl implements ByteBufferPool {
     private final int maxOffset;
 
     @Inject
-    public ByteBufferPoolImpl(final Provider<ByteBufferPoolConfig> byteBufferPoolConfigProvider) {
+    public ByteBufferPoolImpl6(final Provider<ByteBufferPoolConfig> byteBufferPoolConfigProvider) {
 
         // Don't use a provider as all the props are RequiresRestart and we want system info to
         // report on config that matches what we init'd with.
@@ -114,7 +114,7 @@ public class ByteBufferPoolImpl implements ByteBufferPool {
                 ? OptionalInt.empty()
                 : pooledByteBufferCounts.keySet()
                         .stream()
-                        .filter(ByteBufferPoolImpl::isPowerOf10)
+                        .filter(ByteBufferPoolImpl6::isPowerOf10)
                         .mapToInt(Integer::intValue)
                         .max();
 

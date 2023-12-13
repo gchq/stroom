@@ -17,7 +17,7 @@
 
 package stroom.bytebuffer;
 
-import stroom.bytebuffer.impl6.ByteBufferPoolImpl;
+import stroom.bytebuffer.impl6.ByteBufferPoolImpl6;
 import stroom.util.logging.LogUtil;
 import stroom.util.sysinfo.SystemInfoResult;
 
@@ -343,7 +343,7 @@ class TestByteBufferPool {
         byteBufferPools.add(new ByteBufferPoolImpl3());
         byteBufferPools.add(new ByteBufferPoolImpl4(ByteBufferPoolConfig::new));
         byteBufferPools.add(new ByteBufferPoolImpl5());
-        byteBufferPools.add(new ByteBufferPoolImpl(ByteBufferPoolConfig::new));
+        byteBufferPools.add(new ByteBufferPoolImpl6(ByteBufferPoolConfig::new));
         byteBufferPools.add(new JettyByteBufferPool());
 
         final int threads = 10;
