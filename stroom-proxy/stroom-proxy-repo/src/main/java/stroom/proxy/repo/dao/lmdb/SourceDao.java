@@ -7,6 +7,8 @@ import stroom.proxy.repo.dao.lmdb.serde.LongSerde;
 import stroom.proxy.repo.dao.lmdb.serde.RepoSourcePartSerde;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.Clearable;
+import stroom.util.shared.Flushable;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -17,7 +19,7 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 @Singleton
-public class SourceDao {
+public class SourceDao implements Clearable, Flushable {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SourceDao.class);
 
@@ -323,7 +325,6 @@ public class SourceDao {
         final PooledByteBuffer keyBuffer = keySerde.serialize(fileStoreId);
         env.write(txn -> {
             dbi.delete(txn, keyBuffer.getByteBuffer());
-            LOGGER.info(() -> "DELETE SOURCE: " + fileStoreId);
             keyBuffer.release();
         });
     }
@@ -399,15 +400,19 @@ public class SourceDao {
 //        deletableSourceQueue.clear();
 //    }
 
+    @Override
     public void clear() {
-        LOGGER.info(() -> "CLEAR DBI");
         env.clear(dbi);
-        LOGGER.info(() -> "CLEAR newSourceQueue");
         newSourceQueue.clear();
-        LOGGER.info(() -> "CLEAR examinedSourceQueue");
         examinedSourceQueue.clear();
-        LOGGER.info(() -> "CLEAR deletableSourceQueue");
         deletableSourceQueue.clear();
+    }
+
+    @Override
+    public void flush() {
+        newSourceQueue.flush();
+        examinedSourceQueue.flush();
+        deletableSourceQueue.flush();
     }
 
     LmdbQueue<Long> getNewSourceQueue() {

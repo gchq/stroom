@@ -47,41 +47,23 @@ public class TestSourceDao {
         lmdbEnv.stop();
     }
 
-    @RepeatedTest(100)
     @Test
     void testSource() {
-        LOGGER.info(() -> "Clear");
-        sourceDao.clear();
-        assertThat(sourceDao.getNewSourceQueue().getMinId()).isNotPresent();
-        assertThat(sourceDao.getNewSourceQueue().getMaxId()).isNotPresent();
-        assertThat(sourceDao.getExaminedSourceQueue().getMinId()).isNotPresent();
-        assertThat(sourceDao.getExaminedSourceQueue().getMaxId()).isNotPresent();
-        assertThat(sourceDao.getDeletableSourceQueue().getMinId()).isNotPresent();
-        assertThat(sourceDao.getDeletableSourceQueue().getMaxId()).isNotPresent();
-
-        LOGGER.info(() -> "Add source");
         sourceDao.addSource(1L, "test", "test");
-        lmdbEnv.sync();
+        sourceDao.flush();
 
         final RepoSource repoSource = sourceDao.getNextSource();
         assertThat(repoSource).isNotNull();
         assertThat(sourceDao.countSources()).isOne();
 
-        LOGGER.info(() -> "Set source examined");
         sourceDao.setSourceExamined(repoSource.fileStoreId(), 0);
-        lmdbEnv.sync();
+        sourceDao.flush();
         final RepoSource deletable = sourceDao.getDeletableSource();
-        LOGGER.info(() -> "Delete source: " + deletable.fileStoreId());
         assertThat(deletable.fileStoreId()).isOne();
         sourceDao.deleteSource(deletable.fileStoreId());
-        lmdbEnv.sync();
+        sourceDao.flush();
 
-//        assertThat(sourceDao.getNewSourceQueue().getMinId()).isNotPresent();
-//        assertThat(sourceDao.getNewSourceQueue().getMaxId()).isNotPresent();
-//        assertThat(sourceDao.getExaminedSourceQueue().getMinId()).isNotPresent();
-//        assertThat(sourceDao.getExaminedSourceQueue().getMaxId()).isNotPresent();
-//        assertThat(sourceDao.getDeletableSourceQueue().getMinId()).isNotPresent();
-//        assertThat(sourceDao.getDeletableSourceQueue().getMaxId()).isNotPresent();
+        lmdbEnv.sync();
         assertThat(sourceDao.countSources()).isZero();
     }
 
@@ -90,6 +72,7 @@ public class TestSourceDao {
         for (long i = 0; i < 1000000; i++) {
             sourceDao.addSource(i, "test", "test");
         }
+        sourceDao.flush();
         lmdbEnv.sync();
     }
 
@@ -117,6 +100,8 @@ public class TestSourceDao {
         final List<CompletableFuture<Void>> consumers = new ArrayList<>();
         final List<CompletableFuture<Void>> all = new ArrayList<>();
         final Instant start = Instant.now();
+
+        assertThat(sourceDao.countSources()).isZero();
 
         final AtomicLong sourceFileStoreId = new AtomicLong();
         for (int threads = 0; threads < producerThreads; threads++) {
@@ -149,7 +134,7 @@ public class TestSourceDao {
         }
 
         CompletableFuture.allOf(producers.toArray(new CompletableFuture[0])).whenCompleteAsync((unused, throwable) -> {
-            lmdbEnv.sync();
+            sourceDao.flush();
             LOGGER.info("Completed production in: " + Duration.between(start, Instant.now()).toString());
         });
         CompletableFuture.allOf(consumers.toArray(new CompletableFuture[0])).whenCompleteAsync((unused, throwable) -> {

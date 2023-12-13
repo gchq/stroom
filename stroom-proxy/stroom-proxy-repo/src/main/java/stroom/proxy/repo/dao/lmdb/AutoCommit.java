@@ -1,9 +1,14 @@
 package stroom.proxy.repo.dao.lmdb;
 
+import stroom.proxy.repo.dao.lmdb.LmdbEnv.WriteFunction;
+
+import org.lmdbjava.Txn;
+
+import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.time.Instant;
 
-public class AutoCommit {
+public class AutoCommit implements WriteFunction {
 
     private final long maxItems;
     private final Duration maxTime;
@@ -15,20 +20,25 @@ public class AutoCommit {
         this.maxTime = maxTime;
     }
 
-    public boolean shouldCommit() {
+    @Override
+    public Txn<ByteBuffer> apply(final Txn<ByteBuffer> txn) {
         count++;
         if (count > maxItems) {
             count = 0;
             lastCommit = Instant.now();
-            return true;
+            txn.commit();
+            txn.close();
+            return null;
         } else {
             final Instant now = Instant.now();
             if (now.minus(maxTime).isAfter(lastCommit)) {
                 count = 0;
                 lastCommit = now;
-                return true;
+                txn.commit();
+                txn.close();
+                return null;
             }
         }
-        return false;
+        return txn;
     }
 }

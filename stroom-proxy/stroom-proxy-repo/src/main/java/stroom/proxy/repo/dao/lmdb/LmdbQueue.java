@@ -6,6 +6,8 @@ import stroom.proxy.repo.dao.lmdb.serde.LongSerde;
 import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.Clearable;
+import stroom.util.shared.Flushable;
 
 import org.lmdbjava.CursorIterable;
 import org.lmdbjava.CursorIterable.KeyVal;
@@ -22,7 +24,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
-public class LmdbQueue<FK> {
+public class LmdbQueue<FK> implements Clearable, Flushable {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(LmdbQueue.class);
 
@@ -58,15 +60,6 @@ public class LmdbQueue<FK> {
 
             // Get the current maximum write id and set.
             initPositions();
-            env.addPostCommitHook(() -> {
-                readLock.lock();
-                try {
-                    currentWriteId = writeId.get();
-                    notEmpty.signalAll();
-                } finally {
-                    readLock.unlock();
-                }
-            });
 
         } catch (final RuntimeException e) {
             LOGGER.error(e::getMessage, e);
@@ -201,9 +194,37 @@ public class LmdbQueue<FK> {
         }
     }
 
+    @Override
     public void clear() {
         env.clear(dbi);
         initPositions();
+    }
+
+    @Override
+    public void flush() {
+        env.writeFunction(txn -> {
+            // Record current id.
+            final long id = writeId.get();
+            if (currentWriteId != id) {
+                // Commit the current transaction.
+                txn.commit();
+                txn.close();
+
+                // Update the current write position.
+                readLock.lock();
+                try {
+                    currentWriteId = id;
+                    notEmpty.signalAll();
+                } finally {
+                    readLock.unlock();
+                }
+
+                return null;
+
+            } else {
+                return txn;
+            }
+        });
     }
 
     public long size() {

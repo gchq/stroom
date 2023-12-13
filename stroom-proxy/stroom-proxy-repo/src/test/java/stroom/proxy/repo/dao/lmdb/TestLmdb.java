@@ -1,8 +1,13 @@
 package stroom.proxy.repo.dao.lmdb;
 
+import stroom.bytebuffer.ByteBufferPool;
+import stroom.bytebuffer.ByteBufferPoolFactory;
 import stroom.bytebuffer.PooledByteBuffer;
+import stroom.lmdb.BasicLmdbDb;
+import stroom.lmdb.serde.StringSerde;
 import stroom.proxy.repo.ProxyRepoTestModule;
 import stroom.proxy.repo.dao.lmdb.serde.LongSerde;
+import stroom.util.concurrent.ThreadUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -32,6 +37,8 @@ public class TestLmdb {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestLmdb.class);
 
+    private final ByteBufferPool byteBufferPool = new ByteBufferPoolFactory().getByteBufferPool();
+    private BasicLmdbDb<String, String> basicLmdbDb;
     @Inject
     private LmdbEnv lmdbEnv;
     @Inject
@@ -49,8 +56,21 @@ public class TestLmdb {
             final PooledByteBuffer key = serde.serialize(1L);
             final PooledByteBuffer value = serde.serialize(1L);
             lmdbEnv.write(txn -> dbi.put(txn, key.getByteBuffer(), value.getByteBuffer()));
-            lmdbEnv.sync();
+//            lmdbEnv.write(txn -> lmdbEnv.commit());
 
+            lmdbEnv.sync();
+//            ThreadUtil.sleep(1000);
+
+//            lmdbEnv.write(txn -> {
+//                        assertThat(lmdbEnv.count2(txn, dbi)).isOne();
+//                    });
+//            lmdbEnv.write(txn -> {
+//                assertThat(lmdbEnv.count(txn, dbi)).isOne();
+//            });
+//            lmdbEnv.sync();
+
+//            assertThat(lmdbEnv.entries(dbi)).isOne();
+//            assertThat(lmdbEnv.count2(dbi)).isOne();
             assertThat(lmdbEnv.count(dbi)).isOne();
             lmdbEnv.clear(dbi);
             assertThat(lmdbEnv.count(dbi)).isZero();

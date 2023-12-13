@@ -6,35 +6,32 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import io.dropwizard.lifecycle.Managed;
+import org.lmdbjava.Cursor;
 import org.lmdbjava.CursorIterable;
 import org.lmdbjava.CursorIterable.KeyVal;
 import org.lmdbjava.Dbi;
 import org.lmdbjava.DbiFlags;
 import org.lmdbjava.Env;
 import org.lmdbjava.KeyRange;
+import org.lmdbjava.SeekOp;
 import org.lmdbjava.Txn;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class LmdbEnv implements Managed {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(LmdbEnv.class);
-    private static final Commit COMMIT = new Commit();
 
     private final Env<ByteBuffer> env;
-    private final ArrayBlockingQueue<WriteCommand> writeQueue = new ArrayBlockingQueue<>(1000);
-    private volatile AutoCommit autoCommit;
-    private final List<Runnable> preCommitHooks = new ArrayList<>();
-    private final List<Runnable> postCommitHooks = new ArrayList<>();
+    private final ArrayBlockingQueue<WriteFunction> writeQueue = new ArrayBlockingQueue<>(1000);
+    private volatile WriteFunction autoCommit = txn -> txn;
+
     private volatile boolean writing;
     private volatile Thread writingThread;
     private volatile CompletableFuture<Void> completableFuture;
@@ -51,26 +48,17 @@ public class LmdbEnv implements Managed {
                 try {
                     LOGGER.info(() -> "Starting write thread");
                     writingThread = Thread.currentThread();
-                    Txn<ByteBuffer> writeTxn = env.txnWrite();
+                    Txn<ByteBuffer> writeTxn = null;
                     try {
                         while (writing) {
+                            if (writeTxn == null) {
+                                writeTxn = env.txnWrite();
+                            }
+
                             try {
-                                final WriteCommand writeCommand = writeQueue.poll(10, TimeUnit.SECONDS);
-                                boolean committed = false;
-                                if (writeCommand != null) {
-                                    writeCommand.accept(writeTxn);
-
-                                    if (writeCommand.commit()) {
-                                        writeTxn = commit(env, writeTxn);
-                                        committed = true;
-                                    }
-                                }
-
-                                if (!committed && autoCommit != null) {
-                                    if (autoCommit.shouldCommit()) {
-                                        writeTxn = commit(env, writeTxn);
-                                    }
-                                }
+                                final WriteFunction writeCommand = writeQueue.take();
+                                writeTxn = writeCommand.apply(writeTxn);
+                                writeTxn = autoCommit.apply(writeTxn);
                             } catch (final RuntimeException e) {
                                 LOGGER.error(e::getMessage, e);
                             }
@@ -81,8 +69,10 @@ public class LmdbEnv implements Managed {
                     } catch (final RuntimeException e) {
                         LOGGER.error(e::getMessage, e);
                     } finally {
-                        writeTxn.commit();
-                        writeTxn.close();
+                        if (writeTxn != null) {
+                            writeTxn.commit();
+                            writeTxn.close();
+                        }
                         writing = false;
                     }
                     LOGGER.info(() -> "Finished write thread");
@@ -106,13 +96,13 @@ public class LmdbEnv implements Managed {
         }
     }
 
-    public void addPreCommitHook(final Runnable runnable) {
-        preCommitHooks.add(runnable);
-    }
-
-    public void addPostCommitHook(final Runnable runnable) {
-        postCommitHooks.add(runnable);
-    }
+//    public void addPreCommitHook(final Runnable runnable) {
+//        preCommitHooks.add(runnable);
+//    }
+//
+//    public void addPostCommitHook(final Runnable runnable) {
+//        postCommitHooks.add(runnable);
+//    }
 
     public Dbi<ByteBuffer> openDbi(final String dbName) {
         if (writing) {
@@ -130,32 +120,20 @@ public class LmdbEnv implements Managed {
         return env.openDbi(dbName, flags);
     }
 
-    private Txn<ByteBuffer> commit(final Env<ByteBuffer> env, final Txn<ByteBuffer> writeTxn) {
-        LOGGER.info(() -> "PRE COMMIT");
-
-        // Run pre commit hooks.
-        for (final Runnable runnable : preCommitHooks) {
-            runnable.run();
-        }
-        writeTxn.commit();
-        writeTxn.close();
-        // Run post commit hooks.
-        for (final Runnable runnable : postCommitHooks) {
-            runnable.run();
-        }
-        LOGGER.info(() -> "POST COMMIT");
-
-        // Create a new write transaction.
-        return env.txnWrite();
-    }
-
     public void setAutoCommit(final AutoCommit autoCommit) {
         this.autoCommit = autoCommit;
     }
 
-    public void write(final WriteCommand writeCommand) {
+    public void write(final Consumer<Txn<ByteBuffer>> consumer) {
+        writeFunction(txn -> {
+            consumer.accept(txn);
+            return txn;
+        });
+    }
+
+    public void writeFunction(final WriteFunction function) {
         try {
-            writeQueue.put(writeCommand);
+            writeQueue.put(function);
         } catch (final InterruptedException e) {
             LOGGER.debug(e::getMessage, e);
             Thread.currentThread().interrupt();
@@ -184,10 +162,9 @@ public class LmdbEnv implements Managed {
     public void sync() {
         try {
             final Sync sync = new Sync();
-            write(sync);
+            writeFunction(sync);
             LOGGER.info("Synchronizing DB");
             sync.await();
-            env.sync(true);
         } catch (final InterruptedException e) {
             LOGGER.debug(e::getMessage, e);
             Thread.currentThread().interrupt();
@@ -195,21 +172,39 @@ public class LmdbEnv implements Managed {
         }
     }
 
-    public void commit() {
-        write(COMMIT);
+    public long count(final Dbi<ByteBuffer> dbi) {
+        return readResult(txn -> dbi.stat(txn).entries);
     }
 
-    public long count(final Dbi<ByteBuffer> dbi) {
-        return readResult(txn -> {
-            long count = 0;
-            try (final CursorIterable<ByteBuffer> cursor = dbi.iterate(txn)) {
-                for (final KeyVal<ByteBuffer> kv : cursor) {
-                    count++;
-                }
-            }
-            return count;
-        });
-    }
+//    public long count(final Dbi<ByteBuffer> dbi) {
+//        return readResult(txn -> count(txn, dbi));
+//    }
+//
+//    public long count2(final Dbi<ByteBuffer> dbi) {
+//        return readResult(txn -> count2(txn, dbi));
+//    }
+//
+//    public long count(final Txn<ByteBuffer> txn, final Dbi<ByteBuffer> dbi) {
+//        long count = 0;
+//        try (final CursorIterable<ByteBuffer> cursor = dbi.iterate(txn)) {
+//            for (final KeyVal<ByteBuffer> kv : cursor) {
+//                count++;
+//            }
+//        }
+//        return count;
+//    }
+//
+//    public long count2(final Txn<ByteBuffer> txn, final Dbi<ByteBuffer> dbi) {
+//        long count = 0;
+//        try (final Cursor<ByteBuffer> cursor = dbi.openCursor(txn)) {
+//            if (cursor.seek(SeekOp.MDB_FIRST)) {
+//                do {
+//                    count++;
+//                } while (cursor.next());
+//            }
+//        }
+//        return count;
+//    }
 
     public void clear(final Dbi<ByteBuffer> dbi) {
         read(txn -> LOGGER.info(dbi.stat(txn).toString()));
@@ -247,50 +242,34 @@ public class LmdbEnv implements Managed {
         });
     }
 
-    private static class Sync implements WriteCommand {
-
-        private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(Sync.class);
+    private static class Sync implements WriteFunction {
 
         final CountDownLatch complete = new CountDownLatch(1);
 
         @Override
-        public void accept(final Txn<ByteBuffer> txn) {
-            LOGGER.info(() -> "sync countdown before");
+        public Txn<ByteBuffer> apply(final Txn<ByteBuffer> txn) {
+            txn.commit();
+            txn.close();
             complete.countDown();
-            LOGGER.info(() -> "sync countdown after");
+            return null;
         }
 
         public void await() throws InterruptedException {
-            LOGGER.info(() -> "sync await before");
             complete.await();
-            LOGGER.info(() -> "sync await after");
-        }
-
-        @Override
-        public boolean commit() {
-            return true;
         }
     }
 
-    private static class Commit implements WriteCommand {
+    private static class Commit implements WriteFunction {
 
         @Override
-        public void accept(final Txn<ByteBuffer> txn) {
-
-        }
-
-        @Override
-        public boolean commit() {
-            return true;
+        public Txn<ByteBuffer> apply(final Txn<ByteBuffer> txn) {
+            txn.commit();
+            txn.close();
+            return null;
         }
     }
 
-    public interface WriteCommand {
+    public interface WriteFunction extends Function<Txn<ByteBuffer>, Txn<ByteBuffer>> {
 
-        void accept(Txn<ByteBuffer> txn);
-
-        default boolean commit() {
-            return false;
-        }
     }
 }
