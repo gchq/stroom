@@ -17,6 +17,7 @@
 
 package stroom.bytebuffer;
 
+import stroom.bytebuffer.impl6.ByteBufferPoolImpl6;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.HasSystemInfoBinder;
 import stroom.util.shared.Clearable;
@@ -28,11 +29,11 @@ public class ByteBufferModule extends AbstractModule {
     @Override
     protected void configure() {
         // If you switch impl here make sure also to do it in the SystemInfo binder below
-        bind(ByteBufferPool.class).to(ByteBufferPoolImpl4.class);
+        bind(ByteBufferPool.class).to(ByteBufferPoolImpl6.class);
 
         HasSystemInfoBinder.create(binder())
-                .bind(ByteBufferPoolImpl4.class);
+                .bind(ByteBufferPoolImpl6.class);
 
-        GuiceUtil.buildMultiBinder(binder(), Clearable.class).addBinding(ByteBufferPoolImpl4.class);
+        GuiceUtil.buildMultiBinder(binder(), Clearable.class).addBinding(ByteBufferPoolImpl6.class);
     }
 }
