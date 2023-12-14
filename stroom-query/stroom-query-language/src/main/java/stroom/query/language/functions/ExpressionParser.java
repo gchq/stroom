@@ -32,6 +32,7 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 public class ExpressionParser {
@@ -62,6 +63,11 @@ public class ExpressionParser {
             TokenType.MODULUS,
             TokenType.PLUS,
             TokenType.MINUS);
+
+    private static final Set<TokenType> LOGICAL_OPERATORS = Set.of(
+            TokenType.NOT,
+            TokenType.OR,
+            TokenType.AND);
 
     private final ParamFactory paramFactory;
 
@@ -125,13 +131,14 @@ public class ExpressionParser {
             } else if (token instanceof final KeywordGroup keywordGroup) {
 
                 // Add a special case for the NOT keyword that can exist as a function in the context of an expression.
-                if (keywordGroup.getTokenType().equals(TokenType.NOT)
+                if (LOGICAL_OPERATORS.contains(keywordGroup.getTokenType())
                         && keywordGroup.getChildren().size() == 1
                         && keywordGroup.getChildren().get(0) instanceof final TokenGroup tokenGroup) {
+                    final String functionName = keywordGroup.getTokenType().toString().toLowerCase(Locale.ROOT);
                     final Function function = getFunction(
                             keywordGroup,
                             tokenGroup.getChildren(),
-                            "not",
+                            functionName,
                             expressionContext,
                             fieldIndex);
                     output.add(function);
@@ -425,8 +432,8 @@ public class ExpressionParser {
     }
 
     public Param applyBODMAS(final List<Object> objects,
-                              final ExpressionContext expressionContext,
-                              final FieldIndex fieldIndex) {
+                             final ExpressionContext expressionContext,
+                             final FieldIndex fieldIndex) {
         boolean complete = false;
         List<Object> result = new ArrayList<>(objects);
 
