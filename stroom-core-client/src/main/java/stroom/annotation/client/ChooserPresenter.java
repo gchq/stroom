@@ -103,24 +103,24 @@ public class ChooserPresenter<T> extends MyPresenterWidget<ChooserView> implemen
         this.displayValueFunction = Objects.requireNonNull(displayValueFunction);
     }
 
-    T getSelected() {
+    public T getSelected() {
         return selectionModel.getSelectedObject();
     }
 
-    String getSelectedDisplayValue() {
+    public String getSelectedDisplayValue() {
         final T selected = getSelected();
         return GwtNullSafe.get(selected, displayValueFunction);
     }
 
-    void setSelected(final T value) {
+    public void setSelected(final T value) {
         selectionModel.setSelected(value, true);
     }
 
-    void setClearSelectionText(final String text) {
+    public void setClearSelectionText(final String text) {
         getView().setClearSelectionText(text);
     }
 
-    HandlerRegistration addDataSelectionHandler(final SelectionChangeEvent.Handler handler) {
+    public HandlerRegistration addDataSelectionHandler(final SelectionChangeEvent.Handler handler) {
         return selectionModel.addSelectionChangeHandler(handler);
     }
 

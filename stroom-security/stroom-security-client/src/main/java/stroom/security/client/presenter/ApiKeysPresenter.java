@@ -1,17 +1,18 @@
 package stroom.security.client.presenter;
 
+import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.data.table.client.Refreshable;
 import stroom.security.client.presenter.ApiKeysPresenter.ApiKeysView;
+import stroom.svg.shared.SvgImage;
 
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 public class ApiKeysPresenter
-        extends MyPresenterWidget<ApiKeysView>
+        extends ContentTabPresenter<ApiKeysView>
         implements Refreshable, ApiKeyUiHandlers {
 
     private final ApiKeysListPresenter listPresenter;
@@ -38,6 +39,16 @@ public class ApiKeysPresenter
     @Override
     public void refresh() {
         listPresenter.refresh();
+    }
+
+    @Override
+    public SvgImage getIcon() {
+        return SvgImage.KEY;
+    }
+
+    @Override
+    public String getLabel() {
+        return "Api Keys";
     }
 
 

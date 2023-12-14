@@ -1,35 +1,34 @@
 package stroom.security.client;
 
+import stroom.core.client.ContentManager;
 import stroom.core.client.MenuKeys;
+import stroom.core.client.presenter.MonitoringPlugin;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
-import stroom.node.client.NodeToolsPlugin;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.presenter.ApiKeysPresenter;
 import stroom.security.shared.PermissionNames;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.menu.client.presenter.IconMenuItem;
-import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupType;
 
-import com.google.gwt.inject.client.AsyncProvider;
-import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 import javax.inject.Singleton;
 
 @Singleton
-public class ApiKeysPlugin extends NodeToolsPlugin {
+public class ApiKeysPlugin extends MonitoringPlugin<ApiKeysPresenter> {
 
-    private final AsyncProvider<ApiKeysPresenter> apiKeysPresenterAsyncProvider;
+//    private final AsyncProvider<ApiKeysPresenter> apiKeysPresenterAsyncProvider;
 
     @Inject
     public ApiKeysPlugin(final EventBus eventBus,
+                         final ContentManager eventManager,
                          final ClientSecurityContext securityContext,
-                         final AsyncProvider<ApiKeysPresenter> apiKeysPresenterAsyncProvider) {
-        super(eventBus, securityContext);
-        this.apiKeysPresenterAsyncProvider = apiKeysPresenterAsyncProvider;
+                         final Provider<ApiKeysPresenter> apiKeysPresenterAsyncProvider) {
+        super(eventBus, eventManager, apiKeysPresenterAsyncProvider, securityContext);
+//        super(eventBus, securityContext);
+//        this.apiKeysPresenterAsyncProvider = apiKeysPresenterAsyncProvider;
     }
 
     @Override
@@ -47,28 +46,28 @@ public class ApiKeysPlugin extends NodeToolsPlugin {
                 .priority(3)
                 .icon(icon)
                 .text("Manage API Keys")
-                .command(this::show)
+                .command(this::open)
                 .build();
         event.getMenuItems().addMenuItem(MenuKeys.SECURITY_MENU, apiKeysMenuItem);
     }
 
-    private void show() {
-        apiKeysPresenterAsyncProvider.get(new AsyncCallback<ApiKeysPresenter>() {
-            @Override
-            public void onSuccess(final ApiKeysPresenter presenter) {
-                final PopupSize popupSize = PopupSize.resizable(1_100, 800);
-                ShowPopupEvent.builder(presenter)
-                        .popupType(PopupType.CLOSE_DIALOG)
-                        .popupSize(popupSize)
-                        .caption("Manage API Keys")
-                        .onShow(e -> presenter.focus())
-                        .fire();
-            }
-
-            @Override
-            public void onFailure(final Throwable caught) {
-
-            }
-        });
-    }
+//    private void show() {
+//        apiKeysPresenterAsyncProvider.get(new AsyncCallback<ApiKeysPresenter>() {
+//            @Override
+//            public void onSuccess(final ApiKeysPresenter presenter) {
+//                final PopupSize popupSize = PopupSize.resizable(1_100, 800);
+//                ShowPopupEvent.builder(presenter)
+//                        .popupType(PopupType.CLOSE_DIALOG)
+//                        .popupSize(popupSize)
+//                        .caption("Manage API Keys")
+//                        .onShow(e -> presenter.focus())
+//                        .fire();
+//            }
+//
+//            @Override
+//            public void onFailure(final Throwable caught) {
+//
+//            }
+//        });
+//    }
 }

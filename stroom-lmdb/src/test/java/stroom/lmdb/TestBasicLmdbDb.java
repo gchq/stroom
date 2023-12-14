@@ -1393,6 +1393,19 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
         });
     }
 
+    @Test
+    void testInterruption() throws ExecutionException, InterruptedException {
+        CompletableFuture.runAsync(() -> {
+            Thread.currentThread().interrupt();
+            try {
+                basicLmdbDb.put("foo", "bar", false);
+            } catch (Exception e) {
+                throw new RuntimeException("error: " + e.getMessage(), e);
+            }
+            LOGGER.info("Done put");
+        }).get();
+    }
+
     private BasicLmdbDb<String, String> createDb(final TemporaryPathCreator temporaryPathCreator,
                                                  final EnvFlags[] envFlags,
                                                  final String id) {
