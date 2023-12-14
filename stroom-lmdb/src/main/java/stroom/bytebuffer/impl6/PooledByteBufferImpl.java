@@ -10,10 +10,10 @@ import java.util.function.Consumer;
 
 class PooledByteBufferImpl implements PooledByteBuffer {
 
-    private final PooledByteBufferSet byteBufferSet;
+    private final PooledByteBufferQueue byteBufferSet;
     private ByteBuffer byteBuffer;
 
-    PooledByteBufferImpl(final PooledByteBufferSet byteBufferSet,
+    PooledByteBufferImpl(final PooledByteBufferQueue byteBufferSet,
                          final ByteBuffer byteBuffer) {
         this.byteBufferSet = byteBufferSet;
         this.byteBuffer = byteBuffer;
@@ -46,7 +46,7 @@ class PooledByteBufferImpl implements PooledByteBuffer {
     /**
      * Release the underlying {@link ByteBuffer} back to the pool. Once released,
      * the {@link ByteBuffer} cannot be used any more and you should not retain any
-     * references to it. Identical behaviour to calling {@link stroom.bytebuffer.PooledByteBufferImpl#close()}.
+     * references to it. Identical behaviour to calling {@link stroom.bytebuffer.PooledByteBuffer#close()}.
      */
     @Override
     public void release() {
@@ -71,7 +71,7 @@ class PooledByteBufferImpl implements PooledByteBuffer {
     }
 
     /**
-     * Same as calling {@link stroom.bytebuffer.PooledByteBufferImpl#release()}
+     * Same as calling {@link stroom.bytebuffer.PooledByteBuffer#release()}
      */
     @Override
     public void close() {

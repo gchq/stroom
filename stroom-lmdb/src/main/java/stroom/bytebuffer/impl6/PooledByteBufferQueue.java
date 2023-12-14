@@ -1,13 +1,10 @@
 package stroom.bytebuffer.impl6;
 
-import stroom.bytebuffer.ByteBufferPoolConfig;
 import stroom.bytebuffer.ByteBufferSupport;
 import stroom.bytebuffer.PooledByteBuffer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
-
-import jakarta.inject.Provider;
 
 import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
@@ -18,13 +15,12 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
-class PooledByteBufferSet {
+class PooledByteBufferQueue {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(PooledByteBufferSet.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(PooledByteBufferQueue.class);
 
     private final BlockingQueue<ByteBuffer> queue;
 
-    private final Provider<ByteBufferPoolConfig> byteBufferPoolConfigProvider;
     // One counter for each size of buffer. Keeps track of the number of buffers known to the pool
     // whether in the pool or currently on loan. Each AtomicInteger will increase until it hits its
     // configured limit then will never go down unless clear() is called.
@@ -36,16 +32,30 @@ class PooledByteBufferSet {
     // The threshold for the number of created buffers (for each offset) to warn at.
     private final int warningThreshold;
 
-    public PooledByteBufferSet(final Provider<ByteBufferPoolConfig> byteBufferPoolConfigProvider,
-                               final AtomicInteger pooledBufferCounter,
-                               final int maxBufferCount,
-                               final int bufferSize,
-                               final int warningThreshold) {
-        this.byteBufferPoolConfigProvider = byteBufferPoolConfigProvider;
+    /**
+     * Whether the thread should be blocked when requesting a buffer from the pool and the
+     * limit for that buffer size has been reached. If false new buffers will be created and excess buffers
+     * will have to be destroyed when no longer needed which may have a performance/memory penalty
+     **/
+    private final boolean blockOnExhaustedPool;
+
+    /**
+     * When the number of created buffers for any size reaches this threshold a warning will be logged.
+     */
+    private final int warningThresholdPercentage;
+
+    public PooledByteBufferQueue(final AtomicInteger pooledBufferCounter,
+                                 final int maxBufferCount,
+                                 final int bufferSize,
+                                 final int warningThreshold,
+                                 final boolean blockOnExhaustedPool,
+                                 final int warningThresholdPercentage) {
         this.pooledBufferCounter = pooledBufferCounter;
         this.maxBufferCount = maxBufferCount;
         this.bufferSize = bufferSize;
         this.warningThreshold = warningThreshold;
+        this.blockOnExhaustedPool = blockOnExhaustedPool;
+        this.warningThresholdPercentage = warningThresholdPercentage;
         this.queue = new ArrayBlockingQueue<>(maxBufferCount);
     }
 
@@ -77,7 +87,7 @@ class PooledByteBufferSet {
         // None in the pool and not allowed to create any more pool buffers so we either
         // wait on the queue or just create an excess one that will have to be destroyed on release.
         // Creation of an excess one is a last resort due to the cost of creation/destruction
-        if (byteBufferPoolConfigProvider.get().isBlockOnExhaustedPool()) {
+        if (blockOnExhaustedPool) {
             try {
                 // At max pooled buffers so we just have to block and wait for another thread to release
                 LOGGER.debug("Taking from queue, may block");
@@ -120,7 +130,7 @@ class PooledByteBufferSet {
 
                     if (newBufferCount == warningThreshold) {
                         LOGGER.warn("Hit {}% ({}) of the limit of {} for pooled buffers of size {}.",
-                                byteBufferPoolConfigProvider.get().getWarningThresholdPercentage(),
+                                warningThresholdPercentage,
                                 warningThreshold,
                                 newBufferCount,
                                 bufferSize);
@@ -202,17 +212,13 @@ class PooledByteBufferSet {
         // be created again if needs be. It doesn't matter that this happens sometime later than
         // the draining of the queue.
         pooledBufferCounter.addAndGet(-1 * drainedBuffers.size());
-        int size = bufferSize;
-        msgs.add(size + ":" + drainedBuffers.size());
+        msgs.add(bufferSize + ":" + drainedBuffers.size());
 
         // Destroy all the cleared buffers
-        while (true) {
-            final ByteBuffer byteBuffer = drainedBuffers.poll();
-            if (byteBuffer == null) {
-                break;
-            } else {
-                unmapBuffer(byteBuffer);
-            }
+        ByteBuffer byteBuffer = drainedBuffers.poll();
+        while (byteBuffer != null) {
+            unmapBuffer(byteBuffer);
+            byteBuffer = drainedBuffers.poll();
         }
     }
 }

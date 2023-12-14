@@ -12,7 +12,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
 
-public class NonPooledByteBuffer implements PooledByteBuffer {
+class NonPooledByteBuffer implements PooledByteBuffer {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(NonPooledByteBuffer.class);
 
@@ -49,7 +49,7 @@ public class NonPooledByteBuffer implements PooledByteBuffer {
     /**
      * Release the underlying {@link ByteBuffer} back to the pool. Once released,
      * the {@link ByteBuffer} cannot be used any more and you should not retain any
-     * references to it. Identical behaviour to calling {@link stroom.bytebuffer.PooledByteBufferImpl#close()}.
+     * references to it. Identical behaviour to calling {@link stroom.bytebuffer.PooledByteBuffer#close()}.
      */
     @Override
     public void release() {
@@ -81,7 +81,7 @@ public class NonPooledByteBuffer implements PooledByteBuffer {
     }
 
     /**
-     * Same as calling {@link stroom.bytebuffer.PooledByteBufferImpl#release()}
+     * Same as calling {@link stroom.bytebuffer.PooledByteBuffer#release()}
      */
     @Override
     public void close() {
