@@ -27,7 +27,7 @@ import java.util.function.Supplier;
         name = And.NAME,
         commonCategory = FunctionCategory.LOGIC,
         commonReturnType = ValBoolean.class,
-        commonReturnDescription = "If all supplied arguments evaluate to true then return true else false.",
+        commonReturnDescription = "If all supplied arguments evaluate to true then return true, else false.",
         signatures = @FunctionSignature(
                 description = "Logical 'and' operator.",
                 args = {

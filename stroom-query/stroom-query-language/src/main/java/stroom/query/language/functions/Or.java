@@ -27,7 +27,8 @@ import java.util.function.Supplier;
         name = Or.NAME,
         commonCategory = FunctionCategory.LOGIC,
         commonReturnType = ValBoolean.class,
-        commonReturnDescription = "If one or more of the supplied arguments evaluate to true then return true else false.",
+        commonReturnDescription = "If one or more of the supplied arguments evaluate to true then return true, " +
+                "else false.",
         signatures = @FunctionSignature(
                 description = "Logical 'or' operator.",
                 args = {
