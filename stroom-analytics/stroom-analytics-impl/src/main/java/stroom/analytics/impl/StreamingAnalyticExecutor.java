@@ -203,7 +203,7 @@ public class StreamingAnalyticExecutor {
                                                            final AtomicBoolean allComplete) {
         final DocRef pipelineRef = groupKey.pipeline();
         final String ownerUuid = groupKey.ownerUuid();
-        if (analytics.size() > 0) {
+        if (!analytics.isEmpty()) {
             final UserIdentity userIdentity = securityContext.createIdentityByUserUuid(ownerUuid);
             return securityContext.asUserResult(userIdentity, () -> securityContext.useAsReadResult(() -> {
                 final String pipelineIdentity = pipelineRef.toInfoString();
@@ -238,7 +238,7 @@ public class StreamingAnalyticExecutor {
         });
 
         // Now process each stream with the pipeline.
-        if (sortedMetaList.size() > 0) {
+        if (!sortedMetaList.isEmpty()) {
             final PipelineData pipelineData = getPipelineData(pipelineDocRef);
             for (final Meta meta : sortedMetaList) {
                 if (!parentTaskContext.isTerminated()) {

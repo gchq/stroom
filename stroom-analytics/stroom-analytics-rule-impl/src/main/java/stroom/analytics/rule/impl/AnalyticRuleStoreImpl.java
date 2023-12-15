@@ -35,9 +35,9 @@ import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.query.common.v2.DataSourceProviderRegistry;
 import stroom.query.language.SearchRequestBuilder;
-import stroom.query.util.LambdaLogger;
-import stroom.query.util.LambdaLoggerFactory;
 import stroom.security.api.SecurityContext;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Message;
 
 import java.util.List;
