@@ -92,6 +92,7 @@ public abstract class AbstractToken {
         return sb.toString();
     }
 
+    @Override
     public String toString() {
         return toTokenString(false);
     }
