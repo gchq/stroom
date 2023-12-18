@@ -33,6 +33,8 @@ import stroom.query.language.token.TokenException;
 import stroom.query.language.token.TokenGroup;
 import stroom.query.language.token.TokenType;
 import stroom.query.language.token.Tokeniser;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import jakarta.inject.Inject;
 
@@ -51,6 +53,8 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class SearchRequestBuilder {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SearchRequestBuilder.class);
 
     public static final String TABLE_COMPONENT_ID = "table";
     public static final String VIS_COMPONENT_ID = "vis";
@@ -95,57 +99,64 @@ public class SearchRequestBuilder {
     public SearchRequest create(final String string,
                                 final SearchRequest in,
                                 final ExpressionContext expressionContext) {
-        Objects.requireNonNull(in, "Null sample request");
-        Objects.requireNonNull(expressionContext, "Null expression context");
-        Objects.requireNonNull(expressionContext.getDateTimeSettings(), "Null date time settings");
+        try {
+            Objects.requireNonNull(in, "Null sample request");
+            Objects.requireNonNull(expressionContext, "Null expression context");
+            Objects.requireNonNull(expressionContext.getDateTimeSettings(), "Null date time settings");
 
-        // Set the expression context.
-        this.expressionContext = expressionContext;
+            // Set the expression context.
+            this.expressionContext = expressionContext;
 
-        // Get a list of tokens.
-        final List<Token> tokens = Tokeniser.parse(string);
-        if (tokens.isEmpty()) {
-            throw new TokenException(null, "No tokens");
+            // Get a list of tokens.
+            final List<Token> tokens = Tokeniser.parse(string);
+            if (tokens.isEmpty()) {
+                throw new TokenException(null, "No tokens");
+            }
+
+            // Create structure.
+            final TokenGroup tokenGroup = StructureBuilder.create(tokens);
+
+            // Assume we have a root bracket group.
+            final List<AbstractToken> childTokens = tokenGroup.getChildren();
+
+            final Query.Builder queryBuilder = Query.builder();
+            if (in.getQuery() != null) {
+                queryBuilder.params(in.getQuery().getParams());
+                queryBuilder.timeRange(in.getQuery().getTimeRange());
+            }
+
+            // Keep track of consumed tokens to check token order.
+            final List<TokenType> consumedTokens = new ArrayList<>();
+
+            // Create result requests.
+            final List<ResultRequest> resultRequests = new ArrayList<>();
+            addTableSettings(childTokens, consumedTokens, resultRequests, queryBuilder);
+
+            // Try to make a query.
+            Query query = queryBuilder.build();
+            if (query.getDataSource() == null) {
+                throw new TokenException(null, "No data source has been specified.");
+            }
+
+            // Make sure there is a non-null expression.
+            if (query.getExpression() == null) {
+                query = query.copy().expression(ExpressionOperator.builder().build()).build();
+            }
+
+            return new SearchRequest(
+                    in.getSearchRequestSource(),
+                    in.getKey(),
+                    query,
+                    resultRequests,
+                    in.getDateTimeSettings(),
+                    in.incremental(),
+                    in.getTimeout());
+
+        } catch (final Throwable e) {
+            LOGGER.error(() -> "Error creating search request from '" + string + "'", e);
+            LOGGER.error(e::getMessage, e);
+            throw e;
         }
-
-        // Create structure.
-        final TokenGroup tokenGroup = StructureBuilder.create(tokens);
-
-        // Assume we have a root bracket group.
-        final List<AbstractToken> childTokens = tokenGroup.getChildren();
-
-        final Query.Builder queryBuilder = Query.builder();
-        if (in.getQuery() != null) {
-            queryBuilder.params(in.getQuery().getParams());
-            queryBuilder.timeRange(in.getQuery().getTimeRange());
-        }
-
-        // Keep track of consumed tokens to check token order.
-        final List<TokenType> consumedTokens = new ArrayList<>();
-
-        // Create result requests.
-        final List<ResultRequest> resultRequests = new ArrayList<>();
-        addTableSettings(childTokens, consumedTokens, resultRequests, queryBuilder);
-
-        // Try to make a query.
-        Query query = queryBuilder.build();
-        if (query.getDataSource() == null) {
-            throw new TokenException(null, "No data source has been specified.");
-        }
-
-        // Make sure there is a non-null expression.
-        if (query.getExpression() == null) {
-            query = query.copy().expression(ExpressionOperator.builder().build()).build();
-        }
-
-        return new SearchRequest(
-                in.getSearchRequestSource(),
-                in.getKey(),
-                query,
-                resultRequests,
-                in.getDateTimeSettings(),
-                in.incremental(),
-                in.getTimeout());
     }
 
     /**

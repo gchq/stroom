@@ -149,21 +149,26 @@ public class CompletableQueue<T> {
 
     public void complete() {
         final ReentrantLock lock = this.lock;
+
         try {
             lock.lockInterruptibly();
-            while (!complete && count == items.length) {
-                notFull.await();
-            }
-            if (!complete) {
-                enqueue(COMPLETE);
-            } else {
-                notEmpty.signal();
+            try {
+                while (!complete && count == items.length) {
+                    notFull.await();
+                }
+                if (!complete) {
+                    enqueue(COMPLETE);
+                } else {
+                    notEmpty.signal();
+                }
+            } finally {
+                lock.unlock();
             }
         } catch (final InterruptedException e) {
-            complete = true;
             terminate();
-        } finally {
-            lock.unlock();
+
+            // Reestablish interrupt state.
+            Thread.currentThread().interrupt();
         }
     }
 

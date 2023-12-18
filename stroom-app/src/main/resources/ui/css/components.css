@@ -837,13 +837,12 @@
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    background-color: var(--blue-500);
 }
 
 .aboutViewImpl-logo svg {
     width: 150px;
     height: 40px;
-    color: white;
+    color: var(--logo-color);
 }
 
 .aboutViewImpl-body {
@@ -1467,6 +1466,7 @@
 .navigation-logo-image svg {
     width: 146px;
     height: 35px;
+    color: var(--logo-color);
 }
 
 .navigation-arrow-image svg {

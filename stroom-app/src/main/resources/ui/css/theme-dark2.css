@@ -200,6 +200,7 @@
     --navigation__text-color: #e6e1dc;
     --navigation__text-color--selected: #fff;
     --navigation__text-color--no-match: #7b7b7b;
+    --logo-color: var(--white);
 
     /* Specific */
     --header__icon-color: #2185d0;

@@ -192,6 +192,34 @@ class TestStroomStreamProcessor {
         doCheckOrder(byteArrayOutputStream, zipFile);
 
         try (final StroomZipFile stroomZipFile = new StroomZipFile(zipFile)) {
+            // txt is not a standard ext so we don't know if it is an extension or just a filename
+            // with a dot in it. Meta files become 1.txt.meta
+            assertThat(StreamUtil.streamToString(stroomZipFile.getInputStream("1.txt", StroomZipFileType.DATA)))
+                    .isEqualTo("data");
+            assertMeta(stroomZipFile, "1.txt", "TEST:VALUE");
+            assertThat(StreamUtil.streamToString(stroomZipFile.getInputStream("2.txt", StroomZipFileType.DATA)))
+                    .isEqualTo("data");
+            assertMeta(stroomZipFile, "2.txt", "TEST:VALUE");
+
+            assertMeta(stroomZipFile, "2.txt", "TEST:VALUE");
+        }
+    }
+
+    @Test
+    void testOrder1b() throws IOException {
+        final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        try (final ZipOutputStream zipOutputStream = new ZipOutputStream(byteArrayOutputStream)) {
+            for (int i = 1; i <= 10; i++) {
+                zipOutputStream.putNextEntry(new ZipEntry(i + ".dat"));
+                zipOutputStream.write("data".getBytes(StreamUtil.DEFAULT_CHARSET));
+                zipOutputStream.closeEntry();
+            }
+        }
+
+        final Path zipFile = Files.createTempFile("test", "zip");
+        doCheckOrder(byteArrayOutputStream, zipFile);
+
+        try (final StroomZipFile stroomZipFile = new StroomZipFile(zipFile)) {
             assertThat(StreamUtil.streamToString(stroomZipFile.getInputStream("1", StroomZipFileType.DATA)))
                     .isEqualTo("data");
             assertMeta(stroomZipFile, "1", "TEST:VALUE");

@@ -260,6 +260,12 @@ public class StroomStreamProcessor {
                 }
 
                 final String entryName = prefix + zipEntry.getName();
+                if (zipEntry.isDirectory()) {
+                    // No point sending the directory entries over
+                    LOGGER.debug("Skipping directory zip entry {}", entryName);
+                    continue;
+                }
+
                 final long uncompressedSize = zipEntry.getSize();
                 final StroomZipEntry stroomZipEntry = stroomZipEntries.addFile(entryName);
 

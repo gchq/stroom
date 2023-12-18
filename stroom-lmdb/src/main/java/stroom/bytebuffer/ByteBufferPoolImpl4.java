@@ -75,6 +75,10 @@ public class ByteBufferPoolImpl4 implements ByteBufferPool {
 
     // If no count is provided for a buffer size in the config then this value is used.
     private static final int DEFAULT_MAX_BUFFERS_PER_QUEUE = 50;
+    // The offset for a one byte buffer
+    private static final int ONE_BYTE_BUFFER_OFFSET = 0;
+    // The offset for a ten byte buffer
+    private static final int TEN_BYTE_BUFFER_OFFSET = 1;
 
     // In each of these collections, the index/offset is the log10 of the buffer size,
     // i.e. 1 => 0, 10 => 1, 100 => 2 etc.
@@ -523,8 +527,17 @@ public class ByteBufferPoolImpl4 implements ByteBufferPool {
         return byteBuffer;
     }
 
-    private int getOffset(final int minCapacity) {
-        return (int) Math.ceil(Math.log10(minCapacity));
+    // Pkg private for testing
+    static int getOffset(final int minCapacity) {
+        if (minCapacity <= 10) {
+            // Minor optimisation as a lot of the requests for buffers will be for int/longs
+            // so this saves a bit of maths.
+            return minCapacity <= 1
+                    ? ONE_BYTE_BUFFER_OFFSET
+                    : TEN_BYTE_BUFFER_OFFSET;
+        } else {
+            return (int) Math.ceil(Math.log10(minCapacity));
+        }
     }
 
     private int getNextOffset(final int offset) {

@@ -1,7 +1,11 @@
 package stroom.bytebuffer;
 
+import stroom.test.common.TestUtil;
+
 import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,6 +17,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 class TestByteBufferPoolImpl4 {
 
@@ -327,5 +332,26 @@ class TestByteBufferPoolImpl4 {
                     .isFalse();
             i *= 10;
         }
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testGetOffset() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputAndOutputType(int.class)
+                .withSingleArgTestFunction(ByteBufferPoolImpl4::getOffset)
+                .withSimpleEqualityAssertion()
+                .addCase(-1, 0)
+                .addCase(0, 0)
+                .addCase(1, 0)
+                .addCase(2, 1)
+                .addCase(10, 1)
+                .addCase(11, 2)
+                .addCase(100, 2)
+                .addCase(101, 3)
+                .addCase(1000, 3)
+                .addCase(1001, 4)
+                .addCase(10000, 4)
+                .addCase(10001, 5)
+                .build();
     }
 }

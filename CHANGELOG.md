@@ -13,6 +13,17 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Issue **#3913** : Change zip data handling so unknown file extensions are treated as part of the base name, e.g. `001.unknown` gets a base name of `001.unknown` (unless we see a known extension like `001.ctx` in which case `001.unknown` gets a base name of `001`), `abc.xyz.10001` gets a base name of `abc.xyz.10001`.
+
+* Issue **#3945** : Fix light theme colours.
+
+* Issue **#3942** : Fix user identity in audit logging.
+
+* Issue **#3939** : Fix issue changing editor them in user preferences.
+
+* Issue **#3938** : Fix `lockInterruptibly` on `CompletableQueue`.
+
+
 ## [v7.3-beta.4] - 2023-12-04
 
 * Issue **#3867** : Add support for Lucene 9.8.0.
@@ -31,13 +42,7 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 
 * Issue **#3933** : Improvements to selection box.
 
-
-## [v7.2.8] - 2023-11-30
-
 * Issue **#3935** : The `having` clause can now compare two computed row values.
-
-
-## [v7.2.7] - 2023-11-28
 
 * Remove 5s thread sleep left in the code from testing. This sleep happens when a legacy ref data stream is migrated.
 
@@ -48,9 +53,6 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3926** : Add the CLI command `fetch_proc_user_token` to obtain an OIDC access token for the internal processing user. This command is useful for getting a token to be able to call stroom's APIs to manage a cluster.
 
 * Issue **#3929** : Fix stuck searches.
-
-
-## [v7.2.6] - 2023-11-15
 
 * Issue **#3909** : Add multiple recipients to rule notification emails.
 
