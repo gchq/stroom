@@ -13,6 +13,17 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2.12] - 2023-12-19
+
+* Add minor performance optimisation to the byte buffer pool used by the reference data store.
+
+* Issue **#3953** : Fix search buffer size issue.
+
+* Issue **#3948** : Add `and` and `or` functions.
+
+* Issue **#3956** : Add debug to diagnose expression parsing issue.
+
+
 ## [v7.2.11] - 2023-12-13
 
 * Issue **#3913** : Change zip data handling so unknown file extensions are treated as part of the base name, e.g. `001.unknown` gets a base name of `001.unknown` (unless we see a known extension like `001.ctx` in which case `001.unknown` gets a base name of `001`), `abc.xyz.10001` gets a base name of `abc.xyz.10001`.
@@ -6199,7 +6210,8 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2.11...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2.12...HEAD
+[v7.2.12]: https://github.com/gchq/stroom/compare/v7.2.11...v7.2.12
 [v7.2.11]: https://github.com/gchq/stroom/compare/v7.2.10...v7.2.11
 [v7.2.10]: https://github.com/gchq/stroom/compare/v7.2.9...v7.2.10
 [v7.2.9]: https://github.com/gchq/stroom/compare/v7.2.8...v7.2.9
