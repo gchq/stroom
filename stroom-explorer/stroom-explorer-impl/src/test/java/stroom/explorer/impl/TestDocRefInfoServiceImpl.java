@@ -78,7 +78,7 @@ class TestDocRefInfoServiceImpl {
                     final DocRef docRef = invocation.getArgument(0);
                     return Optional.ofNullable(CACHE_DATA.get(docRef));
                 })
-                .when(mockDocRefInfoCache).get(Mockito.any());
+                .when(mockDocRefInfoCache).get(Mockito.any(DocRef.class));
     }
 
     @Test

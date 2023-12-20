@@ -111,12 +111,13 @@ class DocRefInfoServiceImpl implements DocRefInfoService {
     @Override
     public DocRef decorate(final DocRef docRef, final boolean force) {
         Objects.requireNonNull(docRef);
-        Objects.requireNonNull(docRef.getType(), "DocRef type is not set.");
         Objects.requireNonNull(docRef.getUuid(), "DocRef UUID is not set.");
 
-        // The passed docRef may have a name, but it may be from before a rename, so if force
-        // is set, use the cached copy which should be up to date.
-        if (NullSafe.isEmptyString(docRef.getName()) || force) {
+        // The passed docRef may have all the parts, but it may be from before a rename, so if force
+        // is set, use the cached copy which should be up-to-date.
+        if (NullSafe.isEmptyString(docRef.getType())
+                || NullSafe.isEmptyString(docRef.getName())
+                || force) {
             return docRefInfoCache.get(docRef)
                     .map(DocRefInfo::getDocRef)
                     .orElseThrow(() -> new RuntimeException("No docRefInfo for docRef: " + docRef));
