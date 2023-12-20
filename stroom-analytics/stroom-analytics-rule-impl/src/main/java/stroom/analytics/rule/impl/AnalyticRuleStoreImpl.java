@@ -34,7 +34,7 @@ import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.query.common.v2.DataSourceProviderRegistry;
-import stroom.query.language.SearchRequestBuilder;
+import stroom.query.language.SearchRequestFactory;
 import stroom.security.api.SecurityContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -58,18 +58,18 @@ class AnalyticRuleStoreImpl implements AnalyticRuleStore {
     private final Store<AnalyticRuleDoc> store;
     private final SecurityContext securityContext;
     private final Provider<DataSourceProviderRegistry> dataSourceProviderRegistryProvider;
-    private final SearchRequestBuilder searchRequestBuilder;
+    private final SearchRequestFactory searchRequestFactory;
 
     @Inject
     AnalyticRuleStoreImpl(final StoreFactory storeFactory,
                           final AnalyticRuleSerialiser serialiser,
                           final SecurityContext securityContext,
                           final Provider<DataSourceProviderRegistry> dataSourceProviderRegistryProvider,
-                          final SearchRequestBuilder searchRequestBuilder) {
+                          final SearchRequestFactory searchRequestFactory) {
         this.store = storeFactory.createStore(serialiser, AnalyticRuleDoc.DOCUMENT_TYPE, AnalyticRuleDoc.class);
         this.securityContext = securityContext;
         this.dataSourceProviderRegistryProvider = dataSourceProviderRegistryProvider;
-        this.searchRequestBuilder = searchRequestBuilder;
+        this.searchRequestFactory = searchRequestFactory;
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -178,7 +178,7 @@ class AnalyticRuleStoreImpl implements AnalyticRuleStore {
         return (doc, dependencyRemapper) -> {
             try {
                 if (doc.getQuery() != null) {
-                    searchRequestBuilder.extractDataSourceOnly(doc.getQuery(), docRef -> {
+                    searchRequestFactory.extractDataSourceOnly(doc.getQuery(), docRef -> {
                         try {
                             if (docRef != null) {
                                 final Optional<DataSource> optional = dataSourceProviderRegistryProvider

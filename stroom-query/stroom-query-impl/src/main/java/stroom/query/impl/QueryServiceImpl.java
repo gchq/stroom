@@ -40,7 +40,7 @@ import stroom.query.api.v2.TimeRange;
 import stroom.query.common.v2.DataSourceProviderRegistry;
 import stroom.query.common.v2.ExpressionContextFactory;
 import stroom.query.common.v2.ResultStoreManager;
-import stroom.query.language.SearchRequestBuilder;
+import stroom.query.language.SearchRequestFactory;
 import stroom.query.language.token.TokenException;
 import stroom.query.shared.DownloadQueryResultsRequest;
 import stroom.query.shared.QueryContext;
@@ -89,7 +89,7 @@ class QueryServiceImpl implements QueryService {
     private final ViewStore viewStore;
     private final ResultStoreManager searchResponseCreatorManager;
     private final NodeInfo nodeInfo;
-    private final SearchRequestBuilder searchRequestBuilder;
+    private final SearchRequestFactory searchRequestFactory;
     private final ExpressionContextFactory expressionContextFactory;
 
     @Inject
@@ -104,7 +104,7 @@ class QueryServiceImpl implements QueryService {
                      final ViewStore viewStore,
                      final ResultStoreManager searchResponseCreatorManager,
                      final NodeInfo nodeInfo,
-                     final SearchRequestBuilder searchRequestBuilder,
+                     final SearchRequestFactory searchRequestFactory,
                      final ExpressionContextFactory expressionContextFactory) {
         this.queryStore = queryStore;
         this.documentResourceHelper = documentResourceHelper;
@@ -117,7 +117,7 @@ class QueryServiceImpl implements QueryService {
         this.viewStore = viewStore;
         this.searchResponseCreatorManager = searchResponseCreatorManager;
         this.nodeInfo = nodeInfo;
-        this.searchRequestBuilder = searchRequestBuilder;
+        this.searchRequestFactory = searchRequestFactory;
         this.expressionContextFactory = expressionContextFactory;
     }
 
@@ -367,7 +367,7 @@ class QueryServiceImpl implements QueryService {
                 dateTimeSettings,
                 searchRequest.isIncremental());
         final ExpressionContext expressionContext = expressionContextFactory.createContext(sampleRequest);
-        SearchRequest mappedRequest = searchRequestBuilder.create(query, sampleRequest, expressionContext);
+        SearchRequest mappedRequest = searchRequestFactory.create(query, sampleRequest, expressionContext);
 
         // Fix table result requests.
         final List<ResultRequest> resultRequests = mappedRequest.getResultRequests();
@@ -504,7 +504,7 @@ class QueryServiceImpl implements QueryService {
         return securityContext.useAsReadResult(() -> {
             final AtomicReference<DataSource> ref = new AtomicReference<>();
             try {
-                searchRequestBuilder.extractDataSourceOnly(query, docRef ->
+                searchRequestFactory.extractDataSourceOnly(query, docRef ->
                         ref.set(getDataSource(docRef).orElse(null)));
             } catch (final RuntimeException e) {
                 LOGGER.debug(e::getMessage, e);
