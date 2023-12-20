@@ -39,7 +39,7 @@ import stroom.query.common.v2.ResultStoreManager.RequestAndStore;
 import stroom.query.common.v2.SimpleRowCreator;
 import stroom.query.common.v2.format.ColumnFormatter;
 import stroom.query.common.v2.format.FormatterFactory;
-import stroom.query.language.SearchRequestBuilder;
+import stroom.query.language.SearchRequestFactory;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.ref.ErrorConsumer;
 import stroom.security.api.SecurityContext;
@@ -89,7 +89,7 @@ public class ScheduledQueryAnalyticExecutor {
     private final NotificationStateService notificationStateService;
     private final Provider<ErrorReceiverProxy> errorReceiverProxyProvider;
     private final DetectionConsumerFactory detectionConsumerFactory;
-    private final SearchRequestBuilder searchRequestBuilder;
+    private final SearchRequestFactory searchRequestFactory;
     private final ExpressionContextFactory expressionContextFactory;
     private final SecurityContext securityContext;
 
@@ -105,7 +105,7 @@ public class ScheduledQueryAnalyticExecutor {
                                    final NotificationStateService notificationStateService,
                                    final Provider<ErrorReceiverProxy> errorReceiverProxyProvider,
                                    final DetectionConsumerFactory detectionConsumerFactory,
-                                   final SearchRequestBuilder searchRequestBuilder,
+                                   final SearchRequestFactory searchRequestFactory,
                                    final ExpressionContextFactory expressionContextFactory,
                                    final SecurityContext securityContext) {
         this.analyticHelper = analyticHelper;
@@ -119,7 +119,7 @@ public class ScheduledQueryAnalyticExecutor {
         this.notificationStateService = notificationStateService;
         this.errorReceiverProxyProvider = errorReceiverProxyProvider;
         this.detectionConsumerFactory = detectionConsumerFactory;
-        this.searchRequestBuilder = searchRequestBuilder;
+        this.searchRequestFactory = searchRequestFactory;
         this.expressionContextFactory = expressionContextFactory;
         this.securityContext = securityContext;
     }
@@ -247,7 +247,7 @@ public class ScheduledQueryAnalyticExecutor {
                 final SearchRequestSource searchRequestSource = SearchRequestSource
                         .builder()
                         .sourceType(SourceType.SCHEDULED_QUERY_ANALYTIC)
-                        .componentId(SearchRequestBuilder.TABLE_COMPONENT_ID)
+                        .componentId(SearchRequestFactory.TABLE_COMPONENT_ID)
                         .build();
 
                 final String query = analytic.analyticRuleDoc().getQuery();
@@ -264,7 +264,7 @@ public class ScheduledQueryAnalyticExecutor {
                         DateTimeSettings.builder().build(),
                         false);
                 final ExpressionContext expressionContext = expressionContextFactory.createContext(sampleRequest);
-                SearchRequest mappedRequest = searchRequestBuilder.create(query, sampleRequest, expressionContext);
+                SearchRequest mappedRequest = searchRequestFactory.create(query, sampleRequest, expressionContext);
 
                 // Fix table result requests.
                 final List<ResultRequest> resultRequests = mappedRequest.getResultRequests();
@@ -279,7 +279,7 @@ public class ScheduledQueryAnalyticExecutor {
                     final SearchRequest modifiedRequest = requestAndStore.searchRequest();
                     try {
                         final DataStore dataStore = requestAndStore
-                                .resultStore().getData(SearchRequestBuilder.TABLE_COMPONENT_ID);
+                                .resultStore().getData(SearchRequestFactory.TABLE_COMPONENT_ID);
                         dataStore.getCompletionState().awaitCompletion();
 
                         final TableSettings tableSettings = resultRequest.getMappings().get(0);

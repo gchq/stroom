@@ -13,7 +13,7 @@ import stroom.processor.shared.ProcessorType;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.query.language.SearchRequestBuilder;
+import stroom.query.language.SearchRequestFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ResultPage;
@@ -31,17 +31,17 @@ public class AnalyticRuleProcessors {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AnalyticRuleProcessors.class);
 
-    private final SearchRequestBuilder searchRequestBuilder;
+    private final SearchRequestFactory searchRequestFactory;
     private final ProcessorService processorService;
     private final ProcessorFilterService processorFilterService;
     private final ViewStore viewStore;
 
     @Inject
-    public AnalyticRuleProcessors(final SearchRequestBuilder searchRequestBuilder,
+    public AnalyticRuleProcessors(final SearchRequestFactory searchRequestFactory,
                                   final ProcessorService processorService,
                                   final ProcessorFilterService processorFilterService,
                                   final ViewStore viewStore) {
-        this.searchRequestBuilder = searchRequestBuilder;
+        this.searchRequestFactory = searchRequestFactory;
         this.processorService = processorService;
         this.processorFilterService = processorFilterService;
         this.viewStore = viewStore;
@@ -110,7 +110,7 @@ public class AnalyticRuleProcessors {
         final AtomicReference<ViewDoc> reference = new AtomicReference<>();
         try {
             if (query != null) {
-                searchRequestBuilder.extractDataSourceOnly(query, docRef -> {
+                searchRequestFactory.extractDataSourceOnly(query, docRef -> {
                     try {
                         if (docRef != null) {
                             reference.set(viewStore.readDocument(docRef));
