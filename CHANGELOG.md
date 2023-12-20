@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2.13] - 2023-12-20
+
+* Issue **#3956** : Fix SearchRequestBuilder reuse.
+
+
 ## [v7.2.12] - 2023-12-19
 
 * Add minor performance optimisation to the byte buffer pool used by the reference data store.
@@ -6210,7 +6215,8 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2.12...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2.13...HEAD
+[v7.2.13]: https://github.com/gchq/stroom/compare/v7.2.12...v7.2.13
 [v7.2.12]: https://github.com/gchq/stroom/compare/v7.2.11...v7.2.12
 [v7.2.11]: https://github.com/gchq/stroom/compare/v7.2.10...v7.2.11
 [v7.2.10]: https://github.com/gchq/stroom/compare/v7.2.9...v7.2.10
