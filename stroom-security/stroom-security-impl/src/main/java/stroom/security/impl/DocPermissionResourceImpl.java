@@ -24,6 +24,7 @@ import stroom.security.shared.DocumentPermissions;
 import stroom.security.shared.FetchAllDocumentPermissionsRequest;
 import stroom.security.shared.FilterUsersRequest;
 import stroom.security.shared.FindUserCriteria;
+import stroom.security.shared.PermissionChangeImpactSummary;
 import stroom.security.shared.PermissionNames;
 import stroom.security.shared.User;
 import stroom.util.NullSafe;
@@ -35,6 +36,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.PermissionException;
+import stroom.util.shared.StringUtil;
 import stroom.util.shared.UserName;
 
 import com.google.common.base.Strings;
@@ -55,6 +57,7 @@ import event.logging.UpdateEventAction;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -65,6 +68,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
@@ -84,10 +88,10 @@ class DocPermissionResourceImpl implements DocPermissionResource {
     private final Provider<ExplorerNodeService> explorerNodeServiceProvider;
     private final Provider<StroomEventLoggingService> stroomEventLoggingServiceProvider;
     private final Provider<DocRefInfoService> docRefInfoServiceProvider;
+    private final Provider<UserCache> userCacheProvider;
     //Todo
     // Permission checking should be responsibility of underlying service rather than REST resource impl
     private final Provider<SecurityContext> securityContextProvider;
-
 
     @Inject
     DocPermissionResourceImpl(final Provider<UserService> userServiceProvider,
@@ -96,7 +100,8 @@ class DocPermissionResourceImpl implements DocPermissionResource {
                               final Provider<ExplorerNodeService> explorerNodeServiceProvider,
                               final Provider<SecurityContext> securityContextProvider,
                               final Provider<StroomEventLoggingService> stroomEventLoggingServiceProvider,
-                              final Provider<DocRefInfoService> docRefInfoServiceProvider) {
+                              final Provider<DocRefInfoService> docRefInfoServiceProvider,
+                              final Provider<UserCache> userCacheProvider) {
         this.userServiceProvider = userServiceProvider;
         this.documentPermissionServiceProvider = documentPermissionServiceProvider;
         this.documentTypePermissionsProvider = documentTypePermissionsProvider;
@@ -104,6 +109,7 @@ class DocPermissionResourceImpl implements DocPermissionResource {
         this.securityContextProvider = securityContextProvider;
         this.stroomEventLoggingServiceProvider = stroomEventLoggingServiceProvider;
         this.docRefInfoServiceProvider = docRefInfoServiceProvider;
+        this.userCacheProvider = userCacheProvider;
     }
 
     @Override
@@ -120,29 +126,12 @@ class DocPermissionResourceImpl implements DocPermissionResource {
 
             // Change the permissions of the document.
             final Changes changes = request.getChanges();
-            final List<String> validationMessages = new ArrayList<>();
-            try {
-                changeDocPermissionsWithLogging(
-                        docRef,
-                        changes,
-                        affectedDocRefs,
-                        affectedUserUuids,
-                        request.getCascade());
-
-            } catch (PermissionException e) {
-                if (request.getCascade() != null) {
-                    throw e;
-                } else {
-                    validationMessages.add(e.getMessage());
-                }
-            }
-
-            if (!validationMessages.isEmpty()) {
-                throw new PermissionException(
-                        getCurrentUserIdForDisplay(),
-                        String.join("\n", validationMessages));
-            }
-
+            changeDocPermissionsWithLogging(
+                    docRef,
+                    changes,
+                    affectedDocRefs,
+                    affectedUserUuids,
+                    request.getCascade());
             return true;
         }
 
@@ -151,6 +140,176 @@ class DocPermissionResourceImpl implements DocPermissionResource {
         logPermissionChangeError("DocPermissionResourceImpl.changeDocumentPermissions",
                 request.getDocRef(), errorMessage);
         throw new PermissionException(getCurrentUserIdForDisplay(), errorMessage);
+    }
+
+    @Override
+    @AutoLogged(OperationType.UNLOGGED)
+    public PermissionChangeImpactSummary fetchPermissionChangeImpact(final ChangeDocumentPermissionsRequest request) {
+        final PermissionState permissionState = buildPermissionState(
+                request.getDocRef(), request.getChanges(), request.getCascade());
+
+        final List<String> errorMessages = validateChanges(permissionState);
+        if (!errorMessages.isEmpty()) {
+            throw new PermissionException(getCurrentUserIdForDisplay(), String.join("\n", errorMessages));
+        }
+
+        String summary = "";
+        final List<String> impactDetail = new ArrayList<>();
+        if (permissionState.hasDescendants()) {
+            final SecurityContext securityContext = securityContextProvider.get();
+            final UserCache userCache = userCacheProvider.get();
+
+            final List<DocRef> descendantsWithOwnerPerm = permissionState.descendants.stream()
+                    .filter(descendantDocRef -> securityContext.hasDocumentPermission(
+                            descendantDocRef, DocumentPermissionNames.OWNER))
+                    .toList();
+
+            if (descendantsWithOwnerPerm.isEmpty()) {
+                summary = "You do not have the required permission to change the permissions of " +
+                                "any descendant documents. Only this document will be modified.";
+            } else {
+                final int descendantsWithOwnerPermCount = descendantsWithOwnerPerm.size();
+                final String descendantCountStr = permissionState.descendants.size() != descendantsWithOwnerPermCount
+                        ? descendantsWithOwnerPermCount
+                        + " descendant documents. You do not have permission to change some descendant documents."
+                        : "all " + permissionState.descendants.size() + " descendant documents.";
+
+                String ownerChangeMsg = "";
+                if (shouldChangeOwner(permissionState, permissionState.getTopLevelDocRef().getUuid())) {
+                    final int ownerChangeCount = Math.toIntExact(descendantsWithOwnerPerm.stream()
+                            .filter(descendantDocRef ->
+                                    permissionState.isOwnerChanging(descendantDocRef.getUuid()))
+                            .count());
+
+                    if (ownerChangeCount > 0) {
+                        ownerChangeMsg = buildOwnerChangeMessage(ownerChangeCount, permissionState, userCache);
+
+                        // Legacy code allowed a doc to have multiple users, this is no longer allowed in the UI, but
+                        // we have to tolerate legacy data.
+                        final List<DocRef> descendantsWithMultipleOwners = descendantsWithOwnerPerm.stream()
+                                .filter(docRef -> permissionState.getCurrentOwnerUuids(docRef.getUuid()).size() > 1)
+                                .toList();
+                        if (!descendantsWithMultipleOwners.isEmpty()) {
+                            impactDetail.add("The following "
+                                    + StringUtil.pluralSuffix("document", descendantsWithMultipleOwners.size())
+                                    + " currently "
+                                    + StringUtil.plural(
+                                            "has", "have", descendantsWithMultipleOwners.size())
+                                    + " multiple owners.");
+                            impactDetail.add("Ownership" +
+                                    " will be REMOVED from all existing owners and assigned to "
+                                    + convertToTypedUserName(
+                                    permissionState.getTopLevelOwnerUuid(), userCache, true)
+                                    + ".");
+                            for (final DocRef docRef : descendantsWithMultipleOwners) {
+                                impactDetail.add(indent(getDocIdentity(docRef.getUuid()), 1, false)
+                                        + " with existing owners:");
+                                permissionState.getCurrentOwnerUuids(docRef.getUuid())
+                                        .stream()
+                                        .map(userUuid -> convertToTypedUserName(userUuid, userCache, false))
+                                        .map(str -> indent(str, 2, false))
+                                        .forEach(impactDetail::add);
+                            }
+                        }
+                    }
+                }
+
+                switch (request.getCascade()) {
+                    case NO -> summary = null;
+                    case ALL -> summary = "All permissions assigned to this document will be applied to "
+                            + descendantCountStr
+                            + ownerChangeMsg;
+                    case CHANGES_ONLY -> {
+                        impactDetail.addAll(getChangeDetail(permissionState.changes, userCache));
+                        summary = "The following permission changes will be applied to "
+                                + descendantCountStr
+                                + ownerChangeMsg;
+                    }
+                };
+            }
+        } else {
+            summary = "There are no descendant documents. Only this document will be modified.";
+        }
+        if (!NullSafe.isBlankString(summary)) {
+            summary += "\nDo you wish to continue?";
+        }
+        return new PermissionChangeImpactSummary(summary, String.join("\n", impactDetail));
+    }
+
+    private String buildOwnerChangeMessage(final int ownerChangeCount,
+                             final PermissionState permissionState,
+                             final UserCache userCache) {
+        String ownerChangeMsg;
+        ownerChangeMsg = "\nThe ownership of "
+                + ownerChangeCount
+                + " descendant document"
+                + StringUtil.pluralSuffix("document", ownerChangeCount)
+                + " will be changed to "
+                + convertToTypedUserName(permissionState.getTopLevelOwnerUuid(), userCache, true)
+                + ". Any existing owners will lose the permissions implied by the Owner permission.";
+        return ownerChangeMsg;
+    }
+
+    private List<String> getChangeDetail(final Changes changes, final UserCache userCache) {
+
+        final List<String> msgs = new ArrayList<>();
+        if (NullSafe.test(changes, Changes::hasChanges)) {
+            final List<UserUuidAndTypedName> allUsers = Stream.of(
+                            changes.getAdd(),
+                            changes.getRemove())
+                    .filter(Objects::nonNull)
+                    .flatMap(map -> map.keySet().stream())
+                    .distinct()
+                    .map(userUuid -> new UserUuidAndTypedName(
+                            userUuid,
+                            convertToTypedUserName(userUuid, userCache, false)))
+                    .sorted(Comparator.comparing(UserUuidAndTypedName::typedName))
+                    .toList();
+
+            if (allUsers.isEmpty()) {
+                msgs.add("No changes to apply.");
+            } else {
+                allUsers.forEach(userUuidAndTypedName -> {
+                    final List<String> removes = permsAsListWithoutOwner(
+                            changes.getRemove().get(userUuidAndTypedName.userUuid));
+                    final List<String> adds = permsAsListWithoutOwner(
+                            changes.getAdd().get(userUuidAndTypedName.userUuid));
+                    if (!removes.isEmpty() || !adds.isEmpty()) {
+                        final StringBuilder sb = new StringBuilder();
+                        sb.append(userUuidAndTypedName.typedName)
+                                .append(":");
+                        final String level3Indent = indent(3, true);
+                        if (!removes.isEmpty()) {
+                            indent(sb, "REMOVE: ", 2, true);
+                            if (removes.size() > 1) {
+                                sb.append(level3Indent);
+                            }
+                            sb.append(String.join(level3Indent, removes));
+                        }
+                        if (!adds.isEmpty()) {
+                            indent(sb, "ADD: ", 2, true);
+                            if (adds.size() > 1) {
+                                sb.append(level3Indent);
+                            }
+                            sb.append(String.join(level3Indent, adds));
+                        }
+                        msgs.add(sb.toString());
+                    }
+                });
+                return msgs;
+            }
+        } else {
+            // No changes
+            msgs.add("No changes to apply.");
+        }
+        return msgs;
+    }
+
+    private static <T> List<T> permsAsListWithoutOwner(final Set<T> set) {
+        return NullSafe.stream(set)
+                .filter(perm -> !DocumentPermissionNames.OWNER.equals(perm))
+                .sorted()
+                .toList();
     }
 
     @Override
@@ -207,7 +366,7 @@ class DocPermissionResourceImpl implements DocPermissionResource {
         }
 
         LOGGER.debug(() -> "Returning permissions:\n  " + String.join("\n  ", mapPerms(
-                userServiceProvider.get(),
+                userCacheProvider.get(),
                 updatedDocumentPermissions.getPermissions())));
         return updatedDocumentPermissions;
     }
@@ -351,7 +510,7 @@ class DocPermissionResourceImpl implements DocPermissionResource {
                         .withAfter(before) // If successful we overwrite with after, but ensures we have one
                         .build())
                 .withComplexLoggedAction(updateEventAction -> {
-                    doAuditedWork(permissionState, affectedDocRefs, affectedUserUuids);
+                    doPermissionChange(permissionState, affectedDocRefs, affectedUserUuids);
 
                     final DocumentPermissions documentPermissionsAfter = documentPermissionServiceProvider.get()
                             .getPermissionsForDocument(docRef.getUuid());
@@ -365,9 +524,9 @@ class DocPermissionResourceImpl implements DocPermissionResource {
                 .runActionAndLog();
     }
 
-    private void doAuditedWork(final PermissionState permissionState,
-                               final Set<DocRef> affectedDocRefs,
-                               final Set<String> affectedUserUuids) {
+    private void doPermissionChange(final PermissionState permissionState,
+                                    final Set<DocRef> affectedDocRefs,
+                                    final Set<String> affectedUserUuids) {
         final List<String> messages = new ArrayList<>(validateChanges(permissionState));
         if (!messages.isEmpty()) {
             throw new PermissionException(
@@ -396,18 +555,17 @@ class DocPermissionResourceImpl implements DocPermissionResource {
 
     private List<String> validateChanges(final PermissionState permissionState) {
         final SecurityContext securityContext = securityContextProvider.get();
-        final List<String> messages = new ArrayList<>();
         final DocRef topLevelDocRef = permissionState.getTopLevelDocRef();
 
-        final String changeOwnerPermName = PermissionNames.CHANGE_OWNER_PERMISSION;
-        if (permissionState.isOwnerChanging(topLevelDocRef.getUuid())
-                && !securityContextProvider.get().hasAppPermission(changeOwnerPermName)) {
-            messages.add(LogUtil.message("{} permission is required to change the owner of a document/folder",
-                    changeOwnerPermName));
-        }
+//        final String changeOwnerPermName = PermissionNames.CHANGE_OWNER_PERMISSION;
+//        if (permissionState.isOwnerChanging(topLevelDocRef.getUuid())
+//                && !securityContextProvider.get().hasAppPermission(changeOwnerPermName)) {
+//            messages.add(LogUtil.message("{} permission is required to change the owner of a document/folder",
+//                    changeOwnerPermName));
+//        }
 
         // Validate the owners on the top level doc
-        messages.addAll(validateDoc(securityContext, permissionState, topLevelDocRef));
+        final List<String> messages = new ArrayList<>(validateDoc(securityContext, permissionState, topLevelDocRef));
 
         // No point validating the cascade if the top level doc has issues.
         if (messages.isEmpty()) {
@@ -415,7 +573,9 @@ class DocPermissionResourceImpl implements DocPermissionResource {
             // for one or more descendants. Also, the owner of the top level may not be the owner
             // of all descendants
             for (final DocRef descendantDocRef : permissionState.descendants) {
-                messages.addAll(validateDoc(securityContext, permissionState, descendantDocRef));
+                if (securityContext.hasDocumentPermission(descendantDocRef, DocumentPermissionNames.OWNER)) {
+                    messages.addAll(validateDoc(securityContext, permissionState, descendantDocRef));
+                }
             }
         }
         return messages;
@@ -431,37 +591,16 @@ class DocPermissionResourceImpl implements DocPermissionResource {
             messages.add(LogUtil.message("You need to be the owner of {} to change its permissions.",
                     getDocIdentity(docRef.getUuid())));
         }
-//
-//        final Set<String> ownerUuidsBefore = NullSafe.stream(currentDocumentPermissions.getOwners())
-//                .map(User::getUuid)
-//                .collect(Collectors.toSet());
-//
-//        final Set<String> effectiveOwnerUuids = new HashSet<>(ownerUuidsBefore);
-//        // Apply the removes
-//        NullSafe.map(permissionState.changes.getRemove())
-//                .entrySet()
-//                .stream()
-//                .filter(entry -> entry.getValue().contains(DocumentPermissionNames.OWNER))
-//                .map(Entry::getKey)
-//                .forEach(effectiveOwnerUuids::remove);
-//        // Apply the adds
-//        NullSafe.map(permissionState.changes.getAdd())
-//                .entrySet()
-//                .stream()
-//                .filter(entry -> entry.getValue().contains(DocumentPermissionNames.OWNER))
-//                .map(Entry::getKey)
-//                .forEach(effectiveOwnerUuids::add);
-//        final boolean hasOwnerChanged = !Objects.equals(effectiveOwnerUuids, ownerUuidsBefore);
-//
+
         final Set<String> effectiveOwnerUuids = permissionState.requestedTopLevelOwnerUuids;
-        final boolean hasOwnerChanged = permissionState.isOwnerChanging(docRef.getUuid());
+        final boolean isOwnerChanging = permissionState.isOwnerChanging(docRef.getUuid());
         final boolean isDescendant = permissionState.isDescendant(docRef.getUuid());
         final String changeOwnerPermName = PermissionNames.CHANGE_OWNER_PERMISSION;
 
-        if (hasOwnerChanged
+        if (isOwnerChanging
                 && !securityContextProvider.get().hasAppPermission(changeOwnerPermName)) {
-            messages.add(LogUtil.message("{} permission is required to change the owner of a document/folder",
-                    changeOwnerPermName));
+            messages.add(LogUtil.message("{} permission is required to change the ownership of {}",
+                    changeOwnerPermName, getDocIdentity(docRef.getUuid())));
         }
 
         // We can't validate the descendants as they may not have any owners due to legacy behaviour
@@ -649,10 +788,7 @@ class DocPermissionResourceImpl implements DocPermissionResource {
 
         // Only change owner for CHANGES_ONLY if there has been a change to the top level owner
         // and in that case set the descendants to have the same owner as top level.
-        final Cascade cascade = permissionState.cascade;
-        if (cascade == Cascade.ALL
-                || (cascade == Cascade.NO && !permissionState.isDescendant(docUuid))
-                || (cascade == Cascade.CHANGES_ONLY && permissionState.isTopLevelOwnerChange())) {
+        if (shouldChangeOwner(permissionState, docUuid)) {
             // Check if this doc already has the right owner
             if (cleanAllPermsFirst || permissionState.isOwnerChanging(docUuid)) {
                 LOGGER.debug(() -> LogUtil.message("Setting owner of doc {} to {}",
@@ -663,6 +799,15 @@ class DocPermissionResourceImpl implements DocPermissionResource {
                         getDocIdentity(docUuid), permissionState.getTopLevelOwnerUuid()));
             }
         }
+    }
+
+    private boolean shouldChangeOwner(final PermissionState permissionState,
+                                      final String docUuid) {
+
+        final Cascade cascade = permissionState.cascade;
+        return cascade == Cascade.ALL
+                || (cascade == Cascade.NO && !permissionState.isDescendant(docUuid))
+                || (cascade == Cascade.CHANGES_ONLY && permissionState.isTopLevelOwnerChange());
     }
 
     /**
@@ -702,13 +847,30 @@ class DocPermissionResourceImpl implements DocPermissionResource {
         }
     }
 
-    private List<String> mapPerms(final UserService userService, final Map<String, Set<String>> perms) {
+    private String convertToTypedUserName(final String userUuid,
+                                          final UserCache userCache,
+                                          final boolean lowerCaseType) {
+        return userCache.getByUuid(userUuid)
+                .map(user -> {
+                    String type = user.getType();
+                    if (type != null && lowerCaseType) {
+                        type = type.toLowerCase();
+                    }
+                    return type
+                            + " '"
+                            + user.getUserIdentityForAudit()
+                            + "'";
+                })
+                .orElseGet(() -> "Unknown user '" + userUuid + "'");
+    }
+
+    private List<String> mapPerms(final UserCache userCache, final Map<String, Set<String>> perms) {
         return NullSafe.map(perms)
                 .entrySet()
                 .stream()
                 .map(entry -> {
                     final String userUuid = entry.getKey();
-                    final String userNameStr = userService.loadByUuid(userUuid)
+                    final String userNameStr = userCache.getByUuid(userUuid)
                             .map(user ->
                                     Strings.padEnd(user.getType().toUpperCase(), 5, ' ')
                                             + " "
@@ -734,15 +896,15 @@ class DocPermissionResourceImpl implements DocPermissionResource {
                         + user.getUserIdentityForAudit())
                 .collect(Collectors.joining(", "));
 
-        final UserService userService = userServiceProvider.get();
+        final UserCache userCache = userCacheProvider.get();
         final String currentPerms = String.join("\n  ", mapPerms(
-                userService,
+                userCache,
                 currentDocumentPermissions.getPermissions()));
         final String addsStr = String.join("\n  ", mapPerms(
-                userService,
+                userCache,
                 changes.getAdd()));
         final String removesStr = String.join("\n  ", mapPerms(
-                userService,
+                userCache,
                 changes.getRemove()));
 
         logMessageConsumer.accept(LogUtil.message("""
@@ -935,6 +1097,29 @@ class DocPermissionResourceImpl implements DocPermissionResource {
                 descendants);
     }
 
+    private void indent(final StringBuilder sb,
+                        final String str,
+                        final int level,
+                        final boolean newLine) {
+        if (newLine) {
+            sb.append("\n");
+        }
+        sb.append(Strings.repeat("  ", level));
+        NullSafe.consume(str, sb::append);
+    }
+
+    private String indent(final int level, final boolean newLine) {
+        final StringBuilder sb = new StringBuilder();
+        indent(sb, null, level, newLine);
+        return sb.toString();
+    }
+
+    private String indent(final String str, final int level, final boolean newLine) {
+        final StringBuilder sb = new StringBuilder();
+        indent(sb, str, level, newLine);
+        return sb.toString();
+    }
+
 
     // --------------------------------------------------------------------------------
 
@@ -978,7 +1163,6 @@ class DocPermissionResourceImpl implements DocPermissionResource {
                     .collect(Collectors.toSet());
             this.currentTopLevelOwnerUuids = getCurrentOwnerUuids(getTopLevelDocRef().getUuid());
             this.requestedTopLevelOwnerUuids = getRequestedOwnerUuids(changes);
-//            this.changes = buildChanges(changes, cascade, currentPermissions.get(docRef.getUuid()));
             this.changes = changes;
             this.effectiveTopLevelPerms = buildEffectivePermissions(
                     changes, currentPermissions.get(docRef.getUuid()));
@@ -1070,5 +1254,14 @@ class DocPermissionResourceImpl implements DocPermissionResource {
         String getTopLevelOwnerUuid() {
             return requestedTopLevelOwnerUuids.iterator().next();
         }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private record UserUuidAndTypedName(String userUuid,
+                                        String typedName) {
+
     }
 }

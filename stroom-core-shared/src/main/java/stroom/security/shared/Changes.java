@@ -17,7 +17,10 @@
 package stroom.security.shared;
 
 
+import stroom.util.shared.GwtNullSafe;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -25,6 +28,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Stream;
 
 @JsonPropertyOrder({"add", "remove"})
 @JsonInclude(Include.NON_NULL)
@@ -56,6 +60,19 @@ public class Changes {
      */
     public Map<String, Set<String>> getRemove() {
         return remove;
+    }
+
+    @JsonIgnore
+    public boolean hasChanges() {
+        if (add == null && remove == null) {
+            return false;
+        } else {
+            return Stream.of(
+                    GwtNullSafe.map(add),
+                    GwtNullSafe.map(remove))
+                    .mapToLong(map -> map.values().size())
+                    .sum() > 0;
+        }
     }
 
     @Override

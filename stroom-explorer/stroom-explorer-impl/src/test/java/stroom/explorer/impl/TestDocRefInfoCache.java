@@ -56,11 +56,11 @@ class TestDocRefInfoCache {
                         new MyExplorerActionHandler(Set.of(DOC_REF_1, DOC_REF_2)),
                         new MyExplorerActionHandler(Set.of(DOC_REF_3, DOC_REF_4))));
 
-                docRefInfoCache = new DocRefInfoCache(
-                        cacheManager,
-                        explorerActionHandlers,
-                        ExplorerConfig::new,
-                        securityContext);
+        docRefInfoCache = new DocRefInfoCache(
+                cacheManager,
+                explorerActionHandlers,
+                ExplorerConfig::new,
+                securityContext);
     }
 
     @Test
