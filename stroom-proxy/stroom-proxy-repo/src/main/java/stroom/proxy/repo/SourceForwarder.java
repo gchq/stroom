@@ -20,8 +20,6 @@ import stroom.meta.api.AttributeMap;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.repo.dao.FeedDao;
 import stroom.proxy.repo.dao.ForwardSourceDao;
-import stroom.proxy.repo.queue.Batch;
-import stroom.proxy.repo.queue.BatchUtil;
 import stroom.receive.common.StreamHandlers;
 import stroom.util.concurrent.ThreadUtil;
 import stroom.util.logging.LambdaLogger;

@@ -4,7 +4,6 @@ import stroom.proxy.repo.dao.AggregateDao;
 import stroom.proxy.repo.dao.ForwardDestDao;
 import stroom.proxy.repo.dao.SourceDao;
 import stroom.proxy.repo.dao.SourceItemDao;
-import stroom.proxy.repo.queue.Batch;
 
 import name.falgout.jeffrey.testing.junit.guice.GuiceExtension;
 import name.falgout.jeffrey.testing.junit.guice.IncludeModule;

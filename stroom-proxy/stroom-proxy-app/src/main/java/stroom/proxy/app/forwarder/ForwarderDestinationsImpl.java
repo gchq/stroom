@@ -1,7 +1,6 @@
 package stroom.proxy.app.forwarder;
 
 import stroom.proxy.app.ProxyConfig;
-import stroom.proxy.repo.ForwarderDestinations;
 import stroom.proxy.repo.ProxyRepoConfig;
 import stroom.receive.common.StreamHandlers;
 import stroom.util.io.PathCreator;
@@ -24,7 +23,7 @@ import javax.inject.Singleton;
  * Handler class that forwards the request to a URL.
  */
 @Singleton
-public class ForwarderDestinationsImpl implements ForwarderDestinations {
+public class ForwarderDestinationsImpl {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ForwarderDestinationsImpl.class);
 

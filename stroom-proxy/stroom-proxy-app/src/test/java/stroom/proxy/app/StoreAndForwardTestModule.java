@@ -1,10 +1,6 @@
 package stroom.proxy.app;
 
 import stroom.proxy.repo.FailureDestinations;
-import stroom.proxy.repo.ForwarderDestinations;
-import stroom.proxy.repo.MockFailureDestinations;
-import stroom.proxy.repo.MockForwardDestinations;
-import stroom.proxy.repo.MockSender;
 import stroom.proxy.repo.Sender;
 
 import java.nio.file.Path;

@@ -4,17 +4,9 @@ import stroom.proxy.app.event.EventStore;
 import stroom.proxy.app.event.EventStoreConfig;
 import stroom.proxy.app.forwarder.ForwardConfig;
 import stroom.proxy.app.forwarder.ThreadConfig;
-import stroom.proxy.repo.AggregateForwarder;
-import stroom.proxy.repo.Aggregator;
 import stroom.proxy.repo.AggregatorConfig;
-import stroom.proxy.repo.Cleanup;
-import stroom.proxy.repo.ProxyDbConfig;
 import stroom.proxy.repo.ProxyRepoConfig;
-import stroom.proxy.repo.ProxyServices;
-import stroom.proxy.repo.RepoSourceItems;
-import stroom.proxy.repo.RepoSources;
 import stroom.proxy.repo.SourceForwarder;
-import stroom.proxy.repo.store.SequentialFileStore;
 import stroom.util.shared.Flushable;
 
 import io.dropwizard.lifecycle.Managed;

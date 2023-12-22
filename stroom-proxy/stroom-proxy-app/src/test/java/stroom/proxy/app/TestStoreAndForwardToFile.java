@@ -2,8 +2,6 @@ package stroom.proxy.app;
 
 import stroom.proxy.app.forwarder.ForwardFileHandlers;
 import stroom.proxy.app.forwarder.ForwarderDestinationsImpl;
-import stroom.proxy.repo.ForwarderDestinations;
-import stroom.proxy.repo.store.SequentialFileStore;
 
 import com.google.inject.AbstractModule;
 import org.junit.jupiter.api.Test;

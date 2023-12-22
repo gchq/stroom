@@ -3,9 +3,7 @@ package stroom.proxy.app.handler;
 import stroom.meta.api.AttributeMap;
 import stroom.proxy.app.ProxyConfig;
 import stroom.proxy.app.forwarder.ForwardConfig;
-import stroom.proxy.repo.ForwarderDestinations;
 import stroom.proxy.repo.ProxyRepoConfig;
-import stroom.proxy.repo.ProxyRepositoryStreamHandlers;
 import stroom.receive.common.StreamHandler;
 import stroom.receive.common.StreamHandlers;
 
@@ -29,7 +27,7 @@ public class ReceiveStreamHandlers implements StreamHandlers {
         // Check the config is valid.
         if (proxyRepoConfig.isStoringEnabled()) {
             if (Strings.isNullOrEmpty(proxyRepoConfig.getRepoDir())) {
-                throw new RuntimeException("Storing is enabled but no repo directory have been provided in 'repoDir'");
+                throw new RuntimeException("Storing is enabled but no repo directory has been provided in 'repoDir'");
             }
             streamHandlers = proxyRepositoryStreamHandlerProvider;
         } else {

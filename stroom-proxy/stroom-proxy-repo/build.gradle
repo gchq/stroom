@@ -11,7 +11,6 @@ dependencies {
     implementation project(':stroom-meta:stroom-meta-api')
     implementation project(':stroom-pipeline')
     implementation project(':stroom-proxy:stroom-proxy-remote-api')
-    implementation project(':stroom-proxy:stroom-proxy-repo-db-jooq')
     implementation project(':stroom-receive:stroom-receive-common')
     implementation project(':stroom-security:stroom-security-api')
     implementation project(':stroom-task:stroom-task-api')
@@ -29,9 +28,7 @@ dependencies {
     implementation libs.jackson_databind
     implementation libs.jakarta_servlet_api
     implementation libs.javax_inject
-    implementation libs.jooq
     implementation libs.slf4j_api
-    implementation libs.sqlite
 
     testImplementation project(':stroom-proxy:stroom-proxy-remote-api')
     testImplementation project(':stroom-test-common')

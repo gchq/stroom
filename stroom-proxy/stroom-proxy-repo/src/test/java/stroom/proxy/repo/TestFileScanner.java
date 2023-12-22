@@ -5,8 +5,6 @@ import stroom.data.zip.StroomZipFileType;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
-import stroom.proxy.repo.store.Entries;
-import stroom.proxy.repo.store.SequentialFileStore;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 

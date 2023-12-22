@@ -6,8 +6,6 @@ import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.app.forwarder.ForwardConfig;
 import stroom.proxy.app.forwarder.ForwardFileConfig;
-import stroom.proxy.repo.store.FileSet;
-import stroom.proxy.repo.store.SequentialFileStore;
 import stroom.test.common.TestUtil;
 import stroom.util.NullSafe;
 import stroom.util.io.FileName;

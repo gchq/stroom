@@ -1,8 +1,5 @@
 package stroom.proxy.app;
 
-import stroom.proxy.repo.ForwarderDestinations;
-import stroom.proxy.repo.MockForwardDestinations;
-
 import com.google.inject.AbstractModule;
 import org.junit.jupiter.api.Test;
 

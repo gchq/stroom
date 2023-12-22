@@ -407,4 +407,18 @@ public final class FileUtil {
         }
         return total.get();
     }
+
+    public static void deepCopy(Path src, Path dest) throws IOException {
+        try (Stream<Path> stream = Files.walk(src)) {
+            stream.forEach(source -> copy(source, dest.resolve(src.relativize(source))));
+        }
+    }
+
+    private static void copy(Path source, Path dest) {
+        try {
+            Files.copy(source, dest);
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
 }

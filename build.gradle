@@ -274,7 +274,6 @@ ext.libs = [
         slf4j_api                           : "org.slf4j:slf4j-api", // version controlled by dropwizard-dependencies
         snake_yaml                          : "org.yaml:snakeyaml:1.28",
         solrj                               : "org.apache.solr:solr-solrj:8.2.0",
-        sqlite                              : "org.xerial:sqlite-jdbc:3.36.0.3",
         stax_api                            : "stax:stax-api:1.0.1",
         swagger_annotations                 : "io.swagger.core.v3:swagger-annotations:$versions.swagger",
         unirest                             : "com.mashape.unirest:unirest-java:$versions.unirest",
