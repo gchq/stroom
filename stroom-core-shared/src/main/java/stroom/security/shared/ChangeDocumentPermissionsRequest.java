@@ -57,6 +57,10 @@ public class ChangeDocumentPermissionsRequest {
         return cascade;
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public enum Cascade implements HasDisplayValue {
         NO("No"),
         CHANGES_ONLY("Changes only"),
@@ -71,6 +75,10 @@ public class ChangeDocumentPermissionsRequest {
         @Override
         public String getDisplayValue() {
             return displayValue;
+        }
+
+        public static boolean isCascading(final Cascade cascade) {
+            return cascade == CHANGES_ONLY || cascade == ALL;
         }
     }
 }
