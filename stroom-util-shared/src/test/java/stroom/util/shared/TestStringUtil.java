@@ -218,25 +218,25 @@ class TestStringUtil {
 
     @Test
     void testPluralSuffix_1() {
-        assertThat(pluralSuffix("document", 1))
+        assertThat(StringUtil.plural("document", 1))
                 .isEqualTo("document");
-        assertThat(pluralSuffix("document", 2))
+        assertThat(StringUtil.plural("document", 2))
                 .isEqualTo("documents");
     }
 
     @Test
     void testPluralSuffix_2() {
-        assertThat(pluralSuffix("document", 1L))
+        assertThat(StringUtil.plural("document", 1L))
                 .isEqualTo("document");
-        assertThat(pluralSuffix("document", 2L))
+        assertThat(StringUtil.plural("document", 2L))
                 .isEqualTo("documents");
     }
 
     @Test
     void testPluralSuffix_3() {
-        assertThat(pluralSuffix("document", List.of(1)))
+        assertThat(StringUtil.plural("document", List.of(1)))
                 .isEqualTo("document");
-        assertThat(pluralSuffix("document", List.of(1, 2)))
+        assertThat(StringUtil.plural("document", List.of(1, 2)))
                 .isEqualTo("documents");
     }
 

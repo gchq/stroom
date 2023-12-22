@@ -166,7 +166,7 @@ public class StringUtil {
      * e.g.
      * <pre>{@code pluralSuffix("document", count)}</pre>
      */
-    public static String pluralSuffix(final String singular, final int count) {
+    public static String plural(final String singular, final int count) {
         return count > 1
                 ? singular + "s"
                 : singular;
@@ -177,7 +177,7 @@ public class StringUtil {
      * e.g.
      * <pre>{@code pluralSuffix("document", list)}</pre>
      */
-    public static String pluralSuffix(final String singular, final Collection<?> collection) {
+    public static String plural(final String singular, final Collection<?> collection) {
         return collection != null && collection.size() > 1
                 ? singular + "s"
                 : singular;
@@ -188,7 +188,7 @@ public class StringUtil {
      * e.g.
      * <pre>{@code pluralSuffix("document", count)}</pre>
      */
-    public static String pluralSuffix(final String singular, final long count) {
+    public static String plural(final String singular, final long count) {
         return count > 1
                 ? singular + "s"
                 : singular;

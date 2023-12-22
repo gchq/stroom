@@ -191,7 +191,7 @@ class DocPermissionResourceImpl implements DocPermissionResource {
                                 .toList();
                         if (!descendantsWithMultipleOwners.isEmpty()) {
                             impactDetail.add("The following "
-                                    + StringUtil.pluralSuffix("document", descendantsWithMultipleOwners.size())
+                                    + StringUtil.plural("document", descendantsWithMultipleOwners.size())
                                     + " currently "
                                     + StringUtil.plural(
                                             "has", "have", descendantsWithMultipleOwners.size())
@@ -242,8 +242,8 @@ class DocPermissionResourceImpl implements DocPermissionResource {
         String ownerChangeMsg;
         ownerChangeMsg = "\nThe ownership of "
                 + ownerChangeCount
-                + " descendant document"
-                + StringUtil.pluralSuffix("document", ownerChangeCount)
+                + " descendant "
+                + StringUtil.plural("document", ownerChangeCount)
                 + " will be changed to "
                 + convertToTypedUserName(permissionState.getTopLevelOwnerUuid(), userCache, true)
                 + ". Any existing owners will lose the permissions implied by the Owner permission.";
@@ -252,23 +252,14 @@ class DocPermissionResourceImpl implements DocPermissionResource {
 
     private List<String> getChangeDetail(final Changes changes, final UserCache userCache) {
 
-        final List<String> msgs = new ArrayList<>();
+        final List<String> lines = new ArrayList<>();
         if (NullSafe.test(changes, Changes::hasChanges)) {
-            final List<UserUuidAndTypedName> allUsers = Stream.of(
-                            changes.getAdd(),
-                            changes.getRemove())
-                    .filter(Objects::nonNull)
-                    .flatMap(map -> map.keySet().stream())
-                    .distinct()
-                    .map(userUuid -> new UserUuidAndTypedName(
-                            userUuid,
-                            convertToTypedUserName(userUuid, userCache, false)))
-                    .sorted(Comparator.comparing(UserUuidAndTypedName::typedName))
-                    .toList();
+            final List<UserUuidAndTypedName> allUsers = getUsersFromChanges(changes, userCache);
 
             if (allUsers.isEmpty()) {
-                msgs.add("No changes to apply.");
+                lines.add("No changes to apply.");
             } else {
+                lines.add("Permission changes:");
                 allUsers.forEach(userUuidAndTypedName -> {
                     final List<String> removes = permsAsListWithoutOwner(
                             changes.getRemove().get(userUuidAndTypedName.userUuid));
@@ -276,33 +267,51 @@ class DocPermissionResourceImpl implements DocPermissionResource {
                             changes.getAdd().get(userUuidAndTypedName.userUuid));
                     if (!removes.isEmpty() || !adds.isEmpty()) {
                         final StringBuilder sb = new StringBuilder();
-                        sb.append(userUuidAndTypedName.typedName)
-                                .append(":");
-                        final String level3Indent = indent(3, true);
-                        if (!removes.isEmpty()) {
-                            indent(sb, "REMOVE: ", 2, true);
-                            if (removes.size() > 1) {
-                                sb.append(level3Indent);
-                            }
-                            sb.append(String.join(level3Indent, removes));
-                        }
-                        if (!adds.isEmpty()) {
-                            indent(sb, "ADD: ", 2, true);
-                            if (adds.size() > 1) {
-                                sb.append(level3Indent);
-                            }
-                            sb.append(String.join(level3Indent, adds));
-                        }
-                        msgs.add(sb.toString());
+                        lines.add(indent(userUuidAndTypedName.typedName + ":", 1, false));
+
+                        final String permIndent = indent(3, false);
+                        addChanges(removes, lines, indent("REMOVE: ", 2, false), permIndent);
+                        addChanges(adds, lines, indent("ADD: ", 2, false), permIndent);
                     }
                 });
-                return msgs;
+                return lines;
             }
         } else {
             // No changes
-            msgs.add("No changes to apply.");
+            lines.add("No changes to apply.");
         }
-        return msgs;
+        return lines;
+    }
+
+    private static void addChanges(final List<String> removes,
+                                  final List<String> lines,
+                                  final String heading,
+                                  final String level3Indent) {
+        if (!removes.isEmpty()) {
+            if (removes.size() == 1) {
+                lines.add(heading + removes.get(0));
+            } else {
+                lines.add(heading);
+                removes.stream()
+                        .map(str -> level3Indent + str)
+                        .forEach(lines::add);
+            }
+        }
+    }
+
+    private List<UserUuidAndTypedName> getUsersFromChanges(final Changes changes, final UserCache userCache) {
+        final List<UserUuidAndTypedName> allUsers = Stream.of(
+                        changes.getAdd(),
+                        changes.getRemove())
+                .filter(Objects::nonNull)
+                .flatMap(map -> map.keySet().stream())
+                .distinct()
+                .map(userUuid -> new UserUuidAndTypedName(
+                        userUuid,
+                        convertToTypedUserName(userUuid, userCache, false)))
+                .sorted(Comparator.comparing(UserUuidAndTypedName::typedName))
+                .toList();
+        return allUsers;
     }
 
     private static <T> List<T> permsAsListWithoutOwner(final Set<T> set) {
