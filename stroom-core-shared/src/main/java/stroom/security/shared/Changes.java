@@ -20,13 +20,13 @@ package stroom.security.shared;
 import stroom.util.shared.GwtNullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Stream;
 
@@ -62,15 +62,16 @@ public class Changes {
         return remove;
     }
 
-    @JsonIgnore
     public boolean hasChanges() {
         if (add == null && remove == null) {
             return false;
         } else {
             return Stream.of(
-                    GwtNullSafe.map(add),
-                    GwtNullSafe.map(remove))
-                    .mapToLong(map -> map.values().size())
+                            GwtNullSafe.map(add),
+                            GwtNullSafe.map(remove))
+                    .flatMap(map -> map.values().stream())
+                    .filter(Objects::nonNull)
+                    .mapToLong(Set::size)
                     .sum() > 0;
         }
     }
