@@ -65,6 +65,7 @@ dependencies {
     implementation libs.jetty_server
     implementation libs.jose4j
     implementation libs.kafka_clients
+    implementation libs.kryo
     implementation libs.slf4j_api
     implementation libs.swagger_annotations
 

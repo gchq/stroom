@@ -1,26 +1,22 @@
 package stroom.proxy.app.handler;
 
 import stroom.meta.api.AttributeMap;
+import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
-import stroom.proxy.app.event.ReceiveDataHelper;
-import stroom.proxy.repo.CSVFormatter;
-import stroom.proxy.repo.LogStream;
-import stroom.receive.common.ProgressHandler;
+import stroom.proxy.StroomStatusCode;
 import stroom.receive.common.RequestHandler;
 import stroom.receive.common.StroomStreamException;
-import stroom.receive.common.StroomStreamProcessor;
-import stroom.util.io.ByteCountInputStream;
+import stroom.util.cert.CertificateExtractor;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.logging.Metrics;
 
 import org.apache.http.HttpStatus;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.time.Instant;
+import java.util.UUID;
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -34,110 +30,75 @@ import javax.servlet.http.HttpServletResponse;
 public class ProxyRequestHandler implements RequestHandler {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ProxyRequestHandler.class);
-    private static final Logger RECEIVE_LOG = LoggerFactory.getLogger("receive");
+    private static final String ZERO_CONTENT = "0";
 
-    private final ReceiveStreamHandlers receiveStreamHandlerProvider;
-    private final LogStream logStream;
     private final ProxyId proxyId;
-    private final ReceiveDataHelper receiveDataHelper;
+    private final CertificateExtractor certificateExtractor;
+    private final SimpleReceiver simpleReceiver;
+    private final ZipReceiver zipReceiver;
 
     @Inject
-    public ProxyRequestHandler(final ReceiveStreamHandlers receiveStreamHandlerProvider,
-                               final LogStream logStream,
-                               final ProxyId proxyId,
-                               final ReceiveDataHelper receiveDataHelper) {
-        this.receiveStreamHandlerProvider = receiveStreamHandlerProvider;
-        this.logStream = logStream;
+    public ProxyRequestHandler(final ProxyId proxyId,
+                               final CertificateExtractor certificateExtractor,
+                               final SimpleReceiver simpleReceiver,
+                               final ZipReceiver zipReceiver) {
         this.proxyId = proxyId;
-        this.receiveDataHelper = receiveDataHelper;
+        this.certificateExtractor = certificateExtractor;
+        this.simpleReceiver = simpleReceiver;
+        this.zipReceiver = zipReceiver;
     }
 
     @Override
     public void handle(final HttpServletRequest request, final HttpServletResponse response) {
         try {
-            final String proxyId = receiveDataHelper.process(
-                    request,
-                    this::readInputStream,
-                    this::readAndDropInputStream);
+            final Instant startTime = Instant.now();
+
+            // Create attribute map from headers.
+            final AttributeMap attributeMap = AttributeMapUtil.create(request, certificateExtractor);
+
+            // Create a new proxy id for the request so we can track progress and report back the UUID to the sender,
+            final String requestUuid = UUID.randomUUID().toString();
+            final String proxyIdString = proxyId.getId();
+            final String result = proxyIdString + ": " + requestUuid;
+
+            LOGGER.debug(() -> "Adding proxy id attribute: " + proxyIdString + ": " + requestUuid);
+            attributeMap.put(proxyIdString, requestUuid);
+
+            // Treat differently depending on compression type.
+            String compression = attributeMap.get(StandardHeaderArguments.COMPRESSION);
+            if (compression != null && !compression.isEmpty()) {
+                compression = compression.toUpperCase(StreamUtil.DEFAULT_LOCALE);
+                if (!StandardHeaderArguments.VALID_COMPRESSION_SET.contains(compression)) {
+                    throw new StroomStreamException(
+                            StroomStatusCode.UNKNOWN_COMPRESSION, attributeMap, compression);
+                }
+            }
+
+            if (ZERO_CONTENT.equals(attributeMap.get(StandardHeaderArguments.CONTENT_LENGTH))) {
+                LOGGER.warn("process() - Skipping Zero Content " + attributeMap);
+
+            } else {
+                if (StandardHeaderArguments.COMPRESSION_ZIP.equals(compression)) {
+                    // Handle a zip stream.
+                    zipReceiver.receive(startTime, attributeMap, request.getRequestURI(), request::getInputStream);
+
+                } else {
+                    // Handle non zip streams.
+                    simpleReceiver.receive(startTime, attributeMap, request.getRequestURI(), request::getInputStream);
+                }
+            }
+
             response.setStatus(HttpStatus.SC_OK);
 
-            LOGGER.debug(() -> "Writing proxy id attribute to response: " + proxyId);
+            LOGGER.debug(() -> "Writing proxy id attribute to response: " + result);
             try (final PrintWriter writer = response.getWriter()) {
-                writer.println(proxyId);
+                writer.println(result);
             } catch (final IOException e) {
                 LOGGER.error(e.getMessage(), e);
             }
 
         } catch (final StroomStreamException e) {
             e.sendErrorResponse(response);
-        }
-    }
-
-    private void readInputStream(final HttpServletRequest request,
-                                 final AttributeMap attributeMap,
-                                 final String requestUuid) {
-        final String proxyIdString = proxyId.getId();
-        LOGGER.debug(() -> "Adding proxy id attribute: " + proxyIdString + ": " + requestUuid);
-        attributeMap.put(proxyIdString, requestUuid);
-
-        final long startTimeMs = System.currentTimeMillis();
-        try (final ByteCountInputStream inputStream =
-                new ByteCountInputStream(request.getInputStream())) {
-            // Consume the data
-            Metrics.measure("ProxyRequestHandler - handle", () -> {
-                final String feedName = attributeMap.get(StandardHeaderArguments.FEED);
-                final String typeName = attributeMap.get(StandardHeaderArguments.TYPE);
-                receiveStreamHandlerProvider.handle(feedName, typeName, attributeMap, handler -> {
-                    final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(
-                            attributeMap,
-                            handler,
-                            new ProgressHandler("Receiving data"));
-                    stroomStreamProcessor.processRequestHeader(request);
-                    stroomStreamProcessor.processInputStream(inputStream, "");
-                });
-            });
-
-            final long duration = System.currentTimeMillis() - startTimeMs;
-            logStream.log(
-                    RECEIVE_LOG,
-                    attributeMap,
-                    "RECEIVE",
-                    request.getRequestURI(),
-                    HttpStatus.SC_OK,
-                    inputStream.getCount(),
-                    duration);
-        } catch (final IOException e) {
-            throw StroomStreamException.create(e, attributeMap);
-        }
-    }
-
-    private void readAndDropInputStream(final HttpServletRequest request,
-                                        final AttributeMap attributeMap,
-                                        final String requestUuid) {
-        final long startTimeMs = System.currentTimeMillis();
-        try (final ByteCountInputStream inputStream =
-                new ByteCountInputStream(request.getInputStream())) {
-            // Just read the stream in and ignore it
-            final byte[] buffer = new byte[StreamUtil.BUFFER_SIZE];
-            while (inputStream.read(buffer) >= 0) {
-                // Ignore data.
-                if (LOGGER.isTraceEnabled()) {
-                    LOGGER.trace(new String(buffer));
-                }
-            }
-            LOGGER.warn("\"Dropped\",{}", CSVFormatter.format(attributeMap));
-
-            final long duration = System.currentTimeMillis() - startTimeMs;
-            logStream.log(
-                    RECEIVE_LOG,
-                    attributeMap,
-                    "DROP",
-                    request.getRequestURI(),
-                    HttpStatus.SC_OK,
-                    inputStream.getCount(),
-                    duration);
-        } catch (final IOException e) {
-            throw StroomStreamException.create(e, attributeMap);
         }
     }
 }

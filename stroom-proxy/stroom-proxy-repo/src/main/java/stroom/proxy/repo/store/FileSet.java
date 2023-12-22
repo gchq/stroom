@@ -16,31 +16,32 @@ public class FileSet {
 
     public static final String META_EXTENSION = ".meta";
     public static final String ZIP_EXTENSION = ".zip";
+    public static final String ENTRIES_EXTENSION = ".entries";
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FileSet.class);
 
     private final long id;
-    private final String idString;
     private final Path root;
     private final List<Path> subDirs;
     private final Path dir;
     private final Path zip;
     private final Path meta;
+    private final Path entries;
 
     private FileSet(final long id,
-                    final String idString,
                     final Path root,
                     final List<Path> subDirs,
                     final Path dir,
                     final Path zip,
-                    final Path meta) {
+                    final Path meta,
+                    final Path entries) {
         this.id = id;
-        this.idString = idString;
         this.root = root;
         this.subDirs = subDirs;
         this.dir = dir;
         this.zip = zip;
         this.meta = meta;
+        this.entries = entries;
     }
 
     public static FileSet get(final Path root,
@@ -69,7 +70,9 @@ public class FileSet {
                 ZIP_EXTENSION);
         final Path meta = dir.resolve(idString +
                 META_EXTENSION);
-        return new FileSet(id, idString, root, subDirs, dir, zip, meta);
+        final Path entries = dir.resolve(idString +
+                ENTRIES_EXTENSION);
+        return new FileSet(id, root, subDirs, dir, zip, meta, entries);
     }
 
     public long getId() {
@@ -96,15 +99,21 @@ public class FileSet {
         return meta;
     }
 
+    public Path getEntries() {
+        return entries;
+    }
+
     public String getZipFileName() {
         return root.relativize(zip).toString();
     }
 
     public void delete() throws IOException {
         LOGGER.debug(() -> "Deleting: " + FileUtil.getCanonicalPath(zip));
-        Files.deleteIfExists(zip);
+        delete(zip);
         LOGGER.debug(() -> "Deleting: " + FileUtil.getCanonicalPath(meta));
-        Files.deleteIfExists(meta);
+        delete(meta);
+        LOGGER.debug(() -> "Deleting: " + FileUtil.getCanonicalPath(entries));
+        delete(entries);
 
         // Try to delete directories.
         try {
@@ -116,6 +125,14 @@ public class FileSet {
         } catch (final DirectoryNotEmptyException e) {
             // Expected error.
             LOGGER.trace(e::getMessage, e);
+        }
+    }
+
+    private void delete(final Path path) {
+        try {
+            Files.deleteIfExists(path);
+        } catch (final IOException e) {
+            LOGGER.error(e::getMessage, e);
         }
     }
 

@@ -55,7 +55,7 @@ class TestStroomStreamException {
         attributeMap.put(StandardHeaderArguments.FEED, "MY_FEED");
         attributeMap.put(StandardHeaderArguments.COMPRESSION, StandardHeaderArguments.COMPRESSION_GZIP);
 
-        final StroomStatusCode stroomStatusCode = StroomStatusCode.FEED_IS_NOT_SET_TO_RECEIVED_DATA;
+        final StroomStatusCode stroomStatusCode = StroomStatusCode.FEED_IS_NOT_SET_TO_RECEIVE_DATA;
         final String arg1 = "arg1";
         final StroomStreamException stroomStreamException = new StroomStreamException(
                 stroomStatusCode, attributeMap, arg1);
@@ -82,7 +82,7 @@ class TestStroomStreamException {
         final AttributeMap attributeMap = new AttributeMap();
         attributeMap.put(StandardHeaderArguments.FEED, "MY_FEED");
 
-        final StroomStatusCode stroomStatusCode = StroomStatusCode.FEED_IS_NOT_SET_TO_RECEIVED_DATA;
+        final StroomStatusCode stroomStatusCode = StroomStatusCode.FEED_IS_NOT_SET_TO_RECEIVE_DATA;
         final String arg1 = "arg1";
         final StroomStreamException stroomStreamException = new StroomStreamException(
                 stroomStatusCode, attributeMap, arg1);
@@ -107,7 +107,7 @@ class TestStroomStreamException {
         final AttributeMap attributeMap = new AttributeMap();
         attributeMap.put(StandardHeaderArguments.FEED, "MY_FEED");
 
-        final StroomStatusCode stroomStatusCode = StroomStatusCode.FEED_IS_NOT_SET_TO_RECEIVED_DATA;
+        final StroomStatusCode stroomStatusCode = StroomStatusCode.FEED_IS_NOT_SET_TO_RECEIVE_DATA;
         final String arg1 = "arg1";
 
         final Throwable throwable = new RuntimeException(

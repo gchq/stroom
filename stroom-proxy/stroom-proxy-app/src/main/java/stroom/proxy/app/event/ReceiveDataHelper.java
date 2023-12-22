@@ -8,12 +8,10 @@ import stroom.proxy.app.handler.ProxyId;
 import stroom.proxy.repo.CSVFormatter;
 import stroom.proxy.repo.LogStream;
 import stroom.receive.common.AttributeMapFilter;
-import stroom.receive.common.AttributeMapValidator;
 import stroom.receive.common.ReceiveDataConfig;
 import stroom.receive.common.RequestAuthenticator;
 import stroom.receive.common.StroomStreamException;
 import stroom.receive.common.StroomStreamStatus;
-import stroom.security.api.UserIdentity;
 import stroom.util.cert.CertificateExtractor;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -70,16 +68,17 @@ public class ReceiveDataHelper {
 
         try {
             Metrics.measure("ProxyRequestHandler - stream", () -> {
-                final ReceiveDataConfig receiveDataConfig = receiveDataConfigProvider.get();
+//                final ReceiveDataConfig receiveDataConfig = receiveDataConfigProvider.get();
 
                 // Authorise request.
-                final UserIdentity userIdentity = requestAuthenticator.authenticate(request, attributeMap);
+                requestAuthenticator.authenticate(request, attributeMap);
+//                final UserIdentity userIdentity = requestAuthenticator.authenticate(request, attributeMap);
 
                 Metrics.measure("ProxyRequestHandler - handle1", () -> {
-                    // Validate the supplied attributes.
-                    AttributeMapValidator.validate(
-                            attributeMap,
-                            receiveDataConfig::getMetaTypes);
+//                    // Validate the supplied attributes.
+//                    AttributeMapValidator.validate(
+//                            attributeMap,
+//                            receiveDataConfig::getMetaTypes);
 
                     // Test to see if we are going to accept this stream or drop the data.
                     if (attributeMapFilter.filter(attributeMap)) {
@@ -103,7 +102,7 @@ public class ReceiveDataHelper {
                     CSVFormatter.escape(stroomStreamException.getMessage()));
 
             final long duration = System.currentTimeMillis() - startTimeMs;
-            if (StroomStatusCode.FEED_IS_NOT_SET_TO_RECEIVED_DATA.equals(status.getStroomStatusCode())) {
+            if (StroomStatusCode.FEED_IS_NOT_SET_TO_RECEIVE_DATA.equals(status.getStroomStatusCode())) {
                 logStream.log(
                         RECEIVE_LOG,
                         status.getAttributeMap(),

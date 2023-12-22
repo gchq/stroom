@@ -299,6 +299,8 @@ public class AttributeMapUtil {
         attributeMap.put(StandardHeaderArguments.FEED, feedName.trim());
         if (typeName != null && !typeName.isBlank()) {
             attributeMap.put(StandardHeaderArguments.TYPE, typeName.trim());
+        } else {
+            attributeMap.remove(StandardHeaderArguments.TYPE);
         }
     }
 }

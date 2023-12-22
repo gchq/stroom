@@ -17,7 +17,7 @@ public enum StroomStatusCode {
     INVALID_TYPE(HttpServletResponse.SC_NOT_ACCEPTABLE, 102, "Data type is invalid",
             "If you provide a data type it must be valid"),
 
-    FEED_IS_NOT_SET_TO_RECEIVED_DATA(HttpServletResponse.SC_NOT_ACCEPTABLE, 110, "Feed is not set to receive data",
+    FEED_IS_NOT_SET_TO_RECEIVE_DATA(HttpServletResponse.SC_NOT_ACCEPTABLE, 110, "Feed is not set to receive data",
             "The feed you have provided has not been setup to receive data"),
 
     UNEXPECTED_DATA_TYPE(HttpServletResponse.SC_NOT_ACCEPTABLE, 120, "Unexpected data type",
