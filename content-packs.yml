@@ -51,7 +51,7 @@
       name: "stroom-content",
       uri : "https://github.com/gchq/stroom-content.git",
       branch: "7.2",
-      commit: "7ad9927f6b6d57d6620200616d25a003984f5081"
+      commit: "29b6113a0220af11a8f7914ae691339e7270b825"
     }
   }, {
     name: "standard-pipelines",

@@ -26,25 +26,42 @@ public class ConfirmEvent extends CommonAlertEvent<ConfirmEvent.Handler> {
     public static GwtEvent.Type<Handler> TYPE;
     private final ConfirmCallback callback;
 
-    private ConfirmEvent(final SafeHtml message, final Level level, final ConfirmCallback callback) {
-        super(message, level);
+    private ConfirmEvent(final SafeHtml message,
+                         final SafeHtml detail,
+                         final Level level,
+                         final ConfirmCallback callback) {
+        super(message, detail, level);
         this.callback = callback;
     }
 
+    public static void fire(final HasHandlers handlers,
+                            final SafeHtml message,
+                            final SafeHtml detail,
+                            final ConfirmCallback callback) {
+        handlers.fireEvent(new ConfirmEvent(message, detail, Level.QUESTION, callback));
+    }
+
     public static void fire(final HasHandlers handlers, final SafeHtml message, final ConfirmCallback callback) {
-        handlers.fireEvent(new ConfirmEvent(message, Level.QUESTION, callback));
+        handlers.fireEvent(new ConfirmEvent(message, null, Level.QUESTION, callback));
+    }
+
+    public static void fireWarn(final HasHandlers handlers,
+                                final SafeHtml message,
+                                final SafeHtml detail,
+                                final ConfirmCallback callback) {
+        handlers.fireEvent(new ConfirmEvent(message, detail, Level.WARN, callback));
     }
 
     public static void fireWarn(final HasHandlers handlers, final SafeHtml message, final ConfirmCallback callback) {
-        handlers.fireEvent(new ConfirmEvent(message, Level.WARN, callback));
+        handlers.fireEvent(new ConfirmEvent(message, null, Level.WARN, callback));
     }
 
     public static void fire(final HasHandlers handlers, final String message, final ConfirmCallback callback) {
-        handlers.fireEvent(new ConfirmEvent(fromString(message), Level.QUESTION, callback));
+        handlers.fireEvent(new ConfirmEvent(fromString(message), null, Level.QUESTION, callback));
     }
 
     public static void fireWarn(final HasHandlers handlers, final String message, final ConfirmCallback callback) {
-        handlers.fireEvent(new ConfirmEvent(fromString(message), Level.WARN, callback));
+        handlers.fireEvent(new ConfirmEvent(fromString(message), null, Level.WARN, callback));
     }
 
     public static Type<Handler> getType() {
@@ -67,6 +84,10 @@ public class ConfirmEvent extends CommonAlertEvent<ConfirmEvent.Handler> {
     public ConfirmCallback getCallback() {
         return callback;
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface Handler extends EventHandler {
 

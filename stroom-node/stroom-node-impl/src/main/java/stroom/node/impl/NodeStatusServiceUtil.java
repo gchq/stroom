@@ -140,6 +140,9 @@ class NodeStatusServiceUtil {
                 TAG_NODE, nodeInfo.getThisNodeName());
         final long nowEpochMs = System.currentTimeMillis();
 
+        // TODO we prob ought to do these concurrently as some are having to hit the file system
+        //  to find out sizes. Also consider whether each should get the current time, in case
+        //  there is any delay in them running.
         buildJavaMemoryStats(statisticEventList, tags, nowEpochMs);
         buildCpuStatEvents(statisticEventList, tags);
         buildRefDataStats(statisticEventList, tags, nowEpochMs);

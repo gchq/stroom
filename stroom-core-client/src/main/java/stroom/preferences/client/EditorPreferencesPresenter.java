@@ -91,12 +91,9 @@ public final class EditorPreferencesPresenter
                 : AceThemeType.DARK;
 
         String editorThemeName = userPreferences.getEditorTheme();
-        if (AceEditorTheme.isValidThemeName(editorThemeName)) {
-            if (!AceEditorTheme.matchesThemeType(themeName, aceThemeType)) {
-                // e.g. light editor theme with a dark stroom theme, so use an appropriate one
-                editorThemeName = getDefaultEditorTheme(aceThemeType).getName();
-            }
-        } else {
+        if (!AceEditorTheme.isValidThemeName(editorThemeName)
+                || !AceEditorTheme.matchesThemeType(editorThemeName, aceThemeType)) {
+            // e.g. light editor theme with a dark stroom theme, so use the default dark editor theme
             editorThemeName = getDefaultEditorTheme(aceThemeType).getName();
         }
 
