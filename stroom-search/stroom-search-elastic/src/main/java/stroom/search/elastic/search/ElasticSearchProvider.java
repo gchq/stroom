@@ -235,10 +235,10 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
 
                         return elasticFieldType.toDataSourceField(fieldName, fieldIsIndexed(field.getValue()));
                     } catch (UnsupportedTypeException e) {
-                        LOGGER.debug(e::getMessage);
+                        LOGGER.debug(e::getMessage, e);
                         return null;
                     } catch (IllegalArgumentException e) {
-                        LOGGER.warn(e::getMessage);
+                        LOGGER.warn(e::getMessage, e);
                         return null;
                     }
                 })
@@ -309,6 +309,8 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
                         fieldName,
                         nativeType,
                         indexed));
+            } catch (UnsupportedTypeException e) {
+                LOGGER.debug(e::getMessage, e);
             } catch (Exception e) {
                 LOGGER.error(e::getMessage, e);
             }
