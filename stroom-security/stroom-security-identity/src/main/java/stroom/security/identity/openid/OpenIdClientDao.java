@@ -7,9 +7,9 @@ import java.util.Optional;
 
 public interface OpenIdClientDao {
 
-    void create(OpenIdClient client);
+    void createIfNotExists(OpenIdClient client);
 
     Optional<OpenIdClient> getClientForClientId(String clientId);
 
-    Optional<OpenIdClient> getClientByName(String clientId);
+    Optional<OpenIdClient> getClientByName(String name);
 }

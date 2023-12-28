@@ -14,17 +14,16 @@ import stroom.util.NullSafe;
 import stroom.util.authentication.DefaultOpenIdCredentials;
 import stroom.util.authentication.HasRefreshable;
 import stroom.util.authentication.Refreshable;
+import stroom.util.authentication.Refreshable.RefreshMode;
 import stroom.util.cert.CertificateExtractor;
 import stroom.util.exception.ThrowingFunction;
 import stroom.util.jersey.JerseyClientFactory;
-import stroom.util.jersey.JerseyClientName;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.dropwizard.lifecycle.Managed;
 import org.jose4j.jwt.JwtClaims;
 import org.jose4j.jwt.NumericDate;
 import org.jose4j.jwt.consumer.JwtContext;
@@ -34,20 +33,12 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.DelayQueue;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.WebTarget;
 
 @Singleton
-public abstract class AbstractUserIdentityFactory implements UserIdentityFactory, Managed {
+public abstract class AbstractUserIdentityFactory implements UserIdentityFactory {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AbstractUserIdentityFactory.class);
 
@@ -55,7 +46,6 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
     private final Provider<OpenIdConfiguration> openIdConfigProvider;
     private final DefaultOpenIdCredentials defaultOpenIdCredentials;
     private final CertificateExtractor certificateExtractor;
-    //    private final ProcessingUserIdentityProvider processingUserIdentityProvider;
     private final ServiceUserFactory serviceUserFactory;
     private final JerseyClientFactory jerseyClientFactory;
 
@@ -64,10 +54,7 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
     // This is tied to stroom/proxy's clientId, and we have only one of them
     private volatile UserIdentity serviceUserIdentity;
 
-    //    private final BlockingQueue<AbstractTokenUserIdentity> refreshTokensDelayQueue = new DelayQueue<>();
-    private final BlockingQueue<Refreshable> updatableTokensDelayQueue = new DelayQueue<>();
-    private ExecutorService refreshExecutorService = null;
-    private final AtomicBoolean isShutdownInProgress = new AtomicBoolean(false);
+    private final RefreshManager refreshManager;
     // Don't change the configuration of this mapper after it is created, else not thread safe
     private final ObjectMapper objectMapper;
     private final IdpType idpType;
@@ -76,16 +63,16 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
                                        final Provider<OpenIdConfiguration> openIdConfigProvider,
                                        final DefaultOpenIdCredentials defaultOpenIdCredentials,
                                        final CertificateExtractor certificateExtractor,
-//                                       final ProcessingUserIdentityProvider processingUserIdentityProvider,
                                        final ServiceUserFactory serviceUserFactory,
-                                       final JerseyClientFactory jerseyClientFactory) {
+                                       final JerseyClientFactory jerseyClientFactory,
+                                       final RefreshManager refreshManager) {
         this.jwtContextFactory = jwtContextFactory;
         this.openIdConfigProvider = openIdConfigProvider;
         this.defaultOpenIdCredentials = defaultOpenIdCredentials;
         this.certificateExtractor = certificateExtractor;
-//        this.processingUserIdentityProvider = processingUserIdentityProvider;
         this.serviceUserFactory = serviceUserFactory;
         this.jerseyClientFactory = jerseyClientFactory;
+        this.refreshManager = refreshManager;
         this.objectMapper = createObjectMapper();
         // Bake this in as a restart is required for this prop
         this.idpType = openIdConfigProvider.get().getIdentityProviderType();
@@ -188,7 +175,7 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
             return Collections.emptyMap();
 
         } else {
-            LOGGER.debug(() -> LogUtil.message("IdpType: {}, userIdentity type: {}",
+            LOGGER.trace(() -> LogUtil.message("IdpType: {}, userIdentity type: {}",
                     idpType, userIdentity.getClass().getSimpleName()));
 
             if (IdpType.NO_IDP.equals(idpType)) {
@@ -201,27 +188,22 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
                 LOGGER.debug("Using default token");
                 return jwtContextFactory.createAuthorisationEntries(defaultOpenIdCredentials.getApiKey());
 
-            } else if (userIdentity instanceof final HasUpdatableToken hasUpdatableToken) {
-                LOGGER.debug(() -> LogUtil.message("Getting auth headers as {}, {}",
-                        HasUpdatableToken.class.getSimpleName(),
-                        userIdentity.getClass().getSimpleName()));
-                // Ensure the token hasn't gone off, just in case the refresh queue (which refreshes ahead of the
-                // expiry time) is busy, so the call to refresh is unlikely.
-                final UpdatableToken updatableToken = hasUpdatableToken.getUpdatableToken();
-
-                updatableToken.refreshIfRequired();
-                final String accessToken = Objects.requireNonNull(updatableToken.getAccessToken(),
-                        () -> "Null access token for userIdentity " + userIdentity);
-                return jwtContextFactory.createAuthorisationEntries(accessToken);
-
             } else if (userIdentity instanceof final HasJwt hasJwt) {
                 LOGGER.debug(() -> LogUtil.message("Getting auth headers as {}, {}",
                         HasJwt.class.getSimpleName(),
                         userIdentity.getClass().getSimpleName()));
+
+                // The JWT may be of the type that requires refreshing so check that first
+                if (userIdentity instanceof final HasRefreshable hasRefreshable) {
+                    final Refreshable refreshable = hasRefreshable.getRefreshable();
+                    refreshable.refreshIfRequired(RefreshMode.JUST_IN_TIME, refreshManager::addOrUpdate);
+                }
+
                 // This is for stroom's internal IDP processing user identity (which we don't need to refresh as
                 // ProcessingUserIdentityProviderImpl handles that) or for users that have come from
                 // an AWS ALB with an access token that we don't update.
-                final String accessToken = Objects.requireNonNull(hasJwt.getJwt());
+                final String accessToken = Objects.requireNonNull(hasJwt.getJwt(),
+                        () -> "Null access token for userIdentity " + userIdentity);
                 return jwtContextFactory.createAuthorisationEntries(accessToken);
 
             } else {
@@ -278,18 +260,24 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
         // Ideally the token will get recreated by the refresh queue just before
         // it expires so callers to this will find a token that is good to use and
         // thus won't be contended.
+        final boolean didCreate;
         if (serviceUserIdentity == null) {
             synchronized (this) {
                 if (serviceUserIdentity == null) {
                     serviceUserIdentity = createServiceUserIdentity();
+                    didCreate = true;
+                } else {
+                    didCreate = false;
                 }
             }
+        } else {
+            didCreate = false;
         }
 
         // Make sure it is up-to-date before giving it out
-        if (serviceUserIdentity instanceof final HasUpdatableToken hasUpdatableToken) {
-            final UpdatableToken updatableToken = hasUpdatableToken.getUpdatableToken();
-            updatableToken.refreshIfRequired();
+        if (!didCreate && serviceUserIdentity instanceof final HasRefreshable hasRefreshable) {
+            NullSafe.consume(hasRefreshable.getRefreshable(), refreshable ->
+                    refreshable.refreshIfRequired(RefreshMode.JUST_IN_TIME, refreshManager::addOrUpdate));
         }
 
         return serviceUserIdentity;
@@ -298,50 +286,6 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
     @Override
     public boolean isServiceUser(final UserIdentity userIdentity) {
         return serviceUserFactory.isServiceUser(userIdentity, getServiceUserIdentity());
-//        final UserIdentity serviceUserIdentity = getServiceUserIdentity();
-//        // Use instance equality check as there should only ever be one ServiceUserIdentity
-//        // in this JVM
-//        final boolean isServiceUserIdentity = userIdentity instanceof ServiceUserIdentity
-//                && userIdentity == serviceUserIdentity;
-//        LOGGER.debug("isServiceUserIdentity: {}, userIdentity: {}, serviceUserIdentity: {}",
-//                isServiceUserIdentity, userIdentity, serviceUserIdentity);
-//        return isServiceUserIdentity;
-    }
-
-    @Override
-    public boolean isServiceUser(final String subject, final String issuer) {
-        final UserIdentity processingUserIdentity = getServiceUserIdentity();
-        if (processingUserIdentity instanceof final HasJwtClaims hasJwtClaims) {
-            return Optional.ofNullable(hasJwtClaims.getJwtClaims())
-                    .map(ThrowingFunction.unchecked(jwtClaims -> {
-                        final boolean isProcessingUser = Objects.equals(subject, jwtClaims.getSubject())
-                                && Objects.equals(issuer, jwtClaims.getIssuer());
-
-                        if (LOGGER.isDebugEnabled()) {
-                            LOGGER.debug("Comparing subject: [{}|{}], issuer[{}|{}], result: {}",
-                                    subject,
-                                    jwtClaims.getSubject(),
-                                    issuer,
-                                    jwtClaims.getIssuer(),
-                                    isProcessingUser);
-                        }
-                        return isProcessingUser;
-                    }))
-                    .orElse(false);
-        } else {
-            final String requiredIssuer = openIdConfigProvider.get().getIssuer();
-            final boolean isProcessingUser = Objects.equals(subject, processingUserIdentity.getSubjectId())
-                    && Objects.equals(issuer, requiredIssuer);
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("Comparing subject: [{}|{}], issuer[{}|{}], result: {}",
-                        subject,
-                        processingUserIdentity.getSubjectId(),
-                        issuer,
-                        requiredIssuer,
-                        isProcessingUser);
-            }
-            return isProcessingUser;
-        }
     }
 
     /**
@@ -351,33 +295,22 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
      */
     public void refresh(final UserIdentity userIdentity) {
         Objects.requireNonNull(userIdentity, "Null userIdentity");
-        if (userIdentity instanceof final HasUpdatableToken hasUpdatableToken) {
+        if (userIdentity instanceof final HasRefreshable hasRefreshable) {
 
             // This will try and refresh/recreate the token just before it expires
             // so that there is no delay for users of the token. They can explicitly call
             // refresh after checking AbstractTokenUserIdentity.hasTokenExpired() if they don't trust
             // the refresh queue, but it should always return false.
-            final UpdatableToken updatableToken = hasUpdatableToken.getUpdatableToken();
-            final boolean didRefresh = updatableToken.refreshIfRequired();
+            final Refreshable refreshable = hasRefreshable.getRefreshable();
+            final boolean didRefresh = refreshable.refreshIfRequired(
+                    RefreshMode.JUST_IN_TIME, refreshManager::addOrUpdate);
 
             if (LOGGER.isTraceEnabled()) {
                 if (!didRefresh) {
                     LOGGER.trace("Refresh not done for userIdentity: {}, updatableToken: {}",
-                            userIdentity, updatableToken);
+                            userIdentity, refreshable);
                 }
             }
-//
-//            if (userIdentity instanceof ServiceUserIdentity) {
-//                // service users do not have refresh tokens so just create new ones
-//                didRefresh = tokenUserIdentity.refresh(
-////                        AbstractTokenUserIdentity::isTokenRefreshRequired,
-//                        userIdentity2 -> createOrUpdateServiceUserIdentity());
-//            } else {
-//                // This takes care of calling isRefreshRequired before and after getting a lock
-//                didRefresh = tokenUserIdentity.refresh(
-////                        AbstractTokenUserIdentity::isTokenRefreshRequired,
-//                        this::refreshUsingRefreshToken);
-//            }
         }
     }
 
@@ -462,29 +395,12 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
         return fetchTokenResult;
     }
 
-//    private void addUserIdentityToRefreshQueueIfRequired(final UserIdentity userIdentity) {
-//        if (userIdentity instanceof final AbstractTokenUserIdentity tokenUserIdentity) {
-//            LOGGER.debug(() -> LogUtil.message("Adding identity to the refresh queue, userIdentity: {}, delay: {}",
-//                    userIdentity, Duration.ofMillis(tokenUserIdentity.getDelay(TimeUnit.MILLISECONDS))));
-//
-//            // TODO: 02/03/2023 check not needed if we are dealing with a HasRefreshableToken
-//            if (tokenUserIdentity.hasRefreshToken()
-//                    || tokenUserIdentity instanceof ServiceUserIdentity) {
-//                refreshTokensDelayQueue.add(tokenUserIdentity);
-//            } else {
-//                LOGGER.warn("Unable to refresh userIdentity due to lack of refresh token {}", tokenUserIdentity);
-//            }
-//        }
-//    }
+    protected void addTokenToRefreshManager(final Refreshable refreshable) {
+        NullSafe.consume(refreshable, refreshManager::addOrUpdate);
+    }
 
-    protected void addTokenToRefreshQueue(final Refreshable refreshable) {
-        if (refreshable != null) {
-            LOGGER.debug(() -> LogUtil.message(
-                    "Adding {} to the refresh queue, token: {}, delay: {}",
-                    refreshable,
-                    Duration.ofMillis(refreshable.getDelay(TimeUnit.MILLISECONDS))));
-            updatableTokensDelayQueue.add(refreshable);
-        }
+    protected void removeTokenFromRefreshManager(final Refreshable refreshable) {
+        NullSafe.consume(refreshable, refreshManager::remove);
     }
 
     private FetchTokenResult refreshTokens(final TokenResponse existingTokenResponse) {
@@ -510,11 +426,6 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
         return new FetchTokenResult(newTokenResponse, jwtClaims);
     }
 
-    private WebTarget createWebTarget(final String endpoint) {
-        final Client client = jerseyClientFactory.getNamedClient(JerseyClientName.OPEN_ID);
-        return client.target(endpoint);
-    }
-
     private ObjectMapper createObjectMapper() {
         final ObjectMapper mapper = new ObjectMapper();
         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
@@ -533,10 +444,14 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
         final boolean match = nonce != null && nonce.equals(state.getNonce());
         if (match) {
             optUserIdentity = mapAuthFlowIdentity(jwtContext, request, tokenResponse);
-            optUserIdentity
-                    .filter(userIdentity -> userIdentity instanceof HasRefreshable<?>)
-                    .map(userIdentity -> ((HasRefreshable<?>) userIdentity).getRefreshable())
-                    .ifPresent(this::addTokenToRefreshQueue);
+            optUserIdentity.ifPresent(userIdentity -> {
+                if (userIdentity instanceof final HasRefreshable hasRefreshable) {
+                    NullSafe.consume(hasRefreshable.getRefreshable(),
+                            refreshable ->
+                                    refreshable.refreshIfRequired(
+                                            RefreshMode.JUST_IN_TIME, refreshManager::addOrUpdate));
+                }
+            });
         } else {
             // If the nonces don't match we need to redirect to log in again.
             // Maybe the request uses an out-of-date stroomSessionId?
@@ -547,164 +462,13 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
     }
 
     private UserIdentity createServiceUserIdentity() {
-//        final OpenIdConfiguration openIdConfiguration = openIdConfigProvider.get();
-//        final IdpType idpType = openIdConfiguration.getIdentityProviderType();
-//
-//        final UserIdentity userIdentity = switch (idpType) {
-//            case NO_IDP -> new UserIdentity() {
-//                @Override
-//                public String getSubjectId() {
-//                    return "NO_IDP SERVICE USER";
-//                }
-//            };
-//            case TEST_CREDENTIALS -> createTestServiceUser();
-//            case EXTERNAL_IDP -> createExternalServiceUser();
-//            default -> throw new RuntimeException(LogUtil.message("{} is not supported for property {}.",
-//                    openIdConfiguration.getIdentityProviderType(),
-//                    AbstractOpenIdConfig.PROP_NAME_IDP_TYPE));
-//        };
-
         // Delegate creation to an idpType appropriate class
         final UserIdentity userIdentity = serviceUserFactory.createServiceUserIdentity();
 
-        if (userIdentity instanceof final HasRefreshable<?> updatableUserIdentity) {
-            NullSafe.consume(updatableUserIdentity.getRefreshable(),
-                    this::addTokenToRefreshQueue);
+        if (userIdentity instanceof final HasRefreshable hasRefreshable) {
+            NullSafe.consume(hasRefreshable.getRefreshable(),
+                    refreshManager::addOrUpdate);
         }
         return userIdentity;
-    }
-
-//    private UserIdentity createTestServiceUser() {
-//        final UserIdentity serviceUserIdentity = new DefaultOpenIdCredsUserIdentity(
-//                defaultOpenIdCredentials.getApiKeyUserEmail(),
-//                defaultOpenIdCredentials.getApiKey());
-//        LOGGER.info("Created test service user identity {} {}",
-//                serviceUserIdentity.getClass().getSimpleName(), serviceUserIdentity);
-//        return serviceUserIdentity;
-//    }
-
-//    private FetchTokenResult fetchExternalServiceUserToken() {
-//        final OpenIdConfiguration openIdConfiguration = openIdConfigProvider.get();
-//        final String tokenEndpoint = openIdConfiguration.getTokenEndpoint();
-//
-//        // Only need the access token for a client_credentials flow
-//        final TokenResponse tokenResponse = new OpenIdTokenRequestHelper(
-//                tokenEndpoint, openIdConfiguration, objectMapper, jerseyClientFactory)
-//                .withGrantType(OpenId.GRANT_TYPE__CLIENT_CREDENTIALS)
-//                .addScopes(openIdConfiguration.getClientCredentialsScopes())
-//                .sendRequest(false);
-//
-//        final FetchTokenResult fetchTokenResult = jwtContextFactory.getJwtContext(tokenResponse.getAccessToken())
-//                .map(jwtContext ->
-//                        new FetchTokenResult(tokenResponse, jwtContext.getJwtClaims()))
-//                .orElseThrow(() -> {
-//                    throw new RuntimeException("Unable to extract JWT claims for service user");
-//                });
-//
-//        return fetchTokenResult;
-//    }
-
-//    private UserIdentity createExternalServiceUser() {
-//        // Get the initial token
-//        final FetchTokenResult fetchTokenResult = fetchExternalServiceUserToken();
-//
-//        final JwtClaims jwtClaims = fetchTokenResult.jwtClaims();
-//        final UpdatableToken updatableToken = new UpdatableToken(
-//                fetchTokenResult.tokenResponse(),
-//                jwtClaims,
-//                updatableToken2 -> fetchExternalServiceUserToken());
-//
-//        final UserIdentity serviceUserIdentity = new ServiceUserIdentity(
-//                getUniqueIdentity(jwtClaims),
-//                getUserDisplayName(jwtClaims).orElse(null),
-//                updatableToken);
-//
-//        // Associate the token with the user it is for
-//        updatableToken.setUserIdentity(serviceUserIdentity);
-//
-//        LOGGER.info("Created external IDP service user identity {} {}",
-//                serviceUserIdentity.getClass().getSimpleName(), serviceUserIdentity);
-//
-//        // Add the identity onto the queue so the tokens get refreshed
-//        addTokenToRefreshQueue(updatableToken);
-//        return serviceUserIdentity;
-//    }
-
-    private void consumeFromRefreshQueue() {
-        try {
-            // We are called in an infinite while loop so drop out every 2s to allow
-            // checking of shutdown state
-            final Refreshable refreshable = updatableTokensDelayQueue.poll(
-                    2, TimeUnit.SECONDS);
-
-            if (refreshable != null) {
-                // It is possible that something else has refreshed the token
-                LOGGER.debug("Consuming updatableToken {} from refresh queue (size after: {})",
-                        refreshable, updatableTokensDelayQueue.size());
-                refreshable.refreshIfRequired();
-            }
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            LOGGER.debug("Refresh delay queue interrupted, assume shutdown is happening so do no more");
-        }
-    }
-
-//    /**
-//     * Gets the unique ID that links the identity on the IDP to the stroom_user.
-//     * Maps to the 'name' column in stroom_user table.
-//     */
-//    protected String getUniqueIdentity(final JwtClaims jwtClaims) {
-//        Objects.requireNonNull(jwtClaims);
-//        final String uniqueIdentityClaim = openIdConfigProvider.get().getUniqueIdentityClaim();
-//        final String id = JwtUtil.getClaimValue(jwtClaims, uniqueIdentityClaim)
-//                .orElseThrow(() -> new RuntimeException(LogUtil.message(
-//                        "Expecting claims to contain configured uniqueIdentityClaim '{}' " +
-//                                "but it is not there, jwtClaims: {}",
-//                        uniqueIdentityClaim,
-//                        jwtClaims)));
-//
-//        LOGGER.debug("uniqueIdentityClaim: {}, id: {}", uniqueIdentityClaim, id);
-//
-//        return id;
-//    }
-//
-//    /**
-//     * Gets the unique ID that links the identity on the IDP to the stroom_user.
-//     * Maps to the 'name' column in stroom_user table.
-//     */
-//    protected Optional<String> getUserDisplayName(final JwtClaims jwtClaims) {
-//        Objects.requireNonNull(jwtClaims);
-//        final String userDisplayNameClaim = openIdConfigProvider.get().getUserDisplayNameClaim();
-//        final Optional<String> userDisplayName = JwtUtil.getClaimValue(jwtClaims, userDisplayNameClaim);
-//
-//        LOGGER.debug("userDisplayNameClaim: {}, userDisplayName: {}", userDisplayNameClaim, userDisplayName);
-//
-//        return userDisplayName;
-//    }
-
-    @Override
-    public void start() throws Exception {
-        if (refreshExecutorService == null) {
-            LOGGER.info("Initialising OIDC token refresh executor");
-            refreshExecutorService = Executors.newSingleThreadExecutor();
-            refreshExecutorService.submit(() -> {
-                while (!Thread.currentThread().isInterrupted()
-                        && !isShutdownInProgress.get()) {
-                    consumeFromRefreshQueue();
-                }
-            });
-        }
-    }
-
-    @Override
-    public void stop() throws Exception {
-        isShutdownInProgress.set(true);
-        if (refreshExecutorService != null) {
-            LOGGER.info("Shutting down OIDC token refresh executor");
-            refreshExecutorService.shutdownNow();
-            // No need to wait for termination the stuff on the queue has no value once
-            // we are shutting down
-            LOGGER.info("Successfully shut down OIDC token refresh executor");
-        }
     }
 }

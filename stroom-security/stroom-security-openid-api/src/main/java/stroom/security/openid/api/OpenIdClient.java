@@ -44,4 +44,24 @@ public class OpenIdClient {
                 ", uriPattern='" + uriPattern + '\'' +
                 '}';
     }
+
+    @Override
+    public boolean equals(final Object object) {
+        if (this == object) {
+            return true;
+        }
+        if (object == null || getClass() != object.getClass()) {
+            return false;
+        }
+        final OpenIdClient client = (OpenIdClient) object;
+        return Objects.equals(name, client.name) && Objects.equals(clientId,
+                client.clientId) && Objects.equals(clientSecret, client.clientSecret) && Objects.equals(
+                uriPattern,
+                client.uriPattern);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(name, clientId, clientSecret, uriPattern);
+    }
 }

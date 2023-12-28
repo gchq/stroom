@@ -7,8 +7,10 @@ import stroom.security.api.UserIdentity;
 import stroom.security.api.UserIdentityFactory;
 import stroom.security.api.exception.AuthenticationException;
 import stroom.security.common.impl.AbstractUserIdentityFactory;
+import stroom.security.common.impl.HasJwtClaims;
 import stroom.security.common.impl.JwtContextFactory;
 import stroom.security.common.impl.JwtUtil;
+import stroom.security.common.impl.RefreshManager;
 import stroom.security.common.impl.UpdatableToken;
 import stroom.security.openid.api.IdpType;
 import stroom.security.openid.api.OpenId;
@@ -17,11 +19,13 @@ import stroom.security.openid.api.TokenResponse;
 import stroom.security.shared.User;
 import stroom.util.NullSafe;
 import stroom.util.authentication.DefaultOpenIdCredentials;
+import stroom.util.authentication.HasRefreshable;
 import stroom.util.cert.CertificateExtractor;
 import stroom.util.entityevent.EntityAction;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEventBus;
 import stroom.util.exception.DataChangedException;
+import stroom.util.exception.ThrowingFunction;
 import stroom.util.jersey.JerseyClientFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -64,18 +68,18 @@ public class StroomUserIdentityFactory extends AbstractUserIdentityFactory {
                                      final UserService userService,
                                      final SecurityContext securityContext,
                                      final JerseyClientFactory jerseyClientFactory,
-                                     final EntityEventBus entityEventBus) {
+                                     final EntityEventBus entityEventBus,
+                                     final RefreshManager refreshManager) {
 
 
         super(jwtContextFactory,
                 openIdConfigProvider,
                 defaultOpenIdCredentials,
                 certificateExtractor,
-//                processingUserIdentityProvider,
                 serviceUserFactory,
-                jerseyClientFactory);
+                jerseyClientFactory,
+                refreshManager);
 
-//        this.processingUserIdentityProvider = processingUserIdentityProvider;
         this.defaultOpenIdCredentials = defaultOpenIdCredentials;
         this.userCache = userCache;
         this.openIdConfigProvider = openIdConfigProvider;
@@ -133,6 +137,16 @@ public class StroomUserIdentityFactory extends AbstractUserIdentityFactory {
                 .or(() -> {
                     throw new AuthenticationException("Unable to find user: " + subjectId);
                 });
+    }
+
+    /**
+     * Call this when a user logs out (or is logged out) to stop refreshing tokens for that user.
+     */
+    public void logoutUser(final UserIdentity userIdentity) {
+        LOGGER.debug("Logging out user {}", userIdentity);
+        if (userIdentity instanceof final HasRefreshable hasRefreshable) {
+            removeTokenFromRefreshManager(hasRefreshable.getRefreshable());
+        }
     }
 
     /**
@@ -254,7 +268,8 @@ public class StroomUserIdentityFactory extends AbstractUserIdentityFactory {
         final UpdatableToken updatableToken = new UpdatableToken(
                 tokenResponse,
                 jwtClaims,
-                super::refreshUsingRefreshToken);
+                super::refreshUsingRefreshToken,
+                session);
 
         final UserIdentity userIdentity = new UserIdentityImpl(
                 user.getUuid(),
@@ -265,8 +280,7 @@ public class StroomUserIdentityFactory extends AbstractUserIdentityFactory {
                 updatableToken);
 
         updatableToken.setUserIdentity(userIdentity);
-
-        addTokenToRefreshQueue(updatableToken);
+        addTokenToRefreshManager(updatableToken);
 
         LOGGER.info(() -> "Authenticated user " + userIdentity
                 + " for sessionId " + NullSafe.get(session, HttpSession::getId));
@@ -353,12 +367,49 @@ public class StroomUserIdentityFactory extends AbstractUserIdentityFactory {
     private Optional<UserIdentity> getProcessingUser(final JwtContext jwtContext) {
         try {
             final JwtClaims jwtClaims = jwtContext.getJwtClaims();
-            if (isServiceUser(jwtClaims.getSubject(), jwtClaims.getIssuer())) {
-                return Optional.of(getServiceUserIdentity());
+            final UserIdentity serviceUser = getServiceUserIdentity();
+            if (isServiceUser(jwtClaims.getSubject(), jwtClaims.getIssuer(), serviceUser)) {
+                return Optional.of(serviceUser);
             }
         } catch (final MalformedClaimException e) {
             LOGGER.debug(e.getMessage(), e);
         }
         return Optional.empty();
+    }
+
+    public boolean isServiceUser(final String subject,
+                                 final String issuer,
+                                 final UserIdentity serviceUser) {
+        if (serviceUser instanceof final HasJwtClaims hasJwtClaims) {
+            return Optional.ofNullable(hasJwtClaims.getJwtClaims())
+                    .map(ThrowingFunction.unchecked(jwtClaims -> {
+                        final boolean isProcessingUser = Objects.equals(subject, jwtClaims.getSubject())
+                                && Objects.equals(issuer, jwtClaims.getIssuer());
+
+                        if (LOGGER.isDebugEnabled()) {
+                            LOGGER.debug("Comparing subject: [{}|{}], issuer[{}|{}], result: {}",
+                                    subject,
+                                    jwtClaims.getSubject(),
+                                    issuer,
+                                    jwtClaims.getIssuer(),
+                                    isProcessingUser);
+                        }
+                        return isProcessingUser;
+                    }))
+                    .orElse(false);
+        } else {
+            final String requiredIssuer = openIdConfigProvider.get().getIssuer();
+            final boolean isProcessingUser = Objects.equals(subject, serviceUser.getSubjectId())
+                    && Objects.equals(issuer, requiredIssuer);
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("Comparing subject: [{}|{}], issuer[{}|{}], result: {}",
+                        subject,
+                        serviceUser.getSubjectId(),
+                        issuer,
+                        requiredIssuer,
+                        isProcessingUser);
+            }
+            return isProcessingUser;
+        }
     }
 }

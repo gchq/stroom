@@ -6,7 +6,6 @@ import stroom.security.api.UserIdentityFactory;
 
 import java.util.Collections;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
@@ -35,11 +34,6 @@ public class MockUserIdentityFactory implements UserIdentityFactory {
     @Override
     public boolean isServiceUser(final UserIdentity userIdentity) {
         return serviceUserFactory.isServiceUser(userIdentity, serviceUserIdentity);
-    }
-
-    @Override
-    public boolean isServiceUser(final String subject, final String issuer) {
-        return Objects.equals(subject, serviceUserIdentity.getSubjectId());
     }
 
     @Override

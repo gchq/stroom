@@ -6,6 +6,7 @@ import stroom.node.api.NodeService;
 import stroom.security.shared.SessionListResponse;
 import stroom.security.shared.SessionResource;
 import stroom.task.api.SimpleTaskContextFactory;
+import stroom.test.common.TestUtil;
 import stroom.test.common.util.test.AbstractMultiNodeResourceTest;
 
 import org.assertj.core.api.Assertions;
@@ -18,6 +19,7 @@ import org.mockito.quality.Strictness;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import javax.servlet.http.HttpServletRequest;
 
 import static org.mockito.Mockito.when;
 
@@ -121,6 +123,12 @@ class TestSessionListListener extends AbstractMultiNodeResourceTest<SessionResou
 
         sessionListServiceMap.put(node.getNodeName(), sessionListService);
 
-        return new SessionResourceImpl(() -> sessionListService);
+        return new SessionResourceImpl(
+                TestUtil.mockProvider(AuthenticationConfig.class),
+                TestUtil.mockProvider(OpenIdManager.class),
+                TestUtil.mockProvider(HttpServletRequest.class),
+                TestUtil.mockProvider(AuthenticationEventLog.class),
+                () -> sessionListService,
+                TestUtil.mockProvider(StroomUserIdentityFactory.class));
     }
 }

@@ -5,6 +5,8 @@ import stroom.security.api.UserIdentity;
 import stroom.util.NullSafe;
 import stroom.util.authentication.HasRefreshable;
 
+import org.jose4j.jwt.JwtClaims;
+
 import java.util.Objects;
 
 /**
@@ -12,8 +14,7 @@ import java.util.Objects;
  * applications on the same IDP realm. I.e. Stroom's processing user.
  * This user uses the client credentials flow.
  */
-public class ServiceUserIdentity
-        implements UserIdentity, HasJwtClaims, HasJwt, HasUpdatableToken, HasRefreshable<UpdatableToken> {
+public class ServiceUserIdentity implements UserIdentity, HasJwtClaims, HasJwt, HasRefreshable {
 
     private final String id;
     private final String displayName;
@@ -40,13 +41,18 @@ public class ServiceUserIdentity
     }
 
     @Override
-    public UpdatableToken getUpdatableToken() {
+    public UpdatableToken getRefreshable() {
         return updatableToken;
     }
 
     @Override
-    public UpdatableToken getRefreshable() {
-        return updatableToken;
+    public String getJwt() {
+        return NullSafe.get(updatableToken, UpdatableToken::getJwt);
+    }
+
+    @Override
+    public JwtClaims getJwtClaims() {
+        return NullSafe.get(updatableToken, UpdatableToken::getJwtClaims);
     }
 
     @Override
@@ -74,8 +80,4 @@ public class ServiceUserIdentity
                 '}';
     }
 
-    @Override
-    public String getJwt() {
-        return NullSafe.get(updatableToken, UpdatableToken::getJwt);
-    }
 }

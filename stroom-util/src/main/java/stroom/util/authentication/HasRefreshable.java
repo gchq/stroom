@@ -1,6 +1,6 @@
 package stroom.util.authentication;
 
-public interface HasRefreshable<T extends Refreshable> {
+public interface HasRefreshable {
 
-    T getRefreshable();
+    Refreshable getRefreshable();
 }

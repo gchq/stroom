@@ -5,6 +5,15 @@ import java.util.Set;
 
 /**
  * Defines the configuration required to interact with an Open ID Connect IDP
+ * <p>
+ * Depending on the implementation, some of these values may come from the IDP's configuration
+ * endpoint and some may come from stroom's config file OR they may all come from stroom's
+ * config file.
+ * <p>
+ * If you need to be sure you are getting only values from Stroom's config file then inject
+ * the Stroom or Proxy named implementations or {@link AbstractOpenIdConfig} directly. E.g.
+ * any classes that are the implementation of our internal IDP should be using an of this
+ * class that is only backed by the config file.
  */
 public interface OpenIdConfiguration {
 
