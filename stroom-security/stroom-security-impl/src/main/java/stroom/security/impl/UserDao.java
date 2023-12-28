@@ -5,6 +5,7 @@ import stroom.security.shared.User;
 import stroom.util.filter.FilterFieldMapper;
 import stroom.util.filter.FilterFieldMappers;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -31,6 +32,8 @@ public interface UserDao {
     Optional<User> getById(int id);
 
     Optional<User> getByUuid(String uuid);
+
+    Set<User> getByUuids(Collection<String> userUuids);
 
     Optional<User> getBySubjectId(String name);
 

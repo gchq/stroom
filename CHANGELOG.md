@@ -13,6 +13,46 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2.13] - 2023-12-20
+
+* Issue **#3956** : Fix SearchRequestBuilder reuse.
+
+
+## [v7.2.12] - 2023-12-19
+
+* Add minor performance optimisation to the byte buffer pool used by the reference data store.
+
+* Issue **#3953** : Fix search buffer size issue.
+
+* Issue **#3948** : Add `and` and `or` functions.
+
+* Issue **#3956** : Add debug to diagnose expression parsing issue.
+
+
+## [v7.2.11] - 2023-12-13
+
+* Issue **#3913** : Change zip data handling so unknown file extensions are treated as part of the base name, e.g. `001.unknown` gets a base name of `001.unknown` (unless we see a known extension like `001.ctx` in which case `001.unknown` gets a base name of `001`), `abc.xyz.10001` gets a base name of `abc.xyz.10001`.
+
+* Issue **#3945** : Fix light theme colours.
+
+* Issue **#3942** : Fix user identity in audit logging.
+
+
+## [v7.2.10] - 2023-12-07
+
+* Issue **#3939** : Fix issue changing editor them in user preferences.
+
+
+## [v7.2.9] - 2023-12-06
+
+* Issue **#3938** : Fix `lockInterruptibly` on `CompletableQueue`.
+
+
+## [v7.2.8] - 2023-11-30
+
+* Issue **#3935** : The `having` clause can now compare two computed row values.
+
+
 ## [v7.2.7] - 2023-11-28
 
 * Remove 5s thread sleep left in the code from testing. This sleep happens when a legacy ref data stream is migrated.
@@ -6175,7 +6215,13 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2.7...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2.13...HEAD
+[v7.2.13]: https://github.com/gchq/stroom/compare/v7.2.12...v7.2.13
+[v7.2.12]: https://github.com/gchq/stroom/compare/v7.2.11...v7.2.12
+[v7.2.11]: https://github.com/gchq/stroom/compare/v7.2.10...v7.2.11
+[v7.2.10]: https://github.com/gchq/stroom/compare/v7.2.9...v7.2.10
+[v7.2.9]: https://github.com/gchq/stroom/compare/v7.2.8...v7.2.9
+[v7.2.8]: https://github.com/gchq/stroom/compare/v7.2.7...v7.2.8
 [v7.2.7]: https://github.com/gchq/stroom/compare/v7.2.6...v7.2.7
 [v7.2.6]: https://github.com/gchq/stroom/compare/v7.2.5...v7.2.6
 [v7.2.5]: https://github.com/gchq/stroom/compare/v7.2.4...v7.2.5

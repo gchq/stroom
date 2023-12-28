@@ -35,6 +35,7 @@ public class DocumentPermissions {
     @JsonProperty
     private final List<User> groups;
 
+    // userOrGroupUuid => permissionNames
     @JsonProperty
     private final Map<String, Set<String>> permissions;
 
@@ -47,6 +48,14 @@ public class DocumentPermissions {
         this.users = users;
         this.groups = groups;
         this.permissions = permissions;
+    }
+
+    public static DocumentPermissions empty(final String docUuid) {
+        return new DocumentPermissions(
+                docUuid,
+                Collections.emptyList(),
+                Collections.emptyList(),
+                Collections.emptyMap());
     }
 
     public String getDocUuid() {

@@ -16,13 +16,13 @@ public class FileName {
 
     public static FileName fromParts(final String baseName, final String extension) {
         if (baseName == null) {
-            if (extension == null || extension.length() == 0) {
+            if (extension == null || extension.isEmpty()) {
                 return new FileName("", "", "");
             } else {
                 return new FileName("." + extension, "", extension);
             }
         } else {
-            if (extension == null || extension.length() == 0) {
+            if (extension == null || extension.isEmpty()) {
                 return new FileName(baseName, baseName, "");
             } else {
                 return new FileName(baseName + "." + extension, baseName, extension);
@@ -37,8 +37,9 @@ public class FileName {
             final String baseName = fileName.substring(0, dotIndex);
             final String extension = fileName.substring(dotIndex + 1);
             return new FileName(fileName, baseName, extension);
+        } else {
+            return new FileName(fileName, fileName, "");
         }
-        return new FileName(fileName, fileName, "");
     }
 
     public String getFullName() {
@@ -51,5 +52,36 @@ public class FileName {
 
     public String getExtension() {
         return extension;
+    }
+
+    public boolean hasExtension() {
+        return extension != null && !extension.isEmpty();
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        final FileName fileName = (FileName) o;
+        return Objects.equals(fullName, fileName.fullName) && Objects.equals(baseName,
+                fileName.baseName) && Objects.equals(extension, fileName.extension);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(fullName, baseName, extension);
+    }
+
+    @Override
+    public String toString() {
+        return "FileName{" +
+                "fullName='" + fullName + '\'' +
+                ", baseName='" + baseName + '\'' +
+                ", extension='" + extension + '\'' +
+                '}';
     }
 }

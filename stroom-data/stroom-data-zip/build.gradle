@@ -5,13 +5,17 @@ dependencies {
     implementation project(':stroom-task:stroom-task-api')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
-    
+
     implementation libs.commons_compress
     implementation libs.guava
     implementation libs.slf4j_api
 
+    implementation project(':stroom-test-common')
+
     testImplementation libs.assertj_core
+    testImplementation libs.guice5
     testImplementation libs.junit_jupiter_api
+    testImplementation libs.vavr
 
     // The following logging libs are needed when running junits outside dropwizard
     testRuntimeOnly libs.jakarta_activation

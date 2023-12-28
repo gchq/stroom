@@ -45,7 +45,7 @@ class TestDocRefInfoServiceImpl {
             DOC_REF2,
             DOC_REF3);
 
-    private static final Map<DocRef, DocRefInfo> CACHE_DATA = DOC_REFS.stream()
+    private static final Map<String, DocRefInfo> CACHE_DATA = DOC_REFS.stream()
             .map(docRef -> new DocRefInfo(
                     docRef,
                     System.currentTimeMillis(),
@@ -53,7 +53,9 @@ class TestDocRefInfoServiceImpl {
                     "user1",
                     "user1",
                     null))
-            .collect(Collectors.toMap(DocRefInfo::getDocRef, Function.identity()));
+            .collect(Collectors.toMap(
+                    docRefInfo -> docRefInfo.getDocRef().getUuid(),
+                    Function.identity()));
 
     @Mock
     private DocRefInfoCache mockDocRefInfoCache;
@@ -76,9 +78,9 @@ class TestDocRefInfoServiceImpl {
         Mockito
                 .doAnswer(invocation -> {
                     final DocRef docRef = invocation.getArgument(0);
-                    return Optional.ofNullable(CACHE_DATA.get(docRef));
+                    return Optional.ofNullable(CACHE_DATA.get(docRef.getUuid()));
                 })
-                .when(mockDocRefInfoCache).get(Mockito.any());
+                .when(mockDocRefInfoCache).get(Mockito.any(DocRef.class));
     }
 
     @Test
@@ -174,11 +176,11 @@ class TestDocRefInfoServiceImpl {
                 DOC_REF3);
 
         Assertions
-                .assertThatThrownBy(() -> {
-                    final List<DocRef> outputDocRefs = docRefInfoService.decorate(inputDocRefs);
-                })
-                .hasMessageContaining("type is not set")
-                .isInstanceOf(RuntimeException.class);
+                .assertThat(docRefInfoService.decorate(inputDocRefs))
+                .containsExactly(
+                        DOC_REF1,
+                        DOC_REF2,
+                        DOC_REF3);
     }
 
     @Test

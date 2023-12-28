@@ -227,6 +227,7 @@
     --navigation__text-color--selected: var(--text-color--selected);
     --navigation__text-color--no-match: #7b7b7b;
     --navigation__border-color: #27252c;
+    --logo-color: var(--white);
 
     /* Specific */
     --header__icon-color: #2185d0;

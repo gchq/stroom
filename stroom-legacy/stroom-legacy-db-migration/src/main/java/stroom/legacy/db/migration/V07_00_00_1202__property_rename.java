@@ -4,8 +4,8 @@ import stroom.config.impl.db.jooq.tables.Config;
 import stroom.config.impl.db.jooq.tables.records.ConfigRecord;
 import stroom.db.util.JooqUtil;
 import stroom.legacy.model_6_1.GlobalProperty;
-import stroom.query.util.LambdaLogger;
-import stroom.query.util.LambdaLoggerFactory;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.time.StroomDuration;
 
