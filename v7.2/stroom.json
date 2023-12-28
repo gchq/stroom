@@ -1373,6 +1373,36 @@
         "tags" : [ "Authentication" ]
       }
     },
+    "/authproxy/v1/noauth/fetchClientCredsToken" : {
+      "post" : {
+        "operationId" : "fetchClientCredsToken",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ClientCredentials"
+              }
+            }
+          },
+          "description" : "clientCredentials",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "text/plain" : {
+                "schema" : {
+                  "type" : "string"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Fetch an access token from the configured IDP using the supplied client credentials",
+        "tags" : [ "AuthProxy" ]
+      }
+    },
     "/cache/v1" : {
       "delete" : {
         "operationId" : "clearCache",
@@ -5562,6 +5592,36 @@
           }
         },
         "summary" : "Fetch document permissions",
+        "tags" : [ "Doc Permissions" ]
+      }
+    },
+    "/permission/doc/v1/fetchPermissionChangeImpact" : {
+      "post" : {
+        "operationId" : "fetchPermissionChangeImpact",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ChangeDocumentPermissionsRequest"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PermissionChangeImpactSummary"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Fetch impact summary for a change of document permissions",
         "tags" : [ "Doc Permissions" ]
       }
     },
@@ -10807,6 +10867,17 @@
           }
         } ]
       },
+      "ClientCredentials" : {
+        "type" : "object",
+        "properties" : {
+          "clientId" : {
+            "type" : "string"
+          },
+          "clientSecret" : {
+            "type" : "string"
+          }
+        }
+      },
       "ClusterLockKey" : {
         "type" : "object",
         "properties" : {
@@ -14830,6 +14901,17 @@
           }
         },
         "required" : [ "type" ]
+      },
+      "PermissionChangeImpactSummary" : {
+        "type" : "object",
+        "properties" : {
+          "impactDetail" : {
+            "type" : "string"
+          },
+          "impactSummary" : {
+            "type" : "string"
+          }
+        }
       },
       "PermissionChangeRequest" : {
         "type" : "object",
