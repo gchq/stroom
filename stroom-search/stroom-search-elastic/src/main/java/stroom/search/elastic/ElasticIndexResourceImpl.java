@@ -30,11 +30,8 @@ import stroom.util.shared.FetchWithUuid;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
-import org.elasticsearch.ResourceNotFoundException;
-import org.elasticsearch.client.RequestOptions;
-import org.elasticsearch.client.RestHighLevelClient;
-import org.elasticsearch.client.indices.GetIndexRequest;
-import org.elasticsearch.client.indices.GetIndexResponse;
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch.indices.GetIndexResponse;
 
 @AutoLogged
 class ElasticIndexResourceImpl implements ElasticIndexResource, FetchWithUuid<ElasticIndexDoc> {
@@ -90,17 +87,16 @@ class ElasticIndexResourceImpl implements ElasticIndexResource, FetchWithUuid<El
 
             final ElasticConnectionConfig connectionConfig = elasticCluster.getConnection();
             final ElasticClientConfig elasticClientConfig = elasticConfigProvider.get().getClientConfig();
-            final RestHighLevelClient elasticClient = new ElasticClientFactory()
+            final ElasticsearchClient elasticClient = new ElasticClientFactory()
                     .create(connectionConfig, elasticClientConfig);
 
             // Check whether the specified index exists
             final String indexName = index.getIndexName();
-            final GetIndexRequest getIndexRequest = new GetIndexRequest(indexName);
             final GetIndexResponse getIndexResponse = elasticClient.indices()
-                    .get(getIndexRequest, RequestOptions.DEFAULT);
+                    .get(r -> r.index(indexName));
 
-            if (getIndexResponse.getIndices().length < 1) {
-                throw new ResourceNotFoundException("Index '" + indexName + "' was not found");
+            if (getIndexResponse.result().isEmpty()) {
+                throw new NotFoundException("Index '" + indexName + "' was not found");
             }
 
             return new ElasticIndexTestResponse(true, "Elasticsearch index '" + index.getIndexName() + "' was found");

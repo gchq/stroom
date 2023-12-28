@@ -115,12 +115,13 @@ public enum ElasticIndexFieldType implements HasDisplayValue {
     /**
      * Given a native Elasticsearch data type, return an equivalent Stroom field type
      */
-    public static ElasticIndexFieldType fromNativeType(final String fieldName, final String nativeType) {
+    public static ElasticIndexFieldType fromNativeType(final String fieldName, final String nativeType)
+            throws UnsupportedTypeException {
         if (nativeTypeRegistry.containsKey(nativeType)) {
             return nativeTypeRegistry.get(nativeType);
         }
 
-        throw new IllegalArgumentException("Field '" + fieldName + "' has an unsupported mapping type '" +
+        throw new UnsupportedTypeException("Field '" + fieldName + "' has an unsupported mapping type '" +
                 nativeType + "'");
     }
 
@@ -155,3 +156,4 @@ public enum ElasticIndexFieldType implements HasDisplayValue {
         }
     }
 }
+
