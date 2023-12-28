@@ -1,7 +1,5 @@
 package stroom.proxy.app.handler;
 
-import stroom.proxy.app.ProxyConfig;
-import stroom.proxy.repo.AggregatorConfig;
 import stroom.receive.common.ProgressHandler;
 import stroom.util.io.FileName;
 import stroom.util.io.FileUtil;
@@ -9,8 +7,6 @@ import stroom.util.io.StreamUtil;
 import stroom.util.io.TempDirProvider;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-
-import io.dropwizard.lifecycle.Managed;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -20,41 +16,31 @@ import java.io.OutputStream;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 import javax.inject.Inject;
-import javax.inject.Provider;
 import javax.inject.Singleton;
 
 @Singleton
-public class Aggregator implements Managed {
+public class Aggregator {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(Aggregator.class);
 
-    private final PreAggregateDirQueue preAggregateDirQueue;
     private final CleanupDirQueue deleteDirQueue;
-    private final ForwardDirQueue forwardDirQueue;
     private final NumberedDirProvider tempAggregatingDirProvider;
-    private final AggregatorConfig aggregatorConfig;
-    private CompletableFuture<Void> completableFuture;
-    private volatile boolean running;
+
+    private Consumer<Path> destination;
 
 
     @Inject
-    public Aggregator(final PreAggregateDirQueue preAggregateDirQueue,
-                      final CleanupDirQueue deleteDirQueue,
-                      final ForwardDirQueue forwardDirQueue,
-                      final Provider<ProxyConfig> proxyConfigProvider,
+    public Aggregator(final CleanupDirQueue deleteDirQueue,
                       final TempDirProvider tempDirProvider) {
-        this.preAggregateDirQueue = preAggregateDirQueue;
         this.deleteDirQueue = deleteDirQueue;
-        this.forwardDirQueue = forwardDirQueue;
-        this.aggregatorConfig = proxyConfigProvider.get().getAggregatorConfig();
 
         // Make aggregating dir.
         final Path aggregatingDir = tempDirProvider.get().resolve("10_aggregating");
@@ -77,25 +63,7 @@ public class Aggregator implements Managed {
         }
     }
 
-    @Override
-    public synchronized void start() throws Exception {
-        if (!running && aggregatorConfig.isEnabled()) {
-            running = true;
-
-            // TODO : We could introduce more threads here.
-
-            completableFuture = CompletableFuture.runAsync(() -> {
-                while (running) {
-                    final SequentialDir sequentialDir = preAggregateDirQueue.next();
-                    addDir(sequentialDir.getDir());
-                    // Delete empty dirs.
-                    sequentialDir.deleteEmptyParentDirs();
-                }
-            });
-        }
-    }
-
-    private void addDir(final Path dir) {
+    public void addDir(final Path dir) {
         try {
             // First count all files.
             final long sourceDirCount;
@@ -110,7 +78,7 @@ public class Aggregator implements Managed {
 
             } else if (sourceDirCount == 1) {
                 // If we only have one source dir then no merging is required, just forward.
-                forwardDirQueue.add(dir);
+                destination.accept(dir);
 
             } else {
                 // Merge the files into an aggregate.
@@ -170,7 +138,7 @@ public class Aggregator implements Managed {
                 }
 
                 // We have finished the merge so transfer the new item to be forwarded.
-                forwardDirQueue.add(tempDir);
+                destination.accept(tempDir);
 
                 // Delete the source.
                 deleteDirQueue.add(dir);
@@ -181,19 +149,15 @@ public class Aggregator implements Managed {
         }
     }
 
-    @Override
-    public synchronized void stop() {
-        if (running) {
-            running = false;
-            completableFuture.join();
-        }
-    }
-
     private long transfer(final InputStream in, final OutputStream out, final byte[] buffer) {
         return StreamUtil
                 .streamToStream(in,
                         out,
                         buffer,
                         new ProgressHandler("Receiving data"));
+    }
+
+    public void setDestination(final Consumer<Path> destination) {
+        this.destination = destination;
     }
 }

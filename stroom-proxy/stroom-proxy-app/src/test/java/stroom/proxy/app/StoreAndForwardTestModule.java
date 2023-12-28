@@ -1,8 +1,5 @@
 package stroom.proxy.app;
 
-import stroom.proxy.repo.FailureDestinations;
-import stroom.proxy.repo.Sender;
-
 import java.nio.file.Path;
 
 public class StoreAndForwardTestModule extends AbstractStoreAndForwardTestModule {

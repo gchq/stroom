@@ -34,6 +34,7 @@ import java.io.UncheckedIOException;
 import java.io.Writer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.security.cert.X509Certificate;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -107,6 +108,11 @@ public class AttributeMapUtil {
             read(inputStream, attributeMap);
         }
         return attributeMap;
+    }
+
+    public static void read(final Path file, final AttributeMap attributeMap) throws IOException {
+        final String data = StreamUtil.fileToString(file, DEFAULT_CHARSET);
+        read(data, attributeMap);
     }
 
     public static void read(final InputStream inputStream, final AttributeMap attributeMap) throws IOException {

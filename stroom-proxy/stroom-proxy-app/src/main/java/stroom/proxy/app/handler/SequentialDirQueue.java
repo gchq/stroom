@@ -22,7 +22,7 @@ import java.util.concurrent.locks.ReentrantLock;
 public class SequentialDirQueue {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SequentialDirQueue.class);
-    private final Path storeDir;
+    private final Path rootDir;
 
     private final AtomicLong writeId = new AtomicLong();
     private final AtomicLong readId = new AtomicLong();
@@ -33,7 +33,7 @@ public class SequentialDirQueue {
     private final QueueMonitor queueMonitor;
     private final boolean nested;
 
-    public SequentialDirQueue(final Path repoDir,
+    public SequentialDirQueue(final Path rootDir,
                               final QueueMonitors queueMonitors,
                               final FileStores fileStores,
                               final int order,
@@ -43,14 +43,14 @@ public class SequentialDirQueue {
         this.nested = nested;
 
         // Create the root directory
-        ensureDirExists(repoDir);
+        ensureDirExists(rootDir);
 
         // Create the store directory and initialise the store id.
-        storeDir = repoDir;
-        fileStores.add(order, name + " - store", storeDir);
+        this.rootDir = rootDir;
+        fileStores.add(order, name + " - store", this.rootDir);
 
-        final long maxId = NumericFileNameUtil.getMaxId(storeDir);
-        final long minId = NumericFileNameUtil.getMinId(storeDir);
+        final long maxId = NumericFileNameUtil.getMaxId(this.rootDir);
+        final long minId = NumericFileNameUtil.getMinId(this.rootDir);
 
         writeId.set(maxId);
         readId.set(minId);
@@ -80,17 +80,17 @@ public class SequentialDirQueue {
     }
 
     private SequentialDir getDir(final long dirId) {
-        return SequentialDir.get(storeDir, dirId, nested);
+        return SequentialDir.get(rootDir, dirId, nested);
     }
 
-    public void add(final Path dir) throws IOException {
+    public void add(final Path dir) {
         try {
             lock.lockInterruptibly();
             try {
                 // Record the sequence id for future use.
                 final long commitId = writeId.incrementAndGet();
                 try {
-                    final SequentialDir sequentialDir = SequentialDir.get(storeDir, commitId, nested);
+                    final SequentialDir sequentialDir = SequentialDir.get(rootDir, commitId, nested);
                     move(sequentialDir.getRoot(), sequentialDir.getSubDirs(), dir, sequentialDir.getDir());
                 } catch (final IOException e) {
                     LOGGER.error(e::getMessage, e);

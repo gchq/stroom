@@ -34,18 +34,15 @@ public class ProxyRequestHandler implements RequestHandler {
 
     private final ProxyId proxyId;
     private final CertificateExtractor certificateExtractor;
-    private final SimpleReceiver simpleReceiver;
-    private final ZipReceiver zipReceiver;
+    private final ReceiverFactory receiverFactory;
 
     @Inject
     public ProxyRequestHandler(final ProxyId proxyId,
                                final CertificateExtractor certificateExtractor,
-                               final SimpleReceiver simpleReceiver,
-                               final ZipReceiver zipReceiver) {
+                               final ReceiverFactory receiverFactory) {
         this.proxyId = proxyId;
         this.certificateExtractor = certificateExtractor;
-        this.simpleReceiver = simpleReceiver;
-        this.zipReceiver = zipReceiver;
+        this.receiverFactory = receiverFactory;
     }
 
     @Override
@@ -74,18 +71,15 @@ public class ProxyRequestHandler implements RequestHandler {
                 }
             }
 
+            // TODO : If storing is not configured and we are forwarding to single destination then just check the feed
+            //  if feed checking is configured and stream the data straight out to the destination.
+
             if (ZERO_CONTENT.equals(attributeMap.get(StandardHeaderArguments.CONTENT_LENGTH))) {
                 LOGGER.warn("process() - Skipping Zero Content " + attributeMap);
 
             } else {
-                if (StandardHeaderArguments.COMPRESSION_ZIP.equals(compression)) {
-                    // Handle a zip stream.
-                    zipReceiver.receive(startTime, attributeMap, request.getRequestURI(), request::getInputStream);
-
-                } else {
-                    // Handle non zip streams.
-                    simpleReceiver.receive(startTime, attributeMap, request.getRequestURI(), request::getInputStream);
-                }
+                final Receiver receiver = receiverFactory.get(attributeMap);
+                receiver.receive(startTime, attributeMap, request.getRequestURI(), request::getInputStream);
             }
 
             response.setStatus(HttpStatus.SC_OK);

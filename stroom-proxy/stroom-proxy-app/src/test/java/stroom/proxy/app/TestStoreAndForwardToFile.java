@@ -1,6 +1,6 @@
 package stroom.proxy.app;
 
-import stroom.proxy.app.forwarder.ForwardFileHandlers;
+import stroom.proxy.app.forwarder.ForwardFileDestination;
 import stroom.proxy.app.forwarder.ForwarderDestinationsImpl;
 
 import com.google.inject.AbstractModule;
@@ -23,7 +23,7 @@ class TestStoreAndForwardToFile extends AbstractTestStoreAndForward {
     @Override
     void await(final ForwarderDestinations forwarderDestinations) {
         final ForwarderDestinationsImpl destinations = (ForwarderDestinationsImpl) forwarderDestinations;
-        final ForwardFileHandlers handlers = (ForwardFileHandlers) destinations.getProvider("test");
+        final ForwardFileDestination handlers = (ForwardFileDestination) destinations.getProvider("test");
         final SequentialFileStore sequentialFileStore = handlers.getSequentialFileStore();
         while (sequentialFileStore.awaitNew(0) < 1) {
             // Waiting.

@@ -27,6 +27,7 @@ public class ForwardHttpPostConfig extends AbstractConfig implements ForwardConf
     private final String forwardUrl;
     private final StroomDuration forwardTimeout;
     private final StroomDuration forwardDelay;
+    private final StroomDuration retryDelay;
     private final ByteSize forwardChunkSize;
     private final SSLConfig sslConfig;
     private final boolean addOpenIdAccessToken;
@@ -38,6 +39,7 @@ public class ForwardHttpPostConfig extends AbstractConfig implements ForwardConf
         forwardUrl = null;
         forwardTimeout = StroomDuration.ofSeconds(30);
         forwardDelay = StroomDuration.ZERO;
+        retryDelay = StroomDuration.ofSeconds(10);
         forwardChunkSize = DEFAULT_CHUNK_SIZE_BYTES;
         sslConfig = null;
         addOpenIdAccessToken = false;
@@ -51,6 +53,7 @@ public class ForwardHttpPostConfig extends AbstractConfig implements ForwardConf
                                  @JsonProperty("forwardUrl") final String forwardUrl,
                                  @JsonProperty("forwardTimeout") final StroomDuration forwardTimeout,
                                  @JsonProperty("forwardDelay") final StroomDuration forwardDelay,
+                                 @JsonProperty("retryDelay") final StroomDuration retryDelay,
                                  @JsonProperty("forwardChunkSize") final ByteSize forwardChunkSize,
                                  @JsonProperty("sslConfig") final SSLConfig sslConfig,
                                  @JsonProperty("addOpenIdAccessToken") final boolean addOpenIdAccessToken) {
@@ -60,6 +63,7 @@ public class ForwardHttpPostConfig extends AbstractConfig implements ForwardConf
         this.forwardUrl = forwardUrl;
         this.forwardTimeout = forwardTimeout;
         this.forwardDelay = forwardDelay;
+        this.retryDelay = retryDelay;
         this.forwardChunkSize = NullSafe.byteSize(forwardChunkSize);
         this.sslConfig = sslConfig;
         this.addOpenIdAccessToken = addOpenIdAccessToken;
@@ -117,6 +121,14 @@ public class ForwardHttpPostConfig extends AbstractConfig implements ForwardConf
     }
 
     /**
+     * If we fail to send how long should we wait until we try again?
+     */
+    @JsonProperty
+    public StroomDuration getRetryDelay() {
+        return retryDelay;
+    }
+
+    /**
      * Chunk size in bytes to use over http(s).
      * If set to zero, no chunking is used, so requires buffer to be fully loaded into memory,
      * risking out of memory errors for large POSTs.
@@ -151,6 +163,7 @@ public class ForwardHttpPostConfig extends AbstractConfig implements ForwardConf
                 forwardUrl,
                 forwardTimeout,
                 forwardDelay,
+                retryDelay,
                 forwardChunkSize,
                 sslConfig,
                 addOpenIdAccessToken);
@@ -224,6 +237,7 @@ public class ForwardHttpPostConfig extends AbstractConfig implements ForwardConf
         private String forwardUrl;
         private StroomDuration forwardTimeout;
         private StroomDuration forwardDelay;
+        private StroomDuration retryDelay;
         private ByteSize forwardChunkSize;
         private SSLConfig sslConfig;
         private boolean addOpenIdAccessToken;
@@ -237,6 +251,7 @@ public class ForwardHttpPostConfig extends AbstractConfig implements ForwardConf
             this.forwardUrl = forwardHttpPostConfig.forwardUrl;
             this.forwardTimeout = forwardHttpPostConfig.forwardTimeout;
             this.forwardDelay = forwardHttpPostConfig.forwardDelay;
+            this.retryDelay = forwardHttpPostConfig.retryDelay;
             this.forwardChunkSize = forwardHttpPostConfig.forwardChunkSize;
             this.sslConfig = forwardHttpPostConfig.sslConfig;
             this.addOpenIdAccessToken = forwardHttpPostConfig.addOpenIdAccessToken;
@@ -272,6 +287,11 @@ public class ForwardHttpPostConfig extends AbstractConfig implements ForwardConf
             return this;
         }
 
+        public Builder retryDelay(final StroomDuration retryDelay) {
+            this.retryDelay = retryDelay;
+            return this;
+        }
+
         public Builder forwardChunkSize(final ByteSize forwardChunkSize) {
             this.forwardChunkSize = forwardChunkSize;
             return this;
@@ -295,6 +315,7 @@ public class ForwardHttpPostConfig extends AbstractConfig implements ForwardConf
                     forwardUrl,
                     forwardTimeout,
                     forwardDelay,
+                    retryDelay,
                     forwardChunkSize,
                     sslConfig,
                     addOpenIdAccessToken);

@@ -12,7 +12,7 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
-public class CleanupDirQueue implements Destination {
+public class CleanupDirQueue implements DirDest {
 
     private final Path dir;
 

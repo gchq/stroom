@@ -1,5 +1,6 @@
-package stroom.proxy.app.forwarder;
+package stroom.proxy.app.handler;
 
+import stroom.proxy.app.forwarder.ForwardHttpPostConfig;
 import stroom.proxy.repo.LogStream;
 import stroom.security.api.UserIdentityFactory;
 import stroom.util.cert.SSLUtil;
@@ -16,9 +17,9 @@ import javax.inject.Singleton;
 import javax.net.ssl.SSLSocketFactory;
 
 @Singleton
-public class ForwardHttpPostHandlersFactory {
+public class HttpSenderFactory {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ForwardHttpPostHandlersFactory.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(HttpSenderFactory.class);
 
     private static final String USER_AGENT_FORMAT = "stroom-proxy/{} java/{}";
 
@@ -28,10 +29,10 @@ public class ForwardHttpPostHandlersFactory {
     private final UserIdentityFactory userIdentityFactory;
 
     @Inject
-    public ForwardHttpPostHandlersFactory(final LogStream logStream,
-                                          final PathCreator pathCreator,
-                                          final Provider<BuildInfo> buildInfoProvider,
-                                          final UserIdentityFactory userIdentityFactory) {
+    public HttpSenderFactory(final LogStream logStream,
+                             final PathCreator pathCreator,
+                             final Provider<BuildInfo> buildInfoProvider,
+                             final UserIdentityFactory userIdentityFactory) {
         this.logStream = logStream;
         this.pathCreator = pathCreator;
         this.userIdentityFactory = userIdentityFactory;
@@ -42,7 +43,7 @@ public class ForwardHttpPostHandlersFactory {
                 buildInfoProvider.get().getBuildVersion(), System.getProperty("java.version"));
     }
 
-    public ForwardHttpPostHandlers create(final ForwardHttpPostConfig config) {
+    public HttpSender create(final ForwardHttpPostConfig config) {
         final String userAgentString;
         if (config.getUserAgent() != null && !config.getUserAgent().isEmpty()) {
             userAgentString = config.getUserAgent();
@@ -63,11 +64,7 @@ public class ForwardHttpPostHandlersFactory {
                 "\" ForwardHttpPostHandlers with user agent string [" +
                 userAgentString +
                 "]");
-        return new ForwardHttpPostHandlers(
-                logStream,
-                config,
-                userAgentString,
-                sslSocketFactory,
-                userIdentityFactory);
+
+        return new HttpSender(logStream, config, sslSocketFactory, userAgentString, userIdentityFactory);
     }
 }

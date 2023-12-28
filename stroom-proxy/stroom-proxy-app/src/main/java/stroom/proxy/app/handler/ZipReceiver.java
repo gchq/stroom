@@ -92,14 +92,14 @@ public class ZipReceiver implements Receiver {
     private final NumberedDirProvider receivingDirProvider;
     private final NumberedDirProvider receivedDirProvider;
     private final LogStream logStream;
-    private final Provider<Destination> destinationProvider;
+    private final Provider<DirDest> destinationProvider;
 
     @Inject
     public ZipReceiver(final AttributeMapFilter attributeMapFilter,
                        final TempDirProvider tempDirProvider,
                        final RepoDirProvider repoDirProvider,
                        final LogStream logStream,
-                       final Provider<Destination> destinationProvider) {
+                       final Provider<DirDest> destinationProvider) {
         this.attributeMapFilter = attributeMapFilter;
         this.logStream = logStream;
         this.destinationProvider = destinationProvider;
@@ -167,6 +167,8 @@ public class ZipReceiver implements Receiver {
         final long receivedBytes;
         Path receivingDir = null;
         try {
+
+            // TODO : Worry about memory usage here storing potentially 1000's of data entries and groups.
             final List<ZipEntryGroup.Entry> dataEntries = new ArrayList<>();
             receivingDir = receivingDirProvider.get();
             final Path zipFilePath = receivingDir.resolve("proxy.zip");
@@ -325,6 +327,9 @@ public class ZipReceiver implements Receiver {
                     includeList.add(feedKey);
                 }
             }
+
+            // TODO : OPTIMIZATION - If we only have a single feed then we could just keep the zip we have already
+            //  written rather than trying to form a canonical zip.
 
             // Now make new zip files for each of the feeds we want to include.
             final Path correctedData = receivingDirProvider.get();

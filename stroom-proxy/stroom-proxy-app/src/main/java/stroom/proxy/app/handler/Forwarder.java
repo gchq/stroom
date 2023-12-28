@@ -2,14 +2,13 @@ package stroom.proxy.app.handler;
 
 import stroom.proxy.app.ProxyConfig;
 import stroom.proxy.app.forwarder.ForwardConfig;
+import stroom.proxy.app.forwarder.ForwardFileDestination;
+import stroom.proxy.app.forwarder.ForwardFileDestinationFactory;
 import stroom.proxy.repo.RepoDirProvider;
-import stroom.proxy.repo.queue.QueueMonitors;
-import stroom.proxy.repo.store.FileStores;
+import stroom.util.NullSafe;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-
-import io.dropwizard.lifecycle.Managed;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -17,47 +16,65 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
+import java.util.stream.Stream;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
-public class Forwarder implements Managed {
+public class Forwarder implements DirDest {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(Forwarder.class);
 
-    private final ForwardDirQueue incomingQueue;
-    private final List<ForwardDestination> forwardDestinations = new ArrayList<>();
-    private CompletableFuture<Void> completableFuture;
+    private final List<DirDest> destinations = new ArrayList<>();
     private final NumberedDirProvider copiesDirProvider;
-    private volatile boolean running;
 
     @Inject
-    public Forwarder(final ForwardDirQueue incomingQueue,
+    public Forwarder(final CleanupDirQueue cleanupDirQueue,
                      final RepoDirProvider repoDirProvider,
                      final ProxyConfig proxyConfig,
-                     final QueueMonitors queueMonitors,
-                     final FileStores fileStores) {
-        this.incomingQueue = incomingQueue;
+                     final HttpSenderFactory httpSenderFactory,
+                     final ForwardFileDestinationFactory forwardFileDestinationFactory,
+                     final ManagedRegistry managedRegistry,
+                     final SequentialDirQueueFactory sequentialDirQueueFactory) {
 
-        final List<ForwardConfig> forwardDestinations = proxyConfig.getForwardDestinations();
-        if (forwardDestinations == null || forwardDestinations.isEmpty()) {
+        final long count = Stream
+                .concat(NullSafe.list(proxyConfig.getForwardHttpDestinations()).stream(),
+                        NullSafe.list(proxyConfig.getForwardFileDestinations()).stream())
+                .filter(ForwardConfig::isEnabled)
+                .count();
+
+        if (count == 0) {
             throw new RuntimeException("No forward destinations are configured");
         }
 
-        forwardDestinations.forEach(forwardConfig -> {
-            if (forwardConfig.isEnabled()) {
-                final ForwardDestination forwardDestination = new ForwardDestination(
-                        repoDirProvider,
-                        queueMonitors,
-                        fileStores,
-                        forwardConfig.getName());
-                this.forwardDestinations.add(forwardDestination);
+        // Add HTTP POST destinations.
+        proxyConfig.getForwardHttpDestinations().forEach(forwardHttpPostConfig -> {
+            if (forwardHttpPostConfig.isEnabled()) {
+                final StreamDestination streamDestination = httpSenderFactory.create(forwardHttpPostConfig);
+                final ForwardHttpPostDestination forwardDestination = new ForwardHttpPostDestination(
+                        forwardHttpPostConfig.getName(),
+                        streamDestination,
+                        cleanupDirQueue,
+                        forwardHttpPostConfig.getRetryDelay(),
+                        managedRegistry,
+                        sequentialDirQueueFactory,
+                        proxyConfig.getThreadConfig().getForwardThreadCount(),
+                        proxyConfig.getThreadConfig().getForwardRetryThreadCount());
+                this.destinations.add(forwardDestination);
+            }
+        });
+
+        // Add file destinations.
+        proxyConfig.getForwardFileDestinations().forEach(forwardFileConfig -> {
+            if (forwardFileConfig.isEnabled()) {
+                final ForwardFileDestination forwardFileDestination = forwardFileDestinationFactory
+                        .create(forwardFileConfig);
+                this.destinations.add(forwardFileDestination);
             }
         });
 
         // Make receiving zip dir.
-        final Path copiesDir = repoDirProvider.get().resolve("copies");
+        final Path copiesDir = repoDirProvider.get().resolve("temp_forward_copies");
         ensureDirExists(copiesDir);
 
         // This is a temporary location and can be cleaned completely on startup.
@@ -67,12 +84,13 @@ public class Forwarder implements Managed {
         copiesDirProvider = new NumberedDirProvider(copiesDir);
     }
 
-    private void addDir(final Path dir) {
+    @Override
+    public void add(final Path dir) {
         try {
             final List<Path> paths = new ArrayList<>();
 
             // Create copies.
-            for (int i = 0; i < forwardDestinations.size() - 1; i++) {
+            for (int i = 0; i < destinations.size() - 1; i++) {
                 final Path copy = copiesDirProvider.get();
                 FileUtil.deepCopy(dir, copy);
                 paths.add(copy);
@@ -82,49 +100,15 @@ public class Forwarder implements Managed {
             paths.add(dir);
 
             // Add all items to outgoing queues.
-            for (int i = 0; i < forwardDestinations.size(); i++) {
-                final ForwardDestination forwardDestination = forwardDestinations.get(i);
+            for (int i = 0; i < destinations.size(); i++) {
+                final DirDest destination = destinations.get(i);
                 final Path path = paths.get(i);
-                forwardDestination.add(path);
+                destination.add(path);
             }
 
         } catch (final IOException e) {
             LOGGER.error(e::getMessage, e);
             throw new UncheckedIOException(e);
-        }
-    }
-
-    @Override
-    public synchronized void start() throws Exception {
-        if (!running && !forwardDestinations.isEmpty()) {
-            running = true;
-
-            // TODO : We could introduce more threads here but probably don't need to.
-
-            completableFuture = CompletableFuture.runAsync(() -> {
-                while (running) {
-                    final SequentialDir sequentialDir = incomingQueue.next();
-                    addDir(sequentialDir.getDir());
-                    // Delete empty dirs.
-                    sequentialDir.deleteEmptyParentDirs();
-                }
-            });
-
-            for (final ForwardDestination forwardDestination : forwardDestinations) {
-                forwardDestination.start();
-            }
-        }
-    }
-
-    @Override
-    public synchronized void stop() {
-        if (running) {
-            running = false;
-            completableFuture.join();
-
-            for (final ForwardDestination forwardDestination : forwardDestinations) {
-                forwardDestination.stop();
-            }
         }
     }
 

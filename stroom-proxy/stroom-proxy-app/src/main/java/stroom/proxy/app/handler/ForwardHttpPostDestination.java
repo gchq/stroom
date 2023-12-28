@@ -1,0 +1,100 @@
+package stroom.proxy.app.handler;
+
+import stroom.meta.api.AttributeMap;
+import stroom.meta.api.AttributeMapUtil;
+import stroom.meta.api.StandardHeaderArguments;
+import stroom.util.concurrent.ThreadUtil;
+import stroom.util.io.FileUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.time.StroomDuration;
+
+import java.io.BufferedInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+
+public class ForwardHttpPostDestination implements DirDest {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ForwardHttpPostDestination.class);
+
+    private final StreamDestination destination;
+    private final SequentialDirQueue forwardQueue;
+    private final SequentialDirQueue retryQueue;
+    private final CleanupDirQueue cleanupDirQueue;
+    private final StroomDuration retryDelay;
+    private final String destinationName;
+
+    public ForwardHttpPostDestination(final String destinationName,
+                                      final StreamDestination destination,
+                                      final CleanupDirQueue cleanupDirQueue,
+                                      final StroomDuration retryDelay,
+                                      final ManagedRegistry managedRegistry,
+                                      final SequentialDirQueueFactory sequentialDirQueueFactory,
+                                      final int forwardThreads,
+                                      final int retryThreads) {
+        this.destination = destination;
+        this.cleanupDirQueue = cleanupDirQueue;
+        this.destinationName = destinationName;
+        this.retryDelay = retryDelay;
+        forwardQueue = sequentialDirQueueFactory.create(
+                "forward_" + destinationName,
+                100,
+                "forward - " + destinationName);
+        retryQueue = sequentialDirQueueFactory.create(
+                "retry_" + destinationName,
+                101,
+                "retry - " + destinationName);
+        final ManagedQueue forwardingFuture = new ManagedQueue(forwardQueue::next, this::forwardDir, forwardThreads);
+        final ManagedQueue retryingFuture = new ManagedQueue(retryQueue::next, this::retryDir, retryThreads);
+
+        managedRegistry.register(forwardingFuture);
+        managedRegistry.register(retryingFuture);
+    }
+
+    @Override
+    public void add(final Path sourceDir) {
+        forwardQueue.add(sourceDir);
+    }
+
+    private boolean forwardDir(final Path dir) {
+        try {
+            final FileGroup fileGroup = new FileGroup(dir);
+            final AttributeMap attributeMap = new AttributeMap();
+            AttributeMapUtil.read(fileGroup.getMeta(), attributeMap);
+            // Make sure we tell the destination we are sending zip data.
+            attributeMap.put(StandardHeaderArguments.COMPRESSION, StandardHeaderArguments.COMPRESSION_ZIP);
+
+            // Send the data.
+            try (final InputStream inputStream = new BufferedInputStream(Files.newInputStream(fileGroup.getZip()))) {
+                destination.send(attributeMap, inputStream);
+            }
+
+            // We have completed sending so can delete the data.
+            cleanupDirQueue.add(dir);
+
+            // Return true for success.
+            return true;
+
+        } catch (final IOException e) {
+            LOGGER.error(
+                    () -> "Error sending '" + FileUtil.getCanonicalPath(dir) + "' to '" + destinationName + "'.", e);
+            LOGGER.debug(e::getMessage, e);
+            retryQueue.add(dir);
+        }
+
+        // Failed, return false.
+        return false;
+    }
+
+    private void retryDir(final Path dir) {
+        if (!forwardDir(dir)) {
+            // If we failed to send then wait for a bit.
+            if (!retryDelay.isZero()) {
+                LOGGER.trace("'{}' - adding delay {}", destinationName, retryDelay);
+                ThreadUtil.sleep(retryDelay);
+            }
+        }
+    }
+}

@@ -16,8 +16,6 @@ import stroom.util.io.TempDirProvider;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
-import io.dropwizard.lifecycle.Managed;
-
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
@@ -34,8 +32,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -45,36 +43,30 @@ import javax.inject.Provider;
 import javax.inject.Singleton;
 
 @Singleton
-public class PreAggregator implements Managed {
+public class PreAggregator {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(PreAggregator.class);
 
     private final Path tempSplittingDir;
     private final Path stagedSplittingDir;
-    private final FileStoreDirQueue fileStoreDirQueue;
     private final CleanupDirQueue deleteDirQueue;
     private final AggregatorConfig aggregatorConfig;
     private final RepoDirProvider repoDirProvider;
-    private final PreAggregateDirQueue preAggregateDataQueue;
-    private CompletableFuture<Void> completableFuture;
-    private volatile boolean running;
 
     private final Path aggregatingDir;
 
     private final Map<FeedKey, AggregateState> aggregateStateMap = new HashMap<>();
 
+    private Consumer<Path> destination;
+
     @Inject
-    public PreAggregator(final FileStoreDirQueue fileStoreDirQueue,
-                         final CleanupDirQueue deleteDirQueue,
+    public PreAggregator(final CleanupDirQueue deleteDirQueue,
                          final Provider<ProxyConfig> proxyConfigProvider,
                          final TempDirProvider tempDirProvider,
-                         final RepoDirProvider repoDirProvider,
-                         final PreAggregateDirQueue preAggregateDataQueue) {
-        this.fileStoreDirQueue = fileStoreDirQueue;
+                         final RepoDirProvider repoDirProvider) {
         this.deleteDirQueue = deleteDirQueue;
         this.aggregatorConfig = proxyConfigProvider.get().getAggregatorConfig();
         this.repoDirProvider = repoDirProvider;
-        this.preAggregateDataQueue = preAggregateDataQueue;
 
         // Get or create the aggregating dir.
         aggregatingDir = repoDirProvider.get().resolve("03_pre_aggregate");
@@ -177,29 +169,11 @@ public class PreAggregator implements Managed {
         }
     }
 
-    @Override
-    public synchronized void start() throws Exception {
-        if (!running && aggregatorConfig.isEnabled()) {
-            running = true;
-
-            completableFuture = CompletableFuture.runAsync(() -> {
-                while (running) {
-                    final SequentialDir fileGroupDir = fileStoreDirQueue.next();
-                    addDir(fileGroupDir.getDir());
-                    // Delete empty dirs.
-                    fileGroupDir.deleteEmptyParentDirs();
-                }
-            });
-        }
-    }
-
-    private void addDir(final Path dir) {
+    public void addDir(final Path dir) {
         try {
             final FileGroup fileGroup = new FileGroup(dir);
             final AttributeMap attributeMap = new AttributeMap();
-            try (final InputStream inputStream = new BufferedInputStream(Files.newInputStream(fileGroup.getMeta()))) {
-                AttributeMapUtil.read(inputStream, attributeMap);
-            }
+            AttributeMapUtil.read(fileGroup.getMeta(), attributeMap);
 
             final String feed = attributeMap.get(StandardHeaderArguments.FEED);
             final String type = attributeMap.get(StandardHeaderArguments.TYPE);
@@ -216,6 +190,9 @@ public class PreAggregator implements Managed {
             long addedBytes = 0;
             boolean firstItem = aggregateState.itemCount == 0;
             long itemCount = 0;
+
+            // TODO : We could add an option to never split incoming zip files and just allow them to form output
+            //  aggregates that always overflow the aggregation bounds before being closed.
 
             // Determine if we need to split this data into parts.
             final List<Part> parts = new ArrayList<>();
@@ -263,9 +240,6 @@ public class PreAggregator implements Managed {
             } else {
                 // Split the data.
                 final SplitDirSet splitDirSet = split(dir, parts);
-
-                // Prepare a path to stage source delete.
-                final Path deleteStaging = tempSplittingDir.resolve(dir.getFileName());
 
                 // Prepare destination for staged split data.
                 final Path splitStaging = stagedSplittingDir.resolve(splitDirSet.parent.getFileName());
@@ -325,7 +299,7 @@ public class PreAggregator implements Managed {
     }
 
     private void closeAggregate(final Path partialAggregateDir) throws IOException {
-        preAggregateDataQueue.add(partialAggregateDir);
+        destination.accept(partialAggregateDir);
     }
 
     private SplitDirSet split(final Path dir, final List<Part> splits) throws IOException {
@@ -458,20 +432,16 @@ public class PreAggregator implements Managed {
         }
     }
 
-    @Override
-    public synchronized void stop() {
-        if (running) {
-            running = false;
-            completableFuture.join();
-        }
-    }
-
     private long transfer(final InputStream in, final OutputStream out, final byte[] buffer) {
         return StreamUtil
                 .streamToStream(in,
                         out,
                         buffer,
                         new ProgressHandler("Receiving data"));
+    }
+
+    public void setDestination(final Consumer<Path> destination) {
+        this.destination = destination;
     }
 
     private static class AggregateState {

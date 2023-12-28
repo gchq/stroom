@@ -1,7 +1,6 @@
 package stroom.proxy.app;
 
 import stroom.proxy.app.forwarder.ForwardFileConfig;
-import stroom.proxy.repo.ForwardRetryConfig;
 import stroom.proxy.repo.ProxyRepoConfig;
 import stroom.util.NullSafe;
 import stroom.util.config.AbstractConfigUtil;

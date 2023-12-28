@@ -6,7 +6,7 @@ import stroom.proxy.app.forwarder.ForwardConfig;
 import stroom.proxy.app.forwarder.ThreadConfig;
 import stroom.proxy.repo.AggregatorConfig;
 import stroom.proxy.repo.ProxyRepoConfig;
-import stroom.proxy.repo.SourceForwarder;
+import stroom.proxy.repo.ProxyServices;
 import stroom.util.shared.Flushable;
 
 import io.dropwizard.lifecycle.Managed;
@@ -22,20 +22,11 @@ public class ProxyLifecycle implements Managed {
 
     @Inject
     public ProxyLifecycle(final ProxyConfig proxyConfig,
-                          final ProxyDbConfig proxyDbConfig,
                           final ProxyRepoConfig proxyRepoConfig,
                           final AggregatorConfig aggregatorConfig,
                           final EventStoreConfig eventStoreConfig,
                           final ThreadConfig threadConfig,
-                          final Provider<SequentialFileStore> sequentialFileStoreProvider,
-                          final Provider<RepoSources> proxyRepoSourcesProvider,
-                          final Provider<RepoSourceItems> proxyRepoSourceEntriesProvider,
-                          final Provider<Aggregator> aggregatorProvider,
-                          final Provider<AggregateForwarder> aggregatorForwarderProvider,
-                          final Provider<SourceForwarder> sourceForwarderProvider,
-                          final Provider<Cleanup> cleanupProvider,
                           final Provider<Set<Flushable>> flushableProvider,
-                          final Provider<FileScanners> fileScannersProvider,
                           final Provider<EventStore> eventStoreProvider,
                           final ProxyServices proxyServices) {
         this.proxyServices = proxyServices;
@@ -46,21 +37,7 @@ public class ProxyLifecycle implements Managed {
         // If we aren't storing and forwarding then don't do anything.
         if (proxyRepoConfig.isStoringEnabled() &&
                 forwardDestinations != null &&
-                forwardDestinations.size() > 0) {
-
-            final long dbFlushFrequencyMs = proxyDbConfig.getFlushFrequency().toMillis();
-
-            // Start looking at file store to add sources to the DB.
-            final SequentialFileStore sequentialFileStore = sequentialFileStoreProvider.get();
-            proxyServices.addParallelExecutor(
-                    "Add sources",
-                    () -> () -> proxyRepoSourcesProvider.get().addSources(sequentialFileStore),
-                    1);
-
-            final Cleanup cleanup = cleanupProvider.get();
-
-            // Add file scanners.
-            fileScannersProvider.get().register(proxyServices);
+                !forwardDestinations.isEmpty()) {
 
             // Start flushing the DB.
             final Set<Flushable> flushables = flushableProvider.get();

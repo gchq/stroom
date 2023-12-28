@@ -5,12 +5,10 @@ import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.StroomStatusCode;
 import stroom.proxy.app.handler.ZipEntryGroup.Entry;
-import stroom.proxy.repo.CSVFormatter;
 import stroom.proxy.repo.LogStream;
 import stroom.receive.common.AttributeMapFilter;
 import stroom.receive.common.ProgressHandler;
 import stroom.receive.common.StroomStreamException;
-import stroom.util.io.ByteCountInputStream;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.io.TempDirProvider;
@@ -52,16 +50,19 @@ public class SimpleReceiver implements Receiver {
     private final AttributeMapFilter attributeMapFilter;
     private final NumberedDirProvider receivingDirProvider;
     private final LogStream logStream;
-    private final Provider<Destination> destinationProvider;
+    private final Provider<DirDest> destinationProvider;
+    private final DropReceiver dropReceiver;
 
     @Inject
     public SimpleReceiver(final AttributeMapFilter attributeMapFilter,
                           final TempDirProvider tempDirProvider,
                           final LogStream logStream,
-                          final Provider<Destination> destinationProvider) {
+                          final Provider<DirDest> destinationProvider,
+                          final DropReceiver dropReceiver) {
         this.attributeMapFilter = attributeMapFilter;
         this.logStream = logStream;
         this.destinationProvider = destinationProvider;
+        this.dropReceiver = dropReceiver;
 
         // Make receiving zip dir.
         final Path receivingDir = tempDirProvider.get().resolve("01_receiving_simple");
@@ -169,32 +170,9 @@ public class SimpleReceiver implements Receiver {
             }
 
         } else {
-            try (final ByteCountInputStream byteCountInputStream = new ByteCountInputStream(inputStreamSupplier.get())) {
-                try (final BufferedInputStream bufferedInputStream = new BufferedInputStream(byteCountInputStream)) {
-                    // Just read the stream in and ignore it
-                    final byte[] buffer = new byte[StreamUtil.BUFFER_SIZE];
-                    while (bufferedInputStream.read(buffer) >= 0) {
-                        // Ignore data.
-                        if (LOGGER.isTraceEnabled()) {
-                            LOGGER.trace(new String(buffer));
-                        }
-                    }
-                }
 
-                LOGGER.warn("\"Dropped\",{}", CSVFormatter.format(attributeMap));
-
-                final Duration duration = Duration.between(startTime, Instant.now());
-                logStream.log(
-                        RECEIVE_LOG,
-                        attributeMap,
-                        "DROP",
-                        requestUri,
-                        HttpStatus.SC_OK,
-                        byteCountInputStream.getCount(),
-                        duration.toMillis());
-            } catch (final IOException e) {
-                throw StroomStreamException.create(e, attributeMap);
-            }
+            // Drop the data.
+            dropReceiver.receive(startTime, attributeMap, requestUri, inputStreamSupplier);
         }
     }
 

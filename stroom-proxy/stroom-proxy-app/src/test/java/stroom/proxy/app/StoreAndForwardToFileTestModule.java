@@ -2,9 +2,6 @@ package stroom.proxy.app;
 
 import stroom.proxy.app.forwarder.FailureDestinationsImpl;
 import stroom.proxy.app.forwarder.ForwarderDestinationsImpl;
-import stroom.proxy.repo.FailureDestinations;
-import stroom.proxy.repo.Sender;
-import stroom.proxy.repo.SenderImpl;
 
 import java.nio.file.Path;
 

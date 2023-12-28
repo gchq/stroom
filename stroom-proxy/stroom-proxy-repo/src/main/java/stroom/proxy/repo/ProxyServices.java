@@ -1,6 +1,5 @@
 package stroom.proxy.repo;
 
-import stroom.proxy.repo.queue.Batch;
 import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -10,7 +9,6 @@ import io.dropwizard.lifecycle.Managed;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 public class ProxyServices implements Managed {
@@ -40,19 +38,6 @@ public class ProxyServices implements Managed {
                 threadName,
                 runnableSupplier,
                 frequencyMs);
-        addManaged(executor);
-    }
-
-    public <T> void addBatchExecutor(final String threadName,
-                                     final int threadCount,
-                                     final Supplier<Batch<T>> supplier,
-                                     final Consumer<T> consumer) {
-        LOGGER.info("Creating batch executor      '{}', threadCount: {}", threadName, threadCount);
-        final BatchExecutor<T> executor = new BatchExecutor<>(
-                threadName,
-                threadCount,
-                supplier,
-                consumer);
         addManaged(executor);
     }
 

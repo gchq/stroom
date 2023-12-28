@@ -3,8 +3,10 @@ package stroom.proxy.app.handler;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
+import stroom.proxy.StroomStatusCode;
 import stroom.proxy.app.forwarder.ForwardHttpPostConfig;
 import stroom.proxy.repo.LogStream;
+import stroom.receive.common.ProgressHandler;
 import stroom.receive.common.StroomStreamException;
 import stroom.security.api.UserIdentityFactory;
 import stroom.util.NullSafe;
@@ -32,16 +34,13 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.UUID;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 import javax.net.ssl.SSLSocketFactory;
 
 /**
  * Handler class that forwards the request to a URL.
  */
-public class HttpSender {
+public class HttpSender implements StreamDestination {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(HttpSender.class);
     private static final Logger SEND_LOG = LoggerFactory.getLogger("send");
@@ -53,16 +52,14 @@ public class HttpSender {
     private final UserIdentityFactory userIdentityFactory;
     private final String forwardUrl;
     private final StroomDuration forwardDelay;
-    private final byte[] buffer = new byte[StreamUtil.BUFFER_SIZE];
     private final String forwarderName;
-    private long totalBytesSent = 0;
 
 
     public HttpSender(final LogStream logStream,
                       final ForwardHttpPostConfig config,
                       final SSLSocketFactory sslSocketFactory,
                       final String userAgent,
-                      final UserIdentityFactory userIdentityFactory) throws IOException {
+                      final UserIdentityFactory userIdentityFactory) {
         this.logStream = logStream;
         this.config = config;
         this.sslSocketFactory = sslSocketFactory;
@@ -73,12 +70,22 @@ public class HttpSender {
         this.forwarderName = config.getName();
     }
 
+    @Override
     public void send(final AttributeMap attributeMap,
                      final InputStream inputStream) throws IOException {
         final StroomDuration forwardTimeout = config.getForwardTimeout();
         final ByteSize forwardChunkSize = config.getForwardChunkSize();
 
         final Instant startTime = Instant.now();
+
+        if (NullSafe.isEmptyString(attributeMap.get(StandardHeaderArguments.FEED))) {
+            throw new StroomStreamException(StroomStatusCode.FEED_MUST_BE_SPECIFIED, attributeMap);
+        }
+
+        // We need to add the authentication token to our headers
+        final Map<String, String> authHeaders = userIdentityFactory.getServiceUserAuthHeaders();
+        attributeMap.putAll(authHeaders);
+
         attributeMap.computeIfAbsent(StandardHeaderArguments.GUID, k -> UUID.randomUUID().toString());
 
         LOGGER.debug(() -> LogUtil.message(
@@ -89,7 +96,6 @@ public class HttpSender {
         final URL url = new URL(forwardUrl);
 
         final HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-
         connection.setRequestProperty("User-Agent", userAgent);
         if (sslSocketFactory != null) {
             SSLUtil.applySSLConfiguration(connection, sslSocketFactory, config.getSslConfig());
@@ -147,7 +153,13 @@ public class HttpSender {
         }
         connection.connect();
         try {
-            StreamUtil.streamToStream(inputStream, connection.getOutputStream(), buffer, progressHandler);
+            // Get a buffer to help us transfer data.
+            final byte[] buffer = LocalByteBuffer.get();
+            StreamUtil.streamToStream(
+                    inputStream,
+                    connection.getOutputStream(),
+                    buffer,
+                    new ProgressHandler("Sending data"));
 
             if (!forwardDelay.isZero()) {
                 LOGGER.trace("'{}' - adding delay {}", forwarderName, forwardDelay);
@@ -162,10 +174,6 @@ public class HttpSender {
             logAndDisconnect(startTime, connection, attributeMap);
         }
     }
-
-//    void error() {
-//        LOGGER.debug("'{}' - error(), forwardUrl: {}", forwarderName, forwardUrl);
-//    }
 
     private String formatHeaderEntryListForLogging(final Map<String, List<String>> headerFields) {
         return headerFields
@@ -225,6 +233,7 @@ public class HttpSender {
                 throw e;
             } finally {
                 final Duration duration = Duration.between(startTime, Instant.now());
+                long totalBytesSent = 0;
                 logStream.log(
                         SEND_LOG,
                         attributeMap,
@@ -236,7 +245,6 @@ public class HttpSender {
                         errorMsg);
 
                 connection.disconnect();
-                connection = null;
             }
         }
     }
