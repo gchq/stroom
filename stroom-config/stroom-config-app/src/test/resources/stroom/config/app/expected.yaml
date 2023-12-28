@@ -294,6 +294,8 @@ appConfig:
       initialRetryBackoffPeriodMs: 1000
       maxNestedElementDepth: 10
       retryCount: 10
+    retention:
+      scrollSize: 10000
     search:
       highlight: true
       scrollDuration: "PT1M"
