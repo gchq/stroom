@@ -24,6 +24,7 @@ import co.elastic.clients.elasticsearch.core.SearchRequest.Builder;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.core.search.FieldSuggester;
 import co.elastic.clients.elasticsearch.core.search.Suggestion;
+import co.elastic.clients.elasticsearch.core.search.TermSuggestOption;
 
 import java.io.IOException;
 import java.util.List;
@@ -95,30 +96,26 @@ public class ElasticSuggestionsQueryHandlerImpl implements ElasticSuggestionsQue
                 // Only generate suggestions for text and keyword fields
                 return Suggestions.EMPTY;
             }
-
-            final Builder searchSourceBuilder = new SearchRequest.Builder()
-                    .fields(FieldAndFormat.of(f -> f.field(field.getFieldName())))
-                    .suggest(s -> s
-                            .suggesters("suggest", FieldSuggester.of(suggest -> suggest
+            final var searchRequest = SearchRequest.of(s -> s
+                    .index(elasticIndex.getIndexName())
+                    .suggest(suggest -> suggest
+                            .suggesters("suggest", FieldSuggester.of(suggester -> suggester
+                                    .text(query)
                                     .term(t -> t
                                             .field(field.getFieldName())
                                             .suggestMode(SuggestMode.Always)
                                             .minWordLength(3)
-                                            .text(query)
                                     )
-                            )
-                    ));
-            final var searchRequest = SearchRequest.of(s -> s
-                    .index(elasticIndex.getIndexName())
-                    .source(searchSourceBuilder.build().source())
+                            ))
+                    )
             );
 
             final SearchResponse<Void> searchResponse = elasticClient.search(searchRequest, Void.class);
             final Map<String, List<Suggestion<Void>>> suggestResponse = searchResponse.suggest();
             final List<Suggestion<Void>> termSuggestion = suggestResponse.get("suggest");
 
-            return new Suggestions(termSuggestion.stream()
-                    .map(suggestion -> suggestion.term().text())
+            return new Suggestions(termSuggestion.get(0).term().options().stream()
+                    .map(TermSuggestOption::text)
                     .collect(Collectors.toList()));
         } catch (IOException | RuntimeException e) {
             LOGGER.error(() -> "Failed to retrieve search suggestions for field: " + field.getFieldName() +
