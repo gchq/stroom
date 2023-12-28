@@ -34,10 +34,9 @@ import stroom.util.logging.LogExecutionTime;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-import org.elasticsearch.client.RequestOptions;
-import org.elasticsearch.core.TimeValue;
-import org.elasticsearch.index.query.QueryBuilder;
-import org.elasticsearch.index.reindex.DeleteByQueryRequest;
+import co.elastic.clients.elasticsearch._types.Time;
+import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import co.elastic.clients.elasticsearch.core.DeleteByQueryRequest;
 
 import java.util.List;
 import java.util.Map;
@@ -49,8 +48,9 @@ public class ElasticIndexRetentionExecutor {
 
     private static final String TASK_NAME = "Elastic Index Retention Executor";
     private static final String LOCK_NAME = "ElasticIndexRetentionExecutor";
-    private static final int DELETE_REQUEST_TIMEOUT_MILLIS = 60000;
+    private static final int DELETE_REQUEST_TIMEOUT_SECONDS = 60;
 
+    private final Provider<ElasticConfig> elasticConfigProvider;
     private final ElasticClusterStore elasticClusterStore;
     private final ElasticIndexStore elasticIndexStore;
     private final ElasticIndexCache elasticIndexCache;
@@ -62,6 +62,7 @@ public class ElasticIndexRetentionExecutor {
 
     @Inject
     public ElasticIndexRetentionExecutor(
+            final Provider<ElasticConfig> elasticConfigProvider,
             final ElasticClusterStore elasticClusterStore,
             final ElasticIndexStore elasticIndexStore,
             final ElasticIndexCache elasticIndexCache,
@@ -71,6 +72,7 @@ public class ElasticIndexRetentionExecutor {
             final ClusterLockService clusterLockService,
             final TaskContextFactory taskContextFactory
     ) {
+        this.elasticConfigProvider = elasticConfigProvider;
         this.elasticClusterStore = elasticClusterStore;
         this.elasticIndexStore = elasticIndexStore;
         this.elasticIndexCache = elasticIndexCache;
@@ -124,7 +126,7 @@ public class ElasticIndexRetentionExecutor {
                             indexFieldsMap,
                             DateTimeSettings.builder().build());
 
-                    final QueryBuilder query = searchExpressionQueryBuilder.buildQuery(
+                    final Query query = searchExpressionQueryBuilder.buildQuery(
                             elasticIndex.getRetentionExpression());
                     final ElasticClusterDoc elasticCluster = elasticClusterStore.readDocument(
                             elasticIndex.getClusterRef());
@@ -134,12 +136,15 @@ public class ElasticIndexRetentionExecutor {
                             info(taskContext, () ->
                                     "Deleting data from Elasticsearch index '" + elasticIndex.getName() + "'");
 
-                            DeleteByQueryRequest request = new DeleteByQueryRequest(elasticIndex.getIndexName())
-                                .setQuery(query)
-                                .setTimeout(new TimeValue(DELETE_REQUEST_TIMEOUT_MILLIS))
-                                .setRefresh(true);
+                            DeleteByQueryRequest request = DeleteByQueryRequest.of(r -> r
+                                    .index(elasticIndex.getIndexName())
+                                    .query(query)
+                                    .timeout(Time.of(t -> t.time(String.format("%ds", DELETE_REQUEST_TIMEOUT_SECONDS))))
+                                    .refresh(true)
+                                    .scrollSize(elasticConfigProvider.get().getRetentionConfig().getScrollSize())
+                            );
 
-                            elasticClient.deleteByQuery(request, RequestOptions.DEFAULT);
+                            elasticClient.deleteByQuery(request);
                         } catch (Exception e) {
                             LOGGER.error(e::getMessage, e);
                         }

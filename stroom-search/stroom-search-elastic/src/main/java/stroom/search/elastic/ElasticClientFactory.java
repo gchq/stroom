@@ -2,30 +2,23 @@ package stroom.search.elastic;
 
 import stroom.search.elastic.shared.ElasticConnectionConfig;
 
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.json.jackson.JacksonJsonpMapper;
+import co.elastic.clients.transport.ElasticsearchTransport;
+import co.elastic.clients.transport.TransportUtils;
+import co.elastic.clients.transport.rest_client.RestClientTransport;
 import jakarta.inject.Inject;
 import org.apache.http.Header;
 import org.apache.http.HttpHost;
 import org.apache.http.client.config.RequestConfig.Builder;
 import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
 import org.apache.http.message.BasicHeader;
-import org.apache.http.ssl.SSLContextBuilder;
-import org.apache.http.ssl.SSLContexts;
-import org.elasticsearch.client.RestClient;
-import org.elasticsearch.client.RestClientBuilder;
-import org.elasticsearch.client.RestClientBuilder.HttpClientConfigCallback;
-import org.elasticsearch.client.RestClientBuilder.RequestConfigCallback;
-import org.elasticsearch.client.RestHighLevelClient;
-import org.elasticsearch.client.RestHighLevelClientBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.security.KeyStore;
-import java.security.cert.Certificate;
-import java.security.cert.CertificateException;
-import java.security.cert.CertificateFactory;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.regex.Matcher;
@@ -34,12 +27,12 @@ import javax.net.ssl.SSLContext;
 
 public class ElasticClientFactory {
     private static final Logger LOGGER = LoggerFactory.getLogger(ElasticClientFactory.class);
-    private static final Pattern URL_PATTERN = Pattern.compile("^([a-zA-Z]+):\\/\\/(.+?)(?:(?::([0-9]+)\\/?)?)$");
+    private static final Pattern URL_PATTERN = Pattern.compile("^([a-zA-Z]+)://(.+?)(?::([0-9]+)/?)?$");
 
     @Inject
     public ElasticClientFactory() { }
 
-    public RestHighLevelClient create(final ElasticConnectionConfig config,
+    public ElasticsearchClient create(final ElasticConnectionConfig config,
                                       final ElasticClientConfig elasticClientConfig) {
         final ArrayList<HttpHost> httpHosts = new ArrayList<>();
         boolean useHttps = false;
@@ -72,6 +65,7 @@ public class ElasticClientFactory {
         // If using HTTPS, set the CA certificate to verify the connection with the Elasticsearch cluster
         if (useHttps) {
             final SSLContext sslContext = getSslContext(config);
+
             if (sslContext != null) {
                 restClientBuilder.setHttpClientConfigCallback(new HttpClientConfigCallback() {
                     @Override
@@ -89,17 +83,16 @@ public class ElasticClientFactory {
         final String apiKey = getEncodedApiKey(config);
         if (config.getUseAuthentication() && apiKey != null) {
             final Header[] defaultHeaders = new Header[] {
-                new BasicHeader("Authorization", "ApiKey " + apiKey),
-                new BasicHeader("Accept", "application/vnd.elasticsearch+json;compatible-with=7"),
-                new BasicHeader("Content-Type", "application/vnd.elasticsearch+json;compatible-with=7")
+                new BasicHeader("Authorization", "ApiKey " + apiKey)
             };
 
             restClientBuilder.setDefaultHeaders(defaultHeaders);
         }
 
-        return new RestHighLevelClientBuilder(restClientBuilder.build())
-                .setApiCompatibilityMode(true)
-                .build();
+        final ElasticsearchTransport transport = new RestClientTransport(restClientBuilder.build(),
+                new JacksonJsonpMapper());
+
+        return new ElasticsearchClient(transport);
     }
 
     private SSLContext getSslContext(final ElasticConnectionConfig config) {
@@ -110,18 +103,10 @@ public class ElasticClientFactory {
         }
 
         try {
-            final CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
             final InputStream certInputStream = new ByteArrayInputStream(cert.getBytes(StandardCharsets.UTF_8));
-            final Certificate trustedCa = certFactory.generateCertificate(certInputStream);
-
-            final KeyStore trustStore = KeyStore.getInstance("pkcs12");
-            trustStore.load(null, null);
-            trustStore.setCertificateEntry("ca", trustedCa);
-
-            final SSLContextBuilder sslContextBuilder = SSLContexts.custom().loadTrustMaterial(trustStore, null);
-            return sslContextBuilder.build();
-        } catch (CertificateException e) {
-            LOGGER.error("Failed to create a certificate factory", e);
+            return TransportUtils.sslContextFromHttpCaCrt(certInputStream);
+        } catch (RuntimeException e) {
+            LOGGER.error("Failed to initialise SSL context", e);
         } catch (Exception e) {
             LOGGER.error("Failed to load CA certificate", e);
         }

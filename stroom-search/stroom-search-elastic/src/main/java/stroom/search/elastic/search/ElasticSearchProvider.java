@@ -42,6 +42,7 @@ import stroom.search.elastic.shared.ElasticClusterDoc;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.search.elastic.shared.ElasticIndexField;
 import stroom.search.elastic.shared.ElasticIndexFieldType;
+import stroom.search.elastic.shared.UnsupportedTypeException;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.util.logging.LambdaLogger;
@@ -50,11 +51,21 @@ import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
-import org.elasticsearch.action.support.IndicesOptions;
-import org.elasticsearch.client.RequestOptions;
-import org.elasticsearch.client.indices.GetFieldMappingsRequest;
-import org.elasticsearch.client.indices.GetFieldMappingsResponse;
-import org.elasticsearch.client.indices.GetFieldMappingsResponse.FieldMappingMetadata;
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch._types.ExpandWildcard;
+import co.elastic.clients.elasticsearch._types.mapping.BooleanProperty;
+import co.elastic.clients.elasticsearch._types.mapping.DateProperty;
+import co.elastic.clients.elasticsearch._types.mapping.FieldAliasProperty;
+import co.elastic.clients.elasticsearch._types.mapping.FieldMapping;
+import co.elastic.clients.elasticsearch._types.mapping.IpProperty;
+import co.elastic.clients.elasticsearch._types.mapping.KeywordProperty;
+import co.elastic.clients.elasticsearch._types.mapping.NumberPropertyBase;
+import co.elastic.clients.elasticsearch._types.mapping.Property;
+import co.elastic.clients.elasticsearch._types.mapping.PropertyBase;
+import co.elastic.clients.elasticsearch._types.mapping.TextProperty;
+import co.elastic.clients.elasticsearch.indices.GetFieldMappingRequest;
+import co.elastic.clients.elasticsearch.indices.GetFieldMappingResponse;
+import co.elastic.clients.elasticsearch.indices.get_field_mapping.TypeFieldMappings;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -62,7 +73,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.TreeMap;
@@ -194,15 +204,15 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
 
     @Override
     public List<QueryField> getDataSourceFields(ElasticIndexDoc index) {
-        final Map<String, FieldMappingMetadata> fieldMappings = getFieldMappings(index);
+        final Map<String, FieldMapping> fieldMappings = getFieldMappings(index);
 
         return fieldMappings
                 .entrySet()
                 .stream()
                 .map(field -> {
                     final String fieldName = field.getKey();
-                    final FieldMappingMetadata fieldMeta = field.getValue();
-                    String nativeType = getFieldPropertyFromMapping(fieldName, field.getValue(), "type");
+                    final FieldMapping fieldMeta = field.getValue();
+                    String nativeType = getFieldTypeFromMapping(fieldName, field.getValue());
 
                     if (nativeType == null) {
                         // If field type is null, this is a system field, so ignore
@@ -210,9 +220,9 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
                     } else if (nativeType.equals("alias")) {
                         // Determine the mapping type of the field the alias is referring to
                         try {
-                            final String aliasPath = getFieldPropertyFromMapping(fieldName, field.getValue(), "path");
-                            final FieldMappingMetadata targetFieldMeta = fieldMappings.get(aliasPath);
-                            nativeType = getFieldPropertyFromMapping(aliasPath, targetFieldMeta, "type");
+                            final String aliasPath = getAliasPathFromMapping(fieldName, field.getValue());
+                            final FieldMapping targetFieldMeta = fieldMappings.get(aliasPath);
+                            nativeType = getFieldTypeFromMapping(aliasPath, targetFieldMeta);
                         } catch (Exception e) {
                             LOGGER.error("Could not determine mapping type for alias field '{}'", fieldName);
                         }
@@ -224,6 +234,9 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
                                 ElasticIndexFieldType.fromNativeType(fullName, nativeType);
 
                         return elasticFieldType.toDataSourceField(fieldName, fieldIsIndexed(field.getValue()));
+                    } catch (UnsupportedTypeException e) {
+                        LOGGER.debug(e::getMessage);
+                        return null;
                     } catch (IllegalArgumentException e) {
                         LOGGER.warn(e::getMessage);
                         return null;
@@ -233,22 +246,30 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
                 .collect(Collectors.toList());
     }
 
-    private String getFieldPropertyFromMapping(final String fieldName, final FieldMappingMetadata fieldMeta,
-                                               final String propertyName) {
-        final Optional<Entry<String, Object>> firstFieldEntry =
-                fieldMeta.sourceAsMap().entrySet().stream().findFirst();
+    private String getFieldTypeFromMapping(final String fieldName, final FieldMapping fieldMeta) {
+        final Optional<Property> firstFieldMapping = fieldMeta.mapping().values().stream().findFirst();
 
-        if (firstFieldEntry.isPresent()) {
-            final Object properties = firstFieldEntry.get().getValue();
-            if (properties instanceof Map) {
-                @SuppressWarnings("unchecked") // Need to get at the nested properties, which is always a map
-                final Map<String, Object> propertiesMap = (Map<String, Object>) properties;
-                return (String) propertiesMap.get(propertyName);
-            } else {
-                LOGGER.debug(() ->
-                        "Mapping properties for field '" + fieldName +
-                                "' were in an unrecognised format. Field ignored.");
+        if (firstFieldMapping.isPresent()) {
+            return firstFieldMapping.get()._kind().name().toLowerCase();
+        } else {
+            LOGGER.debug(() -> "Mapping properties for field '" + fieldName +
+                    "' were in an unrecognised format. Field ignored.");
+        }
+
+        return null;
+    }
+
+    private String getAliasPathFromMapping(final String fieldName, final FieldMapping fieldMeta) {
+        final Optional<Property> firstFieldMapping = fieldMeta.mapping().values().stream().findFirst();
+
+        if (firstFieldMapping.isPresent()) {
+            final Object fieldMappingInstance = firstFieldMapping.get()._get();
+            if (fieldMappingInstance instanceof FieldAliasProperty) {
+                return ((FieldAliasProperty) fieldMappingInstance).path();
             }
+        } else {
+            LOGGER.debug(() -> "Mapping properties for field '" + fieldName +
+                    "' were in an unrecognised format. Field ignored.");
         }
 
         return null;
@@ -261,12 +282,12 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
 
     @Override
     public Map<String, ElasticIndexField> getFieldsMap(final ElasticIndexDoc index) {
-        final Map<String, FieldMappingMetadata> fieldMappings = getFieldMappings(index);
+        final Map<String, FieldMapping> fieldMappings = getFieldMappings(index);
         final Map<String, ElasticIndexField> fieldsMap = new HashMap<>();
 
         fieldMappings.forEach((key, fieldMeta) -> {
             try {
-                String nativeType = getFieldPropertyFromMapping(key, fieldMeta, "type");
+                String nativeType = getFieldTypeFromMapping(key, fieldMeta);
                 final String fieldName = fieldMeta.fullName();
                 final boolean indexed = fieldIsIndexed(fieldMeta);
 
@@ -275,9 +296,9 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
                 } else if (nativeType.equals("alias")) {
                     // Determine the mapping type of the field the alias is referring to
                     try {
-                        final String aliasPath = getFieldPropertyFromMapping(fieldName, fieldMeta, "path");
-                        final FieldMappingMetadata targetFieldMeta = fieldMappings.get(aliasPath);
-                        nativeType = getFieldPropertyFromMapping(aliasPath, targetFieldMeta, "type");
+                        final String aliasPath = getAliasPathFromMapping(fieldName, fieldMeta);
+                        final FieldMapping targetFieldMeta = fieldMappings.get(aliasPath);
+                        nativeType = getFieldTypeFromMapping(aliasPath, targetFieldMeta);
                     } catch (Exception e) {
                         LOGGER.error("Could not determine mapping type for alias field '{}'", fieldName);
                     }
@@ -300,94 +321,104 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
      * Tests whether a field has the mapping property `index` set to `true`.
      * This determines whether it is searchable.
      */
-    private boolean fieldIsIndexed(final FieldMappingMetadata field) {
+    private boolean fieldIsIndexed(final FieldMapping field) {
         try {
-            final Map<String, Object> fieldMap = field.sourceAsMap();
-            final Optional<String> fieldKey = fieldMap.keySet().stream().findFirst();
-            if (fieldKey.isPresent()) {
-                @SuppressWarnings("unchecked") // Need to get at the field mapping properties
-                final Map<String, Object> mappingProperties = (Map<String, Object>) fieldMap.get(fieldKey.get());
-                return mappingProperties.containsKey("index")
-                        ? (Boolean) fieldMap.get("index")
-                        : true;
-            } else {
-                return false;
+            final Map<String, Property> fieldMap = field.mapping();
+            final Optional<Property> firstFieldMapping = fieldMap.values().stream().findFirst();
+            if (firstFieldMapping.isPresent()) {
+                final Object mappingInstance = firstFieldMapping.get()._get();
+
+                // Detect non-indexed fields for common data types. For all others, assume the field is indexed
+                if (mappingInstance instanceof KeywordProperty) {
+                    return !Boolean.FALSE.equals(((KeywordProperty) mappingInstance).index());
+                } else if (mappingInstance instanceof TextProperty) {
+                    return !Boolean.FALSE.equals(((TextProperty) mappingInstance).index());
+                } else if (mappingInstance instanceof BooleanProperty) {
+                    return !Boolean.FALSE.equals(((BooleanProperty) mappingInstance).index());
+                } else if (mappingInstance instanceof DateProperty) {
+                    return !Boolean.FALSE.equals(((DateProperty) mappingInstance).index());
+                } else if (mappingInstance instanceof NumberPropertyBase) {
+                    return !Boolean.FALSE.equals(((NumberPropertyBase) mappingInstance).index());
+                } else if (mappingInstance instanceof IpProperty) {
+                    return !Boolean.FALSE.equals(((IpProperty) mappingInstance).index());
+                } else {
+                    return true;
+                }
             }
         } catch (Exception e) {
             return false;
         }
+
+        return false;
     }
 
-    @SuppressWarnings("unchecked")
-    private Map<String, FieldMappingMetadata> getFieldMappings(final ElasticIndexDoc elasticIndex) {
-        Map<String, FieldMappingMetadata> result = new TreeMap<>();
+    private Map<String, FieldMapping> getFieldMappings(final ElasticIndexDoc elasticIndex) {
+        Map<String, FieldMapping> result = new TreeMap<>();
 
         if (elasticIndex.getClusterRef() != null) {
             try {
                 final ElasticClusterDoc elasticCluster = elasticClusterStore.readDocument(elasticIndex.getClusterRef());
-                result = elasticClientCache.contextResult(elasticCluster.getConnection(), elasticClient -> {
-
-                    // Flatten the mappings, which are keyed by index, into a de-duplicated list
-                    final TreeMap<String, FieldMappingMetadata> mappings = new TreeMap<>((o1, o2) -> {
-                        if (Objects.equals(o1, o2)) {
-                            return 0;
-                        }
-                        if (o2 == null) {
-                            return 1;
-                        }
-
-                        return o1.compareToIgnoreCase(o2);
-                    });
-
-                    final String indexName = elasticIndex.getIndexName();
-                    final GetFieldMappingsRequest request = new GetFieldMappingsRequest();
-                    request.indicesOptions(IndicesOptions.lenientExpand());
-                    request.indices(indexName);
-                    request.fields("*");
-
-                    try {
-                        final GetFieldMappingsResponse response = elasticClient.indices().getFieldMapping(
-                                request, RequestOptions.DEFAULT);
-                        final Map<String, Map<String, FieldMappingMetadata>> allMappings = response.mappings();
-
-                        // Build a list of all multi fields (i.e. those defined only in the field mapping).
-                        // These are excluded from the fields the user can pick via the Stroom UI, as they are not part
-                        // of the returned `_source` field.
-                        final HashSet<String> multiFieldMappings = new HashSet<>();
-                        allMappings.values().forEach(indexMappings -> indexMappings.forEach((fieldName, mapping) -> {
-                            if (mapping.sourceAsMap().get(fieldName) instanceof Map) {
-                                @SuppressWarnings("unchecked") final Map<String, Object> source =
-                                        (Map<String, Object>) mapping.sourceAsMap().get(fieldName);
-                                final Object fields = source.get("fields");
-
-                                if (fields instanceof Map) {
-                                    final Map<String, Object> multiFields = (Map<String, Object>) fields;
-
-                                    multiFields.forEach((multiFieldName, multiFieldMapping) -> {
-                                        final String fullName = mapping.fullName() + "." + multiFieldName;
-                                        multiFieldMappings.add(fullName);
-                                    });
-                                }
-                            }
-                        }));
-
-                        allMappings.values().forEach(indexMappings -> indexMappings.forEach((fieldName, mapping) -> {
-                            if (!mappings.containsKey(fieldName) && !multiFieldMappings.contains(mapping.fullName())) {
-                                mappings.put(fieldName, mapping);
-                            }
-                        }));
-
-                    } catch (final IOException e) {
-                        LOGGER.error(e::getMessage, e);
-                    }
-
-                    return mappings;
-                });
+                result = elasticClientCache.contextResult(elasticCluster.getConnection(), elasticClient ->
+                        getFlattenedFieldMappings(elasticIndex, elasticClient));
             } catch (final RuntimeException e) {
                 LOGGER.error(e::getMessage, e);
             }
         }
         return result;
+    }
+
+    private static TreeMap<String, FieldMapping> getFlattenedFieldMappings(final ElasticIndexDoc elasticIndex,
+                                                                           final ElasticsearchClient elasticClient) {
+        // Flatten the mappings, which are keyed by index, into a de-duplicated list
+        final TreeMap<String, FieldMapping> mappings = new TreeMap<>((o1, o2) -> {
+            if (Objects.equals(o1, o2)) {
+                return 0;
+            }
+            if (o2 == null) {
+                return 1;
+            }
+
+            return o1.compareToIgnoreCase(o2);
+        });
+
+        final String indexName = elasticIndex.getIndexName();
+        final GetFieldMappingRequest request = GetFieldMappingRequest.of(r -> r
+                .expandWildcards(ExpandWildcard.Open)
+                .index(indexName)
+                .fields("*"));
+
+        try {
+            final GetFieldMappingResponse response = elasticClient.indices().getFieldMapping(request);
+            final Map<String, TypeFieldMappings> allMappings = response.result();
+
+            // Build a list of all multi fields (i.e. those defined only in the field mapping).
+            // These are excluded from the fields the user can pick via the Stroom UI, as they are not part
+            // of the returned `_source` field.
+            final HashSet<String> multiFieldMappings = new HashSet<>();
+            allMappings.values().forEach(indexMappings -> indexMappings.mappings().forEach((fieldName, mapping) -> {
+                final Property source = mapping.mapping().get(fieldName);
+                if (source != null && source._get() instanceof PropertyBase) {
+                    final var multiFields = ((PropertyBase) source._get()).fields();
+
+                    if (!multiFields.isEmpty()) {
+                        multiFields.forEach((multiFieldName, multiFieldMapping) -> {
+                            final String fullName = mapping.fullName() + "." + multiFieldName;
+                            multiFieldMappings.add(fullName);
+                        });
+                    }
+                }
+            }));
+
+            allMappings.values().forEach(indexMappings -> indexMappings.mappings().forEach((fieldName, mapping) -> {
+                if (!mappings.containsKey(fieldName) && !multiFieldMappings.contains(mapping.fullName())) {
+                    mappings.put(fieldName, mapping);
+                }
+            }));
+        } catch (final IOException e) {
+            LOGGER.error(e::getMessage, e);
+        }
+
+        return mappings;
     }
 
     @Override

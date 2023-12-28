@@ -24,9 +24,8 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import jakarta.inject.Inject;
-import org.elasticsearch.index.query.QueryBuilder;
-import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
-import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder.BoundaryScannerType;
+import co.elastic.clients.elasticsearch.core.search.BoundaryScanner;
+import co.elastic.clients.elasticsearch.core.search.Highlight;
 
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -112,30 +111,33 @@ public class ElasticSearchFactory {
                         }).run(), executor);
     }
 
-    private QueryBuilder getQuery(final ExpressionOperator expression,
-                                  final Map<String, ElasticIndexField> indexFieldsMap,
-                                  final DateTimeSettings dateTimeSettings) {
+    private co.elastic.clients.elasticsearch._types.query_dsl.Query getQuery(
+            final ExpressionOperator expression,
+            final Map<String, ElasticIndexField> indexFieldsMap,
+            final DateTimeSettings dateTimeSettings) {
         final SearchExpressionQueryBuilder builder = new SearchExpressionQueryBuilder(
                 wordListProvider,
                 indexFieldsMap,
                 dateTimeSettings);
-        final QueryBuilder query = builder.buildQuery(expression);
+        final co.elastic.clients.elasticsearch._types.query_dsl.Query query = builder.buildQuery(expression);
 
         // Make sure the query was created successfully.
         if (query == null) {
             throw new SearchException("Failed to build query given expression");
         } else {
-            LOGGER.debug(() -> "Query is " + query);
+            LOGGER.debug(() -> "Query: " + query);
         }
 
         return query;
     }
 
-    private HighlightBuilder getHighlighter() {
-        return new HighlightBuilder()
-                .field("*")
-                .preTags("")
-                .postTags("")
-                .boundaryScannerType(BoundaryScannerType.WORD);
+    private Highlight getHighlighter() {
+        return Highlight.of(h -> h
+                .fields("*", f -> f
+                        .preTags("")
+                        .postTags("")
+                        .boundaryScanner(BoundaryScanner.Word)
+                )
+        );
     }
 }
