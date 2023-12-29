@@ -5,14 +5,12 @@ import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.StroomStatusCode;
 import stroom.proxy.repo.LogStream;
-import stroom.receive.common.ProgressHandler;
 import stroom.receive.common.StroomStreamException;
 import stroom.security.api.UserIdentityFactory;
 import stroom.util.NullSafe;
 import stroom.util.cert.SSLUtil;
 import stroom.util.concurrent.ThreadUtil;
 import stroom.util.io.ByteSize;
-import stroom.util.io.StreamUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -154,11 +152,7 @@ public class HttpSender implements StreamDestination {
         try {
             // Get a buffer to help us transfer data.
             final byte[] buffer = LocalByteBuffer.get();
-            StreamUtil.streamToStream(
-                    inputStream,
-                    connection.getOutputStream(),
-                    buffer,
-                    new ProgressHandler("Sending data"));
+            TransferUtil.transfer(inputStream, connection.getOutputStream(), buffer);
 
             if (!forwardDelay.isZero()) {
                 LOGGER.trace("'{}' - adding delay {}", forwarderName, forwardDelay);

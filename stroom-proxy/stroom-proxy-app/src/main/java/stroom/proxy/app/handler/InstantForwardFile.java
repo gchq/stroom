@@ -5,10 +5,8 @@ import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.repo.LogStream;
 import stroom.receive.common.AttributeMapFilter;
-import stroom.receive.common.ProgressHandler;
 import stroom.util.io.ByteCountInputStream;
 import stroom.util.io.FileUtil;
-import stroom.util.io.StreamUtil;
 import stroom.util.io.TempDirProvider;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -143,11 +141,7 @@ public class InstantForwardFile {
                         new ByteCountInputStream(inputStreamSupplier.get())) {
                     try (final OutputStream outputStream =
                             new BufferedOutputStream(Files.newOutputStream(dataFile))) {
-                        StreamUtil.streamToStream(
-                                byteCountInputStream,
-                                outputStream,
-                                buffer,
-                                new ProgressHandler("Receiving"));
+                        TransferUtil.transfer(byteCountInputStream, outputStream, buffer);
                     }
 
                     // Find out how much data we received.

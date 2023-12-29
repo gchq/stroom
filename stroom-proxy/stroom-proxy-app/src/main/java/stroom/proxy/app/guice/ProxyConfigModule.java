@@ -15,8 +15,6 @@ import org.slf4j.LoggerFactory;
 
 public class ProxyConfigModule extends AbstractModule {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ProxyConfigModule.class);
-
     private final ProxyConfigHolder proxyConfigHolder;
 
     public ProxyConfigModule(final ProxyConfigHolder proxyConfigHolder) {

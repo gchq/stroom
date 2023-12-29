@@ -1,6 +1,7 @@
 package stroom.proxy.app.handler;
 
 import stroom.proxy.app.ProxyConfig;
+import stroom.proxy.repo.ProxyServices;
 import stroom.proxy.repo.RepoDirProvider;
 import stroom.util.NullSafe;
 import stroom.util.io.FileUtil;
@@ -31,7 +32,7 @@ public class Forwarder {
                      final ProxyConfig proxyConfig,
                      final HttpSenderFactory httpSenderFactory,
                      final ForwardFileDestinationFactory forwardFileDestinationFactory,
-                     final ManagedRegistry managedRegistry,
+                     final ProxyServices proxyServices,
                      final DirQueueFactory sequentialDirQueueFactory) {
 
         final long count = Stream
@@ -53,7 +54,7 @@ public class Forwarder {
                         streamDestination,
                         cleanupDirQueue,
                         forwardHttpPostConfig.getRetryDelay(),
-                        managedRegistry,
+                        proxyServices,
                         sequentialDirQueueFactory,
                         proxyConfig.getThreadConfig().getForwardThreadCount(),
                         proxyConfig.getThreadConfig().getForwardRetryThreadCount());

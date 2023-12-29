@@ -1,6 +1,5 @@
 package stroom.proxy.app;
 
-import stroom.proxy.app.handler.ForwardFileConfig;
 import stroom.proxy.repo.ProxyRepoConfig;
 import stroom.util.NullSafe;
 import stroom.util.config.AbstractConfigUtil;
@@ -164,15 +163,11 @@ public abstract class AbstractApplicationTest {
 
         NullSafe.consume(proxyConfig.getProxyRepositoryConfig(), ProxyRepoConfig::getRepoDir, createDirConsumer);
         NullSafe.consume(proxyConfig.getContentDir(), createDirConsumer);
-        NullSafe.consume(proxyConfig.getProxyDbConfig(), ProxyDbConfig::getDbDir, createDirConsumer);
-        NullSafe.consume(proxyConfig.getForwardRetry(), ForwardRetryConfig::getFailedForwardDir, createDirConsumer);
 
-        if (NullSafe.hasItems(proxyConfig.getForwardDestinations())) {
-            proxyConfig.getForwardDestinations().forEach(forwardConfig -> {
-                if (forwardConfig instanceof final ForwardFileConfig forwardFileConfig) {
-                    if (!NullSafe.isBlankString(forwardFileConfig.getPath())) {
-                        createDirConsumer.accept(forwardFileConfig.getPath());
-                    }
+        if (NullSafe.hasItems(proxyConfig.getForwardFileDestinations())) {
+            proxyConfig.getForwardFileDestinations().forEach(forwardConfig -> {
+                if (!NullSafe.isBlankString(forwardConfig.getPath())) {
+                    createDirConsumer.accept(forwardConfig.getPath());
                 }
             });
         }

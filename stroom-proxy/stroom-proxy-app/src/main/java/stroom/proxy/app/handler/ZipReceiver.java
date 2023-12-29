@@ -8,12 +8,10 @@ import stroom.proxy.repo.FeedKey;
 import stroom.proxy.repo.LogStream;
 import stroom.proxy.repo.RepoDirProvider;
 import stroom.receive.common.AttributeMapFilter;
-import stroom.receive.common.ProgressHandler;
 import stroom.receive.common.StroomStreamException;
 import stroom.util.io.ByteCountInputStream;
 import stroom.util.io.FileName;
 import stroom.util.io.FileUtil;
-import stroom.util.io.StreamUtil;
 import stroom.util.io.TempDirProvider;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -26,7 +24,6 @@ import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -152,6 +149,9 @@ public class ZipReceiver implements Receiver {
         final String defaultFeedName = attributeMap.get(StandardHeaderArguments.FEED);
         final String defaultTypeName = attributeMap.get(StandardHeaderArguments.TYPE);
 
+        // Get a buffer to help us transfer data.
+        final byte[] buffer = LocalByteBuffer.get();
+
         // TODO : We could add an optimisation here to identify if the incoming data is in the expected proxy file
         //  format and if so skip the work to repackage. At present it is very unlikely that any senders will be
         //  providing data in the format perfectly but at the very least proxies that send data to one another ought to
@@ -170,9 +170,6 @@ public class ZipReceiver implements Receiver {
             // Receive data.
             try (final ByteCountInputStream byteCountInputStream = new ByteCountInputStream(inputStreamSupplier.get())) {
                 try (final ZipInputStream zipInputStream = new ZipInputStream(byteCountInputStream)) {
-                    // Get a buffer to help us transfer data.
-                    final byte[] buffer = LocalByteBuffer.get();
-
                     // Write the incoming zip data to temp and record info about the entries as we go.
                     try (final ZipOutputStream zipOutputStream =
                             new ZipOutputStream(new BufferedOutputStream(Files.newOutputStream(zipFilePath)))) {
@@ -198,7 +195,7 @@ public class ZipReceiver implements Receiver {
 
                                     final byte[] bytes = AttributeMapUtil.toByteArray(entryAttributeMap);
                                     zipOutputStream.putNextEntry(entry);
-                                    transfer(new ByteArrayInputStream(bytes), zipOutputStream, buffer);
+                                    TransferUtil.transfer(new ByteArrayInputStream(bytes), zipOutputStream, buffer);
                                     final ZipEntryGroup zipEntryGroup = groups
                                             .computeIfAbsent(baseName, k -> new ZipEntryGroup(feedName, typeName));
                                     // Ensure we override the feed and type names with the meta.
@@ -218,7 +215,7 @@ public class ZipReceiver implements Receiver {
                                     }
 
                                     zipOutputStream.putNextEntry(entry);
-                                    final long size = transfer(zipInputStream, zipOutputStream, buffer);
+                                    final long size = TransferUtil.transfer(zipInputStream, zipOutputStream, buffer);
                                     zipEntryGroup.setContextEntry(new ZipEntryGroup.Entry(entry.getName(), size));
 
                                 } else if (StroomZipFileType.MANIFEST.equals(stroomZipFileType)) {
@@ -229,12 +226,12 @@ public class ZipReceiver implements Receiver {
                                     }
 
                                     zipOutputStream.putNextEntry(entry);
-                                    final long size = transfer(zipInputStream, zipOutputStream, buffer);
+                                    final long size = TransferUtil.transfer(zipInputStream, zipOutputStream, buffer);
                                     zipEntryGroup.setManifestEntry(new ZipEntryGroup.Entry(entry.getName(), size));
 
                                 } else {
                                     zipOutputStream.putNextEntry(entry);
-                                    final long size = transfer(zipInputStream, zipOutputStream, buffer);
+                                    final long size = TransferUtil.transfer(zipInputStream, zipOutputStream, buffer);
                                     dataEntries.add(new ZipEntryGroup.Entry(entry.getName(), size));
                                 }
 
@@ -336,7 +333,7 @@ public class ZipReceiver implements Receiver {
                     groupDirs.add(groupDir);
 
                     final List<ZipEntryGroup> zipEntryGroups = feedGroups.get(feedKey);
-                    writeZip(zipFile, zipEntryGroups, feedKey, attributeMap, fileGroup);
+                    writeZip(zipFile, zipEntryGroups, feedKey, attributeMap, fileGroup, buffer);
                 }
             }
 
@@ -384,11 +381,9 @@ public class ZipReceiver implements Receiver {
                           final List<ZipEntryGroup> zipEntryGroups,
                           final FeedKey feedKey,
                           final AttributeMap attributeMap,
-                          final FileGroup fileGroup) throws IOException {
+                          final FileGroup fileGroup,
+                          final byte[] buffer) throws IOException {
         try {
-            // Get a buffer to help us transfer data.
-            final byte[] buffer = LocalByteBuffer.get();
-
             // Write zip.
             int count = 1;
             try (final ZipOutputStream zipOutputStream =
@@ -436,16 +431,8 @@ public class ZipReceiver implements Receiver {
             final String outEntryName = baseNameOut + stroomZipFileType.getDotExtension();
             zipOutputStream.putNextEntry(new ZipEntry(outEntryName));
 
-            transfer(inputStream, zipOutputStream, buffer);
+            TransferUtil.transfer(inputStream, zipOutputStream, buffer);
         }
-    }
-
-    private long transfer(final InputStream in, final OutputStream out, final byte[] buffer) {
-        return StreamUtil
-                .streamToStream(in,
-                        out,
-                        buffer,
-                        new ProgressHandler("Receiving data"));
     }
 
     public void setDestination(final Consumer<Path> destination) {

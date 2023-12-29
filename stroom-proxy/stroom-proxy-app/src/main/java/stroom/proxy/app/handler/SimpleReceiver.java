@@ -10,7 +10,6 @@ import stroom.receive.common.AttributeMapFilter;
 import stroom.receive.common.ProgressHandler;
 import stroom.receive.common.StroomStreamException;
 import stroom.util.io.FileUtil;
-import stroom.util.io.StreamUtil;
 import stroom.util.io.TempDirProvider;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -109,7 +108,7 @@ public class SimpleReceiver implements Receiver {
                         final AttributeMap entryAttributeMap = AttributeMapUtil.cloneAllowable(attributeMap);
                         final byte[] metaBytes = AttributeMapUtil.toByteArray(entryAttributeMap);
                         zipOutputStream.putNextEntry(new ZipEntry(META_FILE_NAME));
-                        transfer(new ByteArrayInputStream(metaBytes), zipOutputStream, buffer);
+                        TransferUtil.transfer(new ByteArrayInputStream(metaBytes), zipOutputStream, buffer);
 
                         // Deal with GZIP compression.
                         final InputStream in;
@@ -122,7 +121,7 @@ public class SimpleReceiver implements Receiver {
 
                         // Write the data.
                         zipOutputStream.putNextEntry(new ZipEntry(DATA_FILE_NAME));
-                        bytesRead = transfer(in, zipOutputStream, buffer);
+                        bytesRead = TransferUtil.transfer(in, zipOutputStream, buffer);
 
                         // Write the entries for quick reference.
                         final ZipEntryGroup zipEntryGroup = new ZipEntryGroup(
@@ -162,14 +161,6 @@ public class SimpleReceiver implements Receiver {
             // Drop the data.
             dropReceiver.receive(startTime, attributeMap, requestUri, inputStreamSupplier);
         }
-    }
-
-    private long transfer(final InputStream in, final OutputStream out, final byte[] buffer) {
-        return StreamUtil
-                .streamToStream(in,
-                        out,
-                        buffer,
-                        new ProgressHandler("Receiving data"));
     }
 
     public void setDestination(final Consumer<Path> destination) {

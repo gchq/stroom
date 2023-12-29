@@ -1,5 +1,7 @@
 package stroom.proxy.app;
 
+import stroom.proxy.app.guice.ProxyCoreModule;
+
 import com.google.inject.AbstractModule;
 import org.junit.jupiter.api.Test;
 
@@ -14,14 +16,6 @@ class TestStoreAndForward extends AbstractTestStoreAndForward {
 
     @Override
     AbstractModule getModule(final Config configuration, final Path configFile) {
-        return new StoreAndForwardTestModule(configuration, configFile);
-    }
-
-    @Override
-    void await(final ForwarderDestinations forwarderDestinations) {
-        final MockForwardDestinations mockForwardDestinations = (MockForwardDestinations) forwarderDestinations;
-        while (mockForwardDestinations.awaitNew(0) < 1) {
-            // Waiting.
-        }
+        return new ProxyCoreModule();
     }
 }

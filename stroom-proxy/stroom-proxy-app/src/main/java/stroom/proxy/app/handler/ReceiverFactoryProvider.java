@@ -1,6 +1,7 @@
 package stroom.proxy.app.handler;
 
 import stroom.proxy.app.ProxyConfig;
+import stroom.proxy.repo.ProxyServices;
 import stroom.util.NullSafe;
 
 import java.util.Optional;
@@ -17,12 +18,12 @@ public class ReceiverFactoryProvider implements Provider<ReceiverFactory> {
                                    final Provider<InstantForwardHttpPost> directForwardHttpPostProvider,
                                    final Provider<InstantForwardFile> directForwardFileProvider,
                                    final Provider<Forwarder> forwarderProvider,
-                                   final ManagedRegistry managedRegistry,
                                    final DirQueueFactory sequentialDirQueueFactory,
                                    final Provider<Aggregator> aggregatorProvider,
                                    final Provider<PreAggregator> preAggregatorProvider,
                                    final Provider<ZipReceiver> zipReceiverProvider,
-                                   final Provider<SimpleReceiver> simpleReceiverProvider) {
+                                   final Provider<SimpleReceiver> simpleReceiverProvider,
+                                   final ProxyServices proxyServices) {
         final long count = Stream
                 .concat(NullSafe.list(proxyConfig.getForwardHttpDestinations()).stream(),
                         NullSafe.list(proxyConfig.getForwardFileDestinations()).stream())
@@ -73,9 +74,8 @@ public class ReceiverFactoryProvider implements Provider<ReceiverFactory> {
                     20,
                     "Forwarding");
             // Move items from the forwarding queue to the forwarder.
-            final ManagedQueue forwardingQueueProcess =
-                    new ManagedQueue(forwardQueue::next, forwarder::add, 1);
-            managedRegistry.register(forwardingQueueProcess);
+            final DirQueueTransfer forwardingQueueTransfer = new DirQueueTransfer(forwardQueue::next, forwarder::add);
+            proxyServices.addParallelExecutor("Forwarding queue transfer", () -> forwardingQueueTransfer, 1);
 
             if (proxyConfig.getAggregatorConfig() != null && proxyConfig.getAggregatorConfig().isEnabled()) {
                 // If we are aggregating then create the aggregating moving parts.
@@ -89,9 +89,10 @@ public class ReceiverFactoryProvider implements Provider<ReceiverFactory> {
                         10,
                         "Pre Aggregate");
                 // Move items from the pre aggregate queue to the aggregator.
-                final ManagedQueue preAggregateQueueProcess =
-                        new ManagedQueue(preAggregateQueue::next, aggregator::addDir, 1);
-                managedRegistry.register(preAggregateQueueProcess);
+                // TODO : Could use more than one thread here.
+                final DirQueueTransfer preAggregateQueueTransfer =
+                        new DirQueueTransfer(preAggregateQueue::next, aggregator::addDir);
+                proxyServices.addParallelExecutor("Pre aggregate queue transfer", () -> preAggregateQueueTransfer, 1);
 
                 // Create the pre aggregator.
                 final PreAggregator preAggregator = preAggregatorProvider.get();
@@ -102,9 +103,9 @@ public class ReceiverFactoryProvider implements Provider<ReceiverFactory> {
                         3,
                         "File store");
                 // Move items from the file store to the pre aggregator.
-                final ManagedQueue fileStoreQueueProcess =
-                        new ManagedQueue(fileStoreQueue::next, preAggregator::addDir, 1);
-                managedRegistry.register(fileStoreQueueProcess);
+                final DirQueueTransfer fileStoreQueueTransfer =
+                        new DirQueueTransfer(fileStoreQueue::next, preAggregator::addDir);
+                proxyServices.addParallelExecutor("File store queue transfer", () -> fileStoreQueueTransfer, 1);
 
                 // Create the receivers that will add data to the file store queue on receipt.
                 final SimpleReceiver simpleReceiver = simpleReceiverProvider.get();

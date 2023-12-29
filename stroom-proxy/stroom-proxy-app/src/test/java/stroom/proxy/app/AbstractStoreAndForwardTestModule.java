@@ -1,7 +1,6 @@
 package stroom.proxy.app;
 
 import stroom.collection.mock.MockCollectionModule;
-import stroom.db.util.DbModule;
 import stroom.dictionary.impl.DictionaryModule;
 import stroom.docrefinfo.api.DocRefDecorator;
 import stroom.docstore.api.DocumentResourceHelper;
@@ -69,8 +68,6 @@ public abstract class AbstractStoreAndForwardTestModule extends AbstractModule {
         bind(Environment.class).toInstance(new Environment("TestEnvironment"));
 
         install(new ProxyConfigModule(proxyConfigHolder));
-        install(new DbModule());
-        install(new ProxyDbModule());
         install(new MockCollectionModule());
         install(new ProxySecurityModule());
 
@@ -87,7 +84,6 @@ public abstract class AbstractStoreAndForwardTestModule extends AbstractModule {
         bind(BuildInfo.class).toProvider(BuildInfoProvider.class);
         bind(DataReceiptPolicyAttributeMapFilterFactory.class).to(DataReceiptPolicyAttributeMapFilterFactoryImpl.class);
         bind(DocumentResourceHelper.class).to(DocumentResourceHelperImpl.class);
-        bind(ErrorReceiver.class).to(ErrorReceiverImpl.class);
         bind(FeedStatusService.class).to(RemoteFeedStatusService.class);
         bind(ReceiveDataRuleSetService.class).to(ReceiveDataRuleSetServiceImpl.class);
 //        bind(RequestAuthenticator.class).to(RequestAuthenticatorImpl.class).asEagerSingleton();
@@ -98,7 +94,6 @@ public abstract class AbstractStoreAndForwardTestModule extends AbstractModule {
         bind(DocRefDecorator.class).to(NoDecorationDocRefDecorator.class);
 
         bind(RepoDirProvider.class).to(RepoDirProviderImpl.class);
-        bind(RepoDbDirProvider.class).to(RepoDbDirProviderImpl.class);
         bind(ProgressLog.class).to(ProgressLogImpl.class);
 
         // Proxy doesn't do import so bind a dummy ImportConverter for the StoreImpl(s) to use

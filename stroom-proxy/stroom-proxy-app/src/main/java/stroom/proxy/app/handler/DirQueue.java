@@ -30,10 +30,10 @@ public class DirQueue {
     private final QueueMonitor queueMonitor;
 
     DirQueue(final Path rootDir,
-                    final QueueMonitors queueMonitors,
-                    final FileStores fileStores,
-                    final int order,
-                    final String name) {
+             final QueueMonitors queueMonitors,
+             final FileStores fileStores,
+             final int order,
+             final String name) {
         this.rootDir = rootDir;
         this.queueMonitor = queueMonitors.create(order, name);
 

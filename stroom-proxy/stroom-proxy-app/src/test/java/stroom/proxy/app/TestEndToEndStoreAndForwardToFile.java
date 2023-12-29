@@ -1,6 +1,5 @@
 package stroom.proxy.app;
 
-import stroom.proxy.app.DbRecordCountAssertion.DbRecordCounts;
 import stroom.proxy.repo.AggregatorConfig;
 import stroom.proxy.repo.ProxyRepoConfig;
 import stroom.receive.common.ReceiveDataConfig;
@@ -16,16 +15,14 @@ import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
 import java.util.List;
-import javax.inject.Inject;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class TestEndToEndStoreAndForwardToFile extends AbstractEndToEndTest {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestEndToEndStoreAndForwardToFile.class);
 
-    @Inject
-    private DbRecordCountAssertion dbRecordCountAssertion;
-    @Inject
-    private MockFileDestination mockFileDestination;
+    private final MockFileDestination mockFileDestination = new MockFileDestination();
 
     @Override
     protected ProxyConfig getProxyConfigOverride() {
@@ -45,7 +42,7 @@ public class TestEndToEndStoreAndForwardToFile extends AbstractEndToEndTest {
                         .aggregationFrequency(StroomDuration.ofSeconds(1))
                         .maxItemsPerAggregate(3)
                         .build())
-                .addForwardDestination(MockFileDestination.createForwardFileConfig())
+                .addForwardDestination(mockFileDestination.getConfig())
                 .feedStatusConfig(MockHttpDestination.createFeedStatusConfig())
                 .receiveDataConfig(ReceiveDataConfig.builder()
                         .withAuthenticationRequired(false)
@@ -56,7 +53,6 @@ public class TestEndToEndStoreAndForwardToFile extends AbstractEndToEndTest {
     @Test
     void testBasicEndToEnd() {
         LOGGER.info("Starting basic end-end test");
-        dbRecordCountAssertion.assertRecordCounts(new DbRecordCounts(0, 0, 0, 1, 0, 0, 0, 0));
 
         mockHttpDestination.setupStroomStubs(mappingBuilder ->
                 mappingBuilder.willReturn(WireMock.ok()));
@@ -71,14 +67,11 @@ public class TestEndToEndStoreAndForwardToFile extends AbstractEndToEndTest {
             postDataHelper.sendTestData2();
         }
 
-        Assertions.assertThat(postDataHelper.getPostCount())
+        assertThat(postDataHelper.getPostCount())
                 .isEqualTo(8);
 
-
         // Assert the contents of the files.
-        mockFileDestination.assertFileContents(getConfig());
-
-        dbRecordCountAssertion.assertRecordCounts(new DbRecordCounts(0, 2, 0, 1, 0, 0, 0, 0));
+        assertThat(mockFileDestination.getForwardFileMetaCount()).isEqualTo(8);
 
         // Health check sends in a feed status check with DUMMY_FEED to see if stroom is available
         mockHttpDestination.assertFeedStatusCheck();
@@ -92,7 +85,6 @@ public class TestEndToEndStoreAndForwardToFile extends AbstractEndToEndTest {
     @Test
     void testBasicZipEndToEnd() {
         LOGGER.info("Starting basic end-end test");
-        dbRecordCountAssertion.assertRecordCounts(new DbRecordCounts(0, 0, 0, 1, 0, 0, 0, 0));
         mockHttpDestination.setupStroomStubs(mappingBuilder ->
                 mappingBuilder.willReturn(WireMock.ok()));
         // now the stubs are set up wait for proxy to be ready as proxy needs the
@@ -110,9 +102,7 @@ public class TestEndToEndStoreAndForwardToFile extends AbstractEndToEndTest {
                 .isEqualTo(8);
 
         // Assert the contents of the files.
-        mockFileDestination.assertFileContents(getConfig(), 12);
-
-        dbRecordCountAssertion.assertRecordCounts(new DbRecordCounts(0, 2, 0, 1, 0, 0, 0, 0));
+        assertThat(mockFileDestination.getForwardFileMetaCount()).isEqualTo(12);
 
         // Health check sends in a feed status check with DUMMY_FEED to see if stroom is available
         mockHttpDestination.assertFeedStatusCheck();

@@ -11,6 +11,7 @@ import io.dropwizard.lifecycle.Managed;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 public class ParallelExecutor implements Managed {
@@ -20,6 +21,7 @@ public class ParallelExecutor implements Managed {
     private final ExecutorService executorService;
     private final Supplier<Runnable> runnableSupplier;
     private final int threadCount;
+    private volatile boolean running;
 
     public ParallelExecutor(final String threadName,
                             final Supplier<Runnable> runnableSupplier,
@@ -34,16 +36,24 @@ public class ParallelExecutor implements Managed {
     }
 
     @Override
-    public void start() {
+    public synchronized void start() {
         // Start.
+        running = true;
         for (int i = 0; i < threadCount; i++) {
             executorService.execute(this::run);
         }
     }
 
+    @Override
+    public synchronized void stop() throws Exception {
+        running = false;
+        executorService.shutdown();
+        executorService.awaitTermination(1, TimeUnit.DAYS);
+    }
+
     private void run() {
         try {
-            while (!Thread.currentThread().isInterrupted()) {
+            while (running) {
                 final Runnable runnable = runnableSupplier.get();
                 runnable.run();
             }
@@ -52,10 +62,5 @@ public class ParallelExecutor implements Managed {
         } catch (final RuntimeException e) {
             LOGGER.error(e::getMessage, e);
         }
-    }
-
-    @Override
-    public void stop() {
-        executorService.shutdownNow();
     }
 }

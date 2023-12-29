@@ -6,10 +6,6 @@ import stroom.proxy.StroomStatusCode;
 import stroom.receive.common.StroomStreamException;
 import stroom.util.io.StreamUtil;
 
-import com.google.common.base.Strings;
-
-import javax.inject.Inject;
-
 public class StoringReceiverFactory implements ReceiverFactory {
 
     private final SimpleReceiver simpleReceiver;

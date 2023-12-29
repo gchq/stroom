@@ -8,7 +8,6 @@ import stroom.proxy.app.handler.ProxyId;
 import stroom.proxy.repo.CSVFormatter;
 import stroom.proxy.repo.LogStream;
 import stroom.receive.common.AttributeMapFilter;
-import stroom.receive.common.ReceiveDataConfig;
 import stroom.receive.common.RequestAuthenticator;
 import stroom.receive.common.StroomStreamException;
 import stroom.receive.common.StroomStreamStatus;
@@ -22,7 +21,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.UUID;
 import javax.inject.Inject;
-import javax.inject.Provider;
 import javax.servlet.http.HttpServletRequest;
 
 public class ReceiveDataHelper {
@@ -31,7 +29,6 @@ public class ReceiveDataHelper {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ReceiveDataHelper.class);
 
-    private final Provider<ReceiveDataConfig> receiveDataConfigProvider;
     private final RequestAuthenticator requestAuthenticator;
     private final AttributeMapFilter attributeMapFilter;
     private final CertificateExtractor certificateExtractor;
@@ -39,13 +36,11 @@ public class ReceiveDataHelper {
     private final LogStream logStream;
 
     @Inject
-    public ReceiveDataHelper(final Provider<ReceiveDataConfig> receiveDataConfigProvider,
-                             final RequestAuthenticator requestAuthenticator,
+    public ReceiveDataHelper(final RequestAuthenticator requestAuthenticator,
                              final AttributeMapFilterFactory attributeMapFilterFactory,
                              final CertificateExtractor certificateExtractor,
                              final ProxyId proxyId,
                              final LogStream logStream) {
-        this.receiveDataConfigProvider = receiveDataConfigProvider;
         this.requestAuthenticator = requestAuthenticator;
         this.attributeMapFilter = attributeMapFilterFactory.create();
         this.certificateExtractor = certificateExtractor;

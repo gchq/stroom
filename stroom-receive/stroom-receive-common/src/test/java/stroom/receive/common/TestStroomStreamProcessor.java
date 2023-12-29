@@ -1,4 +1,4 @@
-package stroom.proxy.repo;
+package stroom.receive.common;
 
 
 import stroom.data.zip.StroomZipFile;

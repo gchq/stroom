@@ -17,8 +17,6 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.dropwizard.configuration.ConfigurationSourceProvider;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -32,8 +30,6 @@ import java.util.function.Function;
 import javax.validation.constraints.NotNull;
 
 public class ProxyConfigurationSourceProvider implements ConfigurationSourceProvider {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(ProxyConfigurationSourceProvider.class);
 
     private static final String SOURCE_DEFAULTS = "defaults";
     private static final String SOURCE_YAML = "YAML";

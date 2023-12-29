@@ -2,6 +2,7 @@ package stroom.proxy.app.event;
 
 import stroom.meta.api.AttributeMap;
 import stroom.proxy.app.ProxyConfig;
+import stroom.proxy.app.handler.ReceiverFactory;
 import stroom.proxy.repo.RepoDirProvider;
 import stroom.proxy.repo.store.FileStores;
 
@@ -26,7 +27,7 @@ public class TestEventStore {
         Mockito.when(proxyConfig.getProxyId()).thenReturn("test-proxy");
         final EventStoreConfig eventStoreConfig = new EventStoreConfig();
 
-        final ReceiveStreamHandlers receiveStreamHandlers = Mockito.mock(ReceiveStreamHandlers.class);
+        final ReceiverFactory receiveStreamHandlers = Mockito.mock(ReceiverFactory.class);
         final RepoDirProvider repoDirProvider = () -> dir;
         final EventStore eventStore = new EventStore(
                 receiveStreamHandlers,

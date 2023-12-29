@@ -3,6 +3,7 @@ package stroom.proxy.app.handler;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
+import stroom.proxy.repo.ProxyServices;
 import stroom.util.concurrent.ThreadUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
@@ -30,7 +31,7 @@ public class ForwardHttpPostDestination {
                                       final StreamDestination destination,
                                       final CleanupDirQueue cleanupDirQueue,
                                       final StroomDuration retryDelay,
-                                      final ManagedRegistry managedRegistry,
+                                      final ProxyServices proxyServices,
                                       final DirQueueFactory sequentialDirQueueFactory,
                                       final int forwardThreads,
                                       final int retryThreads) {
@@ -46,11 +47,16 @@ public class ForwardHttpPostDestination {
                 "21_retry_" + destinationName,
                 21,
                 "retry - " + destinationName);
-        final ManagedQueue forwardingFuture = new ManagedQueue(forwardQueue::next, this::forwardDir, forwardThreads);
-        final ManagedQueue retryingFuture = new ManagedQueue(retryQueue::next, this::retryDir, retryThreads);
-
-        managedRegistry.register(forwardingFuture);
-        managedRegistry.register(retryingFuture);
+        final DirQueueTransfer forwarding = new DirQueueTransfer(forwardQueue::next, this::forwardDir);
+        final DirQueueTransfer retrying = new DirQueueTransfer(retryQueue::next, this::retryDir);
+        proxyServices.addParallelExecutor(
+                "forward - " + destinationName,
+                () -> forwarding,
+                forwardThreads);
+        proxyServices.addParallelExecutor(
+                "retry - " + destinationName,
+                () -> retrying,
+                retryThreads);
     }
 
     public void add(final Path sourceDir) {

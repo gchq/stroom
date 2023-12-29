@@ -2,17 +2,10 @@ package stroom.proxy.app;
 
 import stroom.proxy.app.event.EventStore;
 import stroom.proxy.app.event.EventStoreConfig;
-import stroom.proxy.app.handler.ForwardConfig;
-import stroom.proxy.app.handler.ThreadConfig;
-import stroom.proxy.repo.AggregatorConfig;
-import stroom.proxy.repo.ProxyRepoConfig;
 import stroom.proxy.repo.ProxyServices;
-import stroom.util.shared.Flushable;
 
 import io.dropwizard.lifecycle.Managed;
 
-import java.util.List;
-import java.util.Set;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
@@ -22,103 +15,10 @@ public class ProxyLifecycle implements Managed {
 
     @Inject
     public ProxyLifecycle(final ProxyConfig proxyConfig,
-                          final ProxyRepoConfig proxyRepoConfig,
-                          final AggregatorConfig aggregatorConfig,
                           final EventStoreConfig eventStoreConfig,
-                          final ThreadConfig threadConfig,
-                          final Provider<Set<Flushable>> flushableProvider,
                           final Provider<EventStore> eventStoreProvider,
                           final ProxyServices proxyServices) {
         this.proxyServices = proxyServices;
-
-        // Get forwarding destinations.
-        final List<ForwardConfig> forwardDestinations = proxyConfig.getForwardDestinations();
-
-        // If we aren't storing and forwarding then don't do anything.
-        if (proxyRepoConfig.isStoringEnabled() &&
-                forwardDestinations != null &&
-                !forwardDestinations.isEmpty()) {
-
-            // Start flushing the DB.
-            final Set<Flushable> flushables = flushableProvider.get();
-            proxyServices.addFrequencyExecutor("Flush DB records",
-                    () -> () -> flushables.forEach(Flushable::flush),
-                    dbFlushFrequencyMs);
-
-            if (aggregatorConfig.isEnabled()) {
-                // We are going to do aggregate forwarding so reset source forwarder.
-                cleanup.resetSourceForwarder();
-
-                final RepoSources repoSources = proxyRepoSourcesProvider.get();
-                final RepoSourceItems repoSourceItems = proxyRepoSourceEntriesProvider.get();
-                final Aggregator aggregator = aggregatorProvider.get();
-                final AggregateForwarder aggregateForwarder = aggregatorForwarderProvider.get();
-                final long aggregationFrequencyMs = aggregatorConfig.getAggregationFrequency().toMillis();
-
-                // Only examine source files if we are aggregating.
-
-                // Add executor to open source files and scan entries
-                proxyServices.addBatchExecutor("RepoSourceItems - examine",
-                        threadConfig.getExamineSourceThreadCount(),
-                        repoSources::getNewSources,
-                        repoSourceItems::examineSource);
-
-                // Just keep trying to aggregate based on a frequency and not changes to source entries.
-                proxyServices.addFrequencyExecutor("Aggregator - aggregate",
-                        () -> aggregator::aggregateAll,
-                        dbFlushFrequencyMs);
-
-                // Periodically close old aggregates.
-                proxyServices.addFrequencyExecutor("Aggregator - closeOldAggregates",
-                        () -> aggregator::closeOldAggregates,
-                        aggregationFrequencyMs);
-
-                // Create forward records.
-                proxyServices.addFrequencyExecutor("AggregateForwarder - createForwardRecord",
-                        () -> aggregateForwarder::createAllForwardAggregates,
-                        dbFlushFrequencyMs);
-
-                // Forward records.
-                proxyServices.addBatchExecutor("AggregateForwarder - forwardNext",
-                        threadConfig.getForwardThreadCount(),
-                        aggregateForwarder::getNewForwardAggregates,
-                        aggregateForwarder::forward);
-
-                // Retry forward records.
-                proxyServices.addBatchExecutor("AggregateForwarder - forwardRetry",
-                        threadConfig.getForwardRetryThreadCount(),
-                        aggregateForwarder::getRetryForwardAggregates,
-                        aggregateForwarder::forwardRetry);
-
-            } else {
-                // We are going to do source forwarding so reset aggregate forwarder.
-                cleanup.resetAggregateForwarder();
-
-                final SourceForwarder sourceForwarder = sourceForwarderProvider.get();
-
-                // Create forward records.
-                proxyServices.addFrequencyExecutor(
-                        "SourceForwarder - createForwardRecord",
-                        () -> sourceForwarder::createAllForwardSources,
-                        dbFlushFrequencyMs);
-
-                // Forward records.
-                proxyServices.addBatchExecutor("SourceForwarder - forwardNext",
-                        threadConfig.getForwardThreadCount(),
-                        sourceForwarder::getNewForwardSources,
-                        sourceForwarder::forward);
-
-                // Retry forward records.
-                proxyServices.addBatchExecutor("SourceForwarder - forwardRetry",
-                        threadConfig.getForwardRetryThreadCount(),
-                        sourceForwarder::getRetryForwardSources,
-                        sourceForwarder::forwardRetry);
-            }
-
-            proxyServices.addFrequencyExecutor("Cleanup - cleanupSources",
-                    () -> cleanup::cleanupSources,
-                    proxyDbConfig.getCleanupFrequency().toMillis());
-        }
 
         // Add executor to roll event store.
         final EventStore eventStore = eventStoreProvider.get();
@@ -147,7 +47,7 @@ public class ProxyLifecycle implements Managed {
     }
 
     @Override
-    public void stop() {
+    public void stop() throws Exception {
         proxyServices.stop();
     }
 }

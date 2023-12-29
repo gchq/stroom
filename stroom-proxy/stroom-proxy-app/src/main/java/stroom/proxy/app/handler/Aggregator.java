@@ -1,9 +1,7 @@
 package stroom.proxy.app.handler;
 
-import stroom.receive.common.ProgressHandler;
 import stroom.util.io.FileName;
 import stroom.util.io.FileUtil;
-import stroom.util.io.StreamUtil;
 import stroom.util.io.TempDirProvider;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -11,8 +9,6 @@ import stroom.util.logging.LambdaLoggerFactory;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -115,7 +111,7 @@ public class Aggregator {
 
                                     zipOutputStream.putNextEntry(
                                             new ZipEntry(outputBaseName + "." + fileName.getExtension()));
-                                    transfer(zipInputStream, zipOutputStream, buffer);
+                                    TransferUtil.transfer(zipInputStream, zipOutputStream, buffer);
 
                                     zipEntry = zipInputStream.getNextEntry();
                                 }
@@ -138,14 +134,6 @@ public class Aggregator {
             LOGGER.error(e::getMessage, e);
             throw new UncheckedIOException(e);
         }
-    }
-
-    private long transfer(final InputStream in, final OutputStream out, final byte[] buffer) {
-        return StreamUtil
-                .streamToStream(in,
-                        out,
-                        buffer,
-                        new ProgressHandler("Receiving data"));
     }
 
     public void setDestination(final Consumer<Path> destination) {

@@ -12,7 +12,6 @@ mainClassName = 'stroom.proxy.app.App'
 dependencies {
     implementation project(':stroom-core-shared')
     implementation project(':stroom-data:stroom-data-zip')
-    implementation project(':stroom-db-util')
     implementation project(':stroom-dictionary:stroom-dictionary-api')
     implementation project(':stroom-dictionary:stroom-dictionary-impl')
     implementation project(':stroom-docref')

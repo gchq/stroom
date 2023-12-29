@@ -8,10 +8,9 @@ import stroom.proxy.app.ProxyConfig;
 import stroom.proxy.app.handler.ZipEntryGroup.Entry;
 import stroom.proxy.repo.AggregatorConfig;
 import stroom.proxy.repo.FeedKey;
+import stroom.proxy.repo.ProxyServices;
 import stroom.proxy.repo.RepoDirProvider;
-import stroom.receive.common.ProgressHandler;
 import stroom.util.io.FileUtil;
-import stroom.util.io.StreamUtil;
 import stroom.util.io.TempDirProvider;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -20,18 +19,17 @@ import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
@@ -55,7 +53,7 @@ public class PreAggregator {
 
     private final Path aggregatingDir;
 
-    private final Map<FeedKey, AggregateState> aggregateStateMap = new HashMap<>();
+    private final Map<FeedKey, AggregateState> aggregateStateMap = new ConcurrentHashMap<>();
 
     private Consumer<Path> destination;
 
@@ -63,7 +61,8 @@ public class PreAggregator {
     public PreAggregator(final CleanupDirQueue deleteDirQueue,
                          final Provider<ProxyConfig> proxyConfigProvider,
                          final TempDirProvider tempDirProvider,
-                         final RepoDirProvider repoDirProvider) {
+                         final RepoDirProvider repoDirProvider,
+                         final ProxyServices proxyServices) {
         this.deleteDirQueue = deleteDirQueue;
         this.aggregatorConfig = proxyConfigProvider.get().getAggregatorConfig();
         this.repoDirProvider = repoDirProvider;
@@ -103,6 +102,13 @@ public class PreAggregator {
             LOGGER.error(e::getMessage, e);
             throw new UncheckedIOException(e);
         }
+
+        // Periodically close old aggregates.
+        proxyServices
+                .addFrequencyExecutor(
+                        "Close Old Aggregates",
+                        () -> this::closeOldAggregates,
+                        Duration.ofSeconds(10).toMillis());
     }
 
     private void initialiseAggregateStateMap() {
@@ -160,7 +166,7 @@ public class PreAggregator {
         }
     }
 
-    public void addDir(final Path dir) {
+    public synchronized void addDir(final Path dir) {
         try {
             final FileGroup fileGroup = new FileGroup(dir);
             final AttributeMap attributeMap = new AttributeMap();
@@ -289,7 +295,7 @@ public class PreAggregator {
         }
     }
 
-    private void closeAggregate(final Path partialAggregateDir) throws IOException {
+    private void closeAggregate(final Path partialAggregateDir) {
         destination.accept(partialAggregateDir);
     }
 
@@ -389,7 +395,7 @@ public class PreAggregator {
             final String outEntryName = baseNameOut + stroomZipFileType.getDotExtension();
             zipOutputStream.putNextEntry(new ZipEntry(outEntryName));
 
-            final long bytes = transfer(zipInputStream, zipOutputStream, buffer);
+            final long bytes = TransferUtil.transfer(zipInputStream, zipOutputStream, buffer);
 
             return new Entry(outEntryName, bytes);
         }
@@ -423,12 +429,16 @@ public class PreAggregator {
         }
     }
 
-    private long transfer(final InputStream in, final OutputStream out, final byte[] buffer) {
-        return StreamUtil
-                .streamToStream(in,
-                        out,
-                        buffer,
-                        new ProgressHandler("Receiving data"));
+    private synchronized void closeOldAggregates() {
+        aggregateStateMap.forEach((k, v) -> {
+            final Instant createTime = v.createTime;
+            final Instant aggregateAfter = createTime.plus(aggregatorConfig.getAggregationFrequency().getDuration());
+            if (aggregateAfter.isBefore(Instant.now())) {
+                // Close the current aggregate.
+                closeAggregate(v.aggregateDir);
+                aggregateStateMap.remove(k);
+            }
+        });
     }
 
     public void setDestination(final Consumer<Path> destination) {

@@ -124,7 +124,6 @@ class TestProxyYamlUtil {
         // This is not ideal as it means the generated yaml is not a true default, but hey ho?
         // This is also a bit of a hack adding items to lists. The lists ought to be immutable but
         // walking the whole tree to build it as you go is non-trivial.
-        proxyConfig.getFileScanners().add(new FileScannerConfig());
         proxyConfig.getForwardHttpDestinations().add(new ForwardHttpPostConfig());
         proxyConfig.getForwardFileDestinations().add(new ForwardFileConfig());
         proxyConfig.getSqsConnectors().add(new SqsConnectorConfig());

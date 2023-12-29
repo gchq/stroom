@@ -66,8 +66,6 @@ class TestProxyConfig {
         Files.createDirectories(testingHomeAndTempProvidersModule.getHomeDir());
         Files.createDirectories(testingHomeAndTempProvidersModule.getHomeDir()
                 .resolve(proxyConfig.getProxyRepositoryConfig().getRepoDir()));
-        Files.createDirectories(testingHomeAndTempProvidersModule.getHomeDir().resolve(
-                proxyConfig.getForwardRetry().getFailedForwardDir()));
 
         final Result<IsProxyConfig> result = proxyConfigValidator.validateRecursively(proxyConfig);
 

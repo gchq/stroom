@@ -1,7 +1,6 @@
 package stroom.proxy.app.guice;
 
 import stroom.collection.mock.MockCollectionModule;
-import stroom.db.util.DbModule;
 import stroom.dictionary.impl.DictionaryModule;
 import stroom.dictionary.impl.DictionaryStore;
 import stroom.docrefinfo.api.DocRefDecorator;
@@ -26,10 +25,10 @@ import stroom.proxy.app.ProxyConfigHealthCheck;
 import stroom.proxy.app.ProxyConfigHolder;
 import stroom.proxy.app.ProxyLifecycle;
 import stroom.proxy.app.event.EventResourceImpl;
-import stroom.proxy.app.forwarder.FailureDestinationsImpl;
-import stroom.proxy.app.forwarder.ForwarderDestinationsImpl;
 import stroom.proxy.app.handler.ProxyId;
 import stroom.proxy.app.handler.ProxyRequestHandler;
+import stroom.proxy.app.handler.ReceiverFactory;
+import stroom.proxy.app.handler.ReceiverFactoryProvider;
 import stroom.proxy.app.handler.RemoteFeedStatusService;
 import stroom.proxy.app.jersey.ProxyJerseyModule;
 import stroom.proxy.app.security.ProxySecurityModule;
@@ -74,15 +73,11 @@ import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import io.dropwizard.lifecycle.Managed;
 import io.dropwizard.setup.Environment;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.nio.file.Path;
 import javax.ws.rs.ext.ExceptionMapper;
 
 public class ProxyModule extends AbstractModule {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(ProxyModule.class);
 
     private final Config configuration;
     private final Environment environment;
@@ -107,9 +102,8 @@ public class ProxyModule extends AbstractModule {
         bind(ProxyId.class).asEagerSingleton();
 
         install(new ProxyConfigModule(proxyConfigHolder));
+        install(new ProxyCoreModule());
         install(new DropwizardModule());
-        install(new DbModule());
-        install(new ProxyDbModule());
         install(new DropwizardModule());
         install(new MockCollectionModule());
 
@@ -125,7 +119,6 @@ public class ProxyModule extends AbstractModule {
 //        bind(BufferFactory.class).to(BufferFactoryImpl.class);
         bind(DataReceiptPolicyAttributeMapFilterFactory.class).to(DataReceiptPolicyAttributeMapFilterFactoryImpl.class);
         bind(DocumentResourceHelper.class).to(DocumentResourceHelperImpl.class);
-        bind(ErrorReceiver.class).to(ErrorReceiverImpl.class);
         bind(FeedStatusService.class).to(RemoteFeedStatusService.class);
 //        bind(RequestAuthenticator.class).to(RequestAuthenticatorImpl.class).asEagerSingleton();
         bind(ReceiveDataRuleSetService.class).to(ReceiveDataRuleSetServiceImpl.class);
@@ -134,13 +127,9 @@ public class ProxyModule extends AbstractModule {
         bind(Serialiser2Factory.class).to(Serialiser2FactoryImpl.class);
         bind(StoreFactory.class).to(StoreFactoryImpl.class);
         bind(DocRefDecorator.class).to(NoDecorationDocRefDecorator.class);
-        bind(ForwarderDestinations.class).to(ForwarderDestinationsImpl.class);
-        bind(FailureDestinations.class).to(FailureDestinationsImpl.class);
-        bind(Sender.class).to(SenderImpl.class);
         bind(ProgressLog.class).to(ProgressLogImpl.class);
 
         bind(RepoDirProvider.class).to(RepoDirProviderImpl.class);
-        bind(RepoDbDirProvider.class).to(RepoDbDirProviderImpl.class);
 
         // Proxy doesn't do import so bind a dummy ImportConverter for the StoreImpl(s) to use
         bind(ImportConverter.class).to(NoOpImportConverter.class);
@@ -201,4 +190,10 @@ public class ProxyModule extends AbstractModule {
         };
     }
 
+    @SuppressWarnings("unused")
+    @Provides
+    @Singleton
+    ReceiverFactory provideReceiverFactory(final ReceiverFactoryProvider receiverFactoryProvider) {
+        return receiverFactoryProvider.get();
+    }
 }
