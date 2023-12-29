@@ -21,6 +21,7 @@ import stroom.pipeline.refdata.ReferenceData;
 import stroom.pipeline.refdata.ReferenceDataResult;
 import stroom.pipeline.refdata.store.RefDataValueProxy;
 import stroom.pipeline.state.MetaHolder;
+import stroom.task.api.TaskContextFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -42,8 +43,9 @@ class Lookup extends AbstractLookup {
     @Inject
     Lookup(final ReferenceData referenceData,
            final MetaHolder metaHolder,
-           final SequenceMakerFactory sequenceMakerFactory) {
-        super(referenceData, metaHolder, sequenceMakerFactory);
+           final SequenceMakerFactory sequenceMakerFactory,
+           final TaskContextFactory taskContextFactory) {
+        super(referenceData, metaHolder, sequenceMakerFactory, taskContextFactory);
     }
 
     @Override

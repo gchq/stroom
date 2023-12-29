@@ -69,15 +69,17 @@ public class LmdbEnv implements AutoCloseable {
     private final Semaphore activeReadTransactionsSemaphore;
 
     /**
-     * @param localDir The directory where the LMDB env will be persisted or read from if it already exists.
-     * @param name A name for the environment.
-     * @param env The actual LMDB env.
-     * @param envFlags The flags used when the LMDB env was created. Mostly for debug purposes.
+     * @param localDir                The directory where the LMDB env will be persisted or read from if it
+     *                                already exists.
+     * @param name                    A name for the environment.
+     * @param env                     The actual LMDB env.
+     * @param envFlags                The flags used when the LMDB env was created. Mostly for debug purposes.
      * @param isReaderBlockedByWriter Set to true if you want writes to block reads. If false reads can happen
      *                                concurrently with writes. Writes always block other writes.
-     * @param isDedicatedDir True if localDir is dedicated to this LMDB env and contains no other files.
-     *                       When {@link LmdbEnv#delete()} is called, if isDedicatedDir is true, localDir will be
-     *                       deleted, else it will just delete the LMDB .mdb files and leave localDir present.
+     * @param isDedicatedDir          True if localDir is dedicated to this LMDB env and contains no other files.
+     *                                When {@link LmdbEnv#delete()} is called, if isDedicatedDir is true,
+     *                                localDir will be deleted, else it will just delete the LMDB .mdb files and
+     *                                leave localDir present.
      */
     LmdbEnv(final Path localDir,
             final String name,
@@ -210,7 +212,7 @@ public class LmdbEnv implements AutoCloseable {
         try {
             writeTxnLock.lockInterruptibly();
         } catch (final InterruptedException e) {
-            throw UncheckedInterruptedException.create(() -> "Thread interrupted while waiting for write lock on "
+            throw UncheckedInterruptedException.create("Thread interrupted while waiting for write lock on "
                     + localDir.toAbsolutePath().normalize(), e);
         }
 
@@ -256,7 +258,7 @@ public class LmdbEnv implements AutoCloseable {
             LOGGER.trace("Opening new write txn");
             return new WriteTxn(writeTxnLock, env.txnWrite());
         } catch (final InterruptedException e) {
-            throw UncheckedInterruptedException.create(() -> "Thread interrupted while waiting for write lock on "
+            throw UncheckedInterruptedException.create("Thread interrupted while waiting for write lock on "
                     + localDir.toAbsolutePath().normalize(), e);
         }
     }
@@ -283,7 +285,7 @@ public class LmdbEnv implements AutoCloseable {
 
             return new BatchingWriteTxn(writeTxnLock, env::txnWrite, batchSize);
         } catch (final InterruptedException e) {
-            throw UncheckedInterruptedException.create(() -> "Thread interrupted while waiting for write lock on "
+            throw UncheckedInterruptedException.create("Thread interrupted while waiting for write lock on "
                     + localDir.toAbsolutePath().normalize(), e);
         }
     }
@@ -340,7 +342,7 @@ public class LmdbEnv implements AutoCloseable {
             }
 
         } catch (final InterruptedException e) {
-            throw UncheckedInterruptedException.create(() -> "Thread interrupted while waiting for read permit on "
+            throw UncheckedInterruptedException.create("Thread interrupted while waiting for read permit on "
                     + localDir.toAbsolutePath().normalize(), e);
         }
 
@@ -369,7 +371,7 @@ public class LmdbEnv implements AutoCloseable {
             }
 
         } catch (final InterruptedException e) {
-            throw UncheckedInterruptedException.create(() -> "Thread interrupted while waiting for read lock on "
+            throw UncheckedInterruptedException.create("Thread interrupted while waiting for read lock on "
                     + localDir.toAbsolutePath().normalize(), e);
         }
 

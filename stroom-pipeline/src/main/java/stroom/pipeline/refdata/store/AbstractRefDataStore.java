@@ -17,6 +17,8 @@
 
 package stroom.pipeline.refdata.store;
 
+import stroom.task.api.TaskTerminatedException;
+import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -104,11 +106,17 @@ public abstract class AbstractRefDataStore implements RefDataStore {
 
                 result = true;
             }
+        } catch (TaskTerminatedException e) {
+            LAMBDA_LOGGER.debug(() -> "Task terminated: " + e.getMessage());
+            throw e;
+        } catch (UncheckedInterruptedException e) {
+            LAMBDA_LOGGER.debug(() -> "Interrupted: " + e.getMessage());
+            throw new TaskTerminatedException();
         } catch (Exception e) {
             String msg = e.getMessage();
             // May get suppressed exceptions from the try-with-resources
             if (e.getSuppressed() != null && e.getSuppressed().length > 0) {
-                msg += Arrays.stream(e.getSuppressed())
+                msg += " " + Arrays.stream(e.getSuppressed())
                         .map(Throwable::getMessage)
                         .collect(Collectors.joining(" "));
             }
