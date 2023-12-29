@@ -3,9 +3,6 @@ package stroom.proxy.app.handler;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
-import stroom.proxy.app.forwarder.ForwardFileConfig;
-import stroom.proxy.app.forwarder.ForwardFileDestination;
-import stroom.proxy.app.forwarder.ForwardFileDestinationFactory;
 import stroom.proxy.repo.LogStream;
 import stroom.receive.common.AttributeMapFilter;
 import stroom.receive.common.ProgressHandler;
@@ -30,9 +27,9 @@ import java.time.Duration;
 import java.time.Instant;
 import javax.inject.Inject;
 
-public class DirectForwardFile {
+public class InstantForwardFile {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DirectForwardFile.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(InstantForwardFile.class);
     private static final Logger RECEIVE_LOG = LoggerFactory.getLogger("receive");
 
     private final AttributeMapFilterFactory attributeMapFilterFactory;
@@ -42,11 +39,11 @@ public class DirectForwardFile {
     private final LogStream logStream;
 
     @Inject
-    public DirectForwardFile(final AttributeMapFilterFactory attributeMapFilterFactory,
-                             final TempDirProvider tempDirProvider,
-                             final DropReceiver dropReceiver,
-                             final ForwardFileDestinationFactory forwardFileDestinationFactory,
-                             final LogStream logStream) {
+    public InstantForwardFile(final AttributeMapFilterFactory attributeMapFilterFactory,
+                              final TempDirProvider tempDirProvider,
+                              final DropReceiver dropReceiver,
+                              final ForwardFileDestinationFactory forwardFileDestinationFactory,
+                              final LogStream logStream) {
         this.attributeMapFilterFactory = attributeMapFilterFactory;
         this.dropReceiver = dropReceiver;
         this.forwardFileDestinationFactory = forwardFileDestinationFactory;
@@ -54,8 +51,8 @@ public class DirectForwardFile {
 
         // Create a direct forwarding file receiver.
         // Make receiving zip dir.
-        final Path receivingDir = tempDirProvider.get().resolve("01_receiving");
-        ensureDirExists(receivingDir);
+        final Path receivingDir = tempDirProvider.get().resolve("proxy_receiving_temp");
+        DirUtil.ensureDirExists(receivingDir);
 
         // This is a temporary location and can be cleaned completely on startup.
         if (!FileUtil.deleteContents(receivingDir)) {
@@ -65,16 +62,7 @@ public class DirectForwardFile {
         receivingDirProvider = new NumberedDirProvider(receivingDir);
     }
 
-    private void ensureDirExists(final Path dir) {
-        try {
-            Files.createDirectories(dir);
-        } catch (final IOException e) {
-            LOGGER.error(() -> "Failed to create " + FileUtil.getCanonicalPath(dir), e);
-            throw new UncheckedIOException(e);
-        }
-    }
-
-    public ReceiverFactory get(ForwardFileConfig forwardFileConfig) {
+    public ReceiverFactory get(final ForwardFileConfig forwardFileConfig) {
         final DirectForwardFileReceiver directForwardFileReceiver = new DirectForwardFileReceiver(
                 receivingDirProvider,
                 forwardFileDestinationFactory.create(forwardFileConfig),

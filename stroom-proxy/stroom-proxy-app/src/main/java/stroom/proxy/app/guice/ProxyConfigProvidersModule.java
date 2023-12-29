@@ -1,5 +1,9 @@
 package stroom.proxy.app.guice;
 
+import stroom.proxy.app.handler.ForwardFileConfig;
+import stroom.proxy.app.handler.ForwardHttpPostConfig;
+import stroom.proxy.app.handler.ThreadConfig;
+
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 
@@ -101,10 +105,10 @@ public class ProxyConfigProvidersModule extends AbstractModule {
     @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
-    stroom.proxy.app.forwarder.ThreadConfig getThreadConfig(
+    ThreadConfig getThreadConfig(
             final ProxyConfigProvider proxyConfigProvider) {
         return proxyConfigProvider.getConfigObject(
-                stroom.proxy.app.forwarder.ThreadConfig.class);
+                ThreadConfig.class);
     }
 
     @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
@@ -175,20 +179,20 @@ public class ProxyConfigProvidersModule extends AbstractModule {
     @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
-    stroom.proxy.app.forwarder.ForwardFileConfig getForwardFileConfigButThrow(
+    ForwardFileConfig getForwardFileConfigButThrow(
             final ProxyConfigProvider proxyConfigProvider) {
         throw new UnsupportedOperationException(
-                "stroom.proxy.app.forwarder.ForwardFileConfig cannot be injected directly. "
+                "stroom.proxy.app.handler.ForwardFileConfig cannot be injected directly. "
                         + "Inject a config class that uses it or one of its sub-class instead.");
     }
 
     @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
-    stroom.proxy.app.forwarder.ForwardHttpPostConfig getForwardHttpPostConfigButThrow(
+    ForwardHttpPostConfig getForwardHttpPostConfigButThrow(
             final ProxyConfigProvider proxyConfigProvider) {
         throw new UnsupportedOperationException(
-                "stroom.proxy.app.forwarder.ForwardHttpPostConfig cannot be injected directly. "
+                "stroom.proxy.app.handler.ForwardHttpPostConfig cannot be injected directly. "
                         + "Inject a config class that uses it or one of its sub-class instead.");
     }
 

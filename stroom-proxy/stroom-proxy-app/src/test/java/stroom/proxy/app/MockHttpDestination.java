@@ -2,7 +2,7 @@ package stroom.proxy.app;
 
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.StandardHeaderArguments;
-import stroom.proxy.app.forwarder.ForwardHttpPostConfig;
+import stroom.proxy.app.handler.ForwardHttpPostConfig;
 import stroom.proxy.app.handler.FeedStatusConfig;
 import stroom.proxy.feed.remote.FeedStatus;
 import stroom.proxy.feed.remote.GetFeedStatusRequest;

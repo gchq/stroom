@@ -44,7 +44,7 @@ public class Aggregator {
 
         // Make aggregating dir.
         final Path aggregatingDir = tempDirProvider.get().resolve("10_aggregating");
-        ensureDirExists(aggregatingDir);
+        DirUtil.ensureDirExists(aggregatingDir);
 
         // This is a temporary location and can be cleaned completely on startup.
         if (!FileUtil.deleteContents(aggregatingDir)) {
@@ -52,15 +52,6 @@ public class Aggregator {
         }
 
         tempAggregatingDirProvider = new NumberedDirProvider(aggregatingDir);
-    }
-
-    private void ensureDirExists(final Path dir) {
-        try {
-            Files.createDirectories(dir);
-        } catch (final IOException e) {
-            LOGGER.error(() -> "Failed to create " + FileUtil.getCanonicalPath(dir), e);
-            throw new UncheckedIOException(e);
-        }
     }
 
     public void addDir(final Path dir) {

@@ -1,10 +1,10 @@
 package stroom.proxy.app;
 
 import stroom.proxy.app.event.EventStoreConfig;
-import stroom.proxy.app.forwarder.ForwardConfig;
-import stroom.proxy.app.forwarder.ForwardFileConfig;
-import stroom.proxy.app.forwarder.ForwardHttpPostConfig;
-import stroom.proxy.app.forwarder.ThreadConfig;
+import stroom.proxy.app.handler.ForwardConfig;
+import stroom.proxy.app.handler.ForwardFileConfig;
+import stroom.proxy.app.handler.ForwardHttpPostConfig;
+import stroom.proxy.app.handler.ThreadConfig;
 import stroom.proxy.app.handler.FeedStatusConfig;
 import stroom.proxy.repo.AggregatorConfig;
 import stroom.proxy.repo.LogStreamConfig;

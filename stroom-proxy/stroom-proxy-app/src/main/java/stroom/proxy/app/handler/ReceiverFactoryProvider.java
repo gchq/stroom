@@ -1,9 +1,6 @@
 package stroom.proxy.app.handler;
 
 import stroom.proxy.app.ProxyConfig;
-import stroom.proxy.app.forwarder.ForwardConfig;
-import stroom.proxy.app.forwarder.ForwardFileConfig;
-import stroom.proxy.app.forwarder.ForwardHttpPostConfig;
 import stroom.util.NullSafe;
 
 import java.util.Optional;
@@ -17,14 +14,15 @@ public class ReceiverFactoryProvider implements Provider<ReceiverFactory> {
 
     @Inject
     public ReceiverFactoryProvider(final ProxyConfig proxyConfig,
-                                   final Provider<DirectForwardHttpPost> directForwardHttpPostProvider,
-                                   final Provider<DirectForwardFile> directForwardFileProvider,
-                                   final Provider<StoringReceiverFactory> storingReceiverFactoryProvider,
+                                   final Provider<InstantForwardHttpPost> directForwardHttpPostProvider,
+                                   final Provider<InstantForwardFile> directForwardFileProvider,
                                    final Provider<Forwarder> forwarderProvider,
                                    final ManagedRegistry managedRegistry,
-                                   final SequentialDirQueueFactory sequentialDirQueueFactory,
+                                   final DirQueueFactory sequentialDirQueueFactory,
                                    final Provider<Aggregator> aggregatorProvider,
-                                   final Provider<PreAggregator> preAggregatorProvider) {
+                                   final Provider<PreAggregator> preAggregatorProvider,
+                                   final Provider<ZipReceiver> zipReceiverProvider,
+                                   final Provider<SimpleReceiver> simpleReceiverProvider) {
         final long count = Stream
                 .concat(NullSafe.list(proxyConfig.getForwardHttpDestinations()).stream(),
                         NullSafe.list(proxyConfig.getForwardFileDestinations()).stream())
@@ -70,7 +68,7 @@ public class ReceiverFactoryProvider implements Provider<ReceiverFactory> {
             // Create forwarder.
             final Forwarder forwarder = forwarderProvider.get();
             // Create the forwarding queue.
-            final SequentialDirQueue forwardQueue = sequentialDirQueueFactory.create(
+            final DirQueue forwardQueue = sequentialDirQueueFactory.create(
                     "20_forwarding",
                     20,
                     "Forwarding");
@@ -79,14 +77,14 @@ public class ReceiverFactoryProvider implements Provider<ReceiverFactory> {
                     new ManagedQueue(forwardQueue::next, forwarder::add, 1);
             managedRegistry.register(forwardingQueueProcess);
 
-            if (proxyConfig.getAggregatorConfig().isEnabled()) {
+            if (proxyConfig.getAggregatorConfig() != null && proxyConfig.getAggregatorConfig().isEnabled()) {
                 // If we are aggregating then create the aggregating moving parts.
 
                 // Create the aggregator.
                 final Aggregator aggregator = aggregatorProvider.get();
                 aggregator.setDestination(forwardQueue::add);
 
-                final SequentialDirQueue preAggregateQueue = sequentialDirQueueFactory.create(
+                final DirQueue preAggregateQueue = sequentialDirQueueFactory.create(
                         "10_pre_aggregate",
                         10,
                         "Pre Aggregate");
@@ -99,7 +97,7 @@ public class ReceiverFactoryProvider implements Provider<ReceiverFactory> {
                 final PreAggregator preAggregator = preAggregatorProvider.get();
                 preAggregator.setDestination(preAggregateQueue::add);
 
-                final SequentialDirQueue fileStoreQueue = sequentialDirQueueFactory.create(
+                final DirQueue fileStoreQueue = sequentialDirQueueFactory.create(
                         "03_store",
                         3,
                         "File store");
@@ -108,13 +106,25 @@ public class ReceiverFactoryProvider implements Provider<ReceiverFactory> {
                         new ManagedQueue(fileStoreQueue::next, preAggregator::addDir, 1);
                 managedRegistry.register(fileStoreQueueProcess);
 
-                // TODO : add items to the file store queue.
+                // Create the receivers that will add data to the file store queue on receipt.
+                final SimpleReceiver simpleReceiver = simpleReceiverProvider.get();
+                simpleReceiver.setDestination(fileStoreQueue::add);
+                final ZipReceiver zipReceiver = zipReceiverProvider.get();
+                zipReceiver.setDestination(fileStoreQueue::add);
 
-                dd
+                receiverFactory = new StoringReceiverFactory(simpleReceiver, zipReceiver);
+
+            } else {
+                // If we aren't aggregating then we just need to queue items for forwarding.
+
+                // Create the receivers that will add data to the forward queue on receipt.
+                final SimpleReceiver simpleReceiver = simpleReceiverProvider.get();
+                simpleReceiver.setDestination(forwardQueue::add);
+                final ZipReceiver zipReceiver = zipReceiverProvider.get();
+                zipReceiver.setDestination(forwardQueue::add);
+
+                receiverFactory = new StoringReceiverFactory(simpleReceiver, zipReceiver);
             }
-
-
-            receiverFactory = storingReceiverFactoryProvider.get();
         }
     }
 

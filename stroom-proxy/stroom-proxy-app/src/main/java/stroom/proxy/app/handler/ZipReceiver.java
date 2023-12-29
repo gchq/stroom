@@ -27,7 +27,6 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.UncheckedIOException;
 import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -39,13 +38,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.stream.Stream;
+import java.util.function.Consumer;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 import javax.inject.Inject;
-import javax.inject.Provider;
 import javax.inject.Singleton;
 
 /**
@@ -92,21 +90,19 @@ public class ZipReceiver implements Receiver {
     private final NumberedDirProvider receivingDirProvider;
     private final NumberedDirProvider receivedDirProvider;
     private final LogStream logStream;
-    private final Provider<DirDest> destinationProvider;
+    private Consumer<Path> destination;
 
     @Inject
     public ZipReceiver(final AttributeMapFilter attributeMapFilter,
                        final TempDirProvider tempDirProvider,
                        final RepoDirProvider repoDirProvider,
-                       final LogStream logStream,
-                       final Provider<DirDest> destinationProvider) {
+                       final LogStream logStream) {
         this.attributeMapFilter = attributeMapFilter;
         this.logStream = logStream;
-        this.destinationProvider = destinationProvider;
 
         // Make receiving zip dir.
         final Path receivingDir = tempDirProvider.get().resolve("01_receiving_zip");
-        ensureDirExists(receivingDir);
+        DirUtil.ensureDirExists(receivingDir);
 
         // This is a temporary location and can be cleaned completely on startup.
         if (!FileUtil.deleteContents(receivingDir)) {
@@ -116,40 +112,37 @@ public class ZipReceiver implements Receiver {
 
         // Get or create the received dir.
         final Path receivedDir = repoDirProvider.get().resolve("02_received_zip");
-        ensureDirExists(receivedDir);
+        DirUtil.ensureDirExists(receivedDir);
 
-        // Move any received data from previous proxy usage to the store.
-        transferOldReceivedData(receivedDir);
+        // This is another temporary location and can be cleaned completely on startup.
+        if (!FileUtil.deleteContents(receivedDir)) {
+            LOGGER.error(() -> "Failed to delete contents of " + FileUtil.getCanonicalPath(receivedDir));
+        }
         receivedDirProvider = new NumberedDirProvider(receivedDir);
+
+//        // Move any received data from previous proxy usage to the store.
+//        transferOldReceivedData(receivedDir);
+
     }
 
-    private void ensureDirExists(final Path dir) {
-        try {
-            Files.createDirectories(dir);
-        } catch (final IOException e) {
-            LOGGER.error(() -> "Failed to create " + FileUtil.getCanonicalPath(dir), e);
-            throw new UncheckedIOException(e);
-        }
-    }
-
-    private void transferOldReceivedData(final Path receivedDir) {
-        try {
-            try (final Stream<Path> stream = Files.list(receivedDir)) {
-                stream.forEach(path -> {
-                    try {
-                        // We will assume each dir is good to transfer.
-                        destinationProvider.get().add(path);
-                    } catch (final IOException e) {
-                        LOGGER.error(() -> "Failed to move data to store " + FileUtil.getCanonicalPath(path), e);
-                        throw new UncheckedIOException(e);
-                    }
-                });
-            }
-        } catch (final IOException e) {
-            LOGGER.error(() -> "Failed to move data to store " + FileUtil.getCanonicalPath(receivedDir), e);
-            throw new UncheckedIOException(e);
-        }
-    }
+//    private void transferOldReceivedData(final Path receivedDir, final Consumer<Path> destination) {
+//        try {
+//            try (final Stream<Path> stream = Files.list(receivedDir)) {
+//                stream.forEach(path -> {
+//                    try {
+//                        // We will assume each dir is good to transfer.
+//                        destination.accept(path);
+//                    } catch (final IOException e) {
+//                        LOGGER.error(() -> "Failed to move data to store " + FileUtil.getCanonicalPath(path), e);
+//                        throw new UncheckedIOException(e);
+//                    }
+//                });
+//            }
+//        } catch (final IOException e) {
+//            LOGGER.error(() -> "Failed to move data to store " + FileUtil.getCanonicalPath(receivedDir), e);
+//            throw new UncheckedIOException(e);
+//        }
+//    }
 
     @Override
     public void receive(final Instant startTime,
@@ -332,13 +325,13 @@ public class ZipReceiver implements Receiver {
             //  written rather than trying to form a canonical zip.
 
             // Now make new zip files for each of the feeds we want to include.
-            final Path correctedData = receivingDirProvider.get();
+            final Path splitZipDir = receivingDirProvider.get();
             final List<Path> groupDirs = new ArrayList<>();
             long id = 1;
             try (final ZipFile zipFile = new ZipFile(zipFilePath.toFile())) {
                 for (final FeedKey feedKey : includeList) {
                     final String name = NumericFileNameUtil.create(id++);
-                    final Path groupDir = correctedData.resolve(name);
+                    final Path groupDir = splitZipDir.resolve(name);
                     final FileGroup fileGroup = new FileGroup(groupDir);
                     groupDirs.add(groupDir);
 
@@ -350,15 +343,16 @@ public class ZipReceiver implements Receiver {
             // Now atomically move the receiving data to the received data location as we have definitely received
             // successfully at this point.
             final Path receivedDir = receivedDirProvider.get();
-            Files.move(correctedData, receivedDir, StandardCopyOption.ATOMIC_MOVE);
+            Files.move(splitZipDir, receivedDir, StandardCopyOption.ATOMIC_MOVE);
 
             // Finally move each group dir to the file store or forward if there is a single destination.
             for (final Path groupDir : groupDirs) {
-                destinationProvider.get().add(groupDir);
+                destination.accept(receivedDir.resolve(groupDir.getFileName()));
             }
 
             // We ought to be able to delete the receivedDir now as it ought to be empty.
             Files.delete(receivedDir);
+            Files.delete(splitZipDir);
 
         } catch (final IOException e) {
             throw StroomStreamException.create(e, attributeMap);
@@ -452,5 +446,9 @@ public class ZipReceiver implements Receiver {
                         out,
                         buffer,
                         new ProgressHandler("Receiving data"));
+    }
+
+    public void setDestination(final Consumer<Path> destination) {
+        this.destination = destination;
     }
 }

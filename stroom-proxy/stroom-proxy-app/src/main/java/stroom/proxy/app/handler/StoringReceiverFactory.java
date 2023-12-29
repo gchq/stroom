@@ -15,7 +15,6 @@ public class StoringReceiverFactory implements ReceiverFactory {
     private final SimpleReceiver simpleReceiver;
     private final ZipReceiver zipReceiver;
 
-    @Inject
     public StoringReceiverFactory(final SimpleReceiver simpleReceiver,
                                   final ZipReceiver zipReceiver) {
         this.simpleReceiver = simpleReceiver;

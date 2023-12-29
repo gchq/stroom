@@ -3,7 +3,6 @@ package stroom.proxy.app.event;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.app.ProxyConfig;
-import stroom.proxy.app.handler.ReceiveStreamHandlers;
 import stroom.proxy.repo.RepoDirProvider;
 import stroom.proxy.repo.store.FileStores;
 import stroom.receive.common.ProgressHandler;

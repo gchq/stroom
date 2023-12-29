@@ -2,7 +2,6 @@ package stroom.proxy.app.handler;
 
 import stroom.meta.api.AttributeMap;
 import stroom.proxy.app.ProxyConfig;
-import stroom.proxy.app.forwarder.ForwardHttpPostConfig;
 import stroom.proxy.app.forwarder.ForwarderDestinationsImpl;
 import stroom.proxy.repo.LogStream;
 import stroom.proxy.repo.LogStreamConfig;

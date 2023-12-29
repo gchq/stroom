@@ -4,7 +4,6 @@ import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.StroomStatusCode;
-import stroom.proxy.app.forwarder.ForwardHttpPostConfig;
 import stroom.proxy.repo.LogStream;
 import stroom.receive.common.ProgressHandler;
 import stroom.receive.common.StroomStreamException;

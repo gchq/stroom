@@ -1,9 +1,6 @@
 package stroom.proxy.app.handler;
 
 import stroom.proxy.app.ProxyConfig;
-import stroom.proxy.app.forwarder.ForwardConfig;
-import stroom.proxy.app.forwarder.ForwardFileDestination;
-import stroom.proxy.app.forwarder.ForwardFileDestinationFactory;
 import stroom.proxy.repo.RepoDirProvider;
 import stroom.util.NullSafe;
 import stroom.util.io.FileUtil;
@@ -12,20 +9,20 @@ import stroom.util.logging.LambdaLoggerFactory;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
-public class Forwarder implements DirDest {
+public class Forwarder {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(Forwarder.class);
 
-    private final List<DirDest> destinations = new ArrayList<>();
+    private final List<Consumer<Path>> destinations = new ArrayList<>();
     private final NumberedDirProvider copiesDirProvider;
 
     @Inject
@@ -35,7 +32,7 @@ public class Forwarder implements DirDest {
                      final HttpSenderFactory httpSenderFactory,
                      final ForwardFileDestinationFactory forwardFileDestinationFactory,
                      final ManagedRegistry managedRegistry,
-                     final SequentialDirQueueFactory sequentialDirQueueFactory) {
+                     final DirQueueFactory sequentialDirQueueFactory) {
 
         final long count = Stream
                 .concat(NullSafe.list(proxyConfig.getForwardHttpDestinations()).stream(),
@@ -60,7 +57,7 @@ public class Forwarder implements DirDest {
                         sequentialDirQueueFactory,
                         proxyConfig.getThreadConfig().getForwardThreadCount(),
                         proxyConfig.getThreadConfig().getForwardRetryThreadCount());
-                this.destinations.add(forwardDestination);
+                this.destinations.add(forwardDestination::add);
             }
         });
 
@@ -69,13 +66,13 @@ public class Forwarder implements DirDest {
             if (forwardFileConfig.isEnabled()) {
                 final ForwardFileDestination forwardFileDestination = forwardFileDestinationFactory
                         .create(forwardFileConfig);
-                this.destinations.add(forwardFileDestination);
+                this.destinations.add(forwardFileDestination::add);
             }
         });
 
         // Make receiving zip dir.
         final Path copiesDir = repoDirProvider.get().resolve("temp_forward_copies");
-        ensureDirExists(copiesDir);
+        DirUtil.ensureDirExists(copiesDir);
 
         // This is a temporary location and can be cleaned completely on startup.
         if (!FileUtil.deleteContents(copiesDir)) {
@@ -84,7 +81,6 @@ public class Forwarder implements DirDest {
         copiesDirProvider = new NumberedDirProvider(copiesDir);
     }
 
-    @Override
     public void add(final Path dir) {
         try {
             final List<Path> paths = new ArrayList<>();
@@ -101,22 +97,13 @@ public class Forwarder implements DirDest {
 
             // Add all items to outgoing queues.
             for (int i = 0; i < destinations.size(); i++) {
-                final DirDest destination = destinations.get(i);
+                final Consumer<Path> destination = destinations.get(i);
                 final Path path = paths.get(i);
-                destination.add(path);
+                destination.accept(path);
             }
 
         } catch (final IOException e) {
             LOGGER.error(e::getMessage, e);
-            throw new UncheckedIOException(e);
-        }
-    }
-
-    private void ensureDirExists(final Path dir) {
-        try {
-            Files.createDirectories(dir);
-        } catch (final IOException e) {
-            LOGGER.error(() -> "Failed to create " + FileUtil.getCanonicalPath(dir), e);
             throw new UncheckedIOException(e);
         }
     }

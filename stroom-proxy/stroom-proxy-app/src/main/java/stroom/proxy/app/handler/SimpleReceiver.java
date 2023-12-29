@@ -25,18 +25,17 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.UncheckedIOException;
 import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Collections;
+import java.util.function.Consumer;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import javax.inject.Inject;
-import javax.inject.Provider;
 import javax.inject.Singleton;
 
 @Singleton
@@ -50,38 +49,27 @@ public class SimpleReceiver implements Receiver {
     private final AttributeMapFilter attributeMapFilter;
     private final NumberedDirProvider receivingDirProvider;
     private final LogStream logStream;
-    private final Provider<DirDest> destinationProvider;
     private final DropReceiver dropReceiver;
+    private Consumer<Path> destination;
 
     @Inject
     public SimpleReceiver(final AttributeMapFilter attributeMapFilter,
                           final TempDirProvider tempDirProvider,
                           final LogStream logStream,
-                          final Provider<DirDest> destinationProvider,
                           final DropReceiver dropReceiver) {
         this.attributeMapFilter = attributeMapFilter;
         this.logStream = logStream;
-        this.destinationProvider = destinationProvider;
         this.dropReceiver = dropReceiver;
 
         // Make receiving zip dir.
         final Path receivingDir = tempDirProvider.get().resolve("01_receiving_simple");
-        ensureDirExists(receivingDir);
+        DirUtil.ensureDirExists(receivingDir);
 
         // This is a temporary location and can be cleaned completely on startup.
         if (!FileUtil.deleteContents(receivingDir)) {
             LOGGER.error(() -> "Failed to delete contents of " + FileUtil.getCanonicalPath(receivingDir));
         }
         receivingDirProvider = new NumberedDirProvider(receivingDir);
-    }
-
-    private void ensureDirExists(final Path dir) {
-        try {
-            Files.createDirectories(dir);
-        } catch (final IOException e) {
-            LOGGER.error(() -> "Failed to create " + FileUtil.getCanonicalPath(dir), e);
-            throw new UncheckedIOException(e);
-        }
     }
 
     @Override
@@ -153,7 +141,7 @@ public class SimpleReceiver implements Receiver {
                     }
 
                     // Now move the temp files to the file store or forward if there is a single destination.
-                    destinationProvider.get().add(receivingDir);
+                    destination.accept(receivingDir);
                 }
 
                 final Duration duration = Duration.between(startTime, Instant.now());
@@ -182,5 +170,9 @@ public class SimpleReceiver implements Receiver {
                         out,
                         buffer,
                         new ProgressHandler("Receiving data"));
+    }
+
+    public void setDestination(final Consumer<Path> destination) {
+        this.destination = destination;
     }
 }

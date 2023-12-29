@@ -1,6 +1,5 @@
 package stroom.proxy.app.handler;
 
-import stroom.proxy.app.forwarder.ForwardHttpPostConfig;
 import stroom.proxy.repo.LogStream;
 import stroom.security.api.UserIdentityFactory;
 import stroom.util.cert.SSLUtil;

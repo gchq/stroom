@@ -15,13 +15,13 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-public class ForwardHttpPostDestination implements DirDest {
+public class ForwardHttpPostDestination {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ForwardHttpPostDestination.class);
 
     private final StreamDestination destination;
-    private final SequentialDirQueue forwardQueue;
-    private final SequentialDirQueue retryQueue;
+    private final DirQueue forwardQueue;
+    private final DirQueue retryQueue;
     private final CleanupDirQueue cleanupDirQueue;
     private final StroomDuration retryDelay;
     private final String destinationName;
@@ -31,7 +31,7 @@ public class ForwardHttpPostDestination implements DirDest {
                                       final CleanupDirQueue cleanupDirQueue,
                                       final StroomDuration retryDelay,
                                       final ManagedRegistry managedRegistry,
-                                      final SequentialDirQueueFactory sequentialDirQueueFactory,
+                                      final DirQueueFactory sequentialDirQueueFactory,
                                       final int forwardThreads,
                                       final int retryThreads) {
         this.destination = destination;
@@ -39,12 +39,12 @@ public class ForwardHttpPostDestination implements DirDest {
         this.destinationName = destinationName;
         this.retryDelay = retryDelay;
         forwardQueue = sequentialDirQueueFactory.create(
-                "forward_" + destinationName,
-                100,
+                "20_forward_" + destinationName,
+                20,
                 "forward - " + destinationName);
         retryQueue = sequentialDirQueueFactory.create(
-                "retry_" + destinationName,
-                101,
+                "21_retry_" + destinationName,
+                21,
                 "retry - " + destinationName);
         final ManagedQueue forwardingFuture = new ManagedQueue(forwardQueue::next, this::forwardDir, forwardThreads);
         final ManagedQueue retryingFuture = new ManagedQueue(retryQueue::next, this::retryDir, retryThreads);
@@ -53,7 +53,6 @@ public class ForwardHttpPostDestination implements DirDest {
         managedRegistry.register(retryingFuture);
     }
 
-    @Override
     public void add(final Path sourceDir) {
         forwardQueue.add(sourceDir);
     }

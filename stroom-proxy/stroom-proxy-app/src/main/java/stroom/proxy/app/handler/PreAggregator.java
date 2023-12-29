@@ -70,14 +70,14 @@ public class PreAggregator {
 
         // Get or create the aggregating dir.
         aggregatingDir = repoDirProvider.get().resolve("03_pre_aggregate");
-        ensureDirExists(aggregatingDir);
+        DirUtil.ensureDirExists(aggregatingDir);
 
         // Read all the current aggregates and establish the aggregation state.
         initialiseAggregateStateMap();
 
         // Make splitting dir.
         tempSplittingDir = tempDirProvider.get().resolve("04_splitting");
-        ensureDirExists(tempSplittingDir);
+        DirUtil.ensureDirExists(tempSplittingDir);
 
         // This is a temporary location and can be cleaned completely on startup.
         if (!FileUtil.deleteContents(tempSplittingDir)) {
@@ -86,7 +86,7 @@ public class PreAggregator {
 
         // Get or create the post split data dir.
         stagedSplittingDir = repoDirProvider.get().resolve("05_split_output");
-        ensureDirExists(stagedSplittingDir);
+        DirUtil.ensureDirExists(stagedSplittingDir);
 
         // Move any split data from previous proxy usage to the aggregates.
         // We will assume that data has been split appropriately for the current aggregate state.
@@ -156,15 +156,6 @@ public class PreAggregator {
             });
         } catch (final IOException e) {
             LOGGER.error(e::getMessage, e);
-            throw new UncheckedIOException(e);
-        }
-    }
-
-    private void ensureDirExists(final Path dir) {
-        try {
-            Files.createDirectories(dir);
-        } catch (final IOException e) {
-            LOGGER.error(() -> "Failed to create " + FileUtil.getCanonicalPath(dir), e);
             throw new UncheckedIOException(e);
         }
     }

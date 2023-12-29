@@ -1,7 +1,6 @@
 package stroom.proxy.app.handler;
 
 import stroom.meta.api.AttributeMap;
-import stroom.proxy.app.forwarder.ForwardHttpPostConfig;
 import stroom.receive.common.AttributeMapFilter;
 
 import java.io.IOException;
@@ -9,16 +8,16 @@ import java.io.UncheckedIOException;
 import java.time.Instant;
 import javax.inject.Inject;
 
-public class DirectForwardHttpPost {
+public class InstantForwardHttpPost {
 
     private final AttributeMapFilterFactory attributeMapFilterFactory;
     private final HttpSenderFactory httpSenderFactory;
     private final DropReceiver dropReceiver;
 
     @Inject
-    public DirectForwardHttpPost(final AttributeMapFilterFactory attributeMapFilterFactory,
-                                 final HttpSenderFactory httpSenderFactory,
-                                 final DropReceiver dropReceiver) {
+    public InstantForwardHttpPost(final AttributeMapFilterFactory attributeMapFilterFactory,
+                                  final HttpSenderFactory httpSenderFactory,
+                                  final DropReceiver dropReceiver) {
         this.attributeMapFilterFactory = attributeMapFilterFactory;
         this.httpSenderFactory = httpSenderFactory;
         this.dropReceiver = dropReceiver;

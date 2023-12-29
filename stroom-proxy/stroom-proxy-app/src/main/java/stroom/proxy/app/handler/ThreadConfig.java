@@ -1,4 +1,4 @@
-package stroom.proxy.app.forwarder;
+package stroom.proxy.app.handler;
 
 import stroom.util.config.annotations.RequiresProxyRestart;
 import stroom.util.shared.AbstractConfig;

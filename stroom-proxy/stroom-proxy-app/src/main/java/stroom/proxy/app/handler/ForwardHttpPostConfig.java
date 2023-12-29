@@ -1,4 +1,4 @@
-package stroom.proxy.app.forwarder;
+package stroom.proxy.app.handler;
 
 import stroom.util.NullSafe;
 import stroom.util.cert.SSLConfig;

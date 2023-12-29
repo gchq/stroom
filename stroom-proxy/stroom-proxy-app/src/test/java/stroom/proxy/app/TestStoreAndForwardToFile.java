@@ -1,6 +1,6 @@
 package stroom.proxy.app;
 
-import stroom.proxy.app.forwarder.ForwardFileDestination;
+import stroom.proxy.app.handler.ForwardFileDestination;
 import stroom.proxy.app.forwarder.ForwarderDestinationsImpl;
 
 import com.google.inject.AbstractModule;
