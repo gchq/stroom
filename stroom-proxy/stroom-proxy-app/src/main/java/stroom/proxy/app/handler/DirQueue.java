@@ -13,6 +13,8 @@ import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -43,11 +45,11 @@ public class DirQueue {
         // Create the store directory and initialise the store id.
         fileStores.add(order, name + " - store", this.rootDir);
 
-        final long maxId = NumericFileNameUtil.getMaxId(this.rootDir);
-        final long minId = NumericFileNameUtil.getMinId(this.rootDir);
+        final long maxId = DirUtil.getMaxDirId(this.rootDir);
+        final long minId = DirUtil.getMinDirId(this.rootDir);
 
         writeId = maxId;
-        readId = minId;
+        readId = Math.max(1, minId);
         queueMonitor.setWritePos(maxId);
         queueMonitor.setReadPos(minId);
     }
@@ -64,10 +66,10 @@ public class DirQueue {
             lock.lockInterruptibly();
             try {
                 while (dir == null) {
-                    final long id = readId++;
-                    while (id > writeId) {
+                    while (readId > writeId) {
                         condition.await();
                     }
+                    final long id = readId++;
                     final Path path = DirUtil.createPath(rootDir, id);
                     if (Files.isDirectory(path)) {
                         queueMonitor.setReadPos(id);
@@ -81,6 +83,39 @@ public class DirQueue {
             throw UncheckedInterruptedException.create(e);
         }
         return dir;
+    }
+
+    /**
+     * Get the next dir that is available in the queue as soon as one is available, block until then or timeout.
+     *
+     * @return A dir that is managed by this queue. The dir should be closed once used to ensure parent dirs are
+     * deleted if empty.
+     */
+    public Optional<Dir> next(final long time, final TimeUnit unit) {
+        Dir dir = null;
+        try {
+            lock.lockInterruptibly();
+            try {
+                while (dir == null) {
+                    while (readId > writeId) {
+                        if (!condition.await(time, unit)) {
+                            return Optional.empty();
+                        }
+                    }
+                    final long id = readId++;
+                    final Path path = DirUtil.createPath(rootDir, id);
+                    if (Files.isDirectory(path)) {
+                        queueMonitor.setReadPos(id);
+                        dir = new Dir(this, path);
+                    }
+                }
+            } finally {
+                lock.unlock();
+            }
+        } catch (final InterruptedException e) {
+            throw UncheckedInterruptedException.create(e);
+        }
+        return Optional.of(dir);
     }
 
     /**

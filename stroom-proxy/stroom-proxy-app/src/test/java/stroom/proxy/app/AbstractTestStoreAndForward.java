@@ -3,8 +3,8 @@ package stroom.proxy.app;
 import stroom.data.shared.StreamTypeNames;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.StandardHeaderArguments;
+import stroom.proxy.app.handler.DirUtil;
 import stroom.proxy.app.handler.ForwardFileConfig;
-import stroom.proxy.app.handler.NumericFileNameUtil;
 import stroom.proxy.app.handler.ReceiverFactory;
 import stroom.proxy.repo.AggregatorConfig;
 import stroom.proxy.repo.ProxyRepoConfig;
@@ -111,10 +111,10 @@ abstract class AbstractTestStoreAndForward {
             CompletableFuture.allOf(futures).join();
 
             // Wait for all of the data to arrive.
-            long maxId = NumericFileNameUtil.getMaxId(outDir);
+            long maxId = DirUtil.getMaxDirId(outDir);
             while (maxId < totalStreams) {
                 ThreadUtil.sleep(1000);
-                maxId = NumericFileNameUtil.getMaxId(outDir);
+                maxId = DirUtil.getMaxDirId(outDir);
             }
 
         } finally {

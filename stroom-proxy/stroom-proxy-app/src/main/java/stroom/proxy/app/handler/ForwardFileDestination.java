@@ -27,7 +27,7 @@ public class ForwardFileDestination {
         // Create the root directory
         DirUtil.ensureDirExists(storeDir);
 
-        final long maxId = NumericFileNameUtil.getMaxId(storeDir);
+        final long maxId = DirUtil.getMaxDirId(storeDir);
         writeId.set(maxId);
     }
 
