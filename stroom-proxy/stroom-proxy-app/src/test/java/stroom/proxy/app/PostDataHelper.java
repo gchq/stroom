@@ -1,17 +1,16 @@
 package stroom.proxy.app;
 
+import stroom.proxy.app.handler.LocalByteBuffer;
+import stroom.proxy.app.handler.ZipWriter;
 import stroom.util.shared.ModelStringUtil;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.atomic.LongAdder;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation.Builder;
@@ -100,10 +99,10 @@ public class PostDataHelper {
     }
 
     public int sendZipData(final String feed,
-                        final String system,
-                        final String environment,
-                        final Map<String, String> extraHeaders,
-                        final String data) {
+                           final String system,
+                           final String environment,
+                           final Map<String, String> extraHeaders,
+                           final String data) {
         int status;
         try {
             final Builder builder = client.target(url)
@@ -119,12 +118,10 @@ public class PostDataHelper {
             LOGGER.info("Sending POST request to {}", url);
 
             final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-            try (final ZipOutputStream zipOutputStream = new ZipOutputStream(outputStream)) {
+            try (final ZipWriter zipWriter = new ZipWriter(outputStream, LocalByteBuffer.get())) {
                 for (int i = 1; i <= 4; i++) {
                     final String name = ModelStringUtil.zeroPad(3, String.valueOf(i)) + ".dat";
-                    zipOutputStream.putNextEntry(new ZipEntry(name));
-                    zipOutputStream.write(data.getBytes(StandardCharsets.UTF_8));
-                    zipOutputStream.closeEntry();
+                    zipWriter.writeString(name, data);
                 }
             }
 

@@ -21,7 +21,6 @@ public class ParallelExecutor implements Managed {
     private final ExecutorService executorService;
     private final Supplier<Runnable> runnableSupplier;
     private final int threadCount;
-    private volatile boolean running;
 
     public ParallelExecutor(final String threadName,
                             final Supplier<Runnable> runnableSupplier,
@@ -38,7 +37,6 @@ public class ParallelExecutor implements Managed {
     @Override
     public synchronized void start() {
         // Start.
-        running = true;
         for (int i = 0; i < threadCount; i++) {
             executorService.execute(this::run);
         }
@@ -46,14 +44,13 @@ public class ParallelExecutor implements Managed {
 
     @Override
     public synchronized void stop() throws Exception {
-        running = false;
-        executorService.shutdown();
+        executorService.shutdownNow();
         executorService.awaitTermination(1, TimeUnit.DAYS);
     }
 
     private void run() {
         try {
-            while (running) {
+            while (!Thread.currentThread().isInterrupted()) {
                 final Runnable runnable = runnableSupplier.get();
                 runnable.run();
             }

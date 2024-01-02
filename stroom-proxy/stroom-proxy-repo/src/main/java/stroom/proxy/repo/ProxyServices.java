@@ -10,7 +10,9 @@ import io.dropwizard.lifecycle.Managed;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
+import javax.inject.Singleton;
 
+@Singleton
 public class ProxyServices implements Managed {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ProxyServices.class);

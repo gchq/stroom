@@ -1,0 +1,24 @@
+package stroom.proxy.app.handler;
+
+import stroom.proxy.app.MockFileDestination;
+
+import javax.inject.Singleton;
+
+@Singleton
+public class MockForwardFileDestinationFactory implements ForwardFileDestinationFactory {
+
+    private final MockForwardFileDestination forwardFileDestination;
+
+    public MockForwardFileDestinationFactory() {
+        this.forwardFileDestination = new MockForwardFileDestination();
+    }
+
+    @Override
+    public ForwardFileDestination create(final ForwardFileConfig config) {
+        return forwardFileDestination;
+    }
+
+    public MockForwardFileDestination getForwardFileDestination() {
+        return forwardFileDestination;
+    }
+}

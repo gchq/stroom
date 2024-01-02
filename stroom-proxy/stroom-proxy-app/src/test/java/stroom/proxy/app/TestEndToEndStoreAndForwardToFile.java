@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
 import java.util.List;
+import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -22,7 +23,8 @@ public class TestEndToEndStoreAndForwardToFile extends AbstractEndToEndTest {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestEndToEndStoreAndForwardToFile.class);
 
-    private final MockFileDestination mockFileDestination = new MockFileDestination();
+    @Inject
+    private MockFileDestination mockFileDestination;
 
     @Override
     protected ProxyConfig getProxyConfigOverride() {
@@ -42,7 +44,7 @@ public class TestEndToEndStoreAndForwardToFile extends AbstractEndToEndTest {
                         .aggregationFrequency(StroomDuration.ofSeconds(1))
                         .maxItemsPerAggregate(3)
                         .build())
-                .addForwardDestination(mockFileDestination.getConfig())
+                .addForwardDestination(MockFileDestination.createForwardFileConfig())
                 .feedStatusConfig(MockHttpDestination.createFeedStatusConfig())
                 .receiveDataConfig(ReceiveDataConfig.builder()
                         .withAuthenticationRequired(false)
@@ -71,7 +73,7 @@ public class TestEndToEndStoreAndForwardToFile extends AbstractEndToEndTest {
                 .isEqualTo(8);
 
         // Assert the contents of the files.
-        assertThat(mockFileDestination.getForwardFileMetaCount()).isEqualTo(8);
+        mockFileDestination.assertFileContents(getConfig());
 
         // Health check sends in a feed status check with DUMMY_FEED to see if stroom is available
         mockHttpDestination.assertFeedStatusCheck();
@@ -102,7 +104,7 @@ public class TestEndToEndStoreAndForwardToFile extends AbstractEndToEndTest {
                 .isEqualTo(8);
 
         // Assert the contents of the files.
-        assertThat(mockFileDestination.getForwardFileMetaCount()).isEqualTo(12);
+        mockFileDestination.assertFileContents(getConfig(), 12);
 
         // Health check sends in a feed status check with DUMMY_FEED to see if stroom is available
         mockHttpDestination.assertFeedStatusCheck();

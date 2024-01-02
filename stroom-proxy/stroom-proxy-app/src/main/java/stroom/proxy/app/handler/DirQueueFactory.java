@@ -1,5 +1,6 @@
 package stroom.proxy.app.handler;
 
+import stroom.proxy.repo.RepoDirProvider;
 import stroom.proxy.repo.queue.QueueMonitors;
 import stroom.proxy.repo.store.FileStores;
 
@@ -13,10 +14,10 @@ public class DirQueueFactory {
     private final FileStores fileStores;
 
     @Inject
-    public DirQueueFactory(final Path repoDir,
+    public DirQueueFactory(final RepoDirProvider repoDirProvider,
                            final QueueMonitors queueMonitors,
                            final FileStores fileStores) {
-        this.repoDir = repoDir;
+        this.repoDir = repoDirProvider.get();
         this.queueMonitors = queueMonitors;
         this.fileStores = fileStores;
     }

@@ -7,23 +7,21 @@ import stroom.proxy.StroomStatusCode;
 import stroom.proxy.app.handler.ZipEntryGroup.Entry;
 import stroom.proxy.repo.LogStream;
 import stroom.receive.common.AttributeMapFilter;
-import stroom.receive.common.ProgressHandler;
 import stroom.receive.common.StroomStreamException;
 import stroom.util.io.FileUtil;
 import stroom.util.io.TempDirProvider;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
+import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 import org.apache.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -31,9 +29,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.function.Consumer;
-import java.util.zip.GZIPInputStream;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -52,11 +47,11 @@ public class SimpleReceiver implements Receiver {
     private Consumer<Path> destination;
 
     @Inject
-    public SimpleReceiver(final AttributeMapFilter attributeMapFilter,
+    public SimpleReceiver(final AttributeMapFilterFactory attributeMapFilterFactory,
                           final TempDirProvider tempDirProvider,
                           final LogStream logStream,
                           final DropReceiver dropReceiver) {
-        this.attributeMapFilter = attributeMapFilter;
+        this.attributeMapFilter = attributeMapFilterFactory.create();
         this.logStream = logStream;
         this.dropReceiver = dropReceiver;
 
@@ -97,31 +92,26 @@ public class SimpleReceiver implements Receiver {
                     final Path receivingDir = receivingDirProvider.get();
                     final FileGroup fileGroup = new FileGroup(receivingDir);
 
-                    try (final ZipOutputStream zipOutputStream =
-                            new ZipOutputStream(
-                                    new BufferedOutputStream(Files.newOutputStream(fileGroup.getZip())))) {
+                    // Get a buffer to help us transfer data.
+                    final byte[] buffer = LocalByteBuffer.get();
 
-                        // Get a buffer to help us transfer data.
-                        final byte[] buffer = LocalByteBuffer.get();
-
+                    try (final ZipWriter zipWriter = new ZipWriter(fileGroup.getZip(), buffer)) {
                         // Write meta first.
                         final AttributeMap entryAttributeMap = AttributeMapUtil.cloneAllowable(attributeMap);
                         final byte[] metaBytes = AttributeMapUtil.toByteArray(entryAttributeMap);
-                        zipOutputStream.putNextEntry(new ZipEntry(META_FILE_NAME));
-                        TransferUtil.transfer(new ByteArrayInputStream(metaBytes), zipOutputStream, buffer);
+                        zipWriter.writeStream(META_FILE_NAME, new ByteArrayInputStream(metaBytes));
 
                         // Deal with GZIP compression.
                         final InputStream in;
                         final String compression = attributeMap.get(StandardHeaderArguments.COMPRESSION);
                         if (StandardHeaderArguments.COMPRESSION_GZIP.equals(compression)) {
-                            in = new GZIPInputStream(bufferedInputStream);
+                            in = new GzipCompressorInputStream(bufferedInputStream);
                         } else {
                             in = bufferedInputStream;
                         }
 
                         // Write the data.
-                        zipOutputStream.putNextEntry(new ZipEntry(DATA_FILE_NAME));
-                        bytesRead = TransferUtil.transfer(in, zipOutputStream, buffer);
+                        zipWriter.writeStream(DATA_FILE_NAME, in);
 
                         // Write the entries for quick reference.
                         final ZipEntryGroup zipEntryGroup = new ZipEntryGroup(

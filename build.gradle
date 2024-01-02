@@ -149,7 +149,7 @@ ext.libs = [
         caffeine                            : "com.github.ben-manes.caffeine:caffeine", // version controlled by dropwizard-dependencies
         commons_beanutils                   : "commons-beanutils:commons-beanutils:1.9.4",
         commons_codec                       : "commons-codec:commons-codec", // version controlled by dropwizard-dependencies
-        commons_compress                    : "org.apache.commons:commons-compress:1.21",
+        commons_compress                    : "org.apache.commons:commons-compress:1.25.0",
         commons_csv                         : "org.apache.commons:commons-csv:1.8",
         commons_fileupload                  : "commons-fileupload:commons-fileupload:1.4",
         commons_io                          : "commons-io:commons-io:2.11.0",

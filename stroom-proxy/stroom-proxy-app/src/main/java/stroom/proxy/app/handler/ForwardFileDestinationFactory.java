@@ -1,23 +1,6 @@
 package stroom.proxy.app.handler;
 
-import stroom.util.io.PathCreator;
+public interface ForwardFileDestinationFactory {
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
-
-@Singleton
-public class ForwardFileDestinationFactory {
-
-    private final PathCreator pathCreator;
-
-    @Inject
-    public ForwardFileDestinationFactory(final PathCreator pathCreator) {
-        this.pathCreator = pathCreator;
-    }
-
-    public ForwardFileDestination create(final ForwardFileConfig config) {
-        return new ForwardFileDestination(
-                config,
-                pathCreator);
-    }
+    ForwardFileDestination create(ForwardFileConfig config);
 }

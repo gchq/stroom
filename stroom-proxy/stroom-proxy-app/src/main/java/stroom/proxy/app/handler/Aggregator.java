@@ -6,8 +6,10 @@ import stroom.util.io.TempDirProvider;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
+import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
+import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
+
 import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
@@ -16,9 +18,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
-import java.util.zip.ZipOutputStream;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -76,9 +75,7 @@ public class Aggregator {
                 // Get a buffer to help us transfer data.
                 final byte[] buffer = LocalByteBuffer.get();
 
-                try (final ZipOutputStream zipOutputStream =
-                        new ZipOutputStream(
-                                new BufferedOutputStream(Files.newOutputStream(outputFileGroup.getZip())))) {
+                try (final ZipWriter zipWriter = new ZipWriter(outputFileGroup.getZip(), buffer)) {
                     try (final Stream<Path> stream = Files.list(dir)) {
                         stream.forEach(fileGroupDir -> {
                             final FileGroup fileGroup = new FileGroup(fileGroupDir);
@@ -94,12 +91,12 @@ public class Aggregator {
                                 }
                             }
 
-                            try (final ZipInputStream zipInputStream = new ZipInputStream(new BufferedInputStream(
-                                    Files.newInputStream(fileGroup.getZip())))) {
-
+                            try (final ZipArchiveInputStream zipInputStream =
+                                    new ZipArchiveInputStream(
+                                            new BufferedInputStream(Files.newInputStream(fileGroup.getZip())))) {
                                 String lastBaseName = null;
                                 String outputBaseName = null;
-                                ZipEntry zipEntry = zipInputStream.getNextEntry();
+                                ZipArchiveEntry zipEntry = zipInputStream.getNextZipEntry();
                                 while (zipEntry != null) {
                                     final String name = zipEntry.getName();
                                     final FileName fileName = FileName.parse(name);
@@ -109,11 +106,11 @@ public class Aggregator {
                                         lastBaseName = baseName;
                                     }
 
-                                    zipOutputStream.putNextEntry(
-                                            new ZipEntry(outputBaseName + "." + fileName.getExtension()));
-                                    TransferUtil.transfer(zipInputStream, zipOutputStream, buffer);
+                                    zipWriter.writeStream(
+                                            outputBaseName + "." + fileName.getExtension(),
+                                            zipInputStream);
 
-                                    zipEntry = zipInputStream.getNextEntry();
+                                    zipEntry = zipInputStream.getNextZipEntry();
                                 }
 
                             } catch (final IOException e) {

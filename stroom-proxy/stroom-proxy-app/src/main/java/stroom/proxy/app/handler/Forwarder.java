@@ -54,10 +54,12 @@ public class Forwarder {
                         streamDestination,
                         cleanupDirQueue,
                         forwardHttpPostConfig.getRetryDelay(),
+                        forwardHttpPostConfig.getMaxRetries(),
                         proxyServices,
                         sequentialDirQueueFactory,
                         proxyConfig.getThreadConfig().getForwardThreadCount(),
-                        proxyConfig.getThreadConfig().getForwardRetryThreadCount());
+                        proxyConfig.getThreadConfig().getForwardRetryThreadCount(),
+                        repoDirProvider);
                 this.destinations.add(forwardDestination::add);
             }
         });

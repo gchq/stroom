@@ -1,6 +1,5 @@
 package stroom.proxy.app.handler;
 
-import stroom.data.zip.CharsetConstants;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.proxy.repo.queue.QueueMonitors;
@@ -22,8 +21,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -179,10 +176,8 @@ class TestDirQueue extends StroomUnitTest {
 
             // Write a zip file.
             final Path zipFile = fileGroup.getZip();
-            try (final ZipOutputStream zipOutputStream =
-                    new ZipOutputStream(new BufferedOutputStream(Files.newOutputStream(zipFile)))) {
-                zipOutputStream.putNextEntry(new ZipEntry("file"));
-                zipOutputStream.write("SOME_DATA".getBytes(CharsetConstants.DEFAULT_CHARSET));
+            try (final ZipWriter zipWriter = new ZipWriter(zipFile, LocalByteBuffer.get())) {
+                zipWriter.writeString("file", "SOME_DATA");
             }
 
             // Transfer.

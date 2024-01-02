@@ -42,6 +42,7 @@ dependencies {
     implementation project(':stroom-util-shared')
 
     implementation libs.aws_sqs
+    implementation libs.commons_compress
     implementation libs.dropwizard_assets
     implementation libs.dropwizard_core
     implementation libs.dropwizard_client

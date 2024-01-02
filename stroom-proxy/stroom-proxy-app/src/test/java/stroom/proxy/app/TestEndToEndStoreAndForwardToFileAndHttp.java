@@ -14,6 +14,8 @@ import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
 
+import javax.inject.Inject;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class TestEndToEndStoreAndForwardToFileAndHttp extends AbstractEndToEndTest {
@@ -21,7 +23,8 @@ public class TestEndToEndStoreAndForwardToFileAndHttp extends AbstractEndToEndTe
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(
             TestEndToEndStoreAndForwardToFileAndHttp.class);
 
-    private final MockFileDestination mockFileDestination = new MockFileDestination();
+    @Inject
+    private MockFileDestination mockFileDestination;
 
     @Override
     protected ProxyConfig getProxyConfigOverride() {
@@ -41,7 +44,7 @@ public class TestEndToEndStoreAndForwardToFileAndHttp extends AbstractEndToEndTe
                         .aggregationFrequency(StroomDuration.ofSeconds(1))
                         .maxItemsPerAggregate(3)
                         .build())
-                .addForwardDestination(mockFileDestination.getConfig()) // forward to file and http
+                .addForwardDestination(MockFileDestination.createForwardFileConfig()) // forward to file and http
                 .addForwardDestination(MockHttpDestination.createForwardHttpPostConfig())
                 .feedStatusConfig(MockHttpDestination.createFeedStatusConfig())
                 .receiveDataConfig(ReceiveDataConfig.builder()
@@ -71,7 +74,7 @@ public class TestEndToEndStoreAndForwardToFileAndHttp extends AbstractEndToEndTe
                 .isEqualTo(8);
 
         // Assert file contents.
-        assertThat(mockFileDestination.getForwardFileMetaCount()).isEqualTo(8);
+        mockFileDestination.assertFileContents(getConfig());
 
         // Health check sends in a feed status check with DUMMY_FEED to see if stroom is available
         mockHttpDestination.assertFeedStatusCheck();

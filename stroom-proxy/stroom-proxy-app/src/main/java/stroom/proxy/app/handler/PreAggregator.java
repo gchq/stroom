@@ -15,8 +15,10 @@ import stroom.util.io.TempDirProvider;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
+import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
+import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
+
 import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -33,9 +35,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
-import java.util.zip.ZipOutputStream;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
@@ -185,8 +184,7 @@ public class PreAggregator {
             long remainingBytes = aggregatorConfig.getMaxUncompressedByteSize() - aggregateState.totalBytes;
             long addedItems = 0;
             long addedBytes = 0;
-            boolean firstItem = aggregateState.itemCount == 0;
-            long itemCount = 0;
+            boolean firstEntry = true;
 
             // TODO : We could add an option to never split incoming zip files and just allow them to form output
             //  aggregates that always overflow the aggregation bounds before being closed.
@@ -196,31 +194,48 @@ public class PreAggregator {
             try (final BufferedReader bufferedReader = Files.newBufferedReader(fileGroup.getEntries())) {
                 String line = bufferedReader.readLine();
                 while (line != null) {
-                    itemCount++;
                     final ZipEntryGroup zipEntryGroup = ZipEntryGroupUtil.read(line);
                     final long totalUncompressedSize = zipEntryGroup.getTotalUncompressedSize();
-                    if (firstItem ||
-                            (remainingItems > 0 && remainingBytes > totalUncompressedSize)) {
-                        // Add to the aggregate.
-                        remainingItems--;
-                        remainingBytes -= totalUncompressedSize;
-                        addedItems++;
-                        addedBytes += totalUncompressedSize;
 
-                    } else {
-                        // Split.
-                        parts.add(new Part(itemCount, addedItems, addedBytes));
+                    // If the current aggregate has items then we might want to close and start a new one.
+                    if (aggregateState.itemCount > 0 &&
+                            (remainingItems == 0 || remainingBytes < totalUncompressedSize)) {
+                        if (firstEntry) {
+                            // If the first entry immediately causes the current aggregate to exceed the required bounds
+                            // then close it and create a new one.
+
+                            // Close the current aggregate.
+                            closeAggregate(aggregateState.aggregateDir);
+                            aggregateStateMap.remove(feedKey);
+
+                            // Create a new aggregate.
+                            aggregateState = aggregateStateMap
+                                    .computeIfAbsent(feedKey, this::createAggregate);
+
+                        } else {
+
+                            // Split.
+                            parts.add(new Part(addedItems, addedBytes));
+                        }
+
+                        // Reset.
                         remainingItems = aggregatorConfig.getMaxItemsPerAggregate();
                         remainingBytes = aggregatorConfig.getMaxUncompressedByteSize();
                         addedItems = 0;
                         addedBytes = 0;
-                        firstItem = true;
                     }
 
+                    // Add to the aggregate.
+                    remainingItems--;
+                    remainingBytes -= totalUncompressedSize;
+                    addedItems++;
+                    addedBytes += totalUncompressedSize;
+
                     line = bufferedReader.readLine();
+                    firstEntry = false;
                 }
 
-                parts.add(new Part(itemCount, addedItems, addedBytes));
+                parts.add(new Part(addedItems, addedBytes));
             }
 
             // If there is only one part then just add directly to the aggregate.
@@ -250,22 +265,8 @@ public class PreAggregator {
                 // Delete source file set as we have split and duplicated.
                 deleteDirQueue.add(dir);
 
-                // Add first part to the current aggregate if the first part has items.
-                if (parts.get(0).item > 1) {
-                    // If the first split included some items then add it as the final item to the current aggregate.
-                    final Path splitDir = splitStaging.resolve(splitDirSet.children.get(0).getFileName());
-                    Files.move(
-                            splitDir,
-                            aggregateState.aggregateDir.resolve(splitDir.getFileName()),
-                            StandardCopyOption.ATOMIC_MOVE);
-                }
-
-                // Close the current aggregate.
-                closeAggregate(aggregateState.aggregateDir);
-                aggregateStateMap.remove(feedKey);
-
-                // Create aggregates from other parts.
-                for (int i = 1; i < parts.size() - 1; i++) {
+                // Create aggregates from parts.
+                for (int i = 0; i < parts.size() - 1; i++) {
                     final Path splitDir = splitStaging.resolve(splitDirSet.children.get(i).getFileName());
                     aggregateState = aggregateStateMap
                             .computeIfAbsent(feedKey, this::createAggregate);
@@ -299,7 +300,7 @@ public class PreAggregator {
         destination.accept(partialAggregateDir);
     }
 
-    private SplitDirSet split(final Path dir, final List<Part> splits) throws IOException {
+    private SplitDirSet split(final Path dir, final List<Part> parts) throws IOException {
         final FileGroup fileGroup = new FileGroup(dir);
         // Get a buffer to help us transfer data.
         final byte[] buffer = LocalByteBuffer.get();
@@ -307,69 +308,61 @@ public class PreAggregator {
         final Path parentDir = tempSplittingDir.resolve(UUID.randomUUID().toString());
         Files.createDirectory(parentDir);
         final List<Path> outputDirs = new ArrayList<>();
-        try (final ZipInputStream zipInputStream =
-                new ZipInputStream(new BufferedInputStream(Files.newInputStream(fileGroup.getZip())))) {
+        try (final ZipArchiveInputStream zipInputStream =
+                new ZipArchiveInputStream(new BufferedInputStream(Files.newInputStream(fileGroup.getZip())))) {
             try (final BufferedReader entryReader = Files.newBufferedReader(fileGroup.getEntries())) {
-                for (final Part split : splits) {
-                    if (split.item > 1) {
-                        int count = 1;
-                        final List<ZipEntryGroup> zipEntryGroups = new ArrayList<>();
-                        final Path outputDir = parentDir.resolve(UUID.randomUUID().toString());
-                        Files.createDirectory(outputDir);
-                        outputDirs.add(outputDir);
-                        final FileGroup outputFileGroup = new FileGroup(outputDir);
+                for (final Part part : parts) {
+                    int count = 1;
+                    final List<ZipEntryGroup> zipEntryGroups = new ArrayList<>();
+                    final Path outputDir = parentDir.resolve(UUID.randomUUID().toString());
+                    Files.createDirectory(outputDir);
+                    outputDirs.add(outputDir);
+                    final FileGroup outputFileGroup = new FileGroup(outputDir);
 
-                        // Write the zip.
-                        try (final ZipOutputStream zipOutputStream =
-                                new ZipOutputStream(
-                                        new BufferedOutputStream(Files.newOutputStream(outputFileGroup.getZip())))) {
-                            for (int i = 0; i < split.items; i++) {
-                                // Add entry.
-                                final String entryLine = entryReader.readLine();
-                                final ZipEntryGroup zipEntryGroup = ZipEntryGroupUtil.read(entryLine);
-                                final String baseNameOut = NumericFileNameUtil.create(count);
-                                final ZipEntryGroup.Entry manifestEntry = transferEntry(zipEntryGroup.getManifestEntry(),
-                                        zipInputStream,
-                                        zipOutputStream,
-                                        StroomZipFileType.MANIFEST,
-                                        baseNameOut,
-                                        buffer);
-                                final ZipEntryGroup.Entry metaEntry = transferEntry(zipEntryGroup.getMetaEntry(),
-                                        zipInputStream,
-                                        zipOutputStream,
-                                        StroomZipFileType.META,
-                                        baseNameOut,
-                                        buffer);
-                                final ZipEntryGroup.Entry contextEntry = transferEntry(zipEntryGroup.getContextEntry(),
-                                        zipInputStream,
-                                        zipOutputStream,
-                                        StroomZipFileType.CONTEXT,
-                                        baseNameOut,
-                                        buffer);
-                                final ZipEntryGroup.Entry dataEntry = transferEntry(zipEntryGroup.getDataEntry(),
-                                        zipInputStream,
-                                        zipOutputStream,
-                                        StroomZipFileType.DATA,
-                                        baseNameOut,
-                                        buffer);
+                    // Write the zip.
+                    try (final ZipWriter zipWriter = new ZipWriter(outputFileGroup.getZip(), buffer)) {
+                        for (int i = 0; i < part.items; i++) {
+                            // Add entry.
+                            final String entryLine = entryReader.readLine();
+                            final ZipEntryGroup zipEntryGroup = ZipEntryGroupUtil.read(entryLine);
+                            final String baseNameOut = NumericFileNameUtil.create(count);
+                            final ZipEntryGroup.Entry manifestEntry = transferEntry(zipEntryGroup.getManifestEntry(),
+                                    zipInputStream,
+                                    zipWriter,
+                                    StroomZipFileType.MANIFEST,
+                                    baseNameOut);
+                            final ZipEntryGroup.Entry metaEntry = transferEntry(zipEntryGroup.getMetaEntry(),
+                                    zipInputStream,
+                                    zipWriter,
+                                    StroomZipFileType.META,
+                                    baseNameOut);
+                            final ZipEntryGroup.Entry contextEntry = transferEntry(zipEntryGroup.getContextEntry(),
+                                    zipInputStream,
+                                    zipWriter,
+                                    StroomZipFileType.CONTEXT,
+                                    baseNameOut);
+                            final ZipEntryGroup.Entry dataEntry = transferEntry(zipEntryGroup.getDataEntry(),
+                                    zipInputStream,
+                                    zipWriter,
+                                    StroomZipFileType.DATA,
+                                    baseNameOut);
 
-                                final ZipEntryGroup outZipEntryGroup = new ZipEntryGroup(
-                                        zipEntryGroup.getFeedName(),
-                                        zipEntryGroup.getTypeName(),
-                                        manifestEntry,
-                                        metaEntry,
-                                        contextEntry,
-                                        dataEntry);
-                                zipEntryGroups.add(outZipEntryGroup);
-                            }
+                            final ZipEntryGroup outZipEntryGroup = new ZipEntryGroup(
+                                    zipEntryGroup.getFeedName(),
+                                    zipEntryGroup.getTypeName(),
+                                    manifestEntry,
+                                    metaEntry,
+                                    contextEntry,
+                                    dataEntry);
+                            zipEntryGroups.add(outZipEntryGroup);
                         }
-
-                        // Write the entries.
-                        ZipEntryGroupUtil.write(outputFileGroup.getEntries(), zipEntryGroups);
-
-                        // Copy the meta.
-                        Files.copy(fileGroup.getMeta(), outputFileGroup.getMeta());
                     }
+
+                    // Write the entries.
+                    ZipEntryGroupUtil.write(outputFileGroup.getEntries(), zipEntryGroups);
+
+                    // Copy the meta.
+                    Files.copy(fileGroup.getMeta(), outputFileGroup.getMeta());
                 }
             }
         }
@@ -378,13 +371,12 @@ public class PreAggregator {
     }
 
     private ZipEntryGroup.Entry transferEntry(final ZipEntryGroup.Entry entry,
-                                              final ZipInputStream zipInputStream,
-                                              final ZipOutputStream zipOutputStream,
+                                              final ZipArchiveInputStream zipInputStream,
+                                              final ZipWriter zipWriter,
                                               final StroomZipFileType stroomZipFileType,
-                                              final String baseNameOut,
-                                              final byte[] buffer) throws IOException {
+                                              final String baseNameOut) throws IOException {
         if (entry != null) {
-            final ZipEntry zipEntry = zipInputStream.getNextEntry();
+            final ZipArchiveEntry zipEntry = zipInputStream.getNextZipEntry();
             if (zipEntry == null) {
                 throw new RuntimeException("Expected entry: " + entry.getName());
             }
@@ -393,10 +385,7 @@ public class PreAggregator {
             }
 
             final String outEntryName = baseNameOut + stroomZipFileType.getDotExtension();
-            zipOutputStream.putNextEntry(new ZipEntry(outEntryName));
-
-            final long bytes = TransferUtil.transfer(zipInputStream, zipOutputStream, buffer);
-
+            final long bytes = zipWriter.writeStream(outEntryName, zipInputStream);
             return new Entry(outEntryName, bytes);
         }
         return null;
@@ -458,7 +447,7 @@ public class PreAggregator {
         }
     }
 
-    private record Part(long item, long items, long bytes) {
+    private record Part(long items, long bytes) {
 
     }
 

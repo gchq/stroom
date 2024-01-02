@@ -1,59 +1,8 @@
 package stroom.proxy.app.handler;
 
-import stroom.util.io.PathCreator;
-import stroom.util.logging.LambdaLogger;
-import stroom.util.logging.LambdaLoggerFactory;
-
-import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
-import java.util.concurrent.atomic.AtomicLong;
 
-public class ForwardFileDestination {
+public interface ForwardFileDestination {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ForwardFileDestination.class);
-    private final Path storeDir;
-
-    private final AtomicLong writeId = new AtomicLong();
-
-    public ForwardFileDestination(final ForwardFileConfig forwardFileConfig,
-                                  final PathCreator pathCreator) {
-        // Create the store directory and initialise the store id.
-        storeDir = pathCreator.toAppPath(forwardFileConfig.getPath());
-
-        // Create the root directory
-        DirUtil.ensureDirExists(storeDir);
-
-        final long maxId = DirUtil.getMaxDirId(storeDir);
-        writeId.set(maxId);
-    }
-
-    public void add(final Path sourceDir) {
-        // Record the sequence id for future use.
-        final long commitId = writeId.incrementAndGet();
-        final Path targetDir = DirUtil.createPath(storeDir, commitId);
-        try {
-            move(sourceDir, targetDir);
-        } catch (final IOException e) {
-            LOGGER.error(e::getMessage, e);
-            throw new UncheckedIOException(e);
-        }
-    }
-
-    private void move(final Path source, final Path target) throws IOException {
-        boolean success = false;
-        while (!success) {
-            try {
-                Files.move(source,
-                        target,
-                        StandardCopyOption.ATOMIC_MOVE);
-                success = true;
-            } catch (final NoSuchFileException e) {
-                DirUtil.ensureDirExists(target.getParent());
-            }
-        }
-    }
+    void add(Path sourceDir);
 }

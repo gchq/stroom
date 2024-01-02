@@ -116,8 +116,9 @@ proxyConfig:
     storingEnabled: true
     #    repoDir: "repo"
 
-  # If we are storing data in a proxy repository we can aggregate it before forwarding.
+  # Do we want to aggregate before forwarding
   aggregator:
+    enabled: true
     maxItemsPerAggregate: 1000
     maxUncompressedByteSize: "1G"
     maxAggregateAge: 10s
@@ -128,12 +129,6 @@ proxyConfig:
       name: "upstream"
       forwardUrl: "http://localhost:8080/stroom/noauth/datafeed"
   #      forwardUrl: "http://127.0.0.1:8090/stroom/noauth/datafeed"
-
-  forwardRetry:
-    failedForwardDir: "failures"
-    maxRetryDelay: "PT1H"
-    maxTries: 2
-    retryFrequency: "PT10S"
 
   logStream:
     metaKeys:

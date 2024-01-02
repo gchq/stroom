@@ -28,21 +28,21 @@ public class InstantForwardHttpPost {
         final HttpSender httpSender = httpSenderFactory.create(forwardHttpPostConfig);
         final DirectForwardHttpPostReceiver directForwardHttpPostReceiver =
                 new DirectForwardHttpPostReceiver(httpSender);
-        return new DirectForwardHttpPostReceiverFactory(
+        return new InstantForwardHttpPostReceiverFactory(
                 attributeMapFilterFactory.create(),
                 directForwardHttpPostReceiver,
                 dropReceiver);
     }
 
-    private static class DirectForwardHttpPostReceiverFactory implements ReceiverFactory {
+    private static class InstantForwardHttpPostReceiverFactory implements ReceiverFactory {
 
         private final AttributeMapFilter attributeMapFilter;
         private final DirectForwardHttpPostReceiver receiver;
         private final DropReceiver dropReceiver;
 
-        public DirectForwardHttpPostReceiverFactory(final AttributeMapFilter attributeMapFilter,
-                                                    final DirectForwardHttpPostReceiver receiver,
-                                                    final DropReceiver dropReceiver) {
+        public InstantForwardHttpPostReceiverFactory(final AttributeMapFilter attributeMapFilter,
+                                                     final DirectForwardHttpPostReceiver receiver,
+                                                     final DropReceiver dropReceiver) {
             this.attributeMapFilter = attributeMapFilter;
             this.receiver = receiver;
             this.dropReceiver = dropReceiver;

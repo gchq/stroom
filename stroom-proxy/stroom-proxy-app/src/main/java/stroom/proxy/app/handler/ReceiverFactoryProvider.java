@@ -8,7 +8,9 @@ import java.util.Optional;
 import java.util.stream.Stream;
 import javax.inject.Inject;
 import javax.inject.Provider;
+import javax.inject.Singleton;
 
+@Singleton
 public class ReceiverFactoryProvider implements Provider<ReceiverFactory> {
 
     private ReceiverFactory receiverFactory;

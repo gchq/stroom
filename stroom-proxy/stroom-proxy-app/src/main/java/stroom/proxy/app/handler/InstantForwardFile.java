@@ -61,25 +61,25 @@ public class InstantForwardFile {
     }
 
     public ReceiverFactory get(final ForwardFileConfig forwardFileConfig) {
-        final DirectForwardFileReceiver directForwardFileReceiver = new DirectForwardFileReceiver(
+        final InstantForwardFileReceiver instantForwardFileReceiver = new InstantForwardFileReceiver(
                 receivingDirProvider,
                 forwardFileDestinationFactory.create(forwardFileConfig),
                 logStream);
-        return new DirectForwardFileReceiverFactory(
+        return new InstantForwardFileReceiverFactory(
                 attributeMapFilterFactory.create(),
-                directForwardFileReceiver,
+                instantForwardFileReceiver,
                 dropReceiver);
     }
 
-    private static class DirectForwardFileReceiverFactory implements ReceiverFactory {
+    private static class InstantForwardFileReceiverFactory implements ReceiverFactory {
 
         private final AttributeMapFilter attributeMapFilter;
-        private final DirectForwardFileReceiver receiver;
+        private final InstantForwardFileReceiver receiver;
         private final DropReceiver dropReceiver;
 
-        public DirectForwardFileReceiverFactory(final AttributeMapFilter attributeMapFilter,
-                                                final DirectForwardFileReceiver receiver,
-                                                final DropReceiver dropReceiver) {
+        public InstantForwardFileReceiverFactory(final AttributeMapFilter attributeMapFilter,
+                                                 final InstantForwardFileReceiver receiver,
+                                                 final DropReceiver dropReceiver) {
             this.attributeMapFilter = attributeMapFilter;
             this.receiver = receiver;
             this.dropReceiver = dropReceiver;
@@ -95,15 +95,15 @@ public class InstantForwardFile {
         }
     }
 
-    private static class DirectForwardFileReceiver implements Receiver {
+    private static class InstantForwardFileReceiver implements Receiver {
 
         private final NumberedDirProvider receivingDirProvider;
         private final ForwardFileDestination forwardFileDestination;
         private final LogStream logStream;
 
-        public DirectForwardFileReceiver(final NumberedDirProvider receivingDirProvider,
-                                         final ForwardFileDestination forwardFileDestination,
-                                         final LogStream logStream) {
+        public InstantForwardFileReceiver(final NumberedDirProvider receivingDirProvider,
+                                          final ForwardFileDestination forwardFileDestination,
+                                          final LogStream logStream) {
             this.receivingDirProvider = receivingDirProvider;
             this.forwardFileDestination = forwardFileDestination;
             this.logStream = logStream;

@@ -2,13 +2,14 @@ package stroom.proxy.app;
 
 import stroom.util.io.StreamUtil;
 
+import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.zip.GZIPOutputStream;
 import javax.net.ssl.HttpsURLConnection;
 
 public class SendReferenceProxyData {
@@ -38,7 +39,7 @@ public class SendReferenceProxyData {
                 connection.setRequestProperty("Connection", "Keep-Alive");
 
                 OutputStream out = connection.getOutputStream();
-                out = new GZIPOutputStream(out);
+                out = new GzipCompressorOutputStream(out);
                 PrintWriter printWriter = new PrintWriter(new OutputStreamWriter(out, StreamUtil.DEFAULT_CHARSET));
                 printWriter.println("Time,Action,User,File");
                 printWriter.println("01/01/2009:00:00:01,OPEN,userone,proxyload.txt");

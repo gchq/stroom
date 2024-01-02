@@ -16,11 +16,13 @@ import stroom.util.io.TempDirProvider;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
+import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
+import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
+import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.apache.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -36,10 +38,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Consumer;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
-import java.util.zip.ZipInputStream;
-import java.util.zip.ZipOutputStream;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -90,11 +88,11 @@ public class ZipReceiver implements Receiver {
     private Consumer<Path> destination;
 
     @Inject
-    public ZipReceiver(final AttributeMapFilter attributeMapFilter,
+    public ZipReceiver(final AttributeMapFilterFactory attributeMapFilterFactory,
                        final TempDirProvider tempDirProvider,
                        final RepoDirProvider repoDirProvider,
                        final LogStream logStream) {
-        this.attributeMapFilter = attributeMapFilter;
+        this.attributeMapFilter = attributeMapFilterFactory.create();
         this.logStream = logStream;
 
         // Make receiving zip dir.
@@ -168,16 +166,16 @@ public class ZipReceiver implements Receiver {
             final Map<String, ZipEntryGroup> groups = new HashMap<>();
 
             // Receive data.
-            try (final ByteCountInputStream byteCountInputStream = new ByteCountInputStream(inputStreamSupplier.get())) {
-                try (final ZipInputStream zipInputStream = new ZipInputStream(byteCountInputStream)) {
+            try (final ByteCountInputStream byteCountInputStream =
+                    new ByteCountInputStream(inputStreamSupplier.get())) {
+                try (final ZipArchiveInputStream zipInputStream = new ZipArchiveInputStream(byteCountInputStream)) {
                     // Write the incoming zip data to temp and record info about the entries as we go.
-                    try (final ZipOutputStream zipOutputStream =
-                            new ZipOutputStream(new BufferedOutputStream(Files.newOutputStream(zipFilePath)))) {
+                    try (final ZipWriter zipWriter = new ZipWriter(zipFilePath, buffer)) {
 
-                        ZipEntry entry = zipInputStream.getNextEntry();
+                        ZipArchiveEntry entry = zipInputStream.getNextZipEntry();
                         while (entry != null) {
                             if (entry.isDirectory()) {
-                                zipOutputStream.putNextEntry(entry);
+                                zipWriter.writeDir(entry.getName());
 
                             } else {
                                 final FileName fileName = FileName.parse(entry.getName());
@@ -187,15 +185,16 @@ public class ZipReceiver implements Receiver {
 
                                 if (StroomZipFileType.META.equals(stroomZipFileType)) {
                                     // Read the meta.
-                                    final AttributeMap entryAttributeMap = AttributeMapUtil.cloneAllowable(attributeMap);
+                                    final AttributeMap entryAttributeMap =
+                                            AttributeMapUtil.cloneAllowable(attributeMap);
                                     AttributeMapUtil.read(zipInputStream, entryAttributeMap);
 
                                     final String feedName = entryAttributeMap.get(StandardHeaderArguments.FEED);
                                     final String typeName = entryAttributeMap.get(StandardHeaderArguments.TYPE);
 
                                     final byte[] bytes = AttributeMapUtil.toByteArray(entryAttributeMap);
-                                    zipOutputStream.putNextEntry(entry);
-                                    TransferUtil.transfer(new ByteArrayInputStream(bytes), zipOutputStream, buffer);
+                                    zipWriter.writeStream(entry.getName(), new ByteArrayInputStream(bytes));
+
                                     final ZipEntryGroup zipEntryGroup = groups
                                             .computeIfAbsent(baseName, k -> new ZipEntryGroup(feedName, typeName));
                                     // Ensure we override the feed and type names with the meta.
@@ -214,8 +213,7 @@ public class ZipReceiver implements Receiver {
                                         throw new RuntimeException("Duplicate context found: " + entry.getName());
                                     }
 
-                                    zipOutputStream.putNextEntry(entry);
-                                    final long size = TransferUtil.transfer(zipInputStream, zipOutputStream, buffer);
+                                    final long size = zipWriter.writeStream(entry.getName(), zipInputStream);
                                     zipEntryGroup.setContextEntry(new ZipEntryGroup.Entry(entry.getName(), size));
 
                                 } else if (StroomZipFileType.MANIFEST.equals(stroomZipFileType)) {
@@ -225,17 +223,15 @@ public class ZipReceiver implements Receiver {
                                         throw new RuntimeException("Duplicate manifest found: " + entry.getName());
                                     }
 
-                                    zipOutputStream.putNextEntry(entry);
-                                    final long size = TransferUtil.transfer(zipInputStream, zipOutputStream, buffer);
+                                    final long size = zipWriter.writeStream(entry.getName(), zipInputStream);
                                     zipEntryGroup.setManifestEntry(new ZipEntryGroup.Entry(entry.getName(), size));
 
                                 } else {
-                                    zipOutputStream.putNextEntry(entry);
-                                    final long size = TransferUtil.transfer(zipInputStream, zipOutputStream, buffer);
+                                    final long size = zipWriter.writeStream(entry.getName(), zipInputStream);
                                     dataEntries.add(new ZipEntryGroup.Entry(entry.getName(), size));
                                 }
 
-                                entry = zipInputStream.getNextEntry();
+                                entry = zipInputStream.getNextZipEntry();
                             }
                         }
                     }
@@ -325,10 +321,11 @@ public class ZipReceiver implements Receiver {
             final Path splitZipDir = receivingDirProvider.get();
             final List<Path> groupDirs = new ArrayList<>();
             long id = 1;
-            try (final ZipFile zipFile = new ZipFile(zipFilePath.toFile())) {
+            try (final ZipFile zipFile = new ZipFile(Files.newByteChannel(zipFilePath))) {
                 for (final FeedKey feedKey : includeList) {
                     final String name = NumericFileNameUtil.create(id++);
                     final Path groupDir = splitZipDir.resolve(name);
+                    Files.createDirectory(groupDir);
                     final FileGroup fileGroup = new FileGroup(groupDir);
                     groupDirs.add(groupDir);
 
@@ -349,7 +346,6 @@ public class ZipReceiver implements Receiver {
 
             // We ought to be able to delete the receivedDir now as it ought to be empty.
             Files.delete(receivedDir);
-            Files.delete(splitZipDir);
 
         } catch (final IOException e) {
             throw StroomStreamException.create(e, attributeMap);
@@ -386,18 +382,17 @@ public class ZipReceiver implements Receiver {
         try {
             // Write zip.
             int count = 1;
-            try (final ZipOutputStream zipOutputStream =
-                    new ZipOutputStream(new BufferedOutputStream(Files.newOutputStream(fileGroup.getZip())))) {
+            try (final ZipWriter zipWriter = new ZipWriter(fileGroup.getZip(), buffer)) {
                 for (final ZipEntryGroup zipEntryGroup : zipEntryGroups) {
                     final String baseNameOut = NumericFileNameUtil.create(count);
-                    addEntry(zip, zipOutputStream, zipEntryGroup.getManifestEntry(), baseNameOut,
-                            StroomZipFileType.MANIFEST, buffer);
-                    addEntry(zip, zipOutputStream, zipEntryGroup.getMetaEntry(), baseNameOut,
-                            StroomZipFileType.META, buffer);
-                    addEntry(zip, zipOutputStream, zipEntryGroup.getContextEntry(), baseNameOut,
-                            StroomZipFileType.CONTEXT, buffer);
-                    addEntry(zip, zipOutputStream, zipEntryGroup.getDataEntry(), baseNameOut,
-                            StroomZipFileType.DATA, buffer);
+                    addEntry(zip, zipWriter, zipEntryGroup.getManifestEntry(), baseNameOut,
+                            StroomZipFileType.MANIFEST);
+                    addEntry(zip, zipWriter, zipEntryGroup.getMetaEntry(), baseNameOut,
+                            StroomZipFileType.META);
+                    addEntry(zip, zipWriter, zipEntryGroup.getContextEntry(), baseNameOut,
+                            StroomZipFileType.CONTEXT);
+                    addEntry(zip, zipWriter, zipEntryGroup.getDataEntry(), baseNameOut,
+                            StroomZipFileType.DATA);
 
                     count++;
                 }
@@ -419,19 +414,15 @@ public class ZipReceiver implements Receiver {
     }
 
     private void addEntry(final ZipFile zip,
-                          final ZipOutputStream zipOutputStream,
+                          final ZipWriter zipWriter,
                           final ZipEntryGroup.Entry entry,
                           final String baseNameOut,
-                          final StroomZipFileType stroomZipFileType,
-                          final byte[] buffer) throws IOException {
+                          final StroomZipFileType stroomZipFileType) throws IOException {
         if (entry != null) {
-            final ZipEntry zipEntry = zip.getEntry(entry.getName());
+            final ZipArchiveEntry zipEntry = zip.getEntry(entry.getName());
             final InputStream inputStream = zip.getInputStream(zipEntry);
-
             final String outEntryName = baseNameOut + stroomZipFileType.getDotExtension();
-            zipOutputStream.putNextEntry(new ZipEntry(outEntryName));
-
-            TransferUtil.transfer(inputStream, zipOutputStream, buffer);
+            zipWriter.writeStream(outEntryName, inputStream);
         }
     }
 

@@ -125,7 +125,7 @@ public final class FileUtil {
                         @Override
                         public FileVisitResult visitFile(final Path file,
                                                          final BasicFileAttributes attrs) {
-                            delete(file, success);
+                            deleteIfExists(file, success);
                             return super.visitFile(file, attrs);
                         }
 
@@ -133,7 +133,7 @@ public final class FileUtil {
                         public FileVisitResult postVisitDirectory(final Path dir,
                                                                   final IOException exc) {
                             if (!dir.equals(path)) {
-                                delete(dir, success);
+                                deleteIfExists(dir, success);
                             }
                             return super.postVisitDirectory(dir, exc);
                         }
@@ -229,6 +229,20 @@ public final class FileUtil {
             Files.delete(path);
             if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug("Deleted file " + path);
+            }
+        } catch (final IOException e) {
+            success.set(false);
+            LOGGER.error("Failed to delete file " + path);
+            LOGGER.trace(e.getMessage(), e);
+        }
+    }
+
+    private static void deleteIfExists(final Path path, final AtomicBoolean success) {
+        try {
+            if (Files.deleteIfExists(path)) {
+                if (LOGGER.isDebugEnabled()) {
+                    LOGGER.debug("Deleted file " + path);
+                }
             }
         } catch (final IOException e) {
             success.set(false);
