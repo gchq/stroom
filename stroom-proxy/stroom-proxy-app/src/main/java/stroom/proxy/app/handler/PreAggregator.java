@@ -45,7 +45,7 @@ public class PreAggregator {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(PreAggregator.class);
 
-    private final Path tempSplittingDir;
+    private final NumberedDirProvider tempSplittingDirProvider;
     private final Path stagedSplittingDir;
     private final CleanupDirQueue deleteDirQueue;
     private final AggregatorConfig aggregatorConfig;
@@ -75,13 +75,14 @@ public class PreAggregator {
         initialiseAggregateStateMap();
 
         // Make splitting dir.
-        tempSplittingDir = tempDirProvider.get().resolve(DirNames.PRE_AGGREGATE_SPLITTING);
+        final Path tempSplittingDir = tempDirProvider.get().resolve(DirNames.PRE_AGGREGATE_SPLITTING);
         DirUtil.ensureDirExists(tempSplittingDir);
 
         // This is a temporary location and can be cleaned completely on startup.
         if (!FileUtil.deleteContents(tempSplittingDir)) {
             LOGGER.error(() -> "Failed to delete contents of " + FileUtil.getCanonicalPath(tempSplittingDir));
         }
+        tempSplittingDirProvider = new NumberedDirProvider(tempSplittingDir);
 
         // Get or create the post split data dir.
         stagedSplittingDir = repoDirProvider.get().resolve(DirNames.PRE_AGGREGATE_SPLIT_OUTPUT);
@@ -313,8 +314,7 @@ public class PreAggregator {
         // Get a buffer to help us transfer data.
         final byte[] buffer = LocalByteBuffer.get();
 
-        final Path parentDir = tempSplittingDir.resolve(UUID.randomUUID().toString());
-        Files.createDirectory(parentDir);
+        final Path parentDir = tempSplittingDirProvider.get();
         final List<Path> outputDirs = new ArrayList<>();
         try (final ZipArchiveInputStream zipInputStream =
                 new ZipArchiveInputStream(new BufferedInputStream(Files.newInputStream(fileGroup.getZip())))) {
