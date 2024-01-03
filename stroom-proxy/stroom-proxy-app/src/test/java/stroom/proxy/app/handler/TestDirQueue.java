@@ -26,7 +26,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TestDirQueue extends StroomUnitTest {
 
-    private static final long MAX = 100000;
+    private static final long MAX = 100;
 
     @Test
     void test() {

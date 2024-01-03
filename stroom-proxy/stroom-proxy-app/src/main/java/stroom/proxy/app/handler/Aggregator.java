@@ -64,7 +64,9 @@ public class Aggregator {
 
             } else if (sourceDirCount == 1) {
                 // If we only have one source dir then no merging is required, just forward.
-                destination.accept(dir);
+                try (final Stream<Path> stream = Files.list(dir)) {
+                    stream.forEach(fileGroupDir -> destination.accept(fileGroupDir));
+                }
 
             } else {
                 // Merge the files into an aggregate.
@@ -123,10 +125,11 @@ public class Aggregator {
 
                 // We have finished the merge so transfer the new item to be forwarded.
                 destination.accept(tempDir);
-
-                // Delete the source.
-                deleteDirQueue.add(dir);
             }
+
+            // Delete the source dir.
+            deleteDirQueue.add(dir);
+
         } catch (final IOException e) {
             LOGGER.error(e::getMessage, e);
             throw new UncheckedIOException(e);

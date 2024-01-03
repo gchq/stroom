@@ -97,46 +97,49 @@ public class MockFileDestination {
                 .flatMap(forwardFileConfig -> {
                     final Path forwardDir = pathCreator.toAppPath(forwardFileConfig.getPath());
                     final List<ForwardFileItem> forwardFileItems = new ArrayList<>();
-                    try (final Stream<Path> stream = Files.list(forwardDir)) {
-                        stream.forEach(dir -> {
-                            final FileGroup fileSet = new FileGroup(dir);
-                            if (!Files.exists(fileSet.getMeta())) {
-                                LOGGER.info("Meta does not exist. dir: {}", dir);
-                            }
-                            final String zipFileName = fileSet.getZip().getFileName().toString();
-                            final String baseName = zipFileName.substring(0, zipFileName.indexOf('.'));
-                            final List<ZipItem> zipItems = new ArrayList<>();
-                            final String metaContent;
-                            try {
-                                metaContent = Files.readString(fileSet.getMeta());
+                    try (final Stream<Path> stream = Files.walk(forwardDir)) {
+                        stream.forEach(path -> {
+                            if (path.getFileName().toString().endsWith(".meta")) {
+                                final Path dir = path.getParent();
+                                final FileGroup fileSet = new FileGroup(dir);
+                                if (!Files.exists(fileSet.getMeta())) {
+                                    LOGGER.info("Meta does not exist. dir: {}", dir);
+                                }
+                                final String zipFileName = fileSet.getZip().getFileName().toString();
+                                final String baseName = zipFileName.substring(0, zipFileName.indexOf('.'));
+                                final List<ZipItem> zipItems = new ArrayList<>();
+                                final String metaContent;
+                                try {
+                                    metaContent = Files.readString(fileSet.getMeta());
 
-                                try (final ZipFile zipFile = new ZipFile(Files.newByteChannel(fileSet.getZip()))) {
-                                    final Enumeration<ZipArchiveEntry> entries = zipFile.getEntries();
-                                    while (entries.hasMoreElements()) {
-                                        final ZipArchiveEntry entry = entries.nextElement();
-                                        if (!entry.isDirectory()) {
-                                            final String zipEntryName = entry.getName();
-                                            final FileName fileName = FileName.parse(zipEntryName);
-                                            final StroomZipFileType zipEntryType =
-                                                    StroomZipFileType.fromExtension(fileName.getExtension());
-                                            final String zipEntryContent = new String(
-                                                    zipFile.getInputStream(entry).readAllBytes(),
-                                                    StandardCharsets.UTF_8);
-                                            zipItems.add(new ZipItem(
-                                                    zipEntryType,
-                                                    fileName.getBaseName(),
-                                                    zipEntryContent));
+                                    try (final ZipFile zipFile = new ZipFile(Files.newByteChannel(fileSet.getZip()))) {
+                                        final Enumeration<ZipArchiveEntry> entries = zipFile.getEntries();
+                                        while (entries.hasMoreElements()) {
+                                            final ZipArchiveEntry entry = entries.nextElement();
+                                            if (!entry.isDirectory()) {
+                                                final String zipEntryName = entry.getName();
+                                                final FileName fileName = FileName.parse(zipEntryName);
+                                                final StroomZipFileType zipEntryType =
+                                                        StroomZipFileType.fromExtension(fileName.getExtension());
+                                                final String zipEntryContent = new String(
+                                                        zipFile.getInputStream(entry).readAllBytes(),
+                                                        StandardCharsets.UTF_8);
+                                                zipItems.add(new ZipItem(
+                                                        zipEntryType,
+                                                        fileName.getBaseName(),
+                                                        zipEntryContent));
+                                            }
                                         }
                                     }
+                                } catch (Exception e) {
+                                    throw new RuntimeException(e);
                                 }
-                            } catch (Exception e) {
-                                throw new RuntimeException(e);
+                                forwardFileItems.add(new ForwardFileItem(
+                                        zipFileName,
+                                        baseName,
+                                        metaContent,
+                                        zipItems));
                             }
-                            forwardFileItems.add(new ForwardFileItem(
-                                    zipFileName,
-                                    baseName,
-                                    metaContent,
-                                    zipItems));
                         });
                     } catch (final IOException e) {
                         throw new UncheckedIOException(e);
