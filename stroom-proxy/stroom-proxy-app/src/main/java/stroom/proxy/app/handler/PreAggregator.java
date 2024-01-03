@@ -22,6 +22,7 @@ import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -126,7 +127,7 @@ public class PreAggregator {
                         try (final BufferedReader bufferedReader = Files.newBufferedReader(fileGroup.getEntries())) {
                             String line = bufferedReader.readLine();
                             while (line != null) {
-                                final ZipEntryGroup zipEntryGroup = ZipEntryGroupUtil.read(line);
+                                final ZipEntryGroup zipEntryGroup = ZipEntryGroupUtil.readLine(line);
                                 final long totalUncompressedSize = zipEntryGroup.getTotalUncompressedSize();
                                 aggregateState.itemCount++;
                                 aggregateState.totalBytes += totalUncompressedSize;
@@ -196,13 +197,13 @@ public class PreAggregator {
             try (final BufferedReader bufferedReader = Files.newBufferedReader(fileGroup.getEntries())) {
                 String line = bufferedReader.readLine();
                 while (line != null) {
-                    final ZipEntryGroup zipEntryGroup = ZipEntryGroupUtil.read(line);
+                    final ZipEntryGroup zipEntryGroup = ZipEntryGroupUtil.readLine(line);
                     final long totalUncompressedSize = zipEntryGroup.getTotalUncompressedSize();
 
                     // If the current aggregate has items then we might want to close and start a new one.
                     if (currentAggregateItemCount > 0 &&
                             (currentAggregateItemCount + 1 > maxItemsPerAggregate ||
-                            currentAggregateBytes + totalUncompressedSize > maxUncompressedByteSize)) {
+                                    currentAggregateBytes + totalUncompressedSize > maxUncompressedByteSize)) {
                         if (firstEntry) {
                             // If the first entry immediately causes the current aggregate to exceed the required bounds
                             // then close it and create a new one.
@@ -320,53 +321,58 @@ public class PreAggregator {
             try (final BufferedReader entryReader = Files.newBufferedReader(fileGroup.getEntries())) {
                 for (final Part part : parts) {
                     int count = 1;
-                    final List<ZipEntryGroup> zipEntryGroups = new ArrayList<>();
                     final Path outputDir = parentDir.resolve(UUID.randomUUID().toString());
                     Files.createDirectory(outputDir);
                     outputDirs.add(outputDir);
                     final FileGroup outputFileGroup = new FileGroup(outputDir);
 
-                    // Write the zip.
-                    try (final ZipWriter zipWriter = new ZipWriter(outputFileGroup.getZip(), buffer)) {
-                        for (int i = 0; i < part.items; i++) {
-                            // Add entry.
-                            final String entryLine = entryReader.readLine();
-                            final ZipEntryGroup zipEntryGroup = ZipEntryGroupUtil.read(entryLine);
-                            final String baseNameOut = NumericFileNameUtil.create(count);
-                            final ZipEntryGroup.Entry manifestEntry = transferEntry(zipEntryGroup.getManifestEntry(),
-                                    zipInputStream,
-                                    zipWriter,
-                                    StroomZipFileType.MANIFEST,
-                                    baseNameOut);
-                            final ZipEntryGroup.Entry metaEntry = transferEntry(zipEntryGroup.getMetaEntry(),
-                                    zipInputStream,
-                                    zipWriter,
-                                    StroomZipFileType.META,
-                                    baseNameOut);
-                            final ZipEntryGroup.Entry contextEntry = transferEntry(zipEntryGroup.getContextEntry(),
-                                    zipInputStream,
-                                    zipWriter,
-                                    StroomZipFileType.CONTEXT,
-                                    baseNameOut);
-                            final ZipEntryGroup.Entry dataEntry = transferEntry(zipEntryGroup.getDataEntry(),
-                                    zipInputStream,
-                                    zipWriter,
-                                    StroomZipFileType.DATA,
-                                    baseNameOut);
+                    // Write entries.
+                    try (final Writer entryWriter = Files.newBufferedWriter(outputFileGroup.getEntries())) {
+                        // Write the zip.
+                        try (final ZipWriter zipWriter = new ZipWriter(outputFileGroup.getZip(), buffer)) {
+                            for (int i = 0; i < part.items; i++) {
+                                // Add entry.
+                                final String entryLine = entryReader.readLine();
+                                final ZipEntryGroup zipEntryGroup = ZipEntryGroupUtil.readLine(entryLine);
+                                final String baseNameOut = NumericFileNameUtil.create(count);
+                                final ZipEntryGroup.Entry manifestEntry =
+                                        transferEntry(zipEntryGroup.getManifestEntry(),
+                                                zipInputStream,
+                                                zipWriter,
+                                                StroomZipFileType.MANIFEST,
+                                                baseNameOut);
+                                final ZipEntryGroup.Entry metaEntry =
+                                        transferEntry(zipEntryGroup.getMetaEntry(),
+                                                zipInputStream,
+                                                zipWriter,
+                                                StroomZipFileType.META,
+                                                baseNameOut);
+                                final ZipEntryGroup.Entry contextEntry =
+                                        transferEntry(zipEntryGroup.getContextEntry(),
+                                                zipInputStream,
+                                                zipWriter,
+                                                StroomZipFileType.CONTEXT,
+                                                baseNameOut);
+                                final ZipEntryGroup.Entry dataEntry =
+                                        transferEntry(zipEntryGroup.getDataEntry(),
+                                                zipInputStream,
+                                                zipWriter,
+                                                StroomZipFileType.DATA,
+                                                baseNameOut);
 
-                            final ZipEntryGroup outZipEntryGroup = new ZipEntryGroup(
-                                    zipEntryGroup.getFeedName(),
-                                    zipEntryGroup.getTypeName(),
-                                    manifestEntry,
-                                    metaEntry,
-                                    contextEntry,
-                                    dataEntry);
-                            zipEntryGroups.add(outZipEntryGroup);
+                                final ZipEntryGroup outZipEntryGroup = new ZipEntryGroup(
+                                        zipEntryGroup.getFeedName(),
+                                        zipEntryGroup.getTypeName(),
+                                        manifestEntry,
+                                        metaEntry,
+                                        contextEntry,
+                                        dataEntry);
+
+                                // Write the entry.
+                                ZipEntryGroupUtil.writeLine(entryWriter, outZipEntryGroup);
+                            }
                         }
                     }
-
-                    // Write the entries.
-                    ZipEntryGroupUtil.write(outputFileGroup.getEntries(), zipEntryGroups);
 
                     // Copy the meta.
                     Files.copy(fileGroup.getMeta(), outputFileGroup.getMeta());

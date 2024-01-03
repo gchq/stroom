@@ -388,43 +388,43 @@ public class ZipReceiver implements Receiver {
         try {
             // Write zip.
             int count = 1;
-            final List<ZipEntryGroup> zipEntryGroupsOut = new ArrayList<>();
-            try (final ZipWriter zipWriter = new ZipWriter(fileGroup.getZip(), buffer)) {
-                for (final ZipEntryGroup zipEntryGroupIn : zipEntryGroupsIn) {
-                    final ZipEntryGroup zipEntryGroupOut = new ZipEntryGroup(feedKey.feed(), feedKey.type());
-                    final String baseNameOut = NumericFileNameUtil.create(count);
-                    zipEntryGroupOut.setManifestEntry(
-                            addEntry(zip,
-                                    zipWriter,
-                                    zipEntryGroupIn.getManifestEntry(),
-                                    baseNameOut,
-                                    StroomZipFileType.MANIFEST));
-                    zipEntryGroupOut.setMetaEntry(
-                            addEntry(zip,
-                                    zipWriter,
-                                    zipEntryGroupIn.getMetaEntry(),
-                                    baseNameOut,
-                                    StroomZipFileType.META));
-                    zipEntryGroupOut.setContextEntry(
-                            addEntry(zip,
-                                    zipWriter,
-                                    zipEntryGroupIn.getContextEntry(),
-                                    baseNameOut,
-                                    StroomZipFileType.CONTEXT));
-                    zipEntryGroupOut.setDataEntry(
-                            addEntry(zip,
-                                    zipWriter,
-                                    zipEntryGroupIn.getDataEntry(),
-                                    baseNameOut,
-                                    StroomZipFileType.DATA));
+            try (final Writer entryWriter = Files.newBufferedWriter(fileGroup.getEntries())) {
+                try (final ZipWriter zipWriter = new ZipWriter(fileGroup.getZip(), buffer)) {
+                    for (final ZipEntryGroup zipEntryGroupIn : zipEntryGroupsIn) {
+                        final ZipEntryGroup zipEntryGroupOut = new ZipEntryGroup(feedKey.feed(), feedKey.type());
+                        final String baseNameOut = NumericFileNameUtil.create(count);
+                        zipEntryGroupOut.setManifestEntry(
+                                addEntry(zip,
+                                        zipWriter,
+                                        zipEntryGroupIn.getManifestEntry(),
+                                        baseNameOut,
+                                        StroomZipFileType.MANIFEST));
+                        zipEntryGroupOut.setMetaEntry(
+                                addEntry(zip,
+                                        zipWriter,
+                                        zipEntryGroupIn.getMetaEntry(),
+                                        baseNameOut,
+                                        StroomZipFileType.META));
+                        zipEntryGroupOut.setContextEntry(
+                                addEntry(zip,
+                                        zipWriter,
+                                        zipEntryGroupIn.getContextEntry(),
+                                        baseNameOut,
+                                        StroomZipFileType.CONTEXT));
+                        zipEntryGroupOut.setDataEntry(
+                                addEntry(zip,
+                                        zipWriter,
+                                        zipEntryGroupIn.getDataEntry(),
+                                        baseNameOut,
+                                        StroomZipFileType.DATA));
 
-                    count++;
-                    zipEntryGroupsOut.add(zipEntryGroupOut);
+                        count++;
+
+                        // Write zip entry.
+                        ZipEntryGroupUtil.writeLine(entryWriter, zipEntryGroupOut);
+                    }
                 }
             }
-
-            // Write zip entries.
-            ZipEntryGroupUtil.write(fileGroup.getEntries(), zipEntryGroupsOut);
 
             // Write meta.
             AttributeMapUtil.addFeedAndType(attributeMap, feedKey.feed(), feedKey.type());

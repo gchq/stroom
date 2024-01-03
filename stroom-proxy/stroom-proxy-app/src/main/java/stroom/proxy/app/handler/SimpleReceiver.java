@@ -10,7 +10,6 @@ import stroom.proxy.repo.RepoDirProvider;
 import stroom.receive.common.AttributeMapFilter;
 import stroom.receive.common.StroomStreamException;
 import stroom.util.io.FileUtil;
-import stroom.util.io.TempDirProvider;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -28,7 +27,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Collections;
 import java.util.function.Consumer;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -122,7 +120,11 @@ public class SimpleReceiver implements Receiver {
                                 new Entry(META_FILE_NAME, metaBytes.length),
                                 null,
                                 new Entry(DATA_FILE_NAME, bytesRead));
-                        ZipEntryGroupUtil.write(fileGroup.getEntries(), Collections.singletonList(zipEntryGroup));
+
+                        // Write zip entry.
+                        try (final Writer entryWriter = Files.newBufferedWriter(fileGroup.getEntries())) {
+                            ZipEntryGroupUtil.writeLine(entryWriter, zipEntryGroup);
+                        }
 
                         // Write the meta.
                         try (final Writer writer = Files.newBufferedWriter(fileGroup.getMeta())) {
