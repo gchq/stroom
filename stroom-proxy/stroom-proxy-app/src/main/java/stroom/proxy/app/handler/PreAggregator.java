@@ -31,7 +31,6 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
@@ -310,6 +309,7 @@ public class PreAggregator {
     }
 
     private SplitDirSet split(final Path dir, final List<Part> parts) throws IOException {
+        final String inputDirName = dir.getFileName().toString();
         final FileGroup fileGroup = new FileGroup(dir);
         // Get a buffer to help us transfer data.
         final byte[] buffer = LocalByteBuffer.get();
@@ -319,9 +319,11 @@ public class PreAggregator {
         try (final ZipArchiveInputStream zipInputStream =
                 new ZipArchiveInputStream(new BufferedInputStream(Files.newInputStream(fileGroup.getZip())))) {
             try (final BufferedReader entryReader = Files.newBufferedReader(fileGroup.getEntries())) {
+                int partNo = 1;
                 for (final Part part : parts) {
                     int count = 1;
-                    final Path outputDir = parentDir.resolve(UUID.randomUUID().toString());
+                    final String outputDirName = inputDirName + "_part_" + partNo++;
+                    final Path outputDir = parentDir.resolve(outputDirName);
                     Files.createDirectory(outputDir);
                     outputDirs.add(outputDir);
                     final FileGroup outputFileGroup = new FileGroup(outputDir);
