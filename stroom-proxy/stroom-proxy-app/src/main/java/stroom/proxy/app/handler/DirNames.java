@@ -2,6 +2,10 @@ package stroom.proxy.app.handler;
 
 public final class DirNames {
 
+    private DirNames() {
+        // Constants.
+    }
+
     /**
      * This is the temporary receive location for receiving non zip data.
      */
@@ -17,10 +21,10 @@ public final class DirNames {
      */
     public static final String SPLIT_ZIP = "02_split_zip";
 
-    /**
-     * This is the final receive location for received zip data as we might have split the zip data.
-     */
-    public static final String RECEIVED_ZIP = "03_received_zip";
+//    /**
+//     * This is the final receive location for received zip data as we might have split the zip data.
+//     */
+//    public static final String RECEIVED_ZIP = "03_received_zip";
 
     /**
      * Where we queue data prior to the pre aggregation process picking it up.
