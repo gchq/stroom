@@ -233,7 +233,7 @@ public class MockHttpDestination {
             final List<String> entries = new ArrayList<>();
             while (true) {
                 try {
-                    final ZipArchiveEntry entry = zipInputStream.getNextZipEntry();
+                    final ZipArchiveEntry entry = zipInputStream.getNextEntry();
                     if (entry == null) {
                         break;
                     }

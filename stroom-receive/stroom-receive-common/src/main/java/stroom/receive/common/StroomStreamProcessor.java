@@ -244,7 +244,7 @@ public class StroomStreamProcessor {
                     // works because we would not expect the zips to have been mutated which
                     // may cause these cases, however we are on slightly shaky ground grabbing
                     // entries without consulting the zip's dictionary.
-                    zipEntry = zipArchiveInputStream.getNextZipEntry();
+                    zipEntry = zipArchiveInputStream.getNextEntry();
                 } catch (final IOException ioEx) {
                     throw new StroomStreamException(
                             StroomStatusCode.COMPRESSED_STREAM_INVALID, globalAttributeMap, ioEx.getMessage());

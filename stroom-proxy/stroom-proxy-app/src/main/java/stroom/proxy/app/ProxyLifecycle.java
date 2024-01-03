@@ -47,7 +47,7 @@ public class ProxyLifecycle implements Managed {
     }
 
     @Override
-    public void stop() throws Exception {
+    public void stop() {
         proxyServices.stop();
     }
 }

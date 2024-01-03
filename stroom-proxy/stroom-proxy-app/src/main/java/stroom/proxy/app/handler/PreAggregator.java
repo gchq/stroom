@@ -67,14 +67,14 @@ public class PreAggregator {
         this.repoDirProvider = repoDirProvider;
 
         // Get or create the aggregating dir.
-        aggregatingDir = repoDirProvider.get().resolve("03_pre_aggregate");
+        aggregatingDir = repoDirProvider.get().resolve(DirNames.PRE_AGGREGATES);
         DirUtil.ensureDirExists(aggregatingDir);
 
         // Read all the current aggregates and establish the aggregation state.
         initialiseAggregateStateMap();
 
         // Make splitting dir.
-        tempSplittingDir = tempDirProvider.get().resolve("04_splitting");
+        tempSplittingDir = tempDirProvider.get().resolve(DirNames.PRE_AGGREGATE_SPLITTING);
         DirUtil.ensureDirExists(tempSplittingDir);
 
         // This is a temporary location and can be cleaned completely on startup.
@@ -83,7 +83,7 @@ public class PreAggregator {
         }
 
         // Get or create the post split data dir.
-        stagedSplittingDir = repoDirProvider.get().resolve("05_split_output");
+        stagedSplittingDir = repoDirProvider.get().resolve(DirNames.PRE_AGGREGATE_SPLIT_OUTPUT);
         DirUtil.ensureDirExists(stagedSplittingDir);
 
         // Move any split data from previous proxy usage to the aggregates.
@@ -180,10 +180,12 @@ public class PreAggregator {
             AggregateState aggregateState = aggregateStateMap.computeIfAbsent(feedKey, this::createAggregate);
 
             // Calculate where we might want to split the incoming data.
-            long remainingItems = aggregatorConfig.getMaxItemsPerAggregate() - aggregateState.itemCount;
-            long remainingBytes = aggregatorConfig.getMaxUncompressedByteSize() - aggregateState.totalBytes;
-            long addedItems = 0;
-            long addedBytes = 0;
+            final long maxItemsPerAggregate = aggregatorConfig.getMaxItemsPerAggregate();
+            final long maxUncompressedByteSize = aggregatorConfig.getMaxUncompressedByteSize();
+            long currentAggregateItemCount = aggregateState.itemCount;
+            long currentAggregateBytes = aggregateState.totalBytes;
+            long partItems = 0;
+            long partBytes = 0;
             boolean firstEntry = true;
 
             // TODO : We could add an option to never split incoming zip files and just allow them to form output
@@ -198,15 +200,15 @@ public class PreAggregator {
                     final long totalUncompressedSize = zipEntryGroup.getTotalUncompressedSize();
 
                     // If the current aggregate has items then we might want to close and start a new one.
-                    if (aggregateState.itemCount > 0 &&
-                            (remainingItems == 0 || remainingBytes < totalUncompressedSize)) {
+                    if (currentAggregateItemCount > 0 &&
+                            (currentAggregateItemCount + 1 > maxItemsPerAggregate ||
+                            currentAggregateBytes + totalUncompressedSize > maxUncompressedByteSize)) {
                         if (firstEntry) {
                             // If the first entry immediately causes the current aggregate to exceed the required bounds
                             // then close it and create a new one.
 
                             // Close the current aggregate.
-                            closeAggregate(aggregateState.aggregateDir);
-                            aggregateStateMap.remove(feedKey);
+                            closeAggregate(feedKey, aggregateState);
 
                             // Create a new aggregate.
                             aggregateState = aggregateStateMap
@@ -215,27 +217,28 @@ public class PreAggregator {
                         } else {
 
                             // Split.
-                            parts.add(new Part(addedItems, addedBytes));
+                            parts.add(new Part(partItems, partBytes));
                         }
 
                         // Reset.
-                        remainingItems = aggregatorConfig.getMaxItemsPerAggregate();
-                        remainingBytes = aggregatorConfig.getMaxUncompressedByteSize();
-                        addedItems = 0;
-                        addedBytes = 0;
+                        currentAggregateItemCount = 0;
+                        currentAggregateBytes = 0;
+                        partItems = 0;
+                        partBytes = 0;
                     }
 
                     // Add to the aggregate.
-                    remainingItems--;
-                    remainingBytes -= totalUncompressedSize;
-                    addedItems++;
-                    addedBytes += totalUncompressedSize;
+                    currentAggregateItemCount++;
+                    currentAggregateBytes += totalUncompressedSize;
+                    partItems++;
+                    partBytes += totalUncompressedSize;
 
                     line = bufferedReader.readLine();
                     firstEntry = false;
                 }
 
-                parts.add(new Part(addedItems, addedBytes));
+                // Add final part.
+                parts.add(new Part(partItems, partBytes));
             }
 
             // If there is only one part then just add directly to the aggregate.
@@ -274,9 +277,9 @@ public class PreAggregator {
                             splitDir,
                             aggregateState.aggregateDir.resolve(splitDir.getFileName()),
                             StandardCopyOption.ATOMIC_MOVE);
+
                     // Close the aggregate.
-                    closeAggregate(aggregateState.aggregateDir);
-                    aggregateStateMap.remove(feedKey);
+                    closeAggregate(feedKey, aggregateState);
                 }
 
                 // Add final part as new aggregate.
@@ -296,8 +299,12 @@ public class PreAggregator {
         }
     }
 
-    private void closeAggregate(final Path partialAggregateDir) {
-        destination.accept(partialAggregateDir);
+    private synchronized void closeAggregate(final FeedKey feedKey,
+                                             final AggregateState aggregateState) {
+        LOGGER.info(() -> "Closing aggregate: " + FileUtil.getCanonicalPath(aggregateState.aggregateDir));
+        destination.accept(aggregateState.aggregateDir);
+        aggregateStateMap.remove(feedKey);
+        LOGGER.info(() -> "Closed aggregate: " + FileUtil.getCanonicalPath(aggregateState.aggregateDir));
     }
 
     private SplitDirSet split(final Path dir, final List<Part> parts) throws IOException {
@@ -376,12 +383,12 @@ public class PreAggregator {
                                               final StroomZipFileType stroomZipFileType,
                                               final String baseNameOut) throws IOException {
         if (entry != null) {
-            final ZipArchiveEntry zipEntry = zipInputStream.getNextZipEntry();
+            final ZipArchiveEntry zipEntry = zipInputStream.getNextEntry();
             if (zipEntry == null) {
                 throw new RuntimeException("Expected entry: " + entry.getName());
             }
             if (!zipEntry.getName().equals(entry.getName())) {
-                throw new RuntimeException("Unexpected entry: " + zipEntry.getName());
+                throw new RuntimeException("Unexpected entry: " + zipEntry.getName() + " expected " + entry.getName());
             }
 
             final String outEntryName = baseNameOut + stroomZipFileType.getDotExtension();
@@ -396,20 +403,23 @@ public class PreAggregator {
             // Make a dir name.
             final StringBuilder sb = new StringBuilder();
             if (feedKey.feed() != null) {
-                sb.append(feedKey.feed().replaceAll("[^a-zA-Z0-9_-]", "_"));
+                sb.append(DirUtil.makeSafeName(feedKey.feed()));
             }
             sb.append("__");
             if (feedKey.type() != null) {
-                sb.append(feedKey.type().replaceAll("[^a-zA-Z0-9_-]", "_"));
+                sb.append(DirUtil.makeSafeName(feedKey.type()));
             }
 
             // Get or create the aggregate dir.
             final Path repoDir = repoDirProvider.get();
             final Path aggregatesDir = repoDir.resolve("aggregates");
             final Path aggregateDir = aggregatesDir.resolve(sb.toString());
+            LOGGER.info(() -> "Creating aggregate: " + FileUtil.getCanonicalPath(aggregateDir));
+
             // Ensure the dir exists.
             Files.createDirectories(aggregateDir);
 
+            LOGGER.info(() -> "Created aggregate: " + FileUtil.getCanonicalPath(aggregateDir));
             return new AggregateState(Instant.now(), aggregateDir);
 
         } catch (final IOException e) {
@@ -424,8 +434,7 @@ public class PreAggregator {
             final Instant aggregateAfter = createTime.plus(aggregatorConfig.getAggregationFrequency().getDuration());
             if (aggregateAfter.isBefore(Instant.now())) {
                 // Close the current aggregate.
-                closeAggregate(v.aggregateDir);
-                aggregateStateMap.remove(k);
+                closeAggregate(k, v);
             }
         });
     }

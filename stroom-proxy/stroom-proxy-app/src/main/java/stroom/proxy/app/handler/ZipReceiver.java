@@ -4,6 +4,7 @@ import stroom.data.zip.StroomZipFileType;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
+import stroom.proxy.app.handler.ZipEntryGroup.Entry;
 import stroom.proxy.repo.FeedKey;
 import stroom.proxy.repo.LogStream;
 import stroom.proxy.repo.RepoDirProvider;
@@ -12,7 +13,6 @@ import stroom.receive.common.StroomStreamException;
 import stroom.util.io.ByteCountInputStream;
 import stroom.util.io.FileName;
 import stroom.util.io.FileUtil;
-import stroom.util.io.TempDirProvider;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -84,40 +84,41 @@ public class ZipReceiver implements Receiver {
     private final AttributeMapFilter attributeMapFilter;
     private final NumberedDirProvider receivingDirProvider;
     private final NumberedDirProvider receivedDirProvider;
+    private final NumberedDirProvider splitZipDirProvider;
     private final LogStream logStream;
     private Consumer<Path> destination;
 
     @Inject
     public ZipReceiver(final AttributeMapFilterFactory attributeMapFilterFactory,
-                       final TempDirProvider tempDirProvider,
                        final RepoDirProvider repoDirProvider,
                        final LogStream logStream) {
         this.attributeMapFilter = attributeMapFilterFactory.create();
         this.logStream = logStream;
 
-        // Make receiving zip dir.
-        final Path receivingDir = tempDirProvider.get().resolve("01_receiving_zip");
-        DirUtil.ensureDirExists(receivingDir);
+        // Make receiving zip dir provider.
+        receivingDirProvider = createDirProvider(repoDirProvider, DirNames.RECEIVING_ZIP);
 
-        // This is a temporary location and can be cleaned completely on startup.
-        if (!FileUtil.deleteContents(receivingDir)) {
-            LOGGER.error(() -> "Failed to delete contents of " + FileUtil.getCanonicalPath(receivingDir));
-        }
-        receivingDirProvider = new NumberedDirProvider(receivingDir);
+        // Get or create the split zip dir provider.
+        splitZipDirProvider = createDirProvider(repoDirProvider, DirNames.SPLIT_ZIP);
 
-        // Get or create the received dir.
-        final Path receivedDir = repoDirProvider.get().resolve("02_received_zip");
-        DirUtil.ensureDirExists(receivedDir);
-
-        // This is another temporary location and can be cleaned completely on startup.
-        if (!FileUtil.deleteContents(receivedDir)) {
-            LOGGER.error(() -> "Failed to delete contents of " + FileUtil.getCanonicalPath(receivedDir));
-        }
-        receivedDirProvider = new NumberedDirProvider(receivedDir);
+        // Get or create the received dir provider.
+        receivedDirProvider = createDirProvider(repoDirProvider, DirNames.RECEIVED_ZIP);
 
 //        // Move any received data from previous proxy usage to the store.
 //        transferOldReceivedData(receivedDir);
 
+    }
+
+    private NumberedDirProvider createDirProvider(final RepoDirProvider repoDirProvider, final String dirName) {
+        // Make dir
+        final Path dir = repoDirProvider.get().resolve(dirName);
+        DirUtil.ensureDirExists(dir);
+
+        // This is a temporary location and can be cleaned completely on startup.
+        if (!FileUtil.deleteContents(dir)) {
+            LOGGER.error(() -> "Failed to delete contents of " + FileUtil.getCanonicalPath(dir));
+        }
+        return new NumberedDirProvider(dir);
     }
 
 //    private void transferOldReceivedData(final Path receivedDir, final Consumer<Path> destination) {
@@ -172,7 +173,7 @@ public class ZipReceiver implements Receiver {
                     // Write the incoming zip data to temp and record info about the entries as we go.
                     try (final ZipWriter zipWriter = new ZipWriter(zipFilePath, buffer)) {
 
-                        ZipArchiveEntry entry = zipInputStream.getNextZipEntry();
+                        ZipArchiveEntry entry = zipInputStream.getNextEntry();
                         while (entry != null) {
                             if (entry.isDirectory()) {
                                 zipWriter.writeDir(entry.getName());
@@ -231,7 +232,7 @@ public class ZipReceiver implements Receiver {
                                     dataEntries.add(new ZipEntryGroup.Entry(entry.getName(), size));
                                 }
 
-                                entry = zipInputStream.getNextZipEntry();
+                                entry = zipInputStream.getNextEntry();
                             }
                         }
                     }
@@ -302,6 +303,11 @@ public class ZipReceiver implements Receiver {
                 feedGroups.computeIfAbsent(feedKey, k -> new ArrayList<>()).add(group);
             });
 
+            // Log if we received a multi feed zip.
+            if (feedGroups.size() > 1) {
+                LOGGER.info("Received multi feed zip");
+            }
+
             // Check all the feeds are ok.
             final List<FeedKey> includeList = new ArrayList<>();
             for (final FeedKey feedKey : feedGroups.keySet()) {
@@ -318,7 +324,7 @@ public class ZipReceiver implements Receiver {
             //  written rather than trying to form a canonical zip.
 
             // Now make new zip files for each of the feeds we want to include.
-            final Path splitZipDir = receivingDirProvider.get();
+            final Path splitZipDir = splitZipDirProvider.get();
             final List<Path> groupDirs = new ArrayList<>();
             long id = 1;
             try (final ZipFile zipFile = new ZipFile(Files.newByteChannel(zipFilePath))) {
@@ -374,7 +380,7 @@ public class ZipReceiver implements Receiver {
     }
 
     private void writeZip(final ZipFile zip,
-                          final List<ZipEntryGroup> zipEntryGroups,
+                          final List<ZipEntryGroup> zipEntryGroupsIn,
                           final FeedKey feedKey,
                           final AttributeMap attributeMap,
                           final FileGroup fileGroup,
@@ -382,24 +388,43 @@ public class ZipReceiver implements Receiver {
         try {
             // Write zip.
             int count = 1;
+            final List<ZipEntryGroup> zipEntryGroupsOut = new ArrayList<>();
             try (final ZipWriter zipWriter = new ZipWriter(fileGroup.getZip(), buffer)) {
-                for (final ZipEntryGroup zipEntryGroup : zipEntryGroups) {
+                for (final ZipEntryGroup zipEntryGroupIn : zipEntryGroupsIn) {
+                    final ZipEntryGroup zipEntryGroupOut = new ZipEntryGroup(feedKey.feed(), feedKey.type());
                     final String baseNameOut = NumericFileNameUtil.create(count);
-                    addEntry(zip, zipWriter, zipEntryGroup.getManifestEntry(), baseNameOut,
-                            StroomZipFileType.MANIFEST);
-                    addEntry(zip, zipWriter, zipEntryGroup.getMetaEntry(), baseNameOut,
-                            StroomZipFileType.META);
-                    addEntry(zip, zipWriter, zipEntryGroup.getContextEntry(), baseNameOut,
-                            StroomZipFileType.CONTEXT);
-                    addEntry(zip, zipWriter, zipEntryGroup.getDataEntry(), baseNameOut,
-                            StroomZipFileType.DATA);
+                    zipEntryGroupOut.setManifestEntry(
+                            addEntry(zip,
+                                    zipWriter,
+                                    zipEntryGroupIn.getManifestEntry(),
+                                    baseNameOut,
+                                    StroomZipFileType.MANIFEST));
+                    zipEntryGroupOut.setMetaEntry(
+                            addEntry(zip,
+                                    zipWriter,
+                                    zipEntryGroupIn.getMetaEntry(),
+                                    baseNameOut,
+                                    StroomZipFileType.META));
+                    zipEntryGroupOut.setContextEntry(
+                            addEntry(zip,
+                                    zipWriter,
+                                    zipEntryGroupIn.getContextEntry(),
+                                    baseNameOut,
+                                    StroomZipFileType.CONTEXT));
+                    zipEntryGroupOut.setDataEntry(
+                            addEntry(zip,
+                                    zipWriter,
+                                    zipEntryGroupIn.getDataEntry(),
+                                    baseNameOut,
+                                    StroomZipFileType.DATA));
 
                     count++;
+                    zipEntryGroupsOut.add(zipEntryGroupOut);
                 }
             }
 
             // Write zip entries.
-            ZipEntryGroupUtil.write(fileGroup.getEntries(), zipEntryGroups);
+            ZipEntryGroupUtil.write(fileGroup.getEntries(), zipEntryGroupsOut);
 
             // Write meta.
             AttributeMapUtil.addFeedAndType(attributeMap, feedKey.feed(), feedKey.type());
@@ -413,17 +438,19 @@ public class ZipReceiver implements Receiver {
         }
     }
 
-    private void addEntry(final ZipFile zip,
-                          final ZipWriter zipWriter,
-                          final ZipEntryGroup.Entry entry,
-                          final String baseNameOut,
-                          final StroomZipFileType stroomZipFileType) throws IOException {
+    private ZipEntryGroup.Entry addEntry(final ZipFile zip,
+                                         final ZipWriter zipWriter,
+                                         final ZipEntryGroup.Entry entry,
+                                         final String baseNameOut,
+                                         final StroomZipFileType stroomZipFileType) throws IOException {
         if (entry != null) {
             final ZipArchiveEntry zipEntry = zip.getEntry(entry.getName());
             final InputStream inputStream = zip.getInputStream(zipEntry);
             final String outEntryName = baseNameOut + stroomZipFileType.getDotExtension();
             zipWriter.writeStream(outEntryName, inputStream);
+            return new Entry(outEntryName, entry.getUncompressedSize());
         }
+        return null;
     }
 
     public void setDestination(final Consumer<Path> destination) {

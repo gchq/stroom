@@ -25,7 +25,6 @@ public class DirQueueFactory {
     public DirQueue create(String dirName,
                            final int order,
                            final String name) {
-        dirName = dirName.replaceAll("[^a-zA-Z0-9-_]", "_");
         final Path rootDir = repoDir.resolve(dirName);
         return new DirQueue(rootDir, queueMonitors, fileStores, order, name);
     }

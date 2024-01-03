@@ -12,11 +12,14 @@ import java.nio.file.Path;
 import java.util.Iterator;
 import java.util.Optional;
 import java.util.function.BiFunction;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 public class DirUtil {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DirUtil.class);
+
+    private static final Pattern SAFE_NAME_PATTERN = Pattern.compile("[^a-zA-Z0-9_-]");
 
     public static Path createPath(final Path root,
                                   final long id) {
@@ -149,6 +152,10 @@ public class DirUtil {
             LOGGER.error(() -> "Error creating directories for: " + FileUtil.getCanonicalPath(path), e);
             throw new UncheckedIOException(e);
         }
+    }
+
+    public static String makeSafeName(final String string) {
+        return SAFE_NAME_PATTERN.matcher(string).replaceAll("_");
     }
 
     private record DirId(Path dir, long num) {

@@ -27,7 +27,7 @@ public class Aggregator {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(Aggregator.class);
 
     private final CleanupDirQueue deleteDirQueue;
-    private final NumberedDirProvider tempAggregatingDirProvider;
+    private final NumberedDirProvider tempAggregatesDirProvider;
 
     private Consumer<Path> destination;
 
@@ -37,16 +37,16 @@ public class Aggregator {
                       final TempDirProvider tempDirProvider) {
         this.deleteDirQueue = deleteDirQueue;
 
-        // Make aggregating dir.
-        final Path aggregatingDir = tempDirProvider.get().resolve("10_aggregating");
-        DirUtil.ensureDirExists(aggregatingDir);
+        // Make temp aggregates dir.
+        final Path aggregatesDir = tempDirProvider.get().resolve(DirNames.AGGREGATES);
+        DirUtil.ensureDirExists(aggregatesDir);
 
         // This is a temporary location and can be cleaned completely on startup.
-        if (!FileUtil.deleteContents(aggregatingDir)) {
-            LOGGER.error(() -> "Failed to delete contents of " + FileUtil.getCanonicalPath(aggregatingDir));
+        if (!FileUtil.deleteContents(aggregatesDir)) {
+            LOGGER.error(() -> "Failed to delete contents of " + FileUtil.getCanonicalPath(aggregatesDir));
         }
 
-        tempAggregatingDirProvider = new NumberedDirProvider(aggregatingDir);
+        tempAggregatesDirProvider = new NumberedDirProvider(aggregatesDir);
     }
 
     public void addDir(final Path dir) {
@@ -68,7 +68,7 @@ public class Aggregator {
 
             } else {
                 // Merge the files into an aggregate.
-                final Path tempDir = tempAggregatingDirProvider.get();
+                final Path tempDir = tempAggregatesDirProvider.get();
                 final FileGroup outputFileGroup = new FileGroup(tempDir);
                 final AtomicLong count = new AtomicLong();
                 final AtomicBoolean doneMeta = new AtomicBoolean();
@@ -96,7 +96,7 @@ public class Aggregator {
                                             new BufferedInputStream(Files.newInputStream(fileGroup.getZip())))) {
                                 String lastBaseName = null;
                                 String outputBaseName = null;
-                                ZipArchiveEntry zipEntry = zipInputStream.getNextZipEntry();
+                                ZipArchiveEntry zipEntry = zipInputStream.getNextEntry();
                                 while (zipEntry != null) {
                                     final String name = zipEntry.getName();
                                     final FileName fileName = FileName.parse(name);
@@ -110,7 +110,7 @@ public class Aggregator {
                                             outputBaseName + "." + fileName.getExtension(),
                                             zipInputStream);
 
-                                    zipEntry = zipInputStream.getNextZipEntry();
+                                    zipEntry = zipInputStream.getNextEntry();
                                 }
 
                             } catch (final IOException e) {

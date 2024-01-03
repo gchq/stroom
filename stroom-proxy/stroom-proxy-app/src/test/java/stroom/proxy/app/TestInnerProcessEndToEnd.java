@@ -40,7 +40,7 @@ import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class TestAggregation {
+class TestInnerProcessEndToEnd {
 
     @Inject
     private ProxyLifecycle proxyLifecycle;
@@ -58,14 +58,27 @@ class TestAggregation {
     @Test
     void testSimpleZip() throws Exception {
         final String feedName = FileSystemTestUtil.getUniqueTestString();
-        test(1, 10001, 10, () -> sendSimpleZip(feedName));
+        test(1, 10001, 10, () -> sendSimpleZip(feedName, 1));
     }
 
     @Test
-    void testComplexZip() throws Exception {
+    void testSourceSplitting() throws Exception {
         final String feedName1 = FileSystemTestUtil.getUniqueTestString();
         final String feedName2 = FileSystemTestUtil.getUniqueTestString();
-        test(1, 10001, 20, () -> sendComplexZip(feedName1, feedName2));
+        test(1, 10001, 20, () -> sendComplexZip(feedName1, feedName2, 1));
+    }
+
+    @Test
+    void testAggregateSplitting() throws Exception {
+        final String feedName = FileSystemTestUtil.getUniqueTestString();
+        test(1, 1, 2, () -> sendSimpleZip(feedName, 2001));
+    }
+
+    @Test
+    void testSourceAndAggregateSplitting() throws Exception {
+        final String feedName1 = FileSystemTestUtil.getUniqueTestString();
+        final String feedName2 = FileSystemTestUtil.getUniqueTestString();
+        test(1, 1, 4, () -> sendComplexZip(feedName1, feedName2, 2001));
     }
 
 
@@ -139,6 +152,7 @@ class TestAggregation {
             assertThat(maxId).isLessThanOrEqualTo(expectedOutputStreamCount + 1);
 
         } finally {
+            proxyLifecycle.stop();
             FileUtil.deleteContents(root);
         }
     }
@@ -160,7 +174,7 @@ class TestAggregation {
         }
     }
 
-    private void sendSimpleZip(final String feedName) {
+    private void sendSimpleZip(final String feedName, final int entryCount) {
         final AttributeMap attributeMap = new AttributeMap();
         attributeMap.put(StandardHeaderArguments.FEED, feedName);
         attributeMap.put(StandardHeaderArguments.TYPE, StreamTypeNames.RAW_EVENTS);
@@ -169,8 +183,10 @@ class TestAggregation {
 
         try (final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream()) {
             try (final ZipWriter zipWriter = new ZipWriter(byteArrayOutputStream, LocalByteBuffer.get())) {
-                zipWriter.writeAttributeMap("001.meta", attributeMap);
-                zipWriter.writeString("001.dat", "test");
+                for (int i = 0; i < entryCount; i++) {
+                    zipWriter.writeAttributeMap(i + ".meta", attributeMap);
+                    zipWriter.writeString(i + ".dat", "test");
+                }
             }
 
             dataBytes = byteArrayOutputStream.toByteArray();
@@ -190,22 +206,24 @@ class TestAggregation {
         }
     }
 
-    private void sendComplexZip(final String feedName1, final String feedName2) {
+    private void sendComplexZip(final String feedName1, final String feedName2, final int entryCount) {
         final byte[] dataBytes;
 
         try (final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream()) {
             try (final ZipWriter zipWriter = new ZipWriter(byteArrayOutputStream, LocalByteBuffer.get())) {
-                final AttributeMap attributeMap1 = new AttributeMap();
-                attributeMap1.put(StandardHeaderArguments.FEED, feedName1);
-                attributeMap1.put(StandardHeaderArguments.TYPE, StreamTypeNames.RAW_EVENTS);
-                zipWriter.writeAttributeMap("001.meta", attributeMap1);
-                zipWriter.writeString("001.dat", "test");
+                for (int i = 0; i < entryCount; i++) {
+                    final AttributeMap attributeMap1 = new AttributeMap();
+                    attributeMap1.put(StandardHeaderArguments.FEED, feedName1);
+                    attributeMap1.put(StandardHeaderArguments.TYPE, StreamTypeNames.RAW_EVENTS);
+                    zipWriter.writeAttributeMap(i + "_1.meta", attributeMap1);
+                    zipWriter.writeString(i + "_1.dat", "test");
 
-                final AttributeMap attributeMap2 = new AttributeMap();
-                attributeMap2.put(StandardHeaderArguments.FEED, feedName2);
-                attributeMap2.put(StandardHeaderArguments.TYPE, StreamTypeNames.RAW_EVENTS);
-                zipWriter.writeAttributeMap("002.meta", attributeMap2);
-                zipWriter.writeString("002.dat", "test");
+                    final AttributeMap attributeMap2 = new AttributeMap();
+                    attributeMap2.put(StandardHeaderArguments.FEED, feedName2);
+                    attributeMap2.put(StandardHeaderArguments.TYPE, StreamTypeNames.RAW_EVENTS);
+                    zipWriter.writeAttributeMap(i + "_2.meta", attributeMap2);
+                    zipWriter.writeString(i + "_2.dat", "test");
+                }
             }
 
             dataBytes = byteArrayOutputStream.toByteArray();

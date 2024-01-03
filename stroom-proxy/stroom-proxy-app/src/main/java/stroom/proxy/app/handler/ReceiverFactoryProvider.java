@@ -17,10 +17,10 @@ public class ReceiverFactoryProvider implements Provider<ReceiverFactory> {
 
     @Inject
     public ReceiverFactoryProvider(final ProxyConfig proxyConfig,
-                                   final Provider<InstantForwardHttpPost> directForwardHttpPostProvider,
-                                   final Provider<InstantForwardFile> directForwardFileProvider,
+                                   final Provider<InstantForwardHttpPost> instantForwardHttpPostProvider,
+                                   final Provider<InstantForwardFile> instantForwardFileProvider,
                                    final Provider<Forwarder> forwarderProvider,
-                                   final DirQueueFactory sequentialDirQueueFactory,
+                                   final DirQueueFactory dirQueueFactory,
                                    final Provider<Aggregator> aggregatorProvider,
                                    final Provider<PreAggregator> preAggregatorProvider,
                                    final Provider<ZipReceiver> zipReceiverProvider,
@@ -51,7 +51,7 @@ public class ReceiverFactoryProvider implements Provider<ReceiverFactory> {
                         .findFirst();
                 // Create a direct forwarding HTTP POST receiver.
                 optional.ifPresent(forwardHttpPostConfig ->
-                        receiverFactory = directForwardHttpPostProvider.get().get(forwardHttpPostConfig));
+                        receiverFactory = instantForwardHttpPostProvider.get().get(forwardHttpPostConfig));
             }
 
             // See if we can create a direct file forwarding receiver.
@@ -64,56 +64,60 @@ public class ReceiverFactoryProvider implements Provider<ReceiverFactory> {
                 if (optional.isPresent()) {
                     // Create a direct forwarding file receiver.
                     optional.ifPresent(forwardFileConfig ->
-                            receiverFactory = directForwardFileProvider.get().get(forwardFileConfig));
+                            receiverFactory = instantForwardFileProvider.get().get(forwardFileConfig));
                 }
             }
         } else {
             // Create forwarder.
             final Forwarder forwarder = forwarderProvider.get();
             // Create the forwarding queue.
-            final DirQueue forwardQueue = sequentialDirQueueFactory.create(
-                    "20_forwarding",
-                    20,
-                    "Forwarding");
+            final DirQueue forwardInputQueue = dirQueueFactory.create(
+                    DirNames.FORWARDING_INPUT_QUEUE,
+                    40,
+                    "Forwarding Input Queue");
             // Move items from the forwarding queue to the forwarder.
-            final DirQueueTransfer forwardingQueueTransfer = new DirQueueTransfer(forwardQueue::next, forwarder::add);
-            proxyServices.addParallelExecutor("Forwarding queue transfer", () -> forwardingQueueTransfer, 1);
+            final DirQueueTransfer forwardingInputQueueTransfer =
+                    new DirQueueTransfer(forwardInputQueue::next, forwarder::add);
+            proxyServices.addParallelExecutor("Forwarding queue transfer", () ->
+                    forwardingInputQueueTransfer, 1);
 
             if (proxyConfig.getAggregatorConfig() != null && proxyConfig.getAggregatorConfig().isEnabled()) {
                 // If we are aggregating then create the aggregating moving parts.
 
                 // Create the aggregator.
                 final Aggregator aggregator = aggregatorProvider.get();
-                aggregator.setDestination(forwardQueue::add);
+                aggregator.setDestination(forwardInputQueue::add);
 
-                final DirQueue preAggregateQueue = sequentialDirQueueFactory.create(
-                        "10_pre_aggregate",
-                        10,
-                        "Pre Aggregate");
+                final DirQueue aggregateInputQueue = dirQueueFactory.create(
+                        DirNames.AGGREGATE_INPUT_QUEUE,
+                        30,
+                        "Aggregate Input Queue");
                 // Move items from the pre aggregate queue to the aggregator.
                 // TODO : Could use more than one thread here.
-                final DirQueueTransfer preAggregateQueueTransfer =
-                        new DirQueueTransfer(preAggregateQueue::next, aggregator::addDir);
-                proxyServices.addParallelExecutor("Pre aggregate queue transfer", () -> preAggregateQueueTransfer, 1);
+                final DirQueueTransfer aggregateInputQueueTransfer =
+                        new DirQueueTransfer(aggregateInputQueue::next, aggregator::addDir);
+                proxyServices.addParallelExecutor("Aggregate input queue transfer", () ->
+                        aggregateInputQueueTransfer, 1);
 
                 // Create the pre aggregator.
                 final PreAggregator preAggregator = preAggregatorProvider.get();
-                preAggregator.setDestination(preAggregateQueue::add);
+                preAggregator.setDestination(aggregateInputQueue::add);
 
-                final DirQueue fileStoreQueue = sequentialDirQueueFactory.create(
-                        "03_store",
-                        3,
-                        "File store");
+                final DirQueue preAggregateInputQueue = dirQueueFactory.create(
+                        DirNames.PRE_AGGREGATE_INPUT_QUEUE,
+                        20,
+                        "Pre Aggregate Input Queue");
                 // Move items from the file store to the pre aggregator.
-                final DirQueueTransfer fileStoreQueueTransfer =
-                        new DirQueueTransfer(fileStoreQueue::next, preAggregator::addDir);
-                proxyServices.addParallelExecutor("File store queue transfer", () -> fileStoreQueueTransfer, 1);
+                final DirQueueTransfer preAggregateInputQueueTransfer =
+                        new DirQueueTransfer(preAggregateInputQueue::next, preAggregator::addDir);
+                proxyServices.addParallelExecutor("Pre aggregate input queue transfer", () ->
+                        preAggregateInputQueueTransfer, 1);
 
                 // Create the receivers that will add data to the file store queue on receipt.
                 final SimpleReceiver simpleReceiver = simpleReceiverProvider.get();
-                simpleReceiver.setDestination(fileStoreQueue::add);
+                simpleReceiver.setDestination(preAggregateInputQueue::add);
                 final ZipReceiver zipReceiver = zipReceiverProvider.get();
-                zipReceiver.setDestination(fileStoreQueue::add);
+                zipReceiver.setDestination(preAggregateInputQueue::add);
 
                 receiverFactory = new StoringReceiverFactory(simpleReceiver, zipReceiver);
 
@@ -122,9 +126,9 @@ public class ReceiverFactoryProvider implements Provider<ReceiverFactory> {
 
                 // Create the receivers that will add data to the forward queue on receipt.
                 final SimpleReceiver simpleReceiver = simpleReceiverProvider.get();
-                simpleReceiver.setDestination(forwardQueue::add);
+                simpleReceiver.setDestination(forwardInputQueue::add);
                 final ZipReceiver zipReceiver = zipReceiverProvider.get();
-                zipReceiver.setDestination(forwardQueue::add);
+                zipReceiver.setDestination(forwardInputQueue::add);
 
                 receiverFactory = new StoringReceiverFactory(simpleReceiver, zipReceiver);
             }

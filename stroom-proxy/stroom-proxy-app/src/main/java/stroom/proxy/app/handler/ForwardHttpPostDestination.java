@@ -50,13 +50,14 @@ public class ForwardHttpPostDestination {
         this.retryDelay = retryDelay;
         this.maxRetries = maxRetries;
 
+        final String safeDirName = DirUtil.makeSafeName(destinationName);
         forwardQueue = sequentialDirQueueFactory.create(
-                "20_forward_" + destinationName,
-                20,
+                "50_forward_" + safeDirName,
+                50,
                 "forward - " + destinationName);
         retryQueue = sequentialDirQueueFactory.create(
-                "21_retry_" + destinationName,
-                21,
+                "51_retry_" + safeDirName,
+                51,
                 "retry - " + destinationName);
         final DirQueueTransfer forwarding = new DirQueueTransfer(forwardQueue::next, this::forwardDir);
         final DirQueueTransfer retrying = new DirQueueTransfer(retryQueue::next, this::retryDir);
@@ -70,8 +71,7 @@ public class ForwardHttpPostDestination {
                 retryThreads);
 
         // Create failure destination.
-        String failureDirName = "22_failure_" + destinationName;
-        failureDirName = failureDirName.replaceAll("[^a-zA-Z0-9-_]", "_");
+        final String failureDirName = "52_failure_" + safeDirName;
         final Path failureDir = repoDirProvider.get().resolve(failureDirName);
         DirUtil.ensureDirExists(failureDir);
         failureDestination = new ForwardFileDestinationImpl(failureDir);

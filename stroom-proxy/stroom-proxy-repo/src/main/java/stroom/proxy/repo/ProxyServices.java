@@ -33,9 +33,9 @@ public class ProxyServices implements Managed {
     public void addFrequencyExecutor(final String threadName,
                                      final Supplier<Runnable> runnableSupplier,
                                      final long frequencyMs) {
-        LOGGER.info("Creating frequency executor  '{}', frequencyMs: {}",
+        LOGGER.info("Creating frequency executor  '{}', frequency: {}",
                 threadName,
-                ModelStringUtil.formatCsv(frequencyMs));
+                ModelStringUtil.formatDurationString(frequencyMs, true));
         final FrequencyExecutor executor = new FrequencyExecutor(
                 threadName,
                 runnableSupplier,

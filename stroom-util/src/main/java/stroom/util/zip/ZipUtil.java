@@ -20,7 +20,6 @@ import stroom.util.io.AbstractFileVisitor;
 import stroom.util.io.CloseableUtil;
 import stroom.util.io.StreamUtil;
 
-import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
@@ -30,7 +29,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -44,7 +42,6 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.Enumeration;
 import java.util.List;
-import java.util.function.Consumer;
 import java.util.regex.Pattern;
 
 public final class ZipUtil {
@@ -118,7 +115,7 @@ public final class ZipUtil {
         try (final ZipArchiveInputStream zip =
                 new ZipArchiveInputStream(new BufferedInputStream(Files.newInputStream(zipFile)))) {
             ZipArchiveEntry zipEntry;
-            while ((zipEntry = zip.getNextZipEntry()) != null) {
+            while ((zipEntry = zip.getNextEntry()) != null) {
                 // Get output file.
                 final Path file = dir.resolve(zipEntry.getName());
 
