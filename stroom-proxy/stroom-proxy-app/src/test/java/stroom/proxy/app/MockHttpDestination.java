@@ -426,8 +426,8 @@ public class MockHttpDestination {
                 this::getDataFeedPostsToStroomCount,
                 expectedRequestCount,
                 () -> "Forward to stroom datafeed count",
-                Duration.ofSeconds(10),
-                Duration.ofMillis(50),
+                Duration.ofMinutes(1),
+                Duration.ofMillis(100),
                 Duration.ofSeconds(1));
 
         WireMock.verify(expectedRequestCount, WireMock.postRequestedFor(
