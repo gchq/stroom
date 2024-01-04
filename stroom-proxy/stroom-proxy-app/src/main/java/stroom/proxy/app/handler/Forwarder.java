@@ -10,6 +10,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -91,7 +92,7 @@ public class Forwarder {
             // Create copies.
             for (int i = 0; i < destinations.size() - 1; i++) {
                 final Path copy = copiesDirProvider.get();
-                FileUtil.deepCopy(dir, copy);
+                copyContents(dir, copy);
                 paths.add(copy);
             }
 
@@ -105,6 +106,22 @@ public class Forwarder {
                 destination.accept(path);
             }
 
+        } catch (final IOException e) {
+            LOGGER.error(e::getMessage, e);
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    private void copyContents(final Path source, final Path target) {
+        try (final Stream<Path> stream = Files.list(source)) {
+            stream.forEach(path -> {
+                try {
+                    Files.copy(path, target.resolve(path.getFileName()));
+                } catch (final IOException e) {
+                    LOGGER.error(e::getMessage, e);
+                    throw new UncheckedIOException(e);
+                }
+            });
         } catch (final IOException e) {
             LOGGER.error(e::getMessage, e);
             throw new UncheckedIOException(e);

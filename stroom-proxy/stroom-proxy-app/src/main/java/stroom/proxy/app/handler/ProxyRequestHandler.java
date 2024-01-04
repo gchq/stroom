@@ -7,9 +7,11 @@ import stroom.proxy.StroomStatusCode;
 import stroom.receive.common.RequestHandler;
 import stroom.receive.common.StroomStreamException;
 import stroom.util.cert.CertificateExtractor;
+import stroom.util.date.DateUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.net.HostNameUtil;
 
 import org.apache.http.HttpStatus;
 
@@ -35,6 +37,7 @@ public class ProxyRequestHandler implements RequestHandler {
     private final ProxyId proxyId;
     private final CertificateExtractor certificateExtractor;
     private final ReceiverFactory receiverFactory;
+    private final String hostName;
 
     @Inject
     public ProxyRequestHandler(final ProxyId proxyId,
@@ -43,6 +46,7 @@ public class ProxyRequestHandler implements RequestHandler {
         this.proxyId = proxyId;
         this.certificateExtractor = certificateExtractor;
         this.receiverFactory = receiverFactory;
+        this.hostName = HostNameUtil.determineHostName();
     }
 
     @Override
@@ -60,6 +64,13 @@ public class ProxyRequestHandler implements RequestHandler {
 
             LOGGER.debug(() -> "Adding proxy id attribute: " + proxyIdString + ": " + requestUuid);
             attributeMap.put(proxyIdString, requestUuid);
+
+            // Save the time the data was received.
+            attributeMap.computeIfAbsent(StandardHeaderArguments.RECEIVED_TIME, k ->
+                    DateUtil.createNormalDateTimeString());
+
+            // Append the hostname.
+            appendReceivedPath(attributeMap);
 
             // Treat differently depending on compression type.
             String compression = attributeMap.get(StandardHeaderArguments.COMPRESSION);
@@ -94,5 +105,24 @@ public class ProxyRequestHandler implements RequestHandler {
         } catch (final StroomStreamException e) {
             e.sendErrorResponse(response);
         }
+    }
+
+    private void appendReceivedPath(final AttributeMap attributeMap) {
+//        if (appendReceivedPath) {
+        // Here we build up a list of stroom servers that have received
+        // the message
+
+        // The initial one will be initially set at the boundary proxy/stroom server
+        final String entryReceivedServer = attributeMap.get(StandardHeaderArguments.RECEIVED_PATH);
+
+        if (entryReceivedServer != null) {
+            if (!entryReceivedServer.contains(hostName)) {
+                attributeMap.put(StandardHeaderArguments.RECEIVED_PATH,
+                        entryReceivedServer + "," + hostName);
+            }
+        } else {
+            attributeMap.put(StandardHeaderArguments.RECEIVED_PATH, hostName);
+        }
+//        }
     }
 }

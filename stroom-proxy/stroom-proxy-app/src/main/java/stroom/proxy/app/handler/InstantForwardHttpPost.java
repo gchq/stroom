@@ -26,8 +26,8 @@ public class InstantForwardHttpPost {
     public ReceiverFactory get(final ForwardHttpPostConfig forwardHttpPostConfig) {
         // Create a direct forwarding HTTP POST receiver.
         final HttpSender httpSender = httpSenderFactory.create(forwardHttpPostConfig);
-        final DirectForwardHttpPostReceiver directForwardHttpPostReceiver =
-                new DirectForwardHttpPostReceiver(httpSender);
+        final InstantForwardHttpPostReceiver directForwardHttpPostReceiver =
+                new InstantForwardHttpPostReceiver(httpSender);
         return new InstantForwardHttpPostReceiverFactory(
                 attributeMapFilterFactory.create(),
                 directForwardHttpPostReceiver,
@@ -37,11 +37,11 @@ public class InstantForwardHttpPost {
     private static class InstantForwardHttpPostReceiverFactory implements ReceiverFactory {
 
         private final AttributeMapFilter attributeMapFilter;
-        private final DirectForwardHttpPostReceiver receiver;
+        private final InstantForwardHttpPostReceiver receiver;
         private final DropReceiver dropReceiver;
 
         public InstantForwardHttpPostReceiverFactory(final AttributeMapFilter attributeMapFilter,
-                                                     final DirectForwardHttpPostReceiver receiver,
+                                                     final InstantForwardHttpPostReceiver receiver,
                                                      final DropReceiver dropReceiver) {
             this.attributeMapFilter = attributeMapFilter;
             this.receiver = receiver;
@@ -58,11 +58,11 @@ public class InstantForwardHttpPost {
         }
     }
 
-    private static class DirectForwardHttpPostReceiver implements Receiver {
+    private static class InstantForwardHttpPostReceiver implements Receiver {
 
         private final HttpSender httpSender;
 
-        public DirectForwardHttpPostReceiver(final HttpSender httpSender) {
+        public InstantForwardHttpPostReceiver(final HttpSender httpSender) {
             this.httpSender = httpSender;
         }
 

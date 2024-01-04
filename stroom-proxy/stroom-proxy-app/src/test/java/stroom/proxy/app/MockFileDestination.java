@@ -134,6 +134,7 @@ public class MockFileDestination {
                                             entry = zipArchiveInputStream.getNextEntry();
                                         }
                                     }
+
                                 } catch (Exception e) {
                                     throw new RuntimeException(e);
                                 }
@@ -185,9 +186,9 @@ public class MockFileDestination {
 
         // Check zip content file count.
         final Integer[] sizes = new Integer[count];
-        Arrays.fill(sizes, 3);
-        sizes[sizes.length - 1] = 1;
-        sizes[sizes.length - 2] = 1;
+        Arrays.fill(sizes, 6);
+        sizes[sizes.length - 1] = 2;
+        sizes[sizes.length - 2] = 2;
 
         Assertions.assertThat(forwardFileItems.stream()
                         .map(forwardFileItem -> forwardFileItem.zipItems().size())
@@ -196,9 +197,13 @@ public class MockFileDestination {
 
         // Check zip contents.
         final List<String> expectedFiles = List.of(
+                "0000000001.meta",
                 "0000000001.dat",
+                "0000000002.meta",
                 "0000000002.dat",
+                "0000000003.meta",
                 "0000000003.dat",
+                "0000000004.meta",
                 "0000000004.dat");
         assertForwardFileItemContent(forwardFileItems, expectedFiles);
     }

@@ -126,7 +126,7 @@ public class PreAggregator {
                         try (final BufferedReader bufferedReader = Files.newBufferedReader(fileGroup.getEntries())) {
                             String line = bufferedReader.readLine();
                             while (line != null) {
-                                final ZipEntryGroup zipEntryGroup = ZipEntryGroupUtil.readLine(line);
+                                final ZipEntryGroup zipEntryGroup = ZipEntryGroup.read(line);
                                 final long totalUncompressedSize = zipEntryGroup.getTotalUncompressedSize();
                                 aggregateState.itemCount++;
                                 aggregateState.totalBytes += totalUncompressedSize;
@@ -196,7 +196,7 @@ public class PreAggregator {
             try (final BufferedReader bufferedReader = Files.newBufferedReader(fileGroup.getEntries())) {
                 String line = bufferedReader.readLine();
                 while (line != null) {
-                    final ZipEntryGroup zipEntryGroup = ZipEntryGroupUtil.readLine(line);
+                    final ZipEntryGroup zipEntryGroup = ZipEntryGroup.read(line);
                     final long totalUncompressedSize = zipEntryGroup.getTotalUncompressedSize();
 
                     // If the current aggregate has items then we might want to close and start a new one.

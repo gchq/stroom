@@ -123,7 +123,7 @@ public class SimpleReceiver implements Receiver {
 
                         // Write zip entry.
                         try (final Writer entryWriter = Files.newBufferedWriter(fileGroup.getEntries())) {
-                            ZipEntryGroupUtil.writeLine(entryWriter, zipEntryGroup);
+                            zipEntryGroup.write(entryWriter);
                         }
 
                         // Write the meta.

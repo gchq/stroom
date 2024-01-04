@@ -28,7 +28,7 @@ public class TestZipEntryGroup extends StroomUnitTest {
                 zipEntryGroup.setMetaEntry(new Entry(i + ".meta", 234));
                 zipEntryGroup.setContextEntry(new Entry(i + ".ctx", 345));
                 zipEntryGroup.setDataEntry(new Entry(i + ".dat", 456));
-                ZipEntryGroupUtil.writeLine(writer, zipEntryGroup);
+                zipEntryGroup.write(writer);
             }
             writer.flush();
             data = writer.toString();
@@ -39,7 +39,7 @@ public class TestZipEntryGroup extends StroomUnitTest {
             String line = bufferedReader.readLine();
             int i = 0;
             while (line != null) {
-                final ZipEntryGroup zipEntryGroup = ZipEntryGroupUtil.readLine(line);
+                final ZipEntryGroup zipEntryGroup = ZipEntryGroup.read(line);
                 assertThat(zipEntryGroup.getFeedName()).isEqualTo("test_feed");
                 assertThat(zipEntryGroup.getTypeName()).isEqualTo("test_type");
                 assertThat(zipEntryGroup.getManifestEntry().getName()).isEqualTo(i + ".mf");

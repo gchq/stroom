@@ -249,7 +249,7 @@ public class AttributeMapUtil {
         attributeMap.computeIfAbsent(StandardHeaderArguments.REMOTE_HOST, key ->
                 nullIfBlank(httpServletRequest.getRemoteHost()));
         attributeMap.computeIfAbsent(StandardHeaderArguments.REMOTE_ADDRESS, key ->
-                nullIfBlank(httpServletRequest.getRemoteHost()));
+                nullIfBlank(httpServletRequest.getRemoteAddr()));
     }
 
     private static String nullIfBlank(final String str) {

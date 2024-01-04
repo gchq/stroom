@@ -211,7 +211,7 @@ public class ZipReceiver implements Receiver {
                     // Write out entries.
                     try (final Writer writer = Files.newBufferedWriter(fileGroup.getEntries())) {
                         for (final ZipEntryGroup zipEntryGroup : zipEntryGroups) {
-                            ZipEntryGroupUtil.writeLine(writer, zipEntryGroup);
+                            zipEntryGroup.write(writer);
                         }
                     }
 
@@ -478,11 +478,12 @@ public class ZipReceiver implements Receiver {
                                         baseNameOut,
                                         StroomZipFileType.MANIFEST));
                         zipEntryGroupOut.setMetaEntry(
-                                addEntry(zip,
+                                addMetaEntry(zip,
                                         zipWriter,
                                         zipEntryGroupIn.getMetaEntry(),
                                         baseNameOut,
-                                        StroomZipFileType.META));
+                                        StroomZipFileType.META,
+                                        attributeMap));
                         zipEntryGroupOut.setContextEntry(
                                 addEntry(zip,
                                         zipWriter,
@@ -499,7 +500,7 @@ public class ZipReceiver implements Receiver {
                         count++;
 
                         // Write zip entry.
-                        ZipEntryGroupUtil.writeLine(entryWriter, zipEntryGroupOut);
+                        zipEntryGroupOut.write(entryWriter);
                     }
                 }
             }
@@ -529,6 +530,25 @@ public class ZipReceiver implements Receiver {
             return new Entry(outEntryName, entry.getUncompressedSize());
         }
         return null;
+    }
+
+    private static ZipEntryGroup.Entry addMetaEntry(final ZipFile zip,
+                                                    final ProxyZipWriter zipWriter,
+                                                    final ZipEntryGroup.Entry entry,
+                                                    final String baseNameOut,
+                                                    final StroomZipFileType stroomZipFileType,
+                                                    final AttributeMap globalAttributeMap) throws IOException {
+        final AttributeMap entryAttributeMap = AttributeMapUtil.cloneAllowable(globalAttributeMap);
+        if (entry != null) {
+            final ZipArchiveEntry zipEntry = zip.getEntry(entry.getName());
+            final InputStream inputStream = zip.getInputStream(zipEntry);
+            AttributeMapUtil.read(inputStream, entryAttributeMap);
+        }
+
+        final byte[] bytes = AttributeMapUtil.toByteArray(entryAttributeMap);
+        final String outEntryName = baseNameOut + stroomZipFileType.getDotExtension();
+        zipWriter.writeStream(outEntryName, new ByteArrayInputStream(bytes));
+        return new Entry(outEntryName, bytes.length);
     }
 
     public void setDestination(final Consumer<Path> destination) {

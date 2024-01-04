@@ -65,25 +65,25 @@ public class TestEndToEndStoreAndForwardToFileAndHttp extends AbstractEndToEndTe
 
         // Two feeds each send 4, agg max items of 3 so two batches each
         final PostDataHelper postDataHelper = createPostDataHelper();
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < 16; i++) {
             postDataHelper.sendTestData1();
             postDataHelper.sendTestData2();
         }
 
-        Assertions.assertThat(postDataHelper.getPostCount())
-                .isEqualTo(8);
+        assertThat(postDataHelper.getPostCount())
+                .isEqualTo(32);
 
-        // Assert file contents.
-        mockFileDestination.assertFileContents(getConfig());
+        // Assert the contents of the files.
+        mockFileDestination.assertFileContents(getConfig(), 12);
 
         // Health check sends in a feed status check with DUMMY_FEED to see if stroom is available
         mockHttpDestination.assertFeedStatusCheck();
 
-        // Check the HTTP forwarding
-        mockHttpDestination.assertRequestCount(4);
+        // Check number of forwarded files.
+        mockHttpDestination.assertRequestCount(12);
 
-        // Assert the posts.
-        mockHttpDestination.assertPosts();
+        // Assert the content of posts
+        mockHttpDestination.assertPosts(12);
 
         // Health check sends in a feed status check with DUMMY_FEED to see if stroom is available
         mockHttpDestination.assertFeedStatusCheck();

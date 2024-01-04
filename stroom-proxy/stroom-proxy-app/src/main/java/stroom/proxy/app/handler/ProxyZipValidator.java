@@ -6,8 +6,11 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * <p>
@@ -38,8 +41,21 @@ public class ProxyZipValidator {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ProxyZipValidator.class);
 
+    private static final Set<StroomZipFileType> ALLOWED_BEFORE_META = Collections.singleton(
+            StroomZipFileType.MANIFEST);
+    private static final Set<StroomZipFileType> ALLOWED_BEFORE_CONTEXT = Set.of(
+            StroomZipFileType.MANIFEST,
+            StroomZipFileType.META);
+    private static final Set<StroomZipFileType> ALLOWED_BEFORE_DATA = Set.of(
+            StroomZipFileType.MANIFEST,
+            StroomZipFileType.META,
+            StroomZipFileType.CONTEXT);
+    private static final Set<StroomZipFileType> REQUIRED_BEFORE_DATA = Set.of(
+            StroomZipFileType.META);
+
     private String lastBaseName;
     private StroomZipFileType lastType;
+    private final Set<StroomZipFileType> lastTypes = new HashSet<>();
     private boolean valid = true;
     private long count;
     private String errorMessage;
@@ -68,24 +84,24 @@ public class ProxyZipValidator {
                                 expectedBaseName +
                                 "'");
                     } else {
-                        // Check the extension order with no previous extension as this is a new group.
-                        checkExtensionOrder(entryName, stroomZipFileType, null);
+                        // Set no previous extension as this is a new group.
+                        lastTypes.clear();
                     }
-
-                } else {
-                    // Check that the file type follows the expected order.
-                    checkExtensionOrder(entryName, stroomZipFileType, lastType);
                 }
+
+                // Check that the file type follows the expected order.
+                checkExtensionOrder(entryName, stroomZipFileType, lastTypes);
 
                 lastBaseName = fileName.getBaseName();
                 lastType = stroomZipFileType;
+                lastTypes.add(stroomZipFileType);
             }
         }
     }
 
     private void checkExtensionOrder(final String entryName,
                                      final StroomZipFileType type,
-                                     final StroomZipFileType lastType) {
+                                     final Set<StroomZipFileType> lastTypes) {
         // Check that the file type follows the expected order.
         switch (type) {
             case MANIFEST -> {
@@ -94,27 +110,37 @@ public class ProxyZipValidator {
                 }
             }
             case META -> {
-                if (lastType != null &&
-                        !lastType.equals(StroomZipFileType.MANIFEST)) {
-                    error("A meta entry was found after " + lastType + " '" + entryName + "'");
+                if (isUnexpectedType(lastTypes, ALLOWED_BEFORE_META, Collections.emptySet())) {
+                    error("An unexpected meta entry was found '" + entryName + "'");
                 }
             }
             case CONTEXT -> {
-                if (lastType != null &&
-                        !lastType.equals(StroomZipFileType.MANIFEST) &&
-                        !lastType.equals(StroomZipFileType.META)) {
-                    error("A context entry was found after " + lastType + " '" + entryName + "'");
+                if (isUnexpectedType(lastTypes, ALLOWED_BEFORE_CONTEXT, Collections.emptySet())) {
+                    error("A unexpected context entry was found '" + entryName + "'");
                 }
             }
             case DATA -> {
-                if (lastType != null &&
-                        !lastType.equals(StroomZipFileType.MANIFEST) &&
-                        !lastType.equals(StroomZipFileType.META) &&
-                        !lastType.equals(StroomZipFileType.CONTEXT)) {
-                    error("A data entry was found after " + lastType + " '" + entryName + "'");
+                if (isUnexpectedType(lastTypes, ALLOWED_BEFORE_DATA, REQUIRED_BEFORE_DATA)) {
+                    error("An unexpected data entry was found '" + entryName + "'");
                 }
             }
         }
+    }
+
+    private boolean isUnexpectedType(final Set<StroomZipFileType> lastTypes,
+                                     final Set<StroomZipFileType> allowed,
+                                     final Set<StroomZipFileType> required) {
+        for (final StroomZipFileType stroomZipFileType : lastTypes) {
+            if (!allowed.contains(stroomZipFileType)) {
+                return true;
+            }
+        }
+        for (final StroomZipFileType stroomZipFileType : required) {
+            if (!lastTypes.contains(stroomZipFileType)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void finalCheck() {

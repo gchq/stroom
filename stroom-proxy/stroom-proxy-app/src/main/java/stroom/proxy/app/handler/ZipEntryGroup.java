@@ -1,11 +1,16 @@
 package stroom.proxy.app.handler;
 
+import stroom.util.json.JsonUtil;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+
+import java.io.IOException;
+import java.io.Writer;
 
 @JsonPropertyOrder({
         "feedName",
@@ -93,6 +98,16 @@ public class ZipEntryGroup {
 
     public void setDataEntry(final Entry dataEntry) {
         this.dataEntry = dataEntry;
+    }
+
+    public void write(final Writer writer) throws IOException {
+        final String json = JsonUtil.writeValueAsString(this, false);
+        writer.write(json);
+        writer.write("\n");
+    }
+
+    public static ZipEntryGroup read(final String line) throws IOException {
+        return JsonUtil.readValue(line, ZipEntryGroup.class);
     }
 
     @JsonIgnore

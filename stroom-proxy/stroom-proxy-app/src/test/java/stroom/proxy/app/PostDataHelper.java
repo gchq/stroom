@@ -2,7 +2,7 @@ package stroom.proxy.app;
 
 import stroom.proxy.app.handler.LocalByteBuffer;
 import stroom.proxy.app.handler.NumericFileNameUtil;
-import stroom.proxy.app.handler.ProxyZipWriter;
+import stroom.proxy.app.handler.ZipWriter;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -121,7 +121,7 @@ public class PostDataHelper {
             LOGGER.info("Sending POST request to {}", url);
 
             final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-            try (final ProxyZipWriter zipWriter = new ProxyZipWriter(outputStream, LocalByteBuffer.get())) {
+            try (final ZipWriter zipWriter = new ZipWriter(outputStream, LocalByteBuffer.get())) {
                 for (int i = 1; i <= entryCount; i++) {
                     final String name = NumericFileNameUtil.create(i) + ".dat";
                     zipWriter.writeString(name, data);
