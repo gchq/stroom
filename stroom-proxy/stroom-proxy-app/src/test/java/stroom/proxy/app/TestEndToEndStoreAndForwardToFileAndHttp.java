@@ -9,11 +9,9 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.time.StroomDuration;
 
 import com.github.tomakehurst.wiremock.client.WireMock;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
-
 import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;

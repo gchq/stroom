@@ -58,13 +58,10 @@ public final class ZipUtil {
 
     public static void zip(final Path zipFile, final Path dir, final Pattern includePattern,
                            final Pattern excludePattern) throws IOException {
-        final ZipArchiveOutputStream zipStream =
-                new ZipArchiveOutputStream(new BufferedOutputStream(Files.newOutputStream(zipFile)));
-
-        zip(dir, zipStream, includePattern, excludePattern);
-
-        zipStream.flush();
-        zipStream.close();
+        try (final ZipArchiveOutputStream zipStream =
+                new ZipArchiveOutputStream(new BufferedOutputStream(Files.newOutputStream(zipFile)))) {
+            zip(dir, zipStream, includePattern, excludePattern);
+        }
     }
 
     private static void zip(final Path parent, final ZipArchiveOutputStream zip,

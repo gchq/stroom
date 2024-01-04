@@ -1,9 +1,5 @@
 package stroom.proxy.app.guice;
 
-import stroom.proxy.app.handler.ForwardFileConfig;
-import stroom.proxy.app.handler.ForwardHttpPostConfig;
-import stroom.proxy.app.handler.ThreadConfig;
-
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 
@@ -105,19 +101,19 @@ public class ProxyConfigProvidersModule extends AbstractModule {
     @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
-    ThreadConfig getThreadConfig(
+    stroom.proxy.app.handler.FeedStatusConfig getFeedStatusConfig(
             final ProxyConfigProvider proxyConfigProvider) {
         return proxyConfigProvider.getConfigObject(
-                ThreadConfig.class);
+                stroom.proxy.app.handler.FeedStatusConfig.class);
     }
 
     @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
-    stroom.proxy.app.handler.FeedStatusConfig getFeedStatusConfig(
+    stroom.proxy.app.handler.ThreadConfig getThreadConfig(
             final ProxyConfigProvider proxyConfigProvider) {
         return proxyConfigProvider.getConfigObject(
-                stroom.proxy.app.handler.FeedStatusConfig.class);
+                stroom.proxy.app.handler.ThreadConfig.class);
     }
 
     @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
@@ -137,6 +133,7 @@ public class ProxyConfigProvidersModule extends AbstractModule {
         return proxyConfigProvider.getConfigObject(
                 stroom.proxy.repo.LogStreamConfig.class);
     }
+
     @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
@@ -160,7 +157,7 @@ public class ProxyConfigProvidersModule extends AbstractModule {
     @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
-    ForwardFileConfig getForwardFileConfigButThrow(
+    stroom.proxy.app.handler.ForwardFileConfig getForwardFileConfigButThrow(
             final ProxyConfigProvider proxyConfigProvider) {
         throw new UnsupportedOperationException(
                 "stroom.proxy.app.handler.ForwardFileConfig cannot be injected directly. "
@@ -170,7 +167,7 @@ public class ProxyConfigProvidersModule extends AbstractModule {
     @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
-    ForwardHttpPostConfig getForwardHttpPostConfigButThrow(
+    stroom.proxy.app.handler.ForwardHttpPostConfig getForwardHttpPostConfigButThrow(
             final ProxyConfigProvider proxyConfigProvider) {
         throw new UnsupportedOperationException(
                 "stroom.proxy.app.handler.ForwardHttpPostConfig cannot be injected directly. "
