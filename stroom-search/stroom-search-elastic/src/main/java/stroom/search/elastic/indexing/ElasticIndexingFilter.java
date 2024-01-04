@@ -421,7 +421,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
      * Whether to include the field in the destination document
      */
     private boolean includeField(final String fieldName) {
-        return fieldName != null && !fieldName.startsWith("_");
+        return fieldName == null || !fieldName.startsWith("_");
     }
 
     private void storeIndexNameVariableValue(final String value) {
