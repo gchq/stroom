@@ -61,4 +61,9 @@ public final class DirNames {
      * Where we queue data ready for forwarding.
      */
     public static final String FORWARDING_INPUT_QUEUE = "40_forwarding_input_queue";
+
+    /**
+     * Where we perform forwarding.
+     */
+    public static final String FORWARDING = "50_forwarding";
 }

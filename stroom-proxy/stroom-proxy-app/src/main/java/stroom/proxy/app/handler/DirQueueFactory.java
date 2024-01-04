@@ -22,10 +22,16 @@ public class DirQueueFactory {
         this.fileStores = fileStores;
     }
 
-    public DirQueue create(String dirName,
+    public DirQueue create(final String dirName,
                            final int order,
                            final String name) {
         final Path rootDir = repoDir.resolve(dirName);
+        return create(rootDir, order, name);
+    }
+
+    public DirQueue create(final Path rootDir,
+                           final int order,
+                           final String name) {
         return new DirQueue(rootDir, queueMonitors, fileStores, order, name);
     }
 }

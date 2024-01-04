@@ -35,17 +35,17 @@ public class ZipWriter implements AutoCloseable {
     }
 
     public void writeDir(final String name) throws IOException {
-        zipArchiveOutputStream.putArchiveEntry(new ZipArchiveEntry(name));
-        zipArchiveOutputStream.closeArchiveEntry();
+        putArchiveEntry(new ZipArchiveEntry(name));
+        closeArchiveEntry();
     }
 
     public void writeAttributeMap(final String name,
                                   final AttributeMap attributeMap) throws IOException {
-        zipArchiveOutputStream.putArchiveEntry(new ZipArchiveEntry(name));
+        putArchiveEntry(new ZipArchiveEntry(name));
         try {
             AttributeMapUtil.write(attributeMap, zipArchiveOutputStream);
         } finally {
-            zipArchiveOutputStream.closeArchiveEntry();
+            closeArchiveEntry();
         }
     }
 
@@ -63,12 +63,20 @@ public class ZipWriter implements AutoCloseable {
 
     private long writeStream(final ZipArchiveEntry zipArchiveEntry,
                              final InputStream inputStream) throws IOException {
-        zipArchiveOutputStream.putArchiveEntry(zipArchiveEntry);
+        putArchiveEntry(zipArchiveEntry);
         try {
             return TransferUtil.transfer(inputStream, zipArchiveOutputStream, buffer);
         } finally {
-            zipArchiveOutputStream.closeArchiveEntry();
+            closeArchiveEntry();
         }
+    }
+
+    void putArchiveEntry(final ZipArchiveEntry zipArchiveEntry) throws IOException {
+        zipArchiveOutputStream.putArchiveEntry(zipArchiveEntry);
+    }
+
+    void closeArchiveEntry() throws IOException {
+        zipArchiveOutputStream.closeArchiveEntry();
     }
 
     @Override

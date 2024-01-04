@@ -179,7 +179,7 @@ public class ZipReceiver implements Receiver {
 
             if (receiveResult.feedGroups.size() > 1) {
                 // Log if we received a multi feed zip.
-                LOGGER.info("Received multi feed zip");
+                LOGGER.debug("Received multi feed zip");
             }
 
             // Check all the feeds are ok.
@@ -199,7 +199,9 @@ public class ZipReceiver implements Receiver {
             // Only keep data for allowed feeds.
             if (!allowed.isEmpty()) {
 
-                if (receiveResult.feedGroups.size() == 1) {
+                // If the data we received was for a perfectly formed zip file with data for a single feed then don't
+                // bother to rewrite.
+                if (receiveResult.valid && receiveResult.feedGroups.size() == 1) {
                     // If we only had a single feed in the incoming zip then just pass on the data as is.
 
                     final Map.Entry<FeedKey, List<ZipEntryGroup>> entry = allowed.entrySet().iterator().next();
@@ -282,6 +284,7 @@ public class ZipReceiver implements Receiver {
         // TODO : Worry about memory usage here storing potentially 1000's of data entries and groups.
         final List<Entry> dataEntries = new ArrayList<>();
         final Map<String, ZipEntryGroup> groups = new HashMap<>();
+        final ProxyZipValidator validator = new ProxyZipValidator();
         final long receivedBytes;
 
         // Receive data.
@@ -293,6 +296,9 @@ public class ZipReceiver implements Receiver {
 
                     ZipArchiveEntry entry = zipInputStream.getNextEntry();
                     while (entry != null) {
+                        // We will validate the data as we receive it to see if the format is exactly as expected.
+                        validator.addEntry(entry.getName());
+
                         if (entry.isDirectory()) {
                             zipWriter.writeDir(entry.getName());
 
@@ -421,7 +427,12 @@ public class ZipReceiver implements Receiver {
             feedGroups.computeIfAbsent(feedKey, k -> new ArrayList<>()).add(group);
         });
 
-        return new ReceiveResult(feedGroups, receivedBytes);
+        // We might want to know what was wrong with the received data.
+        if (!validator.isValid()) {
+            LOGGER.debug(validator.getErrorMessage());
+        }
+
+        return new ReceiveResult(feedGroups, receivedBytes, validator.isValid());
     }
 
     static List<Path> splitZip(final Path zipFilePath,
@@ -456,7 +467,7 @@ public class ZipReceiver implements Receiver {
             // Write zip.
             int count = 1;
             try (final Writer entryWriter = Files.newBufferedWriter(fileGroup.getEntries())) {
-                try (final ZipWriter zipWriter = new ZipWriter(fileGroup.getZip(), buffer)) {
+                try (final ProxyZipWriter zipWriter = new ProxyZipWriter(fileGroup.getZip(), buffer)) {
                     for (final ZipEntryGroup zipEntryGroupIn : zipEntryGroupsIn) {
                         final ZipEntryGroup zipEntryGroupOut = new ZipEntryGroup(feedKey.feed(), feedKey.type());
                         final String baseNameOut = NumericFileNameUtil.create(count);
@@ -506,7 +517,7 @@ public class ZipReceiver implements Receiver {
     }
 
     private static ZipEntryGroup.Entry addEntry(final ZipFile zip,
-                                                final ZipWriter zipWriter,
+                                                final ProxyZipWriter zipWriter,
                                                 final ZipEntryGroup.Entry entry,
                                                 final String baseNameOut,
                                                 final StroomZipFileType stroomZipFileType) throws IOException {
@@ -524,7 +535,9 @@ public class ZipReceiver implements Receiver {
         this.destination = destination;
     }
 
-    record ReceiveResult(Map<FeedKey, List<ZipEntryGroup>> feedGroups, long receivedBytes) {
+    record ReceiveResult(Map<FeedKey, List<ZipEntryGroup>> feedGroups,
+                         long receivedBytes,
+                         boolean valid) {
 
     }
 }

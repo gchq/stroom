@@ -13,11 +13,12 @@ import stroom.util.io.PathCreator;
 import stroom.util.logging.LogUtil;
 
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
-import org.apache.commons.compress.archivers.zip.ZipFile;
+import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
 import org.assertj.core.api.Assertions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
@@ -27,7 +28,6 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Enumeration;
 import java.util.List;
 import java.util.stream.Stream;
 import javax.inject.Inject;
@@ -101,34 +101,37 @@ public class MockFileDestination {
                         stream.forEach(path -> {
                             if (path.getFileName().toString().endsWith(".meta")) {
                                 final Path dir = path.getParent();
-                                final FileGroup fileSet = new FileGroup(dir);
-                                if (!Files.exists(fileSet.getMeta())) {
+                                final FileGroup fileGroup = new FileGroup(dir);
+                                if (!Files.exists(fileGroup.getMeta())) {
                                     LOGGER.info("Meta does not exist. dir: {}", dir);
                                 }
-                                final String zipFileName = fileSet.getZip().getFileName().toString();
+                                final String zipFileName = fileGroup.getZip().getFileName().toString();
                                 final String baseName = zipFileName.substring(0, zipFileName.indexOf('.'));
                                 final List<ZipItem> zipItems = new ArrayList<>();
                                 final String metaContent;
                                 try {
-                                    metaContent = Files.readString(fileSet.getMeta());
+                                    metaContent = Files.readString(fileGroup.getMeta());
 
-                                    try (final ZipFile zipFile = new ZipFile(Files.newByteChannel(fileSet.getZip()))) {
-                                        final Enumeration<ZipArchiveEntry> entries = zipFile.getEntries();
-                                        while (entries.hasMoreElements()) {
-                                            final ZipArchiveEntry entry = entries.nextElement();
+                                    try (final ZipArchiveInputStream zipArchiveInputStream =
+                                            new ZipArchiveInputStream(
+                                                    new BufferedInputStream(
+                                                            Files.newInputStream(fileGroup.getZip())))) {
+                                        ZipArchiveEntry entry = zipArchiveInputStream.getNextEntry();
+                                        while (entry != null) {
                                             if (!entry.isDirectory()) {
                                                 final String zipEntryName = entry.getName();
                                                 final FileName fileName = FileName.parse(zipEntryName);
                                                 final StroomZipFileType zipEntryType =
                                                         StroomZipFileType.fromExtension(fileName.getExtension());
-                                                final String zipEntryContent = new String(
-                                                        zipFile.getInputStream(entry).readAllBytes(),
-                                                        StandardCharsets.UTF_8);
+                                                final String zipEntryContent =
+                                                        new String(zipArchiveInputStream.readAllBytes(),
+                                                                StandardCharsets.UTF_8);
                                                 zipItems.add(new ZipItem(
                                                         zipEntryType,
                                                         fileName.getBaseName(),
                                                         zipEntryContent));
                                             }
+                                            entry = zipArchiveInputStream.getNextEntry();
                                         }
                                     }
                                 } catch (Exception e) {
@@ -182,9 +185,9 @@ public class MockFileDestination {
 
         // Check zip content file count.
         final Integer[] sizes = new Integer[count];
-        Arrays.fill(sizes, 7);
-        sizes[sizes.length - 1] = 3;
-        sizes[sizes.length - 2] = 3;
+        Arrays.fill(sizes, 3);
+        sizes[sizes.length - 1] = 1;
+        sizes[sizes.length - 2] = 1;
 
         Assertions.assertThat(forwardFileItems.stream()
                         .map(forwardFileItem -> forwardFileItem.zipItems().size())
@@ -193,15 +196,10 @@ public class MockFileDestination {
 
         // Check zip contents.
         final List<String> expectedFiles = List.of(
-                "001.mf",
-                "001.meta",
-                "001.dat",
-                "002.meta",
-                "002.dat",
-                "003.meta",
-                "003.dat",
-                "004.meta",
-                "004.dat");
+                "0000000001.dat",
+                "0000000002.dat",
+                "0000000003.dat",
+                "0000000004.dat");
         assertForwardFileItemContent(forwardFileItems, expectedFiles);
     }
 

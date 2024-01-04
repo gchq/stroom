@@ -94,7 +94,7 @@ public class SimpleReceiver implements Receiver {
                     // Get a buffer to help us transfer data.
                     final byte[] buffer = LocalByteBuffer.get();
 
-                    try (final ZipWriter zipWriter = new ZipWriter(fileGroup.getZip(), buffer)) {
+                    try (final ProxyZipWriter zipWriter = new ProxyZipWriter(fileGroup.getZip(), buffer)) {
                         // Write meta first.
                         final AttributeMap entryAttributeMap = AttributeMapUtil.cloneAllowable(attributeMap);
                         final byte[] metaBytes = AttributeMapUtil.toByteArray(entryAttributeMap);

@@ -1,15 +1,14 @@
 package stroom.proxy.app.handler;
 
-import stroom.data.zip.StroomZipFileType;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.app.ProxyConfig;
-import stroom.proxy.app.handler.ZipEntryGroup.Entry;
 import stroom.proxy.repo.AggregatorConfig;
 import stroom.proxy.repo.FeedKey;
 import stroom.proxy.repo.ProxyServices;
 import stroom.proxy.repo.RepoDirProvider;
+import stroom.util.io.FileName;
 import stroom.util.io.FileUtil;
 import stroom.util.io.TempDirProvider;
 import stroom.util.logging.LambdaLogger;
@@ -22,7 +21,6 @@ import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -31,6 +29,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
@@ -302,10 +301,10 @@ public class PreAggregator {
 
     private synchronized void closeAggregate(final FeedKey feedKey,
                                              final AggregateState aggregateState) {
-        LOGGER.info(() -> "Closing aggregate: " + FileUtil.getCanonicalPath(aggregateState.aggregateDir));
+        LOGGER.debug(() -> "Closing aggregate: " + FileUtil.getCanonicalPath(aggregateState.aggregateDir));
         destination.accept(aggregateState.aggregateDir);
         aggregateStateMap.remove(feedKey);
-        LOGGER.info(() -> "Closed aggregate: " + FileUtil.getCanonicalPath(aggregateState.aggregateDir));
+        LOGGER.debug(() -> "Closed aggregate: " + FileUtil.getCanonicalPath(aggregateState.aggregateDir));
     }
 
     private SplitDirSet split(final Path dir, final List<Part> parts) throws IOException {
@@ -316,94 +315,54 @@ public class PreAggregator {
 
         final Path parentDir = tempSplittingDirProvider.get();
         final List<Path> outputDirs = new ArrayList<>();
-        try (final ZipArchiveInputStream zipInputStream =
+        try (final ZipArchiveInputStream zipArchiveInputStream =
                 new ZipArchiveInputStream(new BufferedInputStream(Files.newInputStream(fileGroup.getZip())))) {
-            try (final BufferedReader entryReader = Files.newBufferedReader(fileGroup.getEntries())) {
-                int partNo = 1;
-                for (final Part part : parts) {
-                    int count = 1;
-                    final String outputDirName = inputDirName + "_part_" + partNo++;
-                    final Path outputDir = parentDir.resolve(outputDirName);
-                    Files.createDirectory(outputDir);
-                    outputDirs.add(outputDir);
-                    final FileGroup outputFileGroup = new FileGroup(outputDir);
+            ZipArchiveEntry entry = zipArchiveInputStream.getNextEntry();
+            if (entry == null) {
+                throw new RuntimeException("Unexpected empty zip file");
+            }
 
-                    // Write entries.
-                    try (final Writer entryWriter = Files.newBufferedWriter(outputFileGroup.getEntries())) {
-                        // Write the zip.
-                        try (final ZipWriter zipWriter = new ZipWriter(outputFileGroup.getZip(), buffer)) {
-                            for (int i = 0; i < part.items; i++) {
-                                // Add entry.
-                                final String entryLine = entryReader.readLine();
-                                final ZipEntryGroup zipEntryGroup = ZipEntryGroupUtil.readLine(entryLine);
-                                final String baseNameOut = NumericFileNameUtil.create(count);
-                                final ZipEntryGroup.Entry manifestEntry =
-                                        transferEntry(zipEntryGroup.getManifestEntry(),
-                                                zipInputStream,
-                                                zipWriter,
-                                                StroomZipFileType.MANIFEST,
-                                                baseNameOut);
-                                final ZipEntryGroup.Entry metaEntry =
-                                        transferEntry(zipEntryGroup.getMetaEntry(),
-                                                zipInputStream,
-                                                zipWriter,
-                                                StroomZipFileType.META,
-                                                baseNameOut);
-                                final ZipEntryGroup.Entry contextEntry =
-                                        transferEntry(zipEntryGroup.getContextEntry(),
-                                                zipInputStream,
-                                                zipWriter,
-                                                StroomZipFileType.CONTEXT,
-                                                baseNameOut);
-                                final ZipEntryGroup.Entry dataEntry =
-                                        transferEntry(zipEntryGroup.getDataEntry(),
-                                                zipInputStream,
-                                                zipWriter,
-                                                StroomZipFileType.DATA,
-                                                baseNameOut);
+            int partNo = 1;
+            for (final Part part : parts) {
+                final String outputDirName = inputDirName + "_part_" + partNo++;
+                final Path outputDir = parentDir.resolve(outputDirName);
+                Files.createDirectory(outputDir);
+                outputDirs.add(outputDir);
+                final FileGroup outputFileGroup = new FileGroup(outputDir);
 
-                                final ZipEntryGroup outZipEntryGroup = new ZipEntryGroup(
-                                        zipEntryGroup.getFeedName(),
-                                        zipEntryGroup.getTypeName(),
-                                        manifestEntry,
-                                        metaEntry,
-                                        contextEntry,
-                                        dataEntry);
+                // Write the zip.
+                try (final ProxyZipWriter zipWriter = new ProxyZipWriter(outputFileGroup.getZip(), buffer)) {
+                    String lastBaseName = null;
+                    int count = 0;
+                    String baseNameOut = null;
+                    boolean add = true;
 
-                                // Write the entry.
-                                ZipEntryGroupUtil.writeLine(entryWriter, outZipEntryGroup);
+                    while (entry != null && add) {
+                        final FileName fileName = FileName.parse(entry.getName());
+                        if (!Objects.equals(fileName.getBaseName(), lastBaseName)) {
+                            count++;
+                            if (count <= part.items) {
+                                baseNameOut = NumericFileNameUtil.create(count);
+                                lastBaseName = fileName.getBaseName();
+                            } else {
+                                add = false;
                             }
                         }
-                    }
 
-                    // Copy the meta.
-                    Files.copy(fileGroup.getMeta(), outputFileGroup.getMeta());
+                        if (add) {
+                            final String entryName = baseNameOut + "." + fileName.getExtension();
+                            zipWriter.writeStream(entryName, zipArchiveInputStream);
+                            entry = zipArchiveInputStream.getNextEntry();
+                        }
+                    }
                 }
+
+                // Copy the meta.
+                Files.copy(fileGroup.getMeta(), outputFileGroup.getMeta());
             }
         }
 
         return new SplitDirSet(parentDir, outputDirs);
-    }
-
-    private ZipEntryGroup.Entry transferEntry(final ZipEntryGroup.Entry entry,
-                                              final ZipArchiveInputStream zipInputStream,
-                                              final ZipWriter zipWriter,
-                                              final StroomZipFileType stroomZipFileType,
-                                              final String baseNameOut) throws IOException {
-        if (entry != null) {
-            final ZipArchiveEntry zipEntry = zipInputStream.getNextEntry();
-            if (zipEntry == null) {
-                throw new RuntimeException("Expected entry: " + entry.getName());
-            }
-            if (!zipEntry.getName().equals(entry.getName())) {
-                throw new RuntimeException("Unexpected entry: " + zipEntry.getName() + " expected " + entry.getName());
-            }
-
-            final String outEntryName = baseNameOut + stroomZipFileType.getDotExtension();
-            final long bytes = zipWriter.writeStream(outEntryName, zipInputStream);
-            return new Entry(outEntryName, bytes);
-        }
-        return null;
     }
 
     private AggregateState createAggregate(final FeedKey feedKey) {
@@ -422,12 +381,12 @@ public class PreAggregator {
             final Path repoDir = repoDirProvider.get();
             final Path aggregatesDir = repoDir.resolve("aggregates");
             final Path aggregateDir = aggregatesDir.resolve(sb.toString());
-            LOGGER.info(() -> "Creating aggregate: " + FileUtil.getCanonicalPath(aggregateDir));
+            LOGGER.debug(() -> "Creating aggregate: " + FileUtil.getCanonicalPath(aggregateDir));
 
             // Ensure the dir exists.
             Files.createDirectories(aggregateDir);
 
-            LOGGER.info(() -> "Created aggregate: " + FileUtil.getCanonicalPath(aggregateDir));
+            LOGGER.debug(() -> "Created aggregate: " + FileUtil.getCanonicalPath(aggregateDir));
             return new AggregateState(Instant.now(), aggregateDir);
 
         } catch (final IOException e) {

@@ -8,8 +8,10 @@ import stroom.util.logging.LambdaLoggerFactory;
 
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
+import org.apache.commons.compress.archivers.zip.ZipFile;
 
 import java.io.BufferedInputStream;
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
@@ -77,7 +79,7 @@ public class Aggregator {
                 // Get a buffer to help us transfer data.
                 final byte[] buffer = LocalByteBuffer.get();
 
-                try (final ZipWriter zipWriter = new ZipWriter(outputFileGroup.getZip(), buffer)) {
+                try (final ProxyZipWriter zipWriter = new ProxyZipWriter(outputFileGroup.getZip(), buffer)) {
                     try (final Stream<Path> stream = Files.list(dir)) {
                         stream.forEach(fileGroupDir -> {
                             final FileGroup fileGroup = new FileGroup(fileGroupDir);
@@ -115,6 +117,28 @@ public class Aggregator {
                                     zipEntry = zipInputStream.getNextEntry();
                                 }
 
+//                            try (final BufferedReader entryReader = Files.newBufferedReader(fileGroup.getEntries())) {
+//                                try (final ZipFile zipFile = new ZipFile(Files.newByteChannel(fileGroup.getZip()))) {
+//                                    String entryLine = entryReader.readLine();
+//                                    while (entryLine != null) {
+//                                        // Add entry.
+//                                        final ZipEntryGroup zipEntryGroup = ZipEntryGroupUtil.readLine(entryLine);
+//                                        final String baseNameOut = NumericFileNameUtil.create(count.incrementAndGet());
+//
+//                                        TransferUtil.transferZipEntryGroup(
+//                                                zipFile,
+//                                                zipWriter,
+//                                                zipEntryGroup,
+//                                                baseNameOut);
+//
+////                                        final ZipEntryGroup outZipEntryGroup =
+////                                        // Write the entry.
+////                                        ZipEntryGroupUtil.writeLine(entryWriter, outZipEntryGroup);
+//
+//
+//                                        entryLine = entryReader.readLine();
+//                                    }
+//                                }
                             } catch (final IOException e) {
                                 LOGGER.error(e::getMessage, e);
                                 throw new UncheckedIOException(e);

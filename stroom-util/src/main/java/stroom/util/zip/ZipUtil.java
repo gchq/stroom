@@ -135,12 +135,10 @@ public final class ZipUtil {
         }
     }
 
-    public static List<String> pathList(final Path zipFile) throws IOException {
+    public static List<String> pathList(final Path zipFilePath) throws IOException {
         final List<String> pathList = new ArrayList<>();
-        try (final ZipFile zipFile2 = new ZipFile(Files.newByteChannel(zipFile))) {
-
-            final Enumeration<? extends ZipArchiveEntry> zipEnumeration = zipFile2.getEntries();
-
+        try (final ZipFile zipFile = new ZipFile(Files.newByteChannel(zipFilePath))) {
+            final Enumeration<? extends ZipArchiveEntry> zipEnumeration = zipFile.getEntries();
             while (zipEnumeration.hasMoreElements()) {
                 final ZipArchiveEntry zipEntry = zipEnumeration.nextElement();
                 pathList.add(zipEntry.getName());
