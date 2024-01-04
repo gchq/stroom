@@ -102,6 +102,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ElasticIndexingFilter.class);
     private static final JsonFactory JSON_FACTORY = new JsonFactory();
     private static final int INITIAL_JSON_STREAM_SIZE_BYTES = 1024;
+    private static final int ES_COMPOSITE_BATCH_SIZE = 100; // Number of index names to retrieve per request
     private static final int ES_MAX_EXCEPTION_CHARS = 1024;
     private static final int ES_TOO_MANY_REQUESTS_STATUS = 429;
     private static final Pattern INDEX_NAME_VALUE_PATTERN = Pattern.compile("(\\{[^}]+?})");
@@ -547,12 +548,12 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
     private List<String> getTargetIndexNames(final ElasticsearchClient elasticClient, final Long streamId)
             throws LoggedException {
         final String indicesAggregationKey = "indices";
-        final String streamIdSourceKey = "streamId";
+        final String indexNameSourceKey = "index_name";
 
         final Map<String, CompositeAggregationSource> compositeAggregationSource = Map.of(
-                streamIdSourceKey,
+                indexNameSourceKey,
                 CompositeAggregationSource.of(source -> source
-                        .terms(t -> t.field(ElasticIndexConstants.STREAM_ID))
+                        .terms(t -> t.field(ElasticIndexConstants.INDEX_NAME))
                 )
         );
 
@@ -569,7 +570,6 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                 );
 
                 final CompositeAggregation.Builder compositeAggBuilder = AggregationBuilders.composite()
-                        .name(indicesAggregationKey)
                         .sources(List.of(compositeAggregationSource));
                 if (afterKey != null) {
                     compositeAggBuilder.after(afterKey);
@@ -589,7 +589,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                             .composite();
 
                     final List<String> indexNames = compositeAgg.buckets().array()
-                            .stream().map(bucket -> bucket.key().get(streamIdSourceKey).stringValue())
+                            .stream().map(bucket -> bucket.key().get(indexNameSourceKey).stringValue())
                             .toList();
                     allIndexNames.addAll(indexNames);
                     afterKey = compositeAgg.afterKey();
