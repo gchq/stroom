@@ -37,7 +37,7 @@ public class TestZipReceiver extends StroomUnitTest {
                 attributeMap,
                 buffer);
         assertThat(receiveResult.feedGroups().size()).isEqualTo(1);
-        assertThat(receiveResult.receivedBytes()).isEqualTo(257);
+        assertThat(receiveResult.receivedBytes()).isEqualTo(285);
     }
 
     @Test
@@ -60,7 +60,7 @@ public class TestZipReceiver extends StroomUnitTest {
                 attributeMap,
                 buffer);
         assertThat(receiveResult.feedGroups().size()).isEqualTo(2);
-        assertThat(receiveResult.receivedBytes()).isEqualTo(518);
+        assertThat(receiveResult.receivedBytes()).isEqualTo(574);
 
         final Path splitDir = Files.createTempDirectory("test");
         ZipReceiver.splitZip(testZipFile, attributeMap, receiveResult.feedGroups(), splitDir, buffer);

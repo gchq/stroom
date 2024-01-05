@@ -131,7 +131,8 @@ public class TestPreAggregator extends StroomUnitTest {
                       final int inputZipCount,
                       final boolean splitSources) throws IOException {
         // Simulate the splitting and aggregation we expect to occur within the pre aggregator.
-        final List<ExpectedOutput> expectedOutputs = createExpectedOutput(inputZipCount, entryCountPerZip, splitSources);
+        final List<ExpectedOutput> expectedOutputs =
+                createExpectedOutput(inputZipCount, entryCountPerZip, splitSources);
 
         final Path tempDir = Files.createTempDirectory("temp");
         final Path repoDir = Files.createTempDirectory("repo");
