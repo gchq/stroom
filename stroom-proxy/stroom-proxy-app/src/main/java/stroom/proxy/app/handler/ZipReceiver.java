@@ -217,9 +217,7 @@ public class ZipReceiver implements Receiver {
 
                     // Write meta.
                     AttributeMapUtil.addFeedAndType(attributeMap, feedKey.feed(), feedKey.type());
-                    try (final Writer writer = Files.newBufferedWriter(fileGroup.getMeta())) {
-                        AttributeMapUtil.write(attributeMap, writer);
-                    }
+                    AttributeMapUtil.write(attributeMap, fileGroup.getMeta());
 
                     // Move receiving dir to destination.
                     destination.accept(receivingDir);
@@ -507,9 +505,7 @@ public class ZipReceiver implements Receiver {
 
             // Write meta.
             AttributeMapUtil.addFeedAndType(attributeMap, feedKey.feed(), feedKey.type());
-            try (final Writer writer = Files.newBufferedWriter(fileGroup.getMeta())) {
-                AttributeMapUtil.write(attributeMap, writer);
-            }
+            AttributeMapUtil.write(attributeMap, fileGroup.getMeta());
 
         } catch (final IOException e) {
             LOGGER.error(e::getMessage, e);

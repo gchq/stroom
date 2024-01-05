@@ -1,5 +1,6 @@
 package stroom.proxy.app.handler;
 
+import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.io.FileUtil;
 
 import org.junit.jupiter.api.Test;
@@ -9,7 +10,7 @@ import java.nio.file.Path;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class TestNumberedDirProvider {
+public class TestNumberedDirProvider extends StroomUnitTest {
 
     @Test
     void test() throws Exception {

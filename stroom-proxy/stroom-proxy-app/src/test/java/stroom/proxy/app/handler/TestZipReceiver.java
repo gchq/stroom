@@ -3,6 +3,7 @@ package stroom.proxy.app.handler;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.proxy.app.handler.ZipReceiver.ReceiveResult;
+import stroom.proxy.repo.FeedKey;
 import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.io.FileUtil;
 
@@ -27,7 +28,7 @@ public class TestZipReceiver extends StroomUnitTest {
         final AttributeMap attributeMap = new AttributeMap();
         AttributeMapUtil.addFeedAndType(attributeMap, defaultFeedName, defaultTypeName);
 
-        final Path testZipFile = writeSimpleZip(buffer);
+        final Path testZipFile = TestDataUtil.writeZip(new FeedKey(defaultFeedName, defaultTypeName));
 
         final ReceiveResult receiveResult = receive(
                 testZipFile,
@@ -48,7 +49,9 @@ public class TestZipReceiver extends StroomUnitTest {
         final AttributeMap attributeMap = new AttributeMap();
         AttributeMapUtil.addFeedAndType(attributeMap, defaultFeedName, defaultTypeName);
 
-        final Path testZipFile = writeMultiFeedZip(buffer);
+        final Path testZipFile = TestDataUtil.writeZip(
+                new FeedKey("test-feed-1", "test-type-1"),
+                new FeedKey("test-feed-2", "test-type-2"));
 
         final ReceiveResult receiveResult = receive(
                 testZipFile,
@@ -77,37 +80,6 @@ public class TestZipReceiver extends StroomUnitTest {
             assertThat(receiveResult2.feedGroups().size()).isEqualTo(1);
             assertThat(receiveResult2.receivedBytes()).isEqualTo(298);
         }
-    }
-
-    private Path writeSimpleZip(final byte[] buffer) throws IOException {
-        final String defaultFeedName = "test-feed";
-        final String defaultTypeName = null;
-
-        final AttributeMap attributeMap = new AttributeMap();
-        AttributeMapUtil.addFeedAndType(attributeMap, defaultFeedName, defaultTypeName);
-
-        final Path testZipFile = Files.createTempFile("test", ".zip");
-        try (final ZipWriter zipWriter = new ZipWriter(testZipFile, buffer)) {
-            zipWriter.writeAttributeMap("001.meta", attributeMap);
-            zipWriter.writeString("001.dat", "test");
-        }
-        return testZipFile;
-    }
-
-    private Path writeMultiFeedZip(final byte[] buffer) throws IOException {
-        final Path testZipFile = Files.createTempFile("test", ".zip");
-        try (final ZipWriter zipWriter = new ZipWriter(testZipFile, buffer)) {
-            final AttributeMap attributeMap1 = new AttributeMap();
-            AttributeMapUtil.addFeedAndType(attributeMap1, "test-feed-1", "test-type-1");
-            zipWriter.writeAttributeMap("001.meta", attributeMap1);
-            zipWriter.writeString("001.dat", "test");
-
-            final AttributeMap attributeMap2 = new AttributeMap();
-            AttributeMapUtil.addFeedAndType(attributeMap2, "test-feed-2", "test-type-2");
-            zipWriter.writeAttributeMap("002.meta", attributeMap2);
-            zipWriter.writeString("002.dat", "test");
-        }
-        return testZipFile;
     }
 
     private ReceiveResult receive(final Path testZipFile,

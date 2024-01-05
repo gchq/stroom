@@ -34,6 +34,7 @@ import java.io.UncheckedIOException;
 import java.io.Writer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.cert.X509Certificate;
 import java.time.LocalDateTime;
@@ -148,10 +149,6 @@ public class AttributeMapUtil {
         read(new ByteArrayInputStream(data), attributeMap);
     }
 
-    public static void write(final AttributeMap attributeMap, final OutputStream outputStream) throws IOException {
-        write(attributeMap, new OutputStreamWriter(outputStream, DEFAULT_CHARSET));
-    }
-
     public static void appendAttributes(final AttributeMap attributeMap,
                                         final StringBuilder builder,
                                         final String... attributeKeys) {
@@ -181,6 +178,16 @@ public class AttributeMapUtil {
             str = null;
         }
         return str;
+    }
+
+    public static void write(final AttributeMap attributeMap, final Path path) throws IOException {
+        try (final Writer writer = Files.newBufferedWriter(path)) {
+            AttributeMapUtil.write(attributeMap, writer);
+        }
+    }
+
+    public static void write(final AttributeMap attributeMap, final OutputStream outputStream) throws IOException {
+        write(attributeMap, new OutputStreamWriter(outputStream, DEFAULT_CHARSET));
     }
 
     public static void write(final AttributeMap attributeMap, final Writer writer) throws IOException {

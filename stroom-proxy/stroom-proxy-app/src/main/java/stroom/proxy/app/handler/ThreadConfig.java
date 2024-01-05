@@ -15,31 +15,20 @@ import javax.validation.constraints.Min;
 @JsonPropertyOrder(alphabetic = true)
 public class ThreadConfig extends AbstractConfig implements IsProxyConfig {
 
-    private final int examineSourceThreadCount;
     private final int forwardThreadCount;
     private final int forwardRetryThreadCount;
 
     public ThreadConfig() {
-        forwardRetryThreadCount = 2;
-        forwardThreadCount = 10;
-        examineSourceThreadCount = 3;
+        forwardRetryThreadCount = 1;
+        forwardThreadCount = 5;
     }
 
     @SuppressWarnings("unused")
     @JsonCreator
-    public ThreadConfig(@JsonProperty("examineSourceThreadCount") final int examineSourceThreadCount,
-                        @JsonProperty("forwardThreadCount") final int forwardThreadCount,
+    public ThreadConfig(@JsonProperty("forwardThreadCount") final int forwardThreadCount,
                         @JsonProperty("forwardRetryThreadCount") final int forwardRetryThreadCount) {
-        this.examineSourceThreadCount = examineSourceThreadCount;
         this.forwardThreadCount = forwardThreadCount;
         this.forwardRetryThreadCount = forwardRetryThreadCount;
-    }
-
-    @RequiresProxyRestart
-    @Min(0)
-    @JsonProperty
-    public int getExamineSourceThreadCount() {
-        return examineSourceThreadCount;
     }
 
     @RequiresProxyRestart

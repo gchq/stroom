@@ -127,9 +127,7 @@ public class SimpleReceiver implements Receiver {
                         }
 
                         // Write the meta.
-                        try (final Writer writer = Files.newBufferedWriter(fileGroup.getMeta())) {
-                            AttributeMapUtil.write(entryAttributeMap, writer);
-                        }
+                        AttributeMapUtil.write(entryAttributeMap, fileGroup.getMeta());
                     }
 
                     // Now move the temp files to the file store or forward if there is a single destination.

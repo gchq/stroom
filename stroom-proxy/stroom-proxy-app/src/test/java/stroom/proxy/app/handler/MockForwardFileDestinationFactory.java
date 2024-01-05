@@ -1,7 +1,5 @@
 package stroom.proxy.app.handler;
 
-import stroom.proxy.app.MockFileDestination;
-
 import javax.inject.Singleton;
 
 @Singleton

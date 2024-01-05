@@ -27,6 +27,7 @@ import java.nio.file.StandardCopyOption;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -177,90 +178,34 @@ public class PreAggregator {
 
             // TODO : We could use separate threads for each feed key.
 
-            AggregateState aggregateState = aggregateStateMap.computeIfAbsent(feedKey, this::createAggregate);
-
             // Calculate where we might want to split the incoming data.
-            final long maxItemsPerAggregate = aggregatorConfig.getMaxItemsPerAggregate();
-            final long maxUncompressedByteSize = aggregatorConfig.getMaxUncompressedByteSize();
-            long currentAggregateItemCount = aggregateState.itemCount;
-            long currentAggregateBytes = aggregateState.totalBytes;
-            long partItems = 0;
-            long partBytes = 0;
-            boolean firstEntry = true;
-
-            // TODO : We could add an option to never split incoming zip files and just allow them to form output
-            //  aggregates that always overflow the aggregation bounds before being closed.
-
-            // Determine if we need to split this data into parts.
-            final List<Part> parts = new ArrayList<>();
-            try (final BufferedReader bufferedReader = Files.newBufferedReader(fileGroup.getEntries())) {
-                String line = bufferedReader.readLine();
-                while (line != null) {
-                    final ZipEntryGroup zipEntryGroup = ZipEntryGroup.read(line);
-                    final long totalUncompressedSize = zipEntryGroup.getTotalUncompressedSize();
-
-                    // If the current aggregate has items then we might want to close and start a new one.
-                    if (currentAggregateItemCount > 0 &&
-                            (currentAggregateItemCount + 1 > maxItemsPerAggregate ||
-                                    currentAggregateBytes + totalUncompressedSize > maxUncompressedByteSize)) {
-                        if (firstEntry) {
-                            // If the first entry immediately causes the current aggregate to exceed the required bounds
-                            // then close it and create a new one.
-
-                            // Close the current aggregate.
-                            closeAggregate(feedKey, aggregateState);
-
-                            // Create a new aggregate.
-                            aggregateState = aggregateStateMap
-                                    .computeIfAbsent(feedKey, this::createAggregate);
-
-                        } else {
-
-                            // Split.
-                            parts.add(new Part(partItems, partBytes));
-                        }
-
-                        // Reset.
-                        currentAggregateItemCount = 0;
-                        currentAggregateBytes = 0;
-                        partItems = 0;
-                        partBytes = 0;
-                    }
-
-                    // Add to the aggregate.
-                    currentAggregateItemCount++;
-                    currentAggregateBytes += totalUncompressedSize;
-                    partItems++;
-                    partBytes += totalUncompressedSize;
-
-                    line = bufferedReader.readLine();
-                    firstEntry = false;
-                }
-
-                // Add final part.
-                parts.add(new Part(partItems, partBytes));
+            final List<Part> parts;
+            if (aggregatorConfig.isSplitSources()) {
+                parts = calculateSplitParts(feedKey, fileGroup);
+            } else {
+                parts = calculateOverflowingParts(fileGroup);
             }
 
             // If there is only one part then just add directly to the aggregate.
             if (parts.size() == 1) {
-                // Just add the data.
-                Files.move(
-                        dir,
-                        aggregateState.aggregateDir.resolve(dir.getFileName()),
-                        StandardCopyOption.ATOMIC_MOVE);
-                Part split = parts.get(0);
-                aggregateState.itemCount += split.items;
-                aggregateState.totalBytes += split.bytes;
+                // Just add the single part to the current aggregate.
+                addPartToAggregate(feedKey, dir, parts.get(0));
 
             } else {
                 // Split the data.
-                final SplitDirSet splitDirSet = split(dir, parts);
+                final PartDirs partDirSet = split(dir, parts);
+                final List<PartDir> partDirs = partDirSet.children();
+
+                // Assert that we have created matching splits.
+                if (parts.size() != partDirs.size()) {
+                    throw new RuntimeException("Unexpected split dir count");
+                }
 
                 // Prepare destination for staged split data.
-                final Path splitStaging = stagedSplittingDir.resolve(splitDirSet.parent.getFileName());
+                final Path splitStaging = stagedSplittingDir.resolve(partDirSet.parent.getFileName());
 
                 // Atomically move the temporary split data into the split staging area.
-                Files.move(splitDirSet.parent, splitStaging, StandardCopyOption.ATOMIC_MOVE);
+                Files.move(partDirSet.parent, splitStaging, StandardCopyOption.ATOMIC_MOVE);
 
                 // NOTE : If we get failure here before we delete the source then we will end up duplicating data, but
                 // we can't do much about that.
@@ -268,35 +213,157 @@ public class PreAggregator {
                 // Delete source file set as we have split and duplicated.
                 deleteDirQueue.add(dir);
 
-                // Create aggregates from parts.
-                for (int i = 0; i < parts.size() - 1; i++) {
-                    final Path splitDir = splitStaging.resolve(splitDirSet.children.get(i).getFileName());
-                    aggregateState = aggregateStateMap
-                            .computeIfAbsent(feedKey, this::createAggregate);
-                    Files.move(
-                            splitDir,
-                            aggregateState.aggregateDir.resolve(splitDir.getFileName()),
-                            StandardCopyOption.ATOMIC_MOVE);
+                // Create complete aggregates from all parts except the last one.
+                for (int i = 0; i < partDirs.size() - 1; i++) {
+                    final PartDir partDir = partDirs.get(i);
+                    final Path splitDir = splitStaging.resolve(partDir.dir.getFileName());
+                    final AggregateState aggregateState = addPartToAggregate(feedKey, splitDir, partDir.part);
 
                     // Close the aggregate.
                     closeAggregate(feedKey, aggregateState);
                 }
 
                 // Add final part as new aggregate.
-                final Path splitDir = splitStaging.resolve(splitDirSet.children.get(parts.size() - 1).getFileName());
-                Part part = parts.get(parts.size() - 1);
-                aggregateState = aggregateStateMap
-                        .computeIfAbsent(feedKey, this::createAggregate);
-                aggregateState.itemCount += part.items;
-                aggregateState.totalBytes += part.bytes;
-                Files.move(
-                        splitDir,
-                        aggregateState.aggregateDir.resolve(splitDir.getFileName()),
-                        StandardCopyOption.ATOMIC_MOVE);
+                final PartDir partDir = partDirs.get(partDirs.size() - 1);
+                final Path splitDir = splitStaging.resolve(partDir.dir.getFileName());
+                addPartToAggregate(feedKey, splitDir, partDir.part);
             }
+
+            // If we have an aggregate we can close now then do so.
+            final AggregateState aggregateState = aggregateStateMap
+                    .computeIfAbsent(feedKey, this::createAggregate);
+            final long maxItemsPerAggregate = aggregatorConfig.getMaxItemsPerAggregate();
+            final long maxUncompressedByteSize = aggregatorConfig.getMaxUncompressedByteSize();
+            if (aggregateState.itemCount >= maxItemsPerAggregate ||
+                    aggregateState.totalBytes >= maxUncompressedByteSize) {
+                closeAggregate(feedKey, aggregateState);
+            }
+
         } catch (final IOException e) {
             LOGGER.error(e::getMessage, e);
         }
+    }
+
+    /**
+     * Add a part to the current aggregate by moving it's source dir to the aggregate output dir and incrementing the
+     * item count and total bytes for the aggregate.
+     *
+     * @param feedKey The feed key of the aggregate to add to.
+     * @param dir     The source dir to add.
+     * @param part    The part details associated with the source.
+     * @return The updated aggregate state.
+     * @throws IOException Could be thrown when moving the source dir to the aggregate.
+     */
+    private AggregateState addPartToAggregate(final FeedKey feedKey,
+                                              final Path dir,
+                                              final Part part) throws IOException {
+        final AggregateState aggregateState = aggregateStateMap
+                .computeIfAbsent(feedKey, this::createAggregate);
+        Files.move(
+                dir,
+                aggregateState.aggregateDir.resolve(dir.getFileName()),
+                StandardCopyOption.ATOMIC_MOVE);
+        aggregateState.itemCount += part.items;
+        aggregateState.totalBytes += part.bytes;
+        return aggregateState;
+    }
+
+    /**
+     * Calculate the number of logical parts the source zip will need to be split into in order to fit output aggregates
+     * without them exceeding the size and item count constraints.
+     *
+     * @param feedKey   The feed
+     * @param fileGroup the file group to examine.
+     * @return A list of parts to split the zip data by.
+     * @throws IOException Could be throws when reading entries.
+     */
+    private List<Part> calculateSplitParts(final FeedKey feedKey,
+                                           final FileGroup fileGroup) throws IOException {
+        // Determine if we need to split this data into parts.
+        final List<Part> parts = new ArrayList<>();
+        AggregateState aggregateState = aggregateStateMap.computeIfAbsent(feedKey, this::createAggregate);
+
+        // Calculate where we might want to split the incoming data.
+        final long maxItemsPerAggregate = aggregatorConfig.getMaxItemsPerAggregate();
+        final long maxUncompressedByteSize = aggregatorConfig.getMaxUncompressedByteSize();
+        long currentAggregateItemCount = aggregateState.itemCount;
+        long currentAggregateBytes = aggregateState.totalBytes;
+        long partItems = 0;
+        long partBytes = 0;
+        boolean firstEntry = true;
+
+        try (final BufferedReader bufferedReader = Files.newBufferedReader(fileGroup.getEntries())) {
+            String line = bufferedReader.readLine();
+            while (line != null) {
+                final ZipEntryGroup zipEntryGroup = ZipEntryGroup.read(line);
+                final long totalUncompressedSize = zipEntryGroup.getTotalUncompressedSize();
+
+                // If the current aggregate has items then we might want to close and start a new one.
+                if (currentAggregateItemCount > 0 &&
+                        (currentAggregateItemCount + 1 > maxItemsPerAggregate ||
+                                currentAggregateBytes + totalUncompressedSize > maxUncompressedByteSize)) {
+                    if (firstEntry) {
+                        // If the first entry immediately causes the current aggregate to exceed the required bounds
+                        // then close it and create a new one.
+
+                        // Close the current aggregate.
+                        closeAggregate(feedKey, aggregateState);
+
+                        // Create a new aggregate.
+                        aggregateState = aggregateStateMap
+                                .computeIfAbsent(feedKey, this::createAggregate);
+
+                    } else {
+
+                        // Split.
+                        parts.add(new Part(partItems, partBytes));
+                    }
+
+                    // Reset.
+                    currentAggregateItemCount = 0;
+                    currentAggregateBytes = 0;
+                    partItems = 0;
+                    partBytes = 0;
+                }
+
+                // Add to the aggregate.
+                currentAggregateItemCount++;
+                currentAggregateBytes += totalUncompressedSize;
+                partItems++;
+                partBytes += totalUncompressedSize;
+
+                line = bufferedReader.readLine();
+                firstEntry = false;
+            }
+
+            // Add final part.
+            parts.add(new Part(partItems, partBytes));
+        }
+
+        return parts;
+    }
+
+    /**
+     * Just get a single part for the entire file group.
+     *
+     * @param fileGroup The file group to get the zip item count and total uncompressed size from.
+     * @return A single part to add to teh current aggregate.
+     * @throws IOException Could be throws when reading entries.
+     */
+    private List<Part> calculateOverflowingParts(final FileGroup fileGroup) throws IOException {
+        long partItems = 0;
+        long partBytes = 0;
+        try (final BufferedReader bufferedReader = Files.newBufferedReader(fileGroup.getEntries())) {
+            String line = bufferedReader.readLine();
+            while (line != null) {
+                final ZipEntryGroup zipEntryGroup = ZipEntryGroup.read(line);
+                final long totalUncompressedSize = zipEntryGroup.getTotalUncompressedSize();
+                partItems++;
+                partBytes += totalUncompressedSize;
+                line = bufferedReader.readLine();
+            }
+        }
+        return Collections.singletonList(new Part(partItems, partBytes));
     }
 
     private synchronized void closeAggregate(final FeedKey feedKey,
@@ -307,14 +374,14 @@ public class PreAggregator {
         LOGGER.debug(() -> "Closed aggregate: " + FileUtil.getCanonicalPath(aggregateState.aggregateDir));
     }
 
-    private SplitDirSet split(final Path dir, final List<Part> parts) throws IOException {
+    private PartDirs split(final Path dir, final List<Part> parts) throws IOException {
         final String inputDirName = dir.getFileName().toString();
         final FileGroup fileGroup = new FileGroup(dir);
         // Get a buffer to help us transfer data.
         final byte[] buffer = LocalByteBuffer.get();
 
         final Path parentDir = tempSplittingDirProvider.get();
-        final List<Path> outputDirs = new ArrayList<>();
+        final List<PartDir> partDirs = new ArrayList<>();
         try (final ZipArchiveInputStream zipArchiveInputStream =
                 new ZipArchiveInputStream(new BufferedInputStream(Files.newInputStream(fileGroup.getZip())))) {
             ZipArchiveEntry entry = zipArchiveInputStream.getNextEntry();
@@ -327,7 +394,7 @@ public class PreAggregator {
                 final String outputDirName = inputDirName + "_part_" + partNo++;
                 final Path outputDir = parentDir.resolve(outputDirName);
                 Files.createDirectory(outputDir);
-                outputDirs.add(outputDir);
+                partDirs.add(new PartDir(part, outputDir));
                 final FileGroup outputFileGroup = new FileGroup(outputDir);
 
                 // Write the zip.
@@ -362,7 +429,7 @@ public class PreAggregator {
             }
         }
 
-        return new SplitDirSet(parentDir, outputDirs);
+        return new PartDirs(parentDir, partDirs);
     }
 
     private AggregateState createAggregate(final FeedKey feedKey) {
@@ -423,11 +490,33 @@ public class PreAggregator {
         }
     }
 
+    /**
+     * Record of a part items and total byte size.
+     *
+     * @param items The number of items.
+     * @param bytes The total byte size of the part.
+     */
     private record Part(long items, long bytes) {
 
     }
 
-    private record SplitDirSet(Path parent, List<Path> children) {
+    /**
+     * Associate a dir with a part.
+     *
+     * @param part The part.
+     * @param dir  The associated dir that the part describes.
+     */
+    private record PartDir(Part part, Path dir) {
+
+    }
+
+    /**
+     * Output of a split operation.
+     *
+     * @param parent   The parent dir of the split output.
+     * @param children The child part dirs of the split output.
+     */
+    private record PartDirs(Path parent, List<PartDir> children) {
 
     }
 }
