@@ -1,11 +1,11 @@
 package stroom.proxy.app.handler;
 
 import stroom.data.zip.StroomZipFileType;
+import stroom.proxy.app.DataDirProvider;
 import stroom.proxy.app.ProxyConfig;
 import stroom.proxy.repo.AggregatorConfig;
 import stroom.proxy.repo.FeedKey;
 import stroom.proxy.repo.ProxyServices;
-import stroom.proxy.repo.RepoDirProvider;
 import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.io.FileUtil;
 import stroom.util.io.TempDirProvider;
@@ -135,16 +135,16 @@ public class TestPreAggregator extends StroomUnitTest {
                 createExpectedOutput(inputZipCount, entryCountPerZip, splitSources);
 
         final Path tempDir = Files.createTempDirectory("temp");
-        final Path repoDir = Files.createTempDirectory("repo");
+        final Path dataDir = Files.createTempDirectory("data");
         final TempDirProvider tempDirProvider = () -> tempDir;
-        final RepoDirProvider repoDirProvider = () -> repoDir;
-        final CleanupDirQueue cleanupDirQueue = new CleanupDirQueue(repoDirProvider);
+        final DataDirProvider dataDirProvider = () -> dataDir;
+        final CleanupDirQueue cleanupDirQueue = new CleanupDirQueue(dataDirProvider);
         final ProxyConfig proxyConfig = getProxyConfig(splitSources);
         final PreAggregator preAggregator = new PreAggregator(
                 cleanupDirQueue,
                 () -> proxyConfig,
                 tempDirProvider,
-                repoDirProvider,
+                dataDirProvider,
                 proxyServices);
 
         final AtomicInteger aggregateCount = new AtomicInteger();

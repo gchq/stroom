@@ -2,9 +2,9 @@ package stroom.proxy.app.event;
 
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.StandardHeaderArguments;
+import stroom.proxy.app.DataDirProvider;
 import stroom.proxy.app.ProxyConfig;
 import stroom.proxy.app.handler.ReceiverFactory;
-import stroom.proxy.repo.RepoDirProvider;
 import stroom.proxy.repo.store.FileStores;
 import stroom.util.concurrent.ThreadUtil;
 import stroom.util.concurrent.UncheckedInterruptedException;
@@ -53,18 +53,18 @@ public class EventStore implements EventConsumer, RemovalListener<FeedKey, Event
     public EventStore(final ReceiverFactory receiverFactory,
                       final Provider<ProxyConfig> proxyConfigProvider,
                       final Provider<EventStoreConfig> eventStoreConfigProvider,
-                      final RepoDirProvider repoDirProvider,
+                      final DataDirProvider dataDirProvider,
                       final FileStores fileStores) {
         this.eventStoreConfigProvider = eventStoreConfigProvider;
         final EventStoreConfig eventStoreConfig = eventStoreConfigProvider.get();
         this.forwardQueue = new LinkedBlockingQueue<>(eventStoreConfig.getForwardQueueSize());
-        final Path repoDir = repoDirProvider.get();
+        final Path dataDir = dataDirProvider.get();
 
-        // Create the root directory
-        ensureDirExists(repoDir);
+        // Create the data directory
+        ensureDirExists(dataDir);
 
         // Create the event directory.
-        dir = repoDir.resolve("event");
+        dir = dataDir.resolve("event");
         ensureDirExists(dir);
         fileStores.add(0, "Event Store", dir);
 

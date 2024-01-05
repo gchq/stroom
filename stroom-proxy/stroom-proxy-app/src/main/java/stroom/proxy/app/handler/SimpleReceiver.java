@@ -4,9 +4,9 @@ import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.StroomStatusCode;
+import stroom.proxy.app.DataDirProvider;
 import stroom.proxy.app.handler.ZipEntryGroup.Entry;
 import stroom.proxy.repo.LogStream;
-import stroom.proxy.repo.RepoDirProvider;
 import stroom.receive.common.AttributeMapFilter;
 import stroom.receive.common.StroomStreamException;
 import stroom.util.io.FileUtil;
@@ -47,7 +47,7 @@ public class SimpleReceiver implements Receiver {
 
     @Inject
     public SimpleReceiver(final AttributeMapFilterFactory attributeMapFilterFactory,
-                          final RepoDirProvider repoDirProvider,
+                          final DataDirProvider dataDirProvider,
                           final LogStream logStream,
                           final DropReceiver dropReceiver) {
         this.attributeMapFilter = attributeMapFilterFactory.create();
@@ -55,7 +55,7 @@ public class SimpleReceiver implements Receiver {
         this.dropReceiver = dropReceiver;
 
         // Make receiving zip dir.
-        final Path receivingDir = repoDirProvider.get().resolve(DirNames.RECEIVING_SIMPLE);
+        final Path receivingDir = dataDirProvider.get().resolve(DirNames.RECEIVING_SIMPLE);
         DirUtil.ensureDirExists(receivingDir);
 
         // This is a temporary location and can be cleaned completely on startup.

@@ -30,16 +30,16 @@ class TestDirQueue extends StroomUnitTest {
 
     @Test
     void test() {
-        final Path repoDir = FileUtil.createTempDirectory("stroom").resolve("repo1");
-        final DirQueue dirQueue = new DirQueue(repoDir, new QueueMonitors(), new FileStores(), 1, "test");
+        final Path dataDir = FileUtil.createTempDirectory("stroom").resolve("repo1");
+        final DirQueue dirQueue = new DirQueue(dataDir, new QueueMonitors(), new FileStores(), 1, "test");
 
-        assertThat(FileUtil.count(repoDir)).isZero();
+        assertThat(FileUtil.count(dataDir)).isZero();
 
         addFile(dirQueue);
         addFile(dirQueue);
 
         // Re open.
-        final DirQueue reopenFileStore = new DirQueue(repoDir, new QueueMonitors(), new FileStores(), 1, "test");
+        final DirQueue reopenFileStore = new DirQueue(dataDir, new QueueMonitors(), new FileStores(), 1, "test");
 
         try (final Dir dir = reopenFileStore.next()) {
             final FileGroup fileGroup = new FileGroup(dir.getPath());
@@ -52,35 +52,35 @@ class TestDirQueue extends StroomUnitTest {
             FileUtil.deleteDir(dir.getPath());
         }
 
-        assertThat(FileUtil.count(repoDir)).isZero();
-        FileUtil.delete(repoDir);
+        assertThat(FileUtil.count(dataDir)).isZero();
+        FileUtil.delete(dataDir);
     }
 
     @Test
     void testPerformance() {
-        final Path repoDir = FileUtil.createTempDirectory("stroom").resolve("repo1");
-        final DirQueue dirQueue = new DirQueue(repoDir, new QueueMonitors(), new FileStores(), 1, "test");
+        final Path dataDir = FileUtil.createTempDirectory("stroom").resolve("repo1");
+        final DirQueue dirQueue = new DirQueue(dataDir, new QueueMonitors(), new FileStores(), 1, "test");
 
         for (int i = 0; i < MAX; i++) {
             addTempDir(dirQueue);
         }
 
-        long maxId = DirUtil.getMaxDirId(repoDir);
+        long maxId = DirUtil.getMaxDirId(dataDir);
         assertThat(maxId).isEqualTo(MAX);
 
         for (int i = 0; i < 5; i++) {
             addTempDir(dirQueue);
         }
 
-        maxId = DirUtil.getMaxDirId(repoDir);
+        maxId = DirUtil.getMaxDirId(dataDir);
         assertThat(maxId).isEqualTo(MAX + 5);
     }
 
     @Test
     void testMultiThreadedPerformance() {
         final int threads = 10;
-        final Path repoDir = FileUtil.createTempDirectory("stroom").resolve("repo1");
-        final DirQueue dirQueue = new DirQueue(repoDir, new QueueMonitors(), new FileStores(), 1, "test");
+        final Path dataDir = FileUtil.createTempDirectory("stroom").resolve("repo1");
+        final DirQueue dirQueue = new DirQueue(dataDir, new QueueMonitors(), new FileStores(), 1, "test");
 
         final ExecutorService executorService = Executors.newCachedThreadPool();
         try {
@@ -124,7 +124,7 @@ class TestDirQueue extends StroomUnitTest {
             CompletableFuture.allOf(consumers).join();
 
             assertThat(consumed.get()).isEqualTo(MAX);
-            assertThat(FileUtil.count(repoDir)).isZero();
+            assertThat(FileUtil.count(dataDir)).isZero();
 
         } finally {
             executorService.shutdown();
@@ -133,21 +133,21 @@ class TestDirQueue extends StroomUnitTest {
 
     @Test
     void testPerformanceWithData() {
-        final Path repoDir = FileUtil.createTempDirectory("stroom").resolve("repo1");
-        final DirQueue dirQueue = new DirQueue(repoDir, new QueueMonitors(), new FileStores(), 1, "test");
+        final Path dataDir = FileUtil.createTempDirectory("stroom").resolve("repo1");
+        final DirQueue dirQueue = new DirQueue(dataDir, new QueueMonitors(), new FileStores(), 1, "test");
 
         for (int i = 0; i < MAX; i++) {
             addFile(dirQueue);
         }
 
-        long maxId = DirUtil.getMaxDirId(repoDir);
+        long maxId = DirUtil.getMaxDirId(dataDir);
         assertThat(maxId).isEqualTo(MAX);
 
         for (int i = 0; i < 5; i++) {
             addFile(dirQueue);
         }
 
-        maxId = DirUtil.getMaxDirId(repoDir);
+        maxId = DirUtil.getMaxDirId(dataDir);
         assertThat(maxId).isEqualTo(MAX + 5);
     }
 

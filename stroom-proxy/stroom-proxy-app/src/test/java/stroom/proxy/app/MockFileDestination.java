@@ -46,6 +46,7 @@ public class MockFileDestination {
     static ForwardFileConfig createForwardFileConfig() {
         return new ForwardFileConfig(
                 true,
+                false,
                 "My forward file",
                 "forward_dest");
     }

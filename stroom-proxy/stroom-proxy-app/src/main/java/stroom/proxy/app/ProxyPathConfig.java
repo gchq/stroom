@@ -15,13 +15,31 @@ import javax.inject.Singleton;
 @JsonPropertyOrder(alphabetic = true)
 public class ProxyPathConfig extends PathConfig implements IsProxyConfig {
 
+    public static final String PROP_NAME_DATA = "data";
+
+    @JsonProperty(PROP_NAME_DATA)
+    private final String data;
+
     public ProxyPathConfig() {
+        data = "data";
     }
 
     @JsonCreator
-    public ProxyPathConfig(@JsonProperty("home") final String home,
+    public ProxyPathConfig(@JsonProperty("data") final String data,
+                           @JsonProperty("home") final String home,
                            @JsonProperty("temp") final String temp) {
         super(home, temp);
+        this.data = data;
+    }
+
+    /**
+     * Where data will be stored during processing.
+     */
+    @ReadOnly
+    @JsonPropertyDescription("By default data will be stored relative to home. This property can be used to override " +
+            "that location.")
+    public String getData() {
+        return data;
     }
 
     /**
@@ -52,10 +70,10 @@ public class ProxyPathConfig extends PathConfig implements IsProxyConfig {
     }
 
     public ProxyPathConfig withHome(final String home) {
-        return new ProxyPathConfig(home, getTemp());
+        return new ProxyPathConfig(data, home, getTemp());
     }
 
     public ProxyPathConfig withTemp(final String temp) {
-        return new ProxyPathConfig(getHome(), temp);
+        return new ProxyPathConfig(data, getHome(), temp);
     }
 }

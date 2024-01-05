@@ -11,7 +11,6 @@ import stroom.proxy.app.handler.MockForwardFileDestinationFactory;
 import stroom.proxy.app.handler.ReceiverFactory;
 import stroom.proxy.app.handler.ZipWriter;
 import stroom.proxy.repo.AggregatorConfig;
-import stroom.proxy.repo.ProxyRepoConfig;
 import stroom.test.common.util.test.FileSystemTestUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.time.StroomDuration;
@@ -91,6 +90,7 @@ class TestInnerProcessEndToEnd {
         try {
             FileUtil.deleteContents(root);
 
+            final Path dataDir = root.resolve("data");
             final Path tempDir = root.resolve("temp");
             final Path homeDir = root.resolve("home");
             Files.createDirectories(tempDir);
@@ -98,19 +98,16 @@ class TestInnerProcessEndToEnd {
 
             final ProxyConfig proxyConfig = ProxyConfig.builder()
                     .pathConfig(new ProxyPathConfig(
+                            dataDir.toAbsolutePath().toString(),
                             homeDir.toAbsolutePath().toString(),
                             tempDir.toAbsolutePath().toString()))
-                    .proxyRepoConfig(ProxyRepoConfig.builder()
-                            .storingEnabled(true)
-                            .build())
                     .aggregatorConfig(AggregatorConfig.builder()
                             .maxItemsPerAggregate(1000)
                             .maxUncompressedByteSizeString("1G")
                             .maxAggregateAge(StroomDuration.ofSeconds(5))
                             .aggregationFrequency(StroomDuration.ofSeconds(1))
                             .build())
-                    .addForwardDestination(new ForwardFileConfig(true, "test",
-                            "test"))
+                    .addForwardFileDestination(new ForwardFileConfig(true, false, "test", "test"))
                     .build();
 
             final AbstractModule proxyModule = getModule(proxyConfig);

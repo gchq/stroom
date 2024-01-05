@@ -1,8 +1,8 @@
 package stroom.proxy.app.handler;
 
+import stroom.proxy.app.DataDirProvider;
 import stroom.proxy.app.ProxyConfig;
 import stroom.proxy.repo.ProxyServices;
-import stroom.proxy.repo.RepoDirProvider;
 import stroom.util.NullSafe;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
@@ -29,20 +29,24 @@ public class Forwarder {
 
     @Inject
     public Forwarder(final CleanupDirQueue cleanupDirQueue,
-                     final RepoDirProvider repoDirProvider,
+                     final DataDirProvider dataDirProvider,
                      final ProxyConfig proxyConfig,
                      final HttpSenderFactory httpSenderFactory,
                      final ForwardFileDestinationFactory forwardFileDestinationFactory,
                      final ProxyServices proxyServices,
                      final DirQueueFactory sequentialDirQueueFactory) {
 
-        final long count = Stream
-                .concat(NullSafe.list(proxyConfig.getForwardHttpDestinations()).stream(),
-                        NullSafe.list(proxyConfig.getForwardFileDestinations()).stream())
-                .filter(ForwardConfig::isEnabled)
+        // Find out how many forward destinations are enabled.
+        final long enabledForwardCount = Stream
+                .concat(NullSafe.list(proxyConfig.getForwardHttpDestinations())
+                                .stream()
+                                .filter(ForwardHttpPostConfig::isEnabled),
+                        NullSafe.list(proxyConfig.getForwardFileDestinations())
+                                .stream()
+                                .filter(ForwardFileConfig::isEnabled))
                 .count();
 
-        if (count == 0) {
+        if (enabledForwardCount == 0) {
             throw new RuntimeException("No forward destinations are configured");
         }
 
@@ -60,7 +64,7 @@ public class Forwarder {
                         sequentialDirQueueFactory,
                         proxyConfig.getThreadConfig().getForwardThreadCount(),
                         proxyConfig.getThreadConfig().getForwardRetryThreadCount(),
-                        repoDirProvider);
+                        dataDirProvider);
                 this.destinations.add(forwardDestination::add);
             }
         });
@@ -75,7 +79,7 @@ public class Forwarder {
         });
 
         // Make receiving zip dir.
-        final Path copiesDir = repoDirProvider.get().resolve("temp_forward_copies");
+        final Path copiesDir = dataDirProvider.get().resolve("temp_forward_copies");
         DirUtil.ensureDirExists(copiesDir);
 
         // This is a temporary location and can be cleaned completely on startup.

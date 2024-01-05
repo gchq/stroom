@@ -112,10 +112,6 @@ proxyConfig:
   receive:
     receiptPolicyUuid:
 
-  repository:
-    storingEnabled: true
-    #    repoDir: "repo"
-
   # Do we want to aggregate before forwarding
   aggregator:
     enabled: true

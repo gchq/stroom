@@ -1,7 +1,6 @@
 package stroom.proxy.app;
 
 import stroom.meta.api.StandardHeaderArguments;
-import stroom.proxy.repo.ProxyRepoConfig;
 import stroom.receive.common.ReceiveDataConfig;
 import stroom.security.openid.api.IdpType;
 
@@ -28,10 +27,7 @@ public class TestEndToEndForwardToHttp extends AbstractEndToEndTest {
                         .build()))
                 .proxyId("TestProxy")
                 .pathConfig(createProxyPathConfig())
-                .proxyRepoConfig(ProxyRepoConfig.builder()
-                        .storingEnabled(false)
-                        .build())
-                .addForwardDestination(MockHttpDestination.createForwardHttpPostConfig())
+                .addForwardHttpDestination(MockHttpDestination.createForwardHttpPostConfig(true))
                 .feedStatusConfig(MockHttpDestination.createFeedStatusConfig())
                 .receiveDataConfig(ReceiveDataConfig.builder()
                         .withAuthenticationRequired(false)

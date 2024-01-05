@@ -1,6 +1,6 @@
 package stroom.proxy.app.handler;
 
-import stroom.proxy.repo.RepoDirProvider;
+import stroom.proxy.app.DataDirProvider;
 import stroom.proxy.repo.queue.QueueMonitors;
 import stroom.proxy.repo.store.FileStores;
 
@@ -9,15 +9,15 @@ import javax.inject.Inject;
 
 public class DirQueueFactory {
 
-    private final Path repoDir;
+    private final Path dataDir;
     private final QueueMonitors queueMonitors;
     private final FileStores fileStores;
 
     @Inject
-    public DirQueueFactory(final RepoDirProvider repoDirProvider,
+    public DirQueueFactory(final DataDirProvider dataDirProvider,
                            final QueueMonitors queueMonitors,
                            final FileStores fileStores) {
-        this.repoDir = repoDirProvider.get();
+        this.dataDir = dataDirProvider.get();
         this.queueMonitors = queueMonitors;
         this.fileStores = fileStores;
     }
@@ -25,7 +25,7 @@ public class DirQueueFactory {
     public DirQueue create(final String dirName,
                            final int order,
                            final String name) {
-        final Path rootDir = repoDir.resolve(dirName);
+        final Path rootDir = dataDir.resolve(dirName);
         return create(rootDir, order, name);
     }
 

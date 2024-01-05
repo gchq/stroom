@@ -1,6 +1,6 @@
 package stroom.proxy.app.handler;
 
-import stroom.proxy.repo.RepoDirProvider;
+import stroom.proxy.app.DataDirProvider;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -21,8 +21,8 @@ public class CleanupDirQueue {
     private final Path dir;
 
     @Inject
-    CleanupDirQueue(final RepoDirProvider repoDirProvider) {
-        dir = repoDirProvider.get().resolve("99_deleting");
+    CleanupDirQueue(final DataDirProvider dataDirProvider) {
+        dir = dataDirProvider.get().resolve("99_deleting");
         DirUtil.ensureDirExists(dir);
         FileUtil.deleteContents(dir);
     }

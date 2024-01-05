@@ -1,7 +1,6 @@
 package stroom.proxy.app;
 
 import stroom.proxy.repo.AggregatorConfig;
-import stroom.proxy.repo.ProxyRepoConfig;
 import stroom.receive.common.ReceiveDataConfig;
 import stroom.security.openid.api.IdpType;
 import stroom.util.logging.LambdaLogger;
@@ -31,9 +30,6 @@ public class TestEndToEndStoreAndForwardToFile extends AbstractEndToEndTest {
         return ProxyConfig.builder()
                 .proxyId("TestProxy")
                 .pathConfig(createProxyPathConfig())
-                .proxyRepoConfig(ProxyRepoConfig.builder()
-                        .storingEnabled(true)
-                        .build())
                 .securityConfig(new ProxySecurityConfig(ProxyAuthenticationConfig.builder()
                         .openIdConfig(new ProxyOpenIdConfig()
                                 .withIdentityProviderType(IdpType.TEST_CREDENTIALS))
@@ -44,7 +40,7 @@ public class TestEndToEndStoreAndForwardToFile extends AbstractEndToEndTest {
                         .aggregationFrequency(StroomDuration.ofSeconds(1))
                         .maxItemsPerAggregate(3)
                         .build())
-                .addForwardDestination(MockFileDestination.createForwardFileConfig())
+                .addForwardFileDestination(MockFileDestination.createForwardFileConfig())
                 .feedStatusConfig(MockHttpDestination.createFeedStatusConfig())
                 .receiveDataConfig(ReceiveDataConfig.builder()
                         .withAuthenticationRequired(false)

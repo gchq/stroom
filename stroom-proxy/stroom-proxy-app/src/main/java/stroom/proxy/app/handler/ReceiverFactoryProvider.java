@@ -26,18 +26,31 @@ public class ReceiverFactoryProvider implements Provider<ReceiverFactory> {
                                    final Provider<ZipReceiver> zipReceiverProvider,
                                    final Provider<SimpleReceiver> simpleReceiverProvider,
                                    final ProxyServices proxyServices) {
-        final long count = Stream
-                .concat(NullSafe.list(proxyConfig.getForwardHttpDestinations()).stream(),
-                        NullSafe.list(proxyConfig.getForwardFileDestinations()).stream())
-                .filter(ForwardConfig::isEnabled)
+        // Find out how many forward destinations are enabled.
+        final long enabledForwardCount = Stream
+                .concat(NullSafe.list(proxyConfig.getForwardHttpDestinations())
+                                .stream()
+                                .filter(ForwardHttpPostConfig::isEnabled),
+                        NullSafe.list(proxyConfig.getForwardFileDestinations())
+                                .stream()
+                                .filter(ForwardFileConfig::isEnabled))
+                .count();
+        // Find out how many forward destinations are set for instant forwarding.
+        final long instantForwardCount = Stream
+                .concat(NullSafe.list(proxyConfig.getForwardHttpDestinations())
+                                .stream()
+                                .filter(ForwardHttpPostConfig::isInstant),
+                        NullSafe.list(proxyConfig.getForwardFileDestinations())
+                                .stream()
+                                .filter(ForwardFileConfig::isInstant))
                 .count();
 
-        if (count == 0) {
+        if (enabledForwardCount == 0) {
             throw new RuntimeException("No forward destinations are configured.");
         }
 
-        if (!proxyConfig.getProxyRepositoryConfig().isStoringEnabled()) {
-            if (count > 1) {
+        if (instantForwardCount > 0) {
+            if (enabledForwardCount > 1) {
                 throw new RuntimeException("Storing is not enabled but more than one forward destination is " +
                         "configured.");
             }

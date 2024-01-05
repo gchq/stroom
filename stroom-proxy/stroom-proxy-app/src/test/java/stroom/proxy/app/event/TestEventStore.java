@@ -1,9 +1,9 @@
 package stroom.proxy.app.event;
 
 import stroom.meta.api.AttributeMap;
+import stroom.proxy.app.DataDirProvider;
 import stroom.proxy.app.ProxyConfig;
 import stroom.proxy.app.handler.ReceiverFactory;
-import stroom.proxy.repo.RepoDirProvider;
 import stroom.proxy.repo.store.FileStores;
 
 import org.junit.jupiter.api.Test;
@@ -28,12 +28,12 @@ public class TestEventStore {
         final EventStoreConfig eventStoreConfig = new EventStoreConfig();
 
         final ReceiverFactory receiveStreamHandlers = Mockito.mock(ReceiverFactory.class);
-        final RepoDirProvider repoDirProvider = () -> dir;
+        final DataDirProvider dataDirProvider = () -> dir;
         final EventStore eventStore = new EventStore(
                 receiveStreamHandlers,
                 () -> proxyConfig,
                 () -> eventStoreConfig,
-                repoDirProvider,
+                dataDirProvider,
                 new FileStores());
 
         for (int i = 0; i < 10; i++) {

@@ -10,6 +10,7 @@ import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Objects;
@@ -17,11 +18,12 @@ import javax.validation.constraints.NotNull;
 
 @NotInjectableConfig // Used in lists so not a unique thing
 @JsonPropertyOrder(alphabetic = true)
-public class ForwardHttpPostConfig extends AbstractConfig implements ForwardConfig, IsProxyConfig {
+public class ForwardHttpPostConfig extends AbstractConfig implements IsProxyConfig {
 
     private static final ByteSize DEFAULT_CHUNK_SIZE_BYTES = ByteSize.ofMebibytes(1);
 
     private final boolean enabled;
+    private final boolean instant;
     private final String name;
     private final String userAgent;
     private final String forwardUrl;
@@ -35,6 +37,7 @@ public class ForwardHttpPostConfig extends AbstractConfig implements ForwardConf
 
     public ForwardHttpPostConfig() {
         enabled = true;
+        instant = false;
         name = null;
         userAgent = null;
         forwardUrl = null;
@@ -50,6 +53,7 @@ public class ForwardHttpPostConfig extends AbstractConfig implements ForwardConf
     @SuppressWarnings("unused")
     @JsonCreator
     public ForwardHttpPostConfig(@JsonProperty("enabled") final boolean enabled,
+                                 @JsonProperty("instant") final boolean instant,
                                  @JsonProperty("name") final String name,
                                  @JsonProperty("userAgent") final String userAgent,
                                  @JsonProperty("forwardUrl") final String forwardUrl,
@@ -61,6 +65,7 @@ public class ForwardHttpPostConfig extends AbstractConfig implements ForwardConf
                                  @JsonProperty("sslConfig") final SSLConfig sslConfig,
                                  @JsonProperty("addOpenIdAccessToken") final boolean addOpenIdAccessToken) {
         this.enabled = enabled;
+        this.instant = instant;
         this.name = name;
         this.userAgent = userAgent;
         this.forwardUrl = forwardUrl;
@@ -77,14 +82,20 @@ public class ForwardHttpPostConfig extends AbstractConfig implements ForwardConf
      * True if received streams should be forwarded to another stroom(-proxy) instance.
      */
     @JsonProperty
-    @Override
     public boolean isEnabled() {
         return enabled;
     }
 
     @NotNull
     @JsonProperty
-    @Override
+    @JsonPropertyDescription("Should data be forwarded instantly during the receipt process, i.e. must we" +
+            " successfully forward before returning a success response to the sender.")
+    public boolean isInstant() {
+        return instant;
+    }
+
+    @NotNull
+    @JsonProperty
     public String getName() {
         return name;
     }
@@ -99,7 +110,7 @@ public class ForwardHttpPostConfig extends AbstractConfig implements ForwardConf
     }
 
     /**
-     * The URL's to forward onto. This is pass-through mode if repoDir is not set
+     * The URLs to forward onto. This is pass-through mode if instant is set.
      */
     @NotNull
     @JsonProperty
@@ -170,6 +181,7 @@ public class ForwardHttpPostConfig extends AbstractConfig implements ForwardConf
     public ForwardHttpPostConfig withSslConfig(final SSLConfig sslConfig) {
         return new ForwardHttpPostConfig(
                 enabled,
+                instant,
                 name,
                 userAgent,
                 forwardUrl,
@@ -199,45 +211,57 @@ public class ForwardHttpPostConfig extends AbstractConfig implements ForwardConf
         if (this == o) {
             return true;
         }
-        if (o == null || getClass() != o.getClass()) {
+        if (!(o instanceof final ForwardHttpPostConfig that)) {
             return false;
         }
-        final ForwardHttpPostConfig that = (ForwardHttpPostConfig) o;
-        return enabled == that.enabled && Objects.equals(name, that.name) && Objects.equals(userAgent,
-                that.userAgent) && Objects.equals(forwardUrl, that.forwardUrl) && Objects.equals(
-                forwardTimeout,
-                that.forwardTimeout) && Objects.equals(forwardDelay,
-                that.forwardDelay) && Objects.equals(forwardChunkSize,
-                that.forwardChunkSize) && Objects.equals(sslConfig, that.sslConfig);
+        return enabled == that.enabled &&
+                instant == that.instant &&
+                maxRetries == that.maxRetries &&
+                addOpenIdAccessToken == that.addOpenIdAccessToken &&
+                Objects.equals(name, that.name) &&
+                Objects.equals(userAgent, that.userAgent) &&
+                Objects.equals(forwardUrl, that.forwardUrl) &&
+                Objects.equals(forwardTimeout, that.forwardTimeout) &&
+                Objects.equals(forwardDelay, that.forwardDelay) &&
+                Objects.equals(retryDelay, that.retryDelay) &&
+                Objects.equals(forwardChunkSize, that.forwardChunkSize) &&
+                Objects.equals(sslConfig, that.sslConfig);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(enabled,
+        return Objects.hash(
+                enabled,
+                instant,
                 name,
                 userAgent,
                 forwardUrl,
                 forwardTimeout,
                 forwardDelay,
+                retryDelay,
+                maxRetries,
                 forwardChunkSize,
-                sslConfig);
+                sslConfig,
+                addOpenIdAccessToken);
     }
 
     @Override
     public String toString() {
         return "ForwardHttpPostConfig{" +
                 "enabled=" + enabled +
+                ", instant=" + instant +
                 ", name='" + name + '\'' +
                 ", userAgent='" + userAgent + '\'' +
                 ", forwardUrl='" + forwardUrl + '\'' +
                 ", forwardTimeout=" + forwardTimeout +
                 ", forwardDelay=" + forwardDelay +
+                ", retryDelay=" + retryDelay +
+                ", maxRetries=" + maxRetries +
                 ", forwardChunkSize=" + forwardChunkSize +
                 ", sslConfig=" + sslConfig +
                 ", addOpenIdAccessToken=" + addOpenIdAccessToken +
                 '}';
     }
-
 
     // --------------------------------------------------------------------------------
 
@@ -245,6 +269,7 @@ public class ForwardHttpPostConfig extends AbstractConfig implements ForwardConf
     public static class Builder {
 
         private boolean enabled;
+        private boolean instant;
         private String name;
         private String userAgent;
         private String forwardUrl;
@@ -260,6 +285,7 @@ public class ForwardHttpPostConfig extends AbstractConfig implements ForwardConf
             final ForwardHttpPostConfig forwardHttpPostConfig = new ForwardHttpPostConfig();
 
             this.enabled = forwardHttpPostConfig.enabled;
+            this.instant = forwardHttpPostConfig.instant;
             this.name = forwardHttpPostConfig.name;
             this.userAgent = forwardHttpPostConfig.userAgent;
             this.forwardUrl = forwardHttpPostConfig.forwardUrl;
@@ -274,6 +300,11 @@ public class ForwardHttpPostConfig extends AbstractConfig implements ForwardConf
 
         public Builder enabled(final boolean enabled) {
             this.enabled = enabled;
+            return this;
+        }
+
+        public Builder instant(final boolean instant) {
+            this.instant = instant;
             return this;
         }
 
@@ -330,6 +361,7 @@ public class ForwardHttpPostConfig extends AbstractConfig implements ForwardConf
         public ForwardHttpPostConfig build() {
             return new ForwardHttpPostConfig(
                     enabled,
+                    instant,
                     name,
                     userAgent,
                     forwardUrl,

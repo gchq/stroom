@@ -1,7 +1,6 @@
 package stroom.proxy.app;
 
 import stroom.proxy.repo.AggregatorConfig;
-import stroom.proxy.repo.ProxyRepoConfig;
 import stroom.receive.common.ReceiveDataConfig;
 import stroom.security.openid.api.IdpType;
 import stroom.util.time.StroomDuration;
@@ -27,16 +26,13 @@ public class TestEndToEndStoreAndForwardToHttp extends AbstractEndToEndTest {
                         .build()))
                 .proxyId("TestProxy")
                 .pathConfig(createProxyPathConfig())
-                .proxyRepoConfig(ProxyRepoConfig.builder()
-                        .storingEnabled(true)
-                        .build())
                 .aggregatorConfig(AggregatorConfig.builder()
                         .maxUncompressedByteSizeString("1G")
                         .maxAggregateAge(StroomDuration.ofSeconds(5))
                         .aggregationFrequency(StroomDuration.ofSeconds(1))
                         .maxItemsPerAggregate(3)
                         .build())
-                .addForwardDestination(MockHttpDestination.createForwardHttpPostConfig())
+                .addForwardHttpDestination(MockHttpDestination.createForwardHttpPostConfig(false))
                 .feedStatusConfig(MockHttpDestination.createFeedStatusConfig())
                 .receiveDataConfig(ReceiveDataConfig.builder()
                         .withAuthenticationRequired(false)

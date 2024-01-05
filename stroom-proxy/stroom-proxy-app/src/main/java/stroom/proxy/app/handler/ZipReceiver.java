@@ -4,10 +4,10 @@ import stroom.data.zip.StroomZipFileType;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
+import stroom.proxy.app.DataDirProvider;
 import stroom.proxy.app.handler.ZipEntryGroup.Entry;
 import stroom.proxy.repo.FeedKey;
 import stroom.proxy.repo.LogStream;
-import stroom.proxy.repo.RepoDirProvider;
 import stroom.receive.common.AttributeMapFilter;
 import stroom.receive.common.StroomStreamException;
 import stroom.util.io.ByteCountInputStream;
@@ -88,28 +88,28 @@ public class ZipReceiver implements Receiver {
 
     @Inject
     public ZipReceiver(final AttributeMapFilterFactory attributeMapFilterFactory,
-                       final RepoDirProvider repoDirProvider,
+                       final DataDirProvider dataDirProvider,
                        final LogStream logStream) {
         this.attributeMapFilter = attributeMapFilterFactory.create();
         this.logStream = logStream;
 
         // Make receiving zip dir provider.
-        receivingDirProvider = createDirProvider(repoDirProvider, DirNames.RECEIVING_ZIP);
+        receivingDirProvider = createDirProvider(dataDirProvider, DirNames.RECEIVING_ZIP);
 
         // Get or create the split zip dir provider.
-        splitZipDirProvider = createDirProvider(repoDirProvider, DirNames.SPLIT_ZIP);
+        splitZipDirProvider = createDirProvider(dataDirProvider, DirNames.SPLIT_ZIP);
 
 //        // Get or create the received dir provider.
-//        receivedDirProvider = createDirProvider(repoDirProvider, DirNames.RECEIVED_ZIP);
+//        receivedDirProvider = createDirProvider(dataDirProvider, DirNames.RECEIVED_ZIP);
 
 //        // Move any received data from previous proxy usage to the store.
 //        transferOldReceivedData(receivedDir);
 
     }
 
-    private NumberedDirProvider createDirProvider(final RepoDirProvider repoDirProvider, final String dirName) {
+    private NumberedDirProvider createDirProvider(final DataDirProvider dataDirProvider, final String dirName) {
         // Make dir
-        final Path dir = repoDirProvider.get().resolve(dirName);
+        final Path dir = dataDirProvider.get().resolve(dirName);
         DirUtil.ensureDirExists(dir);
 
         // This is a temporary location and can be cleaned completely on startup.

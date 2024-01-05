@@ -390,9 +390,10 @@ public class MockHttpDestination {
 //        isRequestLoggingEnabled = requestLoggingEnabled;
 //    }
 
-    static ForwardHttpPostConfig createForwardHttpPostConfig() {
+    static ForwardHttpPostConfig createForwardHttpPostConfig(final boolean instant) {
         return ForwardHttpPostConfig.builder()
                 .enabled(true)
+                .instant(instant)
                 .forwardUrl("http://localhost:"
                         + MockHttpDestination.DEFAULT_STROOM_PORT
                         + getDataFeedPath())

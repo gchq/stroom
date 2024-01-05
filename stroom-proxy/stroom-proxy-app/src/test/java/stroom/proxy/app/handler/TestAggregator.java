@@ -1,8 +1,8 @@
 package stroom.proxy.app.handler;
 
 import stroom.data.zip.StroomZipFileType;
+import stroom.proxy.app.DataDirProvider;
 import stroom.proxy.repo.FeedKey;
-import stroom.proxy.repo.RepoDirProvider;
 import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.io.FileUtil;
 import stroom.util.io.TempDirProvider;
@@ -51,10 +51,10 @@ public class TestAggregator extends StroomUnitTest {
     private void test(final int entryCountPerZip,
                       final int inputZipCount) throws IOException {
         final Path tempDir = Files.createTempDirectory("temp");
-        final Path repoDir = Files.createTempDirectory("repo");
+        final Path dataDir = Files.createTempDirectory("repo");
         final TempDirProvider tempDirProvider = () -> tempDir;
-        final RepoDirProvider repoDirProvider = () -> repoDir;
-        final CleanupDirQueue cleanupDirQueue = new CleanupDirQueue(repoDirProvider);
+        final DataDirProvider dataDirProvider = () -> dataDir;
+        final CleanupDirQueue cleanupDirQueue = new CleanupDirQueue(dataDirProvider);
         final AtomicInteger aggregateCount = new AtomicInteger();
         final Aggregator aggregator = new Aggregator(
                 cleanupDirQueue,

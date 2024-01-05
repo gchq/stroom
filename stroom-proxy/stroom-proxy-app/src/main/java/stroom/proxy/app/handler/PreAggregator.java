@@ -3,11 +3,11 @@ package stroom.proxy.app.handler;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
+import stroom.proxy.app.DataDirProvider;
 import stroom.proxy.app.ProxyConfig;
 import stroom.proxy.repo.AggregatorConfig;
 import stroom.proxy.repo.FeedKey;
 import stroom.proxy.repo.ProxyServices;
-import stroom.proxy.repo.RepoDirProvider;
 import stroom.util.io.FileName;
 import stroom.util.io.FileUtil;
 import stroom.util.io.TempDirProvider;
@@ -48,7 +48,7 @@ public class PreAggregator {
     private final Path stagedSplittingDir;
     private final CleanupDirQueue deleteDirQueue;
     private final AggregatorConfig aggregatorConfig;
-    private final RepoDirProvider repoDirProvider;
+    private final DataDirProvider dataDirProvider;
 
     private final Path aggregatingDir;
 
@@ -60,14 +60,14 @@ public class PreAggregator {
     public PreAggregator(final CleanupDirQueue deleteDirQueue,
                          final Provider<ProxyConfig> proxyConfigProvider,
                          final TempDirProvider tempDirProvider,
-                         final RepoDirProvider repoDirProvider,
+                         final DataDirProvider dataDirProvider,
                          final ProxyServices proxyServices) {
         this.deleteDirQueue = deleteDirQueue;
         this.aggregatorConfig = proxyConfigProvider.get().getAggregatorConfig();
-        this.repoDirProvider = repoDirProvider;
+        this.dataDirProvider = dataDirProvider;
 
         // Get or create the aggregating dir.
-        aggregatingDir = repoDirProvider.get().resolve(DirNames.PRE_AGGREGATES);
+        aggregatingDir = dataDirProvider.get().resolve(DirNames.PRE_AGGREGATES);
         DirUtil.ensureDirExists(aggregatingDir);
 
         // Read all the current aggregates and establish the aggregation state.
@@ -84,7 +84,7 @@ public class PreAggregator {
         tempSplittingDirProvider = new NumberedDirProvider(tempSplittingDir);
 
         // Get or create the post split data dir.
-        stagedSplittingDir = repoDirProvider.get().resolve(DirNames.PRE_AGGREGATE_SPLIT_OUTPUT);
+        stagedSplittingDir = dataDirProvider.get().resolve(DirNames.PRE_AGGREGATE_SPLIT_OUTPUT);
         DirUtil.ensureDirExists(stagedSplittingDir);
 
         // Move any split data from previous proxy usage to the aggregates.
@@ -445,8 +445,8 @@ public class PreAggregator {
             }
 
             // Get or create the aggregate dir.
-            final Path repoDir = repoDirProvider.get();
-            final Path aggregatesDir = repoDir.resolve("aggregates");
+            final Path dataDir = dataDirProvider.get();
+            final Path aggregatesDir = dataDir.resolve("aggregates");
             final Path aggregateDir = aggregatesDir.resolve(sb.toString());
             LOGGER.debug(() -> "Creating aggregate: " + FileUtil.getCanonicalPath(aggregateDir));
 

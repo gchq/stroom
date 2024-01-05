@@ -2,13 +2,11 @@ package stroom.proxy.app;
 
 import stroom.proxy.app.event.EventStoreConfig;
 import stroom.proxy.app.handler.FeedStatusConfig;
-import stroom.proxy.app.handler.ForwardConfig;
 import stroom.proxy.app.handler.ForwardFileConfig;
 import stroom.proxy.app.handler.ForwardHttpPostConfig;
 import stroom.proxy.app.handler.ThreadConfig;
 import stroom.proxy.repo.AggregatorConfig;
 import stroom.proxy.repo.LogStreamConfig;
-import stroom.proxy.repo.ProxyRepoConfig;
 import stroom.receive.common.ReceiveDataConfig;
 import stroom.security.openid.api.AbstractOpenIdConfig;
 import stroom.security.openid.api.IdpType;
@@ -40,7 +38,6 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
     public static final String PROP_NAME_CONTENT_DIR = "contentDir";
     public static final String PROP_NAME_PATH = "path";
     public static final String PROP_NAME_RECEIVE = "receive";
-    public static final String PROP_NAME_REPOSITORY = "repository";
     public static final String PROP_NAME_EVENT_STORE = "eventStore";
     public static final String PROP_NAME_AGGREGATOR = "aggregator";
     public static final String PROP_NAME_FORWARD_FILE_DESTINATIONS = "forwardFileDestinations";
@@ -62,7 +59,6 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
 
     private final ProxyPathConfig pathConfig;
     private final ReceiveDataConfig receiveDataConfig;
-    private final ProxyRepoConfig proxyRepoConfig;
     private final EventStoreConfig eventStoreConfig;
     private final AggregatorConfig aggregatorConfig;
     private final List<ForwardFileConfig> forwardFileDestinations;
@@ -81,7 +77,6 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
 
         pathConfig = new ProxyPathConfig();
         receiveDataConfig = new ReceiveDataConfig();
-        proxyRepoConfig = new ProxyRepoConfig();
         eventStoreConfig = new EventStoreConfig();
         aggregatorConfig = new AggregatorConfig();
         forwardFileDestinations = new ArrayList<>();
@@ -103,7 +98,6 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
             @JsonProperty(PROP_NAME_CONTENT_DIR) final String contentDir,
             @JsonProperty(PROP_NAME_PATH) final ProxyPathConfig pathConfig,
             @JsonProperty(PROP_NAME_RECEIVE) final ReceiveDataConfig receiveDataConfig,
-            @JsonProperty(PROP_NAME_REPOSITORY) final ProxyRepoConfig proxyRepoConfig,
             @JsonProperty(PROP_NAME_EVENT_STORE) final EventStoreConfig eventStoreConfig,
             @JsonProperty(PROP_NAME_AGGREGATOR) final AggregatorConfig aggregatorConfig,
             @JsonProperty(PROP_NAME_FORWARD_FILE_DESTINATIONS) final List<ForwardFileConfig> forwardFileDestinations,
@@ -120,7 +114,6 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         this.contentDir = contentDir;
         this.pathConfig = pathConfig;
         this.receiveDataConfig = receiveDataConfig;
-        this.proxyRepoConfig = proxyRepoConfig;
         this.eventStoreConfig = eventStoreConfig;
         this.aggregatorConfig = aggregatorConfig;
         this.forwardFileDestinations = forwardFileDestinations;
@@ -165,11 +158,6 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
     @JsonProperty(PROP_NAME_RECEIVE)
     public ReceiveDataConfig getReceiveDataConfig() {
         return receiveDataConfig;
-    }
-
-    @JsonProperty(PROP_NAME_REPOSITORY)
-    public ProxyRepoConfig getProxyRepositoryConfig() {
-        return proxyRepoConfig;
     }
 
     @JsonProperty(PROP_NAME_EVENT_STORE)
@@ -219,20 +207,6 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         return proxySecurityConfig;
     }
 
-    @JsonIgnore
-    @SuppressWarnings("unused")
-    @ValidationMethod(message = "If repository.storingEnabled is not true, then forwardFileDestinations " +
-            "or forwardHttpDestinations must contain at least one destination")
-    public boolean isRepoConfigValid() {
-        if (proxyRepoConfig == null && !proxyRepoConfig.isStoringEnabled()) {
-            final int destinationCount = NullSafe.get(forwardFileDestinations, List::size)
-                    + NullSafe.get(forwardHttpDestinations, List::size);
-            return destinationCount > 0;
-        } else {
-            return true;
-        }
-    }
-
     @JsonPropertyDescription("Configurations for AWS SQS connectors")
     @JsonProperty
     public List<SqsConnectorConfig> getSqsConnectors() {
@@ -279,7 +253,6 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
 
         private ProxyPathConfig pathConfig = new ProxyPathConfig();
         private ReceiveDataConfig receiveDataConfig = new ReceiveDataConfig();
-        private ProxyRepoConfig proxyRepoConfig = new ProxyRepoConfig();
         private EventStoreConfig eventStoreConfig = new EventStoreConfig();
         private AggregatorConfig aggregatorConfig = new AggregatorConfig();
         private final List<ForwardFileConfig> forwardFileDestinations = new ArrayList<>();
@@ -320,11 +293,6 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
             return this;
         }
 
-        public Builder proxyRepoConfig(final ProxyRepoConfig proxyRepoConfig) {
-            this.proxyRepoConfig = proxyRepoConfig;
-            return this;
-        }
-
         public Builder eventStoreConfig(final EventStoreConfig eventStoreConfig) {
             this.eventStoreConfig = eventStoreConfig;
             return this;
@@ -332,19 +300,6 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
 
         public Builder aggregatorConfig(final AggregatorConfig aggregatorConfig) {
             this.aggregatorConfig = aggregatorConfig;
-            return this;
-        }
-
-        public Builder addForwardDestination(final ForwardConfig forwarderConfig) {
-            if (forwarderConfig != null) {
-                if (forwarderConfig instanceof final ForwardFileConfig forwardFileConfig) {
-                    addForwardFileDestination(forwardFileConfig);
-                } else if (forwarderConfig instanceof final ForwardHttpPostConfig forwardHttpPostConfig) {
-                    addForwardHttpDestination(forwardHttpPostConfig);
-                } else {
-                    throw new IllegalArgumentException("Unexpected type " + forwarderConfig.getClass().getName());
-                }
-            }
             return this;
         }
 
@@ -395,7 +350,6 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
                     contentDir,
                     pathConfig,
                     receiveDataConfig,
-                    proxyRepoConfig,
                     eventStoreConfig,
                     aggregatorConfig,
                     forwardFileDestinations,

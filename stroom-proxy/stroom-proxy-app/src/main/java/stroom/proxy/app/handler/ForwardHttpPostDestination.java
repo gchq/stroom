@@ -3,8 +3,8 @@ package stroom.proxy.app.handler;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
+import stroom.proxy.app.DataDirProvider;
 import stroom.proxy.repo.ProxyServices;
-import stroom.proxy.repo.RepoDirProvider;
 import stroom.util.concurrent.ThreadUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
@@ -43,7 +43,7 @@ public class ForwardHttpPostDestination {
                                       final DirQueueFactory sequentialDirQueueFactory,
                                       final int forwardThreads,
                                       final int retryThreads,
-                                      final RepoDirProvider repoDirProvider) {
+                                      final DataDirProvider dataDirProvider) {
         this.destination = destination;
         this.cleanupDirQueue = cleanupDirQueue;
         this.destinationName = destinationName;
@@ -51,7 +51,7 @@ public class ForwardHttpPostDestination {
         this.maxRetries = maxRetries;
 
         final String safeDirName = DirUtil.makeSafeName(destinationName);
-        final Path forwardingDir = repoDirProvider.get().resolve(DirNames.FORWARDING).resolve(safeDirName);
+        final Path forwardingDir = dataDirProvider.get().resolve(DirNames.FORWARDING).resolve(safeDirName);
         DirUtil.ensureDirExists(forwardingDir);
 
         forwardQueue = sequentialDirQueueFactory.create(
