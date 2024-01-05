@@ -119,7 +119,7 @@ public class ProxySecurityFilter implements Filter {
 
         LOGGER.debug("Filtering fullPath: {}, servletPath: {}", fullPath, servletPath);
 
-        // TODO: 05/12/2022 Need to fugure out how we deal with chained proxies where the distant
+        // TODO: 05/12/2022 Need to figure out how we deal with chained proxies where the distant
         //  proxies can only see the downstream and not the IDP.
 
         if (request.getMethod().equalsIgnoreCase(HttpMethod.OPTIONS)) {

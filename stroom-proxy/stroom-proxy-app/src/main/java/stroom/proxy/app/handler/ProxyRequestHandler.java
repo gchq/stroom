@@ -82,9 +82,6 @@ public class ProxyRequestHandler implements RequestHandler {
                 }
             }
 
-            // TODO : If storing is not configured and we are forwarding to single destination then just check the feed
-            //  if feed checking is configured and stream the data straight out to the destination.
-
             if (ZERO_CONTENT.equals(attributeMap.get(StandardHeaderArguments.CONTENT_LENGTH))) {
                 LOGGER.warn("process() - Skipping Zero Content " + attributeMap);
 

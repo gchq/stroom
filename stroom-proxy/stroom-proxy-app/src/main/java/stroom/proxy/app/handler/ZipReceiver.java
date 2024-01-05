@@ -149,11 +149,6 @@ public class ZipReceiver implements Receiver {
         // Get a buffer to help us transfer data.
         final byte[] buffer = LocalByteBuffer.get();
 
-        // TODO : We could add an optimisation here to identify if the incoming data is in the expected proxy file
-        //  format and if so skip the work to repackage. At present it is very unlikely that any senders will be
-        //  providing data in the format perfectly but at the very least proxies that send data to one another ought to
-        //  be meeting the standard.
-
         final Path receivingDir;
         final ReceiveResult receiveResult;
         try {
