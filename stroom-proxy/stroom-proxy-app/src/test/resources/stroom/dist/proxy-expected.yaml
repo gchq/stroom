@@ -6,6 +6,7 @@ proxyConfig:
     maxAggregateAge: "PT10M"
     maxItemsPerAggregate: 1000
     maxUncompressedByteSize: "1.0G"
+    splitSources: true
   contentDir: "content"
   contentSync:
     apiKey: null
@@ -110,6 +111,5 @@ proxyConfig:
     queueName: null
     queueUrl: null
   threads:
-    examineSourceThreadCount: 3
-    forwardRetryThreadCount: 2
-    forwardThreadCount: 10
+    forwardRetryThreadCount: 1
+    forwardThreadCount: 5

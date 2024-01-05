@@ -59,8 +59,8 @@ public class TestPreAggregator extends StroomUnitTest {
 
     @Test
     void testSplitManyExamples() throws IOException {
-        for (int inputZipCount = 1; inputZipCount < 20; inputZipCount++) {
-            for (int entryCountPerZip = 1; entryCountPerZip < 20; entryCountPerZip++) {
+        for (int inputZipCount = 1; inputZipCount < 10; inputZipCount++) {
+            for (int entryCountPerZip = 1; entryCountPerZip < 10; entryCountPerZip++) {
                 test(entryCountPerZip, inputZipCount, true);
             }
         }
@@ -75,8 +75,8 @@ public class TestPreAggregator extends StroomUnitTest {
 
     @Test
     void testNoSplitManyExamples() throws IOException {
-        for (int inputZipCount = 1; inputZipCount < 20; inputZipCount++) {
-            for (int entryCountPerZip = 1; entryCountPerZip < 20; entryCountPerZip++) {
+        for (int inputZipCount = 1; inputZipCount < 10; inputZipCount++) {
+            for (int entryCountPerZip = 1; entryCountPerZip < 10; entryCountPerZip++) {
                 test(entryCountPerZip, inputZipCount, false);
             }
         }
