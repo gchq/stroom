@@ -13,7 +13,7 @@ import org.jooq.ForeignKey;
 import org.jooq.Identity;
 import org.jooq.Name;
 import org.jooq.Record;
-import org.jooq.Row16;
+import org.jooq.Row17;
 import org.jooq.Schema;
 import org.jooq.Table;
 import org.jooq.TableField;
@@ -129,6 +129,11 @@ public class ProcessorFilter extends TableImpl<ProcessorFilterRecord> {
      */
     public final TableField<ProcessorFilterRecord, Long> MAX_META_CREATE_TIME_MS = createField(DSL.name("max_meta_create_time_ms"), SQLDataType.BIGINT, this, "");
 
+    /**
+     * The column <code>stroom.processor_filter.max_processing_tasks</code>.
+     */
+    public final TableField<ProcessorFilterRecord, Integer> MAX_PROCESSING_TASKS = createField(DSL.name("max_processing_tasks"), SQLDataType.INTEGER.nullable(false), this, "");
+
     private ProcessorFilter(Name alias, Table<ProcessorFilterRecord> aliased) {
         this(alias, aliased, null);
     }
@@ -243,11 +248,11 @@ public class ProcessorFilter extends TableImpl<ProcessorFilterRecord> {
     }
 
     // -------------------------------------------------------------------------
-    // Row16 type methods
+    // Row17 type methods
     // -------------------------------------------------------------------------
 
     @Override
-    public Row16<Integer, Integer, Long, String, Long, String, String, Integer, Integer, String, Integer, Boolean, Boolean, Boolean, Long, Long> fieldsRow() {
-        return (Row16) super.fieldsRow();
+    public Row17<Integer, Integer, Long, String, Long, String, String, Integer, Integer, String, Integer, Boolean, Boolean, Boolean, Long, Long, Integer> fieldsRow() {
+        return (Row17) super.fieldsRow();
     }
 }

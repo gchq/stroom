@@ -583,19 +583,20 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
     }
 
     /**
-     * Count the current number of tasks for a filter in the CREATED state.
+     * Count the current number of tasks for a filter matching the specified status.
      *
      * @param filterId The filter to count tasks for.
-     * @return The number of tasks currently CREATED.
+     * @param status Task status.
+     * @return The number of tasks matching the specified status.
      */
     @Override
-    public int countCreatedTasksForFilter(final int filterId) {
+    public int countTasksForFilter(final int filterId, final TaskStatus status) {
         return JooqUtil.contextResult(
                 processorDbConnProvider, context ->
                         context
                                 .selectCount()
                                 .from(PROCESSOR_TASK)
-                                .where(PROCESSOR_TASK.STATUS.eq(TaskStatus.CREATED.getPrimitiveValue()))
+                                .where(PROCESSOR_TASK.STATUS.eq(status.getPrimitiveValue()))
                                 .and(PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID.eq(filterId))
                                 .fetchOne(0, int.class));
     }

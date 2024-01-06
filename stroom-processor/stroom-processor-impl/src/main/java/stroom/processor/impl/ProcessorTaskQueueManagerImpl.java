@@ -241,11 +241,31 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
                         // Get the queue for this filter.
                         final ProcessorTaskQueue queue = queueMap.get(filter);
                         if (queue != null) {
+                            int filterTasksAssigned = 0;
+
+                            // Maximum number of tasks to assign for this filter. If the filter task limit is
+                            // unbounded, assign as many tasks up to the specified `count`. Otherwise, only assign
+                            // tasks up to the filter's configured limit.
+                            int maxFilterTasks = count - assignedStreamTasks.size();
+                            if (filter.isProcessingTaskCountBounded()) {
+                                final int maxFilterTasksToCreate = filter.getMaxProcessingTasks() -
+                                        processorTaskDao.countTasksForFilter(filter.getId(), TaskStatus.PROCESSING);
+                                maxFilterTasks = Math.min(
+                                        maxFilterTasks,
+                                        Math.max(0, maxFilterTasksToCreate));
+                            }
+
+                            if (maxFilterTasks == 0) {
+                                continue;
+                            }
+
                             // Add as many tasks as we can for this filter.
                             ProcessorTask streamTask = queue.poll();
                             while (streamTask != null) {
                                 assignedStreamTasks.add(streamTask);
-                                if (assignedStreamTasks.size() < count) {
+                                filterTasksAssigned++;
+
+                                if (assignedStreamTasks.size() < count && filterTasksAssigned < maxFilterTasks) {
                                     streamTask = queue.poll();
                                 } else {
                                     streamTask = null;

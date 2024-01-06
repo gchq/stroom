@@ -269,6 +269,7 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
                     .minMetaCreateTimeMs(processorFilter.getMinMetaCreateTimeMs())
                     .maxMetaCreateTimeMs(processorFilter.getMaxMetaCreateTimeMs())
                     .priority(processorFilter.getPriority())
+                    .maxProcessingTasks(processorFilter.getMaxProcessingTasks())
                     .autoPriority(true)
                     .enabled(false)
                     .build();

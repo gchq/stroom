@@ -33,6 +33,7 @@ import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterTracker;
 import stroom.processor.shared.ProcessorFilterTrackerStatus;
 import stroom.processor.shared.QueryData;
+import stroom.processor.shared.TaskStatus;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
@@ -315,7 +316,7 @@ class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                         .ofEpochMilli(tracker.getLastPollMs())
                         .plus(processorConfigProvider.get().getSkipNonProducingFiltersDuration())
                         .isBefore(Instant.now())) {
-            final int currentCreatedTasks = processorTaskDao.countCreatedTasksForFilter(filter.getId());
+            final int currentCreatedTasks = processorTaskDao.countTasksForFilter(filter.getId(), TaskStatus.CREATED);
             final int maxTasks = tasksToCreatePerFilter - currentCreatedTasks;
 
             // Skip filters that already have enough tasks.
