@@ -22,6 +22,7 @@ class RecordToProcessorFilterMapper implements Function<Record, ProcessorFilter>
         processorFilter.setUuid(record.get(PROCESSOR_FILTER.UUID));
         processorFilter.setData(record.get(PROCESSOR_FILTER.DATA));
         processorFilter.setPriority(record.get(PROCESSOR_FILTER.PRIORITY));
+        processorFilter.setMaxProcessingTasks(record.get(PROCESSOR_FILTER.MAX_PROCESSING_TASKS));
         processorFilter.setReprocess(record.get(PROCESSOR_FILTER.REPROCESS));
         processorFilter.setEnabled(record.get(PROCESSOR_FILTER.ENABLED));
         processorFilter.setDeleted(record.get(PROCESSOR_FILTER.DELETED));

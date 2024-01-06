@@ -39,12 +39,13 @@ public interface ProcessorTaskDao {
                           Instant statusOlderThan);
 
     /**
-     * Count the current number of tasks for a filter in the CREATED state.
+     * Count the current number of tasks for a filter matching the specified status.
      *
      * @param filterId The filter to count tasks for.
-     * @return The number of tasks currently CREATED.
+     * @param status Task status.
+     * @return The number of tasks matching the specified status.
      */
-    int countCreatedTasksForFilter(int filterId);
+    int countTasksForFilter(int filterId, TaskStatus status);
 
     /**
      * Create new tasks for the specified filter and add them to the queue.

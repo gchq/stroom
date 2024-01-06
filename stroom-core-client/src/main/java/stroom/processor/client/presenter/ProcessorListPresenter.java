@@ -94,6 +94,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
     private final RestSaveQueue<Integer, Boolean> processorEnabledSaveQueue;
     private final RestSaveQueue<Integer, Boolean> processorFilterEnabledSaveQueue;
     private final RestSaveQueue<Integer, Integer> processorFilterPrioritySaveQueue;
+    private final RestSaveQueue<Integer, Integer> processorFilterMaxProcessingTasksSaveQueue;
 
     private boolean allowUpdate;
 
@@ -158,6 +159,14 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
                         .setPriority(key, value);
             }
         };
+        processorFilterMaxProcessingTasksSaveQueue = new RestSaveQueue<Integer, Integer>(eventBus, restFactory) {
+            @Override
+            protected void doAction(final Rest<?> rest, final Integer key, final Integer value) {
+                rest
+                        .call(PROCESSOR_FILTER_RESOURCE)
+                        .setMaxProcessingTasks(key, value);
+            }
+        };
     }
 
     void setAllowUpdate(final boolean allowUpdate) {
@@ -201,6 +210,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
         addTrackerColumns();
         addLastPollColumns();
         addPriorityColumn();
+        addMaxProcessingTasksColumn();
         addStreamsColumn();
         addEventsColumn();
         addStatusColumn();
@@ -382,6 +392,40 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
             });
         }
         dataGrid.addColumn(priorityColumn, "Priority", ColumnSizeConstants.MEDIUM_COL);
+    }
+
+    private void addMaxProcessingTasksColumn() {
+        final Column<ProcessorListRow, Number> maxProcessingTasksColumn = new Column<ProcessorListRow, Number>(
+                new ValueSpinnerCell(0, Integer.MAX_VALUE)) {
+            @Override
+            public Number getValue(final ProcessorListRow row) {
+                Number maxProcessingTasks = null;
+                if (row instanceof ProcessorFilterRow) {
+                    final ProcessorFilterRow processorFilterRow = (ProcessorFilterRow) row;
+                    if (allowUpdate) {
+                        maxProcessingTasks = new EditableInteger(processorFilterRow.getProcessorFilter()
+                                .getMaxProcessingTasks());
+                    } else {
+                        maxProcessingTasks = processorFilterRow.getProcessorFilter().getMaxProcessingTasks();
+                    }
+                }
+                return maxProcessingTasks;
+            }
+        };
+        if (allowUpdate) {
+            maxProcessingTasksColumn.setFieldUpdater(new FieldUpdater<ProcessorListRow, Number>() {
+                @Override
+                public void update(final int index, final ProcessorListRow row, final Number value) {
+                    if (row instanceof ProcessorFilterRow) {
+                        final ProcessorFilterRow processorFilterRow = (ProcessorFilterRow) row;
+                        final ProcessorFilter processorFilter = processorFilterRow.getProcessorFilter();
+                        processorFilter.setMaxProcessingTasks(value.intValue());
+                        processorFilterMaxProcessingTasksSaveQueue.setValue(processorFilter.getId(), value.intValue());
+                    }
+                }
+            });
+        }
+        dataGrid.addColumn(maxProcessingTasksColumn, "Max Tasks", ColumnSizeConstants.MEDIUM_COL);
     }
 
     private void addStreamsColumn() {

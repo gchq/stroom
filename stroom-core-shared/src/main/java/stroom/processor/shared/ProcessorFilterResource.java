@@ -95,6 +95,15 @@ public interface ProcessorFilterResource extends RestResource, DirectRestService
     boolean setPriority(@PathParam("id") Integer id, Integer priority);
 
     @PUT
+    @Path("/{id}/maxProcessingTasks")
+    @Operation(
+            summary = "Sets the optional cluster-wide limit on the number of tasks that may be processed for this " +
+                    "filter, at any one time",
+            operationId = "setProcessorFilterMaxProcessingTasks")
+    boolean setMaxProcessingTasks(@PathParam("id") Integer id, Integer maxProcessingTasks);
+
+
+    @PUT
     @Path("/{id}/enabled")
     @Operation(
             summary = "Sets the enabled/disabled state for a filter",

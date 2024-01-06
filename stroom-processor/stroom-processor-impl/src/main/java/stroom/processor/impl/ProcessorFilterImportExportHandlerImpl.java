@@ -157,6 +157,7 @@ public class ProcessorFilterImportExportHandlerImpl implements ImportExportActio
                             .builder()
                             .queryData(processorFilter.getQueryData())
                             .priority(processorFilter.getPriority())
+                            .maxProcessingTasks(processorFilter.getMaxProcessingTasks())
                             .autoPriority(false)
                             .reprocess(processorFilter.isReprocess())
                             .enabled(enableFilters)
