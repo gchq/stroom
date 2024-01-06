@@ -237,7 +237,7 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid, HasIntegerId {
         this.priority = priority;
     }
 
-    public Integer getMaxProcessingTasks() {
+    public int getMaxProcessingTasks() {
         return maxProcessingTasks;
     }
 
@@ -245,12 +245,13 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid, HasIntegerId {
         this.maxProcessingTasks = maxProcessingTasks;
     }
 
-    public boolean isHigherPriority(final ProcessorFilter other) {
-        return HIGHEST_PRIORITY_FIRST_COMPARATOR.compare(this, other) < 0;
-    }
-
+    @JsonIgnore
     public boolean isProcessingTaskCountBounded() {
         return maxProcessingTasks > 0;
+    }
+
+    public boolean isHigherPriority(final ProcessorFilter other) {
+        return HIGHEST_PRIORITY_FIRST_COMPARATOR.compare(this, other) < 0;
     }
 
     public Processor getProcessor() {
