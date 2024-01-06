@@ -43,15 +43,20 @@ class TestProcessorFilter {
         t2.setProcessorFilterTracker(new ProcessorFilterTracker());
         t2.getProcessorFilterTracker().setMinMetaId(2L);
         t2.setPriority(1);
+        t2.setMaxProcessingTasks(10);
 
         final ProcessorFilter t3 = new ProcessorFilter();
         t3.setProcessorFilterTracker(new ProcessorFilterTracker());
         t3.getProcessorFilterTracker().setMinMetaId(3L);
         t3.setPriority(3);
+        t3.setMaxProcessingTasks(20);
 
         assertThat(t1.isHigherPriority(t2)).isTrue();
         assertThat(t3.isHigherPriority(t2)).isTrue();
         assertThat(t3.isHigherPriority(t1)).isTrue();
+
+        assertThat(t1.isProcessingTaskCountBounded()).isFalse();
+        assertThat(t2.isProcessingTaskCountBounded()).isTrue();
 
         final ArrayList<ProcessorFilter> taskList = new ArrayList<>();
         taskList.add(t1);

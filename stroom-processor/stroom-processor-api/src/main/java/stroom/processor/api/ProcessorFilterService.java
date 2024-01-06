@@ -54,6 +54,8 @@ public interface ProcessorFilterService extends HasIntCrud<ProcessorFilter> {
 
     void setPriority(Integer id, Integer priority);
 
+    void setMaxProcessingTasks(Integer id, Integer maxProcessingTasks);
+
     void setEnabled(Integer id, Boolean enabled);
 
     ProcessorFilterRow getRow(ProcessorFilter processorFilter);

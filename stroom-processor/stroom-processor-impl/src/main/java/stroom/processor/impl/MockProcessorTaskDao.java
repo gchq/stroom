@@ -120,7 +120,7 @@ public class MockProcessorTaskDao implements ProcessorTaskDao, Clearable {
     }
 
     @Override
-    public int countCreatedTasksForFilter(final int filterId) {
+    public int countTasksForFilter(final int filterId, final TaskStatus status) {
         return 0;
     }
 
