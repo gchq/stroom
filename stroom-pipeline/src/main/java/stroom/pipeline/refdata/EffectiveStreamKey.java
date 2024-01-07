@@ -28,7 +28,7 @@ import java.util.Objects;
  * Represents a time range of approx 11.5 days. The range size and bounds are
  */
 @JsonInclude(Include.NON_NULL)
-class EffectiveStreamKey {
+public class EffectiveStreamKey {
 
     // Actually 11.5 days but this is fine for the purposes of reference data.
     private static final long APPROX_TEN_DAYS = 1_000_000_000;
@@ -76,25 +76,25 @@ class EffectiveStreamKey {
     }
 
 
-    String getFeed() {
+    public String getFeed() {
         return feed;
     }
 
-    String getStreamType() {
+    public String getStreamType() {
         return streamType;
     }
 
     /**
      * Inclusive
      */
-    long getFromMs() {
+    public long getFromMs() {
         return fromMs;
     }
 
     /**
      * Exclusive
      */
-    long getToMs() {
+    public long getToMs() {
         return toMs;
     }
 

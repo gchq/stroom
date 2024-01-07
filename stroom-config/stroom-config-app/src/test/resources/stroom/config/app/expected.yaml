@@ -462,6 +462,10 @@ appConfig:
       expireAfterAccess: null
       expireAfterWrite: "PT30S"
       maximumSize: 1000
+    geoIp2DatabaseReaderCache:
+      expireAfterAccess: "PT1H"
+      expireAfterWrite: null
+      maximumSize: 100
     httpClientCache:
       expireAfterAccess: "PT10M"
       expireAfterWrite: null

@@ -34,7 +34,7 @@ public class EffectiveStreamService {
      * Find the most recent stream that is older than or equal to {@code time} or empty if
      * there isn't one
      */
-    Optional<EffectiveMeta> determineEffectiveStream(final PipelineReference pipelineReference,
+    public Optional<EffectiveMeta> determineEffectiveStream(final PipelineReference pipelineReference,
                                                        final long time,
                                                        final ReferenceDataResult result) {
 

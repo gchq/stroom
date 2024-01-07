@@ -26,6 +26,7 @@ public class PipelineConfig extends AbstractConfig implements IsStroomConfig {
     private final CacheConfig httpClientCache;
     private final CacheConfig pipelineDataCache;
     private final CacheConfig documentPermissionCache;
+    private final CacheConfig geoIp2DatabaseReaderCache;
 
     public PipelineConfig() {
         appenderConfig = new AppenderConfig();
@@ -48,6 +49,10 @@ public class PipelineConfig extends AbstractConfig implements IsStroomConfig {
                 .maximumSize(1000L)
                 .expireAfterWrite(StroomDuration.ofSeconds(30))
                 .build();
+        geoIp2DatabaseReaderCache = CacheConfig.builder()
+                .maximumSize(100L)
+                .expireAfterAccess(StroomDuration.ofHours(1))
+                .build();
     }
 
     @SuppressWarnings("unused")
@@ -59,7 +64,8 @@ public class PipelineConfig extends AbstractConfig implements IsStroomConfig {
                           @JsonProperty("xslt") final XsltConfig xsltConfig,
                           @JsonProperty("httpClientCache") final CacheConfig httpClientCache,
                           @JsonProperty("pipelineDataCache") final CacheConfig pipelineDataCache,
-                          @JsonProperty("documentPermissionCache") final CacheConfig documentPermissionCache) {
+                          @JsonProperty("documentPermissionCache") final CacheConfig documentPermissionCache,
+                          @JsonProperty("geoIp2DatabaseReaderCache") final CacheConfig geoIp2DatabaseReaderCache) {
         this.appenderConfig = appenderConfig;
         this.parserConfig = parserConfig;
         this.referenceDataConfig = referenceDataConfig;
@@ -68,6 +74,7 @@ public class PipelineConfig extends AbstractConfig implements IsStroomConfig {
         this.httpClientCache = httpClientCache;
         this.pipelineDataCache = pipelineDataCache;
         this.documentPermissionCache = documentPermissionCache;
+        this.geoIp2DatabaseReaderCache = geoIp2DatabaseReaderCache;
     }
 
     @JsonProperty("appender")
@@ -105,5 +112,9 @@ public class PipelineConfig extends AbstractConfig implements IsStroomConfig {
 
     public CacheConfig getDocumentPermissionCache() {
         return documentPermissionCache;
+    }
+
+    public CacheConfig getGeoIp2DatabaseReaderCache() {
+        return geoIp2DatabaseReaderCache;
     }
 }

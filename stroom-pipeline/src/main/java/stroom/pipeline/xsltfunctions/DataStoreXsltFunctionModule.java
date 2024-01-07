@@ -11,6 +11,7 @@ public class DataStoreXsltFunctionModule extends AbstractXsltFunctionModule {
     protected void configureFunctions() {
         bindFunction(BitmapLookupFunction.class);
         bindFunction(LookupFunction.class);
+        bindFunction(LookupGeoIp2Function.class);
         bindFunction(PartNoFunction.class);
         bindFunction(SourceIdFunction.class);
         bindFunction(StreamIdFunction.class);
@@ -49,6 +50,26 @@ public class DataStoreXsltFunctionModule extends AbstractXsltFunctionModule {
                             SequenceType.OPTIONAL_STRING,
                             SequenceType.OPTIONAL_BOOLEAN,
                             SequenceType.OPTIONAL_BOOLEAN},
+                    SequenceType.NODE_SEQUENCE,
+                    functionCallProvider);
+        }
+    }
+
+    private static class LookupGeoIp2Function extends StroomExtensionFunctionDefinition<LookupGeoIp2> {
+
+        @Inject
+        LookupGeoIp2Function(final Provider<LookupGeoIp2> functionCallProvider) {
+            super(
+                    "lookup-geoip2",
+                    4,
+                    5,
+                    new SequenceType[]{
+                            SequenceType.SINGLE_STRING,
+                            SequenceType.SINGLE_STRING,
+                            SequenceType.SINGLE_STRING,
+                            SequenceType.SINGLE_STRING,
+                            SequenceType.OPTIONAL_BOOLEAN
+                    },
                     SequenceType.NODE_SEQUENCE,
                     functionCallProvider);
         }

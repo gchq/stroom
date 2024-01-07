@@ -32,12 +32,14 @@ public class PipelineCacheModule extends AbstractModule {
         bind(ParserFactoryPool.class).to(ParserFactoryPoolImpl.class);
         bind(XsltPool.class).to(XsltPoolImpl.class);
         bind(DocumentPermissionCache.class).to(DocumentPermissionCacheImpl.class);
+        bind(GeoIp2DatabaseReaderCache.class).to(GeoIp2DatabaseReaderCacheImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class)
                 .addBinding(SchemaPoolImpl.class)
                 .addBinding(ParserFactoryPoolImpl.class)
                 .addBinding(XsltPoolImpl.class)
-                .addBinding(DocumentPermissionCacheImpl.class);
+                .addBinding(DocumentPermissionCacheImpl.class)
+                .addBinding(GeoIp2DatabaseReaderCacheImpl.class);
 
         HasSystemInfoBinder.create(binder())
                 .bind(SchemaPoolImpl.class)

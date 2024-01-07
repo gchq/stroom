@@ -57,6 +57,7 @@ dependencies {
     implementation libs.jetty_http
     implementation libs.kryo
     implementation libs.lmdbjava
+    implementation libs.maxmind_geoip2
     implementation libs.okhttp
     implementation libs.restygwt
     implementation libs.saxon_he

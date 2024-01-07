@@ -259,6 +259,7 @@ ext.libs = [
         lucene_core                         : "org.apache.lucene:lucene-core:$versions.lucene",
         lucene_memory                       : "org.apache.lucene:lucene-memory:$versions.lucene",
         lucene_queryparser                  : "org.apache.lucene:lucene-queryparser:$versions.lucene",
+        maxmind_geoip2                      : "com.maxmind.geoip2:geoip2:4.2.0",
         mbknor_jackson_jsonSchema           : "com.kjetland:mbknor-jackson-jsonschema_2.12:1.0.36",
         mockito_core                        : "org.mockito:mockito-core", // version controlled by dropwizard-dependencies
         mockito_junit_jupiter               : "org.mockito:mockito-junit-jupiter", // version controlled by dropwizard-dependencies
