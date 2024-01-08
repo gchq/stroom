@@ -6,10 +6,10 @@ import stroom.security.openid.api.OpenId;
 import stroom.security.openid.api.OpenIdConfiguration;
 import stroom.security.openid.api.TokenResponse;
 import stroom.util.jersey.JerseyClientFactory;
+import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -92,8 +92,6 @@ public class ExternalServiceUserFactory implements ServiceUserFactory {
     }
 
     private ObjectMapper createObjectMapper() {
-        final ObjectMapper mapper = new ObjectMapper();
-        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        return mapper;
+        return JsonUtil.getNoIndentMapper();
     }
 }

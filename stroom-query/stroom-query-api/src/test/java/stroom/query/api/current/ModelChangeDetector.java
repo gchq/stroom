@@ -34,7 +34,7 @@ class ModelChangeDetector {
         String newPortrait = ClassPhotographer.takePortraitOf(SearchRequest.class, "stroom.query.api");
 
         // Uncomment this line to update the model portrait
-//        Files.write(Paths.get(SEARCH_REQUEST_PORTRAIT_FILE_CURRENT), newPortrait.getBytes());
+//        Files.write(SEARCH_REQUEST_PORTRAIT_FILE_CURRENT, newPortrait.getBytes());
 
         //write the new portrait to a file ignored by git so you can diff the old and new if the
         //assertion fails

@@ -33,6 +33,14 @@ public interface DocPermissionResource extends RestResource, DirectRestService {
             @Parameter(description = "request", required = true) ChangeDocumentPermissionsRequest request);
 
     @POST
+    @Path("/fetchPermissionChangeImpact")
+    @Operation(
+            summary = "Fetch impact summary for a change of document permissions",
+            operationId = "fetchPermissionChangeImpact")
+    PermissionChangeImpactSummary fetchPermissionChangeImpact(
+            @Parameter(description = "request", required = true) ChangeDocumentPermissionsRequest request);
+
+    @POST
     @Path("/copyPermissionsFromParent")
     @Operation(
             summary = "Copy permissions from parent",

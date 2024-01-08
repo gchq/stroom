@@ -967,6 +967,27 @@ paths:
       summary: Reset an authenticated user's password.
       tags:
       - Authentication
+  /authproxy/v1/noauth/fetchClientCredsToken:
+    post:
+      operationId: fetchClientCredsToken
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClientCredentials'
+        description: clientCredentials
+        required: true
+      responses:
+        default:
+          content:
+            text/plain:
+              schema:
+                type: string
+          description: default response
+      summary: Fetch an access token from the configured IDP using the supplied client
+        credentials
+      tags:
+      - AuthProxy
   /cache/v1:
     delete:
       operationId: clearCache
@@ -7538,6 +7559,13 @@ components:
         properties:
           documentUuid:
             type: string
+    ClientCredentials:
+      type: object
+      properties:
+        clientId:
+          type: string
+        clientSecret:
+          type: string
     ClusterLockKey:
       type: object
       properties:

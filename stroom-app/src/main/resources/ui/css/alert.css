@@ -50,6 +50,7 @@
     padding: 5px;
     overflow: auto;
     flex-grow: 1;
+    flex-basis: 20rem;
 
 	border: solid 1px var(--control__border-color);
 	background-color: var(--control__background-color);

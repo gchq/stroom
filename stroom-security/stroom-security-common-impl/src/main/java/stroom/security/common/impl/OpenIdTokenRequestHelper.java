@@ -36,7 +36,7 @@ import java.util.function.Consumer;
 /**
  * Helper for getting OIDC tokens from an endpoint
  */
-class OpenIdTokenRequestHelper {
+public class OpenIdTokenRequestHelper {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(OpenIdTokenRequestHelper.class);
 
@@ -50,15 +50,24 @@ class OpenIdTokenRequestHelper {
     private String redirectUri = null;
     private String refreshToken = null;
     private List<String> scopes = null;
+    private ClientCredentials clientCredentials = null;
 
-    OpenIdTokenRequestHelper(final String endpointUri,
-                             final OpenIdConfiguration openIdConfiguration,
-                             final ObjectMapper objectMapper,
-                             final JerseyClientFactory jerseyClientFactory) {
+    public OpenIdTokenRequestHelper(final String endpointUri,
+                                    final OpenIdConfiguration openIdConfiguration,
+                                    final ObjectMapper objectMapper,
+                                    final JerseyClientFactory jerseyClientFactory) {
         this.endpointUri = endpointUri;
         this.openIdConfiguration = openIdConfiguration;
         this.objectMapper = objectMapper;
         this.jerseyClientFactory = jerseyClientFactory;
+    }
+
+    /**
+     * Allows you do define client credentials that differ from those in {@link OpenIdConfiguration}
+     */
+    public OpenIdTokenRequestHelper withClientCredentials(final ClientCredentials clientCredentials) {
+        this.clientCredentials = clientCredentials;
+        return this;
     }
 
     public OpenIdTokenRequestHelper withCode(final String code) {
@@ -149,8 +158,8 @@ class OpenIdTokenRequestHelper {
         // Some OIDC providers expect authentication using a basic auth header
         // others expect the client(Id|Secret) to be in the form params and some cope
         // with both. Therefore, put them in both places to cover all bases.
-        final String clientId = openIdConfiguration.getClientId();
-        final String clientSecret = openIdConfiguration.getClientSecret();
+        final String clientId = getClientId();
+        final String clientSecret = getClientSecret();
         if (!NullSafe.isBlankString(clientId)
                 && !NullSafe.isBlankString(clientSecret)) {
             String authorization = String.join(":", clientId, clientSecret);
@@ -169,8 +178,8 @@ class OpenIdTokenRequestHelper {
             }
         };
 
-        mapAddFunc.accept(OpenId.CLIENT_ID, openIdConfiguration.getClientId());
-        mapAddFunc.accept(OpenId.CLIENT_SECRET, openIdConfiguration.getClientSecret());
+        mapAddFunc.accept(OpenId.CLIENT_ID, getClientId());
+        mapAddFunc.accept(OpenId.CLIENT_SECRET, getClientSecret());
         mapAddFunc.accept(OpenId.CODE, code);
         mapAddFunc.accept(OpenId.GRANT_TYPE, grantType);
         mapAddFunc.accept(OpenId.REDIRECT_URI, redirectUri);
@@ -192,8 +201,8 @@ class OpenIdTokenRequestHelper {
                     func.accept(val);
                 }
             };
-            builderSetFunc.accept(builder::clientId, openIdConfiguration.getClientId());
-            builderSetFunc.accept(builder::clientSecret, openIdConfiguration.getClientSecret());
+            builderSetFunc.accept(builder::clientId, getClientId());
+            builderSetFunc.accept(builder::clientSecret, getClientSecret());
             builderSetFunc.accept(builder::code, code);
             builderSetFunc.accept(builder::grantType, grantType);
             builderSetFunc.accept(builder::redirectUri, redirectUri);
@@ -246,12 +255,26 @@ class OpenIdTokenRequestHelper {
         return client.target(endpointUri);
     }
 
+    private String getClientId() {
+        return NullSafe.getOrElseGet(
+                clientCredentials,
+                ClientCredentials::getClientId,
+                openIdConfiguration::getClientId);
+    }
+
+    private String getClientSecret() {
+        return NullSafe.getOrElseGet(
+                clientCredentials,
+                ClientCredentials::getClientSecret,
+                openIdConfiguration::getClientSecret);
+    }
+
     @Override
     public String toString() {
         return "OpenIdTokenRequestHelper{" +
                 "endpointUri='" + endpointUri + '\'' +
-                ", clientId='" + openIdConfiguration.getClientId() + '\'' +
-                ", clientSecret='" + openIdConfiguration.getClientSecret() + '\'' +
+                ", clientId='" + getClientId() + '\'' +
+                ", clientSecret='" + getClientSecret() + '\'' +
                 ", code='" + code + '\'' +
                 ", grantType='" + grantType + '\'' +
                 ", redirectUri='" + redirectUri + '\'' +

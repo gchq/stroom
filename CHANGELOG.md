@@ -13,6 +13,16 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Add the un-authenticated API method `/api/authproxy/v1/noauth/fetchClientCredsToken` to effectively proxy for the IDP's token endpoint to obtain an access token using the client credentials flow. The request contains the client credentials and looks like `{ "clientId": "a-client", "clientSecret": "BR9m.....KNQO" }`. The response media type is `text/plain` and contains the access token.
+
+* Change processing user token expiry time from 1year to 10min when using internal identity provider.
+
+* Remove the CLI command `fetch_proc_user_token` as it is now replaced by the `/authproxy/v1/noauth` API method.
+
+* Fix issues with the refreshing of expired authentication tokens. Change the age of the service user token from 1yr to 10mins for the internal IDP.
+
+* Issue **#3947** : Fix owner validation of document permissions when cascading permissions. Now the validation requiring a single owner is only applied to the top level document being edited. Descendant documents may have no owners or multiple owners due to legacy behaviour in stroom. If there is no change to the owner of the top level document then the descendant owners will be ignored. If _Cascade_ is set to _All_ or there is a change to the owner of the top level document and _Cascade_ is set to _Changes Only_ then the top level owner will be made the only owner of all descendants replacing any existing owners. This change also adds a confirmation dialog that shows what changes will be made to descendant documents. See the GitHub issue for examples.
+
 * Issue **#3956** : Fix SearchRequestBuilder reuse.
 
 * Add minor performance optimisation to the byte buffer pool used by the reference data store.

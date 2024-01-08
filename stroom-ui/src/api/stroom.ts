@@ -449,6 +449,11 @@ export interface CheckDocumentPermissionRequest {
 
 export type ClearDocumentPermissionsEvent = PermissionChangeEvent & { documentUuid?: string };
 
+export interface ClientCredentials {
+  clientId?: string;
+  clientSecret?: string;
+}
+
 export interface ClusterLockKey {
   /** @format int64 */
   creationTime?: number;
@@ -6405,6 +6410,26 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     resetPassword: (data: ResetPasswordRequest, params: RequestParams = {}) =>
       this.request<any, ChangePasswordResponse>({
         path: `/authentication/v1/resetPassword`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+  };
+  authproxy = {
+    /**
+     * No description
+     *
+     * @tags AuthProxy
+     * @name FetchClientCredsToken
+     * @summary Fetch an access token from the configured IDP using the supplied client credentials
+     * @request POST:/authproxy/v1/noauth/fetchClientCredsToken
+     * @secure
+     */
+    fetchClientCredsToken: (data: ClientCredentials, params: RequestParams = {}) =>
+      this.request<any, string>({
+        path: `/authproxy/v1/noauth/fetchClientCredsToken`,
         method: "POST",
         body: data,
         secure: true,

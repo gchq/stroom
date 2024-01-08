@@ -9,7 +9,6 @@ import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.Collections;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 
 public class MockUserIdentityFactory implements UserIdentityFactory {
@@ -36,11 +35,6 @@ public class MockUserIdentityFactory implements UserIdentityFactory {
     @Override
     public boolean isServiceUser(final UserIdentity userIdentity) {
         return serviceUserFactory.isServiceUser(userIdentity, serviceUserIdentity);
-    }
-
-    @Override
-    public boolean isServiceUser(final String subject, final String issuer) {
-        return Objects.equals(subject, serviceUserIdentity.getSubjectId());
     }
 
     @Override

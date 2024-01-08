@@ -44,6 +44,7 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         bindFunction(MetaFunction.class);
         bindFunction(MetaKeysFunction.class);
         bindFunction(NumericIPFunction.class);
+        bindFunction(IPInCidrFunction.class);
         bindFunction(ParseUriFunction.class);
         bindFunction(PipelineNameFunction.class);
         bindFunction(PointIsInsideXYPolygonFunction.class);
@@ -447,6 +448,23 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
                     1,
                     new SequenceType[]{SequenceType.SINGLE_STRING},
                     SequenceType.OPTIONAL_STRING,
+                    functionCallProvider);
+        }
+    }
+
+    private static class IPInCidrFunction extends StroomExtensionFunctionDefinition<IPInCidr> {
+
+        @Inject
+        IPInCidrFunction(final Provider<IPInCidr> functionCallProvider) {
+            super(
+                    "ip-in-cidr",
+                    2,
+                    2,
+                    new SequenceType[]{
+                            SequenceType.SINGLE_STRING,
+                            SequenceType.SINGLE_STRING
+                    },
+                    SequenceType.SINGLE_BOOLEAN,
                     functionCallProvider);
         }
     }
