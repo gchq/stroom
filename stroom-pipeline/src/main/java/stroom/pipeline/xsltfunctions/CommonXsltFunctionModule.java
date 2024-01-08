@@ -17,6 +17,7 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
 
     @Override
     protected void configureFunctions() {
+        bindFunction(CidrToNumericIPRangeFunction.class);
         bindFunction(ClassificationFunction.class);
         bindFunction(ColFromFunction.class);
         bindFunction(ColToFunction.class);
@@ -53,6 +54,20 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         bindFunction(RecordNoFunction.class);
         bindFunction(SearchIdFunction.class);
         bindFunction(SourceFunction.class);
+    }
+
+    private static class CidrToNumericIPRangeFunction extends StroomExtensionFunctionDefinition<CidrToNumericIPRange> {
+
+        @Inject
+        CidrToNumericIPRangeFunction(final Provider<CidrToNumericIPRange> functionCallProvider) {
+            super(
+                    "cidr-to-numeric-ip-range",
+                    1,
+                    1,
+                    new SequenceType[]{SequenceType.SINGLE_STRING},
+                    SequenceType.NODE_SEQUENCE,
+                    functionCallProvider);
+        }
     }
 
     private static class ClassificationFunction extends StroomExtensionFunctionDefinition<Classification> {
