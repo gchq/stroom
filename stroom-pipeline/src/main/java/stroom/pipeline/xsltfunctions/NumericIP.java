@@ -23,7 +23,7 @@ import net.sf.saxon.expr.XPathContext;
 import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.trans.XPathException;
-import net.sf.saxon.value.Int64Value;
+import net.sf.saxon.value.StringValue;
 
 import java.net.UnknownHostException;
 
@@ -35,7 +35,7 @@ class NumericIP extends StroomExtensionFunctionCall {
         try {
             final String ipAddress = getSafeString(functionName, context, arguments, 0);
             try {
-                return Int64Value.makeIntegerValue(IpAddressUtil.toNumericIpAddress(ipAddress));
+                return StringValue.makeStringValue(Long.toString(IpAddressUtil.toNumericIpAddress(ipAddress)));
             } catch (final RuntimeException e) {
                 final StringBuilder sb = new StringBuilder();
                 sb.append(e.getMessage());
