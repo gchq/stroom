@@ -464,7 +464,7 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
                     1,
                     1,
                     new SequenceType[]{SequenceType.SINGLE_STRING},
-                    SequenceType.OPTIONAL_STRING,
+                    SequenceType.ATOMIC_SEQUENCE,
                     functionCallProvider);
         }
     }

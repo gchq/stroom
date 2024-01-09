@@ -1,17 +1,15 @@
 package stroom.pipeline.xsltfunctions;
 
+import stroom.util.net.IpAddressUtil;
 import stroom.util.shared.Severity;
 
 import net.sf.saxon.expr.XPathContext;
 import net.sf.saxon.ma.arrays.ArrayItem;
-import net.sf.saxon.ma.arrays.ImmutableArrayItem;
 import net.sf.saxon.ma.arrays.SimpleArrayItem;
-import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.trans.XPathException;
 import net.sf.saxon.value.Int64Value;
 
-import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -31,11 +29,11 @@ class CidrToNumericIPRange extends StroomExtensionFunctionCall {
             final Matcher cidrMatcher = IPV4_CIDR_PATTERN.matcher(cidr);
 
             if (cidrMatcher.matches()) {
-                final InetAddress cidrAddress = InetAddress.getByName(cidrMatcher.group(1));
+                final String cidrAddress = cidrMatcher.group(1);
                 final int prefixLength = Integer.parseInt(cidrMatcher.group(2));
                 final int subnetMask = 0xFFFFFFFF << (32 - prefixLength);
 
-                long networkAddress = byteArrayToLong(cidrAddress.getAddress()) & subnetMask;
+                long networkAddress = IpAddressUtil.toNumericIpAddress(cidrAddress) & subnetMask;
                 long broadcastAddress = networkAddress | (~subnetMask);
 
                 return new SimpleArrayItem(new ArrayList<>(Arrays.asList(
@@ -51,13 +49,5 @@ class CidrToNumericIPRange extends StroomExtensionFunctionCall {
         }
 
         return new SimpleArrayItem(new ArrayList<>());
-    }
-
-    private static long byteArrayToLong(byte[] bytes) {
-        long value = 0;
-        for (byte b : bytes) {
-            value = (value << 8) | (b & 0xFF);
-        }
-        return value;
     }
 }
