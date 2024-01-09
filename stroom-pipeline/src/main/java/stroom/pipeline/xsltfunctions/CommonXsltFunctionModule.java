@@ -4,6 +4,7 @@ import stroom.util.pipeline.scope.PipelineScoped;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
+import net.sf.saxon.ma.arrays.ArrayItemType;
 import net.sf.saxon.type.BuiltInAtomicType;
 import net.sf.saxon.value.SequenceType;
 
@@ -65,7 +66,7 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
                     1,
                     1,
                     new SequenceType[]{SequenceType.SINGLE_STRING},
-                    SequenceType.NODE_SEQUENCE,
+                    ArrayItemType.SINGLE_ARRAY,
                     functionCallProvider);
         }
     }
@@ -448,7 +449,7 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
                     0,
                     0,
                     new SequenceType[]{},
-                    SequenceType.ANY_SEQUENCE,
+                    ArrayItemType.SINGLE_ARRAY,
                     functionCallProvider);
         }
     }
