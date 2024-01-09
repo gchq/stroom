@@ -20,11 +20,13 @@ import stroom.pipeline.state.MetaDataHolder;
 import stroom.util.shared.Severity;
 
 import net.sf.saxon.expr.XPathContext;
+import net.sf.saxon.ma.arrays.ArrayItem;
 import net.sf.saxon.ma.arrays.SimpleArrayItem;
 import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.value.StringValue;
 
+import java.util.ArrayList;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
@@ -39,7 +41,7 @@ class MetaKeys extends StroomExtensionFunctionCall {
     }
 
     @Override
-    protected Sequence call(final String functionName, final XPathContext context, final Sequence[] arguments) {
+    protected ArrayItem call(final String functionName, final XPathContext context, final Sequence[] arguments) {
         Set<String> result = null;
 
         try {
@@ -53,10 +55,11 @@ class MetaKeys extends StroomExtensionFunctionCall {
         }
 
         if (result == null) {
-            return EmptyAtomicSequence.getInstance();
+            return new SimpleArrayItem(new ArrayList<>());
+        } else {
+            return new SimpleArrayItem(result.stream()
+                    .map(StringValue::makeStringValue)
+                    .collect(Collectors.toList()));
         }
-        return new SimpleArrayItem(result.stream()
-                .map(StringValue::makeStringValue)
-                .collect(Collectors.toList()));
     }
 }
