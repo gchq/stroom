@@ -8,7 +8,7 @@ import net.sf.saxon.ma.arrays.ArrayItem;
 import net.sf.saxon.ma.arrays.SimpleArrayItem;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.trans.XPathException;
-import net.sf.saxon.value.Int64Value;
+import net.sf.saxon.value.StringValue;
 
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -37,8 +37,8 @@ class CidrToNumericIPRange extends StroomExtensionFunctionCall {
                 long broadcastAddress = networkAddress | (~subnetMask);
 
                 return new SimpleArrayItem(new ArrayList<>(Arrays.asList(
-                        Int64Value.makeIntegerValue(networkAddress),
-                        Int64Value.makeIntegerValue(broadcastAddress))));
+                        StringValue.makeStringValue(Long.toString(networkAddress)),
+                        StringValue.makeStringValue(Long.toString(broadcastAddress)))));
             } else {
                 throw new XPathException("Invalid CIDR format: " + cidr);
             }
