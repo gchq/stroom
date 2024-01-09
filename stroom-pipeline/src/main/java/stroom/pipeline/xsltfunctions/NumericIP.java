@@ -16,46 +16,35 @@
 
 package stroom.pipeline.xsltfunctions;
 
+import stroom.util.net.IpAddressUtil;
 import stroom.util.shared.Severity;
 
 import net.sf.saxon.expr.XPathContext;
 import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.trans.XPathException;
-import net.sf.saxon.value.StringValue;
+import net.sf.saxon.value.Int64Value;
+
+import java.net.UnknownHostException;
 
 class NumericIP extends StroomExtensionFunctionCall {
 
     @Override
     protected Sequence call(final String functionName, final XPathContext context, final Sequence[] arguments) {
-        String result = null;
 
         try {
             final String ipAddress = getSafeString(functionName, context, arguments, 0);
             try {
-                result = convert(ipAddress);
+                return Int64Value.makeIntegerValue(IpAddressUtil.toNumericIpAddress(ipAddress));
             } catch (final RuntimeException e) {
                 final StringBuilder sb = new StringBuilder();
                 sb.append(e.getMessage());
                 outputWarning(context, sb, e);
             }
-        } catch (final XPathException | RuntimeException e) {
+        } catch (final XPathException | UnknownHostException | RuntimeException e) {
             log(context, Severity.ERROR, e.getMessage(), e);
         }
 
-        if (result == null) {
-            return EmptyAtomicSequence.getInstance();
-        }
-        return StringValue.makeStringValue(result);
-    }
-
-    String convert(final String ipAddress) {
-        final String[] parts = ipAddress.split("\\.");
-        int exp = parts.length - 1;
-        long num = 0;
-        for (final String part : parts) {
-            num += Long.parseLong(part) * Math.pow(256, exp--);
-        }
-        return String.valueOf(num);
+        return EmptyAtomicSequence.getInstance();
     }
 }
