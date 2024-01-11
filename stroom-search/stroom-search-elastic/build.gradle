@@ -31,8 +31,6 @@ dependencies {
     implementation libs.elasticsearch_java
     implementation libs.eventLogging
     implementation libs.guice
-    implementation libs.httpcore__elastic
-    implementation libs.http_client__elastic
     implementation libs.jackson_annotations
     implementation libs.jakarta_inject
     implementation libs.jakarta_json_api

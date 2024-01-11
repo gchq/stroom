@@ -13,6 +13,10 @@ import org.apache.http.HttpHost;
 import org.apache.http.client.config.RequestConfig.Builder;
 import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
 import org.apache.http.message.BasicHeader;
+import org.elasticsearch.client.RestClient;
+import org.elasticsearch.client.RestClientBuilder;
+import org.elasticsearch.client.RestClientBuilder.HttpClientConfigCallback;
+import org.elasticsearch.client.RestClientBuilder.RequestConfigCallback;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
