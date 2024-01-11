@@ -24,10 +24,10 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Clearable;
 
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
-import co.elastic.clients.elasticsearch.ElasticsearchClient;
 
 import java.io.IOException;
 import java.util.IdentityHashMap;

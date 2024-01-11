@@ -13,18 +13,16 @@ import stroom.task.api.TaskContextFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Provider;
-import jakarta.inject.Singleton;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.SuggestMode;
-import co.elastic.clients.elasticsearch._types.query_dsl.FieldAndFormat;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
-import co.elastic.clients.elasticsearch.core.SearchRequest.Builder;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.core.search.FieldSuggester;
 import co.elastic.clients.elasticsearch.core.search.Suggestion;
 import co.elastic.clients.elasticsearch.core.search.TermSuggestOption;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
 
 import java.io.IOException;
 import java.util.List;
@@ -114,7 +112,7 @@ public class ElasticSuggestionsQueryHandlerImpl implements ElasticSuggestionsQue
             final Map<String, List<Suggestion<Void>>> suggestResponse = searchResponse.suggest();
             final List<Suggestion<Void>> termSuggestion = suggestResponse.get("suggest");
 
-            return new Suggestions(termSuggestion.get(0).term().options().stream()
+            return new Suggestions(termSuggestion.getFirst().term().options().stream()
                     .map(TermSuggestOption::text)
                     .collect(Collectors.toList()));
         } catch (IOException | RuntimeException e) {
