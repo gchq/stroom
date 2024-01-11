@@ -317,7 +317,13 @@ class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                         .plus(processorConfigProvider.get().getSkipNonProducingFiltersDuration())
                         .isBefore(Instant.now())) {
             final int currentCreatedTasks = processorTaskDao.countTasksForFilter(filter.getId(), TaskStatus.CREATED);
-            final int maxTasks = tasksToCreatePerFilter - currentCreatedTasks;
+            int maxTasks;
+            if (filter.isProcessingTaskCountBounded()) {
+                // The max tasks for this filter is bounded, so only create tasks up to that limit
+                maxTasks = Math.min(tasksToCreatePerFilter, filter.getMaxProcessingTasks()) - currentCreatedTasks;
+            } else {
+                maxTasks = tasksToCreatePerFilter - currentCreatedTasks;
+            }
 
             // Skip filters that already have enough tasks.
             if (maxTasks > 0) {
