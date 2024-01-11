@@ -19,7 +19,7 @@ public interface ApiKeyDao {
 
     FilterFieldMappers<ApiKey> FILTER_FIELD_MAPPERS = FilterFieldMappers.of(
             FilterFieldMapper.of(FindApiKeyCriteria.FIELD_DEF_OWNER_DISPLAY_NAME, (ApiKey apiKey) ->
-                    NullSafe.get(apiKey.getOwner(), UserName::getDisplayName)),
+                    NullSafe.get(apiKey.getOwner(), UserName::getUserIdentityForAudit)),
             FilterFieldMapper.of(FindApiKeyCriteria.FIELD_DEF_NAME, ApiKey::getName),
             FilterFieldMapper.of(FindApiKeyCriteria.FIELD_DEF_PREFIX, ApiKey::getApiKeyPrefix),
             FilterFieldMapper.of(FindApiKeyCriteria.FIELD_DEF_COMMENTS, ApiKey::getComments),
