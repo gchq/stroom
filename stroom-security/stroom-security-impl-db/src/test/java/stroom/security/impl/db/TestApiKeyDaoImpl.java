@@ -1,11 +1,11 @@
 package stroom.security.impl.db;
 
 import stroom.db.util.JooqUtil;
-import stroom.security.impl.ApiKeyDao;
-import stroom.security.impl.ApiKeyService.DuplicateHashException;
 import stroom.security.impl.HashedApiKeyParts;
 import stroom.security.impl.TestModule;
 import stroom.security.impl.UserDao;
+import stroom.security.impl.apikey.ApiKeyDao;
+import stroom.security.impl.apikey.ApiKeyService.DuplicateHashException;
 import stroom.security.shared.ApiKey;
 import stroom.security.shared.CreateApiKeyRequest;
 import stroom.security.shared.FindApiKeyCriteria;

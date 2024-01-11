@@ -53,7 +53,7 @@ public class ApiKeysPlugin extends NodeToolsPlugin {
         apiKeysMenuItem = new IconMenuItem.Builder()
                 .priority(3)
                 .icon(icon)
-                .text("Manage API Keys")
+                .text("Manage API Keys (Legacy)")
                 .command(() -> {
                     postMessage("manageTokens");
 

@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.fusesource.restygwt.client.DirectRestService;
 
+import java.util.Collection;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -49,11 +50,18 @@ public interface ApiKeyResource extends RestResource, DirectRestService, FetchWi
                   @Parameter(description = "apiKey", required = true) final ApiKey apiKey);
 
     @Operation(
-            summary = "Delete a API key by ID.",
+            summary = "Delete an API key by ID.",
             operationId = "deleteApiKey")
     @DELETE
     @Path("/{id}")
-    void delete(@PathParam("{id}") final int id);
+    boolean delete(@PathParam("id") final int id);
+
+    @Operation(
+            summary = "Delete a batch of API keys by ID.",
+            operationId = "deleteApiKey")
+    @DELETE
+    @Path("/deleteBatch")
+    int deleteBatch(@Parameter(description = "ids", required = true) final Collection<Integer> ids);
 
     @POST
     @Path("/find")

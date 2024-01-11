@@ -16,6 +16,7 @@
 
 package stroom.security.impl;
 
+import stroom.event.logging.api.ObjectInfoProviderBinder;
 import stroom.security.api.DocumentPermissionService;
 import stroom.security.api.ServiceUserFactory;
 import stroom.security.api.UserIdentityFactory;
@@ -26,11 +27,16 @@ import stroom.security.common.impl.HttpClientProvider;
 import stroom.security.common.impl.IdpConfigurationProvider;
 import stroom.security.common.impl.JwtContextFactory;
 import stroom.security.common.impl.TestCredentialsServiceUserFactory;
+import stroom.security.impl.apikey.ApiKeyObjectInfoProvider;
+import stroom.security.impl.apikey.ApiKeyResourceImpl;
+import stroom.security.impl.apikey.CreateApiKeyResponseObjectInfoProvider;
 import stroom.security.impl.event.PermissionChangeEvent;
 import stroom.security.impl.event.PermissionChangeEventLifecycleModule;
 import stroom.security.impl.event.PermissionChangeEventModule;
 import stroom.security.openid.api.IdpType;
 import stroom.security.openid.api.OpenIdConfiguration;
+import stroom.security.shared.ApiKey;
+import stroom.security.shared.CreateApiKeyResponse;
 import stroom.security.shared.UserNameProvider;
 import stroom.security.user.api.UserNameService;
 import stroom.util.entityevent.EntityEvent;
@@ -114,5 +120,9 @@ public class SecurityModule extends AbstractModule {
                 .bind(SessionResourceImpl.class)
                 .bind(UserNameResourceImpl.class)
                 .bind(UserResourceImpl.class);
+
+        ObjectInfoProviderBinder.create(binder())
+                .bind(ApiKey.class, ApiKeyObjectInfoProvider.class)
+                .bind(CreateApiKeyResponse.class, CreateApiKeyResponseObjectInfoProvider.class);
     }
 }

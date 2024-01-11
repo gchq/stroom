@@ -1,4 +1,4 @@
-package stroom.security.impl;
+package stroom.security.impl.apikey;
 
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.security.shared.ApiKey;
@@ -7,13 +7,14 @@ import stroom.security.shared.ApiKeyResultPage;
 import stroom.security.shared.CreateApiKeyRequest;
 import stroom.security.shared.CreateApiKeyResponse;
 import stroom.security.shared.FindApiKeyCriteria;
-import stroom.security.shared.FindApiKeysResponse;
-import stroom.util.shared.ResultPage;
+import stroom.util.NullSafe;
+import stroom.util.shared.StringUtil;
 
+import java.util.Collection;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
-@AutoLogged
+@AutoLogged()
 public class ApiKeyResourceImpl implements ApiKeyResource {
 
     private final Provider<ApiKeyService> apiKeyServiceProvider;
@@ -23,6 +24,7 @@ public class ApiKeyResourceImpl implements ApiKeyResource {
         this.apiKeyServiceProvider = apiKeyServiceProvider;
     }
 
+    @AutoLogged()
     @Override
     public CreateApiKeyResponse create(final CreateApiKeyRequest request) {
         return apiKeyServiceProvider.get().create(request);
@@ -40,8 +42,28 @@ public class ApiKeyResourceImpl implements ApiKeyResource {
     }
 
     @Override
-    public void delete(final int id) {
-        apiKeyServiceProvider.get().delete(id);
+    public boolean delete(final int id) {
+        final boolean didDelete = apiKeyServiceProvider.get().delete(id);
+        if (!didDelete) {
+            throw new RuntimeException("No API Key found with ID " + id);
+        }
+        return didDelete;
+    }
+
+    @Override
+    public int deleteBatch(final Collection<Integer> ids) {
+        if (NullSafe.hasItems(ids)) {
+            final int count = apiKeyServiceProvider.get().deleteBatch(ids);
+            if (ids.size() != count) {
+                throw new RuntimeException("Only found " + count
+                        + " out of " + ids.size()
+                        + " API Key" + StringUtil.pluralSuffix(ids.size())
+                + " to delete.");
+            }
+            return count;
+        } else {
+            return 0;
+        }
     }
 
     @Override

@@ -3,22 +3,20 @@ package stroom.security.impl.db;
 import stroom.db.util.GenericDao;
 import stroom.db.util.JooqUtil;
 import stroom.security.api.SecurityContext;
-import stroom.security.impl.ApiKeyDao;
-import stroom.security.impl.ApiKeyService.DuplicateHashException;
 import stroom.security.impl.HashedApiKeyParts;
 import stroom.security.impl.UserCache;
+import stroom.security.impl.apikey.ApiKeyDao;
+import stroom.security.impl.apikey.ApiKeyService.DuplicateHashException;
 import stroom.security.impl.db.jooq.tables.records.ApiKeyRecord;
 import stroom.security.shared.ApiKey;
 import stroom.security.shared.ApiKeyResultPage;
 import stroom.security.shared.CreateApiKeyRequest;
 import stroom.security.shared.FindApiKeyCriteria;
-import stroom.security.shared.FindApiKeysResponse;
 import stroom.util.NullSafe;
 import stroom.util.filter.QuickFilterPredicateFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
-import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserName;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -31,6 +29,7 @@ import org.jooq.impl.DSL;
 
 import java.sql.SQLIntegrityConstraintViolationException;
 import java.time.Instant;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -181,9 +180,14 @@ public class ApiKeyDaoImpl implements ApiKeyDao {
             );
         } catch (DataAccessException e) {
             final Throwable rootCause = ExceptionUtils.getRootCause(e);
-            if (rootCause instanceof SQLIntegrityConstraintViolationException
-                    && rootCause.getMessage().contains(API_KEY.API_KEY_HASH.getName())) {
-                throw new DuplicateHashException("Duplicate API key hash value.", e);
+            if (rootCause instanceof SQLIntegrityConstraintViolationException) {
+                if (rootCause.getMessage().contains(API_KEY.API_KEY_HASH.getName())) {
+                    throw new DuplicateHashException("Duplicate API key hash value.", e);
+                } else if (rootCause.getMessage().contains(API_KEY.NAME.getName())) {
+                    throw new RuntimeException("Duplicate API key name.", e);
+                } else {
+                    throw e;
+                }
             } else {
                 throw e;
             }
@@ -207,6 +211,19 @@ public class ApiKeyDaoImpl implements ApiKeyDao {
     @Override
     public boolean delete(final int id) {
         return genericDao.delete(id);
+    }
+
+    @Override
+    public int delete(final Collection<Integer> ids) {
+        if (NullSafe.hasItems(ids)) {
+            final Integer count = JooqUtil.contextResult(securityDbConnProvider, dslContext ->
+                    dslContext.deleteFrom(API_KEY)
+                            .where(API_KEY.ID.in(ids))
+                            .execute());
+            return count;
+        } else {
+            return 0;
+        }
     }
 
     private ApiKeyRecord mapApiKeyToRecord(final ApiKey apiKey, final ApiKeyRecord record) {

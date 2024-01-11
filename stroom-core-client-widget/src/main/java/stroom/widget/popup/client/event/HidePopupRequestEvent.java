@@ -70,10 +70,18 @@ public class HidePopupRequestEvent extends GwtEvent<HidePopupRequestEvent.Handle
         HidePopupEvent.builder(presenterWidget).autoClose(autoClose).ok(ok).fire();
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface Handler extends EventHandler {
 
         void onHideRequest(HidePopupRequestEvent event);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public static class Builder {
 

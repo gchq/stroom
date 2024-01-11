@@ -1,6 +1,7 @@
-package stroom.security.impl;
+package stroom.security.impl.apikey;
 
-import stroom.security.impl.ApiKeyService.DuplicateHashException;
+import stroom.security.impl.HashedApiKeyParts;
+import stroom.security.impl.apikey.ApiKeyService.DuplicateHashException;
 import stroom.security.shared.ApiKey;
 import stroom.security.shared.ApiKeyResultPage;
 import stroom.security.shared.CreateApiKeyRequest;
@@ -10,6 +11,7 @@ import stroom.util.filter.FilterFieldMapper;
 import stroom.util.filter.FilterFieldMappers;
 import stroom.util.shared.UserName;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -19,11 +21,12 @@ public interface ApiKeyDao {
             FilterFieldMapper.of(FindApiKeyCriteria.FIELD_DEF_OWNER_DISPLAY_NAME, (ApiKey apiKey) ->
                     NullSafe.get(apiKey.getOwner(), UserName::getDisplayName)),
             FilterFieldMapper.of(FindApiKeyCriteria.FIELD_DEF_NAME, ApiKey::getName),
+            FilterFieldMapper.of(FindApiKeyCriteria.FIELD_DEF_PREFIX, ApiKey::getApiKeyPrefix),
             FilterFieldMapper.of(FindApiKeyCriteria.FIELD_DEF_COMMENTS, ApiKey::getComments),
             FilterFieldMapper.of(FindApiKeyCriteria.FIELD_DEF_ENABLED,
                     apiKey -> apiKey.getEnabled()
-                            ? "Enabled"
-                            : "Disabled"));
+                            ? "enabled"
+                            : "disabled"));
 
     ApiKeyResultPage find(final FindApiKeyCriteria criteria);
 
@@ -50,4 +53,6 @@ public interface ApiKeyDao {
     ApiKey update(final ApiKey apiKey);
 
     boolean delete(final int id);
+
+    int delete(final Collection<Integer> ids);
 }

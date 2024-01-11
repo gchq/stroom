@@ -1,9 +1,9 @@
 package stroom.security.impl.db;
 
-import stroom.security.impl.ApiKeyDao;
 import stroom.security.impl.AppPermissionDao;
 import stroom.security.impl.DocumentPermissionDao;
 import stroom.security.impl.UserDao;
+import stroom.security.impl.apikey.ApiKeyDao;
 
 import com.google.inject.AbstractModule;
 

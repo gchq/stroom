@@ -20,12 +20,14 @@ import java.util.List;
 public class FindApiKeyCriteria extends BaseCriteria {
 
     public static final String FIELD_NAME = "Name";
+    public static final String FIELD_PREFIX = "Prefix";
     public static final String FIELD_OWNER_DISPLAY_NAME = "Owner";
     public static final String FIELD_COMMENTS = "Comments";
-    public static final String FIELD_ENABLED = "Enabled";
+    public static final String FIELD_ENABLED = "State";
     public static final String FIELD_EXPIRE_TIME = "Expire Time";
 
     public static final FilterFieldDefinition FIELD_DEF_NAME = FilterFieldDefinition.defaultField(FIELD_NAME);
+    public static final FilterFieldDefinition FIELD_DEF_PREFIX = FilterFieldDefinition.defaultField(FIELD_PREFIX);
     public static final FilterFieldDefinition FIELD_DEF_OWNER_DISPLAY_NAME = FilterFieldDefinition.qualifiedField(
             FIELD_OWNER_DISPLAY_NAME);
     public static final FilterFieldDefinition FIELD_DEF_COMMENTS = FilterFieldDefinition.qualifiedField(
@@ -35,6 +37,7 @@ public class FindApiKeyCriteria extends BaseCriteria {
 
     public static final List<FilterFieldDefinition> FILTER_FIELD_DEFINITIONS = Arrays.asList(
             FIELD_DEF_NAME,
+            FIELD_DEF_PREFIX,
             FIELD_DEF_OWNER_DISPLAY_NAME,
             FIELD_DEF_COMMENTS,
             FIELD_DEF_ENABLED);

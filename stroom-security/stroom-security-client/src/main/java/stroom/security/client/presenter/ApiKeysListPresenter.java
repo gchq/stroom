@@ -1,5 +1,6 @@
 package stroom.security.client.presenter;
 
+import stroom.alert.client.event.ConfirmEvent;
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.client.event.DataSelectionEvent;
@@ -22,6 +23,7 @@ import stroom.security.shared.FindApiKeyCriteria;
 import stroom.security.shared.PermissionNames;
 import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
+import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.Selection;
 import stroom.widget.button.client.InlineSvgButton;
 import stroom.widget.popup.client.event.HidePopupEvent;
@@ -38,8 +40,13 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Consumer;
 
 public class ApiKeysListPresenter
@@ -67,6 +74,7 @@ public class ApiKeysListPresenter
 
     private Range range;
     private Consumer<ApiKeyResultPage> dataConsumer;
+    private Map<Integer, ApiKey> apiKeys = new HashMap<>();
 
     @Inject
     public ApiKeysListPresenter(final EventBus eventBus,
@@ -86,6 +94,11 @@ public class ApiKeysListPresenter
         this.dataGrid.setSelectionModel(selectionModel, selectionEventManager);
         view.setDataWidget(dataGrid);
 
+        if (!securityContext.hasAppPermission(PermissionNames.MANAGE_USERS_PERMISSION)) {
+            // No Manage Users perms so can only see their own keys
+            criteria.setOwner(securityContext.getUserName());
+        }
+
         addButton = new InlineSvgButton();
         editButton = new InlineSvgButton();
         deleteButton = new InlineSvgButton();
@@ -103,6 +116,13 @@ public class ApiKeysListPresenter
             }
         };
         dataProvider.addDataDisplay(dataGrid);
+        selectionModel.addSelectionHandler(event -> {
+            setButtonStates();
+            if (event.getSelectionType().isDoubleSelect()) {
+                editSelectedKey();
+            }
+        });
+
     }
 
     private void initButtons() {
@@ -125,40 +145,79 @@ public class ApiKeysListPresenter
     }
 
     private void setButtonStates() {
-        final boolean enabled = !selection.isMatchNothing();
-        editButton.setEnabled(enabled);
-        deleteButton.setEnabled(enabled);
+        final boolean hasSelectedItems = GwtNullSafe.hasItems(selectionModel.getSelectedItems());
+        editButton.setEnabled(hasSelectedItems);
+        deleteButton.setEnabled(!selection.isMatchNothing());
     }
 
-
     private void createNewKey() {
-        editApiKeyPresenter.show(Mode.CREATE, e -> {
-            if (e.isOk()) {
-                dataProvider.refresh();
+        editApiKeyPresenter.showCreateDialog(Mode.PRE_CREATE, () -> {
+            dataProvider.refresh();
 //                selected = newPresenter.getUserName();
 //                if (selected != null) {
-                    HidePopupEvent.builder(this).fire();
+            HidePopupEvent.builder(this).fire();
 //                }
-            }
-            e.hide();
         });
     }
 
     private void editSelectedKey() {
-        editApiKeyPresenter.show(Mode.EDIT, e -> {
-            if (e.isOk()) {
-                dataProvider.refresh();
+        final ApiKey apiKey = selectionModel.getSelected();
+        editApiKeyPresenter.showEditDialog(apiKey, Mode.EDIT, () -> {
+            dataProvider.refresh();
 //                selected = newPresenter.getUserName();
 //                if (selected != null) {
-                HidePopupEvent.builder(this).fire();
+            HidePopupEvent.builder(this).fire();
 //                }
-            }
-            e.hide();
         });
     }
 
     private void deleteSelectedKeys() {
+        // This is the one selected using row selection, not the checkbox
+        final ApiKey selectedApiKey = selectionModel.getSelected();
 
+        // The ones selected with the checkboxes
+        final Set<Integer> selectedSet = GwtNullSafe.set(selection.getSet());
+        final boolean clearSelection = selectedApiKey != null && selectedSet.contains(selectedApiKey.getId());
+        final List<Integer> selectedItems = new ArrayList<>(selectedSet);
+
+        final Consumer<Void> onSuccess = unused -> {
+            if (clearSelection) {
+                selectionModel.clear();
+            }
+            selection.clear();
+            refresh();
+        };
+
+        final int cnt = selectedItems.size();
+        if (cnt == 1) {
+            final int id = selectedItems.get(0);
+            final ApiKey apiKey = apiKeys.get(id);
+            final String msg = "Are you sure you want to delete API Key '"
+                    + apiKey.getName()
+                    + "' with prefix '"
+                    + apiKey.getApiKeyPrefix()
+                    + "'? Once deleted, anyone using this API Key will no longer by able to authenticate with it.";
+            ConfirmEvent.fire(this, msg, ok -> {
+//                GWT.log("id: " + id);
+                if (ok) {
+                    final Rest<Void> rest = restFactory.create();
+                    rest.onSuccess(onSuccess)
+                            .call(API_KEY_RESOURCE)
+                            .delete(id);
+                }
+            });
+        } else if (cnt > 1) {
+            final String msg = "Are you sure you want to delete " + selectedItems.size() + " API keys? " +
+                    "Once deleted, anyone using these API Keys will no longer by able to authenticate with them.";
+            ConfirmEvent.fire(this, msg, ok -> {
+                if (ok) {
+                    final Rest<Void> rest = restFactory.create();
+                    rest.onSuccess(onSuccess)
+                            .call(API_KEY_RESOURCE)
+                            .deleteBatch(selection.getSet());
+                }
+            });
+        }
     }
 
     private void initTableColumns() {
@@ -166,18 +225,18 @@ public class ApiKeysListPresenter
         final Column<ApiKey, TickBoxState> checkBoxColumn = DataGridUtil.columnBuilder(
                         (ApiKey row) ->
                                 TickBoxState.fromBoolean(selection.isMatch(row.getId())),
-                        () ->
-                                TickBoxCell.create(false, false))
+                        () -> TickBoxCell.create(false, false))
                 .build();
         dataGrid.addColumn(checkBoxColumn, "", ColumnSizeConstants.CHECKBOX_COL);
 
         // Add Handlers
-        checkBoxColumn.setFieldUpdater((index, row, value) -> {
+        checkBoxColumn.setFieldUpdater((index, apiKey, value) -> {
             if (value.toBoolean()) {
-                selection.add(row.getId());
+                selection.add(apiKey.getId());
             } else {
-                selection.remove(row.getId());
+                selection.remove(apiKey.getId());
             }
+            setButtonStates();
             dataGrid.redrawHeaders();
             DataSelectionEvent.fire(ApiKeysListPresenter.this, selection, false);
         });
@@ -188,31 +247,37 @@ public class ApiKeysListPresenter
             final Column<ApiKey, String> ownerColumn = DataGridUtil.textColumnBuilder(
                             (ApiKey row) ->
                                     row.getOwner().getUserIdentityForAudit())
+                    .enabledWhen(ApiKey::getEnabled)
                     .build();
             dataGrid.addResizableColumn(ownerColumn, "Owner", 250);
         }
 
         final Column<ApiKey, String> nameColumn = DataGridUtil.textColumnBuilder(ApiKey::getName)
+                .enabledWhen(ApiKey::getEnabled)
                 .build();
         dataGrid.addResizableColumn(nameColumn, "Name", 250);
 
         final Column<ApiKey, String> prefixColumn = DataGridUtil.textColumnBuilder(ApiKey::getApiKeyPrefix)
+                .enabledWhen(ApiKey::getEnabled)
                 .build();
-        dataGrid.addColumn(prefixColumn, "Key Prefix", ColumnSizeConstants.MEDIUM_COL);
+        dataGrid.addColumn(prefixColumn, "Key Prefix", 130);
 
         final Column<ApiKey, String> enabledColumn = DataGridUtil.textColumnBuilder((ApiKey apiKey) ->
                         apiKey.getEnabled()
                                 ? "Enabled"
                                 : "Disabled")
+                .enabledWhen(ApiKey::getEnabled)
                 .build();
         dataGrid.addColumn(enabledColumn, "State", ColumnSizeConstants.SMALL_COL);
 
         final Column<ApiKey, String> expiresOnColumn = DataGridUtil.textColumnBuilder(
                         ApiKey::getExpireTimeMs, dateTimeFormatter::formatWithDuration)
+                .enabledWhen(ApiKey::getEnabled)
                 .build();
         dataGrid.addColumn(expiresOnColumn, "Expires On", ColumnSizeConstants.DATE_AND_DURATION_COL);
 
         final Column<ApiKey, String> commentsColumn = DataGridUtil.textColumnBuilder(ApiKey::getComments)
+                .enabledWhen(ApiKey::getEnabled)
                 .build();
         dataGrid.addAutoResizableColumn(commentsColumn, "Comments", ColumnSizeConstants.BIG_COL);
 
@@ -226,16 +291,14 @@ public class ApiKeysListPresenter
         final Rest<ApiKeyResultPage> rest = restFactory.create();
         rest
                 .onSuccess(response -> {
+                    apiKeys.clear();
+                    response.stream()
+                            .forEach(apiKey -> apiKeys.put(apiKey.getId(), apiKey));
                     dataConsumer.accept(response);
 //                    responseMap.put(nodeName, response.getValues());
 //                    errorMap.put(nodeName, response.getErrors());
 //                    delayedUpdate.update();
                     update();
-                })
-                .onFailure(throwable -> {
-//                    responseMap.remove(nodeName);
-//                    errorMap.put(nodeName, Collections.singletonList(throwable.getMessage()));
-//                    delayedUpdate.update();
                 })
                 .call(API_KEY_RESOURCE)
                 .find(criteria);
@@ -246,7 +309,9 @@ public class ApiKeysListPresenter
     }
 
     public void setQuickFilter(final String userInput) {
-
+        timer.setName(userInput);
+        timer.cancel();
+        timer.schedule(400);
     }
 
     public void refresh() {
