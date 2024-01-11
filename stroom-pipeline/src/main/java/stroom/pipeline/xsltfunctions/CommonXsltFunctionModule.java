@@ -5,6 +5,7 @@ import stroom.util.pipeline.scope.PipelineScoped;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import net.sf.saxon.ma.arrays.ArrayItemType;
+import net.sf.saxon.ma.arrays.ArrayItemType;
 import net.sf.saxon.type.BuiltInAtomicType;
 import net.sf.saxon.value.SequenceType;
 
