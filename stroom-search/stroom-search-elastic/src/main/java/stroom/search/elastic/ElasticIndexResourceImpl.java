@@ -28,10 +28,11 @@ import stroom.search.elastic.shared.ElasticIndexTestResponse;
 import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.FetchWithUuid;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Provider;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch.indices.GetIndexResponse;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.ws.rs.NotFoundException;
 
 @AutoLogged
 class ElasticIndexResourceImpl implements ElasticIndexResource, FetchWithUuid<ElasticIndexDoc> {

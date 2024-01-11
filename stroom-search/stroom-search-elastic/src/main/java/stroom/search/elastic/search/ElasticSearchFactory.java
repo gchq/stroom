@@ -23,9 +23,9 @@ import stroom.task.shared.ThreadPool;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
-import jakarta.inject.Inject;
 import co.elastic.clients.elasticsearch.core.search.BoundaryScanner;
 import co.elastic.clients.elasticsearch.core.search.Highlight;
+import jakarta.inject.Inject;
 
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;

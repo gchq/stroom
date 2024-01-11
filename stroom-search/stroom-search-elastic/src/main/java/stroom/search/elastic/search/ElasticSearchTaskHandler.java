@@ -43,8 +43,6 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Provider;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.SlicedScroll;
 import co.elastic.clients.elasticsearch._types.Time;
@@ -58,6 +56,8 @@ import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.elasticsearch.core.search.SourceConfig;
 import co.elastic.clients.json.JsonData;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import jakarta.json.JsonArray;
 import jakarta.json.JsonNumber;
 import jakarta.json.JsonString;
@@ -65,6 +65,7 @@ import jakarta.json.JsonValue;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -216,8 +217,8 @@ public class ElasticSearchTaskHandler {
 
             // Limit the returned fields to what the values consumers require
             final FieldIndex fieldIndex = coprocessors.getFieldIndex();
-            final Set<String> fieldNames = coprocessors.getFieldIndex().getFields();
-            searchRequestBuilder.fields(fieldNames.stream()
+            final String[] fieldNames = coprocessors.getFieldIndex().getFields();
+            searchRequestBuilder.fields(Arrays.stream(fieldNames)
                     .map(fieldName -> FieldAndFormat.of(f -> f.field(fieldName)))
                     .toList()
             );
