@@ -19,7 +19,7 @@ public class ProcessorToRecordMapper implements BiFunction<Processor, ProcessorR
         record.set(PROCESSOR.UPDATE_TIME_MS, processor.getUpdateTimeMs());
         record.set(PROCESSOR.UPDATE_USER, processor.getUpdateUser());
         record.set(PROCESSOR.UUID, processor.getUuid());
-        record.set(PROCESSOR.PIPELINE_UUID, processor.getUuid());
+        record.set(PROCESSOR.PIPELINE_UUID, processor.getPipelineUuid());
         record.set(PROCESSOR.TASK_TYPE, processor.getProcessorType().getDisplayValue());
         record.set(PROCESSOR.ENABLED, processor.isEnabled());
         record.set(PROCESSOR.DELETED, processor.isDeleted());
