@@ -21,7 +21,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
 @Tag(name = "API Key")
-@Path("/apikey" + ResourcePaths.V1)
+@Path("/apikey" + ResourcePaths.V2)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public interface ApiKeyResource extends RestResource, DirectRestService, FetchWithIntegerId<ApiKey> {

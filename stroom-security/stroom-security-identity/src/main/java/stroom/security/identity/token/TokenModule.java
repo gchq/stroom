@@ -18,6 +18,7 @@ package stroom.security.identity.token;
 
 import stroom.security.openid.api.JsonWebKeyFactory;
 import stroom.security.openid.api.PublicJsonWebKeyProvider;
+import stroom.util.guice.RestResourcesBinder;
 
 import com.google.inject.AbstractModule;
 
@@ -30,7 +31,7 @@ public final class TokenModule extends AbstractModule {
         bind(JsonWebKeyFactory.class).to(JwkFactoryImpl.class);
         bind(PublicJsonWebKeyProvider.class).to(JwkCache.class);
 
-//        RestResourcesBinder.create(binder())
-//                .bind(ApiKeyResourceImpl.class);
+        RestResourcesBinder.create(binder())
+                .bind(ApiKeyResourceImpl.class);
     }
 }
