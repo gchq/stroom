@@ -1,5 +1,6 @@
 package stroom.security.client.presenter;
 
+import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
@@ -10,6 +11,7 @@ import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.DataGridSelectionEventManager;
 import stroom.data.grid.client.MyDataGrid;
+import stroom.data.grid.client.OrderByColumn;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
@@ -98,6 +100,7 @@ public class ApiKeysListPresenter
             // No Manage Users perms so can only see their own keys
             criteria.setOwner(securityContext.getUserName());
         }
+        criteria.setSort(FindApiKeyCriteria.FIELD_NAME);
 
         addButton = new InlineSvgButton();
         editButton = new InlineSvgButton();
@@ -122,7 +125,13 @@ public class ApiKeysListPresenter
                 editSelectedKey();
             }
         });
-
+        dataGrid.addColumnSortHandler(event -> {
+            if (event.getColumn() instanceof OrderByColumn<?, ?>) {
+                final OrderByColumn<?, ?> orderByColumn = (OrderByColumn<?, ?>) event.getColumn();
+                criteria.setSort(orderByColumn.getField(), !event.isSortAscending(), orderByColumn.isIgnoreCase());
+                dataProvider.refresh();
+            }
+        });
     }
 
     private void initButtons() {
@@ -180,11 +189,17 @@ public class ApiKeysListPresenter
         final boolean clearSelection = selectedApiKey != null && selectedSet.contains(selectedApiKey.getId());
         final List<Integer> selectedItems = new ArrayList<>(selectedSet);
 
-        final Consumer<Void> onSuccess = unused -> {
+        final Runnable onSuccess = () -> {
             if (clearSelection) {
                 selectionModel.clear();
             }
             selection.clear();
+            refresh();
+        };
+
+        final Consumer<Throwable> onFailure = throwable -> {
+            // Something went wrong so refresh the data.
+            AlertEvent.fireError(this, throwable.getMessage(), null);
             refresh();
         };
 
@@ -200,8 +215,12 @@ public class ApiKeysListPresenter
             ConfirmEvent.fire(this, msg, ok -> {
 //                GWT.log("id: " + id);
                 if (ok) {
-                    final Rest<Void> rest = restFactory.create();
-                    rest.onSuccess(onSuccess)
+                    final Rest<Boolean> rest = restFactory.create();
+                    rest
+                            .onSuccess(unused -> {
+                                onSuccess.run();
+                            })
+                            .onFailure(onFailure)
                             .call(API_KEY_RESOURCE)
                             .delete(id);
                 }
@@ -211,8 +230,12 @@ public class ApiKeysListPresenter
                     "Once deleted, anyone using these API Keys will no longer by able to authenticate with them.";
             ConfirmEvent.fire(this, msg, ok -> {
                 if (ok) {
-                    final Rest<Void> rest = restFactory.create();
-                    rest.onSuccess(onSuccess)
+                    final Rest<Integer> rest = restFactory.create();
+                    rest
+                            .onSuccess(count -> {
+                                onSuccess.run();
+                            })
+                            .onFailure(onFailure)
                             .call(API_KEY_RESOURCE)
                             .deleteBatch(selection.getSet());
                 }
@@ -248,17 +271,20 @@ public class ApiKeysListPresenter
                             (ApiKey row) ->
                                     row.getOwner().getUserIdentityForAudit())
                     .enabledWhen(ApiKey::getEnabled)
+                    .withSorting(FindApiKeyCriteria.FIELD_OWNER)
                     .build();
             dataGrid.addResizableColumn(ownerColumn, "Owner", 250);
         }
 
         final Column<ApiKey, String> nameColumn = DataGridUtil.textColumnBuilder(ApiKey::getName)
                 .enabledWhen(ApiKey::getEnabled)
+                .withSorting(FindApiKeyCriteria.FIELD_NAME)
                 .build();
         dataGrid.addResizableColumn(nameColumn, "Name", 250);
 
         final Column<ApiKey, String> prefixColumn = DataGridUtil.textColumnBuilder(ApiKey::getApiKeyPrefix)
                 .enabledWhen(ApiKey::getEnabled)
+                .withSorting(FindApiKeyCriteria.FIELD_PREFIX)
                 .build();
         dataGrid.addColumn(prefixColumn, "Key Prefix", 130);
 
@@ -267,17 +293,20 @@ public class ApiKeysListPresenter
                                 ? "Enabled"
                                 : "Disabled")
                 .enabledWhen(ApiKey::getEnabled)
+                .withSorting(FindApiKeyCriteria.FIELD_STATE)
                 .build();
         dataGrid.addColumn(enabledColumn, "State", ColumnSizeConstants.SMALL_COL);
 
         final Column<ApiKey, String> expiresOnColumn = DataGridUtil.textColumnBuilder(
                         ApiKey::getExpireTimeMs, dateTimeFormatter::formatWithDuration)
                 .enabledWhen(ApiKey::getEnabled)
+                .withSorting(FindApiKeyCriteria.FIELD_EXPIRE_TIME)
                 .build();
         dataGrid.addColumn(expiresOnColumn, "Expires On", ColumnSizeConstants.DATE_AND_DURATION_COL);
 
         final Column<ApiKey, String> commentsColumn = DataGridUtil.textColumnBuilder(ApiKey::getComments)
                 .enabledWhen(ApiKey::getEnabled)
+                .withSorting(FindApiKeyCriteria.FIELD_COMMENTS)
                 .build();
         dataGrid.addAutoResizableColumn(commentsColumn, "Comments", ColumnSizeConstants.BIG_COL);
 
@@ -294,18 +323,27 @@ public class ApiKeysListPresenter
                     apiKeys.clear();
                     response.stream()
                             .forEach(apiKey -> apiKeys.put(apiKey.getId(), apiKey));
+
+                    // Make sure we don't have any selected IDs that are not in the visible data.
+                    final Set<Integer> selectionSet = selection.getSet();
+                    final Set<Integer> idsToRemove = new HashSet<>();
+                    selectionSet.forEach(id -> {
+                        if (!apiKeys.containsKey(id)) {
+                            idsToRemove.add(id);
+                        }
+                    });
+                    selection.removeAll(idsToRemove);
+
                     dataConsumer.accept(response);
-//                    responseMap.put(nodeName, response.getValues());
-//                    errorMap.put(nodeName, response.getErrors());
-//                    delayedUpdate.update();
-                    update();
+                })
+                .onFailure(throwable -> {
+                    AlertEvent.fireError(
+                            this,
+                            "Error fetching API Keys: " + throwable.getMessage(),
+                            null);
                 })
                 .call(API_KEY_RESOURCE)
                 .find(criteria);
-    }
-
-    private void update() {
-
     }
 
     public void setQuickFilter(final String userInput) {

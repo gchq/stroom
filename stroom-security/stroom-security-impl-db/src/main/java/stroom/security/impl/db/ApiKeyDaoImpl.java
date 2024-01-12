@@ -22,6 +22,7 @@ import stroom.util.shared.UserName;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.jooq.Condition;
 import org.jooq.Field;
+import org.jooq.OrderField;
 import org.jooq.Record;
 import org.jooq.Result;
 import org.jooq.exception.DataAccessException;
@@ -46,9 +47,11 @@ public class ApiKeyDaoImpl implements ApiKeyDao {
 
     private static final Map<String, Field<?>> FIELD_MAP = Map.of(
             FindApiKeyCriteria.FIELD_NAME, API_KEY.NAME,
+            FindApiKeyCriteria.FIELD_PREFIX, API_KEY.API_KEY_PREFIX,
+            FindApiKeyCriteria.FIELD_OWNER, API_KEY.FK_OWNER_UUID,
             FindApiKeyCriteria.FIELD_COMMENTS, API_KEY.COMMENTS,
             FindApiKeyCriteria.FIELD_EXPIRE_TIME, API_KEY.EXPIRES_ON_MS,
-            FindApiKeyCriteria.FIELD_ENABLED, API_KEY.ENABLED);
+            FindApiKeyCriteria.FIELD_STATE, API_KEY.ENABLED);
     public static final int INITIAL_VERSION = 1;
 
     private final SecurityDbConnProvider securityDbConnProvider;
@@ -83,6 +86,8 @@ public class ApiKeyDaoImpl implements ApiKeyDao {
                 criteria.getQuickFilterInput(),
                 ApiKeyDao.FILTER_FIELD_MAPPERS);
 
+        final Collection<OrderField<?>> orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
+
         final ApiKeyResultPage resultPage = QuickFilterPredicateFactory.filterStream(
                         criteria.getQuickFilterInput(),
                         FILTER_FIELD_MAPPERS,
@@ -90,7 +95,7 @@ public class ApiKeyDaoImpl implements ApiKeyDao {
                                         .select()
                                         .from(API_KEY)
                                         .where(ownerCondition)
-                                        .orderBy(API_KEY.NAME)
+                                        .orderBy(orderFields)
                                         .fetch())
                                 .stream()
                                 .map(this::mapRecordToApiKey)

@@ -4,6 +4,7 @@ import stroom.cache.api.CacheManager;
 import stroom.cache.api.StroomCache;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
+import stroom.security.common.impl.JwtUtil;
 import stroom.security.impl.AuthenticationConfig;
 import stroom.security.impl.BasicUserIdentity;
 import stroom.security.impl.HashedApiKeyParts;
@@ -31,6 +32,8 @@ import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
+import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.core.HttpHeaders;
 
 @Singleton // Has a cache
 public class ApiKeyService {
@@ -66,6 +69,27 @@ public class ApiKeyService {
             checkAdditionalPerms(criteria.getOwner());
             return apiKeyDao.find(criteria);
         });
+    }
+
+    /**
+     * Fetch the verified {@link UserIdentity} for the passed API key.
+     * If the hash of the API key matches one in the database and that key is enabled
+     * and not expired then the {@link UserIdentity} will be returned, else an empty {@link Optional}
+     * is returned.
+     */
+    public Optional<UserIdentity> fetchVerifiedIdentity(final HttpServletRequest request) {
+        final String authHeaderVal = NullSafe.get(
+                request.getHeader(HttpHeaders.AUTHORIZATION),
+                header -> header.replace(JwtUtil.BEARER_PREFIX, ""));
+
+        // We need to do a basic check to see if it looks like an API key else we will fill the cache with
+        // JWT tokens mapped to empty Optionals.
+        if (!NullSafe.isBlankString(authHeaderVal)
+                && authHeaderVal.startsWith(ApiKeyGenerator.API_KEY_STATIC_PREFIX)) {
+            return fetchVerifiedIdentity(authHeaderVal);
+        } else {
+            return Optional.empty();
+        }
     }
 
     /**

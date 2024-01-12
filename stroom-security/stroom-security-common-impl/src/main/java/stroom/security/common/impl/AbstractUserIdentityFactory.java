@@ -55,7 +55,6 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
     private final Provider<OpenIdConfiguration> openIdConfigProvider;
     private final DefaultOpenIdCredentials defaultOpenIdCredentials;
     private final CertificateExtractor certificateExtractor;
-    //    private final ProcessingUserIdentityProvider processingUserIdentityProvider;
     private final ServiceUserFactory serviceUserFactory;
     private final JerseyClientFactory jerseyClientFactory;
 
@@ -64,7 +63,6 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
     // This is tied to stroom/proxy's clientId, and we have only one of them
     private volatile UserIdentity serviceUserIdentity;
 
-    //    private final BlockingQueue<AbstractTokenUserIdentity> refreshTokensDelayQueue = new DelayQueue<>();
     private final BlockingQueue<Refreshable> updatableTokensDelayQueue = new DelayQueue<>();
     private ExecutorService refreshExecutorService = null;
     private final AtomicBoolean isShutdownInProgress = new AtomicBoolean(false);
@@ -76,14 +74,12 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
                                        final Provider<OpenIdConfiguration> openIdConfigProvider,
                                        final DefaultOpenIdCredentials defaultOpenIdCredentials,
                                        final CertificateExtractor certificateExtractor,
-//                                       final ProcessingUserIdentityProvider processingUserIdentityProvider,
                                        final ServiceUserFactory serviceUserFactory,
                                        final JerseyClientFactory jerseyClientFactory) {
         this.jwtContextFactory = jwtContextFactory;
         this.openIdConfigProvider = openIdConfigProvider;
         this.defaultOpenIdCredentials = defaultOpenIdCredentials;
         this.certificateExtractor = certificateExtractor;
-//        this.processingUserIdentityProvider = processingUserIdentityProvider;
         this.serviceUserFactory = serviceUserFactory;
         this.jerseyClientFactory = jerseyClientFactory;
         this.objectMapper = createObjectMapper();

@@ -30,12 +30,12 @@ class TestApiKeyGenerator {
     Stream<DynamicTest> testVerifyApiKeyFormatAndHash() {
         final String validKey = apiKeyGenerator.generateRandomApiKey();
         // Will fail regex
-        final String inValidKey1 = validKey.replace("sak_", "sak_?");
+        final String inValidKey1 = validKey.replace(ApiKeyGenerator.API_KEY_STATIC_PREFIX, "sak_?");
 
-        final String[] parts = validKey.split("_");
+        final String[] parts = validKey.split(ApiKeyGenerator.API_KEY_SEPARATOR);
         // Reverse the hash part so it is bad
         parts[1] = new StringBuilder(parts[1]).reverse().toString();
-        final String inValidKey2 = String.join("_", parts);
+        final String inValidKey2 = String.join(ApiKeyGenerator.API_KEY_SEPARATOR, parts);
 
         return TestUtil.buildDynamicTestStream()
                 .withInputType(String.class)
@@ -74,12 +74,12 @@ class TestApiKeyGenerator {
         LOGGER.info("keys:\n{}", String.join("\n", apiKeys));
     }
 
-    @Disabled // manual only
+    @Disabled // manual only, to see how many prefix clashes we get for 1mil api keys
     @Test
     void testPrefixClash() {
         final int iterations = 1_000_000;
         final Map<String, String> prefixToApiKeyMap = new ConcurrentHashMap<>(iterations);
-        final Pattern splitPattern = Pattern.compile("_");
+        final Pattern splitPattern = Pattern.compile(ApiKeyGenerator.API_KEY_SEPARATOR);
         final ThreadLocal<ApiKeyGenerator> apiKeyGeneratorThreadLocal = ThreadLocal.withInitial(ApiKeyGenerator::new);
         final LongAdder clashCount = new LongAdder();
 

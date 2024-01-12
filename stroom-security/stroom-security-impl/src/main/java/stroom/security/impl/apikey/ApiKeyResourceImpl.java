@@ -8,6 +8,9 @@ import stroom.security.shared.CreateApiKeyRequest;
 import stroom.security.shared.CreateApiKeyResponse;
 import stroom.security.shared.FindApiKeyCriteria;
 import stroom.util.NullSafe;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.StringUtil;
 
 import java.util.Collection;
@@ -16,6 +19,8 @@ import javax.inject.Provider;
 
 @AutoLogged()
 public class ApiKeyResourceImpl implements ApiKeyResource {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ApiKeyResourceImpl.class);
 
     private final Provider<ApiKeyService> apiKeyServiceProvider;
 
@@ -43,11 +48,17 @@ public class ApiKeyResourceImpl implements ApiKeyResource {
 
     @Override
     public boolean delete(final int id) {
-        final boolean didDelete = apiKeyServiceProvider.get().delete(id);
-        if (!didDelete) {
-            throw new RuntimeException("No API Key found with ID " + id);
+        try {
+            final boolean didDelete = apiKeyServiceProvider.get().delete(id);
+            if (!didDelete) {
+                throw new RuntimeException("No API Key found with ID " + id);
+            }
+            return didDelete;
+        } catch (Exception e) {
+            LOGGER.debug(() -> LogUtil.message("Error deleting API key with ID {}: {}",
+                    id, LogUtil.exceptionMessage(e)));
+            throw e;
         }
-        return didDelete;
     }
 
     @Override

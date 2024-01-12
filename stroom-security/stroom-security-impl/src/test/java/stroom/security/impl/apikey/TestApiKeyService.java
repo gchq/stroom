@@ -21,6 +21,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.core.HttpHeaders;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -44,6 +46,57 @@ class TestApiKeyService {
                 apiKeyGenerator,
                 new CacheManagerImpl(),
                 AuthenticationConfig::new);
+    }
+
+    @Test
+    void fetchVerifiedIdentityFromRequest_success() {
+        final String salt = "mySalt";
+        final String apiKeyStr = apiKeyGenerator.generateRandomApiKey();
+        final String saltedApiKeyHash = apiKeyService.computeApiKeyHash(apiKeyStr, salt);
+        final HttpServletRequest mockRequest = Mockito.mock(HttpServletRequest.class);
+
+        final UserName owner = SimpleUserName.builder()
+                .uuid("myUuid")
+                .subjectId("mySubjectId")
+                .displayName("myDisplayName")
+                .build();
+
+        List<ApiKey> validApiKeys = List.of(
+                ApiKey.builder()
+                        .withOwner(owner)
+                        .withApiKeySalt(salt)
+                        .withApiKeyHash(saltedApiKeyHash)
+                        .build());
+
+        Mockito.when(mockApiKeyDao.fetchValidApiKeysByPrefix(Mockito.anyString()))
+                .thenReturn(validApiKeys);
+        Mockito.when(mockRequest.getHeader(HttpHeaders.AUTHORIZATION))
+                .thenReturn(apiKeyStr);
+
+        final Optional<UserIdentity> opUserIdentity = apiKeyService.fetchVerifiedIdentity(mockRequest);
+
+        assertThat(opUserIdentity)
+                .isNotEmpty();
+        final UserIdentity userIdentity = opUserIdentity.get();
+        assertThat(userIdentity.getSubjectId())
+                .isEqualTo(owner.getSubjectId());
+        assertThat(userIdentity.getDisplayName())
+                .isEqualTo(owner.getDisplayName());
+    }
+
+    @Test
+    void fetchVerifiedIdentityFromRequest_notApiKey() {
+        final String badApiKeyStr = "XXX_" + apiKeyGenerator.generateRandomApiKey();
+        final HttpServletRequest mockRequest = Mockito.mock(HttpServletRequest.class);
+
+        // Return something that is not an API
+        Mockito.when(mockRequest.getHeader(HttpHeaders.AUTHORIZATION))
+                .thenReturn(badApiKeyStr);
+
+        final Optional<UserIdentity> opUserIdentity = apiKeyService.fetchVerifiedIdentity(mockRequest);
+
+        assertThat(opUserIdentity)
+                .isEmpty();
     }
 
     @Test

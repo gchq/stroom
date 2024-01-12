@@ -23,6 +23,7 @@ public class ApiKeyGenerator {
     // Stands for stroom-api-key
     static final String API_KEY_TYPE = "sak";
     static final String API_KEY_SEPARATOR = "_";
+    static final String API_KEY_STATIC_PREFIX = API_KEY_TYPE + API_KEY_SEPARATOR;
     private static final Pattern API_KEY_SEPARATOR_PATTERN = Pattern.compile(API_KEY_SEPARATOR, Pattern.LITERAL);
     public static final int API_KEY_RANDOM_CODE_LENGTH = 128;
     // A sha256 truncated to 10 typically gives less than a handful of clashes for 1mil random codes
@@ -72,12 +73,13 @@ public class ApiKeyGenerator {
             return false;
         } else {
             final String trimmedApiKey = apiKey.trim();
-            if (trimmedApiKey.length() != API_KEY_TOTAL_LENGTH) {
-                LOGGER.debug(() -> LogUtil.message("Invalid length: {}", trimmedApiKey.length()));
+            if (!trimmedApiKey.startsWith(API_KEY_STATIC_PREFIX)) {
+                LOGGER.debug(() -> LogUtil.message("Doesn't start with api key static prefix '{}'",
+                        API_KEY_STATIC_PREFIX));
                 return false;
             }
             if (!API_KEY_MATCH_PREDICATE.test(trimmedApiKey)) {
-                LOGGER.debug("Doesn't match pattern");
+                LOGGER.debug("Doesn't match pattern '{}'", API_KEY_PATTERN);
                 return false;
             }
             final String[] parts = API_KEY_SEPARATOR_PATTERN.split(apiKey.trim());
