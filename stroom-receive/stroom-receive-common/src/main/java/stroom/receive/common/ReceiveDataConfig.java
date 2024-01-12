@@ -27,7 +27,6 @@ public class ReceiveDataConfig
     private final String receiptPolicyUuid;
     private final Set<String> metaTypes;
     private final boolean tokenAuthenticationEnabled;
-    private final boolean apiKeyAuthenticationEnabled;
     private final boolean certificateAuthenticationEnabled;
     private final boolean authenticationRequired;
 
@@ -35,7 +34,6 @@ public class ReceiveDataConfig
         receiptPolicyUuid = null;
         metaTypes = new HashSet<>(StreamTypeNames.ALL_HARD_CODED_STREAM_TYPE_NAMES);
         tokenAuthenticationEnabled = false;
-        apiKeyAuthenticationEnabled = true;
         certificateAuthenticationEnabled = true;
         authenticationRequired = true;
     }
@@ -46,14 +44,12 @@ public class ReceiveDataConfig
             @JsonProperty("receiptPolicyUuid") final String receiptPolicyUuid,
             @JsonProperty("metaTypes") final Set<String> metaTypes,
             @JsonProperty("tokenAuthenticationEnabled") final boolean tokenAuthenticationEnabled,
-            @JsonProperty("apiKeyAuthenticationEnabled") final boolean apiKeyAuthenticationEnabled,
             @JsonProperty("certificateAuthenticationEnabled") final boolean certificateAuthenticationEnabled,
             @JsonProperty("authenticationRequired") final boolean authenticationRequired) {
 
         this.receiptPolicyUuid = receiptPolicyUuid;
         this.metaTypes = metaTypes;
         this.tokenAuthenticationEnabled = tokenAuthenticationEnabled;
-        this.apiKeyAuthenticationEnabled = apiKeyAuthenticationEnabled;
         this.certificateAuthenticationEnabled = certificateAuthenticationEnabled;
         this.authenticationRequired = authenticationRequired;
     }
@@ -62,7 +58,6 @@ public class ReceiveDataConfig
         receiptPolicyUuid = builder.receiptPolicyUuid;
         metaTypes = builder.metaTypes;
         tokenAuthenticationEnabled = builder.tokenAuthenticationEnabled;
-        apiKeyAuthenticationEnabled = builder.apiKeyAuthenticationEnabled;
         certificateAuthenticationEnabled = builder.certificateAuthenticationEnabled;
         authenticationRequired = builder.authenticationRequired;
     }
@@ -90,17 +85,10 @@ public class ReceiveDataConfig
         return metaTypes;
     }
 
-    @JsonPropertyDescription("If true, the data receipt request 'Authorization' header will be checked " +
-            "for the presence of an Open ID access token. This token will be used to authenticate the sender.")
+    @JsonPropertyDescription("If true, the data receipt request headers will be checked for the presence of an " +
+            "Open ID access token. This token will be used to authenticate the sender.")
     public boolean isTokenAuthenticationEnabled() {
         return tokenAuthenticationEnabled;
-    }
-
-    @JsonPropertyDescription("If true, the data receipt request 'Authorization' header will be checked " +
-            "for the presence of a token matching the format of a Stroom API key . This API key will be used " +
-            "to authenticate the sender.")
-    public boolean isApiKeyAuthenticationEnabled() {
-        return apiKeyAuthenticationEnabled;
     }
 
     @JsonPropertyDescription("If true, the data receipt request will be checked for the presence of a " +
@@ -132,17 +120,6 @@ public class ReceiveDataConfig
                 receiptPolicyUuid,
                 metaTypes,
                 isTokenAuthenticationEnabled,
-                apiKeyAuthenticationEnabled,
-                certificateAuthenticationEnabled,
-                authenticationRequired);
-    }
-
-    public ReceiveDataConfig withApiKeyAuthenticationEnabled(final boolean isApiKeyAuthenticationEnabled) {
-        return new ReceiveDataConfig(
-                receiptPolicyUuid,
-                metaTypes,
-                tokenAuthenticationEnabled,
-                isApiKeyAuthenticationEnabled,
                 certificateAuthenticationEnabled,
                 authenticationRequired);
     }
@@ -152,7 +129,6 @@ public class ReceiveDataConfig
                 receiptPolicyUuid,
                 metaTypes,
                 tokenAuthenticationEnabled,
-                apiKeyAuthenticationEnabled,
                 isCertificateAuthenticationEnabled,
                 authenticationRequired);
     }
@@ -162,7 +138,6 @@ public class ReceiveDataConfig
                 receiptPolicyUuid,
                 metaTypes,
                 tokenAuthenticationEnabled,
-                apiKeyAuthenticationEnabled,
                 certificateAuthenticationEnabled,
                 isAuthenticationRequired);
     }
@@ -172,7 +147,6 @@ public class ReceiveDataConfig
         return "ReceiveDataConfig{" +
                 "receiptPolicyUuid='" + receiptPolicyUuid + '\'' +
                 ", tokenAuthenticationEnabled=" + tokenAuthenticationEnabled +
-                ", apiKeyAuthenticationEnabled=" + apiKeyAuthenticationEnabled +
                 ", certificateAuthenticationEnabled=" + certificateAuthenticationEnabled +
                 ", authenticationRequired=" + authenticationRequired +
                 '}';
@@ -183,7 +157,6 @@ public class ReceiveDataConfig
         builder.receiptPolicyUuid = receiveDataConfig.getReceiptPolicyUuid();
         builder.metaTypes = receiveDataConfig.getMetaTypes();
         builder.tokenAuthenticationEnabled = receiveDataConfig.isTokenAuthenticationEnabled();
-        builder.apiKeyAuthenticationEnabled = receiveDataConfig.isApiKeyAuthenticationEnabled();
         builder.certificateAuthenticationEnabled = receiveDataConfig.isCertificateAuthenticationEnabled();
         builder.authenticationRequired = receiveDataConfig.isAuthenticationRequired();
         return builder;
@@ -202,7 +175,6 @@ public class ReceiveDataConfig
         private String receiptPolicyUuid;
         private Set<String> metaTypes;
         private boolean tokenAuthenticationEnabled;
-        private boolean apiKeyAuthenticationEnabled;
         private boolean certificateAuthenticationEnabled;
         private boolean authenticationRequired;
 
@@ -225,11 +197,6 @@ public class ReceiveDataConfig
 
         public Builder withTokenAuthenticationEnabled(final boolean val) {
             tokenAuthenticationEnabled = val;
-            return this;
-        }
-
-        public Builder withApiKeyAuthenticationEnabled(final boolean val) {
-            apiKeyAuthenticationEnabled = val;
             return this;
         }
 
