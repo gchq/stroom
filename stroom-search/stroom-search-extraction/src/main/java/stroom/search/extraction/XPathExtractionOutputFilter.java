@@ -23,9 +23,8 @@ import stroom.pipeline.factory.PipelineProperty;
 import stroom.pipeline.filter.AbstractXMLFilter;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
+import stroom.query.common.v2.StringFieldValue;
 import stroom.query.language.functions.FieldIndex;
-import stroom.query.language.functions.Val;
-import stroom.query.language.functions.ValString;
 import stroom.svg.shared.SvgImage;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.Severity;
@@ -50,8 +49,10 @@ import org.xml.sax.Attributes;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import javax.inject.Inject;
 
 import static stroom.index.shared.IndexConstants.EVENT_ID;
@@ -310,10 +311,10 @@ public class XPathExtractionOutputFilter extends AbstractXMLFilter {
 
                     final TinyTree tree = builder.getTree();
 
-                    Val[] values = new Val[xPathExecutables.length];
-
-                    for (int field = 0; field < values.length; field++) {
-                        final XPathSelector selector = xPathExecutables[field].load();
+                    final List<StringFieldValue> stringFieldValues = new ArrayList<>(xPathExecutables.length);
+                    for (int pos = 0; pos < xPathExecutables.length; pos++) {
+                        final String fieldName = valueConsumerHolder.getFieldIndex().getField(pos);
+                        final XPathSelector selector = xPathExecutables[pos].load();
 
                         selector.setContextItem(new XdmNode(tree.getRootNode()));
                         final Iterator<XdmItem> iterator = selector.iterator();
@@ -322,14 +323,11 @@ public class XPathExtractionOutputFilter extends AbstractXMLFilter {
                         int numVals = 0;
                         while (iterator.hasNext()) {
                             XdmItem item = iterator.next();
-
                             numVals = stringifyItem(item, thisVal, numVals);
-
                         }
-
-                        values[field] = ValString.create(thisVal.toString());
+                        stringFieldValues.add(new StringFieldValue(fieldName, thisVal.toString()));
                     }
-                    valueConsumerHolder.accept(Val.of(values));
+                    valueConsumerHolder.acceptStringValues(stringFieldValues);
 
                 } catch (SaxonApiException ex) {
                     log(Severity.ERROR, "Unable to evaluate XPaths", ex);

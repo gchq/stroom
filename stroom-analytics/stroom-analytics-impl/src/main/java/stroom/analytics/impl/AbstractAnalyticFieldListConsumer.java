@@ -4,9 +4,11 @@ import stroom.index.impl.FieldFactory;
 import stroom.index.shared.IndexField;
 import stroom.pipeline.filter.FieldValue;
 import stroom.query.api.v2.SearchRequest;
+import stroom.query.common.v2.StringFieldValue;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValuesConsumer;
+import stroom.search.extraction.FieldValueExtractor;
 import stroom.search.impl.SearchException;
 import stroom.search.impl.SearchExpressionQueryBuilder.SearchExpressionQuery;
 import stroom.util.logging.LambdaLogger;
@@ -28,6 +30,7 @@ abstract class AbstractAnalyticFieldListConsumer implements AnalyticFieldListCon
 
     private final SearchRequest searchRequest;
     private final FieldIndex fieldIndex;
+    private final FieldValueExtractor fieldValueExtractor;
     private final NotificationState notificationState;
     private final ValuesConsumer valuesConsumer;
     private final SearchExpressionQueryCache searchExpressionQueryCache;
@@ -37,12 +40,14 @@ abstract class AbstractAnalyticFieldListConsumer implements AnalyticFieldListCon
 
     AbstractAnalyticFieldListConsumer(final SearchRequest searchRequest,
                                       final FieldIndex fieldIndex,
+                                      final FieldValueExtractor fieldValueExtractor,
                                       final NotificationState notificationState,
                                       final ValuesConsumer valuesConsumer,
                                       final SearchExpressionQueryCache searchExpressionQueryCache,
                                       final Long minEventId) {
         this.searchRequest = searchRequest;
         this.fieldIndex = fieldIndex;
+        this.fieldValueExtractor = fieldValueExtractor;
         this.notificationState = notificationState;
         this.valuesConsumer = valuesConsumer;
         this.searchExpressionQueryCache = searchExpressionQueryCache;
@@ -50,7 +55,7 @@ abstract class AbstractAnalyticFieldListConsumer implements AnalyticFieldListCon
     }
 
     @Override
-    public void accept(final List<FieldValue> fieldValues) {
+    public void acceptFieldValues(final List<FieldValue> fieldValues) {
         // Only notify if the state is enabled.
         notificationState.enableIfPossible();
         if (notificationState.isEnabled()) {
@@ -90,6 +95,11 @@ abstract class AbstractAnalyticFieldListConsumer implements AnalyticFieldListCon
                 }
             }
         }
+    }
+
+    @Override
+    public void acceptStringValues(final List<StringFieldValue> stringValues) {
+        acceptFieldValues(fieldValueExtractor.convert(stringValues));
     }
 
     private boolean matchQuery(final MemoryIndex memoryIndex) {

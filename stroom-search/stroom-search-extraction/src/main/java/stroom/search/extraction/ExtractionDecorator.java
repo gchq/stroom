@@ -54,6 +54,7 @@ public class ExtractionDecorator {
             "Extraction - Stream Map Creator");
     private static final ThreadPool EXTRACTION_THREAD_POOL = new ThreadPoolImpl("Extraction");
 
+    private final FieldValueExtractorFactory fieldValueExtractorFactory;
     private final ExtractionConfig extractionConfig;
     private final ExecutorProvider executorProvider;
     private final TaskContextFactory taskContextFactory;
@@ -73,7 +74,10 @@ public class ExtractionDecorator {
     private final StoredDataQueue storedDataQueue;
     private final Map<DocRef, Receiver> receivers;
 
-    ExtractionDecorator(final ExtractionConfig extractionConfig,
+    private DocRef dataSource;
+
+    ExtractionDecorator(final FieldValueExtractorFactory fieldValueExtractorFactory,
+                        final ExtractionConfig extractionConfig,
                         final ExecutorProvider executorProvider,
                         final TaskContextFactory taskContextFactory,
                         final PipelineScopeRunnable pipelineScopeRunnable,
@@ -86,6 +90,7 @@ public class ExtractionDecorator {
                         final Provider<ValueConsumerHolder> valueConsumerHolderProvider,
                         final Provider<FieldListConsumerHolder> fieldListConsumerHolderProvider,
                         final QueryKey queryKey) {
+        this.fieldValueExtractorFactory = fieldValueExtractorFactory;
         this.extractionConfig = extractionConfig;
         this.executorProvider = executorProvider;
         this.taskContextFactory = taskContextFactory;
@@ -108,6 +113,9 @@ public class ExtractionDecorator {
 
     public StoredDataQueue createStoredDataQueue(final Coprocessors coprocessors,
                                                  final Query query) {
+        // Remember the datasource.
+        this.dataSource = query.getDataSource();
+
         // We are going to do extraction or at least filter streams so add fields to the field index to do this.
         coprocessors.getFieldIndex().create(IndexConstants.STREAM_ID);
         coprocessors.getFieldIndex().create(IndexConstants.EVENT_ID);
@@ -315,7 +323,7 @@ public class ExtractionDecorator {
             eventIds = null;
         }
 
-        if (receivers.size() > 0 && !Thread.currentThread().isInterrupted()) {
+        if (!receivers.isEmpty() && !Thread.currentThread().isInterrupted()) {
             try {
                 Meta meta = null;
 
@@ -333,16 +341,21 @@ public class ExtractionDecorator {
                         // Execute the extraction within a fresh pipeline scope.
                         meta = pipelineScopeRunnable.scopeResult(() -> {
                             final ExtractionTaskHandler handler = handlerProvider.get();
-                            final ValueConsumerHolder valueConsumerHolder = valueConsumerHolderProvider.get();
-                            valueConsumerHolder.setQueryKey(queryKey);
-                            valueConsumerHolder.setFieldIndex(receiver.fieldIndex);
-                            valueConsumerHolder.setReceiver(receiver.valuesConsumer);
 
-                            final StandardFieldListConsumer fieldListConsumer = new StandardFieldListConsumer();
+                            // Get the index and index fields from the cache.
+                            final FieldValueExtractor fieldValueExtractor =
+                                    fieldValueExtractorFactory.create(dataSource, receiver.fieldIndex);
+                            final StandardFieldListConsumer fieldListConsumer =
+                                    new StandardFieldListConsumer(fieldValueExtractor);
                             fieldListConsumer.setQueryKey(queryKey);
                             fieldListConsumer.setFieldIndex(receiver.fieldIndex);
                             fieldListConsumer.setReceiver(receiver.valuesConsumer);
                             fieldListConsumerHolderProvider.get().setFieldListConsumer(fieldListConsumer);
+
+                            final ValueConsumerHolder valueConsumerHolder = valueConsumerHolderProvider.get();
+                            valueConsumerHolder.setQueryKey(queryKey);
+                            valueConsumerHolder.setFieldIndex(receiver.fieldIndex);
+                            valueConsumerHolder.setFieldListConsumer(fieldListConsumer);
 
                             return handler.extract(
                                     taskContext,

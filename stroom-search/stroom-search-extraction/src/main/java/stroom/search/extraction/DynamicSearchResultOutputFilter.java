@@ -48,6 +48,6 @@ public class DynamicSearchResultOutputFilter extends AbstractFieldFilter {
 
     @Override
     protected void processFields(final List<FieldValue> fieldValues) {
-        fieldListConsumerHolder.accept(fieldValues);
+        fieldListConsumerHolder.acceptFieldValues(fieldValues);
     }
 }

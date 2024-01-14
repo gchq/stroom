@@ -1,10 +1,13 @@
 package stroom.search.extraction;
 
 import stroom.pipeline.filter.FieldValue;
+import stroom.query.common.v2.StringFieldValue;
 
 import java.util.List;
 
 public interface FieldListConsumer {
 
-    void accept(List<FieldValue> fieldValues);
+    void acceptFieldValues(List<FieldValue> fieldValues);
+
+    void acceptStringValues(List<StringFieldValue> stringValues);
 }

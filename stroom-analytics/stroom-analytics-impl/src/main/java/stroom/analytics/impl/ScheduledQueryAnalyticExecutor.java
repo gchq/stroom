@@ -39,7 +39,6 @@ import stroom.query.common.v2.SimpleRowCreator;
 import stroom.query.common.v2.format.FieldFormatter;
 import stroom.query.common.v2.format.FormatterFactory;
 import stroom.query.language.SearchRequestFactory;
-import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.ref.ErrorConsumer;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
@@ -287,14 +286,12 @@ public class ScheduledQueryAnalyticExecutor {
                                 expressionContext,
                                 tableSettings.getFields(),
                                 paramMap);
-                        final FieldIndex fieldIndex = compiledFields.getFieldIndex();
 
                         final Provider<DetectionConsumer> detectionConsumerProvider =
                                 detectionConsumerFactory.create(analytic.analyticRuleDoc);
                         final DetectionConsumerProxy detectionConsumerProxy = detectionConsumerProxyProvider.get();
                         detectionConsumerProxy.setAnalyticRuleDoc(analytic.analyticRuleDoc());
                         detectionConsumerProxy.setCompiledFields(compiledFields);
-                        detectionConsumerProxy.setFieldIndex(fieldIndex);
                         detectionConsumerProxy.setDetectionsConsumerProvider(detectionConsumerProvider);
 
                         try {
@@ -378,7 +375,7 @@ public class ScheduledQueryAnalyticExecutor {
 
                         } finally {
                             final List<String> errors = errorConsumer.getErrors();
-                            if (errors != null && errors.size() > 0) {
+                            if (errors != null && !errors.isEmpty()) {
                                 for (final String error : errors) {
                                     errorReceiverProxyProvider.get()
                                             .getErrorReceiver()

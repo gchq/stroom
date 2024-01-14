@@ -30,6 +30,9 @@ import stroom.query.language.functions.FieldIndex;
 import stroom.search.extraction.ExtractionException;
 import stroom.search.extraction.ExtractionState;
 import stroom.search.extraction.FieldListConsumerHolder;
+import stroom.search.extraction.FieldValueExtractor;
+import stroom.search.extraction.FieldValueExtractorFactory;
+import stroom.search.extraction.ValueConsumerHolder;
 import stroom.search.impl.SearchExpressionQueryBuilderFactory;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
@@ -74,6 +77,7 @@ public class StreamingAnalyticExecutor {
     private final PipelineStore pipelineStore;
     private final PipelineDataCache pipelineDataCache;
     private final Provider<AnalyticsStreamProcessor> analyticsStreamProcessorProvider;
+    private final Provider<ValueConsumerHolder> valueConsumerHolderProvider;
     private final Provider<FieldListConsumerHolder> fieldListConsumerHolderProvider;
     private final Provider<ExtractionState> extractionStateProvider;
     private final Provider<DetectionConsumerProxy> detectionConsumerProxyProvider;
@@ -84,12 +88,12 @@ public class StreamingAnalyticExecutor {
     private final AnalyticRuleSearchRequestHelper analyticRuleSearchRequestHelper;
     private final NotificationStateService notificationStateService;
     private final DetectionConsumerFactory detectionConsumerFactory;
-
     private final int maxMetaListSize = DEFAULT_MAX_META_LIST_SIZE;
 
     private final AnalyticErrorWritingExecutor analyticErrorWritingExecutor;
     private final AnalyticHelper analyticHelper;
     private final ExpressionContextFactory expressionContextFactory;
+    private final FieldValueExtractorFactory fieldValueExtractorFactory;
 
     @Inject
     public StreamingAnalyticExecutor(final ExecutorProvider executorProvider,
@@ -97,6 +101,7 @@ public class StreamingAnalyticExecutor {
                                      final PipelineStore pipelineStore,
                                      final PipelineDataCache pipelineDataCache,
                                      final Provider<AnalyticsStreamProcessor> analyticsStreamProcessorProvider,
+                                     final Provider<ValueConsumerHolder> valueConsumerHolderProvider,
                                      final Provider<FieldListConsumerHolder> fieldListConsumerHolderProvider,
                                      final Provider<ExtractionState> extractionStateProvider,
                                      final TaskContextFactory taskContextFactory,
@@ -109,12 +114,14 @@ public class StreamingAnalyticExecutor {
                                      final AnalyticRuleSearchRequestHelper analyticRuleSearchRequestHelper,
                                      final NotificationStateService notificationStateService,
                                      final DetectionConsumerFactory detectionConsumerFactory,
-                                     final ExpressionContextFactory expressionContextFactory) {
+                                     final ExpressionContextFactory expressionContextFactory,
+                                     final FieldValueExtractorFactory fieldValueExtractorFactory) {
         this.executorProvider = executorProvider;
         this.securityContext = securityContext;
         this.pipelineStore = pipelineStore;
         this.pipelineDataCache = pipelineDataCache;
         this.analyticsStreamProcessorProvider = analyticsStreamProcessorProvider;
+        this.valueConsumerHolderProvider = valueConsumerHolderProvider;
         this.fieldListConsumerHolderProvider = fieldListConsumerHolderProvider;
         this.extractionStateProvider = extractionStateProvider;
         this.taskContextFactory = taskContextFactory;
@@ -128,6 +135,7 @@ public class StreamingAnalyticExecutor {
         this.notificationStateService = notificationStateService;
         this.detectionConsumerFactory = detectionConsumerFactory;
         this.expressionContextFactory = expressionContextFactory;
+        this.fieldValueExtractorFactory = fieldValueExtractorFactory;
     }
 
     public void exec() {
@@ -398,6 +406,9 @@ public class StreamingAnalyticExecutor {
                                 fieldListConsumerHolderProvider.get();
                         fieldListConsumerHolder.setFieldListConsumer(fieldListConsumer);
 
+                        final ValueConsumerHolder valueConsumerHolder = valueConsumerHolderProvider.get();
+                        valueConsumerHolder.setFieldListConsumer(fieldListConsumer);
+
                         try {
                             fieldListConsumer.start();
 
@@ -451,13 +462,16 @@ public class StreamingAnalyticExecutor {
                 final DetectionConsumerProxy detectionConsumerProxy = detectionConsumerProxyProvider.get();
                 detectionConsumerProxy.setAnalyticRuleDoc(analytic.analyticRuleDoc());
                 detectionConsumerProxy.setCompiledFields(compiledFields);
-                detectionConsumerProxy.setFieldIndex(fieldIndex);
                 detectionConsumerProxy.setDetectionsConsumerProvider(detectionConsumerProvider);
+
+                final FieldValueExtractor fieldValueExtractor = fieldValueExtractorFactory
+                        .create(searchRequest.getQuery().getDataSource(), fieldIndex);
 
                 final AnalyticFieldListConsumer analyticFieldListConsumer =
                         new StreamingAnalyticFieldListConsumer(
                                 searchRequest,
                                 fieldIndex,
+                                fieldValueExtractor,
                                 notificationState,
                                 detectionConsumerProxy,
                                 searchExpressionQueryCache,
