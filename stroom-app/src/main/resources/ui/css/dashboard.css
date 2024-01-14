@@ -40,6 +40,10 @@
     -webkit-transition: none;
 }
 
+.DashboardViewImpl .explorerTreeViewImpl-nameFilter {
+    margin: 0 0 var(--control__padding--vertical) 0;
+}
+
 /*
 .DashboardViewImpl .linkTab {
     cursor: default;

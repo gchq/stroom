@@ -14,7 +14,7 @@
                 <g:SimplePanel ui:field="editorContainer" styleName="max columnFunctionEditorViewImpl-editorContainer"/>
             </g:north>
             <g:center>
-                <g:SimplePanel ui:field="queryHelpContainer" styleName="max control__padding-right"/>
+                <g:SimplePanel ui:field="queryHelpContainer" styleName="max"/>
             </g:center>
         </g:MySplitLayoutPanel>
     </g:FlowPanel>
