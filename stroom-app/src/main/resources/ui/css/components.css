@@ -1865,16 +1865,13 @@ button.main-menu svg {
 }
 
 .pipelineElementChooser-iconCell {
-    padding: var(--row__padding--vertical) 0 var(--row__padding--vertical) var(--row__padding--horizontal);
 }
 
 .pipelineElementChooser-textCell {
-    padding: var(--row__padding--vertical) 0 var(--row__padding--vertical) var(--row__padding--horizontal);
     min-width: 200px;
 }
 
 .pipelineElementChooser-filterIconCell {
-    padding: var(--row__padding--vertical) 0 var(--row__padding--vertical) var(--row__padding--horizontal);
 }
 
 .pipelineElementChooser-textCell.pipelineElementChooser-filterOn {
