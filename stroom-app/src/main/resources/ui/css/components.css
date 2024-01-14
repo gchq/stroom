@@ -1475,7 +1475,9 @@
 
 button.main-menu {
     background-color: transparent;
-    color: white;
+    /*color: var(--navigation-icon-button__color);*/
+    color: var(--text-color);
+    opacity: 0.6;
 }
 
 button.main-menu svg {
