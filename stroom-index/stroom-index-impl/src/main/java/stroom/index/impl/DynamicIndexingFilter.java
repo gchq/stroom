@@ -33,6 +33,8 @@ import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.MetaHolder;
 import stroom.search.extraction.AbstractFieldFilter;
 import stroom.search.extraction.FieldValue;
+import stroom.search.extraction.IndexStructure;
+import stroom.search.extraction.IndexStructureCache;
 import stroom.svg.shared.SvgImage;
 import stroom.util.CharBuffer;
 import stroom.util.shared.Severity;
@@ -157,7 +159,7 @@ class DynamicIndexingFilter extends AbstractFieldFilter {
             final IndexStructure indexStructure = indexStructureCache.get(indexRef);
             // Remove fields we already know about.
             indexStructure.getIndexFields().forEach(foundFields::remove);
-            if (foundFields.size() > 0) {
+            if (!foundFields.isEmpty()) {
                 LOGGER.info("Updating fields for: " + indexRef);
                 final stroom.index.shared.IndexDoc indexDoc = indexStore.readDocument(indexRef);
                 if (indexDoc.getFields() != null) {
@@ -221,7 +223,7 @@ class DynamicIndexingFilter extends AbstractFieldFilter {
             }
         }
 
-        if (document.getValues().size() > 0) {
+        if (!document.getValues().isEmpty()) {
             try {
                 Partition partition = defaultPartition;
                 if (currentEventTime != null) {

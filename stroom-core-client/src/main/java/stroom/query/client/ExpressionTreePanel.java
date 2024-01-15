@@ -45,6 +45,8 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.view.client.SelectionModel;
 import com.google.inject.Provider;
 
+import java.util.Objects;
+
 public class ExpressionTreePanel extends TreePanel<Item> {
 
     private static final double HORIZONTAL_SEPARATION = 20;
@@ -102,7 +104,7 @@ public class ExpressionTreePanel extends TreePanel<Item> {
     public Box<Item> getBox(final Item item) {
         if (renderer != null) {
             for (final ExpressionItemBox box : cellRenderer.getBoxes()) {
-                if (box.getItem() == item) {
+                if (Objects.equals(box.getItem(), item)) {
                     return box;
                 }
             }

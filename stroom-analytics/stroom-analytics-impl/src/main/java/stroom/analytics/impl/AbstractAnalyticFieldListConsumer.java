@@ -2,11 +2,13 @@ package stroom.analytics.impl;
 
 import stroom.analytics.api.NotificationState;
 import stroom.query.api.v2.SearchRequest;
+import stroom.query.common.v2.StringFieldValue;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValuesConsumer;
 import stroom.search.extraction.AnalyticFieldListConsumer;
 import stroom.search.extraction.FieldValue;
+import stroom.search.extraction.FieldValueExtractor;
 import stroom.search.extraction.MemoryIndex;
 
 import java.util.List;
@@ -15,6 +17,7 @@ abstract class AbstractAnalyticFieldListConsumer implements AnalyticFieldListCon
 
     private final SearchRequest searchRequest;
     private final FieldIndex fieldIndex;
+    private final FieldValueExtractor fieldValueExtractor;
     private final NotificationState notificationState;
     private final ValuesConsumer valuesConsumer;
     private final MemoryIndex memoryIndex;
@@ -24,12 +27,14 @@ abstract class AbstractAnalyticFieldListConsumer implements AnalyticFieldListCon
 
     AbstractAnalyticFieldListConsumer(final SearchRequest searchRequest,
                                       final FieldIndex fieldIndex,
+                                      final FieldValueExtractor fieldValueExtractor,
                                       final NotificationState notificationState,
                                       final ValuesConsumer valuesConsumer,
                                       final MemoryIndex memoryIndex,
                                       final Long minEventId) {
         this.searchRequest = searchRequest;
         this.fieldIndex = fieldIndex;
+        this.fieldValueExtractor = fieldValueExtractor;
         this.notificationState = notificationState;
         this.valuesConsumer = valuesConsumer;
         this.memoryIndex = memoryIndex;
@@ -37,7 +42,7 @@ abstract class AbstractAnalyticFieldListConsumer implements AnalyticFieldListCon
     }
 
     @Override
-    public void accept(final List<FieldValue> fieldValues) {
+    public void acceptFieldValues(final List<FieldValue> fieldValues) {
         // Only notify if the state is enabled.
         notificationState.enableIfPossible();
         if (notificationState.isEnabled()) {
@@ -62,5 +67,10 @@ abstract class AbstractAnalyticFieldListConsumer implements AnalyticFieldListCon
                 }
             }
         }
+    }
+
+    @Override
+    public void acceptStringValues(final List<StringFieldValue> stringValues) {
+        acceptFieldValues(fieldValueExtractor.convert(stringValues));
     }
 }

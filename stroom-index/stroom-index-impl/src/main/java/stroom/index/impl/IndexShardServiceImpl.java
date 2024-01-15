@@ -33,6 +33,8 @@ import stroom.index.shared.LuceneVersionUtil;
 import stroom.query.common.v2.FieldInfoResultPageBuilder;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.ValuesConsumer;
+import stroom.search.extraction.IndexStructure;
+import stroom.search.extraction.IndexStructureCache;
 import stroom.searchable.api.Searchable;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;

@@ -18,15 +18,19 @@ public class SearchProgressLog {
     private static boolean writtenHeader;
 
     public static void increment(final QueryKey queryKey, final SearchPhase searchPhase) {
-        add(queryKey, searchPhase, 1);
+        if (queryKey != null) {
+            add(queryKey, searchPhase, 1);
+        }
     }
 
     public static void add(final QueryKey queryKey, final SearchPhase searchPhase, final long delta) {
-        if (SEARCH_PROGRESS_TRACE.isTraceEnabled()) {
-            map
-                    .computeIfAbsent(queryKey, k -> new Stats(queryKey))
-                    .add(searchPhase, delta);
-            periodicTrace();
+        if (queryKey != null) {
+            if (SEARCH_PROGRESS_TRACE.isTraceEnabled()) {
+                map
+                        .computeIfAbsent(queryKey, k -> new Stats(queryKey))
+                        .add(searchPhase, delta);
+                periodicTrace();
+            }
         }
     }
 

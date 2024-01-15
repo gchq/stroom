@@ -33,8 +33,6 @@ import stroom.query.language.functions.ValString;
 import stroom.util.date.DateUtil;
 import stroom.util.shared.Severity;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.xml.sax.Attributes;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
@@ -44,8 +42,6 @@ import java.util.List;
 import java.util.Locale;
 
 public abstract class AbstractFieldFilter extends AbstractXMLFilter {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractFieldFilter.class);
 
     private static final String DOCUMENT = "document";
     private static final String FIELD = "field";
@@ -103,7 +99,7 @@ public abstract class AbstractFieldFilter extends AbstractXMLFilter {
     @Override
     public void endElement(final String uri, final String localName, final String qName) throws SAXException {
         if (DOCUMENT.equals(localName)) {
-            if (currentFieldValues.size() > 0) {
+            if (!currentFieldValues.isEmpty()) {
                 processFields(currentFieldValues);
             }
             currentFieldValues = null;

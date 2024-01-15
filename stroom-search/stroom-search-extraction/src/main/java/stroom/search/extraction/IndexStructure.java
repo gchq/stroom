@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.index.impl;
+package stroom.search.extraction;
 
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexField;

@@ -18,6 +18,7 @@ package stroom.index.impl;
 
 import stroom.index.shared.IndexException;
 import stroom.index.shared.IndexShardKey;
+import stroom.search.extraction.IndexStructure;
 
 public interface IndexShardWriter {
 

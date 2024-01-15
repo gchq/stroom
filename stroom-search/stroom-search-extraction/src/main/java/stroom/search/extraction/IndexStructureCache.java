@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.index.impl;
+package stroom.search.extraction;
 
 import stroom.docref.DocRef;
 

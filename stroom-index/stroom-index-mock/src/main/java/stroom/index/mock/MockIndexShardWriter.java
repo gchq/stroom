@@ -18,10 +18,10 @@ package stroom.index.mock;
 
 import stroom.index.impl.IndexDocument;
 import stroom.index.impl.IndexShardWriter;
-import stroom.index.impl.IndexStructure;
 import stroom.index.shared.IndexException;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
+import stroom.search.extraction.IndexStructure;
 
 import java.util.ArrayList;
 import java.util.List;

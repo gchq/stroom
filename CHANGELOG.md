@@ -13,6 +13,24 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Issue **#3964** : Add XSLT function for testing whether an IP address is within the specified CIDR range.
+
+* Issue **#3982** : Fix text colour in step filter element selector.
+
+* Issue **#3983** : Fix colour of hamburger menu in light theme so it is visible.
+
+* Issue **#3984** : Text editor fixed line height is now more appropriate for each font size.
+
+* Issue **#3985** : Fix dashboard table custom date format checkbox state.
+
+* Issue **#3950** : Rules now work with non-dynamic indexes.
+
+* Issue **#4002** : Fix setting dirty state when switching to notification tab on rules.
+
+* Issue **#4001** : Fix pipeline structure editor element drag issue.
+
+* Issue **#3999** : Main pane scroll bar now displays where needed.
+
 * Add the un-authenticated API method `/api/authproxy/v1/noauth/fetchClientCredsToken` to effectively proxy for the IDP's token endpoint to obtain an access token using the client credentials flow. The request contains the client credentials and looks like `{ "clientId": "a-client", "clientSecret": "BR9m.....KNQO" }`. The response media type is `text/plain` and contains the access token.
 
 * Change processing user token expiry time from 1year to 10min when using internal identity provider.

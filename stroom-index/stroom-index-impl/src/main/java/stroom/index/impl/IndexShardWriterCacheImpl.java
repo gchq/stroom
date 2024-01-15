@@ -26,6 +26,8 @@ import stroom.index.shared.IndexShardKey;
 import stroom.index.shared.LuceneVersion;
 import stroom.index.shared.LuceneVersionUtil;
 import stroom.node.api.NodeInfo;
+import stroom.search.extraction.IndexStructure;
+import stroom.search.extraction.IndexStructureCache;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TerminateHandlerFactory;
@@ -269,7 +271,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
         LOGGER.logDurationIfDebugEnabled(() -> {
             try {
                 final Set<IndexShardWriter> openWriters = new HashSet<>(openWritersByShardKey.values());
-                if (openWriters.size() > 0) {
+                if (!openWriters.isEmpty()) {
                     // Flush all writers.
                     final CountDownLatch countDownLatch = new CountDownLatch(openWriters.size());
                     openWriters.forEach(indexShardWriter -> {
@@ -336,8 +338,8 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
 
             // Close candidates in LRU order.
             final List<IndexShardWriter> lruList = getLeastRecentlyUsedList(candidates);
-            while (overflow > 0 && lruList.size() > 0) {
-                final IndexShardWriter indexShardWriter = lruList.remove(0);
+            while (overflow > 0 && !lruList.isEmpty()) {
+                final IndexShardWriter indexShardWriter = lruList.removeFirst();
                 overflow--;
                 close(indexShardWriter, executorProvider.getAsyncExecutor());
             }
@@ -360,8 +362,8 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
         if (overflow > 0) {
             // Get LRU list.
             final List<IndexShardWriter> lruList = getLeastRecentlyUsedList(openWritersByShardKey.values());
-            while (overflow > 0 && lruList.size() > 0) {
-                final IndexShardWriter indexShardWriter = lruList.remove(0);
+            while (overflow > 0 && !lruList.isEmpty()) {
+                final IndexShardWriter indexShardWriter = lruList.removeFirst();
                 overflow--;
                 close(indexShardWriter, executor);
             }

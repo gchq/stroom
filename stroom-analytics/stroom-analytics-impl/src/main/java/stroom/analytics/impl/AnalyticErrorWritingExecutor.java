@@ -9,7 +9,7 @@ import jakarta.inject.Provider;
 
 import java.util.function.Consumer;
 
-class AnalyticErrorWritingExecutor {
+public class AnalyticErrorWritingExecutor {
 
     private final TaskContextFactory taskContextFactory;
     private final Provider<AnalyticErrorWriter> analyticErrorWriterProvider;
