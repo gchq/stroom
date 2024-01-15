@@ -178,10 +178,10 @@ public class TermEditor extends Composite {
 
         // Select the current value.
         conditionListBox.setValue(null);
-        changeField(null, false);
+        changeField(null, null, false);
         fieldSelectionListModel.findFieldByName(term.getField(), fieldInfo -> {
             fieldListBox.setValue(fieldInfo);
-            changeField(fieldInfo, false);
+            changeField(fieldInfo, term.getCondition(), false);
         });
 
         reading = false;
@@ -223,11 +223,11 @@ public class TermEditor extends Composite {
         }
     }
 
-    private void changeField(final FieldInfo field, final boolean useDefaultCondition) {
+    private void changeField(final FieldInfo field, final Condition condition, final boolean useDefaultCondition) {
         suggestOracle.setField(field);
         final List<Condition> conditions = getConditions(field);
 
-        Condition selected = conditionListBox.getValue();
+        Condition selected = condition;
         conditionListBox.clear();
         conditionListBox.addItems(conditions);
 
@@ -478,7 +478,7 @@ public class TermEditor extends Composite {
         registerHandler(fieldListBox.addValueChangeHandler(event -> {
             if (!reading) {
                 write(term);
-                changeField(event.getValue(), true);
+                changeField(event.getValue(), conditionListBox.getValue(), true);
                 fireDirty();
             }
         }));
