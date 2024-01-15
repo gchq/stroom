@@ -189,9 +189,13 @@ class ExplorerDropDownTreePresenter
     }
 
     public void setSelectedEntityReference(final DocRef docRef) {
+        setSelectedEntityReference(docRef, true);
+    }
+
+    public void setSelectedEntityReference(final DocRef docRef, final boolean fireEvents) {
         restFactory
                 .create()
-                .onSuccess(explorerNode -> setSelectedEntityData((ExplorerNode) explorerNode))
+                .onSuccess(explorerNode -> setSelectedEntityData((ExplorerNode) explorerNode, fireEvents))
                 .call(EXPLORER_RESOURCE)
                 .getFromDocRef(docRef);
     }
@@ -200,10 +204,12 @@ class ExplorerDropDownTreePresenter
         return resolve(explorerTree.getSelectionModel().getSelected());
     }
 
-    private void setSelectedEntityData(final ExplorerNode explorerNode) {
+    private void setSelectedEntityData(final ExplorerNode explorerNode, final boolean fireEvents) {
 //        GWT.log("setSelectedEntityData: " + explorerNode);
         this.selectedExplorerNode = explorerNode;
-        DataSelectionEvent.fire(this, explorerNode, false);
+        if (fireEvents) {
+            DataSelectionEvent.fire(this, explorerNode, false);
+        }
         refresh();
     }
 
