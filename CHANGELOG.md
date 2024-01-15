@@ -13,6 +13,27 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2.15] - 2024-01-15
+
+* Issue **#3964** : Add XSLT function  for testing whether an IP address is within the specified CIDR range.
+
+* Issue **#3982** : Fix text colour in step filter element selector.
+
+* Issue **#3983** : Fix colour of hamburger menu in light theme so it is visible.
+
+* Issue **#3984** : Text editor fixed line height is now more appropriate for each font size.
+
+* Issue **#3985** : Fix dashboard table custom date format checkbox state.
+
+* Issue **#3950** : Rules now work with non-dynamic indexes.
+
+* Issue **#4002** : Fix setting dirty state when switching to notification tab on rules.
+
+* Issue **#4001** : Fix pipeline structure editor element drag issue.
+
+* Issue **#3999** : Main pane scroll bar now displays where needed.
+
+
 ## [v7.2.14] - 2023-12-28
 
 * Add the un-authenticated API method `/api/authproxy/v1/noauth/fetchClientCredsToken` to effectively proxy for the IDP's token endpoint to obtain an access token using the client credentials flow. The request contains the client credentials and looks like `{ "clientId": "a-client", "clientSecret": "BR9m.....KNQO" }`. The response media type is `text/plain` and contains the access token.
@@ -6228,7 +6249,8 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2.14...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2.15...HEAD
+[v7.2.15]: https://github.com/gchq/stroom/compare/v7.2.14...v7.2.15
 [v7.2.14]: https://github.com/gchq/stroom/compare/v7.2.13...v7.2.14
 [v7.2.13]: https://github.com/gchq/stroom/compare/v7.2.12...v7.2.13
 [v7.2.12]: https://github.com/gchq/stroom/compare/v7.2.11...v7.2.12
