@@ -167,8 +167,8 @@
 
     /* Dashboard */
     --dashboard-panel__background-color: var(--page__background-color);
-    --dashboard-panel__grid-color: rgba(0, 0, 0, 0.2);
-    --dashboard-panel__grid-background-color: rgba(0, 0, 0, 0.02);
+    --dashboard-panel__grid-color: var(--border-color);
+    --dashboard-panel__grid-background-color: #f9f9f9;
 
     /* ExpanderCell */
     --expander-cell-icon__background-color--hover: rgba(0, 0, 0, 0.2);
