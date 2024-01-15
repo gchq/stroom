@@ -208,7 +208,7 @@ public class XPathExtractionOutputFilter extends AbstractXMLFilter {
                 boolean hasChildElement = false;
                 XdmSequenceIterator<XdmNode> iterator = node.axisIterator(Axis.ATTRIBUTE);
                 while (iterator.hasNext()) {
-                    final XdmNode childNode =  iterator.next();
+                    final XdmNode childNode = iterator.next();
                     final XdmNodeKind childType = childNode.getNodeKind();
                     if (childType == XdmNodeKind.ATTRIBUTE) {
                         hasChildElement = true;
@@ -249,16 +249,16 @@ public class XPathExtractionOutputFilter extends AbstractXMLFilter {
 //                            numberOfVals++;
 //                        } else if (item instanceof XdmNode) {
 //                            XdmNode childNode = child;
-                            XdmNodeKind childType = childNode.getNodeKind();
+                        XdmNodeKind childType = childNode.getNodeKind();
 
-                            if (childType == XdmNodeKind.TEXT) {
-                                if (numberOfVals > 0) {
-                                    thisVal.append(multipleValueDelimiter);
-                                }
-                                String value = item.getStringValue();
-                                thisVal.append(value);
-                                numberOfVals++;
+                        if (childType == XdmNodeKind.TEXT) {
+                            if (numberOfVals > 0) {
+                                thisVal.append(multipleValueDelimiter);
                             }
+                            String value = item.getStringValue();
+                            thisVal.append(value);
+                            numberOfVals++;
+                        }
 //                        }
                     }
                 }

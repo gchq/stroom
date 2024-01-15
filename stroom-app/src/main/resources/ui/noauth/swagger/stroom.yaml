@@ -3985,6 +3985,26 @@ paths:
       summary: Fetch document permissions
       tags:
       - Doc Permissions
+  /permission/doc/v1/fetchPermissionChangeImpact:
+    post:
+      operationId: fetchPermissionChangeImpact
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangeDocumentPermissionsRequest'
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PermissionChangeImpactSummary'
+          description: default response
+      summary: Fetch impact summary for a change of document permissions
+      tags:
+      - Doc Permissions
   /permission/doc/v1/filterUsers:
     post:
       operationId: filterUsers
@@ -11188,6 +11208,13 @@ components:
           type: string
       required:
       - type
+    PermissionChangeImpactSummary:
+      type: object
+      properties:
+        impactDetail:
+          type: string
+        impactSummary:
+          type: string
     PermissionChangeRequest:
       type: object
       properties:
