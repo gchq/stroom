@@ -15,7 +15,7 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 
 ## [v7.2.15] - 2024-01-15
 
-* Issue **#3964** : Add XSLT function  for testing whether an IP address is within the specified CIDR range.
+* Issue **#3964** : Add XSLT function for testing whether an IP address is within the specified CIDR range.
 
 * Issue **#3982** : Fix text colour in step filter element selector.
 
