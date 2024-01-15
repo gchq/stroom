@@ -38,6 +38,7 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.view.client.SelectionModel;
 
 import java.util.Map;
+import java.util.Objects;
 
 public class PipelineTreePanel extends TreePanel<PipelineElement> {
 
@@ -88,7 +89,7 @@ public class PipelineTreePanel extends TreePanel<PipelineElement> {
     public Box<PipelineElement> getBox(final PipelineElement item) {
         if (renderer != null) {
             for (final PipelineElementBox box : cellRenderer.getBoxes()) {
-                if (box.getItem() == item) {
+                if (Objects.equals(box.getItem(), item)) {
                     return box;
                 }
             }

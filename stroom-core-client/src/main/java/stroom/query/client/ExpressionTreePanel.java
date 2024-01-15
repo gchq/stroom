@@ -46,6 +46,7 @@ import com.google.gwt.view.client.SelectionModel;
 import com.google.inject.Provider;
 
 import java.util.List;
+import java.util.Objects;
 
 public class ExpressionTreePanel extends TreePanel<Item> {
 
@@ -104,7 +105,7 @@ public class ExpressionTreePanel extends TreePanel<Item> {
     public Box<Item> getBox(final Item item) {
         if (renderer != null) {
             for (final ExpressionItemBox box : cellRenderer.getBoxes()) {
-                if (box.getItem() == item) {
+                if (Objects.equals(box.getItem(), item)) {
                     return box;
                 }
             }
