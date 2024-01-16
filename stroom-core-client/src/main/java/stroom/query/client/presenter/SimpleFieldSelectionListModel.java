@@ -15,7 +15,7 @@ public class SimpleFieldSelectionListModel
             items.stream()
                     .filter(fieldInfo -> fieldInfo.getLabel().equals(fieldName))
                     .findAny()
-                    .ifPresent(item -> consumer.accept(((FieldInfoSelectionItem) consumer).getFieldInfo()));
+                    .ifPresent(item -> consumer.accept(item.getFieldInfo()));
         }
     }
 
