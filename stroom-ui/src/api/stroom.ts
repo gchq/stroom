@@ -2811,6 +2811,11 @@ export interface PermissionChangeEvent {
   type: string;
 }
 
+export interface PermissionChangeImpactSummary {
+  impactDetail?: string;
+  impactSummary?: string;
+}
+
 export interface PermissionChangeRequest {
   event?: PermissionChangeEvent;
 }
@@ -8631,6 +8636,25 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     fetchAllDocumentPermissions: (data: FetchAllDocumentPermissionsRequest, params: RequestParams = {}) =>
       this.request<any, DocumentPermissions>({
         path: `/permission/doc/v1/fetchAllDocumentPermissions`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Doc Permissions
+     * @name FetchPermissionChangeImpact
+     * @summary Fetch impact summary for a change of document permissions
+     * @request POST:/permission/doc/v1/fetchPermissionChangeImpact
+     * @secure
+     */
+    fetchPermissionChangeImpact: (data: ChangeDocumentPermissionsRequest, params: RequestParams = {}) =>
+      this.request<any, PermissionChangeImpactSummary>({
+        path: `/permission/doc/v1/fetchPermissionChangeImpact`,
         method: "POST",
         body: data,
         secure: true,

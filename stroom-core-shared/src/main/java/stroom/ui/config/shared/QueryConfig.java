@@ -32,9 +32,7 @@ public class QueryConfig extends AbstractConfig implements IsStroomConfig {
 
         // At some point we might want to do this if we are certain
         dashboardPipelineSelectorIncludedTags = StandardExplorerTags.asTagNameSet(StandardExplorerTags.EXTRACTION);
-        viewPipelineSelectorIncludedTags = StandardExplorerTags.asTagNameSet(
-                StandardExplorerTags.EXTRACTION,
-                StandardExplorerTags.DYNAMIC);
+        viewPipelineSelectorIncludedTags = StandardExplorerTags.asTagNameSet(StandardExplorerTags.EXTRACTION);
     }
 
     //    @Inject
