@@ -2352,7 +2352,6 @@ export interface GlobalConfigCriteria {
 export interface HashedApiKey {
   apiKeyHash?: string;
   apiKeyPrefix?: string;
-  apiKeySalt?: string;
   comments?: string;
 
   /** @format int64 */
