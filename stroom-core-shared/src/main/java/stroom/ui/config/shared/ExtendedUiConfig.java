@@ -37,21 +37,28 @@ public class ExtendedUiConfig {
             "Enables warning indicators in the explorer tree for documents with broken dependencies")
     private final boolean dependencyWarningsEnabled;
 
+    @JsonProperty
+    @JsonPropertyDescription("The maximum expiry age for new API keys in millis. Defaults to 365 days.")
+    private final long maxApiKeyExpiryAgeMs;
+
     public ExtendedUiConfig() {
         this.externalIdentityProvider = false;
         this.uiConfig = new UiConfig();
         this.dependencyWarningsEnabled = false;
+        this.maxApiKeyExpiryAgeMs = 365L * 24 * 60 * 60 * 1_000;
     }
 
     @JsonCreator
     public ExtendedUiConfig(
             @JsonProperty("uiConfig") final UiConfig uiConfig,
             @JsonProperty("externalIdentityProvider") final boolean externalIdentityProvider,
-            @JsonProperty("dependencyWarningsEnabled") final boolean dependencyWarningsEnabled) {
+            @JsonProperty("dependencyWarningsEnabled") final boolean dependencyWarningsEnabled,
+            @JsonProperty("maxApiKeyExpiryAgeMs") final long maxApiKeyExpiryAgeMs) {
 
         this.uiConfig = uiConfig;
         this.externalIdentityProvider = externalIdentityProvider;
         this.dependencyWarningsEnabled = dependencyWarningsEnabled;
+        this.maxApiKeyExpiryAgeMs = maxApiKeyExpiryAgeMs;
     }
 
     public UiConfig getUiConfig() {
@@ -211,6 +218,10 @@ public class ExtendedUiConfig {
     @JsonIgnore
     public boolean isDependencyWarningsEnabled() {
         return dependencyWarningsEnabled;
+    }
+
+    public long getMaxApiKeyExpiryAgeMs() {
+        return maxApiKeyExpiryAgeMs;
     }
 
     @Override

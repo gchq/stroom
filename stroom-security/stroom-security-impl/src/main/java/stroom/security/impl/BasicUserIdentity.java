@@ -26,6 +26,14 @@ public class BasicUserIdentity implements UserIdentity, HasStroomUserIdentity {
         this.fullName = fullName;
     }
 
+    public BasicUserIdentity(final UserName userName) {
+        Objects.requireNonNull(userName);
+        this.userUuid = userName.getUuid();
+        this.subjectId = userName.getSubjectId(); // User.name is the unique identifier. User.id is the DB PK.
+        this.displayName = userName.getDisplayName();
+        this.fullName = userName.getFullName();
+    }
+
     public BasicUserIdentity(final User user) {
         Objects.requireNonNull(user);
         this.userUuid = user.getUuid();

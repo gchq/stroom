@@ -40,7 +40,7 @@ import java.util.Optional;
         EntityAction.UPDATE,
         EntityAction.DELETE,
         EntityAction.CLEAR_CACHE})
-class UserCache implements Clearable, EntityEvent.Handler {
+public class UserCache implements Clearable, EntityEvent.Handler {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(UserCache.class);
 

@@ -25,8 +25,7 @@ public class StringUtil {
     public static final char[] ALLOWED_CHARS_HEX =
             "0123456789ABCDEF".toCharArray();
     // See Base58Check. This is NOT base58Check, but uses the same chars, ie. no 'o0il1' for readability
-    public static final char[] ALLOWED_CHARS_BASE_58_STYLE =
-            "abcdefghjkmnpqrstuvwxyzABCDEFGJKLMNPRSTUVWXYZ23456789".toCharArray();
+    public static final char[] ALLOWED_CHARS_BASE_58_STYLE = Base58.ALPHABET;
 
     private StringUtil() {
     }
@@ -67,16 +66,22 @@ public class StringUtil {
     }
 
     public static String createRandomCode(final int length) {
-        return createRandomCode(length, ALLOWED_CHARS_BASE_58_STYLE);
+        return createRandomCode(new SecureRandom(), length, ALLOWED_CHARS_BASE_58_STYLE);
     }
 
-    public static String createRandomCode(final int length, final char[] allowedChars) {
+    public static String createRandomCode(final SecureRandom secureRandom,
+                                          final int length) {
+        return createRandomCode(secureRandom, length, ALLOWED_CHARS_BASE_58_STYLE);
+    }
+
+    public static String createRandomCode(final SecureRandom secureRandom,
+                                          final int length,
+                                          final char[] allowedChars) {
         Preconditions.checkArgument(length >= 1, "length must be >= 1");
         Objects.requireNonNull(allowedChars);
         final int count = allowedChars.length;
         Preconditions.checkArgument(count >= 1, "Need at least one allowedChar");
 
-        final SecureRandom secureRandom = new SecureRandom();
         final StringBuilder stringBuilder = new StringBuilder();
 
         for (int i = 0; i < length; i++) {

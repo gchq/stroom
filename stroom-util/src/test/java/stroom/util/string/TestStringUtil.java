@@ -7,6 +7,7 @@ import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 
+import java.security.SecureRandom;
 import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -125,7 +126,7 @@ class TestStringUtil {
     @TestFactory
     Stream<DynamicTest> testCreateRandomCode() {
         final Pattern allowedCharsPattern = Pattern.compile(
-                "[" + new String(StringUtil.ALLOWED_CHARS_CASE_SENSITIVE_ALPHA_NUMERIC) + "]+");
+                "[" + new String(StringUtil.ALLOWED_CHARS_BASE_58_STYLE) + "]+");
 
         // Random content, so we can't do equality asserts on it
         final String expectedOutput = "expected output ignored";
@@ -151,6 +152,7 @@ class TestStringUtil {
 
     @TestFactory
     Stream<DynamicTest> testCreateRandomCode_customChars() {
+        final SecureRandom secureRandom = new SecureRandom();
         final char[] allowedChars = "0123456789ABCDEF".toCharArray();
         final Pattern allowedCharsPattern = Pattern.compile(
                 "[" + new String(allowedChars) + "]+");
@@ -159,7 +161,8 @@ class TestStringUtil {
         return TestUtil.buildDynamicTestStream()
                 .withInputType(int.class)
                 .withOutputType(String.class)
-                .withSingleArgTestFunction(length -> StringUtil.createRandomCode(length, allowedChars))
+                .withSingleArgTestFunction(length ->
+                        StringUtil.createRandomCode(secureRandom, length, allowedChars))
                 .withAssertions(outcome -> {
                     final String actual = outcome.getActualOutput();
                     Assertions.assertThat(actual.length())
@@ -178,6 +181,7 @@ class TestStringUtil {
 
     @TestFactory
     Stream<DynamicTest> testCreateRandomCode_base64() {
+        final SecureRandom secureRandom = new SecureRandom();
         final char[] allowedChars = "0123456789ABCDEF".toCharArray();
         final Pattern allowedCharsPattern = Pattern.compile(
                 "[" + new String(allowedChars) + "]+");
@@ -186,7 +190,8 @@ class TestStringUtil {
         return TestUtil.buildDynamicTestStream()
                 .withInputType(int.class)
                 .withOutputType(String.class)
-                .withSingleArgTestFunction(length -> StringUtil.createRandomCode(length, allowedChars))
+                .withSingleArgTestFunction(length ->
+                        StringUtil.createRandomCode(secureRandom, length, allowedChars))
                 .withAssertions(outcome -> {
                     final String actual = outcome.getActualOutput();
                     Assertions.assertThat(actual.length())

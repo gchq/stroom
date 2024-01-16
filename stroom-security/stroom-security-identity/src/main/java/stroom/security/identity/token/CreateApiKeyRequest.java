@@ -26,6 +26,7 @@ import jakarta.validation.constraints.Pattern;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@Deprecated // Keeping it else it breaks the React code
 public class CreateApiKeyRequest {
 
     @NotNull

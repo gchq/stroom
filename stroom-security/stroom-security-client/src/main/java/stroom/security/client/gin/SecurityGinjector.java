@@ -16,6 +16,7 @@
 
 package stroom.security.client.gin;
 
+import stroom.security.client.ApiKeysPlugin;
 import stroom.security.client.LoginManager;
 import stroom.security.client.LogoutPlugin;
 import stroom.security.client.ManageUserPlugin;
@@ -32,6 +33,8 @@ public interface SecurityGinjector extends Ginjector {
     AsyncProvider<LogoutPlugin> getLogoutPlugin();
 
     AsyncProvider<ManageUserPlugin> getManageUserPlugin();
+
+    AsyncProvider<ApiKeysPlugin> getApiKeysPlugin();
 
     Provider<ClientSecurityContext> getSecurityContext();
 }

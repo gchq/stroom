@@ -673,7 +673,12 @@ appConfig:
         maximumSize: 100
   security:
     authentication:
+      apiKeyCache:
+        expireAfterAccess: null
+        expireAfterWrite: "PT5S"
+        maximumSize: 1000
       authenticationRequired: true
+      maxApiKeyExpiryAge: "P365D"
       openId:
         authEndpoint: null
         clientCredentialsScopes:
