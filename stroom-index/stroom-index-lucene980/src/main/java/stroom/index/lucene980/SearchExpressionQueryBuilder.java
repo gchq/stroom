@@ -90,8 +90,33 @@ class SearchExpressionQueryBuilder {
 
         if (query == null) {
             query = new MatchAllDocsQuery();
+        } else if (query instanceof final BooleanQuery booleanQuery) {
+            final boolean hasInclusiveClauses = hasInclusiveClauses(query);
+            if (!hasInclusiveClauses) {
+                final Builder builder = new Builder();
+                builder.add(new MatchAllDocsQuery(), Occur.MUST);
+                for (final BooleanClause booleanClause : booleanQuery.clauses()) {
+                    builder.add(booleanClause);
+                }
+                query = builder.build();
+            }
         }
         return new SearchExpressionQuery(query, terms);
+    }
+
+    private boolean hasInclusiveClauses(final Query query) {
+        if (query instanceof final BooleanQuery booleanQuery) {
+            for (final BooleanClause booleanClause : booleanQuery.clauses()) {
+                if (!Occur.MUST_NOT.equals(booleanClause.getOccur())) {
+                    return true;
+                }
+                final Query subQuery = booleanClause.getQuery();
+                if (hasInclusiveClauses(subQuery)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private Query getQuery(final ExpressionItem item,
