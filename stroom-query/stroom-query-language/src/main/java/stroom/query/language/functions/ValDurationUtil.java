@@ -44,7 +44,7 @@ public class ValDurationUtil {
             return ValNull.INSTANCE;
         } else if (value.type().isNumber()) {
             final long milliseconds = value.toLong();
-            return ValString.create(ModelStringUtil.formatDurationString(milliseconds, true));
+            return ValString.create(Duration.ofMillis(milliseconds).toString());
         } else if (Type.STRING.equals(value.type())) {
             return formatISODuration(value.toString());
         }
