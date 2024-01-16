@@ -967,6 +967,8 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
             final Predicate<String> strPredicate = switch (expressionTerm.getCondition()) {
                 case EQUALS -> PredicateUtil.createWildCardedFilterPredicate(
                         termValue, true, true);
+                case NOT_EQUALS -> PredicateUtil.createWildCardedFilterPredicate(
+                        termValue, true, true).negate();
                 case CONTAINS -> PredicateUtil.createWildCardedFilterPredicate(
                         termValue, false, true);
                 case IN -> PredicateUtil.createWildCardedInPredicate(termValue, true);
@@ -989,6 +991,8 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
         return switch (expressionTerm.getCondition()) {
             case EQUALS -> rec ->
                     Objects.equals(valueExtractor.apply(rec), termValue);
+            case NOT_EQUALS -> rec ->
+                    !Objects.equals(valueExtractor.apply(rec), termValue);
             case GREATER_THAN -> rec ->
                     valueExtractor.apply(rec) > termValue;
             case GREATER_THAN_OR_EQUAL_TO -> rec ->
@@ -1009,6 +1013,8 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
         return switch (expressionTerm.getCondition()) {
             case EQUALS -> rec ->
                     Objects.equals(valueExtractor.apply(rec), termValue);
+            case NOT_EQUALS -> rec ->
+                    !Objects.equals(valueExtractor.apply(rec), termValue);
             case GREATER_THAN -> rec ->
                     valueExtractor.apply(rec) > termValue;
             case GREATER_THAN_OR_EQUAL_TO -> rec ->

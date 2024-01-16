@@ -1832,6 +1832,7 @@ export type ExpressionTerm = ExpressionItem & {
   condition?:
     | "CONTAINS"
     | "EQUALS"
+    | "NOT_EQUALS"
     | "GREATER_THAN"
     | "GREATER_THAN_OR_EQUAL_TO"
     | "LESS_THAN"
@@ -1955,18 +1956,18 @@ export interface FetchSuggestionsRequest {
 
 export interface FieldInfo {
   conditions?:
-    | "'=', 'between', '>', '>=', '<', '<='"
-    | "'=', 'in', 'in dictionary', 'between', '>', '>=', '<', '<='"
-    | "'='"
-    | "'=', 'in', 'in dictionary'"
+    | "'=', '!=', 'between', '>', '>=', '<', '<='"
+    | "'=', '!=', 'in', 'in dictionary', 'between', '>', '>=', '<', '<='"
+    | "'=', '!='"
+    | "'=', '!=', 'in', 'in dictionary'"
     | "'is', 'in folder'"
-    | "'is', 'in folder', '=', 'in', 'in dictionary'"
-    | "'=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'"
-    | "'=', 'in', 'in dictionary', 'matches regex'"
-    | "'is', '='"
+    | "'is', 'in folder', '=', '!=', 'in', 'in dictionary'"
+    | "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'"
+    | "'=', '!=', 'in', 'in dictionary', 'matches regex'"
+    | "'is', '=', '!='"
     | "'between'"
-    | "'=', 'in'"
-    | "'=', 'in', 'in dictionary', 'is'";
+    | "'=', '!=', 'in'"
+    | "'=', '!=', 'in', 'in dictionary', 'is'";
   docRefType?: string;
   fieldName?: string;
   fieldType?:
@@ -3474,18 +3475,18 @@ export interface QueryDoc {
 
 export interface QueryField {
   conditionSet?:
-    | "'=', 'between', '>', '>=', '<', '<='"
-    | "'=', 'in', 'in dictionary', 'between', '>', '>=', '<', '<='"
-    | "'='"
-    | "'=', 'in', 'in dictionary'"
+    | "'=', '!=', 'between', '>', '>=', '<', '<='"
+    | "'=', '!=', 'in', 'in dictionary', 'between', '>', '>=', '<', '<='"
+    | "'=', '!='"
+    | "'=', '!=', 'in', 'in dictionary'"
     | "'is', 'in folder'"
-    | "'is', 'in folder', '=', 'in', 'in dictionary'"
-    | "'=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'"
-    | "'=', 'in', 'in dictionary', 'matches regex'"
-    | "'is', '='"
+    | "'is', 'in folder', '=', '!=', 'in', 'in dictionary'"
+    | "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'"
+    | "'=', '!=', 'in', 'in dictionary', 'matches regex'"
+    | "'is', '=', '!='"
     | "'between'"
-    | "'=', 'in'"
-    | "'=', 'in', 'in dictionary', 'is'";
+    | "'=', '!=', 'in'"
+    | "'=', '!=', 'in', 'in dictionary', 'is'";
   docRefType?: string;
   fieldType?:
     | "ID"
@@ -4758,6 +4759,7 @@ export interface StringMatch {
     | "NULL_OR_EMPTY"
     | "CONTAINS"
     | "EQUALS"
+    | "NOT_EQUALS"
     | "STARTS_WITH"
     | "ENDS_WITH"
     | "REGEX";
@@ -5010,6 +5012,7 @@ export interface TimeRange {
   condition?:
     | "CONTAINS"
     | "EQUALS"
+    | "NOT_EQUALS"
     | "GREATER_THAN"
     | "GREATER_THAN_OR_EQUAL_TO"
     | "LESS_THAN"
@@ -5278,7 +5281,7 @@ export interface Window {
 
 export interface XPathFilter {
   ignoreCase?: boolean;
-  matchType?: "EXISTS" | "CONTAINS" | "EQUALS" | "UNIQUE";
+  matchType?: "EXISTS" | "CONTAINS" | "EQUALS" | "NOT_EQUALS" | "UNIQUE";
   path?: string;
   uniqueValues?: Record<string, Rec>;
   value?: string;

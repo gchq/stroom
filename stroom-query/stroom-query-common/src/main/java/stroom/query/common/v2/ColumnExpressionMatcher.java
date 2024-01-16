@@ -156,6 +156,7 @@ public class ColumnExpressionMatcher {
         } else {
             return switch (condition) {
                 case EQUALS -> isStringMatch(termValue, attribute);
+                case NOT_EQUALS -> !isStringMatch(termValue, attribute);
                 // CONTAINS only supported for legacy content, not for use in UI
                 case CONTAINS -> isStringContainsMatch(termValue, attribute);
                 case IN -> isIn(termValue, attribute);
@@ -183,6 +184,11 @@ public class ColumnExpressionMatcher {
                 final Long num1 = getDate(fieldName, attribute);
                 final Long num2 = getDate(termValue);
                 return Objects.equals(num1, num2);
+            }
+            case NOT_EQUALS: {
+                final Long num1 = getDate(fieldName, attribute);
+                final Long num2 = getDate(termValue);
+                return !Objects.equals(num1, num2);
             }
             case GREATER_THAN: {
                 final Long num1 = getDate(fieldName, attribute);
@@ -232,6 +238,11 @@ public class ColumnExpressionMatcher {
                 final BigDecimal num1 = getNumber(columnName, attribute);
                 final BigDecimal num2 = getNumber(columnName, termValue);
                 return Objects.equals(num1, num2);
+            }
+            case NOT_EQUALS: {
+                final BigDecimal num1 = getNumber(columnName, attribute);
+                final BigDecimal num2 = getNumber(columnName, termValue);
+                return !Objects.equals(num1, num2);
             }
             case GREATER_THAN: {
                 final BigDecimal num1 = getNumber(columnName, attribute);

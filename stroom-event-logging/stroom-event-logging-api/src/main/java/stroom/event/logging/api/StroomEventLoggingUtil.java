@@ -330,6 +330,9 @@ public class StroomEventLoggingUtil {
             case IS_DOC_REF:
                 termCondition = TermCondition.EQUALS;
                 break;
+            case NOT_EQUALS:
+                termCondition = TermCondition.NOT_EQUALS;
+                break;
             case GREATER_THAN:
                 termCondition = TermCondition.GREATER_THAN;
                 break;

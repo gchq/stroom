@@ -181,6 +181,9 @@ public class SearchExpressionQueryBuilder {
                 case EQUALS -> {
                     return buildKeywordQuery(fieldName, expression);
                 }
+                case NOT_EQUALS -> {
+                    return negate(buildKeywordQuery(fieldName, expression));
+                }
                 case MATCHES_REGEX -> {
                     return QueryBuilders.regexpQuery(fieldName, expression);
                 }
@@ -207,6 +210,9 @@ public class SearchExpressionQueryBuilder {
             switch (condition) {
                 case EQUALS -> {
                     return buildTextQuery(fieldName, expression);
+                }
+                case NOT_EQUALS -> {
+                    return negate(buildTextQuery(fieldName, expression));
                 }
                 case MATCHES_REGEX -> {
                     return QueryBuilders.regexpQuery(fieldName, expression);
@@ -269,6 +275,11 @@ public class SearchExpressionQueryBuilder {
                 return QueryBuilders
                         .termQuery(fieldName, numericValue);
             }
+            case NOT_EQUALS -> {
+                numericValue = valueParser.apply(condition, fieldName, fieldValue);
+                return negate(QueryBuilders
+                        .termQuery(fieldName, numericValue));
+            }
             case CONTAINS, IN -> {
                 numericValues = tokenizeExpression(fieldValue)
                         .map(val -> valueParser.apply(condition, fieldName, val))
@@ -319,6 +330,12 @@ public class SearchExpressionQueryBuilder {
             default -> throw new SearchException("Unexpected condition '" + condition.getDisplayValue() + "' for " +
                     indexField.getFieldUse().getDisplayValue() + " field type");
         }
+    }
+
+    private QueryBuilder negate(final QueryBuilder queryBuilder) {
+        final BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery();
+        boolQueryBuilder.mustNot(queryBuilder);
+        return boolQueryBuilder;
     }
 
     /**
