@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2.18] - 2024-01-16
+
+* Fix duplicate entries in selection boxes.
+
+
 ## [v7.2.17] - 2024-01-16
 
 * Fix broken SQL migration script V07_02_00_110__api_key_legacy_data_migration.sql.
@@ -6267,7 +6272,8 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2.17...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2.18...HEAD
+[v7.2.18]: https://github.com/gchq/stroom/compare/v7.2.17...v7.2.18
 [v7.2.17]: https://github.com/gchq/stroom/compare/v7.2.16...v7.2.17
 [v7.2.16]: https://github.com/gchq/stroom/compare/v7.2.15...v7.2.16
 [v7.2.15]: https://github.com/gchq/stroom/compare/v7.2.14...v7.2.15
