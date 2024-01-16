@@ -24,28 +24,28 @@ import java.util.function.Supplier;
 
 @SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
-        name = Duration.NAME,
+        name = FormatDuration.NAME,
         commonCategory = FunctionCategory.DATE,
         commonSubCategories = "Duration",
-        commonReturnType = ValDuration.class,
-        commonReturnDescription = "The parsed duration.",
+        commonReturnType = ValString.class,
+        commonReturnDescription = "A duration formatted as a string.",
         signatures = {
                 @FunctionSignature(
-                        description = "Parses the supplied value as a duration",
+                        description = "Formats the supplied duration as a string",
                         args = @FunctionArg(
                                 name = "value",
                                 argType = ValString.class,
                                 description = "The duration as a string."))
         })
-class Duration extends AbstractFunction {
+class FormatDuration extends AbstractFunction {
 
-    static final String NAME = "duration";
+    static final String NAME = "formatDuration";
 
     private Generator gen;
     private Function function;
     private boolean hasAggregate;
 
-    public Duration(final String name) {
+    public FormatDuration(final String name) {
         super(name, 1, 1);
     }
 
@@ -59,7 +59,7 @@ class Duration extends AbstractFunction {
             hasAggregate = function.hasAggregate();
         } else {
             final String durationString = param.toString();
-            gen = new StaticValueFunction(parseDuration(durationString)).createGenerator();
+            gen = new StaticValueFunction(ValDurationUtil.formatDuration(durationString)).createGenerator();
         }
     }
 
@@ -91,11 +91,6 @@ class Duration extends AbstractFunction {
         return Type.DURATION;
     }
 
-    private static Val parseDuration(final String string) throws ParseException {
-        final SimpleDuration duration = SimpleDurationUtil.parse(string);
-        return ValDuration.create(duration);
-    }
-
     private static final class Gen extends AbstractSingleChildGenerator {
 
         Gen(final Generator childGenerator) {
@@ -110,14 +105,7 @@ class Duration extends AbstractFunction {
         @Override
         public Val eval(final StoredValues storedValues, final Supplier<ChildData> childDataSupplier) {
             final Val val = childGenerator.eval(storedValues, childDataSupplier);
-            if (Type.STRING.equals(val.type())) {
-                try {
-                    return parseDuration(val.toString());
-                } catch (final ParseException e) {
-                    return ValErr.create(e.getMessage());
-                }
-            }
-            return val;
+            return ValDurationUtil.formatDuration(val);
         }
     }
 }
