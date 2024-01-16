@@ -12,6 +12,7 @@ import stroom.security.common.impl.JwtContextFactory;
 import stroom.security.common.impl.JwtUtil;
 import stroom.security.common.impl.RefreshManager;
 import stroom.security.common.impl.UpdatableToken;
+import stroom.security.impl.apikey.ApiKeyService;
 import stroom.security.openid.api.IdpType;
 import stroom.security.openid.api.OpenId;
 import stroom.security.openid.api.OpenIdConfiguration;
@@ -57,6 +58,7 @@ public class StroomUserIdentityFactory extends AbstractUserIdentityFactory {
     private final UserService userService;
     private final SecurityContext securityContext;
     private final EntityEventBus entityEventBus;
+    private final ApiKeyService apiKeyService;
 
     @Inject
     public StroomUserIdentityFactory(final JwtContextFactory jwtContextFactory,
@@ -69,7 +71,8 @@ public class StroomUserIdentityFactory extends AbstractUserIdentityFactory {
                                      final SecurityContext securityContext,
                                      final JerseyClientFactory jerseyClientFactory,
                                      final EntityEventBus entityEventBus,
-                                     final RefreshManager refreshManager) {
+                                     final RefreshManager refreshManager,
+                                     final ApiKeyService apiKeyService) {
 
 
         super(jwtContextFactory,
@@ -86,6 +89,7 @@ public class StroomUserIdentityFactory extends AbstractUserIdentityFactory {
         this.userService = userService;
         this.securityContext = securityContext;
         this.entityEventBus = entityEventBus;
+        this.apiKeyService = apiKeyService;
     }
 
     @Override
@@ -137,6 +141,14 @@ public class StroomUserIdentityFactory extends AbstractUserIdentityFactory {
                 .or(() -> {
                     throw new AuthenticationException("Unable to find user: " + subjectId);
                 });
+    }
+
+    @Override
+    public Optional<UserIdentity> getApiUserIdentity(final HttpServletRequest request) {
+        // First see if we have a Stroom API key to authenticate with, else see if we have
+        // a valid JWT. Proxy can't auth using API keys as it doesn't have the back end to hold/manage them.
+        return apiKeyService.fetchVerifiedIdentity(request)
+                .or(() -> super.getApiUserIdentity(request));
     }
 
     /**

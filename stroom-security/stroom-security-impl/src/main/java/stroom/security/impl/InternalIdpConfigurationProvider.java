@@ -2,7 +2,6 @@ package stroom.security.impl;
 
 import stroom.config.common.UriFactory;
 import stroom.security.common.impl.IdpConfigurationProvider;
-import stroom.security.openid.api.AbstractOpenIdConfig;
 import stroom.security.openid.api.IdpType;
 import stroom.security.openid.api.OpenIdClientFactory;
 import stroom.security.openid.api.OpenIdConfigurationResponse;
@@ -42,7 +41,7 @@ public class InternalIdpConfigurationProvider implements IdpConfigurationProvide
 
 
     private final UriFactory uriFactory;
-    private final Provider<AbstractOpenIdConfig> localOpenIdConfigProvider;
+    private final Provider<StroomOpenIdConfig> localOpenIdConfigProvider;
     private final OpenIdClientFactory openIdClientDetailsFactory;
 
     private volatile String lastConfigurationEndpoint;
@@ -50,7 +49,7 @@ public class InternalIdpConfigurationProvider implements IdpConfigurationProvide
 
     @Inject
     public InternalIdpConfigurationProvider(final UriFactory uriFactory,
-                                            final Provider<AbstractOpenIdConfig> localOpenIdConfigProvider,
+                                            final Provider<StroomOpenIdConfig> localOpenIdConfigProvider,
                                             final OpenIdClientFactory openIdClientDetailsFactory) {
         this.uriFactory = uriFactory;
         this.localOpenIdConfigProvider = localOpenIdConfigProvider;
@@ -59,8 +58,8 @@ public class InternalIdpConfigurationProvider implements IdpConfigurationProvide
 
     @Override
     public OpenIdConfigurationResponse getConfigurationResponse() {
-        final AbstractOpenIdConfig abstractOpenIdConfig = localOpenIdConfigProvider.get();
-        final String configurationEndpoint = abstractOpenIdConfig.getOpenIdConfigurationEndpoint();
+        final StroomOpenIdConfig stroomOpenIdConfig = localOpenIdConfigProvider.get();
+        final String configurationEndpoint = stroomOpenIdConfig.getOpenIdConfigurationEndpoint();
         if (isNewResponseRequired(configurationEndpoint)) {
             synchronized (this) {
                 if (isNewResponseRequired(configurationEndpoint)) {

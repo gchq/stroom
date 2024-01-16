@@ -2,6 +2,6 @@ package stroom.security.impl.db;
 
 import javax.sql.DataSource;
 
-interface SecurityDbConnProvider extends DataSource {
+public interface SecurityDbConnProvider extends DataSource {
 
 }

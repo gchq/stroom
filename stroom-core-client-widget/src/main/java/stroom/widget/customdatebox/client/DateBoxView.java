@@ -8,4 +8,8 @@ public interface DateBoxView extends HasValue<String>, Focus {
     Long getMilliseconds();
 
     void setMilliseconds(Long milliseconds);
+
+    void setEnabled(final boolean isEnabled);
+
+    boolean isEnabled();
 }

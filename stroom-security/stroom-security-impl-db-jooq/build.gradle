@@ -36,7 +36,7 @@ jooq {
                         inputSchema = 'stroom'
                         // Add anything you want included in generation below, whitespace ignored
                         // and comments allowed. Each one is a java regex
-                        includes = 'stroom_user|stroom_user_group|app_permission|doc_permission'
+                        includes = 'api_key|stroom_user|stroom_user_group|app_permission|doc_permission'
                         // We don't want to include flyway versioning
                         excludes = 'security_schema_history'
                         // Specify 'version' for use in optimistic concurrency control
@@ -46,6 +46,7 @@ jooq {
                             forcedType {
                                 name = 'BOOLEAN'
                                 includeExpression = '' +
+                                    '.*\\.api_key\\.enabled|' +
                                     '.*\\.stroom_user\\.is_group|' +
                                     '.*\\.stroom_user\\.enabled'
                                 // see https://github.com/jOOQ/jOOQ/issues/9405

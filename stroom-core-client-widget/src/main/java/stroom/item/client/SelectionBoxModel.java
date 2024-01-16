@@ -10,6 +10,7 @@ import com.google.gwt.event.shared.HandlerManager;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.function.Function;
 
 public class SelectionBoxModel<T> implements SelectionBoxView<T> {
 
@@ -17,8 +18,14 @@ public class SelectionBoxModel<T> implements SelectionBoxView<T> {
     private final List<String> strings = new ArrayList<>();
     private T value;
     private final HandlerManager handlerManager = new HandlerManager(this);
+    private Function<T, String> displayValueFunction = null;
 
     public SelectionBoxModel() {
+    }
+
+    @Override
+    public void setDisplayValueFunction(final Function<T, String> displayValueFunction) {
+        this.displayValueFunction = displayValueFunction;
     }
 
     @Override
@@ -45,11 +52,18 @@ public class SelectionBoxModel<T> implements SelectionBoxView<T> {
     public void addItem(final T item) {
         if (item != null) {
             items.add(item);
-            if (item instanceof HasDisplayValue) {
+            final String displayValue;
+            if (displayValueFunction != null) {
+                displayValue = displayValueFunction.apply(item);
+            } else if (item instanceof HasDisplayValue) {
+                displayValue = ((HasDisplayValue) item).getDisplayValue();
                 strings.add(((HasDisplayValue) item).getDisplayValue());
+            } else if (item instanceof String) {
+                displayValue = (String) item;
             } else {
-                strings.add(item.toString());
+                displayValue = item.toString();
             }
+            strings.add(displayValue);
         }
     }
 

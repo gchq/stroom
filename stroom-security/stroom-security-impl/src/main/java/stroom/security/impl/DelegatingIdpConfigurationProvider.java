@@ -3,7 +3,6 @@ package stroom.security.impl;
 import stroom.config.common.UriFactory;
 import stroom.security.common.impl.ExternalIdpConfigurationProvider;
 import stroom.security.common.impl.IdpConfigurationProvider;
-import stroom.security.openid.api.AbstractOpenIdConfig;
 import stroom.security.openid.api.IdpType;
 import stroom.security.openid.api.OpenIdConfigurationResponse;
 import stroom.util.NullSafe;
@@ -24,7 +23,7 @@ public class DelegatingIdpConfigurationProvider implements IdpConfigurationProvi
     // bound to this interface (IdpConfigurationProvider) to provide a derived config based on yaml
     // config + config from the IDP. AbstractOpenIdConfig is bound to the local yaml config only, which is
     // what we need here.
-    private final Provider<AbstractOpenIdConfig> localOpenIdConfigProvider;
+    private final Provider<StroomOpenIdConfig> localOpenIdConfigProvider;
     private final UriFactory uriFactory;
 
     @Inject
@@ -32,7 +31,7 @@ public class DelegatingIdpConfigurationProvider implements IdpConfigurationProvi
             final Provider<InternalIdpConfigurationProvider> internalIdpConfigurationProviderProvider,
             final Provider<ExternalIdpConfigurationProvider> externalIdpConfigurationProviderProvider,
             final Provider<StroomTestIdpConfigurationProvider> stroomTestIdpConfigurationProviderProvider,
-            final Provider<AbstractOpenIdConfig> localOpenIdConfigProvider,
+            final Provider<StroomOpenIdConfig> localOpenIdConfigProvider,
             final UriFactory uriFactory) {
 
         delegate = switch (localOpenIdConfigProvider.get().getIdentityProviderType()) {

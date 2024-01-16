@@ -16,6 +16,7 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 
 public class SelectionBox<T>
         extends Composite
@@ -65,6 +66,11 @@ public class SelectionBox<T>
     @Override
     protected void onUnload() {
         eventBinder.unbind();
+    }
+
+    @Override
+    public void setDisplayValueFunction(final Function<T, String> displayValueFunction) {
+        model.setDisplayValueFunction(displayValueFunction);
     }
 
     @Override

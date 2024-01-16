@@ -16,7 +16,6 @@
 
 package stroom.security.impl;
 
-import stroom.security.openid.api.AbstractOpenIdConfig;
 import stroom.security.openid.api.IdpType;
 import stroom.security.shared.PermissionNames;
 import stroom.security.shared.User;
@@ -42,13 +41,13 @@ public class AuthenticationService {
 
     private final UserDao userDao;
     private final AppPermissionDao appPermissionDao;
-    private final Provider<AbstractOpenIdConfig> openIdConfigProvider;
+    private final Provider<StroomOpenIdConfig> openIdConfigProvider;
 
     @Inject
     AuthenticationService(
             final UserDao userDao,
             final AppPermissionDao appPermissionDao,
-            final Provider<AbstractOpenIdConfig> openIdConfigProvider) {
+            final Provider<StroomOpenIdConfig> openIdConfigProvider) {
         this.userDao = userDao;
         this.appPermissionDao = appPermissionDao;
         this.openIdConfigProvider = openIdConfigProvider;
