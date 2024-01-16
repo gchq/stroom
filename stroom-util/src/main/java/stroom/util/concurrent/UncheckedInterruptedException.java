@@ -4,7 +4,7 @@ import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
-import java.util.function.Supplier;
+import java.util.Objects;
 
 public class UncheckedInterruptedException extends RuntimeException {
 
@@ -23,7 +23,7 @@ public class UncheckedInterruptedException extends RuntimeException {
      * and returns a new {@link UncheckedInterruptedException} that can be rethrown.
      */
     public static UncheckedInterruptedException create(final InterruptedException e) {
-        return create(e::getMessage, e);
+        return create(e.getMessage(), e);
     }
 
     /**
@@ -31,13 +31,15 @@ public class UncheckedInterruptedException extends RuntimeException {
      * resets the interrupt flag
      * and returns a new {@link UncheckedInterruptedException} that can be rethrown.
      */
-    public static UncheckedInterruptedException create(final Supplier<String> msgSupplier,
+    public static UncheckedInterruptedException create(final String message,
                                                        final InterruptedException e) {
         LOGGER.debug(() ->
-                        NullSafe.getOrElse(msgSupplier, Supplier::get, "Interrupted"),
-                e);
+                        Objects.requireNonNullElseGet(
+                                message,
+                                () -> NullSafe.getOrElse(e, Throwable::getMessage, "Interrupted")
+                        ));
         // Continue to interrupt the thread.
         Thread.currentThread().interrupt();
-        return new UncheckedInterruptedException(e);
+        return new UncheckedInterruptedException(message, e);
     }
 }

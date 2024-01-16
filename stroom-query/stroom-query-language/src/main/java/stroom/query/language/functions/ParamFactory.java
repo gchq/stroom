@@ -20,7 +20,6 @@ import stroom.query.language.token.Param;
 import stroom.query.language.token.Token;
 import stroom.query.language.token.TokenException;
 
-import java.text.ParseException;
 import java.util.Map;
 
 public class ParamFactory {
@@ -46,7 +45,7 @@ public class ParamFactory {
                     return ValDate.create(DateUtil.parseNormalDateTimeString(token.getText()));
 
                 case DURATION:
-                    return ValDuration.create(SimpleDurationUtil.parse(token.getText()));
+                    return ValDuration.create(ValDurationUtil.parseToMilliseconds(token.getText()));
 
                 case NUMBER:
                     return ValDouble.create(Double.parseDouble(token.getText()));
@@ -54,7 +53,7 @@ public class ParamFactory {
                 default:
                     throw new TokenException(token, "Unexpected token type '" + token.getTokenType() + "'");
             }
-        } catch (final ParseException | RuntimeException e) {
+        } catch (final RuntimeException e) {
             throw new TokenException(token, e.getMessage());
         }
     }

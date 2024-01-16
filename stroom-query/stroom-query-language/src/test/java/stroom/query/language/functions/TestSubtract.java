@@ -1,5 +1,8 @@
 package stroom.query.language.functions;
 
+import stroom.util.date.DateUtil;
+
+import java.time.Duration;
 import java.util.stream.Stream;
 
 class TestSubtract extends AbstractFunctionTest<Subtract> {
@@ -37,7 +40,17 @@ class TestSubtract extends AbstractFunctionTest<Subtract> {
                         "2",
                         ValErr.INSTANCE,
                         ValString.create("2008-11-18T09:47:50.548Z"),
-                        ValString.create("2008-11-18T09:47:50.548Z"))
+                        ValString.create("2008-11-18T09:47:50.548Z")),
+                TestCase.of(
+                        "duration",
+                        ValDuration.create(Duration.ofMinutes(5).toMillis()),
+                        ValDuration.create(Duration.ofMinutes(7).toMillis()),
+                        ValDuration.create(Duration.ofMinutes(2).toMillis())),
+                TestCase.of(
+                        "date",
+                        ValDate.create(stroom.util.date.DateUtil.parseNormalDateTimeString("2020-10-01T00:02:00.000Z")),
+                        ValDate.create(DateUtil.parseNormalDateTimeString("2020-10-01T00:04:00.000Z")),
+                        ValDuration.create(Duration.ofMinutes(2).toMillis()))
         );
     }
 }

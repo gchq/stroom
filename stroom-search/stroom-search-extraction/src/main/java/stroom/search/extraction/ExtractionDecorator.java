@@ -329,6 +329,10 @@ public class ExtractionDecorator {
                 Meta meta = null;
 
                 for (final Entry<DocRef, Receiver> entry : receivers.entrySet()) {
+                    if (Thread.currentThread().isInterrupted()) {
+                        LOGGER.debug("Interrupted, breaking out");
+                        break;
+                    }
                     final DocRef docRef = entry.getKey();
                     final Receiver receiver = entry.getValue();
 
@@ -389,6 +393,10 @@ public class ExtractionDecorator {
                                 () -> "Transferring " + events.size() + " records from stream " + streamId);
                         // Pass raw values to coprocessors that are not requesting values to be extracted.
                         for (final Event event : events) {
+                            if (Thread.currentThread().isInterrupted()) {
+                                LOGGER.debug("Interrupted, breaking out");
+                                break;
+                            }
                             receiver.valuesConsumer.accept(event.getValues());
                             extractionCount.increment();
                         }
@@ -426,6 +434,10 @@ public class ExtractionDecorator {
             return pipelineDataCache.get(pipelineDoc);
         });
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private record Receiver(FieldIndex fieldIndex, ValuesConsumer valuesConsumer) {
 

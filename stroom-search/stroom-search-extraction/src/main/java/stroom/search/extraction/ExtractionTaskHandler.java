@@ -254,6 +254,7 @@ public class ExtractionTaskHandler {
             } catch (final TaskTerminatedException e) {
                 // Ignore stopped pipeline exceptions as we are meant to get
                 // these when a task is asked to stop prematurely.
+                LOGGER.debug("Swallowing TaskTerminatedException");
             } catch (final RuntimeException e) {
                 throw ExtractionException.wrap(e);
             }

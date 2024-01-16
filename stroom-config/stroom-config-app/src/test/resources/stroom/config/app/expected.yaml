@@ -1032,7 +1032,6 @@ appConfig:
         title: "Please Provide Query Info"
         validationRegex: "^[\\s\\S]{3,}$"
       viewPipelineSelectorIncludedTags:
-      - "dynamic"
       - "extraction"
     referencePipelineSelectorIncludedTags:
     - "reference-loader"
