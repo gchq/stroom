@@ -25,6 +25,7 @@ import stroom.statistics.impl.sql.search.PrintableNode;
 import java.util.EnumMap;
 
 class SQLTagValueWhereClauseConverter {
+
     // map to provide a lookup from the FilterOperationMode enum to the SQL reserved word
     private static final EnumMap<FilterOperationMode, String> OPERATOR_TO_SQL_TERM_MAP;
 

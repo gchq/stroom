@@ -16,6 +16,7 @@
 
 package stroom.statistics.impl.sql.search;
 
+import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.statistics.impl.sql.SQLStatisticConstants;
 import stroom.statistics.impl.sql.SQLStatisticNames;
 import stroom.statistics.impl.sql.SqlBuilder;
@@ -25,6 +26,7 @@ import stroom.statistics.impl.sql.search.FilterTermsTree.TermNode;
 import java.util.EnumMap;
 
 public class SQLTagValueWhereClauseConverter {
+
     // map to provide a lookup from the FilterOperationMode enum to the SQL reserved word
     private static final EnumMap<FilterOperationMode, String> OPERATOR_TO_SQL_TERM_MAP;
 
@@ -73,12 +75,20 @@ public class SQLTagValueWhereClauseConverter {
         // bind: '¬Tag1¬Val1(¬|$)'
         // which equates to: ' name REGEXP '¬Tag1¬Val1(¬|$)' '
 
+        if (Condition.NOT_EQUALS.equals(oldNode.getCondition())) {
+            sql.append(" NOT(");
+        }
+
         sql.append(" " + SQLStatisticNames.NAME + " REGEXP ");
 
         final String regexTerm = SQLStatisticConstants.NAME_SEPARATOR + oldNode.getTag()
                 + SQLStatisticConstants.NAME_SEPARATOR + cleanedValue + "($|" + SQLStatisticConstants.NAME_SEPARATOR
                 + ")";
         sql.arg(regexTerm);
+
+        if (Condition.NOT_EQUALS.equals(oldNode.getCondition())) {
+            sql.append(")");
+        }
     }
 
     private static void convertOperatorNode(final FilterTermsTree.OperatorNode oldNode, final SqlBuilder sql) {
