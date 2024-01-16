@@ -273,7 +273,8 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
                         // We only want to do this extraction once so we cache the values
                         extractor = buildTagFieldValueExtractor(fieldName, idx);
                     } else {
-                        throw new RuntimeException(String.format("Unexpected fieldName %s", fieldName));
+                        extractor = null;
+//                        throw new RuntimeException(String.format("Unexpected fieldName %s", fieldName));
                     }
                     LAMBDA_LOGGER.debug(() ->
                             String.format("Adding extraction function for field %s, idx %s", fieldName, idx));
@@ -300,8 +301,11 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
             final Map<String, Val> fieldValueCache = new HashMap<>();
 
             //run each of our field value extractors against the resultSet to fill up the data arr
-            valueExtractors.forEach(valueExtractor ->
-                    valueExtractor.extract(rs, data, fieldValueCache));
+            valueExtractors.forEach(valueExtractor -> {
+                if (valueExtractor != null) {
+                    valueExtractor.extract(rs, data, fieldValueCache);
+                }
+            });
 
             LAMBDA_LOGGER.trace(() -> {
                 try {
