@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2.17] - 2024-01-16
+
+* Fix broken SQL migration script V07_02_00_110__api_key_legacy_data_migration.sql.
+
+
 ## [v7.2.16] - 2024-01-16
 
 * Issue **#3952** : Fix handling of thread interrupts (e.g. when a ref load is triggered by a search extraction and the search is stopped) during reference data loads. Interrupted ref loads now correctly get a load state of TERMINATED. Stopped searches no longer show a warning triangle with ref errors. Terminated pipeline tasks no longer list errors/warnings for the ref load/lookups.
@@ -6262,7 +6267,8 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2.16...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2.17...HEAD
+[v7.2.17]: https://github.com/gchq/stroom/compare/v7.2.16...v7.2.17
 [v7.2.16]: https://github.com/gchq/stroom/compare/v7.2.15...v7.2.16
 [v7.2.15]: https://github.com/gchq/stroom/compare/v7.2.14...v7.2.15
 [v7.2.14]: https://github.com/gchq/stroom/compare/v7.2.13...v7.2.14
