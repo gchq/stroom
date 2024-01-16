@@ -4,22 +4,20 @@
 package stroom.security.identity.db.jooq;
 
 
-import stroom.security.identity.db.jooq.tables.Account;
-import stroom.security.identity.db.jooq.tables.JsonWebKey;
-import stroom.security.identity.db.jooq.tables.OauthClient;
-import stroom.security.identity.db.jooq.tables.Token;
-import stroom.security.identity.db.jooq.tables.TokenType;
-import stroom.security.identity.db.jooq.tables.records.AccountRecord;
-import stroom.security.identity.db.jooq.tables.records.JsonWebKeyRecord;
-import stroom.security.identity.db.jooq.tables.records.OauthClientRecord;
-import stroom.security.identity.db.jooq.tables.records.TokenRecord;
-import stroom.security.identity.db.jooq.tables.records.TokenTypeRecord;
-
 import org.jooq.ForeignKey;
 import org.jooq.TableField;
 import org.jooq.UniqueKey;
 import org.jooq.impl.DSL;
 import org.jooq.impl.Internal;
+
+import stroom.security.identity.db.jooq.tables.Account;
+import stroom.security.identity.db.jooq.tables.JsonWebKey;
+import stroom.security.identity.db.jooq.tables.OauthClient;
+import stroom.security.identity.db.jooq.tables.TokenType;
+import stroom.security.identity.db.jooq.tables.records.AccountRecord;
+import stroom.security.identity.db.jooq.tables.records.JsonWebKeyRecord;
+import stroom.security.identity.db.jooq.tables.records.OauthClientRecord;
+import stroom.security.identity.db.jooq.tables.records.TokenTypeRecord;
 
 
 /**
@@ -39,7 +37,6 @@ public class Keys {
     public static final UniqueKey<OauthClientRecord> KEY_OAUTH_CLIENT_CLIENT_ID = Internal.createUniqueKey(OauthClient.OAUTH_CLIENT, DSL.name("KEY_oauth_client_client_id"), new TableField[] { OauthClient.OAUTH_CLIENT.CLIENT_ID }, true);
     public static final UniqueKey<OauthClientRecord> KEY_OAUTH_CLIENT_NAME = Internal.createUniqueKey(OauthClient.OAUTH_CLIENT, DSL.name("KEY_oauth_client_name"), new TableField[] { OauthClient.OAUTH_CLIENT.NAME }, true);
     public static final UniqueKey<OauthClientRecord> KEY_OAUTH_CLIENT_PRIMARY = Internal.createUniqueKey(OauthClient.OAUTH_CLIENT, DSL.name("KEY_oauth_client_PRIMARY"), new TableField[] { OauthClient.OAUTH_CLIENT.ID }, true);
-    public static final UniqueKey<TokenRecord> KEY_TOKEN_PRIMARY = Internal.createUniqueKey(Token.TOKEN, DSL.name("KEY_token_PRIMARY"), new TableField[] { Token.TOKEN.ID }, true);
     public static final UniqueKey<TokenTypeRecord> KEY_TOKEN_TYPE_PRIMARY = Internal.createUniqueKey(TokenType.TOKEN_TYPE, DSL.name("KEY_token_type_PRIMARY"), new TableField[] { TokenType.TOKEN_TYPE.ID }, true);
 
     // -------------------------------------------------------------------------
@@ -47,6 +44,4 @@ public class Keys {
     // -------------------------------------------------------------------------
 
     public static final ForeignKey<JsonWebKeyRecord, TokenTypeRecord> JSON_WEB_KEY_FK_TOKEN_TYPE_ID = Internal.createForeignKey(JsonWebKey.JSON_WEB_KEY, DSL.name("json_web_key_fk_token_type_id"), new TableField[] { JsonWebKey.JSON_WEB_KEY.FK_TOKEN_TYPE_ID }, Keys.KEY_TOKEN_TYPE_PRIMARY, new TableField[] { TokenType.TOKEN_TYPE.ID }, true);
-    public static final ForeignKey<TokenRecord, AccountRecord> TOKEN_FK_ACCOUNT_ID = Internal.createForeignKey(Token.TOKEN, DSL.name("token_fk_account_id"), new TableField[] { Token.TOKEN.FK_ACCOUNT_ID }, Keys.KEY_ACCOUNT_PRIMARY, new TableField[] { Account.ACCOUNT.ID }, true);
-    public static final ForeignKey<TokenRecord, TokenTypeRecord> TOKEN_FK_TOKEN_TYPE_ID = Internal.createForeignKey(Token.TOKEN, DSL.name("token_fk_token_type_id"), new TableField[] { Token.TOKEN.FK_TOKEN_TYPE_ID }, Keys.KEY_TOKEN_TYPE_PRIMARY, new TableField[] { TokenType.TOKEN_TYPE.ID }, true);
 }
