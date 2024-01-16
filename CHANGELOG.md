@@ -13,6 +13,75 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2.15] - 2024-01-15
+
+* Issue **#3964** : Add XSLT function for testing whether an IP address is within the specified CIDR range.
+
+* Issue **#3982** : Fix text colour in step filter element selector.
+
+* Issue **#3983** : Fix colour of hamburger menu in light theme so it is visible.
+
+* Issue **#3984** : Text editor fixed line height is now more appropriate for each font size.
+
+* Issue **#3985** : Fix dashboard table custom date format checkbox state.
+
+* Issue **#3950** : Rules now work with non-dynamic indexes.
+
+* Issue **#4002** : Fix setting dirty state when switching to notification tab on rules.
+
+* Issue **#4001** : Fix pipeline structure editor element drag issue.
+
+* Issue **#3999** : Main pane scroll bar now displays where needed.
+
+
+## [v7.2.14] - 2023-12-28
+
+* Add the un-authenticated API method `/api/authproxy/v1/noauth/fetchClientCredsToken` to effectively proxy for the IDP's token endpoint to obtain an access token using the client credentials flow. The request contains the client credentials and looks like `{ "clientId": "a-client", "clientSecret": "BR9m.....KNQO" }`. The response media type is `text/plain` and contains the access token.
+
+* Change processing user token expiry time from 1year to 10min when using internal identity provider.
+
+* Remove the CLI command `fetch_proc_user_token` as it is now replaced by the `/authproxy/v1/noauth` API method.
+
+* Fix issues with the refreshing of expired authentication tokens. Change the age of the service user token from 1yr to 10mins for the internal IDP.
+
+* Issue **#3947** : Fix owner validation of document permissions when cascading permissions. Now the validation requiring a single owner is only applied to the top level document being edited. Descendant documents may have no owners or multiple owners due to legacy behaviour in stroom. If there is no change to the owner of the top level document then the descendant owners will be ignored. If _Cascade_ is set to _All_ or there is a change to the owner of the top level document and _Cascade_ is set to _Changes Only_ then the top level owner will be made the only owner of all descendants replacing any existing owners. This change also adds a confirmation dialog that shows what changes will be made to descendant documents. See the GitHub issue for examples.
+
+
+## [v7.2.13] - 2023-12-20
+
+* Issue **#3956** : Fix SearchRequestBuilder reuse.
+
+
+## [v7.2.12] - 2023-12-19
+
+* Add minor performance optimisation to the byte buffer pool used by the reference data store.
+
+* Issue **#3953** : Fix search buffer size issue.
+
+* Issue **#3948** : Add `and` and `or` functions.
+
+* Issue **#3956** : Add debug to diagnose expression parsing issue.
+
+
+## [v7.2.11] - 2023-12-13
+
+* Issue **#3913** : Change zip data handling so unknown file extensions are treated as part of the base name, e.g. `001.unknown` gets a base name of `001.unknown` (unless we see a known extension like `001.ctx` in which case `001.unknown` gets a base name of `001`), `abc.xyz.10001` gets a base name of `abc.xyz.10001`.
+
+* Issue **#3945** : Fix light theme colours.
+
+* Issue **#3942** : Fix user identity in audit logging.
+
+
+## [v7.2.10] - 2023-12-07
+
+* Issue **#3939** : Fix issue changing editor them in user preferences.
+
+
+## [v7.2.9] - 2023-12-06
+
+* Issue **#3938** : Fix `lockInterruptibly` on `CompletableQueue`.
+
+
 ## [v7.2.8] - 2023-11-30
 
 * Issue **#3935** : The `having` clause can now compare two computed row values.
@@ -6180,7 +6249,14 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2.8...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2.15...HEAD
+[v7.2.15]: https://github.com/gchq/stroom/compare/v7.2.14...v7.2.15
+[v7.2.14]: https://github.com/gchq/stroom/compare/v7.2.13...v7.2.14
+[v7.2.13]: https://github.com/gchq/stroom/compare/v7.2.12...v7.2.13
+[v7.2.12]: https://github.com/gchq/stroom/compare/v7.2.11...v7.2.12
+[v7.2.11]: https://github.com/gchq/stroom/compare/v7.2.10...v7.2.11
+[v7.2.10]: https://github.com/gchq/stroom/compare/v7.2.9...v7.2.10
+[v7.2.9]: https://github.com/gchq/stroom/compare/v7.2.8...v7.2.9
 [v7.2.8]: https://github.com/gchq/stroom/compare/v7.2.7...v7.2.8
 [v7.2.7]: https://github.com/gchq/stroom/compare/v7.2.6...v7.2.7
 [v7.2.6]: https://github.com/gchq/stroom/compare/v7.2.5...v7.2.6

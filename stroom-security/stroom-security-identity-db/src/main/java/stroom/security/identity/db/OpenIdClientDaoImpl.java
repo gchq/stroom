@@ -18,7 +18,7 @@ public class OpenIdClientDaoImpl implements OpenIdClientDao {
     }
 
     @Override
-    public void create(final OpenIdClient client) {
+    public void createIfNotExists(final OpenIdClient client) {
         JooqUtil.context(identityDbConnProvider, context -> context
                 .insertInto(OauthClient.OAUTH_CLIENT)
                 .set(OauthClient.OAUTH_CLIENT.NAME, client.getName())

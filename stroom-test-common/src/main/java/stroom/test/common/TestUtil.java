@@ -17,6 +17,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DynamicTest;
+import org.mockito.Mockito;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -33,6 +34,7 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.inject.Provider;
 
 /**
  * Useful utility methods for junit tests
@@ -43,6 +45,13 @@ public class TestUtil {
 
     private TestUtil() {
         // Static Utils only
+    }
+
+    /**
+     * Build a {@link Provider} for a mocked class.
+     */
+    public static <T> Provider<T> mockProvider(final Class<T> type) {
+        return () -> Mockito.mock(type);
     }
 
     /**

@@ -447,6 +447,11 @@ export interface CheckDocumentPermissionRequest {
 
 export type ClearDocumentPermissionsEvent = PermissionChangeEvent & { documentUuid?: string };
 
+export interface ClientCredentials {
+  clientId?: string;
+  clientSecret?: string;
+}
+
 export interface ClusterLockKey {
   /** @format int64 */
   creationTime?: number;
@@ -2857,6 +2862,11 @@ export interface PasswordPolicyConfig {
 
 export interface PermissionChangeEvent {
   type: string;
+}
+
+export interface PermissionChangeImpactSummary {
+  impactDetail?: string;
+  impactSummary?: string;
 }
 
 export interface PermissionChangeRequest {
@@ -6161,6 +6171,26 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
         ...params,
       }),
   };
+  authproxy = {
+    /**
+     * No description
+     *
+     * @tags AuthProxy
+     * @name FetchClientCredsToken
+     * @summary Fetch an access token from the configured IDP using the supplied client credentials
+     * @request POST:/authproxy/v1/noauth/fetchClientCredsToken
+     * @secure
+     */
+    fetchClientCredsToken: (data: ClientCredentials, params: RequestParams = {}) =>
+      this.request<any, string>({
+        path: `/authproxy/v1/noauth/fetchClientCredsToken`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+  };
   cache = {
     /**
      * No description
@@ -8769,6 +8799,25 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     fetchAllDocumentPermissions: (data: FetchAllDocumentPermissionsRequest, params: RequestParams = {}) =>
       this.request<any, DocumentPermissions>({
         path: `/permission/doc/v1/fetchAllDocumentPermissions`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Doc Permissions
+     * @name FetchPermissionChangeImpact
+     * @summary Fetch impact summary for a change of document permissions
+     * @request POST:/permission/doc/v1/fetchPermissionChangeImpact
+     * @secure
+     */
+    fetchPermissionChangeImpact: (data: ChangeDocumentPermissionsRequest, params: RequestParams = {}) =>
+      this.request<any, PermissionChangeImpactSummary>({
+        path: `/permission/doc/v1/fetchPermissionChangeImpact`,
         method: "POST",
         body: data,
         secure: true,

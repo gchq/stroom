@@ -16,53 +16,51 @@
 
 package stroom.query.language.functions;
 
+import stroom.util.shared.ModelStringUtil;
+
 import java.util.Objects;
 
 public final class ValDuration implements Val {
 
     public static final Type TYPE = Type.DURATION;
-    private final SimpleDuration value;
+    private final long milliseconds;
 
-    private ValDuration(final SimpleDuration value) {
-        this.value = value;
+    private ValDuration(final long milliseconds) {
+        this.milliseconds = milliseconds;
     }
 
-    public static ValDuration create(final SimpleDuration value) {
-        return new ValDuration(value);
+    public static ValDuration create(final long milliseconds) {
+        return new ValDuration(milliseconds);
     }
 
     @Override
     public Integer toInteger() {
-        return null;
+        return (int) milliseconds;
     }
 
     @Override
     public Long toLong() {
-        return null;
+        return milliseconds;
     }
 
     @Override
     public Float toFloat() {
-        return null;
+        return (float) milliseconds;
     }
 
     @Override
     public Double toDouble() {
-        return null;
+        return (double) milliseconds;
     }
 
     @Override
     public Boolean toBoolean() {
-        return null;
-    }
-
-    public SimpleDuration toDuration() {
-        return value;
+        return milliseconds != 0;
     }
 
     @Override
     public String toString() {
-        return value.toString();
+        return ModelStringUtil.formatDurationString(milliseconds, true);
     }
 
     @Override
@@ -84,11 +82,11 @@ public final class ValDuration implements Val {
             return false;
         }
         final ValDuration valDuration = (ValDuration) o;
-        return value == valDuration.value;
+        return milliseconds == valDuration.milliseconds;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(value);
+        return Objects.hash(milliseconds);
     }
 }

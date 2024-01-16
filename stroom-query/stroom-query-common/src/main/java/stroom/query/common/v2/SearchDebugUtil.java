@@ -6,7 +6,6 @@ import stroom.query.api.v2.Row;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
 import stroom.query.api.v2.TableResult;
-import stroom.query.language.functions.Val;
 import stroom.util.io.DiffUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.json.JsonUtil;
@@ -189,17 +188,17 @@ public class SearchDebugUtil {
         }
     }
 
-    public static synchronized void writeExtractionData(final Val[] values) {
+    public static synchronized void writeExtractionData(final List<StringFieldValue> values) {
         if (enabled && writeExpected) {
             try {
                 if (writer == null) {
                     writer = new OutputStreamWriter(Files.newOutputStream(dir.resolve("data.txt")));
                 }
 
-                for (int i = 0; i < values.length; i++) {
-                    Val value = values[i];
-                    writer.write(value.toString());
-                    if (i < values.length - 1) {
+                for (int i = 0; i < values.size(); i++) {
+                    final StringFieldValue value = values.get(i);
+                    writer.write(value.getFieldValue());
+                    if (i < values.size() - 1) {
                         writer.write(",");
                     } else {
                         writer.write("\n");

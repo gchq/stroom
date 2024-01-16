@@ -15,11 +15,11 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
-public class TestSearchRequestBuilder extends AbstractQueryTest {
+public class TestSearchRequestFactory extends AbstractQueryTest {
 
     @Override
     protected Path getTestDir() {
-        final Path dir = Paths.get("../stroom-query-common/src/test/resources/TestSearchRequestBuilder");
+        final Path dir = Paths.get("../stroom-query-common/src/test/resources/TestSearchRequestFactory");
         if (!Files.isDirectory(dir)) {
             throw new RuntimeException("Test data directory not found: " + dir.toAbsolutePath());
         }
@@ -45,7 +45,7 @@ public class TestSearchRequestBuilder extends AbstractQueryTest {
                     .dateTimeSettings(dateTimeSettings)
                     .maxStringLength(100)
                     .build();
-            searchRequest = new SearchRequestBuilder(
+            searchRequest = new SearchRequestFactory(
                     (keywordGroup, parentTableSettings) -> null,
                     new MockDocResolver())
                     .create(input, searchRequest, expressionContext);

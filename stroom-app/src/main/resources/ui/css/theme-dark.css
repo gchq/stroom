@@ -163,9 +163,8 @@
 
     /* Dashboard */
     --dashboard-panel__background-color: var(--page__background-color);
-    --dashboard-panel__border-color: #353944;
-    --dashboard-panel__grid-color: rgba(255, 255, 255, 0.1);
-    --dashboard-panel__grid-background-color: rgba(255, 255, 255, 0.015);
+    --dashboard-panel__grid-color: var(--border-color);
+    --dashboard-panel__grid-background-color: #19171d;
 
     /* ExpanderCell */
     --expander-cell-icon__background-color--hover: rgba(255, 255, 255, 0.2);
@@ -227,6 +226,7 @@
     --navigation__text-color--selected: var(--text-color--selected);
     --navigation__text-color--no-match: #7b7b7b;
     --navigation__border-color: #27252c;
+    --logo-color: var(--white);
 
     /* Specific */
     --header__icon-color: #2185d0;

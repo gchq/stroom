@@ -82,6 +82,28 @@ class DynamicTestBuilder {
         }
 
         /**
+         * Define the item type for a {@link List} input type, e.g. for an input of a list of strings:
+         * <pre>{@code withListItemInputType(String.class)}</pre>
+         */
+        @SuppressWarnings("unused")
+        public <I> InputBuilder<List<I>> withListInputItemType(final Class<I> inputItemType) {
+            final TypeLiteral<List<I>> typeLiteral = new TypeLiteral<>() {
+            };
+            return new InputBuilder<>(typeLiteral);
+        }
+
+        /**
+         * Define the item type for a {@link Set} input type, e.g. for an input of a set of strings:
+         * <pre>{@code withSetItemInputType(String.class)}</pre>
+         */
+        @SuppressWarnings("unused")
+        public <I> InputBuilder<Set<I>> withSetInputItemType(final Class<I> inputItemType) {
+            final TypeLiteral<Set<I>> typeLiteral = new TypeLiteral<>() {
+            };
+            return new InputBuilder<>(typeLiteral);
+        }
+
+        /**
          * Define the type of both the input and output for the dynamic tests, where the type uses generics,
          * e.g. a {@link Collection <?>} or a {@link io.vavr.Tuple}. Specify the type using a
          * {@link TypeLiteral}, e.g.
@@ -166,6 +188,28 @@ class DynamicTestBuilder {
         @SuppressWarnings("unused")
         public <O> OutputBuilder<I, O> withWrappedOutputType(final TypeLiteral<O> outputType) {
             return new OutputBuilder<>(this, outputType);
+        }
+
+        /**
+         * Define the item type for a {@link List} output type, e.g. for an output of a list of strings:
+         * <pre>{@code withListItemOutputType(String.class)}</pre>
+         */
+        @SuppressWarnings("unused")
+        public <O> OutputBuilder<I, List<O>> withListOutputItemType(final Class<O> outputItemType) {
+            final TypeLiteral<List<O>> typeLiteral = new TypeLiteral<List<O>>() {
+            };
+            return new OutputBuilder<>(this, typeLiteral);
+        }
+
+        /**
+         * Define the item type for a {@link Set} output type, e.g. for an output of a set of strings:
+         * <pre>{@code withSetItemOutputType(String.class)}</pre>
+         */
+        @SuppressWarnings("unused")
+        public <O> OutputBuilder<I, Set<O>> withSetOutputItemType(final Class<O> outputItemType) {
+            final TypeLiteral<Set<O>> typeLiteral = new TypeLiteral<>() {
+            };
+            return new OutputBuilder<>(this, typeLiteral);
         }
 
         /**

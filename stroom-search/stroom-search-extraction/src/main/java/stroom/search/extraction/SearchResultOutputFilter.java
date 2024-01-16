@@ -24,14 +24,14 @@ import stroom.query.api.v2.QueryKey;
 import stroom.query.common.v2.SearchDebugUtil;
 import stroom.query.common.v2.SearchProgressLog;
 import stroom.query.common.v2.SearchProgressLog.SearchPhase;
-import stroom.query.language.functions.FieldIndex;
-import stroom.query.language.functions.Val;
-import stroom.query.language.functions.ValString;
+import stroom.query.common.v2.StringFieldValue;
 import stroom.svg.shared.SvgImage;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 
+import java.util.ArrayList;
+import java.util.List;
 import javax.inject.Inject;
 
 @ConfigurableElement(
@@ -50,8 +50,7 @@ public class SearchResultOutputFilter extends AbstractXMLFilter {
     private final ValueConsumerHolder valueConsumerHolder;
 
     private QueryKey queryKey;
-    private FieldIndex fieldIndex;
-    private Val[] values;
+    private List<StringFieldValue> stringFieldValues;
 
     @Inject
     public SearchResultOutputFilter(final ValueConsumerHolder valueConsumerHolder) {
@@ -62,13 +61,12 @@ public class SearchResultOutputFilter extends AbstractXMLFilter {
     public void startProcessing() {
         super.startProcessing();
         this.queryKey = valueConsumerHolder.getQueryKey();
-        this.fieldIndex = valueConsumerHolder.getFieldIndex();
     }
 
     @Override
     public void startElement(final String uri, final String localName, final String qName, final Attributes atts)
             throws SAXException {
-        if (DATA.equals(localName) && values != null) {
+        if (DATA.equals(localName) && stringFieldValues != null) {
             SearchProgressLog.increment(queryKey,
                     SearchPhase.SEARCH_RESULT_OUTPUT_FILTER_START_DATA);
             String name = atts.getValue(NAME);
@@ -77,17 +75,14 @@ public class SearchResultOutputFilter extends AbstractXMLFilter {
                 name = name.trim();
                 value = value.trim();
 
-                if (name.length() > 0 && value.length() > 0) {
-                    final Integer pos = fieldIndex.getPos(name);
-                    if (pos != null) {
-                        values[pos] = ValString.create(value);
-                    }
+                if (!name.isEmpty() && !value.isEmpty()) {
+                    stringFieldValues.add(new StringFieldValue(name, value));
                 }
             }
         } else if (RECORD.equals(localName)) {
             SearchProgressLog.increment(queryKey,
                     SearchPhase.SEARCH_RESULT_OUTPUT_FILTER_START_RECORD);
-            values = new Val[fieldIndex.size()];
+            stringFieldValues = new ArrayList<>();
         }
     }
 
@@ -96,9 +91,9 @@ public class SearchResultOutputFilter extends AbstractXMLFilter {
         if (RECORD.equals(localName)) {
             SearchProgressLog.increment(queryKey,
                     SearchPhase.SEARCH_RESULT_OUTPUT_FILTER_END_RECORD);
-            SearchDebugUtil.writeExtractionData(values);
-            valueConsumerHolder.accept(Val.of(values));
-            values = null;
+            SearchDebugUtil.writeExtractionData(stringFieldValues);
+            valueConsumerHolder.acceptStringValues(stringFieldValues);
+            stringFieldValues = null;
         }
     }
 }

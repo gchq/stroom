@@ -36,11 +36,17 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -70,31 +76,88 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
         return documentPermissionDao.getPermissionsForDocumentForUser(docUuid, userUuid);
     }
 
-    public DocumentPermissions getPermissionsForDocument(final String docUuid) {
+    private DocumentPermissions getPermissionsForDocument(final String docUuid,
+                                                          final BasicDocPermissions docPermissions,
+                                                          final Map<String, User> userUuidToUserMap) {
         final List<User> users = new ArrayList<>();
         final List<User> groups = new ArrayList<>();
         final Map<String, Set<String>> userPermissions = new HashMap<>();
 
-        try {
-            final Map<String, Set<String>> documentPermission = documentPermissionDao.getPermissionsForDocument(
-                    docUuid);
+        // Filters out any perms for users that don't exist anymore
+        docPermissions.forEachUserUuid((userUuid, permissions) ->
+                Optional.ofNullable(userUuidToUserMap.get(userUuid))
+                        .ifPresent(user -> {
+                            if (user.isGroup()) {
+                                groups.add(user);
+                            } else {
+                                users.add(user);
+                            }
+                            userPermissions.put(user.getUuid(), permissions);
+                        }));
 
-            documentPermission.forEach((userUuid, permissions) ->
-                    userDao.getByUuid(userUuid)
-                            .ifPresent(user -> {
-                                if (user.isGroup()) {
-                                    groups.add(user);
-                                } else {
-                                    users.add(user);
-                                }
-                                userPermissions.put(user.getUuid(), permissions);
-                            }));
+        return new DocumentPermissions(docUuid, users, groups, userPermissions);
+    }
+
+    public DocumentPermissions getPermissionsForDocument(final String docUuid) {
+        try {
+            final BasicDocPermissions docPermissions = documentPermissionDao.getPermissionsForDocument(
+                    docUuid);
+            // Temporary cache of the users involved
+            final Map<String, User> userUuidToUserMap = getUsersMap(Collections.singleton(docPermissions));
+
+            return getPermissionsForDocument(docUuid, docPermissions, userUuidToUserMap);
+
         } catch (final RuntimeException e) {
             LOGGER.error("getPermissionsForDocument()", e);
             throw e;
         }
+    }
 
-        return new DocumentPermissions(docUuid, users, groups, userPermissions);
+    public Map<String, DocumentPermissions> getPermissionsForDocuments(final Collection<String> docUuids) {
+        if (NullSafe.isEmptyCollection(docUuids)) {
+            return Collections.emptyMap();
+        } else {
+            final Map<String, DocumentPermissions> docUuidToDocumentPermissionsMap = new HashMap<>(docUuids.size());
+            try {
+                final Map<String, BasicDocPermissions> docUuidToDocPermsMap =
+                        documentPermissionDao.getPermissionsForDocuments(docUuids);
+                // Temporary cache of the users involved
+                final Map<String, User> userUuidToUserMap = getUsersMap(docUuidToDocPermsMap.values());
+
+                docUuidToDocPermsMap.forEach((docUuid, docPermissions) -> {
+
+                    final DocumentPermissions documentPermissions = getPermissionsForDocument(docUuid,
+                            docPermissions,
+                            userUuidToUserMap);
+
+                    docUuidToDocumentPermissionsMap.put(docUuid, documentPermissions);
+                });
+
+            } catch (final RuntimeException e) {
+                LOGGER.error("getPermissionsForDocument()", e);
+                throw e;
+            }
+
+            return docUuidToDocumentPermissionsMap;
+        }
+    }
+
+    /**
+     * Get a map of userUuid => User from all the users in the collection of docPermissions
+     */
+    private Map<String, User> getUsersMap(final Collection<BasicDocPermissions> docPermissionsCollection) {
+        if (NullSafe.isEmptyCollection(docPermissionsCollection)) {
+            return Collections.emptyMap();
+        } else {
+            final Set<String> userUuids = NullSafe.stream(docPermissionsCollection)
+                    .flatMap(docPermissions -> docPermissions.getUserUuids().stream())
+                    .collect(Collectors.toSet());
+
+            final Set<User> users = userDao.getByUuids(userUuids);
+
+            return users.stream()
+                    .collect(Collectors.toMap(User::getUuid, Function.identity()));
+        }
     }
 
     public void addPermission(final String docUuid,
@@ -177,18 +240,25 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
 
     @Override
     public void setDocumentOwner(final String documentUuid, final String userUuid) {
-        final Set<String> currentOwners = documentPermissionDao.getDocumentOwnerUuids(documentUuid);
-        if (currentOwners != null) {
-            currentOwners.forEach(ownerUuid -> {
-                documentPermissionDao.removePermission(documentUuid, ownerUuid, DocumentPermissionNames.OWNER);
-                RemovePermissionEvent.fire(permissionChangeEventBus,
-                        ownerUuid,
-                        documentUuid,
-                        DocumentPermissionNames.OWNER);
-            });
-        }
-        documentPermissionDao.addPermission(documentUuid, userUuid, DocumentPermissionNames.OWNER);
-        AddPermissionEvent.fire(permissionChangeEventBus, userUuid, documentUuid, DocumentPermissionNames.OWNER);
+        final Set<String> currentOwnerUuids = documentPermissionDao.getDocumentOwnerUuids(documentUuid);
+        final Set<String> ownersToRemove = new HashSet<>(currentOwnerUuids);
+        ownersToRemove.remove(userUuid);
+
+        documentPermissionDao.setOwner(documentUuid, userUuid);
+
+        ownersToRemove.forEach(ownerUuid -> {
+            RemovePermissionEvent.fire(
+                    permissionChangeEventBus,
+                    ownerUuid,
+                    documentUuid,
+                    DocumentPermissionNames.OWNER);
+        });
+        AddPermissionEvent.fire(
+                permissionChangeEventBus,
+                userUuid,
+                documentUuid,
+                DocumentPermissionNames.OWNER);
+
     }
 
     @Override

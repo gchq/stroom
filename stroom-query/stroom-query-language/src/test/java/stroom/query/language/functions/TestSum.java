@@ -1,5 +1,8 @@
 package stroom.query.language.functions;
 
+import stroom.util.date.DateUtil;
+
+import java.time.Duration;
 import java.util.stream.Stream;
 
 class TestSum extends AbstractFunctionTest<Sum> {
@@ -35,7 +38,17 @@ class TestSum extends AbstractFunctionTest<Sum> {
                         ValDouble.create(-0.8),
                         ValDouble.create(1.3),
                         ValDouble.create(1.2),
-                        ValDouble.create(-3.3))
+                        ValDouble.create(-3.3)),
+                TestCase.of(
+                        "duration",
+                        ValDuration.create(Duration.ofMinutes(5).toMillis()),
+                        ValDuration.create(Duration.ofMinutes(3).toMillis()),
+                        ValDuration.create(Duration.ofMinutes(2).toMillis())),
+                TestCase.of(
+                        "date",
+                        ValDate.create(DateUtil.parseNormalDateTimeString("2020-10-01T00:02:00.000Z")),
+                        ValDate.create(DateUtil.parseNormalDateTimeString("2020-10-01T00:00:00.000Z")),
+                        ValDuration.create(Duration.ofMinutes(2).toMillis()))
         );
     }
 }

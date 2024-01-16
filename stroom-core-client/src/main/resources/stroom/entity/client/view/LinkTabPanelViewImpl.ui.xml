@@ -7,6 +7,6 @@
             <tab:LinkTabBar ui:field="tabBar" styleName="linkTabPanelViewImpl-middle linkTabBar"/>
         </g:FlowPanel>
         <g:FlowPanel ui:field="toolbarContainer" styleName="dock-min toolbarContainer"/>
-        <tab:LayerContainerImpl ui:field="layerContainer" styleName="dock-max"/>
+        <tab:LayerContainerImpl ui:field="layerContainer" addStyleNames="dock-max"/>
     </g:FlowPanel>
 </ui:UiBinder>

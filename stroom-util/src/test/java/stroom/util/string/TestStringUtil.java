@@ -16,7 +16,6 @@ import java.util.stream.Stream;
 
 class TestStringUtil {
 
-
     @TestFactory
     Stream<DynamicTest> splitToLines_noTrim() {
         return TestUtil.buildDynamicTestStream()

@@ -41,8 +41,7 @@ public class LayerContainerImpl extends Composite implements LayerContainer, Req
     public LayerContainerImpl() {
         panel = new FlowPanel();
         panel.addStyleName("layerContainer-container");
-
-        initWidget(new SimplePanel(panel));
+        initWidget(panel);
     }
 
     @Override

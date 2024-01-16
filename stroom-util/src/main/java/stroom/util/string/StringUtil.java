@@ -32,6 +32,7 @@ public class StringUtil {
 
     /**
      * Splits text into lines, where a line is delimited by \n or \r\n.
+     *
      * @param trimLines If true, trims any leading/trailing space and ignores any blank lines
      */
     public static Stream<String> splitToLines(final String text,

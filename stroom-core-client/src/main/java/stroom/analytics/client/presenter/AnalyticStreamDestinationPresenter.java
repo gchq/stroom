@@ -71,7 +71,7 @@ public class AnalyticStreamDestinationPresenter
         if (streamDestination != null) {
             this.currentFeed = streamDestination.getDestinationFeed();
             getView().setUseSourceFeedIfPossible(streamDestination.isUseSourceFeedIfPossible());
-            feedPresenter.setSelectedEntityReference(currentFeed);
+            feedPresenter.setSelectedEntityReference(currentFeed, false);
         }
     }
 

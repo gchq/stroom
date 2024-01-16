@@ -1,10 +1,10 @@
 package stroom.search.extraction;
 
 import stroom.pipeline.filter.FieldValue;
+import stroom.query.common.v2.StringFieldValue;
 import stroom.util.pipeline.scope.PipelineScoped;
 
 import java.util.List;
-import java.util.function.Consumer;
 import javax.inject.Inject;
 
 @PipelineScoped
@@ -19,8 +19,14 @@ public class FieldListConsumerHolder implements FieldListConsumer {
     }
 
     @Override
-    public void accept(final List<FieldValue> fieldValues) {
-        fieldListConsumer.accept(fieldValues);
+    public void acceptFieldValues(final List<FieldValue> fieldValues) {
+        fieldListConsumer.acceptFieldValues(fieldValues);
+        extractionState.incrementCount();
+    }
+
+    @Override
+    public void acceptStringValues(final List<StringFieldValue> stringValues) {
+        fieldListConsumer.acceptStringValues(stringValues);
         extractionState.incrementCount();
     }
 

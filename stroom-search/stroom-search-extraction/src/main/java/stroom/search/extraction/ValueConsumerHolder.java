@@ -1,19 +1,19 @@
 package stroom.search.extraction;
 
 import stroom.query.api.v2.QueryKey;
+import stroom.query.common.v2.StringFieldValue;
 import stroom.query.language.functions.FieldIndex;
-import stroom.query.language.functions.Val;
-import stroom.query.language.functions.ValuesConsumer;
 import stroom.util.pipeline.scope.PipelineScoped;
 
+import java.util.List;
 import javax.inject.Inject;
 
 @PipelineScoped
-public class ValueConsumerHolder implements ValuesConsumer {
+public class ValueConsumerHolder {
 
     private final ExtractionState extractionState;
     private QueryKey queryKey;
-    private ValuesConsumer receiver;
+    private FieldListConsumer fieldListConsumer;
     private FieldIndex fieldIndex;
 
     @Inject
@@ -21,9 +21,8 @@ public class ValueConsumerHolder implements ValuesConsumer {
         this.extractionState = extractionState;
     }
 
-    @Override
-    public void accept(final Val[] values) {
-        receiver.accept(values);
+    public void acceptStringValues(final List<StringFieldValue> stringValues) {
+        fieldListConsumer.acceptStringValues(stringValues);
         extractionState.incrementCount();
     }
 
@@ -35,8 +34,8 @@ public class ValueConsumerHolder implements ValuesConsumer {
         this.queryKey = queryKey;
     }
 
-    public void setReceiver(final ValuesConsumer receiver) {
-        this.receiver = receiver;
+    public void setFieldListConsumer(final FieldListConsumer fieldListConsumer) {
+        this.fieldListConsumer = fieldListConsumer;
     }
 
     public FieldIndex getFieldIndex() {

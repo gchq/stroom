@@ -1,6 +1,7 @@
 package stroom.analytics.impl;
 
 import stroom.pipeline.filter.FieldValue;
+import stroom.query.common.v2.StringFieldValue;
 
 import java.util.List;
 
@@ -13,9 +14,16 @@ public class MultiAnalyticFieldListConsumer implements AnalyticFieldListConsumer
     }
 
     @Override
-    public void accept(final List<FieldValue> fieldValues) {
+    public void acceptFieldValues(final List<FieldValue> fieldValues) {
         for (final AnalyticFieldListConsumer consumer : consumers) {
-            consumer.accept(fieldValues);
+            consumer.acceptFieldValues(fieldValues);
+        }
+    }
+
+    @Override
+    public void acceptStringValues(final List<StringFieldValue> stringValues) {
+        for (final AnalyticFieldListConsumer consumer : consumers) {
+            consumer.acceptStringValues(stringValues);
         }
     }
 

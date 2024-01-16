@@ -27,14 +27,20 @@ import stroom.query.language.token.TokenException;
 import stroom.query.language.token.TokenGroup;
 import stroom.query.language.token.TokenType;
 import stroom.query.language.token.Tokeniser;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class ExpressionParser {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ExpressionParser.class);
 
     // We deliberately exclude brackets as they are treated as an unnamed function.
     private static final TokenType[] BODMAS = new TokenType[]{
@@ -63,6 +69,11 @@ public class ExpressionParser {
             TokenType.PLUS,
             TokenType.MINUS);
 
+    private static final Set<TokenType> LOGICAL_OPERATORS = Set.of(
+            TokenType.NOT,
+            TokenType.OR,
+            TokenType.AND);
+
     private final ParamFactory paramFactory;
 
     public ExpressionParser(final ParamFactory paramFactory) {
@@ -72,38 +83,55 @@ public class ExpressionParser {
     public Expression parse(final ExpressionContext expressionContext,
                             final FieldIndex fieldIndex,
                             final String input) throws ParseException {
-        if (input == null || input.trim().length() == 0) {
-            return null;
+        LOGGER.trace(() -> "parse() - " + input);
+
+        try {
+            if (input == null || input.isBlank()) {
+                return null;
+            }
+
+            // First tokenize the expression.
+            final List<Token> tokens = Tokeniser.parse(input);
+            // Then create some structure from the tokens.
+            final TokenGroup tokenGroup = StructureBuilder.create(tokens);
+
+            return parse(expressionContext, fieldIndex, tokenGroup.getChildren());
+
+        } catch (final Throwable e) {
+            LOGGER.error(() -> "Error parsing expression: " + input);
+            throw e;
         }
-
-        // First tokenise the expression.
-        final List<Token> tokens = Tokeniser.parse(input);
-        // Then create some structure from the tokens.
-        final TokenGroup tokenGroup = StructureBuilder.create(tokens);
-
-        return parse(expressionContext, fieldIndex, tokenGroup.getChildren());
     }
 
     public Expression parse(final ExpressionContext expressionContext,
                             final FieldIndex fieldIndex,
                             final List<AbstractToken> tokens) throws ParseException {
-        final List<Param> objects = processObjects(tokens, expressionContext, fieldIndex);
+        LOGGER.trace(() -> "parse() - " + getTokenString(tokens));
 
-        // We should have a single object.
-        if (objects.size() == 0) {
-            return null;
-        } else if (objects.size() > 1) {
-            throw new ParseException("Expected only 1 object", -1);
+        try {
+            final List<Param> objects = processObjects(tokens, expressionContext, fieldIndex);
+
+            // We should have a single object.
+            if (objects.isEmpty()) {
+                return null;
+            } else if (objects.size() > 1) {
+                throw new ParseException("Expected only 1 object", -1);
+            }
+
+            final Expression expression = new Expression();
+            expression.setParams(objects.toArray(new Param[0]));
+            return expression;
+
+        } catch (final Throwable e) {
+            LOGGER.error(() -> "Error parsing expression: " + getTokenString(tokens));
+            throw e;
         }
-
-        final Expression expression = new Expression();
-        expression.setParams(objects.toArray(new Param[0]));
-        return expression;
     }
 
     private List<Param> processObjects(final List<AbstractToken> tokens,
                                        final ExpressionContext expressionContext,
                                        final FieldIndex fieldIndex) {
+        LOGGER.trace(() -> "processObjects() - " + getTokenString(tokens));
 
         final List<Object> output = new ArrayList<>(tokens.size());
 
@@ -125,13 +153,14 @@ public class ExpressionParser {
             } else if (token instanceof final KeywordGroup keywordGroup) {
 
                 // Add a special case for the NOT keyword that can exist as a function in the context of an expression.
-                if (keywordGroup.getTokenType().equals(TokenType.NOT)
+                if (LOGICAL_OPERATORS.contains(keywordGroup.getTokenType())
                         && keywordGroup.getChildren().size() == 1
                         && keywordGroup.getChildren().get(0) instanceof final TokenGroup tokenGroup) {
+                    final String functionName = keywordGroup.getTokenType().toString().toLowerCase(Locale.ROOT);
                     final Function function = getFunction(
                             keywordGroup,
                             tokenGroup.getChildren(),
-                            "not",
+                            functionName,
                             expressionContext,
                             fieldIndex);
                     output.add(function);
@@ -171,6 +200,7 @@ public class ExpressionParser {
                                  final String functionName,
                                  final ExpressionContext expressionContext,
                                  final FieldIndex fieldIndex) {
+        LOGGER.trace(() -> "getFunction() - " + functionName);
 
         // Create the function.
         final Function function = FunctionFactory.create(expressionContext, functionName);
@@ -193,6 +223,8 @@ public class ExpressionParser {
     private Function getGroup(final TokenGroup functionGroup,
                               final ExpressionContext expressionContext,
                               final FieldIndex fieldIndex) {
+        LOGGER.trace(() -> "getGroup() - " + functionGroup.toString());
+
         // If this function just represents a bracketed section then get a Brackets function.
         final Function function = new Brackets();
 
@@ -211,6 +243,8 @@ public class ExpressionParser {
     private Param[] getParams(final List<AbstractToken> children,
                               final ExpressionContext expressionContext,
                               final FieldIndex fieldIndex) {
+        LOGGER.trace(() -> "getParams() - " + getTokenString(children));
+
         final List<Param> paramList = new ArrayList<>(children.size());
 
         // Turn comma separated tokens into parameters.
@@ -219,7 +253,7 @@ public class ExpressionParser {
             if (TokenType.COMMA.equals(token.getTokenType())) {
                 // If we haven't found a parameter from the previous token or object then this comma
                 // is unexpected.
-                if (childSet.size() == 0) {
+                if (childSet.isEmpty()) {
                     throw new TokenException(token, "Unexpected comma");
                 }
 
@@ -235,7 +269,7 @@ public class ExpressionParser {
         }
 
         // Capture last param if there is one.
-        if (childSet.size() > 0) {
+        if (!childSet.isEmpty()) {
             final Param param = getParam(childSet, expressionContext, fieldIndex);
             paramList.add(param);
         }
@@ -247,8 +281,10 @@ public class ExpressionParser {
     private Param getParam(final List<Object> objects,
                            final ExpressionContext expressionContext,
                            final FieldIndex fieldIndex) {
+        LOGGER.trace(() -> "getParam() - " + getObjectString(objects));
+
         // If no objects are included to create this param then return null.
-        if (objects.size() == 0) {
+        if (objects.isEmpty()) {
             return null;
         }
 
@@ -263,6 +299,8 @@ public class ExpressionParser {
     private Param convertParam(final Object object,
                                final ExpressionContext expressionContext,
                                final FieldIndex fieldIndex) {
+        LOGGER.trace(() -> "convertParam() - " + object);
+
         Object result = object;
         if (object instanceof final Token token) {
             result = paramFactory.create(fieldIndex, token);
@@ -290,6 +328,8 @@ public class ExpressionParser {
     }
 
     private Function negate(final Param param) throws ParseException {
+        LOGGER.trace(() -> "negate() - " + param);
+
         final Negate negate = new Negate("-");
         negate.setParams(new Param[]{param});
         return negate;
@@ -298,6 +338,8 @@ public class ExpressionParser {
     private Param applyEquality(final List<Object> objects,
                                 final ExpressionContext expressionContext,
                                 final FieldIndex fieldIndex) {
+        LOGGER.trace(() -> "applyEquality() - " + getObjectString(objects));
+
         int index = -1;
         for (final TokenType type : EQUALITY) {
             for (int i = 0; i < objects.size() && index == -1; i++) {
@@ -346,6 +388,8 @@ public class ExpressionParser {
     private List<Object> applySigns(final List<Object> objects,
                                     final ExpressionContext expressionContext,
                                     final FieldIndex fieldIndex) {
+        LOGGER.trace(() -> "applySigns() - " + getObjectString(objects));
+
         boolean loop = true;
         List<Object> result = new ArrayList<>(objects);
 
@@ -391,9 +435,7 @@ public class ExpressionParser {
                                                         param = ValDouble.create(-((ValDouble) param).toDouble());
                                                 case DURATION -> {
                                                     final ValDuration valDuration = (ValDuration) param;
-                                                    final SimpleDuration duration = valDuration.toDuration();
-                                                    param = ValDuration.create(new SimpleDuration(-duration.getTime(),
-                                                            duration.getTimeUnit()));
+                                                    param = ValDuration.create(-valDuration.toLong());
                                                 }
                                                 default -> throw new TokenException(signToken,
                                                         "Illegal negation of " + val.type().getName());
@@ -425,8 +467,10 @@ public class ExpressionParser {
     }
 
     public Param applyBODMAS(final List<Object> objects,
-                              final ExpressionContext expressionContext,
-                              final FieldIndex fieldIndex) {
+                             final ExpressionContext expressionContext,
+                             final FieldIndex fieldIndex) {
+        LOGGER.trace(() -> "applyBODMAS() - " + getObjectString(objects));
+
         boolean complete = false;
         List<Object> result = new ArrayList<>(objects);
 
@@ -477,7 +521,7 @@ public class ExpressionParser {
             }
         }
 
-        if (result.size() == 0) {
+        if (result.isEmpty()) {
             return null;
         } else if (result.size() == 1) {
             return convertParam(result.get(0), expressionContext, fieldIndex);
@@ -531,5 +575,19 @@ public class ExpressionParser {
         }
 
         return newList;
+    }
+
+    private String getObjectString(final List<Object> objects) {
+        return objects
+                .stream()
+                .map(Object::toString)
+                .collect(Collectors.joining(","));
+    }
+
+    private String getTokenString(final List<AbstractToken> tokens) {
+        return tokens
+                .stream()
+                .map(AbstractToken::toString)
+                .collect(Collectors.joining(","));
     }
 }
