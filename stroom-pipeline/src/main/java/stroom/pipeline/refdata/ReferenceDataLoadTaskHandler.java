@@ -28,11 +28,13 @@ import stroom.pipeline.StreamLocationFactory;
 import stroom.pipeline.errorhandler.ErrorReceiverIdDecorator;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.LoggedException;
+import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.errorhandler.StoredErrorReceiver;
 import stroom.pipeline.factory.Pipeline;
 import stroom.pipeline.factory.PipelineDataCache;
 import stroom.pipeline.factory.PipelineFactory;
 import stroom.pipeline.refdata.store.ProcessingState;
+import stroom.pipeline.refdata.store.RefDataLoader;
 import stroom.pipeline.refdata.store.RefDataStore;
 import stroom.pipeline.refdata.store.RefDataStoreFactory;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
@@ -46,9 +48,12 @@ import stroom.pipeline.task.StreamMetaDataProvider;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskTerminatedException;
+import stroom.util.NullSafe;
+import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.Severity;
 
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,6 +61,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
 import javax.inject.Inject;
+import javax.xml.transform.TransformerException;
 
 /**
  * Processes reference data that meets some supplied criteria (feed names,
@@ -125,64 +131,74 @@ class ReferenceDataLoadTaskHandler {
                                     final RefStreamDefinition refStreamDefinition) {
         this.taskContext = taskContext;
         final StoredErrorReceiver storedErrorReceiver = new StoredErrorReceiver();
-        securityContext.secure(() -> {
-            // Elevate user permissions so that inherited pipelines that the user only has 'Use' permission
-            // on can be read.
-            securityContext.useAsRead(() -> {
-                errorReceiver = new ErrorReceiverIdDecorator(getClass().getSimpleName(), storedErrorReceiver);
-                errorReceiverProxy.setErrorReceiver(errorReceiver);
 
-                LOGGER.debug("Loading reference data: {}", refStreamDefinition);
-                taskContext.info(() -> LogUtil.message(
-                        "Loading reference data stream {}:{}",
-                        refStreamDefinition.getStreamId(),
-                        refStreamDefinition.getPartNumber()));
+        if (!taskContext.isTerminated() && !Thread.currentThread().isInterrupted()) {
+            securityContext.secure(() -> {
+                // Elevate user permissions so that inherited pipelines that the user only has 'Use' permission
+                // on can be read.
+                securityContext.useAsRead(() -> {
+                    errorReceiver = new ErrorReceiverIdDecorator(getClass().getSimpleName(), storedErrorReceiver);
+                    errorReceiverProxy.setErrorReceiver(errorReceiver);
 
-                // Open the stream source.
-                try (final Source source = streamStore.openSource(refStreamDefinition.getStreamId())) {
-                    if (source != null) {
-                        final Meta meta = source.getMeta();
+                    LOGGER.debug("Loading reference data: {}", refStreamDefinition);
+                    taskContext.info(() -> LogUtil.message(
+                            "Loading reference data stream {}:{}",
+                            refStreamDefinition.getStreamId(),
+                            refStreamDefinition.getPartNumber()));
 
-                        // Load the feed.
-                        final String feedName = meta.getFeedName();
-                        feedHolder.setFeedName(feedName);
-
-                        // Setup the meta data holder.
-                        metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(metaHolder, pipelineStore));
-
-                        // Set the pipeline so it can be used by a filter if needed.
-                        if (refStreamDefinition.getPipelineDocRef() == null ||
-                                refStreamDefinition.getPipelineDocRef().getUuid() == null) {
-                            throw new RuntimeException("Null reference pipeline");
-                        }
-                        final PipelineDoc pipelineDoc = pipelineStore
-                                .readDocument(refStreamDefinition.getPipelineDocRef());
-                        if (pipelineDoc == null) {
-                            throw new RuntimeException("Unable to find pipeline with UUID: " +
-                                    refStreamDefinition.getPipelineDocRef().getUuid());
-                        }
-                        pipelineHolder.setPipeline(refStreamDefinition.getPipelineDocRef());
-
-                        // Create the parser.
-                        final PipelineData pipelineData = pipelineDataCache.get(pipelineDoc);
-                        final Pipeline pipeline = pipelineFactory.create(pipelineData, taskContext);
-
-                        populateMaps(
-                                pipeline,
-                                meta,
-                                source,
-                                feedName,
-                                refStreamDefinition);
-
-                        LOGGER.debug("Finished loading reference data: {}", refStreamDefinition);
-                        taskContext.info(() -> "Finished " + refStreamDefinition);
-                    }
-                } catch (final Exception e) {
-                    log(Severity.ERROR, e.getMessage(), e);
-                }
+                    loadReferenceData(taskContext, refStreamDefinition);
+                });
             });
-        });
+        }
         return storedErrorReceiver;
+    }
+
+    private void loadReferenceData(final TaskContext taskContext,
+                                   final RefStreamDefinition refStreamDefinition) {
+        // Open the stream source.
+        try (final Source source = streamStore.openSource(refStreamDefinition.getStreamId())) {
+            if (source != null) {
+                final Meta meta = source.getMeta();
+
+                // Load the feed.
+                final String feedName = meta.getFeedName();
+                feedHolder.setFeedName(feedName);
+
+                // Setup the meta data holder.
+                metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(metaHolder, pipelineStore));
+
+                // Set the pipeline so it can be used by a filter if needed.
+                if (refStreamDefinition.getPipelineDocRef() == null ||
+                        refStreamDefinition.getPipelineDocRef().getUuid() == null) {
+                    throw new RuntimeException("Null reference pipeline");
+                }
+                final PipelineDoc pipelineDoc = pipelineStore
+                        .readDocument(refStreamDefinition.getPipelineDocRef());
+                if (pipelineDoc == null) {
+                    throw new RuntimeException("Unable to find pipeline with UUID: " +
+                            refStreamDefinition.getPipelineDocRef().getUuid());
+                }
+                pipelineHolder.setPipeline(refStreamDefinition.getPipelineDocRef());
+
+                // Create the parser.
+                final PipelineData pipelineData = pipelineDataCache.get(pipelineDoc);
+                final Pipeline pipeline = pipelineFactory.create(pipelineData, taskContext);
+
+                populateMaps(
+                        pipeline,
+                        meta,
+                        source,
+                        feedName,
+                        refStreamDefinition);
+
+                LOGGER.debug("Finished loading reference data: {}", refStreamDefinition);
+                taskContext.info(() -> "Finished " + refStreamDefinition);
+            }
+        } catch (final UncheckedInterruptedException | TaskTerminatedException e) {
+            throw ProcessException.wrap(new TaskTerminatedException());
+        } catch (final Exception e) {
+            log(Severity.ERROR, e.getMessage(), e);
+        }
     }
 
     private void populateMaps(final Pipeline pipeline,
@@ -242,55 +258,103 @@ class ReferenceDataLoadTaskHandler {
                         // Process the boundary.
                         //process the pipeline, ref data will be loaded via the ReferenceDataFilter
                         try {
+                            LOGGER.debug("Starting processing on pipeline: {}", pipeline);
                             pipeline.process(inputStream, encoding);
                         } finally {
                             // This calls endProcessing on the ReferenceDataFilter, which will initiate
                             // the transfer from staging to ref store
+                            LOGGER.debug("Ending processing on pipeline: {}", pipeline);
                             pipeline.endProcessing();
                         }
                     }
                 }
 
                 if (taskContext.isTerminated()) {
-                    log(Severity.WARNING,
-                            LogUtil.message("Load terminated while loading stream {} from feed '{}'",
-                                    refStreamDefinition.getStreamId(),
-                                    feedName),
-                            null);
-                    refDataLoader.completeProcessing(ProcessingState.TERMINATED);
+                    final String msg = LogUtil.message("Load terminated while loading stream {} from feed '{}'",
+                            refStreamDefinition.getStreamId(),
+                            feedName);
+                    logAndCompleteProcessing(refDataLoader, Severity.WARNING, ProcessingState.TERMINATED, msg);
                 } else {
-                    log(Severity.INFO,
-                            LogUtil.message("Successfully loaded stream {} from feed: '{}'",
-                                    refStreamDefinition.getStreamId(),
-                                    feedName),
-                            null);
-                    refDataLoader.completeProcessing(ProcessingState.COMPLETE);
+                    final String msg = LogUtil.message("Successfully loaded stream {} from feed: '{}'",
+                            refStreamDefinition.getStreamId(),
+                            feedName);
+                    logAndCompleteProcessing(refDataLoader, Severity.INFO, ProcessingState.COMPLETE, msg);
                 }
-            } catch (TaskTerminatedException e) {
-                // Task terminated
-                log(Severity.FATAL_ERROR, e.getMessage(), e);
-                refDataLoader.completeProcessing(ProcessingState.TERMINATED);
             } catch (UncheckedIOException | IOException e) {
                 // Missing ref strm file or unable to read it
-                log(Severity.FATAL_ERROR,
-                        "Error reading reference stream "
-                                + refStreamDefinition.getStreamId()
-                                + ":"
-                                + refStreamDefinition.getPartNumber()
-                                + " - "
-                                + e.getMessage(),
-                        e);
-                refDataLoader.completeProcessing(ProcessingState.FAILED);
+                final String msg = "Error reading reference stream "
+                        + refStreamDefinition.getStreamId()
+                        + ":"
+                        + refStreamDefinition.getPartNumber()
+                        + " - "
+                        + e.getMessage();
+                logAndCompleteProcessing(refDataLoader, Severity.FATAL_ERROR, ProcessingState.FAILED, msg, e);
             } catch (Exception e) {
-                // Something unexpected happened
-                log(Severity.ERROR, e.getMessage(), e);
-                refDataLoader.completeProcessing(ProcessingState.FAILED);
+                handleException(refDataLoader, e);
             }
         });
 
         // clear the reference to the loader now we have finished with it
         refDataLoaderHolder.setRefDataLoader(null);
     }
+
+    private void handleException(final RefDataLoader refDataLoader, final Throwable e) {
+
+        if (e instanceof ProcessException pe) {
+            // ProcessException are a bit special, so we need to get the exception that we wrapped
+            final Throwable wrappedThrowable = NullSafe.get(
+                    pe.getXPathException(),
+                    TransformerException::getException);
+            if (wrappedThrowable != null) {
+                handleException(refDataLoader, wrappedThrowable);
+            } else {
+                logAndCompleteProcessing(refDataLoader, Severity.ERROR, ProcessingState.FAILED, e);
+            }
+        } else {
+            // The UIE/TTE may have been buried under a chain of runtime exceptions, so go digging for them
+            if (e instanceof UncheckedInterruptedException
+                    || e instanceof TaskTerminatedException
+                    || ExceptionUtils.indexOfThrowable(e, UncheckedInterruptedException.class) >= 0
+                    || ExceptionUtils.indexOfThrowable(e, TaskTerminatedException.class) >= 0) {
+                logAndCompleteProcessing(refDataLoader, Severity.INFO, ProcessingState.TERMINATED, e);
+                throw new TaskTerminatedException();
+            } else {
+                logAndCompleteProcessing(refDataLoader, Severity.ERROR, ProcessingState.FAILED, e);
+            }
+        }
+    }
+
+    private void logAndCompleteProcessing(final RefDataLoader refDataLoader,
+                                          final Severity severity,
+                                          final ProcessingState processingState,
+                                          final String message) {
+        logAndCompleteProcessing(refDataLoader, severity, processingState, message, null);
+    }
+
+    private void logAndCompleteProcessing(final RefDataLoader refDataLoader,
+                                          final Severity severity,
+                                          final ProcessingState processingState,
+                                          final Throwable e) {
+        logAndCompleteProcessing(refDataLoader, severity, processingState, e.getMessage(), e);
+    }
+
+    private void logAndCompleteProcessing(final RefDataLoader refDataLoader,
+                                          final Severity severity,
+                                          final ProcessingState processingState,
+                                          final String message,
+                                          final Throwable e) {
+        final String msg;
+        if (message != null) {
+            msg = message;
+        } else if (e != null) {
+            msg = e.getMessage();
+        } else {
+            msg = null;
+        }
+        log(severity, msg, e);
+        refDataLoader.completeProcessing(processingState);
+    }
+
 
     private void log(final Severity severity, final String message, final Throwable e) {
         LOGGER.trace(message, e);
@@ -299,7 +363,7 @@ class ReferenceDataLoadTaskHandler {
         if (errorReceiverProxy != null && !(e instanceof LoggedException)) {
 
             String msg = message;
-            if (msg == null) {
+            if (msg == null && e != null) {
                 msg = e.toString();
             }
             errorReceiver.log(severity, null, getClass().getSimpleName(), msg, e);

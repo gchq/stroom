@@ -16,10 +16,17 @@
 
 package stroom.pipeline.errorhandler;
 
+import stroom.task.api.TaskTerminatedException;
+import stroom.util.NullSafe;
+import stroom.util.concurrent.UncheckedInterruptedException;
+
 import net.sf.saxon.trans.UncheckedXPathException;
 import net.sf.saxon.trans.XPathException;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 
+import java.nio.channels.ClosedByInterruptException;
 import java.util.Objects;
+import javax.xml.transform.TransformerException;
 
 /**
  * Exception used to wrap all exceptions generated within transformation code.
@@ -52,9 +59,57 @@ public class ProcessException extends UncheckedXPathException {
     }
 
     public static ProcessException wrap(final String message, final Throwable throwable) {
-        if (Objects.equals(message, throwable.getMessage())) {
-            return wrap(throwable);
+        if (throwable != null) {
+            if (Objects.equals(message, throwable.getMessage())) {
+                return wrap(throwable);
+            }
+            return new ProcessException(new XPathException(message, throwable));
+        } else {
+            return new ProcessException(new XPathException(message));
         }
-        return new ProcessException(new XPathException(message, throwable));
+    }
+
+    /**
+     * @return True if e is an instance of or was caused by one of
+     * {@link stroom.task.api.TaskTerminatedException}
+     * {@link InterruptedException}
+     * {@link ClosedByInterruptException}
+     * {@link UncheckedInterruptedException}.
+     * <p>
+     * Similar (but more involved) functionality to {@link TaskTerminatedException#unwrap(Throwable)}
+     */
+    public static boolean isTerminated(final Throwable e) {
+        if (e == null) {
+            return false;
+        } else if (e instanceof final TransformerException te) {
+            return isTerminated(te.getException());
+        } else if (e instanceof final ProcessException pe) {
+            final Throwable wrappedThrowable = NullSafe.get(
+                    pe.getXPathException(),
+                    TransformerException::getException);
+            return isTerminated(wrappedThrowable);
+        } else if (contains(e, TaskTerminatedException.class)) {
+            return true;
+        } else if (contains(e, InterruptedException.class)) {
+            return true;
+        } else if (contains(e, UncheckedInterruptedException.class)) {
+            return true;
+        } else if (contains(e, ClosedByInterruptException.class)) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * @return True if e is of type clazz or a throwable in its cause chain is of type clazz.
+     */
+    private static boolean contains(final Throwable e,
+                                    final Class<? extends Throwable> clazz) {
+        return e != null
+                && clazz != null
+                && (
+                clazz.isAssignableFrom(e.getClass())
+                        || ExceptionUtils.indexOfThrowable(e, clazz) >= 0);
     }
 }

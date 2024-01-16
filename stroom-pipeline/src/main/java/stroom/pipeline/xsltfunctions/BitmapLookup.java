@@ -21,6 +21,7 @@ import stroom.pipeline.refdata.ReferenceData;
 import stroom.pipeline.refdata.ReferenceDataResult;
 import stroom.pipeline.refdata.store.RefDataValueProxy;
 import stroom.pipeline.state.MetaHolder;
+import stroom.task.api.TaskContextFactory;
 import stroom.util.date.DateUtil;
 import stroom.util.exception.ThrowingFunction;
 import stroom.util.logging.LambdaLogger;
@@ -49,8 +50,9 @@ class BitmapLookup extends AbstractLookup {
     @Inject
     BitmapLookup(final ReferenceData referenceData,
                  final MetaHolder metaHolder,
-                 final SequenceMakerFactory sequenceMakerFactory) {
-        super(referenceData, metaHolder, sequenceMakerFactory);
+                 final SequenceMakerFactory sequenceMakerFactory,
+                 final TaskContextFactory taskContextFactory) {
+        super(referenceData, metaHolder, sequenceMakerFactory, taskContextFactory);
     }
 
     private SequenceMaker getOrCreateSequenceMaker(final AtomicReference<SequenceMaker> sequenceMakerRef,
