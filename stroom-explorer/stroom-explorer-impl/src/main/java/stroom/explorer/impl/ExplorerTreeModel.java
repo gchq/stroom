@@ -263,9 +263,13 @@ class ExplorerTreeModel implements EntityEvent.Handler {
     public void onChange(final EntityEvent event) {
         NullSafe.consume(event, EntityEvent::getAction, action -> {
             switch (action) {
+                // The model doesn't care about UPDATE as that is an update of the content of the doc
+                // rather than an update to the node (e.g. tags).
                 case CREATE,
                         DELETE,
-                        UPDATE_EXPLORER_NODE -> {
+                        UPDATE_EXPLORER_NODE,
+                        DELETE_EXPLORER_NODE,
+                        CREATE_EXPLORER_NODE -> {
                     // E.g. tags on a node have changed
                     LOGGER.debug("Rebuilding tree model due to entity event {}", event);
                     rebuild();
