@@ -57,7 +57,6 @@ public class SelectionBoxModel<T> implements SelectionBoxView<T> {
                 displayValue = displayValueFunction.apply(item);
             } else if (item instanceof HasDisplayValue) {
                 displayValue = ((HasDisplayValue) item).getDisplayValue();
-                strings.add(((HasDisplayValue) item).getDisplayValue());
             } else if (item instanceof String) {
                 displayValue = (String) item;
             } else {
