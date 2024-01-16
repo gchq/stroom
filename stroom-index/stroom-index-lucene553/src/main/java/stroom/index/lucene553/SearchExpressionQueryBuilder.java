@@ -92,8 +92,33 @@ class SearchExpressionQueryBuilder {
 
         if (query == null) {
             query = new MatchAllDocsQuery();
+        } else if (query instanceof final BooleanQuery booleanQuery) {
+            final boolean hasInclusiveClauses = hasInclusiveClauses(query);
+            if (!hasInclusiveClauses) {
+                final Builder builder = new Builder();
+                builder.add(new MatchAllDocsQuery(), Occur.MUST);
+                for (final BooleanClause booleanClause : booleanQuery.clauses()) {
+                    builder.add(booleanClause);
+                }
+                query = builder.build();
+            }
         }
         return new SearchExpressionQuery(query, terms);
+    }
+
+    private boolean hasInclusiveClauses(final Query query) {
+        if (query instanceof final BooleanQuery booleanQuery) {
+            for (final BooleanClause booleanClause : booleanQuery.clauses()) {
+                if (!Occur.MUST_NOT.equals(booleanClause.getOccur())) {
+                    return true;
+                }
+                final Query subQuery = booleanClause.getQuery();
+                if (hasInclusiveClauses(subQuery)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private Query getQuery(final ExpressionItem item,
@@ -114,11 +139,11 @@ class SearchExpressionQueryBuilder {
                         }
                     }
 
-                    if (innerChildQueries.size() > 0) {
+                    if (!innerChildQueries.isEmpty()) {
                         final Occur occur = getOccur(operator);
 
                         if (innerChildQueries.size() == 1) {
-                            final Query child = innerChildQueries.get(0);
+                            final Query child = innerChildQueries.getFirst();
 
                             // Add negation to single items if required.
                             if (Occur.MUST_NOT.equals(occur)) {
@@ -148,10 +173,10 @@ class SearchExpressionQueryBuilder {
                                         }
 
                                         final BooleanQuery orTerms = orTermsBuilder.build();
-                                        if (orTerms.clauses().size() > 0) {
+                                        if (!orTerms.clauses().isEmpty()) {
                                             if (orTerms.clauses().size() == 1) {
                                                 // Collapse single term.
-                                                builder.add(orTerms.clauses().get(0).getQuery(), occur);
+                                                builder.add(orTerms.clauses().getFirst().getQuery(), occur);
                                             } else {
                                                 builder.add(orTerms, occur);
                                             }
@@ -175,10 +200,10 @@ class SearchExpressionQueryBuilder {
                                         }
 
                                         final BooleanQuery orTerms = orTermsBuilder.build();
-                                        if (orTerms.clauses().size() > 0) {
+                                        if (!orTerms.clauses().isEmpty()) {
                                             if (orTerms.clauses().size() == 1) {
                                                 // Collapse single term.
-                                                builder.add(orTerms.clauses().get(0).getQuery(), occur);
+                                                builder.add(orTerms.clauses().getFirst().getQuery(), occur);
                                             } else {
                                                 builder.add(orTerms, occur);
                                             }
@@ -218,7 +243,7 @@ class SearchExpressionQueryBuilder {
         }
 
         // Try and find the referenced field.
-        if (field == null || field.length() == 0) {
+        if (field == null || field.isEmpty()) {
             throw new SearchException("Field not set");
         }
         final IndexField indexField = indexFieldsMap.get(field);
@@ -237,7 +262,7 @@ class SearchExpressionQueryBuilder {
                 throw new SearchException("Doc Ref not set for field: " + field);
             }
         } else {
-            if (value == null || value.length() == 0) {
+            if (value == null || value.isEmpty()) {
                 return null;
             }
         }
@@ -249,6 +274,10 @@ class SearchExpressionQueryBuilder {
                 case EQUALS -> {
                     final int num1 = getInt(fieldName, value);
                     return NumericRangeQuery.newIntRange(fieldName, num1, num1, true, true);
+                }
+                case NOT_EQUALS -> {
+                    final int num1 = getInt(fieldName, value);
+                    return negate(NumericRangeQuery.newIntRange(fieldName, num1, num1, true, true));
                 }
                 case CONTAINS -> {
                     return getContains(fieldName, value, indexField, terms);
@@ -294,6 +323,10 @@ class SearchExpressionQueryBuilder {
                     final Long num1 = getLong(fieldName, value);
                     return NumericRangeQuery.newLongRange(fieldName, num1, num1, true, true);
                 }
+                case NOT_EQUALS -> {
+                    final Long num1 = getLong(fieldName, value);
+                    return negate(NumericRangeQuery.newLongRange(fieldName, num1, num1, true, true));
+                }
                 case CONTAINS -> {
                     return getContains(fieldName, value, indexField, terms);
                 }
@@ -337,6 +370,10 @@ class SearchExpressionQueryBuilder {
                 case EQUALS -> {
                     final Float num1 = getFloat(fieldName, value);
                     return NumericRangeQuery.newFloatRange(fieldName, num1, num1, true, true);
+                }
+                case NOT_EQUALS -> {
+                    final Float num1 = getFloat(fieldName, value);
+                    return negate(NumericRangeQuery.newFloatRange(fieldName, num1, num1, true, true));
                 }
                 case CONTAINS -> {
                     return getContains(fieldName, value, indexField, terms);
@@ -384,6 +421,10 @@ class SearchExpressionQueryBuilder {
                 case EQUALS -> {
                     final Double num1 = getDouble(fieldName, value);
                     return NumericRangeQuery.newDoubleRange(fieldName, num1, num1, true, true);
+                }
+                case NOT_EQUALS -> {
+                    final Double num1 = getDouble(fieldName, value);
+                    return negate(NumericRangeQuery.newDoubleRange(fieldName, num1, num1, true, true));
                 }
                 case CONTAINS -> {
                     return getContains(fieldName, value, indexField, terms);
@@ -440,6 +481,10 @@ class SearchExpressionQueryBuilder {
                 case EQUALS -> {
                     final Long date1 = DateExpressionParser.getMs(fieldName, value, dateTimeSettings);
                     return NumericRangeQuery.newLongRange(fieldName, date1, date1, true, true);
+                }
+                case NOT_EQUALS -> {
+                    final Long date1 = DateExpressionParser.getMs(fieldName, value, dateTimeSettings);
+                    return negate(NumericRangeQuery.newLongRange(fieldName, date1, date1, true, true));
                 }
                 case CONTAINS -> {
                     return getContains(fieldName, value, indexField, terms);
@@ -501,6 +546,10 @@ class SearchExpressionQueryBuilder {
                     final Long num1 = getLong(fieldName, value);
                     return NumericRangeQuery.newLongRange(fieldName, num1, num1, true, true);
                 }
+                case NOT_EQUALS -> {
+                    final Long num1 = getLong(fieldName, value);
+                    return negate(NumericRangeQuery.newLongRange(fieldName, num1, num1, true, true));
+                }
                 case CONTAINS -> {
                     return getContains(fieldName, value, indexField, terms);
                 }
@@ -542,6 +591,7 @@ class SearchExpressionQueryBuilder {
         } else {
             return switch (condition) {
                 case EQUALS -> getContains(fieldName, value, indexField, terms);
+                case NOT_EQUALS -> negate(getContains(fieldName, value, indexField, terms));
 //                    return getSubQuery(matchVersion, indexField, value, terms, false);
                 case CONTAINS -> getContains(fieldName, value, indexField, terms);
                 case IN -> getIn(fieldName, value, indexField, terms);
@@ -551,6 +601,10 @@ class SearchExpressionQueryBuilder {
                         + indexField.getFieldType().getDisplayValue() + " field type");
             };
         }
+    }
+
+    private Query negate(final Query query) {
+        return new BooleanQuery.Builder().add(query, Occur.MUST_NOT).build();
     }
 
     private Query getIntIn(final String fieldName, final String value) {
@@ -772,7 +826,7 @@ class SearchExpressionQueryBuilder {
             }
 
         } else {
-            if (val.length() > 0) {
+            if (!val.isEmpty()) {
                 // As this is just indexed as a keyword we only want to search
                 // for the term.
                 if (!field.isCaseSensitive()) {

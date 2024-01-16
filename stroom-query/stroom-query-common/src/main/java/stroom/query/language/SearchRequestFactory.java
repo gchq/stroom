@@ -313,13 +313,9 @@ public class SearchRequestFactory {
 
                 // If we have a where clause then we expect the next token to contain an expression.
                 Condition cond;
-                boolean not = false;
                 switch (conditionToken.getTokenType()) {
                     case EQUALS -> cond = Condition.EQUALS;
-                    case NOT_EQUALS -> {
-                        cond = Condition.EQUALS;
-                        not = true;
-                    }
+                    case NOT_EQUALS -> cond = Condition.NOT_EQUALS;
                     case GREATER_THAN -> cond = Condition.GREATER_THAN;
                     case GREATER_THAN_OR_EQUAL_TO -> cond = Condition.GREATER_THAN_OR_EQUAL_TO;
                     case LESS_THAN -> cond = Condition.LESS_THAN;
@@ -336,17 +332,7 @@ public class SearchRequestFactory {
                         .condition(cond)
                         .value(value.toString().trim())
                         .build();
-
-                if (not) {
-                    parentBuilder
-                            .addOperator(ExpressionOperator
-                                    .builder()
-                                    .op(Op.NOT)
-                                    .addTerm(expressionTerm)
-                                    .build());
-                } else {
-                    parentBuilder.addTerm(expressionTerm);
-                }
+                parentBuilder.addTerm(expressionTerm);
             }
 
             if (inHaving) {

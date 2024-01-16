@@ -13131,7 +13131,7 @@
             "condition" : {
               "type" : "string",
               "description" : "The condition of the predicate term",
-              "enum" : [ "CONTAINS", "EQUALS", "GREATER_THAN", "GREATER_THAN_OR_EQUAL_TO", "LESS_THAN", "LESS_THAN_OR_EQUAL_TO", "BETWEEN", "IN", "IN_DICTIONARY", "IN_FOLDER", "IS_DOC_REF", "IS_NULL", "IS_NOT_NULL", "MATCHES_REGEX" ]
+              "enum" : [ "CONTAINS", "EQUALS", "NOT_EQUALS", "GREATER_THAN", "GREATER_THAN_OR_EQUAL_TO", "LESS_THAN", "LESS_THAN_OR_EQUAL_TO", "BETWEEN", "IN", "IN_DICTIONARY", "IN_FOLDER", "IS_DOC_REF", "IS_NULL", "IS_NOT_NULL", "MATCHES_REGEX" ]
             },
             "docRef" : {
               "$ref" : "#/components/schemas/DocRef"
@@ -13420,7 +13420,7 @@
         "properties" : {
           "conditions" : {
             "type" : "string",
-            "enum" : [ "'=', 'between', '>', '>=', '<', '<='", "'=', 'in', 'in dictionary', 'between', '>', '>=', '<', '<='", "'='", "'=', 'between', '>', '>=', '<', '<='", "'=', 'in', 'in dictionary'", "'is', 'in folder'", "'=', 'in', 'in dictionary'", "'is', 'in folder', '=', 'in', 'in dictionary'", "'=', 'in', 'in dictionary'", "'=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', 'in', 'in dictionary', 'matches regex'", "'=', 'in', 'in dictionary'", "'=', 'in', 'in dictionary'", "'=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'='", "'=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', 'in', 'in dictionary'", "'is', '='", "'between'", "'=', 'in'", "'=', 'in'", "'=', 'in', 'in dictionary'", "'=', 'in', 'in dictionary', 'is'", "'=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'" ]
+            "enum" : [ "'=', '!=', 'between', '>', '>=', '<', '<='", "'=', '!=', 'in', 'in dictionary', 'between', '>', '>=', '<', '<='", "'=', '!='", "'=', '!=', 'between', '>', '>=', '<', '<='", "'=', '!=', 'in', 'in dictionary'", "'is', 'in folder'", "'=', '!=', 'in', 'in dictionary'", "'is', 'in folder', '=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary', 'matches regex'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!='", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'is', '=', '!='", "'between'", "'=', '!=', 'in'", "'=', '!=', 'in'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary', 'is'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'" ]
           },
           "docRefType" : {
             "type" : "string"
@@ -16423,7 +16423,7 @@
         "properties" : {
           "conditionSet" : {
             "type" : "string",
-            "enum" : [ "'=', 'between', '>', '>=', '<', '<='", "'=', 'in', 'in dictionary', 'between', '>', '>=', '<', '<='", "'='", "'=', 'between', '>', '>=', '<', '<='", "'=', 'in', 'in dictionary'", "'is', 'in folder'", "'=', 'in', 'in dictionary'", "'is', 'in folder', '=', 'in', 'in dictionary'", "'=', 'in', 'in dictionary'", "'=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', 'in', 'in dictionary', 'matches regex'", "'=', 'in', 'in dictionary'", "'=', 'in', 'in dictionary'", "'=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'='", "'=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', 'in', 'in dictionary'", "'is', '='", "'between'", "'=', 'in'", "'=', 'in'", "'=', 'in', 'in dictionary'", "'=', 'in', 'in dictionary', 'is'", "'=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'" ]
+            "enum" : [ "'=', '!=', 'between', '>', '>=', '<', '<='", "'=', '!=', 'in', 'in dictionary', 'between', '>', '>=', '<', '<='", "'=', '!='", "'=', '!=', 'between', '>', '>=', '<', '<='", "'=', '!=', 'in', 'in dictionary'", "'is', 'in folder'", "'=', '!=', 'in', 'in dictionary'", "'is', 'in folder', '=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary', 'matches regex'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!='", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'is', '=', '!='", "'between'", "'=', '!=', 'in'", "'=', '!=', 'in'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary', 'is'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'" ]
           },
           "docRefType" : {
             "type" : "string"
@@ -18709,7 +18709,7 @@
           },
           "matchType" : {
             "type" : "string",
-            "enum" : [ "ANY", "NULL", "NON_NULL", "BLANK", "EMPTY", "NULL_OR_BLANK", "NULL_OR_EMPTY", "CONTAINS", "EQUALS", "STARTS_WITH", "ENDS_WITH", "REGEX" ]
+            "enum" : [ "ANY", "NULL", "NON_NULL", "BLANK", "EMPTY", "NULL_OR_BLANK", "NULL_OR_EMPTY", "CONTAINS", "EQUALS", "NOT_EQUALS", "STARTS_WITH", "ENDS_WITH", "REGEX" ]
           },
           "pattern" : {
             "type" : "string"
@@ -19355,7 +19355,7 @@
         "properties" : {
           "condition" : {
             "type" : "string",
-            "enum" : [ "CONTAINS", "EQUALS", "GREATER_THAN", "GREATER_THAN_OR_EQUAL_TO", "LESS_THAN", "LESS_THAN_OR_EQUAL_TO", "BETWEEN", "IN", "IN_DICTIONARY", "IN_FOLDER", "IS_DOC_REF", "IS_NULL", "IS_NOT_NULL", "MATCHES_REGEX" ]
+            "enum" : [ "CONTAINS", "EQUALS", "NOT_EQUALS", "GREATER_THAN", "GREATER_THAN_OR_EQUAL_TO", "LESS_THAN", "LESS_THAN_OR_EQUAL_TO", "BETWEEN", "IN", "IN_DICTIONARY", "IN_FOLDER", "IS_DOC_REF", "IS_NULL", "IS_NOT_NULL", "MATCHES_REGEX" ]
           },
           "from" : {
             "type" : "string"
@@ -19943,7 +19943,7 @@
           },
           "matchType" : {
             "type" : "string",
-            "enum" : [ "EXISTS", "CONTAINS", "EQUALS", "UNIQUE" ]
+            "enum" : [ "EXISTS", "CONTAINS", "EQUALS", "NOT_EQUALS", "UNIQUE" ]
           },
           "path" : {
             "type" : "string"

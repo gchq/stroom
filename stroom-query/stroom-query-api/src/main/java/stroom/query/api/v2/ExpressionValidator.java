@@ -50,6 +50,7 @@ public class ExpressionValidator {
                 switch (term.getCondition()) {
                     case CONTAINS:
                     case EQUALS:
+                    case NOT_EQUALS:
                     case GREATER_THAN:
                     case GREATER_THAN_OR_EQUAL_TO:
                     case LESS_THAN:

@@ -199,6 +199,7 @@ public final class ExpressionTerm extends ExpressionItem {
     public enum Condition implements HasDisplayValue {
         @Deprecated CONTAINS("contains"), // No longer pick-able in TermEditor
         EQUALS("="),
+        NOT_EQUALS("!="),
         GREATER_THAN(">"),
         GREATER_THAN_OR_EQUAL_TO(">="),
         LESS_THAN("<"),

@@ -27,15 +27,13 @@ public class StringMatcher {
             pattern = pattern == null
                     ? ""
                     : pattern;
-            if (MatchType.EQUALS.equals(matchType)) {
+            if (MatchType.EQUALS.equals(matchType) ||
+                    MatchType.NOT_EQUALS.equals(matchType) ||
+                    MatchType.CONTAINS.equals(matchType)) {
                 if (!caseSensitive) {
                     pattern = pattern.toLowerCase(Locale.ROOT);
                 }
-            } else if (MatchType.CONTAINS.equals(matchType)) {
-                if (!caseSensitive) {
-                    pattern = pattern.toLowerCase(Locale.ROOT);
-                }
-            } else if (pattern.length() > 0) {
+            } else if (!pattern.isEmpty()) {
                 int flags = 0;
                 if (!caseSensitive) {
                     flags = flags | Pattern.CASE_INSENSITIVE;
@@ -81,6 +79,9 @@ public class StringMatcher {
             case EQUALS -> {
                 return equals(string);
             }
+            case NOT_EQUALS -> {
+                return notEquals(string);
+            }
             case STARTS_WITH -> {
                 return startsWith(string);
             }
@@ -104,6 +105,22 @@ public class StringMatcher {
             }
         } else {
             if (string.equalsIgnoreCase(pattern)) {
+                return Optional.of(new Match(0, string.length()));
+            }
+        }
+        return Optional.empty();
+    }
+
+    private Optional<Match> notEquals(final String string) {
+        if (string == null) {
+            return Optional.of(new Match(0, 0));
+        }
+        if (caseSensitive) {
+            if (!string.equals(pattern)) {
+                return Optional.of(new Match(0, string.length()));
+            }
+        } else {
+            if (!string.equalsIgnoreCase(pattern)) {
                 return Optional.of(new Match(0, string.length()));
             }
         }

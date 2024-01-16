@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Set;
 
 public class FilterTermsTreeBuilder {
+
     private FilterTermsTreeBuilder() {
         // Utility class of static methods so should never be initialised
     }
@@ -53,7 +54,9 @@ public class FilterTermsTreeBuilder {
 
         // we may have black listed all our terms and been left with a null root
         // node so handle that
-        return newRootNode != null ? new FilterTermsTree(newRootNode) : FilterTermsTree.emptyTree();
+        return newRootNode != null
+                ? new FilterTermsTree(newRootNode)
+                : FilterTermsTree.emptyTree();
     }
 
     private static PrintableNode convertNode(final ExpressionItem oldNode, final Set<String> fieldBlackList) {
@@ -95,16 +98,18 @@ public class FilterTermsTreeBuilder {
             // any further down the stack as we can only filter on distinct UIDs
 
             if (oldNode.getCondition().equals(Condition.EQUALS)) {
-                newNode = new TermNode(oldNode.getField(), oldNode.getValue());
+                newNode = new TermNode(oldNode.getField(), Condition.EQUALS, oldNode.getValue());
+            } else if (oldNode.getCondition().equals(Condition.NOT_EQUALS)) {
+                newNode = new TermNode(oldNode.getField(), Condition.NOT_EQUALS, oldNode.getValue());
             } else if (oldNode.getCondition().equals(Condition.IN)) {
                 if (oldNode.getValue() == null) {
-                    newNode = new TermNode(oldNode.getField(), null);
+                    newNode = new TermNode(oldNode.getField(), Condition.EQUALS, null);
                 } else {
                     final String[] values = oldNode.getValue().split(Condition.IN_CONDITION_DELIMITER);
 
                     if (values.length == 1) {
                         // only one value so just convert it like it is EQUALS
-                        newNode = new TermNode(oldNode.getField(), oldNode.getValue());
+                        newNode = new TermNode(oldNode.getField(), Condition.EQUALS, oldNode.getValue());
                     } else {
                         // multiple values in the IN list so convert it into a
                         // set of EQUALS terms under and OR node
@@ -124,7 +129,7 @@ public class FilterTermsTreeBuilder {
                     }
                 }
             } else {
-                throw new UnsupportedOperationException("Only EQUALS and IN are currently supported");
+                throw new UnsupportedOperationException("Only EQUALS, NOT_EQUALS and IN are currently supported");
             }
         }
         return newNode;

@@ -155,6 +155,13 @@ public class QueryFieldDaoImpl implements QueryFieldDao {
                         condition = field.equalIgnoreCase(stringMatch.getPattern());
                     }
                 }
+                case NOT_EQUALS -> {
+                    if (stringMatch.isCaseSensitive()) {
+                        condition = field.notEqual(stringMatch.getPattern());
+                    } else {
+                        condition = field.notEqualIgnoreCase(stringMatch.getPattern());
+                    }
+                }
                 case STARTS_WITH -> {
                     if (stringMatch.isCaseSensitive()) {
                         condition = field.startsWith(stringMatch.getPattern());

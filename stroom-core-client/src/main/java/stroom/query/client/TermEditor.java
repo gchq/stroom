@@ -285,6 +285,11 @@ public class TermEditor extends Composite {
         } else {
             switch (condition) {
                 case EQUALS:
+                case NOT_EQUALS:
+                case LESS_THAN:
+                case LESS_THAN_OR_EQUAL_TO:
+                case GREATER_THAN:
+                case GREATER_THAN_OR_EQUAL_TO:
                     if (FieldType.DATE.equals(indexFieldType)) {
                         enterDateMode();
                     } else {
@@ -304,40 +309,8 @@ public class TermEditor extends Composite {
                         enterTextRangeMode();
                     }
                     break;
-                case LESS_THAN:
-                    if (FieldType.DATE.equals(indexFieldType)) {
-                        enterDateMode();
-                    } else {
-                        enterTextMode();
-                    }
-                    break;
-                case LESS_THAN_OR_EQUAL_TO:
-                    if (FieldType.DATE.equals(indexFieldType)) {
-                        enterDateMode();
-                    } else {
-                        enterTextMode();
-                    }
-                    break;
-                case GREATER_THAN:
-                    if (FieldType.DATE.equals(indexFieldType)) {
-                        enterDateMode();
-                    } else {
-                        enterTextMode();
-                    }
-                    break;
-                case GREATER_THAN_OR_EQUAL_TO:
-                    if (FieldType.DATE.equals(indexFieldType)) {
-                        enterDateMode();
-                    } else {
-                        enterTextMode();
-                    }
-                    break;
                 case IN_DICTIONARY:
-                    enterDocRefMode(field, condition);
-                    break;
                 case IN_FOLDER:
-                    enterDocRefMode(field, condition);
-                    break;
                 case IS_DOC_REF:
                     enterDocRefMode(field, condition);
                     break;

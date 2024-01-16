@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 public enum ConditionSet {
     DEFAULT_NUMERIC(
             Condition.EQUALS,
+            Condition.NOT_EQUALS,
             Condition.BETWEEN,
             Condition.GREATER_THAN,
             Condition.GREATER_THAN_OR_EQUAL_TO,
@@ -19,6 +20,7 @@ public enum ConditionSet {
             Condition.LESS_THAN_OR_EQUAL_TO),
     DEFAULT_ID(
             Condition.EQUALS,
+            Condition.NOT_EQUALS,
             Condition.IN,
             Condition.IN_DICTIONARY,
             Condition.BETWEEN,
@@ -27,9 +29,11 @@ public enum ConditionSet {
             Condition.LESS_THAN,
             Condition.LESS_THAN_OR_EQUAL_TO),
     DEFAULT_BOOLEAN(
-            Condition.EQUALS),
+            Condition.EQUALS,
+            Condition.NOT_EQUALS),
     DEFAULT_DATE(
             Condition.EQUALS,
+            Condition.NOT_EQUALS,
             Condition.BETWEEN,
             Condition.GREATER_THAN,
             Condition.GREATER_THAN_OR_EQUAL_TO,
@@ -37,6 +41,7 @@ public enum ConditionSet {
             Condition.LESS_THAN_OR_EQUAL_TO),
     DEFAULT_KEYWORD(
             Condition.EQUALS,
+            Condition.NOT_EQUALS,
             Condition.IN,
             Condition.IN_DICTIONARY),
     DOC_REF_UUID(
@@ -44,22 +49,26 @@ public enum ConditionSet {
             Condition.IN_FOLDER),
     DOC_REF_NAME(
             Condition.EQUALS,
+            Condition.NOT_EQUALS,
             Condition.IN,
             Condition.IN_DICTIONARY),
     DOC_REF_ALL(
             Condition.IS_DOC_REF,
             Condition.IN_FOLDER,
             Condition.EQUALS,
+            Condition.NOT_EQUALS,
             Condition.IN,
             Condition.IN_DICTIONARY),
     DEFAULT_TEXT(
             Condition.EQUALS,
+            Condition.NOT_EQUALS,
             Condition.IN,
             Condition.IN_DICTIONARY),
 
     // Elastic Conditions.
     ELASTIC_NUMERIC(
             Condition.EQUALS,
+            Condition.NOT_EQUALS,
             Condition.GREATER_THAN,
             Condition.GREATER_THAN_OR_EQUAL_TO,
             Condition.LESS_THAN,
@@ -69,6 +78,7 @@ public enum ConditionSet {
             Condition.IN_DICTIONARY),
     ELASTIC_TEXT(
             Condition.EQUALS,
+            Condition.NOT_EQUALS,
             Condition.IN,
             Condition.IN_DICTIONARY,
             Condition.MATCHES_REGEX),
@@ -76,14 +86,17 @@ public enum ConditionSet {
     // Solr Conditions.
     SOLR_ID(
             Condition.EQUALS,
+            Condition.NOT_EQUALS,
             Condition.IN,
             Condition.IN_DICTIONARY),
     SOLR_TEXT(
             Condition.EQUALS,
+            Condition.NOT_EQUALS,
             Condition.IN,
             Condition.IN_DICTIONARY),
     SOLR_DATE(
             Condition.EQUALS,
+            Condition.NOT_EQUALS,
             Condition.GREATER_THAN,
             Condition.GREATER_THAN_OR_EQUAL_TO,
             Condition.LESS_THAN,
@@ -92,9 +105,11 @@ public enum ConditionSet {
             Condition.IN,
             Condition.IN_DICTIONARY),
     SOLR_BOOLEAN(
-            Condition.EQUALS),
+            Condition.EQUALS,
+            Condition.NOT_EQUALS),
     SOLR_NUMERIC(
             Condition.EQUALS,
+            Condition.NOT_EQUALS,
             Condition.GREATER_THAN,
             Condition.GREATER_THAN_OR_EQUAL_TO,
             Condition.LESS_THAN,
@@ -104,37 +119,45 @@ public enum ConditionSet {
             Condition.IN_DICTIONARY),
 
     // Reference Data Conditions.
-    REF_DATA_TEXT(Condition.EQUALS,
+    REF_DATA_TEXT(
+            Condition.EQUALS,
+            Condition.NOT_EQUALS,
             Condition.IN,
             Condition.IN_DICTIONARY),
     REF_DATA_DOC_REF(
             Condition.IS_DOC_REF,
-            Condition.EQUALS),
+            Condition.EQUALS,
+            Condition.NOT_EQUALS),
 
     // Statistic Conditions.
     STAT_DATE(
             Condition.BETWEEN),
     STAT_TEXT(
             Condition.EQUALS,
+            Condition.NOT_EQUALS,
             Condition.IN),
 
     // Basic.
     BASIC_TEXT(
             Condition.EQUALS,
+            Condition.NOT_EQUALS,
             Condition.IN),
 
     // UI Defaults.
     UI_TEXT(
             Condition.EQUALS,
+            Condition.NOT_EQUALS,
             Condition.IN,
             Condition.IN_DICTIONARY),
     UI_DOC_REF(
             Condition.EQUALS,
+            Condition.NOT_EQUALS,
             Condition.IN,
             Condition.IN_DICTIONARY,
             Condition.IS_DOC_REF),
     UI_NUMERIC(
             Condition.EQUALS,
+            Condition.NOT_EQUALS,
             Condition.GREATER_THAN,
             Condition.GREATER_THAN_OR_EQUAL_TO,
             Condition.LESS_THAN,
@@ -144,6 +167,7 @@ public enum ConditionSet {
             Condition.IN_DICTIONARY),
     UI_DATE(
             Condition.EQUALS,
+            Condition.NOT_EQUALS,
             Condition.GREATER_THAN,
             Condition.GREATER_THAN_OR_EQUAL_TO,
             Condition.LESS_THAN,

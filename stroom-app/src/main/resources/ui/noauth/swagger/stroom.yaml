@@ -9661,6 +9661,7 @@ components:
             enum:
             - CONTAINS
             - EQUALS
+            - NOT_EQUALS
             - GREATER_THAN
             - GREATER_THAN_OR_EQUAL_TO
             - LESS_THAN
@@ -9885,31 +9886,31 @@ components:
         conditions:
           type: string
           enum:
-          - "'=', 'between', '>', '>=', '<', '<='"
-          - "'=', 'in', 'in dictionary', 'between', '>', '>=', '<', '<='"
-          - '''='''
-          - "'=', 'between', '>', '>=', '<', '<='"
-          - "'=', 'in', 'in dictionary'"
+          - "'=', '!=', 'between', '>', '>=', '<', '<='"
+          - "'=', '!=', 'in', 'in dictionary', 'between', '>', '>=', '<', '<='"
+          - "'=', '!='"
+          - "'=', '!=', 'between', '>', '>=', '<', '<='"
+          - "'=', '!=', 'in', 'in dictionary'"
           - "'is', 'in folder'"
-          - "'=', 'in', 'in dictionary'"
-          - "'is', 'in folder', '=', 'in', 'in dictionary'"
-          - "'=', 'in', 'in dictionary'"
-          - "'=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'"
-          - "'=', 'in', 'in dictionary', 'matches regex'"
-          - "'=', 'in', 'in dictionary'"
-          - "'=', 'in', 'in dictionary'"
-          - "'=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'"
-          - '''='''
-          - "'=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'"
-          - "'=', 'in', 'in dictionary'"
-          - "'is', '='"
+          - "'=', '!=', 'in', 'in dictionary'"
+          - "'is', 'in folder', '=', '!=', 'in', 'in dictionary'"
+          - "'=', '!=', 'in', 'in dictionary'"
+          - "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'"
+          - "'=', '!=', 'in', 'in dictionary', 'matches regex'"
+          - "'=', '!=', 'in', 'in dictionary'"
+          - "'=', '!=', 'in', 'in dictionary'"
+          - "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'"
+          - "'=', '!='"
+          - "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'"
+          - "'=', '!=', 'in', 'in dictionary'"
+          - "'is', '=', '!='"
           - '''between'''
-          - "'=', 'in'"
-          - "'=', 'in'"
-          - "'=', 'in', 'in dictionary'"
-          - "'=', 'in', 'in dictionary', 'is'"
-          - "'=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'"
-          - "'=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'"
+          - "'=', '!=', 'in'"
+          - "'=', '!=', 'in'"
+          - "'=', '!=', 'in', 'in dictionary'"
+          - "'=', '!=', 'in', 'in dictionary', 'is'"
+          - "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'"
+          - "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'"
         docRefType:
           type: string
         fieldName:
@@ -12306,31 +12307,31 @@ components:
         conditionSet:
           type: string
           enum:
-          - "'=', 'between', '>', '>=', '<', '<='"
-          - "'=', 'in', 'in dictionary', 'between', '>', '>=', '<', '<='"
-          - '''='''
-          - "'=', 'between', '>', '>=', '<', '<='"
-          - "'=', 'in', 'in dictionary'"
+          - "'=', '!=', 'between', '>', '>=', '<', '<='"
+          - "'=', '!=', 'in', 'in dictionary', 'between', '>', '>=', '<', '<='"
+          - "'=', '!='"
+          - "'=', '!=', 'between', '>', '>=', '<', '<='"
+          - "'=', '!=', 'in', 'in dictionary'"
           - "'is', 'in folder'"
-          - "'=', 'in', 'in dictionary'"
-          - "'is', 'in folder', '=', 'in', 'in dictionary'"
-          - "'=', 'in', 'in dictionary'"
-          - "'=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'"
-          - "'=', 'in', 'in dictionary', 'matches regex'"
-          - "'=', 'in', 'in dictionary'"
-          - "'=', 'in', 'in dictionary'"
-          - "'=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'"
-          - '''='''
-          - "'=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'"
-          - "'=', 'in', 'in dictionary'"
-          - "'is', '='"
+          - "'=', '!=', 'in', 'in dictionary'"
+          - "'is', 'in folder', '=', '!=', 'in', 'in dictionary'"
+          - "'=', '!=', 'in', 'in dictionary'"
+          - "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'"
+          - "'=', '!=', 'in', 'in dictionary', 'matches regex'"
+          - "'=', '!=', 'in', 'in dictionary'"
+          - "'=', '!=', 'in', 'in dictionary'"
+          - "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'"
+          - "'=', '!='"
+          - "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'"
+          - "'=', '!=', 'in', 'in dictionary'"
+          - "'is', '=', '!='"
           - '''between'''
-          - "'=', 'in'"
-          - "'=', 'in'"
-          - "'=', 'in', 'in dictionary'"
-          - "'=', 'in', 'in dictionary', 'is'"
-          - "'=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'"
-          - "'=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'"
+          - "'=', '!=', 'in'"
+          - "'=', '!=', 'in'"
+          - "'=', '!=', 'in', 'in dictionary'"
+          - "'=', '!=', 'in', 'in dictionary', 'is'"
+          - "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'"
+          - "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'"
         docRefType:
           type: string
         fieldType:
@@ -14240,6 +14241,7 @@ components:
           - NULL_OR_EMPTY
           - CONTAINS
           - EQUALS
+          - NOT_EQUALS
           - STARTS_WITH
           - ENDS_WITH
           - REGEX
@@ -14723,6 +14725,7 @@ components:
           enum:
           - CONTAINS
           - EQUALS
+          - NOT_EQUALS
           - GREATER_THAN
           - GREATER_THAN_OR_EQUAL_TO
           - LESS_THAN
@@ -15158,6 +15161,7 @@ components:
           - EXISTS
           - CONTAINS
           - EQUALS
+          - NOT_EQUALS
           - UNIQUE
         path:
           type: string
