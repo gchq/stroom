@@ -8,11 +8,11 @@ import stroom.security.common.impl.JwtUtil;
 import stroom.security.impl.AuthenticationConfig;
 import stroom.security.impl.BasicUserIdentity;
 import stroom.security.impl.HashedApiKeyParts;
-import stroom.security.shared.ApiKey;
 import stroom.security.shared.ApiKeyResultPage;
-import stroom.security.shared.CreateApiKeyRequest;
-import stroom.security.shared.CreateApiKeyResponse;
+import stroom.security.shared.CreateHashedApiKeyRequest;
+import stroom.security.shared.CreateHashedApiKeyResponse;
 import stroom.security.shared.FindApiKeyCriteria;
+import stroom.security.shared.HashedApiKey;
 import stroom.security.shared.PermissionNames;
 import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
@@ -24,11 +24,8 @@ import stroom.util.shared.UserName;
 import org.apache.commons.codec.digest.DigestUtils;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
@@ -40,8 +37,8 @@ public class ApiKeyService {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ApiKeyService.class);
 
-    private static final int API_KEY_SALT_LENGTH = 48;
     private static final String CACHE_NAME = "API Key cache";
+    private static final int MAX_CREATION_ATTEMPTS = 100;
 
     private final ApiKeyDao apiKeyDao;
     private final SecurityContext securityContext;
@@ -112,32 +109,16 @@ public class ApiKeyService {
             LOGGER.debug("apiKey '{}' is not an API key", apiKeyStr);
             return Optional.empty();
         } else {
-            final String apiKeyPrefix = ApiKeyGenerator.extractPrefixPart(apiKeyStr);
-            // Each key has its own salt, and we need the salt to hash the incoming key
-            // to compare the hash against the ones in the DB. Therefore, use the key prefix
-            // to find potential key records (likely will hit only one) then test the salted hash for each.
-            final List<ApiKey> apiKeys = apiKeyDao.fetchValidApiKeysByPrefix(apiKeyPrefix);
+            final String hash = computeApiKeyHash(apiKeyStr);
+            final Optional<HashedApiKey> optApiKey = apiKeyDao.fetchValidApiKeyByHash(hash);
 
-            LOGGER.debug(() -> LogUtil.message("Found {} API keys matching prefix '{}'",
-                    apiKeys.size(), apiKeyPrefix));
+            LOGGER.debug("Found API key {} matching hash '{}'", optApiKey, hash);
 
-            final List<ApiKey> validApiKeys = apiKeys.stream()
-                    .filter(apiKey -> {
-                        final String saltedApiKeyHash = computeApiKeyHash(apiKeyStr, apiKey.getApiKeySalt());
-                        return apiKey.getApiKeyHash().equals(saltedApiKeyHash);
-                    })
-                    .toList();
-
-            if (validApiKeys.isEmpty()) {
-                LOGGER.debug("No valid keys found matching prefix {}", apiKeyPrefix);
+            if (optApiKey.isEmpty()) {
+                LOGGER.debug("No valid API keys found matching hash {}", hash);
                 return Optional.empty();
-            } else if (validApiKeys.size() > 1) {
-                final Set<Integer> ids = validApiKeys.stream()
-                        .map(ApiKey::getId)
-                        .collect(Collectors.toSet());
-                throw new RuntimeException("Found multiple api keys that match on hash. IDs: " + ids);
             } else {
-                final ApiKey apiKey = validApiKeys.get(0);
+                final HashedApiKey apiKey = optApiKey.get();
                 final Optional<UserIdentity> optUserIdentity = Optional.of(apiKey.getOwner())
                         .map(BasicUserIdentity::new);
                 LOGGER.debug("optUserIdentity: {}", optUserIdentity);
@@ -146,9 +127,9 @@ public class ApiKeyService {
         }
     }
 
-    public Optional<ApiKey> fetch(final int id) {
+    public Optional<HashedApiKey> fetch(final int id) {
         return securityContext.secureResult(PermissionNames.MANAGE_API_KEYS, () -> {
-            final Optional<ApiKey> optApiKey = apiKeyDao.fetch(id);
+            final Optional<HashedApiKey> optApiKey = apiKeyDao.fetch(id);
 
             optApiKey.ifPresent(apiKey ->
                     checkAdditionalPerms(apiKey.getOwner()));
@@ -156,48 +137,52 @@ public class ApiKeyService {
         });
     }
 
-    public CreateApiKeyResponse create(final CreateApiKeyRequest createApiKeyRequest) {
-        Objects.requireNonNull(createApiKeyRequest);
+    public CreateHashedApiKeyResponse create(final CreateHashedApiKeyRequest createHashedApiKeyRequest) {
+        Objects.requireNonNull(createHashedApiKeyRequest);
 
         return securityContext.secureResult(PermissionNames.MANAGE_API_KEYS, () -> {
-            checkAdditionalPerms(createApiKeyRequest.getOwner());
-            // It is possible that we generate a key with a hash-clash, so keep trying.
+            checkAdditionalPerms(createHashedApiKeyRequest.getOwner());
+            // We want both a unique prefix and hash so keep generating new keys till we
+            // get one that is unique on both
             int attempts = 0;
             do {
+                attempts++;
                 try {
-                    return createNewApiKey(createApiKeyRequest);
+                    return createNewApiKey(createHashedApiKeyRequest);
                 } catch (DuplicateHashException e) {
                     LOGGER.debug("Duplicate hash on attempt {}, going round again", attempts);
+                } catch (DuplicatePrefixException e) {
+                    LOGGER.debug("Duplicate prefix on attempt {}, going round again", attempts);
                 }
-                attempts++;
-            } while (attempts <= 5);
+            } while (attempts < MAX_CREATION_ATTEMPTS);
 
-            throw new RuntimeException(LogUtil.message("Unable to create api key after {} attempts", attempts));
+            throw new RuntimeException(LogUtil.message("Unable to create API key with unique prefix and hash " +
+                    "after {} attempts", attempts));
         });
     }
 
-    private CreateApiKeyResponse createNewApiKey(final CreateApiKeyRequest createApiKeyRequest)
-            throws DuplicateHashException {
+    private CreateHashedApiKeyResponse createNewApiKey(final CreateHashedApiKeyRequest createHashedApiKeyRequest)
+            throws DuplicateHashException, DuplicatePrefixException {
         LOGGER.debug(() -> LogUtil.message("Attempting to create new API key for {}",
-                createApiKeyRequest.getOwner()));
-        final String salt = apiKeyGenerator.createRandomBase58String(API_KEY_SALT_LENGTH);
+                createHashedApiKeyRequest.getOwner()));
         final String apiKeyStr = apiKeyGenerator.generateRandomApiKey();
-        final String saltedApiKeyHash = computeApiKeyHash(apiKeyStr, salt);
+        final String apiKeyHash = computeApiKeyHash(apiKeyStr);
         final HashedApiKeyParts hashedApiKeyParts = new HashedApiKeyParts(
-                saltedApiKeyHash, salt, ApiKeyGenerator.extractPrefixPart(apiKeyStr));
+                apiKeyHash,
+                ApiKeyGenerator.extractPrefixPart(apiKeyStr));
 
-        final ApiKey hashedApiKey = apiKeyDao.create(
-                createApiKeyRequest,
+        final HashedApiKey hashedApiKey = apiKeyDao.create(
+                createHashedApiKeyRequest,
                 hashedApiKeyParts);
 
-        LOGGER.debug(() -> LogUtil.message("Created new API key for {}", createApiKeyRequest.getOwner()));
-        return new CreateApiKeyResponse(apiKeyStr, hashedApiKey);
+        LOGGER.debug(() -> LogUtil.message("Created new API key for {}", createHashedApiKeyRequest.getOwner()));
+        return new CreateHashedApiKeyResponse(apiKeyStr, hashedApiKey);
     }
 
-    public ApiKey update(final ApiKey apiKey) {
+    public HashedApiKey update(final HashedApiKey apiKey) {
         return securityContext.secureResult(PermissionNames.MANAGE_API_KEYS, () -> {
             checkAdditionalPerms(apiKey.getOwner());
-            final ApiKey apiKeyBefore = apiKeyDao.fetch(apiKey.getId())
+            final HashedApiKey apiKeyBefore = apiKeyDao.fetch(apiKey.getId())
                     .orElseThrow(() -> new RuntimeException("API Key not found with ID " + apiKey.getId()));
             if (apiKeyBefore.getEnabled() != apiKey.getEnabled()) {
                 // Enabled state has changed so invalidate the cache
@@ -209,9 +194,9 @@ public class ApiKeyService {
 
     public boolean delete(final int id) {
         return securityContext.secureResult(PermissionNames.MANAGE_API_KEYS, () -> {
-            final Optional<ApiKey> optApiKey = fetch(id);
+            final Optional<HashedApiKey> optApiKey = fetch(id);
             if (optApiKey.isPresent()) {
-                final ApiKey apiKey = optApiKey.get();
+                final HashedApiKey apiKey = optApiKey.get();
                 checkAdditionalPerms(apiKey.getOwner());
                 final boolean didDelete = apiKeyDao.delete(id);
                 invalidateApiKeyCacheEntry(apiKey);
@@ -223,7 +208,7 @@ public class ApiKeyService {
         });
     }
 
-    private void invalidateApiKeyCacheEntry(final ApiKey apiKey) {
+    private void invalidateApiKeyCacheEntry(final HashedApiKey apiKey) {
         if (apiKey != null) {
             final String apiKeyPrefix = apiKey.getApiKeyPrefix();
             // It's possible there are >1 entries with the same prefix, but that is lottery odds
@@ -250,11 +235,10 @@ public class ApiKeyService {
         });
     }
 
-    String computeApiKeyHash(final String apiKey, final String salt) {
-        Objects.requireNonNull(apiKey);
-        Objects.requireNonNull(salt);
-        final String input = salt.trim() + apiKey.trim();
-        final String sha256 = DigestUtils.sha3_256Hex(input)
+    String computeApiKeyHash(final String apiKeyStr) {
+        Objects.requireNonNull(apiKeyStr);
+
+        final String sha256 = DigestUtils.sha3_256Hex(apiKeyStr.trim())
                 .trim();
         return sha256;
     }
@@ -283,6 +267,17 @@ public class ApiKeyService {
     public static class DuplicateHashException extends Exception {
 
         public DuplicateHashException(final String message, final Throwable cause) {
+            super(message, cause);
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    public static class DuplicatePrefixException extends Exception {
+
+        public DuplicatePrefixException(final String message, final Throwable cause) {
             super(message, cause);
         }
     }

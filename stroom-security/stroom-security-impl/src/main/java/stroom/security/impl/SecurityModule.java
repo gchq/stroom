@@ -29,14 +29,14 @@ import stroom.security.common.impl.JwtContextFactory;
 import stroom.security.common.impl.TestCredentialsServiceUserFactory;
 import stroom.security.impl.apikey.ApiKeyObjectInfoProvider;
 import stroom.security.impl.apikey.ApiKeyResourceImpl;
-import stroom.security.impl.apikey.CreateApiKeyResponseObjectInfoProvider;
+import stroom.security.impl.apikey.CreateHashedApiKeyResponseObjectInfoProvider;
 import stroom.security.impl.event.PermissionChangeEvent;
 import stroom.security.impl.event.PermissionChangeEventLifecycleModule;
 import stroom.security.impl.event.PermissionChangeEventModule;
 import stroom.security.openid.api.IdpType;
 import stroom.security.openid.api.OpenIdConfiguration;
-import stroom.security.shared.ApiKey;
-import stroom.security.shared.CreateApiKeyResponse;
+import stroom.security.shared.CreateHashedApiKeyResponse;
+import stroom.security.shared.HashedApiKey;
 import stroom.security.shared.UserNameProvider;
 import stroom.security.user.api.UserNameService;
 import stroom.util.entityevent.EntityEvent;
@@ -122,7 +122,7 @@ public class SecurityModule extends AbstractModule {
                 .bind(UserResourceImpl.class);
 
         ObjectInfoProviderBinder.create(binder())
-                .bind(ApiKey.class, ApiKeyObjectInfoProvider.class)
-                .bind(CreateApiKeyResponse.class, CreateApiKeyResponseObjectInfoProvider.class);
+                .bind(HashedApiKey.class, ApiKeyObjectInfoProvider.class)
+                .bind(CreateHashedApiKeyResponse.class, CreateHashedApiKeyResponseObjectInfoProvider.class);
     }
 }

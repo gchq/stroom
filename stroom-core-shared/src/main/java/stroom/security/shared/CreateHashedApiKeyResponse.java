@@ -10,7 +10,7 @@ import java.util.Objects;
 
 @JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
-public class CreateApiKeyResponse {
+public class CreateHashedApiKeyResponse {
 
     // The actual api key
     @JsonProperty
@@ -18,16 +18,16 @@ public class CreateApiKeyResponse {
 
     // The DB mapped object containing the hash of the api key
     @JsonProperty
-    private final ApiKey hashedApiKey;
+    private final HashedApiKey hashedApiKey;
 
     @JsonCreator
-    public CreateApiKeyResponse(@JsonProperty("apiKey") final String apiKey,
-                                @JsonProperty("hashedApiKey") final ApiKey hashedApiKey) {
+    public CreateHashedApiKeyResponse(@JsonProperty("apiKey") final String apiKey,
+                                      @JsonProperty("hashedApiKey") final HashedApiKey hashedApiKey) {
         this.apiKey = apiKey;
         this.hashedApiKey = hashedApiKey;
     }
 
-    public ApiKey getHashedApiKey() {
+    public HashedApiKey getHashedApiKey() {
         return hashedApiKey;
     }
 
@@ -43,7 +43,7 @@ public class CreateApiKeyResponse {
         if (object == null || getClass() != object.getClass()) {
             return false;
         }
-        final CreateApiKeyResponse that = (CreateApiKeyResponse) object;
+        final CreateHashedApiKeyResponse that = (CreateHashedApiKeyResponse) object;
         return Objects.equals(apiKey, that.apiKey) && Objects.equals(hashedApiKey, that.hashedApiKey);
     }
 

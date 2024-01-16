@@ -1,12 +1,12 @@
 package stroom.security.impl.apikey;
 
 import stroom.event.logging.rs.api.AutoLogged;
-import stroom.security.shared.ApiKey;
 import stroom.security.shared.ApiKeyResource;
 import stroom.security.shared.ApiKeyResultPage;
-import stroom.security.shared.CreateApiKeyRequest;
-import stroom.security.shared.CreateApiKeyResponse;
+import stroom.security.shared.CreateHashedApiKeyRequest;
+import stroom.security.shared.CreateHashedApiKeyResponse;
 import stroom.security.shared.FindApiKeyCriteria;
+import stroom.security.shared.HashedApiKey;
 import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -31,18 +31,18 @@ public class ApiKeyResourceImpl implements ApiKeyResource {
 
     @AutoLogged()
     @Override
-    public CreateApiKeyResponse create(final CreateApiKeyRequest request) {
+    public CreateHashedApiKeyResponse create(final CreateHashedApiKeyRequest request) {
         return apiKeyServiceProvider.get().create(request);
     }
 
     @Override
-    public ApiKey fetch(final Integer id) {
+    public HashedApiKey fetch(final Integer id) {
         return apiKeyServiceProvider.get().fetch(id)
                 .orElse(null);
     }
 
     @Override
-    public ApiKey update(final int id, final ApiKey apiKey) {
+    public HashedApiKey update(final int id, final HashedApiKey apiKey) {
         return apiKeyServiceProvider.get().update(apiKey);
     }
 
@@ -69,7 +69,7 @@ public class ApiKeyResourceImpl implements ApiKeyResource {
                 throw new RuntimeException("Only found " + count
                         + " out of " + ids.size()
                         + " API Key" + StringUtil.pluralSuffix(ids.size())
-                + " to delete.");
+                        + " to delete.");
             }
             return count;
         } else {

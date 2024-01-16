@@ -1,14 +1,14 @@
 package stroom.security.impl.apikey;
 
-import stroom.security.shared.CreateApiKeyResponse;
+import stroom.security.shared.CreateHashedApiKeyResponse;
 
 import event.logging.BaseObject;
 
-public class CreateApiKeyResponseObjectInfoProvider extends ApiKeyObjectInfoProvider {
+public class CreateHashedApiKeyResponseObjectInfoProvider extends ApiKeyObjectInfoProvider {
 
     @Override
     public BaseObject createBaseObject(final Object object) {
-        final CreateApiKeyResponse response = (CreateApiKeyResponse) object;
+        final CreateHashedApiKeyResponse response = (CreateHashedApiKeyResponse) object;
         return super.createBaseObject(response.getHashedApiKey());
     }
 

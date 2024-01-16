@@ -24,30 +24,30 @@ import javax.ws.rs.core.MediaType;
 @Path("/apikey" + ResourcePaths.V2)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-public interface ApiKeyResource extends RestResource, DirectRestService, FetchWithIntegerId<ApiKey> {
+public interface ApiKeyResource extends RestResource, DirectRestService, FetchWithIntegerId<HashedApiKey> {
 
     @POST
     @Path("/")
     @Operation(
             summary = "Creates a new API key",
             operationId = "createApiKey")
-    CreateApiKeyResponse create(
-            @Parameter(description = "request", required = true) final CreateApiKeyRequest request);
+    CreateHashedApiKeyResponse create(
+            @Parameter(description = "request", required = true) final CreateHashedApiKeyRequest request);
 
     @GET
     @Path("/{id}")
     @Operation(
             summary = "Fetch a dictionary doc by its UUID",
             operationId = "fetchApiKey")
-    ApiKey fetch(@PathParam("id") Integer id);
+    HashedApiKey fetch(@PathParam("id") Integer id);
 
     @PUT
     @Path("/{id}")
     @Operation(
             summary = "Update a dictionary doc",
             operationId = "updateApiKey")
-    ApiKey update(@PathParam("id") final int id,
-                  @Parameter(description = "apiKey", required = true) final ApiKey apiKey);
+    HashedApiKey update(@PathParam("id") final int id,
+                        @Parameter(description = "apiKey", required = true) final HashedApiKey apiKey);
 
     @Operation(
             summary = "Delete an API key by ID.",

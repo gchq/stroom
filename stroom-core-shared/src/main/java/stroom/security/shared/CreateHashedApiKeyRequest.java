@@ -12,7 +12,7 @@ import java.util.Objects;
 
 @JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
-public class CreateApiKeyRequest {
+public class CreateHashedApiKeyRequest {
 
     @JsonProperty
     private final UserName owner;
@@ -26,11 +26,11 @@ public class CreateApiKeyRequest {
     private final boolean enabled;
 
     @JsonCreator
-    public CreateApiKeyRequest(@JsonProperty("owner") final UserName owner,
-                               @JsonProperty("expireTimeMs") final Long expireTimeMs,
-                               @JsonProperty("name") final String name,
-                               @JsonProperty("comments") final String comments,
-                               @JsonProperty("enabled") final boolean enabled) {
+    public CreateHashedApiKeyRequest(@JsonProperty("owner") final UserName owner,
+                                     @JsonProperty("expireTimeMs") final Long expireTimeMs,
+                                     @JsonProperty("name") final String name,
+                                     @JsonProperty("comments") final String comments,
+                                     @JsonProperty("enabled") final boolean enabled) {
         this.owner = owner;
         this.expireTimeMs = expireTimeMs;
         this.name = name;
@@ -38,7 +38,7 @@ public class CreateApiKeyRequest {
         this.enabled = enabled;
     }
 
-    private CreateApiKeyRequest(final Builder builder) {
+    private CreateHashedApiKeyRequest(final Builder builder) {
         owner = builder.owner;
         expireTimeMs = builder.expireTimeMs;
         name = builder.name;
@@ -50,7 +50,7 @@ public class CreateApiKeyRequest {
         return new Builder();
     }
 
-    public static Builder builder(final CreateApiKeyRequest copy) {
+    public static Builder builder(final CreateHashedApiKeyRequest copy) {
         Builder builder = new Builder();
         builder.owner = copy.getOwner();
         builder.expireTimeMs = copy.getExpireTimeMs();
@@ -88,7 +88,7 @@ public class CreateApiKeyRequest {
         if (object == null || getClass() != object.getClass()) {
             return false;
         }
-        final CreateApiKeyRequest that = (CreateApiKeyRequest) object;
+        final CreateHashedApiKeyRequest that = (CreateHashedApiKeyRequest) object;
         return enabled == that.enabled && Objects.equals(owner, that.owner) && Objects.equals(
                 expireTimeMs,
                 that.expireTimeMs) && Objects.equals(name, that.name) && Objects.equals(comments,
@@ -154,8 +154,8 @@ public class CreateApiKeyRequest {
             return this;
         }
 
-        public CreateApiKeyRequest build() {
-            return new CreateApiKeyRequest(this);
+        public CreateHashedApiKeyRequest build() {
+            return new CreateHashedApiKeyRequest(this);
         }
     }
 }

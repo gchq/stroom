@@ -2,15 +2,14 @@ package stroom.security.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.config.global.client.presenter.ErrorEvent;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.presenter.EditApiKeyPresenter.EditApiKeyView;
-import stroom.security.shared.ApiKey;
 import stroom.security.shared.ApiKeyResource;
-import stroom.security.shared.CreateApiKeyRequest;
-import stroom.security.shared.CreateApiKeyResponse;
+import stroom.security.shared.CreateHashedApiKeyRequest;
+import stroom.security.shared.CreateHashedApiKeyResponse;
+import stroom.security.shared.HashedApiKey;
 import stroom.security.shared.PermissionNames;
 import stroom.security.shared.UserResource;
 import stroom.ui.config.client.UiConfigCache;
@@ -44,10 +43,9 @@ public class EditApiKeyPresenter
 
     private final RestFactory restFactory;
     private final ClientSecurityContext securityContext;
-//    private final ChooserPresenter<UserName> ownerChooserPresenter;
     private final UiConfigCache uiConfigCache;
 
-    private ApiKey apiKey;
+    private HashedApiKey apiKey;
     private Runnable onChangeHandler = null;
 
     @Inject
@@ -55,23 +53,16 @@ public class EditApiKeyPresenter
                                final EditApiKeyView view,
                                final RestFactory restFactory,
                                final ClientSecurityContext securityContext,
-//                               final ChooserPresenter<UserName> ownerChooserPresenter,
                                final UiConfigCache uiConfigCache) {
         super(eventBus, view);
         this.restFactory = restFactory;
         this.securityContext = securityContext;
-//        this.ownerChooserPresenter = ownerChooserPresenter;
         this.uiConfigCache = uiConfigCache;
-//        initOwnerChooserPresenter(ownerChooserPresenter);
     }
 
     @Override
     protected void onBind() {
         super.onBind();
-//        registerHandler(ownerChooserPresenter.addDataSelectionHandler(e -> {
-//            final UserName selected = ownerChooserPresenter.getSelected();
-//            getView().setOwner(selected);
-//        }));
         getView().setCanSelectOwner(securityContext.hasAppPermission(PermissionNames.MANAGE_USERS_PERMISSION));
 
         final Rest<List<UserName>> rest = restFactory.create();
@@ -81,32 +72,6 @@ public class EditApiKeyPresenter
                 .call(USER_RESOURCE)
                 .getAssociates(null);
     }
-
-//    private void initOwnerChooserPresenter(final ChooserPresenter<UserName> ownerChooserPresenter) {
-//        if (securityContext.hasAppPermission(PermissionNames.MANAGE_USERS_PERMISSION)) {
-//            ownerChooserPresenter.setDisplayValueFunction(userName -> {
-//                if (userName != null) {
-//                    if (!GwtNullSafe.isBlankString(userName.getFullName())) {
-//                        return userName.getUserIdentityForAudit() + " (" + userName.getFullName() + ")";
-//                    } else {
-//                        return userName.getUserIdentityForAudit();
-//                    }
-//                } else {
-//                    return null;
-//                }
-//            });
-//
-//            ownerChooserPresenter.setDataSupplier((filter, consumer) -> {
-//                final Rest<List<UserName>> rest = restFactory.create();
-//                rest
-//                        .onSuccess(userNames -> consumer.accept(userNames.stream()
-//                                .sorted(Comparator.comparing(UserName::getUserIdentityForAudit))
-//                                .collect(Collectors.toList())))
-//                        .call(USER_RESOURCE)
-//                        .getAssociates(filter);
-//            });
-//        }
-//    }
 
     public void showCreateDialog(final Mode mode,
                                  final Runnable onChangeHandler) {
@@ -138,7 +103,7 @@ public class EditApiKeyPresenter
                 .fire();
     }
 
-    public void showEditDialog(final ApiKey apiKey,
+    public void showEditDialog(final HashedApiKey apiKey,
                                final Mode mode,
                                final Runnable onChangeHandler) {
         this.onChangeHandler = onChangeHandler;
@@ -167,9 +132,9 @@ public class EditApiKeyPresenter
     @Override
     public void onHideRequest(final HidePopupRequestEvent event) {
 //        GWT.log("event: " + event);
-        if (event.isOk()) {
+        final Mode mode = getView().getMode();
+        if (event.isOk() || Mode.POST_CREATE.equals(mode)) {
             uiConfigCache.get().onSuccess(uiConfig -> {
-                final Mode mode = getView().getMode();
 //                GWT.log("mode: " + mode);
                 if (Mode.PRE_CREATE.equals(mode)) {
                     handlePreCreateModeHide(event, uiConfig);
@@ -189,7 +154,7 @@ public class EditApiKeyPresenter
             if (GwtNullSafe.isBlankString(getView().getName())) {
                 AlertEvent.fireError(this, "A name must be provided for the API key.", null);
             } else {
-                final ApiKey updatedApiKey = ApiKey.builder(this.apiKey)
+                final HashedApiKey updatedApiKey = HashedApiKey.builder(this.apiKey)
                         .withName(getView().getName())
                         .withComments(getView().getComments())
                         .withEnabled(getView().isEnabled())
@@ -197,7 +162,7 @@ public class EditApiKeyPresenter
 
 //                GWT.log("ID: " + this.apiKey.getId());
 
-                final Rest<ApiKey> rest = restFactory.create();
+                final Rest<HashedApiKey> rest = restFactory.create();
                 rest
                         .onSuccess(apiKey -> {
                             this.apiKey = apiKey;
@@ -205,8 +170,8 @@ public class EditApiKeyPresenter
                             event.hide();
                         })
                         .onFailure(throwable -> {
-                            ErrorEvent.fire(this, "Error updating API key: "
-                                    + throwable.getMessage());
+                            AlertEvent.fireError(this, "Error updating API key: "
+                                    + throwable.getMessage(), null);
                         })
                         .call(API_KEY_RESOURCE)
                         .update(this.apiKey.getId(), updatedApiKey);
@@ -215,15 +180,37 @@ public class EditApiKeyPresenter
     }
 
     private void handlePostCreateModeHide(final HidePopupRequestEvent event) {
-        ConfirmEvent.fire(this,
-                "You will never be able to view the API Key after you close " +
-                        "this dialog. Stroom does not store the API Key. You must copy it elsewhere first. " +
-                        "Are you sure you want to close this dialog?",
-                ok -> {
-                    if (ok) {
-                        event.hide();
-                    }
-                });
+        if (event.isOk()) {
+            ConfirmEvent.fire(this,
+                    "You will never be able to view the API Key after you close " +
+                            "this dialog. Stroom does not store the API Key. You must copy it elsewhere first. " +
+                            "Are you sure you want to close this dialog?",
+                    ok -> {
+                        if (ok) {
+                            event.hide();
+                        }
+                    });
+        } else {
+            ConfirmEvent.fire(this,
+                    "Cancelling will delete the API Key that you have just created, are you sure?",
+                    ok -> {
+                        if (ok) {
+                            // cancel clicked so delete the created key
+                            final Rest<Boolean> rest = restFactory.create();
+                            rest
+                                    .onSuccess(didDelete -> {
+                                        GwtNullSafe.run(onChangeHandler);
+                                        event.hide();
+                                    })
+                                    .onFailure(throwable -> {
+                                        AlertEvent.fireError(this, "Error deleting API key: "
+                                                + throwable.getMessage(), null);
+                                    })
+                                    .call(API_KEY_RESOURCE)
+                                    .delete(this.apiKey.getId());
+                        }
+                    });
+        }
     }
 
     private void handlePreCreateModeHide(final HidePopupRequestEvent event,
@@ -239,14 +226,14 @@ public class EditApiKeyPresenter
         } else if (owner == null) {
             AlertEvent.fireError(this, "An owner must be provided for the API key.", null);
         } else {
-            CreateApiKeyRequest request = new CreateApiKeyRequest(
+            CreateHashedApiKeyRequest request = new CreateHashedApiKeyRequest(
                     owner,
                     expireTimeEpochMs,
                     getView().getName(),
                     getView().getComments(),
                     getView().isEnabled());
 //            GWT.log("sending create req");
-            final Rest<CreateApiKeyResponse> rest = restFactory.create();
+            final Rest<CreateHashedApiKeyResponse> rest = restFactory.create();
             rest
                     .onSuccess(response -> {
                         apiKey = response.getHashedApiKey();
@@ -299,8 +286,6 @@ public class EditApiKeyPresenter
 
 
     public interface EditApiKeyView extends View, HasUiHandlers<HideRequestUiHandlers> {
-
-//        void setCanSelectOwner(final boolean canSelectOwner);
 
         void setCanSelectOwner(boolean canSelectOwner);
 

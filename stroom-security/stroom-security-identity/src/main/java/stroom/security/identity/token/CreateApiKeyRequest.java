@@ -27,6 +27,7 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@Deprecated // Keeping it else it breaks the React code
 public class CreateApiKeyRequest {
 
     @NotNull

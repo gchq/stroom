@@ -2,7 +2,6 @@ package stroom.security.impl;
 
 import stroom.security.api.ProcessingUserIdentityProvider;
 import stroom.security.api.UserIdentity;
-import stroom.security.openid.api.AbstractOpenIdConfig;
 import stroom.security.openid.api.IdpType;
 
 import java.util.Map;
@@ -22,7 +21,7 @@ public class DelegatingProcessingUserIdentityProvider implements ProcessingUserI
 
     @Inject // MapBinder injection
     public DelegatingProcessingUserIdentityProvider(final Map<IdpType, ProcessingUserIdentityProvider> delegates,
-                                                    final Provider<AbstractOpenIdConfig> openIdConfigProvider) {
+                                                    final Provider<StroomOpenIdConfig> openIdConfigProvider) {
         // Bake in the delegate as changing the idp type requires a restart so no point
         // checking the config on every call
         final IdpType idpType = openIdConfigProvider.get().getIdentityProviderType();

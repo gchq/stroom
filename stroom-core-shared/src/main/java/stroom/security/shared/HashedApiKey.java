@@ -18,7 +18,7 @@ import java.util.Objects;
  */
 @JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
-public class ApiKey implements HasAuditInfoGetters, HasIntegerId {
+public class HashedApiKey implements HasAuditInfoGetters, HasIntegerId {
 
     @JsonProperty
     private final Integer id;
@@ -37,8 +37,6 @@ public class ApiKey implements HasAuditInfoGetters, HasIntegerId {
     @JsonProperty
     private final String apiKeyHash;
     @JsonProperty
-    private final String apiKeySalt;
-    @JsonProperty
     private final String apiKeyPrefix;
     @JsonProperty
     private final Long expireTimeMs;
@@ -50,20 +48,19 @@ public class ApiKey implements HasAuditInfoGetters, HasIntegerId {
     private final boolean enabled;
 
     @JsonCreator
-    public ApiKey(@JsonProperty("id") final Integer id,
-                  @JsonProperty("version") final int version,
-                  @JsonProperty("createTimeMs") final Long createTimeMs,
-                  @JsonProperty("createUser") final String createUser,
-                  @JsonProperty("updateTimeMs") final Long updateTimeMs,
-                  @JsonProperty("updateUser") final String updateUser,
-                  @JsonProperty("owner") final UserName owner,
-                  @JsonProperty("apiKeyHash") final String apiKeyHash,
-                  @JsonProperty("apiKeySalt") final String apiKeySalt,
-                  @JsonProperty("apiKeyPrefix") final String apiKeyPrefix,
-                  @JsonProperty("expireTimeMs") final Long expireTimeMs,
-                  @JsonProperty("name") final String name,
-                  @JsonProperty("comments") final String comments,
-                  @JsonProperty("enabled") final boolean enabled) {
+    public HashedApiKey(@JsonProperty("id") final Integer id,
+                        @JsonProperty("version") final int version,
+                        @JsonProperty("createTimeMs") final Long createTimeMs,
+                        @JsonProperty("createUser") final String createUser,
+                        @JsonProperty("updateTimeMs") final Long updateTimeMs,
+                        @JsonProperty("updateUser") final String updateUser,
+                        @JsonProperty("owner") final UserName owner,
+                        @JsonProperty("apiKeyHash") final String apiKeyHash,
+                        @JsonProperty("apiKeyPrefix") final String apiKeyPrefix,
+                        @JsonProperty("expireTimeMs") final Long expireTimeMs,
+                        @JsonProperty("name") final String name,
+                        @JsonProperty("comments") final String comments,
+                        @JsonProperty("enabled") final boolean enabled) {
         this.id = id;
         this.version = version;
         this.createTimeMs = createTimeMs;
@@ -72,7 +69,6 @@ public class ApiKey implements HasAuditInfoGetters, HasIntegerId {
         this.updateUser = updateUser;
         this.owner = owner;
         this.apiKeyHash = apiKeyHash;
-        this.apiKeySalt = apiKeySalt;
         this.apiKeyPrefix = apiKeyPrefix;
         this.expireTimeMs = expireTimeMs;
         this.name = name;
@@ -80,7 +76,7 @@ public class ApiKey implements HasAuditInfoGetters, HasIntegerId {
         this.enabled = enabled;
     }
 
-    private ApiKey(final Builder builder) {
+    private HashedApiKey(final Builder builder) {
         id = builder.id;
         version = builder.version;
         createTimeMs = builder.createTimeMs;
@@ -89,7 +85,6 @@ public class ApiKey implements HasAuditInfoGetters, HasIntegerId {
         updateUser = builder.updateUser;
         owner = builder.owner;
         apiKeyHash = builder.apiKeyHash;
-        apiKeySalt = builder.apiKeySalt;
         apiKeyPrefix = builder.apiKeyPrefix;
         expireTimeMs = builder.expireTimeMs;
         name = builder.name;
@@ -101,7 +96,7 @@ public class ApiKey implements HasAuditInfoGetters, HasIntegerId {
         return new Builder();
     }
 
-    public static Builder builder(final ApiKey copy) {
+    public static Builder builder(final HashedApiKey copy) {
         Builder builder = new Builder();
         builder.id = copy.getId();
         builder.version = copy.getVersion();
@@ -111,7 +106,6 @@ public class ApiKey implements HasAuditInfoGetters, HasIntegerId {
         builder.updateUser = copy.getUpdateUser();
         builder.owner = copy.getOwner();
         builder.apiKeyHash = copy.getApiKeyHash();
-        builder.apiKeySalt = copy.getApiKeySalt();
         builder.apiKeyPrefix = copy.getApiKeyPrefix();
         builder.expireTimeMs = copy.getExpireTimeMs();
         builder.name = copy.getName();
@@ -157,10 +151,6 @@ public class ApiKey implements HasAuditInfoGetters, HasIntegerId {
         return apiKeyHash;
     }
 
-    public String getApiKeySalt() {
-        return apiKeySalt;
-    }
-
     public String getApiKeyPrefix() {
         return apiKeyPrefix;
     }
@@ -189,7 +179,7 @@ public class ApiKey implements HasAuditInfoGetters, HasIntegerId {
         if (object == null || getClass() != object.getClass()) {
             return false;
         }
-        final ApiKey apiKey1 = (ApiKey) object;
+        final HashedApiKey apiKey1 = (HashedApiKey) object;
         return version == apiKey1.version && enabled == apiKey1.enabled && Objects.equals(id,
                 apiKey1.id) && Objects.equals(createTimeMs, apiKey1.createTimeMs) && Objects.equals(
                 createUser,
@@ -197,7 +187,6 @@ public class ApiKey implements HasAuditInfoGetters, HasIntegerId {
                 apiKey1.updateTimeMs) && Objects.equals(updateUser,
                 apiKey1.updateUser) && Objects.equals(owner, apiKey1.owner)
                 && Objects.equals(apiKeyHash, apiKey1.apiKeyHash)
-                && Objects.equals(apiKeySalt, apiKey1.apiKeySalt)
                 && Objects.equals(apiKeyPrefix, apiKey1.apiKeyPrefix)
                 && Objects.equals(expireTimeMs, apiKey1.expireTimeMs) && Objects.equals(
                 name,
@@ -214,7 +203,6 @@ public class ApiKey implements HasAuditInfoGetters, HasIntegerId {
                 updateUser,
                 owner,
                 apiKeyHash,
-                apiKeySalt,
                 apiKeyPrefix,
                 expireTimeMs,
                 name,
@@ -229,7 +217,6 @@ public class ApiKey implements HasAuditInfoGetters, HasIntegerId {
                 ", version=" + version +
                 ", owner=" + owner +
                 ", apiKeyHash='" + apiKeyHash + '\'' +
-                ", apiKeySalt='" + apiKeySalt + '\'' +
                 ", apiKeyPrefix='" + apiKeyPrefix + '\'' +
                 ", expireTimeMs=" + expireTimeMs + '\'' +
                 ", name='" + name + '\'' +
@@ -250,7 +237,6 @@ public class ApiKey implements HasAuditInfoGetters, HasIntegerId {
         private String updateUser;
         private UserName owner;
         private String apiKeyHash;
-        private String apiKeySalt;
         private String apiKeyPrefix;
         private Long expireTimeMs;
         private String name;
@@ -316,11 +302,6 @@ public class ApiKey implements HasAuditInfoGetters, HasIntegerId {
             return this;
         }
 
-        public Builder withApiKeySalt(final String val) {
-            apiKeySalt = val;
-            return this;
-        }
-
         public Builder withApiKeyPrefix(final String val) {
             apiKeyPrefix = val;
             return this;
@@ -346,8 +327,8 @@ public class ApiKey implements HasAuditInfoGetters, HasIntegerId {
             return this;
         }
 
-        public ApiKey build() {
-            return new ApiKey(this);
+        public HashedApiKey build() {
+            return new HashedApiKey(this);
         }
     }
 }

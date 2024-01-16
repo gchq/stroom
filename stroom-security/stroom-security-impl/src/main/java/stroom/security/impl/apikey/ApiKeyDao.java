@@ -2,27 +2,27 @@ package stroom.security.impl.apikey;
 
 import stroom.security.impl.HashedApiKeyParts;
 import stroom.security.impl.apikey.ApiKeyService.DuplicateHashException;
-import stroom.security.shared.ApiKey;
+import stroom.security.impl.apikey.ApiKeyService.DuplicatePrefixException;
 import stroom.security.shared.ApiKeyResultPage;
-import stroom.security.shared.CreateApiKeyRequest;
+import stroom.security.shared.CreateHashedApiKeyRequest;
 import stroom.security.shared.FindApiKeyCriteria;
+import stroom.security.shared.HashedApiKey;
 import stroom.util.NullSafe;
 import stroom.util.filter.FilterFieldMapper;
 import stroom.util.filter.FilterFieldMappers;
 import stroom.util.shared.UserName;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.Optional;
 
 public interface ApiKeyDao {
 
-    FilterFieldMappers<ApiKey> FILTER_FIELD_MAPPERS = FilterFieldMappers.of(
-            FilterFieldMapper.of(FindApiKeyCriteria.FIELD_DEF_OWNER_DISPLAY_NAME, (ApiKey apiKey) ->
+    FilterFieldMappers<HashedApiKey> FILTER_FIELD_MAPPERS = FilterFieldMappers.of(
+            FilterFieldMapper.of(FindApiKeyCriteria.FIELD_DEF_OWNER_DISPLAY_NAME, (HashedApiKey apiKey) ->
                     NullSafe.get(apiKey.getOwner(), UserName::getUserIdentityForAudit)),
-            FilterFieldMapper.of(FindApiKeyCriteria.FIELD_DEF_NAME, ApiKey::getName),
-            FilterFieldMapper.of(FindApiKeyCriteria.FIELD_DEF_PREFIX, ApiKey::getApiKeyPrefix),
-            FilterFieldMapper.of(FindApiKeyCriteria.FIELD_DEF_COMMENTS, ApiKey::getComments),
+            FilterFieldMapper.of(FindApiKeyCriteria.FIELD_DEF_NAME, HashedApiKey::getName),
+            FilterFieldMapper.of(FindApiKeyCriteria.FIELD_DEF_PREFIX, HashedApiKey::getApiKeyPrefix),
+            FilterFieldMapper.of(FindApiKeyCriteria.FIELD_DEF_COMMENTS, HashedApiKey::getComments),
             FilterFieldMapper.of(FindApiKeyCriteria.FIELD_DEF_ENABLED,
                     apiKey -> apiKey.getEnabled()
                             ? "enabled"
@@ -41,16 +41,17 @@ public interface ApiKeyDao {
     Optional<String> fetchVerifiedUserUuid(final String apiKeyHash);
 
     /**
-     * Fetch all API keys matching the given API key prefix.
+     * Fetch an API key by its hash if it is enabled and not expired.
      */
-    List<ApiKey> fetchValidApiKeysByPrefix(final String apiKeyPrefix);
+    Optional<HashedApiKey> fetchValidApiKeyByHash(String hash);
 
-    ApiKey create(final CreateApiKeyRequest createApiKeyRequest,
-                  final HashedApiKeyParts hashedApiKeyParts) throws DuplicateHashException;
+    HashedApiKey create(final CreateHashedApiKeyRequest createHashedApiKeyRequest,
+                        final HashedApiKeyParts hashedApiKeyParts) throws DuplicateHashException,
+            DuplicatePrefixException;
 
-    Optional<ApiKey> fetch(final int id);
+    Optional<HashedApiKey> fetch(final int id);
 
-    ApiKey update(final ApiKey apiKey);
+    HashedApiKey update(final HashedApiKey apiKey);
 
     boolean delete(final int id);
 

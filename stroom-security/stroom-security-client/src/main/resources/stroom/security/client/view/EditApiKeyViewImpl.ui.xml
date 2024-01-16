@@ -20,6 +20,15 @@
         <form:FormGroup ui:field="prefixFormGroup" identity="prefix" label="API Key Prefix">
             <g:TextBox ui:field="prefixTextBox" addStyleNames="w-100"/>
         </form:FormGroup>
+        <form:FormGroup ui:field="apiKeyFormGroup" identity="apiKey" label="API Key (you must copy this)">
+            <g:FlowPanel styleName="max dock-container-vertical">
+                <g:TextArea ui:field="apiKeyTextArea" addStyleNames="w-100"/>
+                <g:FlowPanel styleName="max dock-container-horizontal align-center">
+                    <b:ButtonPanel ui:field="apiKeyButtonPanel" />
+                    <g:Label ui:field="copyToClipboardLabel" />
+                </g:FlowPanel>
+            </g:FlowPanel>
+        </form:FormGroup>
         <form:FormGroup identity="enabled" label="Enabled">
             <tickbox:CustomCheckBox ui:field="enabledCheckBox" identity="enabledCheckBox" label="Enabled"/>
         </form:FormGroup>
@@ -28,15 +37,6 @@
         </form:FormGroup>
         <form:FormGroup identity="expiry" label="Expiry Date">
             <c:MyDateBox ui:field="expiresOnDateBox" addStyleNames="w-100"/>
-        </form:FormGroup>
-        <form:FormGroup ui:field="apiKeyFormGroup" identity="apiKey" label="API Key">
-            <g:FlowPanel styleName="max dock-container-vertical">
-                <g:TextArea ui:field="apiKeyTextArea" addStyleNames="w-100"/>
-                <g:FlowPanel styleName="max dock-container-horizontal align-center">
-                    <b:ButtonPanel ui:field="apiKeyButtonPanel" />
-                    <g:Label ui:field="copyToClipboardLabel" />
-                </g:FlowPanel>
-            </g:FlowPanel>
         </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder>

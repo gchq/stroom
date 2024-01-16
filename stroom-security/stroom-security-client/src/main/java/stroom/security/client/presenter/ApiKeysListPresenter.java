@@ -18,10 +18,10 @@ import stroom.dispatch.client.RestFactory;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.presenter.EditApiKeyPresenter.Mode;
-import stroom.security.shared.ApiKey;
 import stroom.security.shared.ApiKeyResource;
 import stroom.security.shared.ApiKeyResultPage;
 import stroom.security.shared.FindApiKeyCriteria;
+import stroom.security.shared.HashedApiKey;
 import stroom.security.shared.PermissionNames;
 import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
@@ -34,13 +34,11 @@ import stroom.widget.util.client.MultiSelectionModelImpl;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.client.Timer;
-import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
-import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -65,18 +63,18 @@ public class ApiKeysListPresenter
 
     //    private final Set<Integer> selectedApiKeyIds = new HashSet<>();
     private final Selection<Integer> selection = new Selection<>(false, new HashSet<>());
-    private final MultiSelectionModelImpl<ApiKey> selectionModel;
-    private final DataGridSelectionEventManager<ApiKey> selectionEventManager;
+    private final MultiSelectionModelImpl<HashedApiKey> selectionModel;
+    private final DataGridSelectionEventManager<HashedApiKey> selectionEventManager;
     private final QuickFilterTimer timer = new QuickFilterTimer();
-    private final RestDataProvider<ApiKey, ApiKeyResultPage> dataProvider;
-    private final MyDataGrid<ApiKey> dataGrid;
+    private final RestDataProvider<HashedApiKey, ApiKeyResultPage> dataProvider;
+    private final MyDataGrid<HashedApiKey> dataGrid;
     private final InlineSvgButton addButton;
     private final InlineSvgButton editButton;
     private final InlineSvgButton deleteButton;
 
     private Range range;
     private Consumer<ApiKeyResultPage> dataConsumer;
-    private Map<Integer, ApiKey> apiKeys = new HashMap<>();
+    private Map<Integer, HashedApiKey> apiKeys = new HashMap<>();
 
     @Inject
     public ApiKeysListPresenter(final EventBus eventBus,
@@ -100,21 +98,20 @@ public class ApiKeysListPresenter
             // No Manage Users perms so can only see their own keys
             criteria.setOwner(securityContext.getUserName());
         }
-        criteria.setSort(FindApiKeyCriteria.FIELD_NAME);
+        criteria.setSort(FindApiKeyCriteria.FIELD_EXPIRE_TIME);
 
         addButton = new InlineSvgButton();
         editButton = new InlineSvgButton();
         deleteButton = new InlineSvgButton();
         initButtons();
         initTableColumns();
-        dataProvider = new RestDataProvider<ApiKey, ApiKeyResultPage>(eventBus) {
+        dataProvider = new RestDataProvider<HashedApiKey, ApiKeyResultPage>(eventBus) {
             @Override
             protected void exec(final Range range,
                                 final Consumer<ApiKeyResultPage> dataConsumer,
                                 final Consumer<Throwable> throwableConsumer) {
                 ApiKeysListPresenter.this.range = range;
                 ApiKeysListPresenter.this.dataConsumer = dataConsumer;
-//                delayedUpdate.reset();
                 fetchData(range, dataConsumer, throwableConsumer);
             }
         };
@@ -162,27 +159,21 @@ public class ApiKeysListPresenter
     private void createNewKey() {
         editApiKeyPresenter.showCreateDialog(Mode.PRE_CREATE, () -> {
             dataProvider.refresh();
-//                selected = newPresenter.getUserName();
-//                if (selected != null) {
             HidePopupEvent.builder(this).fire();
-//                }
         });
     }
 
     private void editSelectedKey() {
-        final ApiKey apiKey = selectionModel.getSelected();
+        final HashedApiKey apiKey = selectionModel.getSelected();
         editApiKeyPresenter.showEditDialog(apiKey, Mode.EDIT, () -> {
             dataProvider.refresh();
-//                selected = newPresenter.getUserName();
-//                if (selected != null) {
             HidePopupEvent.builder(this).fire();
-//                }
         });
     }
 
     private void deleteSelectedKeys() {
         // This is the one selected using row selection, not the checkbox
-        final ApiKey selectedApiKey = selectionModel.getSelected();
+        final HashedApiKey selectedApiKey = selectionModel.getSelected();
 
         // The ones selected with the checkboxes
         final Set<Integer> selectedSet = GwtNullSafe.set(selection.getSet());
@@ -206,12 +197,14 @@ public class ApiKeysListPresenter
         final int cnt = selectedItems.size();
         if (cnt == 1) {
             final int id = selectedItems.get(0);
-            final ApiKey apiKey = apiKeys.get(id);
+            final HashedApiKey apiKey = apiKeys.get(id);
             final String msg = "Are you sure you want to delete API Key '"
                     + apiKey.getName()
                     + "' with prefix '"
                     + apiKey.getApiKeyPrefix()
-                    + "'? Once deleted, anyone using this API Key will no longer by able to authenticate with it.";
+                    + "'?" +
+                    "\n\nOnce deleted, anyone using this API Key will no longer by able to authenticate with it "
+                    + "and it will not be possible to re-create it.";
             ConfirmEvent.fire(this, msg, ok -> {
 //                GWT.log("id: " + id);
                 if (ok) {
@@ -226,8 +219,9 @@ public class ApiKeysListPresenter
                 }
             });
         } else if (cnt > 1) {
-            final String msg = "Are you sure you want to delete " + selectedItems.size() + " API keys? " +
-                    "Once deleted, anyone using these API Keys will no longer by able to authenticate with them.";
+            final String msg = "Are you sure you want to delete " + selectedItems.size() + " API keys?" +
+                    "\n\nOnce deleted, anyone using these API Keys will no longer by able to authenticate with them " +
+                    "and it will not be possible to re-create them.";
             ConfirmEvent.fire(this, msg, ok -> {
                 if (ok) {
                     final Rest<Integer> rest = restFactory.create();
@@ -245,8 +239,8 @@ public class ApiKeysListPresenter
 
     private void initTableColumns() {
 
-        final Column<ApiKey, TickBoxState> checkBoxColumn = DataGridUtil.columnBuilder(
-                        (ApiKey row) ->
+        final Column<HashedApiKey, TickBoxState> checkBoxColumn = DataGridUtil.columnBuilder(
+                        (HashedApiKey row) ->
                                 TickBoxState.fromBoolean(selection.isMatch(row.getId())),
                         () -> TickBoxCell.create(false, false))
                 .build();
@@ -267,45 +261,45 @@ public class ApiKeysListPresenter
         // Need manage users perm to CRUD keys for other users
         // If you don't have it no point in showing owner col
         if (securityContext.hasAppPermission(PermissionNames.MANAGE_USERS_PERMISSION)) {
-            final Column<ApiKey, String> ownerColumn = DataGridUtil.textColumnBuilder(
-                            (ApiKey row) ->
+            final Column<HashedApiKey, String> ownerColumn = DataGridUtil.textColumnBuilder(
+                            (HashedApiKey row) ->
                                     row.getOwner().getUserIdentityForAudit())
-                    .enabledWhen(ApiKey::getEnabled)
+                    .enabledWhen(HashedApiKey::getEnabled)
                     .withSorting(FindApiKeyCriteria.FIELD_OWNER)
                     .build();
             dataGrid.addResizableColumn(ownerColumn, "Owner", 250);
         }
 
-        final Column<ApiKey, String> nameColumn = DataGridUtil.textColumnBuilder(ApiKey::getName)
-                .enabledWhen(ApiKey::getEnabled)
+        final Column<HashedApiKey, String> nameColumn = DataGridUtil.textColumnBuilder(HashedApiKey::getName)
+                .enabledWhen(HashedApiKey::getEnabled)
                 .withSorting(FindApiKeyCriteria.FIELD_NAME)
                 .build();
         dataGrid.addResizableColumn(nameColumn, "Name", 250);
 
-        final Column<ApiKey, String> prefixColumn = DataGridUtil.textColumnBuilder(ApiKey::getApiKeyPrefix)
-                .enabledWhen(ApiKey::getEnabled)
+        final Column<HashedApiKey, String> prefixColumn = DataGridUtil.textColumnBuilder(HashedApiKey::getApiKeyPrefix)
+                .enabledWhen(HashedApiKey::getEnabled)
                 .withSorting(FindApiKeyCriteria.FIELD_PREFIX)
                 .build();
         dataGrid.addColumn(prefixColumn, "Key Prefix", 130);
 
-        final Column<ApiKey, String> enabledColumn = DataGridUtil.textColumnBuilder((ApiKey apiKey) ->
+        final Column<HashedApiKey, String> enabledColumn = DataGridUtil.textColumnBuilder((HashedApiKey apiKey) ->
                         apiKey.getEnabled()
                                 ? "Enabled"
                                 : "Disabled")
-                .enabledWhen(ApiKey::getEnabled)
+                .enabledWhen(HashedApiKey::getEnabled)
                 .withSorting(FindApiKeyCriteria.FIELD_STATE)
                 .build();
         dataGrid.addColumn(enabledColumn, "State", ColumnSizeConstants.SMALL_COL);
 
-        final Column<ApiKey, String> expiresOnColumn = DataGridUtil.textColumnBuilder(
-                        ApiKey::getExpireTimeMs, dateTimeFormatter::formatWithDuration)
-                .enabledWhen(ApiKey::getEnabled)
+        final Column<HashedApiKey, String> expiresOnColumn = DataGridUtil.textColumnBuilder(
+                        HashedApiKey::getExpireTimeMs, dateTimeFormatter::formatWithDuration)
+                .enabledWhen(HashedApiKey::getEnabled)
                 .withSorting(FindApiKeyCriteria.FIELD_EXPIRE_TIME)
                 .build();
         dataGrid.addColumn(expiresOnColumn, "Expires On", ColumnSizeConstants.DATE_AND_DURATION_COL);
 
-        final Column<ApiKey, String> commentsColumn = DataGridUtil.textColumnBuilder(ApiKey::getComments)
-                .enabledWhen(ApiKey::getEnabled)
+        final Column<HashedApiKey, String> commentsColumn = DataGridUtil.textColumnBuilder(HashedApiKey::getComments)
+                .enabledWhen(HashedApiKey::getEnabled)
                 .withSorting(FindApiKeyCriteria.FIELD_COMMENTS)
                 .build();
         dataGrid.addAutoResizableColumn(commentsColumn, "Comments", ColumnSizeConstants.BIG_COL);
@@ -395,15 +389,5 @@ public class ApiKeysListPresenter
         public void setName(final String name) {
             this.name = name;
         }
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    @Deprecated
-    public interface ApiKeysListView extends View {
-
-        void setTable(Widget widget);
     }
 }

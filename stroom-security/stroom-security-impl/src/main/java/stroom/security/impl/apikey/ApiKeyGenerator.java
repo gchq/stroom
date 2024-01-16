@@ -103,17 +103,18 @@ public class ApiKeyGenerator {
      * <pre>{@code sak_<truncated hash>_<random code>}</pre>
      * where:
      * <p>
-     * {@code <hash>} is the SHA1 hash of {@code <random code>} encoded in Base58 and truncated to the first
-     * seven characters. This acts as a checksum for the random code part so you can be confident that something
+     * {@code <hash>} is the SHA2-256 hash of {@code <random code>} and truncated to the first
+     * ten characters. This acts as a checksum for the random code part so you can be confident that something
      * that looks like a stroom api key is actually one. As the prefix is stored in Stroom, it serves as a way
      * for the user to match a key they have with the API Key record in stroom (that doesn't hold the full key).
      * </p>
      * <p>
-     * {@code <random code>} is a string of crypto random characters using the Base58 character set. This is e
+     * {@code <random code>} is a string of 128 crypto random characters using the Base58 character set.
      * </p>
      *
-     * <p>The following cyberchef recipe takes a full API key as input and highlights the hash part if it is valid,
-     * thus indicating that the API key is a valid one.</p>
+     * <p>The following <a href="https://gchq.github.io/CyberChef/">cyberchef</a> recipe takes a full API key
+     * as input and highlights the hash part if it is valid, thus indicating that the API key is a valid one.
+     * </p>
      * <pre>
      *
      * Register('sak_(.*)_.*$',true,false,false)
@@ -134,7 +135,7 @@ public class ApiKeyGenerator {
                 StringUtil.ALLOWED_CHARS_BASE_58_STYLE);
 
         // Generate a short hash of the randomCode. This is not THE hash. It just acts as a
-        // checksum for the random code part of the key so you can reasonably confidently
+        // checksum for the random code part of the key, so you can reasonably confidently
         // tell if a string is a stroom api key or not.
         final String randomCodeHash = computeTruncatedHash(randomCode);
         return String.join(API_KEY_SEPARATOR, API_KEY_TYPE, randomCodeHash, randomCode);
@@ -172,10 +173,39 @@ public class ApiKeyGenerator {
         return parts[0] + API_KEY_SEPARATOR + parts[1] + API_KEY_SEPARATOR;
     }
 
-    String createRandomBase58String(final int length) {
-        return StringUtil.createRandomCode(
-                secureRandom,
-                length,
-                StringUtil.ALLOWED_CHARS_BASE_58_STYLE);
+
+    // --------------------------------------------------------------------------------
+
+
+    record ApiKeyParts(String type, String hash, String randomCode) {
+
+        static ApiKeyParts fromApiKey(final String apiKey) {
+            Objects.requireNonNull(apiKey);
+            final String[] parts = API_KEY_SEPARATOR_PATTERN.split(apiKey.trim());
+            if (parts.length != 3) {
+                throw new IllegalArgumentException("Invalid key format, expecting three parts.");
+            }
+            return new ApiKeyParts(parts[0], parts[1], parts[2]);
+        }
+
+        String asApiKey() {
+            return String.join(API_KEY_SEPARATOR, type, hash, randomCode);
+        }
+
+        /**
+         * For a key like
+         * <pre>{@code
+         * sak_50910c4ef3_Lz3mnbGYS14fn14LWZFvCn2wPD2bB.....yFimeDifW2FZmj8TixAAgGMM1BeJLpT5cN5ztTuNK3SZ8JZogL
+         * }</pre>
+         * return
+         * <pre>{@code
+         * sak_50910c4ef3_
+         * }</pre>
+         * This is to allow a user to identify their key. This prefix part may not be unique as it is only
+         * 10 chars of the hash, however it probably is, so is good enough.
+         */
+        String asPrefix() {
+            return String.join(API_KEY_SEPARATOR, type, hash) + API_KEY_SEPARATOR;
+        }
     }
 }

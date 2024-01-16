@@ -5,8 +5,8 @@ import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.security.api.SecurityContext;
 import stroom.security.impl.UserService;
 import stroom.security.impl.apikey.ApiKeyService;
-import stroom.security.shared.CreateApiKeyRequest;
-import stroom.security.shared.CreateApiKeyResponse;
+import stroom.security.shared.CreateHashedApiKeyRequest;
+import stroom.security.shared.CreateHashedApiKeyResponse;
 import stroom.security.shared.User;
 import stroom.util.NullSafe;
 import stroom.util.logging.LogUtil;
@@ -117,7 +117,7 @@ public class CreateApiKeyCommand extends AbstractStroomAppCommand {
                 .map(User::asUserName)
                 .ifPresentOrElse(
                         userName -> {
-                            final CreateApiKeyResponse response = createApiKey(namespace, userName);
+                            final CreateHashedApiKeyResponse response = createApiKey(namespace, userName);
                             if (outputApiKey(response, outputPath)) {
                                 final String msg = LogUtil.message("API key successfully created for user '{}'",
                                         userId);
@@ -138,8 +138,8 @@ public class CreateApiKeyCommand extends AbstractStroomAppCommand {
                         });
     }
 
-    private CreateApiKeyResponse createApiKey(final Namespace namespace,
-                                              final UserName userName) {
+    private CreateHashedApiKeyResponse createApiKey(final Namespace namespace,
+                                                    final UserName userName) {
         final String apiKeyName = namespace.getString(API_KEY_NAME_ARG_NAME);
         if (NullSafe.isBlankString(apiKeyName)) {
             throw new RuntimeException("A name must be provided for the API key");
@@ -156,7 +156,7 @@ public class CreateApiKeyCommand extends AbstractStroomAppCommand {
             expirationTime = new Date(Long.MAX_VALUE).toInstant();
         }
 
-        final CreateApiKeyResponse response = apiKeyService.create(new CreateApiKeyRequest(
+        final CreateHashedApiKeyResponse response = apiKeyService.create(new CreateHashedApiKeyRequest(
                 userName,
                 expirationTime.toEpochMilli(),
                 apiKeyName,
@@ -172,34 +172,34 @@ public class CreateApiKeyCommand extends AbstractStroomAppCommand {
      *
      * @return Whether the token was successfully written
      */
-    private boolean outputApiKey(final CreateApiKeyResponse createApiKeyResponse,
+    private boolean outputApiKey(final CreateHashedApiKeyResponse createHashedApiKeyResponse,
                                  final String path) {
         if (path != null) {
             // Output the API key to a file path specified by the CLI user
             try {
-                final String apiKey = createApiKeyResponse.getApiKey();
+                final String apiKey = createHashedApiKeyResponse.getApiKey();
                 BufferedWriter writer = new BufferedWriter(new FileWriter(path));
                 writer.write(apiKey);
                 writer.close();
 
                 final File fileInfo = new File(path);
                 LOGGER.info("Wrote API key for user '{}' to file '{}'",
-                        createApiKeyResponse.getHashedApiKey().getOwner().getUserIdentityForAudit(),
+                        createHashedApiKeyResponse.getHashedApiKey().getOwner().getUserIdentityForAudit(),
                         fileInfo.getAbsolutePath());
             } catch (IOException e) {
                 LOGGER.error("API key for user '{}' could not be written to file. {}",
-                        createApiKeyResponse.getHashedApiKey().getOwner().getUserIdentityForAudit(),
+                        createHashedApiKeyResponse.getHashedApiKey().getOwner().getUserIdentityForAudit(),
                         LogUtil.exceptionMessage(e));
 
                 // Destroy the created API key
-                apiKeyService.delete(createApiKeyResponse.getHashedApiKey().getId());
+                apiKeyService.delete(createHashedApiKeyResponse.getHashedApiKey().getId());
                 return false;
             }
         } else {
             // Output API key to standard out
             LOGGER.info("Generated API key for user '{}': '{}'",
-                    createApiKeyResponse.getHashedApiKey().getOwner().getUserIdentityForAudit(),
-                    createApiKeyResponse.getApiKey());
+                    createHashedApiKeyResponse.getHashedApiKey().getOwner().getUserIdentityForAudit(),
+                    createHashedApiKeyResponse.getApiKey());
         }
 
         return true;

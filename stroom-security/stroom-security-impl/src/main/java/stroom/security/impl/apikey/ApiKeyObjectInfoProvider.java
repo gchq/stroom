@@ -1,7 +1,7 @@
 package stroom.security.impl.apikey;
 
 import stroom.event.logging.api.ObjectInfoProvider;
-import stroom.security.shared.ApiKey;
+import stroom.security.shared.HashedApiKey;
 import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -19,7 +19,7 @@ public class ApiKeyObjectInfoProvider implements ObjectInfoProvider {
 
     @Override
     public BaseObject createBaseObject(final Object object) {
-        final ApiKey apiKey = (ApiKey) object;
+        final HashedApiKey apiKey = (HashedApiKey) object;
 
         final Builder<Void> builder = OtherObject.builder()
                 .withType("ApiKey")

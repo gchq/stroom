@@ -13,12 +13,12 @@ import java.util.List;
 
 @JsonInclude(Include.NON_NULL)
 @JsonPropertyOrder(alphabetic = true)
-public class ApiKeyResultPage extends QuickFilterResultPage<ApiKey> {
+public class ApiKeyResultPage extends QuickFilterResultPage<HashedApiKey> {
 
     @JsonCreator
-    public ApiKeyResultPage(@JsonProperty("values") final List<ApiKey> values,
-                             @JsonProperty("pageResponse") final PageResponse pageResponse,
-                             @JsonProperty("qualifiedFilterInput") final String qualifiedFilterInput) {
+    public ApiKeyResultPage(@JsonProperty("values") final List<HashedApiKey> values,
+                            @JsonProperty("pageResponse") final PageResponse pageResponse,
+                            @JsonProperty("qualifiedFilterInput") final String qualifiedFilterInput) {
         super(values, pageResponse, qualifiedFilterInput);
     }
 }
