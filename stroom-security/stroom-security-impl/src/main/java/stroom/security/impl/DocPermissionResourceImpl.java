@@ -166,7 +166,7 @@ class DocPermissionResourceImpl implements DocPermissionResource {
 
             if (descendantsWithOwnerPerm.isEmpty()) {
                 summary = "You do not have the required permission to change the permissions of " +
-                                "any descendant documents. Only this document will be modified.";
+                        "any descendant documents. Only this document will be modified.";
             } else {
                 final int descendantsWithOwnerPermCount = descendantsWithOwnerPerm.size();
                 final String descendantCountStr = permissionState.descendants.size() != descendantsWithOwnerPermCount
@@ -194,7 +194,7 @@ class DocPermissionResourceImpl implements DocPermissionResource {
                                     + StringUtil.plural("document", descendantsWithMultipleOwners.size())
                                     + " currently "
                                     + StringUtil.plural(
-                                            "has", "have", descendantsWithMultipleOwners.size())
+                                    "has", "have", descendantsWithMultipleOwners.size())
                                     + " multiple owners.");
                             impactDetail.add("Ownership" +
                                     " will be REMOVED from all existing owners and assigned to "
@@ -225,7 +225,8 @@ class DocPermissionResourceImpl implements DocPermissionResource {
                                 + descendantCountStr
                                 + ownerChangeMsg;
                     }
-                };
+                }
+                ;
             }
         } else {
             summary = "There are no descendant documents. Only this document will be modified.";
@@ -237,8 +238,8 @@ class DocPermissionResourceImpl implements DocPermissionResource {
     }
 
     private String buildOwnerChangeMessage(final int ownerChangeCount,
-                             final PermissionState permissionState,
-                             final UserCache userCache) {
+                                           final PermissionState permissionState,
+                                           final UserCache userCache) {
         String ownerChangeMsg;
         ownerChangeMsg = "\nThe ownership of "
                 + ownerChangeCount
@@ -284,9 +285,9 @@ class DocPermissionResourceImpl implements DocPermissionResource {
     }
 
     private static void addChanges(final List<String> removes,
-                                  final List<String> lines,
-                                  final String heading,
-                                  final String level3Indent) {
+                                   final List<String> lines,
+                                   final String heading,
+                                   final String level3Indent) {
         if (!removes.isEmpty()) {
             if (removes.size() == 1) {
                 lines.add(heading + removes.get(0));
@@ -1200,20 +1201,26 @@ class DocPermissionResourceImpl implements DocPermissionResource {
                                                                    final DocumentPermissions documentPermissions) {
 
             final Map<String, Set<String>> effectivePermsMap = new HashMap<>();
-            final Map<String, Set<String>> removes = changes.getRemove();
-            final Map<String, Set<String>> adds = changes.getAdd();
+            final Map<String, Set<String>> removes = changes != null
+                    ? NullSafe.map(changes.getRemove())
+                    : Collections.emptyMap();
+            final Map<String, Set<String>> adds = changes != null
+                    ? NullSafe.map(changes.getAdd())
+                    : Collections.emptyMap();
 
             // Build the perms map without any of the remove set
-            documentPermissions.getPermissions().forEach((userUuid, permissions) -> {
-                permissions.forEach(perm -> {
-                    final Set<String> removePerms = removes.get(userUuid);
-                    if (removePerms == null || !removePerms.contains(perm)) {
-                        // Not in the remove set so put it in ours
-                        effectivePermsMap.computeIfAbsent(userUuid, k -> new HashSet<>())
-                                .add(perm);
-                    }
+            if (documentPermissions != null) {
+                documentPermissions.getPermissions().forEach((userUuid, permissions) -> {
+                    permissions.forEach(perm -> {
+                        final Set<String> removePerms = removes.get(userUuid);
+                        if (removePerms == null || !removePerms.contains(perm)) {
+                            // Not in the remove set so put it in ours
+                            effectivePermsMap.computeIfAbsent(userUuid, k -> new HashSet<>())
+                                    .add(perm);
+                        }
+                    });
                 });
-            });
+            }
 
             // Now add in the adds
             adds.forEach((userUuid, permissions) -> {
