@@ -40,7 +40,6 @@ import stroom.query.common.v2.SimpleRowCreator;
 import stroom.query.common.v2.format.ColumnFormatter;
 import stroom.query.common.v2.format.FormatterFactory;
 import stroom.query.language.SearchRequestFactory;
-import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.ref.ErrorConsumer;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
@@ -269,7 +268,7 @@ public class ScheduledQueryAnalyticExecutor {
                 // Fix table result requests.
                 final List<ResultRequest> resultRequests = mappedRequest.getResultRequests();
                 if (resultRequests != null && resultRequests.size() == 1) {
-                    final ResultRequest resultRequest = resultRequests.get(0).copy()
+                    final ResultRequest resultRequest = resultRequests.getFirst().copy()
                             .openGroups(null)
                             .requestedRange(OffsetRange.UNBOUNDED)
                             .build();
@@ -282,21 +281,19 @@ public class ScheduledQueryAnalyticExecutor {
                                 .resultStore().getData(SearchRequestFactory.TABLE_COMPONENT_ID);
                         dataStore.getCompletionState().awaitCompletion();
 
-                        final TableSettings tableSettings = resultRequest.getMappings().get(0);
+                        final TableSettings tableSettings = resultRequest.getMappings().getFirst();
                         final Map<String, String> paramMap = ParamUtil
                                 .createParamMap(mappedRequest.getQuery().getParams());
                         final CompiledColumns compiledColumns = CompiledColumns.create(
                                 expressionContext,
                                 tableSettings.getColumns(),
                                 paramMap);
-                        final FieldIndex fieldIndex = compiledColumns.getFieldIndex();
 
                         final Provider<DetectionConsumer> detectionConsumerProvider =
                                 detectionConsumerFactory.create(analytic.analyticRuleDoc);
                         final DetectionConsumerProxy detectionConsumerProxy = detectionConsumerProxyProvider.get();
                         detectionConsumerProxy.setAnalyticRuleDoc(analytic.analyticRuleDoc());
                         detectionConsumerProxy.setCompiledColumns(compiledColumns);
-                        detectionConsumerProxy.setFieldIndex(fieldIndex);
                         detectionConsumerProxy.setDetectionsConsumerProvider(detectionConsumerProvider);
 
                         try {

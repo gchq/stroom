@@ -68,6 +68,10 @@ public class TaskManagerPresenter extends ContentTabPresenter<TaskManagerView>
         listPresenter.setNameFilter(name);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface TaskManagerView extends View, HasUiHandlers<TaskManagerUiHandlers> {
 
         void setList(Widget widget);

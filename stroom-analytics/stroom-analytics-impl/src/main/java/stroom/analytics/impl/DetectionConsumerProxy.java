@@ -36,7 +36,6 @@ public class DetectionConsumerProxy implements ValuesConsumer, ProcessLifecycleA
     private final ColumnFormatter fieldFormatter;
     private Provider<DetectionConsumer> detectionsConsumerProvider;
 
-    private FieldIndex fieldIndex;
     private DetectionConsumer detectionConsumer;
 
     private AnalyticRuleDoc analyticRuleDoc;
@@ -88,10 +87,6 @@ public class DetectionConsumerProxy implements ValuesConsumer, ProcessLifecycleA
 
     public void setCompiledColumns(final CompiledColumns compiledColumns) {
         this.compiledColumns = compiledColumns;
-    }
-
-    public void setFieldIndex(final FieldIndex fieldIndex) {
-        this.fieldIndex = fieldIndex;
     }
 
     @Override

@@ -1426,8 +1426,8 @@ public class FlexLayout extends Composite {
             double minWidth = getMinRequired(layoutConfig, Dimension.X);
             double minHeight = getMinRequired(layoutConfig, Dimension.Y);
 
-            final double visibleWidth = Math.floor(ElementUtil.getSubPixelOffsetWidth(getElement()));
-            final double visibleHeight = Math.floor(ElementUtil.getSubPixelOffsetHeight(getElement()));
+            final double visibleWidth = Math.floor(ElementUtil.getSubPixelClientWidth(scrollPanel.getElement()));
+            final double visibleHeight = Math.floor(ElementUtil.getSubPixelClientHeight(scrollPanel.getElement()));
 //            GWT.log(getElement() + " visibleWidth=" + visibleWidth + " visibleHeight=" + visibleHeight);
 //            double barWidth = 12;
 //            boolean scrollX = false;

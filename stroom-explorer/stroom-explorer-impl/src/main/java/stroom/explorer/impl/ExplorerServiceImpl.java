@@ -955,7 +955,7 @@ class ExplorerServiceImpl
         // Make sure the tree model is rebuilt.
         remappings.values().forEach(newNode -> {
             // Although the copy above will have fired entity events, they were before the deps
-            // get re-mapped. Thus ee need to let the exp tree know that deps may have changed
+            // get re-mapped. Thus, we need to let the exp tree know that deps may have changed
             EntityEvent.fire(entityEventBus, newNode.getDocRef(), EntityAction.CREATE_EXPLORER_NODE);
         });
 

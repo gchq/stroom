@@ -7,6 +7,7 @@ import stroom.index.shared.IndexShardKey;
 import stroom.index.shared.LuceneVersion;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.QueryKey;
+import stroom.search.extraction.IndexStructure;
 
 public interface LuceneProvider {
 

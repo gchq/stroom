@@ -279,7 +279,7 @@ export interface ApiKeyResultPage {
   /** Details of the page of results being returned. */
   pageResponse?: PageResponse;
   qualifiedFilterInput?: string;
-  values?: ApiKey[];
+  values?: HashedApiKey[];
 }
 
 export interface Arg {
@@ -641,6 +641,21 @@ export interface CreateEntryRequest {
   entryValue?: EntryValue;
   linkedEvents?: EventId[];
   type?: string;
+}
+
+export interface CreateHashedApiKeyRequest {
+  comments?: string;
+  enabled?: boolean;
+
+  /** @format int64 */
+  expireTimeMs?: number;
+  name?: string;
+  owner?: UserName;
+}
+
+export interface CreateHashedApiKeyResponse {
+  apiKey?: string;
+  hashedApiKey?: HashedApiKey;
 }
 
 export interface CreateProcessFilterRequest {
@@ -1832,6 +1847,7 @@ export type ExpressionTerm = ExpressionItem & {
   condition?:
     | "CONTAINS"
     | "EQUALS"
+    | "NOT_EQUALS"
     | "GREATER_THAN"
     | "GREATER_THAN_OR_EQUAL_TO"
     | "LESS_THAN"
@@ -1852,6 +1868,9 @@ export type ExpressionTerm = ExpressionItem & {
 export interface ExtendedUiConfig {
   dependencyWarningsEnabled?: boolean;
   externalIdentityProvider?: boolean;
+
+  /** @format int64 */
+  maxApiKeyExpiryAgeMs?: number;
   uiConfig?: UiConfig;
 }
 
@@ -1955,18 +1974,18 @@ export interface FetchSuggestionsRequest {
 
 export interface FieldInfo {
   conditions?:
-    | "'=', 'between', '>', '>=', '<', '<='"
-    | "'=', 'in', 'in dictionary', 'between', '>', '>=', '<', '<='"
-    | "'='"
-    | "'=', 'in', 'in dictionary'"
+    | "'=', '!=', 'between', '>', '>=', '<', '<='"
+    | "'=', '!=', 'in', 'in dictionary', 'between', '>', '>=', '<', '<='"
+    | "'=', '!='"
+    | "'=', '!=', 'in', 'in dictionary'"
     | "'is', 'in folder'"
-    | "'is', 'in folder', '=', 'in', 'in dictionary'"
-    | "'=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'"
-    | "'=', 'in', 'in dictionary', 'matches regex'"
-    | "'is', '='"
+    | "'is', 'in folder', '=', '!=', 'in', 'in dictionary'"
+    | "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'"
+    | "'=', '!=', 'in', 'in dictionary', 'matches regex'"
+    | "'is', '=', '!='"
     | "'between'"
-    | "'=', 'in'"
-    | "'=', 'in', 'in dictionary', 'is'";
+    | "'=', '!=', 'in'"
+    | "'=', '!=', 'in', 'in dictionary', 'is'";
   docRefType?: string;
   fieldName?: string;
   fieldType?:
@@ -2014,6 +2033,14 @@ export interface FilterUsersRequest {
 
 export interface FindAnalyticDataShardCriteria {
   analyticDocUuid?: string;
+  pageRequest?: PageRequest;
+  quickFilterInput?: string;
+  sort?: string;
+  sortList?: CriteriaFieldSort[];
+}
+
+export interface FindApiKeyCriteria {
+  owner?: UserName;
   pageRequest?: PageRequest;
   quickFilterInput?: string;
   sort?: string;
@@ -2320,6 +2347,32 @@ export interface GlobalConfigCriteria {
   quickFilterInput?: string;
   sort?: string;
   sortList?: CriteriaFieldSort[];
+}
+
+export interface HashedApiKey {
+  apiKeyHash?: string;
+  apiKeyPrefix?: string;
+  comments?: string;
+
+  /** @format int64 */
+  createTimeMs?: number;
+  createUser?: string;
+  enabled?: boolean;
+
+  /** @format int64 */
+  expireTimeMs?: number;
+
+  /** @format int32 */
+  id?: number;
+  name?: string;
+  owner?: UserName;
+
+  /** @format int64 */
+  updateTimeMs?: number;
+  updateUser?: string;
+
+  /** @format int32 */
+  version?: number;
 }
 
 export type HoppingWindow = Window & { advanceSize?: string; timeField?: string; windowSize?: string };
@@ -2881,6 +2934,11 @@ export interface PasswordPolicyConfig {
 
 export interface PermissionChangeEvent {
   type: string;
+}
+
+export interface PermissionChangeImpactSummary {
+  impactDetail?: string;
+  impactSummary?: string;
 }
 
 export interface PermissionChangeRequest {
@@ -3469,18 +3527,18 @@ export interface QueryDoc {
 
 export interface QueryField {
   conditionSet?:
-    | "'=', 'between', '>', '>=', '<', '<='"
-    | "'=', 'in', 'in dictionary', 'between', '>', '>=', '<', '<='"
-    | "'='"
-    | "'=', 'in', 'in dictionary'"
+    | "'=', '!=', 'between', '>', '>=', '<', '<='"
+    | "'=', '!=', 'in', 'in dictionary', 'between', '>', '>=', '<', '<='"
+    | "'=', '!='"
+    | "'=', '!=', 'in', 'in dictionary'"
     | "'is', 'in folder'"
-    | "'is', 'in folder', '=', 'in', 'in dictionary'"
-    | "'=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'"
-    | "'=', 'in', 'in dictionary', 'matches regex'"
-    | "'is', '='"
+    | "'is', 'in folder', '=', '!=', 'in', 'in dictionary'"
+    | "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'"
+    | "'=', '!=', 'in', 'in dictionary', 'matches regex'"
+    | "'is', '=', '!='"
     | "'between'"
-    | "'=', 'in'"
-    | "'=', 'in', 'in dictionary', 'is'";
+    | "'=', '!=', 'in'"
+    | "'=', '!=', 'in', 'in dictionary', 'is'";
   docRefType?: string;
   fieldType?:
     | "ID"
@@ -4753,6 +4811,7 @@ export interface StringMatch {
     | "NULL_OR_EMPTY"
     | "CONTAINS"
     | "EQUALS"
+    | "NOT_EQUALS"
     | "STARTS_WITH"
     | "ENDS_WITH"
     | "REGEX";
@@ -5005,6 +5064,7 @@ export interface TimeRange {
   condition?:
     | "CONTAINS"
     | "EQUALS"
+    | "NOT_EQUALS"
     | "GREATER_THAN"
     | "GREATER_THAN_OR_EQUAL_TO"
     | "LESS_THAN"
@@ -5273,7 +5333,7 @@ export interface Window {
 
 export interface XPathFilter {
   ignoreCase?: boolean;
-  matchType?: "EXISTS" | "CONTAINS" | "EQUALS" | "UNIQUE";
+  matchType?: "EXISTS" | "CONTAINS" | "EQUALS" | "NOT_EQUALS" | "UNIQUE";
   path?: string;
   uniqueValues?: Record<string, Rec>;
   value?: string;
@@ -6250,6 +6310,116 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
         method: "GET",
         query: query,
         secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags API Key
+     * @name CreateApiKey1
+     * @summary Creates a new API key
+     * @request POST:/apikey/v2
+     * @secure
+     */
+    createApiKey1: (data: CreateHashedApiKeyRequest, params: RequestParams = {}) =>
+      this.request<any, CreateHashedApiKeyResponse>({
+        path: `/apikey/v2`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags API Key
+     * @name DeleteApiKey2
+     * @summary Delete a batch of API keys by ID.
+     * @request DELETE:/apikey/v2/deleteBatch
+     * @secure
+     */
+    deleteApiKey2: (data: number[], params: RequestParams = {}) =>
+      this.request<any, number>({
+        path: `/apikey/v2/deleteBatch`,
+        method: "DELETE",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags API Key
+     * @name FindApiKeysByCriteria
+     * @summary Find the API keys matching the supplied criteria
+     * @request POST:/apikey/v2/find
+     * @secure
+     */
+    findApiKeysByCriteria: (data: FindApiKeyCriteria, params: RequestParams = {}) =>
+      this.request<any, ApiKeyResultPage>({
+        path: `/apikey/v2/find`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags API Key
+     * @name DeleteApiKey1
+     * @summary Delete an API key by ID.
+     * @request DELETE:/apikey/v2/{id}
+     * @secure
+     */
+    deleteApiKey1: (id: number, params: RequestParams = {}) =>
+      this.request<any, boolean>({
+        path: `/apikey/v2/${id}`,
+        method: "DELETE",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags API Key
+     * @name FetchApiKey1
+     * @summary Fetch a dictionary doc by its UUID
+     * @request GET:/apikey/v2/{id}
+     * @secure
+     */
+    fetchApiKey1: (id: number, params: RequestParams = {}) =>
+      this.request<any, HashedApiKey>({
+        path: `/apikey/v2/${id}`,
+        method: "GET",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags API Key
+     * @name UpdateApiKey
+     * @summary Update a dictionary doc
+     * @request PUT:/apikey/v2/{id}
+     * @secure
+     */
+    updateApiKey: (id: number, data: HashedApiKey, params: RequestParams = {}) =>
+      this.request<any, HashedApiKey>({
+        path: `/apikey/v2/${id}`,
+        method: "PUT",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
         ...params,
       }),
   };
@@ -9153,6 +9323,25 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     fetchAllDocumentPermissions: (data: FetchAllDocumentPermissionsRequest, params: RequestParams = {}) =>
       this.request<any, DocumentPermissions>({
         path: `/permission/doc/v1/fetchAllDocumentPermissions`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Doc Permissions
+     * @name FetchPermissionChangeImpact
+     * @summary Fetch impact summary for a change of document permissions
+     * @request POST:/permission/doc/v1/fetchPermissionChangeImpact
+     * @secure
+     */
+    fetchPermissionChangeImpact: (data: ChangeDocumentPermissionsRequest, params: RequestParams = {}) =>
+      this.request<any, PermissionChangeImpactSummary>({
+        path: `/permission/doc/v1/fetchPermissionChangeImpact`,
         method: "POST",
         body: data,
         secure: true,

@@ -43,6 +43,7 @@ import java.util.stream.Collectors;
 
 public class DataGridUtil {
 
+    private static final String DISABLED_CELL_CLASS = "dataGridDisabledCell";
     private static final String LOW_LIGHT_COLOUR = "#666666";
 
     private DataGridUtil() {
@@ -481,6 +482,7 @@ public class DataGridUtil {
 
         /**
          * Add a style (or space separated styles) to rows in this column conditionally based on the row value
+         *
          * @param styleFunction A function to return the style name, an empty string or null
          */
         public ColumnBuilder<T_ROW, T_RAW_VAL, T_CELL_VAL, T_CELL> withConditionalStyleName(
@@ -489,6 +491,27 @@ public class DataGridUtil {
                 styleFunctions = new ArrayList<>();
             }
             styleFunctions.add(Objects.requireNonNull(styleFunction));
+            return this;
+        }
+
+        /**
+         * Add a class to the cell if it is not enabled, so enabled and disabled rows appear
+         * differently.
+         *
+         * @param enabledFunction A function to return true if the row is enabled.
+         */
+        public ColumnBuilder<T_ROW, T_RAW_VAL, T_CELL_VAL, T_CELL> enabledWhen(
+                final Function<T_ROW, Boolean> enabledFunction) {
+            if (styleFunctions == null) {
+                styleFunctions = new ArrayList<>();
+            }
+            if (enabledFunction != null) {
+                final Function<T_ROW, String> sytleFunction = row ->
+                        enabledFunction.apply(row)
+                                ? ""
+                                : "dataGridDisabledCell";
+                styleFunctions.add(sytleFunction);
+            }
             return this;
         }
 

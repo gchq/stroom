@@ -16,6 +16,8 @@
 
 package stroom.statistics.impl.sql.search;
 
+import stroom.query.api.v2.ExpressionTerm.Condition;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -72,19 +74,29 @@ public class FilterTermsTree {
     public static class TermNode implements PrintableNode {
 
         private final String tag;
+        private final Condition condition;
         private final String value;
 
         public TermNode(final String tag, final String value) {
+            this(tag, Condition.EQUALS, value);
+        }
+
+        public TermNode(final String tag, final Condition condition, final String value) {
             if (tag == null) {
                 throw new FilterTermsTreeException("Must have a tag to be added as a filter term");
             }
 
             this.tag = tag;
+            this.condition = condition;
             this.value = value;
         }
 
         public String getTag() {
             return this.tag;
+        }
+
+        public Condition getCondition() {
+            return condition;
         }
 
         public String getValue() {
@@ -95,7 +107,7 @@ public class FilterTermsTree {
         public void printNode(final StringBuilder sb) {
             final TermNode termNode = this;
             sb.append(termNode.getTag());
-            sb.append("=");
+            sb.append(condition.getDisplayValue());
             sb.append(termNode.getValue());
         }
 

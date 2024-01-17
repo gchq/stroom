@@ -37,6 +37,8 @@ import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.MetaHolder;
 import stroom.query.language.functions.ValString;
 import stroom.search.extraction.FieldValue;
+import stroom.search.extraction.IndexStructure;
+import stroom.search.extraction.IndexStructureCache;
 import stroom.svg.shared.SvgImage;
 import stroom.util.CharBuffer;
 import stroom.util.date.DateUtil;
@@ -172,7 +174,7 @@ class IndexingFilter extends AbstractXMLFilter {
                 name = name.trim();
                 value = value.trim();
 
-                if (name.length() > 0 && value.length() > 0) {
+                if (!name.isEmpty() && !value.isEmpty()) {
                     // See if we can get this field.
                     final IndexField indexField = indexFieldsMap.get(name);
                     if (indexField != null) {
@@ -213,7 +215,7 @@ class IndexingFilter extends AbstractXMLFilter {
     private void processDocument() {
         // Write the document if we have dropped out of the record element and
         // have indexed some fields.
-        if (document.getValues().size() > 0) {
+        if (!document.getValues().isEmpty()) {
             try {
                 Partition partition = defaultPartition;
                 if (currentEventTime != null) {

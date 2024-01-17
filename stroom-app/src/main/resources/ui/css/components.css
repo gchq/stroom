@@ -219,6 +219,7 @@
 .layerContainer-container {
 	width: 100%;
 	height: 100%;
+	overflow: hidden;
 }
 
 .layerContainer-layer {
@@ -1477,7 +1478,9 @@
 
 button.main-menu {
     background-color: transparent;
-    color: white;
+    /*color: var(--navigation-icon-button__color);*/
+    color: var(--text-color);
+    opacity: 0.6;
 }
 
 button.main-menu svg {
@@ -1872,16 +1875,13 @@ button.main-menu svg {
 }
 
 .pipelineElementChooser-iconCell {
-    padding: var(--row__padding--vertical) 0 var(--row__padding--vertical) var(--row__padding--horizontal);
 }
 
 .pipelineElementChooser-textCell {
-    padding: var(--row__padding--vertical) 0 var(--row__padding--vertical) var(--row__padding--horizontal);
     min-width: 200px;
 }
 
 .pipelineElementChooser-filterIconCell {
-    padding: var(--row__padding--vertical) 0 var(--row__padding--vertical) var(--row__padding--horizontal);
 }
 
 .pipelineElementChooser-textCell.pipelineElementChooser-filterOn {

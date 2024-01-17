@@ -178,10 +178,10 @@ public class TermEditor extends Composite {
 
         // Select the current value.
         conditionListBox.setValue(null);
-        changeField(null, false);
+        changeField(null, null, false);
         fieldSelectionListModel.findFieldByName(term.getField(), fieldInfo -> {
             fieldListBox.setValue(fieldInfo);
-            changeField(fieldInfo, false);
+            changeField(fieldInfo, term.getCondition(), false);
         });
 
         reading = false;
@@ -223,11 +223,11 @@ public class TermEditor extends Composite {
         }
     }
 
-    private void changeField(final FieldInfo field, final boolean useDefaultCondition) {
+    private void changeField(final FieldInfo field, final Condition condition, final boolean useDefaultCondition) {
         suggestOracle.setField(field);
         final List<Condition> conditions = getConditions(field);
 
-        Condition selected = conditionListBox.getValue();
+        Condition selected = condition;
         conditionListBox.clear();
         conditionListBox.addItems(conditions);
 
@@ -285,6 +285,11 @@ public class TermEditor extends Composite {
         } else {
             switch (condition) {
                 case EQUALS:
+                case NOT_EQUALS:
+                case LESS_THAN:
+                case LESS_THAN_OR_EQUAL_TO:
+                case GREATER_THAN:
+                case GREATER_THAN_OR_EQUAL_TO:
                     if (FieldType.DATE.equals(indexFieldType)) {
                         enterDateMode();
                     } else {
@@ -304,40 +309,8 @@ public class TermEditor extends Composite {
                         enterTextRangeMode();
                     }
                     break;
-                case LESS_THAN:
-                    if (FieldType.DATE.equals(indexFieldType)) {
-                        enterDateMode();
-                    } else {
-                        enterTextMode();
-                    }
-                    break;
-                case LESS_THAN_OR_EQUAL_TO:
-                    if (FieldType.DATE.equals(indexFieldType)) {
-                        enterDateMode();
-                    } else {
-                        enterTextMode();
-                    }
-                    break;
-                case GREATER_THAN:
-                    if (FieldType.DATE.equals(indexFieldType)) {
-                        enterDateMode();
-                    } else {
-                        enterTextMode();
-                    }
-                    break;
-                case GREATER_THAN_OR_EQUAL_TO:
-                    if (FieldType.DATE.equals(indexFieldType)) {
-                        enterDateMode();
-                    } else {
-                        enterTextMode();
-                    }
-                    break;
                 case IN_DICTIONARY:
-                    enterDocRefMode(field, condition);
-                    break;
                 case IN_FOLDER:
-                    enterDocRefMode(field, condition);
-                    break;
                 case IS_DOC_REF:
                     enterDocRefMode(field, condition);
                     break;
@@ -478,7 +451,7 @@ public class TermEditor extends Composite {
         registerHandler(fieldListBox.addValueChangeHandler(event -> {
             if (!reading) {
                 write(term);
-                changeField(event.getValue(), true);
+                changeField(event.getValue(), conditionListBox.getValue(), true);
                 fireDirty();
             }
         }));

@@ -38,6 +38,10 @@ public class SecurityDbModule extends AbstractFlyWayDbModule<AuthorisationDbConf
         return new DataSourceImpl(dataSource);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class DataSourceImpl extends DataSourceProxy implements SecurityDbConnProvider {
 
         private DataSourceImpl(final DataSource dataSource) {

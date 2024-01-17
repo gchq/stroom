@@ -29,7 +29,7 @@ public class StroomTestIdpConfigurationProvider extends InternalIdpConfiguration
     @Inject
     public StroomTestIdpConfigurationProvider(final DefaultOpenIdCredentials defaultOpenIdCredentials,
                                               final UriFactory uriFactory,
-                                              final Provider<AbstractOpenIdConfig> openIdConfigProvider,
+                                              final Provider<StroomOpenIdConfig> openIdConfigProvider,
                                               final OpenIdClientFactory openIdClientDetailsFactory) {
         super(uriFactory, openIdConfigProvider, openIdClientDetailsFactory);
         this.defaultOpenIdCredentials = defaultOpenIdCredentials;

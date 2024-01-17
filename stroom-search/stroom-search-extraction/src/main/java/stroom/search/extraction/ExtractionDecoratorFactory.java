@@ -14,6 +14,7 @@ import jakarta.inject.Provider;
 
 public class ExtractionDecoratorFactory {
 
+    private final FieldValueExtractorFactory fieldValueExtractorFactory;
     private final ExtractionConfig extractionConfig;
     private final ExecutorProvider executorProvider;
     private final TaskContextFactory taskContextFactory;
@@ -28,7 +29,8 @@ public class ExtractionDecoratorFactory {
     private final Provider<FieldListConsumerHolder> fieldListConsumerHolderProvider;
 
     @Inject
-    ExtractionDecoratorFactory(final ExtractionConfig extractionConfig,
+    ExtractionDecoratorFactory(final FieldValueExtractorFactory fieldValueExtractorFactory,
+                               final ExtractionConfig extractionConfig,
                                final ExecutorProvider executorProvider,
                                final TaskContextFactory taskContextFactory,
                                final PipelineScopeRunnable pipelineScopeRunnable,
@@ -40,6 +42,7 @@ public class ExtractionDecoratorFactory {
                                final Provider<ExtractionTaskHandler> handlerProvider,
                                final Provider<ValueConsumerHolder> valueConsumerHolderProvider,
                                final Provider<FieldListConsumerHolder> fieldListConsumerHolderProvider) {
+        this.fieldValueExtractorFactory = fieldValueExtractorFactory;
         this.extractionConfig = extractionConfig;
         this.executorProvider = executorProvider;
         this.taskContextFactory = taskContextFactory;
@@ -56,6 +59,7 @@ public class ExtractionDecoratorFactory {
 
     public ExtractionDecorator create(final QueryKey queryKey) {
         return new ExtractionDecorator(
+                fieldValueExtractorFactory,
                 extractionConfig,
                 executorProvider,
                 taskContextFactory,

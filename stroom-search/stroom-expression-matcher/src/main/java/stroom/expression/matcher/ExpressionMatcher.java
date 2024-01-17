@@ -172,15 +172,15 @@ public class ExpressionMatcher {
         // Create a query based on the field type and condition.
         if (field.isNumeric()) {
             switch (condition) {
-                case EQUALS: {
+                case EQUALS, CONTAINS: {
                     final long num1 = getNumber(fieldName, attribute);
                     final long num2 = getNumber(fieldName, termValue);
                     return num1 == num2;
                 }
-                case CONTAINS: {
+                case NOT_EQUALS: {
                     final long num1 = getNumber(fieldName, attribute);
                     final long num2 = getNumber(fieldName, termValue);
-                    return num1 == num2;
+                    return num1 != num2;
                 }
                 case GREATER_THAN: {
                     final long num1 = getNumber(fieldName, attribute);
@@ -225,15 +225,15 @@ public class ExpressionMatcher {
             }
         } else if (FieldType.DATE.equals(field.getFieldType())) {
             switch (condition) {
-                case EQUALS: {
+                case EQUALS, CONTAINS: {
                     final long date1 = getDate(fieldName, attribute);
                     final long date2 = getDate(fieldName, termValue);
                     return date1 == date2;
                 }
-                case CONTAINS: {
+                case NOT_EQUALS: {
                     final long date1 = getDate(fieldName, attribute);
                     final long date2 = getDate(fieldName, termValue);
-                    return date1 == date2;
+                    return date1 != date2;
                 }
                 case GREATER_THAN: {
                     final long date1 = getDate(fieldName, attribute);
@@ -278,10 +278,10 @@ public class ExpressionMatcher {
             }
         } else {
             switch (condition) {
-                case EQUALS:
+                case EQUALS, CONTAINS:
                     return isStringMatch(termValue, attribute);
-                case CONTAINS:
-                    return isStringMatch(termValue, attribute);
+                case NOT_EQUALS:
+                    return !isStringMatch(termValue, attribute);
                 case IN:
                     return isIn(fieldName, termValue, attribute);
                 case IN_DICTIONARY:

@@ -23,7 +23,6 @@
 .expressionItemBox-background .termEditor-inner {
 	border-radius: 5px;
 	z-index: 3;
-	min-width: 50px;
 }
 
 .expressionItemBox-selectable .termEditor-inner {

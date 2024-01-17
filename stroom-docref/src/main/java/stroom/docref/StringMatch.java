@@ -58,6 +58,14 @@ public class StringMatch {
         return new StringMatch(MatchType.EQUALS, caseSensitive, pattern);
     }
 
+    public static StringMatch notEquals(final String pattern) {
+        return notEquals(pattern, false);
+    }
+
+    public static StringMatch notEquals(final String pattern, final boolean caseSensitive) {
+        return new StringMatch(MatchType.NOT_EQUALS, caseSensitive, pattern);
+    }
+
     public static StringMatch regex(final String pattern) {
         return regex(pattern, false);
     }
@@ -116,6 +124,7 @@ public class StringMatch {
         NULL_OR_EMPTY,
         CONTAINS,
         EQUALS,
+        NOT_EQUALS,
         STARTS_WITH,
         ENDS_WITH,
         REGEX

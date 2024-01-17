@@ -21,7 +21,6 @@ import stroom.index.impl.IndexDocument;
 import stroom.index.impl.IndexShardManager;
 import stroom.index.impl.IndexShardUtil;
 import stroom.index.impl.IndexShardWriter;
-import stroom.index.impl.IndexStructure;
 import stroom.index.impl.ShardFullException;
 import stroom.index.impl.UncheckedLockObtainException;
 import stroom.index.lucene980.analyser.AnalyzerFactory;
@@ -31,6 +30,7 @@ import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
 import stroom.search.extraction.FieldValue;
+import stroom.search.extraction.IndexStructure;
 import stroom.util.NullSafe;
 import stroom.util.io.FileUtil;
 import stroom.util.io.PathCreator;
@@ -258,7 +258,7 @@ class Lucene980IndexShardWriter implements IndexShardWriter {
                 document.add(field);
             }
         }
-        if (document.getFields().size() > 0) {
+        if (!document.getFields().isEmpty()) {
             addDocument(document);
         }
     }

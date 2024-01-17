@@ -111,6 +111,10 @@ public class EntityDropDownPresenter extends MyPresenterWidget<DropDownView>
         explorerDropDownTreePresenter.setSelectedEntityReference(docRef);
     }
 
+    public void setSelectedEntityReference(final DocRef docRef, final boolean fireEvents) {
+        explorerDropDownTreePresenter.setSelectedEntityReference(docRef, fireEvents);
+    }
+
     public void setAllowFolderSelection(final boolean allowFolderSelection) {
         explorerDropDownTreePresenter.setAllowFolderSelection(allowFolderSelection);
     }

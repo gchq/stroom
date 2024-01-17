@@ -44,7 +44,10 @@ import stroom.search.extraction.AnalyticFieldListConsumer;
 import stroom.search.extraction.ExtractionException;
 import stroom.search.extraction.ExtractionState;
 import stroom.search.extraction.FieldListConsumerHolder;
+import stroom.search.extraction.FieldValueExtractor;
+import stroom.search.extraction.FieldValueExtractorFactory;
 import stroom.search.extraction.MemoryIndex;
+import stroom.search.extraction.ValueConsumerHolder;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.task.api.ExecutorProvider;
@@ -96,6 +99,7 @@ public class TableBuilderAnalyticExecutor {
     private final PipelineStore pipelineStore;
     private final PipelineDataCache pipelineDataCache;
     private final Provider<AnalyticsStreamProcessor> analyticsStreamProcessorProvider;
+    private final Provider<ValueConsumerHolder> valueConsumerHolderProvider;
     private final Provider<FieldListConsumerHolder> fieldListConsumerHolderProvider;
     private final Provider<ExtractionState> extractionStateProvider;
     private final AnalyticDataStores analyticDataStores;
@@ -106,6 +110,7 @@ public class TableBuilderAnalyticExecutor {
     private final NodeInfo nodeInfo;
     private final AnalyticRuleSearchRequestHelper analyticRuleSearchRequestHelper;
     private final NotificationStateService notificationStateService;
+    private final FieldValueExtractorFactory fieldValueExtractorFactory;
 
     private final int maxMetaListSize = DEFAULT_MAX_META_LIST_SIZE;
 
@@ -120,6 +125,7 @@ public class TableBuilderAnalyticExecutor {
                                         final PipelineStore pipelineStore,
                                         final PipelineDataCache pipelineDataCache,
                                         final Provider<AnalyticsStreamProcessor> analyticsStreamProcessorProvider,
+                                        final Provider<ValueConsumerHolder> valueConsumerHolderProvider,
                                         final Provider<FieldListConsumerHolder> fieldListConsumerHolderProvider,
                                         final Provider<ExtractionState> extractionStateProvider,
                                         final TaskContextFactory taskContextFactory,
@@ -131,13 +137,15 @@ public class TableBuilderAnalyticExecutor {
                                         final AnalyticHelper analyticHelper,
                                         final NodeInfo nodeInfo,
                                         final AnalyticRuleSearchRequestHelper analyticRuleSearchRequestHelper,
-                                        final NotificationStateService notificationStateService) {
+                                        final NotificationStateService notificationStateService,
+                                        final FieldValueExtractorFactory fieldValueExtractorFactory) {
         this.executorProvider = executorProvider;
         this.detectionConsumerFactory = detectionConsumerFactory;
         this.securityContext = securityContext;
         this.pipelineStore = pipelineStore;
         this.pipelineDataCache = pipelineDataCache;
         this.analyticsStreamProcessorProvider = analyticsStreamProcessorProvider;
+        this.valueConsumerHolderProvider = valueConsumerHolderProvider;
         this.fieldListConsumerHolderProvider = fieldListConsumerHolderProvider;
         this.extractionStateProvider = extractionStateProvider;
         this.taskContextFactory = taskContextFactory;
@@ -150,6 +158,7 @@ public class TableBuilderAnalyticExecutor {
         this.nodeInfo = nodeInfo;
         this.analyticRuleSearchRequestHelper = analyticRuleSearchRequestHelper;
         this.notificationStateService = notificationStateService;
+        this.fieldValueExtractorFactory = fieldValueExtractorFactory;
     }
 
     private void info(final Supplier<String> messageSupplier) {
@@ -235,7 +244,7 @@ public class TableBuilderAnalyticExecutor {
                                                            final AtomicBoolean allComplete) {
         final DocRef pipelineRef = groupKey.pipeline();
         final String ownerUuid = groupKey.ownerUuid();
-        if (analytics.size() > 0) {
+        if (!analytics.isEmpty()) {
             final UserIdentity userIdentity = securityContext.createIdentityByUserUuid(ownerUuid);
             return securityContext.asUserResult(userIdentity, () -> securityContext.useAsReadResult(() -> {
                 final String pipelineIdentity = pipelineRef.toInfoString();
@@ -270,7 +279,7 @@ public class TableBuilderAnalyticExecutor {
         });
 
         // Now process each stream with the pipeline.
-        if (sortedMetaList.size() > 0) {
+        if (!sortedMetaList.isEmpty()) {
             final PipelineData pipelineData = getPipelineData(pipelineDocRef);
             for (final Meta meta : sortedMetaList) {
                 if (!parentTaskContext.isTerminated()) {
@@ -384,7 +393,7 @@ public class TableBuilderAnalyticExecutor {
         if (fieldListConsumers.size() > 1) {
             fieldListConsumer = new MultiAnalyticFieldListConsumer(fieldListConsumers);
         } else if (fieldListConsumers.size() == 1) {
-            fieldListConsumer = fieldListConsumers.get(0);
+            fieldListConsumer = fieldListConsumers.getFirst();
         } else {
             fieldListConsumer = null;
         }
@@ -399,6 +408,9 @@ public class TableBuilderAnalyticExecutor {
                         final FieldListConsumerHolder fieldListConsumerHolder =
                                 fieldListConsumerHolderProvider.get();
                         fieldListConsumerHolder.setFieldListConsumer(fieldListConsumer);
+
+                        final ValueConsumerHolder valueConsumerHolder = valueConsumerHolderProvider.get();
+                        valueConsumerHolder.setFieldListConsumer(fieldListConsumer);
 
                         try {
                             fieldListConsumer.start();
@@ -461,9 +473,14 @@ public class TableBuilderAnalyticExecutor {
 
         // Get the field index.
         final FieldIndex fieldIndex = lmdbDataStore.getFieldIndex();
+
+        final FieldValueExtractor fieldValueExtractor = fieldValueExtractorFactory
+                .create(searchRequest.getQuery().getDataSource(), fieldIndex);
+
         return new TableBuilderAnalyticFieldListConsumer(
                 searchRequest,
                 fieldIndex,
+                fieldValueExtractor,
                 NotificationState.NO_OP,
                 lmdbDataStore,
                 memoryIndex,
@@ -631,7 +648,7 @@ public class TableBuilderAnalyticExecutor {
 
             searchRequest = searchRequest.copy().key(queryKey).incremental(true).build();
             // Perform the search.
-            ResultRequest resultRequest = searchRequest.getResultRequests().get(0);
+            ResultRequest resultRequest = searchRequest.getResultRequests().getFirst();
             resultRequest = resultRequest.copy().timeFilter(timeFilter).build();
             final TableResultConsumer tableResultConsumer =
                     new TableResultConsumer(analytic.analyticRuleDoc(), notificationState, detectionConsumer);

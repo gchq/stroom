@@ -918,6 +918,7 @@
     },
     "/apikey/v1" : {
       "delete" : {
+        "deprecated" : true,
         "operationId" : "deleteAllApiKeys",
         "responses" : {
           "default" : {
@@ -936,6 +937,7 @@
         "tags" : [ "Api Keys" ]
       },
       "post" : {
+        "deprecated" : true,
         "operationId" : "createApiKey",
         "requestBody" : {
           "content" : {
@@ -966,6 +968,7 @@
     },
     "/apikey/v1/byData/{data}" : {
       "delete" : {
+        "deprecated" : true,
         "operationId" : "deleteApiKeyByData",
         "parameters" : [ {
           "in" : "path",
@@ -992,6 +995,7 @@
         "tags" : [ "Api Keys" ]
       },
       "get" : {
+        "deprecated" : true,
         "operationId" : "fetchApiKeyByData",
         "parameters" : [ {
           "in" : "path",
@@ -1019,6 +1023,7 @@
     },
     "/apikey/v1/noauth/getDefaultApiKeyExpirySeconds" : {
       "get" : {
+        "deprecated" : true,
         "operationId" : "getDefaultApiKeyExpirySeconds",
         "responses" : {
           "default" : {
@@ -1039,6 +1044,7 @@
     },
     "/apikey/v1/search" : {
       "post" : {
+        "deprecated" : true,
         "operationId" : "searchApiKeys",
         "requestBody" : {
           "content" : {
@@ -1069,6 +1075,7 @@
     },
     "/apikey/v1/{id}" : {
       "delete" : {
+        "deprecated" : true,
         "operationId" : "deleteApiKey",
         "parameters" : [ {
           "in" : "path",
@@ -1096,6 +1103,7 @@
         "tags" : [ "Api Keys" ]
       },
       "get" : {
+        "deprecated" : true,
         "operationId" : "fetchApiKey",
         "parameters" : [ {
           "in" : "path",
@@ -1124,6 +1132,7 @@
     },
     "/apikey/v1/{id}/enabled" : {
       "get" : {
+        "deprecated" : true,
         "operationId" : "toggleApiKeyEnabled",
         "parameters" : [ {
           "in" : "path",
@@ -1156,6 +1165,192 @@
         },
         "summary" : "Enable or disable the state of an API key.",
         "tags" : [ "Api Keys" ]
+      }
+    },
+    "/apikey/v2" : {
+      "post" : {
+        "operationId" : "createApiKey_1",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CreateHashedApiKeyRequest"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CreateHashedApiKeyResponse"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Creates a new API key",
+        "tags" : [ "API Key" ]
+      }
+    },
+    "/apikey/v2/deleteBatch" : {
+      "delete" : {
+        "operationId" : "deleteApiKey_2",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "type" : "array",
+                "items" : {
+                  "type" : "integer",
+                  "format" : "int32"
+                }
+              }
+            }
+          },
+          "description" : "ids",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "integer",
+                  "format" : "int32"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Delete a batch of API keys by ID.",
+        "tags" : [ "API Key" ]
+      }
+    },
+    "/apikey/v2/find" : {
+      "post" : {
+        "operationId" : "findApiKeysByCriteria",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/FindApiKeyCriteria"
+              }
+            }
+          },
+          "description" : "criteria",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiKeyResultPage"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Find the API keys matching the supplied criteria",
+        "tags" : [ "API Key" ]
+      }
+    },
+    "/apikey/v2/{id}" : {
+      "delete" : {
+        "operationId" : "deleteApiKey_1",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Delete an API key by ID.",
+        "tags" : [ "API Key" ]
+      },
+      "get" : {
+        "operationId" : "fetchApiKey_1",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/HashedApiKey"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Fetch a dictionary doc by its UUID",
+        "tags" : [ "API Key" ]
+      },
+      "put" : {
+        "operationId" : "updateApiKey",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/HashedApiKey"
+              }
+            }
+          },
+          "description" : "apiKey",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/HashedApiKey"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Update a dictionary doc",
+        "tags" : [ "API Key" ]
       }
     },
     "/authentication/v1/needsPasswordChange" : {
@@ -5798,6 +5993,36 @@
           }
         },
         "summary" : "Fetch document permissions",
+        "tags" : [ "Doc Permissions" ]
+      }
+    },
+    "/permission/doc/v1/fetchPermissionChangeImpact" : {
+      "post" : {
+        "operationId" : "fetchPermissionChangeImpact",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ChangeDocumentPermissionsRequest"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PermissionChangeImpactSummary"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Fetch impact summary for a change of document permissions",
         "tags" : [ "Doc Permissions" ]
       }
     },
@@ -10535,7 +10760,7 @@
           "values" : {
             "type" : "array",
             "items" : {
-              "$ref" : "#/components/schemas/ApiKey"
+              "$ref" : "#/components/schemas/HashedApiKey"
             }
           }
         }
@@ -11410,6 +11635,38 @@
           },
           "type" : {
             "type" : "string"
+          }
+        }
+      },
+      "CreateHashedApiKeyRequest" : {
+        "type" : "object",
+        "properties" : {
+          "comments" : {
+            "type" : "string"
+          },
+          "enabled" : {
+            "type" : "boolean"
+          },
+          "expireTimeMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "owner" : {
+            "$ref" : "#/components/schemas/UserName"
+          }
+        }
+      },
+      "CreateHashedApiKeyResponse" : {
+        "type" : "object",
+        "properties" : {
+          "apiKey" : {
+            "type" : "string"
+          },
+          "hashedApiKey" : {
+            "$ref" : "#/components/schemas/HashedApiKey"
           }
         }
       },
@@ -12874,7 +13131,7 @@
             "condition" : {
               "type" : "string",
               "description" : "The condition of the predicate term",
-              "enum" : [ "CONTAINS", "EQUALS", "GREATER_THAN", "GREATER_THAN_OR_EQUAL_TO", "LESS_THAN", "LESS_THAN_OR_EQUAL_TO", "BETWEEN", "IN", "IN_DICTIONARY", "IN_FOLDER", "IS_DOC_REF", "IS_NULL", "IS_NOT_NULL", "MATCHES_REGEX" ]
+              "enum" : [ "CONTAINS", "EQUALS", "NOT_EQUALS", "GREATER_THAN", "GREATER_THAN_OR_EQUAL_TO", "LESS_THAN", "LESS_THAN_OR_EQUAL_TO", "BETWEEN", "IN", "IN_DICTIONARY", "IN_FOLDER", "IS_DOC_REF", "IS_NULL", "IS_NOT_NULL", "MATCHES_REGEX" ]
             },
             "docRef" : {
               "$ref" : "#/components/schemas/DocRef"
@@ -12900,6 +13157,10 @@
           },
           "externalIdentityProvider" : {
             "type" : "boolean"
+          },
+          "maxApiKeyExpiryAgeMs" : {
+            "type" : "integer",
+            "format" : "int64"
           },
           "uiConfig" : {
             "$ref" : "#/components/schemas/UiConfig"
@@ -13159,7 +13420,7 @@
         "properties" : {
           "conditions" : {
             "type" : "string",
-            "enum" : [ "'=', 'between', '>', '>=', '<', '<='", "'=', 'in', 'in dictionary', 'between', '>', '>=', '<', '<='", "'='", "'=', 'between', '>', '>=', '<', '<='", "'=', 'in', 'in dictionary'", "'is', 'in folder'", "'=', 'in', 'in dictionary'", "'is', 'in folder', '=', 'in', 'in dictionary'", "'=', 'in', 'in dictionary'", "'=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', 'in', 'in dictionary', 'matches regex'", "'=', 'in', 'in dictionary'", "'=', 'in', 'in dictionary'", "'=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'='", "'=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', 'in', 'in dictionary'", "'is', '='", "'between'", "'=', 'in'", "'=', 'in'", "'=', 'in', 'in dictionary'", "'=', 'in', 'in dictionary', 'is'", "'=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'" ]
+            "enum" : [ "'=', '!=', 'between', '>', '>=', '<', '<='", "'=', '!=', 'in', 'in dictionary', 'between', '>', '>=', '<', '<='", "'=', '!='", "'=', '!=', 'between', '>', '>=', '<', '<='", "'=', '!=', 'in', 'in dictionary'", "'is', 'in folder'", "'=', '!=', 'in', 'in dictionary'", "'is', 'in folder', '=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary', 'matches regex'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!='", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'is', '=', '!='", "'between'", "'=', '!=', 'in'", "'=', '!=', 'in'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary', 'is'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'" ]
           },
           "docRefType" : {
             "type" : "string"
@@ -13225,6 +13486,30 @@
         "properties" : {
           "analyticDocUuid" : {
             "type" : "string"
+          },
+          "pageRequest" : {
+            "$ref" : "#/components/schemas/PageRequest"
+          },
+          "quickFilterInput" : {
+            "type" : "string"
+          },
+          "sort" : {
+            "type" : "string",
+            "writeOnly" : true
+          },
+          "sortList" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/CriteriaFieldSort"
+            }
+          }
+        }
+      },
+      "FindApiKeyCriteria" : {
+        "type" : "object",
+        "properties" : {
+          "owner" : {
+            "$ref" : "#/components/schemas/UserName"
           },
           "pageRequest" : {
             "$ref" : "#/components/schemas/PageRequest"
@@ -13965,6 +14250,55 @@
             "items" : {
               "$ref" : "#/components/schemas/CriteriaFieldSort"
             }
+          }
+        }
+      },
+      "HashedApiKey" : {
+        "type" : "object",
+        "properties" : {
+          "apiKeyHash" : {
+            "type" : "string"
+          },
+          "apiKeyPrefix" : {
+            "type" : "string"
+          },
+          "comments" : {
+            "type" : "string"
+          },
+          "createTimeMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "createUser" : {
+            "type" : "string"
+          },
+          "enabled" : {
+            "type" : "boolean"
+          },
+          "expireTimeMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "id" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "owner" : {
+            "$ref" : "#/components/schemas/UserName"
+          },
+          "updateTimeMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "updateUser" : {
+            "type" : "string"
+          },
+          "version" : {
+            "type" : "integer",
+            "format" : "int32"
           }
         }
       },
@@ -15120,6 +15454,17 @@
         },
         "required" : [ "type" ]
       },
+      "PermissionChangeImpactSummary" : {
+        "type" : "object",
+        "properties" : {
+          "impactDetail" : {
+            "type" : "string"
+          },
+          "impactSummary" : {
+            "type" : "string"
+          }
+        }
+      },
       "PermissionChangeRequest" : {
         "type" : "object",
         "properties" : {
@@ -16078,7 +16423,7 @@
         "properties" : {
           "conditionSet" : {
             "type" : "string",
-            "enum" : [ "'=', 'between', '>', '>=', '<', '<='", "'=', 'in', 'in dictionary', 'between', '>', '>=', '<', '<='", "'='", "'=', 'between', '>', '>=', '<', '<='", "'=', 'in', 'in dictionary'", "'is', 'in folder'", "'=', 'in', 'in dictionary'", "'is', 'in folder', '=', 'in', 'in dictionary'", "'=', 'in', 'in dictionary'", "'=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', 'in', 'in dictionary', 'matches regex'", "'=', 'in', 'in dictionary'", "'=', 'in', 'in dictionary'", "'=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'='", "'=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', 'in', 'in dictionary'", "'is', '='", "'between'", "'=', 'in'", "'=', 'in'", "'=', 'in', 'in dictionary'", "'=', 'in', 'in dictionary', 'is'", "'=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'" ]
+            "enum" : [ "'=', '!=', 'between', '>', '>=', '<', '<='", "'=', '!=', 'in', 'in dictionary', 'between', '>', '>=', '<', '<='", "'=', '!='", "'=', '!=', 'between', '>', '>=', '<', '<='", "'=', '!=', 'in', 'in dictionary'", "'is', 'in folder'", "'=', '!=', 'in', 'in dictionary'", "'is', 'in folder', '=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary', 'matches regex'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!='", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'is', '=', '!='", "'between'", "'=', '!=', 'in'", "'=', '!=', 'in'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary', 'is'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'" ]
           },
           "docRefType" : {
             "type" : "string"
@@ -18364,7 +18709,7 @@
           },
           "matchType" : {
             "type" : "string",
-            "enum" : [ "ANY", "NULL", "NON_NULL", "BLANK", "EMPTY", "NULL_OR_BLANK", "NULL_OR_EMPTY", "CONTAINS", "EQUALS", "STARTS_WITH", "ENDS_WITH", "REGEX" ]
+            "enum" : [ "ANY", "NULL", "NON_NULL", "BLANK", "EMPTY", "NULL_OR_BLANK", "NULL_OR_EMPTY", "CONTAINS", "EQUALS", "NOT_EQUALS", "STARTS_WITH", "ENDS_WITH", "REGEX" ]
           },
           "pattern" : {
             "type" : "string"
@@ -19010,7 +19355,7 @@
         "properties" : {
           "condition" : {
             "type" : "string",
-            "enum" : [ "CONTAINS", "EQUALS", "GREATER_THAN", "GREATER_THAN_OR_EQUAL_TO", "LESS_THAN", "LESS_THAN_OR_EQUAL_TO", "BETWEEN", "IN", "IN_DICTIONARY", "IN_FOLDER", "IS_DOC_REF", "IS_NULL", "IS_NOT_NULL", "MATCHES_REGEX" ]
+            "enum" : [ "CONTAINS", "EQUALS", "NOT_EQUALS", "GREATER_THAN", "GREATER_THAN_OR_EQUAL_TO", "LESS_THAN", "LESS_THAN_OR_EQUAL_TO", "BETWEEN", "IN", "IN_DICTIONARY", "IN_FOLDER", "IS_DOC_REF", "IS_NULL", "IS_NOT_NULL", "MATCHES_REGEX" ]
           },
           "from" : {
             "type" : "string"
@@ -19598,7 +19943,7 @@
           },
           "matchType" : {
             "type" : "string",
-            "enum" : [ "EXISTS", "CONTAINS", "EQUALS", "UNIQUE" ]
+            "enum" : [ "EXISTS", "CONTAINS", "EQUALS", "NOT_EQUALS", "UNIQUE" ]
           },
           "path" : {
             "type" : "string"

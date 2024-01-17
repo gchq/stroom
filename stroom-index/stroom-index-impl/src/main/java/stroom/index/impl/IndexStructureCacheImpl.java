@@ -23,6 +23,8 @@ import stroom.docref.DocRef;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFieldsMap;
+import stroom.search.extraction.IndexStructure;
+import stroom.search.extraction.IndexStructureCache;
 import stroom.util.shared.Clearable;
 
 import jakarta.inject.Inject;

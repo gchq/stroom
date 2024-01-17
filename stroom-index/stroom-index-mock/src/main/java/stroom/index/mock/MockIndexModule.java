@@ -23,12 +23,12 @@ import stroom.index.impl.IndexShardService;
 import stroom.index.impl.IndexShardWriterCache;
 import stroom.index.impl.IndexStore;
 import stroom.index.impl.IndexStoreImpl;
-import stroom.index.impl.IndexStructureCache;
 import stroom.index.impl.IndexStructureCacheImpl;
 import stroom.index.impl.IndexVolumeGroupService;
 import stroom.index.impl.IndexVolumeService;
 import stroom.index.impl.Indexer;
 import stroom.index.shared.IndexDoc;
+import stroom.search.extraction.IndexStructureCache;
 import stroom.util.guice.GuiceUtil;
 
 import com.google.inject.AbstractModule;

@@ -29,10 +29,13 @@ import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.common.v2.CompiledColumns;
 import stroom.query.common.v2.ExpressionContextFactory;
+import stroom.query.common.v2.StringFieldValue;
 import stroom.query.language.functions.FieldIndex;
 import stroom.search.extraction.AnalyticFieldListConsumer;
 import stroom.search.extraction.FieldListConsumerHolder;
 import stroom.search.extraction.FieldValue;
+import stroom.search.extraction.FieldValueExtractor;
+import stroom.search.extraction.FieldValueExtractorFactory;
 import stroom.search.extraction.MemoryIndex;
 import stroom.task.api.TaskTerminatedException;
 import stroom.util.concurrent.UncheckedInterruptedException;
@@ -58,6 +61,7 @@ public class StreamingAnalyticProcessorTaskDecorator implements ProcessorTaskDec
     private final DetectionConsumerFactory detectionConsumerFactory;
     private final DetectionConsumerProxy detectionConsumerProxy;
     private final FieldListConsumerHolder fieldListConsumerHolder;
+    private final FieldValueExtractorFactory fieldValueExtractorFactory;
 
     private AnalyticFieldListConsumer fieldListConsumer;
 
@@ -71,7 +75,8 @@ public class StreamingAnalyticProcessorTaskDecorator implements ProcessorTaskDec
                                                    final NotificationStateService notificationStateService,
                                                    final DetectionConsumerFactory detectionConsumerFactory,
                                                    final DetectionConsumerProxy detectionConsumerProxy,
-                                                   final FieldListConsumerHolder fieldListConsumerHolder) {
+                                                   final FieldListConsumerHolder fieldListConsumerHolder,
+                                                   final FieldValueExtractorFactory fieldValueExtractorFactory) {
         this.streamingAnalyticCache = streamingAnalyticCache;
         this.expressionContextFactory = expressionContextFactory;
         this.memoryIndex = memoryIndex;
@@ -79,6 +84,7 @@ public class StreamingAnalyticProcessorTaskDecorator implements ProcessorTaskDec
         this.detectionConsumerFactory = detectionConsumerFactory;
         this.detectionConsumerProxy = detectionConsumerProxy;
         this.fieldListConsumerHolder = fieldListConsumerHolder;
+        this.fieldValueExtractorFactory = fieldValueExtractorFactory;
     }
 
     @Override
@@ -127,7 +133,7 @@ public class StreamingAnalyticProcessorTaskDecorator implements ProcessorTaskDec
         final SearchRequest searchRequest = analytic.searchRequest();
         final ExpressionContext expressionContext = expressionContextFactory
                 .createContext(searchRequest);
-        final TableSettings tableSettings = searchRequest.getResultRequests().get(0).getMappings().get(0);
+        final TableSettings tableSettings = searchRequest.getResultRequests().getFirst().getMappings().getFirst();
         final Map<String, String> paramMap = ParamUtil.createParamMap(searchRequest.getQuery().getParams());
         final CompiledColumns compiledColumns = CompiledColumns.create(expressionContext,
                 tableSettings.getColumns(),
@@ -144,12 +150,15 @@ public class StreamingAnalyticProcessorTaskDecorator implements ProcessorTaskDec
                         detectionConsumerFactory.create(analytic.analyticRuleDoc());
                 detectionConsumerProxy.setAnalyticRuleDoc(analytic.analyticRuleDoc());
                 detectionConsumerProxy.setCompiledColumns(compiledColumns);
-                detectionConsumerProxy.setFieldIndex(fieldIndex);
                 detectionConsumerProxy.setDetectionsConsumerProvider(detectionConsumerProvider);
+
+                final FieldValueExtractor fieldValueExtractor = fieldValueExtractorFactory
+                        .create(searchRequest.getQuery().getDataSource(), fieldIndex);
 
                 return Optional.of(new StreamingAnalyticFieldListConsumer(
                         searchRequest,
                         fieldIndex,
+                        fieldValueExtractor,
                         notificationState,
                         detectionConsumerProxy,
                         memoryIndex,
@@ -180,7 +189,12 @@ public class StreamingAnalyticProcessorTaskDecorator implements ProcessorTaskDec
         }
 
         @Override
-        public void accept(final List<FieldValue> fieldValues) {
+        public void acceptFieldValues(final List<FieldValue> fieldValues) {
+
+        }
+
+        @Override
+        public void acceptStringValues(final List<StringFieldValue> stringValues) {
 
         }
     }
