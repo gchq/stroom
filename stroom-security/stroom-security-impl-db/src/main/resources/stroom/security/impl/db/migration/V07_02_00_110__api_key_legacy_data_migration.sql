@@ -61,7 +61,6 @@ BEGIN
             '     update_user,',
             '     fk_owner_uuid,',
             '     api_key_hash,',
-            '     api_key_salt,',
             '     api_key_prefix,',
             '     expires_on_ms,',
             '     name,',
@@ -76,7 +75,6 @@ BEGIN
             '     s.uuid,',
             '     CONCAT(''LEGACY_API_KEY'', ''_'', t.id),', -- Add id to make it unique
             '     CONCAT(''LEGACY_API_KEY'', ''_'', t.id),', -- Add id to make it unique
-            '     substring(t.data, 1, 15),',  -- So we have something to put in this col
             '     t.expires_on_ms,',
             '     CONCAT(''LEGACY_API_KEY'', ''_'', t.id),', -- Add id to make it unique
             '     t.data,', -- put the api key in the comments, as you used to be able to see the full key

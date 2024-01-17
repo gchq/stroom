@@ -13,6 +13,14 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Issue **#4012** : Fix NPE when cascading perms on a folder with no current perms.
+
+* Change V07_02_00_110__api_key_legacy_data_migration.sql to make prefix column values unique.
+
+* Fix duplicate entries in selection boxes.
+
+* Fix broken SQL migration script V07_02_00_110__api_key_legacy_data_migration.sql.
+
 * Issue **#3952** : Fix handling of thread interrupts (e.g. when a ref load is triggered by a search extraction and the search is stopped) during reference data loads. Interrupted ref loads now correctly get a load state of TERMINATED. Stopped searches no longer show a warning triangle with ref errors. Terminated pipeline tasks no longer list errors/warnings for the ref load/lookups.
 
 * Issue **#3937** : Re-work the API keys screen using GWT rather than React. Change the structure of the API keys from a JSON Web Token to a 'dumb' random string. Add the ability to enable/disable tokens. Change Stroom to store the hash of the API key rather than the key itself. Include a prefix in the API key (which is stored in Stroom) so that users can identify a key they have against the list of keys in Stroom. Legacy API Keys that are _enabled_ will be migrated from the `token` table into the new `apk-key` table. This is mostly so there is visibility of the legacy API keys. As the legacy API keys are JWTs and Stroom was not checking the `token` table for their presence, authentication relies on the JWT being valid and not expired. It is recommended to create new API keys and get users of the legacy API keys to migrate over. The new API keys allow temporary/permanent revocation so are more secure.
