@@ -1334,6 +1334,7 @@ public class LmdbDataStore implements DataStore {
                 long count = 0;
                 while (iterator.hasNext()
                         && !Thread.currentThread().isInterrupted()) {
+                    iterator.next();
                     // FIXME : NOTE THIS COUNT IS NOT FILTERED BY THE MAPPER.
                     count++;
                 }

@@ -64,6 +64,10 @@ class CountGroups extends AbstractFunction implements AggregateFunction {
         return Type.LONG;
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static final class Gen extends AbstractNoChildGenerator {
 
         @Override
