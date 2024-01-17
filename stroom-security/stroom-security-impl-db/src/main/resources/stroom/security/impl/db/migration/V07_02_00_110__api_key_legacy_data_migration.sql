@@ -83,16 +83,14 @@ BEGIN
             ' inner join token_type tt on tt.id = t.fk_token_type_id',
             ' inner join account a on a.id = t.fk_account_id',
             ' inner join stroom_user s on s.name = a.user_id',
-            ' where tt.type = ''api''',
-            ' and t.enabled = true;'));  -- No point migrating disabled ones
+            ' where tt.type = ''api'';'));
 
         -- Now delete the ones we migrated
         CALL security_run_sql_v1(CONCAT(
             ' delete t ',
             ' from token t',
             ' inner join token_type tt on tt.id = t.fk_token_type_id',
-            ' where tt.type = ''api''',
-            ' and t.enabled = true;'));
+            ' where tt.type = ''api'';'));
     END IF;
 END $$
 

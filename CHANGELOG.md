@@ -13,6 +13,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Change SQL migration `V07_02_00_110__api_key_legacy_data_migration.sql` to include all API keys, not just enabled ones.
+
 * Issue **#4012** : Fix NPE when cascading perms on a folder with no current perms.
 
 * Change V07_02_00_110__api_key_legacy_data_migration.sql to make prefix column values unique.
