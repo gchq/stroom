@@ -7,8 +7,7 @@ import stroom.search.elastic.search.SearchExpressionQueryBuilder;
 import stroom.search.elastic.shared.ElasticIndexField;
 import stroom.search.elastic.shared.ElasticIndexFieldType;
 
-import co.elastic.clients.elasticsearch._types.FieldValue;
-import co.elastic.clients.elasticsearch._types.mapping.LongNumberProperty;
+import co.elastic.clients.elasticsearch._types.mapping.Property.Kind;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch._types.query_dsl.RangeQuery;
@@ -44,7 +43,7 @@ public class TestSearchExpressionQueryBuilder {
     public void testBuildQuery() {
         ElasticIndexField answerField = new ElasticIndexField();
         answerField.setFieldName("answer");
-        answerField.setFieldType("long");
+        answerField.setFieldType(Kind.Long.jsonValue());
         answerField.setFieldUse(ElasticIndexFieldType.LONG);
         indexFieldsMap.put(answerField.getFieldName(), answerField);
         final long answerFieldValue = 42L;
@@ -58,7 +57,7 @@ public class TestSearchExpressionQueryBuilder {
         BoolQuery boolQuery = queryBuilder.bool();
         Assertions.assertEquals(1, boolQuery.must().size(), "Bool query contains exactly one item");
 
-        TermQuery termQuery = boolQuery.must().get(0).term();
+        TermQuery termQuery = boolQuery.must().getFirst().term();
         Assertions.assertEquals(answerField.getFieldName(), termQuery.field(), "Field name is correct");
         Assertions.assertEquals(answerFieldValue, termQuery.value().longValue(), "Query value is correct");
 
@@ -66,7 +65,7 @@ public class TestSearchExpressionQueryBuilder {
 
         ElasticIndexField nameField = new ElasticIndexField();
         nameField.setFieldName("name");
-        nameField.setFieldType("text");
+        nameField.setFieldType(Kind.Text.jsonValue());
         nameField.setFieldUse(ElasticIndexFieldType.TEXT);
         indexFieldsMap.put(nameField.getFieldName(), nameField);
 
@@ -74,7 +73,7 @@ public class TestSearchExpressionQueryBuilder {
 
         ElasticIndexField dateField = new ElasticIndexField();
         dateField.setFieldName("date");
-        dateField.setFieldType("date");
+        dateField.setFieldType(Kind.Date.jsonValue());
         dateField.setFieldUse(ElasticIndexFieldType.DATE);
         indexFieldsMap.put(dateField.getFieldName(), dateField);
         final String nowStr = "2021-02-17T01:23:34.000";
@@ -100,7 +99,7 @@ public class TestSearchExpressionQueryBuilder {
         Assertions.assertEquals(1, innerBoolQuery.mustNot().size(),
                 "Inner bool query contains one item");
 
-        RangeQuery firstRangeQuery = innerBoolQuery.mustNot().get(0).range();
+        RangeQuery firstRangeQuery = innerBoolQuery.mustNot().getFirst().range();
         Assertions.assertEquals(dateField.getFieldName(), firstRangeQuery.field(),
                 "Field name of first range query is correct");
     }
