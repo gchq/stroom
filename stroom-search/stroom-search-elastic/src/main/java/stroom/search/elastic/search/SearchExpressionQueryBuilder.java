@@ -31,6 +31,7 @@ import stroom.search.elastic.shared.ElasticIndexFieldType;
 import stroom.util.functions.TriFunction;
 
 import co.elastic.clients.elasticsearch._types.FieldValue;
+import co.elastic.clients.elasticsearch._types.mapping.Property.Kind;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.MatchAllQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
@@ -53,7 +54,6 @@ import java.util.stream.Stream;
  */
 public class SearchExpressionQueryBuilder {
 
-    private static final String KEYWORD_FIELD_TYPE = "keyword";
     private static final String DELIMITER = ",";
     private static final Pattern WILDCARD_PATTERN = Pattern.compile(".*[*?].*");
     private static final Pattern QUOTED_PATTERN = Pattern.compile("^\"(.+)\"$");
@@ -180,7 +180,7 @@ public class SearchExpressionQueryBuilder {
         }
 
         final BiFunction<String, String, Query> buildQueryFn;
-        if (indexField.getFieldType().equals(KEYWORD_FIELD_TYPE)) {
+        if (Kind.Keyword.jsonValue().equals(indexField.getFieldType())) {
             // Elasticsearch field mapping type is `keyword`, so generate a term-level query
             buildQueryFn = this::buildKeywordQuery;
         } else {

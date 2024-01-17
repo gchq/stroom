@@ -59,6 +59,7 @@ import co.elastic.clients.elasticsearch._types.mapping.IpProperty;
 import co.elastic.clients.elasticsearch._types.mapping.KeywordProperty;
 import co.elastic.clients.elasticsearch._types.mapping.NumberPropertyBase;
 import co.elastic.clients.elasticsearch._types.mapping.Property;
+import co.elastic.clients.elasticsearch._types.mapping.Property.Kind;
 import co.elastic.clients.elasticsearch._types.mapping.PropertyBase;
 import co.elastic.clients.elasticsearch._types.mapping.TextProperty;
 import co.elastic.clients.elasticsearch.indices.GetFieldMappingRequest;
@@ -217,7 +218,7 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
                     if (nativeType == null) {
                         // If field type is null, this is a system field, so ignore
                         return null;
-                    } else if (nativeType.equals("alias")) {
+                    } else if (Kind.Alias.jsonValue().equals(nativeType)) {
                         // Determine the mapping type of the field the alias is referring to
                         try {
                             final String aliasPath = getAliasPathFromMapping(fieldName, field.getValue());
@@ -250,7 +251,7 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
         final Optional<Property> firstFieldMapping = fieldMeta.mapping().values().stream().findFirst();
 
         if (firstFieldMapping.isPresent()) {
-            return firstFieldMapping.get()._kind().name().toLowerCase();
+            return firstFieldMapping.get()._kind().jsonValue();
         } else {
             LOGGER.debug(() -> "Mapping properties for field '" + fieldName +
                     "' were in an unrecognised format. Field ignored.");
@@ -293,7 +294,7 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
 
                 if (nativeType == null) {
                     return;
-                } else if (nativeType.equals("alias")) {
+                } else if (Kind.Alias.jsonValue().equals(nativeType)) {
                     // Determine the mapping type of the field the alias is referring to
                     try {
                         final String aliasPath = getAliasPathFromMapping(fieldName, fieldMeta);
