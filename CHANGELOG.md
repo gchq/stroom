@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2.20] - 2024-01-17
+
+* Change SQL migration `V07_02_00_110__api_key_legacy_data_migration.sql` to include all API keys, not just enabled ones.
+
+
 ## [v7.2.19] - 2024-01-17
 
 * Issue **#4012** : Fix NPE when cascading perms on a folder with no current perms.
@@ -6279,7 +6284,8 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2.19...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2.20...HEAD
+[v7.2.20]: https://github.com/gchq/stroom/compare/v7.2.19...v7.2.20
 [v7.2.19]: https://github.com/gchq/stroom/compare/v7.2.18...v7.2.19
 [v7.2.18]: https://github.com/gchq/stroom/compare/v7.2.17...v7.2.18
 [v7.2.17]: https://github.com/gchq/stroom/compare/v7.2.16...v7.2.17
