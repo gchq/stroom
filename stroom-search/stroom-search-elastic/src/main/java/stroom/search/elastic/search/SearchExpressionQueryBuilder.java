@@ -42,6 +42,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.BiFunction;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -52,6 +53,7 @@ import java.util.stream.Stream;
  */
 public class SearchExpressionQueryBuilder {
 
+    private static final String KEYWORD_FIELD_TYPE = "keyword";
     private static final String DELIMITER = ",";
     private static final Pattern WILDCARD_PATTERN = Pattern.compile(".*[*?].*");
     private static final Pattern QUOTED_PATTERN = Pattern.compile("^\"(.+)\"$");
@@ -177,74 +179,45 @@ public class SearchExpressionQueryBuilder {
             return null;
         }
 
-        if (indexField.getFieldType().equals("keyword")) {
+        final BiFunction<String, String, Query> buildQueryFn;
+        if (indexField.getFieldType().equals(KEYWORD_FIELD_TYPE)) {
             // Elasticsearch field mapping type is `keyword`, so generate a term-level query
-            switch (condition) {
-                case EQUALS -> {
-                    return buildKeywordQuery(fieldName, expression);
-                }
-                case NOT_EQUALS -> {
-                    return negate(buildKeywordQuery(fieldName, expression));
-                }
-                case MATCHES_REGEX -> {
-                    return QueryBuilders.regexp(q -> q
-                            .field(fieldName)
-                            .value(expression)
-                    );
-                }
-                case IN -> {
-                    if (terms.size() > 1) {
-                        return BoolQuery.of(q -> q
-                                .should(terms.stream()
-                                        .map(term -> buildKeywordQuery(fieldName, term))
-                                        .collect(Collectors.toList()))
-                        )._toQuery();
-                    } else {
-                        return buildKeywordQuery(fieldName, expression);
-                    }
-                }
-                case IN_DICTIONARY -> {
-                    return buildDictionaryQuery(condition, fieldName, docRef, indexField);
-                }
-                default -> throw new UnsupportedOperationException("Unsupported condition '" +
-                        condition.getDisplayValue() +
-                        "' for " +
-                        indexField.getFieldUse().getDisplayValue() +
-                        " field type");
-            }
+            buildQueryFn = this::buildKeywordQuery;
         } else {
             // This is a type other than `keyword`, such as `text` or `wildcard`. Perform a full-text match.
-            switch (condition) {
-                case EQUALS -> {
-                    return buildTextQuery(fieldName, expression);
-                }
-                case NOT_EQUALS -> {
-                    return negate(buildTextQuery(fieldName, expression));
-                }
-                case MATCHES_REGEX -> {
-                    return QueryBuilders.regexp(q -> q
-                            .field(fieldName)
-                            .value(expression)
-                    );
-                }
-                case IN -> {
-                    if (terms.size() > 1) {
-                        return BoolQuery.of(q -> q
-                                .should(terms.stream()
-                                        .map(term -> buildTextQuery(fieldName, term))
-                                        .collect(Collectors.toList()))
-                        )._toQuery();
-                    } else {
-                        return buildTextQuery(fieldName, expression);
-                    }
-                }
-                case IN_DICTIONARY -> {
-                    return buildDictionaryQuery(condition, fieldName, docRef, indexField);
-                }
-                default -> throw new UnsupportedOperationException("Unsupported condition '" +
-                        condition.getDisplayValue() + "' for " + indexField.getFieldUse().getDisplayValue() +
-                        " field type");
+            buildQueryFn = this::buildTextQuery;
+        }
+
+        switch (condition) {
+            case EQUALS -> {
+                return buildQueryFn.apply(fieldName, expression);
             }
+            case NOT_EQUALS -> {
+                return negate(buildQueryFn.apply(fieldName, expression));
+            }
+            case MATCHES_REGEX -> {
+                return QueryBuilders.regexp(q -> q
+                        .field(fieldName)
+                        .value(expression)
+                );
+            }
+            case IN -> {
+                if (terms.size() > 1) {
+                    return BoolQuery.of(q -> q
+                            .should(terms.stream()
+                                    .map(term -> buildQueryFn.apply(fieldName, term))
+                                    .collect(Collectors.toList()))
+                    )._toQuery();
+                } else {
+                    return buildQueryFn.apply(fieldName, expression);
+                }
+            }
+            case IN_DICTIONARY -> {
+                return buildDictionaryQuery(condition, fieldName, docRef, indexField);
+            }
+            default -> throw new UnsupportedOperationException("Unsupported condition '" +
+                    condition.getDisplayValue() + "' for " + indexField.getFieldUse().getDisplayValue() +
+                    " field type");
         }
     }
 
@@ -304,9 +277,12 @@ public class SearchExpressionQueryBuilder {
                         );
             }
             case NOT_EQUALS -> {
-                numericValue = valueParser.apply(condition, fieldName, fieldValue);
+                fieldValue = valueParser.apply(condition, fieldName, rawValue);
                 return negate(QueryBuilders
-                        .termQuery(fieldName, numericValue));
+                        .term(q -> q
+                                .field(fieldName)
+                                .value(fieldValue)
+                        ));
             }
             case IN -> {
                 fieldValues = tokenizeExpression(rawValue)
@@ -373,10 +349,10 @@ public class SearchExpressionQueryBuilder {
         }
     }
 
-    private QueryBuilder negate(final QueryBuilder queryBuilder) {
-        final BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery();
-        boolQueryBuilder.mustNot(queryBuilder);
-        return boolQueryBuilder;
+    private Query negate(final Query query) {
+        return QueryBuilders.bool()
+                .mustNot(query)
+                .build()._toQuery();
     }
 
     /**
