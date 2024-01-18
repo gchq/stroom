@@ -566,15 +566,11 @@ class DynamicTestBuilder {
                                 .map(this::valueToStr)
                                 .collect(Collectors.joining(", ")))
                         .append("]");
-            } else if (value.toString().contains("$$Lambda")) {
+            } else if (NullSafe.test(value.toString(), str -> str.contains("$$Lambda"))) {
                 // Not sure if there is anything useful we can show for the lambda so just do this
                 stringBuilder.append("lambda");
             } else {
                 String valStr = value.toString();
-                // No point outputting the lambda reference as it doesn't help
-                if (valStr.contains("$$Lambda")) {
-                    valStr = "lambda";
-                }
 
                 stringBuilder.append("'")
                         .append(valStr)
