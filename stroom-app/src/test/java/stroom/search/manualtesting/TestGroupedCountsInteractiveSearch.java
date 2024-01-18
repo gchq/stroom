@@ -20,7 +20,7 @@ package stroom.search.manualtesting;
 
 
 import stroom.docref.DocRef;
-import stroom.index.impl.IndexStore;
+import stroom.index.IndexStore;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.Field;

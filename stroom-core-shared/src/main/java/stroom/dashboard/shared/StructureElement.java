@@ -1,16 +1,22 @@
 package stroom.dashboard.shared;
 
+import stroom.util.shared.CompareUtil;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.Comparator;
 import java.util.List;
 
 @JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
-public class StructureElement {
+public class StructureElement implements Comparable<StructureElement> {
+
+    public static final Comparator<StructureElement> CASE_INSENSITIVE_TITLE_COMPARATOR =
+            CompareUtil.getNullSafeCaseInsensitiveComparator(StructureElement::getTitle);
 
     @JsonProperty
     private final String title;
@@ -47,5 +53,10 @@ public class StructureElement {
                 ", description='" + description + '\'' +
                 ", snippets=" + snippets +
                 '}';
+    }
+
+    @Override
+    public int compareTo(final StructureElement o) {
+        return CASE_INSENSITIVE_TITLE_COMPARATOR.compare(this, o);
     }
 }

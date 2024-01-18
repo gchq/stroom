@@ -21,7 +21,7 @@ import stroom.annotation.api.AnnotationFields;
 import stroom.dictionary.impl.DictionaryStore;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docref.DocRef;
-import stroom.index.impl.IndexStore;
+import stroom.index.IndexStore;
 import stroom.index.shared.IndexConstants;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;

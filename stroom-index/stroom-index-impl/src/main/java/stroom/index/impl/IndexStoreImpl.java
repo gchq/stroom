@@ -28,6 +28,7 @@ import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
+import stroom.index.IndexStore;
 import stroom.index.shared.IndexDoc;
 import stroom.util.shared.Message;
 

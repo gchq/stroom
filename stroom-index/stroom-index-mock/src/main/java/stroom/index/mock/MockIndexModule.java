@@ -18,10 +18,10 @@ package stroom.index.mock;
 
 import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.importexport.api.ImportExportActionHandler;
+import stroom.index.IndexStore;
 import stroom.index.impl.IndexElementModule;
 import stroom.index.impl.IndexShardService;
 import stroom.index.impl.IndexShardWriterCache;
-import stroom.index.impl.IndexStore;
 import stroom.index.impl.IndexStoreImpl;
 import stroom.index.impl.IndexStructureCache;
 import stroom.index.impl.IndexStructureCacheImpl;

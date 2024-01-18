@@ -27,6 +27,7 @@ import stroom.datasource.api.v2.DataSource;
 import stroom.docref.DocRef;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
+import stroom.index.IndexStore;
 import stroom.node.api.NodeService;
 import stroom.query.shared.DownloadQueryResultsRequest;
 import stroom.query.shared.QueryDoc;
@@ -47,12 +48,14 @@ import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.filter.FilterFieldDefinition;
 import stroom.view.api.ViewStore;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.ws.rs.client.Entity;
@@ -78,18 +81,21 @@ class QueryResourceImpl implements QueryResource {
     private final Provider<FunctionService> functionServiceProvider;
     private final Provider<StructureElementService> structureElementServiceProvider;
     private final Provider<ViewStore> viewStoreProvider;
+    private final Provider<IndexStore> indexStoreProvider;
 
     @Inject
     QueryResourceImpl(final Provider<NodeService> nodeServiceProvider,
                       final Provider<QueryService> dashboardServiceProvider,
                       final Provider<FunctionService> functionServiceProvider,
                       final Provider<StructureElementService> structureElementServiceProvider,
-                      final Provider<ViewStore> viewStoreProvider) {
+                      final Provider<ViewStore> viewStoreProvider,
+                      final Provider<IndexStore> indexStoreProvider) {
         this.nodeServiceProvider = nodeServiceProvider;
         this.queryServiceProvider = dashboardServiceProvider;
         this.functionServiceProvider = functionServiceProvider;
         this.structureElementServiceProvider = structureElementServiceProvider;
         this.viewStoreProvider = viewStoreProvider;
+        this.indexStoreProvider = indexStoreProvider;
     }
 
     @Override
@@ -194,13 +200,14 @@ class QueryResourceImpl implements QueryResource {
                 request,
                 HelpItemType.DATA_SOURCE,
                 DOC_REF_FILTER_FIELD_MAPPERS,
-                () -> viewStoreProvider.get().list());
+                () -> viewStoreProvider.get().list().stream(),
+                () -> indexStoreProvider.get().list().stream());
 
         final List<StructureElement> structureElements = getData(
                 request,
                 HelpItemType.STRUCTURE,
                 STRUCTURE_ELEMENTS_FILTER_FIELD_MAPPERS,
-                () -> structureElementServiceProvider.get().getStructureElements());
+                () -> structureElementServiceProvider.get().getStructureElements().stream());
 
         final List<FunctionSignature> functionSignatures = getData(
                 request,
@@ -209,15 +216,18 @@ class QueryResourceImpl implements QueryResource {
                 () -> functionServiceProvider.get()
                         .getSignatures()
                         .stream()
-                        .flatMap(sig -> sig.asAliases().stream())
-                        .collect(Collectors.toList()));
+                        .flatMap(sig -> sig.asAliases().stream()));
 
         final Optional<DataSource> optional = Optional.ofNullable(request.getDataSourceRef())
                 .map(docRef -> queryServiceProvider.get().getDataSource(docRef))
                 .orElse(queryServiceProvider.get().getDataSource(request.getQuery()));
 
         final List<AbstractField> dataSourceFields = optional
-                .map(ds -> getData(request, HelpItemType.FIELD, FIELD_FILTER_FIELD_MAPPERS, ds::getFields))
+                .map(ds ->
+                        getData(request,
+                                HelpItemType.FIELD,
+                                FIELD_FILTER_FIELD_MAPPERS,
+                                () -> ds.getFields().stream()))
                 .orElse(Collections.emptyList());
 
         return new QueryHelpItemsResult(
@@ -230,22 +240,36 @@ class QueryResourceImpl implements QueryResource {
     private <T> List<T> getData(final QueryHelpItemsRequest request,
                                 final HelpItemType helpItemType,
                                 final FilterFieldMappers<T> filterFieldMappers,
-                                final Supplier<List<T>> dataSupplier) {
-        final String filterInput = request.getFilterInput();
-        final Set<HelpItemType> requestedTypes = request.getRequestedTypes();
-
-        if (requestedTypes.contains(helpItemType)) {
-            if (NullSafe.isBlankString(filterInput)) {
-                return dataSupplier.get();
-            } else {
-                return QuickFilterPredicateFactory.filterStream(
-                                filterInput,
-                                filterFieldMappers,
-                                NullSafe.stream(dataSupplier.get()))
-                        .toList();
-            }
-        } else {
+                                final Supplier<Stream<T>>... dataSuppliers) {
+        if (NullSafe.isEmptyArray(dataSuppliers)) {
             return Collections.emptyList();
+        } else {
+            final String filterInput = request.getFilterInput();
+            final Set<HelpItemType> requestedTypes = request.getRequestedTypes();
+
+            if (requestedTypes.contains(helpItemType)) {
+                Stream<T> combinedStream = combineStreamSuppliers(dataSuppliers);
+                if (!NullSafe.isBlankString(filterInput)) {
+                    combinedStream = QuickFilterPredicateFactory.filterStream(
+                            filterInput,
+                            filterFieldMappers,
+                            combinedStream);
+                }
+                return combinedStream.toList();
+            } else {
+                return Collections.emptyList();
+            }
+        }
+    }
+
+    private <T> Stream<T> combineStreamSuppliers(final Supplier<Stream<T>>... streamSuppliers) {
+        if (NullSafe.isEmptyArray(streamSuppliers)) {
+            return Stream.empty();
+        } else {
+            return Arrays.stream(streamSuppliers)
+                    .filter(Objects::nonNull)
+                    .map(Supplier::get)
+                    .reduce(Stream.empty(), Stream::concat);
         }
     }
 }

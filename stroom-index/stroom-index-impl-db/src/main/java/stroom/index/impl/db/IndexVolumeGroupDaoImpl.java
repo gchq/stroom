@@ -3,7 +3,7 @@ package stroom.index.impl.db;
 import stroom.db.util.GenericDao;
 import stroom.db.util.JooqUtil;
 import stroom.docref.DocRef;
-import stroom.index.impl.IndexStore;
+import stroom.index.IndexStore;
 import stroom.index.impl.IndexVolumeGroupDao;
 import stroom.index.impl.db.jooq.tables.records.IndexVolumeGroupRecord;
 import stroom.index.shared.IndexDoc;

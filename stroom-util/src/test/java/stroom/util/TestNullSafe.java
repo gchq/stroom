@@ -504,7 +504,25 @@ class TestNullSafe {
     }
 
     @TestFactory
-    Stream<DynamicTest> testHasItems() {
+    Stream<DynamicTest> testIsEmptyArray() {
+        final String[] emptyArr = new String[0];
+        final String[] nonEmptyArr = new String[]{ "foo", "bar" };
+
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(new TypeLiteral<String[]>() {
+                })
+                .withOutputType(boolean.class)
+                .withTestFunction(testCase ->
+                        NullSafe.isEmptyArray(testCase.getInput()))
+                .withSimpleEqualityAssertion()
+                .addCase(null, true)
+                .addCase(emptyArr, true)
+                .addCase(nonEmptyArr, false)
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testHasItems_collection() {
         final List<String> emptyList = Collections.emptyList();
         final List<String> nonEmptyList = List.of("foo", "bar");
 
@@ -518,6 +536,24 @@ class TestNullSafe {
                 .addCase(null, false)
                 .addCase(emptyList, false)
                 .addCase(nonEmptyList, true)
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testHasItems_array() {
+        final String[] emptyArr = new String[0];
+        final String[] nonEmptyArr = new String[]{ "foo", "bar" };
+
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(new TypeLiteral<String[]>() {
+                })
+                .withOutputType(boolean.class)
+                .withTestFunction(testCase ->
+                        NullSafe.hasItems(testCase.getInput()))
+                .withSimpleEqualityAssertion()
+                .addCase(null, false)
+                .addCase(emptyArr, false)
+                .addCase(nonEmptyArr, true)
                 .build();
     }
 

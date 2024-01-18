@@ -47,8 +47,20 @@ class DocRefInfoServiceImpl implements DocRefInfoService {
     }
 
     @Override
+    public Optional<DocRefInfo> info(final String uuid) {
+        return docRefInfoCache.get(uuid);
+    }
+
+    @Override
     public Optional<String> name(final DocRef docRef) {
         return info(docRef)
+                .map(DocRefInfo::getDocRef)
+                .map(DocRef::getName);
+    }
+
+    @Override
+    public Optional<String> name(final String uuid) {
+        return info(uuid)
                 .map(DocRefInfo::getDocRef)
                 .map(DocRef::getName);
     }

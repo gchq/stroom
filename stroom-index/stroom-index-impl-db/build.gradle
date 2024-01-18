@@ -11,6 +11,7 @@ dependencies {
     implementation project(':stroom-explorer:stroom-docrefinfo-api')
     implementation project(':stroom-explorer:stroom-explorer-api')
     implementation project(':stroom-importexport:stroom-importexport-api')
+    implementation project(':stroom-index:stroom-index-api')
     implementation project(':stroom-index:stroom-index-impl')
     implementation project(':stroom-index:stroom-index-impl-db-jooq')
     implementation project(':stroom-query:stroom-query-api')

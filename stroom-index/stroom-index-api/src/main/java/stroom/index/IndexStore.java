@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.index.impl;
+package stroom.index;
 
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentStore;

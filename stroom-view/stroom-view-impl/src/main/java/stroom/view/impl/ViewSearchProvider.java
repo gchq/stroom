@@ -51,6 +51,9 @@ public class ViewSearchProvider implements SearchProvider {
     public DataSource getDataSource(final DocRef docRef) {
         return securityContext.useAsReadResult(() -> {
             final ViewDoc viewDoc = getView(docRef);
+            // TODO AT: should it get the extraction pipe from the idx if there is no pipe
+            //  set on the view?  Maybe it is desirable to NOT have an extraction pipe, in which
+            //  case we shouldn't do this?
             return DataSource
                     .builder()
                     .docRef(viewDoc.asDocRef())

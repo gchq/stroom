@@ -1,7 +1,7 @@
 package stroom.search.impl.shard;
 
 import stroom.dictionary.api.WordListProvider;
-import stroom.index.impl.IndexStore;
+import stroom.index.IndexStore;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFieldsMap;

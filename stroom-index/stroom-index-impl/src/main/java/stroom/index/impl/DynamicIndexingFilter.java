@@ -17,6 +17,7 @@
 package stroom.index.impl;
 
 import stroom.docref.DocRef;
+import stroom.index.IndexStore;
 import stroom.index.shared.AllPartition;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexField;

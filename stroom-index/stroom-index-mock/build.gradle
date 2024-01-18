@@ -6,6 +6,7 @@ dependencies {
     implementation project(':stroom-docstore:stroom-docstore-api')
     implementation project(':stroom-explorer:stroom-explorer-api')
     implementation project(':stroom-importexport:stroom-importexport-api')
+    implementation project(':stroom-index:stroom-index-api')
     implementation project(':stroom-index:stroom-index-impl')
     implementation project(':stroom-pipeline')
     implementation project(':stroom-util')

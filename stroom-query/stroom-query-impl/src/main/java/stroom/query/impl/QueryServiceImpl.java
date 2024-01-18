@@ -27,6 +27,8 @@ import stroom.docstore.shared.Documentation;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.expression.api.DateTimeSettings;
 import stroom.expression.api.ExpressionContext;
+import stroom.index.IndexStore;
+import stroom.index.shared.IndexDoc;
 import stroom.node.api.NodeInfo;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Param;
@@ -64,6 +66,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -87,6 +90,7 @@ class QueryServiceImpl implements QueryService {
     private final TaskContextFactory taskContextFactory;
     private final DataSourceProviderRegistry dataSourceProviderRegistry;
     private final ViewStore viewStore;
+    private final IndexStore indexStore;
     private final ResultStoreManager searchResponseCreatorManager;
     private final NodeInfo nodeInfo;
     private final SearchRequestFactory searchRequestFactory;
@@ -102,6 +106,7 @@ class QueryServiceImpl implements QueryService {
                      final TaskContextFactory taskContextFactory,
                      final DataSourceProviderRegistry dataSourceProviderRegistry,
                      final ViewStore viewStore,
+                     final IndexStore indexStore,
                      final ResultStoreManager searchResponseCreatorManager,
                      final NodeInfo nodeInfo,
                      final SearchRequestFactory searchRequestFactory,
@@ -115,6 +120,7 @@ class QueryServiceImpl implements QueryService {
         this.taskContextFactory = taskContextFactory;
         this.dataSourceProviderRegistry = dataSourceProviderRegistry;
         this.viewStore = viewStore;
+        this.indexStore = indexStore;
         this.searchResponseCreatorManager = searchResponseCreatorManager;
         this.nodeInfo = nodeInfo;
         this.searchRequestFactory = searchRequestFactory;
@@ -515,9 +521,24 @@ class QueryServiceImpl implements QueryService {
 
     @Override
     public Documentation fetchDocumentation(final DocRef docRef) {
+        Objects.requireNonNull(docRef);
+        final String type = Objects.requireNonNull(docRef.getType());
+
         return securityContext.useAsReadResult(() -> {
-            final String markdown = NullSafe.get(viewStore.readDocument(docRef),
-                    ViewDoc::getDescription);
+            final String markdown = switch (type) {
+                // In hindsight, maybe the description should have been added to the
+                // doc table as a col, so it is on all Doc sub-classes, then we could have
+                // a DocumentActionHandlers class that holds the guide bound map of
+                // DocumentType => DocumentStore and thus could have a readDocument method
+                // that returns a Doc.
+                case ViewDoc.DOCUMENT_TYPE -> NullSafe.get(
+                        viewStore.readDocument(docRef),
+                        ViewDoc::getDescription);
+                case IndexDoc.DOCUMENT_TYPE -> NullSafe.get(
+                        indexStore.readDocument(docRef),
+                        IndexDoc::getDescription);
+                default -> throw new IllegalArgumentException("Unexpected type " + type);
+            };
             return Documentation.of(markdown);
         });
     }

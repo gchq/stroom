@@ -23,7 +23,7 @@ import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.expression.api.DateTimeSettings;
-import stroom.index.impl.IndexStore;
+import stroom.index.IndexStore;
 import stroom.index.impl.LuceneVersionUtil;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexFieldsMap;
@@ -149,7 +149,7 @@ public class LuceneSearchProvider implements SearchProvider {
 
         // Create a coprocessor settings list.
         final List<CoprocessorSettings> coprocessorSettingsList = coprocessorsFactory
-                .createSettings(modifiedSearchRequest);
+                .createSettings(modifiedSearchRequest, index.getDefaultExtractionPipeline());
 
         // Create a handler for search results.
         final DataStoreSettings dataStoreSettings = DataStoreSettings

@@ -4,7 +4,7 @@ import stroom.collection.api.CollectionService;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
 import stroom.docrefinfo.mock.MockDocRefInfoModule;
-import stroom.index.impl.IndexStore;
+import stroom.index.IndexStore;
 import stroom.index.impl.IndexVolumeGroupService;
 import stroom.index.mock.MockIndexVolumeGroupService;
 import stroom.security.api.SecurityContext;

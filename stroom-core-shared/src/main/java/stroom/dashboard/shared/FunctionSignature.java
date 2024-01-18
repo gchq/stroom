@@ -1,11 +1,14 @@
 package stroom.dashboard.shared;
 
+import stroom.util.shared.CompareUtil;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -14,7 +17,10 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class FunctionSignature {
+public class FunctionSignature implements Comparable<FunctionSignature> {
+
+    public static final Comparator<FunctionSignature> CASE_INSENSITIVE_NAME_COMPARATOR =
+            CompareUtil.getNullSafeCaseInsensitiveComparator(FunctionSignature::getName);
 
     @JsonProperty
     private final String name;
@@ -188,6 +194,11 @@ public class FunctionSignature {
     public int hashCode() {
         return Objects.hash(
                 name, aliases, categoryPath, args, returnType, returnDescription, description, overloadType);
+    }
+
+    @Override
+    public int compareTo(final FunctionSignature o) {
+        return CASE_INSENSITIVE_NAME_COMPARATOR.compare(this, o);
     }
 
 

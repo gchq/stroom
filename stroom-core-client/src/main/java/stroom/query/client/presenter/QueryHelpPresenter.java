@@ -28,6 +28,9 @@ import stroom.editor.client.presenter.EditorPresenter;
 import stroom.editor.client.presenter.KeyedAceCompletionProvider;
 import stroom.editor.client.presenter.LazyCompletion;
 import stroom.entity.client.presenter.MarkdownConverter;
+import stroom.explorer.client.presenter.DocumentTypeCache;
+import stroom.explorer.shared.DocumentType;
+import stroom.explorer.shared.DocumentTypes;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.client.presenter.QueryHelpItem.FunctionCategoryItem;
 import stroom.query.client.presenter.QueryHelpItem.FunctionItem;
@@ -37,6 +40,7 @@ import stroom.query.client.presenter.QueryHelpItem.TopLevelHeadingItem;
 import stroom.query.client.presenter.QueryHelpPresenter.QueryHelpView;
 import stroom.query.shared.QueryHelpItemsRequest.HelpItemType;
 import stroom.query.shared.QueryHelpItemsResult;
+import stroom.svg.shared.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.ExtendedUiConfig;
 import stroom.ui.config.shared.Themes.ThemeType;
@@ -76,7 +80,6 @@ import edu.ycp.cs.dh.acegwt.client.ace.AceCompletionValue;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -132,6 +135,7 @@ public class QueryHelpPresenter
     private final QueryStructure queryStructure;
     private final KeyedAceCompletionProvider keyedAceCompletionProvider;
     private final UiConfigCache uiConfigCache;
+    private final DocumentTypeCache documentTypeCache;
     private QueryHelpDataSupplier queryHelpDataSupplier;
 
     private final List<QueryHelpItem> queryHelpItems = new ArrayList<>();
@@ -164,7 +168,8 @@ public class QueryHelpPresenter
                               final QueryStructure queryStructure,
                               final MarkdownConverter markdownConverter,
                               final KeyedAceCompletionProvider keyedAceCompletionProvider,
-                              final UiConfigCache uiConfigCache) {
+                              final UiConfigCache uiConfigCache,
+                              final DocumentTypeCache documentTypeCache) {
         super(eventBus, view);
         this.functionSignatures = functionSignatures;
         this.markdownConverter = markdownConverter;
@@ -194,6 +199,7 @@ public class QueryHelpPresenter
             // Rebuild the structure menu items as they contain markdown
             updateAllMenus(true);
         }));
+        this.documentTypeCache = documentTypeCache;
     }
 
     private void initMenu(final QueryHelpDataSupplier queryHelpDataSupplier) {
@@ -366,60 +372,75 @@ public class QueryHelpPresenter
         }
     }
 
-    private void buildDataSourcesMenuItems(final List<DocRef> viewDocRefs) {
+    private void buildDataSourcesMenuItems(final List<DocRef> dataSourceDocRefs) {
         // Add views.
         // Only need to re-build this part of the menu if the list of data sources has actually changed
-        if (!Objects.equals(lastFetchedViews, viewDocRefs) || hasThemeChanged()) {
-            lastFetchedViews = viewDocRefs;
+        if (!Objects.equals(lastFetchedViews, dataSourceDocRefs) || hasThemeChanged()) {
+            lastFetchedViews = dataSourceDocRefs;
             dataSourceHeading.clear();
-            if (!viewDocRefs.isEmpty()) {
+            if (!dataSourceDocRefs.isEmpty()) {
                 keyedAceCompletionProvider.clear(DATA_SOURCES_COMPLETION_KEY);
-                viewDocRefs.stream()
-                        .sorted()
-                        .forEach(viewDocRef -> {
-                            final String name = viewDocRef.getName();
-                            final HtmlBuilder htmlBuilder = HtmlBuilder.builder();
-                            appendKeyValueTable(htmlBuilder,
-                                    Arrays.asList(
-                                            new SimpleEntry<>("Name:", name),
-                                            new SimpleEntry<>("Type:", viewDocRef.getType()),
-                                            new SimpleEntry<>("UUID:", viewDocRef.getUuid())));
-
-                            // ctor add the item to its parent
-                            final DataSourceHelpItem dataSourceHelpItem = new DataSourceHelpItem(
-                                    dataSourceHeading,
-                                    name,
-                                    htmlBuilder.toSafeHtml(),
-                                    null,
-                                    viewDocRef);
-
-                            GWT.log("Adding completion for '" + dataSourceHelpItem.title + "'");
-
-                            keyedAceCompletionProvider.addLazyCompletion(
-                                    DATA_SOURCES_COMPLETION_KEY,
-                                    new LazyCompletion(callback -> {
-                                        queryHelpDataSupplier.fetchDataSourceDescription(
-                                                viewDocRef,
-                                                optMarkdown -> {
-                                                    final SafeHtml safeHtml = buildDatasourceDescription(
-                                                            optMarkdown, dataSourceHelpItem.getDetail());
-//                                                    GWT.log("Building completion for " +
-//                                                            dataSourceHelpItem.title);
-                                                    callback.accept(
-                                                            new AceCompletionValue(
-                                                                    dataSourceHelpItem.title,
-                                                                    dataSourceHelpItem.getInsertText(),
-                                                                    DATA_SOURCES_META,
-                                                                    safeHtml.asString(),
-                                                                    DATA_SOURCES_COMPLETION_SCORE));
-                                                });
-                                    }));
-                        });
+                documentTypeCache.fetch(documentTypes -> {
+                    dataSourceDocRefs.stream()
+                            .forEach(dataSourceDocRef -> {
+                                GWT.log(dataSourceDocRef.getName() + " " + dataSourceDocRef.getType());
+                                buildDataSourceMenuItem(dataSourceDocRef, documentTypes);
+                            });
+                });
             } else if (GwtNullSafe.isBlankString(quickFilterInput)) {
                 // Only show the EMPTY item if we are not filtering as an empty state is likely when filtering
                 createEmptyDataSourcesMenuItem(dataSourceHeading);
             }
         }
+    }
+
+    private void buildDataSourceMenuItem(final DocRef dataSourceDocRef,
+                                         final DocumentTypes documentTypes) {
+        final String name = dataSourceDocRef.getName();
+//                            final String title = dataSourceDocRef.getName()
+//                                    + " (" + dataSourceDocRef.getType() + ")";
+        final String title = name;
+        final HtmlBuilder detailHtmlBuilder = HtmlBuilder.builder();
+        appendKeyValueTable(detailHtmlBuilder,
+                Arrays.asList(
+                        new SimpleEntry<>("Name:", name),
+                        new SimpleEntry<>("Type:", dataSourceDocRef.getType()),
+                        new SimpleEntry<>("UUID:", dataSourceDocRef.getUuid())));
+
+        final SvgImage typeIcon = documentTypes.getDocumentType(dataSourceDocRef.getType())
+                .map(DocumentType::getIcon)
+                .orElse(null);
+
+        // ctor adds the item to its parent
+        final DataSourceHelpItem dataSourceHelpItem = new DataSourceHelpItem(
+                dataSourceHeading,
+                typeIcon,
+                title,
+                detailHtmlBuilder.toSafeHtml(),
+                null,
+                dataSourceDocRef);
+
+//                            GWT.log("Adding completion for '" + dataSourceHelpItem.title + "'");
+
+        keyedAceCompletionProvider.addLazyCompletion(
+                DATA_SOURCES_COMPLETION_KEY,
+                new LazyCompletion(callback -> {
+                    queryHelpDataSupplier.fetchDataSourceDescription(
+                            dataSourceDocRef,
+                            optMarkdown -> {
+                                final SafeHtml safeHtml = buildDatasourceDescription(
+                                        optMarkdown, dataSourceHelpItem.getDetail());
+//                                                    GWT.log("Building completion for " +
+//                                                            dataSourceHelpItem.title);
+                                callback.accept(
+                                        new AceCompletionValue(
+                                                dataSourceHelpItem.title,
+                                                dataSourceHelpItem.getInsertText(),
+                                                DATA_SOURCES_META,
+                                                safeHtml.asString(),
+                                                DATA_SOURCES_COMPLETION_SCORE));
+                            });
+                }));
     }
 
     public AceCompletionProvider getKeyedAceCompletionProvider() {
@@ -435,6 +456,7 @@ public class QueryHelpPresenter
             queryHelpDataSupplier.registerChangeHandler(dataSourceFieldsMap -> {
                 updateAllMenus(true);
             });
+
         }
     }
 
@@ -670,11 +692,7 @@ public class QueryHelpPresenter
                 keyedAceCompletionProvider.clear(FIELDS_COMPLETION_KEY);
 
                 if (GwtNullSafe.hasItems(fields)) {
-                    final List<AbstractField> sortedFields = fields.stream()
-                            .sorted(Comparator.comparing(AbstractField::getName))
-                            .collect(Collectors.toList());
-
-                    addFieldsToMenu(helpUrl, sortedFields, uiConfig);
+                    addFieldsToMenu(helpUrl, fields, uiConfig);
                 } else if (GwtNullSafe.isBlankString(quickFilterInput)) {
                     // Only show the EMPTY item if we are not filtering as an empty state is likely when filtering
                     createEmptyFieldsMenuItem(fieldsHeading);
@@ -1001,18 +1019,21 @@ public class QueryHelpPresenter
 
         private final SafeHtml detail;
         private final DocRef docRef;
+        private final String name;
 
         public DataSourceHelpItem(final QueryHelpItem parent,
+                                  final SvgImage icon,
                                   final String title,
                                   final SafeHtml detail,
                                   final String helpUrlBase,
                                   final DocRef docRef) {
-            super(parent, title, false);
+            super(parent, title, icon, false);
             this.docRef = docRef;
+            this.name = docRef.getName();
 
             final HtmlBuilder htmlBuilder = new HtmlBuilder();
             htmlBuilder.div(htmlBuilder2 -> {
-                htmlBuilder2.bold(htmlBuilder3 -> htmlBuilder3.append(title));
+                htmlBuilder2.bold(htmlBuilder3 -> htmlBuilder3.append(name));
                 htmlBuilder2.br();
                 htmlBuilder2.hr();
 
@@ -1059,7 +1080,7 @@ public class QueryHelpPresenter
 
         @Override
         public String getInsertText() {
-            return GwtNullSafe.get(title, title2 ->
+            return GwtNullSafe.get(name, title2 ->
                     title2.contains(" ")
                             ? "\"" + title2 + "\""
                             : title2);
@@ -1072,7 +1093,7 @@ public class QueryHelpPresenter
 
         @Override
         public InsertType getInsertType() {
-            return GwtNullSafe.isBlankString(title)
+            return GwtNullSafe.isBlankString(name)
                     ? InsertType.BLANK
                     : InsertType.PLAIN_TEXT;
         }

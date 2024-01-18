@@ -18,6 +18,7 @@ package stroom.index.impl;
 
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentNotFoundException;
+import stroom.index.IndexStore;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexShard;

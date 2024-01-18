@@ -20,7 +20,7 @@ package stroom.search;
 import stroom.annotation.api.AnnotationFields;
 import stroom.dictionary.impl.DictionaryStore;
 import stroom.docref.DocRef;
-import stroom.index.impl.IndexStore;
+import stroom.index.IndexStore;
 import stroom.index.shared.IndexConstants;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Format;

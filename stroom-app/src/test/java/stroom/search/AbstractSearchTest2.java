@@ -20,7 +20,7 @@ package stroom.search;
 import stroom.docref.DocRef;
 import stroom.expression.api.DateTimeSettings;
 import stroom.expression.api.ExpressionContext;
-import stroom.index.impl.IndexStore;
+import stroom.index.IndexStore;
 import stroom.index.shared.IndexDoc;
 import stroom.query.api.v2.DestroyReason;
 import stroom.query.api.v2.Result;

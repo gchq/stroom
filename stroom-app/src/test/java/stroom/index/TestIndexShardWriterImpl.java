@@ -25,7 +25,6 @@ import stroom.index.impl.IndexShardManager.IndexShardAction;
 import stroom.index.impl.IndexShardService;
 import stroom.index.impl.IndexShardWriter;
 import stroom.index.impl.IndexShardWriterCache;
-import stroom.index.impl.IndexStore;
 import stroom.index.impl.Indexer;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexDoc;

@@ -1,7 +1,7 @@
 package stroom.search.impl;
 
+import stroom.index.IndexStore;
 import stroom.index.impl.IndexShardService;
-import stroom.index.impl.IndexStore;
 import stroom.index.impl.TimePartitionFactory;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexDoc;

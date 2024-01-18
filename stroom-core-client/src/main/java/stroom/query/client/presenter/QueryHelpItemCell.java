@@ -1,6 +1,7 @@
 package stroom.query.client.presenter;
 
 import stroom.svg.shared.SvgImage;
+import stroom.util.shared.GwtNullSafe;
 import stroom.widget.util.client.SafeHtmlUtil;
 import stroom.widget.util.client.SvgImageUtil;
 
@@ -62,6 +63,16 @@ public class QueryHelpItemCell extends AbstractCell<QueryHelpItem> {
                 expanderIconSafeHtml = SvgImageUtil.emptySvg();
             }
             content.append(template.expander(className, paddingLeft, expanderIconSafeHtml));
+
+            GwtNullSafe.consume(item.getIcon(), icon -> {
+                // Add icon
+                final SafeHtml iconSafeHtml = template.div(
+                        getCellClassName()
+                                + "-icon svg-image svgCell-icon explorerCell-icon"
+                                + icon.getClassName(),
+                        SafeHtmlUtil.getSafeHtmlFromTrustedString(icon.getSvg()));
+                content.append(iconSafeHtml);
+            });
 
             if (item.getLabel() != null) {
                 // Add text

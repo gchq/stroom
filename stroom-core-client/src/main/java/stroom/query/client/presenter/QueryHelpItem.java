@@ -2,12 +2,15 @@ package stroom.query.client.presenter;
 
 import stroom.dashboard.shared.FunctionSignature;
 import stroom.query.client.presenter.QueryHelpPresenter.InsertType;
+import stroom.svg.shared.SvgImage;
+import stroom.util.shared.CompareUtil;
 import stroom.util.shared.GwtNullSafe;
 
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,15 +19,19 @@ import java.util.stream.Collectors;
 
 public abstract class QueryHelpItem implements Comparable<QueryHelpItem> {
 
+    public static final Comparator<QueryHelpItem> CASE_INSENSITIVE_TITLE_COMPARATOR =
+            CompareUtil.getNullSafeCaseInsensitiveComparator(QueryHelpItem::getTitle);
+
     static final String HELP_ITEM_BASE_CLASS = "queryHelpItem";
     static final String HELP_ITEM_LEAF_CLASS = HELP_ITEM_BASE_CLASS + "-leaf";
     static  final String HELP_ITEM_HEADING_CLASS = HELP_ITEM_BASE_CLASS + "-heading";
     static final int TOP_LEVEL_DEPTH = 0;
 
     final String title;
+    final SvgImage icon;
     private final boolean heading;
     private final int depth;
-    // Hold the path to this item so we can use it to uniquely identify an item as some function names
+    // Hold the path to this item, so we can use it to uniquely identify an item as some function names
     // exist in multiple categories
     protected String path;
 
@@ -34,8 +41,16 @@ public abstract class QueryHelpItem implements Comparable<QueryHelpItem> {
     public QueryHelpItem(final QueryHelpItem parent,
                          final String title,
                          final boolean heading) {
+        this(parent, title, null, heading);
+    }
+
+    public QueryHelpItem(final QueryHelpItem parent,
+                         final String title,
+                         final SvgImage icon,
+                         final boolean heading) {
         this.title = title;
         this.heading = heading;
+        this.icon = icon;
 
         if (parent != null) {
             this.depth = parent.depth + 1;
@@ -87,6 +102,10 @@ public abstract class QueryHelpItem implements Comparable<QueryHelpItem> {
         return title;
     }
 
+    public SvgImage getIcon() {
+        return icon;
+    }
+
     public int getDepth() {
         return depth;
     }
@@ -113,8 +132,9 @@ public abstract class QueryHelpItem implements Comparable<QueryHelpItem> {
 
     @Override
     public int compareTo(final QueryHelpItem o) {
+        // Headings go first
         if (heading == o.heading) {
-            return title.compareTo(o.title);
+            return CASE_INSENSITIVE_TITLE_COMPARATOR.compare(this, o);
         }
         return Boolean.compare(o.heading, heading);
     }

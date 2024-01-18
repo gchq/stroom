@@ -18,6 +18,7 @@ package stroom.datasource.api.v2;
 
 import stroom.docref.HasDisplayValue;
 import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.util.shared.CompareUtil;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -28,6 +29,7 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 
@@ -49,7 +51,10 @@ import java.util.Objects;
         @Type(value = DocRefField.class, name = "DocRef")
 })
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public abstract class AbstractField implements HasDisplayValue {
+public abstract class AbstractField implements HasDisplayValue, Comparable<AbstractField> {
+
+    public static final Comparator<AbstractField> CASE_INSENSITIVE_NAME_COMPARATOR =
+            CompareUtil.getNullSafeCaseInsensitiveComparator(AbstractField::getName);
 
     @JsonProperty
     private final String name;
@@ -125,5 +130,10 @@ public abstract class AbstractField implements HasDisplayValue {
     @Override
     public String toString() {
         return name;
+    }
+
+    @Override
+    public int compareTo(final AbstractField o) {
+        return CASE_INSENSITIVE_NAME_COMPARATOR.compare(this, o);
     }
 }

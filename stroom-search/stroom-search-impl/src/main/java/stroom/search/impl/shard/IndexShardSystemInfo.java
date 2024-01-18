@@ -1,10 +1,10 @@
 package stroom.search.impl.shard;
 
 import stroom.docref.DocRef;
+import stroom.index.IndexStore;
 import stroom.index.impl.IndexShardService;
 import stroom.index.impl.IndexShardWriter;
 import stroom.index.impl.IndexShardWriterCache;
-import stroom.index.impl.IndexStore;
 import stroom.index.shared.IndexConstants;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexField;

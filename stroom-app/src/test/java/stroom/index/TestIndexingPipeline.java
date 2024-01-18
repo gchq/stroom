@@ -19,7 +19,6 @@ package stroom.index;
 
 import stroom.docref.DocRef;
 import stroom.index.impl.IndexShardWriter;
-import stroom.index.impl.IndexStore;
 import stroom.index.mock.MockIndexShardWriter;
 import stroom.index.mock.MockIndexShardWriterCache;
 import stroom.index.shared.AnalyzerType;
