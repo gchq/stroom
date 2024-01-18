@@ -329,7 +329,8 @@ public class AnalyticDataStores implements HasResultStoreInfo {
                     }
                 }
             } catch (final RuntimeException e) {
-                LOGGER.debug(e::getMessage, e);
+                LOGGER.debug("Error getting result store info for analytic rule {}",
+                        analyticRuleDoc, e);
             }
         });
 
