@@ -16,7 +16,7 @@ public interface ImportExportActionHandler extends HasDependencies {
      * @param docRef
      * @param dataMap
      * @param importState
-     * @param importMode
+     * @param importSettings
      * @return a tuple containing the imported DocRef and a String location where it is imported to
      */
     DocRef importDocument(DocRef docRef,
