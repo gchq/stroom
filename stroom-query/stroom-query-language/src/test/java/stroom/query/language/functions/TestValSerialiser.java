@@ -10,6 +10,7 @@ import com.esotericsoftware.kryo.io.ByteBufferInputStream;
 import com.esotericsoftware.kryo.io.ByteBufferOutputStream;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
+import jakarta.xml.bind.DatatypeConverter;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
@@ -18,7 +19,6 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.stream.Stream;
-import javax.xml.bind.DatatypeConverter;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
