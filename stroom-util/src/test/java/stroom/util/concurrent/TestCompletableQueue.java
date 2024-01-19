@@ -5,6 +5,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -30,7 +31,7 @@ class TestCompletableQueue {
         completableQueue = new CompletableQueue<>(10);
     }
 
-    @Test
+    @RepeatedTest(3)
     void putAndTake() throws InterruptedException {
         final int count = 1_000;
         final List<Integer> items = IntStream.rangeClosed(1, count)
@@ -55,7 +56,6 @@ class TestCompletableQueue {
                 } catch (InterruptedException | CompleteException e) {
                     throw new RuntimeException(e);
                 }
-                doneTakesLatch.countDown();
             }, takeExecutor);
         }
 
@@ -77,7 +77,7 @@ class TestCompletableQueue {
                 .containsExactlyInAnyOrderElementsOf(items);
     }
 
-    @Test
+    @RepeatedTest(3)
     void putAndPoll() throws InterruptedException {
         final int count = 1_000;
         final List<Integer> items = IntStream.rangeClosed(1, count)
@@ -127,7 +127,7 @@ class TestCompletableQueue {
                 .containsExactlyInAnyOrderElementsOf(items);
     }
 
-    @Test
+    @RepeatedTest(3)
     void putAndPoll_withTimeout() throws InterruptedException {
         final int count = 1_000;
         final List<Integer> items = IntStream.rangeClosed(1, count)
@@ -177,7 +177,7 @@ class TestCompletableQueue {
                 .containsExactlyInAnyOrderElementsOf(items);
     }
 
-    @Test
+    @RepeatedTest(3)
     void complete() throws InterruptedException, CompleteException {
         final int cnt = 5;
         for (int i = 0; i < cnt; i++) {
@@ -196,7 +196,7 @@ class TestCompletableQueue {
                 .isInstanceOf(CompleteException.class);
     }
 
-    @Test
+    @RepeatedTest(3)
     void terminate() throws InterruptedException {
         final int count = 1_000;
         final List<Integer> items = IntStream.rangeClosed(1, count)
