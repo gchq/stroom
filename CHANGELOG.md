@@ -13,6 +13,20 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.3-beta.5] - 2024-01-19
+
+* Issue **#3915** : Change how multi-line attribute values (e.g. for `Files`) are written to the .meta/.mf files. Previously they were written as is so resulted in multiple lines in the file for one entry, which breaks parsing of the file. Now multi-line values are comma delimited in the file, so each entry will be on a single line. Existing meta/mf files in the system cannot be changed.
+
+* Issue **#3981** : Fix processor records being created with the wrong pipeline UUID.
+
+* Issue **#3979** : Fix term editor condition losing selection.
+
+* Issue **#3979** : Fix term editor condition losing selection.
+
+* Issue **#3891** : Add support for `not equals` `!=` term condition.
+
+* Issue **#4014** : Fix queries hanging dur to an infinite loop when using `countGroups()` expression function.
+
 * Change SQL migration `V07_02_00_110__api_key_legacy_data_migration.sql` to include all API keys, not just enabled ones.
 
 * Issue **#4012** : Fix NPE when cascading perms on a folder with no current perms.
@@ -205,7 +219,8 @@ eval EventId = first(EventId)`, `evt` => `eval EventId = first(EventId)` and `st
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.3-beta.4...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.3-beta.5...HEAD
+[v7.3-beta.5]: https://github.com/gchq/stroom/compare/v7.3-beta.4...v7.3-beta.5
 [v7.3-beta.4]: https://github.com/gchq/stroom/compare/v7.2.8...v7.3-beta.4
 [v7.3-beta.3]: https://github.com/gchq/stroom/compare/v7.3-beta.2...v7.3-beta.3
 [v7.3-beta.2]: https://github.com/gchq/stroom/compare/v7.3-beta.1...v7.3-beta.2
