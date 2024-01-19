@@ -149,7 +149,13 @@ public class SearchExpressionQueryBuilder {
 
         // Special case: if the expression is a wildcard, use the `exists` query
         if (value.equals("*")) {
-            return QueryBuilders.exists(q -> q.field(fieldName));
+            if (Condition.EQUALS.equals(condition)) {
+                return QueryBuilders.exists(q -> q.field(fieldName));
+            } else if (Condition.NOT_EQUALS.equals(condition)) {
+                return QueryBuilders.bool()
+                        .mustNot(QueryBuilders.exists(q -> q.field(fieldName)))
+                        .build()._toQuery();
+            }
         }
 
         // Create a query based on the field type and condition.
