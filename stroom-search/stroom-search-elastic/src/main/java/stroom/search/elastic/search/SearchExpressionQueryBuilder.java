@@ -242,14 +242,12 @@ public class SearchExpressionQueryBuilder {
             return QueryBuilders.wildcard(q -> q
                     .field(fieldName)
                     .value(expression)
-                    .caseInsensitive(true)
-            );
+                    .caseInsensitive(true));
         } else {
             // Perform an exact match on the provided term
             return QueryBuilders.term(q -> q
                     .field(fieldName)
-                    .value(expression)
-            );
+                    .value(expression));
         }
     }
 
@@ -279,16 +277,14 @@ public class SearchExpressionQueryBuilder {
                 return QueryBuilders
                         .term(q -> q
                                 .field(fieldName)
-                                .value(fieldValue)
-                        );
+                                .value(fieldValue));
             }
             case NOT_EQUALS -> {
                 fieldValue = valueParser.apply(condition, fieldName, rawValue);
                 return negate(QueryBuilders
                         .term(q -> q
                                 .field(fieldName)
-                                .value(fieldValue)
-                        ));
+                                .value(fieldValue)));
             }
             case IN -> {
                 fieldValues = tokenizeExpression(rawValue)
@@ -297,40 +293,35 @@ public class SearchExpressionQueryBuilder {
                 return QueryBuilders
                         .terms(q -> q
                                 .field(fieldName)
-                                .terms(t -> t.value(fieldValues))
-                        );
+                                .terms(t -> t.value(fieldValues)));
             }
             case GREATER_THAN -> {
                 fieldValue = valueParser.apply(condition, fieldName, rawValue);
                 return QueryBuilders
                         .range(q -> q
                                 .field(fieldName)
-                                .gt(JsonData.of(fieldValue))
-                        );
+                                .gt(JsonData.of(fieldValue)));
             }
             case GREATER_THAN_OR_EQUAL_TO -> {
                 fieldValue = valueParser.apply(condition, fieldName, rawValue);
                 return QueryBuilders
                         .range(q -> q
                                 .field(fieldName)
-                                .gte(JsonData.of(fieldValue))
-                        );
+                                .gte(JsonData.of(fieldValue)));
             }
             case LESS_THAN -> {
                 fieldValue = valueParser.apply(condition, fieldName, rawValue);
                 return QueryBuilders
                         .range(q -> q
                                 .field(fieldName)
-                                .lt(JsonData.of(fieldValue))
-                        );
+                                .lt(JsonData.of(fieldValue)));
             }
             case LESS_THAN_OR_EQUAL_TO -> {
                 fieldValue = valueParser.apply(condition, fieldName, rawValue);
                 return QueryBuilders
                         .range(q -> q
                                 .field(fieldName)
-                                .lte(JsonData.of(fieldValue))
-                        );
+                                .lte(JsonData.of(fieldValue)));
             }
             case BETWEEN -> {
                 fieldValues = tokenizeExpression(rawValue)
@@ -344,8 +335,7 @@ public class SearchExpressionQueryBuilder {
                         .range(q -> q
                                 .field(fieldName)
                                 .gte(JsonData.of(fieldValues.get(0)))
-                                .lte(JsonData.of(fieldValues.get(1)))
-                        );
+                                .lte(JsonData.of(fieldValues.get(1))));
             }
             case IN_DICTIONARY -> {
                 return buildDictionaryQuery(condition, fieldName, docRef, indexField);
@@ -463,28 +453,23 @@ public class SearchExpressionQueryBuilder {
             if (elasticFieldType.isNumeric()) {
                 mustQueries.must(QueryBuilders.term(q -> q
                         .field(fieldName)
-                        .value(getNumber(condition, fieldName, line)))
-                );
+                        .value(getNumber(condition, fieldName, line))));
             } else if (elasticFieldType.equals(ElasticIndexFieldType.FLOAT)) {
                 mustQueries.must(QueryBuilders.term(q -> q
                         .field(fieldName)
-                        .value(getFloat(condition, fieldName, line)))
-                );
+                        .value(getFloat(condition, fieldName, line))));
             } else if (elasticFieldType.equals(ElasticIndexFieldType.DOUBLE)) {
                 mustQueries.must(QueryBuilders.term(q -> q
                         .field(fieldName)
-                        .value(getDouble(condition, fieldName, line)))
-                );
+                        .value(getDouble(condition, fieldName, line))));
             } else if (elasticFieldType.equals(ElasticIndexFieldType.DATE)) {
                 mustQueries.must(QueryBuilders.term(q -> q
                         .field(fieldName)
-                        .value(getDate(condition, fieldName, line)))
-                );
+                        .value(getDate(condition, fieldName, line))));
             } else if (elasticFieldType.equals(ElasticIndexFieldType.IPV4_ADDRESS)) {
                 mustQueries.must(QueryBuilders.term(q -> q
                         .field(fieldName)
-                        .value(getIpV4Address(condition, fieldName, line)))
-                );
+                        .value(getIpV4Address(condition, fieldName, line))));
             } else if (indexField.getFieldType().equals("keyword")) {
                 mustQueries.must(buildKeywordQuery(fieldName, line));
             } else {
