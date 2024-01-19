@@ -1190,6 +1190,10 @@ public class LmdbDataStore implements DataStore {
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class LmdbReadContext {
 
         private final LmdbDataStore dataStore;
@@ -1243,6 +1247,10 @@ public class LmdbDataStore implements DataStore {
             return val;
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class ChildDataImpl implements ChildData {
 
@@ -1344,7 +1352,8 @@ public class LmdbDataStore implements DataStore {
     }
 
 
-//    }
+    // --------------------------------------------------------------------------------
+
 
     private static class FetchState {
 
@@ -1378,6 +1387,10 @@ public class LmdbDataStore implements DataStore {
         boolean keepGoing;
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class SortableItem implements Item {
 
         private final ItemImpl item;
@@ -1402,6 +1415,10 @@ public class LmdbDataStore implements DataStore {
             return values[index];
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class SortedItems {
 
@@ -1514,6 +1531,10 @@ public class LmdbDataStore implements DataStore {
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class ItemImpl implements Item {
 
         private final LmdbReadContext readContext;
@@ -1538,6 +1559,10 @@ public class LmdbDataStore implements DataStore {
             return readContext.createValue(key, storedValues, index);
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class CompletionStateImpl implements CompletionState {
 
@@ -1582,6 +1607,10 @@ public class LmdbDataStore implements DataStore {
             return complete.await(timeout, unit);
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class TransferState {
 

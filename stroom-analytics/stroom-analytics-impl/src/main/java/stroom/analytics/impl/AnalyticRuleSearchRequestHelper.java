@@ -47,8 +47,9 @@ public class AnalyticRuleSearchRequestHelper {
             return searchRequestFactory
                     .create(analyticRuleDoc.getQuery(), sampleRequest, expressionContext);
         } catch (final RuntimeException e) {
-            final String ruleIdentity = AnalyticUtil.getAnalyticRuleIdentity(analyticRuleDoc);
-            LOGGER.error(() -> "Error creating search request for analytic rule - " + ruleIdentity, e);
+            LOGGER.debug(() ->
+                    "Error creating search request for analytic rule - "
+                            + AnalyticUtil.getAnalyticRuleIdentity(analyticRuleDoc), e);
             throw e;
         }
     }
