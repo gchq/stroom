@@ -51,6 +51,10 @@ public class ViewSearchProvider implements SearchProvider {
     public DataSource getDataSource(final DocRef docRef) {
         return securityContext.useAsReadResult(() -> {
             final ViewDoc viewDoc = getView(docRef);
+            // It was agreed between AT and 66 that we should NOT use the index's default
+            // extraction pipeline if the view does not have one. There may be a case where
+            // a user does not want any extraction. If you create a view on an index then
+            // it is reasonable to expect to explicitly set the pipeline for it if you want one.
             return DataSource
                     .builder()
                     .docRef(viewDoc.asDocRef())
