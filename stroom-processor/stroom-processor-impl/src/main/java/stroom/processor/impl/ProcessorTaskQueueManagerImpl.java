@@ -236,7 +236,7 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
                     // Try and get a bunch of tasks from the queue to assign to the requesting node.
                     int index = 0;
                     while (assignedStreamTasks.size() < count && index < filters.size()) {
-                        final ProcessorFilter filter = filters.get(index);
+                        final ProcessorFilter filter = filters.get(index++);
 
                         // Get the queue for this filter.
                         final ProcessorTaskQueue queue = queueMap.get(filter);
@@ -272,7 +272,6 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
                                 }
                             }
                         }
-                        index++;
                     }
                 }
             } else {
