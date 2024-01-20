@@ -62,7 +62,7 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         @Inject
         CidrToNumericIPRangeFunction(final Provider<CidrToNumericIPRange> functionCallProvider) {
             super(
-                    "cidr-to-numeric-ip-range",
+                    CidrToNumericIPRange.FUNCTION_NAME,
                     1,
                     1,
                     new SequenceType[]{SequenceType.SINGLE_STRING},
@@ -473,7 +473,7 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         @Inject
         IPInCidrFunction(final Provider<IPInCidr> functionCallProvider) {
             super(
-                    "ip-in-cidr",
+                    IPInCidr.FUNCTION_NAME,
                     2,
                     2,
                     new SequenceType[]{

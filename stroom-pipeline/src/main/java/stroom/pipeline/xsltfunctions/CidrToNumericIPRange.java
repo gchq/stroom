@@ -18,6 +18,8 @@ import java.util.regex.Pattern;
 
 class CidrToNumericIPRange extends StroomExtensionFunctionCall {
 
+    public static final String FUNCTION_NAME = "cidr-to-numeric-ip-range";
+
     private static final Pattern IPV4_CIDR_PATTERN = Pattern.compile(
             "^(\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3})/(\\d{1,2})$");
 
