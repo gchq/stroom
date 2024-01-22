@@ -129,6 +129,18 @@ public final class TimeZone {
                 '}';
     }
 
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
     public enum Use implements HasDisplayValue {
         LOCAL("Local"),
         UTC("UTC"),
@@ -152,13 +164,9 @@ public final class TimeZone {
         }
     }
 
-    public static Builder builder() {
-        return new Builder();
-    }
 
-    public Builder copy() {
-        return new Builder(this);
-    }
+    // --------------------------------------------------------------------------------
+
 
     /**
      * Builder for constructing a {@link TimeZone timeZone}
