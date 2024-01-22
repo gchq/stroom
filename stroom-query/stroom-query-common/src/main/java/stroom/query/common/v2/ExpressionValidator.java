@@ -8,7 +8,7 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.util.NullSafe;
 import stroom.util.logging.LogUtil;
-import stroom.util.shared.StringUtil;
+import stroom.util.string.StringUtil;
 
 import java.time.ZonedDateTime;
 import java.util.List;

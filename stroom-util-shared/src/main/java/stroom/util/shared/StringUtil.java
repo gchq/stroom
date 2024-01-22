@@ -255,19 +255,4 @@ public class StringUtil {
             return "'" + str + "'";
         }
     }
-
-    public static String ensureFullStop(final String str) {
-        if (str == null) {
-            return "";
-        } else {
-            final String str2 = str.stripTrailing();
-            if (str2.isBlank()) {
-                return str;
-            } else if (str2.endsWith(".")) {
-                return str2;
-            } else {
-                return str2 + ".";
-            }
-        }
-    }
 }

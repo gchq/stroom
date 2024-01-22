@@ -263,20 +263,4 @@ class TestStringUtil {
         assertThat(pluralSuffix(List.of(1, 2)))
                 .isEqualTo("s");
     }
-
-    @TestFactory
-    Stream<DynamicTest> testEnsureFullStop() {
-        return TestUtil.buildDynamicTestStream()
-                .withInputAndOutputType(String.class)
-                .withSingleArgTestFunction(StringUtil::ensureFullStop)
-                .withSimpleEqualityAssertion()
-                .addCase(null, "")
-                .addCase("", "")
-                .addCase(" ", " ")
-                .addCase("foo", "foo.")
-                .addCase("foo ", "foo.")
-                .addCase("foo.", "foo.")
-                .addCase("foo. ", "foo.")
-                .build();
-    }
 }
