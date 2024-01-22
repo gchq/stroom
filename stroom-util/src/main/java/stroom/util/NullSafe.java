@@ -192,6 +192,13 @@ public class NullSafe {
     }
 
     /**
+     * @return True if the array is null or empty
+     */
+    public static <T> boolean isEmptyArray(final T[] arr) {
+        return arr == null || arr.length == 0;
+    }
+
+    /**
      * @return True if the map is null or empty
      */
     public static <T1, T2> boolean isEmptyMap(final Map<T1, T2> map) {
@@ -250,6 +257,13 @@ public class NullSafe {
                     .apply(value);
             return map == null || map.isEmpty();
         }
+    }
+
+    /**
+     * @return True if the collection is non-null and not empty
+     */
+    public static <T> boolean hasItems(final T... items) {
+        return items != null && items.length > 0;
     }
 
     /**
