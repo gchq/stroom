@@ -15,8 +15,10 @@ import java.util.regex.Pattern;
 
 class IPInCidr extends StroomExtensionFunctionCall {
 
-    static final Pattern IPV4_CIDR_PATTERN = Pattern.compile(
-            "^(\\d{1,3}\\.\\d{1,3})\\.\\d{1,3}\\.\\d{1,3}/(\\d{1,2})$");
+    public static final String FUNCTION_NAME = "ip-in-cidr";
+
+    private static final Pattern IPV4_CIDR_PATTERN = Pattern.compile(
+            "^(\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3})/(\\d{1,2})$");
 
     @Override
     protected Sequence call(final String functionName, final XPathContext context, final Sequence[] arguments) {
