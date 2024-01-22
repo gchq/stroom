@@ -83,10 +83,20 @@ public interface DashboardResource extends RestResource, DirectRestService, Fetc
     @Path(DOWNLOAD_SEARCH_RESULTS_PATH_PATH + NODE_NAME_PATH_PARAM)
     @Operation(
             summary = "Download search results",
-            operationId = "downloadDashboardSearchResults")
+            operationId = "downloadDashboardSearchResultsNode")
     ResourceGeneration downloadSearchResults(
             @PathParam("nodeName") String nodeName,
             @Parameter(description = "request", required = true) DownloadSearchResultsRequest request);
+
+    @POST
+    @Path(DOWNLOAD_SEARCH_RESULTS_PATH_PATH)
+    @Operation(
+            summary = "Download search results",
+            operationId = "downloadDashboardSearchResultsLocal")
+    default ResourceGeneration downloadSearchResults(
+            @Parameter(description = "request", required = true) DownloadSearchResultsRequest request) {
+        return downloadSearchResults(null, request);
+    }
 
     @POST
     @Path(SEARCH_PATH_PART + NODE_NAME_PATH_PARAM)
@@ -96,6 +106,16 @@ public interface DashboardResource extends RestResource, DirectRestService, Fetc
     DashboardSearchResponse search(
             @PathParam("nodeName") String nodeName,
             @Parameter(description = "request", required = true) DashboardSearchRequest request);
+
+    @POST
+    @Path(SEARCH_PATH_PART)
+    @Operation(
+            summary = "Perform a new search or get new results",
+            operationId = "dashboardSearch")
+    default DashboardSearchResponse search(
+            @Parameter(description = "request", required = true) DashboardSearchRequest request) {
+        return search(null, request);
+    }
 
 //    @POST
 //    @Path("/destroy")
