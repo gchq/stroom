@@ -41,9 +41,6 @@ public class StreamEventMap {
     public void terminate() {
         if (!complete) {
             complete = true;
-            notEmpty.signalAll();
-            notFull.signalAll();
-
             try {
                 lock.lockInterruptibly();
                 try {
@@ -51,13 +48,10 @@ public class StreamEventMap {
                     streamIdQueue.clear();
                     storedDataMap.clear();
 
-                    if (!complete) {
-                        complete = true;
-                        streamIdQueue.addLast(COMPLETE);
-                        count++;
-                        notEmpty.signalAll();
-                        notFull.signalAll();
-                    }
+                    streamIdQueue.addLast(COMPLETE);
+                    count++;
+                    notEmpty.signalAll();
+                    notFull.signalAll();
                 } finally {
                     lock.unlock();
                 }
@@ -69,28 +63,30 @@ public class StreamEventMap {
     }
 
     public void complete() {
-        try {
-            lock.lockInterruptibly();
+        if (!complete) {
             try {
-                if (!complete) {
-                    while (count == capacity) {
-                        notFull.await();
-                    }
-
-                    // If not already completed then add the item to the queue, so it completes
-                    // when it gets taken off.
+                lock.lockInterruptibly();
+                try {
                     if (!complete) {
-                        streamIdQueue.addLast(COMPLETE);
-                        count++;
-                        notEmpty.signal();
+                        while (count == capacity) {
+                            notFull.await();
+                        }
+
+                        // If not already completed then add the item to the queue, so it completes
+                        // when it gets taken off.
+                        if (!complete) {
+                            streamIdQueue.addLast(COMPLETE);
+                            count++;
+                            notEmpty.signal();
+                        }
                     }
+                } finally {
+                    lock.unlock();
                 }
-            } finally {
-                lock.unlock();
+            } catch (final InterruptedException e) {
+                LOGGER.debug(e::getMessage, e);
+                throw new UncheckedInterruptedException(e);
             }
-        } catch (final InterruptedException e) {
-            LOGGER.debug(e::getMessage, e);
-            throw new UncheckedInterruptedException(e);
         }
     }
 
