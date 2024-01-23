@@ -75,6 +75,14 @@ public interface QueryResource extends RestResource, DirectRestService, FetchWit
             @Parameter(description = "query", required = true) String query);
 
     @POST
+    @Path(DOWNLOAD_SEARCH_RESULTS_PATH_PATH)
+    @Operation(
+            summary = "Download search results",
+            operationId = "downloadQuerySearchResults")
+    ResourceGeneration downloadSearchResults(
+            @Parameter(description = "request", required = true) DownloadQueryResultsRequest request);
+
+    @POST
     @Path(DOWNLOAD_SEARCH_RESULTS_PATH_PATH + NODE_NAME_PATH_PARAM)
     @Operation(
             summary = "Download search results",
@@ -82,6 +90,14 @@ public interface QueryResource extends RestResource, DirectRestService, FetchWit
     ResourceGeneration downloadSearchResults(
             @PathParam("nodeName") String nodeName,
             @Parameter(description = "request", required = true) DownloadQueryResultsRequest request);
+
+    @POST
+    @Path(SEARCH_PATH_PART)
+    @Operation(
+            summary = "Perform a new search or get new results",
+            operationId = "querySearch")
+    DashboardSearchResponse search(
+            @Parameter(description = "request", required = true) QuerySearchRequest request);
 
     @POST
     @Path(SEARCH_PATH_PART + NODE_NAME_PATH_PARAM)
