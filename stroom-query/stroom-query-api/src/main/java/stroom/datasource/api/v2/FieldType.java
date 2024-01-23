@@ -48,6 +48,7 @@ public enum FieldType implements HasDisplayValue {
                     "\n" +
                     "Decimal value supporting equality and range queries.",
             true),
+    // Dates are held in string form, so need to be parsed
     DATE(6,
             "Date",
             "date",
@@ -60,7 +61,7 @@ public enum FieldType implements HasDisplayValue {
                     " * Current time plus 2 days: 'now() + 2d'\n" +
                     " * Current time minus 1 hour: 'now() - 1h'\n" +
                     " * Current time plus 2 weeks, minus 1 day 10 hours: 'now() + 2w - 1d10h'",
-            true),
+            false),
     TEXT(7,
             "Text",
             "text",

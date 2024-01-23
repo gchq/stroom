@@ -2,6 +2,7 @@ package stroom.processor.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
+import stroom.dashboard.shared.ValidateExpressionResult;
 import stroom.data.client.presenter.EditExpressionPresenter;
 import stroom.datasource.api.v2.FieldInfo;
 import stroom.datasource.api.v2.QueryField;
@@ -17,8 +18,10 @@ import stroom.processor.shared.ProcessorType;
 import stroom.processor.shared.QueryData;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionUtil;
-import stroom.query.api.v2.ExpressionValidator;
+import stroom.query.client.presenter.DateTimeSettingsFactory;
 import stroom.query.client.presenter.SimpleFieldSelectionListModel;
+import stroom.query.shared.ExpressionResource;
+import stroom.query.shared.ValidateExpressionRequest;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -37,9 +40,11 @@ import java.util.stream.Collectors;
 public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView> {
 
     private static final ProcessorFilterResource PROCESSOR_FILTER_RESOURCE = GWT.create(ProcessorFilterResource.class);
+    private static final ExpressionResource EXPRESSION_RESOURCE = GWT.create(ExpressionResource.class);
 
     private final EditExpressionPresenter editExpressionPresenter;
     private final RestFactory restFactory;
+    private final DateTimeSettingsFactory dateTimeSettingsFactory;
 
     private ProcessorType processorType;
     private DocRef pipelineRef;
@@ -49,10 +54,12 @@ public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView>
     public ProcessorEditPresenter(final EventBus eventBus,
                                   final ProcessorEditView view,
                                   final EditExpressionPresenter editExpressionPresenter,
-                                  final RestFactory restFactory) {
+                                  final RestFactory restFactory,
+                                  final DateTimeSettingsFactory dateTimeSettingsFactory) {
         super(eventBus, view);
         this.editExpressionPresenter = editExpressionPresenter;
         this.restFactory = restFactory;
+        this.dateTimeSettingsFactory = dateTimeSettingsFactory;
         view.setExpressionView(editExpressionPresenter.getView());
     }
 
@@ -130,36 +137,60 @@ public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView>
                         final Long minMetaCreateTime = getView().getMinMetaCreateTimeMs();
                         final Long maxMetaCreateTime = getView().getMaxMetaCreateTimeMs();
 
-                        try {
-                            final ExpressionValidator expressionValidator = new ExpressionValidator(fields);
-                            expressionValidator.validate(expression);
+                        validateExpression(fields, expression, () -> {
+                            try {
+                                queryData.setDataSource(MetaFields.STREAM_STORE_DOC_REF);
+                                queryData.setExpression(expression);
 
-                            queryData.setDataSource(MetaFields.STREAM_STORE_DOC_REF);
-                            queryData.setExpression(expression);
-
-                            if (filter != null) {
-                                ConfirmEvent.fire(ProcessorEditPresenter.this,
-                                        "You are about to update an existing filter. Any streams that might now " +
-                                                "be included by this filter but are older than the current tracker " +
-                                                "position will not be processed. Are you sure you wish to do this?",
-                                        result -> {
-                                            if (result) {
-                                                validateFeed(filter, queryData, minMetaCreateTime, maxMetaCreateTime);
-                                            }
-                                        });
-                            } else {
-                                validateFeed(null, queryData, minMetaCreateTime, maxMetaCreateTime);
+                                if (filter != null) {
+                                    ConfirmEvent.fire(
+                                            ProcessorEditPresenter.this,
+                                            "You are about to update an existing filter. Any streams that " +
+                                                    "might now be included by this filter but are older than the " +
+                                                    "current tracker position will not be processed. " +
+                                                    "Are you sure you wish to do this?",
+                                            result -> {
+                                                if (result) {
+                                                    validateFeed(
+                                                            filter, queryData, minMetaCreateTime, maxMetaCreateTime);
+                                                }
+                                            });
+                                } else {
+                                    validateFeed(null, queryData, minMetaCreateTime, maxMetaCreateTime);
+                                }
+                            } catch (final RuntimeException e) {
+                                AlertEvent.fireError(ProcessorEditPresenter.this, e.getMessage(), null);
                             }
-                        } catch (final RuntimeException e) {
-                            AlertEvent.fireError(ProcessorEditPresenter.this, e.getMessage(), null);
-                        }
-
+                        });
                     } else {
                         consumer.accept(null);
                         event.hide();
                     }
                 })
                 .fire();
+    }
+
+    private void validateExpression(final List<QueryField> fields,
+                                    final ExpressionOperator expression,
+                                    final Runnable onSuccess) {
+
+        restFactory.builder()
+                .forType(ValidateExpressionResult.class)
+                .onSuccess(result -> {
+                    if (result.isOk()) {
+                        onSuccess.run();
+                    } else {
+                        AlertEvent.fireError(ProcessorEditPresenter.this, result.getString(), null);
+                    }
+                })
+                .onFailure(throwable -> {
+                    AlertEvent.fireError(ProcessorEditPresenter.this, throwable.getMessage(), null);
+                })
+                .call(EXPRESSION_RESOURCE)
+                .validate(new ValidateExpressionRequest(
+                        expression,
+                        fields,
+                        dateTimeSettingsFactory.getDateTimeSettings()));
     }
 
     private void hide(final ProcessorFilter result) {

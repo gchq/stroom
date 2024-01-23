@@ -15,7 +15,11 @@ public interface DocRefInfoService extends DocRefDecorator {
 
     Optional<DocRefInfo> info(final DocRef docRef);
 
+    Optional<DocRefInfo> info(final String uuid);
+
     Optional<String> name(DocRef docRef);
+
+    Optional<String> name(String uuid);
 
     /**
      * Find by case-sensitive match on the name.

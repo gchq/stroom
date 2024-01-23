@@ -365,6 +365,10 @@ public class DateExpressionParser {
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public enum DatePoint {
         NOW("now()"),
         SECOND("second()"),
@@ -386,6 +390,10 @@ public class DateExpressionParser {
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class Part {
 
         private final String string;
@@ -405,6 +413,10 @@ public class DateExpressionParser {
             return string;
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private interface TimeFunction extends Function<ZonedDateTime, ZonedDateTime> {
 

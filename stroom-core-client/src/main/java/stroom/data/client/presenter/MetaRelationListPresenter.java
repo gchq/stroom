@@ -29,6 +29,7 @@ import stroom.meta.shared.Status;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.query.client.presenter.DateTimeSettingsFactory;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.Expander;
 import stroom.util.shared.ModelStringUtil;
@@ -64,7 +65,8 @@ public class MetaRelationListPresenter extends AbstractMetaListPresenter {
                                      final DateTimeFormatter dateTimeFormatter,
                                      final Provider<SelectionSummaryPresenter> selectionSummaryPresenterProvider,
                                      final Provider<ProcessChoicePresenter> processChoicePresenterProvider,
-                                     final Provider<EntityChooser> pipelineSelection) {
+                                     final Provider<EntityChooser> pipelineSelection,
+                                     final DateTimeSettingsFactory dateTimeSettingsFactory) {
         super(eventBus,
                 view,
                 restFactory,
@@ -73,6 +75,7 @@ public class MetaRelationListPresenter extends AbstractMetaListPresenter {
                 selectionSummaryPresenterProvider,
                 processChoicePresenterProvider,
                 pipelineSelection,
+                dateTimeSettingsFactory,
                 false);
     }
 

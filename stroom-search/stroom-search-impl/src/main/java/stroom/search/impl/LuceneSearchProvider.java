@@ -175,7 +175,7 @@ public class LuceneSearchProvider implements SearchProvider {
 
         // Create a coprocessor settings list.
         final List<CoprocessorSettings> coprocessorSettingsList = coprocessorsFactory
-                .createSettings(modifiedSearchRequest);
+                .createSettings(modifiedSearchRequest, index.getDefaultExtractionPipeline());
 
         // Create a handler for search results.
         final DataStoreSettings dataStoreSettings = DataStoreSettings
