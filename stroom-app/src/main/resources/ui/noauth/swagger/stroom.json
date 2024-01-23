@@ -2188,9 +2188,39 @@
         "tags" : [ "Dashboards" ]
       }
     },
-    "/dashboard/v1/downloadSearchResults/{nodeName}" : {
+    "/dashboard/v1/downloadSearchResults" : {
       "post" : {
         "operationId" : "downloadDashboardSearchResults",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/DownloadSearchResultsRequest"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ResourceGeneration"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Download search results",
+        "tags" : [ "Dashboards" ]
+      }
+    },
+    "/dashboard/v1/downloadSearchResults/{nodeName}" : {
+      "post" : {
+        "operationId" : "downloadDashboardSearchResults_1",
         "parameters" : [ {
           "in" : "path",
           "name" : "nodeName",
@@ -2226,9 +2256,39 @@
         "tags" : [ "Dashboards" ]
       }
     },
-    "/dashboard/v1/search/{nodeName}" : {
+    "/dashboard/v1/search" : {
       "post" : {
         "operationId" : "dashboardSearch",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/DashboardSearchRequest"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/DashboardSearchResponse"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Perform a new search or get new results",
+        "tags" : [ "Dashboards" ]
+      }
+    },
+    "/dashboard/v1/search/{nodeName}" : {
+      "post" : {
+        "operationId" : "dashboardSearch_1",
         "parameters" : [ {
           "in" : "path",
           "name" : "nodeName",
@@ -6702,6 +6762,44 @@
         "tags" : [ "Processor Filters" ]
       }
     },
+    "/processorFilter/v1/{id}/maxProcessingTasks" : {
+      "put" : {
+        "operationId" : "setProcessorFilterMaxProcessingTasks",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "type" : "integer",
+                "format" : "int32"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Sets the optional cluster-wide limit on the number of tasks that may be processed for this filter, at any one time",
+        "tags" : [ "Processor Filters" ]
+      }
+    },
     "/processorFilter/v1/{id}/priority" : {
       "put" : {
         "operationId" : "setProcessorFilterPriority",
@@ -6876,9 +6974,39 @@
         "tags" : [ "Processor Tasks" ]
       }
     },
-    "/query/v1/downloadSearchResults/{nodeName}" : {
+    "/query/v1/downloadSearchResults" : {
       "post" : {
         "operationId" : "downloadQuerySearchResults",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/DownloadQueryResultsRequest"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ResourceGeneration"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Download search results",
+        "tags" : [ "Queries" ]
+      }
+    },
+    "/query/v1/downloadSearchResults/{nodeName}" : {
+      "post" : {
+        "operationId" : "downloadQuerySearchResults_1",
         "parameters" : [ {
           "in" : "path",
           "name" : "nodeName",
@@ -7022,9 +7150,39 @@
         "tags" : [ "Queries" ]
       }
     },
-    "/query/v1/search/{nodeName}" : {
+    "/query/v1/search" : {
       "post" : {
         "operationId" : "querySearch",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/QuerySearchRequest"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/DashboardSearchResponse"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Perform a new search or get new results",
+        "tags" : [ "Queries" ]
+      }
+    },
+    "/query/v1/search/{nodeName}" : {
+      "post" : {
+        "operationId" : "querySearch_1",
         "parameters" : [ {
           "in" : "path",
           "name" : "nodeName",
@@ -11683,6 +11841,10 @@
             "type" : "integer",
             "format" : "int64"
           },
+          "maxProcessingTasks" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
           "minMetaCreateTimeMs" : {
             "type" : "integer",
             "format" : "int64"
@@ -15935,6 +16097,10 @@
           "maxMetaCreateTimeMs" : {
             "type" : "integer",
             "format" : "int64"
+          },
+          "maxProcessingTasks" : {
+            "type" : "integer",
+            "format" : "int32"
           },
           "minMetaCreateTimeMs" : {
             "type" : "integer",

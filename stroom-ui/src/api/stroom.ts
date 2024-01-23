@@ -665,6 +665,9 @@ export interface CreateProcessFilterRequest {
   /** @format int64 */
   maxMetaCreateTimeMs?: number;
 
+  /** @format int32 */
+  maxProcessingTasks?: number;
+
   /** @format int64 */
   minMetaCreateTimeMs?: number;
 
@@ -3316,6 +3319,9 @@ export interface ProcessorFilter {
 
   /** @format int64 */
   maxMetaCreateTimeMs?: number;
+
+  /** @format int32 */
+  maxProcessingTasks?: number;
 
   /** @format int64 */
   minMetaCreateTimeMs?: number;
@@ -6949,10 +6955,29 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @tags Dashboards
      * @name DownloadDashboardSearchResults
      * @summary Download search results
+     * @request POST:/dashboard/v1/downloadSearchResults
+     * @secure
+     */
+    downloadDashboardSearchResults: (data: DownloadSearchResultsRequest, params: RequestParams = {}) =>
+      this.request<any, ResourceGeneration>({
+        path: `/dashboard/v1/downloadSearchResults`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Dashboards
+     * @name DownloadDashboardSearchResults1
+     * @summary Download search results
      * @request POST:/dashboard/v1/downloadSearchResults/{nodeName}
      * @secure
      */
-    downloadDashboardSearchResults: (
+    downloadDashboardSearchResults1: (
       nodeName: string,
       data: DownloadSearchResultsRequest,
       params: RequestParams = {},
@@ -6972,10 +6997,29 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @tags Dashboards
      * @name DashboardSearch
      * @summary Perform a new search or get new results
+     * @request POST:/dashboard/v1/search
+     * @secure
+     */
+    dashboardSearch: (data: DashboardSearchRequest, params: RequestParams = {}) =>
+      this.request<any, DashboardSearchResponse>({
+        path: `/dashboard/v1/search`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Dashboards
+     * @name DashboardSearch1
+     * @summary Perform a new search or get new results
      * @request POST:/dashboard/v1/search/{nodeName}
      * @secure
      */
-    dashboardSearch: (nodeName: string, data: DashboardSearchRequest, params: RequestParams = {}) =>
+    dashboardSearch1: (nodeName: string, data: DashboardSearchRequest, params: RequestParams = {}) =>
       this.request<any, DashboardSearchResponse>({
         path: `/dashboard/v1/search/${nodeName}`,
         method: "POST",
@@ -9776,6 +9820,25 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Processor Filters
+     * @name SetProcessorFilterMaxProcessingTasks
+     * @summary Sets the optional cluster-wide limit on the number of tasks that may be processed for this filter, at any one time
+     * @request PUT:/processorFilter/v1/{id}/maxProcessingTasks
+     * @secure
+     */
+    setProcessorFilterMaxProcessingTasks: (id: number, data: number, params: RequestParams = {}) =>
+      this.request<any, boolean>({
+        path: `/processorFilter/v1/${id}/maxProcessingTasks`,
+        method: "PUT",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Processor Filters
      * @name SetProcessorFilterPriority
      * @summary Sets the priority for a filter
      * @request PUT:/processorFilter/v1/{id}/priority
@@ -9875,10 +9938,29 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @tags Queries
      * @name DownloadQuerySearchResults
      * @summary Download search results
+     * @request POST:/query/v1/downloadSearchResults
+     * @secure
+     */
+    downloadQuerySearchResults: (data: DownloadQueryResultsRequest, params: RequestParams = {}) =>
+      this.request<any, ResourceGeneration>({
+        path: `/query/v1/downloadSearchResults`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Queries
+     * @name DownloadQuerySearchResults1
+     * @summary Download search results
      * @request POST:/query/v1/downloadSearchResults/{nodeName}
      * @secure
      */
-    downloadQuerySearchResults: (nodeName: string, data: DownloadQueryResultsRequest, params: RequestParams = {}) =>
+    downloadQuerySearchResults1: (nodeName: string, data: DownloadQueryResultsRequest, params: RequestParams = {}) =>
       this.request<any, ResourceGeneration>({
         path: `/query/v1/downloadSearchResults/${nodeName}`,
         method: "POST",
@@ -9968,10 +10050,29 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @tags Queries
      * @name QuerySearch
      * @summary Perform a new search or get new results
+     * @request POST:/query/v1/search
+     * @secure
+     */
+    querySearch: (data: QuerySearchRequest, params: RequestParams = {}) =>
+      this.request<any, DashboardSearchResponse>({
+        path: `/query/v1/search`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Queries
+     * @name QuerySearch1
+     * @summary Perform a new search or get new results
      * @request POST:/query/v1/search/{nodeName}
      * @secure
      */
-    querySearch: (nodeName: string, data: QuerySearchRequest, params: RequestParams = {}) =>
+    querySearch1: (nodeName: string, data: QuerySearchRequest, params: RequestParams = {}) =>
       this.request<any, DashboardSearchResponse>({
         path: `/query/v1/search/${nodeName}`,
         method: "POST",
