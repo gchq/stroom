@@ -2190,7 +2190,7 @@
     },
     "/dashboard/v1/downloadSearchResults" : {
       "post" : {
-        "operationId" : "downloadDashboardSearchResults",
+        "operationId" : "downloadDashboardSearchResultsLocal",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -2220,7 +2220,7 @@
     },
     "/dashboard/v1/downloadSearchResults/{nodeName}" : {
       "post" : {
-        "operationId" : "downloadDashboardSearchResults_1",
+        "operationId" : "downloadDashboardSearchResultsNode",
         "parameters" : [ {
           "in" : "path",
           "name" : "nodeName",
@@ -3866,6 +3866,36 @@
         },
         "summary" : "Exports all configuration to a file.",
         "tags" : [ "Export" ]
+      }
+    },
+    "/expression/v1/validate" : {
+      "post" : {
+        "operationId" : "validate",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ValidateExpressionRequest"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ValidateExpressionResult"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Validate an expression",
+        "tags" : [ "Expressions" ]
       }
     },
     "/feed/v1/fetchSupportedEncodings" : {
@@ -6976,7 +7006,7 @@
     },
     "/query/v1/downloadSearchResults" : {
       "post" : {
-        "operationId" : "downloadQuerySearchResults",
+        "operationId" : "downloadQuerySearchResultsLocal",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -7006,7 +7036,7 @@
     },
     "/query/v1/downloadSearchResults/{nodeName}" : {
       "post" : {
-        "operationId" : "downloadQuerySearchResults_1",
+        "operationId" : "downloadQuerySearchResultsNode",
         "parameters" : [ {
           "in" : "path",
           "name" : "nodeName",
@@ -7152,7 +7182,7 @@
     },
     "/query/v1/search" : {
       "post" : {
-        "operationId" : "querySearch",
+        "operationId" : "querySearchLocal",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -7182,7 +7212,7 @@
     },
     "/query/v1/search/{nodeName}" : {
       "post" : {
-        "operationId" : "querySearch_1",
+        "operationId" : "querySearchNode",
         "parameters" : [ {
           "in" : "path",
           "name" : "nodeName",
@@ -19895,6 +19925,23 @@
           },
           "timeZone" : {
             "$ref" : "#/components/schemas/TimeZone"
+          }
+        }
+      },
+      "ValidateExpressionRequest" : {
+        "type" : "object",
+        "properties" : {
+          "dateTimeSettings" : {
+            "$ref" : "#/components/schemas/DateTimeSettings"
+          },
+          "expressionItem" : {
+            "$ref" : "#/components/schemas/ExpressionItem"
+          },
+          "fields" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/QueryField"
+            }
           }
         }
       },
