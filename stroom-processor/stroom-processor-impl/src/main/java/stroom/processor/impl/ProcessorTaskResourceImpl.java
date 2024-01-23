@@ -120,7 +120,7 @@ class ProcessorTaskResourceImpl implements ProcessorTaskResource {
     @Override
     @AutoLogged(OperationType.UNLOGGED)
     public ProcessorTaskList assignTasks(final String nodeName, final AssignTasksRequest request) {
-        final ProcessorTaskList processorTaskList = nodeServiceProvider.get()
+        return nodeServiceProvider.get()
                 .remoteRestResult(
                         nodeName,
                         ProcessorTaskList.class,
@@ -133,7 +133,6 @@ class ProcessorTaskResourceImpl implements ProcessorTaskResource {
                                         .assignTasks(request.getNodeName(), request.getCount()),
                         builder ->
                                 builder.post(Entity.json(request)));
-        return processorTaskList;
     }
 
     @Override

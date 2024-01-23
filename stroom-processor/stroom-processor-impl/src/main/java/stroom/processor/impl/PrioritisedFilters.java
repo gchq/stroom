@@ -7,50 +7,44 @@ import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterFields;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContextFactory;
 import stroom.util.NullSafe;
+import stroom.util.concurrent.AsyncReference;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.Clearable;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import java.time.Instant;
+import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
 @Singleton
-public class PrioritisedFilters {
+public class PrioritisedFilters implements Clearable {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(PrioritisedFilters.class);
 
     private final ProcessorFilterService processorFilterService;
     private final TaskContextFactory taskContextFactory;
 
-    private final AtomicReference<List<ProcessorFilter>> prioritisedFiltersRef = new AtomicReference<>();
-    private volatile Instant lastUpdate = Instant.ofEpochMilli(0);
+    private final AsyncReference<List<ProcessorFilter>> asyncReference;
 
     @Inject
     public PrioritisedFilters(final ProcessorFilterService processorFilterService,
-                              final TaskContextFactory taskContextFactory) {
+                              final TaskContextFactory taskContextFactory,
+                              final ExecutorProvider executorProvider) {
         this.processorFilterService = processorFilterService;
         this.taskContextFactory = taskContextFactory;
+        asyncReference = new AsyncReference<>(filters -> fetch(), Duration.ofSeconds(10), executorProvider.get());
     }
 
     public List<ProcessorFilter> get() {
-        List<ProcessorFilter> filters = prioritisedFiltersRef.get();
-
-        final Instant now = Instant.now();
-        if (filters == null || lastUpdate.isBefore(now.minusSeconds(10))) {
-            lastUpdate = now;
-            filters = fetch();
-            prioritisedFiltersRef.set(filters);
-        }
-
-        return filters;
+        return asyncReference.get();
     }
 
     private List<ProcessorFilter> fetch() {
@@ -102,7 +96,8 @@ public class PrioritisedFilters {
         taskContextFactory.current().info(messageSupplier);
     }
 
-    public void reset() {
-        prioritisedFiltersRef.set(null);
+    @Override
+    public void clear() {
+        asyncReference.clear();
     }
 }

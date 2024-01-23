@@ -22,7 +22,6 @@ import stroom.cluster.task.api.NullClusterStateException;
 import stroom.cluster.task.api.TargetNodeSetFactory;
 import stroom.meta.api.MetaService;
 import stroom.node.api.NodeInfo;
-import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.impl.ProgressMonitor.FilterProgressMonitor;
 import stroom.processor.impl.ProgressMonitor.Phase;
 import stroom.processor.shared.ProcessorFilter;
@@ -78,9 +77,9 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ProcessorTaskQueueManagerImpl.class);
 
     private static final int BATCH_SIZE = 1000;
+    private static final int MAX_ASSIGNMENT_ATTEMPTS = 10;
     private static final ThreadPool THREAD_POOL = new ThreadPoolImpl("Fill Task Store", 3);
 
-    private final ProcessorFilterService processorFilterService;
     private final ProcessorTaskDao processorTaskDao;
     private final Executor executor;
     private final TaskContextFactory taskContextFactory;
@@ -106,14 +105,13 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
      * Make sure the task store isn't allowed to be filled until this node has
      * run startup() and has not run shutdown().
      */
-    private volatile boolean allowAsyncTaskCreation = false;
+    private volatile boolean allowTaskQueueFill = false;
 
     private final Map<String, Instant> lastNodeContactTime = new ConcurrentHashMap<>();
     private Instant lastDisownedTasks = Instant.now();
 
     @Inject
-    ProcessorTaskQueueManagerImpl(final ProcessorFilterService processorFilterService,
-                                  final ProcessorTaskDao processorTaskDao,
+    ProcessorTaskQueueManagerImpl(final ProcessorTaskDao processorTaskDao,
                                   final ExecutorProvider executorProvider,
                                   final TaskContextFactory taskContextFactory,
                                   final NodeInfo nodeInfo,
@@ -123,7 +121,6 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
                                   final SecurityContext securityContext,
                                   final TargetNodeSetFactory targetNodeSetFactory,
                                   final PrioritisedFilters prioritisedFilters) {
-        this.processorFilterService = processorFilterService;
         this.taskContextFactory = taskContextFactory;
         this.nodeInfo = nodeInfo;
         this.processorTaskDao = processorTaskDao;
@@ -157,23 +154,131 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
             LOGGER.error(e.getMessage(), e);
         }
 
-        // Allow task creation.
-        allowAsyncTaskCreation = true;
+        // Allow task queueing.
+        allowTaskQueueFill = true;
     }
 
     @Override
     public synchronized void shutdown() {
-        // It shouldn't be possible to create tasks during shutdown.
+        // It shouldn't be possible to queue tasks during shutdown.
         try {
-            allowAsyncTaskCreation = false;
+            allowTaskQueueFill = false;
             clearTaskStore();
         } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
         }
     }
 
+    /**
+     * Return the next task to perform. Called by worker threads. Also assigns
+     * the task to the node asking for the job
+     */
+    @Override
+    public ProcessorTaskList assignTasks(final String nodeName, final int count) {
+        LOGGER.debug("assignTasks() called for node {}, count {}", nodeName, count);
+
+        if (!securityContext.isProcessingUser()) {
+            throw new PermissionException(securityContext.getUserIdentityForAudit(),
+                    "Only the processing user is allowed to assign tasks");
+        }
+
+        final List<ProcessorTask> assignedStreamTasks = new ArrayList<>();
+        int attempt = 0;
+        while (attempt < MAX_ASSIGNMENT_ATTEMPTS) {
+            attempt++;
+            try {
+                if (processorConfigProvider.get().isAssignTasks() && count > 0) {
+                    // Get local reference to list in case it is swapped out.
+                    final List<ProcessorFilter> filters = prioritisedFilters.get();
+                    // Try and get a bunch of tasks from the queue to assign to the requesting node.
+                    for (final ProcessorFilter filter : filters) {
+                        if (assignedStreamTasks.size() >= count) {
+                            break;
+                        }
+
+                        // Get the queue for this filter.
+                        final ProcessorTaskQueue queue = queueMap.get(filter);
+                        if (queue != null) {
+                            int filterTasksAssigned = 0;
+
+                            // Maximum number of tasks to assign for this filter. If the filter task limit is
+                            // unbounded, assign as many tasks up to the specified `count`. Otherwise, only assign
+                            // tasks up to the filter's configured limit.
+                            int maxFilterTasks = count - assignedStreamTasks.size();
+                            if (filter.isProcessingTaskCountBounded()) {
+                                final int maxFilterTasksToCreate = filter.getMaxProcessingTasks() -
+                                        processorTaskDao.countTasksForFilter(filter.getId(), TaskStatus.PROCESSING);
+                                maxFilterTasks = Math.min(
+                                        maxFilterTasks,
+                                        Math.max(0, maxFilterTasksToCreate));
+                            }
+
+                            if (maxFilterTasks > 0) {
+                                // Add as many tasks as we can for this filter.
+                                ProcessorTask streamTask = queue.poll();
+                                while (streamTask != null) {
+                                    assignedStreamTasks.add(streamTask);
+                                    filterTasksAssigned++;
+
+                                    if (assignedStreamTasks.size() < count && filterTasksAssigned < maxFilterTasks) {
+                                        streamTask = queue.poll();
+                                    } else {
+                                        streamTask = null;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    LOGGER.debug("assignTasks is disabled");
+                }
+            } catch (final RuntimeException e) {
+                LOGGER.error(e.getMessage(), e);
+            }
+
+            // Output some trace logging, so we can see where tasks go.
+            taskStatusTraceLog.assignTasks(ProcessorTaskQueueManagerImpl.class, assignedStreamTasks, nodeName);
+
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("Assigning " + assignedStreamTasks.size()
+                        + " tasks (" + count + " requested) to node " + nodeName);
+            }
+
+            // If we don't get any tasks then force synchronous queueing of tasks.
+            if (allowTaskQueueFill) {
+                if (assignedStreamTasks.isEmpty()) {
+                    fillTaskQueueSync();
+                } else {
+                    // Kick off a queue fill.
+                    fillTaskQueueAsync();
+                    attempt = MAX_ASSIGNMENT_ATTEMPTS;
+                }
+            } else {
+                attempt = MAX_ASSIGNMENT_ATTEMPTS;
+            }
+        }
+
+        return new ProcessorTaskList(nodeName, assignedStreamTasks);
+    }
+
+    private void fillTaskQueueSync() {
+        if (allowTaskQueueFill) {
+            try {
+                LOGGER.debug("fillTaskQueueAsync() - Executing fillTaskQueue");
+                securityContext.asProcessingUser(() ->
+                        taskContextFactory.context(
+                                "Fill task queue",
+                                this::queueNewTasks).run());
+
+            } catch (final RuntimeException e) {
+                fillingQueue.set(false);
+                LOGGER.error(e::getMessage, e);
+            }
+        }
+    }
+
     private void fillTaskQueueAsync() {
-        if (allowAsyncTaskCreation) {
+        if (allowTaskQueueFill) {
             if (fillingQueue.compareAndSet(false, true)) {
                 try {
                     needToFillQueue.set(false);
@@ -190,7 +295,7 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
                                                 LOGGER.error("Error filling task queue:" + error.getMessage(), error);
                                             }
 
-                                            if (allowAsyncTaskCreation && (error != null || result == 0)) {
+                                            if (allowTaskQueueFill && (error != null || result == 0)) {
                                                 ThreadUtil.sleep(processorConfigProvider.get()
                                                         .getWaitToQueueTasksDuration().toMillis());
                                             }
@@ -213,69 +318,6 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
         }
     }
 
-    /**
-     * Return the next task to perform. Called by worker threads. Also assigns
-     * the task to the node asking for the job
-     */
-    @Override
-    public ProcessorTaskList assignTasks(final String nodeName, final int count) {
-        LOGGER.debug("assignTasks() called for node {}, count {}", nodeName, count);
-
-        if (!securityContext.isProcessingUser()) {
-            throw new PermissionException(securityContext.getUserIdentityForAudit(),
-                    "Only the processing user is allowed to assign tasks");
-        }
-
-        final List<ProcessorTask> assignedStreamTasks = new ArrayList<>();
-        try {
-            if (processorConfigProvider.get().isAssignTasks() && count > 0) {
-                // Get local reference to list in case it is swapped out.
-                final List<ProcessorFilter> filters = prioritisedFilters.get();
-                if (filters != null && filters.size() > 0) {
-
-                    // Try and get a bunch of tasks from the queue to assign to the requesting node.
-                    int index = 0;
-                    while (assignedStreamTasks.size() < count && index < filters.size()) {
-                        final ProcessorFilter filter = filters.get(index);
-
-                        // Get the queue for this filter.
-                        final ProcessorTaskQueue queue = queueMap.get(filter);
-                        if (queue != null) {
-                            // Add as many tasks as we can for this filter.
-                            ProcessorTask streamTask = queue.poll();
-                            while (streamTask != null) {
-                                assignedStreamTasks.add(streamTask);
-                                if (assignedStreamTasks.size() < count) {
-                                    streamTask = queue.poll();
-                                } else {
-                                    streamTask = null;
-                                }
-                            }
-                        }
-                        index++;
-                    }
-                }
-            } else {
-                LOGGER.debug("assignTasks is disabled");
-            }
-        } catch (final RuntimeException e) {
-            LOGGER.error(e.getMessage(), e);
-        }
-
-        // Output some trace logging, so we can see where tasks go.
-        taskStatusTraceLog.assignTasks(ProcessorTaskQueueManagerImpl.class, assignedStreamTasks, nodeName);
-
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("Assigning " + assignedStreamTasks.size()
-                    + " tasks (" + count + " requested) to node " + nodeName);
-        }
-
-        // Kick off a queue fill.
-        fillTaskQueueAsync();
-
-        return new ProcessorTaskList(nodeName, assignedStreamTasks);
-    }
-
     @Override
     public Boolean abandonTasks(final ProcessorTaskList processorTaskList) {
         LOGGER.debug(() -> LogUtil.message("abandonTasks() called for {} tasks",
@@ -294,7 +336,7 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
                 processorTaskList.getList(),
                 processorTaskList.getNodeName());
 
-        if (processorTaskList.getList().size() > 0) {
+        if (!processorTaskList.getList().isEmpty()) {
             try {
                 LOGGER.warn("abandon() - {}", processorTaskList);
                 final Set<Long> idSet = processorTaskList
@@ -345,7 +387,7 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
     }
 
     private void releaseQueuedTask(final Set<Long> taskIdSet) {
-        if (taskIdSet.size() > 0) {
+        if (!taskIdSet.isEmpty()) {
             try {
                 processorTaskDao.releaseTasks(taskIdSet, TaskStatus.QUEUED);
             } catch (final RuntimeException e) {
@@ -426,7 +468,7 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
 
     public synchronized void releaseOldQueuedTasks() {
         LOGGER.trace(() -> "releaseOldQueuedTasks()");
-        if (queueMap.size() > 0) {
+        if (!queueMap.isEmpty()) {
             try {
                 final String node = nodeInfo.getThisNodeName();
                 final String masterNode = targetNodeSetFactory.getMasterNode();
@@ -533,36 +575,39 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
                                     final ProcessorTaskQueue queue,
                                     final QueueProcessTasksState queueProcessTasksState) {
         try {
+            LOGGER.debug("queueTasksForFilter() - processorFilter {}", filter.getFilterInfo());
+
             // Queue tasks for this filter.
             final int initialQueueSize = queue.size();
-            queueProcessTasksState.addCurrentlyQueuedTasks(initialQueueSize);
-            final FilterProgressMonitor filterProgressMonitor = progressMonitor.logFilter(filter, initialQueueSize);
 
-            // Reload as it could have changed.
-            final Optional<ProcessorFilter> optionalProcessorFilter = processorFilterService.fetch(filter.getId());
+            // If the filter specifies a maximum number of concurrent processing tasks then limit the number we
+            // report as being added to the queue otherwise we might stop adding other tasks early.
+            if (filter.isProcessingTaskCountBounded()) {
+                queueProcessTasksState
+                        .addCurrentlyQueuedTasks(Math.min(filter.getMaxProcessingTasks(), initialQueueSize));
+            } else {
+                queueProcessTasksState.addCurrentlyQueuedTasks(initialQueueSize);
+            }
 
-            // The filter might have been deleted since we found it.
-            if (optionalProcessorFilter.isPresent()) {
-                final ProcessorFilter loadedFilter = optionalProcessorFilter.get();
-                LOGGER.debug("queueTasksForFilter() - processorFilter {}", loadedFilter.getFilterInfo());
+            final FilterProgressMonitor filterProgressMonitor = progressMonitor.logFilter(filter,
+                    initialQueueSize);
 
-                // Only try and create tasks if the processor is enabled.
-                if (loadedFilter.isEnabled() && loadedFilter.getProcessor().isEnabled()) {
-                    info(taskContext, loadedFilter::getFilterInfo);
+            // Only try and create tasks if the processor is enabled.
+            if (filter.isEnabled() && filter.getProcessor().isEnabled()) {
+                info(taskContext, filter::getFilterInfo);
 
-                    // If there are any tasks for this filter that were previously created but aren't queued and
-                    // their associated stream is unlocked then add them to the queue here.
-                    final DurationTimer durationTimer = DurationTimer.start();
-                    final int count = queueCreatedTasks(
-                            taskContext,
-                            nodeName,
-                            loadedFilter,
-                            queue,
-                            queueProcessTasksState,
-                            filterProgressMonitor);
-                    filterProgressMonitor.logPhase(Phase.QUEUE_CREATED_TASKS, durationTimer, count);
-                    return count;
-                }
+                // If there are any tasks for this filter that were previously created but aren't queued and
+                // their associated stream is unlocked then add them to the queue here.
+                final DurationTimer durationTimer = DurationTimer.start();
+                final int count = queueCreatedTasks(
+                        taskContext,
+                        nodeName,
+                        filter,
+                        queue,
+                        queueProcessTasksState,
+                        filterProgressMonitor);
+                filterProgressMonitor.logPhase(Phase.QUEUE_CREATED_TASKS, durationTimer, count);
+                return count;
             }
         } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
@@ -600,7 +645,7 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
                 }
 
                 // If we have some existing tasks then queue them unless they belong to locked meta.
-                if (existingCreatedTasks.size() > 0) {
+                if (!existingCreatedTasks.isEmpty()) {
                     try {
                         // Increment the total number of unowned tasks.
                         totalTasks += existingCreatedTasks.size();
@@ -627,7 +672,7 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
                                 .collect(Collectors.toSet());
 
                         durationTimer = DurationTimer.start();
-                        final List<ProcessorTask> existingTasks = processorTaskDao.queueExistingTasks(
+                        final List<ProcessorTask> existingTasks = processorTaskDao.queueTasks(
                                 processorTaskIdSet,
                                 nodeName);
                         filterProgressMonitor.logPhase(Phase.QUEUE_CREATED_TASKS_QUEUE_TASKS,
@@ -657,7 +702,14 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
 
             if (totalAddedTasks > 0) {
                 filterProgressMonitor.add(totalAddedTasks);
-                queueProcessTasksState.addUnownedTasksToQueue(totalAddedTasks);
+                if (filter.isProcessingTaskCountBounded()) {
+                    // If the filter specifies a maximum number of concurrent processing tasks then limit the number we
+                    // report as being added to the queue otherwise we might stop adding other tasks early.
+                    queueProcessTasksState
+                            .addUnownedTasksToQueue(Math.min(filter.getMaxProcessingTasks(), totalAddedTasks));
+                } else {
+                    queueProcessTasksState.addUnownedTasksToQueue(totalAddedTasks);
+                }
                 LOGGER.debug("doCreateTasks() - Added {} tasks that are no longer locked", totalAddedTasks);
             }
 

@@ -33,6 +33,7 @@ import stroom.task.shared.ThreadPool;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,6 +44,7 @@ import java.util.stream.Collectors;
 @DistributedTaskFactoryDescription(
         jobName = JobNames.DATA_PROCESSOR,
         description = "Job to process data matching processor filters with their associated pipelines")
+@Singleton
 public class DataProcessorTaskFactory implements DistributedTaskFactory {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DataProcessorTaskFactory.class);
@@ -52,6 +54,7 @@ public class DataProcessorTaskFactory implements DistributedTaskFactory {
     private final ProcessorTaskResource processorTaskResource;
     private final Provider<DataProcessorTaskHandler> dataProcessorTaskHandlerProvider;
     private final NodeInfo nodeInfo;
+    private RunnableFactory runnableFactory;
 
     @Inject
     DataProcessorTaskFactory(final TargetNodeSetFactory targetNodeSetFactory,
@@ -62,6 +65,7 @@ public class DataProcessorTaskFactory implements DistributedTaskFactory {
         this.processorTaskResource = processorTaskResource;
         this.dataProcessorTaskHandlerProvider = dataProcessorTaskHandlerProvider;
         this.nodeInfo = nodeInfo;
+        this.runnableFactory = new RunnableFactoryImpl(dataProcessorTaskHandlerProvider);
     }
 
     @Override
@@ -77,11 +81,7 @@ public class DataProcessorTaskFactory implements DistributedTaskFactory {
                         .getList()
                         .stream()
                         .map(processorTask -> {
-                            final Runnable runnable = () -> {
-                                final DataProcessorTaskHandler dataProcessorTaskHandler =
-                                        dataProcessorTaskHandlerProvider.get();
-                                dataProcessorTaskHandler.exec(processorTask);
-                            };
+                            final Runnable runnable = runnableFactory.create(processorTask);
                             return new DistributedDataProcessorTask(JobNames.DATA_PROCESSOR,
                                     runnable,
                                     THREAD_POOL,
@@ -136,5 +136,31 @@ public class DataProcessorTaskFactory implements DistributedTaskFactory {
         public ProcessorTask getProcessorTask() {
             return processorTask;
         }
+    }
+
+    public void setRunnableFactory(final RunnableFactory runnableFactory) {
+        this.runnableFactory = runnableFactory;
+    }
+
+    public static class RunnableFactoryImpl implements RunnableFactory {
+
+        private final Provider<DataProcessorTaskHandler> dataProcessorTaskHandlerProvider;
+
+        public RunnableFactoryImpl(final Provider<DataProcessorTaskHandler> dataProcessorTaskHandlerProvider) {
+            this.dataProcessorTaskHandlerProvider = dataProcessorTaskHandlerProvider;
+        }
+
+        @Override
+        public Runnable create(final ProcessorTask processorTask) {
+            return () -> {
+                final DataProcessorTaskHandler dataProcessorTaskHandler = dataProcessorTaskHandlerProvider.get();
+                dataProcessorTaskHandler.exec(processorTask);
+            };
+        }
+    }
+
+    public interface RunnableFactory {
+
+        Runnable create(ProcessorTask processorTask);
     }
 }

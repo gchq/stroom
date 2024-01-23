@@ -60,8 +60,8 @@ public class ProcessorModule extends AbstractModule {
                 .addBinding(DataProcessorTaskFactory.class);
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class)
-                .addBinding(ProcessorCache.class)
-                .addBinding(ProcessorFilterCache.class);
+                .addBinding(ProcessorFilterCache.class)
+                .addBinding(PrioritisedFilters.class);
 
         GuiceUtil.buildMultiBinder(binder(), Searchable.class)
                 .addBinding(ProcessorTaskServiceImpl.class);

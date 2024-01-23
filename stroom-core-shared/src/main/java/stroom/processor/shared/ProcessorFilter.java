@@ -96,6 +96,8 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid, HasIntegerId {
     @JsonProperty
     private int priority;
     @JsonProperty
+    private int maxProcessingTasks;
+    @JsonProperty
     private boolean reprocess;
     @JsonProperty
     private boolean enabled;
@@ -123,6 +125,7 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid, HasIntegerId {
                            @JsonProperty("processor") final Processor processor,
                            @JsonProperty("processorFilterTracker") final ProcessorFilterTracker processorFilterTracker,
                            @JsonProperty("priority") final int priority,
+                           @JsonProperty("maxProcessingTasks") final int maxProcessingTasks,
                            @JsonProperty("reprocess") final boolean reprocess,
                            @JsonProperty("enabled") final boolean enabled,
                            @JsonProperty("deleted") final boolean deleted,
@@ -149,6 +152,7 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid, HasIntegerId {
         } else {
             this.priority = 10;
         }
+        this.maxProcessingTasks = maxProcessingTasks;
         this.reprocess = reprocess;
         this.enabled = enabled;
         this.deleted = deleted;
@@ -237,6 +241,19 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid, HasIntegerId {
 
     public void setPriority(final int priority) {
         this.priority = priority;
+    }
+
+    public int getMaxProcessingTasks() {
+        return maxProcessingTasks;
+    }
+
+    public void setMaxProcessingTasks(final int maxProcessingTasks) {
+        this.maxProcessingTasks = maxProcessingTasks;
+    }
+
+    @JsonIgnore
+    public boolean isProcessingTaskCountBounded() {
+        return maxProcessingTasks > 0;
     }
 
     public boolean isHigherPriority(final ProcessorFilter other) {

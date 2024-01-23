@@ -33,6 +33,7 @@ import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterTracker;
 import stroom.processor.shared.ProcessorFilterTrackerStatus;
 import stroom.processor.shared.QueryData;
+import stroom.processor.shared.TaskStatus;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
@@ -77,7 +78,7 @@ import java.util.function.Supplier;
  * Keep a pool of stream tasks ready to go.
  */
 @Singleton
-class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
+public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ProcessorTaskCreatorImpl.class);
 
@@ -185,18 +186,13 @@ class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                         final ProcessorFilter filter = filterQueue.poll();
                         if (remaining > 0 && filter != null && !Thread.currentThread().isInterrupted()) {
                             try {
-                                // Set the current user to be the one who created the filter so that only streams that
-                                // the user has access to are processed.
-                                final UserIdentity ownerIdentity = getFilterOwnerIdentity(filter);
-
                                 createTasksForFilter(parentTaskContext,
                                         totalTasksCreated,
                                         filters,
                                         progressMonitor,
                                         filterCount,
                                         remaining,
-                                        filter,
-                                        ownerIdentity);
+                                        filter);
                             } catch (final RuntimeException e) {
                                 LOGGER.error(e::getMessage, e);
                             }
@@ -225,8 +221,11 @@ class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                                       final ProgressMonitor progressMonitor,
                                       final AtomicInteger filterCount,
                                       final int remaining,
-                                      final ProcessorFilter filter,
-                                      final UserIdentity ownerIdentity) {
+                                      final ProcessorFilter filter) {
+        // Set the current user to be the one who created the filter so that only streams that
+        // the user has access to are processed.
+        final UserIdentity ownerIdentity = getFilterOwnerIdentity(filter);
+
         securityContext.asUser(ownerIdentity, () ->
                 taskContextFactory.childContext(parentTaskContext,
                         "Create Tasks",
@@ -258,11 +257,11 @@ class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
         }
     }
 
-    private void createTasksForFilter(final TaskContext taskContext,
-                                      final ProcessorFilter filter,
-                                      final ProgressMonitor progressMonitor,
-                                      final int tasksToCreatePerFilter,
-                                      final LongAdder totalTasksCreated) {
+    public void createTasksForFilter(final TaskContext taskContext,
+                                     final ProcessorFilter filter,
+                                     final ProgressMonitor progressMonitor,
+                                     final int tasksToCreatePerFilter,
+                                     final LongAdder totalTasksCreated) {
         try {
             // The filter might have been deleted since we found it.
             processorFilterService.fetch(filter.getId()).ifPresent(loadedFilter -> {
@@ -315,8 +314,14 @@ class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                         .ofEpochMilli(tracker.getLastPollMs())
                         .plus(processorConfigProvider.get().getSkipNonProducingFiltersDuration())
                         .isBefore(Instant.now())) {
-            final int currentCreatedTasks = processorTaskDao.countCreatedTasksForFilter(filter.getId());
-            final int maxTasks = tasksToCreatePerFilter - currentCreatedTasks;
+            final int currentCreatedTasks = processorTaskDao.countTasksForFilter(filter.getId(), TaskStatus.CREATED);
+            int maxTasks;
+            if (filter.isProcessingTaskCountBounded()) {
+                // The max tasks for this filter is bounded, so only create tasks up to that limit
+                maxTasks = Math.min(tasksToCreatePerFilter, filter.getMaxProcessingTasks()) - currentCreatedTasks;
+            } else {
+                maxTasks = tasksToCreatePerFilter - currentCreatedTasks;
+            }
 
             // Skip filters that already have enough tasks.
             if (maxTasks > 0) {

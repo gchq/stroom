@@ -30,7 +30,7 @@ public class ProcessorTaskTestHelper {
 
     public void createAndQueueTasks() {
         processorConfigProvider.get().setSkipNonProducingFiltersDuration(StroomDuration.ZERO);
-        prioritisedFilters.reset();
+        prioritisedFilters.clear();
         processorTaskCreator.exec();
         processorTaskQueueManager.exec();
     }

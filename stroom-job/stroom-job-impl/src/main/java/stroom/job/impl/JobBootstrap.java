@@ -44,7 +44,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Singleton
-class JobBootstrap {
+public class JobBootstrap {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(JobBootstrap.class);
     private static final String LOCK_NAME = "JobNodeService";
@@ -77,7 +77,7 @@ class JobBootstrap {
         this.distributedTaskFactoryRegistry = distributedTaskFactoryRegistry;
     }
 
-    void startup() {
+    public void startup() {
         LOGGER.info(() -> "startup()");
 
         // Lock the cluster so only 1 node at a time can call the following code.

@@ -31,15 +31,11 @@ import stroom.util.shared.ModelStringUtil;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Optional;
 
 @Singleton
 class JobNodeService {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(JobNodeService.class);
 
     private final JobNodeDao jobNodeDao;
     private final JobNodeTrackerCache jobNodeTrackerCache;
@@ -65,8 +61,7 @@ class JobNodeService {
             before.ifPresent(j -> jobNode.setVersion(j.getVersion()));
 
             AuditUtil.stamp(securityContext, jobNode);
-            final JobNode after = jobNodeDao.update(jobNode);
-            return after;
+            return jobNodeDao.update(jobNode);
         });
     }
 
@@ -79,7 +74,7 @@ class JobNodeService {
     JobNodeInfo getInfo(final String jobName) {
         return securityContext.secureResult(() -> {
             JobNodeInfo result = null;
-            final JobNodeTrackerCache.Trackers trackers = jobNodeTrackerCache.getTrackers();
+            final JobNodeTrackers trackers = jobNodeTrackerCache.getTrackers();
             if (trackers != null) {
                 final JobNodeTracker tracker = trackers.getTrackerForJobName(jobName);
                 if (tracker != null) {
