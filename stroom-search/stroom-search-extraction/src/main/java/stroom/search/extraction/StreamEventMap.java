@@ -24,6 +24,7 @@ public class StreamEventMap {
     private final LinkedList<Key> streamIdQueue;
     private final int capacity;
     private int count;
+    private volatile boolean complete = false;
 
     private final Lock lock = new ReentrantLock();
     private final Condition notFull = lock.newCondition();
@@ -38,23 +39,32 @@ public class StreamEventMap {
     }
 
     public void terminate() {
-        try {
-            lock.lockInterruptibly();
-            try {
-                count = 0;
-                streamIdQueue.clear();
-                storedDataMap.clear();
+        if (!complete) {
+            complete = true;
+            notEmpty.signalAll();
+            notFull.signalAll();
 
-                streamIdQueue.addLast(COMPLETE);
-                count++;
-                notEmpty.signal();
-                notFull.signal();
-            } finally {
-                lock.unlock();
+            try {
+                lock.lockInterruptibly();
+                try {
+                    count = 0;
+                    streamIdQueue.clear();
+                    storedDataMap.clear();
+
+                    if (!complete) {
+                        complete = true;
+                        streamIdQueue.addLast(COMPLETE);
+                        count++;
+                        notEmpty.signalAll();
+                        notFull.signalAll();
+                    }
+                } finally {
+                    lock.unlock();
+                }
+            } catch (final InterruptedException e) {
+                LOGGER.debug(e::getMessage, e);
+                throw new UncheckedInterruptedException(e);
             }
-        } catch (final InterruptedException e) {
-            LOGGER.debug(e::getMessage, e);
-            throw new UncheckedInterruptedException(e);
         }
     }
 
@@ -62,13 +72,19 @@ public class StreamEventMap {
         try {
             lock.lockInterruptibly();
             try {
-                while (count == capacity) {
-                    notFull.await();
-                }
+                if (!complete) {
+                    while (count == capacity) {
+                        notFull.await();
+                    }
 
-                streamIdQueue.addLast(COMPLETE);
-                count++;
-                notEmpty.signal();
+                    // If not already completed then add the item to the queue, so it completes
+                    // when it gets taken off.
+                    if (!complete) {
+                        streamIdQueue.addLast(COMPLETE);
+                        count++;
+                        notEmpty.signal();
+                    }
+                }
             } finally {
                 lock.unlock();
             }
@@ -78,12 +94,18 @@ public class StreamEventMap {
         }
     }
 
-    public void put(final Event event) {
+    public void put(final Event event) throws CompleteException {
         try {
             lock.lockInterruptibly();
             try {
+                // No point putting if it has completed so alert any other waiting threads
+                // and throw.
+                checkForCompletion();
+
                 while (count == capacity) {
                     notFull.await();
+                    // Now we are done waiting check for completion again
+                    checkForCompletion();
                 }
 
                 final Set<Event> events = storedDataMap.compute(event.getStreamId(), (k, v) -> {
@@ -113,6 +135,19 @@ public class StreamEventMap {
         }
     }
 
+    /**
+     * Must be called under lock
+     */
+    private void checkForCompletion() throws CompleteException {
+        if (complete) {
+            // Make sure all other threads are woken up, so they can check for completion
+            // and drop out
+            notFull.signalAll();
+            notEmpty.signalAll();
+            throw new CompleteException();
+        }
+    }
+
     public EventSet take() throws CompleteException {
         try {
             Key key;
@@ -121,14 +156,18 @@ public class StreamEventMap {
 
             lock.lockInterruptibly();
             try {
+                checkForCompletion();
                 while (count == 0) {
                     notEmpty.await();
+                    checkForCompletion();
                 }
 
                 key = streamIdQueue.peekFirst();
                 if (key != null) {
                     if (key == COMPLETE) {
-                        notEmpty.signal();
+                        complete = true;
+                        notEmpty.signalAll();
+                        notFull.signalAll();
                     } else {
                         delay = extractionDelayMs - (System.currentTimeMillis() - key.createTimeMs);
                         if (delay <= 0) {
@@ -144,7 +183,7 @@ public class StreamEventMap {
                 lock.unlock();
             }
 
-            if (key == COMPLETE) {
+            if (complete) {
                 throw new CompleteException();
             }
 
@@ -167,44 +206,19 @@ public class StreamEventMap {
         this.extractionDelayMs = extractionDelayMs;
     }
 
-    private static class Key {
 
-        private final long streamId;
-        private final long createTimeMs;
+    // --------------------------------------------------------------------------------
 
-        public Key(final long streamId,
-                   final long createTimeMs) {
-            this.streamId = streamId;
-            this.createTimeMs = createTimeMs;
-        }
 
-        public long getStreamId() {
-            return streamId;
-        }
+    private record Key(long streamId, long createTimeMs) {
 
-        public long getCreateTimeMs() {
-            return createTimeMs;
-        }
     }
 
-    public static class EventSet {
 
-        private final long streamId;
-        private final Set<Event> events;
+    // --------------------------------------------------------------------------------
 
-        public EventSet(final long streamId,
-                        final Set<Event> events) {
-            this.streamId = streamId;
-            this.events = events;
-        }
 
-        public long getStreamId() {
-            return streamId;
-        }
-
-        public Set<Event> getEvents() {
-            return events;
-        }
+    public record EventSet(long streamId, Set<Event> events) {
 
         public int size() {
             return events.size();

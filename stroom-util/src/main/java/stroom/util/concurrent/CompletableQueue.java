@@ -29,7 +29,7 @@ public class CompletableQueue<T> {
      */
     private int count;
 
-    private boolean complete;
+    private volatile boolean complete;
 
     /**
      * Main lock guarding all access

@@ -353,4 +353,42 @@ class TestCompletableQueue {
         assertThat(completed)
                 .isTrue();
     }
+
+    @Test
+    void manyPuttersThenComplete() throws InterruptedException {
+
+        final int count = 10;
+        final List<Integer> outputItems = new CopyOnWriteArrayList<>();
+        final CountDownLatch aboutToTakeLatch = new CountDownLatch(count);
+        final CountDownLatch doneTakesLatch = new CountDownLatch(count);
+        final ExecutorService takeExecutor = Executors.newFixedThreadPool(10);
+        final AtomicBoolean completed = new AtomicBoolean(false);
+
+        // Line up 10 takers on an empty queue so, they will all block
+        for (int i = 0; i < count; i++) {
+            CompletableFuture.runAsync(() -> {
+                try {
+                    aboutToTakeLatch.countDown();
+                    final Integer item = completableQueue.take();
+                    outputItems.add(item);
+                    LOGGER.debug("Got item: {}", item);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                } catch (CompleteException e) {
+                    LOGGER.debug("Completed");
+                    completed.set(true);
+                }
+                doneTakesLatch.countDown();
+            }, takeExecutor);
+        }
+
+        // Make sure all threads have or are ready to take
+        aboutToTakeLatch.await();
+        ThreadUtil.sleepIgnoringInterrupts(50);
+        // Complete the queue, which _should_ release all blocked takers
+        completableQueue.complete();
+        doneTakesLatch.await();
+        assertThat(completed)
+                .isTrue();
+    }
 }

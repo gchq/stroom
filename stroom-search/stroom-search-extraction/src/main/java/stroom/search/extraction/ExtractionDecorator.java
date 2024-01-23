@@ -199,7 +199,7 @@ public class ExtractionDecorator {
                                                 SearchPhase.EXTRACTION_DECORATOR_FACTORY_STREAM_EVENT_MAP_PUT);
                                         streamEventMap.put(event);
 
-                                    } catch (final RuntimeException e) {
+                                    } catch (final RuntimeException | CompleteException e) {
                                         LOGGER.debug(e::getMessage, e);
                                         receivers.values().forEach(receiver ->
                                                 errorConsumer.add(e));
@@ -286,8 +286,8 @@ public class ExtractionDecorator {
 
                                         securityContext.useAsRead(() ->
                                                 extractEvents(taskContext,
-                                                        eventSet.getStreamId(),
-                                                        eventSet.getEvents(),
+                                                        eventSet.streamId(),
+                                                        eventSet.events(),
                                                         extractionCount,
                                                         errorConsumer));
                                     }
