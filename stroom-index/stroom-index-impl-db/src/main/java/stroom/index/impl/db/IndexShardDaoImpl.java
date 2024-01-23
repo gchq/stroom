@@ -25,6 +25,7 @@ import stroom.index.shared.IndexVolume;
 import stroom.index.shared.Partition;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionUtil;
+import stroom.query.common.v2.DateExpressionParser;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValInteger;
 import stroom.query.language.functions.ValLong;
@@ -415,7 +416,8 @@ class IndexShardDaoImpl implements IndexShardDao {
             expressionMapper.map(IndexShardFields.FIELD_FILE_SIZE, INDEX_SHARD.FILE_SIZE, Long::valueOf);
             expressionMapper.map(IndexShardFields.FIELD_STATUS, INDEX_SHARD.STATUS, value ->
                     IndexShardStatus.fromDisplayValue(value).getPrimitiveValue());
-            expressionMapper.map(IndexShardFields.FIELD_LAST_COMMIT, INDEX_SHARD.COMMIT_MS, Long::valueOf);
+            expressionMapper.map(IndexShardFields.FIELD_LAST_COMMIT, INDEX_SHARD.COMMIT_MS, value ->
+                    DateExpressionParser.getMs(IndexShardFields.FIELD_LAST_COMMIT.getName(), value));
             expressionMapper.map(IndexShardFields.FIELD_VOLUME_PATH, INDEX_VOLUME.PATH, value -> value);
             expressionMapper.map(IndexShardFields.FIELD_VOLUME_GROUP, INDEX_VOLUME_GROUP.NAME, value -> value);
         }
