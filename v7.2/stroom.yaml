@@ -1489,9 +1489,29 @@ paths:
       summary: Download a query
       tags:
       - Dashboards
+  /dashboard/v1/downloadSearchResults:
+    post:
+      operationId: downloadDashboardSearchResultsLocal
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DownloadSearchResultsRequest'
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceGeneration'
+          description: default response
+      summary: Download search results
+      tags:
+      - Dashboards
   /dashboard/v1/downloadSearchResults/{nodeName}:
     post:
-      operationId: downloadDashboardSearchResults
+      operationId: downloadDashboardSearchResultsNode
       parameters:
       - in: path
         name: nodeName
@@ -1515,9 +1535,29 @@ paths:
       summary: Download search results
       tags:
       - Dashboards
-  /dashboard/v1/search/{nodeName}:
+  /dashboard/v1/search:
     post:
       operationId: dashboardSearch
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DashboardSearchRequest'
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardSearchResponse'
+          description: default response
+      summary: Perform a new search or get new results
+      tags:
+      - Dashboards
+  /dashboard/v1/search/{nodeName}:
+    post:
+      operationId: dashboardSearch_1
       parameters:
       - in: path
         name: nodeName
@@ -4580,9 +4620,29 @@ paths:
       summary: Finds processor task summaries
       tags:
       - Processor Tasks
+  /query/v1/downloadSearchResults:
+    post:
+      operationId: downloadQuerySearchResultsLocal
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DownloadQueryResultsRequest'
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceGeneration'
+          description: default response
+      summary: Download search results
+      tags:
+      - Queries
   /query/v1/downloadSearchResults/{nodeName}:
     post:
-      operationId: downloadQuerySearchResults
+      operationId: downloadQuerySearchResultsNode
       parameters:
       - in: path
         name: nodeName
@@ -4656,9 +4716,29 @@ paths:
       summary: Fetch all (optionally filtered) query help items
       tags:
       - Queries
+  /query/v1/search:
+    post:
+      operationId: querySearchLocal
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QuerySearchRequest'
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardSearchResponse'
+          description: default response
+      summary: Perform a new search or get new results
+      tags:
+      - Queries
   /query/v1/search/{nodeName}:
     post:
-      operationId: querySearch
+      operationId: querySearchNode
       parameters:
       - in: path
         name: nodeName
