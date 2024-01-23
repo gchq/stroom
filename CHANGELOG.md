@@ -13,6 +13,23 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2.21] - 2024-01-23
+
+* Issue **#4010** : Change ERROR logging to DEBUG when search requests cannot be created, e.g. when a rule has a blank or invalid query string.
+
+* Issue **#4014** : Fix queries hanging dur to an infinite loop when using `countGroups()` expression function.
+
+* Issue **#4007** : Change the Lucene search code so that it will use the Index's default extraction pipeline if there is no extraction set on the dashboard, or in the case of StroomQL, always use the Index's default extraction pipeline as there no way to set a pipeline.
+
+* Issue **#4021** : Fix using the `parseDuration(...)` function inside another function, e.g. `max(parseDuration(...))`.
+
+* Issue **#4029** : Change the `/api/(query|dashboard)/v1/(search|downloadSearcResults)` to accept a null `nodeName` path param, e.g. `/api/query/v1/search`.
+
+* Issue **#4024** : Fix concurrency issues in CompleteableQueue that were causing searches to get stuck. Also fix similar issues in StreamEventMap.
+
+* Issue **#3900** : Fix bug when using an expression term like `Last Commit > 2023-12-22T11:19:32.000Z` when searching the Index Shards data source.
+
+
 ## [v7.2.20] - 2024-01-17
 
 * Change SQL migration `V07_02_00_110__api_key_legacy_data_migration.sql` to include all API keys, not just enabled ones.
@@ -6284,7 +6301,8 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2.20...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2.21...HEAD
+[v7.2.21]: https://github.com/gchq/stroom/compare/v7.2.20...v7.2.21
 [v7.2.20]: https://github.com/gchq/stroom/compare/v7.2.19...v7.2.20
 [v7.2.19]: https://github.com/gchq/stroom/compare/v7.2.18...v7.2.19
 [v7.2.18]: https://github.com/gchq/stroom/compare/v7.2.17...v7.2.18
