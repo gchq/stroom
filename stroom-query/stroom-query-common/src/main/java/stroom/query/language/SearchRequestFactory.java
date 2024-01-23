@@ -162,7 +162,9 @@ public class SearchRequestFactory {
 
                 // Make sure there is a non-null expression.
                 if (query.getExpression() == null) {
-                    query = query.copy().expression(ExpressionOperator.builder().build()).build();
+                    query = query.copy()
+                            .expression(ExpressionOperator.builder().build())
+                            .build();
                 }
 
                 return new SearchRequest(
@@ -175,8 +177,7 @@ public class SearchRequestFactory {
                         in.getTimeout());
 
             } catch (final Throwable e) {
-                LOGGER.error(() -> "Error creating search request from '" + string + "'", e);
-                LOGGER.error(e::getMessage, e);
+                LOGGER.debug(() -> "Error creating search request from '" + string + "'", e);
                 throw e;
             }
         }
