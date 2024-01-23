@@ -2,6 +2,7 @@ package stroom.search.extraction;
 
 import stroom.search.extraction.StreamEventMap.EventSet;
 import stroom.util.concurrent.CompleteException;
+import stroom.util.concurrent.ThreadUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -11,6 +12,10 @@ import org.junit.jupiter.api.Test;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -30,7 +35,11 @@ class TestStreamEventMap {
         CompletableFuture<Void> producer = CompletableFuture.runAsync(() -> {
             for (int i = 0; i < TOTAL_EVENTS; i++) {
                 int streamId = (int) (Math.random() * 10);
-                streamEventMap.put(new Event(streamId, i, null));
+                try {
+                    streamEventMap.put(new Event(streamId, i, null));
+                } catch (CompleteException e) {
+                    throw new RuntimeException(e);
+                }
             }
             streamEventMap.complete();
         });
@@ -59,5 +68,118 @@ class TestStreamEventMap {
 
         // Make sure we get all the events back.
         assertThat(total.get()).isEqualTo(TOTAL_EVENTS);
+    }
+
+    @Test
+    void testManyTakersThenComplete() throws InterruptedException {
+        final int count = 10;
+        final StreamEventMap streamEventMap = new StreamEventMap(100);
+        final List<CompletableFuture<Void>> futures = new ArrayList<>();
+        final ExecutorService executorService = Executors.newFixedThreadPool(count);
+        final CountDownLatch aboutToTakeLatch = new CountDownLatch(count);
+        final AtomicBoolean didComplete = new AtomicBoolean(false);
+
+        // Start a consumer.
+        for (int i = 0; i < count; i++) {
+            CompletableFuture<Void> consumer = CompletableFuture.runAsync(() -> {
+                try {
+                    aboutToTakeLatch.countDown();
+                    final EventSet eventSet = streamEventMap.take();
+                } catch (CompleteException e) {
+                    LOGGER.debug("Completed");
+                    didComplete.set(true);
+                }
+            }, executorService);
+            futures.add(consumer);
+        }
+
+        aboutToTakeLatch.await();
+        ThreadUtil.sleepIgnoringInterrupts(50);
+
+        streamEventMap.complete();
+
+        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+
+        assertThat(didComplete)
+                .isTrue();
+    }
+
+    @Test
+    void testManyTakersThenTerminate() throws InterruptedException {
+        final int count = 10;
+        final StreamEventMap streamEventMap = new StreamEventMap(100);
+        final List<CompletableFuture<Void>> futures = new ArrayList<>();
+        final ExecutorService executorService = Executors.newFixedThreadPool(count);
+        final CountDownLatch aboutToTakeLatch = new CountDownLatch(count);
+        final AtomicBoolean didComplete = new AtomicBoolean(false);
+
+        // Start a consumer.
+        for (int i = 0; i < count; i++) {
+            CompletableFuture<Void> consumer = CompletableFuture.runAsync(() -> {
+                try {
+                    aboutToTakeLatch.countDown();
+                    final EventSet eventSet = streamEventMap.take();
+                } catch (CompleteException e) {
+                    LOGGER.debug("Completed");
+                    didComplete.set(true);
+                }
+            }, executorService);
+            futures.add(consumer);
+        }
+
+        aboutToTakeLatch.await();
+        ThreadUtil.sleepIgnoringInterrupts(50);
+
+        streamEventMap.terminate();
+
+        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+
+        assertThat(didComplete)
+                .isTrue();
+    }
+
+    @Test
+    void testManyPuttersThenComplete() throws InterruptedException {
+        // More putters than capacity
+        final int count = 10;
+        final StreamEventMap streamEventMap = new StreamEventMap(2);
+        final List<CompletableFuture<Void>> futures = new ArrayList<>();
+        final ExecutorService executorService = Executors.newFixedThreadPool(count);
+        final CountDownLatch aboutToPutLatch = new CountDownLatch(count);
+        final AtomicBoolean didComplete = new AtomicBoolean(false);
+
+        // Complete it straight away
+        streamEventMap.complete();
+
+        // This should pick up the complete item so will complete the queue and release all putters.
+        try {
+            streamEventMap.take();
+        } catch (CompleteException e) {
+            LOGGER.debug("Completed on take");
+        }
+
+        // Start the producers, none of which should block as the map is completed already
+        for (int i = 0; i < count; i++) {
+            CompletableFuture<Void> producer = CompletableFuture.runAsync(() -> {
+                try {
+                    aboutToPutLatch.countDown();
+                    int streamId = (int) (Math.random() * 10);
+                    int eventId = (int) (Math.random() * 10);
+                    streamEventMap.put(new Event(streamId, eventId, null));
+                } catch (CompleteException e) {
+                    LOGGER.debug("Completed on put");
+                    didComplete.set(true);
+                }
+            }, executorService);
+            futures.add(producer);
+        }
+
+        aboutToPutLatch.await();
+        ThreadUtil.sleepIgnoringInterrupts(50);
+
+        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+
+        assertThat(didComplete)
+                .isTrue();
     }
 }
