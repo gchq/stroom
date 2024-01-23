@@ -91,17 +91,23 @@ public class StreamEventMap {
     }
 
     public void put(final Event event) throws CompleteException {
+        if (complete) {
+            LOGGER.debug("Ignoring put as StreamEventMap is completed");
+            return;
+        }
         try {
             lock.lockInterruptibly();
+            if (complete) {
+                LOGGER.debug("Ignoring put as StreamEventMap is completed");
+                return;
+            }
             try {
-                // No point putting if it has completed so alert any other waiting threads
-                // and throw.
-                checkForCompletion();
-
                 while (count == capacity) {
                     notFull.await();
-                    // Now we are done waiting check for completion again
-                    checkForCompletion();
+                    if (complete) {
+                        LOGGER.debug("Ignoring put as StreamEventMap is completed");
+                        return;
+                    }
                 }
 
                 final Set<Event> events = storedDataMap.compute(event.getStreamId(), (k, v) -> {
@@ -131,20 +137,10 @@ public class StreamEventMap {
         }
     }
 
-    /**
-     * Must be called under lock
-     */
-    private void checkForCompletion() throws CompleteException {
+    public EventSet take() throws CompleteException {
         if (complete) {
-            // Make sure all other threads are woken up, so they can check for completion
-            // and drop out
-            notFull.signalAll();
-            notEmpty.signalAll();
             throw new CompleteException();
         }
-    }
-
-    public EventSet take() throws CompleteException {
         try {
             Key key;
             EventSet eventSet = null;
@@ -152,10 +148,14 @@ public class StreamEventMap {
 
             lock.lockInterruptibly();
             try {
-                checkForCompletion();
+                if (complete) {
+                    throw new CompleteException();
+                }
                 while (count == 0) {
                     notEmpty.await();
-                    checkForCompletion();
+                    if (complete) {
+                        throw new CompleteException();
+                    }
                 }
 
                 key = streamIdQueue.peekFirst();
@@ -179,7 +179,7 @@ public class StreamEventMap {
                 lock.unlock();
             }
 
-            if (complete) {
+            if (key == COMPLETE) {
                 throw new CompleteException();
             }
 
