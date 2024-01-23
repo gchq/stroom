@@ -2188,9 +2188,39 @@
         "tags" : [ "Dashboards" ]
       }
     },
+    "/dashboard/v1/downloadSearchResults" : {
+      "post" : {
+        "operationId" : "downloadDashboardSearchResultsLocal",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/DownloadSearchResultsRequest"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ResourceGeneration"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Download search results",
+        "tags" : [ "Dashboards" ]
+      }
+    },
     "/dashboard/v1/downloadSearchResults/{nodeName}" : {
       "post" : {
-        "operationId" : "downloadDashboardSearchResults",
+        "operationId" : "downloadDashboardSearchResultsNode",
         "parameters" : [ {
           "in" : "path",
           "name" : "nodeName",
@@ -2226,9 +2256,39 @@
         "tags" : [ "Dashboards" ]
       }
     },
-    "/dashboard/v1/search/{nodeName}" : {
+    "/dashboard/v1/search" : {
       "post" : {
         "operationId" : "dashboardSearch",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/DashboardSearchRequest"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/DashboardSearchResponse"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Perform a new search or get new results",
+        "tags" : [ "Dashboards" ]
+      }
+    },
+    "/dashboard/v1/search/{nodeName}" : {
+      "post" : {
+        "operationId" : "dashboardSearch_1",
         "parameters" : [ {
           "in" : "path",
           "name" : "nodeName",
@@ -3806,6 +3866,36 @@
         },
         "summary" : "Exports all configuration to a file.",
         "tags" : [ "Export" ]
+      }
+    },
+    "/expression/v1/validate" : {
+      "post" : {
+        "operationId" : "validate",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ValidateExpressionRequest"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ValidateExpressionResult"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Validate an expression",
+        "tags" : [ "Expressions" ]
       }
     },
     "/feed/v1/fetchSupportedEncodings" : {
@@ -6876,9 +6966,39 @@
         "tags" : [ "Processor Tasks" ]
       }
     },
+    "/query/v1/downloadSearchResults" : {
+      "post" : {
+        "operationId" : "downloadQuerySearchResultsLocal",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/DownloadQueryResultsRequest"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ResourceGeneration"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Download search results",
+        "tags" : [ "Queries" ]
+      }
+    },
     "/query/v1/downloadSearchResults/{nodeName}" : {
       "post" : {
-        "operationId" : "downloadQuerySearchResults",
+        "operationId" : "downloadQuerySearchResultsNode",
         "parameters" : [ {
           "in" : "path",
           "name" : "nodeName",
@@ -7022,9 +7142,39 @@
         "tags" : [ "Queries" ]
       }
     },
+    "/query/v1/search" : {
+      "post" : {
+        "operationId" : "querySearchLocal",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/QuerySearchRequest"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/DashboardSearchResponse"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Perform a new search or get new results",
+        "tags" : [ "Queries" ]
+      }
+    },
     "/query/v1/search/{nodeName}" : {
       "post" : {
-        "operationId" : "querySearch",
+        "operationId" : "querySearchNode",
         "parameters" : [ {
           "in" : "path",
           "name" : "nodeName",
@@ -19729,6 +19879,23 @@
           },
           "timeZone" : {
             "$ref" : "#/components/schemas/TimeZone"
+          }
+        }
+      },
+      "ValidateExpressionRequest" : {
+        "type" : "object",
+        "properties" : {
+          "dateTimeSettings" : {
+            "$ref" : "#/components/schemas/DateTimeSettings"
+          },
+          "expressionItem" : {
+            "$ref" : "#/components/schemas/ExpressionItem"
+          },
+          "fields" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/QueryField"
+            }
           }
         }
       },

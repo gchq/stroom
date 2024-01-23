@@ -5248,6 +5248,15 @@ export interface UserPreferences {
   timeZone?: TimeZone;
 }
 
+export interface ValidateExpressionRequest {
+  /** The client date/time settings */
+  dateTimeSettings?: DateTimeSettings;
+
+  /** Base type for an item in an expression tree */
+  expressionItem?: ExpressionItem;
+  fields?: QueryField[];
+}
+
 export interface ValidateExpressionResult {
   groupBy?: boolean;
   ok?: boolean;
@@ -6947,12 +6956,31 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Dashboards
-     * @name DownloadDashboardSearchResults
+     * @name DownloadDashboardSearchResultsLocal
+     * @summary Download search results
+     * @request POST:/dashboard/v1/downloadSearchResults
+     * @secure
+     */
+    downloadDashboardSearchResultsLocal: (data: DownloadSearchResultsRequest, params: RequestParams = {}) =>
+      this.request<any, ResourceGeneration>({
+        path: `/dashboard/v1/downloadSearchResults`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Dashboards
+     * @name DownloadDashboardSearchResultsNode
      * @summary Download search results
      * @request POST:/dashboard/v1/downloadSearchResults/{nodeName}
      * @secure
      */
-    downloadDashboardSearchResults: (
+    downloadDashboardSearchResultsNode: (
       nodeName: string,
       data: DownloadSearchResultsRequest,
       params: RequestParams = {},
@@ -6972,10 +7000,29 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @tags Dashboards
      * @name DashboardSearch
      * @summary Perform a new search or get new results
+     * @request POST:/dashboard/v1/search
+     * @secure
+     */
+    dashboardSearch: (data: DashboardSearchRequest, params: RequestParams = {}) =>
+      this.request<any, DashboardSearchResponse>({
+        path: `/dashboard/v1/search`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Dashboards
+     * @name DashboardSearch1
+     * @summary Perform a new search or get new results
      * @request POST:/dashboard/v1/search/{nodeName}
      * @secure
      */
-    dashboardSearch: (nodeName: string, data: DashboardSearchRequest, params: RequestParams = {}) =>
+    dashboardSearch1: (nodeName: string, data: DashboardSearchRequest, params: RequestParams = {}) =>
       this.request<any, DashboardSearchResponse>({
         path: `/dashboard/v1/search/${nodeName}`,
         method: "POST",
@@ -7974,6 +8021,26 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
         path: `/export/v1`,
         method: "GET",
         secure: true,
+        ...params,
+      }),
+  };
+  expression = {
+    /**
+     * No description
+     *
+     * @tags Expressions
+     * @name Validate
+     * @summary Validate an expression
+     * @request POST:/expression/v1/validate
+     * @secure
+     */
+    validate: (data: ValidateExpressionRequest, params: RequestParams = {}) =>
+      this.request<any, ValidateExpressionResult>({
+        path: `/expression/v1/validate`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
         ...params,
       }),
   };
@@ -9873,12 +9940,31 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Queries
-     * @name DownloadQuerySearchResults
+     * @name DownloadQuerySearchResultsLocal
+     * @summary Download search results
+     * @request POST:/query/v1/downloadSearchResults
+     * @secure
+     */
+    downloadQuerySearchResultsLocal: (data: DownloadQueryResultsRequest, params: RequestParams = {}) =>
+      this.request<any, ResourceGeneration>({
+        path: `/query/v1/downloadSearchResults`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Queries
+     * @name DownloadQuerySearchResultsNode
      * @summary Download search results
      * @request POST:/query/v1/downloadSearchResults/{nodeName}
      * @secure
      */
-    downloadQuerySearchResults: (nodeName: string, data: DownloadQueryResultsRequest, params: RequestParams = {}) =>
+    downloadQuerySearchResultsNode: (nodeName: string, data: DownloadQueryResultsRequest, params: RequestParams = {}) =>
       this.request<any, ResourceGeneration>({
         path: `/query/v1/downloadSearchResults/${nodeName}`,
         method: "POST",
@@ -9966,12 +10052,31 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Queries
-     * @name QuerySearch
+     * @name QuerySearchLocal
+     * @summary Perform a new search or get new results
+     * @request POST:/query/v1/search
+     * @secure
+     */
+    querySearchLocal: (data: QuerySearchRequest, params: RequestParams = {}) =>
+      this.request<any, DashboardSearchResponse>({
+        path: `/query/v1/search`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Queries
+     * @name QuerySearchNode
      * @summary Perform a new search or get new results
      * @request POST:/query/v1/search/{nodeName}
      * @secure
      */
-    querySearch: (nodeName: string, data: QuerySearchRequest, params: RequestParams = {}) =>
+    querySearchNode: (nodeName: string, data: QuerySearchRequest, params: RequestParams = {}) =>
       this.request<any, DashboardSearchResponse>({
         path: `/query/v1/search/${nodeName}`,
         method: "POST",
