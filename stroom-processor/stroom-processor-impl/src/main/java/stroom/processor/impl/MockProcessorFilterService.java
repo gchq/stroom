@@ -23,15 +23,14 @@ import java.util.Optional;
 @Singleton
 public class MockProcessorFilterService implements ProcessorFilterService {
 
-    private final MockProcessorFilterDao dao = new MockProcessorFilterDao();
-
-//    private Random idRandom = new Random (0);
-
     private final ProcessorService processorService;
+    private final MockProcessorFilterDao dao;
 
     @Inject
-    MockProcessorFilterService(final ProcessorService processorService) {
+    MockProcessorFilterService(final ProcessorService processorService,
+                               final MockProcessorFilterDao dao) {
         this.processorService = processorService;
+        this.dao = dao;
     }
 
     @Override

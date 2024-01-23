@@ -8790,6 +8790,7 @@ components:
           - INSERT
           - JOBS
           - KEY
+          - LOCATE
           - LOCKED
           - LOGO
           - LOGOUT
@@ -9278,6 +9279,7 @@ components:
           - INSERT
           - JOBS
           - KEY
+          - LOCATE
           - LOCKED
           - LOGO
           - LOGOUT
@@ -9471,6 +9473,7 @@ components:
           - INSERT
           - JOBS
           - KEY
+          - LOCATE
           - LOCKED
           - LOGO
           - LOGOUT
@@ -11733,6 +11736,7 @@ components:
           - INSERT
           - JOBS
           - KEY
+          - LOCATE
           - LOCKED
           - LOGO
           - LOGOUT
@@ -12703,6 +12707,7 @@ components:
           - INSERT
           - JOBS
           - KEY
+          - LOCATE
           - LOCKED
           - LOGO
           - LOGOUT

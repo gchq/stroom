@@ -23,6 +23,7 @@ import stroom.index.impl.IndexVolumeService;
 import stroom.index.shared.IndexVolume;
 import stroom.index.shared.IndexVolumeGroup;
 import stroom.node.impl.NodeConfig;
+import stroom.test.AppConfigTestModule;
 
 import jakarta.inject.Inject;
 import org.slf4j.Logger;
@@ -39,7 +40,7 @@ class VolumeCreatorForTesting implements VolumeCreator {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(VolumeCreatorForTesting.class);
 
-    private static final String NODE1 = "node1a";
+    private static final String NODE1 = AppConfigTestModule.NODE1;
     private static final String NODE2 = "node2a";
 
     private final NodeConfig nodeConfig;
@@ -98,8 +99,6 @@ class VolumeCreatorForTesting implements VolumeCreator {
                     volumeService.create(indexVolume);
                 }
             }
-
-            nodeConfig.setNodeName(NODE1);
         } catch (final IOException | RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
         }

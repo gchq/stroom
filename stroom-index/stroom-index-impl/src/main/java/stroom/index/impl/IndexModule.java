@@ -53,7 +53,8 @@ public class IndexModule extends AbstractModule {
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class)
                 .addBinding(IndexStructureCacheImpl.class)
-                .addBinding(IndexVolumeServiceImpl.class);
+                .addBinding(IndexVolumeServiceImpl.class)
+                .addBinding(IndexVolumeGroupServiceImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), EntityEvent.Handler.class)
                 .addBinding(IndexConfigCacheEntityEventHandler.class);

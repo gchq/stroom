@@ -21,7 +21,9 @@ import stroom.test.common.util.TestClassLogger;
 import stroom.test.common.util.db.DbTestUtil;
 import stroom.test.common.util.test.StroomTest;
 import stroom.util.NullSafe;
+import stroom.util.io.CommonDirSetup;
 import stroom.util.io.FileUtil;
+import stroom.util.io.HomeDirProvider;
 import stroom.util.io.TempDirProvider;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -65,9 +67,15 @@ public abstract class StroomIntegrationTest implements StroomTest {
     @Inject
     private TempDirProvider tempDirProvider;
     @Inject
+    private HomeDirProvider homeDirProvider;
+    @Inject
     private Injector injector;
 
     private Path testTempDir;
+
+    static {
+        CommonDirSetup.setup();
+    }
 
     /**
      * Initialise required database entities.
@@ -89,8 +97,12 @@ public abstract class StroomIntegrationTest implements StroomTest {
             LOGGER.debug("Set CURRENT_TEST_CLASS_THREAD_LOCAL to {} ({})",
                     this.getClass().getSimpleName(), System.identityHashCode(this));
         } else {
+            final StroomIntegrationTest current = CURRENT_TEST_CLASS_THREAD_LOCAL.get();
             LOGGER.info("Previous test class on this thread: {}",
-                    CURRENT_TEST_CLASS_THREAD_LOCAL.get().getClass().getSimpleName());
+                    current.getClass().getSimpleName());
+            if (!current.getClass().getName().equals(this.getClass().getName())) {
+                throw new RuntimeException("Unexpected change of test without cleanup");
+            }
         }
 
         // Record the test class and method
