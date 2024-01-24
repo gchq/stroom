@@ -26,7 +26,6 @@ import stroom.document.client.event.ShowPermissionsDialogEvent;
 import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.processor.shared.CreateProcessFilterRequest;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterResource;
 import stroom.processor.shared.ProcessorFilterRow;
@@ -68,7 +67,7 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
     private ProcessorListRow selectedProcessor;
     private ButtonView addButton;
     private ButtonView editButton;
-    private ButtonView cloneButton;
+    private ButtonView duplicateButton;
     private ButtonView removeButton;
     private ButtonView permissionsButton;
 
@@ -145,13 +144,15 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
                 }
             }));
 
-            cloneButton = processorListPresenter.getView().addButton(SvgPresets.COPY);
-            cloneButton.setTitle("Clone Processor");
-            registerHandler(cloneButton.addClickHandler(event -> {
-                if (allowUpdate) {
-                    cloneProcessor();
-                }
-            }));
+            if (allowEdit) {
+                duplicateButton = processorListPresenter.getView().addButton(SvgPresets.COPY);
+                duplicateButton.setTitle("Duplicate Processor");
+                registerHandler(duplicateButton.addClickHandler(event -> {
+                    if (allowUpdate) {
+                        duplicateProcessor();
+                    }
+                }));
+            }
 
             removeButton = processorListPresenter.getView().addButton(SvgPresets.DELETE);
             removeButton.setTitle("Delete Processor");
@@ -186,11 +187,11 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
                 editButton.setEnabled(false);
             }
         }
-        if (cloneButton != null) {
+        if (duplicateButton != null) {
             if (allowUpdate) {
-                cloneButton.setEnabled(enabled);
+                duplicateButton.setEnabled(enabled);
             } else {
-                cloneButton.setEnabled(false);
+                duplicateButton.setEnabled(false);
             }
         }
         if (removeButton != null) {
@@ -257,30 +258,22 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
     /**
      * Make a copy of the currently selected processor
      */
-    private void cloneProcessor() {
+    private void duplicateProcessor() {
         if (allowEdit) {
             // Now create the processor filter using the find stream criteria.
             final ProcessorFilterRow row = (ProcessorFilterRow) selectedProcessor;
             final ProcessorFilter processorFilter = row.getProcessorFilter();
-            final CreateProcessFilterRequest request = CreateProcessFilterRequest
-                    .builder()
-                    .pipeline(row.getProcessorFilter().getPipeline())
-                    .queryData(processorFilter.getQueryData())
-                    .minMetaCreateTimeMs(processorFilter.getMinMetaCreateTimeMs())
-                    .maxMetaCreateTimeMs(processorFilter.getMaxMetaCreateTimeMs())
-                    .priority(processorFilter.getPriority())
-                    .maxProcessingTasks(processorFilter.getMaxProcessingTasks())
-                    .autoPriority(true)
-                    .enabled(false)
+            final ProcessorFilter copy = processorFilter
+                    .copy()
+                    .id(null)
+                    .version(null)
+                    .processorFilterTracker(null)
+                    .createUser(null)
+                    .createTimeMs(null)
+                    .updateUser(null)
+                    .createTimeMs(null)
                     .build();
-
-            restFactory
-                    .builder()
-                    .forType(ProcessorFilter.class)
-                    .onSuccess(result ->
-                            processorListPresenter.refresh())
-                    .call(PROCESSOR_FILTER_RESOURCE)
-                    .create(request);
+            edit(copy, null);
         }
     }
 

@@ -445,4 +445,210 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid, HasIntegerId {
                 .uuid(uuid)
                 .build();
     }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static class Builder {
+
+        private Integer id;
+        private Integer version;
+        private Long createTimeMs;
+        private String createUser;
+        private Long updateTimeMs;
+        private String updateUser;
+        private String uuid;
+        private String data;
+        private QueryData queryData;
+        private ProcessorType processorType;
+        private String processorUuid;
+        private String pipelineUuid;
+        private String pipelineName;
+        private Processor processor;
+        private ProcessorFilterTracker processorFilterTracker;
+
+        /**
+         * The higher the number the higher the priority. So 1 is LOW, 10 is medium,
+         * 20 is high.
+         */
+        private int priority;
+        private int maxProcessingTasks;
+        private boolean reprocess;
+        private boolean enabled;
+        private boolean deleted;
+        private Long minMetaCreateTimeMs;
+        private Long maxMetaCreateTimeMs;
+
+        public Builder() {
+
+        }
+
+        public Builder(final ProcessorFilter filter) {
+            this.id = filter.id;
+            this.version = filter.version;
+            this.createTimeMs = filter.createTimeMs;
+            this.createUser = filter.createUser;
+            this.updateTimeMs = filter.updateTimeMs;
+            this.updateUser = filter.updateUser;
+            this.uuid = filter.uuid;
+            this.data = filter.data;
+            this.queryData = filter.queryData != null
+                    ? filter.queryData.copy().build()
+                    : null;
+            this.processorType = filter.processorType;
+            this.processorUuid = filter.processorUuid;
+            this.pipelineUuid = filter.pipelineUuid;
+            this.pipelineName = filter.pipelineName;
+            this.processor = filter.processor;
+            this.processorFilterTracker = filter.processorFilterTracker;
+            this.priority = filter.priority;
+            this.maxProcessingTasks = filter.maxProcessingTasks;
+            this.reprocess = filter.reprocess;
+            this.enabled = filter.enabled;
+            this.deleted = filter.deleted;
+            this.minMetaCreateTimeMs = filter.minMetaCreateTimeMs;
+            this.maxMetaCreateTimeMs = filter.maxMetaCreateTimeMs;
+        }
+
+        public Builder id(final Integer id) {
+            this.id = id;
+            return this;
+        }
+
+        public Builder version(final Integer version) {
+            this.version = version;
+            return this;
+        }
+
+        public Builder createTimeMs(final Long createTimeMs) {
+            this.createTimeMs = createTimeMs;
+            return this;
+        }
+
+        public Builder createUser(final String createUser) {
+            this.createUser = createUser;
+            return this;
+        }
+
+        public Builder updateTimeMs(final Long updateTimeMs) {
+            this.updateTimeMs = updateTimeMs;
+            return this;
+        }
+
+        public Builder updateUser(final String updateUser) {
+            this.updateUser = updateUser;
+            return this;
+        }
+
+        public Builder uuid(final String uuid) {
+            this.uuid = uuid;
+            return this;
+        }
+
+        public Builder data(final String data) {
+            this.data = data;
+            return this;
+        }
+
+        public Builder queryData(final QueryData queryData) {
+            this.queryData = queryData;
+            return this;
+        }
+
+        public Builder processorType(final ProcessorType processorType) {
+            this.processorType = processorType;
+            return this;
+        }
+
+        public Builder processorUuid(final String processorUuid) {
+            this.processorUuid = processorUuid;
+            return this;
+        }
+
+        public Builder pipelineUuid(final String pipelineUuid) {
+            this.pipelineUuid = pipelineUuid;
+            return this;
+        }
+
+        public Builder pipelineName(final String pipelineName) {
+            this.pipelineName = pipelineName;
+            return this;
+        }
+
+        public Builder processor(final Processor processor) {
+            this.processor = processor;
+            return this;
+        }
+
+        public Builder processorFilterTracker(final ProcessorFilterTracker processorFilterTracker) {
+            this.processorFilterTracker = processorFilterTracker;
+            return this;
+        }
+
+        public Builder priority(final int priority) {
+            this.priority = priority;
+            return this;
+        }
+
+        public Builder maxProcessingTasks(final int maxProcessingTasks) {
+            this.maxProcessingTasks = maxProcessingTasks;
+            return this;
+        }
+
+        public Builder reprocess(final boolean reprocess) {
+            this.reprocess = reprocess;
+            return this;
+        }
+
+        public Builder enabled(final boolean enabled) {
+            this.enabled = enabled;
+            return this;
+        }
+
+        public Builder deleted(final boolean deleted) {
+            this.deleted = deleted;
+            return this;
+        }
+
+        public Builder minMetaCreateTimeMs(final Long minMetaCreateTimeMs) {
+            this.minMetaCreateTimeMs = minMetaCreateTimeMs;
+            return this;
+        }
+
+        public Builder maxMetaCreateTimeMs(final Long maxMetaCreateTimeMs) {
+            this.maxMetaCreateTimeMs = maxMetaCreateTimeMs;
+            return this;
+        }
+
+        public ProcessorFilter build() {
+            return new ProcessorFilter(
+                    id,
+                    version,
+                    createTimeMs,
+                    createUser,
+                    updateTimeMs,
+                    updateUser,
+                    uuid,
+                    data,
+                    queryData,
+                    processor,
+                    processorFilterTracker,
+                    priority,
+                    maxProcessingTasks,
+                    reprocess,
+                    enabled,
+                    deleted,
+                    processorType,
+                    processorUuid,
+                    pipelineUuid,
+                    pipelineName,
+                    minMetaCreateTimeMs,
+                    maxMetaCreateTimeMs);
+        }
+    }
 }

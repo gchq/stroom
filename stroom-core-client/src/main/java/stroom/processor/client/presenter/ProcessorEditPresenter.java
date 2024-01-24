@@ -112,6 +112,7 @@ public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView>
         this.pipelineRef = pipelineRef;
         this.consumer = consumer;
 
+        final boolean existingFilter = filter != null && filter.getId() != null;
         final QueryData queryData = getOrCreateQueryData(filter);
         final List<QueryField> fields = MetaFields.getAllFields();
         read(
@@ -126,7 +127,7 @@ public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView>
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(popupSize)
-                .caption(filter != null
+                .caption(existingFilter
                         ? "Edit Filter"
                         : "Add Filter")
                 .modal(true)
@@ -142,7 +143,7 @@ public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView>
                                 queryData.setDataSource(MetaFields.STREAM_STORE_DOC_REF);
                                 queryData.setExpression(expression);
 
-                                if (filter != null) {
+                                if (existingFilter) {
                                     ConfirmEvent.fire(
                                             ProcessorEditPresenter.this,
                                             "You are about to update an existing filter. Any streams that " +
