@@ -190,6 +190,7 @@ tasks.register('compileSources', JavaCompile) {
 
 tasks.register('makeGwtSourceDirs') {
     dependsOn compileSources
+    group "gwt"
 
     doLast {
         gwtSourceDirs = []

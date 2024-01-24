@@ -7,6 +7,7 @@ import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterFields;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.security.api.SecurityContext;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContextFactory;
 import stroom.util.NullSafe;
@@ -31,15 +32,18 @@ public class PrioritisedFilters implements Clearable {
 
     private final ProcessorFilterService processorFilterService;
     private final TaskContextFactory taskContextFactory;
+    private final SecurityContext securityContext;
 
     private final AsyncReference<List<ProcessorFilter>> asyncReference;
 
     @Inject
     public PrioritisedFilters(final ProcessorFilterService processorFilterService,
                               final TaskContextFactory taskContextFactory,
+                              final SecurityContext securityContext,
                               final ExecutorProvider executorProvider) {
         this.processorFilterService = processorFilterService;
         this.taskContextFactory = taskContextFactory;
+        this.securityContext = securityContext;
         asyncReference = new AsyncReference<>(filters -> fetch(), Duration.ofSeconds(10), executorProvider.get());
     }
 
@@ -48,47 +52,49 @@ public class PrioritisedFilters implements Clearable {
     }
 
     private List<ProcessorFilter> fetch() {
-        // Get an up-to-date list of all enabled stream processor filters.
-        LOGGER.trace("Getting enabled non deleted filters");
-        info(() -> "Getting enabled non deleted filters");
-        final ExpressionOperator expression = ExpressionOperator.builder()
-                .addTerm(ProcessorFields.ENABLED, Condition.EQUALS, true)
-                .addTerm(ProcessorFields.DELETED, Condition.EQUALS, false)
-                .addTerm(ProcessorFilterFields.ENABLED, Condition.EQUALS, true)
-                .addTerm(ProcessorFilterFields.DELETED, Condition.EQUALS, false)
-                .build();
+        return securityContext.asProcessingUserResult(() -> {
+            // Get an up-to-date list of all enabled stream processor filters.
+            LOGGER.trace("Getting enabled non deleted filters");
+            info(() -> "Getting enabled non deleted filters");
+            final ExpressionOperator expression = ExpressionOperator.builder()
+                    .addTerm(ProcessorFields.ENABLED, Condition.EQUALS, true)
+                    .addTerm(ProcessorFields.DELETED, Condition.EQUALS, false)
+                    .addTerm(ProcessorFilterFields.ENABLED, Condition.EQUALS, true)
+                    .addTerm(ProcessorFilterFields.DELETED, Condition.EQUALS, false)
+                    .build();
 
-        final ExpressionCriteria findProcessorFilterCriteria = new ExpressionCriteria(expression);
-        final List<ProcessorFilter> filters = processorFilterService
-                .find(findProcessorFilterCriteria)
-                .getValues();
-        LOGGER.trace("Found {} filters", filters.size());
-        info(() -> "Found " + filters.size() + " filters");
+            final ExpressionCriteria findProcessorFilterCriteria = new ExpressionCriteria(expression);
+            final List<ProcessorFilter> filters = processorFilterService
+                    .find(findProcessorFilterCriteria)
+                    .getValues();
+            LOGGER.trace("Found {} filters", filters.size());
+            info(() -> "Found " + filters.size() + " filters");
 
-        // Sort the stream processor filters by priority.
-        filters.sort(ProcessorFilter.HIGHEST_PRIORITY_FIRST_COMPARATOR);
+            // Sort the stream processor filters by priority.
+            filters.sort(ProcessorFilter.HIGHEST_PRIORITY_FIRST_COMPARATOR);
 
-        // Try and ensure we have pipeline names for each filter
-        for (ProcessorFilter filter : NullSafe.list(filters)) {
-            try {
-                if (filter != null
-                        && filter.getPipelineUuid() != null
-                        && NullSafe.isEmptyString(filter.getPipelineName())) {
-                    final Optional<String> pipelineName = processorFilterService
-                            .getPipelineName(filter.getProcessorType(), filter.getPipelineUuid());
-                    pipelineName.ifPresent(newPipeName -> {
-                        if (!Objects.equals(filter.getPipelineName(), newPipeName)) {
-                            filter.setPipelineName(newPipeName);
-                        }
-                    });
+            // Try and ensure we have pipeline names for each filter
+            for (ProcessorFilter filter : NullSafe.list(filters)) {
+                try {
+                    if (filter != null
+                            && filter.getPipelineUuid() != null
+                            && NullSafe.isEmptyString(filter.getPipelineName())) {
+                        final Optional<String> pipelineName = processorFilterService
+                                .getPipelineName(filter.getProcessorType(), filter.getPipelineUuid());
+                        pipelineName.ifPresent(newPipeName -> {
+                            if (!Objects.equals(filter.getPipelineName(), newPipeName)) {
+                                filter.setPipelineName(newPipeName);
+                            }
+                        });
+                    }
+                } catch (final RuntimeException e) {
+                    // This error is expected in tests and the pipeline name isn't essential
+                    // as it is only used in here for logging purposes.
+                    LOGGER.trace(e::getMessage, e);
                 }
-            } catch (final RuntimeException e) {
-                // This error is expected in tests and the pipeline name isn't essential
-                // as it is only used in here for logging purposes.
-                LOGGER.trace(e::getMessage, e);
             }
-        }
-        return filters;
+            return filters;
+        });
     }
 
     private void info(final Supplier<String> messageSupplier) {

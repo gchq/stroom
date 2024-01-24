@@ -317,7 +317,7 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
             final int currentCreatedTasks = processorTaskDao.countTasksForFilter(filter.getId(), TaskStatus.CREATED);
             int maxTasks;
             if (filter.isProcessingTaskCountBounded()) {
-                // The max tasks for this filter is bounded, so only create tasks up to that limit
+                // The max concurrent tasks for this filter is bounded, so only create tasks up to that limit
                 maxTasks = Math.min(tasksToCreatePerFilter, filter.getMaxProcessingTasks()) - currentCreatedTasks;
             } else {
                 maxTasks = tasksToCreatePerFilter - currentCreatedTasks;
