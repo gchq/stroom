@@ -37,7 +37,6 @@ import com.google.gwt.view.client.Range;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.Stack;
 
 public class SelectionList<T, I extends SelectionItem> extends Composite {
 
@@ -46,9 +45,8 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
     private final PagerViewImpl pagerView;
     private final CellTable<I> cellTable;
     private SelectionListModel<T, I> model;
-
-    private final Stack<NavigationState<I>> navigationStates = new Stack<>();
     private final MultiSelectionModelImpl<I> selectionModel;
+    private List<NavigationState<I>> navigationStates = new ArrayList<>();
     private ResultPage<I> currentResult;
     private String lastFilter;
 
@@ -161,13 +159,23 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
     }
 
     public void refresh() {
+        refresh(new ArrayList<>(navigationStates));
+    }
+
+    public void refresh(final List<NavigationState<I>> navigationStates) {
         if (model != null) {
-            final I parentItem = navigationStates.isEmpty()
-                    ? null
-                    : navigationStates.peek().getSelectedItem();
             final Range range = cellTable.getVisibleRange();
             final PageRequest pageRequest = new PageRequest(range.getStart(), range.getLength());
+
+            final I parentItem;
+            if (!navigationStates.isEmpty()) {
+                parentItem = navigationStates.get(navigationStates.size() - 1).getSelectedItem();
+            } else {
+                parentItem = null;
+            }
+
             model.onRangeChange(parentItem, lastFilter, pageRequest, pageResponse -> {
+                this.navigationStates = navigationStates;
                 currentResult = pageResponse;
                 cellTable.setRowData(pageResponse.getPageStart(), pageResponse.getValues());
                 cellTable.setRowCount(pageResponse.getPageSize(), pageResponse.isExact());
@@ -341,31 +349,31 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
         return link;
     }
 
-
     public void navigate(I selectionItem) {
         final List<I> list = new ArrayList<>(currentResult.getValues());
         final PageResponse pageResponse = currentResult.getPageResponse();
         final PageResponse pageResponseCopy = pageResponse.copy().build();
         final ResultPage<I> resultPage = new ResultPage<>(list, pageResponseCopy);
         final NavigationState<I> navigationState = new NavigationState<>(selectionItem, resultPage);
-        navigationStates.push(navigationState);
-        refresh();
+        final List<NavigationState<I>> navigationStates = new ArrayList<>(this.navigationStates);
+        navigationStates.add(navigationState);
+        refresh(navigationStates);
     }
 
     private void navigateBack() {
         if (!navigationStates.isEmpty()) {
-            final NavigationState<I> navigationState = navigationStates.pop();
+            final NavigationState<I> navigationState = navigationStates.remove(navigationStates.size() - 1);
             setState(navigationState);
         }
     }
 
     private void navigateBack(I selectionItem) {
         NavigationState<I> navigationState = null;
-        while (!navigationStates.empty() && !navigationStates.peek().getSelectedItem().equals(selectionItem)) {
-            navigationState = navigationStates.pop();
+        while (!navigationStates.isEmpty() && !navigationStates.get(navigationStates.size() - 1).getSelectedItem().equals(selectionItem)) {
+            navigationState = navigationStates.remove(navigationStates.size() - 1);
         }
         if (navigationState == null && !navigationStates.isEmpty()) {
-            navigationState = navigationStates.peek();
+            navigationState = navigationStates.get(navigationStates.size() - 1);
         }
         if (navigationState != null) {
             setState(navigationState);
@@ -382,7 +390,7 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
         }
     }
 
-    private static class NavigationState<I extends SelectionItem> {
+    public static class NavigationState<I extends SelectionItem> {
 
         private final I selectedItem;
         private final ResultPage<I> resultPage;

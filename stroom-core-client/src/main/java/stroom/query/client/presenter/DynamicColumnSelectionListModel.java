@@ -37,7 +37,6 @@ public class DynamicColumnSelectionListModel implements SelectionListModel<Colum
     private final ClientSecurityContext clientSecurityContext;
     private DocRef dataSourceRef;
     private FindFieldInfoCriteria lastCriteria;
-    private String lastPath;
 
     @Inject
     public DynamicColumnSelectionListModel(final DataSourceClient dataSourceClient,
@@ -61,17 +60,14 @@ public class DynamicColumnSelectionListModel implements SelectionListModel<Colum
                     stringMatch);
 
             // Only fetch if the request has changed.
-            if (!parentPath.equals(lastPath) || !findFieldInfoCriteria.equals(lastCriteria)) {
-                lastPath = parentPath;
-                lastCriteria = findFieldInfoCriteria;
+            lastCriteria = findFieldInfoCriteria;
 
-                dataSourceClient.findFields(findFieldInfoCriteria, response -> {
-                    // Only update if the request is still current.
-                    if (findFieldInfoCriteria == lastCriteria) {
-                        setResponse(stringMatch, parentPath, pageRequest, response, consumer);
-                    }
-                });
-            }
+            dataSourceClient.findFields(findFieldInfoCriteria, response -> {
+                // Only update if the request is still current.
+                if (findFieldInfoCriteria == lastCriteria) {
+                    setResponse(stringMatch, parentPath, pageRequest, response, consumer);
+                }
+            });
         }
     }
 
@@ -109,7 +105,7 @@ public class DynamicColumnSelectionListModel implements SelectionListModel<Colum
             add(filter, new ColumnSelectionItem(
                     null,
                     "Data Source",
-                    response.getValues().size() > 0), builder);
+                    !response.getValues().isEmpty()), builder);
 
             resultPage = builder.build();
         } else if ("Counts.".equals(parentPath)) {
@@ -125,7 +121,7 @@ public class DynamicColumnSelectionListModel implements SelectionListModel<Colum
             resultPage = new ResultPage<>(items, response.getPageResponse());
         }
 
-        if (resultPage == null || resultPage.getValues().size() == 0) {
+        if (resultPage == null || resultPage.getValues().isEmpty()) {
             resultPage = new ResultPage<>(Collections.singletonList(
                     new ColumnSelectionItem(null, "[ none ]", false)),
                     new PageResponse(0, 1, 1L, true));
@@ -196,7 +192,6 @@ public class DynamicColumnSelectionListModel implements SelectionListModel<Colum
     @Override
     public void reset() {
         lastCriteria = null;
-        lastPath = null;
     }
 
     @Override
