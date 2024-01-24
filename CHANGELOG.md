@@ -12,6 +12,25 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
+* Issue **#4024** : Fix concurrency issues in CompleteableQueue that were causing searches to get stuck. Also fix similar issues in StreamEventMap.
+
+* Issue **#3900** : Fix bug when using an expression term like `Last Commit > 2023-12-22T11:19:32.000Z` when searching the Index Shards data source.
+
+
+## [v7.3-beta.6] - 2024-01-22
+
+* Issue **#3975** : Add `cidr-to-numeric-ip-range` XSLT function.
+
+* Issue **#4010** : Change ERROR logging to DEBUG when search requests cannot be created, e.g. when a rule has a blank or invalid query string.
+
+* Issue **#4007** : Change the Lucene search code so that it will use the Index's default extraction pipeline if there is no extraction set on the dashboard, or in the case of StroomQL, always use the Index's default extraction pipeline as there no way to set a pipeline.
+
+* Issue **#4021** : Fix using the `parseDuration(...)` function inside another function, e.g. `max(parseDuration(...))`.
+
+* Issue **#4019** : Fix inability to change a date term in a filter tree. Change expression tree validation to use server-side validation so it can validate date terms correctly.
+
+* Issue **#4029** : Change the `/api/(query|dashboard)/v1/(search|downloadSearcResults)` to accept a null `nodeName` path param, e.g. `/api/query/v1/search`.
+
 
 ## [v7.3-beta.5] - 2024-01-19
 
@@ -219,7 +238,8 @@ eval EventId = first(EventId)`, `evt` => `eval EventId = first(EventId)` and `st
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.3-beta.5...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.3-beta.6...HEAD
+[v7.3-beta.6]: https://github.com/gchq/stroom/compare/v7.3-beta.5...v7.3-beta.6
 [v7.3-beta.5]: https://github.com/gchq/stroom/compare/v7.3-beta.4...v7.3-beta.5
 [v7.3-beta.4]: https://github.com/gchq/stroom/compare/v7.2.8...v7.3-beta.4
 [v7.3-beta.3]: https://github.com/gchq/stroom/compare/v7.3-beta.2...v7.3-beta.3

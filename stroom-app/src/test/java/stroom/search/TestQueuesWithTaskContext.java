@@ -112,8 +112,13 @@ public class TestQueuesWithTaskContext extends AbstractCoreIntegrationTest {
                                             if (id > MAX) {
                                                 run = false;
                                             } else {
-                                                queue.put(new Event(1, id,
-                                                        Val.of(ValString.create("test"), ValString.create("test"))));
+                                                try {
+                                                    queue.put(new Event(1, id, Val.of(
+                                                                    ValString.create("test"),
+                                                                    ValString.create("test"))));
+                                                } catch (CompleteException e) {
+                                                    throw new RuntimeException(e);
+                                                }
                                             }
                                         }
                                     }, executorService);
