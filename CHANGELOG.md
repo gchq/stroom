@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
+* Issue **#4024** : Fix concurrency issues in CompleteableQueue that were causing searches to get stuck. Also fix similar issues in StreamEventMap.
+
+* Issue **#3900** : Fix bug when using an expression term like `Last Commit > 2023-12-22T11:19:32.000Z` when searching the Index Shards data source.
+
 
 ## [v7.3-beta.6] - 2024-01-22
 

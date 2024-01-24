@@ -29,7 +29,7 @@ public class CompletableQueue<T> {
      */
     private int count;
 
-    private boolean complete;
+    private volatile boolean complete;
 
     /**
      * Main lock guarding all access
@@ -82,15 +82,11 @@ public class CompletableQueue<T> {
             while (!complete && count == 0) {
                 notEmpty.await();
             }
-            if (complete) {
-                notFull.signal();
-                throw COMPLETE;
-            }
+            checkForCompletion();
+
             final Object object = dequeue();
-            if (COMPLETE == object) {
-                complete = true;
-                throw COMPLETE;
-            }
+            checkObjectForCompletion(object);
+
             return (T) object;
         } finally {
             lock.unlock();
@@ -102,18 +98,13 @@ public class CompletableQueue<T> {
         final ReentrantLock lock = this.lock;
         lock.lockInterruptibly();
         try {
-            if (complete) {
-                notFull.signal();
-                throw COMPLETE;
-            }
+            checkForCompletion();
+
             if (count == 0) {
                 return null;
             }
             final Object object = dequeue();
-            if (COMPLETE == object) {
-                complete = true;
-                throw COMPLETE;
-            }
+            checkObjectForCompletion(object);
             return (T) object;
         } finally {
             lock.unlock();
@@ -132,15 +123,10 @@ public class CompletableQueue<T> {
                 }
                 nanos = notEmpty.awaitNanos(nanos);
             }
-            if (complete) {
-                notFull.signal();
-                throw COMPLETE;
-            }
+            checkForCompletion();
+
             final Object object = dequeue();
-            if (COMPLETE == object) {
-                complete = true;
-                throw COMPLETE;
-            }
+            checkObjectForCompletion(object);
             return (T) object;
         } finally {
             lock.unlock();
@@ -156,10 +142,14 @@ public class CompletableQueue<T> {
                 while (!complete && count == items.length) {
                     notFull.await();
                 }
+                try {
+                    checkForCompletion();
+                } catch (CompleteException e) {
+                    // Caller is asking to complete so ignore
+                }
+
                 if (!complete) {
                     enqueue(COMPLETE);
-                } else {
-                    notEmpty.signal();
                 }
             } finally {
                 lock.unlock();
@@ -179,23 +169,36 @@ public class CompletableQueue<T> {
         final ReentrantLock lock = this.lock;
         lock.lock();
         try {
-            // Make sure we don't try to add any more items.
-            complete = true;
             int k;
             if ((k = count) > 0) {
                 circularClear(items, takeIndex, putIndex);
                 takeIndex = putIndex;
                 count = 0;
-                for (; k > 0 && lock.hasWaiters(notFull); k--) {
-                    notFull.signal();
-                }
             }
-
             notFull.signalAll();
             notEmpty.signalAll();
-
         } finally {
             lock.unlock();
+        }
+    }
+
+    private void checkForCompletion() throws CompleteException {
+        if (complete) {
+            // Wake up all waiting threads to check the complete state
+            notFull.signalAll();
+            notEmpty.signalAll();
+            throw COMPLETE;
+        }
+    }
+
+    private void checkObjectForCompletion(final Object object) throws CompleteException {
+        if (COMPLETE == object) {
+            // We found the complete object to mark the queue as complete
+            complete = true;
+            // Wake up all waiting threads to check the complete state
+            notFull.signalAll();
+            notEmpty.signalAll();
+            throw COMPLETE;
         }
     }
 
