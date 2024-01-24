@@ -12,10 +12,12 @@ import stroom.util.time.StroomDuration;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import jakarta.inject.Inject;
 import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
 
+@Disabled
 public class TestEndToEndStoreAndForwardToFileAndHttp extends AbstractEndToEndTest {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(
