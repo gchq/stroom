@@ -46,7 +46,7 @@ public class DataSourceClient {
                     new PageRequest(0, 1),
                     null,
                     dataSourceRef,
-                    StringMatch.contains(fieldName));
+                    StringMatch.equals(fieldName, true));
             final Rest<ResultPage<FieldInfo>> rest = restFactory.create();
             rest
                     .onSuccess(result -> {

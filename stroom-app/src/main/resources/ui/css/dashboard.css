@@ -114,6 +114,10 @@
 	-moz-user-select: none;
 }
 
+.QueryEditViewImpl.dashboard-scrollPanel {
+    background-color: var(--dashboard-panel__background-color);
+}
+
 .dashboard-scrollPanel {
     display: flex;
     flex-grow: 1;
