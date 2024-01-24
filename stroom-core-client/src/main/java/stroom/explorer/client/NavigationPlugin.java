@@ -16,8 +16,12 @@
 
 package stroom.explorer.client;
 
+import stroom.content.client.event.ContentTabSelectionChangeEvent;
 import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.Plugin;
+import stroom.docref.DocRef;
+import stroom.document.client.DocumentTabData;
+import stroom.explorer.client.event.LocateDocEvent;
 import stroom.explorer.client.event.ShowFindEvent;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.svg.shared.SvgImage;
@@ -32,9 +36,20 @@ import javax.inject.Singleton;
 @Singleton
 public class NavigationPlugin extends Plugin {
 
+    private DocRef selectedDoc;
+
     @Inject
     public NavigationPlugin(final EventBus eventBus) {
         super(eventBus);
+        // track the currently selected doc.
+        registerHandler(getEventBus().addHandler(ContentTabSelectionChangeEvent.getType(), e -> {
+            if (e.getTabData() instanceof DocumentTabData) {
+                final DocumentTabData documentTabData = (DocumentTabData) e.getTabData();
+                selectedDoc = documentTabData.getDocRef();
+            } else {
+                selectedDoc = null;
+            }
+        }));
     }
 
     @Override
@@ -47,6 +62,15 @@ public class NavigationPlugin extends Plugin {
                         .text("Find Content")
                         .action(Action.FIND)
                         .command(() -> ShowFindEvent.fire(NavigationPlugin.this))
+                        .build());
+        event.getMenuItems().addMenuItem(MenuKeys.NAVIGATION_MENU,
+                new IconMenuItem.Builder()
+                        .priority(202)
+                        .icon(SvgImage.LOCATE)
+                        .text("Locate Current Item")
+                        .action(Action.LOCATE)
+                        .enabled(selectedDoc != null)
+                        .command(() -> LocateDocEvent.fire(NavigationPlugin.this, selectedDoc))
                         .build());
     }
 }

@@ -48,6 +48,7 @@ import stroom.document.client.event.WriteDocumentEvent;
 import stroom.explorer.client.event.ExplorerTreeDeleteEvent;
 import stroom.explorer.client.event.ExplorerTreeSelectEvent;
 import stroom.explorer.client.event.HighlightExplorerNodeEvent;
+import stroom.explorer.client.event.LocateDocEvent;
 import stroom.explorer.client.event.RefreshExplorerTreeEvent;
 import stroom.explorer.client.event.ShowEditNodeTagsDialogEvent;
 import stroom.explorer.client.event.ShowExplorerMenuEvent;
@@ -165,6 +166,12 @@ public class DocumentPluginEventManager extends Plugin {
         KeyBinding.addCommand(Action.ITEM_SAVE_ALL, hasSaveRegistry::save);
 
         KeyBinding.addCommand(Action.FIND, () -> ShowFindEvent.fire(this));
+        KeyBinding.addCommand(Action.LOCATE, () -> {
+            final DocRef selectedDoc = getSelectedDoc(selectedTab);
+            if (selectedDoc != null) {
+                LocateDocEvent.fire(this, selectedDoc);
+            }
+        });
     }
 
     @Override
@@ -172,8 +179,16 @@ public class DocumentPluginEventManager extends Plugin {
         super.onBind();
 
         // track the currently selected content tab.
-        registerHandler(getEventBus().addHandler(ContentTabSelectionChangeEvent.getType(),
-                e -> selectedTab = e.getTabData()));
+        registerHandler(getEventBus().addHandler(ContentTabSelectionChangeEvent.getType(), e ->
+                selectedTab = e.getTabData()));
+
+        // Add support to locate items in the explorer tree.
+        registerHandler(getEventBus().addHandler(LocateDocEvent.getType(), e -> {
+            if (e.getDocRef() != null) {
+                highlight(e.getDocRef());
+            }
+        }));
+
 
         // // 2. Handle requests to close tabs.
         // registerHandler(getEventBus().addHandler(
@@ -433,6 +448,8 @@ public class DocumentPluginEventManager extends Plugin {
             menuItems.add(new Separator(5));
             menuItems.add(createSaveMenuItem(6, event.getTabData()));
             menuItems.add(createSaveAllMenuItem(8));
+            menuItems.add(new Separator(9));
+            menuItems.add(createLocateMenuItem(10, event.getTabData()));
 
             ShowMenuEvent
                     .builder()
@@ -1032,6 +1049,30 @@ public class DocumentPluginEventManager extends Plugin {
                 .enabled(hasSaveRegistry.isDirty())
                 .command(hasSaveRegistry::save)
                 .build();
+    }
+
+    private MenuItem createLocateMenuItem(final int priority, final TabData selectedTab) {
+        final DocRef selectedDoc = getSelectedDoc(selectedTab);
+        return new IconMenuItem.Builder()
+                .priority(priority)
+                .icon(SvgImage.LOCATE)
+                .text("Locate In Explorer")
+                .action(Action.LOCATE)
+                .enabled(selectedDoc != null)
+                .command(() -> {
+                    if (selectedDoc != null) {
+                        LocateDocEvent.fire(DocumentPluginEventManager.this, selectedDoc);
+                    }
+                })
+                .build();
+    }
+
+    private DocRef getSelectedDoc(final TabData selectedTab) {
+        if (selectedTab instanceof DocumentTabData) {
+            final DocumentTabData documentTabData = (DocumentTabData) selectedTab;
+            return documentTabData.getDocRef();
+        }
+        return null;
     }
 
     private MenuItem createInfoMenuItem(final ExplorerNode explorerNode,

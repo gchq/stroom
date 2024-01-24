@@ -21,11 +21,15 @@ import stroom.activity.client.ActivityChangedEvent;
 import stroom.activity.client.CurrentActivity;
 import stroom.activity.shared.Activity.ActivityDetails;
 import stroom.activity.shared.Activity.Prop;
+import stroom.content.client.event.ContentTabSelectionChangeEvent;
 import stroom.core.client.MenuKeys;
 import stroom.dispatch.client.RestFactory;
+import stroom.docref.DocRef;
+import stroom.document.client.DocumentTabData;
 import stroom.explorer.client.event.ExplorerTreeDeleteEvent;
 import stroom.explorer.client.event.ExplorerTreeSelectEvent;
 import stroom.explorer.client.event.HighlightExplorerNodeEvent;
+import stroom.explorer.client.event.LocateDocEvent;
 import stroom.explorer.client.event.RefreshExplorerTreeEvent;
 import stroom.explorer.client.event.ShowFindEvent;
 import stroom.explorer.client.event.ShowNewMenuEvent;
@@ -82,6 +86,7 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
 
     private final MenuItems menuItems;
 
+    private final InlineSvgButton locate;
     private final InlineSvgButton find;
     private final InlineSvgButton add;
     private final InlineSvgButton delete;
@@ -89,6 +94,7 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
     private final InlineSvgToggleButton showAlertsBtn;
     private boolean menuVisible = false;
     private boolean hasActiveFilter = false;
+    private DocRef selectedDoc;
 
     @Inject
     public NavigationPresenter(final EventBus eventBus,
@@ -138,12 +144,19 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
         find.setTitle("Find Content");
         find.setEnabled(true);
 
+        locate = new InlineSvgButton();
+        locate.setSvg(SvgImage.LOCATE);
+        locate.getElement().addClassName("navigation-header-button locate");
+        locate.setTitle("Locate Current Item");
+        locate.setEnabled(false);
+
         final FlowPanel buttons = getView().getButtonContainer();
         buttons.add(add);
         buttons.add(delete);
         buttons.add(showAlertsBtn);
         buttons.add(filter);
         buttons.add(find);
+        buttons.add(locate);
 
         view.setUiHandlers(this);
 
@@ -168,6 +181,17 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
     protected void onBind() {
         super.onBind();
 
+        // track the currently selected doc.
+        registerHandler(getEventBus().addHandler(ContentTabSelectionChangeEvent.getType(), e -> {
+            selectedDoc = null;
+            if (e.getTabData() instanceof DocumentTabData) {
+                final DocumentTabData documentTabData = (DocumentTabData) e.getTabData();
+                selectedDoc = documentTabData.getDocRef();
+            }
+            locate.setEnabled(selectedDoc != null);
+        }));
+        registerHandler(locate.addClickHandler((e) ->
+                LocateDocEvent.fire(this, selectedDoc)));
         registerHandler(find.addClickHandler((e) ->
                 ShowFindEvent.fire(this)));
         registerHandler(add.addClickHandler((e) ->
