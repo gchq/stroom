@@ -37,6 +37,7 @@ public class KeyBinding {
         add(Action.ITEM_CLOSE_ALL, new Builder().keyCode(KeyCodes.KEY_W).shift(true).alt(true).build());
 
         add(Action.FIND, new Builder().keyCode(KeyCodes.KEY_F).shift(true).ctrl(true).build());
+        add(Action.LOCATE, new Builder().keyCode(KeyCodes.KEY_L).alt(true).build());
     }
 
     public static void addCommand(final Action action, final Command command) {
@@ -193,7 +194,8 @@ public class KeyBinding {
         ITEM_SAVE_ALL,
         ITEM_CLOSE,
         ITEM_CLOSE_ALL,
-        FIND
+        FIND,
+        LOCATE
     }
 
     static void add(final Action action,

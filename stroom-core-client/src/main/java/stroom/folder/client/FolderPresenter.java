@@ -150,4 +150,9 @@ public class FolderPresenter extends LinkTabPanelPresenter implements DocumentTa
     public SvgImage getIcon() {
         return SvgImage.FOLDER;
     }
+
+    @Override
+    public DocRef getDocRef() {
+        return docRef;
+    }
 }

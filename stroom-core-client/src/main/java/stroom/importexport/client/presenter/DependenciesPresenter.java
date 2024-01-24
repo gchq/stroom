@@ -26,9 +26,9 @@ import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.document.client.DocumentPluginEventManager;
 import stroom.document.client.event.DeleteDocumentEvent;
 import stroom.document.client.event.OpenDocumentEvent;
+import stroom.explorer.client.event.LocateDocEvent;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.ExplorerResource;
@@ -83,7 +83,6 @@ public class DependenciesPresenter extends MyPresenterWidget<PagerView> {
     private final DependencyCriteria criteria;
     private final RestDataProvider<Dependency, ResultPage<Dependency>> dataProvider;
     private final MyDataGrid<Dependency> dataGrid;
-    private final DocumentPluginEventManager entityPluginEventManager;
     private final MenuPresenter menuPresenter;
 
     // Holds all the doc type icons
@@ -94,7 +93,6 @@ public class DependenciesPresenter extends MyPresenterWidget<PagerView> {
     public DependenciesPresenter(final EventBus eventBus,
                                  final PagerView view,
                                  final RestFactory restFactory,
-                                 final DocumentPluginEventManager entityPluginEventManager,
                                  final MenuPresenter menuPresenter) {
         super(eventBus, view);
 
@@ -121,7 +119,6 @@ public class DependenciesPresenter extends MyPresenterWidget<PagerView> {
             }
         };
         dataProvider.addDataDisplay(dataGrid);
-        this.entityPluginEventManager = entityPluginEventManager;
         this.menuPresenter = menuPresenter;
         initColumns();
     }
@@ -230,9 +227,9 @@ public class DependenciesPresenter extends MyPresenterWidget<PagerView> {
                         .text("Delete")
                         .command(() -> onDeleteDoc(docRef)))
                 .withIconMenuItem(itemBuilder -> itemBuilder
-                        .icon(SvgImage.SHOW)
-                        .text("Reveal in Explorer")
-                        .command(() -> onRevealDoc(docRef)))
+                        .icon(SvgImage.LOCATE)
+                        .text("Locate in Explorer")
+                        .command(() -> onLocateDoc(docRef)))
                 .withIconMenuItem(itemBuilder -> itemBuilder
                         .icon(SvgImage.DEPENDENCIES)
                         .text("Show dependencies")
@@ -254,8 +251,8 @@ public class DependenciesPresenter extends MyPresenterWidget<PagerView> {
     /**
      * Reveal the doc in the Explorer tree
      */
-    private void onRevealDoc(final DocRef docRef) {
-        entityPluginEventManager.highlight(docRef);
+    private void onLocateDoc(final DocRef docRef) {
+        LocateDocEvent.fire(this, docRef);
     }
 
     private void onDocInfo(final DocRef docRef) {
