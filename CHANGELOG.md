@@ -12,6 +12,23 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
+
+## [v7.3-beta.7] - 2024-01-24
+
+* Issue **#4029** : Remove the need to specify node name for query and dashboard API.
+
+* Issue **#3790** : Add mechanism to locate an open item in the explorer tree.
+
+* Issue **#4043** : Duplicating filters now open a create popup rather than immediately creating a filter.
+
+* Issue **#4058** : Improve processor filter status display.
+
+* Issue **#3951** : Add term copy feature to stream filters.
+
+* Issue **#4052** : Fix query helper breadcrumbs.
+
+* Issue **#4049** : Fix term editor field selection.
+
 * Issue **#4024** : Fix concurrency issues in CompleteableQueue that were causing searches to get stuck. Also fix similar issues in StreamEventMap.
 
 * Issue **#3900** : Fix bug when using an expression term like `Last Commit > 2023-12-22T11:19:32.000Z` when searching the Index Shards data source.
@@ -238,7 +255,8 @@ eval EventId = first(EventId)`, `evt` => `eval EventId = first(EventId)` and `st
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.3-beta.6...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.3-beta.7...HEAD
+[v7.3-beta.7]: https://github.com/gchq/stroom/compare/v7.3-beta.6...v7.3-beta.7
 [v7.3-beta.6]: https://github.com/gchq/stroom/compare/v7.3-beta.5...v7.3-beta.6
 [v7.3-beta.5]: https://github.com/gchq/stroom/compare/v7.3-beta.4...v7.3-beta.5
 [v7.3-beta.4]: https://github.com/gchq/stroom/compare/v7.2.8...v7.3-beta.4
