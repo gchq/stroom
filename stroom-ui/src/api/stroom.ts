@@ -665,6 +665,9 @@ export interface CreateProcessFilterRequest {
   /** @format int64 */
   maxMetaCreateTimeMs?: number;
 
+  /** @format int32 */
+  maxProcessingTasks?: number;
+
   /** @format int64 */
   minMetaCreateTimeMs?: number;
 
@@ -1093,6 +1096,7 @@ export interface DocumentType {
     | "INSERT"
     | "JOBS"
     | "KEY"
+    | "LOCATE"
     | "LOCKED"
     | "LOGO"
     | "LOGOUT"
@@ -1472,6 +1476,7 @@ export interface ExplorerDocContentMatch {
     | "INSERT"
     | "JOBS"
     | "KEY"
+    | "LOCATE"
     | "LOCKED"
     | "LOGO"
     | "LOGOUT"
@@ -1658,6 +1663,7 @@ export interface ExplorerNode {
     | "INSERT"
     | "JOBS"
     | "KEY"
+    | "LOCATE"
     | "LOCKED"
     | "LOGO"
     | "LOGOUT"
@@ -3080,6 +3086,7 @@ export interface PipelineElementType {
     | "INSERT"
     | "JOBS"
     | "KEY"
+    | "LOCATE"
     | "LOCKED"
     | "LOGO"
     | "LOGOUT"
@@ -3316,6 +3323,9 @@ export interface ProcessorFilter {
 
   /** @format int64 */
   maxMetaCreateTimeMs?: number;
+
+  /** @format int32 */
+  maxProcessingTasks?: number;
 
   /** @format int64 */
   minMetaCreateTimeMs?: number;
@@ -3698,6 +3708,7 @@ export interface QueryHelpRow {
     | "INSERT"
     | "JOBS"
     | "KEY"
+    | "LOCATE"
     | "LOCKED"
     | "LOGO"
     | "LOGOUT"
@@ -9832,6 +9843,25 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     setProcessorFilterEnabled: (id: number, data: boolean, params: RequestParams = {}) =>
       this.request<any, boolean>({
         path: `/processorFilter/v1/${id}/enabled`,
+        method: "PUT",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Processor Filters
+     * @name SetProcessorFilterMaxProcessingTasks
+     * @summary Sets the optional cluster-wide limit on the number of tasks that may be processed for this filter, at any one time
+     * @request PUT:/processorFilter/v1/{id}/maxProcessingTasks
+     * @secure
+     */
+    setProcessorFilterMaxProcessingTasks: (id: number, data: number, params: RequestParams = {}) =>
+      this.request<any, boolean>({
+        path: `/processorFilter/v1/${id}/maxProcessingTasks`,
         method: "PUT",
         body: data,
         secure: true,

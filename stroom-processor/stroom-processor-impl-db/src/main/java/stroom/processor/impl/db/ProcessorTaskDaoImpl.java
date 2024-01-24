@@ -15,11 +15,11 @@ import stroom.processor.api.InclusiveRanges;
 import stroom.processor.api.InclusiveRanges.InclusiveRange;
 import stroom.processor.impl.ExistingCreatedTask;
 import stroom.processor.impl.ProcessorConfig;
+import stroom.processor.impl.ProcessorFilterCache;
 import stroom.processor.impl.ProcessorTaskDao;
 import stroom.processor.impl.ProgressMonitor.FilterProgressMonitor;
 import stroom.processor.impl.ProgressMonitor.Phase;
 import stroom.processor.impl.db.jooq.tables.records.ProcessorTaskRecord;
-import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterTracker;
 import stroom.processor.shared.ProcessorFilterTrackerStatus;
@@ -92,11 +92,11 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
 
     private static final int BATCH_SIZE = 1_000;
 
-    private static final Function<Record, Processor> RECORD_TO_PROCESSOR_MAPPER = new RecordToProcessorMapper();
-    private static final Function<Record, ProcessorFilter> RECORD_TO_PROCESSOR_FILTER_MAPPER =
-            new RecordToProcessorFilterMapper();
-    private static final Function<Record, ProcessorFilterTracker> RECORD_TO_PROCESSOR_FILTER_TRACKER_MAPPER =
-            new RecordToProcessorFilterTrackerMapper();
+    //    private static final Function<Record, Processor> RECORD_TO_PROCESSOR_MAPPER = new RecordToProcessorMapper();
+//    private static final Function<Record, ProcessorFilter> RECORD_TO_PROCESSOR_FILTER_MAPPER =
+//            new RecordToProcessorFilterMapper();
+//    private static final Function<Record, ProcessorFilterTracker> RECORD_TO_PROCESSOR_FILTER_TRACKER_MAPPER =
+//            new RecordToProcessorFilterTrackerMapper();
     private static final Function<Record, ProcessorTask> RECORD_TO_PROCESSOR_TASK_MAPPER =
             new RecordToProcessorTaskMapper();
     private static final Condition ACTIVE_TASKS_STATUS_CONDITION = PROCESSOR_TASK.STATUS.in(
@@ -135,9 +135,10 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
     private final ProcessorNodeCache processorNodeCache;
     private final ProcessorFeedCache processorFeedCache;
     private final ProcessorFilterTrackerDaoImpl processorFilterTrackerDao;
+    private final ProcessorFilterCache processorFilterCache;
     private final ProcessorConfig processorConfig;
     private final ProcessorDbConnProvider processorDbConnProvider;
-    private final ProcessorFilterMarshaller marshaller;
+    //    private final ProcessorFilterMarshaller marshaller;
     private final DocRefInfoService docRefInfoService;
     private final ExpressionMapper expressionMapper;
     private final ValueMapper valueMapper;
@@ -146,17 +147,17 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
     ProcessorTaskDaoImpl(final ProcessorNodeCache processorNodeCache,
                          final ProcessorFeedCache processorFeedCache,
                          final ProcessorFilterTrackerDaoImpl processorFilterTrackerDao,
+                         final ProcessorFilterCache processorFilterCache,
                          final ProcessorConfig processorConfig,
                          final ProcessorDbConnProvider processorDbConnProvider,
-                         final ProcessorFilterMarshaller marshaller,
                          final ExpressionMapperFactory expressionMapperFactory,
                          final DocRefInfoService docRefInfoService) {
         this.processorNodeCache = processorNodeCache;
         this.processorFeedCache = processorFeedCache;
         this.processorFilterTrackerDao = processorFilterTrackerDao;
+        this.processorFilterCache = processorFilterCache;
         this.processorConfig = processorConfig;
         this.processorDbConnProvider = processorDbConnProvider;
-        this.marshaller = marshaller;
         this.docRefInfoService = docRefInfoService;
 
         expressionMapper = expressionMapperFactory.create();
@@ -310,7 +311,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                                     .orderBy(PROCESSOR_TASK.ID)
                                     .limit(BATCH_SIZE)
                                     .fetch());
-            if (results.size() == 0) {
+            if (results.isEmpty()) {
                 complete = true;
             } else {
                 // Group by status.
@@ -521,9 +522,16 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
         return creationState.totalTasksCreated;
     }
 
+    /**
+     * Change the node ownership of the tasks in the id set and select them back to include in the queue.
+     *
+     * @param idSet        The ids of the tasks to take ownership of.
+     * @param nodeName This node name.
+     * @return A list of tasks to queue.
+     */
     @Override
-    public List<ProcessorTask> queueExistingTasks(final Set<Long> idSet,
-                                                  final String nodeName) {
+    public List<ProcessorTask> queueTasks(final Set<Long> idSet,
+                                          final String nodeName) {
         final long now = System.currentTimeMillis();
         final Integer nodeId;
         if (nodeName != null) {
@@ -583,19 +591,20 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
     }
 
     /**
-     * Count the current number of tasks for a filter in the CREATED state.
+     * Count the current number of tasks for a filter matching the specified status.
      *
      * @param filterId The filter to count tasks for.
-     * @return The number of tasks currently CREATED.
+     * @param status   Task status.
+     * @return The number of tasks matching the specified status.
      */
     @Override
-    public int countCreatedTasksForFilter(final int filterId) {
+    public int countTasksForFilter(final int filterId, final TaskStatus status) {
         return JooqUtil.contextResult(
                 processorDbConnProvider, context ->
                         context
                                 .selectCount()
                                 .from(PROCESSOR_TASK)
-                                .where(PROCESSOR_TASK.STATUS.eq(TaskStatus.CREATED.getPrimitiveValue()))
+                                .where(PROCESSOR_TASK.STATUS.eq(status.getPrimitiveValue()))
                                 .and(PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID.eq(filterId))
                                 .fetchOne(0, int.class));
     }
@@ -607,10 +616,10 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                 .from(PROCESSOR_TASK)
                 .leftOuterJoin(PROCESSOR_NODE).on(PROCESSOR_TASK.FK_PROCESSOR_NODE_ID.eq(PROCESSOR_NODE.ID))
                 .leftOuterJoin(PROCESSOR_FEED).on(PROCESSOR_TASK.FK_PROCESSOR_FEED_ID.eq(PROCESSOR_FEED.ID))
-                .join(PROCESSOR_FILTER).on(PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID.eq(PROCESSOR_FILTER.ID))
-                .join(PROCESSOR_FILTER_TRACKER).on(PROCESSOR_FILTER.FK_PROCESSOR_FILTER_TRACKER_ID.eq(
-                        PROCESSOR_FILTER_TRACKER.ID))
-                .join(PROCESSOR).on(PROCESSOR_FILTER.FK_PROCESSOR_ID.eq(PROCESSOR.ID))
+//                .join(PROCESSOR_FILTER).on(PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID.eq(PROCESSOR_FILTER.ID))
+//                .join(PROCESSOR_FILTER_TRACKER).on(PROCESSOR_FILTER.FK_PROCESSOR_FILTER_TRACKER_ID.eq(
+//                        PROCESSOR_FILTER_TRACKER.ID))
+//                .join(PROCESSOR).on(PROCESSOR_FILTER.FK_PROCESSOR_ID.eq(PROCESSOR.ID))
                 .where(condition)
                 .orderBy(PROCESSOR_TASK.ID)
                 .fetch();
@@ -651,7 +660,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                                         .values(PROCESSOR_TASK_VALUES));
             }
 
-            batchBindStep.bind(bindValues);
+            batchBindStep = batchBindStep.bind(bindValues);
 
             // Execute insert if we have reached batch size.
             if (i >= processorConfig.getDatabaseMultiInsertMaxBatchSize()) {
@@ -716,27 +725,37 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
     }
 
     private List<ProcessorTask> convert(final Result<Record> result) {
-        final Map<Integer, ProcessorFilter> processorFilterCache = new HashMap<>();
         return result.map(record -> {
             final Integer processorFilterId = record.get(PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID);
-            final ProcessorFilter processorFilter = processorFilterCache.computeIfAbsent(processorFilterId,
-                    pfid -> {
-                        final Processor processor = RECORD_TO_PROCESSOR_MAPPER.apply(record);
-                        final ProcessorFilterTracker processorFilterTracker =
-                                RECORD_TO_PROCESSOR_FILTER_TRACKER_MAPPER.apply(record);
-
-                        final ProcessorFilter filter = RECORD_TO_PROCESSOR_FILTER_MAPPER.apply(record);
-                        filter.setProcessor(processor);
-                        filter.setProcessorFilterTracker(processorFilterTracker);
-                        return marshaller.unmarshal(filter);
-                    });
-
+            final Optional<ProcessorFilter> processorFilter = processorFilterCache.get(processorFilterId);
             final ProcessorTask processorTask = RECORD_TO_PROCESSOR_TASK_MAPPER.apply(record);
-            processorTask.setProcessorFilter(marshaller.unmarshal(processorFilter));
-
+            processorTask.setProcessorFilter(processorFilter.orElse(null));
             return processorTask;
         });
     }
+
+//    private List<ProcessorTask> convert(final Result<Record> result) {
+//        final Map<Integer, ProcessorFilter> processorFilterCache = new HashMap<>();
+//        return result.map(record -> {
+//            final Integer processorFilterId = record.get(PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID);
+//            final ProcessorFilter processorFilter = processorFilterCache.computeIfAbsent(processorFilterId,
+//                    pfid -> {
+//                        final Processor processor = RECORD_TO_PROCESSOR_MAPPER.apply(record);
+//                        final ProcessorFilterTracker processorFilterTracker =
+//                                RECORD_TO_PROCESSOR_FILTER_TRACKER_MAPPER.apply(record);
+//
+//                        final ProcessorFilter filter = RECORD_TO_PROCESSOR_FILTER_MAPPER.apply(record);
+//                        filter.setProcessor(processor);
+//                        filter.setProcessorFilterTracker(processorFilterTracker);
+//                        return marshaller.unmarshal(filter);
+//                    });
+//
+//            final ProcessorTask processorTask = RECORD_TO_PROCESSOR_TASK_MAPPER.apply(record);
+//            processorTask.setProcessorFilter(marshaller.unmarshal(processorFilter));
+//
+//            return processorTask;
+//        });
+//    }
 
     @Override
     public ResultPage<ProcessorTaskSummary> findSummary(final ExpressionCriteria criteria) {
@@ -1177,8 +1196,8 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                 LOGGER.debug("Logically deleted {} processor tasks for processorFilterId {}", count, processorFilterId);
                 totalCount.addAndGet(count);
             } catch (final DataAccessException e) {
-                if (e.getCause() != null && e.getCause() instanceof SQLIntegrityConstraintViolationException) {
-                    final var sqlEx = (SQLIntegrityConstraintViolationException) e.getCause();
+                if (e.getCause() != null && e.getCause() instanceof
+                        final SQLIntegrityConstraintViolationException sqlEx) {
                     LOGGER.debug("Expected constraint violation exception: " + sqlEx.getMessage(), e);
                 } else {
                     throw e;

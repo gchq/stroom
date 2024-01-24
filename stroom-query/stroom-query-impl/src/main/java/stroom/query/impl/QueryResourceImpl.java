@@ -105,6 +105,12 @@ class QueryResourceImpl implements QueryResource {
 
     @AutoLogged(OperationType.UNLOGGED)
     @Override
+    public ResourceGeneration downloadSearchResults(final DownloadQueryResultsRequest request) {
+        return queryServiceProvider.get().downloadSearchResults(request);
+    }
+
+    @AutoLogged(OperationType.UNLOGGED)
+    @Override
     public ResourceGeneration downloadSearchResults(final String nodeName, final DownloadQueryResultsRequest request) {
         try {
             // If the client doesn't specify a node then execute locally.
@@ -126,6 +132,12 @@ class QueryResourceImpl implements QueryResource {
             LOGGER.debug(e.getMessage(), e);
             throw e;
         }
+    }
+
+    @AutoLogged(OperationType.UNLOGGED)
+    @Override
+    public DashboardSearchResponse search(final QuerySearchRequest request) {
+        return queryServiceProvider.get().search(request);
     }
 
     @AutoLogged(OperationType.UNLOGGED)

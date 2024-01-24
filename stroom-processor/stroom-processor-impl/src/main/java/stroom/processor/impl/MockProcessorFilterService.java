@@ -23,15 +23,14 @@ import java.util.Optional;
 @Singleton
 public class MockProcessorFilterService implements ProcessorFilterService {
 
-    private final MockProcessorFilterDao dao = new MockProcessorFilterDao();
-
-//    private Random idRandom = new Random (0);
-
     private final ProcessorService processorService;
+    private final MockProcessorFilterDao dao;
 
     @Inject
-    MockProcessorFilterService(final ProcessorService processorService) {
+    MockProcessorFilterService(final ProcessorService processorService,
+                               final MockProcessorFilterDao dao) {
         this.processorService = processorService;
+        this.dao = dao;
     }
 
     @Override
@@ -40,6 +39,7 @@ public class MockProcessorFilterService implements ProcessorFilterService {
         filter.setPipelineUuid(request.getPipeline().getUuid());
         filter.setQueryData(request.getQueryData());
         filter.setPriority(request.getPriority());
+        filter.setMaxProcessingTasks(request.getMaxProcessingTasks());
         filter.setEnabled(request.isEnabled());
         filter.setMinMetaCreateTimeMs(request.getMinMetaCreateTimeMs());
         filter.setMaxMetaCreateTimeMs(request.getMaxMetaCreateTimeMs());
@@ -65,6 +65,7 @@ public class MockProcessorFilterService implements ProcessorFilterService {
         filter.setProcessor(processor);
         filter.setQueryData(request.getQueryData());
         filter.setPriority(request.getPriority());
+        filter.setMaxProcessingTasks(request.getMaxProcessingTasks());
         filter.setEnabled(request.isEnabled());
         filter.setMinMetaCreateTimeMs(request.getMinMetaCreateTimeMs());
         filter.setMaxMetaCreateTimeMs(request.getMaxMetaCreateTimeMs());
@@ -84,6 +85,7 @@ public class MockProcessorFilterService implements ProcessorFilterService {
         filter.setProcessor(processor);
         filter.setQueryData(request.getQueryData());
         filter.setPriority(request.getPriority());
+        filter.setMaxProcessingTasks(request.getMaxProcessingTasks());
         filter.setUuid(processorFilterDocRef.getUuid());
         filter.setEnabled(request.isEnabled());
         filter.setMinMetaCreateTimeMs(request.getMinMetaCreateTimeMs());
@@ -113,6 +115,10 @@ public class MockProcessorFilterService implements ProcessorFilterService {
 
     @Override
     public void setPriority(Integer id, Integer priority) {
+    }
+
+    @Override
+    public void setMaxProcessingTasks(Integer id, Integer maxProcessingTasks) {
     }
 
     @Override

@@ -137,6 +137,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
         processorFilter.setReprocess(request.isReprocess());
         processorFilter.setEnabled(request.isEnabled());
         processorFilter.setPriority(calculatedPriority);
+        processorFilter.setMaxProcessingTasks(request.getMaxProcessingTasks());
         processorFilter.setProcessor(processor);
         processorFilter.setQueryData(request.getQueryData());
         processorFilter.setMinMetaCreateTimeMs(request.getMinMetaCreateTimeMs());
@@ -167,6 +168,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
         processorFilter.setReprocess(request.isReprocess());
         processorFilter.setEnabled(request.isEnabled());
         processorFilter.setPriority(calculatedPriority);
+        processorFilter.setMaxProcessingTasks(request.getMaxProcessingTasks());
         processorFilter.setProcessor(processor);
         processorFilter.setQueryData(request.getQueryData());
         processorFilter.setMinMetaCreateTimeMs(request.getMinMetaCreateTimeMs());
@@ -235,6 +237,14 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
     public void setPriority(final Integer id, final Integer priority) {
         fetch(id).ifPresent(processorFilter -> {
             processorFilter.setPriority(priority);
+            update(processorFilter);
+        });
+    }
+
+    @Override
+    public void setMaxProcessingTasks(final Integer id, final Integer maxProcessingTasks) {
+        fetch(id).ifPresent(processorFilter -> {
+            processorFilter.setMaxProcessingTasks(maxProcessingTasks);
             update(processorFilter);
         });
     }

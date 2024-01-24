@@ -439,6 +439,10 @@ subprojects {
     test {
         useJUnitPlatform()
 
+        // set heap size for the test JVM(s)
+//        minHeapSize = "128m"
+//        maxHeapSize = "8G"
+
         // Run test classes in N different JVMs
         // The internet seems to suggest the divide by 2, not sure why, maybe
         // not to exhaust all cores. Removing it doesn't seem to speed it up.

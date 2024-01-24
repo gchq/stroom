@@ -23,8 +23,7 @@ public class NodeConfig extends AbstractConfig implements IsStroomConfig, HasDbC
 
     private final NodeDbConfig dbConfig;
     private final StatusConfig statusConfig;
-    // TODO 29/11/2021 AT: Make immutable
-    private String nodeName;
+    private final String nodeName;
 
     public NodeConfig() {
         dbConfig = new NodeDbConfig();
@@ -55,11 +54,6 @@ public class NodeConfig extends AbstractConfig implements IsStroomConfig, HasDbC
     @JsonProperty(PROP_NAME_NAME)
     public String getNodeName() {
         return nodeName;
-    }
-
-    @Deprecated(forRemoval = true)
-    public void setNodeName(final String nodeName) {
-        this.nodeName = nodeName;
     }
 
     @JsonProperty(PROP_NAME_STATUS)

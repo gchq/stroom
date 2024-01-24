@@ -1,6 +1,7 @@
 package stroom.proxy.app;
 
 import stroom.test.common.TestResourceLocks;
+import stroom.util.io.CommonDirSetup;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.ResourcePaths;
 
@@ -32,6 +33,10 @@ public class AbstractEndToEndTest extends AbstractApplicationTest {
     @SuppressWarnings("unused")
     @RegisterExtension
     public final WireMockExtension wireMockExtension = mockHttpDestination.createExtension();
+
+    static {
+        CommonDirSetup.setup();
+    }
 
     @BeforeEach
     void setup() {

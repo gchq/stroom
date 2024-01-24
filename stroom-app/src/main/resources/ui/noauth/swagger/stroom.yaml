@@ -4664,6 +4664,33 @@ paths:
       summary: Sets the enabled/disabled state for a filter
       tags:
       - Processor Filters
+  /processorFilter/v1/{id}/maxProcessingTasks:
+    put:
+      operationId: setProcessorFilterMaxProcessingTasks
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+          format: int32
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: integer
+              format: int32
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: "Sets the optional cluster-wide limit on the number of tasks that may\
+        \ be processed for this filter, at any one time"
+      tags:
+      - Processor Filters
   /processorFilter/v1/{id}/priority:
     put:
       operationId: setProcessorFilterPriority
@@ -8139,6 +8166,9 @@ components:
         maxMetaCreateTimeMs:
           type: integer
           format: int64
+        maxProcessingTasks:
+          type: integer
+          format: int32
         minMetaCreateTimeMs:
           type: integer
           format: int64
@@ -8760,6 +8790,7 @@ components:
           - INSERT
           - JOBS
           - KEY
+          - LOCATE
           - LOCKED
           - LOGO
           - LOGOUT
@@ -9248,6 +9279,7 @@ components:
           - INSERT
           - JOBS
           - KEY
+          - LOCATE
           - LOCKED
           - LOGO
           - LOGOUT
@@ -9441,6 +9473,7 @@ components:
           - INSERT
           - JOBS
           - KEY
+          - LOCATE
           - LOCKED
           - LOGO
           - LOGOUT
@@ -11703,6 +11736,7 @@ components:
           - INSERT
           - JOBS
           - KEY
+          - LOCATE
           - LOCKED
           - LOGO
           - LOGOUT
@@ -12053,6 +12087,9 @@ components:
         maxMetaCreateTimeMs:
           type: integer
           format: int64
+        maxProcessingTasks:
+          type: integer
+          format: int32
         minMetaCreateTimeMs:
           type: integer
           format: int64
@@ -12670,6 +12707,7 @@ components:
           - INSERT
           - JOBS
           - KEY
+          - LOCATE
           - LOCKED
           - LOGO
           - LOGOUT

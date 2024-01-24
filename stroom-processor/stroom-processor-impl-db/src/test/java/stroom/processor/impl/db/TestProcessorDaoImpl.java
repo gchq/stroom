@@ -3,8 +3,6 @@ package stroom.processor.impl.db;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.TaskStatus;
-import stroom.util.logging.LambdaLogger;
-import stroom.util.logging.LambdaLoggerFactory;
 
 import org.junit.jupiter.api.Test;
 
@@ -17,8 +15,6 @@ import static stroom.processor.impl.db.jooq.tables.ProcessorFilter.PROCESSOR_FIL
 import static stroom.processor.impl.db.jooq.tables.ProcessorTask.PROCESSOR_TASK;
 
 class TestProcessorDaoImpl extends AbstractProcessorTest {
-
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestProcessorDaoImpl.class);
 
     Processor processor1;
     Processor processor2;

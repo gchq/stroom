@@ -5,6 +5,7 @@ import stroom.config.app.AppConfigModule;
 import stroom.config.app.Config;
 import stroom.config.app.ConfigHolder;
 import stroom.config.global.impl.ConfigMapper;
+import stroom.node.impl.NodeConfig;
 import stroom.test.common.util.db.DbTestUtil;
 import stroom.util.config.AbstractConfigUtil;
 import stroom.util.io.FileUtil;
@@ -17,6 +18,8 @@ import java.nio.file.Path;
 import java.util.Map;
 
 public class AppConfigTestModule extends AppConfigModule {
+
+    public static final String NODE1 = "node1a";
 
     private final ConfigMapperSpy configMapperSpy;
 
@@ -66,10 +69,18 @@ public class AppConfigTestModule extends AppConfigModule {
                 final StroomPathConfig modifiedPathConfig = vanillaAppConfig.getPathConfig()
                         .withHome(FileUtil.getCanonicalPath(dir))
                         .withTemp(FileUtil.getCanonicalPath(dir));
-                final AppConfig modifiedAppConfig = AbstractConfigUtil.mutateTree(
+                AppConfig modifiedAppConfig = AbstractConfigUtil.mutateTree(
                         vanillaAppConfig,
                         AppConfig.ROOT_PROPERTY_PATH,
                         Map.of(AppConfig.ROOT_PROPERTY_PATH.merge(AppConfig.PROP_NAME_PATH), modifiedPathConfig));
+
+                // Set local node name to "node1a"
+                modifiedAppConfig = AbstractConfigUtil.mutateTree(
+                        vanillaAppConfig,
+                        AppConfig.ROOT_PROPERTY_PATH,
+                        Map.of(AppConfig.ROOT_PROPERTY_PATH
+                                .merge(AppConfig.PROP_NAME_NODE)
+                                .merge(NodeConfig.PROP_NAME_NAME), NODE1));
 
                 this.appConfig = modifiedAppConfig;
                 this.config = new Config();

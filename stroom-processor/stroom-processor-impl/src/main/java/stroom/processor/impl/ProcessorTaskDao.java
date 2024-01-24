@@ -39,12 +39,13 @@ public interface ProcessorTaskDao {
                           Instant statusOlderThan);
 
     /**
-     * Count the current number of tasks for a filter in the CREATED state.
+     * Count the current number of tasks for a filter matching the specified status.
      *
      * @param filterId The filter to count tasks for.
-     * @return The number of tasks currently CREATED.
+     * @param status Task status.
+     * @return The number of tasks matching the specified status.
      */
-    int countCreatedTasksForFilter(int filterId);
+    int countTasksForFilter(int filterId, TaskStatus status);
 
     /**
      * Create new tasks for the specified filter and add them to the queue.
@@ -54,11 +55,10 @@ public interface ProcessorTaskDao {
      * @param filterProgressMonitor Monitor and record task creation progress to help identify issues.
      * @param metaQueryTime         The time that we queried for meta data that matches the processor filter.
      * @param metaMap               The map of meta data and optional event ranges to create tasks for.
-     * @param thisNodeName          This node, the node that will own the created tasks.
+     * @param maxMetaId             The max id to create tasks up to.
      * @param reachedLimit          For search based task creation this indicates if we have reached the limit of tasks
      *                              created for a single search. This limit is imposed to stop search based task
      *                              creation running forever.
-     * @param fillTaskQueue         Should the newly created tasks be added to the task queue immediately.
      * @return A list of tasks that we have created and that are owned by this
      * node and available to be handed to workers (i.e. their associated meta data is not locked).
      */
@@ -77,8 +77,8 @@ public interface ProcessorTaskDao {
      * @param thisNodeName This node name.
      * @return A list of tasks to queue.
      */
-    List<ProcessorTask> queueExistingTasks(Set<Long> idSet,
-                                           String thisNodeName);
+    List<ProcessorTask> queueTasks(Set<Long> idSet,
+                                   String thisNodeName);
 
     /**
      * Release ownership for a set of tasks and abandon processing.

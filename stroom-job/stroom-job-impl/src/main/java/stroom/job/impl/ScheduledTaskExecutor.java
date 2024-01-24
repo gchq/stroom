@@ -176,7 +176,7 @@ class ScheduledTaskExecutor {
                 Scheduler scheduler = null;
                 JobNodeTracker jobNodeTracker;
 
-                final JobNodeTrackerCache.Trackers trackers = jobNodeTrackerCache.getTrackers();
+                final JobNodeTrackers trackers = jobNodeTrackerCache.getTrackers();
                 jobNodeTracker = trackers.getTrackerForJobName(scheduledJob.getName());
 
                 if (scheduledJob.isManaged()) {
