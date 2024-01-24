@@ -369,7 +369,10 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
 
     private void navigateBack(I selectionItem) {
         NavigationState<I> navigationState = null;
-        while (!navigationStates.isEmpty() && !navigationStates.get(navigationStates.size() - 1).getSelectedItem().equals(selectionItem)) {
+        while (!navigationStates.isEmpty() && !navigationStates
+                .get(navigationStates.size() - 1)
+                .getSelectedItem()
+                .equals(selectionItem)) {
             navigationState = navigationStates.remove(navigationStates.size() - 1);
         }
         if (navigationState == null && !navigationStates.isEmpty()) {
