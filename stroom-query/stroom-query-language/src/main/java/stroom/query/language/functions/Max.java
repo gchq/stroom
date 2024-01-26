@@ -47,9 +47,11 @@ class Max extends AbstractAggregateFunction {
         super(name, new Calc());
     }
 
-    static class Calc extends Calculator {
 
-        private static final ValComparator COMPARATOR = new ValComparator();
+    // --------------------------------------------------------------------------------
+
+
+    static class Calc extends Calculator {
 
         @Override
         Val calc(final Val current, final Val value) {
@@ -61,7 +63,7 @@ class Max extends AbstractAggregateFunction {
                     return current;
                 }
 
-                if (COMPARATOR.compare(current, value) < 0) {
+                if (ValComparators.GENERIC_COMPARATOR.compare(current, value) < 0) {
                     return value;
                 }
                 return current;

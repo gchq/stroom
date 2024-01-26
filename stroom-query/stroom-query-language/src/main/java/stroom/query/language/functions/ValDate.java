@@ -16,17 +16,23 @@
 
 package stroom.query.language.functions;
 
+import stroom.util.concurrent.LazyValue;
+
+import java.util.Comparator;
 import java.util.Objects;
-import java.util.Optional;
 
 public final class ValDate implements ValNumber {
 
+    public static Comparator<Val> COMPARATOR = ValComparators.asGenericComparator(
+            ValDate.class, ValComparators.AS_LONG_COMPARATOR);
+
     public static final Type TYPE = Type.DATE;
     private final long value;
-    private transient Optional<String> optionalString;
+    private transient final LazyValue<String> lazyStringValue;
 
     private ValDate(final long value) {
         this.value = value;
+        this.lazyStringValue = LazyValue.initialisedBy(this::deriveStringValue);
     }
 
     public static ValDate create(final long value) {
@@ -64,15 +70,15 @@ public final class ValDate implements ValNumber {
 
     @Override
     public String toString() {
-        if (optionalString == null) {
-            try {
-                optionalString = Optional.of(DateUtil.createNormalDateTimeString(value));
-            } catch (final RuntimeException e) {
-                optionalString = Optional.empty();
-            }
+        return lazyStringValue.getValueWithoutLocks();
+    }
 
+    private String deriveStringValue() {
+        try {
+            return DateUtil.createNormalDateTimeString(value);
+        } catch (final RuntimeException e) {
+            return null;
         }
-        return optionalString.orElse(null);
     }
 
     @Override
@@ -100,5 +106,10 @@ public final class ValDate implements ValNumber {
     @Override
     public int hashCode() {
         return Objects.hash(value);
+    }
+
+    @Override
+    public Comparator<Val> getDefaultComparator() {
+        return COMPARATOR;
     }
 }

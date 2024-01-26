@@ -16,20 +16,51 @@
 
 package stroom.query.language.functions;
 
+import stroom.util.concurrent.LazyBoolean;
+import stroom.util.concurrent.LazyValue;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
+
+import com.google.common.math.DoubleMath;
+
 import java.math.BigDecimal;
+import java.util.Comparator;
 import java.util.Objects;
-import java.util.Optional;
 
 public final class ValString implements Val {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ValString.class);
+
+    public static Comparator<Val> COMPARATOR = ValComparators.asGenericComparator(
+            ValString.class, ValComparators.AS_DOUBLE_THEN_STRING_COMPARATOR);
 
     public static final Type TYPE = Type.STRING;
     static final ValString EMPTY = new ValString("");
     private final String value;
-    private transient Optional<Double> optionalDouble;
-    private transient Optional<Long> optionalLong;
+
+    // Permanent lazy cache of the slightly costly conversion to long/double
+    private transient final LazyValue<Double> lazyDoubleValue;
+    private transient final LazyValue<Long> lazyLongValue;
+    private transient final LazyBoolean lazyHasFractionalPart;
 
     private ValString(final String value) {
+        if (value == null) {
+            // We should not be allowing null values, but not sure that we can risk a null check in case
+            // it breaks existing content
+            LOGGER.warn("null passed to ValString.create, should be using ValNull, enable DEBUG to see stack");
+            if (LOGGER.isDebugEnabled()) {
+                LogUtil.logStackTrace(
+                        "null passed to ValString.create, should be using ValNull, stack trace:",
+                        LOGGER::debug);
+            }
+        }
         this.value = value;
+        // Suppliers are idempotent so do it without locking at the risk of
+        // calling the supplier >1 times.
+        this.lazyDoubleValue = LazyValue.initialisedBy(this::deriveDoubleValue);
+        this.lazyLongValue = LazyValue.initialisedBy(this::deriveLongValue);
+        this.lazyHasFractionalPart = LazyBoolean.initialisedBy(this::deriveHasFractionalPart);
     }
 
     public static ValString create(final String value) {
@@ -50,19 +81,28 @@ public final class ValString implements Val {
 
     @Override
     public Long toLong() {
-        if (optionalLong == null) {
+        return lazyLongValue.getValueWithoutLocks();
+    }
+
+    private Long deriveLongValue() {
+        Long longValue = null;
+        try {
+            // See if it is a date string
+            longValue = DateUtil.parseNormalDateTimeString(value);
+        } catch (final RuntimeException e) {
             try {
-                optionalLong = Optional.of(DateUtil.parseNormalDateTimeString(value));
-            } catch (final RuntimeException e) {
+                // See if it is a duration string
+                longValue = ValDurationUtil.parseToMilliseconds(value);
+            } catch (RuntimeException e2) {
                 try {
-                    optionalLong = Optional.of(Long.valueOf(value));
-                } catch (final RuntimeException e2) {
-                    optionalLong = Optional.empty();
+                    // See if it is an integer part
+                    longValue = Long.valueOf(value);
+                } catch (final RuntimeException e3) {
+                    // Not a date or a long so has no long value
                 }
             }
-
         }
-        return optionalLong.orElse(null);
+        return longValue;
     }
 
     @Override
@@ -76,18 +116,25 @@ public final class ValString implements Val {
 
     @Override
     public Double toDouble() {
-        if (optionalDouble == null) {
+        return lazyDoubleValue.getValueWithoutLocks();
+    }
+
+    private Double deriveDoubleValue() {
+        Double doubleValue = null;
+        try {
+            doubleValue = (double) DateUtil.parseNormalDateTimeString(value);
+        } catch (final RuntimeException e) {
             try {
-                optionalDouble = Optional.of((double) DateUtil.parseNormalDateTimeString(value));
-            } catch (final RuntimeException e) {
+                doubleValue = (double) ValDurationUtil.parseToMilliseconds(value);
+            } catch (RuntimeException e2) {
                 try {
-                    optionalDouble = Optional.of(new BigDecimal(value).doubleValue());
-                } catch (final RuntimeException e2) {
-                    optionalDouble = Optional.empty();
+                    doubleValue = new BigDecimal(value).doubleValue();
+                } catch (final RuntimeException e3) {
+                    // Not a date or a double so has no double value
                 }
             }
         }
-        return optionalDouble.orElse(null);
+        return doubleValue;
     }
 
     @Override
@@ -119,6 +166,23 @@ public final class ValString implements Val {
     }
 
     @Override
+    public boolean hasFractionalPart() {
+        return lazyHasFractionalPart.getValueWithoutLocks();
+    }
+
+    private boolean deriveHasFractionalPart() {
+        final Double dbl = toDouble();
+        return dbl != null && !DoubleMath.isMathematicalInteger(dbl);
+    }
+
+    @Override
+    public boolean hasNumericValue() {
+        // Even if it has fractional parts, toLong will tell us if it is numeric
+        return value != null
+                && (toLong() != null || toDouble() != null);
+    }
+
+    @Override
     public boolean equals(final Object o) {
         if (this == o) {
             return true;
@@ -133,5 +197,10 @@ public final class ValString implements Val {
     @Override
     public int hashCode() {
         return Objects.hash(value);
+    }
+
+    @Override
+    public Comparator<Val> getDefaultComparator() {
+        return COMPARATOR;
     }
 }

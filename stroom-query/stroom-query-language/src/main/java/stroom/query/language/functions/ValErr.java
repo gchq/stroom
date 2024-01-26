@@ -16,9 +16,16 @@
 
 package stroom.query.language.functions;
 
+import stroom.util.NullSafe;
+
+import java.util.Comparator;
 import java.util.Objects;
 
 public final class ValErr implements Val {
+
+    public static final String PREFIX = "ERR: ";
+    public static Comparator<Val> COMPARATOR = ValComparators.asGenericComparator(
+            ValErr.class, ValComparators.AS_STRING_COMPARATOR);
 
     public static final ValErr INSTANCE = new ValErr("Err");
     public static final Type TYPE = Type.ERR;
@@ -29,7 +36,19 @@ public final class ValErr implements Val {
     }
 
     public static ValErr create(final String message) {
-        return new ValErr(message);
+        if (NullSafe.isBlankString(message)) {
+            return INSTANCE;
+        } else {
+            return new ValErr(message);
+        }
+    }
+
+    public static ValErr create(final Throwable throwable) {
+        return NullSafe.getOrElse(
+                throwable,
+                Throwable::getMessage,
+                ValErr::create,
+                INSTANCE);
     }
 
     public static Val wrap(final Val val) {
@@ -83,7 +102,7 @@ public final class ValErr implements Val {
 
     @Override
     public String toString() {
-        return null;
+        return PREFIX + message;
     }
 
     @Override
@@ -115,5 +134,10 @@ public final class ValErr implements Val {
     @Override
     public int hashCode() {
         return Objects.hash(message);
+    }
+
+    @Override
+    public Comparator<Val> getDefaultComparator() {
+        return COMPARATOR;
     }
 }

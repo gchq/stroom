@@ -51,29 +51,19 @@ class Equals extends AbstractEqualityFunction {
         return EVALUATOR;
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class EqualsEvaluator extends Evaluator {
 
         @Override
         protected Val evaluate(final Val a, final Val b) {
-            if (a.getClass().equals(b.getClass())) {
-                if (a instanceof ValInteger) {
-                    return ValBoolean.create(a.toInteger().equals(b.toInteger()));
-                }
-                if (a instanceof ValLong) {
-                    return ValBoolean.create(a.toLong().equals(b.toLong()));
-                }
-                if (a instanceof ValBoolean) {
-                    return ValBoolean.create(a.toBoolean().equals(b.toBoolean()));
-                }
-            } else {
-                final Double da = a.toDouble();
-                final Double db = b.toDouble();
-                if (da != null && db != null) {
-                    return ValBoolean.create(da.equals(db));
-                }
-            }
 
-            return ValBoolean.create(a.toString().equals(b.toString()));
+            final int compareResult = ValComparators.GENERIC_COMPARATOR.compare(a, b);
+            return compareResult == 0
+                    ? ValBoolean.TRUE
+                    : ValBoolean.FALSE;
         }
     }
 }

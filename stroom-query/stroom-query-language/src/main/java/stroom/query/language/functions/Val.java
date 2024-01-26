@@ -19,10 +19,17 @@ package stroom.query.language.functions;
 
 import stroom.query.language.token.Param;
 
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Comparator;
 import java.util.Objects;
 
-public interface Val extends Param, Appendable {
+public sealed interface Val
+        extends Param, Appendable, Comparable<Val>
+        permits ValNumber, ValString, ValErr, ValNull, ValBoolean {
+
     Val[] EMPTY_VALUES = new Val[0];
+    double FLOATING_POINT_EQUALITY_TOLERANCE = 0.00001;
 
     Integer toInteger();
 
@@ -37,6 +44,32 @@ public interface Val extends Param, Appendable {
     String toString();
 
     Type type();
+
+    /**
+     * @return True if the underlying value is non-null, numeric and has a
+     * fractional part, e.g. "1.2" or 1.2.
+     */
+    default boolean hasFractionalPart() {
+        // Most Vals don't have fractional parts
+        return false;
+    }
+
+    /**
+     * @return True if the underlying value is non-null, has a numeric value,
+     * e.g. "1", "1.2", 300, etc, or can be represented as a number, e.g. a date string
+     * represented as millis since epoch.
+     */
+    default boolean hasNumericValue() {
+        return false;
+    }
+
+    /**
+     * @return A comparator that will compare {@link Val} instances using the
+     * comparison method of the subclass in question. Only intended for use on
+     * {@link Val} instances of the same class. To compare {@link Val} instances
+     * of potentially mixed types in a null-safe way, see {@link ValComparators#compare(Val, Val)}.
+     */
+    Comparator<Val> getDefaultComparator();
 
     static Val[] of(final Val... values) {
         return values;
@@ -93,5 +126,65 @@ public interface Val extends Param, Appendable {
                 return Objects.requireNonNull(creator).apply(value2);
             }
         }
+    }
+
+    /**
+     * Create a {@link Val} of the appropriate subclass for the java
+     * type passed, e.g.
+     * <pre>
+     * {@link String} => {@link ValString},
+     * {@link Long} => {@link ValLong},
+     * {@link Instant} => {@link ValDate},
+     * {@link Duration} => {@link ValDuration},
+     * {@link Throwable} => {@link ValErr},
+     * null => {@link ValNull},
+     * etc
+     * </pre>
+     */
+    static Val create(final Object object) {
+        // TODO consider using java pattern match switch in J21+
+        if (object == null) {
+            return ValNull.INSTANCE;
+        } else if (object instanceof String val) {
+            return ValString.create(val);
+        } else if (object instanceof Integer val) {
+            return ValInteger.create(val);
+        } else if (object instanceof Long val) {
+            return ValLong.create(val);
+        } else if (object instanceof Double val) {
+            return ValDouble.create(val);
+        } else if (object instanceof Float val) {
+            return ValFloat.create(val);
+        } else if (object instanceof Boolean val) {
+            return ValBoolean.create(val);
+        } else if (object instanceof Instant val) {
+            return ValDate.create(val.toEpochMilli());
+        } else if (object instanceof Duration val) {
+            return ValDuration.create(val.toMillis());
+        } else if (object instanceof Throwable val) {
+            return ValErr.create(val.getMessage());
+        } else if (object instanceof Val val) {
+            return val;
+        } else {
+            throw new UnsupportedOperationException("Unsupported type " + object.getClass());
+        }
+    }
+
+    static <T extends Val> Comparator<T> nullsFirstComparator(Comparator<T> comparator) {
+
+        return Comparator.nullsFirst((val1, val2) -> {
+            if (ValComparators.isNull(val1) && ValComparators.isNotNull(val2)) {
+                return -1;
+            } else if (ValComparators.isNotNull(val1) && ValComparators.isNull(val2)) {
+                return 1;
+            } else {
+                return comparator.compare(val1, val2);
+            }
+        });
+    }
+
+    @Override
+    default int compareTo(Val other) {
+        return ValComparators.GENERIC_COMPARATOR.compare(this, other);
     }
 }

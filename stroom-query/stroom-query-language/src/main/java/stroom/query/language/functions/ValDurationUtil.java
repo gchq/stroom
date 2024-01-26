@@ -1,19 +1,24 @@
 package stroom.query.language.functions;
 
+import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.ModelStringUtil;
 
 import java.time.Duration;
+import java.time.format.DateTimeParseException;
 
 public class ValDurationUtil {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ValDurationUtil.class);
+    static final String PARSE_ERROR_MESSAGE = "Text cannot be parsed to a Duration";
 
     public static Val formatDuration(final Val value) {
         if (value == null) {
             return ValNull.INSTANCE;
-        } else if (value.type().isNumber()) {
+        } else if (value.hasNumericValue()) {
+            // This covers strings too
             final long milliseconds = value.toLong();
             return ValString.create(ModelStringUtil.formatDurationString(milliseconds, true));
         } else if (Type.STRING.equals(value.type())) {
@@ -23,20 +28,16 @@ public class ValDurationUtil {
     }
 
     public static Val formatDuration(final String value) {
-        if (value == null) {
+        if (NullSafe.isBlankString(value)) {
             return ValNull.INSTANCE;
-        }
-        if (!value.isBlank()) {
+        } else {
             try {
-                final Long milliseconds = parseToMilliseconds(value);
-                if (milliseconds != null) {
-                    return ValString.create(ModelStringUtil.formatDurationString(milliseconds, true));
-                }
+                final long milliseconds = parseToMilliseconds(value);
+                return ValString.create(ModelStringUtil.formatDurationString(milliseconds, true));
             } catch (final Exception e) {
-                LOGGER.debug(e::getMessage, e);
+                return exceptionToValErr(e);
             }
         }
-        return ValString.create(value);
     }
 
     public static Val formatISODuration(final Val value) {
@@ -52,45 +53,46 @@ public class ValDurationUtil {
     }
 
     public static Val formatISODuration(final String value) {
-        if (value == null) {
+        if (NullSafe.isBlankString(value)) {
             return ValNull.INSTANCE;
-        }
-        if (!value.isBlank()) {
+        } else {
             try {
-                final Long milliseconds = parseToMilliseconds(value);
-                if (milliseconds != null) {
-                    return ValString.create(Duration.ofMillis(milliseconds).toString());
-                }
+                final long milliseconds = parseToMilliseconds(value);
+                return ValString.create(Duration.ofMillis(milliseconds).toString());
             } catch (final Exception e) {
-                LOGGER.debug(e::getMessage, e);
+                return exceptionToValErr(e);
             }
         }
-        return ValString.create(value);
     }
 
     public static Val parseDuration(final Val val) {
-        if (Type.STRING.equals(val.type())) {
+        if (Type.STRING == val.type()) {
             return parseDuration(val.toString());
         } else if (val.type().isNumber()) {
-            if (Type.DURATION.equals(val.type())) {
+            if (Type.DURATION == val.type()) {
                 return val;
             }
             final Long milliseconds = val.toLong();
             if (milliseconds != null) {
                 return ValDuration.create(milliseconds);
+            } else {
+                // Should never have a numeric type with null toLong
+                throw new RuntimeException(LogUtil.message("Numeric type {} has a null long value",
+                        val.getClass().getSimpleName()));
             }
         }
         return val;
     }
 
     public static Val parseDuration(final String value) {
-        if (value == null || value.isBlank()) {
+        if (NullSafe.isBlankString(value)) {
             return ValNull.INSTANCE;
         } else {
             try {
-                return ValDuration.create(parseToMilliseconds(value));
+                final long millis = parseToMilliseconds(value);
+                return ValDuration.create(millis);
             } catch (final Exception e) {
-                return ValErr.create(e.getMessage());
+                return exceptionToValErr(e);
             }
         }
     }
@@ -105,29 +107,61 @@ public class ValDurationUtil {
             final Long milliseconds = val.toLong();
             if (milliseconds != null) {
                 return ValDuration.create(milliseconds);
+            } else {
+                // Should never have a numeric type with null toLong
+                throw new RuntimeException(LogUtil.message("Numeric type {} has a null long value",
+                        val.getClass().getSimpleName()));
             }
         }
         return val;
     }
 
     public static Val parseISODuration(final String value) {
-        if (value == null || value.isBlank()) {
+        if (NullSafe.isBlankString(value)) {
             return ValNull.INSTANCE;
         } else {
             try {
                 return ValDuration.create(Duration.parse(value).toMillis());
             } catch (final Exception e) {
-                return ValErr.create(e.getMessage());
+                return exceptionToValErr(e);
             }
         }
     }
 
-    public static Long parseToMilliseconds(final String value) {
-        if (value.startsWith("P")) {
-            // This is ISO 8601 format so use Duration to parse it
-            return Duration.parse(value).toMillis();
+    private static ValErr exceptionToValErr(final Exception e) {
+        if (e instanceof DateTimeParseException dtpe) {
+            String msg = e.getMessage().stripTrailing();
+            msg = msg.endsWith(".")
+                    ? e.getMessage()
+                    : e.getMessage() + ".";
+            msg = msg + " Text: '" + dtpe.getParsedString() + "'.";
+            return ValErr.create(msg);
+        } else {
+            return ValErr.create(e);
         }
-        // Not ISO 8601 so have a go with our ModelStringUtil format
-        return ModelStringUtil.parseDurationString(value);
+    }
+
+    /**
+     * @throws DateTimeParseException if value is null or can't be parsed for any reason.
+     */
+    public static long parseToMilliseconds(final String value) {
+        if (value == null) {
+            throw new DateTimeParseException(PARSE_ERROR_MESSAGE, "null", 0);
+        }
+        if (NullSafe.isBlankString(value)) {
+            throw new DateTimeParseException(PARSE_ERROR_MESSAGE, value, 0);
+        }
+        try {
+            if (value.startsWith("P")) {
+                // This is ISO 8601 format so use Duration to parse it
+                return Duration.parse(value).toMillis();
+            }
+            // Not ISO 8601 so have a go with our ModelStringUtil format
+            return ModelStringUtil.parseDurationString(value);
+        } catch (DateTimeParseException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new DateTimeParseException(PARSE_ERROR_MESSAGE, value, 0);
+        }
     }
 }

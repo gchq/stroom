@@ -71,6 +71,10 @@ abstract class AbstractEqualityFunction extends AbstractManyChildFunction {
         return Type.BOOLEAN;
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static final class Gen extends AbstractManyChildGenerator {
 
         private final Evaluator evaluator;
