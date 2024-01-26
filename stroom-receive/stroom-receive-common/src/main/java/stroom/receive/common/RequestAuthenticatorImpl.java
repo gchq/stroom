@@ -46,10 +46,6 @@ public class RequestAuthenticatorImpl implements RequestAuthenticator {
         final boolean isTokenAuthEnabled = receiveDataConfig.isTokenAuthenticationEnabled();
         final boolean isCertAuthEnabled = receiveDataConfig.isCertificateAuthenticationEnabled();
 
-        final Consumer<StroomStatusCode> throwFunc = code -> {
-            throw new StroomStreamException(code, attributeMap);
-        };
-
         // Try tokens first in preference
         final boolean foundToken = userIdentityFactory.hasAuthenticationToken(request);
         if (isTokenAuthEnabled) {
