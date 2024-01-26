@@ -4,11 +4,12 @@ import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TerminateHandlerFactory;
 
-import java.util.function.Consumer;
-import javax.inject.Inject;
-import javax.inject.Provider;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
-class AnalyticErrorWritingExecutor {
+import java.util.function.Consumer;
+
+public class AnalyticErrorWritingExecutor {
 
     private final TaskContextFactory taskContextFactory;
     private final Provider<AnalyticErrorWriter> analyticErrorWriterProvider;

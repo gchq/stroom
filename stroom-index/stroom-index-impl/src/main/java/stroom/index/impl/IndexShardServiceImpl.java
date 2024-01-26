@@ -17,9 +17,9 @@
 
 package stroom.index.impl;
 
-import stroom.datasource.api.v2.AbstractField;
-import stroom.datasource.api.v2.DataSource;
 import stroom.datasource.api.v2.DateField;
+import stroom.datasource.api.v2.FieldInfo;
+import stroom.datasource.api.v2.FindFieldInfoCriteria;
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.index.shared.FindIndexShardCriteria;
@@ -28,7 +28,13 @@ import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardFields;
 import stroom.index.shared.IndexShardKey;
 import stroom.index.shared.IndexVolume;
+import stroom.index.shared.LuceneVersion;
+import stroom.index.shared.LuceneVersionUtil;
+import stroom.query.common.v2.FieldInfoResultPageBuilder;
+import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.ValuesConsumer;
+import stroom.search.extraction.IndexStructure;
+import stroom.search.extraction.IndexStructureCache;
 import stroom.searchable.api.Searchable;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
@@ -39,8 +45,10 @@ import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+
+import java.util.Optional;
 
 @Singleton
 public class IndexShardServiceImpl implements IndexShardService, Searchable {
@@ -54,6 +62,8 @@ public class IndexShardServiceImpl implements IndexShardService, Searchable {
     private final IndexStructureCache indexStructureCache;
     private final IndexShardDao indexShardDao;
     private final IndexVolumeService indexVolumeService;
+
+    private LuceneVersion indexVersion = LuceneVersionUtil.CURRENT_LUCENE_VERSION;
 
     @Inject
     IndexShardServiceImpl(final SecurityContext securityContext,
@@ -83,15 +93,13 @@ public class IndexShardServiceImpl implements IndexShardService, Searchable {
             final IndexStructure indexStructure = indexStructureCache.get(
                     new DocRef(IndexDoc.DOCUMENT_TYPE, indexShardKey.getIndexUuid()));
             final IndexDoc index = indexStructure.getIndex();
-
-
             final IndexVolume indexVolume = indexVolumeService.selectVolume(index.getVolumeGroupName(), ownerNodeName);
 
             return indexShardDao.create(
                     indexShardKey,
                     indexVolume,
                     ownerNodeName,
-                    LuceneVersionUtil.getCurrentVersion());
+                    indexVersion.getDisplayValue());
         });
     }
 
@@ -140,12 +148,13 @@ public class IndexShardServiceImpl implements IndexShardService, Searchable {
     }
 
     @Override
-    public DataSource getDataSource() {
-        return DataSource
-                .builder()
-                .docRef(IndexShardFields.INDEX_SHARDS_PSEUDO_DOC_REF)
-                .fields(IndexShardFields.getFields())
-                .build();
+    public ResultPage<FieldInfo> getFieldInfo(final FindFieldInfoCriteria criteria) {
+        return FieldInfoResultPageBuilder.builder(criteria).addAll(IndexShardFields.getFields()).build();
+    }
+
+    @Override
+    public Optional<String> fetchDocumentation(final DocRef docRef) {
+        return Optional.empty();
     }
 
     @Override
@@ -155,9 +164,14 @@ public class IndexShardServiceImpl implements IndexShardService, Searchable {
 
     @Override
     public void search(final ExpressionCriteria criteria,
-                       final AbstractField[] fields,
+                       final FieldIndex fieldIndex,
                        final ValuesConsumer consumer) {
         securityContext.secure(PERMISSION, () ->
-                indexShardDao.search(criteria, fields, consumer));
+                indexShardDao.search(criteria, fieldIndex, consumer));
+    }
+
+    @Override
+    public void setIndexVersion(final LuceneVersion indexVersion) {
+        this.indexVersion = indexVersion;
     }
 }

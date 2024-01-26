@@ -1,6 +1,7 @@
 package stroom.proxy;
 
-import javax.servlet.http.HttpServletResponse;
+
+import jakarta.servlet.http.HttpServletResponse;
 
 /**
  * List of all the stroom codes that we return.

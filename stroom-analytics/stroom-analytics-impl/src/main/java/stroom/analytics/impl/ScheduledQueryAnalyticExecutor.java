@@ -1,5 +1,6 @@
 package stroom.analytics.impl;
 
+import stroom.analytics.api.NotificationState;
 import stroom.analytics.shared.AnalyticProcessConfig;
 import stroom.analytics.shared.AnalyticProcessType;
 import stroom.analytics.shared.AnalyticRuleDoc;
@@ -25,7 +26,7 @@ import stroom.query.api.v2.SearchRequestSource.SourceType;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.api.v2.TimeFilter;
 import stroom.query.api.v2.TimeRange;
-import stroom.query.common.v2.CompiledFields;
+import stroom.query.common.v2.CompiledColumns;
 import stroom.query.common.v2.DataStore;
 import stroom.query.common.v2.ErrorConsumerImpl;
 import stroom.query.common.v2.ExpressionContextFactory;
@@ -36,10 +37,9 @@ import stroom.query.common.v2.OpenGroups;
 import stroom.query.common.v2.ResultStoreManager;
 import stroom.query.common.v2.ResultStoreManager.RequestAndStore;
 import stroom.query.common.v2.SimpleRowCreator;
-import stroom.query.common.v2.format.FieldFormatter;
+import stroom.query.common.v2.format.ColumnFormatter;
 import stroom.query.common.v2.format.FormatterFactory;
-import stroom.query.language.SearchRequestBuilder;
-import stroom.query.language.functions.FieldIndex;
+import stroom.query.language.SearchRequestFactory;
 import stroom.query.language.functions.ref.ErrorConsumer;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
@@ -60,6 +60,9 @@ import stroom.util.shared.time.TimeUnit;
 import stroom.util.time.SimpleDurationUtil;
 import stroom.view.shared.ViewDoc;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -69,8 +72,6 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
-import javax.inject.Inject;
-import javax.inject.Provider;
 
 public class ScheduledQueryAnalyticExecutor {
 
@@ -87,7 +88,7 @@ public class ScheduledQueryAnalyticExecutor {
     private final NotificationStateService notificationStateService;
     private final Provider<ErrorReceiverProxy> errorReceiverProxyProvider;
     private final DetectionConsumerFactory detectionConsumerFactory;
-    private final SearchRequestBuilder searchRequestBuilder;
+    private final SearchRequestFactory searchRequestFactory;
     private final ExpressionContextFactory expressionContextFactory;
     private final SecurityContext securityContext;
 
@@ -103,7 +104,7 @@ public class ScheduledQueryAnalyticExecutor {
                                    final NotificationStateService notificationStateService,
                                    final Provider<ErrorReceiverProxy> errorReceiverProxyProvider,
                                    final DetectionConsumerFactory detectionConsumerFactory,
-                                   final SearchRequestBuilder searchRequestBuilder,
+                                   final SearchRequestFactory searchRequestFactory,
                                    final ExpressionContextFactory expressionContextFactory,
                                    final SecurityContext securityContext) {
         this.analyticHelper = analyticHelper;
@@ -117,7 +118,7 @@ public class ScheduledQueryAnalyticExecutor {
         this.notificationStateService = notificationStateService;
         this.errorReceiverProxyProvider = errorReceiverProxyProvider;
         this.detectionConsumerFactory = detectionConsumerFactory;
-        this.searchRequestBuilder = searchRequestBuilder;
+        this.searchRequestFactory = searchRequestFactory;
         this.expressionContextFactory = expressionContextFactory;
         this.securityContext = securityContext;
     }
@@ -245,7 +246,7 @@ public class ScheduledQueryAnalyticExecutor {
                 final SearchRequestSource searchRequestSource = SearchRequestSource
                         .builder()
                         .sourceType(SourceType.SCHEDULED_QUERY_ANALYTIC)
-                        .componentId(SearchRequestBuilder.TABLE_COMPONENT_ID)
+                        .componentId(SearchRequestFactory.TABLE_COMPONENT_ID)
                         .build();
 
                 final String query = analytic.analyticRuleDoc().getQuery();
@@ -262,12 +263,12 @@ public class ScheduledQueryAnalyticExecutor {
                         DateTimeSettings.builder().build(),
                         false);
                 final ExpressionContext expressionContext = expressionContextFactory.createContext(sampleRequest);
-                SearchRequest mappedRequest = searchRequestBuilder.create(query, sampleRequest, expressionContext);
+                SearchRequest mappedRequest = searchRequestFactory.create(query, sampleRequest, expressionContext);
 
                 // Fix table result requests.
                 final List<ResultRequest> resultRequests = mappedRequest.getResultRequests();
                 if (resultRequests != null && resultRequests.size() == 1) {
-                    final ResultRequest resultRequest = resultRequests.get(0).copy()
+                    final ResultRequest resultRequest = resultRequests.getFirst().copy()
                             .openGroups(null)
                             .requestedRange(OffsetRange.UNBOUNDED)
                             .build();
@@ -277,24 +278,22 @@ public class ScheduledQueryAnalyticExecutor {
                     final SearchRequest modifiedRequest = requestAndStore.searchRequest();
                     try {
                         final DataStore dataStore = requestAndStore
-                                .resultStore().getData(SearchRequestBuilder.TABLE_COMPONENT_ID);
+                                .resultStore().getData(SearchRequestFactory.TABLE_COMPONENT_ID);
                         dataStore.getCompletionState().awaitCompletion();
 
-                        final TableSettings tableSettings = resultRequest.getMappings().get(0);
+                        final TableSettings tableSettings = resultRequest.getMappings().getFirst();
                         final Map<String, String> paramMap = ParamUtil
                                 .createParamMap(mappedRequest.getQuery().getParams());
-                        final CompiledFields compiledFields = CompiledFields.create(
+                        final CompiledColumns compiledColumns = CompiledColumns.create(
                                 expressionContext,
-                                tableSettings.getFields(),
+                                tableSettings.getColumns(),
                                 paramMap);
-                        final FieldIndex fieldIndex = compiledFields.getFieldIndex();
 
                         final Provider<DetectionConsumer> detectionConsumerProvider =
                                 detectionConsumerFactory.create(analytic.analyticRuleDoc);
                         final DetectionConsumerProxy detectionConsumerProxy = detectionConsumerProxyProvider.get();
                         detectionConsumerProxy.setAnalyticRuleDoc(analytic.analyticRuleDoc());
-                        detectionConsumerProxy.setCompiledFields(compiledFields);
-                        detectionConsumerProxy.setFieldIndex(fieldIndex);
+                        detectionConsumerProxy.setCompiledColumns(compiledColumns);
                         detectionConsumerProxy.setDetectionsConsumerProvider(detectionConsumerProvider);
 
                         try {
@@ -308,17 +307,17 @@ public class ScheduledQueryAnalyticExecutor {
                                     Long streamId = null;
                                     Long eventId = null;
                                     final List<DetectionValue> values = new ArrayList<>();
-                                    for (int i = 0; i < dataStore.getFields().size(); i++) {
+                                    for (int i = 0; i < dataStore.getColumns().size(); i++) {
                                         if (i < row.getValues().size()) {
-                                            final String fieldName = dataStore.getFields().get(i).getName();
+                                            final String columnName = dataStore.getColumns().get(i).getName();
                                             final String value = row.getValues().get(i);
                                             if (value != null) {
-                                                if (IndexConstants.STREAM_ID.equals(fieldName)) {
+                                                if (IndexConstants.STREAM_ID.equals(columnName)) {
                                                     streamId = DetectionConsumerProxy.getSafeLong(value);
-                                                } else if (IndexConstants.EVENT_ID.equals(fieldName)) {
+                                                } else if (IndexConstants.EVENT_ID.equals(columnName)) {
                                                     eventId = DetectionConsumerProxy.getSafeLong(value);
                                                 }
-                                                values.add(new DetectionValue(fieldName, value));
+                                                values.add(new DetectionValue(columnName, value));
                                             }
                                         }
                                     }
@@ -350,8 +349,8 @@ public class ScheduledQueryAnalyticExecutor {
                             };
 
                             final KeyFactory keyFactory = dataStore.getKeyFactory();
-                            final FieldFormatter fieldFormatter =
-                                    new FieldFormatter(
+                            final ColumnFormatter fieldFormatter =
+                                    new ColumnFormatter(
                                             new FormatterFactory(sampleRequest.getDateTimeSettings()));
 
                             // Create the row creator.
@@ -359,7 +358,7 @@ public class ScheduledQueryAnalyticExecutor {
                                     fieldFormatter,
                                     keyFactory,
                                     tableSettings.getAggregateFilter(),
-                                    dataStore.getFields(),
+                                    dataStore.getColumns(),
                                     errorConsumer);
 
                             if (optionalRowCreator.isEmpty()) {
@@ -378,7 +377,7 @@ public class ScheduledQueryAnalyticExecutor {
 
                         } finally {
                             final List<String> errors = errorConsumer.getErrors();
-                            if (errors != null && errors.size() > 0) {
+                            if (errors != null) {
                                 for (final String error : errors) {
                                     errorReceiverProxyProvider.get()
                                             .getErrorReceiver()
@@ -420,65 +419,67 @@ public class ScheduledQueryAnalyticExecutor {
         final List<AnalyticRuleDoc> rules = analyticHelper.getRules();
         for (final AnalyticRuleDoc analyticRuleDoc : rules) {
             final AnalyticProcessConfig analyticProcessConfig = analyticRuleDoc.getAnalyticProcessConfig();
-            if (analyticProcessConfig != null &&
-                    analyticProcessConfig.isEnabled() &&
-                    nodeInfo.getThisNodeName().equals(analyticProcessConfig.getNode()) &&
-                    AnalyticProcessType.SCHEDULED_QUERY.equals(analyticRuleDoc.getAnalyticProcessType())) {
-                final AnalyticTracker tracker = analyticHelper.getTracker(analyticRuleDoc);
+            if (analyticProcessConfig instanceof
+                    final ScheduledQueryAnalyticProcessConfig scheduledQueryAnalyticProcessConfig) {
+                if (scheduledQueryAnalyticProcessConfig.isEnabled() &&
+                        nodeInfo.getThisNodeName().equals(scheduledQueryAnalyticProcessConfig.getNode()) &&
+                        AnalyticProcessType.SCHEDULED_QUERY.equals(analyticRuleDoc.getAnalyticProcessType())) {
+                    final AnalyticTracker tracker = analyticHelper.getTracker(analyticRuleDoc);
 
 
-                ScheduledQueryAnalyticTrackerData analyticProcessorTrackerData;
-                if (tracker.getAnalyticTrackerData() instanceof
-                        ScheduledQueryAnalyticTrackerData) {
-                    analyticProcessorTrackerData = (ScheduledQueryAnalyticTrackerData)
-                            tracker.getAnalyticTrackerData();
-                } else {
-                    analyticProcessorTrackerData = new ScheduledQueryAnalyticTrackerData();
-                    tracker.setAnalyticTrackerData(analyticProcessorTrackerData);
-                }
-
-                try {
-                    ViewDoc viewDoc = null;
-
-                    // Try and get view.
-                    final String ruleIdentity = AnalyticUtil.getAnalyticRuleIdentity(analyticRuleDoc);
-                    final SearchRequest searchRequest = analyticRuleSearchRequestHelper
-                            .create(analyticRuleDoc);
-                    final DocRef dataSource = searchRequest.getQuery().getDataSource();
-
-                    if (dataSource == null || !ViewDoc.DOCUMENT_TYPE.equals(dataSource.getType())) {
-                        tracker.getAnalyticTrackerData()
-                                .setMessage("Error: Rule needs to reference a view");
-
+                    ScheduledQueryAnalyticTrackerData analyticProcessorTrackerData;
+                    if (tracker.getAnalyticTrackerData() instanceof
+                            ScheduledQueryAnalyticTrackerData) {
+                        analyticProcessorTrackerData = (ScheduledQueryAnalyticTrackerData)
+                                tracker.getAnalyticTrackerData();
                     } else {
-                        // Load view.
-                        viewDoc = analyticHelper.loadViewDoc(ruleIdentity, dataSource);
+                        analyticProcessorTrackerData = new ScheduledQueryAnalyticTrackerData();
+                        tracker.setAnalyticTrackerData(analyticProcessorTrackerData);
                     }
 
-                    if (!(analyticRuleDoc.getAnalyticProcessConfig()
-                            instanceof ScheduledQueryAnalyticProcessConfig)) {
-                        LOGGER.debug("Error: Invalid process config {}", ruleIdentity);
-                        tracker.getAnalyticTrackerData()
-                                .setMessage("Error: Invalid process config.");
-
-                    } else {
-                        analyticList.add(new ScheduledQueryAnalytic(
-                                ruleIdentity,
-                                analyticRuleDoc,
-                                (ScheduledQueryAnalyticProcessConfig) analyticRuleDoc.getAnalyticProcessConfig(),
-                                tracker,
-                                analyticProcessorTrackerData,
-                                searchRequest,
-                                viewDoc));
-                    }
-
-                } catch (final RuntimeException e) {
-                    LOGGER.debug(e.getMessage(), e);
                     try {
-                        tracker.getAnalyticTrackerData().setMessage(e.getMessage());
-                        analyticHelper.updateTracker(tracker);
-                    } catch (final RuntimeException e2) {
-                        LOGGER.error(e2::getMessage, e2);
+                        ViewDoc viewDoc = null;
+
+                        // Try and get view.
+                        final String ruleIdentity = AnalyticUtil.getAnalyticRuleIdentity(analyticRuleDoc);
+                        final SearchRequest searchRequest = analyticRuleSearchRequestHelper
+                                .create(analyticRuleDoc);
+                        final DocRef dataSource = searchRequest.getQuery().getDataSource();
+
+                        if (dataSource == null || !ViewDoc.DOCUMENT_TYPE.equals(dataSource.getType())) {
+                            tracker.getAnalyticTrackerData()
+                                    .setMessage("Error: Rule needs to reference a view");
+
+                        } else {
+                            // Load view.
+                            viewDoc = analyticHelper.loadViewDoc(ruleIdentity, dataSource);
+                        }
+
+                        if (!(analyticRuleDoc.getAnalyticProcessConfig()
+                                instanceof ScheduledQueryAnalyticProcessConfig)) {
+                            LOGGER.debug("Error: Invalid process config {}", ruleIdentity);
+                            tracker.getAnalyticTrackerData()
+                                    .setMessage("Error: Invalid process config.");
+
+                        } else {
+                            analyticList.add(new ScheduledQueryAnalytic(
+                                    ruleIdentity,
+                                    analyticRuleDoc,
+                                    (ScheduledQueryAnalyticProcessConfig) analyticRuleDoc.getAnalyticProcessConfig(),
+                                    tracker,
+                                    analyticProcessorTrackerData,
+                                    searchRequest,
+                                    viewDoc));
+                        }
+
+                    } catch (final RuntimeException e) {
+                        LOGGER.debug(e.getMessage(), e);
+                        try {
+                            tracker.getAnalyticTrackerData().setMessage(e.getMessage());
+                            analyticHelper.updateTracker(tracker);
+                        } catch (final RuntimeException e2) {
+                            LOGGER.error(e2::getMessage, e2);
+                        }
                     }
                 }
             }

@@ -3,10 +3,11 @@ package stroom.proxy.app.handler;
 import stroom.meta.api.AttributeMap;
 import stroom.receive.common.AttributeMapFilter;
 
+import jakarta.inject.Inject;
+
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.time.Instant;
-import javax.inject.Inject;
 
 public class InstantForwardHttpPost {
 

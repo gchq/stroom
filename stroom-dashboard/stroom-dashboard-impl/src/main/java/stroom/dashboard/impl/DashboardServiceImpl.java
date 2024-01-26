@@ -36,7 +36,7 @@ import stroom.docstore.api.DocumentResourceHelper;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.expression.api.ExpressionContext;
 import stroom.node.api.NodeInfo;
-import stroom.query.api.v2.Field;
+import stroom.query.api.v2.Column;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.ResultRequest;
@@ -50,7 +50,7 @@ import stroom.query.common.v2.ResultCreator;
 import stroom.query.common.v2.ResultStoreManager;
 import stroom.query.common.v2.ResultStoreManager.RequestAndStore;
 import stroom.query.common.v2.TableResultCreator;
-import stroom.query.common.v2.format.FieldFormatter;
+import stroom.query.common.v2.format.ColumnFormatter;
 import stroom.query.common.v2.format.FormatterFactory;
 import stroom.query.language.functions.Expression;
 import stroom.query.language.functions.ExpressionParser;
@@ -74,6 +74,9 @@ import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
 import stroom.util.string.ExceptionStringUtil;
 
+import jakarta.inject.Inject;
+import jakarta.servlet.http.HttpServletRequest;
+
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -91,8 +94,6 @@ import java.util.concurrent.Executor;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
-import javax.servlet.http.HttpServletRequest;
 
 @AutoLogged
 class DashboardServiceImpl implements DashboardService {
@@ -188,7 +189,7 @@ class DashboardServiceImpl implements DashboardService {
                                 ComponentResultRequest newRequest = null;
                                 if (componentResultRequest instanceof final TableResultRequest tableResultRequest) {
                                     // Remove special fields.
-                                    tableResultRequest.getTableSettings().getFields().removeIf(Field::isSpecial);
+                                    tableResultRequest.getTableSettings().getColumns().removeIf(Column::isSpecial);
                                     newRequest = tableResultRequest
                                             .copy()
                                             .fetch(Fetch.ALL)
@@ -279,8 +280,8 @@ class DashboardServiceImpl implements DashboardService {
                 resourceKey = resourceStore.createTempFile(fileName);
                 final Path file = resourceStore.getTempFile(resourceKey);
 
-                final FieldFormatter fieldFormatter =
-                        new FieldFormatter(
+                final ColumnFormatter fieldFormatter =
+                        new ColumnFormatter(
                                 new FormatterFactory(searchRequest.getDateTimeSettings()));
 
                 // Start target

@@ -6,7 +6,7 @@ import stroom.proxy.app.handler.ForwardFileDestinationFactory;
 import stroom.proxy.app.handler.MockForwardFileDestinationFactory;
 
 import com.google.inject.AbstractModule;
-import io.dropwizard.setup.Environment;
+import io.dropwizard.core.setup.Environment;
 
 import java.nio.file.Path;
 

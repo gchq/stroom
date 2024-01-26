@@ -7,8 +7,6 @@ import stroom.search.extraction.Event;
 import stroom.search.extraction.StoredDataQueue;
 import stroom.search.extraction.StreamEventMap;
 import stroom.search.extraction.StreamEventMap.EventSet;
-import stroom.search.impl.shard.DocIdQueue;
-import stroom.search.impl.shard.ShardIdQueue;
 import stroom.util.concurrent.CompleteException;
 
 import org.junit.jupiter.api.AfterEach;
@@ -71,55 +69,6 @@ class TestQueues {
         CompletableFuture.allOf(futures).join();
 
         assertThat(consumed.get()).isEqualTo(1000);
-    }
-
-    @Test
-    @SuppressWarnings("unchecked")
-    void testDocIdQueue() {
-        final int threads = 10;
-        final DocIdQueue queue = new DocIdQueue(1000000);
-        final AtomicInteger produced = new AtomicInteger();
-        final AtomicInteger consumed = new AtomicInteger();
-
-        // Producer.
-        final CompletableFuture<Void>[] producers = new CompletableFuture[threads];
-        for (int i = 0; i < threads; i++) {
-            final CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
-                boolean run = true;
-                while (run) {
-                    final int id = produced.incrementAndGet();
-                    if (id > MAX) {
-                        run = false;
-                    } else {
-                        queue.put(id);
-                    }
-                }
-            }, executorService);
-            producers[i] = future;
-        }
-
-        final CompletableFuture<Void>[] consumers = new CompletableFuture[threads];
-        for (int i = 0; i < threads; i++) {
-            final CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
-                boolean done = false;
-                while (!done) {
-                    if (queue.take() == null) {
-                        done = true;
-                    } else {
-                        consumed.incrementAndGet();
-                    }
-                }
-            }, executorService);
-            consumers[i] = future;
-        }
-
-        CompletableFuture.allOf(producers).join();
-        for (int i = 0; i < threads; i++) {
-            queue.complete();
-        }
-        CompletableFuture.allOf(consumers).join();
-
-        assertThat(consumed.get()).isEqualTo(MAX);
     }
 
     @Test
@@ -191,8 +140,12 @@ class TestQueues {
                     if (id > MAX) {
                         run = false;
                     } else {
-                        queue.put(new Event(1, id,
-                                Val.of(ValString.create("test"), ValString.create("test"))));
+                        try {
+                            queue.put(new Event(1, id,
+                                    Val.of(ValString.create("test"), ValString.create("test"))));
+                        } catch (CompleteException e) {
+                            throw new RuntimeException(e);
+                        }
                     }
                 }
             }, executorService);

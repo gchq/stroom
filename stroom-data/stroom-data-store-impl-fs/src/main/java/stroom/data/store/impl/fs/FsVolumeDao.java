@@ -22,4 +22,8 @@ public interface FsVolumeDao {
     Set<FsVolume> get(final String path);
 
     List<FsVolume> getAll();
+
+    List<FsVolume> getVolumesInGroup(String groupName);
+
+    List<FsVolume> getVolumesInGroup(final int groupid);
 }

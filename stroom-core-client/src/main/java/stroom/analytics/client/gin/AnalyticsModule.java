@@ -28,11 +28,20 @@ import stroom.analytics.client.presenter.AnalyticProcessingPresenter.AnalyticPro
 import stroom.analytics.client.presenter.AnalyticRulePresenter;
 import stroom.analytics.client.presenter.AnalyticStreamDestinationPresenter;
 import stroom.analytics.client.presenter.AnalyticStreamDestinationPresenter.AnalyticStreamDestinationView;
+import stroom.analytics.client.presenter.ScheduledQueryProcessingPresenter;
+import stroom.analytics.client.presenter.ScheduledQueryProcessingPresenter.ScheduledQueryProcessingView;
+import stroom.analytics.client.presenter.StreamingProcessingPresenter;
+import stroom.analytics.client.presenter.StreamingProcessingPresenter.StreamingProcessingView;
+import stroom.analytics.client.presenter.TableBuilderProcessingPresenter;
+import stroom.analytics.client.presenter.TableBuilderProcessingPresenter.TableBuilderProcessingView;
 import stroom.analytics.client.view.AnalyticDataShardsViewImpl;
 import stroom.analytics.client.view.AnalyticEmailDestinationViewImpl;
 import stroom.analytics.client.view.AnalyticNotificationViewImpl;
 import stroom.analytics.client.view.AnalyticProcessingViewImpl;
 import stroom.analytics.client.view.AnalyticStreamDestinationViewImpl;
+import stroom.analytics.client.view.ScheduledQueryProcessingViewImpl;
+import stroom.analytics.client.view.StreamingProcessingViewImpl;
+import stroom.analytics.client.view.TableBuilderProcessingViewImpl;
 import stroom.core.client.gin.PluginModule;
 
 public class AnalyticsModule extends PluginModule {
@@ -58,5 +67,14 @@ public class AnalyticsModule extends PluginModule {
         bindPresenterWidget(AnalyticDataShardsPresenter.class,
                 AnalyticDataShardsView.class,
                 AnalyticDataShardsViewImpl.class);
+        bindPresenterWidget(ScheduledQueryProcessingPresenter.class,
+                ScheduledQueryProcessingView.class,
+                ScheduledQueryProcessingViewImpl.class);
+        bindPresenterWidget(TableBuilderProcessingPresenter.class,
+                TableBuilderProcessingView.class,
+                TableBuilderProcessingViewImpl.class);
+        bindPresenterWidget(StreamingProcessingPresenter.class,
+                StreamingProcessingView.class,
+                StreamingProcessingViewImpl.class);
     }
 }

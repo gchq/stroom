@@ -16,7 +16,7 @@
 
 package stroom.query.common.v2;
 
-import stroom.query.api.v2.Field;
+import stroom.query.api.v2.Column;
 import stroom.query.api.v2.Sort;
 import stroom.query.api.v2.Sort.SortDirection;
 import stroom.query.language.functions.Val;
@@ -40,21 +40,21 @@ public class CompiledSorter<E extends Item> implements Comparator<E>, Function<S
 
     @SuppressWarnings("unchecked")
     public static <E extends Item> CompiledSorter<E>[] create(final int maxDepth,
-                                                              final CompiledField[] compiledFields) {
+                                                              final CompiledColumn[] compiledColumns) {
         final CompiledSorter<E>[] sorters = new CompiledSorter[maxDepth + 1];
 
-        if (compiledFields != null) {
+        if (compiledColumns != null) {
             for (int depth = 0; depth <= maxDepth; depth++) {
-                for (int fieldIndex = 0; fieldIndex < compiledFields.length; fieldIndex++) {
-                    final CompiledField compiledField = compiledFields[fieldIndex];
-                    final Field field = compiledField.getField();
-                    if (field.getSort() != null && (field.getGroup() == null || field.getGroup() >= depth)) {
+                for (int columnIndex = 0; columnIndex < compiledColumns.length; columnIndex++) {
+                    final CompiledColumn compiledColumn = compiledColumns[columnIndex];
+                    final Column column = compiledColumn.getColumn();
+                    if (column.getSort() != null && (column.getGroup() == null || column.getGroup() >= depth)) {
                         // Get an appropriate comparator.
-                        final Comparator<Val> comparator = ComparatorFactory.create(field);
+                        final Comparator<Val> comparator = ComparatorFactory.create(column);
 
                         // Remember sorting info.
-                        final Sort sort = field.getSort();
-                        final CompiledSort compiledSort = new CompiledSort(fieldIndex, sort, comparator);
+                        final Sort sort = column.getSort();
+                        final CompiledSort compiledSort = new CompiledSort(columnIndex, sort, comparator);
 
                         CompiledSorter<E> sorter = sorters[depth];
                         if (sorter == null) {

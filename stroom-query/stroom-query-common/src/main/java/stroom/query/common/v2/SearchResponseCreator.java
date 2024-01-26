@@ -24,7 +24,7 @@ import stroom.query.api.v2.ResultRequest.Fetch;
 import stroom.query.api.v2.ResultRequest.ResultStyle;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
-import stroom.query.common.v2.format.FieldFormatter;
+import stroom.query.common.v2.format.ColumnFormatter;
 import stroom.query.common.v2.format.FormatterFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -296,10 +296,10 @@ public class SearchResponseCreator {
             ResultCreator resultCreator;
             try {
                 if (ResultStyle.TABLE.equals(resultRequest.getResultStyle())) {
-                    final FieldFormatter fieldFormatter =
-                            new FieldFormatter(
+                    final ColumnFormatter columnFormatter =
+                            new ColumnFormatter(
                                     new FormatterFactory(searchRequest.getDateTimeSettings()));
-                    resultCreator = new TableResultCreator(fieldFormatter, cacheLastResult);
+                    resultCreator = new TableResultCreator(columnFormatter, cacheLastResult);
 
                 } else if (ResultStyle.VIS.equals(resultRequest.getResultStyle())) {
                     final FlatResultCreator flatResultCreator = new FlatResultCreator(

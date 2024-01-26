@@ -24,16 +24,15 @@ import stroom.util.shared.RestResource;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
 import org.fusesource.restygwt.client.DirectRestService;
-
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
 
 @Tag(name = "Dashboards")
 @Path(DashboardResource.BASE_PATH)
@@ -83,10 +82,20 @@ public interface DashboardResource extends RestResource, DirectRestService, Fetc
     @Path(DOWNLOAD_SEARCH_RESULTS_PATH_PATH + NODE_NAME_PATH_PARAM)
     @Operation(
             summary = "Download search results",
-            operationId = "downloadDashboardSearchResults")
+            operationId = "downloadDashboardSearchResultsNode")
     ResourceGeneration downloadSearchResults(
             @PathParam("nodeName") String nodeName,
             @Parameter(description = "request", required = true) DownloadSearchResultsRequest request);
+
+    @POST
+    @Path(DOWNLOAD_SEARCH_RESULTS_PATH_PATH)
+    @Operation(
+            summary = "Download search results",
+            operationId = "downloadDashboardSearchResultsLocal")
+    default ResourceGeneration downloadSearchResults(
+            @Parameter(description = "request", required = true) DownloadSearchResultsRequest request) {
+        return downloadSearchResults(null, request);
+    }
 
     @POST
     @Path(SEARCH_PATH_PART + NODE_NAME_PATH_PARAM)
@@ -96,6 +105,16 @@ public interface DashboardResource extends RestResource, DirectRestService, Fetc
     DashboardSearchResponse search(
             @PathParam("nodeName") String nodeName,
             @Parameter(description = "request", required = true) DashboardSearchRequest request);
+
+    @POST
+    @Path(SEARCH_PATH_PART)
+    @Operation(
+            summary = "Perform a new search or get new results",
+            operationId = "dashboardSearch")
+    default DashboardSearchResponse search(
+            @Parameter(description = "request", required = true) DashboardSearchRequest request) {
+        return search(null, request);
+    }
 
 //    @POST
 //    @Path("/destroy")

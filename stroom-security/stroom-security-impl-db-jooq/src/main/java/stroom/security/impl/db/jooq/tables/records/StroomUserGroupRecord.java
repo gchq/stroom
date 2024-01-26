@@ -4,13 +4,13 @@
 package stroom.security.impl.db.jooq.tables.records;
 
 
+import stroom.security.impl.db.jooq.tables.StroomUserGroup;
+
 import org.jooq.Field;
 import org.jooq.Record1;
 import org.jooq.Record3;
 import org.jooq.Row3;
 import org.jooq.impl.UpdatableRecordImpl;
-
-import stroom.security.impl.db.jooq.tables.StroomUserGroup;
 
 
 /**

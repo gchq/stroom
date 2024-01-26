@@ -27,6 +27,7 @@ import stroom.pipeline.refdata.store.offheapstore.databases.ValueStoreMetaDb;
 import stroom.util.logging.LogUtil;
 
 import com.google.inject.assistedinject.Assisted;
+import jakarta.inject.Inject;
 import org.lmdbjava.Txn;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,7 +35,6 @@ import org.slf4j.LoggerFactory;
 import java.nio.ByteBuffer;
 import java.util.Optional;
 import java.util.OptionalInt;
-import javax.inject.Inject;
 
 /**
  * Class to manage all interactions with the {@link ValueStoreDb} and {@link ValueStoreMetaDb}

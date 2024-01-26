@@ -48,6 +48,7 @@ import stroom.document.client.event.WriteDocumentEvent;
 import stroom.explorer.client.event.ExplorerTreeDeleteEvent;
 import stroom.explorer.client.event.ExplorerTreeSelectEvent;
 import stroom.explorer.client.event.HighlightExplorerNodeEvent;
+import stroom.explorer.client.event.LocateDocEvent;
 import stroom.explorer.client.event.RefreshExplorerTreeEvent;
 import stroom.explorer.client.event.ShowEditNodeTagsDialogEvent;
 import stroom.explorer.client.event.ShowExplorerMenuEvent;
@@ -165,6 +166,12 @@ public class DocumentPluginEventManager extends Plugin {
         KeyBinding.addCommand(Action.ITEM_SAVE_ALL, hasSaveRegistry::save);
 
         KeyBinding.addCommand(Action.FIND, () -> ShowFindEvent.fire(this));
+        KeyBinding.addCommand(Action.LOCATE, () -> {
+            final DocRef selectedDoc = getSelectedDoc(selectedTab);
+            if (selectedDoc != null) {
+                LocateDocEvent.fire(this, selectedDoc);
+            }
+        });
     }
 
     @Override
@@ -172,8 +179,16 @@ public class DocumentPluginEventManager extends Plugin {
         super.onBind();
 
         // track the currently selected content tab.
-        registerHandler(getEventBus().addHandler(ContentTabSelectionChangeEvent.getType(),
-                e -> selectedTab = e.getTabData()));
+        registerHandler(getEventBus().addHandler(ContentTabSelectionChangeEvent.getType(), e ->
+                selectedTab = e.getTabData()));
+
+        // Add support to locate items in the explorer tree.
+        registerHandler(getEventBus().addHandler(LocateDocEvent.getType(), e -> {
+            if (e.getDocRef() != null) {
+                highlight(e.getDocRef());
+            }
+        }));
+
 
         // // 2. Handle requests to close tabs.
         // registerHandler(getEventBus().addHandler(
@@ -262,8 +277,10 @@ public class DocumentPluginEventManager extends Plugin {
         // 6. Handle save as events.
         registerHandler(getEventBus().addHandler(SaveAsDocumentEvent.getType(), event -> {
             // First get the explorer node for the docref.
-            final Rest<ExplorerNode> rest = restFactory.create();
-            rest
+//            final Rest<ExplorerNode> rest = restFactory.create();
+//            rest
+            restFactory.builder()
+                    .forType(ExplorerNode.class)
                     .onSuccess(explorerNode -> {
                         // Now we have the explorer node proceed with the save as.
                         final DocumentPlugin<?> plugin = documentPluginRegistry.get(explorerNode.getType());
@@ -431,6 +448,8 @@ public class DocumentPluginEventManager extends Plugin {
             menuItems.add(new Separator(5));
             menuItems.add(createSaveMenuItem(6, event.getTabData()));
             menuItems.add(createSaveAllMenuItem(8));
+            menuItems.add(new Separator(9));
+            menuItems.add(createLocateMenuItem(10, event.getTabData()));
 
             ShowMenuEvent
                     .builder()
@@ -615,7 +634,8 @@ public class DocumentPluginEventManager extends Plugin {
     }
 
     private void setAsFavourite(final DocRef docRef, final boolean setFavourite) {
-        final Rest<Void> rest = restFactory.create();
+        final Rest<Void> rest = restFactory.builder()
+                .forVoid();
         rest.onSuccess(result -> RefreshExplorerTreeEvent.fire(DocumentPluginEventManager.this));
         if (setFavourite) {
             rest.call(EXPLORER_FAV_RESOURCE).createUserFavourite(docRef);
@@ -628,7 +648,8 @@ public class DocumentPluginEventManager extends Plugin {
         final DocumentPlugin<?> documentPlugin = documentPluginRegistry.get(docRef.getType());
         if (documentPlugin != null) {
             // Decorate the DocRef with its name from the info service (required by the doc presenter)
-            restFactory.create(DocRef.class)
+            restFactory.builder()
+                    .forType(DocRef.class)
                     .onSuccess(decoratedDocRef -> {
                         if (decoratedDocRef != null) {
                             docRef.setName(decoratedDocRef.getName());
@@ -1028,6 +1049,30 @@ public class DocumentPluginEventManager extends Plugin {
                 .enabled(hasSaveRegistry.isDirty())
                 .command(hasSaveRegistry::save)
                 .build();
+    }
+
+    private MenuItem createLocateMenuItem(final int priority, final TabData selectedTab) {
+        final DocRef selectedDoc = getSelectedDoc(selectedTab);
+        return new IconMenuItem.Builder()
+                .priority(priority)
+                .icon(SvgImage.LOCATE)
+                .text("Locate In Explorer")
+                .action(Action.LOCATE)
+                .enabled(selectedDoc != null)
+                .command(() -> {
+                    if (selectedDoc != null) {
+                        LocateDocEvent.fire(DocumentPluginEventManager.this, selectedDoc);
+                    }
+                })
+                .build();
+    }
+
+    private DocRef getSelectedDoc(final TabData selectedTab) {
+        if (selectedTab instanceof DocumentTabData) {
+            final DocumentTabData documentTabData = (DocumentTabData) selectedTab;
+            return documentTabData.getDocRef();
+        }
+        return null;
     }
 
     private MenuItem createInfoMenuItem(final ExplorerNode explorerNode,

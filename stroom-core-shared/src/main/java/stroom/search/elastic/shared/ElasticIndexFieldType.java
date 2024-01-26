@@ -16,8 +16,8 @@
 
 package stroom.search.elastic.shared;
 
-import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.BooleanField;
+import stroom.datasource.api.v2.ConditionSet;
 import stroom.datasource.api.v2.DateField;
 import stroom.datasource.api.v2.DoubleField;
 import stroom.datasource.api.v2.FieldType;
@@ -27,15 +27,13 @@ import stroom.datasource.api.v2.IntegerField;
 import stroom.datasource.api.v2.IpV4AddressField;
 import stroom.datasource.api.v2.KeywordField;
 import stroom.datasource.api.v2.LongField;
+import stroom.datasource.api.v2.QueryField;
 import stroom.datasource.api.v2.TextField;
 import stroom.docref.HasDisplayValue;
-import stroom.query.api.v2.ExpressionTerm.Condition;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -74,7 +72,7 @@ public enum ElasticIndexFieldType implements HasDisplayValue {
     private final String displayValue;
     private final boolean numeric;
     private final Set<String> nativeTypes;
-    private final List<Condition> supportedConditions;
+    private final ConditionSet supportedConditions;
 
     ElasticIndexFieldType(final FieldType dataSourceFieldType,
                           final String displayValue,
@@ -93,7 +91,7 @@ public enum ElasticIndexFieldType implements HasDisplayValue {
         return numeric;
     }
 
-    public List<Condition> getSupportedConditions() {
+    public ConditionSet getSupportedConditions() {
         return supportedConditions;
     }
 
@@ -105,28 +103,13 @@ public enum ElasticIndexFieldType implements HasDisplayValue {
     /**
      * Determine the query expression conditions that apply to this field type
      */
-    private List<Condition> getConditions() {
-        final List<Condition> conditions = new ArrayList<>();
-
+    private ConditionSet getConditions() {
         if (FieldType.DATE.equals(dataSourceFieldType) ||
                 FieldType.IPV4_ADDRESS.equals(dataSourceFieldType) ||
                 numeric) {
-            conditions.add(Condition.EQUALS);
-            conditions.add(Condition.GREATER_THAN);
-            conditions.add(Condition.GREATER_THAN_OR_EQUAL_TO);
-            conditions.add(Condition.LESS_THAN);
-            conditions.add(Condition.LESS_THAN_OR_EQUAL_TO);
-            conditions.add(Condition.BETWEEN);
-            conditions.add(Condition.IN);
-            conditions.add(Condition.IN_DICTIONARY);
-        } else {
-            conditions.add(Condition.EQUALS);
-            conditions.add(Condition.IN);
-            conditions.add(Condition.IN_DICTIONARY);
-            conditions.add(Condition.MATCHES_REGEX);
+            return ConditionSet.ELASTIC_NUMERIC;
         }
-
-        return conditions;
+        return ConditionSet.ELASTIC_TEXT;
     }
 
     /**
@@ -144,29 +127,29 @@ public enum ElasticIndexFieldType implements HasDisplayValue {
     /**
      * Returns an `AbstractField` instance, based on the field's data type
      */
-    public AbstractField toDataSourceField(final String fieldName, final Boolean isIndexed)
+    public QueryField toDataSourceField(final String fieldName, final Boolean isIndexed)
             throws IllegalArgumentException {
         switch (dataSourceFieldType) {
             case ID:
-                return new IdField(fieldName, isIndexed, supportedConditions);
+                return new IdField(fieldName, supportedConditions, null, isIndexed);
             case BOOLEAN:
-                return new BooleanField(fieldName, isIndexed, supportedConditions);
+                return new BooleanField(fieldName, supportedConditions, null, isIndexed);
             case INTEGER:
-                return new IntegerField(fieldName, isIndexed, supportedConditions);
+                return new IntegerField(fieldName, supportedConditions, null, isIndexed);
             case LONG:
-                return new LongField(fieldName, isIndexed, supportedConditions);
+                return new LongField(fieldName, supportedConditions, null, isIndexed);
             case FLOAT:
-                return new FloatField(fieldName, isIndexed, supportedConditions);
+                return new FloatField(fieldName, supportedConditions, null, isIndexed);
             case DOUBLE:
-                return new DoubleField(fieldName, isIndexed, supportedConditions);
+                return new DoubleField(fieldName, supportedConditions, null, isIndexed);
             case DATE:
-                return new DateField(fieldName, isIndexed, supportedConditions);
+                return new DateField(fieldName, supportedConditions, null, isIndexed);
             case TEXT:
-                return new TextField(fieldName, isIndexed, supportedConditions);
+                return new TextField(fieldName, supportedConditions, null, isIndexed);
             case KEYWORD:
-                return new KeywordField(fieldName, isIndexed, supportedConditions);
+                return new KeywordField(fieldName, supportedConditions, null, isIndexed);
             case IPV4_ADDRESS:
-                return new IpV4AddressField(fieldName, isIndexed, supportedConditions);
+                return new IpV4AddressField(fieldName, supportedConditions, null, isIndexed);
             default:
                 return null;
         }

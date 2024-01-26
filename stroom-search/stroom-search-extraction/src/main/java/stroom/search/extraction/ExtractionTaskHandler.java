@@ -52,11 +52,12 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.StoredError;
 
+import jakarta.inject.Inject;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.util.Optional;
-import javax.inject.Inject;
 
 public class ExtractionTaskHandler {
 
@@ -253,6 +254,7 @@ public class ExtractionTaskHandler {
             } catch (final TaskTerminatedException e) {
                 // Ignore stopped pipeline exceptions as we are meant to get
                 // these when a task is asked to stop prematurely.
+                LOGGER.debug("Swallowing TaskTerminatedException");
             } catch (final RuntimeException e) {
                 throw ExtractionException.wrap(e);
             }

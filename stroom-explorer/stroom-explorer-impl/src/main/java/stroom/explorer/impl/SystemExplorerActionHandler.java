@@ -3,6 +3,7 @@ package stroom.explorer.impl;
 import stroom.docref.DocContentMatch;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
+import stroom.docref.StringMatch;
 import stroom.docstore.api.UniqueNameUtil;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.explorer.shared.DocumentType;
@@ -13,12 +14,13 @@ import stroom.security.shared.DocumentPermissionNames;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.PermissionException;
 
+import jakarta.inject.Inject;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import javax.inject.Inject;
 
 class SystemExplorerActionHandler implements ExplorerActionHandler {
 
@@ -125,7 +127,7 @@ class SystemExplorerActionHandler implements ExplorerActionHandler {
     }
 
     @Override
-    public List<DocContentMatch> findByContent(final String pattern, final boolean regex, final boolean matchCase) {
+    public List<DocContentMatch> findByContent(final StringMatch filter) {
         return Collections.emptyList();
     }
 

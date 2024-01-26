@@ -14,6 +14,7 @@ import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.explorer.impl.ExplorerConfig;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
+import stroom.security.impl.AuthenticationConfig;
 import stroom.security.openid.api.IdpType;
 import stroom.security.openid.api.OpenIdConfiguration;
 import stroom.ui.config.shared.ExtendedUiConfig;
@@ -31,18 +32,18 @@ import event.logging.ComplexLoggedOutcome;
 import event.logging.Query;
 import event.logging.SearchEventAction;
 import event.logging.UpdateEventAction;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.client.SyncInvoker;
+import jakarta.ws.rs.core.GenericType;
 
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.ws.rs.NotFoundException;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.client.SyncInvoker;
-import javax.ws.rs.core.GenericType;
 
 @AutoLogged
 public class GlobalConfigResourceImpl implements GlobalConfigResource {
@@ -57,6 +58,7 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
     private final Provider<NodeInfo> nodeInfoProvider;
     private final Provider<OpenIdConfiguration> openIdConfigProvider;
     private final Provider<ExplorerConfig> explorerConfigProvider;
+    private final Provider<AuthenticationConfig> authenticationConfigProvider;
 
     @Inject
     GlobalConfigResourceImpl(final Provider<StroomEventLoggingService> stroomEventLoggingServiceProvider,
@@ -66,7 +68,8 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
                              final Provider<UriFactory> uriFactory,
                              final Provider<NodeInfo> nodeInfoProvider,
                              final Provider<OpenIdConfiguration> openIdConfigProvider,
-                             final Provider<ExplorerConfig> explorerConfigProvider) {
+                             final Provider<ExplorerConfig> explorerConfigProvider,
+                             final Provider<AuthenticationConfig> authenticationConfigProvider) {
 
         this.stroomEventLoggingServiceProvider = stroomEventLoggingServiceProvider;
         this.globalConfigServiceProvider = Objects.requireNonNull(globalConfigServiceProvider);
@@ -76,6 +79,7 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
         this.nodeInfoProvider = nodeInfoProvider;
         this.openIdConfigProvider = openIdConfigProvider;
         this.explorerConfigProvider = explorerConfigProvider;
+        this.authenticationConfigProvider = authenticationConfigProvider;
     }
 
 
@@ -289,7 +293,8 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
         return new ExtendedUiConfig(
                 uiConfig.get(),
                 isExternalIdp,
-                explorerConfigProvider.get().getDependencyWarningsEnabled());
+                explorerConfigProvider.get().getDependencyWarningsEnabled(),
+                authenticationConfigProvider.get().getMaxApiKeyExpiryAge().toMillis());
     }
 
     private Query buildRawQuery(final String userInput) {

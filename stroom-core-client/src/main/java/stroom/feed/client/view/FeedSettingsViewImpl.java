@@ -46,6 +46,8 @@ public class FeedSettingsViewImpl extends ViewImpl implements FeedSettingsView, 
     SelectionBox<String> receivedType;
     @UiField
     CustomCheckBox reference;
+    @UiField
+    SelectionBox<String> volumeGroup;
 
     @Inject
     public FeedSettingsViewImpl(final Binder binder) {
@@ -88,6 +90,11 @@ public class FeedSettingsViewImpl extends ViewImpl implements FeedSettingsView, 
     }
 
     @Override
+    public SelectionBox<String> getVolumeGroup() {
+        return volumeGroup;
+    }
+
+    @Override
     public void onReadOnly(final boolean readOnly) {
         classification.setEnabled(!readOnly);
         dataEncoding.setEnabled(!readOnly);
@@ -95,6 +102,7 @@ public class FeedSettingsViewImpl extends ViewImpl implements FeedSettingsView, 
         receivedType.setEnabled(!readOnly);
         feedStatus.setEnabled(!readOnly);
         reference.setEnabled(!readOnly);
+        volumeGroup.setEnabled(!readOnly);
     }
 
     public interface Binder extends UiBinder<Widget, FeedSettingsViewImpl> {

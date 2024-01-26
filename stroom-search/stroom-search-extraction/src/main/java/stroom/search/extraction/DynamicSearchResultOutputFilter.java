@@ -19,14 +19,13 @@ package stroom.search.extraction;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.factory.ConfigurableElement;
-import stroom.pipeline.filter.AbstractFieldFilter;
-import stroom.pipeline.filter.FieldValue;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.svg.shared.SvgImage;
 
+import jakarta.inject.Inject;
+
 import java.util.List;
-import javax.inject.Inject;
 
 @ConfigurableElement(
         type = "DynamicSearchResultOutputFilter",
@@ -48,6 +47,6 @@ public class DynamicSearchResultOutputFilter extends AbstractFieldFilter {
 
     @Override
     protected void processFields(final List<FieldValue> fieldValues) {
-        fieldListConsumerHolder.accept(fieldValues);
+        fieldListConsumerHolder.acceptFieldValues(fieldValues);
     }
 }

@@ -40,6 +40,7 @@ import stroom.processor.api.ProcessorService;
 import stroom.processor.shared.CreateProcessFilterRequest;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
+import stroom.processor.shared.ProcessorType;
 import stroom.processor.shared.QueryData;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
@@ -55,6 +56,7 @@ import stroom.util.shared.Message;
 import stroom.util.shared.Severity;
 import stroom.xmlschema.shared.XmlSchemaDoc;
 
+import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -68,7 +70,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -199,7 +200,7 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
         QueryData filterConstraints = new QueryData();
         filterConstraints.setExpression(expression);
 
-        Processor processor = processorService.create(pipelineNode.getDocRef(), true);
+        Processor processor = processorService.create(ProcessorType.PIPELINE, pipelineNode.getDocRef(), true);
 
         ProcessorFilter filter = processorFilterService.create(processor,
                 CreateProcessFilterRequest

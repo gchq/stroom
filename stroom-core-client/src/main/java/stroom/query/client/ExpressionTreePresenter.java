@@ -19,10 +19,10 @@ package stroom.query.client;
 import stroom.data.client.event.DataSelectionEvent;
 import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.data.client.event.HasDataSelectionHandlers;
-import stroom.datasource.api.v2.AbstractField;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.client.presenter.FieldSelectionListModel;
 import stroom.widget.contextmenu.client.event.ContextMenuEvent.Handler;
 import stroom.widget.contextmenu.client.event.HasContextMenuHandlers;
 import stroom.widget.htree.client.treelayout.util.DefaultTreeForTreeLayout;
@@ -74,8 +74,10 @@ public class ExpressionTreePresenter extends MyPresenterWidget<ExpressionTreePre
         return selectionModel.addSelectionChangeHandler(handler);
     }
 
-    public void init(final RestFactory restFactory, final DocRef dataSource, final List<AbstractField> fields) {
-        getView().init(restFactory, dataSource, fields);
+    public void init(final RestFactory restFactory,
+                     final DocRef dataSource,
+                     final FieldSelectionListModel fieldSelectionListModel) {
+        getView().init(restFactory, dataSource, fieldSelectionListModel);
     }
 
     public void read(final ExpressionOperator root) {
@@ -277,7 +279,9 @@ public class ExpressionTreePresenter extends MyPresenterWidget<ExpressionTreePre
 
         void setSelectionModel(MySingleSelectionModel<Item> selectionModel);
 
-        void init(RestFactory restFactory, DocRef dataSource, List<AbstractField> fields);
+        void init(RestFactory restFactory,
+                  DocRef dataSource,
+                  FieldSelectionListModel fieldSelectionListModel);
 
         void endEditing();
 

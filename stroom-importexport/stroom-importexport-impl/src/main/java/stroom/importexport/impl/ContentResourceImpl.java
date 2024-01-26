@@ -42,14 +42,14 @@ import event.logging.SearchEventAction;
 import event.logging.Term;
 import event.logging.TermCondition;
 import event.logging.util.EventLoggingUtil;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
-import javax.inject.Provider;
 
 @AutoLogged
 public class ContentResourceImpl implements ContentResource {

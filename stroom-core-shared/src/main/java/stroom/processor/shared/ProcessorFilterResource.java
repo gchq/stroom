@@ -23,18 +23,18 @@ import stroom.util.shared.RestResource;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
 import org.fusesource.restygwt.client.DirectRestService;
 
 import java.util.List;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
 
 @Tag(name = "Processor Filters")
 @Path("/processorFilter" + ResourcePaths.V1)
@@ -93,6 +93,15 @@ public interface ProcessorFilterResource extends RestResource, DirectRestService
             summary = "Sets the priority for a filter",
             operationId = "setProcessorFilterPriority")
     boolean setPriority(@PathParam("id") Integer id, Integer priority);
+
+    @PUT
+    @Path("/{id}/maxProcessingTasks")
+    @Operation(
+            summary = "Sets the optional cluster-wide limit on the number of tasks that may be processed for this " +
+                    "filter, at any one time",
+            operationId = "setProcessorFilterMaxProcessingTasks")
+    boolean setMaxProcessingTasks(@PathParam("id") Integer id, Integer maxProcessingTasks);
+
 
     @PUT
     @Path("/{id}/enabled")

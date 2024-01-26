@@ -18,8 +18,8 @@
 package stroom.receive.rules.client.presenter;
 
 import stroom.data.client.presenter.EditExpressionPresenter;
-import stroom.datasource.api.v2.AbstractField;
 import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.client.presenter.FieldSelectionListModel;
 import stroom.receive.rules.client.presenter.RulePresenter.RuleView;
 import stroom.receive.rules.shared.ReceiveDataRule;
 import stroom.receive.rules.shared.RuleAction;
@@ -28,8 +28,6 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
-
-import java.util.List;
 
 public class RulePresenter extends MyPresenterWidget<RuleView> {
 
@@ -45,8 +43,9 @@ public class RulePresenter extends MyPresenterWidget<RuleView> {
         view.setExpressionView(editExpressionPresenter.getView());
     }
 
-    void read(final ReceiveDataRule rule, final List<AbstractField> fields) {
-        editExpressionPresenter.init(null, null, fields);
+    void read(final ReceiveDataRule rule,
+              final FieldSelectionListModel fieldSelectionListModel) {
+        editExpressionPresenter.init(null, null, fieldSelectionListModel);
         this.originalRule = rule;
         getView().setName(rule.getName());
         if (rule.getExpression() == null) {

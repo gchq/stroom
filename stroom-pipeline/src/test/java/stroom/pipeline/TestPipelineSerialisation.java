@@ -21,9 +21,8 @@ import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.util.xml.XMLMarshallerUtil;
 
+import jakarta.xml.bind.JAXBContext;
 import org.junit.jupiter.api.Test;
-
-import javax.xml.bind.JAXBContext;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

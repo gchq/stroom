@@ -35,4 +35,6 @@ public interface PagerView extends View {
     void setRefreshing(boolean refreshing);
 
     void setDataWidget(final AbstractHasData<?> widget);
+
+    void setPagerVisible(boolean visible);
 }

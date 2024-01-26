@@ -4,13 +4,14 @@ import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Optional;
 import java.util.regex.Pattern;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 @Singleton
 public class HomeDirProviderImpl implements HomeDirProvider {
@@ -41,7 +42,7 @@ public class HomeDirProviderImpl implements HomeDirProvider {
                     Paths::get);
             if (path != null) {
                 LOGGER.warn("Using system property {} for stroom home: {}. " +
-                        "This overrides the value in the config file and is only intended for testing.",
+                                "This overrides the value in the config file and is only intended for testing.",
                         HomeDirProvider.PROP_STROOM_HOME, path);
             }
 
@@ -111,9 +112,5 @@ public class HomeDirProviderImpl implements HomeDirProvider {
             LOGGER.warn("Unable to determine application jar directory due to: {}", e.getMessage());
             return Optional.empty();
         }
-    }
-
-    public void setHomeDir(final Path homeDir) {
-        this.homeDir = homeDir;
     }
 }

@@ -3,6 +3,7 @@ package stroom.legacy.impex_6_1;
 import stroom.index.shared.AnalyzerType;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFieldType;
+import stroom.query.api.v2.Column;
 import stroom.query.api.v2.ConditionalFormattingRule;
 import stroom.util.shared.time.TimeUnit;
 
@@ -318,12 +319,12 @@ public final class MappingUtil {
         return new stroom.dashboard.shared.Automate(value.isOpen(), value.isRefresh(), value.getRefreshInterval());
     }
 
-    public static stroom.query.api.v2.Field map(stroom.legacy.model_6_1.Field value) {
+    public static Column map(stroom.legacy.model_6_1.Field value) {
         if (value == null) {
             return null;
         }
 
-        return new stroom.query.api.v2.Field(
+        return new Column(
                 value.getId(),
                 value.getName(),
                 value.getExpression(),

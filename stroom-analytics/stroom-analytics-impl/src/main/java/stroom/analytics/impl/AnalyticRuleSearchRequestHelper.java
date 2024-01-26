@@ -9,23 +9,23 @@ import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchRequestSource;
 import stroom.query.api.v2.SearchRequestSource.SourceType;
 import stroom.query.common.v2.ExpressionContextFactory;
-import stroom.query.language.SearchRequestBuilder;
+import stroom.query.language.SearchRequestFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 public class AnalyticRuleSearchRequestHelper {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AnalyticRuleSearchRequestHelper.class);
 
-    private final SearchRequestBuilder searchRequestBuilder;
+    private final SearchRequestFactory searchRequestFactory;
     private final ExpressionContextFactory expressionContextFactory;
 
     @Inject
-    public AnalyticRuleSearchRequestHelper(final SearchRequestBuilder searchRequestBuilder,
+    public AnalyticRuleSearchRequestHelper(final SearchRequestFactory searchRequestFactory,
                                            final ExpressionContextFactory expressionContextFactory) {
-        this.searchRequestBuilder = searchRequestBuilder;
+        this.searchRequestFactory = searchRequestFactory;
         this.expressionContextFactory = expressionContextFactory;
     }
 
@@ -44,11 +44,12 @@ public class AnalyticRuleSearchRequestHelper {
                     DateTimeSettings.builder().build(),
                     false);
             final ExpressionContext expressionContext = expressionContextFactory.createContext(sampleRequest);
-            return searchRequestBuilder
+            return searchRequestFactory
                     .create(analyticRuleDoc.getQuery(), sampleRequest, expressionContext);
         } catch (final RuntimeException e) {
-            final String ruleIdentity = AnalyticUtil.getAnalyticRuleIdentity(analyticRuleDoc);
-            LOGGER.error(() -> "Error creating search request for analytic rule - " + ruleIdentity, e);
+            LOGGER.debug(() ->
+                    "Error creating search request for analytic rule - "
+                            + AnalyticUtil.getAnalyticRuleIdentity(analyticRuleDoc), e);
             throw e;
         }
     }

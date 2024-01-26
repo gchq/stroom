@@ -1,6 +1,6 @@
 package stroom.proxy.app.handler;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 
 @Singleton
 public class MockForwardFileDestinationFactory implements ForwardFileDestinationFactory {

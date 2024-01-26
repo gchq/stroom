@@ -96,7 +96,7 @@ public final class SvgPresets {
         return svgPreset.with(title, enabled);
     }
 
-    private static Preset enabled(final SvgImage svgImage, final String title) {
+    public static Preset enabled(final SvgImage svgImage, final String title) {
         return new Preset(svgImage, title, true);
     }
 

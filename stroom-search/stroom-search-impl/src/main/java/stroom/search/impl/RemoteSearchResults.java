@@ -18,14 +18,15 @@ package stroom.search.impl;
 
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.StroomCache;
-import stroom.search.impl.shard.IndexShardSearchConfig;
+import stroom.index.impl.IndexShardSearchConfig;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
+
 import java.util.Optional;
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.inject.Singleton;
 
 @Singleton
 class RemoteSearchResults {

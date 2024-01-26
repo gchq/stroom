@@ -6,19 +6,19 @@ import stroom.expression.api.ExpressionContext;
 import stroom.index.impl.IndexStore;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.common.v2.ExpressionContextFactory;
-import stroom.query.language.SearchRequestBuilder;
+import stroom.query.language.SearchRequestFactory;
 import stroom.search.impl.EventSearchTaskHandler;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.impl.ExecutorProviderImpl;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.ContentImportService;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.Executor;
-import javax.inject.Inject;
-import javax.inject.Provider;
 
 public class TestVisualisationTokenConsumer extends AbstractCoreIntegrationTest {
     private static boolean doneSetup;
@@ -37,7 +37,7 @@ public class TestVisualisationTokenConsumer extends AbstractCoreIntegrationTest 
     @Inject
     private ExecutorProviderImpl executorProvider;
     @Inject
-    private SearchRequestBuilder searchRequestBuilder;
+    private SearchRequestFactory searchRequestFactory;
     @Inject
     private ExpressionContextFactory expressionContextFactory;
     @Inject
@@ -73,7 +73,7 @@ public class TestVisualisationTokenConsumer extends AbstractCoreIntegrationTest 
                 DateTimeSettings.builder().build(),
                 false);
         final ExpressionContext expressionContext = expressionContextFactory.createContext(searchRequest);
-        searchRequest = searchRequestBuilder.create(queryString, searchRequest, expressionContext);
+        searchRequest = searchRequestFactory.create(queryString, searchRequest, expressionContext);
 //        searchRequest = dataSourceResolver.resolveDataSource(searchRequest);
 
 //        test(queryString, 5);

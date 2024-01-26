@@ -5,6 +5,7 @@ import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.common.TestUtil;
 
 import com.google.inject.TypeLiteral;
+import jakarta.inject.Inject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
@@ -14,7 +15,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.inject.Inject;
 
 public class TestPipelineStoreImpl extends AbstractCoreIntegrationTest {
 

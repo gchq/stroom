@@ -17,7 +17,7 @@
 package stroom.dashboard.impl.download;
 
 import stroom.dashboard.impl.SampleGenerator;
-import stroom.query.api.v2.Field;
+import stroom.query.api.v2.Column;
 import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.Row;
 import stroom.query.api.v2.TableResult;
@@ -31,7 +31,7 @@ public class SearchResultWriter implements TableResultBuilder {
 
     private final SampleGenerator sampleGenerator;
     private final Target target;
-    private List<Field> fields;
+    private List<Column> columns;
     private long rowCount;
 
     public SearchResultWriter(final SampleGenerator sampleGenerator,
@@ -46,17 +46,17 @@ public class SearchResultWriter implements TableResultBuilder {
     }
 
     @Override
-    public TableResultBuilder fields(final List<Field> fields) {
-        this.fields = fields;
+    public TableResultBuilder columns(final List<Column> columns) {
+        this.columns = columns;
 
         // Write heading.
         try {
             target.startLine();
 
             int fieldIndex = 0;
-            for (final Field field : fields) {
-                if (field.isVisible()) {
-                    target.writeHeading(fieldIndex, field, field.getName());
+            for (final Column column : columns) {
+                if (column.isVisible()) {
+                    target.writeHeading(fieldIndex, column, column.getName());
                 }
 
                 fieldIndex++;
@@ -75,11 +75,11 @@ public class SearchResultWriter implements TableResultBuilder {
             if (row.getDepth() == 0) {
                 if (sampleGenerator.includeResult()) {
                     target.startLine();
-                    for (int i = 0; i < fields.size(); i++) {
-                        final Field field = fields.get(i);
-                        if (field.isVisible()) {
+                    for (int i = 0; i < columns.size(); i++) {
+                        final Column column = columns.get(i);
+                        if (column.isVisible()) {
                             final String val = row.getValues().get(i);
-                            target.writeValue(field, val);
+                            target.writeValue(column, val);
                         }
                     }
                     target.endLine();
@@ -130,8 +130,8 @@ public class SearchResultWriter implements TableResultBuilder {
 
         void endLine() throws IOException;
 
-        void writeHeading(int fieldIndex, Field field, String heading) throws IOException;
+        void writeHeading(int fieldIndex, Column column, String heading) throws IOException;
 
-        void writeValue(Field field, String value) throws IOException;
+        void writeValue(Column column, String value) throws IOException;
     }
 }

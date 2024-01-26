@@ -435,9 +435,7 @@ public class ExpressionParser {
                                                         param = ValDouble.create(-((ValDouble) param).toDouble());
                                                 case DURATION -> {
                                                     final ValDuration valDuration = (ValDuration) param;
-                                                    final SimpleDuration duration = valDuration.toDuration();
-                                                    param = ValDuration.create(new SimpleDuration(-duration.getTime(),
-                                                            duration.getTimeUnit()));
+                                                    param = ValDuration.create(-valDuration.toLong());
                                                 }
                                                 default -> throw new TokenException(signToken,
                                                         "Illegal negation of " + val.type().getName());

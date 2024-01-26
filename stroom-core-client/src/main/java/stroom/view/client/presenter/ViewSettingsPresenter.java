@@ -18,6 +18,7 @@
 package stroom.view.client.presenter;
 
 import stroom.data.client.presenter.EditExpressionPresenter;
+import stroom.datasource.api.v2.FieldInfo;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocumentEditPresenter;
@@ -27,6 +28,7 @@ import stroom.explorer.shared.NodeFlag;
 import stroom.meta.shared.MetaFields;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.client.presenter.SimpleFieldSelectionListModel;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.QueryConfig;
@@ -39,6 +41,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 public class ViewSettingsPresenter extends DocumentEditPresenter<ViewSettingsView, ViewDoc> {
 
@@ -75,11 +78,11 @@ public class ViewSettingsPresenter extends DocumentEditPresenter<ViewSettingsVie
 
         // Filter the pipeline picker by tags, if configured
         uiConfigCache.get().onSuccess(extendedUiConfig ->
-            GwtNullSafe.consume(
-                    extendedUiConfig.getQuery(),
-                    QueryConfig::getViewPipelineSelectorIncludedTags,
-                    ExplorerTreeFilter::createTagQuickFilterInput,
-                    pipelineSelectionPresenter::setQuickFilter));
+                GwtNullSafe.consume(
+                        extendedUiConfig.getQuery(),
+                        QueryConfig::getViewPipelineSelectorIncludedTags,
+                        ExplorerTreeFilter::createTagQuickFilterInput,
+                        pipelineSelectionPresenter::setQuickFilter));
     }
 
     @Override
@@ -117,7 +120,13 @@ public class ViewSettingsPresenter extends DocumentEditPresenter<ViewSettingsVie
     protected void onRead(final DocRef docRef, final ViewDoc entity, final boolean readOnly) {
         dataSourceSelectionPresenter.setSelectedEntityReference(entity.getDataSource());
         pipelineSelectionPresenter.setSelectedEntityReference(entity.getPipeline());
-        expressionPresenter.init(restFactory, MetaFields.STREAM_STORE_DOC_REF, MetaFields.getAllFields());
+        final SimpleFieldSelectionListModel fieldSelectionBoxModel = new SimpleFieldSelectionListModel();
+        fieldSelectionBoxModel.addItems(MetaFields
+                .getAllFields()
+                .stream()
+                .map(FieldInfo::create)
+                .collect(Collectors.toList()));
+        expressionPresenter.init(restFactory, MetaFields.STREAM_STORE_DOC_REF, fieldSelectionBoxModel);
 
         // Read expression.
         ExpressionOperator root = entity.getFilter();

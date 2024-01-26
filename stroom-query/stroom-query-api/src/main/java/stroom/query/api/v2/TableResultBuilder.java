@@ -6,7 +6,7 @@ public interface TableResultBuilder {
 
     TableResultBuilder componentId(String componentId);
 
-    TableResultBuilder fields(List<Field> fields);
+    TableResultBuilder columns(List<Column> columns);
 
     TableResultBuilder addRow(Row row);
 

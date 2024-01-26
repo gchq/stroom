@@ -32,9 +32,10 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
+import jakarta.inject.Inject;
+
 import java.util.Collections;
 import java.util.function.BiConsumer;
-import javax.inject.Inject;
 
 
 public class EventSearchTaskHandler {
@@ -45,19 +46,19 @@ public class EventSearchTaskHandler {
     private final CoprocessorsFactory coprocessorsFactory;
     private final ResultStoreFactory resultStoreFactory;
     private final FederatedSearchExecutor federatedSearchExecutor;
-    private final LuceneNodeSearchTaskCreator luceneNodeSearchTaskCreator;
+    private final NodeSearchTaskCreator nodeSearchTaskCreator;
 
     @Inject
     EventSearchTaskHandler(final SecurityContext securityContext,
                            final CoprocessorsFactory coprocessorsFactory,
                            final ResultStoreFactory resultStoreFactory,
                            final FederatedSearchExecutor federatedSearchExecutor,
-                           final LuceneNodeSearchTaskCreator luceneNodeSearchTaskCreator) {
+                           final NodeSearchTaskCreator nodeSearchTaskCreator) {
         this.securityContext = securityContext;
         this.coprocessorsFactory = coprocessorsFactory;
         this.resultStoreFactory = resultStoreFactory;
         this.federatedSearchExecutor = federatedSearchExecutor;
-        this.luceneNodeSearchTaskCreator = luceneNodeSearchTaskCreator;
+        this.nodeSearchTaskCreator = nodeSearchTaskCreator;
     }
 
     public void exec(final EventSearchTask task,
@@ -109,7 +110,7 @@ public class EventSearchTaskHandler {
                         null,
                         coprocessors);
                 try {
-                    federatedSearchExecutor.start(federatedSearchTask, resultStore, luceneNodeSearchTaskCreator);
+                    federatedSearchExecutor.start(federatedSearchTask, resultStore, nodeSearchTaskCreator);
 
                     LOGGER.debug(() -> "Started searchResultCollector " + resultStore);
 

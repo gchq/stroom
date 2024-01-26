@@ -25,7 +25,7 @@ import stroom.dashboard.shared.TextComponentSettings;
 import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.query.api.v2.Field;
+import stroom.query.api.v2.Column;
 import stroom.security.shared.DocumentPermissionNames;
 
 import com.google.gwt.user.client.ui.Focus;
@@ -45,7 +45,7 @@ public class BasicTextSettingsPresenter
     private final EntityDropDownPresenter pipelinePresenter;
     private List<Component> tableList;
     private boolean ignoreTableChange;
-    private final List<Field> allFields = new ArrayList<>();
+    private final List<Column> allColumns = new ArrayList<>();
 
     @Inject
     public BasicTextSettingsPresenter(final EventBus eventBus, final BasicTextSettingsView view,
@@ -79,25 +79,25 @@ public class BasicTextSettingsPresenter
 
     private void updateFieldNames(final Component component) {
         if (!ignoreTableChange) {
-            allFields.clear();
+            allColumns.clear();
             if (component == null) {
                 if (tableList != null) {
-                    tableList.forEach(c -> addFieldNames(c, allFields));
+                    tableList.forEach(c -> addColumnNames(c, allColumns));
                 }
             } else {
-                addFieldNames(component, allFields);
+                addColumnNames(component, allColumns);
             }
 
-            getView().setFields(allFields);
+            getView().setColumns(allColumns);
         }
     }
 
-    private void addFieldNames(final Component component, final List<Field> allFields) {
+    private void addColumnNames(final Component component, final List<Column> allColumns) {
         if (component instanceof TablePresenter) {
             final TablePresenter tablePresenter = (TablePresenter) component;
-            final List<Field> fields = tablePresenter.getTableSettings().getFields();
-            if (fields != null && fields.size() > 0) {
-                allFields.addAll(fields);
+            final List<Column> columns = tablePresenter.getTableSettings().getColumns();
+            if (columns != null && columns.size() > 0) {
+                allColumns.addAll(columns);
             }
         }
     }
@@ -124,45 +124,45 @@ public class BasicTextSettingsPresenter
         updateFieldNames(getView().getTable());
 
         // Make some best matches for fields.
-        builder.streamIdField(getClosestField(settings.getStreamIdField()));
-        builder.partNoField(getClosestField(settings.getPartNoField()));
-        builder.recordNoField(getClosestField(settings.getRecordNoField()));
-        builder.lineFromField(getClosestField(settings.getLineFromField()));
-        builder.colFromField(getClosestField(settings.getColFromField()));
-        builder.lineToField(getClosestField(settings.getLineToField()));
-        builder.colToField(getClosestField(settings.getColToField()));
+        builder.streamIdField(getClosestColumn(settings.getStreamIdColumn()));
+        builder.partNoField(getClosestColumn(settings.getPartNoColumn()));
+        builder.recordNoField(getClosestColumn(settings.getRecordNoColumn()));
+        builder.lineFromField(getClosestColumn(settings.getLineFromColumn()));
+        builder.colFromField(getClosestColumn(settings.getColFromColumn()));
+        builder.lineToField(getClosestColumn(settings.getLineToColumn()));
+        builder.colToField(getClosestColumn(settings.getColToColumn()));
 
         settings = builder.build();
 
-        getView().setStreamIdField(settings.getStreamIdField());
-        getView().setPartNoField(settings.getPartNoField());
-        getView().setRecordNoField(settings.getRecordNoField());
-        getView().setLineFromField(settings.getLineFromField());
-        getView().setColFromField(settings.getColFromField());
-        getView().setLineToField(settings.getLineToField());
-        getView().setColToField(settings.getColToField());
+        getView().setStreamIdColumn(settings.getStreamIdColumn());
+        getView().setPartNoColumn(settings.getPartNoColumn());
+        getView().setRecordNoColumn(settings.getRecordNoColumn());
+        getView().setLineFromColumn(settings.getLineFromColumn());
+        getView().setColFromColumn(settings.getColFromColumn());
+        getView().setLineToColumn(settings.getLineToColumn());
+        getView().setColToColumn(settings.getColToColumn());
 
         setPipeline(settings.getPipeline());
         getView().setShowAsHtml(settings.isShowAsHtml());
         getView().setShowStepping(settings.isShowStepping());
     }
 
-    private Field getClosestField(final Field field) {
-        if (field == null) {
+    private Column getClosestColumn(final Column column) {
+        if (column == null) {
             return null;
         }
-        Field bestMatch = null;
-        for (final Field f : allFields) {
-            if (f.getId().equals(field.getId())) {
-                bestMatch = f;
+        Column bestMatch = null;
+        for (final Column col : allColumns) {
+            if (col.getId().equals(column.getId())) {
+                bestMatch = col;
                 break;
-            } else if (bestMatch == null && f.getName().equals(field.getName())) {
-                bestMatch = f;
+            } else if (bestMatch == null && col.getName().equals(column.getName())) {
+                bestMatch = col;
             }
         }
 
         if (bestMatch == null) {
-            return field;
+            return column;
         }
 
         return bestMatch;
@@ -180,13 +180,13 @@ public class BasicTextSettingsPresenter
         return settings
                 .copy()
                 .tableId(getTableId())
-                .streamIdField(getView().getStreamIdField())
-                .partNoField(getView().getPartNoField())
-                .recordNoField(getView().getRecordNoField())
-                .lineFromField(getView().getLineFromField())
-                .colFromField(getView().getColFromField())
-                .lineToField(getView().getLineToField())
-                .colToField(getView().getColToField())
+                .streamIdField(getView().getStreamIdColumn())
+                .partNoField(getView().getPartNoColumn())
+                .recordNoField(getView().getRecordNoColumn())
+                .lineFromField(getView().getLineFromColumn())
+                .colFromField(getView().getColFromColumn())
+                .lineToField(getView().getLineToColumn())
+                .colToField(getView().getColToColumn())
                 .pipeline(getPipeline())
                 .showAsHtml(getView().isShowAsHtml())
                 .showStepping(getView().isShowStepping())
@@ -216,13 +216,13 @@ public class BasicTextSettingsPresenter
         final TextComponentSettings newSettings = writeSettings(oldSettings);
 
         final boolean equal = Objects.equals(oldSettings.getTableId(), newSettings.getTableId()) &&
-                Field.equalsId(oldSettings.getStreamIdField(), newSettings.getStreamIdField()) &&
-                Field.equalsId(oldSettings.getPartNoField(), newSettings.getPartNoField()) &&
-                Field.equalsId(oldSettings.getRecordNoField(), newSettings.getRecordNoField()) &&
-                Field.equalsId(oldSettings.getLineFromField(), newSettings.getLineFromField()) &&
-                Field.equalsId(oldSettings.getColFromField(), newSettings.getColFromField()) &&
-                Field.equalsId(oldSettings.getLineToField(), newSettings.getLineToField()) &&
-                Field.equalsId(oldSettings.getColToField(), newSettings.getColToField()) &&
+                Column.equalsId(oldSettings.getStreamIdColumn(), newSettings.getStreamIdColumn()) &&
+                Column.equalsId(oldSettings.getPartNoColumn(), newSettings.getPartNoColumn()) &&
+                Column.equalsId(oldSettings.getRecordNoColumn(), newSettings.getRecordNoColumn()) &&
+                Column.equalsId(oldSettings.getLineFromColumn(), newSettings.getLineFromColumn()) &&
+                Column.equalsId(oldSettings.getColFromColumn(), newSettings.getColFromColumn()) &&
+                Column.equalsId(oldSettings.getLineToColumn(), newSettings.getLineToColumn()) &&
+                Column.equalsId(oldSettings.getColToColumn(), newSettings.getColToColumn()) &&
                 Objects.equals(oldSettings.getPipeline(), newSettings.getPipeline()) &&
                 Objects.equals(oldSettings.isShowAsHtml(), newSettings.isShowAsHtml()) &&
                 Objects.equals(oldSettings.isShowStepping(), newSettings.isShowStepping());
@@ -240,35 +240,35 @@ public class BasicTextSettingsPresenter
 
         void setTable(Component table);
 
-        void setFields(List<Field> fields);
+        void setColumns(List<Column> column);
 
-        Field getStreamIdField();
+        Column getStreamIdColumn();
 
-        void setStreamIdField(Field field);
+        void setStreamIdColumn(Column column);
 
-        Field getPartNoField();
+        Column getPartNoColumn();
 
-        void setPartNoField(Field field);
+        void setPartNoColumn(Column column);
 
-        Field getRecordNoField();
+        Column getRecordNoColumn();
 
-        void setRecordNoField(Field field);
+        void setRecordNoColumn(Column column);
 
-        Field getLineFromField();
+        Column getLineFromColumn();
 
-        void setLineFromField(Field field);
+        void setLineFromColumn(Column column);
 
-        Field getColFromField();
+        Column getColFromColumn();
 
-        void setColFromField(Field field);
+        void setColFromColumn(Column column);
 
-        Field getLineToField();
+        Column getLineToColumn();
 
-        void setLineToField(Field field);
+        void setLineToColumn(Column column);
 
-        Field getColToField();
+        Column getColToColumn();
 
-        void setColToField(Field field);
+        void setColToColumn(Column column);
 
         void setPipelineView(View view);
 

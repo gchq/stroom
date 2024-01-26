@@ -32,11 +32,10 @@ import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.ResultPage;
 
 import event.logging.Query;
-
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.inject.Singleton;
-import javax.ws.rs.client.Entity;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
+import jakarta.ws.rs.client.Entity;
 
 @Singleton
 @AutoLogged
@@ -121,7 +120,7 @@ class ProcessorTaskResourceImpl implements ProcessorTaskResource {
     @Override
     @AutoLogged(OperationType.UNLOGGED)
     public ProcessorTaskList assignTasks(final String nodeName, final AssignTasksRequest request) {
-        final ProcessorTaskList processorTaskList = nodeServiceProvider.get()
+        return nodeServiceProvider.get()
                 .remoteRestResult(
                         nodeName,
                         ProcessorTaskList.class,
@@ -134,7 +133,6 @@ class ProcessorTaskResourceImpl implements ProcessorTaskResource {
                                         .assignTasks(request.getNodeName(), request.getCount()),
                         builder ->
                                 builder.post(Entity.json(request)));
-        return processorTaskList;
     }
 
     @Override

@@ -127,6 +127,10 @@ class CIStringHashMap implements Map<String, String> {
         return Objects.hash(map);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     protected static class CIString implements Comparable<CIString>, Serializable {
 
         private final String key;
@@ -172,6 +176,10 @@ class CIStringHashMap implements Map<String, String> {
             return key;
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class CIEntryAdaptor implements Entry<String, String> {
 

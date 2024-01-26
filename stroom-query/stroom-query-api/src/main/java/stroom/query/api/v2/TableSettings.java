@@ -19,6 +19,7 @@ package stroom.query.api.v2;
 import stroom.docref.DocRef;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -47,14 +48,13 @@ import java.util.Objects;
         "should be included and what sorting, grouping, filtering, limiting, etc. should be applied")
 public final class TableSettings {
 
-    @Schema(description = "TODO",
-            required = true)
+    @Schema(description = "TODO")
     @JsonProperty
     private final String queryId;
 
-    @Schema(required = true)
+    @Schema
     @JsonProperty
-    private final List<Field> fields;
+    private final List<Column> fields;
 
     @JsonProperty
     private final Window window;
@@ -109,7 +109,7 @@ public final class TableSettings {
 
     public TableSettings(
             final String queryId,
-            final List<Field> fields,
+            final List<Column> columns,
             final Window window,
             final ExpressionOperator valueFilter,
             final ExpressionOperator aggregateFilter,
@@ -120,7 +120,7 @@ public final class TableSettings {
             final List<ConditionalFormattingRule> conditionalFormattingRules,
             final QLVisSettings visSettings) {
         this.queryId = queryId;
-        this.fields = fields;
+        this.fields = columns;
         this.window = window;
         this.valueFilter = valueFilter;
         this.aggregateFilter = aggregateFilter;
@@ -136,7 +136,7 @@ public final class TableSettings {
     @JsonCreator
     public TableSettings(
             @JsonProperty("queryId") final String queryId,
-            @JsonProperty("fields") final List<Field> fields,
+            @JsonProperty("fields") final List<Column> fields, // Kept as fields for backward compatibility.
             @JsonProperty("window") final Window window,
             @JsonProperty("valueFilter") final ExpressionOperator valueFilter,
             @JsonProperty("aggregateFilter") final ExpressionOperator aggregateFilter,
@@ -166,7 +166,13 @@ public final class TableSettings {
         return queryId;
     }
 
-    public List<Field> getFields() {
+    @Deprecated // Kept as fields for backward compatibility.
+    public List<Column> getFields() {
+        return fields;
+    }
+
+    @JsonIgnore // Kept as fields for backward compatibility.
+    public List<Column> getColumns() {
         return fields;
     }
 
@@ -259,7 +265,7 @@ public final class TableSettings {
     public String toString() {
         return "TableSettings{" +
                 "queryId='" + queryId + '\'' +
-                ", fields=" + fields +
+                ", columns=" + fields +
                 ", window=" + window +
                 ", filter=" + aggregateFilter +
                 ", extractValues=" + extractValues +
@@ -285,7 +291,7 @@ public final class TableSettings {
     public static final class Builder {
 
         private String queryId;
-        private List<Field> fields;
+        private List<Column> columns;
         private Window window;
         private ExpressionOperator valueFilter;
         private ExpressionOperator aggregateFilter;
@@ -301,9 +307,9 @@ public final class TableSettings {
 
         private Builder(final TableSettings tableSettings) {
             this.queryId = tableSettings.getQueryId();
-            this.fields = tableSettings.getFields() == null
+            this.columns = tableSettings.getColumns() == null
                     ? null
-                    : new ArrayList<>(tableSettings.getFields());
+                    : new ArrayList<>(tableSettings.getColumns());
             this.window = tableSettings.window;
             this.valueFilter = tableSettings.valueFilter;
             this.aggregateFilter = tableSettings.aggregateFilter;
@@ -333,8 +339,8 @@ public final class TableSettings {
             return this;
         }
 
-        public Builder fields(final List<Field> fields) {
-            this.fields = fields;
+        public Builder columns(final List<Column> columns) {
+            this.columns = columns;
             return this;
         }
 
@@ -349,24 +355,24 @@ public final class TableSettings {
         }
 
         /**
-         * @param values Add expected fields to the output table
+         * @param values Add expected columns to the output table
          * @return The {@link TableSettings.Builder}, enabling method chaining
          */
-        public Builder addFields(final Field... values) {
-            return addFields(Arrays.asList(values));
+        public Builder addColumns(final Column... values) {
+            return addColumns(Arrays.asList(values));
         }
 
         /**
-         * Convenience function for adding multiple fields that are already in a collection.
+         * Convenience function for adding multiple columns that are already in a collection.
          *
-         * @param values The fields to add
-         * @return this builder, with the fields added.
+         * @param values The columns to add
+         * @return this builder, with the columns added.
          */
-        public Builder addFields(final Collection<Field> values) {
-            if (this.fields == null) {
-                this.fields = new ArrayList<>(values);
+        public Builder addColumns(final Collection<Column> values) {
+            if (this.columns == null) {
+                this.columns = new ArrayList<>(values);
             } else {
-                this.fields.addAll(values);
+                this.columns.addAll(values);
             }
             return this;
         }
@@ -459,7 +465,7 @@ public final class TableSettings {
         public TableSettings build() {
             return new TableSettings(
                     queryId,
-                    fields,
+                    columns,
                     window,
                     valueFilter,
                     aggregateFilter,

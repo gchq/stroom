@@ -22,8 +22,10 @@ import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.query.SelectionHandlerPresenter.SelectionHandlerView;
 import stroom.dashboard.client.table.cf.EditExpressionPresenter;
 import stroom.dashboard.shared.ComponentSelectionHandler;
-import stroom.datasource.api.v2.AbstractField;
+import stroom.datasource.api.v2.QueryField;
+import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.client.presenter.DynamicFieldSelectionListModel;
 import stroom.util.shared.RandomId;
 
 import com.google.gwt.user.client.ui.Focus;
@@ -33,7 +35,6 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -42,17 +43,17 @@ public class SelectionHandlerPresenter
         implements SelectionHandlerUiHandlers, Focus {
 
     private final EditExpressionPresenter editExpressionPresenter;
+    private final DynamicFieldSelectionListModel fieldSelectionBoxModel;
     private ComponentSelectionHandler originalHandler;
-    private List<Component> componentList;
-    private boolean ignoreTableChange;
-    private final List<AbstractField> allFields = new ArrayList<>();
 
     @Inject
     public SelectionHandlerPresenter(final EventBus eventBus,
                                      final SelectionHandlerView view,
-                                     final EditExpressionPresenter editExpressionPresenter) {
+                                     final EditExpressionPresenter editExpressionPresenter,
+                                     final DynamicFieldSelectionListModel fieldSelectionBoxModel) {
         super(eventBus, view);
         this.editExpressionPresenter = editExpressionPresenter;
+        this.fieldSelectionBoxModel = fieldSelectionBoxModel;
         view.setExpressionView(editExpressionPresenter.getView());
         view.setUiHandlers(this);
     }
@@ -64,7 +65,7 @@ public class SelectionHandlerPresenter
 
     void read(final ComponentSelectionHandler componentSelectionHandler,
               final List<Component> componentList,
-              final List<AbstractField> fields) {
+              final DocRef dataSourceRef) {
         getView().setComponentList(componentList);
         final Optional<Component> optionalComponent = componentList
                 .stream()
@@ -73,7 +74,8 @@ public class SelectionHandlerPresenter
         getView().setComponent(optionalComponent.orElse(null));
 
         this.originalHandler = componentSelectionHandler;
-        editExpressionPresenter.init(null, null, fields);
+        fieldSelectionBoxModel.setDataSourceRef(dataSourceRef);
+        editExpressionPresenter.init(null, null, fieldSelectionBoxModel);
         this.originalHandler = componentSelectionHandler;
         if (componentSelectionHandler.getExpression() == null) {
             editExpressionPresenter.read(ExpressionOperator.builder().build());
@@ -109,13 +111,6 @@ public class SelectionHandlerPresenter
                 .build();
     }
 
-    private void setComponentList(final List<Component> list) {
-        ignoreTableChange = true;
-        this.componentList = list;
-        getView().setComponentList(list);
-        ignoreTableChange = false;
-    }
-
     @Override
     public void onComponentChange() {
         updateFieldNames(getView().getComponent());
@@ -135,10 +130,10 @@ public class SelectionHandlerPresenter
 //        }
     }
 
-    private void addFieldNames(final Component component, final List<AbstractField> allFields) {
+    private void addFieldNames(final Component component, final List<QueryField> allFields) {
         if (component instanceof HasSelection) {
             final HasSelection hasSelection = (HasSelection) component;
-            final List<AbstractField> fields = hasSelection.getFields();
+            final List<QueryField> fields = hasSelection.getFields();
             if (fields != null && fields.size() > 0) {
                 allFields.addAll(fields);
             }

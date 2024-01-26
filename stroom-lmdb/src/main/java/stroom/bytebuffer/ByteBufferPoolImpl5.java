@@ -3,6 +3,7 @@ package stroom.bytebuffer;
 import stroom.util.HasHealthCheck;
 import stroom.util.sysinfo.SystemInfoResult;
 
+import jakarta.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,7 +22,6 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import javax.inject.Singleton;
 
 /**
  * An bounded self-populating pool of directly allocated ByteBuffers.

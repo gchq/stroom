@@ -5,6 +5,7 @@ import stroom.security.api.UserIdentity;
 import stroom.security.common.impl.AbstractUserIdentityFactory;
 import stroom.security.common.impl.JwtContextFactory;
 import stroom.security.common.impl.JwtUtil;
+import stroom.security.common.impl.RefreshManager;
 import stroom.security.openid.api.OpenId;
 import stroom.security.openid.api.OpenIdConfiguration;
 import stroom.security.openid.api.TokenResponse;
@@ -12,15 +13,15 @@ import stroom.util.authentication.DefaultOpenIdCredentials;
 import stroom.util.cert.CertificateExtractor;
 import stroom.util.jersey.JerseyClientFactory;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
+import jakarta.servlet.http.HttpServletRequest;
 import org.jose4j.jwt.JwtClaims;
 import org.jose4j.jwt.consumer.JwtContext;
 
 import java.util.Objects;
 import java.util.Optional;
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.inject.Singleton;
-import javax.servlet.http.HttpServletRequest;
 
 @Singleton
 public class ProxyUserIdentityFactory extends AbstractUserIdentityFactory {
@@ -32,16 +33,16 @@ public class ProxyUserIdentityFactory extends AbstractUserIdentityFactory {
                              final Provider<OpenIdConfiguration> openIdConfigProvider,
                              final DefaultOpenIdCredentials defaultOpenIdCredentials,
                              final CertificateExtractor certificateExtractor,
-//                             final ProcessingUserIdentityProvider processingUserIdentityProvider,
                              final ServiceUserFactory serviceUserFactory,
-                             final JerseyClientFactory jerseyClientFactory) {
+                             final JerseyClientFactory jerseyClientFactory,
+                             final RefreshManager refreshManager) {
         super(jwtContextFactory,
                 openIdConfigProvider,
                 defaultOpenIdCredentials,
                 certificateExtractor,
-//                processingUserIdentityProvider,
                 serviceUserFactory,
-                jerseyClientFactory);
+                jerseyClientFactory,
+                refreshManager);
         this.openIdConfigurationProvider = openIdConfigProvider;
     }
 

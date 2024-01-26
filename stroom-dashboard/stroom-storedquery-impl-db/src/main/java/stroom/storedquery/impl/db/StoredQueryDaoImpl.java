@@ -8,6 +8,8 @@ import stroom.storedquery.impl.StoredQueryDao;
 import stroom.storedquery.impl.db.jooq.tables.records.QueryRecord;
 import stroom.util.shared.ResultPage;
 
+import jakarta.inject.Inject;
+import jakarta.validation.constraints.NotNull;
 import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.OrderField;
@@ -20,8 +22,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
-import javax.validation.constraints.NotNull;
 
 import static stroom.storedquery.impl.db.jooq.Tables.QUERY;
 

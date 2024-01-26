@@ -3,8 +3,8 @@ package stroom.explorer.client.presenter;
 import stroom.cell.list.client.CustomCellList;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.PagerView;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
+import stroom.docref.StringMatch;
 import stroom.document.client.event.OpenDocumentEvent;
 import stroom.explorer.client.event.ShowFindEvent;
 import stroom.explorer.client.presenter.FindPresenter.FindProxy;
@@ -50,9 +50,7 @@ public class FindPresenter extends MyPresenter<FindView, FindProxy> implements F
     private FindExplorerNodeQuery currentQuery = new FindExplorerNodeQuery(
             new PageRequest(0, 100),
             null,
-            "",
-            false,
-            false);
+            StringMatch.any());
     private boolean initialised;
 
     private final Timer filterRefreshTimer = new Timer() {
@@ -86,12 +84,10 @@ public class FindPresenter extends MyPresenter<FindView, FindProxy> implements F
                 final PageRequest pageRequest = new PageRequest(range.getStart(), range.getLength());
                 currentQuery = new FindExplorerNodeQuery(pageRequest,
                         currentQuery.getSortList(),
-                        currentQuery.getPattern(),
-                        currentQuery.isMatchCase(),
-                        currentQuery.isRegex());
+                        currentQuery.getFilter());
 
-                final Rest<ResultPage<ExplorerDocContentMatch>> rest = restFactory.create();
-                rest
+                restFactory.builder()
+                        .forResultPageOf(ExplorerDocContentMatch.class)
                         .onSuccess(resultPage -> {
                             if (resultPage.getPageStart() != cellList.getPageStart()) {
                                 cellList.setPageStart(resultPage.getPageStart());
@@ -141,9 +137,7 @@ public class FindPresenter extends MyPresenter<FindView, FindProxy> implements F
         final FindExplorerNodeQuery query = new FindExplorerNodeQuery(
                 currentQuery.getPageRequest(),
                 currentQuery.getSortList(),
-                trimmed,
-                matchCase,
-                regex);
+                StringMatch.regex(trimmed, matchCase));
 
         if (!Objects.equals(currentQuery, query)) {
             this.currentQuery = query;

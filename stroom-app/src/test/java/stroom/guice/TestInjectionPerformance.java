@@ -191,7 +191,7 @@ class TestInjectionPerformance {
             if (inject != null) {
                 return constructor;
             }
-            javax.inject.Inject inject2 = constructor.getAnnotation(javax.inject.Inject.class);
+            jakarta.inject.Inject inject2 = constructor.getAnnotation(jakarta.inject.Inject.class);
             if (inject2 != null) {
                 return constructor;
             }

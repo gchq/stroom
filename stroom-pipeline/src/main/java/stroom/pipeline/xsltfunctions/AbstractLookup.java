@@ -17,6 +17,7 @@
 package stroom.pipeline.xsltfunctions;
 
 import stroom.docref.DocRef;
+import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.refdata.LookupIdentifier;
 import stroom.pipeline.refdata.ReferenceData;
 import stroom.pipeline.refdata.ReferenceDataResult;
@@ -28,6 +29,9 @@ import stroom.pipeline.refdata.store.RefDataValueProxyConsumerFactory.Factory;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.state.MetaHolder;
+import stroom.task.api.TaskContext;
+import stroom.task.api.TaskContextFactory;
+import stroom.task.api.TaskTerminatedException;
 import stroom.util.NullSafe;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.DurationTimer;
@@ -38,6 +42,7 @@ import stroom.util.shared.Severity;
 import stroom.util.shared.StoredError;
 import stroom.util.shared.StringUtil;
 
+import jakarta.inject.Inject;
 import net.sf.saxon.Configuration;
 import net.sf.saxon.event.Builder;
 import net.sf.saxon.event.PipelineConfiguration;
@@ -53,7 +58,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
 
 
 abstract class AbstractLookup extends StroomExtensionFunctionCall {
@@ -63,15 +67,18 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
     private final ReferenceData referenceData;
     private final MetaHolder metaHolder;
     private final SequenceMakerFactory sequenceMakerFactory;
+    private final TaskContextFactory taskContextFactory;
 
     private long defaultMs = -1;
 
     AbstractLookup(final ReferenceData referenceData,
                    final MetaHolder metaHolder,
-                   final SequenceMakerFactory sequenceMakerFactory) {
+                   final SequenceMakerFactory sequenceMakerFactory,
+                   final TaskContextFactory taskContextFactory) {
         this.referenceData = referenceData;
         this.metaHolder = metaHolder;
         this.sequenceMakerFactory = sequenceMakerFactory;
+        this.taskContextFactory = taskContextFactory;
     }
 
     protected SequenceMaker createSequenceMaker(final XPathContext context) {
@@ -82,6 +89,16 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
     protected Sequence call(final String functionName, final XPathContext context, final Sequence[] arguments) {
         LOGGER.trace("call({}, {}, {}", functionName, context, arguments);
         Sequence result = EmptyAtomicSequence.getInstance();
+
+        if (taskContextFactory.current().isTerminated() || Thread.currentThread().isInterrupted()) {
+            LOGGER.debug(LogUtil.message("call({}, {}, {}), isTerminated: {}, isInterrupted: {}",
+                    functionName,
+                    context,
+                    arguments,
+                    taskContextFactory.current().isTerminated(),
+                    Thread.currentThread().isInterrupted()));
+            throw ProcessException.wrap(new TaskTerminatedException());
+        }
 
         try {
             // Setup the defaultMs to be the received time of the stream.
@@ -145,7 +162,13 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
                             result = doLookup(context, ignoreWarnings, traceLookup, lookupIdentifier);
                         }
                     } catch (final RuntimeException e) {
-                        createLookupFailError(context, lookupIdentifier, e);
+                        // Don't want termination (which is a normal thing to happen
+                        // to log an error
+                        if (ProcessException.isTerminated(e)) {
+                            LOGGER.debug(() -> "Terminated: " + LogUtil.exceptionMessage(e));
+                        } else {
+                            createLookupFailError(context, lookupIdentifier, e);
+                        }
                     }
                 } else {
                     outputInfo(Severity.ERROR,
@@ -240,7 +263,8 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
                     final ReferenceDataResult result,
                     final XPathContext context) {
 
-        if (shouldLog(severity, trace, ignoreWarnings)) {
+        final TaskContext taskContext = taskContextFactory.current();
+        if (shouldLog(taskContext, severity, trace, ignoreWarnings)) {
 
             final String msg = msgSupplier.get();
             final StringBuilder sb = new StringBuilder();
@@ -265,7 +289,7 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
                 result.getMessages()
                         .stream()
                         .filter(lazyMessage ->
-                                shouldLog(lazyMessage.getSeverity(), trace, ignoreWarnings))
+                                shouldLog(taskContext, lazyMessage.getSeverity(), trace, ignoreWarnings))
                         .forEach(lazyMessage -> {
                             sb.append("\n");
                             sb.append(StoredError.MESSAGE_CAUSE_DELIMITER);
@@ -400,12 +424,20 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
     }
 
     // Pkg private for testing
-    static boolean shouldLog(final Severity maxSeverity,
+    static boolean shouldLog(final TaskContext taskContext,
+                             final Severity maxSeverity,
                              final boolean isTraceEnabled,
                              final boolean isIgnoreWarnings) {
-        return isTraceEnabled
-                || maxSeverity.greaterThanOrEqual(Severity.ERROR)
-                || (!isIgnoreWarnings && maxSeverity.greaterThanOrEqual(Severity.WARNING));
+
+        if (taskContext.isTerminated() || Thread.currentThread().isInterrupted()) {
+            // If the task is terminated then lots of lookups will fail but this is expected behaviour
+            // so no point logging
+            return false;
+        } else {
+            return isTraceEnabled
+                    || maxSeverity.greaterThanOrEqual(Severity.ERROR)
+                    || (!isIgnoreWarnings && maxSeverity.greaterThanOrEqual(Severity.WARNING));
+        }
     }
 
     /**

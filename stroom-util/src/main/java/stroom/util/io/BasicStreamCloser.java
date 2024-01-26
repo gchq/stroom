@@ -16,6 +16,7 @@
 
 package stroom.util.io;
 
+import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,7 +26,6 @@ import java.io.OutputStream;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.List;
-import javax.inject.Inject;
 
 public class BasicStreamCloser implements StreamCloser {
 

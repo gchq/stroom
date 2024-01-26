@@ -2,18 +2,11 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:b="urn:import:stroom.widget.button.client"
-             xmlns:v="urn:import:stroom.widget.dropdowntree.client.view">
+             xmlns:sl="urn:import:stroom.item.client">
 
     <g:ThinSplitLayoutPanel styleName="QueryHelpViewImpl max">
         <g:north size="250">
-            <g:SimplePanel styleName="QueryHelpViewImpl max dashboard-panel">
-                <g:FlowPanel ui:field="layout" styleName="max dock-container-vertical">
-                    <v:QuickFilter ui:field="nameFilter" addStyleNames="dock-min explorerTreeViewImpl-nameFilter"/>
-                    <g:MaxScrollPanel styleName="max queryHelpTree">
-                        <g:SimplePanel ui:field="elementChooser"/>
-                    </g:MaxScrollPanel>
-                </g:FlowPanel>
-            </g:SimplePanel>
+            <sl:SelectionList ui:field="selectionList"/>
         </g:north>
         <g:center>
             <g:FlowPanel styleName="QueryHelpViewImpl-details max dashboard-panel dock-container-vertical">
@@ -21,9 +14,7 @@
                     <b:InlineSvgButton ui:field="insertButton" title="Insert" enabled="false"/>
                     <b:InlineSvgButton ui:field="copyButton" title="Copy" enabled="false"/>
                 </g:FlowPanel>
-                <g:MaxScrollPanel styleName="dock-max">
-                    <g:SimplePanel ui:field="details" styleName="queryHelp-details"/>
-                </g:MaxScrollPanel>
+                <g:SimplePanel ui:field="details" styleName="dock-max queryHelpDetail"/>
             </g:FlowPanel>
         </g:center>
     </g:ThinSplitLayoutPanel>

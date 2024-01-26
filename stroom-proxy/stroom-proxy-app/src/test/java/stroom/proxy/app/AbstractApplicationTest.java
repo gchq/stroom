@@ -1,5 +1,6 @@
 package stroom.proxy.app;
 
+import stroom.test.common.TestResourceLocks;
 import stroom.util.NullSafe;
 import stroom.util.config.AbstractConfigUtil;
 import stroom.util.exception.ThrowingConsumer;
@@ -13,18 +14,20 @@ import stroom.util.io.TempDirProviderImpl;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.PropertyPath;
 
-import io.dropwizard.Application;
 import io.dropwizard.configuration.ConfigurationException;
 import io.dropwizard.configuration.ConfigurationFactory;
 import io.dropwizard.configuration.ConfigurationFactoryFactory;
 import io.dropwizard.configuration.ConfigurationSourceProvider;
 import io.dropwizard.configuration.DefaultConfigurationFactoryFactory;
 import io.dropwizard.configuration.FileConfigurationSourceProvider;
+import io.dropwizard.core.Application;
 import io.dropwizard.jackson.Jackson;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
+import jakarta.ws.rs.client.Client;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.parallel.ResourceLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,8 +39,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
-import javax.ws.rs.client.Client;
 
+@ResourceLock(TestResourceLocks.STROOM_PROXY_APP_PORT_8090)
 public abstract class AbstractApplicationTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractApplicationTest.class);

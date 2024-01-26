@@ -16,8 +16,6 @@
 
 package stroom.query.language.functions;
 
-import java.time.Instant;
-
 @SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
         name = Subtract.NAME,
@@ -65,10 +63,13 @@ class Subtract extends NumericFunction {
                     if (!current.type().isValue() || value.type().isError()) {
                         return value;
                     }
-
-                    final Instant instant = Instant.ofEpochMilli(current.toLong());
-                    final SimpleDuration duration = ((ValDuration) value).toDuration();
-                    return ValDate.create(SimpleDurationUtil.minus(instant, duration).toEpochMilli());
+                    final long milliseconds = value.toLong();
+                    final long diff = current.toLong() - milliseconds;
+                    if (Type.DATE.equals(current.type())) {
+                        return ValDate.create(diff);
+                    } else {
+                        return ValDuration.create(diff);
+                    }
                 } else {
                     return super.calc(current, value);
                 }

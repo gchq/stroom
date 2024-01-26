@@ -4,8 +4,8 @@ import stroom.node.api.NodeInfo;
 import stroom.processor.shared.ProcessorTaskList;
 import stroom.util.time.StroomDuration;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 public class ProcessorTaskTestHelper {
 
@@ -30,7 +30,7 @@ public class ProcessorTaskTestHelper {
 
     public void createAndQueueTasks() {
         processorConfigProvider.get().setSkipNonProducingFiltersDuration(StroomDuration.ZERO);
-        prioritisedFilters.reset();
+        prioritisedFilters.clear();
         processorTaskCreator.exec();
         processorTaskQueueManager.exec();
     }

@@ -23,7 +23,7 @@ import stroom.util.NullSafe;
 import stroom.util.shared.DataRange;
 import stroom.util.shared.Location;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 class ColTo extends AbstractLocationFunction {
 

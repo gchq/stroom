@@ -2,17 +2,16 @@ package stroom.security.impl;
 
 import stroom.security.common.impl.JwtContextFactory;
 import stroom.security.common.impl.StandardJwtContextFactory;
-import stroom.security.openid.api.AbstractOpenIdConfig;
 import stroom.security.openid.api.IdpType;
 import stroom.util.NullSafe;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.servlet.http.HttpServletRequest;
 import org.jose4j.jwt.consumer.JwtContext;
 
 import java.util.Map;
 import java.util.Optional;
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.servlet.http.HttpServletRequest;
 
 ///**
 // * A front for {@link InternalJwtContextFactory} and {@link StandardJwtContextFactory}
@@ -29,12 +28,12 @@ public class DelegatingJwtContextFactory implements JwtContextFactory {
 
     private final InternalJwtContextFactory internalJwtContextFactory;
     private final StandardJwtContextFactory standardJwtContextFactory;
-    private final Provider<AbstractOpenIdConfig> openIdConfigProvider;
+    private final Provider<StroomOpenIdConfig> openIdConfigProvider;
 
     @Inject
     public DelegatingJwtContextFactory(final InternalJwtContextFactory internalJwtContextFactory,
                                        final StandardJwtContextFactory standardJwtContextFactory,
-                                       final Provider<AbstractOpenIdConfig> openIdConfigProvider) {
+                                       final Provider<StroomOpenIdConfig> openIdConfigProvider) {
         this.internalJwtContextFactory = internalJwtContextFactory;
         this.standardJwtContextFactory = standardJwtContextFactory;
         this.openIdConfigProvider = openIdConfigProvider;

@@ -17,7 +17,7 @@
 package stroom.query.common.v2;
 
 import stroom.expression.api.ExpressionContext;
-import stroom.query.api.v2.Field;
+import stroom.query.api.v2.Column;
 import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.api.v2.TimeFilter;
@@ -61,9 +61,9 @@ public class MapDataStore implements DataStore {
     private final Map<Key, ItemsImpl> childMap = new ConcurrentHashMap<>();
 
     private final ValueReferenceIndex valueReferenceIndex;
-    private final List<Field> fields;
-    private final CompiledFields compiledFields;
-    private final CompiledField[] compiledFieldsArray;
+    private final List<Column> columns;
+    private final CompiledColumns compiledColumns;
+    private final CompiledColumn[] compiledColumnsArray;
     private final CompiledSorter<ItemImpl>[] compiledSorters;
     private final CompiledDepths compiledDepths;
     private final Sizes maxResults;
@@ -88,12 +88,12 @@ public class MapDataStore implements DataStore {
                         final ErrorConsumer errorConsumer) {
         this.componentId = componentId;
         this.serialisers = serialisers;
-        fields = tableSettings.getFields();
-        this.compiledFields = CompiledFields.create(expressionContext, fields, fieldIndex, paramMap);
-        valueReferenceIndex = compiledFields.getValueReferenceIndex();
-        this.compiledFieldsArray = compiledFields.getCompiledFields();
-        final CompiledDepths compiledDepths = new CompiledDepths(this.compiledFieldsArray, tableSettings.showDetail());
-        this.compiledSorters = CompiledSorter.create(compiledDepths.getMaxDepth(), this.compiledFieldsArray);
+        columns = tableSettings.getColumns();
+        this.compiledColumns = CompiledColumns.create(expressionContext, columns, fieldIndex, paramMap);
+        valueReferenceIndex = compiledColumns.getValueReferenceIndex();
+        this.compiledColumnsArray = compiledColumns.getCompiledColumns();
+        final CompiledDepths compiledDepths = new CompiledDepths(this.compiledColumnsArray, tableSettings.showDetail());
+        this.compiledSorters = CompiledSorter.create(compiledDepths.getMaxDepth(), this.compiledColumnsArray);
         this.compiledDepths = compiledDepths;
         final KeyFactoryConfig keyFactoryConfig = new BasicKeyFactoryConfig();
         keyFactory = KeyFactoryFactory.create(keyFactoryConfig, compiledDepths);
@@ -102,7 +102,7 @@ public class MapDataStore implements DataStore {
 
         groupingFunctions = new GroupingFunction[compiledDepths.getMaxDepth() + 1];
         for (int depth = 0; depth <= compiledDepths.getMaxGroupDepth(); depth++) {
-            groupingFunctions[depth] = new GroupingFunction(compiledFields.getCompiledFields());
+            groupingFunctions[depth] = new GroupingFunction(compiledColumns.getCompiledColumns());
         }
 
         // Find out if we have any sorting.
@@ -141,17 +141,17 @@ public class MapDataStore implements DataStore {
             }
 
             int groupIndex = 0;
-            for (int fieldIndex = 0; fieldIndex < compiledFieldsArray.length; fieldIndex++) {
-                final CompiledField compiledField = compiledFieldsArray[fieldIndex];
+            for (int columnIndex = 0; columnIndex < compiledColumnsArray.length; columnIndex++) {
+                final CompiledColumn compiledColumn = compiledColumnsArray[columnIndex];
 
-                final Generator generator = compiledField.getGenerator();
+                final Generator generator = compiledColumn.getGenerator();
                 if (generator != null) {
                     final ValCache valCache = new ValCache(generator);
                     Val value;
 
                     // If this is the first level then check if we should filter out this data.
                     if (depth == 0) {
-                        final CompiledFilter compiledFilter = compiledField.getCompiledFilter();
+                        final CompiledFilter compiledFilter = compiledColumn.getCompiledFilter();
                         if (compiledFilter != null) {
                             // If we are filtering then we need to evaluate this field
                             // now so that we can filter the resultant value.
@@ -165,14 +165,14 @@ public class MapDataStore implements DataStore {
                     }
 
                     // If we are grouping at this level then evaluate the expression and add to the group values.
-                    if (groupIndices[fieldIndex]) {
+                    if (groupIndices[columnIndex]) {
                         // If we haven't already created the generator then do so now.
                         value = valCache.getVal(values, storedValues);
                         groupValues[groupIndex++] = value;
                     }
 
                     // If we need a value at this level then evaluate the expression and add the value.
-                    if (valueIndices[fieldIndex]) {
+                    if (valueIndices[columnIndex]) {
                         // If we haven't already created the generator then do so now.
                         value = valCache.getVal(values, storedValues);
                     }
@@ -260,8 +260,8 @@ public class MapDataStore implements DataStore {
     }
 
     @Override
-    public List<Field> getFields() {
-        return compiledFields.getFields();
+    public List<Column> getColumns() {
+        return compiledColumns.getColumns();
     }
 
     @Override
@@ -310,7 +310,7 @@ public class MapDataStore implements DataStore {
             fetchState.totalRowCount++;
             if (!fetchState.reachedRowLimit) {
                 if (range.getOffset() <= fetchState.offset) {
-                    final R row = mapper.create(fields, item);
+                    final R row = mapper.create(columns, item);
                     resultConsumer.accept(row);
                     fetchState.length++;
                     fetchState.reachedRowLimit = fetchState.length >= range.getLength();
@@ -641,7 +641,7 @@ public class MapDataStore implements DataStore {
                                        final StoredValues storedValues,
                                        final int index) {
             Val val;
-            final Generator generator = dataStore.compiledFieldsArray[index].getGenerator();
+            final Generator generator = dataStore.compiledColumnsArray[index].getGenerator();
             if (key.isGrouped()) {
                 final Supplier<ChildData> childDataSupplier = () -> new ChildData() {
                     @Override
@@ -719,10 +719,10 @@ public class MapDataStore implements DataStore {
 
     private class GroupingFunction implements Function<Stream<ItemImpl>, Stream<ItemImpl>> {
 
-        private final CompiledField[] compiledFields;
+        private final CompiledColumn[] compiledColumns;
 
-        public GroupingFunction(final CompiledField[] compiledFields) {
-            this.compiledFields = compiledFields;
+        public GroupingFunction(final CompiledColumn[] compiledColumns) {
+            this.compiledColumns = compiledColumns;
         }
 
         @Override
@@ -739,8 +739,8 @@ public class MapDataStore implements DataStore {
                         result = storedValues;
                     } else {
                         // Combine the new item into the original item.
-                        for (final CompiledField compiledField : compiledFields) {
-                            final Generator generator = compiledField.getGenerator();
+                        for (final CompiledColumn compiledColumn : compiledColumns) {
+                            final Generator generator = compiledColumn.getGenerator();
                             generator.merge(result, storedValues);
                         }
                     }

@@ -1,25 +1,26 @@
 package stroom.security.impl;
 
+import stroom.security.api.HasJwt;
 import stroom.security.api.HasSession;
 import stroom.security.api.UserIdentity;
-import stroom.security.common.impl.HasUpdatableToken;
 import stroom.security.common.impl.UpdatableToken;
 import stroom.security.common.impl.UserIdentitySessionUtil;
 import stroom.security.shared.HasStroomUserIdentity;
+import stroom.util.NullSafe;
+import stroom.util.authentication.HasRefreshable;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.SimpleUserName;
 import stroom.util.shared.UserName;
 
-import org.jose4j.jwt.JwtClaims;
+import jakarta.servlet.http.HttpSession;
 
 import java.util.Objects;
 import java.util.Optional;
-import javax.servlet.http.HttpSession;
 
 public class UserIdentityImpl
-        implements UserIdentity, HasSession, HasStroomUserIdentity, HasUpdatableToken {
+        implements UserIdentity, HasSession, HasStroomUserIdentity, HasJwt, HasRefreshable {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(UserIdentityImpl.class);
 
@@ -64,11 +65,6 @@ public class UserIdentityImpl
     @Override
     public Optional<String> getFullName() {
         return Optional.ofNullable(fullName);
-    }
-
-    @Override
-    public JwtClaims getJwtClaims() {
-        return updatableToken.getJwtClaims();
     }
 
     @Override
@@ -141,7 +137,7 @@ public class UserIdentityImpl
     }
 
     @Override
-    public UpdatableToken getUpdatableToken() {
+    public UpdatableToken getRefreshable() {
         return updatableToken;
     }
 
@@ -190,5 +186,10 @@ public class UserIdentityImpl
                 ", fullName='" + fullName + '\'' +
                 ", isInSession='" + isInSession() + '\'' +
                 '}';
+    }
+
+    @Override
+    public String getJwt() {
+        return NullSafe.get(updatableToken, UpdatableToken::getJwt);
     }
 }

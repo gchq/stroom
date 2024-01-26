@@ -34,6 +34,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
 import com.google.inject.assistedinject.Assisted;
+import jakarta.inject.Inject;
 import org.lmdbjava.Cursor;
 import org.lmdbjava.GetOp;
 import org.lmdbjava.PutFlags;
@@ -44,7 +45,6 @@ import org.slf4j.LoggerFactory;
 import java.nio.ByteBuffer;
 import java.util.Optional;
 import java.util.OptionalInt;
-import javax.inject.Inject;
 
 /**
  * This store holds meta data about the corresponding entries in {@link ValueStoreDb}.

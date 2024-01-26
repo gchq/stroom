@@ -6,9 +6,10 @@ import stroom.docstore.api.Serialiser2Factory;
 import stroom.script.shared.ScriptDoc;
 import stroom.util.string.EncodingUtil;
 
+import jakarta.inject.Inject;
+
 import java.io.IOException;
 import java.util.Map;
-import javax.inject.Inject;
 
 public class ScriptSerialiser implements DocumentSerialiser2<ScriptDoc> {
 

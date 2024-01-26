@@ -4,8 +4,9 @@ import stroom.proxy.app.DataDirProvider;
 import stroom.proxy.repo.queue.QueueMonitors;
 import stroom.proxy.repo.store.FileStores;
 
+import jakarta.inject.Inject;
+
 import java.nio.file.Path;
-import javax.inject.Inject;
 
 public class DirQueueFactory {
 

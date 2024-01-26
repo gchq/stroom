@@ -15,11 +15,11 @@ dependencies {
     implementation libs.elasticsearch_rest_client
     implementation libs.elasticsearch
     implementation libs.elasticsearch_core
-    implementation libs.httpcore
-    implementation libs.http_client
+    //implementation libs.httpcore__elastic
+    //implementation libs.http_client__elastic
 }
 
-task elasticShadowJar(type: ShadowJar) {
+tasks.register('elasticShadowJar', ShadowJar) {
     archiveClassifier = 'all'
     configurations = [project.configurations.runtimeClasspath]
     zip64 true

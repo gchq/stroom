@@ -1,6 +1,6 @@
 package stroom.util.servlet;
 
-import javax.inject.Provider;
+import jakarta.inject.Provider;
 
 public interface SessionIdProvider extends Provider<String> {
 

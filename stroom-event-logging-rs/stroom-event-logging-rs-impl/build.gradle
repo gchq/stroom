@@ -26,13 +26,13 @@ dependencies {
     implementation project(':stroom-security:stroom-security-api')
 
     implementation libs.eventLogging
-    implementation libs.guice5
+    implementation libs.guice
     implementation libs.jackson_annotations
     implementation libs.jackson_core
     implementation libs.jackson_databind
     implementation libs.slf4j_api
     implementation libs.jakarta_servlet_api
-    implementation libs.javax_inject
+    implementation libs.jakarta_inject
     implementation libs.jaxb_api
     implementation libs.jersey_common
     implementation libs.ws_rs_api

@@ -16,8 +16,9 @@
 
 package stroom.event.logging.rs.impl;
 
+import jakarta.ws.rs.container.ResourceInfo;
+
 import java.lang.reflect.Method;
-import javax.ws.rs.container.ResourceInfo;
 
 public class MockResourceInfo implements ResourceInfo {
 

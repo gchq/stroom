@@ -16,6 +16,7 @@
 
 package stroom.processor.client.presenter;
 
+import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.cell.expander.client.ExpanderCell;
 import stroom.cell.info.client.InfoColumn;
 import stroom.cell.info.client.SvgCell;
@@ -45,16 +46,15 @@ import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterExpressionUtil;
 import stroom.processor.shared.ProcessorFilterResource;
 import stroom.processor.shared.ProcessorFilterRow;
-import stroom.processor.shared.ProcessorFilterTracker;
-import stroom.processor.shared.ProcessorFilterTrackerStatus;
 import stroom.processor.shared.ProcessorListRow;
 import stroom.processor.shared.ProcessorListRowResultPage;
 import stroom.processor.shared.ProcessorResource;
 import stroom.processor.shared.ProcessorRow;
+import stroom.processor.shared.ProcessorType;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.util.shared.Expander;
-import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.TreeRow;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
@@ -94,6 +94,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
     private final RestSaveQueue<Integer, Boolean> processorEnabledSaveQueue;
     private final RestSaveQueue<Integer, Boolean> processorFilterEnabledSaveQueue;
     private final RestSaveQueue<Integer, Integer> processorFilterPrioritySaveQueue;
+    private final RestSaveQueue<Integer, Integer> processorFilterMaxProcessingTasksSaveQueue;
 
     private boolean allowUpdate;
 
@@ -120,8 +121,9 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
             protected void exec(final Range range,
                                 final Consumer<ProcessorListRowResultPage> dataConsumer,
                                 final Consumer<Throwable> throwableConsumer) {
-                final Rest<ProcessorListRowResultPage> rest = restFactory.create();
-                rest
+                restFactory
+                        .builder()
+                        .forType(ProcessorListRowResultPage.class)
                         .onSuccess(dataConsumer)
                         .onFailure(throwableConsumer)
                         .call(PROCESSOR_FILTER_RESOURCE)
@@ -156,6 +158,14 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
                 rest
                         .call(PROCESSOR_FILTER_RESOURCE)
                         .setPriority(key, value);
+            }
+        };
+        processorFilterMaxProcessingTasksSaveQueue = new RestSaveQueue<Integer, Integer>(eventBus, restFactory) {
+            @Override
+            protected void doAction(final Rest<?> rest, final Integer key, final Integer value) {
+                rest
+                        .call(PROCESSOR_FILTER_RESOURCE)
+                        .setMaxProcessingTasks(key, value);
             }
         };
     }
@@ -198,12 +208,13 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
         addInfoColumn();
         addEnabledColumn();
         addPipelineColumn();
-        addTrackerColumns();
-        addLastPollColumns();
         addPriorityColumn();
-        addStreamsColumn();
-        addEventsColumn();
+        addMaxProcessingTasksColumn();
         addStatusColumn();
+//        addTrackerColumns();
+        addLastPollColumns();
+        addTasksColumn();
+//        addEventsColumn();
         addReprocessColumn();
         addEndColumn();
     }
@@ -247,7 +258,13 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
                 if (row instanceof ProcessorFilterRow) {
                     icon = SvgPresets.FILTER.enabled(true);
                 } else if (row instanceof ProcessorRow) {
-                    icon = SvgPresets.PROCESS.enabled(true);
+                    if (ProcessorType.STREAMING_ANALYTIC
+                            .equals(((ProcessorRow) row).getProcessor().getProcessorType())) {
+                        icon = SvgPresets.enabled(SvgImage.DOCUMENT_ANALYTIC_RULE,
+                                ProcessorType.STREAMING_ANALYTIC.getDisplayValue());
+                    } else {
+                        icon = SvgPresets.PROCESS.enabled(true);
+                    }
                 }
                 return icon;
             }
@@ -298,32 +315,20 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
         }, "Pipeline", 300);
     }
 
-    private void addTrackerColumns() {
-        dataGrid.addResizableColumn(new Column<ProcessorListRow, String>(new TextCell()) {
-            @Override
-            public String getValue(final ProcessorListRow row) {
-                String lastStream = null;
-                if (row instanceof ProcessorFilterRow) {
-                    final ProcessorFilterRow processorFilterRow = (ProcessorFilterRow) row;
-                    lastStream = dateTimeFormatter.format(
-                            processorFilterRow.getProcessorFilter().getProcessorFilterTracker().getMetaCreateMs());
-                }
-                return lastStream;
-            }
-        }, "Tracker Ms", ColumnSizeConstants.DATE_COL);
-        dataGrid.addResizableColumn(new Column<ProcessorListRow, String>(new TextCell()) {
-            @Override
-            public String getValue(final ProcessorListRow row) {
-                final String lastStream = null;
-                if (row instanceof ProcessorFilterRow) {
-                    final ProcessorFilterRow processorFilterRow = (ProcessorFilterRow) row;
-                    return ModelStringUtil.formatCsv(processorFilterRow.getProcessorFilter()
-                            .getProcessorFilterTracker().getTrackerStreamCreatePercentage());
-                }
-                return lastStream;
-            }
-        }, "Tracker %", ColumnSizeConstants.MEDIUM_COL);
-    }
+//    private void addTrackerColumns() {
+//        dataGrid.addResizableColumn(new Column<ProcessorListRow, String>(new TextCell()) {
+//            @Override
+//            public String getValue(final ProcessorListRow row) {
+//                String lastStream = null;
+//                if (row instanceof ProcessorFilterRow) {
+//                    final ProcessorFilterRow processorFilterRow = (ProcessorFilterRow) row;
+//                    lastStream = dateTimeFormatter.format(
+//                            processorFilterRow.getProcessorFilter().getProcessorFilterTracker().getMetaCreateMs());
+//                }
+//                return lastStream;
+//            }
+//        }, "Tracker Ms", ColumnSizeConstants.DATE_COL);
+//    }
 
     private void addLastPollColumns() {
         dataGrid.addResizableColumn(new Column<ProcessorListRow, String>(new TextCell()) {
@@ -337,18 +342,6 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
                 return lastPoll;
             }
         }, "Last Poll Age", ColumnSizeConstants.MEDIUM_COL);
-        dataGrid.addResizableColumn(new Column<ProcessorListRow, Number>(new NumberCell()) {
-            @Override
-            public Number getValue(final ProcessorListRow row) {
-                Number currentTasks = null;
-                if (row instanceof ProcessorFilterRow) {
-                    final ProcessorFilterRow processorFilterRow = (ProcessorFilterRow) row;
-                    currentTasks = processorFilterRow.getProcessorFilter().getProcessorFilterTracker()
-                            .getLastPollTaskCount();
-                }
-                return currentTasks;
-            }
-        }, "Task Count", ColumnSizeConstants.MEDIUM_COL);
     }
 
     private void addPriorityColumn() {
@@ -384,7 +377,41 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
         dataGrid.addColumn(priorityColumn, "Priority", ColumnSizeConstants.MEDIUM_COL);
     }
 
-    private void addStreamsColumn() {
+    private void addMaxProcessingTasksColumn() {
+        final Column<ProcessorListRow, Number> maxProcessingTasksColumn = new Column<ProcessorListRow, Number>(
+                new ValueSpinnerCell(0, Integer.MAX_VALUE)) {
+            @Override
+            public Number getValue(final ProcessorListRow row) {
+                Number maxProcessingTasks = null;
+                if (row instanceof ProcessorFilterRow) {
+                    final ProcessorFilterRow processorFilterRow = (ProcessorFilterRow) row;
+                    if (allowUpdate) {
+                        maxProcessingTasks = new EditableInteger(processorFilterRow.getProcessorFilter()
+                                .getMaxProcessingTasks());
+                    } else {
+                        maxProcessingTasks = processorFilterRow.getProcessorFilter().getMaxProcessingTasks();
+                    }
+                }
+                return maxProcessingTasks;
+            }
+        };
+        if (allowUpdate) {
+            maxProcessingTasksColumn.setFieldUpdater(new FieldUpdater<ProcessorListRow, Number>() {
+                @Override
+                public void update(final int index, final ProcessorListRow row, final Number value) {
+                    if (row instanceof ProcessorFilterRow) {
+                        final ProcessorFilterRow processorFilterRow = (ProcessorFilterRow) row;
+                        final ProcessorFilter processorFilter = processorFilterRow.getProcessorFilter();
+                        processorFilter.setMaxProcessingTasks(value.intValue());
+                        processorFilterMaxProcessingTasksSaveQueue.setValue(processorFilter.getId(), value.intValue());
+                    }
+                }
+            });
+        }
+        dataGrid.addColumn(maxProcessingTasksColumn, "Max Concurrent", 120);
+    }
+
+    private void addTasksColumn() {
         dataGrid.addResizableColumn(new Column<ProcessorListRow, Number>(new NumberCell()) {
             @Override
             public Number getValue(final ProcessorListRow row) {
@@ -395,43 +422,28 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
                 }
                 return value;
             }
-        }, "Streams", ColumnSizeConstants.MEDIUM_COL);
+        }, "Tasks", ColumnSizeConstants.MEDIUM_COL);
     }
 
-    private void addEventsColumn() {
-        dataGrid.addResizableColumn(new Column<ProcessorListRow, Number>(new NumberCell()) {
-            @Override
-            public Number getValue(final ProcessorListRow row) {
-                Number value = null;
-                if (row instanceof ProcessorFilterRow) {
-                    final ProcessorFilterRow processorFilterRow = (ProcessorFilterRow) row;
-                    value = processorFilterRow.getProcessorFilter().getProcessorFilterTracker().getEventCount();
-                }
-                return value;
-            }
-        }, "Events", ColumnSizeConstants.MEDIUM_COL);
-    }
+//    private void addEventsColumn() {
+//        dataGrid.addResizableColumn(new Column<ProcessorListRow, Number>(new NumberCell()) {
+//            @Override
+//            public Number getValue(final ProcessorListRow row) {
+//                Number value = null;
+//                if (row instanceof ProcessorFilterRow) {
+//                    final ProcessorFilterRow processorFilterRow = (ProcessorFilterRow) row;
+//                    value = processorFilterRow.getProcessorFilter().getProcessorFilterTracker().getEventCount();
+//                }
+//                return value;
+//            }
+//        }, "Events", ColumnSizeConstants.MEDIUM_COL);
+//    }
 
     private void addStatusColumn() {
         dataGrid.addResizableColumn(new Column<ProcessorListRow, String>(new TextCell()) {
             @Override
             public String getValue(final ProcessorListRow row) {
-                String status = null;
-                if (row instanceof ProcessorFilterRow) {
-                    final ProcessorFilterRow processorFilterRow = (ProcessorFilterRow) row;
-                    final ProcessorFilterTracker tracker = processorFilterRow
-                            .getProcessorFilter()
-                            .getProcessorFilterTracker();
-                    if (tracker != null) {
-                        if (tracker.getMessage() != null && tracker.getMessage().trim().length() > 0) {
-                            status = tracker.getMessage();
-                        } else if (tracker.getStatus() != null &&
-                                tracker.getStatus() != ProcessorFilterTrackerStatus.CREATED) {
-                            status = tracker.getStatus().getDisplayValue();
-                        }
-                    }
-                }
-                return status;
+                return ProcessorStatusUtil.getValue(row);
             }
         }, "Status", ColumnSizeConstants.MEDIUM_COL);
     }
@@ -487,10 +499,9 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
                 String reprocess = null;
                 if (row instanceof ProcessorFilterRow) {
                     final ProcessorFilterRow processorFilterRow = (ProcessorFilterRow) row;
-                    reprocess = String.valueOf(
-                            processorFilterRow
-                                    .getProcessorFilter()
-                                    .isReprocess()).toLowerCase();
+                    reprocess = processorFilterRow.getProcessorFilter().isReprocess()
+                            ? "True"
+                            : "False";
                 }
                 return reprocess;
             }
@@ -524,6 +535,11 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
         doDataDisplay();
     }
 
+    private void setAnalyticRule(final DocRef analyticRuleRef) {
+        request.setExpression(ProcessorFilterExpressionUtil.createAnalyticRuleExpression(analyticRuleRef));
+        doDataDisplay();
+    }
+
     private void setFolder(final DocRef folder) {
         request.setExpression(ProcessorFilterExpressionUtil.createFolderExpression(folder));
         doDataDisplay();
@@ -540,6 +556,8 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
             setNullCriteria();
         } else if (PipelineDoc.DOCUMENT_TYPE.equals(docRef.getType())) {
             setPipeline(docRef);
+        } else if (AnalyticRuleDoc.DOCUMENT_TYPE.equals(docRef.getType())) {
+            setAnalyticRule(docRef);
         } else {
             setFolder(docRef);
         }

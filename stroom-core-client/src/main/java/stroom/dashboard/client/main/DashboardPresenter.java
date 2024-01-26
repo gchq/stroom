@@ -1120,6 +1120,11 @@ public class DashboardPresenter
         queryToolbarPresenter.onError(getCombinedErrors());
     }
 
+    @Override
+    public DocRef getDocRef() {
+        return docRef;
+    }
+
     private static class ComponentNameSet {
 
         private final Set<String> currentIdSet = new HashSet<>();

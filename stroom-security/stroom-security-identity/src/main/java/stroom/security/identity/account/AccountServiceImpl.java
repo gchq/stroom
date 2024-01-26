@@ -14,13 +14,13 @@ import stroom.util.shared.SimpleUserName;
 import stroom.util.shared.UserName;
 
 import com.google.common.base.Strings;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
-import javax.inject.Provider;
 
 public class AccountServiceImpl implements AccountService, UserNameProvider {
 

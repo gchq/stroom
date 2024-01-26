@@ -22,25 +22,24 @@ import stroom.config.common.UriFactory;
 import stroom.security.identity.config.EmailConfig;
 import stroom.security.identity.config.IdentityConfig;
 import stroom.security.identity.config.SmtpConfig;
+import stroom.util.NullSafe;
 
 import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
-import org.simplejavamail.email.Email;
-import org.simplejavamail.mailer.Mailer;
-import org.simplejavamail.mailer.config.ServerConfig;
-import org.simplejavamail.mailer.config.TransportStrategy;
+import jakarta.inject.Inject;
+import jakarta.mail.Message.RecipientType;
+import org.simplejavamail.api.email.Email;
+import org.simplejavamail.api.mailer.Mailer;
+import org.simplejavamail.email.EmailBuilder;
+import org.simplejavamail.mailer.MailerBuilder;
+import org.simplejavamail.mailer.internal.MailerRegularBuilderImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
-import javax.mail.Message;
 
 class EmailSender {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(EmailSender.class);
 
-    private final ServerConfig serverConfig;
-    private final TransportStrategy transportStrategy;
     private final UriFactory uriFactory;
     private final IdentityConfig authenticationConfig;
 
@@ -49,45 +48,64 @@ class EmailSender {
                 final IdentityConfig authenticationConfig) {
         this.uriFactory = uriFactory;
         this.authenticationConfig = authenticationConfig;
-        final SmtpConfig smtpConfig = Preconditions.checkNotNull(authenticationConfig.getEmailConfig(),
-                "Missing 'email' section in config")
-                .getSmtpConfig();
-
-        if (!Strings.isNullOrEmpty(smtpConfig.getUsername()) && !Strings.isNullOrEmpty(smtpConfig.getPassword())) {
-            serverConfig = new ServerConfig(
-                    authenticationConfig.getEmailConfig().getSmtpConfig().getHost(),
-                    authenticationConfig.getEmailConfig().getSmtpConfig().getPort(),
-                    authenticationConfig.getEmailConfig().getSmtpConfig().getUsername(),
-                    authenticationConfig.getEmailConfig().getSmtpConfig().getPassword());
-        } else {
-            serverConfig = new ServerConfig(
-                    authenticationConfig.getEmailConfig().getSmtpConfig().getHost(),
-                    authenticationConfig.getEmailConfig().getSmtpConfig().getPort());
-        }
-
-        transportStrategy = authenticationConfig.getEmailConfig().getSmtpConfig().getTransportStrategy();
     }
 
-    public void send(final String emailAddress, final String firstName, final String lastName, String resetToken) {
-        Preconditions.checkNotNull(authenticationConfig.getEmailConfig(), "Missing 'email' section in config");
+    public void send(final String emailAddress,
+                     final String firstName,
+                     final String lastName, String resetToken) {
 
         final EmailConfig emailConfig = authenticationConfig.getEmailConfig();
+        final SmtpConfig smtpConfig = Preconditions.checkNotNull(
+                        emailConfig, "Missing 'email' section in config")
+                .getSmtpConfig();
+
         final String resetName = firstName == null
                 ? "[Name not available]"
-                : firstName + "" + lastName;
+                : firstName + " " + lastName;
         String resetUrl = String.format(emailConfig.getPasswordResetUrl(), emailAddress, resetToken);
         resetUrl = uriFactory.publicUri(resetUrl).toString();
         final String passwordResetEmailText = String.format(emailConfig.getPasswordResetText(), resetUrl);
 
-        final Email email = new Email();
-        email.setFromAddress(emailConfig.getFromName(), emailConfig.getFromAddress());
-        email.setReplyToAddress(emailConfig.getFromName(), emailConfig.getFromAddress());
-        email.addRecipient(resetName, emailAddress, Message.RecipientType.TO);
-        email.setSubject(emailConfig.getPasswordResetSubject());
-        email.setText(passwordResetEmailText);
+        final Email email = EmailBuilder.startingBlank()
+                .from(emailConfig.getFromName(), emailConfig.getFromAddress())
+                .withReplyTo(emailConfig.getFromName(), emailConfig.getFromAddress())
+                .withRecipient(resetName, emailAddress, RecipientType.TO)
+                .withSubject(emailConfig.getPasswordResetSubject())
+                .withPlainText(passwordResetEmailText)
+                .buildEmail();
 
-        LOGGER.info("Sending reset email to user {} at {}:{}",
-                serverConfig.getHost(), serverConfig.getPort(), serverConfig.getUsername());
-        new Mailer(serverConfig, transportStrategy).sendMail(email);
+        final MailerRegularBuilderImpl mailerBuilder = MailerBuilder
+                .withTransportStrategy(smtpConfig.getTransportStrategy());
+
+        if (!NullSafe.isEmptyString(smtpConfig.getUsername())
+                && !NullSafe.isEmptyString(smtpConfig.getPassword())) {
+            mailerBuilder.withSMTPServer(
+                    smtpConfig.getHost(),
+                    smtpConfig.getPort(),
+                    smtpConfig.getUsername(),
+                    smtpConfig.getPassword());
+        } else {
+            mailerBuilder.withSMTPServer(
+                    smtpConfig.getHost(),
+                    smtpConfig.getPort());
+        }
+
+        LOGGER.info("Sending reset email to user {} ({}) at {}:{}",
+                smtpConfig.getUsername(),
+                emailAddress,
+                smtpConfig.getHost(),
+                smtpConfig.getPort());
+
+        try (Mailer mailer = mailerBuilder.buildMailer()) {
+            mailer.sendMail(email);
+        } catch (Exception e) {
+            LOGGER.error("Error sending reset email to user {} ({}) at {}:{} - {}",
+                    smtpConfig.getUsername(),
+                    emailAddress,
+                    smtpConfig.getHost(),
+                    smtpConfig.getPort(),
+                    e.getMessage(),
+                    e);
+        }
     }
 }

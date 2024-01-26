@@ -121,6 +121,11 @@ public class Selection<T> implements Iterable<T>, Copyable<Selection<T>>, Matche
         return set.remove(id);
     }
 
+    public boolean removeAll(final Collection<T> ids) {
+        matchAll = false;
+        return set.removeAll(ids);
+    }
+
     public Set<T> getSet() {
         return set;
     }

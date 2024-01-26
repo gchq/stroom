@@ -17,10 +17,14 @@ import com.codahale.metrics.health.HealthCheck;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.http.HttpEntity;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.CloseableHttpClient;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
+import jakarta.servlet.http.HttpServletResponse;
+import org.apache.hc.client5.http.classic.methods.HttpGet;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
+import org.apache.hc.core5.http.HttpEntity;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -32,10 +36,6 @@ import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.inject.Singleton;
-import javax.servlet.http.HttpServletResponse;
 
 /**
  * Combines the values from {@link AbstractOpenIdConfig} with values obtained from the external
@@ -173,7 +173,7 @@ public class ExternalIdpConfigurationProvider
 
             while (true) {
                 try (final CloseableHttpResponse response = httpClient.execute(httpGet)) {
-                    if (HttpServletResponse.SC_OK == response.getStatusLine().getStatusCode()) {
+                    if (HttpServletResponse.SC_OK == response.getCode()) {
                         final HttpEntity entity = response.getEntity();
                         String msg;
                         try (final InputStream is = entity.getContent()) {
@@ -186,7 +186,7 @@ public class ExternalIdpConfigurationProvider
                         LOGGER.info("Successfully fetched open id configuration from: " + configurationEndpoint);
                         return openIdConfigurationResponse;
                     } else {
-                        throw new AuthenticationException("Received status " + response.getStatusLine() +
+                        throw new AuthenticationException("Received status " + response.getCode() +
                                 " from " + configurationEndpoint);
                     }
                 } catch (AuthenticationException e) {

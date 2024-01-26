@@ -4,6 +4,11 @@ import stroom.proxy.app.handler.LocalByteBuffer;
 import stroom.proxy.app.handler.NumericFileNameUtil;
 import stroom.proxy.app.handler.ZipWriter;
 
+import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.client.Invocation.Builder;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -11,11 +16,6 @@ import java.io.ByteArrayOutputStream;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.atomic.LongAdder;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.client.Invocation.Builder;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 
 public class PostDataHelper {
 

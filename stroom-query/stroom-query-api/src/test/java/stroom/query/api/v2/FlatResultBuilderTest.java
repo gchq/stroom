@@ -26,10 +26,10 @@ class FlatResultBuilderTest {
                 .builder()
                 .componentId(componentId)
                 .errors(errors);
-        final List<Field> fields = new ArrayList<>();
+        final List<Column> columns = new ArrayList<>();
         IntStream.range(0, numberFields).forEach(x ->
-                fields
-                        .add(Field
+                columns
+                        .add(Column
                                 .builder()
                                 .id(String.format("id%d", x))
                                 .name(String.format("field%d", x))
@@ -43,7 +43,7 @@ class FlatResultBuilderTest {
             flatResultBuilder.addValues(values);
         });
 
-        flatResultBuilder.structure(fields);
+        flatResultBuilder.structure(columns);
         final FlatResult flatResult = flatResultBuilder.build();
 
         // Then

@@ -17,8 +17,8 @@
 package stroom.dashboard.client.table;
 
 import stroom.expression.api.TimeZone;
+import stroom.query.api.v2.Column;
 import stroom.query.api.v2.DateTimeFormatSettings;
-import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Format;
 import stroom.query.api.v2.Format.Type;
 import stroom.query.api.v2.FormatSettings;
@@ -54,10 +54,10 @@ public class FormatPresenter extends MyPresenterWidget<FormatPresenter.FormatVie
         getView().setTimeZoneIds(timeZones.getIds());
     }
 
-    public void show(final Field field,
-                     final BiConsumer<Field, Field> fieldChangeConsumer) {
+    public void show(final Column column,
+                     final BiConsumer<Column, Column> columnChangeConsumer) {
 
-        final Format format = field.getFormat();
+        final Format format = column.getFormat();
         if (format == null || format.getType() == null) {
             setType(Type.GENERAL);
         } else {
@@ -68,17 +68,17 @@ public class FormatPresenter extends MyPresenterWidget<FormatPresenter.FormatVie
 
         getView().setWrap(format != null && format.getWrap() != null && format.getWrap());
 
-        final PopupSize popupSize = PopupSize.resizable(450, 380);
+        final PopupSize popupSize = PopupSize.resizable(450, 420);
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(popupSize)
-                .caption("Format '" + field.getName() + "'")
+                .caption("Format '" + column.getName() + "'")
                 .onShow(e -> getView().focus())
                 .onHideRequest(e -> {
                     if (e.isOk()) {
                         final Format newFormat = getFormat();
-                        if (!EqualsUtil.isEquals(newFormat, field.getFormat())) {
-                            fieldChangeConsumer.accept(field, field.copy().format(newFormat).build());
+                        if (!EqualsUtil.isEquals(newFormat, column.getFormat())) {
+                            columnChangeConsumer.accept(column, column.copy().format(newFormat).build());
                         }
                     }
 

@@ -1,7 +1,6 @@
 package stroom.receive;
 
 import stroom.data.zip.StroomZipEntry;
-import stroom.data.zip.StroomZipFile;
 import stroom.util.io.FileUtil;
 
 import java.io.IOException;

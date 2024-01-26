@@ -16,8 +16,6 @@
 
 package stroom.search.impl;
 
-import stroom.datasource.api.v2.DataSource;
-import stroom.docref.DocRef;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.index.impl.StroomIndexQueryResource;
@@ -29,9 +27,8 @@ import stroom.query.common.v2.ResultStoreManager;
 import stroom.query.common.v2.TerminateDecorator;
 
 import com.codahale.metrics.annotation.Timed;
-
-import javax.inject.Inject;
-import javax.inject.Provider;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 @AutoLogged
 public class StroomIndexQueryResourceImpl implements StroomIndexQueryResource {
@@ -42,12 +39,6 @@ public class StroomIndexQueryResourceImpl implements StroomIndexQueryResource {
     public StroomIndexQueryResourceImpl(
             final Provider<ResultStoreManager> searchResponseCreatorManagerProvider) {
         this.searchResponseCreatorManagerProvider = searchResponseCreatorManagerProvider;
-    }
-
-    @Timed
-    @Override
-    public DataSource getDataSource(final DocRef docRef) {
-        return searchResponseCreatorManagerProvider.get().getDataSource(docRef);
     }
 
     @Timed

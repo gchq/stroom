@@ -29,15 +29,19 @@ import java.util.Objects;
 public class CreateProcessFilterRequest {
 
     @JsonProperty
+    private final ProcessorType processorType;
+    @JsonProperty
     private final DocRef pipeline;
     @JsonProperty
     private final QueryData queryData;
     @JsonProperty
     private final int priority;
     @JsonProperty
+    private final int maxProcessingTasks;
+    @JsonProperty
     private final boolean autoPriority;
     @JsonProperty
-    private boolean reprocess;
+    private final boolean reprocess;
     @JsonProperty
     private final boolean enabled;
     @JsonProperty
@@ -46,22 +50,30 @@ public class CreateProcessFilterRequest {
     private final Long maxMetaCreateTimeMs;
 
     @JsonCreator
-    public CreateProcessFilterRequest(@JsonProperty("pipeline") final DocRef pipeline,
+    public CreateProcessFilterRequest(@JsonProperty("processorType") final ProcessorType processorType,
+                                      @JsonProperty("pipeline") final DocRef pipeline,
                                       @JsonProperty("queryData") final QueryData queryData,
                                       @JsonProperty("priority") final int priority,
+                                      @JsonProperty("maxProcessingTasks") final int maxProcessingTasks,
                                       @JsonProperty("autoPriority") final boolean autoPriority,
                                       @JsonProperty("reprocess") final boolean reprocess,
                                       @JsonProperty("enabled") final boolean enabled,
                                       @JsonProperty("minMetaCreateTimeMs") final Long minMetaCreateTimeMs,
                                       @JsonProperty("maxMetaCreateTimeMs") final Long maxMetaCreateTimeMs) {
+        this.processorType = processorType;
         this.pipeline = pipeline;
         this.queryData = queryData;
         this.priority = priority;
+        this.maxProcessingTasks = maxProcessingTasks;
         this.autoPriority = autoPriority;
         this.reprocess = reprocess;
         this.enabled = enabled;
         this.minMetaCreateTimeMs = minMetaCreateTimeMs;
         this.maxMetaCreateTimeMs = maxMetaCreateTimeMs;
+    }
+
+    public ProcessorType getProcessorType() {
+        return processorType;
     }
 
     public DocRef getPipeline() {
@@ -74,6 +86,10 @@ public class CreateProcessFilterRequest {
 
     public int getPriority() {
         return priority;
+    }
+
+    public int getMaxProcessingTasks() {
+        return maxProcessingTasks;
     }
 
     public boolean isAutoPriority() {
@@ -151,9 +167,11 @@ public class CreateProcessFilterRequest {
 
     public static class Builder {
 
+        private ProcessorType processorType = ProcessorType.PIPELINE;
         private DocRef pipeline;
         private QueryData queryData;
         private int priority = 10;
+        private int maxProcessingTasks = 0;
         private boolean autoPriority;
         private boolean reprocess;
         private boolean enabled = true;
@@ -164,14 +182,21 @@ public class CreateProcessFilterRequest {
         }
 
         public Builder(final CreateProcessFilterRequest request) {
+            this.processorType = request.processorType;
             this.pipeline = request.pipeline;
             this.queryData = request.queryData;
             this.priority = request.priority;
+            this.maxProcessingTasks = request.maxProcessingTasks;
             this.autoPriority = request.autoPriority;
             this.reprocess = request.reprocess;
             this.enabled = request.enabled;
             this.minMetaCreateTimeMs = request.minMetaCreateTimeMs;
             this.maxMetaCreateTimeMs = request.maxMetaCreateTimeMs;
+        }
+
+        public Builder processorType(final ProcessorType processorType) {
+            this.processorType = processorType;
+            return this;
         }
 
         public Builder pipeline(final DocRef pipeline) {
@@ -186,6 +211,11 @@ public class CreateProcessFilterRequest {
 
         public Builder priority(final int priority) {
             this.priority = priority;
+            return this;
+        }
+
+        public Builder maxProcessingTasks(final int maxProcessingTasks) {
+            this.maxProcessingTasks = maxProcessingTasks;
             return this;
         }
 
@@ -216,9 +246,11 @@ public class CreateProcessFilterRequest {
 
         public CreateProcessFilterRequest build() {
             return new CreateProcessFilterRequest(
+                    processorType,
                     pipeline,
                     queryData,
                     priority,
+                    maxProcessingTasks,
                     autoPriority,
                     reprocess,
                     enabled,

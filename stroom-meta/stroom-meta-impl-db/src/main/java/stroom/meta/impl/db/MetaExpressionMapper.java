@@ -1,6 +1,6 @@
 package stroom.meta.impl.db;
 
-import stroom.datasource.api.v2.AbstractField;
+import stroom.datasource.api.v2.QueryField;
 import stroom.db.util.CommonExpressionMapper;
 import stroom.db.util.TermHandler;
 import stroom.db.util.TermHandlerFactory;
@@ -35,7 +35,7 @@ class MetaExpressionMapper implements Function<ExpressionItem, Condition> {
         this.termHandlerFactory = termHandlerFactory;
     }
 
-    public void map(final AbstractField dataSourceField) {
+    public void map(final QueryField dataSourceField) {
         Optional<Integer> idOptional = metaKeyDao.getIdForName(dataSourceField.getName());
 
         if (idOptional.isPresent()) {

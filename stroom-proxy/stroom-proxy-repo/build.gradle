@@ -21,12 +21,12 @@ dependencies {
     implementation libs.dropwizard_lifecycle
     implementation libs.dropwizard_metrics_healthchecks
     implementation libs.guava
-    implementation libs.guice5
+    implementation libs.guice
     implementation libs.jackson_annotations
     implementation libs.jackson_core
     implementation libs.jackson_databind
     implementation libs.jakarta_servlet_api
-    implementation libs.javax_inject
+    implementation libs.jakarta_inject
     implementation libs.slf4j_api
 
     testImplementation project(':stroom-proxy:stroom-proxy-remote-api')

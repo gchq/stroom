@@ -1,7 +1,8 @@
 package stroom.util.io;
 
+import jakarta.inject.Provider;
+
 import java.nio.file.Path;
-import javax.inject.Provider;
 
 public interface HomeDirProvider extends Provider<Path> {
 

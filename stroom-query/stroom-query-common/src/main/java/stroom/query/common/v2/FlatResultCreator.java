@@ -17,7 +17,7 @@
 package stroom.query.common.v2;
 
 import stroom.expression.api.ExpressionContext;
-import stroom.query.api.v2.Field;
+import stroom.query.api.v2.Column;
 import stroom.query.api.v2.FlatResult;
 import stroom.query.api.v2.FlatResultBuilder;
 import stroom.query.api.v2.Format.Type;
@@ -30,7 +30,7 @@ import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchRequestSource;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.api.v2.TimeFilter;
-import stroom.query.common.v2.format.FieldFormatter;
+import stroom.query.common.v2.format.ColumnFormatter;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ref.ErrorConsumer;
@@ -50,9 +50,9 @@ public class FlatResultCreator implements ResultCreator {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FlatResultCreator.class);
 
-    private final FieldFormatter fieldFormatter;
+    private final ColumnFormatter columnFormatter;
     private final List<Mapper> mappers;
-    private final List<Field> fields;
+    private final List<Column> columns;
     private final ErrorConsumer errorConsumer = new ErrorConsumerImpl();
     private final boolean cacheLastResult;
     private FlatResult lastResult;
@@ -63,10 +63,10 @@ public class FlatResultCreator implements ResultCreator {
                              final ExpressionContext expressionContext,
                              final ResultRequest resultRequest,
                              final Map<String, String> paramMap,
-                             final FieldFormatter fieldFormatter,
+                             final ColumnFormatter columnFormatter,
                              final Sizes defaultMaxResultsSizes,
                              final boolean cacheLastResult) {
-        this.fieldFormatter = fieldFormatter;
+        this.columnFormatter = columnFormatter;
         this.cacheLastResult = cacheLastResult;
 
         // User may have added a vis pane but not defined the vis
@@ -120,12 +120,12 @@ public class FlatResultCreator implements ResultCreator {
 
         final TableSettings child = tableSettings.get(tableSettings.size() - 1);
 
-        fields = child != null
-                ? child.getFields()
+        columns = child != null
+                ? child.getColumns()
                 : Collections.emptyList();
     }
 
-    private List<Object> toNodeKey(final Map<Integer, List<Field>> groupFields, final Key key) {
+    private List<Object> toNodeKey(final Map<Integer, List<Column>> groupColumns, final Key key) {
         if (key == null || key.getKeyParts().size() == 0) {
             return null;
         }
@@ -146,14 +146,14 @@ public class FlatResultCreator implements ResultCreator {
                 if (val == null) {
                     result.add(null);
                 } else {
-                    Field field = null;
+                    Column column = null;
 
-                    final List<Field> fields = groupFields.get(depth);
-                    if (fields != null) {
-                        field = fields.get(0);
+                    final List<Column> columns = groupColumns.get(depth);
+                    if (columns != null) {
+                        column = columns.get(0);
                     }
 
-                    result.add(convert(field, val));
+                    result.add(convert(column, val));
                 }
 
             } else {
@@ -191,12 +191,12 @@ public class FlatResultCreator implements ResultCreator {
                     mappedDataStore = mapper.map(mappedDataStore, resultRequest.getTimeFilter());
                 }
 
-                final Map<Integer, List<Field>> groupFields = new HashMap<>();
-                for (final Field field : fields) {
-                    if (field.getGroup() != null) {
-                        groupFields.computeIfAbsent(field.getGroup(), k ->
+                final Map<Integer, List<Column>> groupFields = new HashMap<>();
+                for (final Column column : columns) {
+                    if (column.getGroup() != null) {
+                        groupFields.computeIfAbsent(column.getGroup(), k ->
                                         new ArrayList<>())
-                                .add(field);
+                                .add(column);
                     }
                 }
 
@@ -207,7 +207,7 @@ public class FlatResultCreator implements ResultCreator {
                         resultRequest.getTimeFilter(),
                         IdentityItemMapper.INSTANCE,
                         item -> {
-                            final List<Object> resultList = new ArrayList<>(fields.size() + 3);
+                            final List<Object> resultList = new ArrayList<>(columns.size() + 3);
 
                             final Key key = item.getKey();
                             if (key != null) {
@@ -223,16 +223,16 @@ public class FlatResultCreator implements ResultCreator {
                             // Convert all list into fully resolved objects evaluating
                             // functions where necessary.
                             int i = 0;
-                            for (final Field field : fields) {
+                            for (final Column column : columns) {
                                 final Val val = item.getValue(i);
                                 Object result = null;
                                 if (val != null) {
                                     // Convert all list into fully resolved
                                     // objects evaluating functions where necessary.
-                                    if (fieldFormatter != null) {
-                                        result = fieldFormatter.format(field, val);
+                                    if (columnFormatter != null) {
+                                        result = columnFormatter.format(column, val);
                                     } else {
-                                        result = convert(field, val);
+                                        result = convert(column, val);
                                     }
                                 }
 
@@ -245,11 +245,11 @@ public class FlatResultCreator implements ResultCreator {
                         },
                         resultBuilder::totalResults);
 
-                final List<Field> structure = new ArrayList<>();
-                structure.add(Field.builder().name(":ParentKey").build());
-                structure.add(Field.builder().name(":Key").build());
-                structure.add(Field.builder().name(":Depth").build());
-                structure.addAll(this.fields);
+                final List<Column> structure = new ArrayList<>();
+                structure.add(Column.builder().name(":ParentKey").build());
+                structure.add(Column.builder().name(":Key").build());
+                structure.add(Column.builder().name(":Depth").build());
+                structure.addAll(this.columns);
 
                 resultBuilder
                         .componentId(resultRequest.getComponentId())
@@ -290,9 +290,9 @@ public class FlatResultCreator implements ResultCreator {
     }
 
     // TODO : Replace this with conversion at the item level.
-    private Object convert(final Field field, final Val val) {
-        if (field != null && field.getFormat() != null && field.getFormat().getType() != null) {
-            final Type type = field.getFormat().getType();
+    private Object convert(final Column column, final Val val) {
+        if (column != null && column.getFormat() != null && column.getFormat().getType() != null) {
+            final Type type = column.getFormat().getType();
             if (Type.NUMBER.equals(type) || Type.DATE_TIME.equals(type)) {
                 return val.toDouble();
             }
@@ -339,16 +339,16 @@ public class FlatResultCreator implements ResultCreator {
             final FieldIndex parentFieldIndex = new FieldIndex();
 
             // Parent fields are now table column names.
-            for (final Field field : parent.getFields()) {
-                parentFieldIndex.create(field.getName());
+            for (final Column column : parent.getColumns()) {
+                parentFieldIndex.create(column.getName());
             }
 
             // Extract child fields from expressions.
             childFieldIndex = new FieldIndex();
-            final List<Field> childFields = child != null
-                    ? child.getFields()
+            final List<Column> childFields = child != null
+                    ? child.getColumns()
                     : Collections.emptyList();
-            CompiledFields.create(expressionContext, childFields, childFieldIndex, paramMap);
+            CompiledColumns.create(expressionContext, childFields, childFieldIndex, paramMap);
 
             // Create the index mapping.
             parentFieldIndices = new int[childFieldIndex.size()];

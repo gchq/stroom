@@ -1,10 +1,10 @@
 package stroom.processor.shared;
 
-import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.BooleanField;
 import stroom.datasource.api.v2.IdField;
 import stroom.datasource.api.v2.IntegerField;
 import stroom.datasource.api.v2.LongField;
+import stroom.datasource.api.v2.QueryField;
 import stroom.datasource.api.v2.TextField;
 
 import java.util.ArrayList;
@@ -17,8 +17,8 @@ public class ProcessorFilterFields {
 
     public static final String FIELD_ID = "Id";
 
-    private static final List<AbstractField> FIELDS = new ArrayList<>();
-    private static final Map<String, AbstractField> FIELD_MAP;
+    private static final List<QueryField> FIELDS = new ArrayList<>();
+    private static final Map<String, QueryField> FIELD_MAP;
 
     public static final IdField ID = new IdField("Processor Filter Id");
 //    public static final TextField CREATE_USER = new TextField("Processor Filter Create User");
@@ -39,14 +39,14 @@ public class ProcessorFilterFields {
         FIELDS.add(DELETED);
         FIELDS.add(PROCESSOR_ID);
         FIELDS.add(UUID);
-        FIELD_MAP = FIELDS.stream().collect(Collectors.toMap(AbstractField::getName, Function.identity()));
+        FIELD_MAP = FIELDS.stream().collect(Collectors.toMap(QueryField::getName, Function.identity()));
     }
 
-    public static List<AbstractField> getFields() {
+    public static List<QueryField> getFields() {
         return new ArrayList<>(FIELDS);
     }
 
-    public static Map<String, AbstractField> getFieldMap() {
+    public static Map<String, QueryField> getFieldMap() {
         return FIELD_MAP;
     }
 }

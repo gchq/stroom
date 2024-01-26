@@ -40,7 +40,6 @@ import stroom.query.client.presenter.DateTimeSettingsFactory;
 import stroom.query.client.presenter.ResultStoreModel;
 import stroom.query.client.presenter.SearchErrorListener;
 import stroom.query.client.presenter.SearchStateListener;
-import stroom.view.client.presenter.IndexLoader;
 
 import com.google.gwt.core.client.GWT;
 

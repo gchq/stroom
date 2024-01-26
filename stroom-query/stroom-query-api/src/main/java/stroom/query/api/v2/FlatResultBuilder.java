@@ -9,10 +9,10 @@ public interface FlatResultBuilder {
     /**
      * Add headings to our data
      *
-     * @param structure the fields which act as headings for our data
+     * @param structure the columns which act as headings for our data
      * @return The {@link FlatResultBuilder}, enabling method chaining
      */
-    FlatResultBuilder structure(List<Field> structure);
+    FlatResultBuilder structure(List<Column> structure);
 
     /**
      * @param values A 'row' of data points to add to our values

@@ -16,7 +16,6 @@
 
 .termEditor-outer {
 	display: flex;
-	align-items: center;
 	gap: 5px;
 }
 
@@ -24,6 +23,9 @@
 	display: flex;
 	align-items: center;
 	flex-shrink: 0;
+    min-width: 50px;
+    min-height: 23px;
+    height: 23px;
 }
 
 .termEditor-item {
@@ -35,8 +37,9 @@
 	vertical-align: top;
 	background-position: right;
 	background-origin: border-box;
-	min-width: 50px;
-	max-height: 21px;
+    min-width: 50px;
+    min-height: 23px;
+    height: 23px;
 	flex-shrink: 0;
 }
 
@@ -69,7 +72,7 @@
 }
 
 .termEditor-item.condition {
-	width: auto;
+	width: 140px;
 	padding-right: 25px;
 }
 
@@ -86,13 +89,11 @@
 }
 
 .termEditor-label {
-	display: inline-block;
-	margin: 0px;
-	padding: 2px 5px;
-	background-color: transparent;
-	border: none;
-	vertical-align: top;
-	flex-shrink: 0;
+    display: flex;
+    margin: 0px;
+    padding: 0 5px;
+    height: 23px;
+    align-items: center;
 }
 
 .termEditor-label.fieldType {

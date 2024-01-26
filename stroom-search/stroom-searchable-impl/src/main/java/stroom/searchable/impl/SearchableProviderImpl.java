@@ -5,12 +5,13 @@ import stroom.explorer.api.HasDataSourceDocRefs;
 import stroom.searchable.api.Searchable;
 import stroom.searchable.api.SearchableProvider;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 @Singleton
 class SearchableProviderImpl implements SearchableProvider, HasDataSourceDocRefs {
@@ -36,5 +37,10 @@ class SearchableProviderImpl implements SearchableProvider, HasDataSourceDocRefs
                 .filter(searchable -> Objects.equals(searchable.getDocRef(), docRef))
                 .findFirst()
                 .orElse(null);
+    }
+
+    @Override
+    public List<DocRef> list() {
+        return searchables.stream().map(Searchable::getDocRef).toList();
     }
 }

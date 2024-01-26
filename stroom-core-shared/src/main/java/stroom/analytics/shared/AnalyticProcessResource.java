@@ -16,19 +16,19 @@
 
 package stroom.analytics.shared;
 
+import stroom.query.api.v2.ExpressionOperator;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
 import org.fusesource.restygwt.client.DirectRestService;
-
-import javax.ws.rs.Consumes;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
 
 @Tag(name = "AnalyticProcess")
 @Path("/analyticProcess" + ResourcePaths.V1)
@@ -42,6 +42,14 @@ public interface AnalyticProcessResource
     @Operation(
             summary = "Find the analytic process tracker for the specified process",
             operationId = "findAnalyticProcessTracker")
-    AnalyticTracker getTracker(@Parameter(description = "processUuid", required = true)
-                               String processUuid);
+    AnalyticTracker getTracker(@Parameter(description = "analyticUuid", required = true)
+                               String analyticUuid);
+
+    @POST
+    @Path("/getDefaultProcessingFilterExpression")
+    @Operation(
+            summary = "Find the default processing filter expression",
+            operationId = "getDefaultProcessingFilterExpression")
+    ExpressionOperator getDefaultProcessingFilterExpression(@Parameter(description = "query", required = true)
+                                            String query);
 }

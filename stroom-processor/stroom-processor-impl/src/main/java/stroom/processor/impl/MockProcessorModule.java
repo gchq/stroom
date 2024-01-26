@@ -39,7 +39,6 @@ public class MockProcessorModule extends AbstractModule {
                 .addBinding(MockProcessorDao.class)
                 .addBinding(MockProcessorFilterDao.class)
                 .addBinding(MockProcessorTaskDao.class)
-                .addBinding(ProcessorCache.class)
                 .addBinding(ProcessorFilterCache.class);
     }
 }

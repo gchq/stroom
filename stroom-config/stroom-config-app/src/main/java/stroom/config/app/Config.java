@@ -6,13 +6,13 @@ import stroom.util.logging.LambdaLoggerFactory;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import io.dropwizard.Configuration;
 import io.dropwizard.client.JerseyClientConfiguration;
+import io.dropwizard.core.Configuration;
 import io.dropwizard.util.Duration;
+import jakarta.validation.Valid;
 
 import java.util.HashMap;
 import java.util.Map;
-import javax.validation.Valid;
 
 // Can't use a JsonCreator for this as the superclass doesn't use 'JsonCreator
 @JsonPropertyOrder(alphabetic = true)

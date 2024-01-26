@@ -522,6 +522,36 @@
         "tags" : [ "AnalyticNotifications" ]
       }
     },
+    "/analyticProcess/v1/getDefaultProcessingFilterExpression" : {
+      "post" : {
+        "operationId" : "getDefaultProcessingFilterExpression",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "type" : "string"
+              }
+            }
+          },
+          "description" : "query",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ExpressionOperator"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Find the default processing filter expression",
+        "tags" : [ "AnalyticProcess" ]
+      }
+    },
     "/analyticProcess/v1/tracker" : {
       "post" : {
         "operationId" : "findAnalyticProcessTracker",
@@ -533,7 +563,7 @@
               }
             }
           },
-          "description" : "processUuid",
+          "description" : "analyticUuid",
           "required" : true
         },
         "responses" : {
@@ -888,6 +918,7 @@
     },
     "/apikey/v1" : {
       "delete" : {
+        "deprecated" : true,
         "operationId" : "deleteAllApiKeys",
         "responses" : {
           "default" : {
@@ -906,6 +937,7 @@
         "tags" : [ "Api Keys" ]
       },
       "post" : {
+        "deprecated" : true,
         "operationId" : "createApiKey",
         "requestBody" : {
           "content" : {
@@ -936,6 +968,7 @@
     },
     "/apikey/v1/byData/{data}" : {
       "delete" : {
+        "deprecated" : true,
         "operationId" : "deleteApiKeyByData",
         "parameters" : [ {
           "in" : "path",
@@ -962,6 +995,7 @@
         "tags" : [ "Api Keys" ]
       },
       "get" : {
+        "deprecated" : true,
         "operationId" : "fetchApiKeyByData",
         "parameters" : [ {
           "in" : "path",
@@ -989,6 +1023,7 @@
     },
     "/apikey/v1/noauth/getDefaultApiKeyExpirySeconds" : {
       "get" : {
+        "deprecated" : true,
         "operationId" : "getDefaultApiKeyExpirySeconds",
         "responses" : {
           "default" : {
@@ -1009,6 +1044,7 @@
     },
     "/apikey/v1/search" : {
       "post" : {
+        "deprecated" : true,
         "operationId" : "searchApiKeys",
         "requestBody" : {
           "content" : {
@@ -1039,6 +1075,7 @@
     },
     "/apikey/v1/{id}" : {
       "delete" : {
+        "deprecated" : true,
         "operationId" : "deleteApiKey",
         "parameters" : [ {
           "in" : "path",
@@ -1066,6 +1103,7 @@
         "tags" : [ "Api Keys" ]
       },
       "get" : {
+        "deprecated" : true,
         "operationId" : "fetchApiKey",
         "parameters" : [ {
           "in" : "path",
@@ -1094,6 +1132,7 @@
     },
     "/apikey/v1/{id}/enabled" : {
       "get" : {
+        "deprecated" : true,
         "operationId" : "toggleApiKeyEnabled",
         "parameters" : [ {
           "in" : "path",
@@ -1126,6 +1165,192 @@
         },
         "summary" : "Enable or disable the state of an API key.",
         "tags" : [ "Api Keys" ]
+      }
+    },
+    "/apikey/v2" : {
+      "post" : {
+        "operationId" : "createApiKey_1",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CreateHashedApiKeyRequest"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CreateHashedApiKeyResponse"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Creates a new API key",
+        "tags" : [ "API Key" ]
+      }
+    },
+    "/apikey/v2/deleteBatch" : {
+      "delete" : {
+        "operationId" : "deleteApiKey_2",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "type" : "array",
+                "items" : {
+                  "type" : "integer",
+                  "format" : "int32"
+                }
+              }
+            }
+          },
+          "description" : "ids",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "integer",
+                  "format" : "int32"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Delete a batch of API keys by ID.",
+        "tags" : [ "API Key" ]
+      }
+    },
+    "/apikey/v2/find" : {
+      "post" : {
+        "operationId" : "findApiKeysByCriteria",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/FindApiKeyCriteria"
+              }
+            }
+          },
+          "description" : "criteria",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiKeyResultPage"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Find the API keys matching the supplied criteria",
+        "tags" : [ "API Key" ]
+      }
+    },
+    "/apikey/v2/{id}" : {
+      "delete" : {
+        "operationId" : "deleteApiKey_1",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Delete an API key by ID.",
+        "tags" : [ "API Key" ]
+      },
+      "get" : {
+        "operationId" : "fetchApiKey_1",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/HashedApiKey"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Fetch a dictionary doc by its UUID",
+        "tags" : [ "API Key" ]
+      },
+      "put" : {
+        "operationId" : "updateApiKey",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/HashedApiKey"
+              }
+            }
+          },
+          "description" : "apiKey",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/HashedApiKey"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Update a dictionary doc",
+        "tags" : [ "API Key" ]
       }
     },
     "/authentication/v1/needsPasswordChange" : {
@@ -1371,6 +1596,36 @@
         },
         "summary" : "Reset an authenticated user's password.",
         "tags" : [ "Authentication" ]
+      }
+    },
+    "/authproxy/v1/noauth/fetchClientCredsToken" : {
+      "post" : {
+        "operationId" : "fetchClientCredsToken",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ClientCredentials"
+              }
+            }
+          },
+          "description" : "clientCredentials",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "text/plain" : {
+                "schema" : {
+                  "type" : "string"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Fetch an access token from the configured IDP using the supplied client credentials",
+        "tags" : [ "AuthProxy" ]
       }
     },
     "/cache/v1" : {
@@ -1933,9 +2188,39 @@
         "tags" : [ "Dashboards" ]
       }
     },
+    "/dashboard/v1/downloadSearchResults" : {
+      "post" : {
+        "operationId" : "downloadDashboardSearchResultsLocal",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/DownloadSearchResultsRequest"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ResourceGeneration"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Download search results",
+        "tags" : [ "Dashboards" ]
+      }
+    },
     "/dashboard/v1/downloadSearchResults/{nodeName}" : {
       "post" : {
-        "operationId" : "downloadDashboardSearchResults",
+        "operationId" : "downloadDashboardSearchResultsNode",
         "parameters" : [ {
           "in" : "path",
           "name" : "nodeName",
@@ -1971,9 +2256,39 @@
         "tags" : [ "Dashboards" ]
       }
     },
-    "/dashboard/v1/search/{nodeName}" : {
+    "/dashboard/v1/search" : {
       "post" : {
         "operationId" : "dashboardSearch",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/DashboardSearchRequest"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/DashboardSearchResponse"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Perform a new search or get new results",
+        "tags" : [ "Dashboards" ]
+      }
+    },
+    "/dashboard/v1/search/{nodeName}" : {
+      "post" : {
+        "operationId" : "dashboardSearch_1",
         "parameters" : [ {
           "in" : "path",
           "name" : "nodeName",
@@ -2390,6 +2705,36 @@
         "tags" : [ "Data Retention Rules" ]
       }
     },
+    "/dataSource/v1/fetchDefaultExtractionPipeline" : {
+      "post" : {
+        "operationId" : "fetchDefaultExtractionPipeline",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/DocRef"
+              }
+            }
+          },
+          "description" : "dataSourceRef",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/DocRef"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Fetch default extraction pipeline",
+        "tags" : [ "Data Sources" ]
+      }
+    },
     "/dataSource/v1/fetchDocumentation" : {
       "post" : {
         "operationId" : "fetchDocumentation",
@@ -2401,7 +2746,7 @@
               }
             }
           },
-          "description" : "docRef",
+          "description" : "dataSourceRef",
           "required" : true
         },
         "responses" : {
@@ -2420,18 +2765,18 @@
         "tags" : [ "Data Sources" ]
       }
     },
-    "/dataSource/v1/fetchFields" : {
+    "/dataSource/v1/findFields" : {
       "post" : {
-        "operationId" : "fetchDataSourceFields",
+        "operationId" : "findDataSourceFields",
         "requestBody" : {
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/DocRef"
+                "$ref" : "#/components/schemas/FindFieldInfoCriteria"
               }
             }
           },
-          "description" : "dataSourceRef",
+          "description" : "criteria",
           "required" : true
         },
         "responses" : {
@@ -2439,44 +2784,14 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/DataSource"
+                  "$ref" : "#/components/schemas/ResultPageFieldInfo"
                 }
               }
             },
             "description" : "default response"
           }
         },
-        "summary" : "Fetch data source fields",
-        "tags" : [ "Data Sources" ]
-      }
-    },
-    "/dataSource/v1/fetchFieldsFromQuery" : {
-      "post" : {
-        "operationId" : "fetchDataSourceFieldsFromQuery",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "type" : "string"
-              }
-            }
-          },
-          "description" : "query",
-          "required" : true
-        },
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/DataSource"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Fetch data source fields",
+        "summary" : "Find data source fields",
         "tags" : [ "Data Sources" ]
       }
     },
@@ -3553,6 +3868,36 @@
         "tags" : [ "Export" ]
       }
     },
+    "/expression/v1/validate" : {
+      "post" : {
+        "operationId" : "validate",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ValidateExpressionRequest"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ValidateExpressionResult"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Validate an expression",
+        "tags" : [ "Expressions" ]
+      }
+    },
     "/feed/v1/fetchSupportedEncodings" : {
       "get" : {
         "operationId" : "fetchSupportedEncodings",
@@ -3864,6 +4209,182 @@
         },
         "summary" : "Update a volume",
         "tags" : [ "Filesystem Volumes" ]
+      }
+    },
+    "/fsVolume/volumeGroup/v2" : {
+      "post" : {
+        "operationId" : "createFsVolumeGroup",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "type" : "string"
+              }
+            }
+          },
+          "description" : "name",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/FsVolumeGroup"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Creates a data volume group",
+        "tags" : [ "Data Volume Groups" ]
+      }
+    },
+    "/fsVolume/volumeGroup/v2/fetchByName/{name}" : {
+      "get" : {
+        "operationId" : "fetchFsVolumeGroupByName",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "name",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/FsVolumeGroup"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Gets a data volume group by name",
+        "tags" : [ "Data Volume Groups" ]
+      }
+    },
+    "/fsVolume/volumeGroup/v2/find" : {
+      "post" : {
+        "operationId" : "findFsVolumeGroups",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ExpressionCriteria"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ResultPageFsVolumeGroup"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Finds data volume groups matching request",
+        "tags" : [ "Data Volume Groups" ]
+      }
+    },
+    "/fsVolume/volumeGroup/v2/{id}" : {
+      "delete" : {
+        "operationId" : "deleteFsVolumeGroup",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Deletes a data volume group",
+        "tags" : [ "Data Volume Groups" ]
+      },
+      "get" : {
+        "operationId" : "fetchFsVolumeGroup",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/FsVolumeGroup"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Gets a data volume group",
+        "tags" : [ "Data Volume Groups" ]
+      },
+      "put" : {
+        "operationId" : "updateFsVolumeGroup",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/FsVolumeGroup"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/FsVolumeGroup"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Updates a data volume group",
+        "tags" : [ "Data Volume Groups" ]
       }
     },
     "/index/v2/shard/delete" : {
@@ -5565,6 +6086,36 @@
         "tags" : [ "Doc Permissions" ]
       }
     },
+    "/permission/doc/v1/fetchPermissionChangeImpact" : {
+      "post" : {
+        "operationId" : "fetchPermissionChangeImpact",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ChangeDocumentPermissionsRequest"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PermissionChangeImpactSummary"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Fetch impact summary for a change of document permissions",
+        "tags" : [ "Doc Permissions" ]
+      }
+    },
     "/permission/doc/v1/filterUsers" : {
       "post" : {
         "operationId" : "filterUsers",
@@ -6241,6 +6792,44 @@
         "tags" : [ "Processor Filters" ]
       }
     },
+    "/processorFilter/v1/{id}/maxProcessingTasks" : {
+      "put" : {
+        "operationId" : "setProcessorFilterMaxProcessingTasks",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "type" : "integer",
+                "format" : "int32"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Sets the optional cluster-wide limit on the number of tasks that may be processed for this filter, at any one time",
+        "tags" : [ "Processor Filters" ]
+      }
+    },
     "/processorFilter/v1/{id}/priority" : {
       "put" : {
         "operationId" : "setProcessorFilterPriority",
@@ -6415,9 +7004,39 @@
         "tags" : [ "Processor Tasks" ]
       }
     },
+    "/query/v1/downloadSearchResults" : {
+      "post" : {
+        "operationId" : "downloadQuerySearchResultsLocal",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/DownloadQueryResultsRequest"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ResourceGeneration"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Download search results",
+        "tags" : [ "Queries" ]
+      }
+    },
     "/query/v1/downloadSearchResults/{nodeName}" : {
       "post" : {
-        "operationId" : "downloadQuerySearchResults",
+        "operationId" : "downloadQuerySearchResultsNode",
         "parameters" : [ {
           "in" : "path",
           "name" : "nodeName",
@@ -6453,6 +7072,62 @@
         "tags" : [ "Queries" ]
       }
     },
+    "/query/v1/fetchCompletions" : {
+      "post" : {
+        "operationId" : "fetchCompletions",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CompletionsRequest"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ResultPageCompletionValue"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Fetch completions for the query",
+        "tags" : [ "Queries" ]
+      }
+    },
+    "/query/v1/fetchDetail" : {
+      "post" : {
+        "operationId" : "fetchDetail",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/QueryHelpRow"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/QueryHelpDetail"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Fetch detail for help item",
+        "tags" : [ "Queries" ]
+      }
+    },
     "/query/v1/fetchTimeZones" : {
       "get" : {
         "operationId" : "fetchTimeZones",
@@ -6475,28 +7150,6 @@
         "tags" : [ "Queries" ]
       }
     },
-    "/query/v1/functions" : {
-      "get" : {
-        "operationId" : "fetchFunctions",
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "array",
-                  "items" : {
-                    "$ref" : "#/components/schemas/FunctionSignature"
-                  }
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Fetch all expression functions",
-        "tags" : [ "Queries" ]
-      }
-    },
     "/query/v1/helpItems" : {
       "post" : {
         "operationId" : "fetchHelpItems",
@@ -6504,7 +7157,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/QueryHelpItemsRequest"
+                "$ref" : "#/components/schemas/QueryHelpRequest"
               }
             }
           },
@@ -6516,7 +7169,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/QueryHelpItemsResult"
+                  "$ref" : "#/components/schemas/ResultPageQueryHelpRow"
                 }
               }
             },
@@ -6527,9 +7180,39 @@
         "tags" : [ "Queries" ]
       }
     },
+    "/query/v1/search" : {
+      "post" : {
+        "operationId" : "querySearchLocal",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/QuerySearchRequest"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/DashboardSearchResponse"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Perform a new search or get new results",
+        "tags" : [ "Queries" ]
+      }
+    },
     "/query/v1/search/{nodeName}" : {
       "post" : {
-        "operationId" : "querySearch",
+        "operationId" : "querySearchNode",
         "parameters" : [ {
           "in" : "path",
           "name" : "nodeName",
@@ -6562,28 +7245,6 @@
           }
         },
         "summary" : "Perform a new search or get new results",
-        "tags" : [ "Queries" ]
-      }
-    },
-    "/query/v1/structure" : {
-      "get" : {
-        "operationId" : "fetchStructureElements",
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "array",
-                  "items" : {
-                    "$ref" : "#/components/schemas/StructureElement"
-                  }
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Fetch all structure element descriptions",
         "tags" : [ "Queries" ]
       }
     },
@@ -7492,36 +8153,6 @@
         "tags" : [ "Scripts" ]
       }
     },
-    "/searchable/v2/dataSource" : {
-      "post" : {
-        "operationId" : "getSearchableDataSource",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/DocRef"
-              }
-            }
-          },
-          "description" : "DocRef",
-          "required" : true
-        },
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/DataSource"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Submit a request for a data source definition, supplying the DocRef for the data source",
-        "tags" : [ "Searchable" ]
-      }
-    },
     "/searchable/v2/destroy" : {
       "post" : {
         "operationId" : "destroySearchableQuery",
@@ -7805,36 +8436,6 @@
         },
         "summary" : "Update a solr index doc",
         "tags" : [ "Solr Indices" ]
-      }
-    },
-    "/sqlstatistics/v2/dataSource" : {
-      "post" : {
-        "operationId" : "getSqlStatisticsDataSource",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/DocRef"
-              }
-            }
-          },
-          "description" : "DocRef",
-          "required" : true
-        },
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/DataSource"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Submit a request for a data source definition, supplying the DocRef for the data source",
-        "tags" : [ "Sql Statistics Query" ]
       }
     },
     "/sqlstatistics/v2/destroy" : {
@@ -8453,36 +9054,6 @@
         "tags" : [ "Stored Queries" ]
       }
     },
-    "/stroom-elastic-index/v2/dataSource" : {
-      "post" : {
-        "operationId" : "getElasticIndexDataSource",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/DocRef"
-              }
-            }
-          },
-          "description" : "DocRef",
-          "required" : true
-        },
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/DataSource"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Submit a request for a data source definition, supplying the DocRef for the data source",
-        "tags" : [ "Elasticsearch Queries" ]
-      }
-    },
     "/stroom-elastic-index/v2/destroy" : {
       "post" : {
         "operationId" : "destroyElasticIndexQuery",
@@ -8543,36 +9114,6 @@
         "tags" : [ "Elasticsearch Queries" ]
       }
     },
-    "/stroom-index/v2/dataSource" : {
-      "post" : {
-        "operationId" : "getStroomIndexDataSource",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/DocRef"
-              }
-            }
-          },
-          "description" : "DocRef",
-          "required" : true
-        },
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/DataSource"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Submit a request for a data source definition, supplying the DocRef for the data source",
-        "tags" : [ "Stroom-Index Queries" ]
-      }
-    },
     "/stroom-index/v2/destroy" : {
       "post" : {
         "operationId" : "destroyStroomIndexQuery",
@@ -8631,36 +9172,6 @@
         },
         "summary" : "Submit a search request",
         "tags" : [ "Stroom-Index Queries" ]
-      }
-    },
-    "/stroom-solr-index/v2/dataSource" : {
-      "post" : {
-        "operationId" : "getSolrIndexDataSource",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/DocRef"
-              }
-            }
-          },
-          "description" : "DocRef",
-          "required" : true
-        },
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/DataSource"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Submit a request for a data source definition, supplying the DocRef for the data source",
-        "tags" : [ "Solr Queries" ]
       }
     },
     "/stroom-solr-index/v2/destroy" : {
@@ -9874,35 +10385,6 @@
         },
         "required" : [ "type" ]
       },
-      "AbstractField" : {
-        "type" : "object",
-        "discriminator" : {
-          "propertyName" : "type"
-        },
-        "properties" : {
-          "conditions" : {
-            "type" : "array",
-            "items" : {
-              "type" : "string",
-              "enum" : [ "CONTAINS", "EQUALS", "GREATER_THAN", "GREATER_THAN_OR_EQUAL_TO", "LESS_THAN", "LESS_THAN_OR_EQUAL_TO", "BETWEEN", "IN", "IN_DICTIONARY", "IN_FOLDER", "IS_DOC_REF", "IS_NULL", "IS_NOT_NULL", "MATCHES_REGEX" ]
-            }
-          },
-          "fieldType" : {
-            "type" : "string",
-            "enum" : [ "ID", "BOOLEAN", "INTEGER", "LONG", "FLOAT", "DOUBLE", "DATE", "TEXT", "KEYWORD", "IPV4_ADDRESS", "DOC_REF" ]
-          },
-          "name" : {
-            "type" : "string"
-          },
-          "queryable" : {
-            "type" : "boolean"
-          },
-          "type" : {
-            "type" : "string"
-          }
-        },
-        "required" : [ "type" ]
-      },
       "Account" : {
         "type" : "object",
         "properties" : {
@@ -10216,15 +10698,6 @@
           "propertyName" : "type"
         },
         "properties" : {
-          "enabled" : {
-            "type" : "boolean"
-          },
-          "errorFeed" : {
-            "$ref" : "#/components/schemas/DocRef"
-          },
-          "node" : {
-            "type" : "string"
-          },
           "type" : {
             "type" : "string"
           }
@@ -10475,7 +10948,7 @@
           "values" : {
             "type" : "array",
             "items" : {
-              "$ref" : "#/components/schemas/ApiKey"
+              "$ref" : "#/components/schemas/HashedApiKey"
             }
           }
         }
@@ -10551,6 +11024,138 @@
           }
         }
       },
+      "AwsBasicCredentials" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/AwsCredentials"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "accessKeyId" : {
+              "type" : "string"
+            },
+            "secretAccessKey" : {
+              "type" : "string"
+            }
+          }
+        } ]
+      },
+      "AwsCredentials" : {
+        "type" : "object",
+        "discriminator" : {
+          "propertyName" : "type"
+        },
+        "properties" : {
+          "type" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "type" ]
+      },
+      "AwsHttpConfig" : {
+        "type" : "object",
+        "properties" : {
+          "connectionTimeout" : {
+            "type" : "string"
+          },
+          "proxyConfiguration" : {
+            "$ref" : "#/components/schemas/AwsProxyConfig"
+          },
+          "trustAllCertificatesEnabled" : {
+            "type" : "boolean"
+          }
+        }
+      },
+      "AwsProfileCredentials" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/AwsCredentials"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "profileFilePath" : {
+              "type" : "string"
+            },
+            "profileName" : {
+              "type" : "string"
+            }
+          }
+        } ]
+      },
+      "AwsProxyConfig" : {
+        "type" : "object",
+        "properties" : {
+          "host" : {
+            "type" : "string"
+          },
+          "password" : {
+            "type" : "string"
+          },
+          "port" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "scheme" : {
+            "type" : "string"
+          },
+          "useSystemPropertyValues" : {
+            "type" : "boolean"
+          },
+          "username" : {
+            "type" : "string"
+          }
+        }
+      },
+      "AwsSessionCredentials" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/AwsCredentials"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "accessKeyId" : {
+              "type" : "string"
+            },
+            "secretAccessKey" : {
+              "type" : "string"
+            },
+            "sessionToken" : {
+              "type" : "string"
+            }
+          }
+        } ]
+      },
+      "AwsWebCredentials" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/AwsCredentials"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "asyncCredentialUpdateEnabled" : {
+              "type" : "boolean"
+            },
+            "prefetchTime" : {
+              "type" : "string"
+            },
+            "roleArn" : {
+              "type" : "string"
+            },
+            "roleSessionName" : {
+              "type" : "string"
+            },
+            "sessionDuration" : {
+              "type" : "string"
+            },
+            "staleTime" : {
+              "type" : "string"
+            },
+            "webIdentityTokenFile" : {
+              "type" : "string"
+            }
+          }
+        } ]
+      },
       "Base64EncodedDocumentData" : {
         "type" : "object",
         "properties" : {
@@ -10568,7 +11173,7 @@
       "BooleanField" : {
         "type" : "object",
         "allOf" : [ {
-          "$ref" : "#/components/schemas/AbstractField"
+          "$ref" : "#/components/schemas/QueryField"
         } ]
       },
       "BuildInfo" : {
@@ -10807,6 +11412,17 @@
           }
         } ]
       },
+      "ClientCredentials" : {
+        "type" : "object",
+        "properties" : {
+          "clientId" : {
+            "type" : "string"
+          },
+          "clientSecret" : {
+            "type" : "string"
+          }
+        }
+      },
       "ClusterLockKey" : {
         "type" : "object",
         "properties" : {
@@ -10863,6 +11479,96 @@
             "type" : "boolean"
           },
           "nodeName" : {
+            "type" : "string"
+          }
+        }
+      },
+      "Column" : {
+        "type" : "object",
+        "description" : "Describes a field in a result set. The field can have various expressions applied to it, e.g. SUM(), along with sorting, filtering, formatting and grouping",
+        "properties" : {
+          "expression" : {
+            "type" : "string",
+            "description" : "The expression to use to generate the value for this field",
+            "example" : "SUM(${count})"
+          },
+          "filter" : {
+            "$ref" : "#/components/schemas/Filter"
+          },
+          "format" : {
+            "$ref" : "#/components/schemas/Format"
+          },
+          "group" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "id" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "sort" : {
+            "$ref" : "#/components/schemas/Sort"
+          }
+        },
+        "required" : [ "expression" ]
+      },
+      "CompletionValue" : {
+        "type" : "object",
+        "properties" : {
+          "caption" : {
+            "type" : "string"
+          },
+          "meta" : {
+            "type" : "string"
+          },
+          "score" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "tooltip" : {
+            "type" : "string"
+          },
+          "value" : {
+            "type" : "string"
+          }
+        }
+      },
+      "CompletionsRequest" : {
+        "type" : "object",
+        "properties" : {
+          "column" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "dataSourceRef" : {
+            "$ref" : "#/components/schemas/DocRef"
+          },
+          "pageRequest" : {
+            "$ref" : "#/components/schemas/PageRequest"
+          },
+          "row" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "showAll" : {
+            "type" : "boolean"
+          },
+          "sort" : {
+            "type" : "string",
+            "writeOnly" : true
+          },
+          "sortList" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/CriteriaFieldSort"
+            }
+          },
+          "stringMatch" : {
+            "$ref" : "#/components/schemas/StringMatch"
+          },
+          "text" : {
             "type" : "string"
           }
         }
@@ -11120,6 +11826,38 @@
           }
         }
       },
+      "CreateHashedApiKeyRequest" : {
+        "type" : "object",
+        "properties" : {
+          "comments" : {
+            "type" : "string"
+          },
+          "enabled" : {
+            "type" : "boolean"
+          },
+          "expireTimeMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "owner" : {
+            "$ref" : "#/components/schemas/UserName"
+          }
+        }
+      },
+      "CreateHashedApiKeyResponse" : {
+        "type" : "object",
+        "properties" : {
+          "apiKey" : {
+            "type" : "string"
+          },
+          "hashedApiKey" : {
+            "$ref" : "#/components/schemas/HashedApiKey"
+          }
+        }
+      },
       "CreateProcessFilterRequest" : {
         "type" : "object",
         "properties" : {
@@ -11133,6 +11871,10 @@
             "type" : "integer",
             "format" : "int64"
           },
+          "maxProcessingTasks" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
           "minMetaCreateTimeMs" : {
             "type" : "integer",
             "format" : "int64"
@@ -11143,6 +11885,10 @@
           "priority" : {
             "type" : "integer",
             "format" : "int32"
+          },
+          "processorType" : {
+            "type" : "string",
+            "enum" : [ "PIPELINE", "STREAMING_ANALYTIC" ]
           },
           "queryData" : {
             "$ref" : "#/components/schemas/QueryData"
@@ -11538,27 +12284,10 @@
           "name" : "dataRetentionPolicy"
         }
       },
-      "DataSource" : {
-        "type" : "object",
-        "properties" : {
-          "defaultExtractionPipeline" : {
-            "$ref" : "#/components/schemas/DocRef"
-          },
-          "docRef" : {
-            "$ref" : "#/components/schemas/DocRef"
-          },
-          "fields" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/AbstractField"
-            }
-          }
-        }
-      },
       "DateField" : {
         "type" : "object",
         "allOf" : [ {
-          "$ref" : "#/components/schemas/AbstractField"
+          "$ref" : "#/components/schemas/QueryField"
         } ]
       },
       "DateTimeFormatSettings" : {
@@ -11757,14 +12486,7 @@
       "DocRefField" : {
         "type" : "object",
         "allOf" : [ {
-          "$ref" : "#/components/schemas/AbstractField"
-        }, {
-          "type" : "object",
-          "properties" : {
-            "docRefType" : {
-              "type" : "string"
-            }
-          }
+          "$ref" : "#/components/schemas/QueryField"
         } ]
       },
       "DocRefInfo" : {
@@ -11846,7 +12568,7 @@
           },
           "icon" : {
             "type" : "string",
-            "enum" : [ "ADD", "ADD_ABOVE", "ADD_BELOW", "ADD_MULTIPLE", "ALERT", "ALERT_SIMPLE", "ARROW_DOWN", "ARROW_LEFT", "ARROW_RIGHT", "ARROW_UP", "AUTO_REFRESH", "BACKWARD", "BORDERED_CIRCLE", "CANCEL", "CASE_SENSITIVE", "CLEAR", "CLIPBOARD", "CLOSE", "CODE", "COLLAPSE_UP", "COPY", "DATABASE", "DELETE", "DEPENDENCIES", "DISABLE", "DOCUMENT_ANALYTIC_OUTPUT_STORE", "DOCUMENT_ANALYTIC_RULE", "DOCUMENT_ANNOTATIONS_INDEX", "DOCUMENT_DASHBOARD", "DOCUMENT_DICTIONARY", "DOCUMENT_DOCUMENTATION", "DOCUMENT_ELASTIC_CLUSTER", "DOCUMENT_ELASTIC_INDEX", "DOCUMENT_FAVOURITES", "DOCUMENT_FEED", "DOCUMENT_FOLDER", "DOCUMENT_INDEX", "DOCUMENT_KAFKA_CONFIG", "DOCUMENT_PIPELINE", "DOCUMENT_QUERY", "DOCUMENT_RECEIVE_DATA_RULE_SET", "DOCUMENT_SCRIPT", "DOCUMENT_SEARCHABLE", "DOCUMENT_SELECT_ALL_OR_NONE", "DOCUMENT_SIGMA_RULE", "DOCUMENT_SOLR_INDEX", "DOCUMENT_STATISTIC_STORE", "DOCUMENT_STROOM_STATS_STORE", "DOCUMENT_SYSTEM", "DOCUMENT_TEXT_CONVERTER", "DOCUMENT_VIEW", "DOCUMENT_VISUALISATION", "DOCUMENT_XMLSCHEMA", "DOCUMENT_XSLT", "DOT", "DOUBLE_ARROW", "DOWN", "DOWNLOAD", "DROP_DOWN", "EDIT", "ELLIPSES_HORIZONTAL", "ELLIPSES_VERTICAL", "ERROR", "EXCLAMATION", "EXPAND_DOWN", "EXPLORER", "FAST_BACKWARD", "FAST_FORWARD", "FATAL", "FATAL_DARK", "FAVOURITES", "FAVOURITES_OUTLINE", "FEED", "FIELD", "FIELDS_EXPRESSION", "FIELDS_FILTER", "FIELDS_FORMAT", "FIELDS_GROUP", "FIELDS_SORTAZ", "FIELDS_SORTZA", "FILE", "FILE_FORMATTED", "FILE_RAW", "FILTER", "FIND", "FOLDER", "FOLDER_TREE", "FORMAT", "FORWARD", "FUNCTION", "GENERATE", "HELP", "HIDE", "HIDE_MENU", "HISTORY", "INFO", "INSERT", "JOBS", "KEY", "LOCKED", "LOGO", "LOGOUT", "MENU", "MONITORING", "MOVE", "NODES", "OK", "OO", "OPEN", "OPERATOR", "PASSWORD", "PAUSE", "PEN", "PIPELINE_ELASTIC_INDEX", "PIPELINE_FILE", "PIPELINE_FILES", "PIPELINE_HADOOP", "PIPELINE_ID", "PIPELINE_INDEX", "PIPELINE_JSON", "PIPELINE_KAFKA", "PIPELINE_RECORD_COUNT", "PIPELINE_RECORD_OUTPUT", "PIPELINE_REFERENCE_DATA", "PIPELINE_SEARCH_OUTPUT", "PIPELINE_SOLR", "PIPELINE_SPLIT", "PIPELINE_STATISTICS", "PIPELINE_STREAM", "PIPELINE_STROOM_STATS", "PIPELINE_STROOM_STATS_STORE", "PIPELINE_TEXT", "PIPELINE_XML", "PIPELINE_XML_SEARCH", "PIPELINE_XSD", "PIPELINE_XSLT", "PLAY", "PROCESS", "PROPERTIES", "QUESTION", "RAW", "REFRESH", "REGEX", "REMOVE", "RESIZE", "RESIZE_HANDLE", "SAVE", "SAVEAS", "SEARCH", "SETTINGS", "SHARD_CLOSE", "SHARD_FLUSH", "SHARE", "SHIELD", "SHOW", "SHOW_MENU", "STEP", "STEPPING", "STEPPING_CIRCLE", "STEP_BACKWARD", "STEP_FORWARD", "STOP", "TABLE", "TABLE_NESTED", "TAB_CLOSE", "TAGS", "TEXT_WRAP", "TICK", "UNDO", "UNLOCK", "UP", "UPLOAD", "USER", "USERS", "VOLUMES", "WARNING" ]
+            "enum" : [ "ADD", "ADD_ABOVE", "ADD_BELOW", "ADD_MULTIPLE", "ALERT", "ALERT_SIMPLE", "ARROW_DOWN", "ARROW_LEFT", "ARROW_RIGHT", "ARROW_UP", "AUTO_REFRESH", "BACKWARD", "BORDERED_CIRCLE", "CANCEL", "CASE_SENSITIVE", "CLEAR", "CLIPBOARD", "CLOSE", "CODE", "COLLAPSE_UP", "COPY", "DATABASE", "DELETE", "DEPENDENCIES", "DISABLE", "DOCUMENT_ANALYTIC_OUTPUT_STORE", "DOCUMENT_ANALYTIC_RULE", "DOCUMENT_ANNOTATIONS_INDEX", "DOCUMENT_DASHBOARD", "DOCUMENT_DICTIONARY", "DOCUMENT_DOCUMENTATION", "DOCUMENT_ELASTIC_CLUSTER", "DOCUMENT_ELASTIC_INDEX", "DOCUMENT_FAVOURITES", "DOCUMENT_FEED", "DOCUMENT_FOLDER", "DOCUMENT_INDEX", "DOCUMENT_KAFKA_CONFIG", "DOCUMENT_PIPELINE", "DOCUMENT_QUERY", "DOCUMENT_RECEIVE_DATA_RULE_SET", "DOCUMENT_SCRIPT", "DOCUMENT_SEARCHABLE", "DOCUMENT_SELECT_ALL_OR_NONE", "DOCUMENT_SIGMA_RULE", "DOCUMENT_SOLR_INDEX", "DOCUMENT_STATISTIC_STORE", "DOCUMENT_STROOM_STATS_STORE", "DOCUMENT_SYSTEM", "DOCUMENT_TEXT_CONVERTER", "DOCUMENT_VIEW", "DOCUMENT_VISUALISATION", "DOCUMENT_XMLSCHEMA", "DOCUMENT_XSLT", "DOT", "DOUBLE_ARROW", "DOWN", "DOWNLOAD", "DROP_DOWN", "EDIT", "ELLIPSES_HORIZONTAL", "ELLIPSES_VERTICAL", "ERROR", "EXCLAMATION", "EXPAND_DOWN", "EXPLORER", "FAST_BACKWARD", "FAST_FORWARD", "FATAL", "FATAL_DARK", "FAVOURITES", "FAVOURITES_OUTLINE", "FEED", "FIELD", "FIELDS_EXPRESSION", "FIELDS_FILTER", "FIELDS_FORMAT", "FIELDS_GROUP", "FIELDS_SORTAZ", "FIELDS_SORTZA", "FILE", "FILE_FORMATTED", "FILE_RAW", "FILTER", "FIND", "FOLDER", "FOLDER_TREE", "FORMAT", "FORWARD", "FUNCTION", "GENERATE", "HELP", "HIDE", "HIDE_MENU", "HISTORY", "INFO", "INSERT", "JOBS", "KEY", "LOCATE", "LOCKED", "LOGO", "LOGOUT", "MENU", "MONITORING", "MOVE", "NODES", "OK", "OO", "OPEN", "OPERATOR", "PASSWORD", "PAUSE", "PEN", "PIPELINE_ELASTIC_INDEX", "PIPELINE_FILE", "PIPELINE_FILES", "PIPELINE_HADOOP", "PIPELINE_ID", "PIPELINE_INDEX", "PIPELINE_JSON", "PIPELINE_KAFKA", "PIPELINE_RECORD_COUNT", "PIPELINE_RECORD_OUTPUT", "PIPELINE_REFERENCE_DATA", "PIPELINE_SEARCH_OUTPUT", "PIPELINE_SOLR", "PIPELINE_SPLIT", "PIPELINE_STATISTICS", "PIPELINE_STREAM", "PIPELINE_STROOM_STATS", "PIPELINE_STROOM_STATS_STORE", "PIPELINE_TEXT", "PIPELINE_XML", "PIPELINE_XML_SEARCH", "PIPELINE_XSD", "PIPELINE_XSLT", "PLAY", "PROCESS", "PROPERTIES", "QUESTION", "RAW", "REFRESH", "REGEX", "REMOVE", "RESIZE", "RESIZE_HANDLE", "SAVE", "SAVEAS", "SEARCH", "SETTINGS", "SHARD_CLOSE", "SHARD_FLUSH", "SHARE", "SHIELD", "SHOW", "SHOW_MENU", "STEP", "STEPPING", "STEPPING_CIRCLE", "STEP_BACKWARD", "STEP_FORWARD", "STOP", "TABLE", "TABLE_NESTED", "TAB_CLOSE", "TAGS", "TEXT_WRAP", "TICK", "UNDO", "UNLOCK", "UP", "UPLOAD", "USER", "USERS", "VOLUMES", "WARNING" ]
           },
           "type" : {
             "type" : "string"
@@ -11918,7 +12640,7 @@
       "DoubleField" : {
         "type" : "object",
         "allOf" : [ {
-          "$ref" : "#/components/schemas/AbstractField"
+          "$ref" : "#/components/schemas/QueryField"
         } ]
       },
       "DownloadQueryResultsRequest" : {
@@ -12275,7 +12997,7 @@
           },
           "icon" : {
             "type" : "string",
-            "enum" : [ "ADD", "ADD_ABOVE", "ADD_BELOW", "ADD_MULTIPLE", "ALERT", "ALERT_SIMPLE", "ARROW_DOWN", "ARROW_LEFT", "ARROW_RIGHT", "ARROW_UP", "AUTO_REFRESH", "BACKWARD", "BORDERED_CIRCLE", "CANCEL", "CASE_SENSITIVE", "CLEAR", "CLIPBOARD", "CLOSE", "CODE", "COLLAPSE_UP", "COPY", "DATABASE", "DELETE", "DEPENDENCIES", "DISABLE", "DOCUMENT_ANALYTIC_OUTPUT_STORE", "DOCUMENT_ANALYTIC_RULE", "DOCUMENT_ANNOTATIONS_INDEX", "DOCUMENT_DASHBOARD", "DOCUMENT_DICTIONARY", "DOCUMENT_DOCUMENTATION", "DOCUMENT_ELASTIC_CLUSTER", "DOCUMENT_ELASTIC_INDEX", "DOCUMENT_FAVOURITES", "DOCUMENT_FEED", "DOCUMENT_FOLDER", "DOCUMENT_INDEX", "DOCUMENT_KAFKA_CONFIG", "DOCUMENT_PIPELINE", "DOCUMENT_QUERY", "DOCUMENT_RECEIVE_DATA_RULE_SET", "DOCUMENT_SCRIPT", "DOCUMENT_SEARCHABLE", "DOCUMENT_SELECT_ALL_OR_NONE", "DOCUMENT_SIGMA_RULE", "DOCUMENT_SOLR_INDEX", "DOCUMENT_STATISTIC_STORE", "DOCUMENT_STROOM_STATS_STORE", "DOCUMENT_SYSTEM", "DOCUMENT_TEXT_CONVERTER", "DOCUMENT_VIEW", "DOCUMENT_VISUALISATION", "DOCUMENT_XMLSCHEMA", "DOCUMENT_XSLT", "DOT", "DOUBLE_ARROW", "DOWN", "DOWNLOAD", "DROP_DOWN", "EDIT", "ELLIPSES_HORIZONTAL", "ELLIPSES_VERTICAL", "ERROR", "EXCLAMATION", "EXPAND_DOWN", "EXPLORER", "FAST_BACKWARD", "FAST_FORWARD", "FATAL", "FATAL_DARK", "FAVOURITES", "FAVOURITES_OUTLINE", "FEED", "FIELD", "FIELDS_EXPRESSION", "FIELDS_FILTER", "FIELDS_FORMAT", "FIELDS_GROUP", "FIELDS_SORTAZ", "FIELDS_SORTZA", "FILE", "FILE_FORMATTED", "FILE_RAW", "FILTER", "FIND", "FOLDER", "FOLDER_TREE", "FORMAT", "FORWARD", "FUNCTION", "GENERATE", "HELP", "HIDE", "HIDE_MENU", "HISTORY", "INFO", "INSERT", "JOBS", "KEY", "LOCKED", "LOGO", "LOGOUT", "MENU", "MONITORING", "MOVE", "NODES", "OK", "OO", "OPEN", "OPERATOR", "PASSWORD", "PAUSE", "PEN", "PIPELINE_ELASTIC_INDEX", "PIPELINE_FILE", "PIPELINE_FILES", "PIPELINE_HADOOP", "PIPELINE_ID", "PIPELINE_INDEX", "PIPELINE_JSON", "PIPELINE_KAFKA", "PIPELINE_RECORD_COUNT", "PIPELINE_RECORD_OUTPUT", "PIPELINE_REFERENCE_DATA", "PIPELINE_SEARCH_OUTPUT", "PIPELINE_SOLR", "PIPELINE_SPLIT", "PIPELINE_STATISTICS", "PIPELINE_STREAM", "PIPELINE_STROOM_STATS", "PIPELINE_STROOM_STATS_STORE", "PIPELINE_TEXT", "PIPELINE_XML", "PIPELINE_XML_SEARCH", "PIPELINE_XSD", "PIPELINE_XSLT", "PLAY", "PROCESS", "PROPERTIES", "QUESTION", "RAW", "REFRESH", "REGEX", "REMOVE", "RESIZE", "RESIZE_HANDLE", "SAVE", "SAVEAS", "SEARCH", "SETTINGS", "SHARD_CLOSE", "SHARD_FLUSH", "SHARE", "SHIELD", "SHOW", "SHOW_MENU", "STEP", "STEPPING", "STEPPING_CIRCLE", "STEP_BACKWARD", "STEP_FORWARD", "STOP", "TABLE", "TABLE_NESTED", "TAB_CLOSE", "TAGS", "TEXT_WRAP", "TICK", "UNDO", "UNLOCK", "UP", "UPLOAD", "USER", "USERS", "VOLUMES", "WARNING" ]
+            "enum" : [ "ADD", "ADD_ABOVE", "ADD_BELOW", "ADD_MULTIPLE", "ALERT", "ALERT_SIMPLE", "ARROW_DOWN", "ARROW_LEFT", "ARROW_RIGHT", "ARROW_UP", "AUTO_REFRESH", "BACKWARD", "BORDERED_CIRCLE", "CANCEL", "CASE_SENSITIVE", "CLEAR", "CLIPBOARD", "CLOSE", "CODE", "COLLAPSE_UP", "COPY", "DATABASE", "DELETE", "DEPENDENCIES", "DISABLE", "DOCUMENT_ANALYTIC_OUTPUT_STORE", "DOCUMENT_ANALYTIC_RULE", "DOCUMENT_ANNOTATIONS_INDEX", "DOCUMENT_DASHBOARD", "DOCUMENT_DICTIONARY", "DOCUMENT_DOCUMENTATION", "DOCUMENT_ELASTIC_CLUSTER", "DOCUMENT_ELASTIC_INDEX", "DOCUMENT_FAVOURITES", "DOCUMENT_FEED", "DOCUMENT_FOLDER", "DOCUMENT_INDEX", "DOCUMENT_KAFKA_CONFIG", "DOCUMENT_PIPELINE", "DOCUMENT_QUERY", "DOCUMENT_RECEIVE_DATA_RULE_SET", "DOCUMENT_SCRIPT", "DOCUMENT_SEARCHABLE", "DOCUMENT_SELECT_ALL_OR_NONE", "DOCUMENT_SIGMA_RULE", "DOCUMENT_SOLR_INDEX", "DOCUMENT_STATISTIC_STORE", "DOCUMENT_STROOM_STATS_STORE", "DOCUMENT_SYSTEM", "DOCUMENT_TEXT_CONVERTER", "DOCUMENT_VIEW", "DOCUMENT_VISUALISATION", "DOCUMENT_XMLSCHEMA", "DOCUMENT_XSLT", "DOT", "DOUBLE_ARROW", "DOWN", "DOWNLOAD", "DROP_DOWN", "EDIT", "ELLIPSES_HORIZONTAL", "ELLIPSES_VERTICAL", "ERROR", "EXCLAMATION", "EXPAND_DOWN", "EXPLORER", "FAST_BACKWARD", "FAST_FORWARD", "FATAL", "FATAL_DARK", "FAVOURITES", "FAVOURITES_OUTLINE", "FEED", "FIELD", "FIELDS_EXPRESSION", "FIELDS_FILTER", "FIELDS_FORMAT", "FIELDS_GROUP", "FIELDS_SORTAZ", "FIELDS_SORTZA", "FILE", "FILE_FORMATTED", "FILE_RAW", "FILTER", "FIND", "FOLDER", "FOLDER_TREE", "FORMAT", "FORWARD", "FUNCTION", "GENERATE", "HELP", "HIDE", "HIDE_MENU", "HISTORY", "INFO", "INSERT", "JOBS", "KEY", "LOCATE", "LOCKED", "LOGO", "LOGOUT", "MENU", "MONITORING", "MOVE", "NODES", "OK", "OO", "OPEN", "OPERATOR", "PASSWORD", "PAUSE", "PEN", "PIPELINE_ELASTIC_INDEX", "PIPELINE_FILE", "PIPELINE_FILES", "PIPELINE_HADOOP", "PIPELINE_ID", "PIPELINE_INDEX", "PIPELINE_JSON", "PIPELINE_KAFKA", "PIPELINE_RECORD_COUNT", "PIPELINE_RECORD_OUTPUT", "PIPELINE_REFERENCE_DATA", "PIPELINE_SEARCH_OUTPUT", "PIPELINE_SOLR", "PIPELINE_SPLIT", "PIPELINE_STATISTICS", "PIPELINE_STREAM", "PIPELINE_STROOM_STATS", "PIPELINE_STROOM_STATS_STORE", "PIPELINE_TEXT", "PIPELINE_XML", "PIPELINE_XML_SEARCH", "PIPELINE_XSD", "PIPELINE_XSLT", "PLAY", "PROCESS", "PROPERTIES", "QUESTION", "RAW", "REFRESH", "REGEX", "REMOVE", "RESIZE", "RESIZE_HANDLE", "SAVE", "SAVEAS", "SEARCH", "SETTINGS", "SHARD_CLOSE", "SHARD_FLUSH", "SHARE", "SHIELD", "SHOW", "SHOW_MENU", "STEP", "STEPPING", "STEPPING_CIRCLE", "STEP_BACKWARD", "STEP_FORWARD", "STOP", "TABLE", "TABLE_NESTED", "TAB_CLOSE", "TAGS", "TEXT_WRAP", "TICK", "UNDO", "UNLOCK", "UP", "UPLOAD", "USER", "USERS", "VOLUMES", "WARNING" ]
           },
           "isFavourite" : {
             "type" : "boolean"
@@ -12300,7 +13022,7 @@
           },
           "icon" : {
             "type" : "string",
-            "enum" : [ "ADD", "ADD_ABOVE", "ADD_BELOW", "ADD_MULTIPLE", "ALERT", "ALERT_SIMPLE", "ARROW_DOWN", "ARROW_LEFT", "ARROW_RIGHT", "ARROW_UP", "AUTO_REFRESH", "BACKWARD", "BORDERED_CIRCLE", "CANCEL", "CASE_SENSITIVE", "CLEAR", "CLIPBOARD", "CLOSE", "CODE", "COLLAPSE_UP", "COPY", "DATABASE", "DELETE", "DEPENDENCIES", "DISABLE", "DOCUMENT_ANALYTIC_OUTPUT_STORE", "DOCUMENT_ANALYTIC_RULE", "DOCUMENT_ANNOTATIONS_INDEX", "DOCUMENT_DASHBOARD", "DOCUMENT_DICTIONARY", "DOCUMENT_DOCUMENTATION", "DOCUMENT_ELASTIC_CLUSTER", "DOCUMENT_ELASTIC_INDEX", "DOCUMENT_FAVOURITES", "DOCUMENT_FEED", "DOCUMENT_FOLDER", "DOCUMENT_INDEX", "DOCUMENT_KAFKA_CONFIG", "DOCUMENT_PIPELINE", "DOCUMENT_QUERY", "DOCUMENT_RECEIVE_DATA_RULE_SET", "DOCUMENT_SCRIPT", "DOCUMENT_SEARCHABLE", "DOCUMENT_SELECT_ALL_OR_NONE", "DOCUMENT_SIGMA_RULE", "DOCUMENT_SOLR_INDEX", "DOCUMENT_STATISTIC_STORE", "DOCUMENT_STROOM_STATS_STORE", "DOCUMENT_SYSTEM", "DOCUMENT_TEXT_CONVERTER", "DOCUMENT_VIEW", "DOCUMENT_VISUALISATION", "DOCUMENT_XMLSCHEMA", "DOCUMENT_XSLT", "DOT", "DOUBLE_ARROW", "DOWN", "DOWNLOAD", "DROP_DOWN", "EDIT", "ELLIPSES_HORIZONTAL", "ELLIPSES_VERTICAL", "ERROR", "EXCLAMATION", "EXPAND_DOWN", "EXPLORER", "FAST_BACKWARD", "FAST_FORWARD", "FATAL", "FATAL_DARK", "FAVOURITES", "FAVOURITES_OUTLINE", "FEED", "FIELD", "FIELDS_EXPRESSION", "FIELDS_FILTER", "FIELDS_FORMAT", "FIELDS_GROUP", "FIELDS_SORTAZ", "FIELDS_SORTZA", "FILE", "FILE_FORMATTED", "FILE_RAW", "FILTER", "FIND", "FOLDER", "FOLDER_TREE", "FORMAT", "FORWARD", "FUNCTION", "GENERATE", "HELP", "HIDE", "HIDE_MENU", "HISTORY", "INFO", "INSERT", "JOBS", "KEY", "LOCKED", "LOGO", "LOGOUT", "MENU", "MONITORING", "MOVE", "NODES", "OK", "OO", "OPEN", "OPERATOR", "PASSWORD", "PAUSE", "PEN", "PIPELINE_ELASTIC_INDEX", "PIPELINE_FILE", "PIPELINE_FILES", "PIPELINE_HADOOP", "PIPELINE_ID", "PIPELINE_INDEX", "PIPELINE_JSON", "PIPELINE_KAFKA", "PIPELINE_RECORD_COUNT", "PIPELINE_RECORD_OUTPUT", "PIPELINE_REFERENCE_DATA", "PIPELINE_SEARCH_OUTPUT", "PIPELINE_SOLR", "PIPELINE_SPLIT", "PIPELINE_STATISTICS", "PIPELINE_STREAM", "PIPELINE_STROOM_STATS", "PIPELINE_STROOM_STATS_STORE", "PIPELINE_TEXT", "PIPELINE_XML", "PIPELINE_XML_SEARCH", "PIPELINE_XSD", "PIPELINE_XSLT", "PLAY", "PROCESS", "PROPERTIES", "QUESTION", "RAW", "REFRESH", "REGEX", "REMOVE", "RESIZE", "RESIZE_HANDLE", "SAVE", "SAVEAS", "SEARCH", "SETTINGS", "SHARD_CLOSE", "SHARD_FLUSH", "SHARE", "SHIELD", "SHOW", "SHOW_MENU", "STEP", "STEPPING", "STEPPING_CIRCLE", "STEP_BACKWARD", "STEP_FORWARD", "STOP", "TABLE", "TABLE_NESTED", "TAB_CLOSE", "TAGS", "TEXT_WRAP", "TICK", "UNDO", "UNLOCK", "UP", "UPLOAD", "USER", "USERS", "VOLUMES", "WARNING" ]
+            "enum" : [ "ADD", "ADD_ABOVE", "ADD_BELOW", "ADD_MULTIPLE", "ALERT", "ALERT_SIMPLE", "ARROW_DOWN", "ARROW_LEFT", "ARROW_RIGHT", "ARROW_UP", "AUTO_REFRESH", "BACKWARD", "BORDERED_CIRCLE", "CANCEL", "CASE_SENSITIVE", "CLEAR", "CLIPBOARD", "CLOSE", "CODE", "COLLAPSE_UP", "COPY", "DATABASE", "DELETE", "DEPENDENCIES", "DISABLE", "DOCUMENT_ANALYTIC_OUTPUT_STORE", "DOCUMENT_ANALYTIC_RULE", "DOCUMENT_ANNOTATIONS_INDEX", "DOCUMENT_DASHBOARD", "DOCUMENT_DICTIONARY", "DOCUMENT_DOCUMENTATION", "DOCUMENT_ELASTIC_CLUSTER", "DOCUMENT_ELASTIC_INDEX", "DOCUMENT_FAVOURITES", "DOCUMENT_FEED", "DOCUMENT_FOLDER", "DOCUMENT_INDEX", "DOCUMENT_KAFKA_CONFIG", "DOCUMENT_PIPELINE", "DOCUMENT_QUERY", "DOCUMENT_RECEIVE_DATA_RULE_SET", "DOCUMENT_SCRIPT", "DOCUMENT_SEARCHABLE", "DOCUMENT_SELECT_ALL_OR_NONE", "DOCUMENT_SIGMA_RULE", "DOCUMENT_SOLR_INDEX", "DOCUMENT_STATISTIC_STORE", "DOCUMENT_STROOM_STATS_STORE", "DOCUMENT_SYSTEM", "DOCUMENT_TEXT_CONVERTER", "DOCUMENT_VIEW", "DOCUMENT_VISUALISATION", "DOCUMENT_XMLSCHEMA", "DOCUMENT_XSLT", "DOT", "DOUBLE_ARROW", "DOWN", "DOWNLOAD", "DROP_DOWN", "EDIT", "ELLIPSES_HORIZONTAL", "ELLIPSES_VERTICAL", "ERROR", "EXCLAMATION", "EXPAND_DOWN", "EXPLORER", "FAST_BACKWARD", "FAST_FORWARD", "FATAL", "FATAL_DARK", "FAVOURITES", "FAVOURITES_OUTLINE", "FEED", "FIELD", "FIELDS_EXPRESSION", "FIELDS_FILTER", "FIELDS_FORMAT", "FIELDS_GROUP", "FIELDS_SORTAZ", "FIELDS_SORTZA", "FILE", "FILE_FORMATTED", "FILE_RAW", "FILTER", "FIND", "FOLDER", "FOLDER_TREE", "FORMAT", "FORWARD", "FUNCTION", "GENERATE", "HELP", "HIDE", "HIDE_MENU", "HISTORY", "INFO", "INSERT", "JOBS", "KEY", "LOCATE", "LOCKED", "LOGO", "LOGOUT", "MENU", "MONITORING", "MOVE", "NODES", "OK", "OO", "OPEN", "OPERATOR", "PASSWORD", "PAUSE", "PEN", "PIPELINE_ELASTIC_INDEX", "PIPELINE_FILE", "PIPELINE_FILES", "PIPELINE_HADOOP", "PIPELINE_ID", "PIPELINE_INDEX", "PIPELINE_JSON", "PIPELINE_KAFKA", "PIPELINE_RECORD_COUNT", "PIPELINE_RECORD_OUTPUT", "PIPELINE_REFERENCE_DATA", "PIPELINE_SEARCH_OUTPUT", "PIPELINE_SOLR", "PIPELINE_SPLIT", "PIPELINE_STATISTICS", "PIPELINE_STREAM", "PIPELINE_STROOM_STATS", "PIPELINE_STROOM_STATS_STORE", "PIPELINE_TEXT", "PIPELINE_XML", "PIPELINE_XML_SEARCH", "PIPELINE_XSD", "PIPELINE_XSLT", "PLAY", "PROCESS", "PROPERTIES", "QUESTION", "RAW", "REFRESH", "REGEX", "REMOVE", "RESIZE", "RESIZE_HANDLE", "SAVE", "SAVEAS", "SEARCH", "SETTINGS", "SHARD_CLOSE", "SHARD_FLUSH", "SHARE", "SHIELD", "SHOW", "SHOW_MENU", "STEP", "STEPPING", "STEPPING_CIRCLE", "STEP_BACKWARD", "STEP_FORWARD", "STOP", "TABLE", "TABLE_NESTED", "TAB_CLOSE", "TAGS", "TEXT_WRAP", "TICK", "UNDO", "UNLOCK", "UP", "UPLOAD", "USER", "USERS", "VOLUMES", "WARNING" ]
           },
           "name" : {
             "type" : "string"
@@ -12601,7 +13323,7 @@
             "condition" : {
               "type" : "string",
               "description" : "The condition of the predicate term",
-              "enum" : [ "CONTAINS", "EQUALS", "GREATER_THAN", "GREATER_THAN_OR_EQUAL_TO", "LESS_THAN", "LESS_THAN_OR_EQUAL_TO", "BETWEEN", "IN", "IN_DICTIONARY", "IN_FOLDER", "IS_DOC_REF", "IS_NULL", "IS_NOT_NULL", "MATCHES_REGEX" ]
+              "enum" : [ "CONTAINS", "EQUALS", "NOT_EQUALS", "GREATER_THAN", "GREATER_THAN_OR_EQUAL_TO", "LESS_THAN", "LESS_THAN_OR_EQUAL_TO", "BETWEEN", "IN", "IN_DICTIONARY", "IN_FOLDER", "IS_DOC_REF", "IS_NULL", "IS_NOT_NULL", "MATCHES_REGEX" ]
             },
             "docRef" : {
               "$ref" : "#/components/schemas/DocRef"
@@ -12627,6 +13349,10 @@
           },
           "externalIdentityProvider" : {
             "type" : "boolean"
+          },
+          "maxApiKeyExpiryAgeMs" : {
+            "type" : "integer",
+            "format" : "int64"
           },
           "uiConfig" : {
             "$ref" : "#/components/schemas/UiConfig"
@@ -12686,6 +13412,9 @@
             "type" : "string"
           },
           "version" : {
+            "type" : "string"
+          },
+          "volumeGroup" : {
             "type" : "string"
           }
         }
@@ -12870,7 +13599,7 @@
             "$ref" : "#/components/schemas/DocRef"
           },
           "field" : {
-            "$ref" : "#/components/schemas/AbstractField"
+            "$ref" : "#/components/schemas/FieldInfo"
           },
           "text" : {
             "type" : "string"
@@ -12878,36 +13607,27 @@
         },
         "required" : [ "dataSource", "field" ]
       },
-      "Field" : {
+      "FieldInfo" : {
         "type" : "object",
-        "description" : "Describes a field in a result set. The field can have various expressions applied to it, e.g. SUM(), along with sorting, filtering, formatting and grouping",
         "properties" : {
-          "expression" : {
+          "conditions" : {
             "type" : "string",
-            "description" : "The expression to use to generate the value for this field",
-            "example" : "SUM(${count})"
+            "enum" : [ "'=', '!=', 'between', '>', '>=', '<', '<='", "'=', '!=', 'in', 'in dictionary', 'between', '>', '>=', '<', '<='", "'=', '!='", "'=', '!=', 'between', '>', '>=', '<', '<='", "'=', '!=', 'in', 'in dictionary'", "'is', 'in folder'", "'=', '!=', 'in', 'in dictionary'", "'is', 'in folder', '=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary', 'matches regex'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!='", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'is', '=', '!='", "'between'", "'=', '!=', 'in'", "'=', '!=', 'in'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary', 'is'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'" ]
           },
-          "filter" : {
-            "$ref" : "#/components/schemas/Filter"
-          },
-          "format" : {
-            "$ref" : "#/components/schemas/Format"
-          },
-          "group" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "id" : {
+          "docRefType" : {
             "type" : "string"
           },
-          "name" : {
+          "fieldName" : {
             "type" : "string"
           },
-          "sort" : {
-            "$ref" : "#/components/schemas/Sort"
+          "fieldType" : {
+            "type" : "string",
+            "enum" : [ "ID", "BOOLEAN", "INTEGER", "LONG", "FLOAT", "DOUBLE", "DATE", "TEXT", "KEYWORD", "IPV4_ADDRESS", "DOC_REF" ]
+          },
+          "queryable" : {
+            "type" : "boolean"
           }
-        },
-        "required" : [ "expression" ]
+        }
       },
       "Filter" : {
         "type" : "object",
@@ -12958,6 +13678,30 @@
         "properties" : {
           "analyticDocUuid" : {
             "type" : "string"
+          },
+          "pageRequest" : {
+            "$ref" : "#/components/schemas/PageRequest"
+          },
+          "quickFilterInput" : {
+            "type" : "string"
+          },
+          "sort" : {
+            "type" : "string",
+            "writeOnly" : true
+          },
+          "sortList" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/CriteriaFieldSort"
+            }
+          }
+        }
+      },
+      "FindApiKeyCriteria" : {
+        "type" : "object",
+        "properties" : {
+          "owner" : {
+            "$ref" : "#/components/schemas/UserName"
           },
           "pageRequest" : {
             "$ref" : "#/components/schemas/PageRequest"
@@ -13075,17 +13819,11 @@
       "FindExplorerNodeQuery" : {
         "type" : "object",
         "properties" : {
-          "matchCase" : {
-            "type" : "boolean"
+          "filter" : {
+            "$ref" : "#/components/schemas/StringMatch"
           },
           "pageRequest" : {
             "$ref" : "#/components/schemas/PageRequest"
-          },
-          "pattern" : {
-            "type" : "string"
-          },
-          "regex" : {
-            "type" : "boolean"
           },
           "sort" : {
             "type" : "string",
@@ -13099,9 +13837,36 @@
           }
         }
       },
+      "FindFieldInfoCriteria" : {
+        "type" : "object",
+        "properties" : {
+          "dataSourceRef" : {
+            "$ref" : "#/components/schemas/DocRef"
+          },
+          "pageRequest" : {
+            "$ref" : "#/components/schemas/PageRequest"
+          },
+          "sort" : {
+            "type" : "string",
+            "writeOnly" : true
+          },
+          "sortList" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/CriteriaFieldSort"
+            }
+          },
+          "stringMatch" : {
+            "$ref" : "#/components/schemas/StringMatch"
+          }
+        }
+      },
       "FindFsVolumeCriteria" : {
         "type" : "object",
         "properties" : {
+          "group" : {
+            "$ref" : "#/components/schemas/FsVolumeGroup"
+          },
           "pageRequest" : {
             "$ref" : "#/components/schemas/PageRequest"
           },
@@ -13408,7 +14173,7 @@
             "structure" : {
               "type" : "array",
               "items" : {
-                "$ref" : "#/components/schemas/Field"
+                "$ref" : "#/components/schemas/Column"
               }
             },
             "values" : {
@@ -13428,7 +14193,7 @@
       "FloatField" : {
         "type" : "object",
         "allOf" : [ {
-          "$ref" : "#/components/schemas/AbstractField"
+          "$ref" : "#/components/schemas/QueryField"
         } ]
       },
       "Format" : {
@@ -13486,6 +14251,12 @@
           "path" : {
             "type" : "string"
           },
+          "s3ClientConfig" : {
+            "$ref" : "#/components/schemas/S3ClientConfig"
+          },
+          "s3ClientConfigData" : {
+            "type" : "string"
+          },
           "status" : {
             "type" : "string",
             "enum" : [ "ACTIVE", "INACTIVE", "CLOSED" ]
@@ -13501,8 +14272,46 @@
             "type" : "integer",
             "format" : "int32"
           },
+          "volumeGroupId" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
           "volumeState" : {
             "$ref" : "#/components/schemas/FsVolumeState"
+          },
+          "volumeType" : {
+            "type" : "string",
+            "enum" : [ "STANDARD", "S3" ]
+          }
+        }
+      },
+      "FsVolumeGroup" : {
+        "type" : "object",
+        "properties" : {
+          "createTimeMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "createUser" : {
+            "type" : "string"
+          },
+          "id" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "updateTimeMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "updateUser" : {
+            "type" : "string"
+          },
+          "version" : {
+            "type" : "integer",
+            "format" : "int32"
           }
         }
       },
@@ -13532,49 +14341,6 @@
           "version" : {
             "type" : "integer",
             "format" : "int32"
-          }
-        }
-      },
-      "FunctionSignature" : {
-        "type" : "object",
-        "properties" : {
-          "aliases" : {
-            "type" : "array",
-            "items" : {
-              "type" : "string"
-            }
-          },
-          "args" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/Arg"
-            }
-          },
-          "categoryPath" : {
-            "type" : "array",
-            "items" : {
-              "type" : "string"
-            }
-          },
-          "description" : {
-            "type" : "string"
-          },
-          "helpAnchor" : {
-            "type" : "string"
-          },
-          "name" : {
-            "type" : "string"
-          },
-          "overloadType" : {
-            "type" : "string",
-            "enum" : [ "NOT_OVERLOADED", "OVERLOADED_IN_CATEGORY", "OVERLOADED_GLOBALLY" ]
-          },
-          "returnDescription" : {
-            "type" : "string"
-          },
-          "returnType" : {
-            "type" : "string",
-            "enum" : [ "UNKNOWN", "BOOLEAN", "DOUBLE", "ERROR", "INTEGER", "LONG", "NULL", "NUMBER", "STRING" ]
           }
         }
       },
@@ -13679,6 +14445,55 @@
           }
         }
       },
+      "HashedApiKey" : {
+        "type" : "object",
+        "properties" : {
+          "apiKeyHash" : {
+            "type" : "string"
+          },
+          "apiKeyPrefix" : {
+            "type" : "string"
+          },
+          "comments" : {
+            "type" : "string"
+          },
+          "createTimeMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "createUser" : {
+            "type" : "string"
+          },
+          "enabled" : {
+            "type" : "boolean"
+          },
+          "expireTimeMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "id" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "owner" : {
+            "$ref" : "#/components/schemas/UserName"
+          },
+          "updateTimeMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "updateUser" : {
+            "type" : "string"
+          },
+          "version" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
       "HoppingWindow" : {
         "type" : "object",
         "allOf" : [ {
@@ -13701,7 +14516,7 @@
       "IdField" : {
         "type" : "object",
         "allOf" : [ {
-          "$ref" : "#/components/schemas/AbstractField"
+          "$ref" : "#/components/schemas/QueryField"
         } ]
       },
       "ImportConfigRequest" : {
@@ -14079,13 +14894,13 @@
       "IntegerField" : {
         "type" : "object",
         "allOf" : [ {
-          "$ref" : "#/components/schemas/AbstractField"
+          "$ref" : "#/components/schemas/QueryField"
         } ]
       },
       "IpV4AddressField" : {
         "type" : "object",
         "allOf" : [ {
-          "$ref" : "#/components/schemas/AbstractField"
+          "$ref" : "#/components/schemas/QueryField"
         } ]
       },
       "Job" : {
@@ -14244,7 +15059,7 @@
       "KeywordField" : {
         "type" : "object",
         "allOf" : [ {
-          "$ref" : "#/components/schemas/AbstractField"
+          "$ref" : "#/components/schemas/QueryField"
         } ]
       },
       "LayoutConfig" : {
@@ -14407,7 +15222,7 @@
       "LongField" : {
         "type" : "object",
         "allOf" : [ {
-          "$ref" : "#/components/schemas/AbstractField"
+          "$ref" : "#/components/schemas/QueryField"
         } ]
       },
       "MapDefinition" : {
@@ -14831,6 +15646,17 @@
         },
         "required" : [ "type" ]
       },
+      "PermissionChangeImpactSummary" : {
+        "type" : "object",
+        "properties" : {
+          "impactDetail" : {
+            "type" : "string"
+          },
+          "impactSummary" : {
+            "type" : "string"
+          }
+        }
+      },
       "PermissionChangeRequest" : {
         "type" : "object",
         "properties" : {
@@ -14929,7 +15755,7 @@
           },
           "icon" : {
             "type" : "string",
-            "enum" : [ "ADD", "ADD_ABOVE", "ADD_BELOW", "ADD_MULTIPLE", "ALERT", "ALERT_SIMPLE", "ARROW_DOWN", "ARROW_LEFT", "ARROW_RIGHT", "ARROW_UP", "AUTO_REFRESH", "BACKWARD", "BORDERED_CIRCLE", "CANCEL", "CASE_SENSITIVE", "CLEAR", "CLIPBOARD", "CLOSE", "CODE", "COLLAPSE_UP", "COPY", "DATABASE", "DELETE", "DEPENDENCIES", "DISABLE", "DOCUMENT_ANALYTIC_OUTPUT_STORE", "DOCUMENT_ANALYTIC_RULE", "DOCUMENT_ANNOTATIONS_INDEX", "DOCUMENT_DASHBOARD", "DOCUMENT_DICTIONARY", "DOCUMENT_DOCUMENTATION", "DOCUMENT_ELASTIC_CLUSTER", "DOCUMENT_ELASTIC_INDEX", "DOCUMENT_FAVOURITES", "DOCUMENT_FEED", "DOCUMENT_FOLDER", "DOCUMENT_INDEX", "DOCUMENT_KAFKA_CONFIG", "DOCUMENT_PIPELINE", "DOCUMENT_QUERY", "DOCUMENT_RECEIVE_DATA_RULE_SET", "DOCUMENT_SCRIPT", "DOCUMENT_SEARCHABLE", "DOCUMENT_SELECT_ALL_OR_NONE", "DOCUMENT_SIGMA_RULE", "DOCUMENT_SOLR_INDEX", "DOCUMENT_STATISTIC_STORE", "DOCUMENT_STROOM_STATS_STORE", "DOCUMENT_SYSTEM", "DOCUMENT_TEXT_CONVERTER", "DOCUMENT_VIEW", "DOCUMENT_VISUALISATION", "DOCUMENT_XMLSCHEMA", "DOCUMENT_XSLT", "DOT", "DOUBLE_ARROW", "DOWN", "DOWNLOAD", "DROP_DOWN", "EDIT", "ELLIPSES_HORIZONTAL", "ELLIPSES_VERTICAL", "ERROR", "EXCLAMATION", "EXPAND_DOWN", "EXPLORER", "FAST_BACKWARD", "FAST_FORWARD", "FATAL", "FATAL_DARK", "FAVOURITES", "FAVOURITES_OUTLINE", "FEED", "FIELD", "FIELDS_EXPRESSION", "FIELDS_FILTER", "FIELDS_FORMAT", "FIELDS_GROUP", "FIELDS_SORTAZ", "FIELDS_SORTZA", "FILE", "FILE_FORMATTED", "FILE_RAW", "FILTER", "FIND", "FOLDER", "FOLDER_TREE", "FORMAT", "FORWARD", "FUNCTION", "GENERATE", "HELP", "HIDE", "HIDE_MENU", "HISTORY", "INFO", "INSERT", "JOBS", "KEY", "LOCKED", "LOGO", "LOGOUT", "MENU", "MONITORING", "MOVE", "NODES", "OK", "OO", "OPEN", "OPERATOR", "PASSWORD", "PAUSE", "PEN", "PIPELINE_ELASTIC_INDEX", "PIPELINE_FILE", "PIPELINE_FILES", "PIPELINE_HADOOP", "PIPELINE_ID", "PIPELINE_INDEX", "PIPELINE_JSON", "PIPELINE_KAFKA", "PIPELINE_RECORD_COUNT", "PIPELINE_RECORD_OUTPUT", "PIPELINE_REFERENCE_DATA", "PIPELINE_SEARCH_OUTPUT", "PIPELINE_SOLR", "PIPELINE_SPLIT", "PIPELINE_STATISTICS", "PIPELINE_STREAM", "PIPELINE_STROOM_STATS", "PIPELINE_STROOM_STATS_STORE", "PIPELINE_TEXT", "PIPELINE_XML", "PIPELINE_XML_SEARCH", "PIPELINE_XSD", "PIPELINE_XSLT", "PLAY", "PROCESS", "PROPERTIES", "QUESTION", "RAW", "REFRESH", "REGEX", "REMOVE", "RESIZE", "RESIZE_HANDLE", "SAVE", "SAVEAS", "SEARCH", "SETTINGS", "SHARD_CLOSE", "SHARD_FLUSH", "SHARE", "SHIELD", "SHOW", "SHOW_MENU", "STEP", "STEPPING", "STEPPING_CIRCLE", "STEP_BACKWARD", "STEP_FORWARD", "STOP", "TABLE", "TABLE_NESTED", "TAB_CLOSE", "TAGS", "TEXT_WRAP", "TICK", "UNDO", "UNLOCK", "UP", "UPLOAD", "USER", "USERS", "VOLUMES", "WARNING" ]
+            "enum" : [ "ADD", "ADD_ABOVE", "ADD_BELOW", "ADD_MULTIPLE", "ALERT", "ALERT_SIMPLE", "ARROW_DOWN", "ARROW_LEFT", "ARROW_RIGHT", "ARROW_UP", "AUTO_REFRESH", "BACKWARD", "BORDERED_CIRCLE", "CANCEL", "CASE_SENSITIVE", "CLEAR", "CLIPBOARD", "CLOSE", "CODE", "COLLAPSE_UP", "COPY", "DATABASE", "DELETE", "DEPENDENCIES", "DISABLE", "DOCUMENT_ANALYTIC_OUTPUT_STORE", "DOCUMENT_ANALYTIC_RULE", "DOCUMENT_ANNOTATIONS_INDEX", "DOCUMENT_DASHBOARD", "DOCUMENT_DICTIONARY", "DOCUMENT_DOCUMENTATION", "DOCUMENT_ELASTIC_CLUSTER", "DOCUMENT_ELASTIC_INDEX", "DOCUMENT_FAVOURITES", "DOCUMENT_FEED", "DOCUMENT_FOLDER", "DOCUMENT_INDEX", "DOCUMENT_KAFKA_CONFIG", "DOCUMENT_PIPELINE", "DOCUMENT_QUERY", "DOCUMENT_RECEIVE_DATA_RULE_SET", "DOCUMENT_SCRIPT", "DOCUMENT_SEARCHABLE", "DOCUMENT_SELECT_ALL_OR_NONE", "DOCUMENT_SIGMA_RULE", "DOCUMENT_SOLR_INDEX", "DOCUMENT_STATISTIC_STORE", "DOCUMENT_STROOM_STATS_STORE", "DOCUMENT_SYSTEM", "DOCUMENT_TEXT_CONVERTER", "DOCUMENT_VIEW", "DOCUMENT_VISUALISATION", "DOCUMENT_XMLSCHEMA", "DOCUMENT_XSLT", "DOT", "DOUBLE_ARROW", "DOWN", "DOWNLOAD", "DROP_DOWN", "EDIT", "ELLIPSES_HORIZONTAL", "ELLIPSES_VERTICAL", "ERROR", "EXCLAMATION", "EXPAND_DOWN", "EXPLORER", "FAST_BACKWARD", "FAST_FORWARD", "FATAL", "FATAL_DARK", "FAVOURITES", "FAVOURITES_OUTLINE", "FEED", "FIELD", "FIELDS_EXPRESSION", "FIELDS_FILTER", "FIELDS_FORMAT", "FIELDS_GROUP", "FIELDS_SORTAZ", "FIELDS_SORTZA", "FILE", "FILE_FORMATTED", "FILE_RAW", "FILTER", "FIND", "FOLDER", "FOLDER_TREE", "FORMAT", "FORWARD", "FUNCTION", "GENERATE", "HELP", "HIDE", "HIDE_MENU", "HISTORY", "INFO", "INSERT", "JOBS", "KEY", "LOCATE", "LOCKED", "LOGO", "LOGOUT", "MENU", "MONITORING", "MOVE", "NODES", "OK", "OO", "OPEN", "OPERATOR", "PASSWORD", "PAUSE", "PEN", "PIPELINE_ELASTIC_INDEX", "PIPELINE_FILE", "PIPELINE_FILES", "PIPELINE_HADOOP", "PIPELINE_ID", "PIPELINE_INDEX", "PIPELINE_JSON", "PIPELINE_KAFKA", "PIPELINE_RECORD_COUNT", "PIPELINE_RECORD_OUTPUT", "PIPELINE_REFERENCE_DATA", "PIPELINE_SEARCH_OUTPUT", "PIPELINE_SOLR", "PIPELINE_SPLIT", "PIPELINE_STATISTICS", "PIPELINE_STREAM", "PIPELINE_STROOM_STATS", "PIPELINE_STROOM_STATS_STORE", "PIPELINE_TEXT", "PIPELINE_XML", "PIPELINE_XML_SEARCH", "PIPELINE_XSD", "PIPELINE_XSLT", "PLAY", "PROCESS", "PROPERTIES", "QUESTION", "RAW", "REFRESH", "REGEX", "REMOVE", "RESIZE", "RESIZE_HANDLE", "SAVE", "SAVEAS", "SEARCH", "SETTINGS", "SHARD_CLOSE", "SHARD_FLUSH", "SHARE", "SHIELD", "SHOW", "SHOW_MENU", "STEP", "STEPPING", "STEPPING_CIRCLE", "STEP_BACKWARD", "STEP_FORWARD", "STOP", "TABLE", "TABLE_NESTED", "TAB_CLOSE", "TAGS", "TEXT_WRAP", "TICK", "UNDO", "UNLOCK", "UP", "UPLOAD", "USER", "USERS", "VOLUMES", "WARNING" ]
           },
           "roles" : {
             "type" : "array",
@@ -15252,8 +16078,9 @@
           "pipelineUuid" : {
             "type" : "string"
           },
-          "taskType" : {
-            "type" : "string"
+          "processorType" : {
+            "type" : "string",
+            "enum" : [ "PIPELINE", "STREAMING_ANALYTIC" ]
           },
           "updateTimeMs" : {
             "type" : "integer",
@@ -15301,6 +16128,10 @@
             "type" : "integer",
             "format" : "int64"
           },
+          "maxProcessingTasks" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
           "minMetaCreateTimeMs" : {
             "type" : "integer",
             "format" : "int64"
@@ -15320,6 +16151,10 @@
           },
           "processorFilterTracker" : {
             "$ref" : "#/components/schemas/ProcessorFilterTracker"
+          },
+          "processorType" : {
+            "type" : "string",
+            "enum" : [ "PIPELINE", "STREAMING_ANALYTIC" ]
           },
           "processorUuid" : {
             "type" : "string"
@@ -15776,54 +16611,191 @@
           }
         }
       },
-      "QueryHelpItemsRequest" : {
+      "QueryField" : {
+        "type" : "object",
+        "discriminator" : {
+          "propertyName" : "type"
+        },
+        "properties" : {
+          "conditionSet" : {
+            "type" : "string",
+            "enum" : [ "'=', '!=', 'between', '>', '>=', '<', '<='", "'=', '!=', 'in', 'in dictionary', 'between', '>', '>=', '<', '<='", "'=', '!='", "'=', '!=', 'between', '>', '>=', '<', '<='", "'=', '!=', 'in', 'in dictionary'", "'is', 'in folder'", "'=', '!=', 'in', 'in dictionary'", "'is', 'in folder', '=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary', 'matches regex'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!='", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'is', '=', '!='", "'between'", "'=', '!=', 'in'", "'=', '!=', 'in'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary', 'is'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'" ]
+          },
+          "docRefType" : {
+            "type" : "string"
+          },
+          "fieldType" : {
+            "type" : "string",
+            "enum" : [ "ID", "BOOLEAN", "INTEGER", "LONG", "FLOAT", "DOUBLE", "DATE", "TEXT", "KEYWORD", "IPV4_ADDRESS", "DOC_REF" ]
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "queryable" : {
+            "type" : "boolean"
+          },
+          "type" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "type" ]
+      },
+      "QueryHelpData" : {
+        "type" : "object",
+        "discriminator" : {
+          "propertyName" : "type"
+        },
+        "properties" : {
+          "type" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "type" ]
+      },
+      "QueryHelpDataSource" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/QueryHelpData"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "docRef" : {
+              "$ref" : "#/components/schemas/DocRef"
+            }
+          }
+        } ]
+      },
+      "QueryHelpDetail" : {
+        "type" : "object",
+        "properties" : {
+          "documentation" : {
+            "type" : "string"
+          },
+          "insertText" : {
+            "type" : "string"
+          },
+          "insertType" : {
+            "type" : "string",
+            "enum" : [ "PLAIN_TEXT", "SNIPPET", "BLANK", "NOT_INSERTABLE" ]
+          }
+        }
+      },
+      "QueryHelpField" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/QueryHelpData"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "fieldInfo" : {
+              "$ref" : "#/components/schemas/FieldInfo"
+            }
+          }
+        } ]
+      },
+      "QueryHelpFunctionSignature" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/QueryHelpData"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "aliases" : {
+              "type" : "array",
+              "items" : {
+                "type" : "string"
+              }
+            },
+            "args" : {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/components/schemas/Arg"
+              }
+            },
+            "categoryPath" : {
+              "type" : "array",
+              "items" : {
+                "type" : "string"
+              }
+            },
+            "description" : {
+              "type" : "string"
+            },
+            "helpAnchor" : {
+              "type" : "string"
+            },
+            "name" : {
+              "type" : "string"
+            },
+            "overloadType" : {
+              "type" : "string",
+              "enum" : [ "NOT_OVERLOADED", "OVERLOADED_IN_CATEGORY", "OVERLOADED_GLOBALLY" ]
+            },
+            "returnDescription" : {
+              "type" : "string"
+            },
+            "returnType" : {
+              "type" : "string",
+              "enum" : [ "UNKNOWN", "BOOLEAN", "DOUBLE", "ERROR", "INTEGER", "LONG", "NULL", "NUMBER", "STRING" ]
+            }
+          }
+        } ]
+      },
+      "QueryHelpRequest" : {
         "type" : "object",
         "properties" : {
           "dataSourceRef" : {
             "$ref" : "#/components/schemas/DocRef"
           },
-          "filterInput" : {
+          "pageRequest" : {
+            "$ref" : "#/components/schemas/PageRequest"
+          },
+          "parentPath" : {
             "type" : "string"
           },
           "query" : {
             "type" : "string"
           },
-          "requestedTypes" : {
+          "showAll" : {
+            "type" : "boolean"
+          },
+          "sort" : {
+            "type" : "string",
+            "writeOnly" : true
+          },
+          "sortList" : {
             "type" : "array",
             "items" : {
-              "type" : "string",
-              "enum" : [ "DATA_SOURCE", "STRUCTURE", "FIELD", "FUNCTION" ]
-            },
-            "uniqueItems" : true
+              "$ref" : "#/components/schemas/CriteriaFieldSort"
+            }
+          },
+          "stringMatch" : {
+            "$ref" : "#/components/schemas/StringMatch"
           }
         }
       },
-      "QueryHelpItemsResult" : {
+      "QueryHelpRow" : {
         "type" : "object",
         "properties" : {
-          "dataSourceFields" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/AbstractField"
-            }
+          "data" : {
+            "$ref" : "#/components/schemas/QueryHelpData"
           },
-          "dataSources" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/DocRef"
-            }
+          "hasChildren" : {
+            "type" : "boolean"
           },
-          "functionSignatures" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/FunctionSignature"
-            }
+          "icon" : {
+            "type" : "string",
+            "enum" : [ "ADD", "ADD_ABOVE", "ADD_BELOW", "ADD_MULTIPLE", "ALERT", "ALERT_SIMPLE", "ARROW_DOWN", "ARROW_LEFT", "ARROW_RIGHT", "ARROW_UP", "AUTO_REFRESH", "BACKWARD", "BORDERED_CIRCLE", "CANCEL", "CASE_SENSITIVE", "CLEAR", "CLIPBOARD", "CLOSE", "CODE", "COLLAPSE_UP", "COPY", "DATABASE", "DELETE", "DEPENDENCIES", "DISABLE", "DOCUMENT_ANALYTIC_OUTPUT_STORE", "DOCUMENT_ANALYTIC_RULE", "DOCUMENT_ANNOTATIONS_INDEX", "DOCUMENT_DASHBOARD", "DOCUMENT_DICTIONARY", "DOCUMENT_DOCUMENTATION", "DOCUMENT_ELASTIC_CLUSTER", "DOCUMENT_ELASTIC_INDEX", "DOCUMENT_FAVOURITES", "DOCUMENT_FEED", "DOCUMENT_FOLDER", "DOCUMENT_INDEX", "DOCUMENT_KAFKA_CONFIG", "DOCUMENT_PIPELINE", "DOCUMENT_QUERY", "DOCUMENT_RECEIVE_DATA_RULE_SET", "DOCUMENT_SCRIPT", "DOCUMENT_SEARCHABLE", "DOCUMENT_SELECT_ALL_OR_NONE", "DOCUMENT_SIGMA_RULE", "DOCUMENT_SOLR_INDEX", "DOCUMENT_STATISTIC_STORE", "DOCUMENT_STROOM_STATS_STORE", "DOCUMENT_SYSTEM", "DOCUMENT_TEXT_CONVERTER", "DOCUMENT_VIEW", "DOCUMENT_VISUALISATION", "DOCUMENT_XMLSCHEMA", "DOCUMENT_XSLT", "DOT", "DOUBLE_ARROW", "DOWN", "DOWNLOAD", "DROP_DOWN", "EDIT", "ELLIPSES_HORIZONTAL", "ELLIPSES_VERTICAL", "ERROR", "EXCLAMATION", "EXPAND_DOWN", "EXPLORER", "FAST_BACKWARD", "FAST_FORWARD", "FATAL", "FATAL_DARK", "FAVOURITES", "FAVOURITES_OUTLINE", "FEED", "FIELD", "FIELDS_EXPRESSION", "FIELDS_FILTER", "FIELDS_FORMAT", "FIELDS_GROUP", "FIELDS_SORTAZ", "FIELDS_SORTZA", "FILE", "FILE_FORMATTED", "FILE_RAW", "FILTER", "FIND", "FOLDER", "FOLDER_TREE", "FORMAT", "FORWARD", "FUNCTION", "GENERATE", "HELP", "HIDE", "HIDE_MENU", "HISTORY", "INFO", "INSERT", "JOBS", "KEY", "LOCATE", "LOCKED", "LOGO", "LOGOUT", "MENU", "MONITORING", "MOVE", "NODES", "OK", "OO", "OPEN", "OPERATOR", "PASSWORD", "PAUSE", "PEN", "PIPELINE_ELASTIC_INDEX", "PIPELINE_FILE", "PIPELINE_FILES", "PIPELINE_HADOOP", "PIPELINE_ID", "PIPELINE_INDEX", "PIPELINE_JSON", "PIPELINE_KAFKA", "PIPELINE_RECORD_COUNT", "PIPELINE_RECORD_OUTPUT", "PIPELINE_REFERENCE_DATA", "PIPELINE_SEARCH_OUTPUT", "PIPELINE_SOLR", "PIPELINE_SPLIT", "PIPELINE_STATISTICS", "PIPELINE_STREAM", "PIPELINE_STROOM_STATS", "PIPELINE_STROOM_STATS_STORE", "PIPELINE_TEXT", "PIPELINE_XML", "PIPELINE_XML_SEARCH", "PIPELINE_XSD", "PIPELINE_XSLT", "PLAY", "PROCESS", "PROPERTIES", "QUESTION", "RAW", "REFRESH", "REGEX", "REMOVE", "RESIZE", "RESIZE_HANDLE", "SAVE", "SAVEAS", "SEARCH", "SETTINGS", "SHARD_CLOSE", "SHARD_FLUSH", "SHARE", "SHIELD", "SHOW", "SHOW_MENU", "STEP", "STEPPING", "STEPPING_CIRCLE", "STEP_BACKWARD", "STEP_FORWARD", "STOP", "TABLE", "TABLE_NESTED", "TAB_CLOSE", "TAGS", "TEXT_WRAP", "TICK", "UNDO", "UNLOCK", "UP", "UPLOAD", "USER", "USERS", "VOLUMES", "WARNING" ]
           },
-          "structureElements" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/StructureElement"
-            }
+          "id" : {
+            "type" : "string"
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "type" : {
+            "type" : "string",
+            "enum" : [ "DATA_SOURCE", "FIELD", "FUNCTION", "TITLE", "STRUCTURE" ]
           }
         }
       },
@@ -15966,7 +16938,7 @@
           "fields" : {
             "type" : "array",
             "items" : {
-              "$ref" : "#/components/schemas/AbstractField"
+              "$ref" : "#/components/schemas/QueryField"
             }
           },
           "name" : {
@@ -16221,6 +17193,21 @@
           }
         }
       },
+      "ResultPageCompletionValue" : {
+        "type" : "object",
+        "description" : "A page of results.",
+        "properties" : {
+          "pageResponse" : {
+            "$ref" : "#/components/schemas/PageResponse"
+          },
+          "values" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/CompletionValue"
+            }
+          }
+        }
+      },
       "ResultPageCustomRollUpMask" : {
         "type" : "object",
         "description" : "A page of results.",
@@ -16296,6 +17283,21 @@
           }
         }
       },
+      "ResultPageFieldInfo" : {
+        "type" : "object",
+        "description" : "A page of results.",
+        "properties" : {
+          "pageResponse" : {
+            "$ref" : "#/components/schemas/PageResponse"
+          },
+          "values" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/FieldInfo"
+            }
+          }
+        }
+      },
       "ResultPageFsVolume" : {
         "type" : "object",
         "description" : "A page of results.",
@@ -16307,6 +17309,21 @@
             "type" : "array",
             "items" : {
               "$ref" : "#/components/schemas/FsVolume"
+            }
+          }
+        }
+      },
+      "ResultPageFsVolumeGroup" : {
+        "type" : "object",
+        "description" : "A page of results.",
+        "properties" : {
+          "pageResponse" : {
+            "$ref" : "#/components/schemas/PageResponse"
+          },
+          "values" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/FsVolumeGroup"
             }
           }
         }
@@ -16427,6 +17444,21 @@
             "type" : "array",
             "items" : {
               "$ref" : "#/components/schemas/ProcessorTaskSummary"
+            }
+          }
+        }
+      },
+      "ResultPageQueryHelpRow" : {
+        "type" : "object",
+        "description" : "A page of results.",
+        "properties" : {
+          "pageResponse" : {
+            "$ref" : "#/components/schemas/PageResponse"
+          },
+          "values" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/QueryHelpRow"
             }
           }
         }
@@ -16605,6 +17637,78 @@
         },
         "required" : [ "depth", "groupKey", "values" ]
       },
+      "S3ClientConfig" : {
+        "type" : "object",
+        "properties" : {
+          "accelerate" : {
+            "type" : "boolean"
+          },
+          "async" : {
+            "type" : "boolean"
+          },
+          "bucketName" : {
+            "type" : "string"
+          },
+          "checksumValidationEnabled" : {
+            "type" : "boolean"
+          },
+          "createBuckets" : {
+            "type" : "boolean"
+          },
+          "credentials" : {
+            "$ref" : "#/components/schemas/AwsCredentials"
+          },
+          "credentialsProviderType" : {
+            "type" : "string",
+            "enum" : [ "ANONYMOUS", "DEFAULT", "ENVIRONMENT_VARIABLE", "PROFILE", "STATIC", "SYSTEM_PROPERTY", "WEB" ]
+          },
+          "crossRegionAccessEnabled" : {
+            "type" : "boolean"
+          },
+          "endpointOverride" : {
+            "type" : "string"
+          },
+          "forcePathStyle" : {
+            "type" : "boolean"
+          },
+          "httpConfiguration" : {
+            "$ref" : "#/components/schemas/AwsHttpConfig"
+          },
+          "keyPattern" : {
+            "type" : "string"
+          },
+          "maxConcurrency" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "minimalPartSizeInBytes" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "multipart" : {
+            "type" : "boolean"
+          },
+          "numRetries" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "readBufferSizeInBytes" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "region" : {
+            "type" : "string"
+          },
+          "targetThroughputInGbps" : {
+            "type" : "number",
+            "format" : "double"
+          },
+          "thresholdInBytes" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }
+      },
       "SavePipelineXmlRequest" : {
         "type" : "object",
         "properties" : {
@@ -16623,6 +17727,12 @@
         }, {
           "type" : "object",
           "properties" : {
+            "enabled" : {
+              "type" : "boolean"
+            },
+            "errorFeed" : {
+              "$ref" : "#/components/schemas/DocRef"
+            },
             "maxEventTimeMs" : {
               "type" : "integer",
               "format" : "int64"
@@ -16630,6 +17740,9 @@
             "minEventTimeMs" : {
               "type" : "integer",
               "format" : "int64"
+            },
+            "node" : {
+              "type" : "string"
             },
             "queryFrequency" : {
               "$ref" : "#/components/schemas/SimpleDuration"
@@ -17317,13 +18430,6 @@
           "stored" : {
             "type" : "boolean"
           },
-          "supportedConditions" : {
-            "type" : "array",
-            "items" : {
-              "type" : "string",
-              "enum" : [ "CONTAINS", "EQUALS", "GREATER_THAN", "GREATER_THAN_OR_EQUAL_TO", "LESS_THAN", "LESS_THAN_OR_EQUAL_TO", "BETWEEN", "IN", "IN_DICTIONARY", "IN_FOLDER", "IS_DOC_REF", "IS_NULL", "IS_NOT_NULL", "MATCHES_REGEX" ]
-            }
-          },
           "termOffsets" : {
             "type" : "boolean"
           },
@@ -17721,13 +18827,8 @@
         }, {
           "type" : "object",
           "properties" : {
-            "maxMetaCreateTimeMs" : {
-              "type" : "integer",
-              "format" : "int64"
-            },
-            "minMetaCreateTimeMs" : {
-              "type" : "integer",
-              "format" : "int64"
+            "errorFeed" : {
+              "$ref" : "#/components/schemas/DocRef"
             }
           }
         } ]
@@ -17795,6 +18896,21 @@
             }
           }
         } ]
+      },
+      "StringMatch" : {
+        "type" : "object",
+        "properties" : {
+          "caseSensitive" : {
+            "type" : "boolean"
+          },
+          "matchType" : {
+            "type" : "string",
+            "enum" : [ "ANY", "NULL", "NON_NULL", "BLANK", "EMPTY", "NULL_OR_BLANK", "NULL_OR_EMPTY", "CONTAINS", "EQUALS", "NOT_EQUALS", "STARTS_WITH", "ENDS_WITH", "REGEX" ]
+          },
+          "pattern" : {
+            "type" : "string"
+          }
+        }
       },
       "StroomStatsStoreDoc" : {
         "type" : "object",
@@ -17874,23 +18990,6 @@
           },
           "oldEntityData" : {
             "$ref" : "#/components/schemas/StroomStatsStoreEntityData"
-          }
-        }
-      },
-      "StructureElement" : {
-        "type" : "object",
-        "properties" : {
-          "description" : {
-            "type" : "string"
-          },
-          "snippets" : {
-            "type" : "array",
-            "items" : {
-              "type" : "string"
-            }
-          },
-          "title" : {
-            "type" : "string"
           }
         }
       },
@@ -18008,6 +19107,12 @@
             "dataRetention" : {
               "$ref" : "#/components/schemas/SimpleDuration"
             },
+            "enabled" : {
+              "type" : "boolean"
+            },
+            "errorFeed" : {
+              "$ref" : "#/components/schemas/DocRef"
+            },
             "maxMetaCreateTimeMs" : {
               "type" : "integer",
               "format" : "int64"
@@ -18015,6 +19120,9 @@
             "minMetaCreateTimeMs" : {
               "type" : "integer",
               "format" : "int64"
+            },
+            "node" : {
+              "type" : "string"
             },
             "timeToWaitForData" : {
               "$ref" : "#/components/schemas/SimpleDuration"
@@ -18084,7 +19192,7 @@
           "fields" : {
             "type" : "array",
             "items" : {
-              "$ref" : "#/components/schemas/Field"
+              "$ref" : "#/components/schemas/Column"
             }
           },
           "maxResults" : {
@@ -18113,8 +19221,7 @@
           "useDefaultExtractionPipeline" : {
             "type" : "boolean"
           }
-        },
-        "required" : [ "fields", "queryId" ]
+        }
       },
       "TableCoprocessorSettings" : {
         "type" : "object",
@@ -18145,7 +19252,7 @@
             "fields" : {
               "type" : "array",
               "items" : {
-                "$ref" : "#/components/schemas/Field"
+                "$ref" : "#/components/schemas/Column"
               }
             },
             "resultRange" : {
@@ -18209,7 +19316,7 @@
           "fields" : {
             "type" : "array",
             "items" : {
-              "$ref" : "#/components/schemas/Field"
+              "$ref" : "#/components/schemas/Column"
             }
           },
           "maxResults" : {
@@ -18239,8 +19346,7 @@
           "window" : {
             "$ref" : "#/components/schemas/Window"
           }
-        },
-        "required" : [ "fields", "queryId" ]
+        }
       },
       "TaskId" : {
         "type" : "object",
@@ -18327,28 +19433,28 @@
           "type" : "object",
           "properties" : {
             "colFromField" : {
-              "$ref" : "#/components/schemas/Field"
+              "$ref" : "#/components/schemas/Column"
             },
             "colToField" : {
-              "$ref" : "#/components/schemas/Field"
+              "$ref" : "#/components/schemas/Column"
             },
             "lineFromField" : {
-              "$ref" : "#/components/schemas/Field"
+              "$ref" : "#/components/schemas/Column"
             },
             "lineToField" : {
-              "$ref" : "#/components/schemas/Field"
+              "$ref" : "#/components/schemas/Column"
             },
             "modelVersion" : {
               "type" : "string"
             },
             "partNoField" : {
-              "$ref" : "#/components/schemas/Field"
+              "$ref" : "#/components/schemas/Column"
             },
             "pipeline" : {
               "$ref" : "#/components/schemas/DocRef"
             },
             "recordNoField" : {
-              "$ref" : "#/components/schemas/Field"
+              "$ref" : "#/components/schemas/Column"
             },
             "showAsHtml" : {
               "type" : "boolean"
@@ -18357,7 +19463,7 @@
               "type" : "boolean"
             },
             "streamIdField" : {
-              "$ref" : "#/components/schemas/Field"
+              "$ref" : "#/components/schemas/Column"
             },
             "tableId" : {
               "type" : "string"
@@ -18409,7 +19515,7 @@
       "TextField" : {
         "type" : "object",
         "allOf" : [ {
-          "$ref" : "#/components/schemas/AbstractField"
+          "$ref" : "#/components/schemas/QueryField"
         } ]
       },
       "ThemeConfig" : {
@@ -18445,7 +19551,7 @@
         "properties" : {
           "condition" : {
             "type" : "string",
-            "enum" : [ "CONTAINS", "EQUALS", "GREATER_THAN", "GREATER_THAN_OR_EQUAL_TO", "LESS_THAN", "LESS_THAN_OR_EQUAL_TO", "BETWEEN", "IN", "IN_DICTIONARY", "IN_FOLDER", "IS_DOC_REF", "IS_NULL", "IS_NOT_NULL", "MATCHES_REGEX" ]
+            "enum" : [ "CONTAINS", "EQUALS", "NOT_EQUALS", "GREATER_THAN", "GREATER_THAN_OR_EQUAL_TO", "LESS_THAN", "LESS_THAN_OR_EQUAL_TO", "BETWEEN", "IN", "IN_DICTIONARY", "IN_FOLDER", "IS_DOC_REF", "IS_NULL", "IS_NOT_NULL", "MATCHES_REGEX" ]
           },
           "from" : {
             "type" : "string"
@@ -18822,6 +19928,23 @@
           }
         }
       },
+      "ValidateExpressionRequest" : {
+        "type" : "object",
+        "properties" : {
+          "dateTimeSettings" : {
+            "$ref" : "#/components/schemas/DateTimeSettings"
+          },
+          "expressionItem" : {
+            "$ref" : "#/components/schemas/ExpressionItem"
+          },
+          "fields" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/QueryField"
+            }
+          }
+        }
+      },
       "ValidateExpressionResult" : {
         "type" : "object",
         "properties" : {
@@ -19033,7 +20156,7 @@
           },
           "matchType" : {
             "type" : "string",
-            "enum" : [ "EXISTS", "CONTAINS", "EQUALS", "UNIQUE" ]
+            "enum" : [ "EXISTS", "CONTAINS", "EQUALS", "NOT_EQUALS", "UNIQUE" ]
           },
           "path" : {
             "type" : "string"

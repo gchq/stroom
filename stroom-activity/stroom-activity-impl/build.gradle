@@ -8,12 +8,12 @@ dependencies {
     implementation project(':stroom-security:stroom-security-api')
     implementation project(':stroom-util-shared')
     implementation project(':stroom-util')
-    
+
     implementation libs.eventLogging
     implementation libs.guava
-    implementation libs.guice5
+    implementation libs.guice
     implementation libs.jakarta_servlet_api
-    implementation libs.javax_inject
+    implementation libs.jakarta_inject
     implementation libs.jaxb_api
     implementation libs.restygwt
     implementation libs.slf4j_api

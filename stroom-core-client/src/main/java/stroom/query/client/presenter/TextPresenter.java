@@ -27,7 +27,7 @@ import stroom.pipeline.shared.AbstractFetchDataResult;
 import stroom.pipeline.shared.FetchDataRequest;
 import stroom.pipeline.shared.FetchDataResult;
 import stroom.pipeline.shared.SourceLocation;
-import stroom.query.api.v2.Field;
+import stroom.query.api.v2.Column;
 import stroom.query.client.presenter.TextPresenter.TextView;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.util.shared.DefaultLocation;
@@ -518,9 +518,9 @@ public class TextPresenter extends MyPresenterWidget<TextView> implements TextUi
         return null;
     }
 
-    private Long getLong(final Field field, final TableRow row) {
-        if (field != null && row != null) {
-            return getLong(row.getText(field.getId()));
+    private Long getLong(final Column column, final TableRow row) {
+        if (column != null && row != null) {
+            return getLong(row.getText(column.getId()));
         }
         return null;
     }

@@ -31,6 +31,7 @@ import stroom.util.shared.OutputState;
 import stroom.util.shared.Severity;
 import stroom.util.shared.TextRange;
 
+import jakarta.inject.Inject;
 import net.sf.saxon.Configuration;
 import net.sf.saxon.om.NodeInfo;
 import net.sf.saxon.xpath.XPathEvaluator;
@@ -40,7 +41,6 @@ import org.xml.sax.SAXException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import javax.inject.Inject;
 import javax.xml.namespace.NamespaceContext;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpression;
@@ -115,7 +115,7 @@ public class SAXEventRecorder extends TinyTreeBufferFilter implements Recorder, 
                 for (final XPathFilter xPathFilter : settings.getFilters()) {
                     if (xPathFilter.getMatchType() != null && xPathFilter.getPath() != null) {
                         if (xPathFilter.getMatchType().isNeedsValue()) {
-                            if (xPathFilter.getValue() != null && xPathFilter.getValue().length() > 0) {
+                            if (xPathFilter.getValue() != null && !xPathFilter.getValue().isEmpty()) {
                                 return true;
                             }
                         } else {
@@ -141,9 +141,7 @@ public class SAXEventRecorder extends TinyTreeBufferFilter implements Recorder, 
         // If we are skipping to a severity then perform check on severity.
         if (settings.getSkipToSeverity() != null) {
             final ErrorReceiver errorReceiver = errorReceiverProxy.getErrorReceiver();
-            if (errorReceiver != null && errorReceiver instanceof LoggingErrorReceiver) {
-                final LoggingErrorReceiver loggingErrorReceiver = (LoggingErrorReceiver) errorReceiver;
-
+            if (errorReceiver instanceof final LoggingErrorReceiver loggingErrorReceiver) {
                 // If this is a stepping filter being used for input then catch
                 // indicators raised by the code.
                 if (elementId != null) {
@@ -172,7 +170,7 @@ public class SAXEventRecorder extends TinyTreeBufferFilter implements Recorder, 
             }
         }
 
-        if (xPathFilters == null && settings.getFilters() != null && settings.getFilters().size() > 0) {
+        if (xPathFilters == null && settings.getFilters() != null && !settings.getFilters().isEmpty()) {
             // Compile the XPath filters.
             xPathFilters = new HashSet<>();
             for (final XPathFilter xPathFilter : settings.getFilters()) {
@@ -198,15 +196,14 @@ public class SAXEventRecorder extends TinyTreeBufferFilter implements Recorder, 
                     final Object result = compiledXPathFilter.getXPathExpression().evaluate(documentInfo,
                             XPathConstants.NODESET);
                     final List<NodeInfo> nodes = (List<NodeInfo>) result;
-                    if (nodes.size() > 0) {
+                    if (!nodes.isEmpty()) {
                         final XPathFilter xPathFilter = compiledXPathFilter.getXPathFilter();
                         switch (xPathFilter.getMatchType()) {
                             case EXISTS:
                                 return true;
 
                             case CONTAINS:
-                                for (int i = 0; i < nodes.size(); i++) {
-                                    final NodeInfo node = nodes.get(i);
+                                for (final NodeInfo node : nodes) {
                                     if (contains(node.getStringValue(), xPathFilter.getValue(),
                                             xPathFilter.isIgnoreCase())) {
                                         return true;
@@ -215,8 +212,7 @@ public class SAXEventRecorder extends TinyTreeBufferFilter implements Recorder, 
                                 break;
 
                             case EQUALS:
-                                for (int i = 0; i < nodes.size(); i++) {
-                                    final NodeInfo node = nodes.get(i);
+                                for (final NodeInfo node : nodes) {
                                     if (equals(node.getStringValue(),
                                             xPathFilter.getValue(),
                                             xPathFilter.isIgnoreCase())) {
@@ -224,9 +220,17 @@ public class SAXEventRecorder extends TinyTreeBufferFilter implements Recorder, 
                                     }
                                 }
                                 break;
+                            case NOT_EQUALS:
+                                for (final NodeInfo node : nodes) {
+                                    if (!equals(node.getStringValue(),
+                                            xPathFilter.getValue(),
+                                            xPathFilter.isIgnoreCase())) {
+                                        return true;
+                                    }
+                                }
+                                break;
                             case UNIQUE:
-                                for (int i = 0; i < nodes.size(); i++) {
-                                    final NodeInfo node = nodes.get(i);
+                                for (final NodeInfo node : nodes) {
                                     String value = node.getStringValue();
                                     if (value != null) {
                                         value = value.trim();
@@ -266,39 +270,35 @@ public class SAXEventRecorder extends TinyTreeBufferFilter implements Recorder, 
     }
 
     private boolean contains(final String value, final String text, final Boolean ignoreCase) {
-        if (value != null && text != null) {
-            String val = value.trim();
-            String txt = text.trim();
-
-            if (ignoreCase != null && ignoreCase) {
-                val = val.toLowerCase();
-                txt = text.toLowerCase();
-            }
-
-            if (val.contains(txt)) {
-                return true;
-            }
+        if (value == null || text == null) {
+            return false;
         }
 
-        return false;
+        String val = value.trim();
+        String txt = text.trim();
+
+        if (ignoreCase != null && ignoreCase) {
+            val = val.toLowerCase();
+            txt = text.toLowerCase();
+        }
+
+        return val.contains(txt);
     }
 
     private boolean equals(final String value, final String text, final Boolean ignoreCase) {
-        if (value != null && text != null) {
-            String val = value.trim();
-            String txt = text.trim();
-
-            if (ignoreCase != null && ignoreCase) {
-                val = val.toLowerCase();
-                txt = text.toLowerCase();
-            }
-
-            if (val.equals(txt)) {
-                return true;
-            }
+        if (value == null || text == null) {
+            return false;
         }
 
-        return false;
+        String val = value.trim();
+        String txt = text.trim();
+
+        if (ignoreCase != null && ignoreCase) {
+            val = val.toLowerCase();
+            txt = text.toLowerCase();
+        }
+
+        return val.equals(txt);
     }
 
     @Override

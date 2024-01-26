@@ -17,30 +17,21 @@
 package stroom.pipeline;
 
 import stroom.docref.DocRef;
-import stroom.docstore.api.DocumentResourceHelper;
-import stroom.docstore.shared.DocRefUtil;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.pipeline.factory.ElementRegistryFactory;
-import stroom.pipeline.factory.PipelineDataValidator;
-import stroom.pipeline.factory.PipelineStackLoader;
 import stroom.pipeline.shared.FetchPipelineXmlResponse;
 import stroom.pipeline.shared.FetchPropertyTypesResult;
-import stroom.pipeline.shared.PipelineDataMerger;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.PipelineResource;
 import stroom.pipeline.shared.SavePipelineXmlRequest;
 import stroom.pipeline.shared.data.PipelineData;
-import stroom.pipeline.shared.data.PipelineElementType;
-import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.FetchWithUuid;
-import stroom.util.shared.PermissionException;
 
-import java.util.ArrayList;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
-import javax.inject.Provider;
 
 @AutoLogged
 class PipelineResourceImpl implements PipelineResource, FetchWithUuid<PipelineDoc> {

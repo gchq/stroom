@@ -18,31 +18,32 @@ package stroom.pipeline.xsltfunctions;
 
 
 import stroom.test.common.util.test.StroomUnitTest;
+import stroom.util.net.IpAddressUtil;
 
 import org.junit.jupiter.api.Test;
+
+import java.net.UnknownHostException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestNumericIP extends StroomUnitTest {
 
     @Test
-    void test() {
-        final NumericIP numericIP = new NumericIP();
-
-        String out = numericIP.convert("192.168.1.1");
+    void test() throws UnknownHostException {
+        long out = IpAddressUtil.toNumericIpAddress("192.168.1.1");
         System.out.println(out);
-        assertThat(out).isEqualTo("3232235777");
-        out = numericIP.convert("192.168.1.2");
+        assertThat(out).isEqualTo(3232235777L);
+        out = IpAddressUtil.toNumericIpAddress("192.168.1.2");
         System.out.println(out);
-        assertThat(out).isEqualTo("3232235778");
-        out = numericIP.convert("255.255.255.255");
+        assertThat(out).isEqualTo(3232235778L);
+        out = IpAddressUtil.toNumericIpAddress("255.255.255.255");
         System.out.println(out);
-        assertThat(out).isEqualTo("4294967295");
-        out = numericIP.convert("0.0.0.0");
+        assertThat(out).isEqualTo(4294967295L);
+        out = IpAddressUtil.toNumericIpAddress("0.0.0.0");
         System.out.println(out);
-        assertThat(out).isEqualTo("0");
-        out = numericIP.convert("1.1.1.1");
+        assertThat(out).isEqualTo(0L);
+        out = IpAddressUtil.toNumericIpAddress("1.1.1.1");
         System.out.println(out);
-        assertThat(out).isEqualTo("16843009");
+        assertThat(out).isEqualTo(16843009L);
     }
 }

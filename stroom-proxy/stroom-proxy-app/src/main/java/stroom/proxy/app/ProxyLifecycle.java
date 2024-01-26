@@ -5,9 +5,8 @@ import stroom.proxy.app.event.EventStoreConfig;
 import stroom.proxy.repo.ProxyServices;
 
 import io.dropwizard.lifecycle.Managed;
-
-import javax.inject.Inject;
-import javax.inject.Provider;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 public class ProxyLifecycle implements Managed {
 

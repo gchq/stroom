@@ -27,12 +27,12 @@ import event.logging.Event;
 import event.logging.Group;
 import event.logging.Outcome;
 import event.logging.RemoveGroups;
+import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
-
 public class AuthorisationEventLog {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(AuthorisationEventLog.class);
 
     private final StroomEventLoggingService eventLoggingService;
@@ -93,9 +93,9 @@ public class AuthorisationEventLog {
             final Outcome outcome = success
                     ? null
                     : Outcome.builder()
-                    .withSuccess(success)
-                    .withDescription(outcomeDescription)
-                    .build();
+                            .withSuccess(success)
+                            .withDescription(outcomeDescription)
+                            .build();
 
             final Event event = eventLoggingService.createEvent(
                     typeId,

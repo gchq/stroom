@@ -34,12 +34,15 @@ public class FsDataStoreModule extends AbstractModule {
     protected void configure() {
         bind(Store.class).to(FsStore.class);
         bind(AttributeMapFactory.class).to(FsStore.class);
+        bind(FsVolumeGroupService.class).to(FsVolumeGroupServiceImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class)
-                .addBinding(FsVolumeService.class);
+                .addBinding(FsVolumeService.class)
+                .addBinding(FsVolumeGroupServiceImpl.class);
 
         RestResourcesBinder.create(binder())
-                .bind(FsVolumeResourceImpl.class);
+                .bind(FsVolumeResourceImpl.class)
+                .bind(FsVolumeGroupResourceImpl.class);
 
         ObjectInfoProviderBinder.create(binder())
                 .bind(FsVolume.class, FsVolumeObjectInfoProvider.class);

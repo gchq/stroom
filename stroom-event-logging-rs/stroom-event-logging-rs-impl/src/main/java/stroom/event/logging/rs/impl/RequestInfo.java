@@ -32,6 +32,7 @@ import stroom.util.shared.HasIntegerId;
 import stroom.util.shared.ResultPage;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.ws.rs.core.MultivaluedMap;
 
 import java.lang.reflect.Method;
 import java.util.Arrays;
@@ -41,7 +42,6 @@ import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
-import javax.ws.rs.core.MultivaluedMap;
 
 class RequestInfo {
 

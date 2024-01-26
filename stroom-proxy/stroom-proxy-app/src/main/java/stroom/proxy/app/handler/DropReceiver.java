@@ -8,7 +8,8 @@ import stroom.util.io.ByteCountInputStream;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
-import org.apache.http.HttpStatus;
+import jakarta.inject.Inject;
+import org.apache.hc.core5.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,9 +17,9 @@ import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
-import javax.inject.Inject;
 
 public class DropReceiver implements Receiver {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DropReceiver.class);
     private static final Logger RECEIVE_LOG = LoggerFactory.getLogger("receive");
     private final LogStream logStream;

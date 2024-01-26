@@ -17,9 +17,10 @@
 package stroom.dashboard.shared;
 
 import stroom.docref.DocRef;
-import stroom.query.api.v2.Field;
+import stroom.query.api.v2.Column;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -47,19 +48,19 @@ public class TextComponentSettings implements ComponentSettings {
     @JsonProperty("tableId")
     private final String tableId;
     @JsonProperty
-    private final Field streamIdField;
+    private final Column streamIdField;
     @JsonProperty
-    private final Field partNoField;
+    private final Column partNoField;
     @JsonProperty
-    private final Field recordNoField;
+    private final Column recordNoField;
     @JsonProperty
-    private final Field lineFromField;
+    private final Column lineFromField;
     @JsonProperty
-    private final Field colFromField;
+    private final Column colFromField;
     @JsonProperty
-    private final Field lineToField;
+    private final Column lineToField;
     @JsonProperty
-    private final Field colToField;
+    private final Column colToField;
     @JsonProperty
     private final DocRef pipeline;
     @JsonProperty
@@ -71,13 +72,13 @@ public class TextComponentSettings implements ComponentSettings {
 
     @JsonCreator
     public TextComponentSettings(@JsonProperty("tableId") final String tableId,
-                                 @JsonProperty("streamIdField") final Field streamIdField,
-                                 @JsonProperty("partNoField") final Field partNoField,
-                                 @JsonProperty("recordNoField") final Field recordNoField,
-                                 @JsonProperty("lineFromField") final Field lineFromField,
-                                 @JsonProperty("colFromField") final Field colFromField,
-                                 @JsonProperty("lineToField") final Field lineToField,
-                                 @JsonProperty("colToField") final Field colToField,
+                                 @JsonProperty("streamIdField") final Column streamIdField,
+                                 @JsonProperty("partNoField") final Column partNoField,
+                                 @JsonProperty("recordNoField") final Column recordNoField,
+                                 @JsonProperty("lineFromField") final Column lineFromField,
+                                 @JsonProperty("colFromField") final Column colFromField,
+                                 @JsonProperty("lineToField") final Column lineToField,
+                                 @JsonProperty("colToField") final Column colToField,
                                  @JsonProperty("pipeline") final DocRef pipeline,
                                  @JsonProperty("showAsHtml") final boolean showAsHtml,
                                  @JsonProperty("showStepping") final boolean showStepping,
@@ -100,31 +101,73 @@ public class TextComponentSettings implements ComponentSettings {
         return tableId;
     }
 
-    public Field getStreamIdField() {
+    @Deprecated
+    public Column getStreamIdField() {
         return streamIdField;
     }
 
-    public Field getPartNoField() {
+    @Deprecated
+    public Column getPartNoField() {
         return partNoField;
     }
 
-    public Field getRecordNoField() {
+    @Deprecated
+    public Column getRecordNoField() {
         return recordNoField;
     }
 
-    public Field getLineFromField() {
+    @Deprecated
+    public Column getLineFromField() {
         return lineFromField;
     }
 
-    public Field getColFromField() {
+    @Deprecated
+    public Column getColFromField() {
         return colFromField;
     }
 
-    public Field getLineToField() {
+    @Deprecated
+    public Column getLineToField() {
         return lineToField;
     }
 
-    public Field getColToField() {
+    @Deprecated
+    public Column getColToField() {
+        return colToField;
+    }
+
+    @JsonIgnore
+    public Column getStreamIdColumn() {
+        return streamIdField;
+    }
+
+    @JsonIgnore
+    public Column getPartNoColumn() {
+        return partNoField;
+    }
+
+    @JsonIgnore
+    public Column getRecordNoColumn() {
+        return recordNoField;
+    }
+
+    @JsonIgnore
+    public Column getLineFromColumn() {
+        return lineFromField;
+    }
+
+    @JsonIgnore
+    public Column getColFromColumn() {
+        return colFromField;
+    }
+
+    @JsonIgnore
+    public Column getLineToColumn() {
+        return lineToField;
+    }
+
+    @JsonIgnore
+    public Column getColToColumn() {
         return colToField;
     }
 
@@ -213,13 +256,13 @@ public class TextComponentSettings implements ComponentSettings {
     public static final class Builder implements ComponentSettings.Builder {
 
         private String tableId;
-        private Field streamIdField;
-        private Field partNoField;
-        private Field recordNoField;
-        private Field lineFromField;
-        private Field colFromField;
-        private Field lineToField;
-        private Field colToField;
+        private Column streamIdField;
+        private Column partNoField;
+        private Column recordNoField;
+        private Column lineFromField;
+        private Column colFromField;
+        private Column lineToField;
+        private Column colToField;
         private DocRef pipeline;
         private boolean showAsHtml;
         private boolean showStepping;
@@ -248,37 +291,37 @@ public class TextComponentSettings implements ComponentSettings {
             return this;
         }
 
-        public Builder streamIdField(final Field streamIdField) {
+        public Builder streamIdField(final Column streamIdField) {
             this.streamIdField = streamIdField;
             return this;
         }
 
-        public Builder partNoField(final Field partNoField) {
+        public Builder partNoField(final Column partNoField) {
             this.partNoField = partNoField;
             return this;
         }
 
-        public Builder recordNoField(final Field recordNoField) {
+        public Builder recordNoField(final Column recordNoField) {
             this.recordNoField = recordNoField;
             return this;
         }
 
-        public Builder lineFromField(final Field lineFromField) {
+        public Builder lineFromField(final Column lineFromField) {
             this.lineFromField = lineFromField;
             return this;
         }
 
-        public Builder colFromField(final Field colFromField) {
+        public Builder colFromField(final Column colFromField) {
             this.colFromField = colFromField;
             return this;
         }
 
-        public Builder lineToField(final Field lineToField) {
+        public Builder lineToField(final Column lineToField) {
             this.lineToField = lineToField;
             return this;
         }
 
-        public Builder colToField(final Field colToField) {
+        public Builder colToField(final Column colToField) {
             this.colToField = colToField;
             return this;
         }

@@ -4,11 +4,12 @@ import stroom.proxy.app.ProxyConfig;
 import stroom.proxy.repo.ProxyServices;
 import stroom.util.NullSafe;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
+
 import java.util.Optional;
 import java.util.stream.Stream;
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.inject.Singleton;
 
 @Singleton
 public class ReceiverFactoryProvider implements Provider<ReceiverFactory> {

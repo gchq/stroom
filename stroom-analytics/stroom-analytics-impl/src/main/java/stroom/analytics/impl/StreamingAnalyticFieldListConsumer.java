@@ -1,21 +1,33 @@
 package stroom.analytics.impl;
 
+import stroom.analytics.api.NotificationState;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.ValuesConsumer;
+import stroom.search.extraction.FieldValueExtractor;
+import stroom.search.extraction.MemoryIndex;
+import stroom.search.extraction.ProcessLifecycleAware;
 
 public class StreamingAnalyticFieldListConsumer extends AbstractAnalyticFieldListConsumer {
 
-    private final DetectionConsumerProxy detectionConsumerProxy;
+    private final ProcessLifecycleAware detectionConsumerProxy;
 
     public StreamingAnalyticFieldListConsumer(final SearchRequest searchRequest,
                                               final FieldIndex fieldIndex,
+                                              final FieldValueExtractor fieldValueExtractor,
                                               final NotificationState notificationState,
                                               final ValuesConsumer valuesConsumer,
-                                              final SearchExpressionQueryCache searchExpressionQueryCache,
+                                              final MemoryIndex memoryIndex,
                                               final Long minEventId,
                                               final DetectionConsumerProxy detectionConsumerProxy) {
-        super(searchRequest, fieldIndex, notificationState, valuesConsumer, searchExpressionQueryCache, minEventId);
+        super(
+                searchRequest,
+                fieldIndex,
+                fieldValueExtractor,
+                notificationState,
+                valuesConsumer,
+                memoryIndex,
+                minEventId);
         this.detectionConsumerProxy = detectionConsumerProxy;
     }
 

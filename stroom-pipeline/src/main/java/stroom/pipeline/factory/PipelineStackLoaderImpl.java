@@ -22,12 +22,12 @@ import stroom.docstore.shared.DocRefUtil;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.shared.PipelineDoc;
 
+import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
-import javax.inject.Inject;
 
 class PipelineStackLoaderImpl implements PipelineStackLoader {
 

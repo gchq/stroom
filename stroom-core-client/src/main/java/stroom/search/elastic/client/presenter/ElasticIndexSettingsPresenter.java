@@ -28,9 +28,9 @@ import stroom.explorer.client.presenter.EntityDropDownPresenter;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
+import stroom.query.client.presenter.DynamicFieldSelectionListModel;
 import stroom.search.elastic.client.presenter.ElasticIndexSettingsPresenter.ElasticIndexSettingsView;
 import stroom.search.elastic.shared.ElasticClusterDoc;
-import stroom.search.elastic.shared.ElasticIndexDataSourceFieldUtil;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.search.elastic.shared.ElasticIndexResource;
 import stroom.search.elastic.shared.ElasticIndexTestResponse;
@@ -54,6 +54,7 @@ public class ElasticIndexSettingsPresenter extends DocumentEditPresenter<Elastic
     private final EditExpressionPresenter editExpressionPresenter;
     private final EntityDropDownPresenter pipelinePresenter;
     private final RestFactory restFactory;
+    private final DynamicFieldSelectionListModel fieldSelectionBoxModel;
 
     private DocRef defaultExtractionPipeline;
 
@@ -64,13 +65,15 @@ public class ElasticIndexSettingsPresenter extends DocumentEditPresenter<Elastic
             final EntityDropDownPresenter clusterPresenter,
             final EditExpressionPresenter editExpressionPresenter,
             final EntityDropDownPresenter pipelinePresenter,
-            final RestFactory restFactory) {
+            final RestFactory restFactory,
+            final DynamicFieldSelectionListModel fieldSelectionBoxModel) {
         super(eventBus, view);
 
         this.clusterPresenter = clusterPresenter;
         this.editExpressionPresenter = editExpressionPresenter;
         this.pipelinePresenter = pipelinePresenter;
         this.restFactory = restFactory;
+        this.fieldSelectionBoxModel = fieldSelectionBoxModel;
 
         clusterPresenter.setIncludedTypes(ElasticClusterDoc.DOCUMENT_TYPE);
         clusterPresenter.setRequiredPermissions(DocumentPermissionNames.USE);
@@ -138,7 +141,8 @@ public class ElasticIndexSettingsPresenter extends DocumentEditPresenter<Elastic
             index.setRetentionExpression(ExpressionOperator.builder().op(Op.AND).build());
         }
 
-        editExpressionPresenter.init(restFactory, docRef, ElasticIndexDataSourceFieldUtil.getDataSourceFields(index));
+        fieldSelectionBoxModel.setDataSourceRef(docRef);
+        editExpressionPresenter.init(restFactory, docRef, fieldSelectionBoxModel);
         editExpressionPresenter.read(index.getRetentionExpression());
 
         defaultExtractionPipeline = index.getDefaultExtractionPipeline();

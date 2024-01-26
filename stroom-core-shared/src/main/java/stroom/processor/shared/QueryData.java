@@ -25,12 +25,12 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.xml.bind.annotation.XmlElement;
+import jakarta.xml.bind.annotation.XmlRootElement;
+import jakarta.xml.bind.annotation.XmlType;
 
 import java.io.Serializable;
 import java.util.List;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlType;
 
 @XmlType(name = "query", propOrder = {"dataSource", "expression", "params", "timeRange", "limits"})
 @XmlRootElement(name = "query")
@@ -135,23 +135,23 @@ public class QueryData implements Serializable {
             this.limits = queryData.limits;
         }
 
-        public Builder dataSource(final DocRef value) {
-            this.dataSource = value;
+        public Builder dataSource(final DocRef dataSource) {
+            this.dataSource = dataSource;
             return this;
         }
 
-        public Builder limits(final Limits value) {
-            this.limits = value;
+        public Builder limits(final Limits limits) {
+            this.limits = limits;
             return this;
         }
 
-        public Builder expression(final ExpressionOperator value) {
-            this.expression = value;
+        public Builder expression(final ExpressionOperator expression) {
+            this.expression = expression;
             return this;
         }
 
-        public Builder params(final List<Param> value) {
-            this.params = value;
+        public Builder params(final List<Param> params) {
+            this.params = params;
             return this;
         }
 

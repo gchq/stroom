@@ -52,4 +52,7 @@ cd -
 cd stroom-analytics/stroom-analytics-impl-db-jooq
 ../../gradlew generateJooq
 cd -
+cd stroom-query/stroom-query-datasource-impl-db-jooq
+../../gradlew generateJooq
+cd -
 

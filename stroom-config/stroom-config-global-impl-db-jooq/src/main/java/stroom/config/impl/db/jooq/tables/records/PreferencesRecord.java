@@ -4,13 +4,13 @@
 package stroom.config.impl.db.jooq.tables.records;
 
 
+import stroom.config.impl.db.jooq.tables.Preferences;
+
 import org.jooq.Field;
 import org.jooq.Record1;
 import org.jooq.Record8;
 import org.jooq.Row8;
 import org.jooq.impl.UpdatableRecordImpl;
-
-import stroom.config.impl.db.jooq.tables.Preferences;
 
 
 /**

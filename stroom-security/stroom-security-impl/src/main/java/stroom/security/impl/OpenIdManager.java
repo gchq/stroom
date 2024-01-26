@@ -12,13 +12,14 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.servlet.UserAgentSessionUtil;
 
+import jakarta.inject.Inject;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
+import jakarta.ws.rs.core.UriBuilder;
+
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import javax.inject.Inject;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
-import javax.ws.rs.core.UriBuilder;
 
 class OpenIdManager {
 
@@ -212,10 +213,12 @@ class OpenIdManager {
     private String createLogoutUri(final String endpoint,
                                    final String clientId,
                                    final AuthenticationState state) {
+        UriBuilder redirect = UriBuilder.fromUri(state.getRedirectUri());
+        redirect = UriBuilderUtil.addParam(redirect, OpenId.STATE, state.getId());
+
         UriBuilder uriBuilder = UriBuilder.fromUri(endpoint);
         uriBuilder = UriBuilderUtil.addParam(uriBuilder, OpenId.CLIENT_ID, clientId);
-        uriBuilder = UriBuilderUtil.addParam(uriBuilder, OpenId.POST_LOGOUT_REDIRECT_URI, state.getRedirectUri());
-        uriBuilder = UriBuilderUtil.addParam(uriBuilder, OpenId.STATE, state.getId());
+        uriBuilder = UriBuilderUtil.addParam(uriBuilder, OpenId.POST_LOGOUT_REDIRECT_URI, redirect.build().toString());
         return uriBuilder.build().toString();
     }
 }

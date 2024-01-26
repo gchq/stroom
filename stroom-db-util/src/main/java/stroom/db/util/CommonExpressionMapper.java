@@ -1,7 +1,7 @@
 package stroom.db.util;
 
-import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.DocRefField;
+import stroom.datasource.api.v2.QueryField;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
@@ -29,7 +29,7 @@ public final class CommonExpressionMapper implements Function<ExpressionItem, Co
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(CommonExpressionMapper.class);
 
     private final Map<String, Function<ExpressionTerm, Condition>> termHandlers = new HashMap<>();
-    private final Map<String, AbstractField> fieldMap = new HashMap<>();
+    private final Map<String, QueryField> fieldMap = new HashMap<>();
     private final Set<String> ignoredFields = new HashSet<>();
     private final Function<ExpressionItem, Condition> delegateItemHandler;
 
@@ -41,14 +41,14 @@ public final class CommonExpressionMapper implements Function<ExpressionItem, Co
         this.delegateItemHandler = delegateItemHandler;
     }
 
-    public void addHandler(final AbstractField dataSourceField,
+    public void addHandler(final QueryField dataSourceField,
                            final Function<ExpressionTerm, Condition> handler) {
         final String fieldName = dataSourceField.getName();
         termHandlers.put(fieldName, handler);
         fieldMap.put(fieldName, dataSourceField);
     }
 
-    public void ignoreField(final AbstractField dataSourceField) {
+    public void ignoreField(final QueryField dataSourceField) {
         ignoredFields.add(dataSourceField.getName());
     }
 
@@ -83,7 +83,7 @@ public final class CommonExpressionMapper implements Function<ExpressionItem, Co
 
                 final Function<ExpressionTerm, Condition> termHandler = termHandlers.get(fieldName);
                 if (termHandler != null) {
-                    final AbstractField abstractField = fieldMap.get(fieldName);
+                    final QueryField abstractField = fieldMap.get(fieldName);
                     Objects.requireNonNull(abstractField, () -> LogUtil.message(
                             "abstractField should not be null if we have a termHandler. term: {}", term));
 

@@ -1,24 +1,25 @@
 package stroom.util.logging;
 
 import stroom.test.common.TestUtil;
+import stroom.test.common.TestUtil.TimedCase;
 import stroom.util.concurrent.DurationAdder;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.List;
+import java.util.Random;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestLogUtil {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(TestLogUtil.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestLogUtil.class);
 
     @Test
     void inSeparatorLine() {
@@ -191,7 +192,123 @@ class TestLogUtil {
                 .build();
     }
 
+    @Disabled
+    @Test
+    void testTemplatePerformance() {
+
+        final Random random = new Random();
+
+        final TimedCase lambdaOneArg = TimedCase.of("1 arg Lambda", (round, iterations) -> {
+            for (int i = 0; i < iterations; i++) {
+                final int num = random.nextInt();
+                LOGGER.trace(() -> "The number is " + num);
+            }
+        });
+
+        final TimedCase templateOneArg = TimedCase.of("1 arg Template", (round, iterations) -> {
+            for (int i = 0; i < iterations; i++) {
+                final int num = random.nextInt();
+                LOGGER.trace("The number is {}", num);
+            }
+        });
+
+        final TimedCase templateLambdaOneArg = TimedCase.of("1 arg Lambda+Template", (round, iterations) -> {
+            for (int i = 0; i < iterations; i++) {
+                final int num = random.nextInt();
+                LOGGER.trace(() -> LogUtil.message("The number is {}", num));
+            }
+        });
+
+        final TimedCase lambdaTwoArgs = TimedCase.of("2 arg Lambda", (round, iterations) -> {
+            for (int i = 0; i < iterations; i++) {
+                final int num = random.nextInt();
+                LOGGER.trace(() -> "The numbers are " + num + " and " + num);
+            }
+        });
+
+        final TimedCase templateTwoArgs = TimedCase.of("2 arg Template", (round, iterations) -> {
+            for (int i = 0; i < iterations; i++) {
+                final int num = random.nextInt();
+                LOGGER.trace("The numbers are {} and {}", num, num);
+            }
+        });
+
+        final TimedCase templateLambdaTwoArgs = TimedCase.of("2 arg Lambda+Template", (round, iterations) -> {
+            for (int i = 0; i < iterations; i++) {
+                final int num = random.nextInt();
+                LOGGER.trace(() -> LogUtil.message("The numbers are {} and {}", num, num));
+            }
+        });
+
+        final TimedCase lambdaThreeArgs = TimedCase.of("3 arg Lambda", (round, iterations) -> {
+            for (int i = 0; i < iterations; i++) {
+                final int num = random.nextInt();
+                LOGGER.trace(() -> "The numbers are " + num + " and " + num + " and " + num);
+            }
+        });
+
+        final TimedCase templateThreeArgs = TimedCase.of("3 arg Template", (round, iterations) -> {
+            for (int i = 0; i < iterations; i++) {
+                final int num = random.nextInt();
+                LOGGER.trace("The numbers are {} and {} and {}", num, num, num);
+            }
+        });
+
+        final TimedCase templateLambdaThreeArgs = TimedCase.of("3 arg Lambda+Template", (round, iterations) -> {
+            for (int i = 0; i < iterations; i++) {
+                final int num = random.nextInt();
+                LOGGER.trace(() -> LogUtil.message("The numbers are {} and {} and {}", num, num, num));
+            }
+        });
+
+        final TimedCase lambdaSevenArgs = TimedCase.of("7 arg Lambda", (round, iterations) -> {
+            for (int i = 0; i < iterations; i++) {
+                final int num = random.nextInt();
+                LOGGER.trace(() -> "The numbers are " + num + " and " + num + " and " + num + " and " +
+                        num + " and " + num + " and " + num + " and " + num);
+            }
+        });
+
+        final TimedCase templateSevenArgs = TimedCase.of("7 arg Template", (round, iterations) -> {
+            for (int i = 0; i < iterations; i++) {
+                final int num = random.nextInt();
+                LOGGER.trace("The numbers are {} and {} and {} and {} and {} and {} and {}",
+                        num, num, num, num, num, num, num);
+            }
+        });
+
+        final TimedCase templateLambdaSevenArgs = TimedCase.of("7 arg Lambda+Template", (round, iterations) -> {
+            for (int i = 0; i < iterations; i++) {
+                final int num = random.nextInt();
+                LOGGER.trace(() -> LogUtil.message("The numbers are {} and {} and {} and {} and {} and {} and {}",
+                        num, num, num, num, num, num, num));
+            }
+        });
+
+        TestUtil.comparePerformance(
+                3,
+                10_000_000,
+                LOGGER::info,
+                lambdaOneArg,
+                templateOneArg,
+                templateLambdaOneArg,
+                lambdaTwoArgs,
+                templateTwoArgs,
+                templateLambdaTwoArgs,
+                lambdaThreeArgs,
+                templateThreeArgs,
+                templateLambdaThreeArgs,
+                lambdaSevenArgs,
+                templateSevenArgs,
+                templateLambdaSevenArgs);
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
     private static class MyPojo {
+
         private final String aString;
         private final int anInt;
 

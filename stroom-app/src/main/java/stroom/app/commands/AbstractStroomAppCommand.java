@@ -11,7 +11,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.Module;
-import io.dropwizard.setup.Bootstrap;
+import io.dropwizard.core.setup.Bootstrap;
 import net.sourceforge.argparse4j.inf.Namespace;
 
 import java.nio.file.Path;

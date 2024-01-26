@@ -37,7 +37,8 @@ import javax.inject.Singleton;
 public class TaskManagerPlugin extends MonitoringPlugin<TaskManagerPresenter> {
 
     @Inject
-    public TaskManagerPlugin(final EventBus eventBus, final ContentManager eventManager,
+    public TaskManagerPlugin(final EventBus eventBus,
+                             final ContentManager eventManager,
                              final Provider<TaskManagerPresenter> presenterProvider,
                              final ClientSecurityContext securityContext) {
         super(eventBus, eventManager, presenterProvider, securityContext);

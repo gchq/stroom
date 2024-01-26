@@ -16,8 +16,8 @@
 
 package stroom.search.elastic.shared;
 
-import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.BooleanField;
+import stroom.datasource.api.v2.ConditionSet;
 import stroom.datasource.api.v2.DateField;
 import stroom.datasource.api.v2.DoubleField;
 import stroom.datasource.api.v2.FloatField;
@@ -26,14 +26,15 @@ import stroom.datasource.api.v2.IntegerField;
 import stroom.datasource.api.v2.IpV4AddressField;
 import stroom.datasource.api.v2.KeywordField;
 import stroom.datasource.api.v2.LongField;
+import stroom.datasource.api.v2.QueryField;
 import stroom.datasource.api.v2.TextField;
-import stroom.query.api.v2.ExpressionTerm.Condition;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 public final class ElasticIndexDataSourceFieldUtil {
-    public static List<AbstractField> getDataSourceFields(final ElasticIndexDoc index) {
+
+    public static List<QueryField> getDataSourceFields(final ElasticIndexDoc index) {
         if (index == null || index.getFields() == null) {
             return null;
         }
@@ -44,31 +45,31 @@ public final class ElasticIndexDataSourceFieldUtil {
                 .collect(Collectors.toList());
     }
 
-    private static AbstractField convert(final ElasticIndexField field) {
+    private static QueryField convert(final ElasticIndexField field) {
         final ElasticIndexFieldType fieldType = field.getFieldUse();
         final String fieldName = field.getFieldName();
-        final List<Condition> supportedConditions = fieldType.getSupportedConditions();
+        final ConditionSet supportedConditions = fieldType.getSupportedConditions();
         switch (fieldType) {
             case ID:
-                return new IdField(fieldName, field.isIndexed(), supportedConditions);
+                return new IdField(fieldName, supportedConditions, null, field.isIndexed());
             case BOOLEAN:
-                return new BooleanField(fieldName, field.isIndexed(), supportedConditions);
+                return new BooleanField(fieldName, supportedConditions, null, field.isIndexed());
             case INTEGER:
-                return new IntegerField(fieldName, field.isIndexed(), supportedConditions);
+                return new IntegerField(fieldName, supportedConditions, null, field.isIndexed());
             case LONG:
-                return new LongField(fieldName, field.isIndexed(), supportedConditions);
+                return new LongField(fieldName, supportedConditions, null, field.isIndexed());
             case FLOAT:
-                return new FloatField(fieldName, field.isIndexed(), supportedConditions);
+                return new FloatField(fieldName, supportedConditions, null, field.isIndexed());
             case DOUBLE:
-                return new DoubleField(fieldName, field.isIndexed(), supportedConditions);
+                return new DoubleField(fieldName, supportedConditions, null, field.isIndexed());
             case DATE:
-                return new DateField(fieldName, field.isIndexed(), supportedConditions);
+                return new DateField(fieldName, supportedConditions, null, field.isIndexed());
             case TEXT:
-                return new TextField(fieldName, field.isIndexed(), supportedConditions);
+                return new TextField(fieldName, supportedConditions, null, field.isIndexed());
             case KEYWORD:
-                return new KeywordField(fieldName, field.isIndexed(), supportedConditions);
+                return new KeywordField(fieldName, supportedConditions, null, field.isIndexed());
             case IPV4_ADDRESS:
-                return new IpV4AddressField(fieldName, field.isIndexed(), supportedConditions);
+                return new IpV4AddressField(fieldName, supportedConditions, null, field.isIndexed());
         }
         return null;
     }

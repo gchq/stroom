@@ -1,7 +1,7 @@
 package stroom.query.common.v2;
 
 import stroom.expression.api.DateTimeSettings;
-import stroom.query.api.v2.Field;
+import stroom.query.api.v2.Column;
 import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.SearchRequest;
@@ -249,18 +249,18 @@ class TestSearchResponseCreator {
                         .requestedRange(OffsetRange.ZERO_100)
                         .addMappings(TableSettings.builder()
                                 .queryId("someQueryId")
-                                .addFields(
-                                        Field.builder()
+                                .addColumns(
+                                        Column.builder()
                                                 .id("field1")
                                                 .name("field1")
                                                 .expression("expression1")
                                                 .build(),
-                                        Field.builder()
+                                        Column.builder()
                                                 .id("field2")
                                                 .name("field2")
                                                 .expression("expression1")
                                                 .build(),
-                                        Field.builder()
+                                        Column.builder()
                                                 .id("field3")
                                                 .name("field3")
                                                 .expression("expression2")
@@ -298,7 +298,7 @@ class TestSearchResponseCreator {
             }
 
             @Override
-            public List<Field> getFields() {
+            public List<Column> getColumns() {
                 return Collections.emptyList();
             }
 
@@ -309,7 +309,7 @@ class TestSearchResponseCreator {
                                   final ItemMapper<R> mapper,
                                   final Consumer<R> resultConsumer,
                                   final Consumer<Long> totalRowCountConsumer) {
-                resultConsumer.accept(mapper.create(getFields(), item));
+                resultConsumer.accept(mapper.create(getColumns(), item));
                 if (totalRowCountConsumer != null) {
                     totalRowCountConsumer.accept(1L);
                 }

@@ -21,6 +21,7 @@ import stroom.alert.client.event.ConfirmEvent;
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.core.client.LocationManager;
+import stroom.dashboard.shared.ValidateExpressionResult;
 import stroom.data.client.event.DataSelectionEvent;
 import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.data.client.event.HasDataSelectionHandlers;
@@ -31,7 +32,7 @@ import stroom.data.grid.client.OrderByColumn;
 import stroom.data.grid.client.PagerView;
 import stroom.data.shared.DataResource;
 import stroom.data.table.client.Refreshable;
-import stroom.datasource.api.v2.AbstractField;
+import stroom.datasource.api.v2.QueryField;
 import stroom.dispatch.client.ExportFileCompleteUtil;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
@@ -55,8 +56,9 @@ import stroom.processor.shared.QueryData;
 import stroom.processor.shared.ReprocessDataInfo;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionUtil;
-import stroom.query.api.v2.ExpressionValidationException;
-import stroom.query.api.v2.ExpressionValidator;
+import stroom.query.client.presenter.DateTimeSettingsFactory;
+import stroom.query.shared.ExpressionResource;
+import stroom.query.shared.ValidateExpressionRequest;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
@@ -94,6 +96,7 @@ public abstract class AbstractMetaListPresenter
 
     private static final MetaResource META_RESOURCE = GWT.create(MetaResource.class);
     private static final DataResource DATA_RESOURCE = GWT.create(DataResource.class);
+    private static final ExpressionResource EXPRESSION_RESOURCE = GWT.create(ExpressionResource.class);
     private static final ProcessorFilterResource PROCESSOR_FILTER_RESOURCE = GWT.create(ProcessorFilterResource.class);
 
     private final Selection<Long> selection = new Selection<>(false, new HashSet<>());
@@ -105,6 +108,7 @@ public abstract class AbstractMetaListPresenter
     private final Provider<SelectionSummaryPresenter> selectionSummaryPresenterProvider;
     private final Provider<ProcessChoicePresenter> processChoicePresenterProvider;
     private final Provider<EntityChooser> pipelineSelection;
+    private final DateTimeSettingsFactory dateTimeSettingsFactory;
 
     private ResultPage<MetaRow> resultPage;
     private boolean initialised;
@@ -120,7 +124,7 @@ public abstract class AbstractMetaListPresenter
                               final Provider<SelectionSummaryPresenter> selectionSummaryPresenterProvider,
                               final Provider<ProcessChoicePresenter> processChoicePresenterProvider,
                               final Provider<EntityChooser> pipelineSelection,
-                              final boolean allowSelectAll) {
+                              final DateTimeSettingsFactory dateTimeSettingsFactory, final boolean allowSelectAll) {
         super(eventBus, view);
         this.restFactory = restFactory;
         this.locationManager = locationManager;
@@ -128,6 +132,7 @@ public abstract class AbstractMetaListPresenter
         this.selectionSummaryPresenterProvider = selectionSummaryPresenterProvider;
         this.processChoicePresenterProvider = processChoicePresenterProvider;
         this.pipelineSelection = pipelineSelection;
+        this.dateTimeSettingsFactory = dateTimeSettingsFactory;
 
         this.dataGrid = new MyDataGrid<>();
         selectionModel = new MultiSelectionModelImpl<>(dataGrid);
@@ -416,7 +421,7 @@ public abstract class AbstractMetaListPresenter
     }
 
     void addAttributeColumn(final String name,
-                            final AbstractField attribute,
+                            final QueryField attribute,
                             final Function<String, String> formatter,
                             final int size) {
 
@@ -433,7 +438,7 @@ public abstract class AbstractMetaListPresenter
     }
 
     void addRightAlignedAttributeColumn(final String name,
-                                        final AbstractField attribute,
+                                        final QueryField attribute,
                                         final Function<String, String> formatter,
                                         final int size) {
 
@@ -451,7 +456,7 @@ public abstract class AbstractMetaListPresenter
     }
 
     void addColouredSizeAttributeColumn(final String name,
-                                        final AbstractField attribute,
+                                        final QueryField attribute,
                                         final Function<String, String> formatter,
                                         final int size) {
 
@@ -589,13 +594,25 @@ public abstract class AbstractMetaListPresenter
     private void validateExpression(final ExpressionOperator expression,
                                     final Consumer<ExpressionOperator> consumer) {
         if (expression != null) {
-            try {
-                final ExpressionValidator expressionValidator = new ExpressionValidator(MetaFields.getAllFields());
-                expressionValidator.validate(expression);
-                consumer.accept(expression);
-            } catch (final ExpressionValidationException e) {
-                AlertEvent.fireError(this, e.getMessage(), null);
-            }
+            restFactory.builder()
+                    .forType(ValidateExpressionResult.class)
+                    .onSuccess(result -> {
+                        if (result.isOk()) {
+                            consumer.accept(expression);
+                        } else {
+                            AlertEvent.fireError(
+                                    AbstractMetaListPresenter.this, result.getString(), null);
+                        }
+                    })
+                    .onFailure(throwable -> {
+                        AlertEvent.fireError(
+                                AbstractMetaListPresenter.this, throwable.getMessage(), null);
+                    })
+                    .call(EXPRESSION_RESOURCE)
+                    .validate(new ValidateExpressionRequest(
+                            expression,
+                            MetaFields.getFields(),
+                            dateTimeSettingsFactory.getDateTimeSettings()));
         }
     }
 

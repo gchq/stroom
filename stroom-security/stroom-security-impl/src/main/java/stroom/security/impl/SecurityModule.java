@@ -26,12 +26,18 @@ import stroom.security.common.impl.ExternalServiceUserFactory;
 import stroom.security.common.impl.HttpClientProvider;
 import stroom.security.common.impl.IdpConfigurationProvider;
 import stroom.security.common.impl.JwtContextFactory;
+import stroom.security.common.impl.RefreshManager;
 import stroom.security.common.impl.TestCredentialsServiceUserFactory;
+import stroom.security.impl.apikey.ApiKeyObjectInfoProvider;
+import stroom.security.impl.apikey.ApiKeyResourceImpl;
+import stroom.security.impl.apikey.CreateHashedApiKeyResponseObjectInfoProvider;
 import stroom.security.impl.event.PermissionChangeEvent;
 import stroom.security.impl.event.PermissionChangeEventLifecycleModule;
 import stroom.security.impl.event.PermissionChangeEventModule;
 import stroom.security.openid.api.IdpType;
 import stroom.security.openid.api.OpenIdConfiguration;
+import stroom.security.shared.CreateHashedApiKeyResponse;
+import stroom.security.shared.HashedApiKey;
 import stroom.security.shared.User;
 import stroom.security.shared.UserNameProvider;
 import stroom.security.user.api.UserNameService;
@@ -45,7 +51,7 @@ import stroom.util.shared.Clearable;
 
 import com.google.inject.AbstractModule;
 import io.dropwizard.lifecycle.Managed;
-import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 
 public class SecurityModule extends AbstractModule {
 
@@ -66,6 +72,7 @@ public class SecurityModule extends AbstractModule {
         // Now bind OpenIdConfiguration to the iface from prev bind
         bind(OpenIdConfiguration.class).to(IdpConfigurationProvider.class);
         bind(UserNameService.class).to(UserNameServiceImpl.class);
+        bind(AuthProxyService.class).to(AuthProxyServiceImpl.class);
 
         HasHealthCheckBinder.create(binder())
                 .bind(ExternalIdpConfigurationProvider.class);
@@ -90,7 +97,7 @@ public class SecurityModule extends AbstractModule {
                 .addBinding(StroomUserNameProvider.class);
 
         GuiceUtil.buildMultiBinder(binder(), Managed.class)
-                .addBinding(StroomUserIdentityFactory.class);
+                .addBinding(RefreshManager.class);
 
         // Provide object info to the logging service.
         GuiceUtil.buildMultiBinder(binder(), Clearable.class)
@@ -110,13 +117,17 @@ public class SecurityModule extends AbstractModule {
                 .addBinding(DocumentOwnerPermissionsCache.class);
 
         RestResourcesBinder.create(binder())
+                .bind(ApiKeyResourceImpl.class)
                 .bind(AppPermissionResourceImpl.class)
                 .bind(DocPermissionResourceImpl.class)
                 .bind(SessionResourceImpl.class)
                 .bind(UserResourceImpl.class)
-                .bind(UserNameResourceImpl.class);
+                .bind(UserNameResourceImpl.class)
+                .bind(AuthProxyResourceImpl.class);
 
         ObjectInfoProviderBinder.create(binder())
-                .bind(User.class, UserObjectInfoProvider.class);
+                .bind(User.class, UserObjectInfoProvider.class)
+                .bind(HashedApiKey.class, ApiKeyObjectInfoProvider.class)
+                .bind(CreateHashedApiKeyResponse.class, CreateHashedApiKeyResponseObjectInfoProvider.class);
     }
 }

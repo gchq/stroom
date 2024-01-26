@@ -28,6 +28,7 @@ proxyConfig:
       expireAfterAccess: null
       expireAfterWrite: null
       maximumSize: 1000
+      refreshAfterWrite: null
     url: null
   forwardFileDestinations:
   - enabled: true

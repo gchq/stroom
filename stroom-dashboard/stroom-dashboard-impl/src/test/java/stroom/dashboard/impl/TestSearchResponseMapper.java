@@ -18,7 +18,7 @@ package stroom.dashboard.impl;
 
 
 import stroom.dashboard.shared.DashboardSearchResponse;
-import stroom.query.api.v2.Field;
+import stroom.query.api.v2.Column;
 import stroom.query.api.v2.FlatResult;
 import stroom.query.api.v2.Format;
 import stroom.query.api.v2.OffsetRange;
@@ -33,7 +33,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 
 class TestSearchResponseMapper {
@@ -46,7 +45,7 @@ class TestSearchResponseMapper {
     }
 
     private SearchResponse getSearchResponse() {
-        final List<Field> fields = Collections.singletonList(Field.builder().id("test").name("test").expression(
+        final List<Column> fields = Collections.singletonList(Column.builder().id("test").name("test").expression(
                 "${test}").build());
         final List<Row> rows = Collections.singletonList(Row.builder()
                 .groupKey("groupKey")
@@ -68,11 +67,11 @@ class TestSearchResponseMapper {
     }
 
     private FlatResult getVisResult1() {
-        List<Field> structure = new ArrayList<>();
-        structure.add(Field.builder().name("val1").format(Format.GENERAL).build());
-        structure.add(Field.builder().name("val2").format(Format.NUMBER).build());
-        structure.add(Field.builder().name("val3").format(Format.NUMBER).build());
-        structure.add(Field.builder().name("val4").format(Format.GENERAL).build());
+        List<Column> structure = new ArrayList<>();
+        structure.add(Column.builder().name("val1").format(Format.GENERAL).build());
+        structure.add(Column.builder().name("val2").format(Format.NUMBER).build());
+        structure.add(Column.builder().name("val3").format(Format.NUMBER).build());
+        structure.add(Column.builder().name("val4").format(Format.GENERAL).build());
 
         List<List<Object>> data = new ArrayList<>();
         data.add(Arrays.asList("test0", 0.4, 234, "this0"));

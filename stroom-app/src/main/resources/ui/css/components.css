@@ -219,6 +219,7 @@
 .layerContainer-container {
 	width: 100%;
 	height: 100%;
+	overflow: hidden;
 }
 
 .layerContainer-layer {
@@ -483,11 +484,12 @@
 
 .curveTabLayoutViewImpl-layerContainerOuter {
     flex-grow: 1;
+    overflow: hidden;
 }
 
 .curveTabLayoutViewImpl-tabBarOuter {
     height: 33px;
-    margin-right: 42px;
+    margin-right: 62px;
     flex-grow: 1;
 }
 
@@ -1167,10 +1169,10 @@
 
 .mainViewImpl-spinner {
     position: absolute;
-    top: 7px;
-    right: 2px;
-    width: 32px;
-    height: 32px;
+    top: 5px;
+    right: 36px;
+    width: 22px;
+    height: 22px;
     z-index: 1;
 }
 
@@ -1453,12 +1455,13 @@
 
 .navigation-logo {
     flex-grow: 1;
-    padding: 6px 0 2px 0;
+    padding: 6px 0 0 0;
     background-color: transparent;
     color: white;
     border: 0;
     text-align: left;
     width: auto;
+    height: 43px;
 }
 
 .navigation-logo-image svg {
@@ -1475,7 +1478,9 @@
 
 button.main-menu {
     background-color: transparent;
-    color: white;
+    /*color: var(--navigation-icon-button__color);*/
+    color: var(--text-color);
+    opacity: 0.6;
 }
 
 button.main-menu svg {
@@ -1722,6 +1727,11 @@ button.main-menu svg {
 
 .queryHelpDetail {
     max-width: 600px;
+    overflow: auto;
+}
+
+.queryHelpDetail .markdown-container {
+    overflow-y: auto;
 }
 
 .queryHelpDetail-description {
@@ -1800,8 +1810,8 @@ button.main-menu svg {
 .find-buttons {
     display: flex;
     position: absolute;
-    right: 5px;
-    top: 5px;
+    right: 3px;
+    top: 3px;
 }
 
 .find-buttons .icon-button .face {
@@ -1865,16 +1875,13 @@ button.main-menu svg {
 }
 
 .pipelineElementChooser-iconCell {
-    padding: var(--row__padding--vertical) 0 var(--row__padding--vertical) var(--row__padding--horizontal);
 }
 
 .pipelineElementChooser-textCell {
-    padding: var(--row__padding--vertical) 0 var(--row__padding--vertical) var(--row__padding--horizontal);
     min-width: 200px;
 }
 
 .pipelineElementChooser-filterIconCell {
-    padding: var(--row__padding--vertical) 0 var(--row__padding--vertical) var(--row__padding--horizontal);
 }
 
 .pipelineElementChooser-textCell.pipelineElementChooser-filterOn {
@@ -1887,77 +1894,93 @@ button.main-menu svg {
     visibility: hidden;
 }
 
-
-
-
-.queryHelpItemCell {
-/*
-    padding: 5px;
+.SelectionPopup .listContainer {
     min-width: 200px;
-    */
+    max-width: 300px;
+    max-height: 400px;
 }
 
-.queryHelpItem-heading.queryHelpItem-topLevel {
-    font-size: var(--font-size-15);
-    color: var(--heading-color);
+.SelectionPopup .selectionList {
+    width: auto;
+    height: auto;
 }
 
-.queryHelpItem-heading {
-    font-size: var(--font-size-13);
-    font-weight: 500;
-}
-
-.queryHelpItem-heading.queryHelpItem-functionCategory {
-    font-size: var(--font-size-13);
-    font-weight: 500;
-}
-
-.queryHelpItem-functionHeading,
-.queryHelpItem-leaf {
-    font-style: italic;
-    font-size: var(--font-size-13);
-    font-weight: 400;
-}
-
- .queryHelpTree {
+.selectionList {
     width: 100%;
- }
-
-.queryHelpTree-container {
-    overflow: auto;
-    display: flex;
-    flex-grow: 1;
-    height: 0;
+    height: 100%;
 }
 
-.queryHelpItemCell {
+.selectionList-elementChooser {
+    overflow: hidden;
+}
+
+.selectionList .cellTableCell {
+     display: flex;
+     align-items: center;
+     min-height: 20px;
+}
+
+.selectionList .cellTableSelectedRow {
+	background-color: var(--row__background-color--selected);
+	color: var(--row__text-color--selected);
+}
+
+.selectionList .cellTableOddRow:hover,
+.selectionList .cellTableEvenRow:hover {
+    background-color: var(--row__background-color--hovered);
+}
+
+.selectionList .cellTableSelectedRow:hover {
+    background-color: var(--row__background-color--selected--hovered);
+}
+
+.selectionList .cellTableOddRow:focus-within,
+.selectionList .cellTableEvenRow:focus-within {
+    background-color: var(--row__background-color--focussed);
+}
+
+.selectionList .cellTableSelectedRow:focus-within {
+    background-color: var(--row__background-color--selected--focussed);
+}
+
+.selectionList-links {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+    padding: 3px;
+    padding-top: 7px;
+}
+
+.selectionList-links .gwt-Label {
+    opacity: 0.8;
+}
+
+.selectionList-links .gwt-HyperLink:hover {
+    text-decoration: underline;
+}
+
+.selectionItemCell {
     display: flex;
     align-items: center;
     cursor: pointer;
     gap: var(--row__gap--horizontal);
 }
 
-.queryHelpItemCell-expander {
-    color: var(--grey-600);
+.selectionItemCell-expander {
 	display: flex;
 }
 
-.queryHelpItemCell-expander svg {
+.selectionItemCell-expander svg {
     width: .7rem;
     height: .7rem;
 }
 
-.queryHelpItemCell-text {
+.selectionItemCell-text {
 	white-space: nowrap;
 }
 
- .queryHelpTree .cellTableCell {
-    display: flex;
-    align-items: center;
- }
-
 .queryHelp-details {
-    padding: 5px;
+    overflow: hidden;
 }
 
 .duration-picker {

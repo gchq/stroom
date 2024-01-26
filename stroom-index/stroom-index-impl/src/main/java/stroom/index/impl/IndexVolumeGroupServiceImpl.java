@@ -19,6 +19,11 @@ import stroom.util.io.PathCreator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.Clearable;
+
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
 
 import java.io.File;
 import java.io.IOException;
@@ -26,17 +31,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.OptionalLong;
-import java.util.stream.Collectors;
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.inject.Singleton;
 
 @Singleton
 @EntityEventHandler(type = IndexVolumeServiceImpl.ENTITY_TYPE, action = {
         EntityAction.UPDATE,
         EntityAction.CREATE,
         EntityAction.DELETE})
-public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService {
+public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService, Clearable {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexVolumeGroupServiceImpl.class);
 
@@ -140,7 +141,7 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService {
                     var indexVolumesInGroup = indexVolumeDao.getAll().stream()
                             .filter(indexVolume ->
                                     indexVolume.getIndexVolumeGroupId().equals(id))
-                            .collect(Collectors.toList());
+                            .toList();
                     indexVolumesInGroup.forEach(indexVolume ->
                             indexVolumeDao.delete(indexVolume.getId()));
                     indexVolumeGroupDao.delete(id);
@@ -258,5 +259,11 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService {
                 LOGGER.error(e::getMessage, e);
             }
         }
+    }
+
+    @Override
+    public void clear() {
+        createdDefaultVolumes = false;
+        creatingDefaultVolumes = false;
     }
 }

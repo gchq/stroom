@@ -1,12 +1,13 @@
 package stroom.db.util;
 
-import stroom.datasource.api.v2.AbstractField;
+import stroom.datasource.api.v2.QueryField;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValNull;
 
 import org.jooq.Field;
 import org.jooq.Record;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,22 +17,26 @@ import java.util.stream.Collectors;
 
 public class ValueMapper {
 
-    private final Map<AbstractField, Field<?>> fieldMap = new HashMap<>();
-    private final Map<AbstractField, Mapper<?>> mappers = new HashMap<>();
+    private final Map<String, Field<?>> fieldNameMap = new HashMap<>();
+    private final Map<String, Mapper<?>> mappers = new HashMap<>();
 
-    public <T> void map(final AbstractField dataSourceField, final Field<T> field, final Function<T, Val> handler) {
-        fieldMap.put(dataSourceField, field);
-        mappers.put(dataSourceField, new Mapper<>(field, handler));
+    public <T> void map(final QueryField dataSourceField, final Field<T> field, final Function<T, Val> handler) {
+        fieldNameMap.put(dataSourceField.getName(), field);
+        mappers.put(dataSourceField.getName(), new Mapper<>(field, handler));
     }
 
-    public List<Field<?>> getFields(final List<AbstractField> fields) {
-        return fields.stream().map(fieldMap::get).filter(Objects::nonNull).collect(Collectors.toList());
+    public List<Field<?>> getDbFieldsByName(final String[] fieldNames) {
+        return Arrays
+                .stream(fieldNames)
+                .map(fieldNameMap::get)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
     }
 
-    public Mapper<?>[] getMappers(final AbstractField[] fields) {
-        final Mapper[] handlers = new Mapper[fields.length];
-        for (int i = 0; i < fields.length; i++) {
-            handlers[i] = mappers.get(fields[i]);
+    public Mapper<?>[] getMappersForFieldNames(final String[] fieldNames) {
+        final Mapper<?>[] handlers = new Mapper[fieldNames.length];
+        for (int i = 0; i < fieldNames.length; i++) {
+            handlers[i] = mappers.get(fieldNames[i]);
         }
         return handlers;
     }

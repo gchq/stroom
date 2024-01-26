@@ -63,6 +63,10 @@ import stroom.util.shared.PageRequest;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
+
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -78,9 +82,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.inject.Singleton;
 
 @Singleton
 class ExplorerServiceImpl
@@ -954,7 +955,7 @@ class ExplorerServiceImpl
         // Make sure the tree model is rebuilt.
         remappings.values().forEach(newNode -> {
             // Although the copy above will have fired entity events, they were before the deps
-            // get re-mapped. Thus ee need to let the exp tree know that deps may have changed
+            // get re-mapped. Thus, we need to let the exp tree know that deps may have changed
             EntityEvent.fire(entityEventBus, newNode.getDocRef(), EntityAction.CREATE_EXPLORER_NODE);
         });
 
@@ -1447,9 +1448,7 @@ class ExplorerServiceImpl
         for (final DocumentType documentType : explorerActionHandlers.getTypes()) {
             final ExplorerActionHandler explorerActionHandler =
                     explorerActionHandlers.getHandler(documentType.getType());
-            final List<DocContentMatch> matches = explorerActionHandler
-                    .findByContent(request.getPattern(), request.isRegex(), request.isMatchCase());
-
+            final List<DocContentMatch> matches = explorerActionHandler.findByContent(request.getFilter());
             for (final DocContentMatch docContentMatch : matches) {
                 final List<String> parents = new ArrayList<>();
                 parents.add(docContentMatch.getDocRef().getName());
@@ -1502,11 +1501,11 @@ class ExplorerServiceImpl
     @Override
     public Suggestions getSuggestions(final FetchSuggestionsRequest request) {
         return securityContext.secureResult(() -> {
-            if (ExplorerFields.TAG.equals(request.getField())) {
+            if (ExplorerFields.TAG.getName().equals(request.getField().getFieldName())) {
                 final Set<String> tags = getTags();
                 return new Suggestions(new ArrayList<>(tags), false);
             } else {
-                throw new RuntimeException(LogUtil.message("Unexpected field " + request.getField()));
+                throw new RuntimeException(LogUtil.message("Unexpected field " + request.getField().getFieldName()));
             }
         });
     }

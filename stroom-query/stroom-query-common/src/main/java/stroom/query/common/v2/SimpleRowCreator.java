@@ -1,8 +1,8 @@
 package stroom.query.common.v2;
 
-import stroom.query.api.v2.Field;
+import stroom.query.api.v2.Column;
 import stroom.query.api.v2.Row;
-import stroom.query.common.v2.format.FieldFormatter;
+import stroom.query.common.v2.format.ColumnFormatter;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ref.ErrorConsumer;
 import stroom.util.logging.LambdaLogger;
@@ -17,36 +17,36 @@ public class SimpleRowCreator implements ItemMapper<Row> {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SimpleRowCreator.class);
 
-    private final FieldFormatter fieldFormatter;
+    private final ColumnFormatter columnFormatter;
     private final KeyFactory keyFactory;
     private final ErrorConsumer errorConsumer;
 
-    private SimpleRowCreator(final FieldFormatter fieldFormatter,
+    private SimpleRowCreator(final ColumnFormatter columnFormatter,
                              final KeyFactory keyFactory,
                              final ErrorConsumer errorConsumer) {
-        this.fieldFormatter = fieldFormatter;
+        this.columnFormatter = columnFormatter;
         this.keyFactory = keyFactory;
         this.errorConsumer = errorConsumer;
     }
 
-    public static Optional<ItemMapper<Row>> create(final FieldFormatter fieldFormatter,
+    public static Optional<ItemMapper<Row>> create(final ColumnFormatter columnFormatter,
                                                    final KeyFactory keyFactory,
                                                    final ErrorConsumer errorConsumer) {
-        return Optional.of(new SimpleRowCreator(fieldFormatter, keyFactory, errorConsumer));
+        return Optional.of(new SimpleRowCreator(columnFormatter, keyFactory, errorConsumer));
     }
 
     @Override
-    public Row create(final List<Field> fields,
+    public Row create(final List<Column> columns,
                       final Item item) {
-        final List<String> stringValues = new ArrayList<>(fields.size());
+        final List<String> stringValues = new ArrayList<>(columns.size());
         int i = 0;
-        for (final Field field : fields) {
+        for (final Column column : columns) {
             try {
                 final Val val = item.getValue(i);
-                final String string = fieldFormatter.format(field, val);
+                final String string = columnFormatter.format(column, val);
                 stringValues.add(string);
             } catch (final RuntimeException e) {
-                LOGGER.error(LogUtil.message("Error getting field value for field {} at index {}", field, i), e);
+                LOGGER.error(LogUtil.message("Error getting column value for column {} at index {}", column, i), e);
                 throw e;
             }
             i++;

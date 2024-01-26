@@ -15,12 +15,13 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.pipeline.scope.PipelineScopeRunnable;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 @Singleton
 class TaskContextFactoryImpl implements TaskContextFactory {
@@ -266,7 +267,7 @@ class TaskContextFactoryImpl implements TaskContextFactory {
 
             } catch (final Throwable t) {
                 try {
-                    if (t instanceof ThreadDeath || t instanceof TaskTerminatedException) {
+                    if (t instanceof TaskTerminatedException) {
                         LOGGER.debug(() -> "exec() - Task killed! (" + taskName + ")", t);
                     } else {
                         LOGGER.debug(() -> t.getMessage() + " (" + taskName + ")", t);

@@ -18,11 +18,12 @@
 package stroom.receive.rules.client.presenter;
 
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.datasource.api.v2.AbstractField;
+import stroom.datasource.api.v2.FieldInfo;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.client.ExpressionTreePresenter;
+import stroom.query.client.presenter.SimpleFieldSelectionListModel;
 import stroom.receive.rules.client.presenter.RuleSetSettingsPresenter.RuleSetSettingsView;
 import stroom.receive.rules.shared.ReceiveDataRule;
 import stroom.receive.rules.shared.ReceiveDataRules;
@@ -42,6 +43,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class RuleSetSettingsPresenter
         extends DocumentEditPresenter<RuleSetSettingsView, ReceiveDataRules> {
@@ -49,8 +51,7 @@ public class RuleSetSettingsPresenter
     private final RuleSetListPresenter listPresenter;
     private final ExpressionTreePresenter expressionPresenter;
     private final Provider<RulePresenter> editRulePresenterProvider;
-
-    private List<AbstractField> fields;
+    private final SimpleFieldSelectionListModel fieldSelectionBoxModel = new SimpleFieldSelectionListModel();
     private List<ReceiveDataRule> rules;
 
     private final ButtonView addButton;
@@ -243,7 +244,7 @@ public class RuleSetSettingsPresenter
                 ExpressionOperator.builder().build(),
                 RuleAction.RECEIVE);
         final RulePresenter editRulePresenter = editRulePresenterProvider.get();
-        editRulePresenter.read(newRule, fields);
+        editRulePresenter.read(newRule, fieldSelectionBoxModel);
 
         showRulePresenter(editRulePresenter, () -> {
             final ReceiveDataRule rule = editRulePresenter.write();
@@ -256,7 +257,7 @@ public class RuleSetSettingsPresenter
 
     private void edit(final ReceiveDataRule existingRule) {
         final RulePresenter editRulePresenter = editRulePresenterProvider.get();
-        editRulePresenter.read(existingRule, fields);
+        editRulePresenter.read(existingRule, fieldSelectionBoxModel);
 
         showRulePresenter(editRulePresenter, () -> {
             final ReceiveDataRule rule = editRulePresenter.write();
@@ -297,7 +298,12 @@ public class RuleSetSettingsPresenter
         updateButtons();
 
         if (document != null) {
-            this.fields = document.getFields();
+            fieldSelectionBoxModel.clear();
+            fieldSelectionBoxModel.addItems(document
+                    .getFields()
+                    .stream()
+                    .map(FieldInfo::create)
+                    .collect(Collectors.toList()));
             this.rules = document.getRules();
             listPresenter.getSelectionModel().clear();
             setDirty(false);

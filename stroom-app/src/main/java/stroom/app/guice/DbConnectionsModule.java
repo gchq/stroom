@@ -23,6 +23,7 @@ public class DbConnectionsModule extends AbstractModule {
         install(new stroom.meta.impl.db.MetaDbModule());
         install(new stroom.node.impl.db.NodeDbModule());
         install(new stroom.processor.impl.db.ProcessorDbModule());
+        install(new stroom.query.field.impl.db.QueryFieldDbModule());
         install(new stroom.security.identity.db.IdentityDbModule());
         install(new stroom.security.impl.db.SecurityDbModule());
         install(new stroom.storedquery.impl.db.StoredQueryDbModule());

@@ -40,6 +40,7 @@ import stroom.util.logging.LogItemProgress;
 import stroom.util.shared.Message;
 import stroom.util.shared.Severity;
 
+import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,7 +52,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
-import javax.inject.Inject;
 
 public class DataDownloadTaskHandler {
 

@@ -16,6 +16,8 @@
 
 package stroom.legacy.model_6_1;
 
+import jakarta.validation.constraints.Size;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -25,7 +27,6 @@ import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
-import javax.validation.constraints.Size;
 
 /**
  * Some path on the network where we can store stuff.

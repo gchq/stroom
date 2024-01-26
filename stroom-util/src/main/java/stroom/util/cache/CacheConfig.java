@@ -14,9 +14,9 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import jakarta.validation.constraints.Min;
 
 import java.util.Objects;
-import javax.validation.constraints.Min;
 
 // The descriptions have mostly been taken from the Caffine javadoc
 @NotInjectableConfig
@@ -26,24 +26,29 @@ public class CacheConfig extends AbstractConfig implements IsStroomConfig, IsPro
     public static final String PROP_NAME_MAXIMUM_SIZE = "maximumSize";
     public static final String PROP_NAME_EXPIRE_AFTER_ACCESS = "expireAfterAccess";
     public static final String PROP_NAME_EXPIRE_AFTER_WRITE = "expireAfterWrite";
+    public static final String PROP_NAME_REFRESH_AFTER_WRITE = "refreshAfterWrite";
 
     protected final Long maximumSize;
     protected final StroomDuration expireAfterAccess;
     protected final StroomDuration expireAfterWrite;
+    protected final StroomDuration refreshAfterWrite;
 
     public CacheConfig() {
         maximumSize = null;
         expireAfterAccess = null;
         expireAfterWrite = null;
+        refreshAfterWrite = null;
     }
 
     @JsonCreator
     public CacheConfig(@JsonProperty(PROP_NAME_MAXIMUM_SIZE) final Long maximumSize,
                        @JsonProperty(PROP_NAME_EXPIRE_AFTER_ACCESS) final StroomDuration expireAfterAccess,
-                       @JsonProperty(PROP_NAME_EXPIRE_AFTER_WRITE) final StroomDuration expireAfterWrite) {
+                       @JsonProperty(PROP_NAME_EXPIRE_AFTER_WRITE) final StroomDuration expireAfterWrite,
+                       @JsonProperty(PROP_NAME_REFRESH_AFTER_WRITE) final StroomDuration refreshAfterWrite) {
         this.maximumSize = maximumSize;
         this.expireAfterAccess = expireAfterAccess;
         this.expireAfterWrite = expireAfterWrite;
+        this.refreshAfterWrite = refreshAfterWrite;
     }
 
     @JsonPropertyDescription("Specifies the maximum number of entries the cache may contain. Note that the cache " +
@@ -80,12 +85,24 @@ public class CacheConfig extends AbstractConfig implements IsStroomConfig, IsPro
         return expireAfterWrite;
     }
 
+    @JsonPropertyDescription("Specifies that each entry should be automatically refreshed in the cache after " +
+            "a fixed duration has elapsed after the entry's creation, or the most recent replacement of its value. " +
+            "In ISO-8601 duration format, e.g. 'PT5M'. Refreshing is performed asynchronously and the current value " +
+            "provided until the refresh has occurred. This mechanism allows the cache to update values without any " +
+            "impact on performance.")
+    @JsonProperty(PROP_NAME_REFRESH_AFTER_WRITE)
+    @RequiresRestart(RestartScope.SYSTEM)
+    public StroomDuration getRefreshAfterWrite() {
+        return refreshAfterWrite;
+    }
+
     @Override
     public String toString() {
         return "CacheConfig{" +
                 "maximumSize=" + maximumSize +
                 ", expireAfterAccess=" + expireAfterAccess +
                 ", expireAfterWrite=" + expireAfterWrite +
+                ", refreshAfterWrite=" + refreshAfterWrite +
                 '}';
     }
 
@@ -98,13 +115,15 @@ public class CacheConfig extends AbstractConfig implements IsStroomConfig, IsPro
             return false;
         }
         final CacheConfig that = (CacheConfig) o;
-        return Objects.equals(maximumSize, that.maximumSize) && Objects.equals(expireAfterAccess,
-                that.expireAfterAccess) && Objects.equals(expireAfterWrite, that.expireAfterWrite);
+        return Objects.equals(maximumSize, that.maximumSize) &&
+                Objects.equals(expireAfterAccess, that.expireAfterAccess) &&
+                Objects.equals(expireAfterWrite, that.expireAfterWrite) &&
+                Objects.equals(refreshAfterWrite, that.refreshAfterWrite);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(maximumSize, expireAfterAccess, expireAfterWrite);
+        return Objects.hash(maximumSize, expireAfterAccess, expireAfterWrite, refreshAfterWrite);
     }
 
     public static Builder builder() {
@@ -124,6 +143,7 @@ public class CacheConfig extends AbstractConfig implements IsStroomConfig, IsPro
         private Long maximumSize;
         private StroomDuration expireAfterAccess;
         private StroomDuration expireAfterWrite;
+        private StroomDuration refreshAfterWrite;
         public PropertyPath basePath;
 
         private Builder() {
@@ -151,8 +171,17 @@ public class CacheConfig extends AbstractConfig implements IsStroomConfig, IsPro
             return this;
         }
 
+        public Builder refreshAfterWrite(final StroomDuration refreshAfterWrite) {
+            this.refreshAfterWrite = refreshAfterWrite;
+            return this;
+        }
+
         public CacheConfig build() {
-            final CacheConfig cacheConfig = new CacheConfig(maximumSize, expireAfterAccess, expireAfterWrite);
+            final CacheConfig cacheConfig = new CacheConfig(
+                    maximumSize,
+                    expireAfterAccess,
+                    expireAfterWrite,
+                    refreshAfterWrite);
             NullSafe.consume(basePath, cacheConfig::setBasePath);
             return cacheConfig;
         }

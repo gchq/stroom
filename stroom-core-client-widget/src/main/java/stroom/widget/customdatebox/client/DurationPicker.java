@@ -1,5 +1,6 @@
 package stroom.widget.customdatebox.client;
 
+import stroom.item.client.EventBinder;
 import stroom.item.client.SelectionBox;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.util.shared.time.TimeUnit;
@@ -10,16 +11,20 @@ import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HasValue;
-import com.google.web.bindery.event.shared.HandlerRegistration;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class DurationPicker extends Composite implements HasValue<SimpleDuration> {
 
     private final ValueSpinner time;
     private final SelectionBox<TimeUnit> timeUnit;
-    private final List<HandlerRegistration> handlerRegistrations = new ArrayList<>();
+    private final EventBinder eventBinder = new EventBinder() {
+        @Override
+        protected void onBind() {
+            registerHandler(time.addValueChangeHandler(event ->
+                    ValueChangeEvent.fire(DurationPicker.this, getValue())));
+            registerHandler(timeUnit.addValueChangeHandler(event ->
+                    ValueChangeEvent.fire(DurationPicker.this, getValue())));
+        }
+    };
 
     public DurationPicker() {
         time = new ValueSpinner();
@@ -43,21 +48,13 @@ public class DurationPicker extends Composite implements HasValue<SimpleDuration
     }
 
     @Override
-    protected void onAttach() {
-        super.onAttach();
-        handlerRegistrations.add(time.addValueChangeHandler(event ->
-                ValueChangeEvent.fire(this, getValue())));
-        handlerRegistrations.add(timeUnit.addValueChangeHandler(event ->
-                ValueChangeEvent.fire(this, getValue())));
+    protected void onLoad() {
+        eventBinder.bind();
     }
 
     @Override
-    protected void onDetach() {
-        super.onDetach();
-        for (final HandlerRegistration handlerRegistration : handlerRegistrations) {
-            handlerRegistration.removeHandler();
-        }
-        handlerRegistrations.clear();
+    protected void onUnload() {
+        eventBinder.unbind();
     }
 
     @Override

@@ -23,10 +23,11 @@ import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
 import stroom.util.io.TempDirProvider;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 @Singleton
 public class MockIndexShardWriterCache implements IndexShardWriterCache {
@@ -81,7 +82,6 @@ public class MockIndexShardWriterCache implements IndexShardWriterCache {
     public void sweep() {
     }
 
-    @Override
     public void close(final IndexShardWriter indexShardWriter) {
         indexShardWriter.close();
         openWritersByShardId.remove(indexShardWriter.getIndexShardId());
@@ -102,7 +102,6 @@ public class MockIndexShardWriterCache implements IndexShardWriterCache {
 //        openWritersByShardId.values().parallelStream().forEach(this::close);
 //    }
 
-    @Override
     public void shutdown() {
         openWritersByShardId.values().parallelStream().forEach(this::close);
     }

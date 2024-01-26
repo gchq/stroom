@@ -34,7 +34,7 @@ import stroom.query.common.v2.HasResultStoreInfo;
 import stroom.query.common.v2.LmdbDataStore;
 import stroom.query.common.v2.Serialisers;
 import stroom.query.common.v2.TableResultCreator;
-import stroom.query.common.v2.format.FieldFormatter;
+import stroom.query.common.v2.format.ColumnFormatter;
 import stroom.query.common.v2.format.FormatterFactory;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.ref.ErrorConsumer;
@@ -47,6 +47,10 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ResultPage;
 import stroom.view.shared.ViewDoc;
+
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -64,9 +68,6 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.inject.Singleton;
 
 @Singleton
 public class AnalyticDataStores implements HasResultStoreInfo {
@@ -329,7 +330,8 @@ public class AnalyticDataStores implements HasResultStoreInfo {
                     }
                 }
             } catch (final RuntimeException e) {
-                LOGGER.debug(e::getMessage, e);
+                LOGGER.debug("Error getting result store info for analytic rule {}",
+                        analyticRuleDoc, e);
             }
         });
 
@@ -407,8 +409,8 @@ public class AnalyticDataStores implements HasResultStoreInfo {
                 final SearchRequest searchRequest = analyticDataStore.searchRequest;
                 final LmdbDataStore lmdbDataStore = analyticDataStore.lmdbDataStore;
 
-                final FieldFormatter fieldFormatter =
-                        new FieldFormatter(
+                final ColumnFormatter fieldFormatter =
+                        new ColumnFormatter(
                                 new FormatterFactory(searchRequest.getDateTimeSettings()));
                 final TableResultCreator resultCreator = new TableResultCreator(fieldFormatter);
                 ResultRequest resultRequest = searchRequest.getResultRequests().get(0);

@@ -1,8 +1,8 @@
 package stroom.searchable.impl;
 
-import stroom.datasource.api.v2.AbstractField;
-import stroom.datasource.api.v2.DataSource;
 import stroom.datasource.api.v2.DateField;
+import stroom.datasource.api.v2.FieldInfo;
+import stroom.datasource.api.v2.FindFieldInfoCriteria;
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.query.api.v2.ExpressionOperator;
@@ -17,7 +17,6 @@ import stroom.query.common.v2.ResultStoreFactory;
 import stroom.query.common.v2.SearchProcess;
 import stroom.query.common.v2.SearchProvider;
 import stroom.query.common.v2.Sizes;
-import stroom.query.language.functions.FieldIndex;
 import stroom.searchable.api.Searchable;
 import stroom.searchable.api.SearchableProvider;
 import stroom.security.api.SecurityContext;
@@ -30,19 +29,22 @@ import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.PageRequest;
+import stroom.util.shared.ResultPage;
 
 import com.google.common.base.Preconditions;
+import jakarta.inject.Inject;
 
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Arrays;
-import java.util.Map;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Function;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
 
 @SuppressWarnings("unused")
 class SearchableSearchProvider implements SearchProvider {
@@ -78,15 +80,29 @@ class SearchableSearchProvider implements SearchProvider {
     }
 
     @Override
-    public DataSource getDataSource(final DocRef docRef) {
-        return securityContext.useAsReadResult(() -> {
-            LOGGER.debug(() -> "getDataSource called for docRef " + docRef);
-            final Searchable searchable = searchableProvider.get(docRef);
-            if (searchable == null) {
-                return null;
+    public ResultPage<FieldInfo> getFieldInfo(final FindFieldInfoCriteria criteria) {
+        final Optional<ResultPage<FieldInfo>> optional = securityContext.useAsReadResult(() -> {
+            final Searchable searchable = searchableProvider.get(criteria.getDataSourceRef());
+            if (searchable != null) {
+                return Optional.ofNullable(searchable.getFieldInfo(criteria));
             }
-            return searchable.getDataSource();
+            return Optional.empty();
         });
+        return optional.orElseGet(() -> {
+            final List<FieldInfo> list = Collections.emptyList();
+            return ResultPage.createCriterialBasedList(list, criteria);
+        });
+    }
+
+    @Override
+    public Optional<String> fetchDocumentation(final DocRef docRef) {
+        return Optional.ofNullable(searchableProvider.get(docRef))
+                .flatMap(searchable -> searchable.fetchDocumentation(docRef));
+    }
+
+    @Override
+    public DocRef fetchDefaultExtractionPipeline(final DocRef dataSourceRef) {
+        return null;
     }
 
     @Override
@@ -135,6 +151,7 @@ class SearchableSearchProvider implements SearchProvider {
         Preconditions.checkNotNull(searchRequest);
         Preconditions.checkNotNull(searchable);
 
+        final DocRef docRef = searchable.getDocRef();
         final Sizes defaultMaxResultsSizes = getDefaultMaxResultsSizes();
         final int resultHandlerBatchSize = getResultHandlerBatchSize();
 
@@ -142,11 +159,11 @@ class SearchableSearchProvider implements SearchProvider {
                 searchRequest.getSearchRequestSource(),
                 coprocessors);
         final String searchKey = searchRequest.getKey().toString();
-        final String taskName = getTaskName(searchable.getDocRef());
+        final String taskName = getTaskName(docRef);
 
         final String infoPrefix = LogUtil.message(
                 "Querying {} {} - ",
-                getStoreName(searchable.getDocRef()),
+                getStoreName(docRef),
                 searchKey);
 
         LOGGER.debug(() -> LogUtil.message("{} Starting search with key {}", taskName, searchKey));
@@ -154,22 +171,12 @@ class SearchableSearchProvider implements SearchProvider {
 
         final ExpressionCriteria criteria = new ExpressionCriteria(expression);
 
-        final Map<String, AbstractField> fieldMap = searchable.getDataSource().getFields()
-                .stream()
-                .collect(Collectors.toMap(AbstractField::getName, Function.identity()));
-
-        final FieldIndex fieldIndex = coprocessors.getFieldIndex();
-        final AbstractField[] fieldArray = new AbstractField[fieldIndex.size()];
-        for (int i = 0; i < fieldArray.length; i++) {
-            final String fieldName = fieldIndex.getField(i);
-            final AbstractField field = fieldMap.get(fieldName);
-            if (field == null) {
-                throw new RuntimeException("Field '" + fieldName + "' is not valid for this datasource");
-            } else {
-                fieldArray[i] = field;
-            }
-        }
-
+        final FindFieldInfoCriteria findFieldInfoCriteria = new FindFieldInfoCriteria(
+                new PageRequest(0, 1000),
+                null,
+                docRef,
+                null);
+        final ResultPage<FieldInfo> resultPage = searchable.getFieldInfo(findFieldInfoCriteria);
         final Runnable runnable = taskContextFactory.context(taskName, taskContext -> {
             final AtomicBoolean destroyed = new AtomicBoolean();
 
@@ -208,7 +215,7 @@ class SearchableSearchProvider implements SearchProvider {
                 final Instant queryStart = Instant.now();
                 try {
                     // Give the data array to each of our coprocessors
-                    searchable.search(criteria, fieldArray, coprocessors);
+                    searchable.search(criteria, coprocessors.getFieldIndex(), coprocessors);
 
                 } catch (final RuntimeException e) {
                     LOGGER.debug(e::getMessage, e);
@@ -267,6 +274,11 @@ class SearchableSearchProvider implements SearchProvider {
     @Override
     public DateField getTimeField(final DocRef docRef) {
         return searchableProvider.get(docRef).getTimeField();
+    }
+
+    @Override
+    public List<DocRef> list() {
+        return searchableProvider.list();
     }
 
     @Override

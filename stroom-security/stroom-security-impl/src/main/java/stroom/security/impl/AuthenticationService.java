@@ -16,21 +16,20 @@
 
 package stroom.security.impl;
 
-import stroom.security.openid.api.AbstractOpenIdConfig;
 import stroom.security.openid.api.IdpType;
 import stroom.security.shared.PermissionNames;
 import stroom.security.shared.User;
 import stroom.util.AuditUtil;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.inject.Singleton;
 
 @Singleton
 public class AuthenticationService {
@@ -42,13 +41,13 @@ public class AuthenticationService {
 
     private final UserDao userDao;
     private final AppPermissionDao appPermissionDao;
-    private final Provider<AbstractOpenIdConfig> openIdConfigProvider;
+    private final Provider<StroomOpenIdConfig> openIdConfigProvider;
 
     @Inject
     AuthenticationService(
             final UserDao userDao,
             final AppPermissionDao appPermissionDao,
-            final Provider<AbstractOpenIdConfig> openIdConfigProvider) {
+            final Provider<StroomOpenIdConfig> openIdConfigProvider) {
         this.userDao = userDao;
         this.appPermissionDao = appPermissionDao;
         this.openIdConfigProvider = openIdConfigProvider;
@@ -131,10 +130,7 @@ public class AuthenticationService {
 
         try {
             optUser = userDao.getBySubjectId(subjectId, false);
-            if (optUser.isEmpty()
-                    && User.ADMIN_SUBJECT_ID.equals(subjectId)
-                    && (IdpType.INTERNAL_IDP.equals(openIdConfigProvider.get().getIdentityProviderType())
-                    || IdpType.TEST_CREDENTIALS.equals(openIdConfigProvider.get().getIdentityProviderType()))) {
+            if (optUser.isEmpty() && shouldCreateAdminUser(subjectId)) {
 
                 // TODO @AT Probably should be an explicit command to create this to avoid the accidental
                 //   running of stroom in UseInternal mode which then leaves admin/admin open
@@ -148,6 +144,13 @@ public class AuthenticationService {
         }
 
         return optUser;
+    }
+
+    private boolean shouldCreateAdminUser(final String subjectId) {
+        return User.ADMIN_SUBJECT_ID.equals(subjectId)
+                && (
+                IdpType.INTERNAL_IDP.equals(openIdConfigProvider.get().getIdentityProviderType())
+                        || IdpType.TEST_CREDENTIALS.equals(openIdConfigProvider.get().getIdentityProviderType()));
     }
 
     public User createOrRefreshUser(final String subjectId) {
@@ -170,9 +173,7 @@ public class AuthenticationService {
                     final User userRef = create(subjectId, isGroup);
 
                     // Creating the admin user so create its group too
-                    if (User.ADMIN_SUBJECT_ID.equals(subjectId)
-                            && (IdpType.INTERNAL_IDP.equals(openIdConfigProvider.get().getIdentityProviderType())
-                            || IdpType.TEST_CREDENTIALS.equals(openIdConfigProvider.get().getIdentityProviderType()))) {
+                    if (shouldCreateAdminUser(subjectId)) {
                         try {
                             User userGroup = createOrRefreshAdminUserGroup(ADMINISTRATORS_GROUP_SUBJECT_ID);
                             userDao.addUserToGroup(userRef.getUuid(), userGroup.getUuid());

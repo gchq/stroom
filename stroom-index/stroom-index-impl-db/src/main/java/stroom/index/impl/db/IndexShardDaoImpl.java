@@ -1,6 +1,6 @@
 package stroom.index.impl.db;
 
-import stroom.datasource.api.v2.AbstractField;
+import stroom.datasource.api.v2.QueryField;
 import stroom.db.util.ExpressionMapper;
 import stroom.db.util.ExpressionMapper.Converter;
 import stroom.db.util.ExpressionMapper.MultiConverter;
@@ -25,6 +25,8 @@ import stroom.index.shared.IndexVolume;
 import stroom.index.shared.Partition;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionUtil;
+import stroom.query.common.v2.DateExpressionParser;
+import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValInteger;
 import stroom.query.language.functions.ValLong;
@@ -38,6 +40,8 @@ import stroom.util.shared.Range;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Selection;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import org.jooq.Condition;
 import org.jooq.Cursor;
 import org.jooq.Field;
@@ -45,7 +49,6 @@ import org.jooq.OrderField;
 import org.jooq.Record;
 import org.jooq.Result;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -57,8 +60,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 import static stroom.index.impl.db.jooq.Tables.INDEX_SHARD;
 import static stroom.index.impl.db.jooq.Tables.INDEX_VOLUME_GROUP;
@@ -198,23 +199,22 @@ class IndexShardDaoImpl implements IndexShardDao {
 
     @Override
     public void search(final ExpressionCriteria criteria,
-                       final AbstractField[] fields,
+                       final FieldIndex fieldIndex,
                        final ValuesConsumer consumer) {
-
+        final String[] fieldNames = fieldIndex.getFields();
         final Collection<OrderField<?>> orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
-        final List<AbstractField> fieldList = Arrays.asList(fields);
-        final List<Field<?>> dbFields = new ArrayList<>(indexShardValueMapper.getFields(fieldList));
-        final Mapper<?>[] mappers = indexShardValueMapper.getMappers(fields);
+        final List<Field<?>> dbFields = indexShardValueMapper.getDbFieldsByName(fieldNames);
+        final Mapper<?>[] mappers = indexShardValueMapper.getMappersForFieldNames(fieldNames);
         final PageRequest pageRequest = criteria.getPageRequest();
         final Condition condition = indexShardExpressionMapper.apply(criteria.getExpression());
 
         final boolean volumeUsed = isUsed(
-                Set.of(IndexShardFields.FIELD_VOLUME_PATH, IndexShardFields.FIELD_VOLUME_GROUP),
-                fieldList,
+                Set.of(IndexShardFields.FIELD_VOLUME_PATH.getName(), IndexShardFields.FIELD_VOLUME_GROUP.getName()),
+                fieldNames,
                 criteria);
         final boolean volumeGroupUsed = isUsed(
-                Set.of(IndexShardFields.FIELD_VOLUME_GROUP),
-                fieldList,
+                Set.of(IndexShardFields.FIELD_VOLUME_GROUP.getName()),
+                fieldNames,
                 criteria);
 
         JooqUtil.context(indexDbConnProvider, context -> {
@@ -250,8 +250,8 @@ class IndexShardDaoImpl implements IndexShardDao {
                     final Result<?> result = cursor.fetchNext(1000);
 
                     result.forEach(r -> {
-                        final Val[] arr = new Val[fields.length];
-                        for (int i = 0; i < fields.length; i++) {
+                        final Val[] arr = new Val[fieldNames.length];
+                        for (int i = 0; i < fieldNames.length; i++) {
                             Val val = ValNull.INSTANCE;
                             final Mapper<?> mapper = mappers[i];
                             if (mapper != null) {
@@ -322,10 +322,10 @@ class IndexShardDaoImpl implements IndexShardDao {
                 .execute());
     }
 
-    private boolean isUsed(final Set<AbstractField> fieldSet,
-                           final List<AbstractField> resultFields,
+    private boolean isUsed(final Set<String> fieldSet,
+                           final String[] fields,
                            final ExpressionCriteria criteria) {
-        return resultFields.stream().filter(Objects::nonNull).anyMatch(fieldSet::contains) ||
+        return Arrays.stream(fields).filter(Objects::nonNull).anyMatch(fieldSet::contains) ||
                 ExpressionUtil.termCount(criteria.getExpression(), fieldSet) > 0;
     }
 
@@ -372,18 +372,12 @@ class IndexShardDaoImpl implements IndexShardDao {
             return ValString.create(indexShardStatus.getDisplayValue());
         }
 
-        public <T> void map(final AbstractField dataSourceField,
-                            final Field<T> field,
-                            final Function<T, Val> handler) {
-            valueMapper.map(dataSourceField, field, handler);
+        public List<Field<?>> getDbFieldsByName(final String[] fieldNames) {
+            return valueMapper.getDbFieldsByName(fieldNames);
         }
 
-        public List<Field<?>> getFields(final List<AbstractField> fields) {
-            return valueMapper.getFields(fields);
-        }
-
-        public Mapper<?>[] getMappers(final AbstractField[] fields) {
-            return valueMapper.getMappers(fields);
+        public Mapper<?>[] getMappersForFieldNames(final String[] fieldNames) {
+            return valueMapper.getMappersForFieldNames(fieldNames);
         }
     }
 
@@ -415,7 +409,8 @@ class IndexShardDaoImpl implements IndexShardDao {
             expressionMapper.map(IndexShardFields.FIELD_FILE_SIZE, INDEX_SHARD.FILE_SIZE, Long::valueOf);
             expressionMapper.map(IndexShardFields.FIELD_STATUS, INDEX_SHARD.STATUS, value ->
                     IndexShardStatus.fromDisplayValue(value).getPrimitiveValue());
-            expressionMapper.map(IndexShardFields.FIELD_LAST_COMMIT, INDEX_SHARD.COMMIT_MS, Long::valueOf);
+            expressionMapper.map(IndexShardFields.FIELD_LAST_COMMIT, INDEX_SHARD.COMMIT_MS, value ->
+                    DateExpressionParser.getMs(IndexShardFields.FIELD_LAST_COMMIT.getName(), value));
             expressionMapper.map(IndexShardFields.FIELD_VOLUME_PATH, INDEX_VOLUME.PATH, value -> value);
             expressionMapper.map(IndexShardFields.FIELD_VOLUME_GROUP, INDEX_VOLUME_GROUP.NAME, value -> value);
         }
@@ -427,31 +422,31 @@ class IndexShardDaoImpl implements IndexShardDao {
                     .collect(Collectors.toList());
         }
 
-        public <T> void map(final AbstractField dataSourceField,
+        public <T> void map(final QueryField dataSourceField,
                             final Field<T> field,
                             final Converter<T> converter) {
             expressionMapper.map(dataSourceField, field, converter);
         }
 
-        public <T> void map(final AbstractField dataSourceField,
+        public <T> void map(final QueryField dataSourceField,
                             final Field<T> field,
                             final Converter<T> converter, final boolean useName) {
             expressionMapper.map(dataSourceField, field, converter, useName);
         }
 
-        public <T> void multiMap(final AbstractField dataSourceField,
+        public <T> void multiMap(final QueryField dataSourceField,
                                  final Field<T> field,
                                  final MultiConverter<T> converter) {
             expressionMapper.multiMap(dataSourceField, field, converter);
         }
 
-        public <T> void multiMap(final AbstractField dataSourceField,
+        public <T> void multiMap(final QueryField dataSourceField,
                                  final Field<T> field,
                                  final MultiConverter<T> converter, final boolean useName) {
             expressionMapper.multiMap(dataSourceField, field, converter, useName);
         }
 
-        public void ignoreField(final AbstractField dataSourceField) {
+        public void ignoreField(final QueryField dataSourceField) {
             expressionMapper.ignoreField(dataSourceField);
         }
 

@@ -18,7 +18,7 @@ package stroom.security.identity.token;
 
 import stroom.event.logging.api.StroomEventLoggingService;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 /**
  * A service to allow other components to easily create Stroom logging events.

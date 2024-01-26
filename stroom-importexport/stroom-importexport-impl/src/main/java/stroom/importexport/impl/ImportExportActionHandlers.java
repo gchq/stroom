@@ -18,12 +18,13 @@ package stroom.importexport.impl;
 
 import stroom.importexport.api.ImportExportActionHandler;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.inject.Singleton;
 
 @Singleton
 class ImportExportActionHandlers {

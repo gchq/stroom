@@ -3,11 +3,13 @@ package stroom.security.impl;
 import stroom.security.shared.SessionDetails;
 import stroom.security.shared.SessionListResponse;
 import stroom.security.shared.SessionResource;
+import stroom.test.common.TestUtil;
 import stroom.test.common.util.test.AbstractResourceTest;
 import stroom.util.jersey.UriBuilderUtil;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.SimpleUserName;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -24,7 +26,14 @@ class TestSessionResourceImpl extends AbstractResourceTest<SessionResource> {
 
     @Override
     public SessionResource getRestResource() {
-        return new SessionResourceImpl(() -> sessionListService);
+        return new SessionResourceImpl(
+                TestUtil.mockProvider(AuthenticationConfig.class),
+                TestUtil.mockProvider(OpenIdManager.class),
+                TestUtil.mockProvider(HttpServletRequest.class),
+                TestUtil.mockProvider(AuthenticationEventLog.class),
+                () -> sessionListService,
+                TestUtil.mockProvider(StroomUserIdentityFactory.class));
+
     }
 
     @Override

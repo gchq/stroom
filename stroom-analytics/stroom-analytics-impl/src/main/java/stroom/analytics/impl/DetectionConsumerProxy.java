@@ -3,20 +3,23 @@ package stroom.analytics.impl;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.expression.api.DateTimeSettings;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
-import stroom.query.api.v2.Field;
-import stroom.query.common.v2.CompiledField;
-import stroom.query.common.v2.CompiledFields;
-import stroom.query.common.v2.format.FieldFormatter;
+import stroom.query.api.v2.Column;
+import stroom.query.common.v2.CompiledColumn;
+import stroom.query.common.v2.CompiledColumns;
+import stroom.query.common.v2.format.ColumnFormatter;
 import stroom.query.common.v2.format.FormatterFactory;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Generator;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValuesConsumer;
 import stroom.query.language.functions.ref.StoredValues;
+import stroom.search.extraction.ProcessLifecycleAware;
 import stroom.util.NullSafe;
 import stroom.util.date.DateUtil;
 import stroom.util.shared.Severity;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,23 +27,20 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
-import javax.inject.Inject;
-import javax.inject.Provider;
 
 public class DetectionConsumerProxy implements ValuesConsumer, ProcessLifecycleAware {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DetectionConsumerProxy.class);
 
     private final Provider<ErrorReceiverProxy> errorReceiverProxyProvider;
-    private final FieldFormatter fieldFormatter;
+    private final ColumnFormatter fieldFormatter;
     private Provider<DetectionConsumer> detectionsConsumerProvider;
 
-    private FieldIndex fieldIndex;
     private DetectionConsumer detectionConsumer;
 
     private AnalyticRuleDoc analyticRuleDoc;
 
-    private CompiledFields compiledFields;
+    private CompiledColumns compiledColumns;
 
     @Inject
     public DetectionConsumerProxy(final Provider<ErrorReceiverProxy> errorReceiverProxyProvider,
@@ -50,7 +50,7 @@ public class DetectionConsumerProxy implements ValuesConsumer, ProcessLifecycleA
                 .builder()
                 .localZoneId(analyticsConfig.getTimezone())
                 .build();
-        fieldFormatter = new FieldFormatter(new FormatterFactory(dateTimeSettings));
+        fieldFormatter = new ColumnFormatter(new FormatterFactory(dateTimeSettings));
     }
 
     public void setDetectionsConsumerProvider(final Provider<DetectionConsumer> detectionsConsumerProvider) {
@@ -85,12 +85,8 @@ public class DetectionConsumerProxy implements ValuesConsumer, ProcessLifecycleA
         this.analyticRuleDoc = analyticRuleDoc;
     }
 
-    public void setCompiledFields(final CompiledFields compiledFields) {
-        this.compiledFields = compiledFields;
-    }
-
-    public void setFieldIndex(final FieldIndex fieldIndex) {
-        this.fieldIndex = fieldIndex;
+    public void setCompiledColumns(final CompiledColumns compiledColumns) {
+        this.compiledColumns = compiledColumns;
     }
 
     @Override
@@ -102,32 +98,32 @@ public class DetectionConsumerProxy implements ValuesConsumer, ProcessLifecycleA
                     ". No values to extract from ", null);
             return;
         }
-        final CompiledFieldValue[] outputValues = extractValues(values);
+        final CompiledColumnValue[] outputValues = extractValues(values);
         if (outputValues != null) {
             writeRecord(outputValues);
         }
     }
 
-    private CompiledFieldValue[] extractValues(final Val[] vals) {
-        final CompiledField[] compiledFieldArray = compiledFields.getCompiledFields();
-        final StoredValues storedValues = compiledFields.getValueReferenceIndex().createStoredValues();
-        final CompiledFieldValue[] output = new CompiledFieldValue[compiledFieldArray.length];
+    private CompiledColumnValue[] extractValues(final Val[] vals) {
+        final CompiledColumn[] compiledColumnArray = compiledColumns.getCompiledColumns();
+        final StoredValues storedValues = compiledColumns.getValueReferenceIndex().createStoredValues();
+        final CompiledColumnValue[] output = new CompiledColumnValue[compiledColumnArray.length];
         int index = 0;
 
-        for (final CompiledField compiledField : compiledFieldArray) {
-            final Generator generator = compiledField.getGenerator();
+        for (final CompiledColumn compiledColumn : compiledColumnArray) {
+            final Generator generator = compiledColumn.getGenerator();
 
             if (generator != null) {
                 generator.set(vals, storedValues);
                 final Val value = generator.eval(storedValues, null);
-                output[index] = new CompiledFieldValue(compiledField, value);
+                output[index] = new CompiledColumnValue(compiledColumn, value);
 
-                if (compiledField.getCompiledFilter() != null) {
+                if (compiledColumn.getCompiledFilter() != null) {
                     // If we are filtering then we need to evaluate this field
                     // now so that we can filter the resultant value.
 
-                    if (compiledField.getCompiledFilter() != null && value != null
-                            && !compiledField.getCompiledFilter().match(value.toString())) {
+                    if (compiledColumn.getCompiledFilter() != null && value != null
+                            && !compiledColumn.getCompiledFilter().match(value.toString())) {
                         // We want to exclude this item.
                         return null;
                     }
@@ -146,9 +142,9 @@ public class DetectionConsumerProxy implements ValuesConsumer, ProcessLifecycleA
                 "AlertExtractionReceiver", message, e);
     }
 
-    private void writeRecord(final CompiledFieldValue[] fieldVals) {
+    private void writeRecord(final CompiledColumnValue[] columnValues) {
 //        final CompiledField[] compiledFieldArray = compiledFields.getCompiledFields();
-        if (fieldVals == null || fieldVals.length == 0) {
+        if (columnValues == null || columnValues.length == 0) {
             return;
         }
 
@@ -181,22 +177,22 @@ public class DetectionConsumerProxy implements ValuesConsumer, ProcessLifecycleA
         final AtomicReference<Long> streamId = new AtomicReference<>();
         final AtomicReference<Long> eventId = new AtomicReference<>();
 
-        // fieldIndex may differ in size to fieldVals if the query uses field but does not
+        // fieldIndex may differ in size to columnValues if the query uses column but does not
         // select them, e.g.
         //   eval compound=field1+field2
         //   select compound
-        for (final CompiledFieldValue fieldVal : fieldVals) {
-            NullSafe.consume(fieldVal, CompiledFieldValue::getVal, val -> {
-                final CompiledField compiledField = fieldVal.getCompiledField();
-                final Field field = compiledField.getField();
-                final String fieldName = field.getName();
-                if (FieldIndex.isStreamIdFieldName(fieldName)) {
+        for (final CompiledColumnValue columnValue : columnValues) {
+            NullSafe.consume(columnValue, CompiledColumnValue::getVal, val -> {
+                final CompiledColumn compiledColumn = columnValue.getCompiledColumn();
+                final Column column = compiledColumn.getColumn();
+                final String columnName = column.getName();
+                if (FieldIndex.isStreamIdFieldName(columnName)) {
                     streamId.set(getSafeLong(val));
-                } else if (FieldIndex.isEventIdFieldName(fieldName)) {
+                } else if (FieldIndex.isEventIdFieldName(columnName)) {
                     eventId.set(getSafeLong(val));
                 } else {
-                    final String fieldValStr = fieldFormatter.format(field, val);
-                    values.add(new DetectionValue(fieldName, fieldValStr));
+                    final String fieldValStr = fieldFormatter.format(column, val);
+                    values.add(new DetectionValue(columnName, fieldValStr));
                 }
             });
         }
@@ -239,18 +235,18 @@ public class DetectionConsumerProxy implements ValuesConsumer, ProcessLifecycleA
         return null;
     }
 
-    private static class CompiledFieldValue {
+    private static class CompiledColumnValue {
 
-        private final CompiledField compiledField;
+        private final CompiledColumn compiledColumn;
         private final Val val;
 
-        public CompiledFieldValue(final CompiledField compiledField, final Val val) {
-            this.compiledField = compiledField;
+        public CompiledColumnValue(final CompiledColumn compiledColumn, final Val val) {
+            this.compiledColumn = compiledColumn;
             this.val = val;
         }
 
-        public CompiledField getCompiledField() {
-            return compiledField;
+        public CompiledColumn getCompiledColumn() {
+            return compiledColumn;
         }
 
         public Val getVal() {

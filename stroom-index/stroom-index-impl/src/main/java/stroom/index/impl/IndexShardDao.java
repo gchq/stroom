@@ -1,11 +1,11 @@
 package stroom.index.impl;
 
-import stroom.datasource.api.v2.AbstractField;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
 import stroom.index.shared.IndexVolume;
+import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.ValuesConsumer;
 import stroom.util.shared.ResultPage;
 
@@ -29,9 +29,9 @@ public interface IndexShardDao {
      */
     ResultPage<IndexShard> find(FindIndexShardCriteria criteria);
 
-    void search(final ExpressionCriteria criteria,
-                final AbstractField[] fields,
-                final ValuesConsumer consumer);
+    void search(ExpressionCriteria criteria,
+                FieldIndex fieldIndex,
+                ValuesConsumer consumer);
 
     /**
      * Create a new Index Shard
@@ -42,10 +42,10 @@ public interface IndexShardDao {
      * @param indexVersion  The version of the index in use
      * @return The newly created Index Shard
      */
-    IndexShard create(final IndexShardKey key,
-                      final IndexVolume indexVolume,
-                      final String ownerNodeName,
-                      final String indexVersion);
+    IndexShard create(IndexShardKey key,
+                      IndexVolume indexVolume,
+                      String ownerNodeName,
+                      String indexVersion);
 
     /**
      * Delete a specific shard, by it's ID

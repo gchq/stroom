@@ -5,9 +5,9 @@ import stroom.util.config.ConfigValidator.Result;
 import stroom.util.shared.IsProxyConfig;
 import stroom.util.shared.validation.ValidationSeverity;
 
-import javax.inject.Inject;
-import javax.validation.ConstraintViolation;
-import javax.validation.Validator;
+import jakarta.inject.Inject;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validator;
 
 public class ProxyConfigValidator {
 

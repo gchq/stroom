@@ -2,9 +2,10 @@ package stroom.proxy.app.handler;
 
 import stroom.util.io.PathCreator;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+
 import java.nio.file.Path;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 @Singleton
 public class ForwardFileDestinationFactoryImpl implements ForwardFileDestinationFactory {

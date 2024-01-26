@@ -16,28 +16,38 @@
 
 package stroom.analytics.impl;
 
+import stroom.analytics.rule.impl.AnalyticRuleProcessors;
 import stroom.analytics.shared.AnalyticProcessResource;
 import stroom.analytics.shared.AnalyticTracker;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
+import stroom.query.api.v2.ExpressionOperator;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 @AutoLogged(OperationType.UNLOGGED)
 class AnalyticProcessResourceImpl implements AnalyticProcessResource {
 
     private final Provider<AnalyticTrackerDao> analyticProcessorTrackerDaoProvider;
+    private final Provider<AnalyticRuleProcessors> analyticRuleProcessorsProvider;
 
     @Inject
-    AnalyticProcessResourceImpl(final Provider<AnalyticTrackerDao> analyticProcessorTrackerDaoProvider) {
+    AnalyticProcessResourceImpl(final Provider<AnalyticTrackerDao> analyticProcessorTrackerDaoProvider,
+                                final Provider<AnalyticRuleProcessors> analyticRuleProcessorsProvider) {
         this.analyticProcessorTrackerDaoProvider = analyticProcessorTrackerDaoProvider;
+        this.analyticRuleProcessorsProvider = analyticRuleProcessorsProvider;
     }
 
     @Override
-    public AnalyticTracker getTracker(final String filterUuid) {
+    public AnalyticTracker getTracker(final String analyticUuid) {
         final AnalyticTrackerDao analyticTrackerDao =
                 analyticProcessorTrackerDaoProvider.get();
-        return analyticTrackerDao.get(filterUuid).orElse(null);
+        return analyticTrackerDao.get(analyticUuid).orElse(null);
+    }
+
+    @Override
+    public ExpressionOperator getDefaultProcessingFilterExpression(final String query) {
+        return analyticRuleProcessorsProvider.get().getDefaultProcessingFilterExpression(query);
     }
 }

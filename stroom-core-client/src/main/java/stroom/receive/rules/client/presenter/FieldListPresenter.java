@@ -21,7 +21,7 @@ import stroom.alert.client.event.ConfirmEvent;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
-import stroom.datasource.api.v2.AbstractField;
+import stroom.datasource.api.v2.QueryField;
 import stroom.datasource.api.v2.TextField;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
@@ -44,8 +44,8 @@ import java.util.stream.Collectors;
 
 public class FieldListPresenter extends DocumentEditPresenter<PagerView, ReceiveDataRules> {
 
-    private final MyDataGrid<AbstractField> dataGrid;
-    private final MultiSelectionModelImpl<AbstractField> selectionModel;
+    private final MyDataGrid<QueryField> dataGrid;
+    private final MultiSelectionModelImpl<QueryField> selectionModel;
 
     private final FieldEditPresenter fieldEditPresenter;
     private final ButtonView newButton;
@@ -53,7 +53,7 @@ public class FieldListPresenter extends DocumentEditPresenter<PagerView, Receive
     private final ButtonView removeButton;
     private final ButtonView upButton;
     private final ButtonView downButton;
-    private List<AbstractField> fields;
+    private List<QueryField> fields;
 
     @Inject
     public FieldListPresenter(final EventBus eventBus,
@@ -136,7 +136,7 @@ public class FieldListPresenter extends DocumentEditPresenter<PagerView, Receive
         newButton.setEnabled(!isReadOnly());
 
         if (!isReadOnly() && fields != null) {
-            final AbstractField selectedElement = selectionModel.getSelected();
+            final QueryField selectedElement = selectionModel.getSelected();
             final boolean enabled = selectedElement != null;
             editButton.setEnabled(enabled);
             removeButton.setEnabled(enabled);
@@ -163,30 +163,30 @@ public class FieldListPresenter extends DocumentEditPresenter<PagerView, Receive
     }
 
     private void addNameColumn() {
-        dataGrid.addResizableColumn(new Column<AbstractField, String>(new TextCell()) {
+        dataGrid.addResizableColumn(new Column<QueryField, String>(new TextCell()) {
             @Override
-            public String getValue(final AbstractField row) {
+            public String getValue(final QueryField row) {
                 return row.getName();
             }
         }, "Name", 150);
     }
 
     private void addTypeColumn() {
-        dataGrid.addResizableColumn(new Column<AbstractField, String>(new TextCell()) {
+        dataGrid.addResizableColumn(new Column<QueryField, String>(new TextCell()) {
             @Override
-            public String getValue(final AbstractField row) {
+            public String getValue(final QueryField row) {
                 return row.getFieldType().getTypeName();
             }
         }, "Type", 100);
     }
 
     private void onAdd() {
-        final Set<String> otherNames = fields.stream().map(AbstractField::getName).collect(Collectors.toSet());
+        final Set<String> otherNames = fields.stream().map(QueryField::getName).collect(Collectors.toSet());
 
         fieldEditPresenter.read(new TextField(""), otherNames);
         fieldEditPresenter.show("New Field", e -> {
             if (e.isOk()) {
-                final AbstractField newField = fieldEditPresenter.write();
+                final QueryField newField = fieldEditPresenter.write();
                 if (newField != null) {
                     fields.add(newField);
                     refresh();
@@ -200,15 +200,15 @@ public class FieldListPresenter extends DocumentEditPresenter<PagerView, Receive
     }
 
     private void onEdit() {
-        final AbstractField field = selectionModel.getSelected();
+        final QueryField field = selectionModel.getSelected();
         if (field != null) {
-            final Set<String> otherNames = fields.stream().map(AbstractField::getName).collect(Collectors.toSet());
+            final Set<String> otherNames = fields.stream().map(QueryField::getName).collect(Collectors.toSet());
             otherNames.remove(field.getName());
 
             fieldEditPresenter.read(field, otherNames);
             fieldEditPresenter.show("Edit Field", e -> {
                 if (e.isOk()) {
-                    final AbstractField newField = fieldEditPresenter.write();
+                    final QueryField newField = fieldEditPresenter.write();
                     if (newField != null) {
                         final int index = fields.indexOf(field);
                         fields.remove(index);
@@ -226,7 +226,7 @@ public class FieldListPresenter extends DocumentEditPresenter<PagerView, Receive
     }
 
     private void onRemove() {
-        final List<AbstractField> list = selectionModel.getSelectedItems();
+        final List<QueryField> list = selectionModel.getSelectedItems();
         if (list != null && list.size() > 0) {
             String message = "Are you sure you want to delete the selected field?";
             if (list.size() > 1) {
@@ -245,7 +245,7 @@ public class FieldListPresenter extends DocumentEditPresenter<PagerView, Receive
     }
 
     private void moveSelectedFieldUp() {
-        final AbstractField selected = selectionModel.getSelected();
+        final QueryField selected = selectionModel.getSelected();
         if (selected != null) {
             final int index = fields.indexOf(selected);
             if (index > 0) {
@@ -260,7 +260,7 @@ public class FieldListPresenter extends DocumentEditPresenter<PagerView, Receive
     }
 
     private void moveSelectedFieldDown() {
-        final AbstractField selected = selectionModel.getSelected();
+        final QueryField selected = selectionModel.getSelected();
         if (selected != null) {
             final int index = fields.indexOf(selected);
             if (index >= 0 && index < fields.size() - 1) {

@@ -1,0 +1,36 @@
+ext.moduleName = 'lucene553.shaded'
+
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+
+configurations {
+    shadow {
+        canBeConsumed = true
+        canBeResolved = false
+        transitive = false
+    }
+}
+
+dependencies {
+    implementation "org.apache.lucene:lucene-analyzers-common:5.5.3"
+    implementation "org.apache.lucene:lucene-backward-codecs:5.5.3"
+    implementation "org.apache.lucene:lucene-core:5.5.3"
+    implementation "org.apache.lucene:lucene-memory:5.5.3"
+    implementation "org.apache.lucene:lucene-queryparser:5.5.3"
+}
+
+tasks.register('lucene553ShadowJar', ShadowJar) {
+    archiveClassifier = 'all'
+    configurations = [project.configurations.runtimeClasspath]
+    zip64 true
+    relocate 'org.apache.lucene', 'org.apache.lucene553'
+
+    mergeServiceFiles()
+}
+
+artifacts {
+    shadow(lucene553ShadowJar.archiveFile) {
+        builtBy(lucene553ShadowJar)
+    }
+}
+
+tasks.build.dependsOn lucene553ShadowJar

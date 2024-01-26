@@ -19,9 +19,9 @@ package stroom.processor.impl;
 
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
-import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorService;
 import stroom.processor.shared.Processor;
+import stroom.processor.shared.ProcessorType;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.PermissionNames;
@@ -29,12 +29,12 @@ import stroom.util.AuditUtil;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
 
+import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Optional;
 import java.util.UUID;
-import javax.inject.Inject;
 
 public class ProcessorServiceImpl implements ProcessorService {
 
@@ -45,25 +45,25 @@ public class ProcessorServiceImpl implements ProcessorService {
     private final SecurityContext securityContext;
     private final ProcessorDao processorDao;
     private final ProcessorTaskDao processorTaskDao;
-    private final ProcessorFilterService processorFilterService;
 
     @Inject
     ProcessorServiceImpl(final SecurityContext securityContext,
                          final ProcessorDao processorDao,
-                         final ProcessorTaskDao processorTaskDao,
-                         final ProcessorFilterService processorFilterService) {
+                         final ProcessorTaskDao processorTaskDao) {
         this.securityContext = securityContext;
         this.processorDao = processorDao;
         this.processorTaskDao = processorTaskDao;
-        this.processorFilterService = processorFilterService;
     }
 
     @Override
-    public Processor create(final DocRef pipelineRef, final boolean enabled) {
+    public Processor create(final ProcessorType processorType,
+                            final DocRef pipelineRef,
+                            final boolean enabled) {
 
         final Processor processor = new Processor();
-        processor.setEnabled(enabled);
+        processor.setProcessorType(processorType);
         processor.setPipeline(pipelineRef);
+        processor.setEnabled(enabled);
 
         // Check the user has read permissions on the pipeline.
         if (!securityContext.hasDocumentPermission(
@@ -93,10 +93,14 @@ public class ProcessorServiceImpl implements ProcessorService {
     }
 
     @Override
-    public Processor create(DocRef processorDocRef, DocRef pipelineDocRef, boolean enabled) {
+    public Processor create(final ProcessorType processorType,
+                            final DocRef processorDocRef,
+                            final DocRef pipelineDocRef,
+                            final boolean enabled) {
         final Processor processor = new Processor();
-        processor.setEnabled(enabled);
+        processor.setProcessorType(processorType);
         processor.setPipeline(pipelineDocRef);
+        processor.setEnabled(enabled);
         processor.setUuid(processorDocRef.getUuid());
 
         // Check the user has read permissions on the pipeline.

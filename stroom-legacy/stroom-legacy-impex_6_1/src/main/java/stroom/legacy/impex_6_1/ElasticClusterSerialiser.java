@@ -5,9 +5,10 @@ import stroom.docstore.api.Serialiser2;
 import stroom.docstore.api.Serialiser2Factory;
 import stroom.search.elastic.shared.ElasticClusterDoc;
 
+import jakarta.inject.Inject;
+
 import java.io.IOException;
 import java.util.Map;
-import javax.inject.Inject;
 
 @Deprecated
 public class ElasticClusterSerialiser implements DocumentSerialiser2<ElasticClusterDoc> {

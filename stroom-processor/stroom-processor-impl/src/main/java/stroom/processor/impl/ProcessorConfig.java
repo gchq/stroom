@@ -57,7 +57,8 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
                 .build();
         processorFilterCache = CacheConfig.builder()
                 .maximumSize(1000L)
-                .expireAfterAccess(StroomDuration.ofSeconds(10))
+                .expireAfterWrite(StroomDuration.ofHours(1))
+                .refreshAfterWrite(StroomDuration.ofSeconds(10))
                 .build();
         processorNodeCache = CacheConfig.builder()
                 .maximumSize(1000L)

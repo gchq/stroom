@@ -8,12 +8,14 @@ import stroom.annotation.shared.EventId;
 import stroom.annotation.shared.EventLink;
 import stroom.annotation.shared.SetAssignedToRequest;
 import stroom.annotation.shared.SetStatusRequest;
-import stroom.datasource.api.v2.AbstractField;
-import stroom.datasource.api.v2.DataSource;
 import stroom.datasource.api.v2.DateField;
+import stroom.datasource.api.v2.FieldInfo;
+import stroom.datasource.api.v2.FindFieldInfoCriteria;
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.common.v2.FieldInfoResultPageBuilder;
+import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.ValuesConsumer;
 import stroom.search.extraction.ExpressionFilter;
 import stroom.searchable.api.Searchable;
@@ -21,10 +23,13 @@ import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.security.user.api.UserNameService;
 import stroom.util.shared.PermissionException;
+import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserName;
 
+import jakarta.inject.Inject;
+
 import java.util.List;
-import javax.inject.Inject;
+import java.util.Optional;
 
 public class AnnotationService implements Searchable, AnnotationCreator {
 
@@ -54,13 +59,13 @@ public class AnnotationService implements Searchable, AnnotationCreator {
     }
 
     @Override
-    public DataSource getDataSource() {
-        checkPermission();
-        return DataSource
-                .builder()
-                .docRef(ANNOTATIONS_PSEUDO_DOC_REF)
-                .fields(AnnotationFields.FIELDS)
-                .build();
+    public ResultPage<FieldInfo> getFieldInfo(final FindFieldInfoCriteria criteria) {
+        return FieldInfoResultPageBuilder.builder(criteria).addAll(AnnotationFields.FIELDS).build();
+    }
+
+    @Override
+    public Optional<String> fetchDocumentation(final DocRef docRef) {
+        return Optional.empty();
     }
 
     @Override
@@ -70,7 +75,7 @@ public class AnnotationService implements Searchable, AnnotationCreator {
 
     @Override
     public void search(final ExpressionCriteria criteria,
-                       final AbstractField[] fields,
+                       final FieldIndex fieldIndex,
                        final ValuesConsumer consumer) {
         checkPermission();
 
@@ -84,7 +89,7 @@ public class AnnotationService implements Searchable, AnnotationCreator {
         expression = expressionFilter.copy(expression);
         criteria.setExpression(expression);
 
-        annotationDao.search(criteria, fields, consumer);
+        annotationDao.search(criteria, fieldIndex, consumer);
     }
 
     private UserName getCurrentUser() {

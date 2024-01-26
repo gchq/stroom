@@ -156,6 +156,14 @@ public class NullSafe {
         return val != null && val;
     }
 
+    public static Optional<String> nonBlank(final String str) {
+        if (isBlankString(str)) {
+            return Optional.empty();
+        } else {
+            return Optional.of(str);
+        }
+    }
+
     /**
      * @return True if both str and subStr are non-null and str contains subStr.
      * Case-sensitive.
@@ -181,6 +189,13 @@ public class NullSafe {
      */
     public static <T> boolean isEmptyCollection(final Collection<T> collection) {
         return collection == null || collection.isEmpty();
+    }
+
+    /**
+     * @return True if the array is null or empty
+     */
+    public static <T> boolean isEmptyArray(final T[] arr) {
+        return arr == null || arr.length == 0;
     }
 
     /**
@@ -242,6 +257,13 @@ public class NullSafe {
                     .apply(value);
             return map == null || map.isEmpty();
         }
+    }
+
+    /**
+     * @return True if the collection is non-null and not empty
+     */
+    public static <T> boolean hasItems(final T... items) {
+        return items != null && items.length > 0;
     }
 
     /**
@@ -570,7 +592,7 @@ public class NullSafe {
     }
 
     /**
-     * If value is non-null pass it to the consumer, else it is a no-op.
+     * If value and consumer are non-null pass it to the consumer, else it is a no-op.
      */
     public static <T> void consume(final T value,
                                    final Consumer<T> consumer) {

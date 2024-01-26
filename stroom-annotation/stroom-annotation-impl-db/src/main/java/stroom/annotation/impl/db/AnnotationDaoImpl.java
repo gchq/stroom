@@ -14,7 +14,6 @@ import stroom.annotation.shared.SetAssignedToRequest;
 import stroom.annotation.shared.SetStatusRequest;
 import stroom.annotation.shared.StringEntryValue;
 import stroom.annotation.shared.UserNameEntryValue;
-import stroom.datasource.api.v2.AbstractField;
 import stroom.db.util.ExpressionMapper;
 import stroom.db.util.ExpressionMapperFactory;
 import stroom.db.util.JooqUtil;
@@ -23,6 +22,7 @@ import stroom.db.util.ValueMapper.Mapper;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.common.v2.DateExpressionParser;
+import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValLong;
 import stroom.query.language.functions.ValNull;
@@ -35,6 +35,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.UserName;
 
+import jakarta.inject.Inject;
 import org.jooq.Condition;
 import org.jooq.Cursor;
 import org.jooq.Field;
@@ -49,7 +50,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
 
 import static stroom.annotation.impl.db.jooq.tables.Annotation.ANNOTATION;
 import static stroom.annotation.impl.db.jooq.tables.AnnotationDataLink.ANNOTATION_DATA_LINK;
@@ -499,12 +499,12 @@ class AnnotationDaoImpl implements AnnotationDao {
 
     @Override
     public void search(final ExpressionCriteria criteria,
-                       final AbstractField[] fields,
+                       final FieldIndex fieldIndex,
                        final ValuesConsumer consumer) {
-        final List<AbstractField> fieldList = NullSafe.asList(fields);
+        final String[] fieldNames = fieldIndex.getFields();
         final Condition condition = createCondition(criteria.getExpression());
-        final List<Field<?>> dbFields = new ArrayList<>(valueMapper.getFields(fieldList));
-        final Mapper<?>[] mappers = valueMapper.getMappers(fields);
+        final List<Field<?>> dbFields = new ArrayList<>(valueMapper.getDbFieldsByName(fieldNames));
+        final Mapper<?>[] mappers = valueMapper.getMappersForFieldNames(fieldNames);
 
         JooqUtil.context(connectionProvider, context -> {
             SelectJoinStep<?> select = context.select(dbFields)
@@ -517,8 +517,8 @@ class AnnotationDaoImpl implements AnnotationDao {
                 while (cursor.hasNext()) {
                     final Result<?> result = cursor.fetchNext(1000);
                     result.forEach(r -> {
-                        final Val[] arr = new Val[fields.length];
-                        for (int i = 0; i < fields.length; i++) {
+                        final Val[] arr = new Val[fieldNames.length];
+                        for (int i = 0; i < fieldNames.length; i++) {
                             Val val = ValNull.INSTANCE;
                             final Mapper<?> mapper = mappers[i];
                             if (mapper != null) {

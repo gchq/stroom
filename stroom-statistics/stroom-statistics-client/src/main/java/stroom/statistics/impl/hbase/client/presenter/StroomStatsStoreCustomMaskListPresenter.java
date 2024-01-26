@@ -197,6 +197,8 @@ public class StroomStatsStoreCustomMaskListPresenter
                     if (result) {
                         final Rest<ResultPage<CustomRollUpMask>> rest = restFactory.create();
                         rest
+//                        restFactory.builder()
+//                                .forResultPage(CustomRollUpMask.class)
                                 .onSuccess(res -> {
                                     updateState(new HashSet<>(res.getValues()));
                                     DirtyEvent.fire(thisInstance, true);

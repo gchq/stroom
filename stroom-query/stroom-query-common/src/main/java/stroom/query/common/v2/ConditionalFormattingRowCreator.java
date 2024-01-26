@@ -1,10 +1,10 @@
 package stroom.query.common.v2;
 
+import stroom.query.api.v2.Column;
 import stroom.query.api.v2.ConditionalFormattingRule;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Row;
-import stroom.query.common.v2.format.FieldFormatter;
+import stroom.query.common.v2.format.ColumnFormatter;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ref.ErrorConsumer;
 import stroom.util.logging.LambdaLogger;
@@ -21,18 +21,18 @@ public class ConditionalFormattingRowCreator implements ItemMapper<Row> {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ConditionalFormattingRowCreator.class);
 
-    private final FieldFormatter fieldFormatter;
+    private final ColumnFormatter fieldFormatter;
     private final KeyFactory keyFactory;
     private final ExpressionOperator rowFilter;
     private final List<ConditionalFormattingRule> rules;
-    private final FieldExpressionMatcher expressionMatcher;
+    private final ColumnExpressionMatcher expressionMatcher;
     private final ErrorConsumer errorConsumer;
 
-    private ConditionalFormattingRowCreator(final FieldFormatter fieldFormatter,
+    private ConditionalFormattingRowCreator(final ColumnFormatter fieldFormatter,
                                             final KeyFactory keyFactory,
                                             final ExpressionOperator rowFilter,
                                             final List<ConditionalFormattingRule> rules,
-                                            final FieldExpressionMatcher expressionMatcher,
+                                            final ColumnExpressionMatcher expressionMatcher,
                                             final ErrorConsumer errorConsumer) {
         this.fieldFormatter = fieldFormatter;
         this.keyFactory = keyFactory;
@@ -42,11 +42,11 @@ public class ConditionalFormattingRowCreator implements ItemMapper<Row> {
         this.errorConsumer = errorConsumer;
     }
 
-    public static Optional<ItemMapper<Row>> create(final FieldFormatter fieldFormatter,
+    public static Optional<ItemMapper<Row>> create(final ColumnFormatter fieldFormatter,
                                                    final KeyFactory keyFactory,
                                                    final ExpressionOperator rowFilter,
                                                    final List<ConditionalFormattingRule> rules,
-                                                   final List<Field> fields,
+                                                   final List<Column> columns,
                                                    final ErrorConsumer errorConsumer) {
         // Create conditional formatting expression matcher.
         if (rules != null) {
@@ -55,8 +55,8 @@ public class ConditionalFormattingRowCreator implements ItemMapper<Row> {
                     .filter(ConditionalFormattingRule::isEnabled)
                     .collect(Collectors.toList());
             if (activeRules.size() > 0) {
-                final FieldExpressionMatcher expressionMatcher =
-                        new FieldExpressionMatcher(fields);
+                final ColumnExpressionMatcher expressionMatcher =
+                        new ColumnExpressionMatcher(columns);
                 return Optional.of(new ConditionalFormattingRowCreator(
                         fieldFormatter,
                         keyFactory,
@@ -71,19 +71,19 @@ public class ConditionalFormattingRowCreator implements ItemMapper<Row> {
     }
 
     @Override
-    public Row create(final List<Field> fields,
+    public Row create(final List<Column> columns,
                       final Item item) {
         Row row = null;
 
         final Map<String, Object> fieldIdToValueMap = new HashMap<>();
-        final List<String> stringValues = new ArrayList<>(fields.size());
+        final List<String> stringValues = new ArrayList<>(columns.size());
         int i = 0;
-        for (final Field field : fields) {
+        for (final Column column : columns) {
             final Val val = item.getValue(i);
-            final String string = fieldFormatter.format(field, val);
+            final String string = fieldFormatter.format(column, val);
             stringValues.add(string);
-            fieldIdToValueMap.put(field.getId(), string);
-            fieldIdToValueMap.put(field.getName(), string);
+            fieldIdToValueMap.put(column.getId(), string);
+            fieldIdToValueMap.put(column.getName(), string);
             i++;
         }
 

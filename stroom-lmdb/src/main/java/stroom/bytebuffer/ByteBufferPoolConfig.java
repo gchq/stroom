@@ -8,11 +8,11 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 
 import java.util.Map;
 import java.util.TreeMap;
-import javax.validation.constraints.Max;
-import javax.validation.constraints.Min;
 
 @JsonPropertyOrder(alphabetic = true)
 public class ByteBufferPoolConfig extends AbstractConfig implements IsStroomConfig {

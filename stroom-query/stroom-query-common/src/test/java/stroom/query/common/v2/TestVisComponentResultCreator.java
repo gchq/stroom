@@ -16,7 +16,7 @@
 
 package stroom.query.common.v2;
 
-import stroom.query.api.v2.Field;
+import stroom.query.api.v2.Column;
 import stroom.query.api.v2.TableSettings;
 
 import org.junit.jupiter.api.Disabled;
@@ -177,15 +177,15 @@ class TestVisComponentResultCreator {
 
     private TableSettings getParentTableSettings() {
         return TableSettings.builder()
-                .addFields(Field.builder()
+                .addColumns(Column.builder()
                         .name("x")
                         .expression("${x}")
                         .build())
-                .addFields(Field.builder()
+                .addColumns(Column.builder()
                         .name("y")
                         .expression("${y}")
                         .build())
-                .addFields(Field.builder()
+                .addColumns(Column.builder()
                         .name("series")
                         .expression("${series}")
                         .build())

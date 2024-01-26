@@ -23,7 +23,7 @@
 # jstat/jmap/jcmd/etc.
 # Using 'openjdk' on Alpine is not fully supported so using Eclipse Temurin JDK to ensure we have a known jdk version
 # See https://github.com/docker-library/docs/blob/master/openjdk/README.md#openjdkversion-alpine
-FROM eclipse-temurin:17.0.1_12-jdk-alpine as stroom-base-stage
+FROM eclipse-temurin:21_35-jdk-alpine as stroom-base-stage
 
 # curl is required for the docker healthcheck
 # su-exec required for running stroom as not-root user
@@ -58,6 +58,9 @@ VOLUME /stroom-proxy/certs/
 VOLUME /stroom-proxy/content/
 VOLUME /stroom-proxy/repo/
 VOLUME /stroom-proxy/logs/
+VOLUME /stroom-proxy/db/
+VOLUME /stroom-proxy/failures/
+# sqlite_library mounted as tmpfs not a managed volumne
 
 # run entrypoint script inside tini for better unix process handling, 
 # see https://github.com/krallin/tini/issues/8
@@ -72,7 +75,10 @@ CMD ["./start.sh"]
 #RUN echo "151.101.112.249 dl-cdn.alpinelinux.org" >> /etc/hosts && \
 
 # Create a system user/group with no home and no shell and a uid:gid of 1000:1000
+
+# IMPORTANT!!!
 # If you add any new dirs here, make sure you also chown them in docker-entrypoint.sh
+# IMPORTANT!!!
 RUN \
     addgroup -g 1000 -S proxy && \
     adduser -u 1000 -S -s /bin/false -D -G proxy proxy && \
@@ -86,6 +92,9 @@ RUN \
     mkdir -p /stroom-proxy/logs/send && \
     mkdir -p /stroom-proxy/logs/app && \
     mkdir -p /stroom-proxy/repo && \
+    mkdir -p /stroom-proxy/db && \
+    mkdir -p /stroom-proxy/failures && \
+    mkdir -p /stroom-proxy/sqlite_library && \
     chown -R proxy:proxy /stroom-proxy
 
 # Copy all the fat jars for the application and connectors

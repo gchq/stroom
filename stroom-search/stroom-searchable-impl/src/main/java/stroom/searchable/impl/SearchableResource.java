@@ -16,9 +16,7 @@
 
 package stroom.searchable.impl;
 
-import stroom.datasource.api.v2.DataSource;
 import stroom.datasource.api.v2.DataSourceResource;
-import stroom.docref.DocRef;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
@@ -28,25 +26,17 @@ import stroom.util.shared.RestResource;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
-
-import javax.ws.rs.Consumes;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
 
 @Tag(name = "Searchable")
 @Path("/searchable" + ResourcePaths.V2)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public interface SearchableResource extends DataSourceResource, RestResource {
-
-    @POST
-    @Path("/dataSource")
-    @Operation(
-            summary = "Submit a request for a data source definition, supplying the DocRef for the data source",
-            operationId = "getSearchableDataSource")
-    DataSource getDataSource(@Parameter(description = "DocRef", required = true) DocRef docRef);
 
     @POST
     @Path("/search")

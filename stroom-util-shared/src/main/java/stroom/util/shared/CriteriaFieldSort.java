@@ -26,8 +26,6 @@ import java.io.Serializable;
 @JsonInclude(Include.NON_NULL)
 public class CriteriaFieldSort implements Serializable {
 
-    private static final long serialVersionUID = -5994197736743037915L;
-
     @JsonProperty
     private final String id;
     @JsonProperty

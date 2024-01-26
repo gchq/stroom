@@ -24,11 +24,11 @@ import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.svg.shared.SvgImage;
 
+import jakarta.inject.Inject;
 import org.apache.commons.text.StringEscapeUtils;
 import org.xml.sax.SAXException;
 
 import java.io.IOException;
-import javax.inject.Inject;
 
 /**
  * Joins text instances into a single text instance.

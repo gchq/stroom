@@ -40,6 +40,7 @@ import stroom.util.shared.Range;
 import stroom.util.shared.Severity;
 
 import com.sun.xml.fastinfoset.sax.SAXDocumentSerializer;
+import jakarta.inject.Inject;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 
@@ -53,7 +54,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
-import javax.inject.Inject;
 
 /**
  * This XML filter captures XML content that defines key, value maps to be
@@ -579,7 +579,7 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
             errorReceiverProxy.log(Severity.ERROR, null, getElementId(), e.getMessage(), e);
             LOGGER.error("Error putting key {} into map {}: {} {}",
                     key, mapName, e.getClass().getSimpleName(), e.getMessage());
-            LOGGER.debug("Error putting key {} into map {}: {}", key, mapName, e);
+            LOGGER.debug("Error putting key {} into map {}: {}", key, mapName, e.getMessage(), e);
         }
 
         // Set keys to null.
@@ -726,11 +726,14 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
                 valueCount,
                 refStreamDefinition);
 
-        refDataLoaderHolder.getRefDataLoader().markPutsComplete();
-
-        // It is critical that this happens else the buffer it uses will not be released back to the pool
-        stagingValueOutputStream.close();
-        super.endProcessing();
+        try {
+            refDataLoaderHolder.getRefDataLoader().markPutsComplete();
+        } finally {
+            // It is critical that this happens else the buffer it uses will not be released back to the pool
+            LOGGER.debug("closing stagingValueOutputStream");
+            stagingValueOutputStream.close();
+            super.endProcessing();
+        }
     }
 
     @PipelineProperty(description = "Warn if there are duplicate keys found in the reference data?",

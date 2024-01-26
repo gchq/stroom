@@ -57,7 +57,7 @@ public class SteppingFilterPresenter extends
         MyPresenterWidget<SteppingFilterView> {
 
     protected static final String BASE_CLASS = "pipelineElementChooser";
-    private static final int ICON_COL_WIDTH = 20;
+    private static final int ICON_COL_WIDTH = 22;
     private final XPathListPresenter xPathListPresenter;
     private final XPathFilterPresenter xPathFilterPresenter;
     private List<XPathFilter> xPathFilters;
@@ -124,7 +124,6 @@ public class SteppingFilterPresenter extends
         final Column<PipelineElement, String> textColumn = DataGridUtil.textColumnBuilder(
                         PipelineElement::getId)
                 .withStyleName(BASE_CLASS + "-textCell")
-                .withConditionalStyleName(filterActiveStyleFunc)
                 .build();
         elementChooser.addColumn(textColumn);
 

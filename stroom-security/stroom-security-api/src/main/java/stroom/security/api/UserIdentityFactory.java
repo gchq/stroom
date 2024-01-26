@@ -1,8 +1,9 @@
 package stroom.security.api;
 
+import jakarta.servlet.http.HttpServletRequest;
+
 import java.util.Map;
 import java.util.Optional;
-import javax.servlet.http.HttpServletRequest;
 
 public interface UserIdentityFactory {
 
@@ -26,11 +27,6 @@ public interface UserIdentityFactory {
      * Return true if userIdentity is the service user identity
      */
     boolean isServiceUser(final UserIdentity userIdentity);
-
-    /**
-     * Return true if subject and issuer match those of the service userIdentity
-     */
-    boolean isServiceUser(final String subject, final String issuer);
 
     /**
      * True if the request contains the certs/headers needed to authenticate.

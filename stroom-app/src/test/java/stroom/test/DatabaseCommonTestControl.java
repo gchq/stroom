@@ -18,6 +18,7 @@ package stroom.test;
 
 import stroom.data.store.impl.fs.FsVolumeConfig;
 import stroom.data.store.impl.fs.FsVolumeService;
+import stroom.data.store.impl.fs.S3ExampleVolumes;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.index.VolumeCreator;
@@ -34,6 +35,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.Clearable;
 
+import jakarta.inject.Inject;
 import org.assertj.core.api.Assertions;
 
 import java.nio.file.Path;
@@ -42,7 +44,6 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
 
 /**
  * <p>
@@ -52,6 +53,8 @@ import javax.inject.Inject;
 public class DatabaseCommonTestControl implements CommonTestControl {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DatabaseCommonTestControl.class);
+
+    private static final boolean USE_S3 = false;
 
     private final ContentImportService contentImportService;
     private final IndexShardManager indexShardManager;
@@ -66,6 +69,7 @@ public class DatabaseCommonTestControl implements CommonTestControl {
     private final IndexVolumeService indexVolumeService;
     private final UserNameService userNameService;
     private final ExplorerNodeService explorerNodeService;
+    private final S3ExampleVolumes s3ExampleVolumes;
 
     //    private static boolean needsCleanup;
     // Thread local for parallel test running
@@ -84,7 +88,8 @@ public class DatabaseCommonTestControl implements CommonTestControl {
                               final PathCreator pathCreator,
                               final IndexVolumeService indexVolumeService,
                               final UserNameService userNameService,
-                              final ExplorerNodeService explorerNodeService) {
+                              final ExplorerNodeService explorerNodeService,
+                              final S3ExampleVolumes s3ExampleVolumes) {
         this.contentImportService = contentImportService;
         this.indexShardManager = indexShardManager;
         this.indexShardWriterCache = indexShardWriterCache;
@@ -98,6 +103,7 @@ public class DatabaseCommonTestControl implements CommonTestControl {
         this.indexVolumeService = indexVolumeService;
         this.userNameService = userNameService;
         this.explorerNodeService = explorerNodeService;
+        this.s3ExampleVolumes = s3ExampleVolumes;
     }
 
     @Override
@@ -129,7 +135,12 @@ public class DatabaseCommonTestControl implements CommonTestControl {
         fsVolumeService.ensureDefaultVolumes();
         fsVolumeService.flush();
 
-        final FsVolume fsVolume = fsVolumeService.getVolume();
+        if (USE_S3) {
+            s3ExampleVolumes.addS3ExampleVolume();
+            fsVolumeConfig.setDefaultStreamVolumeGroupName("S3");
+        }
+
+        final FsVolume fsVolume = fsVolumeService.getVolume(null);
         if (fsVolume == null) {
             Assertions.fail("No active and non-full volumes found. " +
                     "Likely a problem with default volume creation in setup, or a too full disk.");

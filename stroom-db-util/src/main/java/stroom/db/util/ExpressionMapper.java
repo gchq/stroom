@@ -1,6 +1,6 @@
 package stroom.db.util;
 
-import stroom.datasource.api.v2.AbstractField;
+import stroom.datasource.api.v2.QueryField;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.util.NullSafe;
 
@@ -27,7 +27,7 @@ public class ExpressionMapper implements Function<ExpressionItem, Condition> {
     /**
      * Uses UUID for any {@link stroom.datasource.api.v2.DocRefField}s
      */
-    public <T> void map(final AbstractField dataSourceField,
+    public <T> void map(final QueryField dataSourceField,
                         final Field<T> field,
                         final Converter<T> converter) {
         expressionMapper.addHandler(dataSourceField, termHandlerFactory.create(
@@ -39,7 +39,7 @@ public class ExpressionMapper implements Function<ExpressionItem, Condition> {
     /**
      * Uses UUID or name for any {@link stroom.datasource.api.v2.DocRefField}s depending on useName
      */
-    public <T> void map(final AbstractField dataSourceField,
+    public <T> void map(final QueryField dataSourceField,
                         final Field<T> field,
                         final Converter<T> converter,
                         final boolean useName) {
@@ -53,7 +53,7 @@ public class ExpressionMapper implements Function<ExpressionItem, Condition> {
     /**
      * Uses UUID for any {@link stroom.datasource.api.v2.DocRefField}s
      */
-    public <T> void multiMap(final AbstractField dataSourceField,
+    public <T> void multiMap(final QueryField dataSourceField,
                              final Field<T> field,
                              final MultiConverter<T> converter) {
         expressionMapper.addHandler(dataSourceField, termHandlerFactory.create(
@@ -65,7 +65,7 @@ public class ExpressionMapper implements Function<ExpressionItem, Condition> {
     /**
      * Uses UUID or name for any {@link stroom.datasource.api.v2.DocRefField}s depending on useName
      */
-    public <T> void multiMap(final AbstractField dataSourceField,
+    public <T> void multiMap(final QueryField dataSourceField,
                              final Field<T> field,
                              final MultiConverter<T> converter,
                              final boolean useName) {
@@ -76,7 +76,7 @@ public class ExpressionMapper implements Function<ExpressionItem, Condition> {
                 useName));
     }
 
-    public void ignoreField(final AbstractField dataSourceField) {
+    public void ignoreField(final QueryField dataSourceField) {
         expressionMapper.ignoreField(dataSourceField);
     }
 

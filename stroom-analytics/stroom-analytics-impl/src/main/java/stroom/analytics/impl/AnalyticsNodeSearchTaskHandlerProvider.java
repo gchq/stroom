@@ -4,9 +4,9 @@ import stroom.search.impl.NodeSearchTaskHandler;
 import stroom.search.impl.NodeSearchTaskHandlerProvider;
 import stroom.search.impl.NodeSearchTaskType;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
 
 @Singleton
 class AnalyticsNodeSearchTaskHandlerProvider implements NodeSearchTaskHandlerProvider {

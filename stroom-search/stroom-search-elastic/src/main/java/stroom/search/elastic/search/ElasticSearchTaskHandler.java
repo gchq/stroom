@@ -43,6 +43,8 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import org.elasticsearch.action.search.ClearScrollRequest;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
@@ -69,8 +71,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
-import javax.inject.Provider;
 
 public class ElasticSearchTaskHandler {
 
@@ -208,7 +208,7 @@ public class ElasticSearchTaskHandler {
 
             // Limit the returned fields to what the values consumers require
             final FieldIndex fieldIndex = coprocessors.getFieldIndex();
-            for (String field : fieldIndex.getFieldNames()) {
+            for (String field : fieldIndex.getFields()) {
                 searchSourceBuilder.fetchField(field);
             }
 
@@ -285,7 +285,7 @@ public class ElasticSearchTaskHandler {
                 final Map<String, DocumentField> mapSearchHit = searchHit.getFields();
                 Val[] values = null;
 
-                for (final String fieldName : fieldIndex.getFieldNames()) {
+                for (final String fieldName : fieldIndex.getFields()) {
                     final Integer insertAt = fieldIndex.getPos(fieldName);
                     Object fieldValue = getFieldValue(mapSearchHit, fieldName);
 

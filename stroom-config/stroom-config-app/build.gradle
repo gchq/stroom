@@ -40,6 +40,7 @@ dependencies {
     implementation project(':stroom-node:stroom-node-impl-db')
     implementation project(':stroom-pipeline')
     implementation project(':stroom-processor:stroom-processor-impl')
+    implementation project(':stroom-query:stroom-query-field-impl')
     implementation project(':stroom-receive:stroom-receive-common')
     implementation project(':stroom-search:stroom-search-elastic')
     implementation project(':stroom-search:stroom-search-impl')
@@ -59,12 +60,13 @@ dependencies {
     implementation libs.dropwizard_configuration
     implementation libs.dropwizard_client
     implementation libs.dropwizard_core
-    implementation libs.guice5
+    implementation libs.dropwizard_validation
+    implementation libs.guice
     implementation libs.jackson_annotations
     implementation libs.jackson_core
     implementation libs.jackson_databind
     implementation libs.jackson_dataformat_yaml
-    implementation libs.javax_inject
+    implementation libs.jakarta_inject
     implementation libs.snake_yaml
 
     testImplementation project(':stroom-test-common')

@@ -23,6 +23,8 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.UserName;
 
+import jakarta.inject.Inject;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -33,7 +35,6 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
-import javax.inject.Inject;
 
 class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory {
 
@@ -100,7 +101,7 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
         // Do we need to filter based on annotation attributes?
         final Function<Annotation, Boolean> filter = createFilter(query.getExpression());
 
-        final Set<String> usedFields = new HashSet<>(fieldIndex.getFieldNames());
+        final Set<String> usedFields = new HashSet<>(Set.of(fieldIndex.getFields()));
         usedFields.retainAll(AnnotationFields.FIELD_MAP.keySet());
 
         if (filter == null && usedFields.size() == 0) {

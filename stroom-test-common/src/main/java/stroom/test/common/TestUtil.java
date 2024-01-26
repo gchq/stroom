@@ -15,8 +15,10 @@ import stroom.util.shared.ModelStringUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import jakarta.inject.Provider;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DynamicTest;
+import org.mockito.Mockito;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -43,6 +45,13 @@ public class TestUtil {
 
     private TestUtil() {
         // Static Utils only
+    }
+
+    /**
+     * Build a {@link Provider} for a mocked class.
+     */
+    public static <T> Provider<T> mockProvider(final Class<T> type) {
+        return () -> Mockito.mock(type);
     }
 
     /**
@@ -270,7 +279,7 @@ public class TestUtil {
     }
 
     public static void comparePerformance(final int rounds,
-                                          final int iterations,
+                                          final long iterations,
                                           final Consumer<String> outputConsumer,
                                           final TimedCase... testCases) {
         comparePerformance(rounds, iterations, null, outputConsumer, testCases);
@@ -279,16 +288,17 @@ public class TestUtil {
     /**
      * Compares the performance of one or more {@link TimedCase}s, repeating each testCase
      * over n iterations and repeating all that over x rounds.
-     * @param rounds Number of rounds to perform. A round runs n iterations for each testCase.
-     *               If rounds >1 then the results for the first round are treated as a JVM warm-up
-     *               and are not counted in the aggregate stats.
-     * @param iterations Number of times to run each testCase in a round.
+     *
+     * @param rounds         Number of rounds to perform. A round runs n iterations for each testCase.
+     *                       If rounds >1 then the results for the first round are treated as a JVM warm-up
+     *                       and are not counted in the aggregate stats.
+     * @param iterations     Number of times to run each testCase in a round.
      * @param setup          Run before each test case in each round
      * @param outputConsumer The consumer for the tabular results data
-     * @param testCases The test cases to run in each round.
+     * @param testCases      The test cases to run in each round.
      */
     public static void comparePerformance(final int rounds,
-                                          final int iterations,
+                                          final long iterations,
                                           final TestSetup setup,
                                           final Consumer<String> outputConsumer,
                                           final TimedCase... testCases) {
@@ -357,7 +367,7 @@ public class TestUtil {
                                 .average()
                                 .getAsDouble())))
                 .withColumn(Column.decimal("Per iter (last round)", entry ->
-                        entry.getValue().get(rounds - 1).toNanos() / (double) iterations, 0))
+                        entry.getValue().get(rounds - 1).toNanos() / (double) iterations, 6))
                 .build();
         outputConsumer.accept(LogUtil.message("Summary (iterations: {}, values in nanos):\n{}",
                 ModelStringUtil.formatCsv(iterations),
@@ -370,7 +380,7 @@ public class TestUtil {
 
     public static interface TestSetup {
 
-        void run(final int rounds, final int iterations);
+        void run(final int rounds, final long iterations);
     }
 
 
@@ -410,6 +420,6 @@ public class TestUtil {
          * @param round      One based
          * @param iterations Number of iterations to perform in the work
          */
-        void run(final int round, final int iterations);
+        void run(final int round, final long iterations);
     }
 }

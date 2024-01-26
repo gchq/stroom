@@ -26,6 +26,7 @@ import stroom.task.mock.MockTaskModule;
 import stroom.test.common.util.db.DbTestModule;
 
 import com.google.inject.Guice;
+import jakarta.inject.Inject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -34,7 +35,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

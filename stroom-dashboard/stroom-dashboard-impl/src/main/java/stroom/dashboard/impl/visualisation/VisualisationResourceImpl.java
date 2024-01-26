@@ -23,8 +23,8 @@ import stroom.util.shared.EntityServiceException;
 import stroom.visualisation.shared.VisualisationDoc;
 import stroom.visualisation.shared.VisualisationResource;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 @AutoLogged
 class VisualisationResourceImpl implements VisualisationResource {

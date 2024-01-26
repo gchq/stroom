@@ -17,28 +17,27 @@
 package stroom.query.shared;
 
 import stroom.dashboard.shared.DashboardSearchResponse;
-import stroom.dashboard.shared.FunctionSignature;
-import stroom.dashboard.shared.StructureElement;
 import stroom.dashboard.shared.ValidateExpressionResult;
 import stroom.util.shared.FetchWithUuid;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
+import stroom.util.shared.ResultPage;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
 import org.fusesource.restygwt.client.DirectRestService;
 
 import java.util.List;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
 
 @Tag(name = "Queries")
 @Path(QueryResource.BASE_PATH)
@@ -79,19 +78,39 @@ public interface QueryResource extends RestResource, DirectRestService, FetchWit
     @Path(DOWNLOAD_SEARCH_RESULTS_PATH_PATH + NODE_NAME_PATH_PARAM)
     @Operation(
             summary = "Download search results",
-            operationId = "downloadQuerySearchResults")
+            operationId = "downloadQuerySearchResultsNode")
     ResourceGeneration downloadSearchResults(
             @PathParam("nodeName") String nodeName,
             @Parameter(description = "request", required = true) DownloadQueryResultsRequest request);
 
     @POST
+    @Path(DOWNLOAD_SEARCH_RESULTS_PATH_PATH)
+    @Operation(
+            summary = "Download search results",
+            operationId = "downloadQuerySearchResultsLocal")
+    default ResourceGeneration downloadSearchResults(
+            @Parameter(description = "request", required = true) DownloadQueryResultsRequest request) {
+        return downloadSearchResults(null, request);
+    }
+
+    @POST
     @Path(SEARCH_PATH_PART + NODE_NAME_PATH_PARAM)
     @Operation(
             summary = "Perform a new search or get new results",
-            operationId = "querySearch")
+            operationId = "querySearchNode")
     DashboardSearchResponse search(
             @PathParam("nodeName") String nodeName,
             @Parameter(description = "request", required = true) QuerySearchRequest request);
+
+    @POST
+    @Path(SEARCH_PATH_PART)
+    @Operation(
+            summary = "Perform a new search or get new results",
+            operationId = "querySearchLocal")
+    default DashboardSearchResponse search(
+            @Parameter(description = "request", required = true) QuerySearchRequest request) {
+        return search(null, request);
+    }
 //
 //    @POST
 //    @Path("/destroy")
@@ -108,25 +127,25 @@ public interface QueryResource extends RestResource, DirectRestService, FetchWit
             operationId = "fetchTimeZones")
     List<String> fetchTimeZones();
 
-    @GET
-    @Path("/functions")
-    @Operation(
-            summary = "Fetch all expression functions",
-            operationId = "fetchFunctions")
-    List<FunctionSignature> fetchFunctions();
-
-    @GET
-    @Path("/structure")
-    @Operation(
-            summary = "Fetch all structure element descriptions",
-            operationId = "fetchStructureElements")
-    List<StructureElement> fetchStructureElements();
-
     @POST
     @Path("/helpItems")
     @Operation(
             summary = "Fetch all (optionally filtered) query help items",
             operationId = "fetchHelpItems")
-    QueryHelpItemsResult fetchQueryHelpItems(
-            @Parameter(description = "request", required = true) final QueryHelpItemsRequest request);
+    ResultPage<QueryHelpRow> fetchQueryHelpItems(
+            @Parameter(description = "request", required = true) QueryHelpRequest request);
+
+    @POST
+    @Path("/fetchCompletions")
+    @Operation(
+            summary = "Fetch completions for the query",
+            operationId = "fetchCompletions")
+    ResultPage<CompletionValue> fetchCompletions(CompletionsRequest completionsRequest);
+
+    @POST
+    @Path("/fetchDetail")
+    @Operation(
+            summary = "Fetch detail for help item",
+            operationId = "fetchDetail")
+    QueryHelpDetail fetchDetail(QueryHelpRow row);
 }

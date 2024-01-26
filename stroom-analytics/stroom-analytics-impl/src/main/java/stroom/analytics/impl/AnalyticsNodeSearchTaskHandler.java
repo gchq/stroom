@@ -20,10 +20,10 @@ package stroom.analytics.impl;
 import stroom.analytics.impl.AnalyticDataStores.AnalyticDataStore;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.annotation.api.AnnotationFields;
-import stroom.datasource.api.v2.AbstractField;
+import stroom.datasource.api.v2.QueryField;
 import stroom.expression.matcher.ExpressionMatcher;
+import stroom.query.api.v2.Column;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.Field;
 import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.ResultRequest;
@@ -39,7 +39,7 @@ import stroom.query.common.v2.LmdbDataStore;
 import stroom.query.common.v2.SearchProgressLog;
 import stroom.query.common.v2.SearchProgressLog.SearchPhase;
 import stroom.query.common.v2.TableResultCreator;
-import stroom.query.common.v2.format.FieldFormatter;
+import stroom.query.common.v2.format.ColumnFormatter;
 import stroom.query.common.v2.format.FormatterFactory;
 import stroom.query.language.functions.DateUtil;
 import stroom.query.language.functions.FieldIndex;
@@ -63,6 +63,8 @@ import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
+import jakarta.inject.Inject;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -74,7 +76,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
-import javax.inject.Inject;
 
 
 class AnalyticsNodeSearchTaskHandler implements NodeSearchTaskHandler {
@@ -147,11 +148,11 @@ class AnalyticsNodeSearchTaskHandler implements NodeSearchTaskHandler {
             final List<CompletableFuture<Void>> futures = new ArrayList<>();
             try {
                 final FieldIndex fieldIndex = coprocessors.getFieldIndex();
-                final Map<String, AbstractField> fieldMap = AnalyticFields.getFieldMap();
-                final AbstractField[] fieldArray = new AbstractField[fieldIndex.size()];
+                final Map<String, QueryField> fieldMap = AnalyticFields.getFieldMap();
+                final QueryField[] fieldArray = new QueryField[fieldIndex.size()];
                 for (int i = 0; i < fieldArray.length; i++) {
                     final String fieldName = fieldIndex.getField(i);
-                    final AbstractField field = fieldMap.get(fieldName);
+                    final QueryField field = fieldMap.get(fieldName);
                     if (field == null) {
                         throw new RuntimeException("Field '" + fieldName + "' is not valid for this datasource");
                     } else {
@@ -212,7 +213,7 @@ class AnalyticsNodeSearchTaskHandler implements NodeSearchTaskHandler {
                                    final LongAdder hitCount,
                                    final ValuesConsumer valuesConsumer,
                                    final ErrorConsumer errorConsumer,
-                                   final AbstractField[] fieldArray,
+                                   final QueryField[] fieldArray,
                                    final ExpressionMatcher expressionMatcher) {
         try {
 
@@ -245,8 +246,8 @@ class AnalyticsNodeSearchTaskHandler implements NodeSearchTaskHandler {
 
                     final TableResultConsumer tableResultConsumer = new TableResultConsumer(
                             doc, fieldArray, hitCount, valuesConsumer, expression, expressionMatcher);
-                    final FieldFormatter fieldFormatter =
-                            new FieldFormatter(new FormatterFactory(null));
+                    final ColumnFormatter fieldFormatter =
+                            new ColumnFormatter(new FormatterFactory(null));
                     final TableResultCreator resultCreator = new TableResultCreator(fieldFormatter) {
                         @Override
                         public TableResultBuilder createTableResultBuilder() {
@@ -290,17 +291,17 @@ class AnalyticsNodeSearchTaskHandler implements NodeSearchTaskHandler {
         private final AnalyticRuleDoc analyticRuleDoc;
 
         private FieldIndex fieldIndex;
-        private final AbstractField[] requestedFields;
+        private final QueryField[] requestedFields;
         private final LongAdder hitCount;
         private final ValuesConsumer consumer;
 
         private final ExpressionOperator expression;
         private final ExpressionMatcher expressionMatcher;
 
-        private List<Field> fields;
+        private List<Column> columns;
 
         public TableResultConsumer(final AnalyticRuleDoc analyticRuleDoc,
-                                   final AbstractField[] requestedFields,
+                                   final QueryField[] requestedFields,
                                    final LongAdder hitCount,
                                    final ValuesConsumer consumer,
                                    final ExpressionOperator expression,
@@ -327,10 +328,10 @@ class AnalyticsNodeSearchTaskHandler implements NodeSearchTaskHandler {
         }
 
         @Override
-        public TableResultConsumer fields(final List<Field> fields) {
-            this.fields = fields;
+        public TableResultConsumer columns(final List<Column> columns) {
+            this.columns = columns;
             fieldIndex = new FieldIndex();
-            fields.forEach(field -> fieldIndex.create(field.getName()));
+            columns.forEach(field -> fieldIndex.create(field.getName()));
             return this;
         }
 
@@ -345,12 +346,12 @@ class AnalyticsNodeSearchTaskHandler implements NodeSearchTaskHandler {
 
                 // Get value.
                 final StringBuilder sb = new StringBuilder();
-                for (int j = 0; j < fields.size(); j++) {
-                    final Field f = fields.get(j);
+                for (int j = 0; j < columns.size(); j++) {
+                    final Column column = columns.get(j);
                     if (sb.length() > 0) {
                         sb.append(", ");
                     }
-                    sb.append(f.getName());
+                    sb.append(column.getName());
                     sb.append(": ");
                     sb.append(row.getValues().get(j));
                 }
@@ -366,7 +367,7 @@ class AnalyticsNodeSearchTaskHandler implements NodeSearchTaskHandler {
                     hitCount.increment();
                     final Val[] values = new Val[requestedFields.length];
                     for (int i = 0; i < requestedFields.length; i++) {
-                        final AbstractField field = requestedFields[i];
+                        final QueryField field = requestedFields[i];
                         if (field.equals(AnalyticFields.NAME_FIELD)) {
                             values[i] = ValString.create(analyticRuleDoc.getName());
                         } else if (field.equals(AnalyticFields.UUID_FIELD)) {

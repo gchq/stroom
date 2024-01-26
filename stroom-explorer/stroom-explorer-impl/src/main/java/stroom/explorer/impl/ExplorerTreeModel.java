@@ -32,6 +32,10 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.Severity;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
+
 import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
@@ -42,9 +46,6 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.inject.Singleton;
 
 @Singleton
 @EntityEventHandler(action = {
@@ -263,9 +264,13 @@ class ExplorerTreeModel implements EntityEvent.Handler {
     public void onChange(final EntityEvent event) {
         NullSafe.consume(event, EntityEvent::getAction, action -> {
             switch (action) {
+                // The model doesn't care about UPDATE as that is an update of the content of the doc
+                // rather than an update to the node (e.g. tags).
                 case CREATE,
                         DELETE,
-                        UPDATE_EXPLORER_NODE -> {
+                        UPDATE_EXPLORER_NODE,
+                        DELETE_EXPLORER_NODE,
+                        CREATE_EXPLORER_NODE -> {
                     // E.g. tags on a node have changed
                     LOGGER.debug("Rebuilding tree model due to entity event {}", event);
                     rebuild();

@@ -22,6 +22,9 @@ import stroom.util.io.FileUtil;
 import stroom.util.io.TempDirProvider;
 import stroom.util.shared.ResourceKey;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
@@ -29,8 +32,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.Set;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 /**
  * Simple Store that gives you 1 hour to use your temp file and then it deletes

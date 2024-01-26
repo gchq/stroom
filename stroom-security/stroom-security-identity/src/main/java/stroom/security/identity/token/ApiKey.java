@@ -31,6 +31,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 //   possible
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder(alphabetic = true)
+@Deprecated // Keeping it else it breaks the React code
 public class ApiKey implements HasIntegerId, HasAuditInfo {
 
     @JsonProperty

@@ -2,13 +2,15 @@ package stroom.receive.common;
 
 import stroom.data.store.api.Store;
 import stroom.feed.api.FeedProperties;
+import stroom.feed.api.VolumeGroupNameProvider;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.MetaService;
 import stroom.meta.statistics.api.MetaStatistics;
 import stroom.proxy.StroomStatusCode;
 
+import jakarta.inject.Inject;
+
 import java.util.function.Consumer;
-import javax.inject.Inject;
 
 public class StreamTargetStreamHandlers implements StreamHandlers {
 
@@ -16,16 +18,19 @@ public class StreamTargetStreamHandlers implements StreamHandlers {
     private final FeedProperties feedProperties;
     private final MetaService metaService;
     private final MetaStatistics metaDataStatistics;
+    private final VolumeGroupNameProvider volumeGroupNameProvider;
 
     @Inject
     public StreamTargetStreamHandlers(final Store store,
                                       final FeedProperties feedProperties,
                                       final MetaService metaService,
-                                      final MetaStatistics metaDataStatistics) {
+                                      final MetaStatistics metaDataStatistics,
+                                      final VolumeGroupNameProvider volumeGroupNameProvider) {
         this.store = store;
         this.feedProperties = feedProperties;
         this.metaService = metaService;
         this.metaDataStatistics = metaDataStatistics;
+        this.volumeGroupNameProvider = volumeGroupNameProvider;
     }
 
     @Override
@@ -54,6 +59,7 @@ public class StreamTargetStreamHandlers implements StreamHandlers {
                     store,
                     feedProperties,
                     metaDataStatistics,
+                    volumeGroupNameProvider,
                     feedName,
                     type,
                     attributeMap);

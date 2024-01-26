@@ -18,25 +18,18 @@ package stroom.dashboard.client.table;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
+import stroom.dashboard.client.main.IndexLoader;
+import stroom.dashboard.client.main.SearchModel;
 import stroom.dashboard.client.table.ColumnFunctionEditorPresenter.ColumnFunctionEditorView;
 import stroom.dashboard.shared.DashboardResource;
-import stroom.dashboard.shared.TableComponentSettings;
 import stroom.dashboard.shared.ValidateExpressionResult;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
-import stroom.docref.DocRef;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.editor.client.presenter.EditorView;
-import stroom.query.api.v2.Field;
+import stroom.query.api.v2.Column;
 import stroom.query.client.presenter.QueryHelpPresenter;
-import stroom.query.client.presenter.QueryHelpPresenter.QueryHelpDataSupplier;
-import stroom.query.shared.QueryHelpItemsRequest;
-import stroom.query.shared.QueryHelpItemsRequest.HelpItemType;
-import stroom.query.shared.QueryHelpItemsResult;
-import stroom.query.shared.QueryResource;
 import stroom.util.shared.EqualsUtil;
-import stroom.util.shared.GwtNullSafe;
-import stroom.view.client.presenter.DataSourceFieldsMap;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -49,14 +42,9 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
-import edu.ycp.cs.dh.acegwt.client.ace.AceCompletionProvider;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 
-import java.util.EnumSet;
-import java.util.Optional;
-import java.util.Set;
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 
 /**
  * This is the presenter for editing the function expression in a dashboard column
@@ -69,19 +57,12 @@ public class ColumnFunctionEditorPresenter
 
     private static final DashboardResource DASHBOARD_RESOURCE = GWT.create(DashboardResource.class);
 
-    private static final Set<HelpItemType> SUPPORTED_HELP_TYPES = EnumSet.of(
-            HelpItemType.FIELD,
-            HelpItemType.FUNCTION);
-
-    private static final QueryResource QUERY_RESOURCE = GWT.create(QueryResource.class);
-
     private final RestFactory restFactory;
     private final EditorPresenter editorPresenter;
     private final QueryHelpPresenter queryHelpPresenter;
-    private AceCompletionProvider functionsCompletionProvider;
     private TablePresenter tablePresenter;
-    private Field field;
-    private BiConsumer<Field, Field> fieldChangeConsumer;
+    private Column column;
+    private BiConsumer<Column, Column> columnChangeConsumer;
 
     @Inject
     public ColumnFunctionEditorPresenter(final EventBus eventBus,
@@ -111,25 +92,33 @@ public class ColumnFunctionEditorPresenter
     }
 
     public void show(final TablePresenter tablePresenter,
-                     final Field field,
-                     final BiConsumer<Field, Field> fieldChangeConsumer) {
+                     final Column column,
+                     final BiConsumer<Column, Column> columnChangeConsumer) {
         this.tablePresenter = tablePresenter;
-        this.field = field;
-        this.fieldChangeConsumer = fieldChangeConsumer;
+        this.column = column;
+        this.columnChangeConsumer = columnChangeConsumer;
 
-        if (field.getExpression() != null) {
-            editorPresenter.setText(field.getExpression());
+        if (column.getExpression() != null) {
+            editorPresenter.setText(column.getExpression());
         } else {
             editorPresenter.setText("");
         }
-        queryHelpPresenter.setQueryHelpDataSupplier(createQueryHelpDataSupplier());
+        final SearchModel searchModel = tablePresenter.getCurrentSearchModel();
+        if (searchModel != null) {
+            final IndexLoader indexLoader = searchModel.getIndexLoader();
+            if (indexLoader != null) {
+                queryHelpPresenter.setDataSourceRef(indexLoader.getLoadedDataSourceRef());
+            }
+        }
+        queryHelpPresenter.setShowAll(false);
         queryHelpPresenter.linkToEditor(this.editorPresenter);
+        queryHelpPresenter.refresh();
 
         final PopupSize popupSize = PopupSize.resizable(800, 700);
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(popupSize)
-                .caption("Set Expression For '" + field.getName() + "'")
+                .caption("Set Expression For '" + column.getName() + "'")
                 .onShow(this)
                 .onHideRequest(this)
                 .onHide(this)
@@ -150,11 +139,11 @@ public class ColumnFunctionEditorPresenter
     public void onHideRequest(final HidePopupRequestEvent e) {
         if (e.isOk()) {
             final String expression = editorPresenter.getText();
-            if (EqualsUtil.isEquals(expression, field.getExpression())) {
+            if (EqualsUtil.isEquals(expression, column.getExpression())) {
                 e.hide();
             } else {
                 if (expression == null) {
-                    fieldChangeConsumer.accept(field, field.copy().expression(null).build());
+                    columnChangeConsumer.accept(column, column.copy().expression(null).build());
                     e.hide();
                 } else {
                     // Check the validity of the expression.
@@ -162,7 +151,7 @@ public class ColumnFunctionEditorPresenter
                     rest
                             .onSuccess(result -> {
                                 if (result.isOk()) {
-                                    fieldChangeConsumer.accept(field, field
+                                    columnChangeConsumer.accept(column, column
                                             .copy()
                                             .expression(expression)
                                             .build());
@@ -198,57 +187,6 @@ public class ColumnFunctionEditorPresenter
     public void onHide(final HidePopupEvent e) {
         editorPresenter.deRegisterCompletionProviders();
     }
-
-    private QueryHelpDataSupplier createQueryHelpDataSupplier() {
-        return new QueryHelpDataSupplier() {
-
-            @Override
-            public String decorateFieldName(final String fieldName) {
-                return GwtNullSafe.get(fieldName, str ->
-                        "${" + str + "}");
-            }
-
-            @Override
-            public void registerChangeHandler(final Consumer<DataSourceFieldsMap> onChange) {
-                // Do nothing as there is no means to change the data source on this screen
-            }
-
-            @Override
-            public boolean isSupported(final HelpItemType helpItemType) {
-                return helpItemType != null && SUPPORTED_HELP_TYPES.contains(helpItemType);
-            }
-
-            @Override
-            public void fetchQueryHelpItems(final String filterInput,
-                                            final Consumer<QueryHelpItemsResult> resultConsumer) {
-                final QueryHelpItemsRequest queryHelpItemsRequest = QueryHelpItemsRequest.fromDataSource(
-                        GwtNullSafe.get(tablePresenter.getTableSettings(), TableComponentSettings::getDataSourceRef),
-                        filterInput, SUPPORTED_HELP_TYPES);
-
-                final Rest<QueryHelpItemsResult> rest = restFactory.create();
-                rest
-                        .onSuccess(result -> {
-                            GwtNullSafe.consume(result, resultConsumer);
-                        })
-                        .onFailure(throwable -> AlertEvent.fireError(
-                                ColumnFunctionEditorPresenter.this,
-                                throwable.getMessage(),
-                                null))
-                        .call(QUERY_RESOURCE)
-                        .fetchQueryHelpItems(queryHelpItemsRequest);
-            }
-
-            @Override
-            public void fetchDataSourceDescription(final DocRef dataSourceDocRef,
-                                                   final Consumer<Optional<String>> descriptionConsumer) {
-                // DataSources not pickable here, so no-op
-            }
-        };
-    }
-
-
-    // --------------------------------------------------------------------------------
-
 
     public interface ColumnFunctionEditorView extends View {
 

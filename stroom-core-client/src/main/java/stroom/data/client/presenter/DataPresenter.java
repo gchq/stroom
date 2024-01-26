@@ -572,8 +572,8 @@ public class DataPresenter
 
                 final Long currentMetaId = getCurrentMetaId();
                 if (currentMetaId != null && currentMetaId >= 0) {
-                    final Rest<Set<String>> rest = restFactory.create();
-                    rest
+                    restFactory.builder()
+                            .forSetOf(String.class)
                             .onSuccess(availableChildStreamTypes -> {
 //                                GWT.log("Received available child stream types " + availableChildStreamTypes);
                                 currentAvailableStreamTypes = availableChildStreamTypes;
@@ -1116,8 +1116,8 @@ public class DataPresenter
 
     private void fetchMetaInfoData(final Long metaId) {
         if (metaId != null) {
-            final Rest<List<DataInfoSection>> rest = restFactory.create();
-            rest
+            restFactory.builder()
+                    .forListOf(DataInfoSection.class)
                     .onSuccess(this::handleMetaInfoResult)
                     .call(DATA_RESOURCE)
                     .viewInfo(metaId);
@@ -1135,7 +1135,7 @@ public class DataPresenter
                     .forEach(entry ->
                             tableBuilder
                                     .row(SafeHtmlUtils.fromString(entry.getKey()),
-                                            replaceJavaLineBreaks(entry.getValue())));
+                                            toHtmlLineBreaks(entry.getValue())));
         }
 
         final HtmlBuilder htmlBuilder = new HtmlBuilder();
@@ -1143,10 +1143,18 @@ public class DataPresenter
         htmlPresenter.setHtml(htmlBuilder.toSafeHtml().asString());
     }
 
-    private SafeHtml replaceJavaLineBreaks(final String str) {
+    private SafeHtml toHtmlLineBreaks(final String str) {
         if (str != null) {
             HtmlBuilder sb = new HtmlBuilder();
-            sb.appendEscapedLines(str);
+            // Change any line breaks html line breaks
+            final String[] lines = str.split("\n");
+            for (int i = 0; i < lines.length; i++) {
+                final String line = lines[i];
+                if (i > 0) {
+                    sb.appendTrustedString("<br/>");
+                }
+                sb.append(line);
+            }
             return sb.toSafeHtml();
         } else {
             return null;

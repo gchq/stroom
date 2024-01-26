@@ -13,7 +13,7 @@ import org.jooq.ForeignKey;
 import org.jooq.Identity;
 import org.jooq.Name;
 import org.jooq.Record;
-import org.jooq.Row10;
+import org.jooq.Row13;
 import org.jooq.Schema;
 import org.jooq.Table;
 import org.jooq.TableField;
@@ -98,6 +98,21 @@ public class FsVolume extends TableImpl<FsVolumeRecord> {
      */
     public final TableField<FsVolumeRecord, Integer> FK_FS_VOLUME_STATE_ID = createField(DSL.name("fk_fs_volume_state_id"), SQLDataType.INTEGER.nullable(false), this, "");
 
+    /**
+     * The column <code>stroom.fs_volume.volume_type</code>.
+     */
+    public final TableField<FsVolumeRecord, Integer> VOLUME_TYPE = createField(DSL.name("volume_type"), SQLDataType.INTEGER.nullable(false), this, "");
+
+    /**
+     * The column <code>stroom.fs_volume.data</code>.
+     */
+    public final TableField<FsVolumeRecord, byte[]> DATA = createField(DSL.name("data"), SQLDataType.BLOB, this, "");
+
+    /**
+     * The column <code>stroom.fs_volume.fk_fs_volume_group_id</code>.
+     */
+    public final TableField<FsVolumeRecord, Integer> FK_FS_VOLUME_GROUP_ID = createField(DSL.name("fk_fs_volume_group_id"), SQLDataType.INTEGER.nullable(false), this, "");
+
     private FsVolume(Name alias, Table<FsVolumeRecord> aliased) {
         this(alias, aliased, null);
     }
@@ -153,10 +168,11 @@ public class FsVolume extends TableImpl<FsVolumeRecord> {
 
     @Override
     public List<ForeignKey<FsVolumeRecord, ?>> getReferences() {
-        return Arrays.asList(Keys.FS_VOLUME_FK_FS_VOLUME_STATE_ID);
+        return Arrays.asList(Keys.FS_VOLUME_FK_FS_VOLUME_STATE_ID, Keys.FS_VOLUME_GROUP_FK_FS_VOLUME_GROUP_ID);
     }
 
     private transient FsVolumeState _fsVolumeState;
+    private transient FsVolumeGroup _fsVolumeGroup;
 
     /**
      * Get the implicit join path to the <code>stroom.fs_volume_state</code>
@@ -167,6 +183,17 @@ public class FsVolume extends TableImpl<FsVolumeRecord> {
             _fsVolumeState = new FsVolumeState(this, Keys.FS_VOLUME_FK_FS_VOLUME_STATE_ID);
 
         return _fsVolumeState;
+    }
+
+    /**
+     * Get the implicit join path to the <code>stroom.fs_volume_group</code>
+     * table.
+     */
+    public FsVolumeGroup fsVolumeGroup() {
+        if (_fsVolumeGroup == null)
+            _fsVolumeGroup = new FsVolumeGroup(this, Keys.FS_VOLUME_GROUP_FK_FS_VOLUME_GROUP_ID);
+
+        return _fsVolumeGroup;
     }
 
     @Override
@@ -201,11 +228,11 @@ public class FsVolume extends TableImpl<FsVolumeRecord> {
     }
 
     // -------------------------------------------------------------------------
-    // Row10 type methods
+    // Row13 type methods
     // -------------------------------------------------------------------------
 
     @Override
-    public Row10<Integer, Integer, Long, String, Long, String, String, Byte, Long, Integer> fieldsRow() {
-        return (Row10) super.fieldsRow();
+    public Row13<Integer, Integer, Long, String, Long, String, String, Byte, Long, Integer, Integer, byte[], Integer> fieldsRow() {
+        return (Row13) super.fieldsRow();
     }
 }

@@ -3,8 +3,12 @@ package stroom.bytebuffer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.ModelStringUtil;
 import stroom.util.sysinfo.SystemInfoResult;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.nio.ByteBuffer;
@@ -28,9 +32,6 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.inject.Singleton;
 
 /**
  * An bounded self-populating pool of directly allocated ByteBuffers.
@@ -207,7 +208,7 @@ public class ByteBufferPoolImpl4 implements ByteBufferPool {
     }
 
     private ByteBuffer getUnPooledBuffer(final int minCapacity) {
-        LOGGER.warn("Using un-pooled buffer, size: {}", minCapacity);
+        LOGGER.warn(() -> LogUtil.message("Using un-pooled buffer, size: {}", ModelStringUtil.formatCsv(minCapacity)));
         // Too big a buffer to pool so just create one that will have to be destroyed and not put in the pool
         return ByteBuffer.allocateDirect(minCapacity);
     }
@@ -253,7 +254,8 @@ public class ByteBufferPoolImpl4 implements ByteBufferPool {
                     // Don't want to block so create a new one
                     // Excess buffers will have to be unmapped rather than returned to the pool
                     final int roundedCapacity = bufferSizes[originalOffset];
-                    LOGGER.debug("Creating new buffer beyond the pool limit (capacity: {})", roundedCapacity);
+                    LOGGER.debug("Creating new buffer beyond the pool limit (capacity: {})",
+                            ModelStringUtil.formatCsv(roundedCapacity));
                     buffer = ByteBuffer.allocateDirect(roundedCapacity);
                 }
             }
@@ -276,8 +278,15 @@ public class ByteBufferPoolImpl4 implements ByteBufferPool {
             // Queue empty so if the pool hasn't reached them limit for this buffer size
             // create a new one.
             buffer = createNewBufferIfAllowed(offset);
+        } else {
+            // buffer not final, so no lambda
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("Got byteBuffer with capacity: {} from the pool with offset: {}, queue size: {}",
+                        ModelStringUtil.formatCsv(buffer.capacity()),
+                        offset,
+                        byteBufferQueue.size());
+            }
         }
-
         return buffer;
     }
 
@@ -287,6 +296,8 @@ public class ByteBufferPoolImpl4 implements ByteBufferPool {
 
     void release(final ByteBuffer buffer) {
         if (buffer != null) {
+            LOGGER.debug(() -> LogUtil.message("Releasing buffer with capacity: {}",
+                    ModelStringUtil.formatCsv(buffer.capacity())));
             final int offset = getOffset(buffer.capacity());
             if (isUnPooled(offset)) {
                 // Not pooled so need to release the memory via the cleaner
@@ -304,7 +315,7 @@ public class ByteBufferPoolImpl4 implements ByteBufferPool {
                     // to unmap it
                     LOGGER.debug(() -> LogUtil.message("Unable to return buffer to the queue so will destroy it " +
                                     "(capacity: {}, queue size: {}, counter value: {}, configured limit: {}",
-                            buffer.capacity(),
+                            ModelStringUtil.formatCsv(buffer.capacity()),
                             pooledBufferQueues[offset].size(),
                             pooledBufferCounters[offset].get(),
                             maxBufferCounts[offset]));
@@ -419,8 +430,8 @@ public class ByteBufferPoolImpl4 implements ByteBufferPool {
             }
         }
 
-        LOGGER.info("Cleared the following buffers from the pool (buffer size:number cleared) - " + String.join(", ",
-                msgs));
+        LOGGER.info("Cleared the following buffers from the pool (buffer size:number cleared) - "
+                + String.join(", ", msgs));
     }
 
     @Override
@@ -497,7 +508,8 @@ public class ByteBufferPoolImpl4 implements ByteBufferPool {
 
                 if (bufferCounter.compareAndSet(currBufferCount, newBufferCount)) {
                     // Succeeded in incrementing the count so we can create one
-                    LOGGER.debug("Creating new pooled buffer (capacity: {})", roundedCapacity);
+                    LOGGER.debug(() -> LogUtil.message("Creating new pooled buffer (capacity: {})",
+                            ModelStringUtil.formatCsv(roundedCapacity)));
                     byteBuffer = ByteBuffer.allocateDirect(roundedCapacity);
 
                     if (newBufferCount == warningThreshold) {
@@ -505,14 +517,14 @@ public class ByteBufferPoolImpl4 implements ByteBufferPool {
                                 byteBufferPoolConfigProvider.get().getWarningThresholdPercentage(),
                                 warningThreshold,
                                 newBufferCount,
-                                bufferSizes[offset]);
+                                ModelStringUtil.formatCsv(bufferSizes[offset]));
                     } else if (newBufferCount == maxBufferCount) {
                         LOGGER.warn("Hit limit of {} for pooled buffers of size {}. " +
                                         "Future calls to the pool will create new buffers but excess buffers " +
                                         "will have to be freed rather than returned to the pool. This may incur a " +
                                         "performance overhead. Consider changing the pool settings.",
                                 newBufferCount,
-                                roundedCapacity);
+                                ModelStringUtil.formatCsv(roundedCapacity));
                     }
 
                     break;

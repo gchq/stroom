@@ -37,6 +37,8 @@ import stroom.util.shared.Severity;
 import stroom.view.api.ViewStore;
 import stroom.view.shared.ViewDoc;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import org.assertj.core.api.Assertions;
 
 import java.io.ByteArrayInputStream;
@@ -50,8 +52,6 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.regex.Pattern;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

@@ -1,7 +1,7 @@
 package stroom.bytebuffer;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 /**
  * Provides a single point for tests that don't want to use guice

@@ -4,17 +4,18 @@
 package stroom.security.impl.db.jooq;
 
 
-import java.util.Arrays;
-import java.util.List;
+import stroom.security.impl.db.jooq.tables.ApiKey;
+import stroom.security.impl.db.jooq.tables.AppPermission;
+import stroom.security.impl.db.jooq.tables.DocPermission;
+import stroom.security.impl.db.jooq.tables.StroomUser;
+import stroom.security.impl.db.jooq.tables.StroomUserGroup;
 
 import org.jooq.Catalog;
 import org.jooq.Table;
 import org.jooq.impl.SchemaImpl;
 
-import stroom.security.impl.db.jooq.tables.AppPermission;
-import stroom.security.impl.db.jooq.tables.DocPermission;
-import stroom.security.impl.db.jooq.tables.StroomUser;
-import stroom.security.impl.db.jooq.tables.StroomUserGroup;
+import java.util.Arrays;
+import java.util.List;
 
 
 /**
@@ -29,6 +30,11 @@ public class Stroom extends SchemaImpl {
      * The reference instance of <code>stroom</code>
      */
     public static final Stroom STROOM = new Stroom();
+
+    /**
+     * The table <code>stroom.api_key</code>.
+     */
+    public final ApiKey API_KEY = ApiKey.API_KEY;
 
     /**
      * The table <code>stroom.app_permission</code>.
@@ -66,6 +72,7 @@ public class Stroom extends SchemaImpl {
     @Override
     public final List<Table<?>> getTables() {
         return Arrays.asList(
+            ApiKey.API_KEY,
             AppPermission.APP_PERMISSION,
             DocPermission.DOC_PERMISSION,
             StroomUser.STROOM_USER,

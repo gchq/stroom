@@ -1,10 +1,12 @@
 package stroom.pipeline.xsltfunctions;
 
+import stroom.task.api.TaskContext;
 import stroom.test.common.TestUtil;
 import stroom.util.shared.Severity;
 
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
+import org.mockito.Mockito;
 
 import java.util.stream.Stream;
 
@@ -12,45 +14,66 @@ class TestAbstractLookup {
 
     @TestFactory
     Stream<DynamicTest> testShouldLog() {
+
+        record Inputs(Severity severity, boolean isTrace, boolean isIgnoreWarnings, boolean isTerminated) {
+        }
+
         return TestUtil.buildDynamicTestStream()
                 .withInputType(Inputs.class)
                 .withOutputType(Boolean.class)
-                .withTestFunction(testCase -> AbstractLookup.shouldLog(
-                        testCase.getInput().severity,
-                        testCase.getInput().isTrace,
-                        testCase.getInput().isIgnoreWarnings))
+                .withTestFunction(testCase -> {
+                    final TaskContext taskContext = Mockito.mock(TaskContext.class);
+                    Mockito.when(taskContext.isTerminated())
+                            .thenReturn(testCase.getInput().isTerminated);
+
+                    return AbstractLookup.shouldLog(
+                            taskContext,
+                            testCase.getInput().severity,
+                            testCase.getInput().isTrace,
+                            testCase.getInput().isIgnoreWarnings);
+                })
                 .withSimpleEqualityAssertion()
-                .addCase(new Inputs(Severity.INFO, false, true), false)
-                .addCase(new Inputs(Severity.INFO, true, true), true)
-                .addCase(new Inputs(Severity.INFO, false, false), false)
-                .addCase(new Inputs(Severity.WARNING, false, true), false)
-                .addCase(new Inputs(Severity.WARNING, false, true), false)
-                .addCase(new Inputs(Severity.WARNING, true, true), true)
-                .addCase(new Inputs(Severity.ERROR, false, true), true)
-                .addCase(new Inputs(Severity.ERROR, true, true), true)
-                .addCase(new Inputs(Severity.ERROR, true, false), true)
-                .addCase(new Inputs(Severity.ERROR, false, false), true)
+                .addCase(new Inputs(Severity.INFO, false, true, false),
+                        false)
+                .addCase(new Inputs(Severity.INFO, true, true, false),
+                        true)
+                .addCase(new Inputs(Severity.INFO, false, false, false),
+                        false)
+                .addCase(new Inputs(Severity.WARNING, false, true, false),
+                        false)
+                .addCase(new Inputs(Severity.WARNING, false, false, false),
+                        true)
+                .addCase(new Inputs(Severity.WARNING, true, true, false),
+                        true)
+                .addCase(new Inputs(Severity.ERROR, false, true, false),
+                        true)
+                .addCase(new Inputs(Severity.ERROR, true, true, false),
+                        true)
+                .addCase(new Inputs(Severity.ERROR, true, false, false),
+                        true)
+                .addCase(new Inputs(Severity.ERROR, false, false, false),
+                        true)
+
+                .addCase(new Inputs(Severity.INFO, false, true, true),
+                        false)
+                .addCase(new Inputs(Severity.INFO, true, true, true),
+                        false)
+                .addCase(new Inputs(Severity.INFO, false, false, true),
+                        false)
+                .addCase(new Inputs(Severity.WARNING, false, true, true),
+                        false)
+                .addCase(new Inputs(Severity.WARNING, false, false, true),
+                        false)
+                .addCase(new Inputs(Severity.WARNING, true, true, true),
+                        false)
+                .addCase(new Inputs(Severity.ERROR, false, true, true),
+                        false)
+                .addCase(new Inputs(Severity.ERROR, true, true, true),
+                        false)
+                .addCase(new Inputs(Severity.ERROR, true, false, true),
+                        false)
+                .addCase(new Inputs(Severity.ERROR, false, false, true),
+                        false)
                 .build();
-    }
-
-    // TODO: 20/01/2023 Convert to local record in method when on J17+
-    private static class Inputs {
-        private final Severity severity;
-        private final boolean isTrace;
-        private final boolean isIgnoreWarnings;
-
-        private Inputs(final Severity severity, final boolean isTrace, final boolean isIgnoreWarnings) {
-            this.severity = severity;
-            this.isTrace = isTrace;
-            this.isIgnoreWarnings = isIgnoreWarnings;
-        }
-
-        @Override
-        public String toString() {
-            return String.join(", ",
-                    severity.toString(),
-                    "trace:" + isTrace,
-                    "ignoreWarnings:" + isIgnoreWarnings);
-        }
     }
 }

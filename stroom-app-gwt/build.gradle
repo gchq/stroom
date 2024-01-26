@@ -1,16 +1,45 @@
+import java.nio.file.Files
+
 ext.moduleName = 'stroom.app.gwt'
+
+def getSysPropertyOrDefault = { propName, defaultValue ->
+    def val
+    if (System.hasProperty(propName)
+            && System.getProperty(propName) != "unspecified"
+            && System.getProperty(propName) != "") {
+        val = System.getProperty(propName)
+        logger.info("Using property [${propName}] with value [${val}]")
+    } else {
+        val = defaultValue
+        logger.info("Property [${propName}] has no value, using default value [${val}]")
+    }
+    return val
+}
 
 def resourcesDir = project(':stroom-app').file('src/main/resources')
 def warDir = "${resourcesDir}/ui"
 def outputDir = "${warDir}/stroom"
 
-def gwtBuildDir = "${project.buildDir}/gwt"
-def tmpDir = "${gwtBuildDir}/tmp"
+def javaIoTmpDir = getSysPropertyOrDefault("java.io.tmpdir", "/tmp")
+logger.info('javaIoTmpDir: ' + javaIoTmpDir)
+// Append the rootDir so gwt builds from different dirs don't conflict
+def gwtBuildDir = javaIoTmpDir + "/app-gwt_build/" + rootDir
+gwtBuildDir = gwtBuildDir.replaceAll('//', '/')
+logger.info('gwtBuildDir: ' + gwtBuildDir)
+
+def gwtTmpDir = "${gwtBuildDir}/tmp"
+logger.info('gwtTmpDir: ' + gwtTmpDir)
 def workDir = "${gwtBuildDir}/work"
 def deployDir = "${gwtBuildDir}/deploy"
 def extraDir = "${gwtBuildDir}/extra"
+// This is where eclipse transformer outputs to
+def modifiedProjectsBasePath = "${gwtBuildDir}/modified_projects"
+// This will contain a copy of modifiedProjectsBasePath that GWT uses on its classpath
+def modifiedProjectsBasePathGwt = "${gwtBuildDir}/modified_projects_gwt"
 
-configurations.all {
+def gwtSourceDirs = []
+
+configurations.configureEach {
     resolutionStrategy {
         eachDependency { DependencyResolveDetails details ->
             if (details.requested.group == 'javax.xml.bind') {
@@ -23,9 +52,11 @@ configurations.all {
     }
 }
 
-// Declare a source set just for our GWT compile that is separate from teh Java compilation source set.
+// Declare a source set just for our GWT compile that is separate from the Java compilation source set.
 sourceSets {
     gwtSource
+    gwtDevSource
+    jakartaTransformer
 }
 
 dependencies {
@@ -34,100 +65,195 @@ dependencies {
     implementation project(':stroom-core-shared')
     implementation project(':stroom-dashboard:stroom-dashboard-client')
     implementation project(':stroom-docref')
+    implementation project(':stroom-gwt')
     implementation project(':stroom-query:stroom-query-language-api')
     implementation project(':stroom-query:stroom-query-api')
-    implementation project(':stroom-query:stroom-query-common')
     implementation project(':stroom-security:stroom-security-client')
     implementation project(':stroom-security:stroom-security-client-api')
     implementation project(':stroom-statistics:stroom-statistics-client')
 
     // These source deps are all needed for the GWT transpiling to javascript
     implementation libs.gin
-    implementation libs.guice3
+    implementation libs.guice__gwt
     implementation libs.gwt_dev
     implementation libs.gwt_user
     implementation libs.gwtp_mvp_client
     implementation libs.jackson_annotations
-    implementation libs.jaxb_api
+    implementation libs.jaxb_api__gwt
     implementation libs.swagger_annotations // needed so gwt can compile the stroom-query code that contains swagger annotations
+    implementation libs.ws_rs_api__gwt
 
     gwtSourceImplementation libs.gin
-    gwtSourceImplementation libs.gwt_dev
     gwtSourceImplementation libs.gwt_user
     gwtSourceImplementation libs.gwtp_mvp_client
-    gwtSourceImplementation libs.jaxb_api
+    gwtSourceImplementation libs.jaxb_api__gwt
     gwtSourceImplementation libs.swagger_annotations // needed so gwt can compile the stroom-query code that contains swagger annotations
     gwtSourceImplementation libs.restygwt
-    gwtSourceImplementation libs.ws_rs_api
+    gwtSourceImplementation libs.ws_rs_api__gwt
 
-//    gwtSourceImplementation libs.stroomDocRef
-//    gwtSourceCompile "${libs.stroomDocRef}:sources"
-//    gwtSourceImplementation libs.stroomQueryApi
-//    gwtSourceCompile "${libs.stroomQueryApi}:sources"
-//    gwtSourceImplementation libs.stroomQueryCommon
-//    gwtSourceCompile "${libs.stroomQueryCommon}:sources"
+    gwtDevSourceImplementation libs.gwt_dev
+
+    jakartaTransformerImplementation libs.eclipse_transformer_cli
 }
 
-// Create a list of source directories where source for GWT can be found.
-def gwtSourceDirs = []
-
 // Define a list of projects that contain the source code we want to compile with GWT.
-def projList = [
+def clientProjects = [
         project(':stroom-app-gwt'),
         project(':stroom-core-client'),
         project(':stroom-core-client-widget'),
-        project(':stroom-core-shared'),
         project(':stroom-dashboard:stroom-dashboard-client'),
+        project(':stroom-statistics:stroom-statistics-client'),
+        project(':stroom-core-shared'),
         project(':stroom-docref'),
-        project(':stroom-query:stroom-query-language-api'),
         project(':stroom-query:stroom-query-api'),
-        project(':stroom-query:stroom-query-common'),
+        project(':stroom-query:stroom-query-language-api'),
         project(':stroom-security:stroom-security-client'),
         project(':stroom-security:stroom-security-client-api'),
-        project(':stroom-statistics:stroom-statistics-client'),
-        project(':stroom-util-shared')
+        project(':stroom-util-shared'),
 ]
 
-// Add source from each of the defined projects.
-projList.each { p ->
-    gwtSourceDirs.addAll(p.sourceSets.main.output.classesDirs)
-    gwtSourceDirs.addAll(p.sourceSets.main.java.srcDirs)
-    gwtSourceDirs.addAll(p.sourceSets.main.resources.srcDirs)
+// Task to make a copy of each project in projectsToRename then change all imports
+// from jakarta => javax (in source/classses/resources) so that GWT can use them.
+// It adds the modified projects to GWTs compile classpath.
+// This is a temporary hack until there is a jakarta friendly version of GWT.
+// See https://github.com/gwtproject/gwt/issues/9727 for details on jakarta progress but
+// be aware that restgwt is not jakarta friendly and is a dormant project so that will need
+// sorting somehow.
+tasks.register('copySources') {
+    doLast {
+        // This file has all the rename mappings for TransformerCLI to use
+        def propFilePath = rootDir.toPath().resolve('jakarta-renames-reverse.properties')
+        def inputProjectPath = layout.buildDirectory.dir("raw-source").get()
+        def outputProjectPath = layout.buildDirectory.dir("transformed-source").get()
+
+        // Delete current source output.
+        delete inputProjectPath
+
+        // Copy all code into source output.
+        clientProjects.each { prj ->
+            println('copy: ' + prj.projectDir)
+            copy {
+                from prj.projectDir.toPath().resolve('src').resolve('main').resolve('java')
+                into inputProjectPath
+            }
+            copy {
+                from prj.projectDir.toPath().resolve('src').resolve('main').resolve('resources')
+                into inputProjectPath
+            }
+        }
+
+        // Transform code.
+        println 'Running eclipse TransformerCLI'
+        println('inputProjectPath: ' + inputProjectPath)
+        println('outputProjectPath: ' + outputProjectPath)
+        delete outputProjectPath
+
+        javaexec {
+            classpath = files(sourceSets.jakartaTransformer.compileClasspath)
+            mainClass = "org.eclipse.transformer.cli.TransformerCLI"
+            args = [
+                    inputProjectPath,
+                    outputProjectPath,
+                    '-tr', propFilePath,
+            ]
+        }
+
+        def allSourcePath = layout.buildDirectory.dir("all-source").get()
+        delete allSourcePath
+        // Copy dep jars.
+        sourceSets.gwtSource.compileClasspath.files.forEach {zipFile ->
+            println('copy: ' + zipFile)
+            copy {
+                from zipTree(zipFile)
+                into allSourcePath
+            }
+        }
+        copy {
+            from outputProjectPath
+            into allSourcePath
+        }
+    }
 }
 
-// Add all of the library sources from the gwtSource source set defined above.
-gwtSourceDirs.addAll(sourceSets.gwtSource.compileClasspath)
+tasks.register('compileSources', JavaCompile) {
+    dependsOn copySources
+    def sources = layout.buildDirectory.dir("transformed-source").get()
+    def build = layout.buildDirectory.dir("transformed-build").get()
 
-task gwtCompile(dependsOn: classes, type: JavaExec) {
+    source = file(sources)
+    destinationDirectory.set(file(build))
+    classpath = files(sources, sourceSets.gwtSource.compileClasspath)
+    options.sourcepath = files(sources)
+
+    outputs.dir(destinationDirectory.get())
+}
+
+tasks.register('makeGwtSourceDirs') {
+    dependsOn compileSources
     group "gwt"
-    dependsOn 'gwtClean'
 
-    def module = 'stroom.app.App'
+    doLast {
+        gwtSourceDirs = []
 
-    doFirst {
-        println 'Deleting GWT compiled output: ' + outputDir.toString()
-        delete outputDir
-        println 'Deleting GWT build dir: ' + gwtBuildDir.toString()
-        delete gwtBuildDir
+        // Add all of the library sources from the gwtSource source set defined above.
+        gwtSourceDirs.addAll(sourceSets.gwtDevSource.compileClasspath)
+        gwtSourceDirs.addAll(project(':stroom-gwt').sourceSets.main.output.classesDirs)
 
-        println "Making directory gwtBuildDir $gwtBuildDir"
-        file(gwtBuildDir).mkdirs()
-        println "Making directory tmpDir $tmpDir"
-        file(tmpDir).mkdirs()
-        println "Making directory workDir $workDir"
-        file(workDir).mkdirs()
-        println "Making directory deployDir $deployDir"
-        file(deployDir).mkdirs()
-        println "Making directory extraDir $extraDir"
-        file(extraDir).mkdirs()
+        gwtSourceDirs.add(layout.buildDirectory.dir("all-source").get())
+        gwtSourceDirs.add(layout.buildDirectory.dir("transformed-build").get())
 
-        println "Dumping $gwtSourceDirs.size gwtSourceDirs"
+        println "Dumping ${gwtSourceDirs.size()} gwtSourceDirs"
         gwtSourceDirs.each {
             println "${it.toString()}"
         }
     }
+}
 
-    mainClass = gwtCompilerProps.mainClass
+tasks.register('gwtCompile', JavaExec) {
+    dependsOn classes
+    group "gwt"
+    dependsOn 'gwtClean'
+    dependsOn 'makeGwtSourceDirs'
+
+    def module = 'stroom.app.App'
+
+    doFirst {
+        println 'Deleting GWT build dirs in ' + gwtBuildDir.toString()
+        delete gwtTmpDir
+        delete workDir
+        delete deployDir
+        delete extraDir
+
+        logger.info("Ensuring directory gwtBuildDir ${gwtBuildDir}")
+        new File(gwtBuildDir).mkdirs()
+        logger.info("Ensuring directory gwtTmpDir ${gwtTmpDir}")
+        new File(gwtTmpDir).mkdirs()
+        logger.info("Ensuring directory workDir ${workDir}")
+        new File(workDir).mkdirs()
+        logger.info("Ensuring directory deployDir ${deployDir}")
+        new File(deployDir).mkdirs()
+        logger.info("Ensuring directory extraDir ${extraDir}")
+        new File(extraDir).mkdirs()
+
+        logger.info("gwtSourceDirs count: ${gwtSourceDirs.size()}")
+
+        //println "Dumping $gwtSourceDirs.size gwtSourceDirs"
+        //gwtSourceDirs.each {
+        //println "${it.toString()}"
+        //}
+        logger.info('modifiedProjectsBasePath: ' + modifiedProjectsBasePath)
+
+        gwtSourceDirs.each {
+            if (it instanceof java.nio.file.Path && Files.exists(it)) {
+                println "Can't find gwtSourceDir" + it
+                //throw new GradleException("Can't find gwtSourceDir ${it}")
+            } else if (it instanceof File && !Files.exists(it.toPath())) {
+                println "Can't find gwtSourceDir" + it
+            }
+        }
+    }
+
+    mainClass.set(gwtCompilerProps.mainClass.toString())
 
     classpath {
         gwtSourceDirs
@@ -148,27 +274,44 @@ task gwtCompile(dependsOn: classes, type: JavaExec) {
     ]
 
     jvmArgs = [
-            "-Djava.io.tmpdir=${tmpDir}",
+            "-Djava.io.tmpdir=${gwtTmpDir}",
+            //'-Dgwt.persistentunitcache=false',
             '--add-opens', 'java.base/java.lang=ALL-UNNAMED',  // needed for GWT
     ]
     minHeapSize = gwtCompilerProps.minHeap
     maxHeapSize = gwtCompilerProps.maxHeap
 }
 
-task gwtDraftCompile(dependsOn: classes, type: JavaExec) {
+tasks.register('gwtDraftCompile', JavaExec) {
+    dependsOn classes
     group "gwt"
+    dependsOn 'makeGwtSourceDirs'
+
     def module = 'stroom.app.AppSuperDevModeChrome'
 
     doFirst {
         println 'Deleting GWT compiled output: ' + outputDir.toString()
         delete outputDir
 
-        println 'Making GWT output directories'
-        file(gwtBuildDir).mkdirs()
-        file(tmpDir).mkdirs()
-        file(workDir).mkdirs()
-        file(deployDir).mkdirs()
-        file(extraDir).mkdirs()
+        logger.info("Ensuring directory gwtBuildDir ${gwtBuildDir}")
+        new File(gwtBuildDir).mkdirs()
+        logger.info("Ensuring directory gwtTmpDir ${gwtTmpDir}")
+        new File(gwtTmpDir).mkdirs()
+        logger.info("Ensuring directory workDir ${workDir}")
+        new File(workDir).mkdirs()
+        logger.info("Ensuring directory deployDir ${deployDir}")
+        new File(deployDir).mkdirs()
+        logger.info("Ensuring directory extraDir ${extraDir}")
+        new File(extraDir).mkdirs()
+
+        gwtSourceDirs.each {
+            if (it instanceof java.nio.file.Path && Files.exists(it)) {
+                println "Can't find gwtSourceDir" + it
+                //throw new GradleException("Can't find gwtSourceDir ${it}")
+            } else if (it instanceof File && !Files.exists(it.toPath())) {
+                println "Can't find gwtSourceDir" + it
+            }
+        }
     }
 
     mainClass = 'com.google.gwt.dev.Compiler'
@@ -194,15 +337,18 @@ task gwtDraftCompile(dependsOn: classes, type: JavaExec) {
     ]
 
     jvmArgs = [
-            "-Djava.io.tmpdir=${tmpDir}",
+            "-Djava.io.tmpdir=${gwtTmpDir}",
             '--add-opens', 'java.base/java.lang=ALL-UNNAMED',  // needed for GWT
     ]
     minHeapSize = '1G'
     maxHeapSize = '4G'
 }
 
-task gwtSuperDevMode(dependsOn: classes, type: JavaExec) {
+tasks.register('gwtSuperDevMode', JavaExec) {
+    dependsOn classes
     group "gwt"
+    dependsOn 'makeGwtSourceDirs'
+
     def module = 'stroom.app.AppSuperDevModeChrome'
 
 //    def dirs = []
@@ -211,16 +357,16 @@ task gwtSuperDevMode(dependsOn: classes, type: JavaExec) {
 //    println dirs
 
     doFirst {
-        println "Making directory gwtBuildDir $gwtBuildDir"
-        file(gwtBuildDir).mkdirs()
-        println "Making directory tmpDir $tmpDir"
-        file(tmpDir).mkdirs()
-        println "Making directory workDir $workDir"
-        file(workDir).mkdirs()
-        println "Making directory deployDir $deployDir"
-        file(deployDir).mkdirs()
-        println "Making directory extraDir $extraDir"
-        file(extraDir).mkdirs()
+        logger.info("Ensuring directory gwtBuildDir ${gwtBuildDir}")
+        new File(gwtBuildDir).mkdirs()
+        logger.info("Ensuring directory gwtTmpDir ${gwtTmpDir}")
+        new File(gwtTmpDir).mkdirs()
+        logger.info("Ensuring directory workDir ${workDir}")
+        new File(workDir).mkdirs()
+        logger.info("Ensuring directory deployDir ${deployDir}")
+        new File(deployDir).mkdirs()
+        logger.info("Ensuring directory extraDir ${extraDir}")
+        new File(extraDir).mkdirs()
 
         def GREEN = '\033[1;32m'
         def NC = '\033[0m'
@@ -230,6 +376,9 @@ task gwtSuperDevMode(dependsOn: classes, type: JavaExec) {
           * Visit the 'code server' (link further down) and copy the dev mode buttons to your browser bookmarks
           * Visit stroom at http://localhost:8080 (NOTE: http, not https), or https://localhost if running Nginx
           * Click 'Dev Mode On'${NC}
+
+          If you change any code shared between client and server, you will need to run :stroom-app-gwt:jakarta to
+          update GWT's view of the code.
         """.stripIndent().trim()
     }
 
@@ -252,44 +401,31 @@ task gwtSuperDevMode(dependsOn: classes, type: JavaExec) {
     ]
 
     jvmArgs = [
-            "-Djava.io.tmpdir=${tmpDir}",
+            "-Djava.io.tmpdir=${gwtTmpDir}",
             '--add-opens', 'java.base/java.lang=ALL-UNNAMED',  // needed for GWT
     ]
     minHeapSize = gwtCompilerProps.minHeap
     maxHeapSize = gwtCompilerProps.maxHeap
 }
 
-task gwtClean {
+tasks.register('gwtClean') {
     group "gwt"
     doLast {
 //        println 'Deleting GWT unit cache: ' + unitCacheDir.toString()
 //        delete unitCacheDir
-        println 'Deleting GWT compiled output: ' + outputDir.toString()
+
+        logger.info('Deleting GWT compiled output: ' + outputDir.toString())
         delete outputDir
-        println 'Deleting GWT build dir: ' + gwtBuildDir.toString()
+        logger.info('Deleting GWT build dir: ' + gwtBuildDir.toString())
         delete gwtBuildDir
-        println "Making directory gwtBuildDir $gwtBuildDir"
-        file(gwtBuildDir).mkdirs()
-        println "Making directory tmpDir $tmpDir"
-        file(tmpDir).mkdirs()
+        logger.info('Deleting modified projects: ' + modifiedProjectsBasePath.toString())
+        delete modifiedProjectsBasePath
+        logger.info('Deleting modified projects (GWT copy): ' + modifiedProjectsBasePathGwt.toString())
+        delete modifiedProjectsBasePathGwt
+
+        logger.info("Ensuring directory gwtBuildDir ${gwtBuildDir}")
+        new File(gwtBuildDir).mkdirs()
+        logger.info("Ensuring directory gwtTmpDir ${gwtTmpDir}")
+        new File(gwtTmpDir).mkdirs()
     }
 }
-
-
-//import com.vanniktech.dependency.graph.generator.DependencyGraphGeneratorPlugin
-//import com.vanniktech.dependency.graph.generator.DependencyGraphGeneratorExtension.Generator
-//import guru.nidi.graphviz.attribute.Color
-//import guru.nidi.graphviz.attribute.Style
-//
-//plugins.apply(DependencyGraphGeneratorPlugin)
-//
-//def stroomGenerator = new Generator(
-//        "stroomLibraries", // Suffix for our Gradle task.
-//        { dependency -> dependency.getModuleGroup().startsWith("stroom") }, // Only want stroom.
-//        { dependency -> true }, // Include transitive dependencies.
-//        { node, dependency -> node.add(Style.FILLED, Color.rgb("#ff6f00")) }, // Give them some stroom color.
-//)
-//
-//dependencyGraphGenerator {
-//    generators = [ stroomGenerator ]
-//}

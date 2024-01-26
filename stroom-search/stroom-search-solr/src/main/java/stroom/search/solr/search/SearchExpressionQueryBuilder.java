@@ -28,16 +28,16 @@ import stroom.query.common.v2.DateExpressionParser;
 import stroom.search.solr.shared.SolrIndexField;
 import stroom.search.solr.shared.SolrIndexFieldType;
 
-import org.apache.lucene.index.Term;
-import org.apache.lucene.search.BooleanClause;
-import org.apache.lucene.search.BooleanClause.Occur;
-import org.apache.lucene.search.BooleanQuery;
-import org.apache.lucene.search.BooleanQuery.Builder;
-import org.apache.lucene.search.MatchAllDocsQuery;
-import org.apache.lucene.search.NumericRangeQuery;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.TermQuery;
-import org.apache.lucene.search.WildcardQuery;
+import org.apache.lucene553.index.Term;
+import org.apache.lucene553.search.BooleanClause;
+import org.apache.lucene553.search.BooleanClause.Occur;
+import org.apache.lucene553.search.BooleanQuery;
+import org.apache.lucene553.search.BooleanQuery.Builder;
+import org.apache.lucene553.search.MatchAllDocsQuery;
+import org.apache.lucene553.search.NumericRangeQuery;
+import org.apache.lucene553.search.Query;
+import org.apache.lucene553.search.TermQuery;
+import org.apache.lucene553.search.WildcardQuery;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -108,11 +108,11 @@ public class SearchExpressionQueryBuilder {
                         }
                     }
 
-                    if (innerChildQueries.size() > 0) {
+                    if (!innerChildQueries.isEmpty()) {
                         final Occur occur = getOccur(operator);
 
                         if (innerChildQueries.size() == 1) {
-                            final Query child = innerChildQueries.get(0);
+                            final Query child = innerChildQueries.getFirst();
 
                             // Add negation to single items if required.
                             if (Occur.MUST_NOT.equals(occur)) {
@@ -142,10 +142,10 @@ public class SearchExpressionQueryBuilder {
                                         }
 
                                         final BooleanQuery orTerms = orTermsBuilder.build();
-                                        if (orTerms.clauses().size() > 0) {
+                                        if (!orTerms.clauses().isEmpty()) {
                                             if (orTerms.clauses().size() == 1) {
                                                 // Collapse single term.
-                                                builder.add(orTerms.clauses().get(0).getQuery(), occur);
+                                                builder.add(orTerms.clauses().getFirst().getQuery(), occur);
                                             } else {
                                                 builder.add(orTerms, occur);
                                             }
@@ -169,10 +169,10 @@ public class SearchExpressionQueryBuilder {
                                         }
 
                                         final BooleanQuery orTerms = orTermsBuilder.build();
-                                        if (orTerms.clauses().size() > 0) {
+                                        if (!orTerms.clauses().isEmpty()) {
                                             if (orTerms.clauses().size() == 1) {
                                                 // Collapse single term.
-                                                builder.add(orTerms.clauses().get(0).getQuery(), occur);
+                                                builder.add(orTerms.clauses().getFirst().getQuery(), occur);
                                             } else {
                                                 builder.add(orTerms, occur);
                                             }
@@ -212,7 +212,7 @@ public class SearchExpressionQueryBuilder {
         }
 
         // Try and find the referenced field.
-        if (field == null || field.length() == 0) {
+        if (field == null || field.isEmpty()) {
             throw new SearchException("Field not set");
         }
         final SolrIndexField indexField = indexFieldsMap.get(field);
@@ -233,7 +233,7 @@ public class SearchExpressionQueryBuilder {
                 throw new SearchException("Doc Ref not set for field: " + field);
             }
         } else {
-            if (value == null || value.length() == 0) {
+            if (value == null || value.isEmpty()) {
                 return null;
             }
         }
@@ -245,6 +245,11 @@ public class SearchExpressionQueryBuilder {
                     final Long num1 = getNumber(fieldName, value);
                     return NumericRangeQuery.newLongRange(
                             fieldName, num1, num1, true, true);
+                }
+                case NOT_EQUALS -> {
+                    final Long num1 = getNumber(fieldName, value);
+                    return negate(NumericRangeQuery.newLongRange(
+                            fieldName, num1, num1, true, true));
                 }
                 case CONTAINS -> {
                     return getContains(fieldName, value, indexField, terms);
@@ -294,6 +299,10 @@ public class SearchExpressionQueryBuilder {
                 case EQUALS -> {
                     final Long date1 = DateExpressionParser.getMs(fieldName, value, dateTimeSettings);
                     return NumericRangeQuery.newLongRange(fieldName, date1, date1, true, true);
+                }
+                case NOT_EQUALS -> {
+                    final Long date1 = DateExpressionParser.getMs(fieldName, value, dateTimeSettings);
+                    return negate(NumericRangeQuery.newLongRange(fieldName, date1, date1, true, true));
                 }
                 case CONTAINS -> {
                     return getContains(fieldName, value, indexField, terms);
@@ -356,6 +365,7 @@ public class SearchExpressionQueryBuilder {
         } else {
             return switch (condition) {
                 case EQUALS -> getContains(fieldName, value, indexField, terms);
+                case NOT_EQUALS -> negate(getContains(fieldName, value, indexField, terms));
 //                    return getSubQuery(matchVersion, indexField, value, terms, false);
                 case CONTAINS -> getContains(fieldName, value, indexField, terms);
                 case IN -> getIn(fieldName, value, indexField, terms);
@@ -365,6 +375,10 @@ public class SearchExpressionQueryBuilder {
                         + indexField.getFieldUse().getDisplayValue() + " field type");
             };
         }
+    }
+
+    private Query negate(final Query query) {
+        return new BooleanQuery.Builder().add(query, Occur.MUST_NOT).build();
     }
 
     private Query getNumericIn(final String fieldName, final String value) {
@@ -521,7 +535,7 @@ public class SearchExpressionQueryBuilder {
 //            }
 //
 //        } else {
-        if (val.length() > 0) {
+        if (!val.isEmpty()) {
             // As this is just indexed as a keyword we only want to search
             // for the term.
 //                if (!field.isCaseSensitive()) {

@@ -33,8 +33,7 @@ import stroom.util.guice.RestResourcesBinder;
 import stroom.util.shared.Clearable;
 
 import com.google.inject.AbstractModule;
-
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 import static stroom.job.api.Schedule.ScheduleType.PERIODIC;
 
@@ -61,8 +60,8 @@ public class ProcessorModule extends AbstractModule {
                 .addBinding(DataProcessorTaskFactory.class);
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class)
-                .addBinding(ProcessorCache.class)
-                .addBinding(ProcessorFilterCache.class);
+                .addBinding(ProcessorFilterCache.class)
+                .addBinding(PrioritisedFilters.class);
 
         GuiceUtil.buildMultiBinder(binder(), Searchable.class)
                 .addBinding(ProcessorTaskServiceImpl.class);

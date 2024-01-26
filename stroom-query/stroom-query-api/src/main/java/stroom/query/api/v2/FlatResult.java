@@ -35,7 +35,7 @@ import java.util.Objects;
 public final class FlatResult extends Result {
 
     @JsonProperty
-    private final List<Field> structure;
+    private final List<Column> structure;
 
     @JsonPropertyDescription("The 2 dimensional array containing the result set. The positions in the inner array " +
             "correspond to the positions in the 'structure' property")
@@ -48,7 +48,7 @@ public final class FlatResult extends Result {
 
     @JsonCreator
     public FlatResult(@JsonProperty("componentId") final String componentId,
-                      @JsonProperty("structure") final List<Field> structure,
+                      @JsonProperty("structure") final List<Column> structure,
                       @JsonProperty("values") final List<List<Object>> values,
                       @JsonProperty("size") final Long size,
                       @JsonProperty("errors") final List<String> errors) {
@@ -58,7 +58,7 @@ public final class FlatResult extends Result {
         this.size = size;
     }
 
-    public List<Field> getStructure() {
+    public List<Column> getStructure() {
         return structure;
     }
 
@@ -112,7 +112,7 @@ public final class FlatResult extends Result {
             implements FlatResultBuilder {
 
         private String componentId;
-        private List<Field> structure = Collections.emptyList();
+        private List<Column> structure = Collections.emptyList();
         private final List<List<Object>> values;
         private List<String> errors;
         private Long totalResults;
@@ -138,11 +138,11 @@ public final class FlatResult extends Result {
         /**
          * Add headings to our data
          *
-         * @param structure the fields which act as headings for our data
+         * @param structure the columns which act as headings for our data
          * @return The {@link FlatResultBuilderImpl}, enabling method chaining
          */
         @Override
-        public FlatResultBuilderImpl structure(List<Field> structure) {
+        public FlatResultBuilderImpl structure(List<Column> structure) {
             this.structure = structure;
             return this;
         }

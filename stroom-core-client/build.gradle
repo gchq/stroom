@@ -11,22 +11,19 @@ dependencies {
     implementation project(':stroom-docref')
 
     implementation libs.gin
-    implementation libs.guice3
+    implementation libs.guice__gwt
     implementation libs.gwt_user
     implementation libs.gwtp_mvp_client
     implementation libs.jackson_annotations
-    implementation libs.javax_inject
+    implementation libs.javax_inject__gwt
     implementation libs.jaxb_api
     implementation libs.restygwt
-    implementation libs.ws_rs_api
-
-    //Needed only for the GwtCompilerWrapper
-    compileOnly libs.gwt_dev
+    implementation libs.ws_rs_api__gwt
 
     testImplementation project(':stroom-util')
     testImplementation project(':stroom-test-common')
     testImplementation libs.assertj_core
-    testImplementation libs.guice5
+    testImplementation libs.guice
     testImplementation libs.gwt_dev
     testImplementation libs.junit_jupiter_api
     testImplementation libs.slf4j_api

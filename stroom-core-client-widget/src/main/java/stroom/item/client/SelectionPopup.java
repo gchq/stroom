@@ -1,84 +1,54 @@
 package stroom.item.client;
 
-import stroom.svg.client.SvgIconBox;
-import stroom.svg.shared.SvgImage;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.view.SimplePopupLayout;
+import stroom.widget.util.client.MultiSelectionModel;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.event.dom.client.KeyCodes;
-import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
 import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.PopupPanel;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Objects;
-
-public class SelectionPopup extends Composite {
-
-    private static final int DEFAULT_VISIBLE_ITEM_COUNT = 10;
+public class SelectionPopup<T, I extends SelectionItem> extends Composite {
 
     private final PopupPanel popupPanel;
-    private final TextBox textBox;
-    private final ListBox listBox;
-    private SelectionBoxModel<?> model;
-    private String lastFilterValue;
+    private final SelectionList<T, I> selectionList;
 
     private final EventBinder eventBinder = new EventBinder() {
         @Override
         protected void onBind() {
             super.onBind();
             registerHandler(popupPanel.addCloseHandler(event -> hide()));
-            registerHandler(textBox.addKeyUpHandler(e -> onTextKeyUp(e)));
-            registerHandler(listBox.addClickHandler(e -> onListSelectionChange()));
-            registerHandler(listBox.addKeyUpHandler(e -> onListKeyUp(e)));
         }
     };
 
     public SelectionPopup() {
         popupPanel = new PopupPanel();
-        textBox = new TextBox();
-        listBox = new ListBox();
-
-        textBox.addStyleName("allow-focus");
-
-        final SvgIconBox svgIconBox = new SvgIconBox();
-        svgIconBox.setWidget(textBox, SvgImage.SEARCH);
-
-        final FlowPanel layout = new FlowPanel();
-        layout.setStyleName("max SelectionPopup-layout");
-        layout.add(svgIconBox);
-        layout.add(listBox);
+        selectionList = new SelectionList<>();
+        selectionList.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.ENABLED);
 
         final SimplePopupLayout simplePopupLayout = new SimplePopupLayout();
-        simplePopupLayout.setContent(layout);
+        simplePopupLayout.setContent(selectionList);
 
         popupPanel.add(simplePopupLayout);
         popupPanel.setAutoHideEnabled(true);
         popupPanel.setStyleName("SelectionPopup");
-
-        listBox.setVisibleItemCount(DEFAULT_VISIBLE_ITEM_COUNT);
     }
 
     public void addAutoHidePartner(Element partner) {
         popupPanel.addAutoHidePartner(partner);
     }
 
-    public void setModel(final SelectionBoxModel<?> model) {
-        this.model = model;
+    public void init(final SelectionListModel<T, I> model) {
+        selectionList.init(model);
     }
 
-    public void setName(final String name) {
-        textBox.setName(name);
+    public MultiSelectionModel<I> getSelectionModel() {
+        return selectionList.getSelectionModel();
     }
 
     public void setEnabled(final boolean enabled) {
@@ -97,10 +67,6 @@ public class SelectionPopup extends Composite {
         if (popupPanel.isShowing()) {
             hide();
         } else {
-            textBox.setText("");
-            lastFilterValue = null;
-            updateListBox();
-
             eventBinder.bind();
             popupPanel.setPopupPositionAndShow((offsetWidth, offsetHeight) -> {
                 popupPanel.setPopupPosition(
@@ -112,125 +78,13 @@ public class SelectionPopup extends Composite {
     }
 
     private void afterShow() {
-        Scheduler.get().scheduleDeferred(() -> {
-            textBox.setFocus(true);
-        });
+        Scheduler.get().scheduleDeferred(selectionList::focus);
     }
 
     public void hide() {
         eventBinder.unbind();
         popupPanel.hide();
-    }
-
-    private void onTextKeyUp(KeyUpEvent event) {
-        final int keyCode = event.getNativeKeyCode();
-        switch (keyCode) {
-            case KeyCodes.KEY_ESCAPE:
-                if (!textBox.getText().isEmpty()) {
-                    // If the user has entered filter text, clear it
-                    textBox.setText("");
-                    updateListBox();
-                } else {
-                    // Otherwise close the popup
-                    hide();
-                }
-                break;
-            // Allow the user to navigate from the filter box to the options list using the arrow keys
-            case KeyCodes.KEY_DOWN:
-                if (listBox.getItemCount() > 0) {
-                    final int index = listBox.getSelectedIndex();
-                    if (index == -1) {
-                        listBox.setSelectedIndex(0);
-                    } else if (index < listBox.getItemCount() - 2) {
-                        listBox.setSelectedIndex(index + 1);
-                    }
-                    listBox.setFocus(true);
-                }
-                break;
-            case KeyCodes.KEY_UP:
-                if (listBox.getItemCount() > 0) {
-                    final int index = listBox.getSelectedIndex();
-                    if (index == -1) {
-                        listBox.setSelectedIndex(listBox.getItemCount() - 1);
-                    } else if (index > 0) {
-                        listBox.setSelectedIndex(index - 1);
-                    }
-                    listBox.setFocus(true);
-                }
-                break;
-            default:
-                updateListBox();
-        }
-    }
-
-    private void updateListBox() {
-        final int selectedIndex = model.getSelectedIndex();
-        int filteredSelectedIndex = -1;
-        final String text = textBox.getValue().toLowerCase(Locale.ROOT);
-        if (!Objects.equals(text, lastFilterValue)) {
-            lastFilterValue = text;
-
-            List<String> filteredItems = new ArrayList<>(model.getStrings().size());
-            if (!lastFilterValue.isEmpty()) {
-                int filteredIndex = 0;
-                int index = 0;
-                for (final String string : model.getStrings()) {
-                    if (string.toLowerCase().contains(lastFilterValue)) {
-                        filteredItems.add(string);
-                        if (selectedIndex == index) {
-                            filteredSelectedIndex = filteredIndex;
-                        }
-                        filteredIndex++;
-                    }
-                    index++;
-                }
-            } else {
-                filteredItems = model.getStrings();
-                filteredSelectedIndex = selectedIndex;
-            }
-
-            listBox.clear();
-            for (final String string : filteredItems) {
-                listBox.addItem(string);
-            }
-            listBox.setVisibleItemCount(Math.max(2, filteredItems.size()));
-            listBox.setSelectedIndex(filteredSelectedIndex);
-        }
-    }
-
-    private void onListSelectionChange() {
-        int selectedIndex = -1;
-        final int filteredSelectedIndex = listBox.getSelectedIndex();
-        if (filteredSelectedIndex >= 0) {
-            if (!lastFilterValue.isEmpty()) {
-                int filteredIndex = 0;
-                int index = 0;
-                for (final String string : model.getStrings()) {
-                    if (string.toLowerCase().contains(lastFilterValue)) {
-                        if (filteredSelectedIndex == filteredIndex) {
-                            selectedIndex = index;
-                            break;
-                        }
-                        filteredIndex++;
-                    }
-                    index++;
-                }
-            } else {
-                selectedIndex = filteredSelectedIndex;
-            }
-        }
-        model.setSelectedIndex(selectedIndex);
-    }
-
-    private void onListKeyUp(final KeyUpEvent event) {
-        switch (event.getNativeKeyCode()) {
-            case KeyCodes.KEY_ENTER:
-                onListSelectionChange();
-                break;
-            case KeyCodes.KEY_ESCAPE:
-                hide();
-                break;
-        }
+        selectionList.destroy();
     }
 
     public HandlerRegistration addCloseHandler(final CloseHandler<PopupPanel> handler) {

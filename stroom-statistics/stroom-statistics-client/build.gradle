@@ -10,7 +10,7 @@ dependencies {
     implementation project(':stroom-util-shared')
     
     implementation libs.gin
-    implementation libs.guice3
+    implementation libs.guice__gwt
     implementation libs.gwt_user
     implementation libs.gwtp_mvp_client
     implementation libs.jackson_annotations

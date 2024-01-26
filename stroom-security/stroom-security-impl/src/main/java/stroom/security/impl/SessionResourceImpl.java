@@ -10,19 +10,19 @@ import stroom.security.shared.SessionResource;
 import stroom.security.shared.UrlResponse;
 import stroom.security.shared.ValidateSessionResponse;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
 
 @AutoLogged(OperationType.MANUALLY_LOGGED)
-public class SessionResourceImpl implements SessionResource {
+class SessionResourceImpl implements SessionResource {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SessionResourceImpl.class);
 
@@ -31,27 +31,21 @@ public class SessionResourceImpl implements SessionResource {
     private final Provider<HttpServletRequest> httpServletRequestProvider;
     private final Provider<AuthenticationEventLog> authenticationEventLogProvider;
     private final Provider<SessionListService> sessionListService;
+    private final Provider<StroomUserIdentityFactory> stroomUserIdentityFactoryProvider;
 
     @Inject
-    public SessionResourceImpl(final Provider<AuthenticationConfig> authenticationConfigProvider,
-                               final Provider<OpenIdManager> openIdManagerProvider,
-                               final Provider<HttpServletRequest> httpServletRequestProvider,
-                               final Provider<AuthenticationEventLog> authenticationEventLogProvider,
-                               final Provider<SessionListService> sessionListService) {
+    SessionResourceImpl(final Provider<AuthenticationConfig> authenticationConfigProvider,
+                        final Provider<OpenIdManager> openIdManagerProvider,
+                        final Provider<HttpServletRequest> httpServletRequestProvider,
+                        final Provider<AuthenticationEventLog> authenticationEventLogProvider,
+                        final Provider<SessionListService> sessionListService,
+                        final Provider<StroomUserIdentityFactory> stroomUserIdentityFactoryProvider) {
         this.authenticationConfigProvider = authenticationConfigProvider;
         this.openIdManagerProvider = openIdManagerProvider;
         this.httpServletRequestProvider = httpServletRequestProvider;
         this.authenticationEventLogProvider = authenticationEventLogProvider;
         this.sessionListService = sessionListService;
-    }
-
-    // For testing.
-    SessionResourceImpl(final Provider<SessionListService> sessionListService) {
-        this.authenticationConfigProvider = null;
-        this.openIdManagerProvider = null;
-        this.httpServletRequestProvider = null;
-        this.authenticationEventLogProvider = null;
-        this.sessionListService = sessionListService;
+        this.stroomUserIdentityFactoryProvider = stroomUserIdentityFactoryProvider;
     }
 
     @Override
@@ -126,11 +120,11 @@ public class SessionResourceImpl implements SessionResource {
         // Get the session.
         final HttpSession session = request.getSession(false);
         if (session != null) {
-            final Optional<UserIdentity> userIdentity = UserIdentitySessionUtil.get(session);
             // Record the logoff event.
-            userIdentity.ifPresent(ui -> {
+            UserIdentitySessionUtil.get(session).ifPresent(userIdentity -> {
+                stroomUserIdentityFactoryProvider.get().logoutUser(userIdentity);
                 // Create an event for logout
-                authenticationEventLogProvider.get().logoff(ui.getSubjectId());
+                authenticationEventLogProvider.get().logoff(userIdentity.getSubjectId());
             });
 
             // Remove the user identity from the current session.

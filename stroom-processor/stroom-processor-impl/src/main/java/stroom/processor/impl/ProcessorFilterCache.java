@@ -18,15 +18,15 @@ package stroom.processor.impl;
 
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.LoadingStroomCache;
-import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.security.api.SecurityContext;
 import stroom.util.shared.Clearable;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
+
 import java.util.Optional;
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.inject.Singleton;
 
 @Singleton
 public class ProcessorFilterCache implements Clearable {
@@ -34,15 +34,15 @@ public class ProcessorFilterCache implements Clearable {
     private static final String CACHE_NAME = "Processor Filter Cache";
 
     private final LoadingStroomCache<Integer, Optional<ProcessorFilter>> cache;
-    private final ProcessorFilterService processorFilterService;
+    private final ProcessorFilterDao processorFilterDao;
     private final SecurityContext securityContext;
 
     @Inject
     public ProcessorFilterCache(final CacheManager cacheManager,
-                                final ProcessorFilterService processorFilterService,
+                                final ProcessorFilterDao processorFilterDao,
                                 final SecurityContext securityContext,
                                 final Provider<ProcessorConfig> processorConfigProvider) {
-        this.processorFilterService = processorFilterService;
+        this.processorFilterDao = processorFilterDao;
         this.securityContext = securityContext;
         cache = cacheManager.createLoadingCache(
                 CACHE_NAME,
@@ -55,7 +55,7 @@ public class ProcessorFilterCache implements Clearable {
     }
 
     private Optional<ProcessorFilter> create(final int id) {
-        return securityContext.asProcessingUserResult(() -> processorFilterService.fetch(id));
+        return securityContext.asProcessingUserResult(() -> processorFilterDao.fetch(id));
     }
 
     @Override

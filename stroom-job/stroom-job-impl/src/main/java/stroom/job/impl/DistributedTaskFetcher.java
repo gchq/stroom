@@ -19,14 +19,17 @@ package stroom.job.impl;
 import stroom.cluster.task.api.TargetNodeSetFactory;
 import stroom.job.api.DistributedTask;
 import stroom.job.api.DistributedTaskFactory;
+import stroom.node.api.NodeInfo;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
-import stroom.util.concurrent.ThreadUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -42,8 +45,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 /**
  * This class executes all tasks that are currently queued for execution. This
@@ -51,7 +52,7 @@ import javax.inject.Singleton;
  * threads for transforming multiple XML files.
  */
 @Singleton
-class DistributedTaskFetcher {
+public class DistributedTaskFetcher {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DistributedTaskFetcher.class);
 
@@ -62,6 +63,7 @@ class DistributedTaskFetcher {
     private final ExecutorProvider executorProvider;
     private final TaskContextFactory taskContextFactory;
     private final JobNodeTrackerCache jobNodeTrackerCache;
+    private final NodeInfo nodeInfo;
     private final SecurityContext securityContext;
     private final DistributedTaskFactoryRegistry distributedTaskFactoryRegistry;
     private final TargetNodeSetFactory targetNodeSetFactory;
@@ -73,15 +75,17 @@ class DistributedTaskFetcher {
     private final AtomicBoolean running = new AtomicBoolean();
 
     @Inject
-    DistributedTaskFetcher(final ExecutorProvider executorProvider,
-                           final TaskContextFactory taskContextFactory,
-                           final JobNodeTrackerCache jobNodeTrackerCache,
-                           final SecurityContext securityContext,
-                           final DistributedTaskFactoryRegistry distributedTaskFactoryRegistry,
-                           final TargetNodeSetFactory targetNodeSetFactory) {
+    public DistributedTaskFetcher(final ExecutorProvider executorProvider,
+                                  final TaskContextFactory taskContextFactory,
+                                  final JobNodeTrackerCache jobNodeTrackerCache,
+                                  final NodeInfo nodeInfo,
+                                  final SecurityContext securityContext,
+                                  final DistributedTaskFactoryRegistry distributedTaskFactoryRegistry,
+                                  final TargetNodeSetFactory targetNodeSetFactory) {
         this.executorProvider = executorProvider;
         this.taskContextFactory = taskContextFactory;
         this.jobNodeTrackerCache = jobNodeTrackerCache;
+        this.nodeInfo = nodeInfo;
         this.securityContext = securityContext;
         this.distributedTaskFactoryRegistry = distributedTaskFactoryRegistry;
         this.targetNodeSetFactory = targetNodeSetFactory;
@@ -107,7 +111,7 @@ class DistributedTaskFetcher {
     /**
      * The Stroom lifecycle service will try and fetch new tasks for execution.
      */
-    void execute() {
+    public void execute() {
         if (running.compareAndSet(false, true)) {
             final Executor executor = executorProvider.get();
             executor.execute(this::fetch);
@@ -125,20 +129,13 @@ class DistributedTaskFetcher {
                 try {
                     while (!stopping.get()) {
                         needsTasks.set(false);
-                        final int executingTaskCount =
-                                taskContextFactory.contextResult("Fetch Tasks", taskContext -> {
-                                    try {
-                                        return doFetch(taskContext);
-                                    } catch (final RuntimeException e) {
-                                        LOGGER.error(e.getMessage(), e);
-                                    }
-                                    return 0;
-                                }).get();
-
-                        // If we didn't get any tasks then wait a second.
-                        if (executingTaskCount == 0) {
-                            ThreadUtil.sleep(1000);
-                        }
+                        taskContextFactory.context("Fetch Tasks", taskContext -> {
+                            try {
+                                doFetch(taskContext);
+                            } catch (final RuntimeException e) {
+                                LOGGER.error(e.getMessage(), e);
+                            }
+                        }).run();
 
                         // If we don't need more tasks right now then lock and await.
                         if (!needsTasks.get()) {
@@ -177,16 +174,15 @@ class DistributedTaskFetcher {
         // our last fetch. This allows the master node to know that the
         // worker nodes are still alive and that it is still going to be
         // required to distribute tasks. If it did not get a call every
-        // minute it might try and release cached tasks back to the database
-        // event though this doesn't happen in the current implementation.
+        // minute it might try and release cached tasks back to the database.
         final Instant now = Instant.now();
         final boolean forceFetch = now.isAfter(lastFetch.plus(1, ChronoUnit.MINUTES));
 
         // Get the trackers.
-        final JobNodeTrackerCache.Trackers trackers = jobNodeTrackerCache.getTrackers();
+        final JobNodeTrackers trackers = jobNodeTrackerCache.getTrackers();
 
         // Get this node.
-        final String nodeName = jobNodeTrackerCache.getNodeName();
+        final String nodeName = nodeInfo.getThisNodeName();
 
         // Find out how many tasks we need in total.
         final int count = getRequiredTaskCount(trackers);
@@ -232,7 +228,7 @@ class DistributedTaskFetcher {
             final long now = System.currentTimeMillis();
 
             // Execute the returned tasks.
-            final JobNodeTrackerCache.Trackers trackers = jobNodeTrackerCache.getTrackers();
+            final JobNodeTrackers trackers = jobNodeTrackerCache.getTrackers();
             taskStatusTraceLog.receiveOnWorkerNode(DistributedTaskFetcher.class, tasks, jobName);
 
             if (!stopping.get()) {
@@ -279,7 +275,7 @@ class DistributedTaskFetcher {
         }
     }
 
-    private int getRequiredTaskCount(final JobNodeTrackerCache.Trackers trackers) {
+    private int getRequiredTaskCount(final JobNodeTrackers trackers) {
         int totalRequiredTasks = 0;
         final Collection<JobNodeTracker> trackerList = trackers.getDistributedJobNodeTrackers();
         for (final JobNodeTracker tracker : trackerList) {

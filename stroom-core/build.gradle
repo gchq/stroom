@@ -40,7 +40,7 @@ dependencies {
     implementation project(':stroom-task:stroom-task-api')
     implementation project(':stroom-task:stroom-task-impl')
     implementation project(':stroom-job:stroom-job-api')
-    
+
     implementation libs.commons_compress
     implementation libs.commons_io
     implementation libs.commons_lang
@@ -48,9 +48,9 @@ dependencies {
     implementation libs.dropwizard_metrics_annotation
     implementation libs.eventLogging
     implementation libs.flyway_core
+    implementation libs.flyway_mysql
     implementation libs.guava
-    implementation libs.guice5
-    implementation libs.gwt_servlet
+    implementation libs.guice
     implementation libs.hikari
     implementation libs.jackson_annotations
     implementation libs.jackson_core
@@ -58,33 +58,29 @@ dependencies {
     implementation libs.jakarta_servlet_api
     implementation libs.jakarta_validation_api
     implementation libs.javassist
-    implementation libs.javax_inject
+    implementation libs.jakarta_inject
     implementation libs.jaxb_api
     implementation libs.restygwt
     implementation libs.saxon_he
     implementation libs.slf4j_api
     implementation libs.swagger_annotations
     implementation libs.ws_rs_api
-    implementation libs.xml_apis
+    //implementation libs.xml_apis
 
     runtimeOnly libs.jackson_annotations
     runtimeOnly libs.jackson_core
     runtimeOnly libs.jaxb_impl
-    runtimeOnly libs.lucene_analyzers_common
-    runtimeOnly libs.lucene_backward_codecs
-    runtimeOnly libs.lucene_core
-    runtimeOnly libs.lucene_queryparser
     runtimeOnly libs.mysql_connector_java
 
     testImplementation project(':stroom-node:stroom-node-mock')
     testImplementation project(':stroom-security:stroom-security-mock')
     testImplementation project(':stroom-test-common')
-    
+
     testImplementation libs.assertj_core
     testImplementation libs.junit_jupiter_api
     testImplementation libs.mockito_core
     testImplementation libs.mockito_junit_jupiter
-    
+
     // The following logging libs are needed when running junits outside dropwizard
     testRuntimeOnly libs.jakarta_activation
     testRuntimeOnly libs.jaxb_impl

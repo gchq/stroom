@@ -17,8 +17,9 @@
 
 package stroom.analytics.impl;
 
-import stroom.datasource.api.v2.DataSource;
 import stroom.datasource.api.v2.DateField;
+import stroom.datasource.api.v2.FieldInfo;
+import stroom.datasource.api.v2.FindFieldInfoCriteria;
 import stroom.docref.DocRef;
 import stroom.explorer.api.HasDataSourceDocRefs;
 import stroom.expression.api.DateTimeSettings;
@@ -30,33 +31,33 @@ import stroom.query.common.v2.CoprocessorSettings;
 import stroom.query.common.v2.CoprocessorsFactory;
 import stroom.query.common.v2.CoprocessorsImpl;
 import stroom.query.common.v2.DataStoreSettings;
+import stroom.query.common.v2.FieldInfoResultPageBuilder;
 import stroom.query.common.v2.ResultStore;
 import stroom.query.common.v2.ResultStoreFactory;
 import stroom.query.common.v2.SearchProvider;
 import stroom.search.impl.FederatedSearchExecutor;
 import stroom.search.impl.FederatedSearchTask;
-import stroom.security.api.SecurityContext;
+import stroom.util.shared.ResultPage;
+
+import jakarta.inject.Inject;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
-import javax.inject.Inject;
 
 public class AnalyticsSearchProvider implements SearchProvider, HasDataSourceDocRefs {
 
-    private final SecurityContext securityContext;
     private final CoprocessorsFactory coprocessorsFactory;
     private final ResultStoreFactory resultStoreFactory;
     private final FederatedSearchExecutor federatedSearchExecutor;
     private final AnalyticsNodeSearchTaskCreator nodeSearchTaskCreator;
 
     @Inject
-    public AnalyticsSearchProvider(final SecurityContext securityContext,
-                                   final CoprocessorsFactory coprocessorsFactory,
+    public AnalyticsSearchProvider(final CoprocessorsFactory coprocessorsFactory,
                                    final ResultStoreFactory resultStoreFactory,
                                    final FederatedSearchExecutor federatedSearchExecutor,
                                    final AnalyticsNodeSearchTaskCreator nodeSearchTaskCreator) {
-        this.securityContext = securityContext;
         this.coprocessorsFactory = coprocessorsFactory;
         this.resultStoreFactory = resultStoreFactory;
         this.federatedSearchExecutor = federatedSearchExecutor;
@@ -64,12 +65,18 @@ public class AnalyticsSearchProvider implements SearchProvider, HasDataSourceDoc
     }
 
     @Override
-    public DataSource getDataSource(final DocRef docRef) {
-        return securityContext.useAsReadResult(() -> DataSource
-                .builder()
-                .docRef(docRef)
-                .fields(AnalyticFields.getFields())
-                .build());
+    public ResultPage<FieldInfo> getFieldInfo(final FindFieldInfoCriteria criteria) {
+        return FieldInfoResultPageBuilder.builder(criteria).addAll(AnalyticFields.getFields()).build();
+    }
+
+    @Override
+    public Optional<String> fetchDocumentation(final DocRef docRef) {
+        return Optional.empty();
+    }
+
+    @Override
+    public DocRef fetchDefaultExtractionPipeline(final DocRef dataSourceRef) {
+        return null;
     }
 
     @Override
@@ -148,6 +155,11 @@ public class AnalyticsSearchProvider implements SearchProvider, HasDataSourceDoc
 //        }
 
         return highlights;
+    }
+
+    @Override
+    public List<DocRef> list() {
+        return List.of(AnalyticFields.ANALYTICS_DOC_REF);
     }
 
     @Override

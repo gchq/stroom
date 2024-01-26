@@ -8,13 +8,14 @@ import stroom.explorer.shared.DocumentType;
 import stroom.security.api.SecurityContext;
 import stroom.util.NullSafe;
 
+import jakarta.inject.Inject;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
 
 class DocRefInfoServiceImpl implements DocRefInfoService {
 
@@ -47,8 +48,20 @@ class DocRefInfoServiceImpl implements DocRefInfoService {
     }
 
     @Override
+    public Optional<DocRefInfo> info(final String uuid) {
+        return docRefInfoCache.get(uuid);
+    }
+
+    @Override
     public Optional<String> name(final DocRef docRef) {
         return info(docRef)
+                .map(DocRefInfo::getDocRef)
+                .map(DocRef::getName);
+    }
+
+    @Override
+    public Optional<String> name(final String uuid) {
+        return info(uuid)
                 .map(DocRefInfo::getDocRef)
                 .map(DocRef::getName);
     }
@@ -111,12 +124,13 @@ class DocRefInfoServiceImpl implements DocRefInfoService {
     @Override
     public DocRef decorate(final DocRef docRef, final boolean force) {
         Objects.requireNonNull(docRef);
-        Objects.requireNonNull(docRef.getType(), "DocRef type is not set.");
         Objects.requireNonNull(docRef.getUuid(), "DocRef UUID is not set.");
 
-        // The passed docRef may have a name, but it may be from before a rename, so if force
-        // is set, use the cached copy which should be up to date.
-        if (NullSafe.isEmptyString(docRef.getName()) || force) {
+        // The passed docRef may have all the parts, but it may be from before a rename, so if force
+        // is set, use the cached copy which should be up-to-date.
+        if (NullSafe.isEmptyString(docRef.getType())
+                || NullSafe.isEmptyString(docRef.getName())
+                || force) {
             return docRefInfoCache.get(docRef)
                     .map(DocRefInfo::getDocRef)
                     .orElseThrow(() -> new RuntimeException("No docRefInfo for docRef: " + docRef));

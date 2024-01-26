@@ -34,6 +34,9 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.BuildInfo;
 import stroom.util.shared.ModelStringUtil;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -42,8 +45,6 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 /**
  * Component that remembers the node list and who is the current master node
@@ -113,7 +114,7 @@ public class ClusterNodeManagerImpl implements ClusterNodeManager, EntityEvent.H
             updateClusterStateAsync(0, false);
         } else {
             // Determine if the current state should be re-evaluated as it is
-            // older than 10 minutes.
+            // older than 1 minute.
             final long expiryTime = System.currentTimeMillis() - ONE_MINUTE;
             if (clusterState.getUpdateTime() < expiryTime) {
                 updateClusterStateAsync(0, false);

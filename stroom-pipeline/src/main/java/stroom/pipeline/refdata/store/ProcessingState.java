@@ -41,7 +41,7 @@ public enum ProcessingState {
     FAILED((byte) 3, "Failed"),
     /**
      * The load was terminated, i.e. by task cancellation or system shutdown.
-     * It is incomplete and/or wrong so should not be used but we can retry later.
+     * It is incomplete and/or wrong so should not be used, but we can retry later.
      */
     TERMINATED((byte) 4, "Terminated"),
     /**

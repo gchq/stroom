@@ -7,14 +7,18 @@ import stroom.security.impl.UserDao;
 import stroom.security.impl.db.jooq.tables.StroomUser;
 import stroom.security.impl.db.jooq.tables.records.StroomUserRecord;
 import stroom.security.shared.User;
+import stroom.util.NullSafe;
 import stroom.util.filter.QuickFilterPredicateFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
+import jakarta.inject.Inject;
 import org.jooq.Condition;
 import org.jooq.Record;
 import org.jooq.Record1;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -23,7 +27,6 @@ import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
 
 import static stroom.security.impl.db.jooq.Tables.STROOM_USER;
 import static stroom.security.impl.db.jooq.Tables.STROOM_USER_GROUP;
@@ -122,6 +125,22 @@ public class UserDaoImpl implements UserDao {
                         .where(STROOM_USER.UUID.eq(uuid))
                         .fetchOptional())
                 .map(RECORD_TO_USER_MAPPER);
+    }
+
+    @Override
+    public Set<User> getByUuids(final Collection<String> userUuids) {
+        if (NullSafe.isEmptyCollection(userUuids)) {
+            return Collections.emptySet();
+        } else {
+            return JooqUtil.contextResult(securityDbConnProvider, context -> context
+                            .select()
+                            .from(STROOM_USER)
+                            .where(STROOM_USER.UUID.in(userUuids))
+                            .fetch())
+                    .stream()
+                    .map(RECORD_TO_USER_MAPPER)
+                    .collect(Collectors.toSet());
+        }
     }
 
     @Override

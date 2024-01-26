@@ -18,7 +18,6 @@ package stroom.query.language.functions;
 
 import stroom.query.language.functions.ref.StoredValues;
 
-import java.time.Instant;
 import java.util.function.Supplier;
 
 @SuppressWarnings("unused") //Used by FunctionFactory
@@ -68,10 +67,13 @@ class Add extends NumericFunction {
                     if (!current.type().isValue() || value.type().isError()) {
                         return value;
                     }
-
-                    final Instant instant = Instant.ofEpochMilli(current.toLong());
-                    final SimpleDuration duration = ((ValDuration) value).toDuration();
-                    return ValDate.create(SimpleDurationUtil.plus(instant, duration).toEpochMilli());
+                    final long milliseconds = value.toLong();
+                    final long diff = current.toLong() + milliseconds;
+                    if (Type.DATE.equals(current.type())) {
+                        return ValDate.create(diff);
+                    } else {
+                        return ValDuration.create(diff);
+                    }
                 } else {
                     return super.calc(current, value);
                 }

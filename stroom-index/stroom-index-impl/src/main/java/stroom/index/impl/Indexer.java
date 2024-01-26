@@ -18,10 +18,8 @@ package stroom.index.impl;
 
 import stroom.index.shared.IndexShardKey;
 
-import org.apache.lucene.document.Document;
-
 
 public interface Indexer {
 
-    void addDocument(IndexShardKey key, Document document);
+    void addDocument(IndexShardKey key, IndexDocument document);
 }

@@ -15,9 +15,7 @@ import stroom.proxy.app.ProxyLifecycle;
 import stroom.proxy.app.event.EventResourceImpl;
 import stroom.proxy.app.handler.ForwardFileDestinationFactory;
 import stroom.proxy.app.handler.ForwardFileDestinationFactoryImpl;
-import stroom.proxy.app.handler.ProxyId;
 import stroom.proxy.app.handler.RemoteFeedStatusService;
-import stroom.proxy.app.security.ProxyUserIdentityFactory;
 import stroom.proxy.app.servlet.ProxyQueueMonitoringServlet;
 import stroom.proxy.app.servlet.ProxySecurityFilter;
 import stroom.proxy.app.servlet.ProxyStatusServlet;
@@ -27,6 +25,7 @@ import stroom.receive.common.FeedStatusResourceImpl;
 import stroom.receive.common.ReceiveDataServlet;
 import stroom.receive.rules.impl.ReceiveDataRuleSetResourceImpl;
 import stroom.receive.rules.impl.ReceiveDataRuleSetService;
+import stroom.security.common.impl.RefreshManager;
 import stroom.util.guice.AdminServletBinder;
 import stroom.util.guice.FilterBinder;
 import stroom.util.guice.FilterInfo;
@@ -37,11 +36,11 @@ import stroom.util.guice.ServletBinder;
 
 import com.codahale.metrics.health.HealthCheckRegistry;
 import com.google.inject.AbstractModule;
+import io.dropwizard.core.setup.Environment;
 import io.dropwizard.lifecycle.Managed;
-import io.dropwizard.setup.Environment;
+import jakarta.ws.rs.ext.ExceptionMapper;
 
 import java.nio.file.Path;
-import javax.ws.rs.ext.ExceptionMapper;
 
 public class ProxyModule extends AbstractModule {
 
@@ -102,7 +101,7 @@ public class ProxyModule extends AbstractModule {
                 .addBinding(ContentSyncService.class)
                 .addBinding(ProxyLifecycle.class)
                 .addBinding(RemoteFeedStatusService.class)
-                .addBinding(ProxyUserIdentityFactory.class);
+                .addBinding(RefreshManager.class);
 
         GuiceUtil.buildMultiBinder(binder(), ExceptionMapper.class)
                 .addBinding(PermissionExceptionMapper.class)

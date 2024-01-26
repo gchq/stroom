@@ -5,8 +5,9 @@ import stroom.task.api.ExecutorProvider;
 import stroom.task.api.ThreadPoolImpl;
 import stroom.task.shared.ThreadPool;
 
+import jakarta.inject.Inject;
+
 import java.util.concurrent.Executor;
-import javax.inject.Inject;
 
 public class IndexShardWriterExecutorProviderImpl implements IndexShardWriterExecutorProvider {
 

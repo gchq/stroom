@@ -11,7 +11,7 @@ import stroom.dashboard.impl.vis.VisSettings.Structure;
 import stroom.dashboard.impl.vis.VisSettings.Tab;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
-import stroom.query.api.v2.Field;
+import stroom.query.api.v2.Column;
 import stroom.query.api.v2.Format;
 import stroom.query.api.v2.QLVisSettings;
 import stroom.query.api.v2.Sort.SortDirection;
@@ -26,12 +26,13 @@ import stroom.query.language.token.TokenType;
 import stroom.util.json.JsonUtil;
 import stroom.visualisation.shared.VisualisationDoc;
 
+import jakarta.inject.Inject;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import javax.inject.Inject;
 
 public class VisualisationTokenConsumerImpl implements VisualisationTokenConsumer {
 
@@ -184,15 +185,15 @@ public class VisualisationTokenConsumerImpl implements VisualisationTokenConsume
             if (structure != null) {
 
                 final Map<String, Format> formatMap = new HashMap<>();
-                if (parentTableSettings.getFields() != null) {
-                    for (final stroom.query.api.v2.Field field : parentTableSettings.getFields()) {
-                        if (field != null) {
-                            formatMap.put(field.getName(), field.getFormat());
+                if (parentTableSettings.getColumns() != null) {
+                    for (final Column column : parentTableSettings.getColumns()) {
+                        if (column != null) {
+                            formatMap.put(column.getName(), column.getFormat());
                         }
                     }
                 }
 
-                List<Field> fields = new ArrayList<>();
+                List<Column> columns = new ArrayList<>();
                 List<Long> limits = new ArrayList<>();
 
                 VisNest nest = mapNest(structure.getNest(), settingResolver);
@@ -200,10 +201,10 @@ public class VisualisationTokenConsumerImpl implements VisualisationTokenConsume
 
                 int group = 0;
                 while (nest != null) {
-                    final stroom.query.api.v2.Field.Builder builder = convertField(nest.getKey(), formatMap);
+                    final Column.Builder builder = convertField(nest.getKey(), formatMap);
                     builder.group(group++);
 
-                    fields.add(builder.build());
+                    columns.add(builder.build());
 
                     // Get limit from nest.
                     Long limit = null;
@@ -226,13 +227,13 @@ public class VisualisationTokenConsumerImpl implements VisualisationTokenConsume
 
                     if (values.getFields() != null) {
                         for (final VisField visField : values.getFields()) {
-                            fields.add(convertField(visField, formatMap).build());
+                            columns.add(convertField(visField, formatMap).build());
                         }
                     }
                 }
 
                 tableSettings = TableSettings.builder()
-                        .addFields(fields)
+                        .addColumns(columns)
                         .addMaxResults(limits)
                         .showDetail(true)
                         .visSettings(createVisSettings(visualisation, params))
@@ -250,9 +251,9 @@ public class VisualisationTokenConsumerImpl implements VisualisationTokenConsume
         return new QLVisSettings(DocRefUtil.create(visualisation), json);
     }
 
-    private stroom.query.api.v2.Field.Builder convertField(final VisField visField,
-                                                           final Map<String, stroom.query.api.v2.Format> formatMap) {
-        final stroom.query.api.v2.Field.Builder builder = stroom.query.api.v2.Field.builder();
+    private Column.Builder convertField(final VisField visField,
+                                        final Map<String, stroom.query.api.v2.Format> formatMap) {
+        final Column.Builder builder = Column.builder();
 
         builder.format(Format.GENERAL);
 

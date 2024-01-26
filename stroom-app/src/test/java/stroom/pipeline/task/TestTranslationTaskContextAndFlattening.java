@@ -22,9 +22,8 @@ import stroom.task.api.TaskManager;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.StoreCreationTool;
 
+import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
-
-import javax.inject.Inject;
 
 class TestTranslationTaskContextAndFlattening extends AbstractProcessIntegrationTest {
 

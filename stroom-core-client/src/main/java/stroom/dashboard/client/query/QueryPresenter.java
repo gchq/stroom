@@ -26,6 +26,7 @@ import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentUse;
 import stroom.dashboard.client.main.Components;
 import stroom.dashboard.client.main.DashboardContext;
+import stroom.dashboard.client.main.IndexLoader;
 import stroom.dashboard.client.main.Queryable;
 import stroom.dashboard.client.main.SearchModel;
 import stroom.dashboard.shared.Automate;
@@ -36,7 +37,6 @@ import stroom.dashboard.shared.DashboardDoc;
 import stroom.dashboard.shared.DashboardResource;
 import stroom.dashboard.shared.DashboardSearchRequest;
 import stroom.dashboard.shared.QueryComponentSettings;
-import stroom.datasource.api.v2.AbstractField;
 import stroom.dispatch.client.ExportFileCompleteUtil;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
@@ -59,6 +59,7 @@ import stroom.query.api.v2.ResultStoreInfo;
 import stroom.query.client.ExpressionTreePresenter;
 import stroom.query.client.ExpressionUiHandlers;
 import stroom.query.client.presenter.DateTimeSettingsFactory;
+import stroom.query.client.presenter.DynamicFieldSelectionListModel;
 import stroom.query.client.presenter.QueryUiHandlers;
 import stroom.query.client.presenter.ResultStoreModel;
 import stroom.query.client.presenter.SearchErrorListener;
@@ -75,8 +76,6 @@ import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResourceGeneration;
-import stroom.view.client.presenter.DataSourceFieldsMap;
-import stroom.view.client.presenter.IndexLoader;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
@@ -95,7 +94,6 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -124,6 +122,7 @@ public class QueryPresenter
     private final RestFactory restFactory;
     private final LocationManager locationManager;
     private final IndexLoader indexLoader;
+    private final DynamicFieldSelectionListModel fieldSelectionBoxModel;
     private final SearchModel searchModel;
     private final ButtonView addOperatorButton;
     private final ButtonView addTermButton;
@@ -158,7 +157,8 @@ public class QueryPresenter
                           final UiConfigCache clientPropertyCache,
                           final LocationManager locationManager,
                           final DateTimeSettingsFactory dateTimeSettingsFactory,
-                          final ResultStoreModel resultStoreModel) {
+                          final ResultStoreModel resultStoreModel,
+                          final DynamicFieldSelectionListModel fieldSelectionBoxModel) {
         super(eventBus, view, settingsPresenterProvider);
         this.expressionPresenter = expressionPresenter;
         this.historyPresenter = historyPresenter;
@@ -168,6 +168,7 @@ public class QueryPresenter
         this.indexLoader = indexLoader;
         this.restFactory = restFactory;
         this.locationManager = locationManager;
+        this.fieldSelectionBoxModel = fieldSelectionBoxModel;
 
         view.setExpressionView(expressionPresenter.getView());
         view.getQueryButtons().setUiHandlers(new QueryUiHandlers() {
@@ -292,7 +293,7 @@ public class QueryPresenter
             }
         }));
         registerHandler(indexLoader.addChangeDataHandler(event ->
-                loadedDataSource(indexLoader.getLoadedDataSourceRef(), indexLoader.getDataSourceFieldsMap())));
+                loadedDataSource(indexLoader.getLoadedDataSourceRef())));
 
         registerHandler(downloadQueryButton.addClickHandler(event -> downloadQuery()));
 
@@ -462,21 +463,9 @@ public class QueryPresenter
         setButtonsEnabled();
     }
 
-    private void loadedDataSource(final DocRef dataSourceRef, final DataSourceFieldsMap dataSourceFieldsMap) {
-        // Create a list of index fields.
-        final List<AbstractField> fields = new ArrayList<>();
-        if (dataSourceFieldsMap != null) {
-            for (final AbstractField field : dataSourceFieldsMap.values()) {
-                // Protection from default values of false not being in the serialised json
-                if (field.getQueryable() != null
-                        ? field.getQueryable()
-                        : false) {
-                    fields.add(field);
-                }
-            }
-        }
-        fields.sort(Comparator.comparing(AbstractField::getName, String.CASE_INSENSITIVE_ORDER));
-        expressionPresenter.init(restFactory, dataSourceRef, fields);
+    private void loadedDataSource(final DocRef dataSourceRef) {
+        fieldSelectionBoxModel.setDataSourceRef(dataSourceRef);
+        expressionPresenter.init(restFactory, dataSourceRef, fieldSelectionBoxModel);
 
         final EqualsBuilder builder = new EqualsBuilder();
         builder.append(getQuerySettings().getDataSource(), dataSourceRef);
@@ -490,7 +479,7 @@ public class QueryPresenter
         }
 
         // Only allow searching if we have a data source and have loaded fields from it successfully.
-        getView().setEnabled(dataSourceRef != null && fields.size() > 0);
+        getView().setEnabled(dataSourceRef != null);
 
         setButtonsEnabled();
 

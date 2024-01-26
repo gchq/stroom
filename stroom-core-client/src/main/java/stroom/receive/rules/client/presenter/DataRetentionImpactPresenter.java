@@ -29,11 +29,12 @@ import stroom.data.retention.shared.DataRetentionDeleteSummaryResponse;
 import stroom.data.retention.shared.DataRetentionRules;
 import stroom.data.retention.shared.DataRetentionRulesResource;
 import stroom.data.retention.shared.FindDataRetentionImpactCriteria;
-import stroom.datasource.api.v2.AbstractField;
+import stroom.datasource.api.v2.FieldInfo;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.meta.shared.MetaFields;
 import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.client.presenter.SimpleFieldSelectionListModel;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.util.client.DataGridUtil;
@@ -75,11 +76,11 @@ public class DataRetentionImpactPresenter
     private static final String BTN_TITLE_EXPAND_ALL = "Expand all";
     private static final String BTN_TITLE_COLLAPSE_ALL = "Collapse all";
 
-    private static final List<AbstractField> FILTERABLE_FIELDS = new ArrayList<>();
+    private static final List<FieldInfo> FILTERABLE_FIELDS = new ArrayList<>();
 
     static {
-        FILTERABLE_FIELDS.add(MetaFields.FEED);
-        FILTERABLE_FIELDS.add(MetaFields.TYPE);
+        FILTERABLE_FIELDS.add(FieldInfo.create(MetaFields.FEED));
+        FILTERABLE_FIELDS.add(FieldInfo.create(MetaFields.TYPE));
     }
 
     private final MyDataGrid<DataRetentionImpactRow> dataGrid;
@@ -285,7 +286,9 @@ public class DataRetentionImpactPresenter
     private void openFilterPresenter() {
         final EditExpressionPresenter editExpressionPresenter = editExpressionPresenterProvider.get();
         editExpressionPresenter.read(criteria.getExpression());
-        editExpressionPresenter.init(restFactory, MetaFields.STREAM_STORE_DOC_REF, FILTERABLE_FIELDS);
+        final SimpleFieldSelectionListModel fieldSelectionBoxModel = new SimpleFieldSelectionListModel();
+        fieldSelectionBoxModel.addItems(FILTERABLE_FIELDS);
+        editExpressionPresenter.init(restFactory, MetaFields.STREAM_STORE_DOC_REF, fieldSelectionBoxModel);
 
         final PopupSize popupSize = PopupSize.resizable(800, 400);
         ShowPopupEvent.builder(editExpressionPresenter)

@@ -131,6 +131,10 @@ public abstract class AbstractFunctionTest<T extends Function> {
                 ": " + val + "]";
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     static class TestCase {
 
         private final String testVariantName;
@@ -235,5 +239,4 @@ public abstract class AbstractFunctionTest<T extends Function> {
             return aggregateValues;
         }
     }
-
 }

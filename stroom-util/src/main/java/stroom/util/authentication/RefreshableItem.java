@@ -1,64 +1,55 @@
 package stroom.util.authentication;
 
+import stroom.util.NullSafe;
+
 import java.time.Duration;
-import java.time.Instant;
 import java.util.Objects;
-import java.util.concurrent.Delayed;
-import java.util.concurrent.TimeUnit;
+import java.util.UUID;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 public class RefreshableItem<T> implements Refreshable {
 
-    private volatile T item;
-    private final Supplier<T> itemSupplier;
-    private final Duration maxAge;
-    private volatile long expireTimeEpochMs;
+    private volatile PerishableItem<T> perishableItem;
+    private final Supplier<PerishableItem<T>> itemSupplier;
+    private final Duration refreshBuffer;
+    private final String uuid;
 
-    public RefreshableItem(final Supplier<T> itemSupplier,
-                           final Duration maxAge) {
+    public RefreshableItem(final Supplier<PerishableItem<T>> itemSupplier,
+                           final Duration refreshBuffer) {
         this.itemSupplier = Objects.requireNonNull(itemSupplier);
-        this.item = itemSupplier.get();
-        this.maxAge = maxAge;
-        this.expireTimeEpochMs = Instant.now().plus(maxAge).toEpochMilli();
+        this.perishableItem = Objects.requireNonNull(itemSupplier.get(),
+                "itemSupplier supplied null item");
+        this.refreshBuffer = refreshBuffer.isNegative()
+                ? Duration.ZERO
+                : refreshBuffer;
+        this.uuid = UUID.randomUUID().toString();
+    }
+
+    @Override
+    public String getUuid() {
+        return uuid;
     }
 
     public T getItem() {
-        return item;
+        return perishableItem.getItem();
     }
 
     @Override
-    public boolean isRefreshRequired() {
-        final boolean isExpired = System.currentTimeMillis() >= expireTimeEpochMs;
-        LOGGER.trace("isExpired: {}", isExpired);
-        return isExpired;
-    }
-
-    @Override
-    public boolean refresh() {
-        item = itemSupplier.get();
-        updateExpireTime();
+    public boolean refresh(final Consumer<Refreshable> onRefreshAction) {
+        perishableItem = itemSupplier.get();
+        NullSafe.consume(this, onRefreshAction);
         return true;
     }
 
     @Override
     public long getExpireTimeEpochMs() {
-        return expireTimeEpochMs;
+        return perishableItem.getExpiryTimeEpochMs();
     }
 
     @Override
-    public int compareTo(final Delayed other) {
-        return Math.toIntExact(this.expireTimeEpochMs
-                - ((stroom.util.authentication.RefreshableItem<?>) other).expireTimeEpochMs);
-    }
-
-    @Override
-    public long getDelay(final TimeUnit unit) {
-        long diff = expireTimeEpochMs - System.currentTimeMillis();
-        return unit.convert(diff, TimeUnit.MILLISECONDS);
-    }
-
-    private void updateExpireTime() {
-        expireTimeEpochMs = Instant.now().plus(maxAge).toEpochMilli();
+    public long getRefreshBufferMs() {
+        return refreshBuffer.toMillis();
     }
 
     @Override
@@ -70,11 +61,19 @@ public class RefreshableItem<T> implements Refreshable {
             return false;
         }
         final RefreshableItem<?> that = (RefreshableItem<?>) o;
-        return Objects.equals(item, that.item);
+        return Objects.equals(perishableItem, that.perishableItem);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(item);
+        return Objects.hash(perishableItem);
+    }
+
+    @Override
+    public String toString() {
+        return "RefreshableItem{" +
+                "perishableItem=" + perishableItem +
+                ", refreshBuffer=" + refreshBuffer +
+                '}';
     }
 }

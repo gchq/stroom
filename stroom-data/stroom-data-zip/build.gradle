@@ -3,6 +3,7 @@ ext.moduleName = 'stroom.data.zip'
 dependencies {
     implementation project(':stroom-meta:stroom-meta-api')
     implementation project(':stroom-task:stroom-task-api')
+    implementation project(':stroom-test-common')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 
@@ -10,10 +11,8 @@ dependencies {
     implementation libs.guava
     implementation libs.slf4j_api
 
-    implementation project(':stroom-test-common')
-
     testImplementation libs.assertj_core
-    testImplementation libs.guice5
+    testImplementation libs.guice
     testImplementation libs.junit_jupiter_api
     testImplementation libs.vavr
 

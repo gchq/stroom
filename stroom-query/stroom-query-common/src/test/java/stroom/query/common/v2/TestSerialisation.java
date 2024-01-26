@@ -16,16 +16,13 @@
 
 package stroom.query.common.v2;
 
-import stroom.datasource.api.v2.DataSource;
-import stroom.datasource.api.v2.LongField;
-import stroom.datasource.api.v2.TextField;
 import stroom.docref.DocRef;
 import stroom.expression.api.DateTimeSettings;
 import stroom.expression.api.TimeZone;
+import stroom.query.api.v2.Column;
 import stroom.query.api.v2.DateTimeFormatSettings;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Filter;
 import stroom.query.api.v2.FlatResult;
 import stroom.query.api.v2.Format;
@@ -47,6 +44,14 @@ import stroom.util.json.JsonUtil;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import jakarta.xml.bind.JAXBException;
+import jakarta.xml.bind.annotation.XmlAccessType;
+import jakarta.xml.bind.annotation.XmlAccessorType;
+import jakarta.xml.bind.annotation.XmlElement;
+import jakarta.xml.bind.annotation.XmlElementWrapper;
+import jakarta.xml.bind.annotation.XmlElements;
+import jakarta.xml.bind.annotation.XmlRootElement;
+import jakarta.xml.bind.annotation.XmlType;
 import org.assertj.core.util.diff.DiffUtils;
 import org.assertj.core.util.diff.Patch;
 import org.junit.jupiter.api.Test;
@@ -59,25 +64,10 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlElementWrapper;
-import javax.xml.bind.annotation.XmlElements;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlType;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestSerialisation {
-
-    private static DataSource getDataSource() {
-        return DataSource
-                .builder()
-                .fields(List.of(new TextField("field1"), new LongField("field2")))
-                .build();
-    }
 
     private static SearchRequest getSearchRequest() {
         return SearchRequest.builder()
@@ -99,7 +89,7 @@ class TestSerialisation {
                                 .build())
                         .addMappings(TableSettings.builder()
                                 .queryId("someQueryId")
-                                .addFields(Field.builder()
+                                .addColumns(Column.builder()
                                         .id("id1")
                                         .name("name1")
                                         .expression("expression1")
@@ -111,7 +101,7 @@ class TestSerialisation {
                                                 .build())
                                         .group(1)
                                         .build())
-                                .addFields(Field.builder()
+                                .addColumns(Column.builder()
                                         .id("id2")
                                         .name("name2")
                                         .expression("expression2")
@@ -161,11 +151,6 @@ class TestSerialisation {
         final Multi multi = new Multi(list);
 
         test(multi, Multi.class, "testPolymorphic2");
-    }
-
-    @Test
-    void testDataSourceSerialisation() throws IOException, JAXBException {
-        test(getDataSource(), DataSource.class, "testDataSourceSerialisation");
     }
 
     @Test
@@ -288,7 +273,7 @@ class TestSerialisation {
     }
 
     private SearchResponse getSearchResponse() {
-        final List<Field> fields = Collections.singletonList(Field.builder()
+        final List<Column> columns = Collections.singletonList(Column.builder()
                 .id("test")
                 .name("test")
                 .expression("${test}")
@@ -300,7 +285,7 @@ class TestSerialisation {
                 .depth(5)
                 .build());
         final TableResult tableResult = new TableResult("table-1234",
-                fields,
+                columns,
                 rows,
                 new OffsetRange(1, 2),
                 1L,
@@ -314,26 +299,26 @@ class TestSerialisation {
     }
 
     private FlatResult getVisResult1() {
-        final List<Field> structure = new ArrayList<>();
-        structure.add(Field.builder()
+        final List<Column> structure = new ArrayList<>();
+        structure.add(Column.builder()
                 .id("val1")
                 .name("val1")
                 .expression("${val1}")
                 .format(Format.GENERAL)
                 .build());
-        structure.add(Field.builder()
+        structure.add(Column.builder()
                 .id("val2")
                 .name("val2")
                 .expression("${val2}")
                 .format(Format.NUMBER)
                 .build());
-        structure.add(Field.builder()
+        structure.add(Column.builder()
                 .id("val3")
                 .name("val3")
                 .expression("${val3}")
                 .format(Format.NUMBER)
                 .build());
-        structure.add(Field.builder()
+        structure.add(Column.builder()
                 .id("val4")
                 .name("val4")
                 .expression("${val4}")

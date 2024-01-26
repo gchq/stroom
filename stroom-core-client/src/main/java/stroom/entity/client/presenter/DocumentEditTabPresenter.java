@@ -224,4 +224,9 @@ public abstract class DocumentEditTabPresenter<V extends LinkTabPanelView, D>
         }
         saveButton.setEnabled(isDirty());
     }
+
+    @Override
+    public DocRef getDocRef() {
+        return docRef;
+    }
 }

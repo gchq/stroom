@@ -9,8 +9,8 @@ import stroom.util.logging.LogUtil;
 import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.Module;
-import io.dropwizard.cli.ConfiguredCommand;
-import io.dropwizard.setup.Bootstrap;
+import io.dropwizard.core.cli.ConfiguredCommand;
+import io.dropwizard.core.setup.Bootstrap;
 import net.sourceforge.argparse4j.inf.Namespace;
 import org.slf4j.Logger;
 
@@ -122,7 +122,7 @@ public abstract class AbstractStroomBaseCommand extends ConfiguredCommand<Config
      * Log to logger as INFO and stdout
      *
      * @param template The message template with '{}' placeholders
-     * @param args The args for the template
+     * @param args     The args for the template
      */
     protected void info(final Logger logger, final String template, final Object... args) {
         final String msg = LogUtil.message(template, args);
@@ -155,7 +155,7 @@ public abstract class AbstractStroomBaseCommand extends ConfiguredCommand<Config
      * Log to logger as WARN and stdout
      *
      * @param template The message template with '{}' placeholders
-     * @param args The args for the template
+     * @param args     The args for the template
      */
     protected void warn(final Logger logger, final String template, final Object... args) {
         final String msg = LogUtil.message(template, args);
@@ -198,7 +198,7 @@ public abstract class AbstractStroomBaseCommand extends ConfiguredCommand<Config
      * Log to logger as ERROR and stderr
      *
      * @param template The message template with '{}' placeholders
-     * @param args The args for the template
+     * @param args     The args for the template
      */
     protected void error(final Logger logger, final String template, final Object... args) {
         final String msg = LogUtil.message(template, args);

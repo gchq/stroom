@@ -16,8 +16,6 @@
 
 package stroom.search.elastic.search;
 
-import stroom.datasource.api.v2.DataSource;
-import stroom.docref.DocRef;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.query.api.v2.DestroyReason;
@@ -28,9 +26,8 @@ import stroom.query.common.v2.ResultStoreManager;
 import stroom.query.common.v2.TerminateDecorator;
 
 import com.codahale.metrics.annotation.Timed;
-
-import javax.inject.Inject;
-import javax.inject.Provider;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 @AutoLogged
 public class ElasticIndexQueryResourceImpl implements ElasticIndexQueryResource {
@@ -41,12 +38,6 @@ public class ElasticIndexQueryResourceImpl implements ElasticIndexQueryResource 
     public ElasticIndexQueryResourceImpl(
             final Provider<ResultStoreManager> searchResponseCreatorManagerProvider) {
         this.searchResponseCreatorManagerProvider = searchResponseCreatorManagerProvider;
-    }
-
-    @Timed
-    @Override
-    public DataSource getDataSource(final DocRef docRef) {
-        return searchResponseCreatorManagerProvider.get().getDataSource(docRef);
     }
 
     @Timed

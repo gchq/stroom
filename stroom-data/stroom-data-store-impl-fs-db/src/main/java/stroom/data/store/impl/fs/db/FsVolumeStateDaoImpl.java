@@ -5,9 +5,10 @@ import stroom.data.store.impl.fs.db.jooq.tables.records.FsVolumeStateRecord;
 import stroom.data.store.impl.fs.shared.FsVolumeState;
 import stroom.db.util.GenericDao;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+
 import java.util.Optional;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 import static stroom.data.store.impl.fs.db.jooq.tables.FsVolumeState.FS_VOLUME_STATE;
 

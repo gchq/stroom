@@ -23,10 +23,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.dropwizard.validation.ValidationMethod;
+import jakarta.validation.constraints.AssertTrue;
 
 import java.util.ArrayList;
 import java.util.List;
-import javax.validation.constraints.AssertTrue;
 
 @JsonPropertyOrder(alphabetic = true)
 public class ProxyConfig extends AbstractConfig implements IsProxyConfig {

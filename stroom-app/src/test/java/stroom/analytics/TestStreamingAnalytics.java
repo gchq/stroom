@@ -16,7 +16,7 @@
 
 package stroom.analytics;
 
-import stroom.analytics.impl.StreamingAnalyticExecutor;
+import stroom.analytics.rule.impl.AnalyticRuleProcessors;
 import stroom.analytics.shared.AnalyticProcessType;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.QueryLanguageVersion;
@@ -24,20 +24,27 @@ import stroom.analytics.shared.StreamingAnalyticProcessConfig;
 import stroom.app.guice.CoreModule;
 import stroom.app.guice.JerseyModule;
 import stroom.app.uri.UriFactoryModule;
+import stroom.docref.DocRef;
 import stroom.index.VolumeTestConfigModule;
 import stroom.index.mock.MockIndexShardWriterExecutorModule;
+import stroom.meta.shared.MetaFields;
 import stroom.meta.statistics.impl.MockMetaStatisticsModule;
 import stroom.node.api.NodeInfo;
+import stroom.processor.api.ProcessorFilterService;
+import stroom.processor.shared.CreateProcessFilterRequest;
+import stroom.processor.shared.ProcessorType;
+import stroom.processor.shared.QueryData;
+import stroom.query.api.v2.ExpressionOperator;
 import stroom.resource.impl.ResourceModule;
 import stroom.security.mock.MockSecurityContextModule;
 import stroom.test.BootstrapTestModule;
+import stroom.test.CommonTranslationTestHelper;
 
+import jakarta.inject.Inject;
 import name.falgout.jeffrey.testing.junit.guice.GuiceExtension;
 import name.falgout.jeffrey.testing.junit.guice.IncludeModule;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-
-import javax.inject.Inject;
 
 @ExtendWith(GuiceExtension.class)
 @IncludeModule(UriFactoryModule.class)
@@ -54,11 +61,15 @@ import javax.inject.Inject;
 class TestStreamingAnalytics extends AbstractAnalyticsTest {
 
     @Inject
-    private StreamingAnalyticExecutor analyticsExecutor;
-    @Inject
     private AnalyticsDataSetup analyticsDataSetup;
     @Inject
     private NodeInfo nodeInfo;
+    @Inject
+    private CommonTranslationTestHelper commonTranslationTestHelper;
+    @Inject
+    private AnalyticRuleProcessors analyticRuleProcessors;
+    @Inject
+    private ProcessorFilterService processorFilterService;
 
     @Test
     void testSingleEvent() {
@@ -99,22 +110,35 @@ class TestStreamingAnalytics extends AbstractAnalyticsTest {
     private void basicTest(final String query,
                            final int expectedStreams,
                            final int expectedRecords) {
-        AnalyticRuleDoc analyticRuleDoc = AnalyticRuleDoc.builder()
+        final AnalyticRuleDoc analyticRuleDoc = AnalyticRuleDoc.builder()
                 .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
                 .query(query)
                 .analyticProcessType(AnalyticProcessType.STREAMING)
-                .analyticProcessConfig(new StreamingAnalyticProcessConfig(
-                        true,
-                        nodeInfo.getThisNodeName(),
-                        analyticsDataSetup.getDetections(),
-                        null,
-                        null))
+                .analyticProcessConfig(new StreamingAnalyticProcessConfig(analyticsDataSetup.getDetections()))
                 .analyticNotificationConfig(createNotificationConfig())
                 .build();
-        writeRule(analyticRuleDoc);
+        final DocRef analyticRuleDocRef = writeRule(analyticRuleDoc);
+        final ExpressionOperator expressionOperator = analyticRuleProcessors
+                .getDefaultProcessingFilterExpression(query);
+        final QueryData queryData = new QueryData();
+        queryData.setDataSource(MetaFields.STREAM_STORE_DOC_REF);
+        queryData.setExpression(expressionOperator);
 
-        // Now run the search process.
-        analyticsExecutor.exec();
+        // Now create the processor filter using the find stream criteria.
+        final CreateProcessFilterRequest request = CreateProcessFilterRequest
+                .builder()
+                .processorType(ProcessorType.STREAMING_ANALYTIC)
+                .pipeline(analyticRuleDocRef)
+                .queryData(queryData)
+                .autoPriority(true)
+                .enabled(true)
+                .minMetaCreateTimeMs(0L)
+                .maxMetaCreateTimeMs(Long.MAX_VALUE)
+                .build();
+        processorFilterService.create(request);
+
+        // Now run the processing.
+        commonTranslationTestHelper.processAll();
 
         // As we have created alerts ensure we now have more streams.
         testDetectionsStream(expectedStreams, expectedRecords);

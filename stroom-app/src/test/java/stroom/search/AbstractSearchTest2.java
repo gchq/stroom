@@ -32,10 +32,11 @@ import stroom.query.api.v2.TableResult;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.common.v2.ExpressionContextFactory;
 import stroom.query.common.v2.ResultStoreManager;
-import stroom.query.language.SearchRequestBuilder;
+import stroom.query.language.SearchRequestFactory;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.json.JsonUtil;
 
+import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,7 +47,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -59,7 +59,7 @@ public abstract class AbstractSearchTest2 extends AbstractCoreIntegrationTest {
     @Inject
     private ResultStoreManager searchResponseCreatorManager;
     @Inject
-    private SearchRequestBuilder searchRequestBuilder;
+    private SearchRequestFactory searchRequestFactory;
     @Inject
     private ExpressionContextFactory expressionContextFactory;
 
@@ -112,7 +112,7 @@ public abstract class AbstractSearchTest2 extends AbstractCoreIntegrationTest {
                 DateTimeSettings.builder().build(),
                 false);
         final ExpressionContext expressionContext = expressionContextFactory.createContext(searchRequest);
-        searchRequest = searchRequestBuilder.create(queryString, searchRequest, expressionContext);
+        searchRequest = searchRequestFactory.create(queryString, searchRequest, expressionContext);
 
         // Add extraction pipeline.
         // TODO : @66 REPLACE WITH VIEW BASED EXTRACTION
@@ -162,7 +162,7 @@ public abstract class AbstractSearchTest2 extends AbstractCoreIntegrationTest {
             assertThat(rows).hasSize(componentIds.size());
 
             int count = rows.values().iterator().next().size();
-            assertThat(count).as("Correct number of results found").isEqualTo(expectResultCount);
+            assertThat(count).as("Incorrect number of results found").isEqualTo(expectResultCount);
         }
         resultMapConsumer.accept(rows);
     }

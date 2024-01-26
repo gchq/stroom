@@ -18,6 +18,7 @@ package stroom.index;
 
 
 import stroom.docref.DocRef;
+import stroom.index.impl.IndexDocument;
 import stroom.index.impl.IndexShardWriter;
 import stroom.index.impl.IndexStore;
 import stroom.index.mock.MockIndexShardWriter;
@@ -41,12 +42,15 @@ import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.state.MetaHolder;
 import stroom.pipeline.xslt.XsltStore;
+import stroom.search.extraction.FieldValue;
 import stroom.task.api.SimpleTaskContext;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.common.StroomPipelineTestFileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.pipeline.scope.PipelineScopeRunnable;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -54,8 +58,7 @@ import org.junit.jupiter.api.Test;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
-import javax.inject.Inject;
-import javax.inject.Provider;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -154,19 +157,15 @@ class TestIndexingPipeline extends AbstractProcessIntegrationTest {
 
             // Check that we indexed 4 documents.
             assertThat(writer.getDocuments().size()).isEqualTo(4);
-            assertThat(writer.getDocuments().get(0).getField("Action").stringValue())
-                    .isEqualTo("Authenticate");
-            assertThat(writer.getDocuments().get(1).getField("Action").stringValue())
-                    .isEqualTo("Process");
-            assertThat(writer.getDocuments().get(2).getField("Action").stringValue())
-                    .isEqualTo("Process");
-            assertThat(writer.getDocuments().get(3).getField("Action").stringValue())
-                    .isEqualTo("Process");
+            checkField(writer.getDocuments().get(0), "Action", "Authenticate");
+            checkField(writer.getDocuments().get(1), "Action", "Process");
+            checkField(writer.getDocuments().get(2), "Action", "Process");
+            checkField(writer.getDocuments().get(3), "Action", "Process");
 
             for (int i = 0; i < 4; i++) {
-                final String streamId = writer.getDocuments().get(i).getField("StreamId").stringValue();
-                final String eventId = writer.getDocuments().get(i).getField("EventId").stringValue();
-                final String userId = writer.getDocuments().get(i).getField("UserId").stringValue();
+                final String streamId = getValue(writer.getDocuments().get(i), "StreamId");
+                final String eventId = getValue(writer.getDocuments().get(i), "EventId");
+                final String userId = getValue(writer.getDocuments().get(i), "UserId");
 
                 System.out.println(streamId + ":" + eventId);
 
@@ -178,5 +177,19 @@ class TestIndexingPipeline extends AbstractProcessIntegrationTest {
             // // Return the writer to the pool.
             // indexShardManager.returnObject(poolItem, true);
         });
+    }
+
+    private String getValue(final IndexDocument document, final String fieldName) {
+        final Optional<FieldValue> opt = document
+                .getValues()
+                .stream()
+                .filter(fv -> fv.field().getFieldName().equals(fieldName))
+                .findFirst();
+        assertThat(opt).isPresent();
+        return opt.get().value().toString();
+    }
+
+    private void checkField(final IndexDocument document, final String fieldName, final String expectedValue) {
+        assertThat(getValue(document, fieldName)).isEqualTo(expectedValue);
     }
 }

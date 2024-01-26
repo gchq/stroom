@@ -1,6 +1,6 @@
 package stroom.query.common.v2;
 
-import stroom.query.api.v2.Field;
+import stroom.query.api.v2.Column;
 import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.TimeFilter;
 import stroom.query.language.functions.ValuesConsumer;
@@ -14,9 +14,9 @@ import java.util.function.Consumer;
 public interface DataStore extends ValuesConsumer {
 
     /**
-     * Get the fields that this data store knows about.
+     * Get the columns that this data store knows about.
      */
-    List<Field> getFields();
+    List<Column> getColumns();
 
     /**
      * Get child items from the data for the provided parent key and time filter.

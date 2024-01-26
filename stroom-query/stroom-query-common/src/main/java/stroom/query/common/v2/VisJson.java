@@ -1,6 +1,6 @@
 package stroom.query.common.v2;
 
-import stroom.query.api.v2.Field;
+import stroom.query.api.v2.Column;
 import stroom.query.api.v2.FlatResult;
 import stroom.query.api.v2.Format.Type;
 import stroom.query.api.v2.VisResult.Store;
@@ -15,35 +15,35 @@ import java.util.Map.Entry;
 public class VisJson {
     public String createJson(final FlatResult result) {
         String json = null;
-        final List<Field> fields = result.getStructure();
-        if (fields != null && result.getValues() != null) {
+        final List<Column> columns = result.getStructure();
+        if (columns != null && result.getValues() != null) {
             int valueOffset = 0;
 
             final Map<Integer, List<String>> typeMap = new HashMap<>();
             final Map<Integer, List<String>> sortDirectionMap = new HashMap<>();
             int maxDepth = 0;
-            for (final stroom.query.api.v2.Field field : fields) {
+            for (final Column column : columns) {
                 // Ignore key and depth fields.
-                if (field.getName() != null && field.getName().startsWith(":")) {
+                if (column.getName() != null && column.getName().startsWith(":")) {
                     valueOffset++;
 
                 } else {
                     String type = Type.GENERAL.name();
-                    if (field.getFormat() != null && field.getFormat().getType() != null) {
-                        type = field.getFormat().getType().name();
+                    if (column.getFormat() != null && column.getFormat().getType() != null) {
+                        type = column.getFormat().getType().name();
                     }
-                    typeMap.computeIfAbsent(field.getGroup(), k -> new ArrayList<>()).add(type);
+                    typeMap.computeIfAbsent(column.getGroup(), k -> new ArrayList<>()).add(type);
 
                     // The vizes need to know what the sort direction is for the various fields/keys
                     String sortDirection = null;
-                    if (field.getSort() != null && field.getSort().getDirection() != null) {
-                        sortDirection = field.getSort().getDirection().getDisplayValue();
+                    if (column.getSort() != null && column.getSort().getDirection() != null) {
+                        sortDirection = column.getSort().getDirection().getDisplayValue();
                     }
-                    sortDirectionMap.computeIfAbsent(field.getGroup(),
+                    sortDirectionMap.computeIfAbsent(column.getGroup(),
                             k -> new ArrayList<>()).add(sortDirection);
 
-                    if (field.getGroup() != null) {
-                        maxDepth = Math.max(maxDepth, field.getGroup() + 1);
+                    if (column.getGroup() != null) {
+                        maxDepth = Math.max(maxDepth, column.getGroup() + 1);
                         valueOffset++;
                     }
                 }
@@ -75,7 +75,7 @@ public class VisJson {
                 sortDirections[group] = row;
             }
 
-            final int valueCount = fields.size() - valueOffset;
+            final int valueCount = columns.size() - valueOffset;
 
             final Map<Object, List<List<Object>>> map = new HashMap<>();
             for (final List<Object> row : result.getValues()) {

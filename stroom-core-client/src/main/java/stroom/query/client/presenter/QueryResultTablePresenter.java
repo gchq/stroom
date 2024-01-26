@@ -20,7 +20,7 @@ import stroom.cell.expander.client.ExpanderCell;
 import stroom.data.grid.client.DataGridSelectionEventManager;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
-import stroom.query.api.v2.Field;
+import stroom.query.api.v2.Column;
 import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.Result;
 import stroom.query.api.v2.Row;
@@ -38,7 +38,6 @@ import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.safecss.shared.SafeStylesBuilder;
 import com.google.gwt.safehtml.shared.SafeHtml;
-import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.view.client.RangeChangeEvent;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -60,7 +59,7 @@ public class QueryResultTablePresenter
         implements ResultConsumer {
 
     private int expanderColumnWidth;
-    private final Column<TableRow, Expander> expanderColumn;
+    private final com.google.gwt.user.cellview.client.Column<TableRow, Expander> expanderColumn;
 
     private final MyDataGrid<TableRow> dataGrid;
     private final MultiSelectionModelImpl<TableRow> selectionModel;
@@ -89,7 +88,7 @@ public class QueryResultTablePresenter
         tableView.setTableView(pagerView);
 
         // Expander column.
-        expanderColumn = new Column<TableRow, Expander>(new ExpanderCell()) {
+        expanderColumn = new com.google.gwt.user.cellview.client.Column<TableRow, Expander>(new ExpanderCell()) {
             @Override
             public Expander getValue(final TableRow row) {
                 if (row == null) {
@@ -263,8 +262,8 @@ public class QueryResultTablePresenter
         }
     }
 
-    private List<Field> currentFields;
-    private final List<Column<TableRow, ?>> existingColumns = new ArrayList<>();
+    private List<Column> currentFields;
+    private final List<com.google.gwt.user.cellview.client.Column<TableRow, ?>> existingColumns = new ArrayList<>();
 
     private void setDataInternal(final Result componentResult) {
         GWT.log("setDataInternal");
@@ -276,7 +275,7 @@ public class QueryResultTablePresenter
                 // Don't refresh the table unless the results have changed.
                 final TableResult tableResult = (TableResult) componentResult;
 
-                if (!Objects.equals(currentFields, tableResult.getFields())) {
+                if (!Objects.equals(currentFields, tableResult.getColumns())) {
 //                    final Set<String> newIdSet = tableResult
 //                            .getFields()
 //                            .stream()
@@ -284,7 +283,7 @@ public class QueryResultTablePresenter
 //                            .collect(Collectors.toSet());
 
                     // First remove stale fields.
-                    updateColumns(tableResult.getFields());
+                    updateColumns(tableResult.getColumns());
 
 //                    removeAllColumns();
 //
@@ -292,10 +291,10 @@ public class QueryResultTablePresenter
 //                    for (final Field field : tableResult.getFields()) {
 //                        addColumn(field);
 //                    }
-                    currentFields = tableResult.getFields();
+                    currentFields = tableResult.getColumns();
                 }
 
-                final List<TableRow> values = processData(tableResult.getFields(), tableResult.getRows());
+                final List<TableRow> values = processData(tableResult.getColumns(), tableResult.getRows());
                 final OffsetRange valuesRange = tableResult.getResultRange();
 
                 // Only set data in the table if we have got some results and
@@ -324,18 +323,18 @@ public class QueryResultTablePresenter
     }
 
     private void removeAllColumns() {
-        for (Column<TableRow, ?> column : existingColumns) {
+        for (com.google.gwt.user.cellview.client.Column<TableRow, ?> column : existingColumns) {
             dataGrid.removeColumn(column);
         }
         existingColumns.clear();
     }
 
-    void updateColumns(final List<Field> fields) {
+    void updateColumns(final List<Column> columns) {
 //        // Now make sure special fields exist for stream id and event id.
 //        ensureSpecialFields(IndexConstants.STREAM_ID, IndexConstants.EVENT_ID, "Id");
 
         // Remove existing columns.
-        for (final Column<TableRow, ?> column : existingColumns) {
+        for (final com.google.gwt.user.cellview.client.Column<TableRow, ?> column : existingColumns) {
             dataGrid.removeColumn(column);
         }
         existingColumns.clear();
@@ -345,10 +344,10 @@ public class QueryResultTablePresenter
 //        fieldsManager.setFieldsStartIndex(1);
 
         // Add fields as columns.
-        for (final Field field : fields) {
+        for (final Column column : columns) {
             // Only include the field if it is supposed to be visible.
-            if (field.isVisible()) {
-                addColumn(field);
+            if (column.isVisible()) {
+                addColumn(column);
             }
         }
 
@@ -360,31 +359,32 @@ public class QueryResultTablePresenter
         existingColumns.add(expanderColumn);
     }
 
-    private void addColumn(final Field field) {
-        final Column<TableRow, SafeHtml> column = new Column<TableRow, SafeHtml>(new SafeHtmlCell()) {
-            @Override
-            public SafeHtml getValue(final TableRow row) {
-                if (row == null) {
-                    return SafeHtmlUtil.NBSP;
-                }
+    private void addColumn(final Column column) {
+        final com.google.gwt.user.cellview.client.Column<TableRow, SafeHtml> col =
+                new com.google.gwt.user.cellview.client.Column<TableRow, SafeHtml>(new SafeHtmlCell()) {
+                    @Override
+                    public SafeHtml getValue(final TableRow row) {
+                        if (row == null) {
+                            return SafeHtmlUtil.NBSP;
+                        }
 
-                return row.getValue(field.getId());
-            }
-        };
+                        return row.getValue(column.getId());
+                    }
+                };
 
-        final FieldHeader fieldHeader = new FieldHeader(field);
-        dataGrid.addResizableColumn(column, fieldHeader, field.getWidth());
-        existingColumns.add(column);
+        final ColumnHeader columnHeader = new ColumnHeader(column);
+        dataGrid.addResizableColumn(col, columnHeader, column.getWidth());
+        existingColumns.add(col);
     }
 
-    private List<TableRow> processData(final List<Field> fields, final List<Row> values) {
+    private List<TableRow> processData(final List<Column> columns, final List<Row> values) {
         // See if any fields have more than 1 level. If they do then we will add
         // an expander column.
         int maxGroup = -1;
         final boolean showDetail = false; //getTableSettings().showDetail();
-        for (final Field field : fields) {
-            if (field.getGroup() != null) {
-                maxGroup = Math.max(maxGroup, field.getGroup());
+        for (final Column column : columns) {
+            if (column.getGroup() != null) {
+                maxGroup = Math.max(maxGroup, column.getGroup());
             }
         }
 
@@ -412,8 +412,8 @@ public class QueryResultTablePresenter
             }
 
             final Map<String, Cell> cellsMap = new HashMap<>();
-            for (int i = 0; i < fields.size() && i < row.getValues().size(); i++) {
-                final Field field = fields.get(i);
+            for (int i = 0; i < columns.size() && i < row.getValues().size(); i++) {
+                final Column column = columns.get(i);
                 final String value = row.getValues().get(i) != null
                         ? row.getValues().get(i)
                         : "";
@@ -422,18 +422,20 @@ public class QueryResultTablePresenter
                 stylesBuilder.append(rowStyle.toSafeStyles());
 
                 // Wrap
-                if (field.getFormat() != null && field.getFormat().getWrap() != null && field.getFormat().getWrap()) {
+                if (column.getFormat() != null &&
+                        column.getFormat().getWrap() != null &&
+                        column.getFormat().getWrap()) {
                     stylesBuilder.whiteSpace(Style.WhiteSpace.NORMAL);
                 }
                 // Grouped
-                if (field.getGroup() != null && field.getGroup() >= row.getDepth()) {
+                if (column.getGroup() != null && column.getGroup() >= row.getDepth()) {
                     stylesBuilder.fontWeight(Style.FontWeight.BOLD);
                 }
 
                 final String style = stylesBuilder.toSafeStyles().asString();
 
                 final TableRow.Cell cell = new TableRow.Cell(value, style);
-                cellsMap.put(field.getId(), cell);
+                cellsMap.put(column.getId(), cell);
             }
 
             // Create an expander for the row.

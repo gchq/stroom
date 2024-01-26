@@ -22,11 +22,12 @@ import stroom.util.shared.Location;
 import stroom.util.shared.Severity;
 import stroom.util.shared.StoredError;
 
+import jakarta.inject.Inject;
+
 import java.util.Collection;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
-import javax.inject.Inject;
 
 /**
  * Flags records that contain errors so that the RecordOutputFilter can exclude

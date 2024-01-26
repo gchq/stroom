@@ -27,6 +27,7 @@ import stroom.dashboard.client.main.AbstractComponentPresenter;
 import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentUse;
+import stroom.dashboard.client.main.IndexLoader;
 import stroom.dashboard.client.main.ResultComponent;
 import stroom.dashboard.client.main.SearchModel;
 import stroom.dashboard.client.query.QueryPresenter;
@@ -43,10 +44,10 @@ import stroom.dashboard.shared.TableComponentSettings;
 import stroom.dashboard.shared.TableResultRequest;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
-import stroom.datasource.api.v2.AbstractField;
+import stroom.datasource.api.v2.ConditionSet;
 import stroom.datasource.api.v2.DateField;
-import stroom.datasource.api.v2.FieldType;
 import stroom.datasource.api.v2.LongField;
+import stroom.datasource.api.v2.QueryField;
 import stroom.datasource.api.v2.TextField;
 import stroom.dispatch.client.ExportFileCompleteUtil;
 import stroom.dispatch.client.Rest;
@@ -56,16 +57,13 @@ import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.expression.api.DateTimeSettings;
-import stroom.item.client.SelectionBoxModel;
-import stroom.item.client.presenter.SelectionPopupView;
+import stroom.item.client.SelectionPopup;
 import stroom.preferences.client.UserPreferencesManager;
 import stroom.processor.shared.ProcessorExpressionUtil;
+import stroom.query.api.v2.Column;
 import stroom.query.api.v2.ConditionalFormattingRule;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionTerm;
-import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.query.api.v2.Field;
-import stroom.query.api.v2.Field.Builder;
 import stroom.query.api.v2.Format;
 import stroom.query.api.v2.Format.Type;
 import stroom.query.api.v2.OffsetRange;
@@ -76,7 +74,10 @@ import stroom.query.api.v2.ResultRequest.Fetch;
 import stroom.query.api.v2.Row;
 import stroom.query.api.v2.TableResult;
 import stroom.query.api.v2.TableSettings;
-import stroom.query.client.presenter.FieldHeader;
+import stroom.query.client.DataSourceClient;
+import stroom.query.client.presenter.ColumnHeader;
+import stroom.query.client.presenter.DynamicColumnSelectionListModel;
+import stroom.query.client.presenter.DynamicColumnSelectionListModel.ColumnSelectionItem;
 import stroom.query.client.presenter.TableRow;
 import stroom.query.client.presenter.TimeZones;
 import stroom.security.client.api.ClientSecurityContext;
@@ -87,14 +88,12 @@ import stroom.ui.config.shared.UserPreferences;
 import stroom.util.shared.Expander;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.Version;
-import stroom.view.client.presenter.DataSourceFieldsMap;
-import stroom.view.client.presenter.IndexLoader;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.util.client.MouseUtil;
+import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 import stroom.widget.util.client.SafeHtmlUtil;
 
@@ -106,7 +105,6 @@ import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.safecss.shared.SafeStylesBuilder;
 import com.google.gwt.safehtml.shared.SafeHtml;
-import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -116,7 +114,6 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -133,29 +130,29 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     public static final ComponentType TYPE = new ComponentType(1, "table", "Table", ComponentUse.PANEL);
     private static final Version CURRENT_MODEL_VERSION = new Version(6, 1, 26);
 
+    private final DataSourceClient dataSourceClient;
     private final LocationManager locationManager;
     private TableResultRequest tableResultRequest = TableResultRequest.builder()
             .requestedRange(OffsetRange.ZERO_1000)
             .build();
-    private final List<Column<TableRow, ?>> existingColumns = new ArrayList<>();
+    private final List<com.google.gwt.user.cellview.client.Column<TableRow, ?>> existingColumns = new ArrayList<>();
     private final List<HandlerRegistration> searchModelHandlerRegistrations = new ArrayList<>();
-    private final ButtonView addFieldButton;
+    private final ButtonView addColumnButton;
     private final ButtonView downloadButton;
     private final ButtonView annotateButton;
-    private final Provider<FieldAddPresenter> fieldAddPresenterProvider;
     private final DownloadPresenter downloadPresenter;
     private final AnnotationManager annotationManager;
     private final RestFactory restFactory;
     private final TimeZones timeZones;
     private final UserPreferencesManager userPreferencesManager;
-    private final FieldsManager fieldsManager;
+    private final DynamicColumnSelectionListModel columnSelectionListModel;
+    private final ColumnsManager columnsManager;
     private final MyDataGrid<TableRow> dataGrid;
     private final MultiSelectionModelImpl<TableRow> selectionModel;
-    private final Column<TableRow, Expander> expanderColumn;
+    private final com.google.gwt.user.cellview.client.Column<TableRow, Expander> expanderColumn;
 
     private int expanderColumnWidth;
     private SearchModel currentSearchModel;
-    private FieldAddPresenter fieldAddPresenter;
     private boolean ignoreRangeChange;
     private long[] maxResults = TableComponentSettings.DEFAULT_MAX_RESULTS;
     private boolean pause;
@@ -167,26 +164,28 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                           final PagerView pagerView,
                           final ClientSecurityContext securityContext,
                           final LocationManager locationManager,
-                          final Provider<RenameFieldPresenter> renameFieldPresenterProvider,
+                          final Provider<RenameColumnPresenter> renameColumnPresenterProvider,
                           final Provider<ColumnFunctionEditorPresenter> expressionPresenterProvider,
                           final FormatPresenter formatPresenter,
                           final FilterPresenter filterPresenter,
-                          final Provider<FieldAddPresenter> fieldAddPresenterProvider,
                           final Provider<TableSettingsPresenter> settingsPresenterProvider,
                           final DownloadPresenter downloadPresenter,
                           final AnnotationManager annotationManager,
                           final RestFactory restFactory,
                           final UiConfigCache clientPropertyCache,
                           final TimeZones timeZones,
-                          final UserPreferencesManager userPreferencesManager) {
+                          final UserPreferencesManager userPreferencesManager,
+                          final DynamicColumnSelectionListModel columnSelectionListModel,
+                          final DataSourceClient dataSourceClient) {
         super(eventBus, view, settingsPresenterProvider);
         this.locationManager = locationManager;
-        this.fieldAddPresenterProvider = fieldAddPresenterProvider;
         this.downloadPresenter = downloadPresenter;
         this.annotationManager = annotationManager;
         this.restFactory = restFactory;
         this.timeZones = timeZones;
         this.userPreferencesManager = userPreferencesManager;
+        this.columnSelectionListModel = columnSelectionListModel;
+        this.dataSourceClient = dataSourceClient;
 
         dataGrid = new MyDataGrid<>();
         selectionModel = dataGrid.addDefaultSelectionModel(true);
@@ -195,9 +194,9 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         view.setTableView(pagerView);
         view.setUiHandlers(this);
 
-        // Add the 'add field' button.
-        addFieldButton = pagerView.addButton(SvgPresets.ADD);
-        addFieldButton.setTitle("Add Field");
+        // Add the 'add column' button.
+        addColumnButton = pagerView.addButton(SvgPresets.ADD);
+        addColumnButton.setTitle("Add Column");
 
         // Download
         downloadButton = pagerView.addButton(SvgPresets.DOWNLOAD);
@@ -208,13 +207,13 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         annotateButton.setVisible(securityContext.hasAppPermission(PermissionNames.ANNOTATIONS));
         annotateButton.setEnabled(false);
 
-        fieldsManager = new FieldsManager(
+        columnsManager = new ColumnsManager(
                 this,
-                renameFieldPresenterProvider,
+                renameColumnPresenterProvider,
                 expressionPresenterProvider,
                 formatPresenter,
                 filterPresenter);
-        dataGrid.setHeadingListener(fieldsManager);
+        dataGrid.setHeadingListener(columnsManager);
 
         clientPropertyCache.get()
                 .onSuccess(result -> {
@@ -232,7 +231,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
 
         // Expander column.
-        expanderColumn = new Column<TableRow, Expander>(new ExpanderCell()) {
+        expanderColumn = new com.google.gwt.user.cellview.client.Column<TableRow, Expander>(new ExpanderCell()) {
             @Override
             public Expander getValue(final TableRow row) {
                 if (row == null) {
@@ -268,9 +267,9 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
             }
         }));
         registerHandler(dataGrid.addHyperlinkHandler(event -> getEventBus().fireEvent(event)));
-        registerHandler(addFieldButton.addClickHandler(event -> {
+        registerHandler(addColumnButton.addClickHandler(event -> {
             if (MouseUtil.isPrimary(event)) {
-                onAddField(event);
+                onAddColumn(event);
             }
         }));
 
@@ -317,154 +316,45 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         getView().setPaused(this.pause);
     }
 
-    private void onAddField(final ClickEvent event) {
-        if (currentSearchModel != null && fieldAddPresenter == null) {
-            fieldAddPresenter = fieldAddPresenterProvider.get();
+    private void onAddColumn(final ClickEvent event) {
+        if (currentSearchModel != null) {
+            columnSelectionListModel.setDataSourceRef(currentSearchModel.getIndexLoader().getLoadedDataSourceRef());
 
-            final List<Field> annotationFields = new ArrayList<>();
-            final List<Field> dataFields = new ArrayList<>();
-            final List<Field> otherFields = new ArrayList<>();
-
-            final IndexLoader indexLoader = currentSearchModel.getIndexLoader();
-            if (indexLoader.getIndexFieldNames() != null) {
-                final DataSourceFieldsMap indexFieldsMap = indexLoader.getDataSourceFieldsMap();
-
-                for (final String indexFieldName : indexLoader.getIndexFieldNames()) {
-                    final Builder fieldBuilder = Field.builder();
-                    fieldBuilder.name(indexFieldName);
-
-                    if (indexFieldsMap != null) {
-                        final AbstractField indexField = indexFieldsMap.get(indexFieldName);
-                        if (indexField != null) {
-                            switch (indexField.getFieldType()) {
-                                case DATE:
-                                    fieldBuilder.format(Format.DATE_TIME);
-                                    break;
-                                case INTEGER:
-                                case LONG:
-                                case FLOAT:
-                                case DOUBLE:
-                                case ID:
-                                    fieldBuilder.format(Format.NUMBER);
-                                    break;
-                                default:
-                                    fieldBuilder.format(Format.GENERAL);
-                                    break;
-                            }
-                        }
-                    }
-
-                    final String expression;
-                    if (indexFieldName.startsWith("annotation:") && indexFieldsMap != null) {
-                        // Turn 'annotation:.*' fields into annotation links that make use of either the special
-                        // eventId/streamId fields (so event results can link back to annotations) OR
-                        // the annotation:Id field so Annotations datasource results can link back.
-                        expression = buildAnnotationFieldExpression(indexFieldsMap, indexFieldName);
-                        fieldBuilder.expression(expression);
-                        annotationFields.add(fieldBuilder.build());
-                    } else {
-                        expression = ParamSubstituteUtil.makeParam(indexFieldName);
-                        fieldBuilder.expression(expression);
-                        dataFields.add(fieldBuilder.build());
-                    }
-                }
-            }
-
-            final Field count = Field.builder()
-                    .name("Count")
-                    .format(Format.NUMBER)
-                    .expression("count()")
-                    .build();
-            otherFields.add(count);
-
-            final Field countGroups = Field.builder()
-                    .name("Count Groups")
-                    .format(Format.NUMBER)
-                    .expression("countGroups()")
-                    .build();
-            otherFields.add(countGroups);
-
-            final Field custom = Field.builder()
-                    .name("Custom")
-                    .build();
-            otherFields.add(custom);
-
-            final SelectionBoxModel<Field> model = new SelectionBoxModel<>();
-            addFieldGroup(model, otherFields, "Counts");
-            addFieldGroup(model, dataFields, "Data Source");
-            addFieldGroup(model, annotationFields, "Annotations");
-
-            final SelectionPopupView popupView = fieldAddPresenter.getView();
+            final SelectionPopup<Column, ColumnSelectionItem> addColumnPopup = new SelectionPopup<>();
+            addColumnPopup.init(columnSelectionListModel);
 
             final Element target = event.getNativeEvent().getEventTarget().cast();
-            popupView.setModel(model);
-            popupView.addAutoHidePartner(target);
+            addColumnPopup.addAutoHidePartner(target);
             final PopupPosition popupPosition = new PopupPosition(
                     target.getAbsoluteLeft() - 3,
                     target.getAbsoluteTop() + target.getClientHeight() + 1);
-            popupView.show(popupPosition);
+            addColumnPopup.show(popupPosition);
 
             final List<HandlerRegistration> handlerRegistrations = new ArrayList<>();
-            handlerRegistrations.add(model.addValueChangeHandler(e -> {
-                final Field field = model.getValue();
-                if (field != null) {
-                    HidePopupEvent.builder(fieldAddPresenter).fire();
-                    fieldsManager.addField(field);
+            final MultiSelectionModel<ColumnSelectionItem> selectionModel = addColumnPopup.getSelectionModel();
+            handlerRegistrations.add(selectionModel.addSelectionHandler(e -> {
+                final ColumnSelectionItem item = selectionModel.getSelected();
+                if (item != null && !item.isHasChildren()) {
+                    final Column column = item.getColumn();
+                    if (column != null) {
+                        columnsManager.addColumn(column);
+                    }
+                    addColumnPopup.hide();
                 }
-                popupView.hide();
             }));
-            handlerRegistrations.add(popupView.addCloseHandler(closeEvent -> {
+            handlerRegistrations.add(addColumnPopup.addCloseHandler(closeEvent -> {
                 for (final HandlerRegistration handlerRegistration : handlerRegistrations) {
                     handlerRegistration.removeHandler();
                 }
                 handlerRegistrations.clear();
-                fieldAddPresenter = null;
                 target.focus();
             }));
-
             registerHandler(() -> {
                 for (final HandlerRegistration handlerRegistration : handlerRegistrations) {
                     handlerRegistration.removeHandler();
                 }
                 handlerRegistrations.clear();
             });
-        }
-    }
-
-    private void addFieldGroup(final SelectionBoxModel<Field> model,
-                               final List<Field> fields,
-                               final String groupName) {
-        if (fields.size() > 0) {
-            fields.sort(Comparator.comparing(Field::getName, String.CASE_INSENSITIVE_ORDER));
-//            items.add(new GroupHeading(items.size(), groupName));
-            model.addItems(fields);
-        }
-    }
-
-    private String buildAnnotationFieldExpression(final DataSourceFieldsMap indexFieldsMap,
-                                                  final String indexFieldName) {
-        final AbstractField dataSourceField = indexFieldsMap.get(indexFieldName);
-        String fieldParam = ParamSubstituteUtil.makeParam(indexFieldName);
-        if (dataSourceField != null && FieldType.DATE.equals(dataSourceField.getFieldType())) {
-            fieldParam = "formatDate(" + fieldParam + ")";
-        }
-        final Set<String> allFieldNames = indexFieldsMap.keySet();
-
-        final List<String> params = new ArrayList<>();
-        params.add(fieldParam);
-        addFieldIfPresent(params, allFieldNames, "annotation:Id");
-        addFieldIfPresent(params, allFieldNames, "StreamId");
-        addFieldIfPresent(params, allFieldNames, "EventId");
-
-        final String argsStr = String.join(", ", params);
-        return "annotation(" + argsStr + ")";
-    }
-
-    private void addFieldIfPresent(final List<String> params,
-                                   final Set<String> allFields,
-                                   final String fieldName) {
-        if (allFields.contains(fieldName)) {
-            params.add(ParamSubstituteUtil.makeParam(fieldName));
         }
     }
 
@@ -597,7 +487,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 // Don't refresh the table unless the results have changed.
                 final TableResult tableResult = (TableResult) componentResult;
 
-                final List<TableRow> values = processData(tableResult.getFields(), tableResult.getRows());
+                final List<TableRow> values = processData(tableResult.getColumns(), tableResult.getRows());
                 final OffsetRange valuesRange = tableResult.getResultRange();
 
                 // Only set data in the table if we have got some results and
@@ -625,25 +515,22 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         ignoreRangeChange = false;
     }
 
-    public static AbstractField buildDsField(final Field field) {
-        Type colType = Optional.ofNullable(field.getFormat())
+    public static QueryField buildDsField(final Column column) {
+        Type colType = Optional.ofNullable(column.getFormat())
                 .map(Format::getType)
                 .orElse(Type.GENERAL);
 
         try {
             switch (colType) {
                 case NUMBER:
-                    return new LongField(field.getName(), true);
+                    return new LongField(column.getName(), true);
 
                 case DATE_TIME:
-                    return new DateField(field.getName(), true);
+                    return new DateField(column.getName(), true);
 
                 default:
                     // CONTAINS only supported for legacy content, not for use in UI
-                    final List<Condition> conditionList = new ArrayList<>();
-                    conditionList.add(Condition.IN);
-                    conditionList.add(Condition.EQUALS);
-                    return new TextField(field.getName(), true, conditionList);
+                    return new TextField(column.getName(), ConditionSet.BASIC_TEXT, null, true);
 
             }
         } catch (Exception e) {
@@ -652,14 +539,14 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         }
     }
 
-    private List<TableRow> processData(final List<Field> fields, final List<Row> values) {
+    private List<TableRow> processData(final List<Column> columns, final List<Row> values) {
         // See if any fields have more than 1 level. If they do then we will add
         // an expander column.
         int maxGroup = -1;
         final boolean showDetail = getTableSettings().showDetail();
-        for (final Field field : fields) {
-            if (field.getGroup() != null) {
-                maxGroup = Math.max(maxGroup, field.getGroup());
+        for (final Column column : columns) {
+            if (column.getGroup() != null) {
+                maxGroup = Math.max(maxGroup, column.getGroup());
             }
         }
 
@@ -687,8 +574,8 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
             }
 
             final Map<String, TableRow.Cell> cellsMap = new HashMap<>();
-            for (int i = 0; i < fields.size() && i < row.getValues().size(); i++) {
-                final Field field = fields.get(i);
+            for (int i = 0; i < columns.size() && i < row.getValues().size(); i++) {
+                final Column column = columns.get(i);
                 final String value = row.getValues().get(i) != null
                         ? row.getValues().get(i)
                         : "";
@@ -697,18 +584,20 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 stylesBuilder.append(rowStyle.toSafeStyles());
 
                 // Wrap
-                if (field.getFormat() != null && field.getFormat().getWrap() != null && field.getFormat().getWrap()) {
+                if (column.getFormat() != null &&
+                        column.getFormat().getWrap() != null &&
+                        column.getFormat().getWrap()) {
                     stylesBuilder.whiteSpace(Style.WhiteSpace.NORMAL);
                 }
                 // Grouped
-                if (field.getGroup() != null && field.getGroup() >= row.getDepth()) {
+                if (column.getGroup() != null && column.getGroup() >= row.getDepth()) {
                     stylesBuilder.fontWeight(Style.FontWeight.BOLD);
                 }
 
                 final String style = stylesBuilder.toSafeStyles().asString();
 
                 final TableRow.Cell cell = new TableRow.Cell(value, style);
-                cellsMap.put(field.getId(), cell);
+                cellsMap.put(column.getId(), cell);
             }
 
             // Create an expander for the row.
@@ -735,21 +624,22 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         existingColumns.add(expanderColumn);
     }
 
-    private void addColumn(final Field field) {
-        final Column<TableRow, SafeHtml> column = new Column<TableRow, SafeHtml>(new SafeHtmlCell()) {
-            @Override
-            public SafeHtml getValue(final TableRow row) {
-                if (row == null) {
-                    return SafeHtmlUtil.NBSP;
-                }
+    private void addColumn(final Column column) {
+        final com.google.gwt.user.cellview.client.Column<TableRow, SafeHtml> col =
+                new com.google.gwt.user.cellview.client.Column<TableRow, SafeHtml>(new SafeHtmlCell()) {
+                    @Override
+                    public SafeHtml getValue(final TableRow row) {
+                        if (row == null) {
+                            return SafeHtmlUtil.NBSP;
+                        }
 
-                return row.getValue(field.getId());
-            }
-        };
+                        return row.getValue(column.getId());
+                    }
+                };
 
-        final FieldHeader fieldHeader = new FieldHeader(field);
-        dataGrid.addResizableColumn(column, fieldHeader, field.getWidth());
-        existingColumns.add(column);
+        final ColumnHeader columnHeader = new ColumnHeader(column);
+        dataGrid.addResizableColumn(col, columnHeader, column.getWidth());
+        existingColumns.add(col);
     }
 
     void handleFieldRename(final String oldName,
@@ -837,8 +727,8 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     }
 
     private void updateFields() {
-        if (getTableSettings().getFields() == null) {
-            setSettings(getTableSettings().copy().fields(new ArrayList<>()).build());
+        if (getTableSettings().getColumns() == null) {
+            setSettings(getTableSettings().copy().columns(new ArrayList<>()).build());
         }
 
         if (currentSearchModel != null) {
@@ -848,18 +738,18 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
             final DocRef currentDataSource = getTableSettings().getDataSourceRef();
             final DocRef loadedDataSource = indexLoader.getLoadedDataSourceRef();
             if (!Objects.equals(currentDataSource, loadedDataSource)) {
-                final TableComponentSettings.Builder builder = getTableSettings().copy();
+                dataSourceClient.fetchDefaultExtractionPipeline(loadedDataSource, extractionPipeline -> {
+                    final TableComponentSettings.Builder builder = getTableSettings().copy();
 
-                // Update data source ref so the table has an idea where it will be receiving data from.
-                builder.dataSourceRef(indexLoader.getLoadedDataSourceRef());
+                    // Update data source ref so the table has an idea where it will be receiving data from.
+                    builder.dataSourceRef(loadedDataSource);
 
-                // Update the extraction pipeline.
-                final DocRef extractionPipeline = indexLoader.getDefaultExtractionPipeline();
-                if (extractionPipeline != null && getTableSettings().useDefaultExtractionPipeline()) {
-                    builder.extractionPipeline(extractionPipeline).extractValues(true);
-                }
-
-                setSettings(builder.build());
+                    // Update the extraction pipeline.
+                    if (extractionPipeline != null && getTableSettings().useDefaultExtractionPipeline()) {
+                        builder.extractionPipeline(extractionPipeline).extractValues(true);
+                    }
+                    setSettings(builder.build());
+                });
             }
         }
 
@@ -868,36 +758,34 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     }
 
     private void ensureSpecialFields(final String... indexFieldNames) {
-        // Remove all special fields as we will re-add them with the right names if there are any.
-        getTableSettings().getFields().removeIf(Field::isSpecial);
+        // Remove all special fields as we will re-add them.
+        getTableSettings().getColumns().removeIf(Column::isSpecial);
 
-        // Get special fields from the current data source.
-        final List<AbstractField> requiredSpecialDsFields = new ArrayList<>();
-        final List<Field> requiredSpecialFields = new ArrayList<>();
-        // Get all index fields provided by the datasource
-        final DataSourceFieldsMap dataSourceFieldsMap = getIndexFieldsMap();
-        if (dataSourceFieldsMap != null) {
+        final Optional<Integer> maxGroup = getTableSettings()
+                .getColumns()
+                .stream()
+                .map(Column::getGroup)
+                .filter(Objects::nonNull)
+                .max(Integer::compareTo);
+        if (getTableSettings().showDetail() || maxGroup.isEmpty()) {
+            final List<Column> requiredSpecialColumns = new ArrayList<>();
             for (final String indexFieldName : indexFieldNames) {
-                final AbstractField indexField = dataSourceFieldsMap.get(indexFieldName);
-                if (indexField != null) {
-                    requiredSpecialDsFields.add(indexField);
-                    final Field specialField = buildSpecialField(indexFieldName);
-                    requiredSpecialFields.add(specialField);
-                }
+                final Column specialColumn = buildSpecialColumn(indexFieldName);
+                requiredSpecialColumns.add(specialColumn);
             }
 
             // If the fields we want to make special do exist in the current data source then
             // add them.
-            if (requiredSpecialFields.size() > 0) {
+            if (requiredSpecialColumns.size() > 0) {
                 // Prior to the introduction of the special field concept, special fields were
                 // treated as invisible fields. For this reason we need to remove old invisible
                 // fields if we haven't yet turned them into special fields.
                 final Version version = Version.parse(getTableSettings().getModelVersion());
                 final boolean old = version.lt(CURRENT_MODEL_VERSION);
                 if (old) {
-                    requiredSpecialDsFields.forEach(requiredSpecialDsField ->
-                            getTableSettings().getFields().removeIf(field ->
-                                    !field.isVisible() && field.getName().equals(requiredSpecialDsField.getName())));
+                    requiredSpecialColumns.forEach(requiredSpecialDsColumn ->
+                            getTableSettings().getColumns().removeIf(column ->
+                                    !column.isVisible() && column.getName().equals(requiredSpecialDsColumn.getName())));
                     setSettings(getTableSettings()
                             .copy()
                             .modelVersion(CURRENT_MODEL_VERSION.toString())
@@ -905,9 +793,10 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 }
 
                 // Add special fields.
-                requiredSpecialFields.forEach(field ->
-                        getTableSettings().getFields().add(field));
+                requiredSpecialColumns.forEach(column ->
+                        getTableSettings().getColumns().add(column));
             }
+        }
 
 //        GWT.log(tableSettings.getFields().stream()
 //                .map(field ->
@@ -918,12 +807,12 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 //                                Boolean.toString(field.isVisible()),
 //                                Boolean.toString(field.isSpecial())))
 //                .collect(Collectors.joining("\n")));
-        }
+//        }
     }
 
-    public static Field buildSpecialField(final String indexFieldName) {
+    public static Column buildSpecialColumn(final String indexFieldName) {
         final String obfuscatedColumnName = IndexConstants.generateObfuscatedColumnName(indexFieldName);
-        return Field.builder()
+        return Column.builder()
                 .id(obfuscatedColumnName)
                 .name(obfuscatedColumnName)
                 .expression(ParamSubstituteUtil.makeParam(indexFieldName))
@@ -932,35 +821,25 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 .build();
     }
 
-    DataSourceFieldsMap getIndexFieldsMap() {
-        if (currentSearchModel != null
-                && currentSearchModel.getIndexLoader() != null
-                && currentSearchModel.getIndexLoader().getDataSourceFieldsMap() != null) {
-            return currentSearchModel.getIndexLoader().getDataSourceFieldsMap();
-        }
-
-        return null;
-    }
-
     void updateColumns() {
         // Now make sure special fields exist for stream id and event id.
         ensureSpecialFields(IndexConstants.STREAM_ID, IndexConstants.EVENT_ID, "Id");
 
         // Remove existing columns.
-        for (final Column<TableRow, ?> column : existingColumns) {
+        for (final com.google.gwt.user.cellview.client.Column<TableRow, ?> column : existingColumns) {
             dataGrid.removeColumn(column);
         }
         existingColumns.clear();
 
-        final List<Field> fields = getTableSettings().getFields();
+        final List<Column> columns = getTableSettings().getColumns();
         addExpanderColumn();
-        fieldsManager.setFieldsStartIndex(1);
+        columnsManager.setColumnsStartIndex(1);
 
         // Add fields as columns.
-        for (final Field field : fields) {
+        for (final Column column : columns) {
             // Only include the field if it is supposed to be visible.
-            if (field.isVisible()) {
-                addColumn(field);
+            if (column.isVisible()) {
+                addColumn(column);
             }
         }
 
@@ -996,24 +875,24 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
         // Ensure all fields have ids.
         final Set<String> usedFieldIds = new HashSet<>();
-        if (getTableSettings().getFields() != null) {
+        if (getTableSettings().getColumns() != null) {
             final String obfuscatedStreamId = IndexConstants.generateObfuscatedColumnName(IndexConstants.STREAM_ID);
             final String obfuscatedEventId = IndexConstants.generateObfuscatedColumnName(IndexConstants.EVENT_ID);
 
-            final List<Field> fields = new ArrayList<>();
-            getTableSettings().getFields().forEach(field -> {
-                Field f = field;
-                if (obfuscatedStreamId.equals(f.getName())) {
-                    f = buildSpecialField(IndexConstants.STREAM_ID);
-                } else if (obfuscatedEventId.equals(f.getName())) {
-                    f = buildSpecialField(IndexConstants.EVENT_ID);
-                } else if (field.getId() == null) {
-                    f = field.copy().id(fieldsManager.createRandomFieldId(usedFieldIds)).build();
+            final List<Column> columns = new ArrayList<>();
+            getTableSettings().getColumns().forEach(column -> {
+                Column col = column;
+                if (obfuscatedStreamId.equals(col.getName())) {
+                    col = buildSpecialColumn(IndexConstants.STREAM_ID);
+                } else if (obfuscatedEventId.equals(col.getName())) {
+                    col = buildSpecialColumn(IndexConstants.EVENT_ID);
+                } else if (column.getId() == null) {
+                    col = column.copy().id(columnsManager.createRandomColumnId(usedFieldIds)).build();
                 }
-                usedFieldIds.add(field.getId());
-                fields.add(f);
+                usedFieldIds.add(column.getId());
+                columns.add(col);
             });
-            setSettings(getTableSettings().copy().fields(fields).build());
+            setSettings(getTableSettings().copy().columns(columns).build());
         }
     }
 
@@ -1086,12 +965,12 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     }
 
     @Override
-    public List<AbstractField> getFields() {
-        final List<AbstractField> abstractFields = new ArrayList<>();
-        final List<Field> fields = getTableSettings().getFields();
-        if (fields != null && fields.size() > 0) {
-            for (final Field field : fields) {
-                abstractFields.add(new TextField(field.getName(), true));
+    public List<QueryField> getFields() {
+        final List<QueryField> abstractFields = new ArrayList<>();
+        final List<Column> columns = getTableSettings().getColumns();
+        if (columns != null && columns.size() > 0) {
+            for (final Column column : columns) {
+                abstractFields.add(new TextField(column.getName(), true));
             }
         }
         return abstractFields;
@@ -1100,11 +979,11 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     @Override
     public List<Map<String, String>> getSelection() {
         final List<Map<String, String>> list = new ArrayList<>();
-        final List<Field> fields = getTableSettings().getFields();
+        final List<Column> columns = getTableSettings().getColumns();
         for (final TableRow tableRow : getSelectedRows()) {
             final Map<String, String> map = new HashMap<>();
-            for (final Field field : fields) {
-                map.put(field.getName(), tableRow.getText(field.getId()));
+            for (final Column column : columns) {
+                map.put(column.getName(), tableRow.getText(column.getId()));
             }
             list.add(map);
         }
@@ -1164,7 +1043,11 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         super.setDesignMode(designMode);
         dataGrid.setAllowMove(designMode);
         dataGrid.setAllowHeaderSelection(designMode);
-        addFieldButton.setVisible(designMode);
+        addColumnButton.setVisible(designMode);
+    }
+
+    public SearchModel getCurrentSearchModel() {
+        return currentSearchModel;
     }
 
     public interface TableView extends View, HasUiHandlers<TableUiHandlers> {

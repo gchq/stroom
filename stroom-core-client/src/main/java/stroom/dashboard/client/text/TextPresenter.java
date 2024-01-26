@@ -42,7 +42,7 @@ import stroom.pipeline.shared.SourceLocation;
 import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.shared.stepping.StepType;
 import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
-import stroom.query.api.v2.Field;
+import stroom.query.api.v2.Column;
 import stroom.query.client.presenter.TableRow;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
@@ -333,23 +333,23 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
             if (tablePresenter != null) {
                 final List<TableRow> selection = tablePresenter.getSelectedRows();
                 if (selection != null && selection.size() == 1) {
-                    final Field streamIdField = chooseBestField(tablePresenter, getTextSettings().getStreamIdField());
-                    final Field partNoField = chooseBestField(tablePresenter, getTextSettings().getPartNoField());
-                    final Field recordNoField = chooseBestField(tablePresenter, getTextSettings().getRecordNoField());
-                    final Field lineFromField = chooseBestField(tablePresenter, getTextSettings().getLineFromField());
-                    final Field colFromField = chooseBestField(tablePresenter, getTextSettings().getColFromField());
-                    final Field lineToField = chooseBestField(tablePresenter, getTextSettings().getLineToField());
-                    final Field colToField = chooseBestField(tablePresenter, getTextSettings().getColToField());
+                    final Column streamIdColumn = chooseBestCol(tablePresenter, getTextSettings().getStreamIdColumn());
+                    final Column partNoColumn = chooseBestCol(tablePresenter, getTextSettings().getPartNoColumn());
+                    final Column recordNoColumn = chooseBestCol(tablePresenter, getTextSettings().getRecordNoColumn());
+                    final Column lineFromColumn = chooseBestCol(tablePresenter, getTextSettings().getLineFromColumn());
+                    final Column colFromColumn = chooseBestCol(tablePresenter, getTextSettings().getColFromColumn());
+                    final Column lineToColumn = chooseBestCol(tablePresenter, getTextSettings().getLineToColumn());
+                    final Column colToColumn = chooseBestCol(tablePresenter, getTextSettings().getColToColumn());
 
                     // Just use the first row.
                     final TableRow selected = selection.get(0);
-                    currentStreamId = getLong(streamIdField, selected);
-                    currentPartIndex = convertToIndex(getLong(partNoField, selected));
-                    currentRecordIndex = convertToIndex(getLong(recordNoField, selected));
-                    final Long currentLineFrom = getLong(lineFromField, selected);
-                    final Long currentColFrom = getLong(colFromField, selected);
-                    final Long currentLineTo = getLong(lineToField, selected);
-                    final Long currentColTo = getLong(colToField, selected);
+                    currentStreamId = getLong(streamIdColumn, selected);
+                    currentPartIndex = convertToIndex(getLong(partNoColumn, selected));
+                    currentRecordIndex = convertToIndex(getLong(recordNoColumn, selected));
+                    final Long currentLineFrom = getLong(lineFromColumn, selected);
+                    final Long currentColFrom = getLong(colFromColumn, selected);
+                    final Long currentLineTo = getLong(lineToColumn, selected);
+                    final Long currentColTo = getLong(colToColumn, selected);
 
 //                    GWT.log("TextPresenter - selected table row = " + selected);
 //                    GWT.log("TextPresenter - " +
@@ -367,20 +367,20 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
 //                            currentRecordIndex);
 
                     // Validate settings.
-                    if (getTextSettings().getStreamIdField() == null) {
+                    if (getTextSettings().getStreamIdColumn() == null) {
                         message = "No stream id field is configured";
 
-                    } else if (getTextSettings().getStreamIdField() != null && currentStreamId == null) {
+                    } else if (getTextSettings().getStreamIdColumn() != null && currentStreamId == null) {
                         message = "No stream id found in selection";
 
-                    } else if (getTextSettings().getRecordNoField() == null
+                    } else if (getTextSettings().getRecordNoColumn() == null
                             && !(
-                            getTextSettings().getLineFromField() != null
-                                    && getTextSettings().getLineToField() != null)) { // Allow just line positions to
+                            getTextSettings().getLineFromColumn() != null
+                                    && getTextSettings().getLineToColumn() != null)) { // Allow just line positions to
                         //                                                               be used rather than record no.
                         message = "No record number field is configured";
 
-                    } else if (getTextSettings().getRecordNoField() != null && currentRecordIndex == null) {
+                    } else if (getTextSettings().getRecordNoColumn() != null && currentRecordIndex == null) {
                         message = "No record number field found in selection";
 
                     } else {
@@ -469,20 +469,20 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
         }
     }
 
-    private Field chooseBestField(final TablePresenter tablePresenter, final Field field) {
-        if (field != null) {
+    private Column chooseBestCol(final TablePresenter tablePresenter, final Column col) {
+        if (col != null) {
             final TableComponentSettings tableComponentSettings = tablePresenter.getTableSettings();
-            final List<Field> fields = tableComponentSettings.getFields();
+            final List<Column> columns = tableComponentSettings.getColumns();
             // Try and choose by id.
-            for (final Field f : fields) {
-                if (f.getId() != null && f.getId().equals(field.getId())) {
-                    return f;
+            for (final Column column : columns) {
+                if (column.getId() != null && column.getId().equals(col.getId())) {
+                    return column;
                 }
             }
             // Try and choose by name.
-            for (final Field f : fields) {
-                if (f.getName() != null && f.getName().equals(field.getName())) {
-                    return f;
+            for (final Column column : columns) {
+                if (column.getName() != null && column.getName().equals(col.getName())) {
+                    return column;
                 }
             }
         }
@@ -550,9 +550,9 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
         return null;
     }
 
-    private Long getLong(final Field field, final TableRow row) {
-        if (field != null && row != null) {
-            return getLong(row.getText(field.getId()));
+    private Long getLong(final Column column, final TableRow row) {
+        if (column != null && row != null) {
+            return getLong(row.getText(column.getId()));
         }
         return null;
     }
@@ -642,21 +642,21 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
 
             // special field names have changed from EventId to __event_id__ so we need to deal
             // with those and replace them, also rebuild existing special fields just in case
-            if (textComponentSettings.getStreamIdField() == null
-                    || (old && IndexConstants.STREAM_ID.equals(textComponentSettings.getStreamIdField().getName()))
-                    || (old && textComponentSettings.getStreamIdField().isSpecial())) {
-                builder.streamIdField(TablePresenter.buildSpecialField(IndexConstants.STREAM_ID));
+            if (textComponentSettings.getStreamIdColumn() == null
+                    || (old && IndexConstants.STREAM_ID.equals(textComponentSettings.getStreamIdColumn().getName()))
+                    || (old && textComponentSettings.getStreamIdColumn().isSpecial())) {
+                builder.streamIdField(TablePresenter.buildSpecialColumn(IndexConstants.STREAM_ID));
             }
-            if (textComponentSettings.getRecordNoField() == null
-                    || (old && IndexConstants.EVENT_ID.equals(textComponentSettings.getRecordNoField().getName()))
-                    || (old && textComponentSettings.getRecordNoField().isSpecial())) {
-                builder.recordNoField(TablePresenter.buildSpecialField(IndexConstants.EVENT_ID));
+            if (textComponentSettings.getRecordNoColumn() == null
+                    || (old && IndexConstants.EVENT_ID.equals(textComponentSettings.getRecordNoColumn().getName()))
+                    || (old && textComponentSettings.getRecordNoColumn().isSpecial())) {
+                builder.recordNoField(TablePresenter.buildSpecialColumn(IndexConstants.EVENT_ID));
             }
 
         } else {
             builder = TextComponentSettings.builder();
-            builder.streamIdField(TablePresenter.buildSpecialField(IndexConstants.STREAM_ID));
-            builder.recordNoField(TablePresenter.buildSpecialField(IndexConstants.EVENT_ID));
+            builder.streamIdField(TablePresenter.buildSpecialColumn(IndexConstants.STREAM_ID));
+            builder.recordNoField(TablePresenter.buildSpecialColumn(IndexConstants.EVENT_ID));
         }
 
         builder.modelVersion(CURRENT_MODEL_VERSION.toString());

@@ -12,6 +12,11 @@ import stroom.query.api.v2.SearchRequestSource;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.ref.ErrorConsumer;
+import stroom.util.NullSafe;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+
+import jakarta.inject.Inject;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -21,9 +26,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import javax.inject.Inject;
 
 public class CoprocessorsFactory {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(CoprocessorsFactory.class);
 
     private final DataStoreFactory dataStoreFactory;
     private final ExpressionContextFactory expressionContextFactory;
@@ -36,14 +42,27 @@ public class CoprocessorsFactory {
     }
 
     public List<CoprocessorSettings> createSettings(final SearchRequest searchRequest) {
+        return createSettings(searchRequest, null);
+    }
+
+    public List<CoprocessorSettings> createSettings(final SearchRequest searchRequest,
+                                                    final DocRef defaultExtractionPipeline) {
         // Group common settings.
         final Map<TableSettings, Set<String>> groupMap = new HashMap<>();
         for (final ResultRequest resultRequest : searchRequest.getResultRequests()) {
-            if (resultRequest.getMappings() != null && resultRequest.getMappings().size() > 0) {
+            if (!NullSafe.isEmptyCollection(resultRequest.getMappings())) {
                 final String componentId = resultRequest.getComponentId();
-                final TableSettings tableSettings = resultRequest.getMappings().get(0);
+                TableSettings tableSettings = resultRequest.getMappings().get(0);
                 if (tableSettings != null) {
-                    Set<String> set = groupMap.computeIfAbsent(tableSettings, k -> new HashSet<>());
+                    if (tableSettings.getExtractionPipeline() == null
+                            && defaultExtractionPipeline != null) {
+                        LOGGER.debug("Using defaultExtractionPipeline {} on tableSettings {}",
+                                defaultExtractionPipeline, tableSettings);
+                        tableSettings = tableSettings.copy()
+                                .extractionPipeline(defaultExtractionPipeline)
+                                .build();
+                    }
+                    final Set<String> set = groupMap.computeIfAbsent(tableSettings, k -> new HashSet<>());
                     set.add(componentId);
                 }
             }

@@ -23,8 +23,8 @@ import stroom.util.shared.EntityServiceException;
 import stroom.xmlschema.shared.XmlSchemaDoc;
 import stroom.xmlschema.shared.XmlSchemaResource;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 @AutoLogged
 class XmlSchemaResourceImpl implements XmlSchemaResource {

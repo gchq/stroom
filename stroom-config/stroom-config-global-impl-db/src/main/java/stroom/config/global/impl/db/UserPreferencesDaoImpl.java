@@ -5,11 +5,11 @@ import stroom.db.util.JooqUtil;
 import stroom.ui.config.shared.UserPreferences;
 import stroom.util.json.JsonUtil;
 
+import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Optional;
-import javax.inject.Inject;
 
 import static stroom.config.impl.db.jooq.tables.Preferences.PREFERENCES;
 

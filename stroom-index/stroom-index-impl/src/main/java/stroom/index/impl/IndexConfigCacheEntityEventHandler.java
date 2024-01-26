@@ -22,11 +22,12 @@ import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexShard;
 import stroom.node.api.NodeInfo;
+import stroom.search.extraction.IndexStructure;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEventHandler;
 import stroom.util.shared.ResultPage;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 @EntityEventHandler(type = IndexDoc.DOCUMENT_TYPE)
 class IndexConfigCacheEntityEventHandler implements EntityEvent.Handler {

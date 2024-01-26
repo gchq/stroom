@@ -20,6 +20,9 @@ import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.util.filter.QuickFilterPredicateFactory;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+import jakarta.validation.constraints.NotNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,9 +37,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.inject.Inject;
-import javax.inject.Singleton;
-import javax.validation.constraints.NotNull;
 
 @Singleton
 public class MetaSuggestionsQueryHandlerImpl implements MetaSuggestionsQueryHandler {
@@ -93,7 +93,7 @@ public class MetaSuggestionsQueryHandlerImpl implements MetaSuggestionsQueryHand
         return securityContext.secureResult(() -> {
             List<String> result = Collections.emptyList();
 
-            final String fieldName = request.getField().getName();
+            final String fieldName = request.getField().getFieldName();
             final Function<String, List<String>> suggestionFunc = getSuggestionFunc(request, fieldName);
             if (suggestionFunc != null) {
                 result = suggestionFunc.apply(request.getText());
@@ -101,7 +101,8 @@ public class MetaSuggestionsQueryHandlerImpl implements MetaSuggestionsQueryHand
 
             // Determine if we are going to allow the client to cache the suggestions.
             final boolean cache = ((request.getText() == null || request.getText().isBlank()) &&
-                    (request.getField().equals(MetaFields.TYPE) || request.getField().equals(MetaFields.STATUS)));
+                    (request.getField().getFieldName().equals(MetaFields.TYPE.getName()) ||
+                            request.getField().getFieldName().equals(MetaFields.STATUS.getName())));
 
             return new Suggestions(result, cache);
         });

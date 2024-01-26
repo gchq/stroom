@@ -6,11 +6,11 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ModelStringUtil;
 
 import io.dropwizard.lifecycle.Managed;
+import jakarta.inject.Singleton;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
-import javax.inject.Singleton;
 
 @Singleton
 public class ProxyServices implements Managed {

@@ -20,6 +20,8 @@ import stroom.util.io.BasicStreamCloser;
 import stroom.util.io.SeekableInputStream;
 import stroom.util.io.StreamCloser;
 
+import jakarta.validation.constraints.NotNull;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.channels.Channels;
@@ -27,7 +29,6 @@ import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import javax.validation.constraints.NotNull;
 
 /**
  * A stream that interfaces with a random access file.

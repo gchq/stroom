@@ -504,7 +504,25 @@ class TestNullSafe {
     }
 
     @TestFactory
-    Stream<DynamicTest> testHasItems() {
+    Stream<DynamicTest> testIsEmptyArray() {
+        final String[] emptyArr = new String[0];
+        final String[] nonEmptyArr = new String[]{ "foo", "bar" };
+
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(new TypeLiteral<String[]>() {
+                })
+                .withOutputType(boolean.class)
+                .withTestFunction(testCase ->
+                        NullSafe.isEmptyArray(testCase.getInput()))
+                .withSimpleEqualityAssertion()
+                .addCase(null, true)
+                .addCase(emptyArr, true)
+                .addCase(nonEmptyArr, false)
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testHasItems_collection() {
         final List<String> emptyList = Collections.emptyList();
         final List<String> nonEmptyList = List.of("foo", "bar");
 
@@ -518,6 +536,24 @@ class TestNullSafe {
                 .addCase(null, false)
                 .addCase(emptyList, false)
                 .addCase(nonEmptyList, true)
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testHasItems_array() {
+        final String[] emptyArr = new String[0];
+        final String[] nonEmptyArr = new String[]{ "foo", "bar" };
+
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(new TypeLiteral<String[]>() {
+                })
+                .withOutputType(boolean.class)
+                .withTestFunction(testCase ->
+                        NullSafe.hasItems(testCase.getInput()))
+                .withSimpleEqualityAssertion()
+                .addCase(null, false)
+                .addCase(emptyArr, false)
+                .addCase(nonEmptyArr, true)
                 .build();
     }
 
@@ -1553,29 +1589,46 @@ class TestNullSafe {
 
         final TimedCase pureJavaCase = TimedCase.of("Pure java", (round, iterations) -> {
             final Level1 nonNullLevel1 = new Level1();
-            int i = 0;
-            if (nonNullLevel1 != null
-                    && nonNullLevel1.getNonNullLevel2() != null
-                    && nonNullLevel1.getNonNullLevel2().getNonNullLevel3() != null) {
-                i++;
+            long i = 0;
+            for (i = 0; i < iterations; i++) {
+                if (nonNullLevel1 != null
+                        && nonNullLevel1.getNonNullLevel2() != null
+                        && nonNullLevel1.getNonNullLevel2().getNonNullLevel3() != null) {
+                    i++;
+                }
             }
-//            System.out.println(i);
+            System.out.println(i);
         });
         final TimedCase nullSafeCase = TimedCase.of("NullSafe", (round, iterations) -> {
             final Level1 nonNullLevel1 = new Level1();
-            int i = 0;
-            if (NullSafe.nonNull(nonNullLevel1, Level1::getNonNullLevel2, Level2::getNonNullLevel3)) {
-                i++;
+            long i = 0;
+            for (i = 0; i < iterations; i++) {
+                if (NullSafe.nonNull(nonNullLevel1, Level1::getNonNullLevel2, Level2::getNonNullLevel3)) {
+                    i++;
+                }
             }
-//            System.out.println(i);
+        });
+        final TimedCase optCase = TimedCase.of("Optional", (round, iterations) -> {
+            final Level1 nonNullLevel1 = new Level1();
+            long i = 0;
+            for (i = 0; i < iterations; i++) {
+                if (Optional.ofNullable(nonNullLevel1)
+                        .map(Level1::getNonNullLevel2)
+                        .map(Level2::getNonNullLevel3)
+                        .filter(Objects::nonNull)
+                        .isPresent()) {
+                    i++;
+                }
+            }
         });
 
         TestUtil.comparePerformance(
                 4,
-                1_000_000_000,
+                100_000_000L,
                 LOGGER::info,
                 pureJavaCase,
-                nullSafeCase);
+                nullSafeCase,
+                optCase);
     }
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
