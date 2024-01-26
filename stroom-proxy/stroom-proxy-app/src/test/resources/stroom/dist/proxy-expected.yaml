@@ -37,13 +37,14 @@ proxyConfig:
     path: null
   forwardHttpDestinations:
   - addOpenIdAccessToken: false
+    apiKey: null
     enabled: true
     forwardChunkSize: "1M"
     forwardDelay: "PT0S"
     forwardTimeout: "PT30S"
     forwardUrl: null
     instant: false
-    maxRetries: 100
+    maxRetries: 3
     name: null
     retryDelay: "PT10S"
     sslConfig: null

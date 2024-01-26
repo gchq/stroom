@@ -97,7 +97,8 @@ public class ForwardHttpPostDestination {
                 attributeMap.put(StandardHeaderArguments.COMPRESSION, StandardHeaderArguments.COMPRESSION_ZIP);
 
                 // Send the data.
-                try (final InputStream inputStream = new BufferedInputStream(Files.newInputStream(fileGroup.getZip()))) {
+                try (final InputStream inputStream =
+                        new BufferedInputStream(Files.newInputStream(fileGroup.getZip()))) {
                     destination.send(attributeMap, inputStream);
                 }
 
