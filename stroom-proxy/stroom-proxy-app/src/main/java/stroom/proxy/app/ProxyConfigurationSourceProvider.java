@@ -205,10 +205,10 @@ public class ProxyConfigurationSourceProvider implements ConfigurationSourceProv
         final TempDirProvider tempDirProvider = new TempDirProviderImpl(pathConfig, homeDirProvider);
         final PathCreator pathCreator = new SimplePathCreator(homeDirProvider, tempDirProvider);
 
-        log("Using stroom home [{}] from {} for Drop Wizard config path substitutions",
+        log("Using stroom home [{}] from {} for Dropwizard config path substitutions",
                 homeDirProvider.get().toAbsolutePath(),
                 homeSource);
-        log("Using stroom temp [{}] from {} for Drop Wizard config path substitutions",
+        log("Using stroom temp [{}] from {} for Dropwizard config path substitutions",
                 tempDirProvider.get().toAbsolutePath(),
                 tempSource);
         return pathCreator;

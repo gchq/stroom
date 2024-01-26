@@ -4,6 +4,7 @@ import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.StroomStatusCode;
+import stroom.receive.common.RequestAuthenticator;
 import stroom.receive.common.RequestHandler;
 import stroom.receive.common.StroomStreamException;
 import stroom.util.cert.CertificateExtractor;
@@ -34,15 +35,18 @@ public class ProxyRequestHandler implements RequestHandler {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ProxyRequestHandler.class);
     private static final String ZERO_CONTENT = "0";
 
+    private final RequestAuthenticator requestAuthenticator;
     private final ProxyId proxyId;
     private final CertificateExtractor certificateExtractor;
     private final ReceiverFactory receiverFactory;
     private final String hostName;
 
     @Inject
-    public ProxyRequestHandler(final ProxyId proxyId,
+    public ProxyRequestHandler(final RequestAuthenticator requestAuthenticator,
+                               final ProxyId proxyId,
                                final CertificateExtractor certificateExtractor,
                                final ReceiverFactory receiverFactory) {
+        this.requestAuthenticator = requestAuthenticator;
         this.proxyId = proxyId;
         this.certificateExtractor = certificateExtractor;
         this.receiverFactory = receiverFactory;
@@ -61,6 +65,9 @@ public class ProxyRequestHandler implements RequestHandler {
             final String requestUuid = UUID.randomUUID().toString();
             final String proxyIdString = proxyId.getId();
             final String result = proxyIdString + ": " + requestUuid;
+
+            // Authorise request.
+            requestAuthenticator.authenticate(request, attributeMap);
 
             LOGGER.debug(() -> "Adding proxy id attribute: " + proxyIdString + ": " + requestUuid);
             attributeMap.put(proxyIdString, requestUuid);

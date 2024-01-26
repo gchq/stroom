@@ -18,6 +18,7 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.Objects;
 
 public class ForwardHttpPostDestination {
 
@@ -38,7 +39,7 @@ public class ForwardHttpPostDestination {
                                       final StreamDestination destination,
                                       final CleanupDirQueue cleanupDirQueue,
                                       final StroomDuration retryDelay,
-                                      final int maxRetries,
+                                      final Integer maxRetries,
                                       final ProxyServices proxyServices,
                                       final DirQueueFactory sequentialDirQueueFactory,
                                       final int forwardThreads,
@@ -49,6 +50,9 @@ public class ForwardHttpPostDestination {
         this.destinationName = destinationName;
         this.retryDelay = retryDelay;
         this.maxRetries = maxRetries;
+
+        Objects.requireNonNull(retryDelay, "Null retry delay");
+        Objects.requireNonNull(maxRetries, "Null max retries");
 
         final String safeDirName = DirUtil.makeSafeName(destinationName);
         final Path forwardingDir = dataDirProvider.get().resolve(DirNames.FORWARDING).resolve(safeDirName);
@@ -85,40 +89,44 @@ public class ForwardHttpPostDestination {
 
     private boolean forwardDir(final Path dir) {
         try {
-            final FileGroup fileGroup = new FileGroup(dir);
-            final AttributeMap attributeMap = new AttributeMap();
-            AttributeMapUtil.read(fileGroup.getMeta(), attributeMap);
-            // Make sure we tell the destination we are sending zip data.
-            attributeMap.put(StandardHeaderArguments.COMPRESSION, StandardHeaderArguments.COMPRESSION_ZIP);
+            try {
+                final FileGroup fileGroup = new FileGroup(dir);
+                final AttributeMap attributeMap = new AttributeMap();
+                AttributeMapUtil.read(fileGroup.getMeta(), attributeMap);
+                // Make sure we tell the destination we are sending zip data.
+                attributeMap.put(StandardHeaderArguments.COMPRESSION, StandardHeaderArguments.COMPRESSION_ZIP);
 
-            // Send the data.
-            try (final InputStream inputStream = new BufferedInputStream(Files.newInputStream(fileGroup.getZip()))) {
-                destination.send(attributeMap, inputStream);
+                // Send the data.
+                try (final InputStream inputStream = new BufferedInputStream(Files.newInputStream(fileGroup.getZip()))) {
+                    destination.send(attributeMap, inputStream);
+                }
+
+                // We have completed sending so can delete the data.
+                cleanupDirQueue.add(dir);
+
+                // Return true for success.
+                return true;
+
+            } catch (final Exception e) {
+                LOGGER.error(() ->
+                        "Error sending '" + FileUtil.getCanonicalPath(dir) + "' to '" + destinationName + "'.");
+                LOGGER.debug(e::getMessage, e);
+
+                // Add to the errors
+                addError(dir, e);
+
+                // Count errors.
+                final int errorCount = countErrors(dir);
+                if (errorCount >= maxRetries) {
+                    // If we exceeded the max number of retries then move the data to the failure destination.
+                    failureDestination.add(dir);
+                } else {
+                    // Add the dir to the retry queue ready to be tried again.
+                    retryQueue.add(dir);
+                }
             }
-
-            // We have completed sending so can delete the data.
-            cleanupDirQueue.add(dir);
-
-            // Return true for success.
-            return true;
-
-        } catch (final IOException e) {
-            LOGGER.error(
-                    () -> "Error sending '" + FileUtil.getCanonicalPath(dir) + "' to '" + destinationName + "'.", e);
-            LOGGER.debug(e::getMessage, e);
-
-            // Add to the errors
-            addError(dir, e);
-
-            // Count errors.
-            final int errorCount = countErrors(dir);
-            if (errorCount >= maxRetries) {
-                // If we exceeded the max number of retries then move the data to the failure destination.
-                failureDestination.add(dir);
-            } else {
-                // Add the dir to the retry queue ready to be tried again.
-                retryQueue.add(dir);
-            }
+        } catch (final Throwable t) {
+            LOGGER.error(t::getMessage, t);
         }
 
         // Failed, return false.

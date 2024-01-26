@@ -3,11 +3,11 @@ package stroom.proxy.app.handler;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
+import stroom.proxy.app.DataDirProvider;
 import stroom.proxy.repo.LogStream;
 import stroom.receive.common.AttributeMapFilter;
 import stroom.util.io.ByteCountInputStream;
 import stroom.util.io.FileUtil;
-import stroom.util.io.TempDirProvider;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -38,7 +38,7 @@ public class InstantForwardFile {
 
     @Inject
     public InstantForwardFile(final AttributeMapFilterFactory attributeMapFilterFactory,
-                              final TempDirProvider tempDirProvider,
+                              final DataDirProvider dataDirProvider,
                               final DropReceiver dropReceiver,
                               final ForwardFileDestinationFactory forwardFileDestinationFactory,
                               final LogStream logStream) {
@@ -49,7 +49,7 @@ public class InstantForwardFile {
 
         // Create a direct forwarding file receiver.
         // Make receiving zip dir.
-        final Path receivingDir = tempDirProvider.get().resolve("proxy_receiving_temp");
+        final Path receivingDir = dataDirProvider.get().resolve("proxy_receiving_temp");
         DirUtil.ensureDirExists(receivingDir);
 
         // This is a temporary location and can be cleaned completely on startup.

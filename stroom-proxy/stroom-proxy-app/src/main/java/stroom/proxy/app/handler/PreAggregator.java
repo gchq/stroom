@@ -10,7 +10,6 @@ import stroom.proxy.repo.FeedKey;
 import stroom.proxy.repo.ProxyServices;
 import stroom.util.io.FileName;
 import stroom.util.io.FileUtil;
-import stroom.util.io.TempDirProvider;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -59,7 +58,6 @@ public class PreAggregator {
     @Inject
     public PreAggregator(final CleanupDirQueue deleteDirQueue,
                          final Provider<ProxyConfig> proxyConfigProvider,
-                         final TempDirProvider tempDirProvider,
                          final DataDirProvider dataDirProvider,
                          final ProxyServices proxyServices) {
         this.deleteDirQueue = deleteDirQueue;
@@ -74,7 +72,7 @@ public class PreAggregator {
         initialiseAggregateStateMap();
 
         // Make splitting dir.
-        final Path tempSplittingDir = tempDirProvider.get().resolve(DirNames.PRE_AGGREGATE_SPLITTING);
+        final Path tempSplittingDir = dataDirProvider.get().resolve(DirNames.PRE_AGGREGATE_SPLITTING);
         DirUtil.ensureDirExists(tempSplittingDir);
 
         // This is a temporary location and can be cleaned completely on startup.
@@ -445,9 +443,7 @@ public class PreAggregator {
             }
 
             // Get or create the aggregate dir.
-            final Path dataDir = dataDirProvider.get();
-            final Path aggregatesDir = dataDir.resolve("aggregates");
-            final Path aggregateDir = aggregatesDir.resolve(sb.toString());
+            final Path aggregateDir = aggregatingDir.resolve(sb.toString());
             LOGGER.debug(() -> "Creating aggregate: " + FileUtil.getCanonicalPath(aggregateDir));
 
             // Ensure the dir exists.

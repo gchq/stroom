@@ -5,7 +5,6 @@ import stroom.proxy.app.DataDirProvider;
 import stroom.proxy.repo.FeedKey;
 import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.io.FileUtil;
-import stroom.util.io.TempDirProvider;
 import stroom.util.zip.ZipUtil;
 
 import org.junit.jupiter.api.Disabled;
@@ -50,15 +49,13 @@ public class TestAggregator extends StroomUnitTest {
 
     private void test(final int entryCountPerZip,
                       final int inputZipCount) throws IOException {
-        final Path tempDir = Files.createTempDirectory("temp");
         final Path dataDir = Files.createTempDirectory("repo");
-        final TempDirProvider tempDirProvider = () -> tempDir;
         final DataDirProvider dataDirProvider = () -> dataDir;
         final CleanupDirQueue cleanupDirQueue = new CleanupDirQueue(dataDirProvider);
         final AtomicInteger aggregateCount = new AtomicInteger();
         final Aggregator aggregator = new Aggregator(
                 cleanupDirQueue,
-                tempDirProvider);
+                dataDirProvider);
         aggregator.setDestination(aggregatorDir -> {
             try {
                 aggregateCount.getAndIncrement();

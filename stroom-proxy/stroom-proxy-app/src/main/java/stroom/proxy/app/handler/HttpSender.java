@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
+import java.net.URI;
 import java.net.URL;
 import java.time.Duration;
 import java.time.Instant;
@@ -90,7 +91,7 @@ public class HttpSender implements StreamDestination {
                         "values truncated):\n{}",
                 forwarderName, forwardUrl, userAgent, forwardTimeout, formatAttributeMapLogging(attributeMap)));
 
-        final URL url = new URL(forwardUrl);
+        final URL url = URI.create(forwardUrl).toURL();
 
         final HttpURLConnection connection = (HttpURLConnection) url.openConnection();
         connection.setRequestProperty("User-Agent", userAgent);
@@ -112,6 +113,10 @@ public class HttpSender implements StreamDestination {
 
         connection.setRequestMethod("POST");
         connection.setRequestProperty("Content-Type", "application/audit");
+        final String apiKey = config.getApiKey();
+        if (apiKey != null && !apiKey.isBlank()) {
+            connection.setRequestProperty("Authorization", "Bearer " + apiKey.trim());
+        }
         connection.setDoOutput(true);
         connection.setDoInput(true);
 

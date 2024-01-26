@@ -1,8 +1,8 @@
 package stroom.proxy.app.handler;
 
+import stroom.proxy.app.DataDirProvider;
 import stroom.util.io.FileName;
 import stroom.util.io.FileUtil;
-import stroom.util.io.TempDirProvider;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -34,11 +34,11 @@ public class Aggregator {
 
     @Inject
     public Aggregator(final CleanupDirQueue deleteDirQueue,
-                      final TempDirProvider tempDirProvider) {
+                      final DataDirProvider dataDirProvider) {
         this.deleteDirQueue = deleteDirQueue;
 
         // Make temp aggregates dir.
-        final Path aggregatesDir = tempDirProvider.get().resolve(DirNames.AGGREGATES);
+        final Path aggregatesDir = dataDirProvider.get().resolve(DirNames.AGGREGATES);
         DirUtil.ensureDirExists(aggregatesDir);
 
         // This is a temporary location and can be cleaned completely on startup.

@@ -8,7 +8,6 @@ import stroom.proxy.repo.FeedKey;
 import stroom.proxy.repo.ProxyServices;
 import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.io.FileUtil;
-import stroom.util.io.TempDirProvider;
 import stroom.util.time.StroomDuration;
 import stroom.util.zip.ZipUtil;
 
@@ -134,16 +133,13 @@ public class TestPreAggregator extends StroomUnitTest {
         final List<ExpectedOutput> expectedOutputs =
                 createExpectedOutput(inputZipCount, entryCountPerZip, splitSources);
 
-        final Path tempDir = Files.createTempDirectory("temp");
         final Path dataDir = Files.createTempDirectory("data");
-        final TempDirProvider tempDirProvider = () -> tempDir;
         final DataDirProvider dataDirProvider = () -> dataDir;
         final CleanupDirQueue cleanupDirQueue = new CleanupDirQueue(dataDirProvider);
         final ProxyConfig proxyConfig = getProxyConfig(splitSources);
         final PreAggregator preAggregator = new PreAggregator(
                 cleanupDirQueue,
                 () -> proxyConfig,
-                tempDirProvider,
                 dataDirProvider,
                 proxyServices);
 
