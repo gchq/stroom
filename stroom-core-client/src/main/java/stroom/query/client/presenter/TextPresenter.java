@@ -73,6 +73,9 @@ public class TextPresenter extends MyPresenterWidget<TextView> implements TextUi
 
     private boolean isHtml;
 
+    private Runnable showFunction;
+    private Runnable hideFunction;
+
     @Inject
     public TextPresenter(final EventBus eventBus,
                          final TextView view,
@@ -270,7 +273,12 @@ public class TextPresenter extends MyPresenterWidget<TextView> implements TextUi
         return highlights;
     }
 
-    public void show(final SourceLocation sourceLocation) {
+    public void show(final SourceLocation sourceLocation,
+                     final Runnable showFunction,
+                     final Runnable hideFunction) {
+        this.showFunction = showFunction;
+        this.hideFunction = hideFunction;
+
         final FetchDataRequest request = new FetchDataRequest(sourceLocation);
 //        request.setPipeline(getTextSettings().getPipeline());
 //        request.setShowAsHtml(getTextSettings().isShowAsHtml());
@@ -279,6 +287,13 @@ public class TextPresenter extends MyPresenterWidget<TextView> implements TextUi
         fetchDataQueue.add(request);
         delayedFetchDataTimer.cancel();
         delayedFetchDataTimer.schedule(250);
+    }
+
+    @Override
+    public void close() {
+        if (hideFunction != null) {
+            hideFunction.run();
+        }
     }
 
 //
@@ -578,6 +593,12 @@ public class TextPresenter extends MyPresenterWidget<TextView> implements TextUi
                                                         currentHighlightStrings,
                                                         fetchDataResult.isHtml());
                                             }
+
+                                            // Ensure pane is showing.
+                                            if (showFunction != null) {
+                                                showFunction.run();
+                                            }
+
                                         } else {
                                             isHtml = false;
                                             showData("", null, currentHighlightStrings, false);
