@@ -49,7 +49,7 @@ class TestLessThan extends AbstractEqualityFunctionTest<LessThan> {
 
                 Values.of("dog", "cat", false),
                 Values.of("cat", "cat", false),
-                Values.of("CAT", "cat", false)
+                Values.of("CAT", "cat", true)
         );
     }
 }

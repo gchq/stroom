@@ -97,7 +97,7 @@ public final class ValLong implements ValNumber {
     }
 
     @Override
-    public Comparator<Val> getDefaultComparator() {
+    public Comparator<Val> getDefaultComparator(final boolean isCaseSensitive) {
         return COMPARATOR;
     }
 

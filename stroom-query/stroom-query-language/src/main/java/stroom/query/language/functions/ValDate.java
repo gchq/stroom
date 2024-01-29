@@ -28,7 +28,7 @@ public final class ValDate implements ValNumber {
 
     public static final Type TYPE = Type.DATE;
     private final long value;
-    private transient final LazyValue<String> lazyStringValue;
+    private final transient LazyValue<String> lazyStringValue;
 
     private ValDate(final long value) {
         this.value = value;
@@ -109,7 +109,7 @@ public final class ValDate implements ValNumber {
     }
 
     @Override
-    public Comparator<Val> getDefaultComparator() {
+    public Comparator<Val> getDefaultComparator(final boolean isCaseSensitive) {
         return COMPARATOR;
     }
 }

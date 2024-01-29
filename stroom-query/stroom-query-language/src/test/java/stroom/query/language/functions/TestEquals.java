@@ -68,7 +68,7 @@ class TestEquals extends AbstractEqualityFunctionTest<Equals> {
                 Values.of(true, true, true),
 
                 Values.of("dog", "cat", false),
-                Values.of("CAT", "cat", true),
+                Values.of("CAT", "cat", false),
                 Values.of("cat", "cat", true),
 
                 Values.of("1", "1", true),

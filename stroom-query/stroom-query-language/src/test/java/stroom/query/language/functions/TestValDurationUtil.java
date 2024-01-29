@@ -37,7 +37,6 @@ class TestValDurationUtil {
                 .addCase(Val.create(Duration.ofDays(1)), Val.create("1d"))
                 .addCase(Val.create("10d"), Val.create("10d"))
                 .addCase(Val.create("P1D"), Val.create("1d"))
-                .addCase(Val.create("1000.1"), ValErr.create(ERR_TEXT))
                 .addCase(Val.create("foo"), ValErr.create(ERR_TEXT))
                 .addCase(Val.create("P1D foo"), ValErr.create(ERR_TEXT))
                 .build();

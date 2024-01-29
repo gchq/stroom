@@ -8,9 +8,10 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
-public class ValComparators implements Comparator<Val> {
+public class ValComparators {
 
-    public static Comparator<Val> GENERIC_COMPARATOR = new ValComparators();
+    public static Comparator<Val> GENERIC_CASE_INSENSITIVE_COMPARATOR = getComparator(false);
+    public static Comparator<Val> GENERIC_CASE_SENSITIVE_COMPARATOR = getComparator(true);
 
     // Comparators for comparing Val instances in the different ways you can get a value out of them.
     // They assume the Vals being compared are non-null as null protection is handled by
@@ -28,16 +29,31 @@ public class ValComparators implements Comparator<Val> {
     /**
      * Case-insensitive, nulls last.
      */
-    public static final Comparator<Val> AS_STRING_COMPARATOR = Comparator.comparing(
+    public static final Comparator<Val> AS_CASE_INSENSITIVE_STRING_COMPARATOR = Comparator.comparing(
             Val::toString, Comparator.nullsLast(String::compareToIgnoreCase));
+    public static final Comparator<Val> AS_CASE_SENSITIVE_STRING_COMPARATOR = Comparator.comparing(
+            Val::toString, Comparator.nullsLast(String::compareTo));
+    private static final ValComparatorFactory AS_STRING_COMPARATOR_FACTORY = DualValComparatorFactory.create(
+            AS_CASE_SENSITIVE_STRING_COMPARATOR, AS_CASE_INSENSITIVE_STRING_COMPARATOR);
     // String is an odd one. If both values are numeric then we want to compare them as numbers
-    public static final Comparator<Val> AS_DOUBLE_THEN_STRING_COMPARATOR = AS_DOUBLE_COMPARATOR
-            .thenComparing(AS_STRING_COMPARATOR);
-    public static final Comparator<Val> AS_LONG_THEN_STRING_COMPARATOR = AS_LONG_COMPARATOR
-            .thenComparing(AS_STRING_COMPARATOR);
+    public static final Comparator<Val> AS_DOUBLE_THEN_CASE_INSENSITIVE_STRING_COMPARATOR =
+            AS_DOUBLE_COMPARATOR.thenComparing(AS_CASE_INSENSITIVE_STRING_COMPARATOR);
+    public static final Comparator<Val> AS_DOUBLE_THEN_CASE_SENSITIVE_STRING_COMPARATOR =
+            AS_DOUBLE_COMPARATOR.thenComparing(AS_CASE_SENSITIVE_STRING_COMPARATOR);
+    private static final ValComparatorFactory AS_DOUBLE_THEN_STRING_COMPARATOR_FACTORY =
+            DualValComparatorFactory.create(AS_DOUBLE_THEN_CASE_SENSITIVE_STRING_COMPARATOR,
+                    AS_DOUBLE_THEN_CASE_INSENSITIVE_STRING_COMPARATOR);
+
+    public static final Comparator<Val> AS_LONG_THEN_CASE_INSENSITIVE_STRING_COMPARATOR =
+            AS_LONG_COMPARATOR.thenComparing(AS_CASE_INSENSITIVE_STRING_COMPARATOR);
+    public static final Comparator<Val> AS_LONG_THEN_CASE_SENSITIVE_STRING_COMPARATOR =
+            AS_LONG_COMPARATOR.thenComparing(AS_CASE_SENSITIVE_STRING_COMPARATOR);
+    private static final ValComparatorFactory AS_LONG_THEN_STRING_COMPARATOR_FACTORY =
+            DualValComparatorFactory.create(AS_LONG_THEN_CASE_SENSITIVE_STRING_COMPARATOR,
+                    AS_LONG_THEN_CASE_INSENSITIVE_STRING_COMPARATOR);
 
     // Nested map to map pairs of types to a comparator, pairs are added both ways round
-    private static final Map<Type, Map<Type, Comparator<Val>>> COMPARATOR_NESTED_MAP = new EnumMap<>(Type.class);
+    private static final Map<Type, Map<Type, ValComparatorFactory>> COMPARATOR_NESTED_MAP = new EnumMap<>(Type.class);
 
     static {
         // NOTE: Types get added both ways round by the method, so order doesn't matter.
@@ -45,25 +61,25 @@ public class ValComparators implements Comparator<Val> {
         // on the Val instance handles that.
         addTypePair(Type.BOOLEAN, Type.LONG, AS_LONG_COMPARATOR);
         addTypePair(Type.BOOLEAN, Type.INTEGER, AS_INTEGER_COMPARATOR);
-        addTypePair(Type.BOOLEAN, Type.STRING, AS_STRING_COMPARATOR);
+        addTypePair(Type.BOOLEAN, Type.STRING, AS_STRING_COMPARATOR_FACTORY);
 
         // May be comparing "1.23" with 10
-        addTypePair(Type.STRING, Type.LONG, AS_DOUBLE_THEN_STRING_COMPARATOR);
-        addTypePair(Type.STRING, Type.INTEGER, AS_DOUBLE_THEN_STRING_COMPARATOR);
-        addTypePair(Type.STRING, Type.DOUBLE, AS_DOUBLE_THEN_STRING_COMPARATOR);
-        addTypePair(Type.STRING, Type.FLOAT, AS_DOUBLE_THEN_STRING_COMPARATOR);
+        addTypePair(Type.STRING, Type.LONG, AS_DOUBLE_THEN_STRING_COMPARATOR_FACTORY);
+        addTypePair(Type.STRING, Type.INTEGER, AS_DOUBLE_THEN_STRING_COMPARATOR_FACTORY);
+        addTypePair(Type.STRING, Type.DOUBLE, AS_DOUBLE_THEN_STRING_COMPARATOR_FACTORY);
+        addTypePair(Type.STRING, Type.FLOAT, AS_DOUBLE_THEN_STRING_COMPARATOR_FACTORY);
 
         addTypePair(Type.DURATION, Type.LONG, AS_LONG_COMPARATOR);
         addTypePair(Type.DURATION, Type.INTEGER, AS_LONG_COMPARATOR);
         addTypePair(Type.DURATION, Type.FLOAT, AS_LONG_COMPARATOR);
         addTypePair(Type.DURATION, Type.DOUBLE, AS_LONG_COMPARATOR);
-        addTypePair(Type.DURATION, Type.STRING, AS_LONG_THEN_STRING_COMPARATOR);
+        addTypePair(Type.DURATION, Type.STRING, AS_LONG_THEN_STRING_COMPARATOR_FACTORY);
 
         addTypePair(Type.DATE, Type.LONG, AS_LONG_COMPARATOR);
         addTypePair(Type.DATE, Type.INTEGER, AS_LONG_COMPARATOR);
         addTypePair(Type.DATE, Type.FLOAT, AS_LONG_COMPARATOR);
         addTypePair(Type.DATE, Type.DOUBLE, AS_LONG_COMPARATOR);
-        addTypePair(Type.DATE, Type.STRING, AS_LONG_THEN_STRING_COMPARATOR);
+        addTypePair(Type.DATE, Type.STRING, AS_LONG_THEN_STRING_COMPARATOR_FACTORY);
 
         addTypePair(Type.INTEGER, Type.LONG, AS_LONG_COMPARATOR);
         addTypePair(Type.INTEGER, Type.FLOAT, AS_DOUBLE_COMPARATOR);
@@ -74,9 +90,9 @@ public class ValComparators implements Comparator<Val> {
 
         addTypePair(Type.FLOAT, Type.DOUBLE, AS_DOUBLE_COMPARATOR);
 
-        addTypePair(Type.ERR, Type.STRING, AS_STRING_COMPARATOR);
+        addTypePair(Type.ERR, Type.STRING, AS_STRING_COMPARATOR_FACTORY);
 
-        addTypePair(Type.NULL, Type.STRING, AS_STRING_COMPARATOR);
+        addTypePair(Type.NULL, Type.STRING, AS_STRING_COMPARATOR_FACTORY);
     }
 
     private ValComparators() {
@@ -86,7 +102,21 @@ public class ValComparators implements Comparator<Val> {
     /**
      * type1 and type2 can be in any order
      */
-    public static Optional<Comparator<Val>> getComparator(final Type type1, final Type type2) {
+    public static Optional<Comparator<Val>> getComparatorForTypes(final Type type1,
+                                                                  final Type type2,
+                                                                  final boolean isCaseInsensitive) {
+        if (type1 == null || type2 == null) {
+            return Optional.empty();
+        } else {
+            return getComparatorFactory(type1, type2)
+                    .map(comparatorFactory -> comparatorFactory.getComparator(isCaseInsensitive));
+        }
+    }
+
+    /**
+     * type1 and type2 can be in any order
+     */
+    private static Optional<ValComparatorFactory> getComparatorFactory(final Type type1, final Type type2) {
         if (type1 == null || type2 == null) {
             return Optional.empty();
         } else {
@@ -101,29 +131,56 @@ public class ValComparators implements Comparator<Val> {
         Objects.requireNonNull(type1);
         Objects.requireNonNull(type2);
         Objects.requireNonNull(comparator);
-
-        doOrderedPut(type1, type2, comparator);
+        final ValComparatorFactory comparatorFactory = SingleValComparatorFactory.create(comparator);
+        doOrderedPut(type1, type2, comparatorFactory);
         // Now put the same but with the types reversed, so you can look up either way
-        doOrderedPut(type2, type1, comparator);
+        doOrderedPut(type2, type1, comparatorFactory);
+    }
+
+    private static void addTypePair(final Type type1,
+                                    final Type type2,
+                                    final ValComparatorFactory comparatorFactory) {
+        Objects.requireNonNull(type1);
+        Objects.requireNonNull(type2);
+        Objects.requireNonNull(comparatorFactory);
+        doOrderedPut(type1, type2, comparatorFactory);
+        // Now put the same but with the types reversed, so you can look up either way
+        doOrderedPut(type2, type1, comparatorFactory);
+    }
+
+    private static void addTypePair(final Type type1,
+                                    final Type type2,
+                                    final Comparator<Val> caseSensitiveComparator,
+                                    final Comparator<Val> caseInsensitiveComparator) {
+        Objects.requireNonNull(type1);
+        Objects.requireNonNull(type2);
+        Objects.requireNonNull(caseSensitiveComparator);
+        Objects.requireNonNull(caseInsensitiveComparator);
+        final ValComparatorFactory comparatorFactory = DualValComparatorFactory.create(
+                caseSensitiveComparator,
+                caseInsensitiveComparator);
+        doOrderedPut(type1, type2, comparatorFactory);
+        // Now put the same but with the types reversed, so you can look up either way
+        doOrderedPut(type2, type1, comparatorFactory);
     }
 
     private static void doOrderedPut(final Type type1,
                                      final Type type2,
-                                     final Comparator<Val> comparator) {
+                                     final ValComparatorFactory comparatorFactory) {
         // Little check to stop us accidentally defining a comparator for a pair twice, but
         // with a different comparator each time
-        final Comparator<Val> existingComparator = getComparator(type1, type2)
+        final ValComparatorFactory existingComparatorFactory = getComparatorFactory(type1, type2)
                 .orElse(null);
-        if (existingComparator != null
-                && !Objects.equals(existingComparator, comparator)) {
+        if (existingComparatorFactory != null
+                && !Objects.equals(existingComparatorFactory, comparatorFactory)) {
             throw new IllegalArgumentException(LogUtil.message(
-                    "Trying to put a different comparator for types {} & {}",
+                    "Trying to put a different comparator factory for types {} & {}",
                     type1, type2));
         }
 
-        final Map<Type, Comparator<Val>> subMap = COMPARATOR_NESTED_MAP.computeIfAbsent(type1,
+        final Map<Type, ValComparatorFactory> subMap = COMPARATOR_NESTED_MAP.computeIfAbsent(type1,
                 k -> new EnumMap<>(Type.class));
-        subMap.put(type2, comparator);
+        subMap.put(type2, comparatorFactory);
     }
 
     /**
@@ -148,7 +205,7 @@ public class ValComparators implements Comparator<Val> {
                 return delegateComparator.compare(val1, val2);
             } else {
                 // Fall back to our generic one to deal with mixed types
-                return GENERIC_COMPARATOR.compare(val1, val2);
+                return GENERIC_CASE_INSENSITIVE_COMPARATOR.compare(val1, val2);
             }
         };
     }
@@ -173,7 +230,7 @@ public class ValComparators implements Comparator<Val> {
                 return comparator.compare(val1, val2);
             } else {
                 // Fall back to our generic one to deal with mixed types
-                return GENERIC_COMPARATOR.compare(val1, val2);
+                return GENERIC_CASE_SENSITIVE_COMPARATOR.compare(val1, val2);
             }
         };
     }
@@ -192,6 +249,11 @@ public class ValComparators implements Comparator<Val> {
         return val != null && val != ValNull.INSTANCE;
     }
 
+    public static Comparator<Val> getComparator(final boolean isCaseSensitive) {
+        return (o1, o2) ->
+                compare(o1, o2, isCaseSensitive);
+    }
+
     /**
      * A generic comparison method for two {@link Val} instances.
      * null or ValNull values are considered greater than non-null or
@@ -199,7 +261,7 @@ public class ValComparators implements Comparator<Val> {
      * If val1 and val2 are the same subclass then the specific comparator
      * for that type will be delegated to.
      */
-    public int compare(final Val val1, final Val val2) {
+    private static int compare(final Val val1, final Val val2, final boolean isCaseSensitive) {
         if (isNull(val1) && isNull(val2)) {
             return 0;
         } else if (isNull(val1)) {
@@ -208,7 +270,7 @@ public class ValComparators implements Comparator<Val> {
             return -1;
         } else if (Objects.equals(val1.getClass(), val2.getClass())) {
             // Same type so delegate to the type's own comparator
-            return val1.getDefaultComparator().compare(val1, val2);
+            return val1.getDefaultComparator(isCaseSensitive).compare(val1, val2);
         } else if (bothAreNumeric(val1, val2)) {
             // Mixed number types so need to be a bit careful
             // Could be comparing valString("123") with ValDouble(123.456)
@@ -234,12 +296,12 @@ public class ValComparators implements Comparator<Val> {
         } else {
             // Get the appropriate comparator for the mixed types or fallback to a string
             // comparison if
-            final Comparator<Val> comparator = getComparator(val1.type(), val2.type())
-                    .orElse(AS_STRING_COMPARATOR);
+            final Comparator<Val> comparator = getComparatorForTypes(val1.type(), val2.type(), isCaseSensitive)
+                    .orElseGet(() -> ValComparators.getAsStringComparator(isCaseSensitive));
             // e.g. comparing ValString to ValInteger, which doesn't really make any sense
             // but, we might as well compare on something, so compare on the value as a string
 //            return AS_TYPE_COMPARATOR.compare(val1, val2);
-            return AS_STRING_COMPARATOR.compare(val1, val2);
+            return comparator.compare(val1, val2);
         }
     }
 
@@ -292,5 +354,57 @@ public class ValComparators implements Comparator<Val> {
 
     static boolean hasFractionalPart(final Val val) {
         return val != null && val.hasFractionalPart();
+    }
+
+    public static Comparator<Val> getAsStringComparator(final boolean isCaseSensitive) {
+        return isCaseSensitive
+                ? AS_CASE_SENSITIVE_STRING_COMPARATOR
+                : AS_CASE_INSENSITIVE_STRING_COMPARATOR;
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    interface ValComparatorFactory {
+
+        Comparator<Val> getComparator(final boolean isCaseSensitive);
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private record SingleValComparatorFactory(Comparator<Val> comparator) implements ValComparatorFactory {
+
+        private static SingleValComparatorFactory create(final Comparator<Val> comparator) {
+            return new SingleValComparatorFactory(comparator);
+        }
+
+        @Override
+        public Comparator<Val> getComparator(final boolean isCaseSensitive) {
+            return comparator;
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private record DualValComparatorFactory(Comparator<Val> caseSensitiveComparator,
+                                            Comparator<Val> caseInsensitiveComparator)
+            implements ValComparatorFactory {
+
+        private static DualValComparatorFactory create(final Comparator<Val> caseSensitiveComparator,
+                                                       final Comparator<Val> caseInsensitiveComparator) {
+            return new DualValComparatorFactory(caseSensitiveComparator, caseInsensitiveComparator);
+        }
+
+        @Override
+        public Comparator<Val> getComparator(final boolean isCaseSensitive) {
+            return isCaseSensitive
+                    ? caseSensitiveComparator
+                    : caseInsensitiveComparator;
+        }
     }
 }

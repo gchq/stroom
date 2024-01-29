@@ -63,7 +63,7 @@ class Max extends AbstractAggregateFunction {
                     return current;
                 }
 
-                if (ValComparators.GENERIC_COMPARATOR.compare(current, value) < 0) {
+                if (ValComparators.GENERIC_CASE_SENSITIVE_COMPARATOR.compare(current, value) < 0) {
                     return value;
                 }
                 return current;

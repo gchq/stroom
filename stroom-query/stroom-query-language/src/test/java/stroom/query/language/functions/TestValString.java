@@ -21,12 +21,14 @@ class TestValString {
                 .addCase(ValString.create("10 foo"), false)
                 .addCase(ValString.create(null), false)
                 .addCase(ValString.create(""), false)
-                .addCase(ValString.create(" 1.1"), false)
 
                 .addCase(ValString.create("0"), true)
                 .addCase(ValString.create("1"), true)
                 .addCase(ValString.create("-1"), true)
                 .addCase(ValString.create("1.1"), true)
+                .addCase(ValString.create(" 1.2"), true)
+                .addCase(ValString.create("1.3 "), true)
+                .addCase(ValString.create(" 1.4 "), true)
                 .addCase(ValString.create("1234"), true)
                 .build();
     }
@@ -42,11 +44,13 @@ class TestValString {
                 .addCase(ValString.create("10 foo"), false)
                 .addCase(ValString.create(null), false)
                 .addCase(ValString.create(""), false)
-                .addCase(ValString.create(" 1.1"), false)
                 .addCase(ValString.create("1"), false)
                 .addCase(ValString.create("1234"), false)
 
                 .addCase(ValString.create("1.1"), true)
+                .addCase(ValString.create(" 1.2"), true)
+                .addCase(ValString.create("1.3 "), true)
+                .addCase(ValString.create(" 1.4 "), true)
                 .addCase(ValString.create("1.0000000000001"), true)
                 .addCase(ValString.create(new BigDecimal(Long.toString(Long.MAX_VALUE)).toString()),
                         false)

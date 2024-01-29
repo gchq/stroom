@@ -67,7 +67,7 @@ class TestNotEquals extends AbstractEqualityFunctionTest<NotEquals> {
                 Values.of(true, true, false),
 
                 Values.of("dog", "cat", true),
-                Values.of("CAT", "cat", false),
+                Values.of("CAT", "cat", true),
                 Values.of("cat", "cat", false)
         );
     }

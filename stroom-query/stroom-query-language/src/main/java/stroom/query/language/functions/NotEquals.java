@@ -60,7 +60,7 @@ class NotEquals extends AbstractEqualityFunction {
         @Override
         protected Val evaluate(final Val a, final Val b) {
 
-            final int compareResult = ValComparators.GENERIC_COMPARATOR.compare(a, b);
+            final int compareResult = ValComparators.GENERIC_CASE_SENSITIVE_COMPARATOR.compare(a, b);
             return compareResult != 0
                     ? ValBoolean.TRUE
                     : ValBoolean.FALSE;

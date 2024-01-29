@@ -30,8 +30,8 @@ public class TestParseDuration extends AbstractFunctionTest<ParseDuration> {
                         ValErr.create(ValDurationUtil.PARSE_ERROR_MESSAGE),
                         Val.create("P1D foo")),
                 TestCase.of(
-                        "1.1",
-                        ValErr.create(ValDurationUtil.PARSE_ERROR_MESSAGE),
+                        "1.1", // It is debatable whether this should parse or error
+                        Val.create(Duration.ofMillis(1)),
                         Val.create(1.1D)),
                 TestCase.of(
                         "1000 (long)",

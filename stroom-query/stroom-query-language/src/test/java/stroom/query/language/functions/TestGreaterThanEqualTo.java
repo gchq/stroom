@@ -61,7 +61,7 @@ class TestGreaterThanEqualTo extends AbstractEqualityFunctionTest<GreaterThanOrE
                 Values.of(TODAY, TODAY, true),
 
                 Values.of("dog", "cat", true),
-                Values.of("CAT", "cat", true),
+                Values.of("CAT", "cat", false),
                 Values.of("cat", "cat", true)
         );
     }

@@ -22,31 +22,51 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static stroom.query.language.functions.Val.create;
 
 class TestValComparators {
 
-    private Comparator<Val> comparator = ValComparators.GENERIC_COMPARATOR;
+    private Comparator<Val> comparator;
 
     @BeforeEach
     void setUp() {
-        comparator = ValComparators.GENERIC_COMPARATOR;
+        comparator = ValComparators.GENERIC_CASE_INSENSITIVE_COMPARATOR;
     }
 
     @Test
-    void testGetComparator() {
+    void testGetComparator1() {
 
-        final Comparator<Val> comparator = ValComparators.getComparator(Type.BOOLEAN, Type.STRING)
+        final Comparator<Val> comparator = ValComparators.getComparatorForTypes(Type.BOOLEAN, Type.STRING, true)
                 .orElseThrow();
 
-        assertThat(comparator.compare(create("true"), create(true)))
+        assertThat(comparator)
+                .isEqualTo(ValComparators.AS_CASE_SENSITIVE_STRING_COMPARATOR);
+
+        assertThat(comparator.compare(Val.create("true"), Val.create(true)))
+                .isEqualTo(0);
+        assertThat(comparator.compare(Val.create("foo"), Val.create("FOO")))
+                .isNotEqualTo(0);
+    }
+
+    @Test
+    void testGetComparator2() {
+
+        final Comparator<Val> comparator = ValComparators.getComparatorForTypes(Type.BOOLEAN, Type.STRING, false)
+                .orElseThrow();
+
+        assertThat(comparator)
+                .isEqualTo(ValComparators.AS_CASE_INSENSITIVE_STRING_COMPARATOR);
+
+        assertThat(comparator.compare(Val.create("true"), Val.create(true)))
+                .isEqualTo(0);
+        assertThat(comparator.compare(Val.create("foo"), Val.create("FOO")))
                 .isEqualTo(0);
     }
 
     @Test
     void testGetComparator_null() {
 
-        final Optional<Comparator<Val>> optComparator = ValComparators.getComparator(Type.ERR, Type.NULL);
+        final Optional<Comparator<Val>> optComparator = ValComparators.getComparatorForTypes(
+                Type.ERR, Type.NULL, true);
 
         assertThat(optComparator)
                 .isEmpty();
@@ -160,7 +180,7 @@ class TestValComparators {
                         Vals.of("-1", false, true), // -1, 0, 1
                         Vals.of("1", 2, null),
                         Vals.of("1", 2, ValString.create(null)),
-                        Vals.of(1, ValErr.create("a"), "b")
+                        Vals.of(1, "b", ValErr.create("a")) // "Err: a", hence comes last
                 )
                 .map(vals ->
                         DynamicTest.dynamicTest(
@@ -174,7 +194,7 @@ class TestValComparators {
     @TestFactory
     Stream<DynamicTest> testAsLongThenStringComparator() {
 
-        comparator = ValComparators.AS_LONG_THEN_STRING_COMPARATOR;
+        comparator = ValComparators.AS_LONG_THEN_CASE_INSENSITIVE_STRING_COMPARATOR;
 
         return Stream.of(
                         Vals.of("1", 2, "a"),

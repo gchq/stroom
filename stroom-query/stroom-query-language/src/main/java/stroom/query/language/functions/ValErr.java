@@ -25,7 +25,7 @@ public final class ValErr implements Val {
 
     public static final String PREFIX = "ERR: ";
     public static Comparator<Val> COMPARATOR = ValComparators.asGenericComparator(
-            ValErr.class, ValComparators.AS_STRING_COMPARATOR);
+            ValErr.class, ValComparators.AS_CASE_INSENSITIVE_STRING_COMPARATOR);
 
     public static final ValErr INSTANCE = new ValErr("Err");
     public static final Type TYPE = Type.ERR;
@@ -137,7 +137,7 @@ public final class ValErr implements Val {
     }
 
     @Override
-    public Comparator<Val> getDefaultComparator() {
+    public Comparator<Val> getDefaultComparator(final boolean isCaseSensitive) {
         return COMPARATOR;
     }
 }

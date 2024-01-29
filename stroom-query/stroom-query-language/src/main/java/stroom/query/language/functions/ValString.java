@@ -16,6 +16,7 @@
 
 package stroom.query.language.functions;
 
+import stroom.util.NullSafe;
 import stroom.util.concurrent.LazyBoolean;
 import stroom.util.concurrent.LazyValue;
 import stroom.util.logging.LambdaLogger;
@@ -32,17 +33,19 @@ public final class ValString implements Val {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ValString.class);
 
-    public static Comparator<Val> COMPARATOR = ValComparators.asGenericComparator(
-            ValString.class, ValComparators.AS_DOUBLE_THEN_STRING_COMPARATOR);
+    public static Comparator<Val> CASE_SENSITIVE_COMPARATOR = ValComparators.asGenericComparator(
+            ValString.class, ValComparators.AS_DOUBLE_THEN_CASE_SENSITIVE_STRING_COMPARATOR);
+    public static Comparator<Val> CASE_INSENSITIVE_COMPARATOR = ValComparators.asGenericComparator(
+            ValString.class, ValComparators.AS_DOUBLE_THEN_CASE_INSENSITIVE_STRING_COMPARATOR);
 
     public static final Type TYPE = Type.STRING;
     static final ValString EMPTY = new ValString("");
     private final String value;
 
     // Permanent lazy cache of the slightly costly conversion to long/double
-    private transient final LazyValue<Double> lazyDoubleValue;
-    private transient final LazyValue<Long> lazyLongValue;
-    private transient final LazyBoolean lazyHasFractionalPart;
+    private final transient LazyValue<Double> lazyDoubleValue;
+    private final transient LazyValue<Long> lazyLongValue;
+    private final transient LazyBoolean lazyHasFractionalPart;
 
     private ValString(final String value) {
         if (value == null) {
@@ -86,17 +89,18 @@ public final class ValString implements Val {
 
     private Long deriveLongValue() {
         Long longValue = null;
+        final String trimmedVal = NullSafe.get(value, String::trim);
         try {
-            // See if it is a date string
-            longValue = DateUtil.parseNormalDateTimeString(value);
+            // See if it is an integer part
+            longValue = Long.valueOf(trimmedVal);
         } catch (final RuntimeException e) {
             try {
-                // See if it is a duration string
-                longValue = ValDurationUtil.parseToMilliseconds(value);
+                // See if it is a date string
+                longValue = DateUtil.parseNormalDateTimeString(trimmedVal);
             } catch (RuntimeException e2) {
                 try {
-                    // See if it is an integer part
-                    longValue = Long.valueOf(value);
+                    // See if it is a duration string
+                    longValue = ValDurationUtil.parseToMilliseconds(trimmedVal);
                 } catch (final RuntimeException e3) {
                     // Not a date or a long so has no long value
                 }
@@ -121,16 +125,19 @@ public final class ValString implements Val {
 
     private Double deriveDoubleValue() {
         Double doubleValue = null;
+        final String trimmedVal = NullSafe.get(value, String::trim);
         try {
-            doubleValue = (double) DateUtil.parseNormalDateTimeString(value);
+            doubleValue = new BigDecimal(trimmedVal).doubleValue();
         } catch (final RuntimeException e) {
             try {
-                doubleValue = (double) ValDurationUtil.parseToMilliseconds(value);
+                // If parsable as a date then get the millis value
+                doubleValue = (double) DateUtil.parseNormalDateTimeString(trimmedVal);
             } catch (RuntimeException e2) {
                 try {
-                    doubleValue = new BigDecimal(value).doubleValue();
+                    // If parsable as a duration then get the millis value
+                    doubleValue = (double) ValDurationUtil.parseToMilliseconds(trimmedVal);
                 } catch (final RuntimeException e3) {
-                    // Not a date or a double so has no double value
+                    // Not a date/duration/double so has no double value
                 }
             }
         }
@@ -200,7 +207,9 @@ public final class ValString implements Val {
     }
 
     @Override
-    public Comparator<Val> getDefaultComparator() {
-        return COMPARATOR;
+    public Comparator<Val> getDefaultComparator(final boolean isCaseSensitive) {
+        return isCaseSensitive
+                ? CASE_SENSITIVE_COMPARATOR
+                : CASE_INSENSITIVE_COMPARATOR;
     }
 }

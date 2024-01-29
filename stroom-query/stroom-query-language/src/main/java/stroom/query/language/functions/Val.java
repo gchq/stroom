@@ -69,7 +69,7 @@ public sealed interface Val
      * {@link Val} instances of the same class. To compare {@link Val} instances
      * of potentially mixed types in a null-safe way, see {@link ValComparators#compare(Val, Val)}.
      */
-    Comparator<Val> getDefaultComparator();
+    Comparator<Val> getDefaultComparator(final boolean isCaseSensitive);
 
     static Val[] of(final Val... values) {
         return values;
@@ -185,6 +185,6 @@ public sealed interface Val
 
     @Override
     default int compareTo(Val other) {
-        return ValComparators.GENERIC_COMPARATOR.compare(this, other);
+        return ValComparators.GENERIC_CASE_INSENSITIVE_COMPARATOR.compare(this, other);
     }
 }

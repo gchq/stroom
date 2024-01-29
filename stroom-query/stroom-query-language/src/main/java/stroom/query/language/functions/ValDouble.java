@@ -32,8 +32,8 @@ public final class ValDouble implements ValNumber {
 
     public static final Type TYPE = Type.DOUBLE;
     private final double value;
-    private transient final LazyValue<String> lazyStringValue;
-    private transient final LazyBoolean lazyHasFractionalPart;
+    private final transient LazyValue<String> lazyStringValue;
+    private final transient LazyBoolean lazyHasFractionalPart;
 
     private ValDouble(final double value) {
         this.value = value;
@@ -123,7 +123,7 @@ public final class ValDouble implements ValNumber {
     }
 
     @Override
-    public Comparator<Val> getDefaultComparator() {
+    public Comparator<Val> getDefaultComparator(final boolean isCaseSensitive) {
         return COMPARATOR;
     }
 }
