@@ -88,7 +88,7 @@ public class ValComparators {
         // on the Val instance handles that.
         addTypePair(Type.BOOLEAN, Type.LONG, AS_LONG_COMPARATOR);
         addTypePair(Type.BOOLEAN, Type.INTEGER, AS_INTEGER_COMPARATOR);
-        addTypePair(Type.BOOLEAN, Type.STRING, AS_STRING_COMPARATOR_FACTORY);
+        addTypePair(Type.BOOLEAN, Type.STRING, AS_BOOLEAN_COMPARATOR);
 
         // May be comparing "1.23" with 10
         addTypePair(Type.STRING, Type.LONG, AS_DOUBLE_THEN_STRING_COMPARATOR_FACTORY);

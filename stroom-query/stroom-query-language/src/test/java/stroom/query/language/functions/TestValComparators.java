@@ -4,6 +4,7 @@ import stroom.test.common.TestUtil;
 import stroom.util.logging.LogUtil;
 
 import io.vavr.Tuple;
+import io.vavr.Tuple2;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DynamicTest;
@@ -182,7 +183,7 @@ class TestValComparators {
                         Vals.of("1", 2, null),
                         Vals.of("3", 20d, "foo"),
                         Vals.of("1", 2, ValString.create(null)),
-                        Vals.of(1, "b", ValErr.create("a")) // "Err: a", hence comes last
+                        Vals.of(1, "F", ValErr.create("a")) // "Err: a", hence comes last
                 )
                 .map(vals ->
                         DynamicTest.dynamicTest(
@@ -235,6 +236,58 @@ class TestValComparators {
                                                 vals.val1,
                                                 vals.val2,
                                                 vals.val3)));
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testGenericComparator() {
+        comparator = ValComparators.GENERIC_CASE_SENSITIVE_COMPARATOR;
+        final Instant now = Instant.now();
+        return TestUtil.buildDynamicTestStream()
+                .withInputTypes(Val.class, Val.class)
+                .withOutputType(int.class)
+                .withTestFunction(testCase ->
+                        comparator.compare(testCase.getInput()._1, testCase.getInput()._2))
+                .withAssertions(outcome -> {
+                    final Integer actualOutput = outcome.getActualOutput();
+                    final Integer expectedOutput = outcome.getExpectedOutput();
+                    if (expectedOutput == 0) {
+                        Assertions.assertThat(actualOutput)
+                                .isZero();
+                    } else if (expectedOutput > 0) {
+                        Assertions.assertThat(actualOutput)
+                                .isGreaterThan(0);
+                    } else {
+                        Assertions.assertThat(actualOutput)
+                                .isLessThan(0);
+                    }
+                })
+                .addCase(twoVals("a", null), -1)
+                .addCase(twoVals("a", ValString.create(null)), -1)  // This should not be used
+                .addCase(twoVals("1", "a"), -1)
+                .addCase(twoVals("a", "a"), 0)
+                .addCase(twoVals("A", "a"), -1)
+                .addCase(twoVals("2", "10"), -1)
+                .addCase(twoVals(2, "10"), -1)
+                .addCase(twoVals(2, "2"), 0)
+                .addCase(twoVals(2L, 2), 0)
+                .addCase(twoVals(2.2, "2.2"), 0)
+                .addCase(twoVals(2.2F, 2.2D), 0)
+                .addCase(twoVals(Duration.ofMinutes(60), Duration.ofDays(1)), -1)
+                .addCase(twoVals(Duration.ofMinutes(60), "60m"), 0)
+                .addCase(twoVals(Duration.ofMinutes(1), 60_000), 0)
+                .addCase(twoVals(Duration.ofMinutes(1), 60_000L), 0)
+                .addCase(twoVals(now, DateUtil.createNormalDateTimeString(now.toEpochMilli())), 0)
+                .addCase(twoVals(true, true), 0)
+                .addCase(twoVals(true, 1), 0)
+                .addCase(twoVals(true, "true"), 0)
+                .addCase(twoVals(true, "1"), 0)
+                .addCase(twoVals(false, "0"), 0)
+                .addCase(twoVals(false, 0), 0)
+                .addCase(twoVals(false, "false"), 0)
+                .addCase(twoVals(false, "foo"), 0)
+                .addCase(twoVals(null, null), 0)
+                .addCase(twoVals(ValErr.create("foo"), ValErr.create("foo")), 0)
+                .build();
     }
 
     @TestFactory
@@ -346,6 +399,10 @@ class TestValComparators {
 
     private int compare(final Val v1, final Val v2) {
         return comparator.compare(v1, v2);
+    }
+
+    private Tuple2<Val, Val> twoVals(final Object val1, final Object val2) {
+        return Tuple.of(Val.create(val1), Val.create(val2));
     }
 
 
