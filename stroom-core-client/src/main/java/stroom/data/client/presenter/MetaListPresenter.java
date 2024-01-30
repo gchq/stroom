@@ -23,7 +23,6 @@ import stroom.explorer.client.presenter.EntityChooser;
 import stroom.meta.shared.DataRetentionFields;
 import stroom.meta.shared.MetaFields;
 import stroom.preferences.client.DateTimeFormatter;
-import stroom.query.client.presenter.DateTimeSettingsFactory;
 import stroom.util.shared.ModelStringUtil;
 
 import com.google.inject.Inject;
@@ -43,7 +42,7 @@ public class MetaListPresenter extends AbstractMetaListPresenter {
                              final Provider<SelectionSummaryPresenter> selectionSummaryPresenterProvider,
                              final Provider<ProcessChoicePresenter> processChoicePresenterProvider,
                              final Provider<EntityChooser> pipelineSelection,
-                             final DateTimeSettingsFactory dateTimeSettingsFactory) {
+                             final ExpressionValidator expressionValidator) {
         super(eventBus,
                 view,
                 restFactory,
@@ -52,7 +51,7 @@ public class MetaListPresenter extends AbstractMetaListPresenter {
                 selectionSummaryPresenterProvider,
                 processChoicePresenterProvider,
                 pipelineSelection,
-                dateTimeSettingsFactory,
+                expressionValidator,
                 true);
     }
 
