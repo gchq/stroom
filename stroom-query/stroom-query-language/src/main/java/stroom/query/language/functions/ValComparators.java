@@ -1,5 +1,6 @@
 package stroom.query.language.functions;
 
+import stroom.util.NullSafe;
 import stroom.util.logging.LogUtil;
 
 import java.util.Comparator;
@@ -8,9 +9,21 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
+/**
+ * Class for providing comparators for comparing {@link Val} instances.
+ * Comparators are null/ValNull last.
+ */
 public class ValComparators {
 
+    /**
+     * This comparator is likely not transitive so breaks the compare contract, so should not be used
+     * for sorting purposes.
+     */
     public static Comparator<Val> GENERIC_CASE_INSENSITIVE_COMPARATOR = getComparator(false);
+    /**
+     * This comparator is likely not transitive so breaks the compare contract, so should not be used
+     * for sorting purposes.
+     */
     public static Comparator<Val> GENERIC_CASE_SENSITIVE_COMPARATOR = getComparator(true);
 
     // Comparators for comparing Val instances in the different ways you can get a value out of them.
@@ -26,36 +39,50 @@ public class ValComparators {
             Val::toFloat, Comparator.nullsLast(Float::compareTo));
     public static final Comparator<Val> AS_DOUBLE_COMPARATOR = Comparator.comparing(
             Val::toDouble, Comparator.nullsLast(Double::compareTo));
-    /**
-     * Case-insensitive, nulls last.
-     */
     public static final Comparator<Val> AS_CASE_INSENSITIVE_STRING_COMPARATOR = Comparator.comparing(
             Val::toString, Comparator.nullsLast(String::compareToIgnoreCase));
     public static final Comparator<Val> AS_CASE_SENSITIVE_STRING_COMPARATOR = Comparator.comparing(
             Val::toString, Comparator.nullsLast(String::compareTo));
-    private static final ValComparatorFactory AS_STRING_COMPARATOR_FACTORY = DualValComparatorFactory.create(
-            AS_CASE_SENSITIVE_STRING_COMPARATOR, AS_CASE_INSENSITIVE_STRING_COMPARATOR);
+
     // String is an odd one. If both values are numeric then we want to compare them as numbers
     public static final Comparator<Val> AS_DOUBLE_THEN_CASE_INSENSITIVE_STRING_COMPARATOR =
             AS_DOUBLE_COMPARATOR.thenComparing(AS_CASE_INSENSITIVE_STRING_COMPARATOR);
     public static final Comparator<Val> AS_DOUBLE_THEN_CASE_SENSITIVE_STRING_COMPARATOR =
             AS_DOUBLE_COMPARATOR.thenComparing(AS_CASE_SENSITIVE_STRING_COMPARATOR);
-    private static final ValComparatorFactory AS_DOUBLE_THEN_STRING_COMPARATOR_FACTORY =
-            DualValComparatorFactory.create(AS_DOUBLE_THEN_CASE_SENSITIVE_STRING_COMPARATOR,
-                    AS_DOUBLE_THEN_CASE_INSENSITIVE_STRING_COMPARATOR);
 
     public static final Comparator<Val> AS_LONG_THEN_CASE_INSENSITIVE_STRING_COMPARATOR =
             AS_LONG_COMPARATOR.thenComparing(AS_CASE_INSENSITIVE_STRING_COMPARATOR);
     public static final Comparator<Val> AS_LONG_THEN_CASE_SENSITIVE_STRING_COMPARATOR =
             AS_LONG_COMPARATOR.thenComparing(AS_CASE_SENSITIVE_STRING_COMPARATOR);
+
+    private static final ValComparatorFactory AS_STRING_COMPARATOR_FACTORY = DualValComparatorFactory.create(
+            AS_CASE_SENSITIVE_STRING_COMPARATOR, AS_CASE_INSENSITIVE_STRING_COMPARATOR);
+    private static final ValComparatorFactory AS_DOUBLE_THEN_STRING_COMPARATOR_FACTORY =
+            DualValComparatorFactory.create(AS_DOUBLE_THEN_CASE_SENSITIVE_STRING_COMPARATOR,
+                    AS_DOUBLE_THEN_CASE_INSENSITIVE_STRING_COMPARATOR);
     private static final ValComparatorFactory AS_LONG_THEN_STRING_COMPARATOR_FACTORY =
             DualValComparatorFactory.create(AS_LONG_THEN_CASE_SENSITIVE_STRING_COMPARATOR,
                     AS_LONG_THEN_CASE_INSENSITIVE_STRING_COMPARATOR);
 
-    // Nested map to map pairs of types to a comparator, pairs are added both ways round
+    // Nested map to map pairs of types to a comparatorFactory, pairs are added both ways round
     private static final Map<Type, Map<Type, ValComparatorFactory>> COMPARATOR_NESTED_MAP = new EnumMap<>(Type.class);
 
+    private static final Map<Type, Comparator<Val>> SORT_COMPARATORS_BY_TYPE_MAP = new EnumMap<>(Type.class);
+
+    private static final double DOUBLE_TOLERANCE_FRACTION = 0.000001d;
+
     static {
+        SORT_COMPARATORS_BY_TYPE_MAP.put(Type.BOOLEAN, AS_BOOLEAN_COMPARATOR);
+        SORT_COMPARATORS_BY_TYPE_MAP.put(Type.DATE, AS_LONG_COMPARATOR);
+        SORT_COMPARATORS_BY_TYPE_MAP.put(Type.DOUBLE, AS_DOUBLE_COMPARATOR);
+        SORT_COMPARATORS_BY_TYPE_MAP.put(Type.DURATION, AS_LONG_COMPARATOR);
+        SORT_COMPARATORS_BY_TYPE_MAP.put(Type.ERR, AS_CASE_INSENSITIVE_STRING_COMPARATOR); // always prefixed with Err:
+        SORT_COMPARATORS_BY_TYPE_MAP.put(Type.FLOAT, AS_FLOAT_COMPARATOR);
+        SORT_COMPARATORS_BY_TYPE_MAP.put(Type.INTEGER, AS_INTEGER_COMPARATOR);
+        SORT_COMPARATORS_BY_TYPE_MAP.put(Type.LONG, AS_LONG_COMPARATOR);
+        SORT_COMPARATORS_BY_TYPE_MAP.put(Type.NULL, (o1, o2) -> 0);
+        SORT_COMPARATORS_BY_TYPE_MAP.put(Type.STRING, AS_DOUBLE_THEN_CASE_INSENSITIVE_STRING_COMPARATOR);
+
         // NOTE: Types get added both ways round by the method, so order doesn't matter.
         // Don't need to define pairs with the same type as the default comparator
         // on the Val instance handles that.
@@ -148,22 +175,6 @@ public class ValComparators {
         doOrderedPut(type2, type1, comparatorFactory);
     }
 
-    private static void addTypePair(final Type type1,
-                                    final Type type2,
-                                    final Comparator<Val> caseSensitiveComparator,
-                                    final Comparator<Val> caseInsensitiveComparator) {
-        Objects.requireNonNull(type1);
-        Objects.requireNonNull(type2);
-        Objects.requireNonNull(caseSensitiveComparator);
-        Objects.requireNonNull(caseInsensitiveComparator);
-        final ValComparatorFactory comparatorFactory = DualValComparatorFactory.create(
-                caseSensitiveComparator,
-                caseInsensitiveComparator);
-        doOrderedPut(type1, type2, comparatorFactory);
-        // Now put the same but with the types reversed, so you can look up either way
-        doOrderedPut(type2, type1, comparatorFactory);
-    }
-
     private static void doOrderedPut(final Type type1,
                                      final Type type2,
                                      final ValComparatorFactory comparatorFactory) {
@@ -190,22 +201,20 @@ public class ValComparators {
      * comparator if the values being compared are both match type, if not it will use a generic
      * comparator.
      */
-    public static <V extends Val, T> Comparator<Val> asGenericComparator(
-            final Class<V> type,
-            final java.util.function.Function<Val, T> keyExtractor,
-            final Comparator<T> comparator) {
+    static <V extends Val> Comparator<Val> asGenericComparator(final Class<V> type,
+                                                                      final Comparator<Val> comparator) {
 
-        final Comparator<Val> delegateComparator = Comparator.comparing(
-                keyExtractor,
-                Comparator.nullsLast(comparator));
-
+        // If this comparator is called from ValComparators.GENERIC_COMPARATOR then it means
+        // we do the isInstance check in there and in here, but it gives some protection
+        // if this comparator is called directly for a Val type that is not appropriate
+        // for the delegate comparator.
         return (val1, val2) -> {
             if (type.isInstance(val1) && type.isInstance(val2)) {
                 // Both non-null and same type so use type's own comparator
-                return delegateComparator.compare(val1, val2);
+                return comparator.compare(val1, val2);
             } else {
                 // Fall back to our generic one to deal with mixed types
-                return GENERIC_CASE_INSENSITIVE_COMPARATOR.compare(val1, val2);
+                return GENERIC_CASE_SENSITIVE_COMPARATOR.compare(val1, val2);
             }
         };
     }
@@ -218,7 +227,8 @@ public class ValComparators {
      * comparator.
      */
     public static <V extends Val> Comparator<Val> asGenericComparator(final Class<V> type,
-                                                                      final Comparator<Val> comparator) {
+                                                                      final Comparator<Val> comparator,
+                                                                      final Comparator<Val> genericComparator) {
 
         // If this comparator is called from ValComparators.GENERIC_COMPARATOR then it means
         // we do the isInstance check in there and in here, but it gives some protection
@@ -247,6 +257,12 @@ public class ValComparators {
      */
     public static boolean isNotNull(final Val val) {
         return val != null && val != ValNull.INSTANCE;
+    }
+
+    public static Optional<Comparator<Val>> getSortComparator(final Type valType) {
+        return NullSafe.getAsOptional(
+                valType,
+                SORT_COMPARATORS_BY_TYPE_MAP::get);
     }
 
     public static Comparator<Val> getComparator(final boolean isCaseSensitive) {
@@ -281,14 +297,10 @@ public class ValComparators {
             } else {
                 // Mixed decimal values, e.g. float + double
                 // or one decimal one non-decimal, e.g. int + double,
-                // so do the comparison as double, with a tolerance
-                final Double dbl1 = val1.toDouble();
-                final Double dbl2 = val2.toDouble();
-
-                if (dbl1 != null
-                        && dbl2 != null
-                        && Math.abs(dbl1 - dbl2) < Val.FLOATING_POINT_EQUALITY_TOLERANCE) {
-                    return 0;
+                // so do the comparison as double
+                if (haveTypes(val1, val2, ValDouble.class, ValFloat.class)) {
+                    // Special case to deal with differing precision in floats/doubles
+                    return compareAsDoublesWithTolerance(val1, val2);
                 } else {
                     return AS_DOUBLE_COMPARATOR.compare(val1, val2);
                 }
@@ -297,7 +309,7 @@ public class ValComparators {
             // Get the appropriate comparator for the mixed types or fallback to a string
             // comparison if
             final Comparator<Val> comparator = getComparatorForTypes(val1.type(), val2.type(), isCaseSensitive)
-                    .orElseGet(() -> ValComparators.getAsStringComparator(isCaseSensitive));
+                    .orElseGet(() -> getAsStringComparator(isCaseSensitive));
             // e.g. comparing ValString to ValInteger, which doesn't really make any sense
             // but, we might as well compare on something, so compare on the value as a string
 //            return AS_TYPE_COMPARATOR.compare(val1, val2);
@@ -305,49 +317,50 @@ public class ValComparators {
         }
     }
 
-    public static boolean hasBothTypes(final Object val1,
-                                       final Object val2,
-                                       final Class<?> typeA,
-                                       final Class<?> typeB) {
-        return (typeA.isInstance(val1) && typeB.isInstance(val2))
-                || (typeA.isInstance(val2) && typeB.isInstance(val1));
+    /**
+     * This is to deal with the
+     * @param val1
+     * @param val2
+     * @return
+     */
+    static int compareAsDoublesWithTolerance(final Val val1, final Val val2) {
+        final Double d1 = val1.toDouble();
+        final Double d2 = val2.toDouble();
+
+        if (d1 != null
+                && d2 != null
+                && Math.abs(d1 - d2) < DOUBLE_TOLERANCE_FRACTION * Math.abs(d2)) {
+            return 0;
+        } else {
+            return AS_DOUBLE_COMPARATOR.compare(val1, val2);
+        }
     }
 
-    public static boolean atLeastOneHasType(final Object val1,
-                                            final Object val2,
-                                            final Class<?> type) {
-        return type.isInstance(val1) || type.isInstance(val2);
-    }
-
-    public static boolean haveType(final Object val1,
+    static boolean haveType(final Object val1,
                                    final Object val2,
                                    final Class<?> type) {
         return type.isInstance(val1) && type.isInstance(val2);
     }
 
-    public static boolean bothAreNumeric(final Val a, final Val b) {
+    static boolean haveTypes(final Object val1,
+                             final Object val2,
+                             final Class<?> typeA,
+                             final Class<?> typeB) {
+        return (typeA.isInstance(val1) && typeB.isInstance(val2))
+                || (typeB.isInstance(val1) && typeA.isInstance(val2));
+    }
+
+    private static boolean bothAreNumeric(final Val a, final Val b) {
         return a != null
                 && b != null
                 && a.hasNumericValue()
                 && b.hasNumericValue();
     }
 
-    public static boolean atLeastOneIsNumeric(final Val a, final Val b) {
-        return (a != null && a.hasNumericValue())
-                || (b != null && b.hasNumericValue());
-    }
-
-    /**
-     * @return True if either value has a decimal part.
-     */
-    static boolean haveFractionalParts(final Val a, final Val b) {
-        return hasFractionalPart(a) || hasFractionalPart(b);
-    }
-
     /**
      * @return True if neither value has a decimal part.
      */
-    static boolean noFractionalParts(final Val a, final Val b) {
+    private static boolean noFractionalParts(final Val a, final Val b) {
         return !hasFractionalPart(a)
                 && !hasFractionalPart(b);
     }
@@ -356,7 +369,7 @@ public class ValComparators {
         return val != null && val.hasFractionalPart();
     }
 
-    public static Comparator<Val> getAsStringComparator(final boolean isCaseSensitive) {
+    private static Comparator<Val> getAsStringComparator(final boolean isCaseSensitive) {
         return isCaseSensitive
                 ? AS_CASE_SENSITIVE_STRING_COMPARATOR
                 : AS_CASE_INSENSITIVE_STRING_COMPARATOR;

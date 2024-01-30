@@ -29,7 +29,7 @@ class TestValComparators {
 
     @BeforeEach
     void setUp() {
-        comparator = ValComparators.GENERIC_CASE_INSENSITIVE_COMPARATOR;
+        comparator = ValComparators.AS_DOUBLE_THEN_CASE_INSENSITIVE_STRING_COMPARATOR;
     }
 
     @Test
@@ -155,6 +155,7 @@ class TestValComparators {
                         Tuple.of("a", "B", "c"),
                         Tuple.of("2", "10", "10-1"),
                         Tuple.of("3", "20", "300"),
+                        Tuple.of("3", "20", "foo"),
                         Tuple.of("4", "3232235777", "3232238337-3232239362"))
                 .map(values ->
                         DynamicTest.dynamicTest(
@@ -179,6 +180,7 @@ class TestValComparators {
                         Vals.of(-1, false, true), // -1, 0, 1
                         Vals.of("-1", false, true), // -1, 0, 1
                         Vals.of("1", 2, null),
+                        Vals.of("3", 20d, "foo"),
                         Vals.of("1", 2, ValString.create(null)),
                         Vals.of(1, "b", ValErr.create("a")) // "Err: a", hence comes last
                 )
@@ -210,6 +212,52 @@ class TestValComparators {
                                                 vals.val1,
                                                 vals.val2,
                                                 vals.val3)));
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testAsDoubleThenStringComparator() {
+
+        comparator = ValComparators.AS_DOUBLE_THEN_CASE_INSENSITIVE_STRING_COMPARATOR;
+
+        return Stream.of(
+                        Vals.of(1L, 1.1D, "1.3"),
+                        Vals.of("3", 20, "100"),
+                        Vals.of("1", 2d, "a"),
+                        Vals.of(Duration.ofMillis(1), 2d, "3"),
+                        Vals.of(Instant.ofEpochMilli(1), 2d, "3"),
+                        Vals.of("1", 2, null),
+                        Vals.of("1", 2, ValString.create(null)) // We shouldn't have null ValStrings really
+                )
+                .map(vals ->
+                        DynamicTest.dynamicTest(
+                                vals.toString(), () ->
+                                        doTestContract(
+                                                vals.val1,
+                                                vals.val2,
+                                                vals.val3)));
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testCompareDoubleWithTolerance() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputTypes(double.class, double.class)
+                .withOutputType(int.class)
+                .withTestFunction(testCase ->
+                        ValComparators.compareAsDoublesWithTolerance(
+                                ValDouble.create(testCase.getInput()._1),
+                                ValDouble.create(testCase.getInput()._2)))
+                .withSimpleEqualityAssertion()
+                .addCase(Tuple.of(0d, 0d), 0)
+                .addCase(Tuple.of(1d, 0d), 1)
+                .addCase(Tuple.of((double) 0.000001f, 0d), 1)
+                .addCase(Tuple.of(0d, 1d), -1)
+                .addCase(Tuple.of(0d, (double) 0.000001f), -1)
+                .addCase(Tuple.of(1d, 1d), 0)
+                .addCase(Tuple.of(1.1d, (double) 1.1f), 0)
+                .addCase(Tuple.of(1_000.1d, (double) 1_000.1f), 0)
+                .addCase(Tuple.of(100_000.1d, (double) 100_000.1f), 0)
+                .addCase(Tuple.of(10_000_000.1d, (double) 10_000_000.1f), 0)
+                .build();
     }
 
     private void doTestContract(final List<ValString> vals) {

@@ -67,7 +67,11 @@ public sealed interface Val
      * @return A comparator that will compare {@link Val} instances using the
      * comparison method of the subclass in question. Only intended for use on
      * {@link Val} instances of the same class. To compare {@link Val} instances
-     * of potentially mixed types in a null-safe way, see {@link ValComparators#compare(Val, Val)}.
+     * of potentially mixed types in a null-safe way, see
+     * {@link ValComparators#getComparator(boolean)}.
+     * @param isCaseSensitive Set to false for a case-insensitive comparator.
+     *                        Some impls may ignore this parameter, e.g. numeric {@link Val}
+     *                        impls.
      */
     Comparator<Val> getDefaultComparator(final boolean isCaseSensitive);
 
@@ -168,19 +172,6 @@ public sealed interface Val
         } else {
             throw new UnsupportedOperationException("Unsupported type " + object.getClass());
         }
-    }
-
-    static <T extends Val> Comparator<T> nullsFirstComparator(Comparator<T> comparator) {
-
-        return Comparator.nullsFirst((val1, val2) -> {
-            if (ValComparators.isNull(val1) && ValComparators.isNotNull(val2)) {
-                return -1;
-            } else if (ValComparators.isNotNull(val1) && ValComparators.isNull(val2)) {
-                return 1;
-            } else {
-                return comparator.compare(val1, val2);
-            }
-        });
     }
 
     @Override

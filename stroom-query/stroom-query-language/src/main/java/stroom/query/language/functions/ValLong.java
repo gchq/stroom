@@ -21,7 +21,7 @@ import java.util.Objects;
 
 public final class ValLong implements ValNumber {
 
-    public static Comparator<Val> COMPARATOR = ValComparators.asGenericComparator(
+    private static final Comparator<Val> COMPARATOR = ValComparators.asGenericComparator(
             ValLong.class, ValComparators.AS_LONG_COMPARATOR);
 
     public static final Type TYPE = Type.LONG;

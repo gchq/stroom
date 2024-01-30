@@ -33,10 +33,14 @@ public final class ValString implements Val {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ValString.class);
 
-    public static Comparator<Val> CASE_SENSITIVE_COMPARATOR = ValComparators.asGenericComparator(
-            ValString.class, ValComparators.AS_DOUBLE_THEN_CASE_SENSITIVE_STRING_COMPARATOR);
-    public static Comparator<Val> CASE_INSENSITIVE_COMPARATOR = ValComparators.asGenericComparator(
-            ValString.class, ValComparators.AS_DOUBLE_THEN_CASE_INSENSITIVE_STRING_COMPARATOR);
+    private static final Comparator<Val> CASE_SENSITIVE_COMPARATOR = ValComparators.asGenericComparator(
+            ValString.class,
+            ValComparators.AS_DOUBLE_THEN_CASE_SENSITIVE_STRING_COMPARATOR,
+            ValComparators.GENERIC_CASE_SENSITIVE_COMPARATOR);
+    private static final Comparator<Val> CASE_INSENSITIVE_COMPARATOR = ValComparators.asGenericComparator(
+            ValString.class,
+            ValComparators.AS_DOUBLE_THEN_CASE_INSENSITIVE_STRING_COMPARATOR,
+            ValComparators.GENERIC_CASE_INSENSITIVE_COMPARATOR);
 
     public static final Type TYPE = Type.STRING;
     static final ValString EMPTY = new ValString("");
@@ -51,7 +55,8 @@ public final class ValString implements Val {
         if (value == null) {
             // We should not be allowing null values, but not sure that we can risk a null check in case
             // it breaks existing content
-            LOGGER.warn("null passed to ValString.create, should be using ValNull, enable DEBUG to see stack");
+            LOGGER.warn("null passed to ValString.create, code should be using ValNull. " +
+                    "Enable DEBUG to see stack trace.");
             if (LOGGER.isDebugEnabled()) {
                 LogUtil.logStackTrace(
                         "null passed to ValString.create, should be using ValNull, stack trace:",
@@ -147,9 +152,14 @@ public final class ValString implements Val {
     @Override
     public Boolean toBoolean() {
         try {
-            return Boolean.valueOf(value);
-        } catch (final RuntimeException e) {
-            // Ignore.
+            // Any non-zero number is true
+            return Long.parseLong(value) != 0;
+        } catch (final RuntimeException e1) {
+            try {
+                return Boolean.valueOf(value);
+            } catch (final RuntimeException e2) {
+                // Ignore.
+            }
         }
         return null;
     }

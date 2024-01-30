@@ -122,6 +122,10 @@ class Replace extends AbstractManyChildFunction {
         return Type.STRING;
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static final class Gen extends AbstractManyChildGenerator {
 
         Gen(final Generator[] childGenerators) {

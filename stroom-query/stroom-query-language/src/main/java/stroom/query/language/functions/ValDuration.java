@@ -18,12 +18,13 @@ package stroom.query.language.functions;
 
 import stroom.util.shared.ModelStringUtil;
 
+import java.time.Duration;
 import java.util.Comparator;
 import java.util.Objects;
 
 public final class ValDuration implements ValNumber {
 
-    public static Comparator<Val> COMPARATOR = ValComparators.asGenericComparator(
+    private static final Comparator<Val> COMPARATOR = ValComparators.asGenericComparator(
             ValDuration.class, ValComparators.AS_LONG_COMPARATOR);
 
     public static final Type TYPE = Type.DURATION;
@@ -35,6 +36,10 @@ public final class ValDuration implements ValNumber {
 
     public static ValDuration create(final long milliseconds) {
         return new ValDuration(milliseconds);
+    }
+
+    public static ValDuration create(final Duration duration) {
+        return new ValDuration(Objects.requireNonNull(duration).toMillis());
     }
 
     @Override

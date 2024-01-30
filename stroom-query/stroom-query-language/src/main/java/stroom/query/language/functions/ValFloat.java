@@ -27,7 +27,7 @@ import java.util.Objects;
 
 public final class ValFloat implements ValNumber {
 
-    public static Comparator<Val> COMPARATOR = ValComparators.asGenericComparator(
+    private static final Comparator<Val> COMPARATOR = ValComparators.asGenericComparator(
             ValFloat.class, ValComparators.AS_FLOAT_COMPARATOR);
 
     public static final Type TYPE = Type.FLOAT;

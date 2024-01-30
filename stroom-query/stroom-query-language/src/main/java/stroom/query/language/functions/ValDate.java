@@ -18,12 +18,13 @@ package stroom.query.language.functions;
 
 import stroom.util.concurrent.LazyValue;
 
+import java.time.Instant;
 import java.util.Comparator;
 import java.util.Objects;
 
 public final class ValDate implements ValNumber {
 
-    public static Comparator<Val> COMPARATOR = ValComparators.asGenericComparator(
+    private static final Comparator<Val> COMPARATOR = ValComparators.asGenericComparator(
             ValDate.class, ValComparators.AS_LONG_COMPARATOR);
 
     public static final Type TYPE = Type.DATE;
@@ -41,6 +42,10 @@ public final class ValDate implements ValNumber {
 
     public static ValDate create(final String date) {
         return new ValDate(DateUtil.parseNormalDateTimeString(date));
+    }
+
+    public static ValDate create(final Instant instant) {
+        return new ValDate(Objects.requireNonNull(instant).toEpochMilli());
     }
 
     @Override

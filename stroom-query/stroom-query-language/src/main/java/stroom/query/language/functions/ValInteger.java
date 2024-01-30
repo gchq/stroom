@@ -21,7 +21,7 @@ import java.util.Objects;
 
 public final class ValInteger implements ValNumber {
 
-    public static Comparator<Val> COMPARATOR = ValComparators.asGenericComparator(
+    private static final Comparator<Val> COMPARATOR = ValComparators.asGenericComparator(
             ValInteger.class, ValComparators.AS_INTEGER_COMPARATOR);
 
     public static final Type TYPE = Type.INTEGER;

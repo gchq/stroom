@@ -21,7 +21,7 @@ import java.util.Objects;
 
 public final class ValBoolean implements Val {
 
-    public static Comparator<Val> COMPARATOR = ValComparators.asGenericComparator(
+    private static final Comparator<Val> COMPARATOR = ValComparators.asGenericComparator(
             ValBoolean.class, ValComparators.AS_BOOLEAN_COMPARATOR);
 
     public static final Type TYPE = Type.BOOLEAN;

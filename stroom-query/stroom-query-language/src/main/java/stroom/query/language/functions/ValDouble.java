@@ -27,7 +27,7 @@ import java.util.Objects;
 
 public final class ValDouble implements ValNumber {
 
-    public static Comparator<Val> COMPARATOR = ValComparators.asGenericComparator(
+    private static final Comparator<Val> COMPARATOR = ValComparators.asGenericComparator(
             ValDouble.class, ValComparators.AS_DOUBLE_COMPARATOR);
 
     public static final Type TYPE = Type.DOUBLE;

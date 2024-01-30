@@ -24,10 +24,16 @@ import java.util.Objects;
 public final class ValErr implements Val {
 
     public static final String PREFIX = "ERR: ";
-    public static Comparator<Val> COMPARATOR = ValComparators.asGenericComparator(
-            ValErr.class, ValComparators.AS_CASE_INSENSITIVE_STRING_COMPARATOR);
+    public static final Comparator<Val> CASE_SENSITIVE_COMPARATOR = ValComparators.asGenericComparator(
+            ValErr.class,
+            ValComparators.AS_DOUBLE_THEN_CASE_SENSITIVE_STRING_COMPARATOR,
+            ValComparators.GENERIC_CASE_SENSITIVE_COMPARATOR);
+    public static final Comparator<Val> CASE_INSENSITIVE_COMPARATOR = ValComparators.asGenericComparator(
+            ValErr.class,
+            ValComparators.AS_DOUBLE_THEN_CASE_INSENSITIVE_STRING_COMPARATOR,
+            ValComparators.GENERIC_CASE_INSENSITIVE_COMPARATOR);
 
-    public static final ValErr INSTANCE = new ValErr("Err");
+    public static final ValErr INSTANCE = new ValErr("Unknown");
     public static final Type TYPE = Type.ERR;
     private final String message;
 
@@ -138,6 +144,8 @@ public final class ValErr implements Val {
 
     @Override
     public Comparator<Val> getDefaultComparator(final boolean isCaseSensitive) {
-        return COMPARATOR;
+        return isCaseSensitive
+                ? CASE_SENSITIVE_COMPARATOR
+                : CASE_INSENSITIVE_COMPARATOR;
     }
 }
