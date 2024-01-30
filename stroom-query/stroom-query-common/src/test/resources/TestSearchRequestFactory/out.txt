@@ -1585,3 +1585,11 @@ select StreamId
   }
 }
 -----
+// From example index
+from View
+// eval MaxD=max(parseDuration('PT10M'))
+where EventTime < now() - 2dx
+select StreamId, EventId, Feed
+=====
+TokenException{tokenType=STRING, start=101, end=101, text=x, message=Unexpected token}
+-----
