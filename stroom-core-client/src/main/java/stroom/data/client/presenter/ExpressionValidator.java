@@ -21,7 +21,8 @@ import java.util.function.Consumer;
 
 public class ExpressionValidator {
 
-    public static final ExpressionOperator ALL_UNLOCKED_EXPRESSION = MetaExpressionUtil.createStatusExpression(Status.UNLOCKED);
+    public static final ExpressionOperator ALL_UNLOCKED_EXPRESSION = MetaExpressionUtil.createStatusExpression(
+            Status.UNLOCKED);
     private static final ExpressionResource EXPRESSION_RESOURCE = GWT.create(ExpressionResource.class);
 
     private final DateTimeSettingsFactory dateTimeSettingsFactory;
