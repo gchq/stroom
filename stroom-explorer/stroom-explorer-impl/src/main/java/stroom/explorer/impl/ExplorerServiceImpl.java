@@ -18,6 +18,7 @@
 package stroom.explorer.impl;
 
 import stroom.collection.api.CollectionService;
+import stroom.docref.DocContentHighlights;
 import stroom.docref.DocContentMatch;
 import stroom.docref.DocRef;
 import stroom.explorer.api.ExplorerActionHandler;
@@ -36,6 +37,7 @@ import stroom.explorer.shared.ExplorerNodeKey;
 import stroom.explorer.shared.ExplorerResource.TagFetchMode;
 import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.explorer.shared.FetchExplorerNodeResult;
+import stroom.explorer.shared.FetchHighlightsRequest;
 import stroom.explorer.shared.FindExplorerNodeCriteria;
 import stroom.explorer.shared.FindExplorerNodeQuery;
 import stroom.explorer.shared.NodeFlag;
@@ -1486,6 +1488,13 @@ class ExplorerServiceImpl
             return ResultPage.createUnboundedList(Collections.emptyList());
         }
         return ResultPage.createPageLimitedList(list, pageRequest);
+    }
+
+    @Override
+    public DocContentHighlights fetchHighlights(final FetchHighlightsRequest request) {
+        final ExplorerActionHandler explorerActionHandler =
+                explorerActionHandlers.getHandler(request.getDocRef().getType());
+        return explorerActionHandler.fetchHighlights(request.getDocRef(), request.getExtension(), request.getFilter());
     }
 
     @Override

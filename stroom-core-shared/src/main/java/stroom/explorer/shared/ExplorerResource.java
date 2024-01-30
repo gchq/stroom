@@ -16,6 +16,7 @@
 
 package stroom.explorer.shared;
 
+import stroom.docref.DocContentHighlights;
 import stroom.docref.DocRef;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
@@ -174,6 +175,14 @@ public interface ExplorerResource extends RestResource, DirectRestService {
             operationId = "findExplorerNodes")
     ResultPage<ExplorerDocContentMatch> findContent(
             @Parameter(description = "request", required = true) FindExplorerNodeQuery request);
+
+    @POST
+    @Path("/fetchHighlights")
+    @Operation(
+            summary = "Fetch match highlights on found content",
+            operationId = "fetchHighlights")
+    DocContentHighlights fetchHighlights(
+            @Parameter(description = "request", required = true) FetchHighlightsRequest request);
 
 
     // --------------------------------------------------------------------------------

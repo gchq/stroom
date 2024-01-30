@@ -2,8 +2,12 @@ package stroom.util.string;
 
 import stroom.docref.StringMatch;
 import stroom.docref.StringMatch.MatchType;
+import stroom.docref.StringMatchLocation;
 import stroom.util.NullSafe;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.regex.Matcher;
@@ -43,38 +47,46 @@ public class StringMatcher {
         }
     }
 
-    public Optional<Match> match(final String string) {
+    public Optional<StringMatchLocation> match(final String string) {
+        final List<StringMatchLocation> matches = match(string, 1);
+        if (matches.isEmpty()) {
+            return Optional.empty();
+        }
+        return Optional.of(matches.getFirst());
+    }
+
+    public List<StringMatchLocation> match(final String string, final int limit) {
         switch (matchType) {
             case ANY -> {
-                return Optional.of(new Match(0, string.length()));
+                return Collections.singletonList(new StringMatchLocation(0, string.length()));
             }
             case NULL -> {
                 if (string == null) {
-                    return Optional.of(new Match(0, 0));
+                    return Collections.singletonList(new StringMatchLocation(0, 0));
                 }
             }
             case NON_NULL -> {
                 if (string != null && string.isBlank()) {
-                    return Optional.of(new Match(0, 0));
+                    return Collections.singletonList(new StringMatchLocation(0, 0));
                 }
             }
             case EMPTY -> {
                 if (string != null && string.isEmpty()) {
-                    return Optional.of(new Match(0, 0));
+                    return Collections.singletonList(new StringMatchLocation(0, 0));
                 }
             }
             case NULL_OR_BLANK -> {
                 if (NullSafe.isBlankString(string)) {
-                    return Optional.of(new Match(0, 0));
+                    return Collections.singletonList(new StringMatchLocation(0, 0));
                 }
             }
             case NULL_OR_EMPTY -> {
                 if (NullSafe.isEmptyString(string)) {
-                    return Optional.of(new Match(0, 0));
+                    return Collections.singletonList(new StringMatchLocation(0, 0));
                 }
             }
             case CONTAINS -> {
-                return contains(string);
+                return contains(string, limit);
             }
             case EQUALS -> {
                 return equals(string);
@@ -89,90 +101,91 @@ public class StringMatcher {
                 return endsWith(string);
             }
             case REGEX -> {
-                return regex(string);
+                return regex(string, limit);
             }
         }
-        return Optional.empty();
+        return Collections.emptyList();
     }
 
-    private Optional<Match> equals(final String string) {
+    private List<StringMatchLocation> equals(final String string) {
         if (string == null) {
-            return Optional.empty();
+            return Collections.emptyList();
         }
         if (caseSensitive) {
             if (string.equals(pattern)) {
-                return Optional.of(new Match(0, string.length()));
+                return Collections.singletonList(new StringMatchLocation(0, string.length()));
             }
         } else {
             if (string.equalsIgnoreCase(pattern)) {
-                return Optional.of(new Match(0, string.length()));
+                return Collections.singletonList(new StringMatchLocation(0, string.length()));
             }
         }
-        return Optional.empty();
+        return Collections.emptyList();
     }
 
-    private Optional<Match> notEquals(final String string) {
+    private List<StringMatchLocation> notEquals(final String string) {
         if (string == null) {
-            return Optional.of(new Match(0, 0));
+            return Collections.singletonList(new StringMatchLocation(0, 0));
         }
         if (caseSensitive) {
             if (!string.equals(pattern)) {
-                return Optional.of(new Match(0, string.length()));
+                return Collections.singletonList(new StringMatchLocation(0, string.length()));
             }
         } else {
             if (!string.equalsIgnoreCase(pattern)) {
-                return Optional.of(new Match(0, string.length()));
+                return Collections.singletonList(new StringMatchLocation(0, string.length()));
             }
         }
-        return Optional.empty();
+        return Collections.emptyList();
     }
 
-    private Optional<Match> contains(final String string) {
+    private List<StringMatchLocation> contains(final String string, final int limit) {
         if (string == null) {
-            return Optional.empty();
+            return Collections.emptyList();
         }
-        final int index = indexOf(string);
-        if (index != -1) {
-            return Optional.of(new Match(index, pattern.length()));
+        final String alteredString = changeCase(string);
+        int index = alteredString.indexOf(pattern);
+        final List<StringMatchLocation> matches = new ArrayList<>();
+        for (int i = 0; i < limit && index != -1; i++) {
+            matches.add(new StringMatchLocation(index, pattern.length()));
+            index = alteredString.indexOf(pattern, index + pattern.length());
         }
-        return Optional.empty();
+        return matches;
     }
 
-    private Optional<Match> startsWith(final String string) {
+    private List<StringMatchLocation> startsWith(final String string) {
         if (string == null) {
-            return Optional.empty();
+            return Collections.emptyList();
         }
-        final int index = indexOf(string);
-        if (index == 0) {
-            return Optional.of(new Match(index, pattern.length()));
+        final String alteredString = changeCase(string);
+        if (alteredString.startsWith(pattern)) {
+            return Collections.singletonList(new StringMatchLocation(0, pattern.length()));
         }
-        return Optional.empty();
+        return Collections.emptyList();
     }
 
-    private Optional<Match> endsWith(final String string) {
+    private List<StringMatchLocation> endsWith(final String string) {
         if (string == null) {
-            return Optional.empty();
+            return Collections.emptyList();
         }
-        final int index = indexOf(string);
-        if (index == string.length() - pattern.length()) {
-            return Optional.of(new Match(index, pattern.length()));
+        final String alteredString = changeCase(string);
+        if (alteredString.endsWith(pattern)) {
+            return Collections.singletonList(new StringMatchLocation(string.length() - pattern.length(),
+                    pattern.length()));
         }
-        return Optional.empty();
+        return Collections.emptyList();
     }
 
-    private int indexOf(final String string) {
-        final int index;
-        if (caseSensitive) {
-            index = string.indexOf(pattern);
-        } else {
-            index = string.toLowerCase(Locale.ROOT).indexOf(pattern);
+    private String changeCase(final String string) {
+        if (!caseSensitive) {
+            return string.toLowerCase(Locale.ROOT);
         }
-        return index;
+        return string;
     }
 
-    private Optional<Match> regex(final String string) {
+    private List<StringMatchLocation> regex(final String string, final int limit) {
         if (string == null) {
-            return Optional.empty();
+            return Collections.emptyList();
         }
         if (regexPattern != null) {
             int flags = 0;
@@ -181,18 +194,16 @@ public class StringMatcher {
             }
             final Pattern regexPattern = Pattern.compile(pattern, flags);
             final Matcher matcher = regexPattern.matcher(string);
-            if (matcher.find()) {
-                return Optional.of(new Match(matcher.start(), matcher.end() - matcher.start()));
+            final List<StringMatchLocation> list = new ArrayList<>();
+            for (int i = 0; i < limit && matcher.find(); i++) {
+                list.add(new StringMatchLocation(matcher.start(), matcher.end() - matcher.start()));
             }
+            return list;
         }
-        return Optional.empty();
+        return Collections.emptyList();
     }
 
     public MatchType getMatchType() {
         return matchType;
-    }
-
-    public record Match(int offset, int length) {
-
     }
 }

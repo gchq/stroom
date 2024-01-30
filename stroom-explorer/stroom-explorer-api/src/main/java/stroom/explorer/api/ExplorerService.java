@@ -17,13 +17,16 @@
 
 package stroom.explorer.api;
 
+import stroom.docref.DocContentHighlights;
 import stroom.docref.DocRef;
+import stroom.docref.StringMatch;
 import stroom.explorer.shared.BulkActionResult;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.ExplorerDocContentMatch;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerResource.TagFetchMode;
 import stroom.explorer.shared.FetchExplorerNodeResult;
+import stroom.explorer.shared.FetchHighlightsRequest;
 import stroom.explorer.shared.FindExplorerNodeCriteria;
 import stroom.explorer.shared.FindExplorerNodeQuery;
 import stroom.explorer.shared.PermissionInheritance;
@@ -91,6 +94,8 @@ public interface ExplorerService extends Clearable {
     List<DocumentType> getVisibleTypes();
 
     ResultPage<ExplorerDocContentMatch> findContent(FindExplorerNodeQuery request);
+
+    DocContentHighlights fetchHighlights(FetchHighlightsRequest request);
 
     Optional<ExplorerNode> getFromDocRef(DocRef docRef);
 

@@ -16,6 +16,7 @@
 
 package stroom.explorer.impl;
 
+import stroom.docref.DocContentHighlights;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.docrefinfo.api.DocRefInfoService;
@@ -42,6 +43,7 @@ import stroom.explorer.shared.ExplorerServiceMoveRequest;
 import stroom.explorer.shared.ExplorerServiceRenameRequest;
 import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.explorer.shared.FetchExplorerNodeResult;
+import stroom.explorer.shared.FetchHighlightsRequest;
 import stroom.explorer.shared.FindExplorerNodeCriteria;
 import stroom.explorer.shared.FindExplorerNodeQuery;
 import stroom.security.api.DocumentPermissionService;
@@ -273,5 +275,10 @@ class ExplorerResourceImpl implements ExplorerResource {
     @Override
     public ResultPage<ExplorerDocContentMatch> findContent(final FindExplorerNodeQuery request) {
         return explorerServiceProvider.get().findContent(request);
+    }
+
+    @Override
+    public DocContentHighlights fetchHighlights(final FetchHighlightsRequest request) {
+        return explorerServiceProvider.get().fetchHighlights(request);
     }
 }

@@ -4,16 +4,22 @@ import stroom.cell.list.client.CustomCellList;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestFactory;
+import stroom.docref.DocContentHighlights;
 import stroom.docref.StringMatch;
 import stroom.document.client.event.OpenDocumentEvent;
+import stroom.editor.client.presenter.EditorPresenter;
 import stroom.explorer.client.event.ShowFindEvent;
 import stroom.explorer.client.presenter.FindPresenter.FindProxy;
 import stroom.explorer.client.presenter.FindPresenter.FindView;
 import stroom.explorer.shared.ExplorerDocContentMatch;
 import stroom.explorer.shared.ExplorerResource;
+import stroom.explorer.shared.FetchHighlightsRequest;
 import stroom.explorer.shared.FindExplorerNodeQuery;
+import stroom.util.client.TextRangeUtil;
+import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.TextRange;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -35,6 +41,8 @@ import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
 import com.gwtplatform.mvp.client.annotations.ProxyEvent;
 import com.gwtplatform.mvp.client.proxy.Proxy;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 
@@ -46,12 +54,15 @@ public class FindPresenter extends MyPresenter<FindView, FindProxy> implements F
     private final CellList<ExplorerDocContentMatch> cellList;
     private final RestDataProvider<ExplorerDocContentMatch, ResultPage<ExplorerDocContentMatch>> dataProvider;
     private final MySingleSelectionModel<ExplorerDocContentMatch> selectionModel;
+    private final EditorPresenter editorPresenter;
+    private final RestFactory restFactory;
 
     private FindExplorerNodeQuery currentQuery = new FindExplorerNodeQuery(
             new PageRequest(0, 100),
             null,
             StringMatch.any());
     private boolean initialised;
+    private StringMatch lastFilter;
 
     private final Timer filterRefreshTimer = new Timer() {
         @Override
@@ -65,8 +76,11 @@ public class FindPresenter extends MyPresenter<FindView, FindProxy> implements F
                          final FindView view,
                          final FindProxy proxy,
                          final PagerView pagerView,
+                         final EditorPresenter editorPresenter,
                          final RestFactory restFactory) {
         super(eventBus, view, proxy);
+        this.editorPresenter = editorPresenter;
+        this.restFactory = restFactory;
 
         selectionModel = new MySingleSelectionModel<>();
         cellList = new CustomCellList<>(new ExplorerDocContentMatchCell());
@@ -74,6 +88,7 @@ public class FindPresenter extends MyPresenter<FindView, FindProxy> implements F
         cellList.setSelectionModel(selectionModel);
 
         view.setResultView(pagerView);
+        view.setTextView(editorPresenter.getView());
         view.setUiHandlers(this);
 
         dataProvider = new RestDataProvider<ExplorerDocContentMatch, ResultPage<ExplorerDocContentMatch>>(eventBus) {
@@ -86,18 +101,39 @@ public class FindPresenter extends MyPresenter<FindView, FindProxy> implements F
                         currentQuery.getSortList(),
                         currentQuery.getFilter());
 
-                restFactory.builder()
-                        .forResultPageOf(ExplorerDocContentMatch.class)
-                        .onSuccess(resultPage -> {
-                            if (resultPage.getPageStart() != cellList.getPageStart()) {
-                                cellList.setPageStart(resultPage.getPageStart());
-                            }
-                            dataConsumer.accept(resultPage);
+                final boolean filterChange = !Objects.equals(lastFilter, currentQuery.getFilter());
+                lastFilter = currentQuery.getFilter();
 
-                        })
-                        .onFailure(throwableConsumer)
-                        .call(EXPLORER_RESOURCE)
-                        .findContent(currentQuery);
+                if (GwtNullSafe.isBlankString(currentQuery.getFilter().getPattern())) {
+                    final ResultPage<ExplorerDocContentMatch> resultPage =
+                            ResultPage.createUnboundedList(Collections.emptyList());
+                    if (resultPage.getPageStart() != cellList.getPageStart()) {
+                        cellList.setPageStart(resultPage.getPageStart());
+                    }
+                    dataConsumer.accept(resultPage);
+                    selectionModel.clear();
+
+                } else {
+                    restFactory.builder()
+                            .forResultPageOf(ExplorerDocContentMatch.class)
+                            .onSuccess(resultPage -> {
+                                if (resultPage.getPageStart() != cellList.getPageStart()) {
+                                    cellList.setPageStart(resultPage.getPageStart());
+                                }
+                                dataConsumer.accept(resultPage);
+
+                                if (filterChange) {
+                                    if (resultPage.size() > 0) {
+                                        selectionModel.setSelected(resultPage.getValues().get(0), true);
+                                    } else {
+                                        selectionModel.clear();
+                                    }
+                                }
+                            })
+                            .onFailure(throwableConsumer)
+                            .call(EXPLORER_RESOURCE)
+                            .findContent(currentQuery);
+                }
             }
         };
     }
@@ -105,11 +141,30 @@ public class FindPresenter extends MyPresenter<FindView, FindProxy> implements F
     @Override
     protected void onBind() {
         registerHandler(selectionModel.addSelectionChangeHandler(event -> {
-            final ExplorerDocContentMatch match = selectionModel.getSelectedObject();
-//            if (match != null) {
-//                OpenDocumentEvent.fire(this, match.getDocContentMatch().getDocRef(), true);
-//                hide();
-//            }
+            editorPresenter.setText("");
+            editorPresenter.setHighlights(Collections.emptyList());
+            final ExplorerDocContentMatch selection = selectionModel.getSelectedObject();
+            if (selection != null && selection.getDocContentMatch() != null) {
+                final FetchHighlightsRequest fetchHighlightsRequest = new FetchHighlightsRequest(
+                        selection.getDocContentMatch().getDocRef(),
+                        selection.getDocContentMatch().getExtension(),
+                        currentQuery.getFilter());
+                restFactory.builder()
+                        .forType(DocContentHighlights.class)
+                        .onSuccess(response -> {
+                            if (response != null && response.getText() != null) {
+                                editorPresenter.setText(response.getText());
+                                if (response.getHighlights() != null) {
+                                    final List<TextRange> highlights = TextRangeUtil
+                                            .convertMatchesToRanges(response.getText(), response.getHighlights());
+                                    editorPresenter.setHighlights(highlights);
+                                }
+                            }
+                        })
+                        .onFailure(throwable -> editorPresenter.setText(throwable.getMessage()))
+                        .call(EXPLORER_RESOURCE)
+                        .fetchHighlights(fetchHighlightsRequest);
+            }
         }));
         registerHandler(selectionModel.addDoubleSelectHandler(event -> {
             final ExplorerDocContentMatch match = selectionModel.getSelectedObject();
@@ -137,7 +192,9 @@ public class FindPresenter extends MyPresenter<FindView, FindProxy> implements F
         final FindExplorerNodeQuery query = new FindExplorerNodeQuery(
                 currentQuery.getPageRequest(),
                 currentQuery.getSortList(),
-                StringMatch.regex(trimmed, matchCase));
+                regex
+                        ? StringMatch.regex(trimmed, matchCase)
+                        : StringMatch.contains(trimmed, matchCase));
 
         if (!Objects.equals(currentQuery, query)) {
             this.currentQuery = query;
@@ -188,5 +245,7 @@ public class FindPresenter extends MyPresenter<FindView, FindProxy> implements F
         String getPattern();
 
         void setResultView(View view);
+
+        void setTextView(View view);
     }
 }

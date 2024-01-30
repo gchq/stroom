@@ -7,27 +7,27 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Objects;
 
-@JsonPropertyOrder({"docRef", "matchOffset", "matchLength", "sample"})
+@JsonPropertyOrder({"docRef", "extension", "location", "sample"})
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class DocContentMatch {
 
     @JsonProperty
     private final DocRef docRef;
     @JsonProperty
-    private final long matchOffset;
+    private final String extension;
     @JsonProperty
-    private final long matchLength;
+    private final StringMatchLocation location;
     @JsonProperty
     private final String sample;
 
     @JsonCreator
     public DocContentMatch(@JsonProperty("docRef") final DocRef docRef,
-                           @JsonProperty("matchOffset") final long matchOffset,
-                           @JsonProperty("matchLength") final long matchLength,
+                           @JsonProperty("extension") final String extension,
+                           @JsonProperty("location") final StringMatchLocation location,
                            @JsonProperty("sample") final String sample) {
         this.docRef = docRef;
-        this.matchOffset = matchOffset;
-        this.matchLength = matchLength;
+        this.extension = extension;
+        this.location = location;
         this.sample = sample;
     }
 
@@ -35,12 +35,12 @@ public class DocContentMatch {
         return docRef;
     }
 
-    public long getMatchOffset() {
-        return matchOffset;
+    public String getExtension() {
+        return extension;
     }
 
-    public long getMatchLength() {
-        return matchLength;
+    public StringMatchLocation getLocation() {
+        return location;
     }
 
     public String getSample() {
@@ -61,13 +61,15 @@ public class DocContentMatch {
             return false;
         }
         final DocContentMatch that = (DocContentMatch) o;
-        return matchOffset == that.matchOffset && matchLength == that.matchLength && Objects.equals(docRef,
-                that.docRef) && Objects.equals(sample, that.sample);
+        return Objects.equals(docRef, that.docRef)
+                && Objects.equals(extension, that.extension) &&
+                Objects.equals(location, that.location) &&
+                Objects.equals(sample, that.sample);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(docRef, matchOffset, matchLength, sample);
+        return Objects.hash(docRef, extension, location, sample);
     }
 
     public Builder copy() {
@@ -81,8 +83,8 @@ public class DocContentMatch {
     public static class Builder {
 
         private DocRef docRef;
-        private long matchOffset;
-        private long matchLength;
+        private String extension;
+        private StringMatchLocation location;
         private String sample;
 
         private Builder() {
@@ -90,8 +92,8 @@ public class DocContentMatch {
 
         private Builder(final DocContentMatch docContentMatch) {
             this.docRef = docContentMatch.docRef;
-            this.matchOffset = docContentMatch.matchOffset;
-            this.matchLength = docContentMatch.matchLength;
+            this.extension = docContentMatch.extension;
+            this.location = docContentMatch.location;
             this.sample = docContentMatch.sample;
         }
 
@@ -100,13 +102,13 @@ public class DocContentMatch {
             return this;
         }
 
-        public Builder matchOffset(final long matchOffset) {
-            this.matchOffset = matchOffset;
+        public Builder extension(final String extension) {
+            this.extension = extension;
             return this;
         }
 
-        public Builder matchLength(final long matchLength) {
-            this.matchLength = matchLength;
+        public Builder location(final StringMatchLocation location) {
+            this.location = location;
             return this;
         }
 
@@ -116,7 +118,7 @@ public class DocContentMatch {
         }
 
         public DocContentMatch build() {
-            return new DocContentMatch(docRef, matchOffset, matchLength, sample);
+            return new DocContentMatch(docRef, extension, location, sample);
         }
     }
 }

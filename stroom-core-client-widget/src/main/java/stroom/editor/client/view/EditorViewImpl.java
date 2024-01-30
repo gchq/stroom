@@ -319,7 +319,6 @@ public class EditorViewImpl extends ViewImpl implements EditorView {
 
     @Override
     public void setHighlights(final List<TextRange> highlights) {
-
         Scheduler.get().scheduleDeferred(() -> {
             if (highlights != null && highlights.size() > 0) {
                 // Find our first from location

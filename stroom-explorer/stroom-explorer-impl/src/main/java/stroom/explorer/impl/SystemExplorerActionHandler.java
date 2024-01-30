@@ -1,5 +1,6 @@
 package stroom.explorer.impl;
 
+import stroom.docref.DocContentHighlights;
 import stroom.docref.DocContentMatch;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
@@ -129,6 +130,13 @@ class SystemExplorerActionHandler implements ExplorerActionHandler {
     @Override
     public List<DocContentMatch> findByContent(final StringMatch filter) {
         return Collections.emptyList();
+    }
+
+    @Override
+    public DocContentHighlights fetchHighlights(final DocRef docRef,
+                                                final String extension,
+                                                final StringMatch filter) {
+        return null;
     }
 
     @Override

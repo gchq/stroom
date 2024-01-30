@@ -17,6 +17,7 @@
 
 package stroom.explorer.impl;
 
+import stroom.docref.DocContentHighlights;
 import stroom.docref.DocRef;
 import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.BulkActionResult;
@@ -25,6 +26,7 @@ import stroom.explorer.shared.ExplorerDocContentMatch;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerResource.TagFetchMode;
 import stroom.explorer.shared.FetchExplorerNodeResult;
+import stroom.explorer.shared.FetchHighlightsRequest;
 import stroom.explorer.shared.FindExplorerNodeCriteria;
 import stroom.explorer.shared.FindExplorerNodeQuery;
 import stroom.explorer.shared.PermissionInheritance;
@@ -122,6 +124,11 @@ class MockExplorerService implements ExplorerService {
 
     @Override
     public ResultPage<ExplorerDocContentMatch> findContent(final FindExplorerNodeQuery request) {
+        return null;
+    }
+
+    @Override
+    public DocContentHighlights fetchHighlights(final FetchHighlightsRequest request) {
         return null;
     }
 

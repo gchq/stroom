@@ -29,6 +29,7 @@
 .editor .hl {
     position: absolute;
 	background-color: var(--code-editor__background-color--highlight);
+	z-index: 2;
 }
 
 .editor .err {

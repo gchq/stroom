@@ -6,10 +6,18 @@
         <g:FlowPanel styleName="dock-container-horizontal dock-min find-topBar">
             <g:TextBox ui:field="pattern" addStyleNames="dock-max allow-focus"/>
             <g:FlowPanel ui:field="buttonContainer" styleName="dock-min find-buttons">
-                <p:InlineSvgToggleButton ui:field="toggleMatchCase" />
-                <p:InlineSvgToggleButton ui:field="toggleRegex" />
+                <p:InlineSvgToggleButton ui:field="toggleMatchCase"/>
+                <p:InlineSvgToggleButton ui:field="toggleRegex"/>
             </g:FlowPanel>
         </g:FlowPanel>
-        <g:SimplePanel ui:field="resultContainer" styleName="stroom-control__no-padding dock-max overflow-hidden"/>
+        <g:MySplitLayoutPanel styleName="dock-max">
+            <g:north size="200">
+                <g:SimplePanel ui:field="resultContainer"
+                               styleName="max stroom-control__no-padding overflow-hidden"/>
+            </g:north>
+            <g:center>
+                <g:SimplePanel ui:field="textContainer" styleName="max stroom-control__no-padding overflow-hidden"/>
+            </g:center>
+        </g:MySplitLayoutPanel>
     </g:FlowPanel>
 </ui:UiBinder> 

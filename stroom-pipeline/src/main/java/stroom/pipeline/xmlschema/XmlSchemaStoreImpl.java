@@ -17,6 +17,7 @@
 
 package stroom.pipeline.xmlschema;
 
+import stroom.docref.DocContentHighlights;
 import stroom.docref.DocContentMatch;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
@@ -222,5 +223,12 @@ public class XmlSchemaStoreImpl implements XmlSchemaStore {
     @Override
     public List<DocContentMatch> findByContent(final StringMatch filter) {
         return store.findByContent(filter);
+    }
+
+    @Override
+    public DocContentHighlights fetchHighlights(final DocRef docRef,
+                                                final String extension,
+                                                final StringMatch filter) {
+        return store.fetchHighlights(docRef, extension, filter);
     }
 }

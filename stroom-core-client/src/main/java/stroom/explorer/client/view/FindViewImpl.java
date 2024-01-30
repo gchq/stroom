@@ -46,6 +46,8 @@ public class FindViewImpl extends ViewWithUiHandlers<FindUiHandlers>
     InlineSvgToggleButton toggleMatchCase;
     @UiField
     InlineSvgToggleButton toggleRegex;
+    @UiField
+    SimplePanel textContainer;
 
     @Inject
     public FindViewImpl(final Binder binder) {
@@ -73,6 +75,11 @@ public class FindViewImpl extends ViewWithUiHandlers<FindUiHandlers>
     @Override
     public void setResultView(final View view) {
         resultContainer.setWidget(view.asWidget());
+    }
+
+    @Override
+    public void setTextView(final View view) {
+        textContainer.setWidget(view.asWidget());
     }
 
     @Override

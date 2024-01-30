@@ -1,6 +1,7 @@
 package stroom.explorer.impl;
 
 import stroom.cache.impl.CacheManagerImpl;
+import stroom.docref.DocContentHighlights;
 import stroom.docref.DocContentMatch;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
@@ -214,6 +215,13 @@ class TestDocRefInfoCache {
 
         @Override
         public List<DocContentMatch> findByContent(final StringMatch filter) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public DocContentHighlights fetchHighlights(final DocRef docRef,
+                                                    final String extension,
+                                                    final StringMatch filter) {
             throw new UnsupportedOperationException();
         }
     }
