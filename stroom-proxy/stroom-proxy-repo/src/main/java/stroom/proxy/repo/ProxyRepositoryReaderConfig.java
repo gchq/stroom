@@ -17,6 +17,7 @@ public class ProxyRepositoryReaderConfig extends AbstractConfig implements IsPro
 
     private final String readCron;
     private final int forwardThreadCount;
+    private final int workQueueCapacity;
     private final int maxFileScan;
     private final int maxConcurrentMappedFiles;
     private final int maxAggregation;
@@ -25,6 +26,7 @@ public class ProxyRepositoryReaderConfig extends AbstractConfig implements IsPro
     public ProxyRepositoryReaderConfig() {
         readCron = null;
         forwardThreadCount = 3;
+        workQueueCapacity = 100;
         maxFileScan = 100000;
         maxConcurrentMappedFiles = 100000;
         maxAggregation = 1000;
@@ -35,12 +37,14 @@ public class ProxyRepositoryReaderConfig extends AbstractConfig implements IsPro
     @JsonCreator
     public ProxyRepositoryReaderConfig(@JsonProperty("readCron") final String readCron,
                                        @JsonProperty("forwardThreadCount") final int forwardThreadCount,
+                                       @JsonProperty("workQueueCapacity") final int workQueueCapacity,
                                        @JsonProperty("maxFileScan") final int maxFileScan,
                                        @JsonProperty("maxConcurrentMappedFiles") final int maxConcurrentMappedFiles,
                                        @JsonProperty("maxAggregation") final int maxAggregation,
                                        @JsonProperty("maxStreamSize") final String maxStreamSize) {
         this.readCron = readCron;
         this.forwardThreadCount = forwardThreadCount;
+        this.workQueueCapacity = workQueueCapacity;
         this.maxFileScan = maxFileScan;
         this.maxConcurrentMappedFiles = maxConcurrentMappedFiles;
         this.maxAggregation = maxAggregation;
@@ -61,6 +65,11 @@ public class ProxyRepositoryReaderConfig extends AbstractConfig implements IsPro
         return forwardThreadCount;
     }
 
+    @JsonPropertyDescription("Number of items we queue for the forwarding threads to operate on")
+    @JsonProperty
+    public int getWorkQueueCapacity() {
+        return workQueueCapacity;
+    }
 
     @JsonPropertyDescription("Max number of files to scan over during forwarding. Once this limit is reached it " +
             "will wait until next read interval")

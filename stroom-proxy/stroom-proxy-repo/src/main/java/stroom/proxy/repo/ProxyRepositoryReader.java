@@ -219,6 +219,7 @@ public final class ProxyRepositoryReader {
                         fileSetProcessorProvider,
                         FileUtil.getCanonicalPath(readyToProcess.getRootDir()),
                         proxyRepositoryReaderConfig.getForwardThreadCount(),
+                        proxyRepositoryReaderConfig.getWorkQueueCapacity(),
                         proxyRepositoryReaderConfig.getMaxFileScan(),
                         proxyRepositoryReaderConfig.getMaxConcurrentMappedFiles(),
                         proxyRepositoryReaderConfig.getMaxAggregation(),

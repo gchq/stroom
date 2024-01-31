@@ -117,6 +117,7 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
                 pathCreator,
                 proxyDir,
                 10,
+                100,
                 10000,
                 10000,
                 maxAggregation,

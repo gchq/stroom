@@ -286,6 +286,7 @@ public class ManualProxyAggregationTest {
                 pathCreator,
                 proxyDir,
                 10,
+                100,
                 10000,
                 10000,
                 maxAggregation,
