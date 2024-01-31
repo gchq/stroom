@@ -1474,7 +1474,10 @@ class ExplorerServiceImpl
                             final List<FindResult> results) {
         if (nodes != null) {
             for (final ExplorerNode node : nodes) {
-                if (node.hasNodeFlag(NodeFlag.FILTER_MATCH)) {
+                if (node.hasNodeFlag(NodeFlag.FILTER_MATCH) &&
+                        node.getDocRef() != null &&
+                        !Objects.equals(ExplorerConstants.SYSTEM, node.getType()) &&
+                        !Objects.equals(ExplorerConstants.FAVOURITES, node.getType())) {
                     results.add(new FindResult(
                             node.getDocRef(),
                             parent,
@@ -1482,7 +1485,9 @@ class ExplorerServiceImpl
                             node.hasNodeFlag(NodeFlag.FAVOURITE)));
                 }
                 addResults(
-                        parent.isEmpty() ? node.getName() : parent + " / " + node.getName(),
+                        parent.isEmpty()
+                                ? node.getName()
+                                : parent + " / " + node.getName(),
                         node.getChildren(),
                         results);
             }
