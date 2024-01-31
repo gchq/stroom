@@ -226,4 +226,13 @@ public final class CompareUtil {
                                                 extractor3,
                                                 Comparator.nullsFirst(comparator))))));
     }
+
+    /**
+     * Provides a way to name a {@link Comparator} to aid with debugging/logging
+     * @param name The name for the comparator.
+     * @param comparator The comparator that is delegated to.
+     */
+    public static <T> Comparator<T> name(final String name, final Comparator<T> comparator) {
+        return new NamedComparator<>(name, comparator);
+    }
 }

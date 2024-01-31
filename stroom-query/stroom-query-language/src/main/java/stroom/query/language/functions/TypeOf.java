@@ -92,6 +92,10 @@ class TypeOf extends AbstractFunction {
         return Type.STRING;
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static final class Gen extends AbstractSingleChildGenerator {
 
 

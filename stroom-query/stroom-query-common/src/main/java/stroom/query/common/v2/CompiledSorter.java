@@ -50,7 +50,7 @@ public class CompiledSorter<E extends Item> implements Comparator<E>, Function<S
                     final Field field = compiledField.getField();
                     if (field.getSort() != null && (field.getGroup() == null || field.getGroup() >= depth)) {
                         // Get an appropriate comparator.
-                        final Comparator<Val> comparator = ComparatorFactory.create(field);
+                        final Comparator<Val> comparator = ComparatorFactory.create(compiledField);
 
                         // Remember sorting info.
                         final Sort sort = field.getSort();

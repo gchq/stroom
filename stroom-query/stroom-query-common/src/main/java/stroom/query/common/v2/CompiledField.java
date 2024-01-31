@@ -18,6 +18,7 @@ package stroom.query.common.v2;
 
 import stroom.query.api.v2.Field;
 import stroom.query.language.functions.Generator;
+import stroom.query.language.functions.Type;
 
 public class CompiledField {
 
@@ -27,19 +28,22 @@ public class CompiledField {
     private final boolean hasAggregate;
     private final boolean requiresChildData;
     private final CompiledFilter compiledFilter;
+    private final Type commonReturnType;
 
     public CompiledField(final Field field,
                          final int groupDepth,
                          final Generator generator,
                          final boolean hasAggregate,
                          final boolean requiresChildData,
-                         final CompiledFilter compiledFilter) {
+                         final CompiledFilter compiledFilter,
+                         final Type commonReturnType) {
         this.field = field;
         this.groupDepth = groupDepth;
         this.generator = generator;
         this.hasAggregate = hasAggregate;
         this.requiresChildData = requiresChildData;
         this.compiledFilter = compiledFilter;
+        this.commonReturnType = commonReturnType;
     }
 
     public Field getField() {
@@ -78,6 +82,10 @@ public class CompiledField {
         return compiledFilter;
     }
 
+    public Type getCommonReturnType() {
+        return commonReturnType;
+    }
+
     @Override
     public String toString() {
         return "CompiledField{" +
@@ -85,6 +93,7 @@ public class CompiledField {
                 ", groupDepth=" + groupDepth +
                 ", generator=" + generator +
                 ", compiledFilter=" + compiledFilter +
+                ", commonReturnType=" + commonReturnType +
                 '}';
     }
 }
