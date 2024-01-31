@@ -13,6 +13,15 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.2.22] - 2024-01-31
+
+* Issue **#4054** : Fix comparison of double values, e.g. `toDouble(20000) > toDouble(125000000)`. Improve comparison/sorting logic to cope with the new Duration type and to better handle mixed type comparison.
+
+* Issue **#4056** : Fix display value of Error type values in query/dashboard. Now shows error message prefixed with `ERR: `.
+
+* Issue **#4055** : Fix parsing/formatting of durations in query/dashboard expressions.
+
+
 ## [v7.2.21] - 2024-01-23
 
 * Issue **#4010** : Change ERROR logging to DEBUG when search requests cannot be created, e.g. when a rule has a blank or invalid query string.
@@ -6301,7 +6310,8 @@ Improve error handling during reference data initialisation.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.2.21...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.2.22...HEAD
+[v7.2.22]: https://github.com/gchq/stroom/compare/v7.2.21...v7.2.22
 [v7.2.21]: https://github.com/gchq/stroom/compare/v7.2.20...v7.2.21
 [v7.2.20]: https://github.com/gchq/stroom/compare/v7.2.19...v7.2.20
 [v7.2.19]: https://github.com/gchq/stroom/compare/v7.2.18...v7.2.19
