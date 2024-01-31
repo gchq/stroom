@@ -21,23 +21,16 @@ import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
-import stroom.widget.util.client.AbstractSelectionEventManager;
-import stroom.widget.util.client.DoubleSelectTester;
-import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectionModelImpl;
-import stroom.widget.util.client.SelectionType;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
-import com.google.gwt.user.cellview.client.AbstractHasData;
 import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Focus;
-import com.google.gwt.view.client.CellPreviewEvent;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -149,8 +142,7 @@ public class FindPresenter
             }
         };
 
-        final Column<FindResult, FindResult> column =
-                new Column<FindResult, FindResult>(new FindResultCell()) {
+        final Column<FindResult, FindResult> column = new Column<FindResult, FindResult>(new FindResultCell()) {
             @Override
             public FindResult getValue(final FindResult object) {
                 return object;

@@ -175,9 +175,6 @@ class ExplorerServiceImpl
                                             final OpenItems forcedOpenItems,
                                             final LocalMetrics metrics,
                                             final boolean includeNodeInfo) {
-        List<ExplorerNode> rootNodes;
-        List<ExplorerNodeKey> openedItems = new ArrayList<>();
-
         // Generate a hashset of all favourites for the user, so we can mark matching nodes with a star
         final Set<String> userFavouriteUuids = explorerFavService.get().getUserFavourites()
                 .stream()
@@ -222,7 +219,8 @@ class ExplorerServiceImpl
             temporaryOpenItems = null;
         }
 
-        rootNodes = addRoots(
+        List<ExplorerNodeKey> openedItems = new ArrayList<>();
+        List<ExplorerNode> rootNodes = addRoots(
                 filteredModel,
                 allOpenItems,
                 forcedOpenItems,
