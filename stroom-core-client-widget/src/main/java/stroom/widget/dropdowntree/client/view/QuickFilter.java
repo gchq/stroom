@@ -22,6 +22,7 @@ import stroom.widget.util.client.HtmlBuilder;
 
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
@@ -164,6 +165,10 @@ public class QuickFilter extends FlowPanel
     @Override
     public HandlerRegistration addValueChangeHandler(final ValueChangeHandler<String> handler) {
         return handlerManager.addHandler(ValueChangeEvent.getType(), handler);
+    }
+
+    public HandlerRegistration addKeyDownHandler(final KeyDownHandler handler) {
+        return textBox.addDomHandler(handler, KeyDownEvent.getType());
     }
 
     public void focus() {

@@ -53,6 +53,7 @@ import stroom.explorer.client.event.RefreshExplorerTreeEvent;
 import stroom.explorer.client.event.ShowEditNodeTagsDialogEvent;
 import stroom.explorer.client.event.ShowExplorerMenuEvent;
 import stroom.explorer.client.event.ShowFindEvent;
+import stroom.explorer.client.event.ShowFindInContentEvent;
 import stroom.explorer.client.event.ShowNewMenuEvent;
 import stroom.explorer.client.event.ShowRemoveNodeTagsDialogEvent;
 import stroom.explorer.client.presenter.DocumentTypeCache;
@@ -164,8 +165,8 @@ public class DocumentPluginEventManager extends Plugin {
             }
         });
         KeyBinding.addCommand(Action.ITEM_SAVE_ALL, hasSaveRegistry::save);
-
         KeyBinding.addCommand(Action.FIND, () -> ShowFindEvent.fire(this));
+        KeyBinding.addCommand(Action.FIND_IN_CONTENT, () -> ShowFindInContentEvent.fire(this));
         KeyBinding.addCommand(Action.LOCATE, () -> {
             final DocRef selectedDoc = getSelectedDoc(selectedTab);
             if (selectedDoc != null) {

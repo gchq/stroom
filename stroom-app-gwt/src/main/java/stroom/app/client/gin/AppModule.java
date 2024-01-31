@@ -48,6 +48,9 @@ import stroom.explorer.client.presenter.ExplorerNodeRemoveTagsPresenter.Explorer
 import stroom.explorer.client.presenter.ExplorerTreePresenter;
 import stroom.explorer.client.presenter.ExplorerTreePresenter.ExplorerTreeProxy;
 import stroom.explorer.client.presenter.ExplorerTreePresenter.ExplorerTreeView;
+import stroom.explorer.client.presenter.FindInContentPresenter;
+import stroom.explorer.client.presenter.FindInContentPresenter.FindInContentProxy;
+import stroom.explorer.client.presenter.FindInContentPresenter.FindInContentView;
 import stroom.explorer.client.presenter.FindPresenter;
 import stroom.explorer.client.presenter.FindPresenter.FindProxy;
 import stroom.explorer.client.presenter.FindPresenter.FindView;
@@ -62,6 +65,7 @@ import stroom.explorer.client.view.EntityTreeViewImpl;
 import stroom.explorer.client.view.ExplorerNodeEditTagsViewImpl;
 import stroom.explorer.client.view.ExplorerNodeRemoveTagsViewImpl;
 import stroom.explorer.client.view.ExplorerTreeViewImpl;
+import stroom.explorer.client.view.FindInContentViewImpl;
 import stroom.explorer.client.view.FindViewImpl;
 import stroom.explorer.client.view.NavigationViewImpl;
 import stroom.hyperlink.client.HyperlinkEventHandlerImpl;
@@ -157,7 +161,16 @@ public class AppModule extends AbstractPresenterModule {
                 ExplorerNodeRemoveTagsViewImpl.class,
                 ExplorerNodeRemoveTagsProxy.class);
 
-        bindPresenter(FindPresenter.class, FindView.class, FindViewImpl.class, FindProxy.class);
+        bindPresenter(
+                FindInContentPresenter.class,
+                FindInContentView.class,
+                FindInContentViewImpl.class,
+                FindInContentProxy.class);
+        bindPresenter(
+                FindPresenter.class,
+                FindView.class,
+                FindViewImpl.class,
+                FindProxy.class);
 
         // Menu
         bind(Menu.class).asEagerSingleton();

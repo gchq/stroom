@@ -25,7 +25,7 @@ import stroom.explorer.shared.ExplorerNodeKey;
 import stroom.explorer.shared.ExplorerResource;
 import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.explorer.shared.FetchExplorerNodeResult;
-import stroom.explorer.shared.FindExplorerNodeCriteria;
+import stroom.explorer.shared.FetchExplorerNodesRequest;
 import stroom.explorer.shared.NodeFlag;
 import stroom.explorer.shared.NodeFlag.NodeFlagGroups;
 import stroom.util.shared.GwtNullSafe;
@@ -62,7 +62,7 @@ public class ExplorerTreeModel {
     private Set<ExplorerNodeKey> ensureVisible;
     private boolean showAlerts = false;
 
-    private FindExplorerNodeCriteria currentCriteria;
+    private FetchExplorerNodesRequest currentCriteria;
     private boolean fetching;
 
     private boolean includeNullSelection;
@@ -164,7 +164,7 @@ public class ExplorerTreeModel {
         final ExplorerTreeFilter explorerTreeFilter = explorerTreeFilterBuilder.build();
         if (explorerTreeFilter != null) {
             // Fetch a list of data items that belong to this parent.
-            currentCriteria = new FindExplorerNodeCriteria(
+            currentCriteria = new FetchExplorerNodesRequest(
                     openItems.getOpenItems(),
                     openItems.getTemporaryOpenItems(),
                     explorerTreeFilter,
@@ -176,7 +176,7 @@ public class ExplorerTreeModel {
                 fetching = true;
                 loading.setVisible(true);
                 Scheduler.get().scheduleDeferred(() -> {
-                    final FindExplorerNodeCriteria criteria = currentCriteria;
+                    final FetchExplorerNodesRequest criteria = currentCriteria;
 //                    GWT.log("fetchData - filter: " + explorerTreeFilter.getNameFilter()
 //                            + " openItems: " + openItems.getOpenItems().size()
 //                            + " minDepth: " + minDepth
@@ -193,7 +193,7 @@ public class ExplorerTreeModel {
         }
     }
 
-    private void handleFetchResult(final FindExplorerNodeCriteria criteria,
+    private void handleFetchResult(final FetchExplorerNodesRequest criteria,
                                    final FetchExplorerNodeResult result) {
 //        GWT.log("handleFetchResult - filter: " + result.getQualifiedFilterInput()
 //                + " openItems: " + GwtNullSafe.size(result.getOpenedItems())
@@ -303,7 +303,7 @@ public class ExplorerTreeModel {
                 // If there is any quick filter then NULL_SELECTION is a non-match
                 final boolean isFilterMatch = GwtNullSafe.isBlankString(GwtNullSafe.get(
                         currentCriteria,
-                        FindExplorerNodeCriteria::getFilter,
+                        FetchExplorerNodesRequest::getFilter,
                         ExplorerTreeFilter::getNameFilter));
 
                 rows.add(0, NULL_SELECTION.copy()

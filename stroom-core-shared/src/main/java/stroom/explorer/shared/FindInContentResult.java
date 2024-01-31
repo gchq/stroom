@@ -27,7 +27,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
-public class ExplorerDocContentMatch {
+public class FindInContentResult {
 
     @JsonProperty
     private final DocContentMatch docContentMatch;
@@ -39,10 +39,10 @@ public class ExplorerDocContentMatch {
     private final boolean isFavourite;
 
     @JsonCreator
-    public ExplorerDocContentMatch(@JsonProperty("docContentMatch") final DocContentMatch docContentMatch,
-                                   @JsonProperty("path") final String path,
-                                   @JsonProperty("icon") final SvgImage icon,
-                                   @JsonProperty("isFavourite") final boolean isFavourite) {
+    public FindInContentResult(@JsonProperty("docContentMatch") final DocContentMatch docContentMatch,
+                               @JsonProperty("path") final String path,
+                               @JsonProperty("icon") final SvgImage icon,
+                               @JsonProperty("isFavourite") final boolean isFavourite) {
         this.docContentMatch = docContentMatch;
         this.path = path;
         this.icon = icon;
@@ -73,10 +73,11 @@ public class ExplorerDocContentMatch {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        final ExplorerDocContentMatch that = (ExplorerDocContentMatch) o;
-        return isFavourite == that.isFavourite && Objects.equals(docContentMatch,
-                that.docContentMatch) && Objects.equals(path,
-                that.path) && Objects.equals(icon, that.icon);
+        final FindInContentResult that = (FindInContentResult) o;
+        return isFavourite == that.isFavourite &&
+                Objects.equals(docContentMatch, that.docContentMatch) &&
+                Objects.equals(path, that.path) &&
+                Objects.equals(icon, that.icon);
     }
 
     @Override
@@ -106,11 +107,11 @@ public class ExplorerDocContentMatch {
         private Builder() {
         }
 
-        private Builder(final ExplorerDocContentMatch explorerDocContentMatch) {
-            this.docContentMatch = explorerDocContentMatch.docContentMatch;
-            this.path = explorerDocContentMatch.path;
-            this.icon = explorerDocContentMatch.icon;
-            this.isFavourite = explorerDocContentMatch.isFavourite;
+        private Builder(final FindInContentResult findInContentResult) {
+            this.docContentMatch = findInContentResult.docContentMatch;
+            this.path = findInContentResult.path;
+            this.icon = findInContentResult.icon;
+            this.isFavourite = findInContentResult.isFavourite;
         }
 
         public Builder docContentMatch(final DocContentMatch docContentMatch) {
@@ -133,8 +134,8 @@ public class ExplorerDocContentMatch {
             return this;
         }
 
-        public ExplorerDocContentMatch build() {
-            return new ExplorerDocContentMatch(
+        public FindInContentResult build() {
+            return new FindInContentResult(
                     docContentMatch,
                     path,
                     icon,

@@ -31,7 +31,7 @@ import stroom.widget.menu.client.presenter.MenuItems;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.tab.client.event.MaximiseEvent;
-import stroom.widget.util.client.DoubleSelectTester;
+import stroom.widget.util.client.DoubleClickTester;
 import stroom.widget.util.client.KeyBinding;
 
 import com.google.gwt.dom.client.Element;
@@ -145,7 +145,7 @@ public class MainPresenter
                     }
                 };
                 click = true;
-                clickTimer.schedule(DoubleSelectTester.DOUBLE_SELECT_DELAY);
+                clickTimer.schedule(DoubleClickTester.DOUBLE_CLICK_PERIOD);
             }
         }));
         addRegisteredHandler(MaximiseEvent.getType(), event -> view.maximise(event.getView()));

@@ -15,6 +15,8 @@ public class KeyBinding {
     private static final List<Binding> BINDINGS = new ArrayList<>();
     private static final Map<Action, Command> COMMANDS = new HashMap<>();
 
+    private static final DoubleClickTester DOUBLE_PRESS_TESTER = new DoubleClickTester();
+
     static {
         add(Action.MOVE_UP, KeyCodes.KEY_W, KeyCodes.KEY_K, KeyCodes.KEY_UP);
         add(Action.MOVE_DOWN, KeyCodes.KEY_S, KeyCodes.KEY_J, KeyCodes.KEY_DOWN);
@@ -36,7 +38,8 @@ public class KeyBinding {
         add(Action.ITEM_CLOSE, new Builder().keyCode(KeyCodes.KEY_W).alt(true).build());
         add(Action.ITEM_CLOSE_ALL, new Builder().keyCode(KeyCodes.KEY_W).shift(true).alt(true).build());
 
-        add(Action.FIND, new Builder().keyCode(KeyCodes.KEY_F).shift(true).ctrl(true).build());
+        add(Action.FIND, new Builder().keyCode(KeyCodes.KEY_F).alt(true).shift(true).build());
+        add(Action.FIND_IN_CONTENT, new Builder().keyCode(KeyCodes.KEY_F).ctrl(true).shift(true).build());
         add(Action.LOCATE, new Builder().keyCode(KeyCodes.KEY_L).alt(true).build());
     }
 
@@ -62,6 +65,9 @@ public class KeyBinding {
                 .meta(e.getMetaKey())
                 .build();
 
+        // Test for double press.
+        testFind(e, shortcut);
+
 //        GWT.log("SHORTCUT = " + shortcut);
 
         final Binding binding = getBinding(shortcut);
@@ -82,6 +88,26 @@ public class KeyBinding {
             }
         }
         return null;
+    }
+
+    private static void testFind(final NativeEvent e,
+                                 final Shortcut shortcut) {
+        if (shortcut.keyCode == KeyCodes.KEY_SHIFT &&
+                shortcut.shift &&
+                !shortcut.ctrl &&
+                !shortcut.alt &&
+                !shortcut.meta) {
+            e.preventDefault();
+            e.stopPropagation();
+            if (DOUBLE_PRESS_TESTER.isDoubleClick(shortcut)) {
+                final Command command = COMMANDS.get(Action.FIND);
+                if (command != null) {
+                    command.execute();
+                }
+            }
+        } else {
+            DOUBLE_PRESS_TESTER.clear();
+        }
     }
 
     private static Binding getBinding(final Shortcut shortcut) {
@@ -195,6 +221,7 @@ public class KeyBinding {
         ITEM_CLOSE,
         ITEM_CLOSE_ALL,
         FIND,
+        FIND_IN_CONTENT,
         LOCATE
     }
 

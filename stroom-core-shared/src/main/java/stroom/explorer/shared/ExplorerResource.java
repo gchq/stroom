@@ -166,15 +166,23 @@ public interface ExplorerResource extends RestResource, DirectRestService {
             summary = "Fetch explorer nodes",
             operationId = "fetchExplorerNodes")
     FetchExplorerNodeResult fetchExplorerNodes(
-            @Parameter(description = "request", required = true) FindExplorerNodeCriteria request);
+            @Parameter(description = "request", required = true) FetchExplorerNodesRequest request);
 
     @POST
-    @Path("/findExplorerNodes")
+    @Path("/find")
     @Operation(
-            summary = "Find explorer nodes using a query",
-            operationId = "findExplorerNodes")
-    ResultPage<ExplorerDocContentMatch> findContent(
-            @Parameter(description = "request", required = true) FindExplorerNodeQuery request);
+            summary = "Find documents with names and types matching the supplied request",
+            operationId = "find")
+    ResultPage<FindResult> find(
+            @Parameter(description = "request", required = true) FindRequest request);
+
+    @POST
+    @Path("/findInContent")
+    @Operation(
+            summary = "Find documents with content matching the supplied request",
+            operationId = "findInContent")
+    ResultPage<FindInContentResult> findInContent(
+            @Parameter(description = "request", required = true) FindInContentRequest request);
 
     @POST
     @Path("/fetchHighlights")

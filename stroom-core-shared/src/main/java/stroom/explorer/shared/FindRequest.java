@@ -1,6 +1,5 @@
 package stroom.explorer.shared;
 
-import stroom.docref.StringMatch;
 import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.PageRequest;
@@ -14,20 +13,20 @@ import java.util.List;
 import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
-public class FindExplorerNodeQuery extends BaseCriteria {
+public class FindRequest extends BaseCriteria {
 
     @JsonProperty
-    private final StringMatch filter;
+    private final ExplorerTreeFilter filter;
 
     @JsonCreator
-    public FindExplorerNodeQuery(@JsonProperty("pageRequest") final PageRequest pageRequest,
-                                 @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,
-                                 @JsonProperty("filter") final StringMatch filter) {
+    public FindRequest(@JsonProperty("pageRequest") final PageRequest pageRequest,
+                       @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,
+                       @JsonProperty("filter") final ExplorerTreeFilter filter) {
         super(pageRequest, sortList);
         this.filter = filter;
     }
 
-    public StringMatch getFilter() {
+    public ExplorerTreeFilter getFilter() {
         return filter;
     }
 
@@ -36,18 +35,25 @@ public class FindExplorerNodeQuery extends BaseCriteria {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof FindExplorerNodeQuery)) {
+        if (o == null || getClass() != o.getClass()) {
             return false;
         }
         if (!super.equals(o)) {
             return false;
         }
-        final FindExplorerNodeQuery findExplorerNodeQuery = (FindExplorerNodeQuery) o;
-        return Objects.equals(filter, findExplorerNodeQuery.filter);
+        final FindRequest that = (FindRequest) o;
+        return Objects.equals(filter, that.filter);
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(super.hashCode(), filter);
+    }
+
+    @Override
+    public String toString() {
+        return "FindCriteria{" +
+                "filter=" + filter +
+                '}';
     }
 }

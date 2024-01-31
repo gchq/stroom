@@ -19,9 +19,9 @@ package stroom.explorer.client.presenter;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.gwtplatform.mvp.client.UiHandlers;
 
-public interface FindUiHandlers extends UiHandlers {
+public interface FindInContentUiHandlers extends UiHandlers {
 
-    void changeQuickFilter(String name);
+    void changePattern(String pattern, boolean matchCase, boolean regex);
 
-    void onFilterKeyDown(KeyDownEvent event);
+    void onPatternKeyDown(KeyDownEvent event);
 }

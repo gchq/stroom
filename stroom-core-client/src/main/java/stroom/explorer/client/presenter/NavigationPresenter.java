@@ -31,7 +31,7 @@ import stroom.explorer.client.event.ExplorerTreeSelectEvent;
 import stroom.explorer.client.event.HighlightExplorerNodeEvent;
 import stroom.explorer.client.event.LocateDocEvent;
 import stroom.explorer.client.event.RefreshExplorerTreeEvent;
-import stroom.explorer.client.event.ShowFindEvent;
+import stroom.explorer.client.event.ShowFindInContentEvent;
 import stroom.explorer.client.event.ShowNewMenuEvent;
 import stroom.explorer.client.presenter.NavigationPresenter.NavigationProxy;
 import stroom.explorer.client.presenter.NavigationPresenter.NavigationView;
@@ -141,7 +141,7 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
         find = new InlineSvgButton();
         find.setSvg(SvgImage.FIND);
         find.getElement().addClassName("navigation-header-button find");
-        find.setTitle("Find Content");
+        find.setTitle("Find In Content");
         find.setEnabled(true);
 
         locate = new InlineSvgButton();
@@ -193,7 +193,7 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
         registerHandler(locate.addClickHandler((e) ->
                 LocateDocEvent.fire(this, selectedDoc)));
         registerHandler(find.addClickHandler((e) ->
-                ShowFindEvent.fire(this)));
+                ShowFindInContentEvent.fire(this)));
         registerHandler(add.addClickHandler((e) ->
                 newItem(add.getElement())));
         registerHandler(delete.addClickHandler((e) ->

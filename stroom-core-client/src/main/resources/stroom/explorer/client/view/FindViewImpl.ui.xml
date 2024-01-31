@@ -1,23 +1,11 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
-             xmlns:p="urn:import:stroom.widget.button.client">
+             xmlns:v="urn:import:stroom.widget.dropdowntree.client.view">
     <g:FlowPanel styleName="max form">
         <g:FlowPanel styleName="dock-container-horizontal dock-min find-topBar">
-            <g:TextBox ui:field="pattern" addStyleNames="dock-max allow-focus"/>
-            <g:FlowPanel ui:field="buttonContainer" styleName="dock-min find-buttons">
-                <p:InlineSvgToggleButton ui:field="toggleMatchCase"/>
-                <p:InlineSvgToggleButton ui:field="toggleRegex"/>
-            </g:FlowPanel>
+            <v:QuickFilter ui:field="nameFilter" addStyleNames="dock-max"/>
         </g:FlowPanel>
-        <g:MySplitLayoutPanel styleName="dock-max">
-            <g:north size="200">
-                <g:SimplePanel ui:field="resultContainer"
-                               styleName="max stroom-control__no-padding overflow-hidden"/>
-            </g:north>
-            <g:center>
-                <g:SimplePanel ui:field="textContainer" styleName="max stroom-control__no-padding overflow-hidden"/>
-            </g:center>
-        </g:MySplitLayoutPanel>
+        <g:SimplePanel ui:field="resultContainer" styleName="max stroom-control__no-padding overflow-hidden"/>
     </g:FlowPanel>
 </ui:UiBinder> 

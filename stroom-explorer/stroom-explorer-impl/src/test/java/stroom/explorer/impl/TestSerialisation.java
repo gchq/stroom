@@ -3,7 +3,7 @@ package stroom.explorer.impl;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.explorer.shared.FetchExplorerNodeResult;
-import stroom.explorer.shared.FindExplorerNodeCriteria;
+import stroom.explorer.shared.FetchExplorerNodesRequest;
 import stroom.explorer.shared.NodeFlag;
 import stroom.util.json.JsonUtil;
 
@@ -37,7 +37,7 @@ public class TestSerialisation {
                 "blah",
                 true);
 
-        final FindExplorerNodeCriteria criteria1 = new FindExplorerNodeCriteria(
+        final FetchExplorerNodesRequest criteria1 = new FetchExplorerNodesRequest(
                 Set.of(explorerNode.getUniqueKey()),
                 Set.of(explorerNode.getUniqueKey()),
                 explorerTreeFilter,
@@ -48,8 +48,8 @@ public class TestSerialisation {
         final ObjectMapper objectMapper = JsonUtil.getMapper();
         final String result1 = objectMapper.writeValueAsString(criteria1);
         System.out.println(result1);
-        final FindExplorerNodeCriteria criteria2 = objectMapper.readValue(result1, FindExplorerNodeCriteria.class);
-        final String result2 = objectMapper.writerFor(FindExplorerNodeCriteria.class).writeValueAsString(criteria2);
+        final FetchExplorerNodesRequest criteria2 = objectMapper.readValue(result1, FetchExplorerNodesRequest.class);
+        final String result2 = objectMapper.writerFor(FetchExplorerNodesRequest.class).writeValueAsString(criteria2);
         System.out.println(result2);
 
 //        assertThat(result1).isEqualTo(result2);

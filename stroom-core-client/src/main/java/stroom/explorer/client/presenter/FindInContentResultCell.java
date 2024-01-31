@@ -16,7 +16,7 @@
 
 package stroom.explorer.client.presenter;
 
-import stroom.explorer.shared.ExplorerDocContentMatch;
+import stroom.explorer.shared.FindInContentResult;
 import stroom.widget.util.client.SafeHtmlUtil;
 import stroom.widget.util.client.SvgImageUtil;
 
@@ -26,13 +26,13 @@ import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 
-public class ExplorerDocContentMatchCell extends AbstractCell<ExplorerDocContentMatch> {
+public class FindInContentResultCell extends AbstractCell<FindInContentResult> {
 
     private static Template template;
 
-    public ExplorerDocContentMatchCell() {
+    public FindInContentResultCell() {
         if (template == null) {
-            synchronized (ExplorerDocContentMatch.class) {
+            synchronized (FindInContentResult.class) {
                 if (template == null) {
                     template = GWT.create(Template.class);
                 }
@@ -41,18 +41,20 @@ public class ExplorerDocContentMatchCell extends AbstractCell<ExplorerDocContent
     }
 
     @Override
-    public void render(final Context context, final ExplorerDocContentMatch value, final SafeHtmlBuilder sb) {
+    public void render(final Context context, final FindInContentResult value, final SafeHtmlBuilder sb) {
         if (value != null) {
             final SafeHtmlBuilder row = new SafeHtmlBuilder();
             final SafeHtmlBuilder main = new SafeHtmlBuilder();
             final SafeHtmlBuilder sub = new SafeHtmlBuilder();
 
             // Add icon
-            main.append(SvgImageUtil.toSafeHtml(
-                    value.getDocContentMatch().getDocRef().getType(),
-                    value.getIcon(),
-                    getCellClassName() + "-icon",
-                    "svgIcon"));
+            if (value.getIcon() != null) {
+                main.append(SvgImageUtil.toSafeHtml(
+                        value.getDocContentMatch().getDocRef().getType(),
+                        value.getIcon(),
+                        getCellClassName() + "-icon",
+                        "svgIcon"));
+            }
 
             // Add sample
             main.append(template.div(getCellClassName() + "-sample",
