@@ -2,6 +2,7 @@ package stroom.query.language.functions;
 
 import stroom.util.NullSafe;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.CompareUtil;
 
 import java.util.Comparator;
 import java.util.EnumMap;
@@ -19,41 +20,49 @@ public class ValComparators {
      * This comparator is likely not transitive so breaks the compare contract, so should not be used
      * for sorting purposes.
      */
-    public static Comparator<Val> GENERIC_CASE_INSENSITIVE_COMPARATOR = getComparator(false);
+    public static Comparator<Val> GENERIC_CASE_INSENSITIVE_COMPARATOR = CompareUtil.name(
+            "GenericCaseInsensitiveValComparator", getComparator(false));
     /**
      * This comparator is likely not transitive so breaks the compare contract, so should not be used
      * for sorting purposes.
      */
-    public static Comparator<Val> GENERIC_CASE_SENSITIVE_COMPARATOR = getComparator(true);
+    public static Comparator<Val> GENERIC_CASE_SENSITIVE_COMPARATOR =  CompareUtil.name(
+            "GenericCaseSensitiveValComparator", getComparator(true));
 
     // Comparators for comparing Val instances in the different ways you can get a value out of them.
     // They assume the Vals being compared are non-null as null protection is handled by
     // the generic comparator.
-    public static final Comparator<Val> AS_BOOLEAN_COMPARATOR = Comparator.comparing(
-            Val::toBoolean, Comparator.nullsLast(Boolean::compareTo));
-    public static final Comparator<Val> AS_INTEGER_COMPARATOR = Comparator.comparing(
-            Val::toInteger, Comparator.nullsLast(Integer::compareTo));
-    public static final Comparator<Val> AS_LONG_COMPARATOR = Comparator.comparing(
-            Val::toLong, Comparator.nullsLast(Long::compareTo));
-    public static final Comparator<Val> AS_FLOAT_COMPARATOR = Comparator.comparing(
-            Val::toFloat, Comparator.nullsLast(Float::compareTo));
-    public static final Comparator<Val> AS_DOUBLE_COMPARATOR = Comparator.comparing(
-            Val::toDouble, Comparator.nullsLast(Double::compareTo));
-    public static final Comparator<Val> AS_CASE_INSENSITIVE_STRING_COMPARATOR = Comparator.comparing(
-            Val::toString, Comparator.nullsLast(String::compareToIgnoreCase));
-    public static final Comparator<Val> AS_CASE_SENSITIVE_STRING_COMPARATOR = Comparator.comparing(
-            Val::toString, Comparator.nullsLast(String::compareTo));
+    public static final Comparator<Val> AS_BOOLEAN_COMPARATOR = CompareUtil.name("ValAsBoolean",
+            Comparator.comparing(Val::toBoolean, Comparator.nullsLast(Boolean::compareTo)));
+    public static final Comparator<Val> AS_INTEGER_COMPARATOR = CompareUtil.name("ValAsInteger",
+            Comparator.comparing(Val::toInteger, Comparator.nullsLast(Integer::compareTo)));
+    public static final Comparator<Val> AS_LONG_COMPARATOR = CompareUtil.name("ValAsLong",
+            Comparator.comparing(Val::toLong, Comparator.nullsLast(Long::compareTo)));
+    public static final Comparator<Val> AS_FLOAT_COMPARATOR = CompareUtil.name("ValAsFloat",
+            Comparator.comparing(Val::toFloat, Comparator.nullsLast(Float::compareTo)));
+    public static final Comparator<Val> AS_DOUBLE_COMPARATOR = CompareUtil.name("ValAsDouble",
+            Comparator.comparing(Val::toDouble, Comparator.nullsLast(Double::compareTo)));
+    public static final Comparator<Val> AS_CASE_INSENSITIVE_STRING_COMPARATOR = CompareUtil.name(
+            "ValAsCaseInsensitiveString",
+            Comparator.comparing(Val::toString, Comparator.nullsLast(String::compareToIgnoreCase)));
+    public static final Comparator<Val> AS_CASE_SENSITIVE_STRING_COMPARATOR = CompareUtil.name(
+            "ValAsCaseSensitiveString",
+            Comparator.comparing(Val::toString, Comparator.nullsLast(String::compareTo)));
 
     // String is an odd one. If both values are numeric then we want to compare them as numbers
-    public static final Comparator<Val> AS_DOUBLE_THEN_CASE_INSENSITIVE_STRING_COMPARATOR =
-            AS_DOUBLE_COMPARATOR.thenComparing(AS_CASE_INSENSITIVE_STRING_COMPARATOR);
-    public static final Comparator<Val> AS_DOUBLE_THEN_CASE_SENSITIVE_STRING_COMPARATOR =
-            AS_DOUBLE_COMPARATOR.thenComparing(AS_CASE_SENSITIVE_STRING_COMPARATOR);
+    public static final Comparator<Val> AS_DOUBLE_THEN_CASE_INSENSITIVE_STRING_COMPARATOR = CompareUtil.name(
+            "ValAsDoubleThenCaseInsensitiveString",
+            AS_DOUBLE_COMPARATOR.thenComparing(AS_CASE_INSENSITIVE_STRING_COMPARATOR));
+    public static final Comparator<Val> AS_DOUBLE_THEN_CASE_SENSITIVE_STRING_COMPARATOR = CompareUtil.name(
+            "ValAsDoubleThenCaseSensitiveString",
+            AS_DOUBLE_COMPARATOR.thenComparing(AS_CASE_SENSITIVE_STRING_COMPARATOR));
 
-    public static final Comparator<Val> AS_LONG_THEN_CASE_INSENSITIVE_STRING_COMPARATOR =
-            AS_LONG_COMPARATOR.thenComparing(AS_CASE_INSENSITIVE_STRING_COMPARATOR);
-    public static final Comparator<Val> AS_LONG_THEN_CASE_SENSITIVE_STRING_COMPARATOR =
-            AS_LONG_COMPARATOR.thenComparing(AS_CASE_SENSITIVE_STRING_COMPARATOR);
+    public static final Comparator<Val> AS_LONG_THEN_CASE_INSENSITIVE_STRING_COMPARATOR = CompareUtil.name(
+            "ValAsLongThenCaseInsensitiveString",
+            AS_LONG_COMPARATOR.thenComparing(AS_CASE_INSENSITIVE_STRING_COMPARATOR));
+    public static final Comparator<Val> AS_LONG_THEN_CASE_SENSITIVE_STRING_COMPARATOR = CompareUtil.name(
+            "ValAsLongThenCaseSensitiveString",
+            AS_LONG_COMPARATOR.thenComparing(AS_CASE_SENSITIVE_STRING_COMPARATOR));
 
     private static final ValComparatorFactory AS_STRING_COMPARATOR_FACTORY = DualValComparatorFactory.create(
             AS_CASE_SENSITIVE_STRING_COMPARATOR, AS_CASE_INSENSITIVE_STRING_COMPARATOR);
@@ -202,7 +211,7 @@ public class ValComparators {
      * comparator.
      */
     static <V extends Val> Comparator<Val> asGenericComparator(final Class<V> type,
-                                                                      final Comparator<Val> comparator) {
+                                                               final Comparator<Val> comparator) {
 
         // If this comparator is called from ValComparators.GENERIC_COMPARATOR then it means
         // we do the isInstance check in there and in here, but it gives some protection
@@ -319,6 +328,7 @@ public class ValComparators {
 
     /**
      * This is to deal with the
+     *
      * @param val1
      * @param val2
      * @return
@@ -337,8 +347,8 @@ public class ValComparators {
     }
 
     static boolean haveType(final Object val1,
-                                   final Object val2,
-                                   final Class<?> type) {
+                            final Object val2,
+                            final Class<?> type) {
         return type.isInstance(val1) && type.isInstance(val2);
     }
 

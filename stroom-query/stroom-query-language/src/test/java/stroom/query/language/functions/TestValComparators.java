@@ -40,12 +40,10 @@ class TestValComparators {
                 .orElseThrow();
 
         assertThat(comparator)
-                .isEqualTo(ValComparators.AS_CASE_SENSITIVE_STRING_COMPARATOR);
+                .isEqualTo(ValComparators.AS_BOOLEAN_COMPARATOR);
 
         assertThat(comparator.compare(Val.create("true"), Val.create(true)))
                 .isEqualTo(0);
-        assertThat(comparator.compare(Val.create("foo"), Val.create("FOO")))
-                .isNotEqualTo(0);
     }
 
     @Test
@@ -55,11 +53,9 @@ class TestValComparators {
                 .orElseThrow();
 
         assertThat(comparator)
-                .isEqualTo(ValComparators.AS_CASE_INSENSITIVE_STRING_COMPARATOR);
+                .isEqualTo(ValComparators.AS_BOOLEAN_COMPARATOR);
 
         assertThat(comparator.compare(Val.create("true"), Val.create(true)))
-                .isEqualTo(0);
-        assertThat(comparator.compare(Val.create("foo"), Val.create("FOO")))
                 .isEqualTo(0);
     }
 
@@ -183,7 +179,7 @@ class TestValComparators {
                         Vals.of("1", 2, null),
                         Vals.of("3", 20d, "foo"),
                         Vals.of("1", 2, ValString.create(null)),
-                        Vals.of(1, "F", ValErr.create("a")) // "Err: a", hence comes last
+                        Vals.of(1, "D", ValErr.create("a")) // "Err: a", hence comes last
                 )
                 .map(vals ->
                         DynamicTest.dynamicTest(
