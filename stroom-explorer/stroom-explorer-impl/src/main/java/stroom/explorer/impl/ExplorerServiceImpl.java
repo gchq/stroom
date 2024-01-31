@@ -1479,8 +1479,7 @@ class ExplorerServiceImpl
                     results.add(new FindResult(
                             node.getDocRef(),
                             parent,
-                            node.getIcon(),
-                            node.hasNodeFlag(NodeFlag.FAVOURITE)));
+                            node.getIcon()));
                 }
                 addResults(
                         parent.isEmpty()

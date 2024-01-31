@@ -16,8 +16,8 @@
 
 package stroom.explorer.client.view;
 
-import stroom.explorer.client.presenter.FindPresenter.FindView;
 import stroom.explorer.client.presenter.FindUiHandlers;
+import stroom.explorer.client.presenter.FindView;
 import stroom.widget.dropdowntree.client.view.QuickFilter;
 
 import com.google.gwt.event.dom.client.KeyDownEvent;

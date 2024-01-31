@@ -35,18 +35,14 @@ public class FindResult {
     private final String path;
     @JsonProperty
     private final SvgImage icon;
-    @JsonProperty
-    private final boolean isFavourite;
 
     @JsonCreator
     public FindResult(@JsonProperty("docRef") final DocRef docRef,
                       @JsonProperty("path") final String path,
-                      @JsonProperty("icon") final SvgImage icon,
-                      @JsonProperty("isFavourite") final boolean isFavourite) {
+                      @JsonProperty("icon") final SvgImage icon) {
         this.docRef = docRef;
         this.path = path;
         this.icon = icon;
-        this.isFavourite = isFavourite;
     }
 
     public DocRef getDocRef() {
@@ -61,10 +57,6 @@ public class FindResult {
         return icon;
     }
 
-    public boolean getIsFavourite() {
-        return isFavourite;
-    }
-
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -74,15 +66,14 @@ public class FindResult {
             return false;
         }
         final FindResult that = (FindResult) o;
-        return isFavourite == that.isFavourite &&
-                Objects.equals(docRef, that.docRef) &&
+        return Objects.equals(docRef, that.docRef) &&
                 Objects.equals(path, that.path) &&
                 Objects.equals(icon, that.icon);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(docRef, path, icon, isFavourite);
+        return Objects.hash(docRef, path, icon);
     }
 
     public static Builder builder() {
@@ -102,7 +93,6 @@ public class FindResult {
         private DocRef docRef;
         private String path;
         private SvgImage icon;
-        private boolean isFavourite;
 
         private Builder() {
         }
@@ -111,7 +101,6 @@ public class FindResult {
             this.docRef = findResult.docRef;
             this.path = findResult.path;
             this.icon = findResult.icon;
-            this.isFavourite = findResult.isFavourite;
         }
 
         public Builder docRef(final DocRef docRef) {
@@ -129,17 +118,11 @@ public class FindResult {
             return this;
         }
 
-        public Builder isFavourite(final boolean isFavourite) {
-            this.isFavourite = isFavourite;
-            return this;
-        }
-
         public FindResult build() {
             return new FindResult(
                     docRef,
                     path,
-                    icon,
-                    isFavourite);
+                    icon);
         }
     }
 }

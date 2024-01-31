@@ -53,10 +53,12 @@ import stroom.explorer.client.presenter.FindInContentPresenter.FindInContentProx
 import stroom.explorer.client.presenter.FindInContentPresenter.FindInContentView;
 import stroom.explorer.client.presenter.FindPresenter;
 import stroom.explorer.client.presenter.FindPresenter.FindProxy;
-import stroom.explorer.client.presenter.FindPresenter.FindView;
+import stroom.explorer.client.presenter.FindView;
 import stroom.explorer.client.presenter.NavigationPresenter;
 import stroom.explorer.client.presenter.NavigationPresenter.NavigationProxy;
 import stroom.explorer.client.presenter.NavigationPresenter.NavigationView;
+import stroom.explorer.client.presenter.RecentItemsPresenter;
+import stroom.explorer.client.presenter.RecentItemsPresenter.RecentItemsProxy;
 import stroom.explorer.client.presenter.TypeFilterPresenter;
 import stroom.explorer.client.presenter.TypeFilterPresenter.TypeFilterView;
 import stroom.explorer.client.presenter.TypeFilterViewImpl;
@@ -168,9 +170,11 @@ public class AppModule extends AbstractPresenterModule {
                 FindInContentProxy.class);
         bindPresenter(
                 FindPresenter.class,
-                FindView.class,
-                FindViewImpl.class,
                 FindProxy.class);
+        bindPresenter(
+                RecentItemsPresenter.class,
+                RecentItemsProxy.class);
+        bindSharedView(FindView.class, FindViewImpl.class);
 
         // Menu
         bind(Menu.class).asEagerSingleton();
