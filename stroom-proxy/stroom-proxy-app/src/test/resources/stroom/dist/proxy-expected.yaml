@@ -31,6 +31,7 @@ proxyConfig:
     maxFileScan: 100000
     maxStreamSize: "1.0G"
     readCron: null
+    workQueueCapacity: 100
   proxyRequestConfig:
     clientId: null
     metaTypes:
