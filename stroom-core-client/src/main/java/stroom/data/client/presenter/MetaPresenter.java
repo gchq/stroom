@@ -16,9 +16,7 @@
 
 package stroom.data.client.presenter;
 
-import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.dashboard.shared.ValidateExpressionResult;
 import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.data.client.event.HasDataSelectionHandlers;
 import stroom.data.client.presenter.MetaPresenter.MetaView;
@@ -43,7 +41,6 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.client.presenter.DateTimeSettingsFactory;
 import stroom.query.shared.ExpressionResource;
-import stroom.query.shared.ValidateExpressionRequest;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.svg.client.SvgPresets;
@@ -66,7 +63,6 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 public class MetaPresenter extends MyPresenterWidget<MetaView>
@@ -82,6 +78,7 @@ public class MetaPresenter extends MyPresenterWidget<MetaView>
 
     private final RestFactory restFactory;
     private final DateTimeSettingsFactory dateTimeSettingsFactory;
+    private final ExpressionValidator expressionValidator;
     private final MetaListPresenter metaListPresenter;
     private final MetaRelationListPresenter metaRelationListPresenter;
     private final DataPresenter dataPresenter;
@@ -113,7 +110,8 @@ public class MetaPresenter extends MyPresenterWidget<MetaView>
                          final Provider<DataUploadPresenter> streamUploadPresenter,
                          final ClientSecurityContext securityContext,
                          final RestFactory restFactory,
-                         final DateTimeSettingsFactory dateTimeSettingsFactory) {
+                         final DateTimeSettingsFactory dateTimeSettingsFactory,
+                         final ExpressionValidator expressionValidator) {
         super(eventBus, view);
         this.metaListPresenter = metaListPresenter;
         this.metaRelationListPresenter = metaRelationListPresenter;
@@ -122,6 +120,7 @@ public class MetaPresenter extends MyPresenterWidget<MetaView>
         this.dataPresenter = dataPresenter;
         this.restFactory = restFactory;
         this.dateTimeSettingsFactory = dateTimeSettingsFactory;
+        this.expressionValidator = expressionValidator;
 
         setInSlot(STREAM_LIST, metaListPresenter);
         setInSlot(STREAM_RELATION_LIST, metaRelationListPresenter);
@@ -206,30 +205,33 @@ public class MetaPresenter extends MyPresenterWidget<MetaView>
                 if (e.isOk()) {
                     final ExpressionOperator expression = presenter.write();
 
-                    validateExpression(MetaFields.getFields(), expression, () -> {
-                        if (!expression.equals(getCriteria().getExpression())) {
-                            if (hasAdvancedCriteria(expression)) {
-                                ConfirmEvent.fire(MetaPresenter.this,
-                                        "You are setting advanced filters!  It is recommended you constrain " +
-                                                "your filter (e.g. by 'Created') to avoid an expensive query.  "
-                                                + "Are you sure you want to apply this advanced filter?",
-                                        confirm -> {
-                                            if (confirm) {
-                                                setExpression(expression);
-                                                e.hide();
-                                            } else {
-                                                // Don't hide
-                                            }
-                                        });
-                            } else {
-                                setExpression(expression);
-                                e.hide();
-                            }
-                        } else {
-                            // Nothing changed!
-                            e.hide();
-                        }
-                    });
+                    expressionValidator.validateExpression(
+                            MetaPresenter.this,
+                            MetaFields.getFields(),
+                            expression, expression2 -> {
+                                if (!expression2.equals(getCriteria().getExpression())) {
+                                    if (hasAdvancedCriteria(expression2)) {
+                                        ConfirmEvent.fire(MetaPresenter.this,
+                                                "You are setting advanced filters!  It is recommended you constrain " +
+                                                        "your filter (e.g. by 'Created') to avoid an expensive query.  "
+                                                        + "Are you sure you want to apply this advanced filter?",
+                                                confirm -> {
+                                                    if (confirm) {
+                                                        setExpression(expression2);
+                                                        e.hide();
+                                                    } else {
+                                                        // Don't hide
+                                                    }
+                                                });
+                                    } else {
+                                        setExpression(expression2);
+                                        e.hide();
+                                    }
+                                } else {
+                                    // Nothing changed!
+                                    e.hide();
+                                }
+                            });
                 } else {
                     e.hide();
                 }
@@ -326,29 +328,6 @@ public class MetaPresenter extends MyPresenterWidget<MetaView>
         }
     }
 
-    private void validateExpression(final List<QueryField> fields,
-                                    final ExpressionOperator expression,
-                                    final Runnable onSuccess) {
-
-        restFactory.builder()
-                .forType(ValidateExpressionResult.class)
-                .onSuccess(result -> {
-                    if (result.isOk()) {
-                        onSuccess.run();
-                    } else {
-                        AlertEvent.fireError(MetaPresenter.this, result.getString(), null);
-                    }
-                })
-                .onFailure(throwable -> {
-                    AlertEvent.fireError(MetaPresenter.this, throwable.getMessage(), null);
-                })
-                .call(EXPRESSION_RESOURCE)
-                .validate(new ValidateExpressionRequest(
-                        expression,
-                        fields,
-                        dateTimeSettingsFactory.getDateTimeSettings()));
-    }
-
     private void setExpression(final ExpressionOperator expression) {
         // Copy new filter settings back.
         getCriteria().setExpression(expression);
@@ -440,6 +419,7 @@ public class MetaPresenter extends MyPresenterWidget<MetaView>
     }
 
     public void refresh() {
+        GWT.log("Refresh");
         // Get a new list of streams.
         metaListPresenter.refresh();
         metaRelationListPresenter.refresh();
@@ -476,11 +456,14 @@ public class MetaPresenter extends MyPresenterWidget<MetaView>
 
             if (ExplorerConstants.SYSTEM.equals(folder.getType())) {
                 // No point in adding a term for the root folder as everything is a descendent of it
-                metaListPresenter.setExpression(MetaExpressionUtil.createStatusExpression(Status.UNLOCKED));
+                metaListPresenter.setExpression(
+                        ExpressionValidator.ALL_UNLOCKED_EXPRESSION,
+                        this::refresh);
             } else {
-                metaListPresenter.setExpression(MetaExpressionUtil.createFolderExpression(folder));
+                metaListPresenter.setExpression(
+                        MetaExpressionUtil.createFolderExpression(folder),
+                        this::refresh);
             }
-            refresh();
         }
     }
 
@@ -490,8 +473,9 @@ public class MetaPresenter extends MyPresenterWidget<MetaView>
             hasSetCriteria = true;
             this.feedRef = feedRef;
             showUploadButton(true);
-            metaListPresenter.setExpression(MetaExpressionUtil.createFeedExpression(feedRef));
-            refresh();
+            metaListPresenter.setExpression(
+                    MetaExpressionUtil.createFeedExpression(feedRef),
+                    this::refresh);
         }
     }
 
@@ -500,15 +484,17 @@ public class MetaPresenter extends MyPresenterWidget<MetaView>
         if (!hasSetCriteria) {
             hasSetCriteria = true;
             showUploadButton(false);
-            metaListPresenter.setExpression(MetaExpressionUtil.createPipelineExpression(pipelineRef));
-            refresh();
+            metaListPresenter.setExpression(
+                    MetaExpressionUtil.createPipelineExpression(pipelineRef),
+                    this::refresh);
         }
     }
 
     private void setNullCriteria() {
         showUploadButton(false);
-        metaListPresenter.setExpression(MetaExpressionUtil.createStatusExpression(Status.UNLOCKED));
-        refresh();
+        metaListPresenter.setExpression(
+                ExpressionValidator.ALL_UNLOCKED_EXPRESSION,
+                this::refresh);
     }
 
     private Meta getSelected() {
