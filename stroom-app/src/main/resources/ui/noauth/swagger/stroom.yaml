@@ -10574,8 +10574,6 @@ components:
           - USERS
           - VOLUMES
           - WARNING
-        isFavourite:
-          type: boolean
         path:
           type: string
     FindResultStoreCriteria:
