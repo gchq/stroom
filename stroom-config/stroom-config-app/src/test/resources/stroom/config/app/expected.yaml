@@ -514,6 +514,7 @@ appConfig:
     maxUncompressedFileSize: "1G"
     proxyDir: "proxy_repo"
     proxyThreads: 10
+    workQueueCapacity: 100
   publicUri:
     hostname: null
     pathPrefix: null
