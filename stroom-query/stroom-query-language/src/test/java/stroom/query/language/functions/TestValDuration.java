@@ -2,6 +2,7 @@ package stroom.query.language.functions;
 
 import stroom.test.common.TestUtil;
 
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
@@ -10,6 +11,18 @@ import java.time.Duration;
 import java.util.stream.Stream;
 
 class TestValDuration {
+
+    @Test
+    void testHasNumericValue() {
+        Assertions.assertThat(ValDuration.create(1000L).hasNumericValue())
+                .isTrue();
+    }
+
+    @Test
+    void testHasFractionalPart() {
+        Assertions.assertThat(ValDuration.create(1000L).hasFractionalPart())
+                .isFalse();
+    }
 
     @TestFactory
     Stream<DynamicTest> testInteger() {

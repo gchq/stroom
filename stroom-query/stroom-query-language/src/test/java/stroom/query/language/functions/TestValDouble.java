@@ -2,13 +2,21 @@ package stroom.query.language.functions;
 
 import stroom.test.common.TestUtil;
 
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DynamicTest;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
 
 import java.math.BigDecimal;
 import java.util.stream.Stream;
 
 class TestValDouble {
+
+    @Test
+    void testHasNumericValue() {
+        Assertions.assertThat(ValDouble.create(1.1D).hasNumericValue())
+                .isTrue();
+    }
 
     @TestFactory
     Stream<DynamicTest> testHasFractionalPart() {
