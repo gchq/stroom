@@ -202,9 +202,9 @@ public interface AppGinjectorUser extends
 
     AsyncProvider<FindPresenter> getFindPresenter();
 
-    AsyncProvider<FindInContentPresenter> getFindInContentPresenter();
-
     AsyncProvider<RecentItemsPresenter> getRecentItemsPresenter();
+
+    AsyncProvider<FindInContentPresenter> getFindInContentPresenter();
 
     Provider<FullScreenPresenter> getFullScreenPresenter();
 

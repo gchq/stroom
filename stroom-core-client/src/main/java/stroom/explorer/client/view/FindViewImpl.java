@@ -16,8 +16,8 @@
 
 package stroom.explorer.client.view;
 
+import stroom.explorer.client.presenter.AbstractFindPresenter;
 import stroom.explorer.client.presenter.FindUiHandlers;
-import stroom.explorer.client.presenter.FindView;
 import stroom.widget.dropdowntree.client.view.QuickFilter;
 
 import com.google.gwt.event.dom.client.KeyDownEvent;
@@ -33,7 +33,7 @@ import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 public class FindViewImpl
         extends ViewWithUiHandlers<FindUiHandlers>
-        implements FindView {
+        implements AbstractFindPresenter.FindView {
 
     private final Widget widget;
 

@@ -85,6 +85,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Singleton
@@ -1443,7 +1444,15 @@ class ExplorerServiceImpl
         final DurationTimer timer = DurationTimer.start();
         final LocalMetrics metrics = Metrics.createLocalMetrics(LOGGER.isDebugEnabled());
         try {
-            if (NullSafe.isBlankString(request.getFilter().getNameFilter())) {
+            if (request.getFilter() == null) {
+                return ResultPage.empty();
+            }
+            final boolean recentItemsMode = request.getFilter().getRecentItems() != null;
+            if (recentItemsMode) {
+                if (request.getFilter().getRecentItems().isEmpty()) {
+                    return ResultPage.empty();
+                }
+            } else if (NullSafe.isBlankString(request.getFilter().getNameFilter())) {
                 return ResultPage.empty();
             }
 
@@ -1459,6 +1468,21 @@ class ExplorerServiceImpl
                     false);
             final List<FindResult> results = new ArrayList<>();
             addResults("", result.getRootNodes(), results);
+
+            // If this is recent items mode then filter by recent items.
+            if (recentItemsMode) {
+                final Map<DocRef, FindResult> resultMap = results
+                        .stream()
+                        .collect(Collectors.toMap(FindResult::getDocRef, Function.identity()));
+                final List<FindResult> recentItems = request
+                        .getFilter().getRecentItems()
+                        .stream()
+                        .map(resultMap::get)
+                        .filter(Objects::nonNull)
+                        .toList();
+                return ResultPage.createPageLimitedList(recentItems, request.getPageRequest());
+            }
+
             return ResultPage.createPageLimitedList(results, request.getPageRequest());
 
         } catch (Exception e) {

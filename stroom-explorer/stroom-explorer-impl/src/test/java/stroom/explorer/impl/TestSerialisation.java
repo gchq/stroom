@@ -35,7 +35,8 @@ public class TestSerialisation {
                 Set.of(NodeFlag.OPEN, NodeFlag.FAVOURITE),
                 Set.of("p1", "p2"),
                 "blah",
-                true);
+                true,
+                null);
 
         final FetchExplorerNodesRequest criteria1 = new FetchExplorerNodesRequest(
                 Set.of(explorerNode.getUniqueKey()),

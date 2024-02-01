@@ -16,6 +16,7 @@
 
 package stroom.explorer.shared;
 
+import stroom.docref.DocRef;
 import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.filter.FilterFieldDefinition;
 
@@ -55,6 +56,8 @@ public class ExplorerTreeFilter {
     private final String nameFilter;
     @JsonProperty
     private final boolean nameFilterChange;
+    @JsonProperty
+    private final List<DocRef> recentItems;
 
     @JsonCreator
     public ExplorerTreeFilter(@JsonProperty("includedTypes") final Set<String> includedTypes,
@@ -63,7 +66,8 @@ public class ExplorerTreeFilter {
                               @JsonProperty("nodeFlags") final Set<NodeFlag> nodeFlags,
                               @JsonProperty("requiredPermissions") final Set<String> requiredPermissions,
                               @JsonProperty("nameFilter") final String nameFilter,
-                              @JsonProperty("nameFilterChange") final boolean nameFilterChange) {
+                              @JsonProperty("nameFilterChange") final boolean nameFilterChange,
+                              @JsonProperty("recentItems") final List<DocRef> recentItems) {
         this.includedTypes = includedTypes;
         this.includedRootTypes = includedRootTypes;
         this.tags = tags;
@@ -71,6 +75,7 @@ public class ExplorerTreeFilter {
         this.requiredPermissions = requiredPermissions;
         this.nameFilter = nameFilter;
         this.nameFilterChange = nameFilterChange;
+        this.recentItems = recentItems;
     }
 
     public Set<String> getIncludedTypes() {
@@ -112,7 +117,12 @@ public class ExplorerTreeFilter {
                 nodeFlags,
                 requiredPermissions,
                 nameFilter,
-                nameFilterChange);
+                nameFilterChange,
+                recentItems);
+    }
+
+    public List<DocRef> getRecentItems() {
+        return recentItems;
     }
 
     @Override
@@ -125,6 +135,7 @@ public class ExplorerTreeFilter {
                 ", requiredPermissions=" + requiredPermissions +
                 ", nameFilter='" + nameFilter + '\'' +
                 ", nameFilterChange=" + nameFilterChange +
+                ", recentItems=" + recentItems +
                 '}';
     }
 
@@ -143,7 +154,8 @@ public class ExplorerTreeFilter {
                 Objects.equals(tags, that.tags) &&
                 Objects.equals(nodeFlags, that.nodeFlags) &&
                 Objects.equals(requiredPermissions, that.requiredPermissions) &&
-                Objects.equals(nameFilter, that.nameFilter);
+                Objects.equals(nameFilter, that.nameFilter) &&
+                Objects.equals(recentItems, that.recentItems);
     }
 
     @Override
@@ -155,7 +167,8 @@ public class ExplorerTreeFilter {
                 nodeFlags,
                 requiredPermissions,
                 nameFilter,
-                nameFilterChange);
+                nameFilterChange,
+                recentItems);
     }
 
     /**

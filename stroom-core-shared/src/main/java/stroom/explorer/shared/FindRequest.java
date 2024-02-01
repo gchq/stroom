@@ -52,7 +52,7 @@ public class FindRequest extends BaseCriteria {
 
     @Override
     public String toString() {
-        return "FindCriteria{" +
+        return "FindRequest{" +
                 "filter=" + filter +
                 '}';
     }

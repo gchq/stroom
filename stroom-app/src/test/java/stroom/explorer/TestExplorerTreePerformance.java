@@ -88,7 +88,8 @@ class TestExplorerTreePerformance extends AbstractCoreIntegrationTest {
                             null,
                             Collections.singleton(DocumentPermissionNames.READ),
                             null,
-                            false),
+                            false,
+                            null),
                     Integer.MAX_VALUE,
                     new HashSet<>(),
                     true);

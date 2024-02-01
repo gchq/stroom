@@ -35,6 +35,7 @@ import stroom.data.grid.client.PagerView;
 import stroom.data.grid.client.PagerViewImpl;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.view.LinkTabPanelViewImpl;
+import stroom.explorer.client.presenter.AbstractFindPresenter;
 import stroom.explorer.client.presenter.EntityCheckTreePresenter;
 import stroom.explorer.client.presenter.EntityCheckTreePresenter.EntityCheckTreeView;
 import stroom.explorer.client.presenter.EntityTreePresenter;
@@ -53,7 +54,6 @@ import stroom.explorer.client.presenter.FindInContentPresenter.FindInContentProx
 import stroom.explorer.client.presenter.FindInContentPresenter.FindInContentView;
 import stroom.explorer.client.presenter.FindPresenter;
 import stroom.explorer.client.presenter.FindPresenter.FindProxy;
-import stroom.explorer.client.presenter.FindView;
 import stroom.explorer.client.presenter.NavigationPresenter;
 import stroom.explorer.client.presenter.NavigationPresenter.NavigationProxy;
 import stroom.explorer.client.presenter.NavigationPresenter.NavigationView;
@@ -168,13 +168,15 @@ public class AppModule extends AbstractPresenterModule {
                 FindInContentView.class,
                 FindInContentViewImpl.class,
                 FindInContentProxy.class);
+        bindSharedView(
+                AbstractFindPresenter.FindView.class,
+                FindViewImpl.class);
         bindPresenter(
                 FindPresenter.class,
                 FindProxy.class);
         bindPresenter(
                 RecentItemsPresenter.class,
                 RecentItemsProxy.class);
-        bindSharedView(FindView.class, FindViewImpl.class);
 
         // Menu
         bind(Menu.class).asEagerSingleton();
