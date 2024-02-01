@@ -88,7 +88,8 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
 
     private final InlineSvgButton locate;
     private final InlineSvgButton find;
-    private final InlineSvgButton collapse;
+    private final InlineSvgButton collapseAll;
+    private final InlineSvgButton expandAll;
     private final InlineSvgButton add;
     private final InlineSvgButton delete;
     private final InlineSvgToggleButton filter;
@@ -139,11 +140,17 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
         showAlertsBtn.setTitle("Toggle Alerts");
         showAlertsBtn.setEnabled(true);
 
-        collapse = new InlineSvgButton();
-        collapse.setSvg(SvgImage.COLLAPSE);
-        collapse.getElement().addClassName("navigation-header-button collapse-explorer");
-        collapse.setTitle("Collapse All");
-        collapse.setEnabled(true);
+        collapseAll = new InlineSvgButton();
+        collapseAll.setSvg(SvgImage.COLLAPSE_ALL);
+        collapseAll.getElement().addClassName("navigation-header-button explorer-collapse-all");
+        collapseAll.setTitle("Collapse All");
+        collapseAll.setEnabled(true);
+
+        expandAll = new InlineSvgButton();
+        expandAll.setSvg(SvgImage.EXPAND_ALL);
+        expandAll.getElement().addClassName("navigation-header-button explorer-expand-all");
+        expandAll.setTitle("Expand All");
+        expandAll.setEnabled(true);
 
         find = new InlineSvgButton();
         find.setSvg(SvgImage.FIND);
@@ -161,10 +168,11 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
         buttons.add(add);
         buttons.add(delete);
         buttons.add(showAlertsBtn);
+        buttons.add(locate);
+        buttons.add(expandAll);
+        buttons.add(collapseAll);
         buttons.add(filter);
         buttons.add(find);
-        buttons.add(collapse);
-        buttons.add(locate);
 
         view.setUiHandlers(this);
 
@@ -198,20 +206,13 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
             }
             locate.setEnabled(selectedDoc != null);
         }));
-        registerHandler(collapse.addClickHandler((e) -> {
-            explorerTree.getTreeModel().reset();
-            explorerTree.getTreeModel().refresh();
-        }));
-        registerHandler(locate.addClickHandler((e) ->
-                LocateDocEvent.fire(this, selectedDoc)));
-        registerHandler(find.addClickHandler((e) ->
-                ShowFindInContentEvent.fire(this)));
-        registerHandler(add.addClickHandler((e) ->
-                newItem(add.getElement())));
-        registerHandler(delete.addClickHandler((e) ->
-                deleteItem()));
-        registerHandler(filter.addClickHandler((e) ->
-                showTypeFilter(filter.getElement())));
+        registerHandler(collapseAll.addClickHandler((e) -> explorerTree.getTreeModel().collapseAll()));
+        registerHandler(expandAll.addClickHandler((e) -> explorerTree.getTreeModel().expandAll()));
+        registerHandler(locate.addClickHandler((e) -> LocateDocEvent.fire(this, selectedDoc)));
+        registerHandler(find.addClickHandler((e) -> ShowFindInContentEvent.fire(this)));
+        registerHandler(add.addClickHandler((e) -> newItem(add.getElement())));
+        registerHandler(delete.addClickHandler((e) -> deleteItem()));
+        registerHandler(filter.addClickHandler((e) -> showTypeFilter(filter.getElement())));
         registerHandler(showAlertsBtn.addClickHandler((e) -> {
             explorerTree.setShowAlerts(showAlertsBtn.getState());
             explorerTree.refresh();

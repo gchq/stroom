@@ -359,6 +359,22 @@ public class ExplorerTreeModel {
         ensureVisible = null;
     }
 
+    public void expandAll() {
+        explorerTreeFilterBuilder.setNameFilter(null);
+        openItems.clear();
+        minDepth = 1000;
+        ensureVisible = null;
+        refresh();
+    }
+
+    public void collapseAll() {
+        explorerTreeFilterBuilder.setNameFilter(null);
+        openItems.clear();
+        minDepth = 1;
+        ensureVisible = null;
+        refresh();
+    }
+
     public boolean isIncludeNullSelection() {
         return includeNullSelection;
     }
