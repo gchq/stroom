@@ -9585,6 +9585,10 @@ components:
             - L
             - O
           uniqueItems: true
+        recentItems:
+          type: array
+          items:
+            $ref: '#/components/schemas/DocRef'
         requiredPermissions:
           type: array
           items:
