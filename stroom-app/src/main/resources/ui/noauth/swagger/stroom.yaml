@@ -8759,7 +8759,7 @@ components:
           - CLIPBOARD
           - CLOSE
           - CODE
-          - COLLAPSE
+          - COLLAPSE_ALL
           - COLLAPSE_UP
           - COPY
           - DATABASE
@@ -8805,7 +8805,7 @@ components:
           - ELLIPSES_VERTICAL
           - ERROR
           - EXCLAMATION
-          - EXPAND
+          - EXPAND_ALL
           - EXPAND_DOWN
           - EXPLORER
           - FAST_BACKWARD
@@ -9255,7 +9255,7 @@ components:
           - CLIPBOARD
           - CLOSE
           - CODE
-          - COLLAPSE
+          - COLLAPSE_ALL
           - COLLAPSE_UP
           - COPY
           - DATABASE
@@ -9301,7 +9301,7 @@ components:
           - ELLIPSES_VERTICAL
           - ERROR
           - EXCLAMATION
-          - EXPAND
+          - EXPAND_ALL
           - EXPAND_DOWN
           - EXPLORER
           - FAST_BACKWARD
@@ -10141,7 +10141,7 @@ components:
           - CLIPBOARD
           - CLOSE
           - CODE
-          - COLLAPSE
+          - COLLAPSE_ALL
           - COLLAPSE_UP
           - COPY
           - DATABASE
@@ -10187,7 +10187,7 @@ components:
           - ELLIPSES_VERTICAL
           - ERROR
           - EXCLAMATION
-          - EXPAND
+          - EXPAND_ALL
           - EXPAND_DOWN
           - EXPLORER
           - FAST_BACKWARD
@@ -10418,7 +10418,7 @@ components:
           - CLIPBOARD
           - CLOSE
           - CODE
-          - COLLAPSE
+          - COLLAPSE_ALL
           - COLLAPSE_UP
           - COPY
           - DATABASE
@@ -10464,7 +10464,7 @@ components:
           - ELLIPSES_VERTICAL
           - ERROR
           - EXCLAMATION
-          - EXPAND
+          - EXPAND_ALL
           - EXPAND_DOWN
           - EXPLORER
           - FAST_BACKWARD
@@ -11927,7 +11927,7 @@ components:
           - CLIPBOARD
           - CLOSE
           - CODE
-          - COLLAPSE
+          - COLLAPSE_ALL
           - COLLAPSE_UP
           - COPY
           - DATABASE
@@ -11973,7 +11973,7 @@ components:
           - ELLIPSES_VERTICAL
           - ERROR
           - EXCLAMATION
-          - EXPAND
+          - EXPAND_ALL
           - EXPAND_DOWN
           - EXPLORER
           - FAST_BACKWARD
@@ -12900,7 +12900,7 @@ components:
           - CLIPBOARD
           - CLOSE
           - CODE
-          - COLLAPSE
+          - COLLAPSE_ALL
           - COLLAPSE_UP
           - COPY
           - DATABASE
@@ -12946,7 +12946,7 @@ components:
           - ELLIPSES_VERTICAL
           - ERROR
           - EXCLAMATION
-          - EXPAND
+          - EXPAND_ALL
           - EXPAND_DOWN
           - EXPLORER
           - FAST_BACKWARD
