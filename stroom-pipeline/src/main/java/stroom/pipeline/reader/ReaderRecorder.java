@@ -25,7 +25,9 @@ import stroom.pipeline.parser.CombinedParser;
 import stroom.pipeline.parser.CombinedParser.Mode;
 import stroom.pipeline.parser.XMLParser;
 import stroom.pipeline.reader.ByteStreamDecoder.DecodedChar;
+import stroom.pipeline.reader.ByteStreamDecoder.DecoderException;
 import stroom.pipeline.stepping.Recorder;
+import stroom.task.api.TaskTerminatedException;
 import stroom.util.shared.TextRange;
 
 import org.apache.commons.lang3.mutable.MutableInt;
@@ -124,7 +126,7 @@ public class ReaderRecorder extends AbstractIOElement implements TakesInput, Tak
      */
     private static class ReaderBuffer extends FilterReader implements Buffer {
 
-        private static final int MAX_BUFFER_SIZE = 1000000;
+        private static final int MAX_BUFFER_SIZE = 1_000_000;
         private final StringBuilder stringBuilder = new StringBuilder();
 
         private int lineNo = BASE_LINE_NO;
@@ -290,22 +292,19 @@ public class ReaderRecorder extends AbstractIOElement implements TakesInput, Tak
      */
     private static class InputBuffer extends FilterInputStream implements Buffer {
 
-        private static final int MAX_BUFFER_SIZE = 1000000;
+        private static final int MAX_BUFFER_SIZE = 1_000_000;
         private final String encoding;
         private final ByteBuffer byteBuffer = new ByteBuffer();
-        private final ByteStreamDecoder byteStreamDecoder;
         private final RangeMode rangeMode;
 
         private int lineNo = BASE_LINE_NO;
         private int colNo = BASE_COL_NO;
-
 
         InputBuffer(final InputStream in,
                     final String encoding,
                     final RangeMode rangeMode) {
             super(in);
             this.encoding = encoding;
-            this.byteStreamDecoder = new ByteStreamDecoder(encoding);
             this.rangeMode = rangeMode;
             LOGGER.debug("Using rangeMode {}", rangeMode);
         }
@@ -391,6 +390,11 @@ public class ReaderRecorder extends AbstractIOElement implements TakesInput, Tak
             final Supplier<Byte> byteSupplier = () ->
                     byteBuffer.getByte(offset.getAndIncrement());
 
+            final ByteStreamDecoder byteStreamDecoder = new ByteStreamDecoder(
+                    encoding,
+                    ByteStreamDecoder.Mode.STRICT,
+                    byteSupplier);
+
             // TODO This could be made more efficient if scans the stream to look for the
             //  byte value (which may differ for different encodings) of the \n 'chars' until
             //  we get to the line of interest.  From that point we need to decode each char to
@@ -398,11 +402,20 @@ public class ReaderRecorder extends AbstractIOElement implements TakesInput, Tak
             //  Need a kind of jumpToLine method
             while (offset.intValue() < length() && !found) {
 
+                if (Thread.currentThread().isInterrupted()) {
+                    throw new TaskTerminatedException();
+                }
+
                 // The offset where our potentially multi-byte char starts
                 final int startOffset = offset.intValue();
 
                 // This will move offset by the number of bytes in the 'character', i.e. 1-4
-                final DecodedChar decodedChar = byteStreamDecoder.decodeNextChar(byteSupplier);
+                DecodedChar decodedChar;
+                try {
+                    decodedChar = byteStreamDecoder.decodeNextChar();
+                } catch (DecoderException e) {
+                    decodedChar = DecodedChar.unknownChar(e.getMalformedBytes().length);
+                }
 
                 // Inclusive
                 if (!inRecord) {
@@ -508,6 +521,7 @@ public class ReaderRecorder extends AbstractIOElement implements TakesInput, Tak
 
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 
     private static class ByteBuffer extends ByteArrayOutputStream {
 
