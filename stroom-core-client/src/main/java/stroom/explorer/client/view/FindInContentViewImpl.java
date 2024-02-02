@@ -27,6 +27,7 @@ import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
+import com.google.gwt.user.client.ui.FocusUtil;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
@@ -86,7 +87,10 @@ public class FindInContentViewImpl
 
     @Override
     public void focus() {
-        pattern.setFocus(true);
+        FocusUtil.forceFocus(() -> {
+            pattern.setFocus(true);
+            pattern.selectAll();
+        });
     }
 
     @UiHandler("pattern")

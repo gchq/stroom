@@ -20,6 +20,7 @@ public class RecentItemsPresenter
         implements ShowRecentItemsEvent.Handler {
 
     private final RecentItems recentItems;
+    private boolean showing;
 
     @Inject
     public RecentItemsPresenter(final EventBus eventBus,
@@ -35,15 +36,20 @@ public class RecentItemsPresenter
     @ProxyEvent
     @Override
     public void onShowRecentItems(final ShowRecentItemsEvent event) {
-        refresh();
-        final PopupSize popupSize = PopupSize.resizable(800, 600);
-        ShowPopupEvent.builder(this)
-                .popupType(PopupType.CLOSE_DIALOG)
-                .popupSize(popupSize)
-                .caption("Recent Items")
-                .onShow(e -> getView().focus())
-                .onHideRequest(HidePopupRequestEvent::hide)
-                .fire();
+        if (!showing) {
+            showing = true;
+            focusText = true;
+            refresh();
+            final PopupSize popupSize = PopupSize.resizable(800, 600);
+            ShowPopupEvent.builder(this)
+                    .popupType(PopupType.CLOSE_DIALOG)
+                    .popupSize(popupSize)
+                    .caption("Recent Items")
+                    .onShow(e -> getView().focus())
+                    .onHideRequest(HidePopupRequestEvent::hide)
+                    .onHide(e -> showing = false)
+                    .fire();
+        }
     }
 
     @Override

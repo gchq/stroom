@@ -53,6 +53,7 @@ public abstract class AbstractFindPresenter<T_PROXY extends Proxy<?>>
             null,
             null);
     private boolean initialised;
+    protected boolean focusText;
 
     public AbstractFindPresenter(final EventBus eventBus,
                                  final FindView view,
@@ -109,6 +110,7 @@ public abstract class AbstractFindPresenter<T_PROXY extends Proxy<?>>
                     }
                     dataConsumer.accept(resultPage);
                     selectionModel.clear();
+                    resetFocus();
 
                 } else {
                     restFactory.builder()
@@ -126,6 +128,8 @@ public abstract class AbstractFindPresenter<T_PROXY extends Proxy<?>>
                                         selectionModel.clear();
                                     }
                                 }
+
+                                resetFocus();
                             })
                             .onFailure(throwableConsumer)
                             .call(EXPLORER_RESOURCE)
@@ -142,6 +146,13 @@ public abstract class AbstractFindPresenter<T_PROXY extends Proxy<?>>
         };
         cellTable.addColumn(column);
         pagerView.setDataWidget(cellTable);
+    }
+
+    private void resetFocus() {
+        if (focusText) {
+            focusText = false;
+            getView().focus();
+        }
     }
 
     protected void updateFilter(final ExplorerTreeFilterBuilder explorerTreeFilterBuilder) {

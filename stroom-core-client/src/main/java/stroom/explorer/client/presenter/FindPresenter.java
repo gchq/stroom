@@ -18,6 +18,9 @@ import com.gwtplatform.mvp.client.proxy.Proxy;
 public class FindPresenter
         extends AbstractFindPresenter<FindProxy>
         implements ShowFindEvent.Handler {
+
+    private boolean showing;
+
     @Inject
     public FindPresenter(final EventBus eventBus,
                          final FindView view,
@@ -30,15 +33,20 @@ public class FindPresenter
     @ProxyEvent
     @Override
     public void onShow(final ShowFindEvent event) {
-        refresh();
-        final PopupSize popupSize = PopupSize.resizable(800, 600);
-        ShowPopupEvent.builder(this)
-                .popupType(PopupType.CLOSE_DIALOG)
-                .popupSize(popupSize)
-                .caption("Find")
-                .onShow(e -> getView().focus())
-                .onHideRequest(HidePopupRequestEvent::hide)
-                .fire();
+        if (!showing) {
+            showing = true;
+            focusText = true;
+            refresh();
+            final PopupSize popupSize = PopupSize.resizable(800, 600);
+            ShowPopupEvent.builder(this)
+                    .popupType(PopupType.CLOSE_DIALOG)
+                    .popupSize(popupSize)
+                    .caption("Find")
+                    .onShow(e -> getView().focus())
+                    .onHideRequest(HidePopupRequestEvent::hide)
+                    .onHide(e -> showing = false)
+                    .fire();
+        }
     }
 
     @ProxyCodeSplit

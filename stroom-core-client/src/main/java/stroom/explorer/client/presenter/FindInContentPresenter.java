@@ -68,7 +68,9 @@ public class FindInContentPresenter
             null,
             StringMatch.any());
     private boolean initialised;
+    protected boolean focusText;
     private StringMatch lastFilter;
+    private boolean showing;
 
     private final Timer filterRefreshTimer = new Timer() {
         @Override
@@ -132,6 +134,7 @@ public class FindInContentPresenter
                     }
                     dataConsumer.accept(resultPage);
                     selectionModel.clear();
+                    resetFocus();
 
                 } else {
                     restFactory.builder()
@@ -149,6 +152,8 @@ public class FindInContentPresenter
                                         selectionModel.clear();
                                     }
                                 }
+
+                                resetFocus();
                             })
                             .onFailure(throwableConsumer)
                             .call(EXPLORER_RESOURCE)
@@ -166,6 +171,13 @@ public class FindInContentPresenter
                 };
         cellTable.addColumn(column);
         pagerView.setDataWidget(cellTable);
+    }
+
+    private void resetFocus() {
+        if (focusText) {
+            focusText = false;
+            getView().focus();
+        }
     }
 
     @Override
@@ -262,14 +274,19 @@ public class FindInContentPresenter
     }
 
     private void show() {
-        final PopupSize popupSize = PopupSize.resizable(800, 600);
-        ShowPopupEvent.builder(this)
-                .popupType(PopupType.CLOSE_DIALOG)
-                .popupSize(popupSize)
-                .caption("Find In Content")
-                .onShow(e -> getView().focus())
-                .onHideRequest(HidePopupRequestEvent::hide)
-                .fire();
+        if (!showing) {
+            showing = true;
+//            focusText = true;
+            final PopupSize popupSize = PopupSize.resizable(800, 600);
+            ShowPopupEvent.builder(this)
+                    .popupType(PopupType.CLOSE_DIALOG)
+                    .popupSize(popupSize)
+                    .caption("Find In Content")
+                    .onShow(e -> getView().focus())
+                    .onHideRequest(HidePopupRequestEvent::hide)
+                    .onHide(e -> showing = false)
+                    .fire();
+        }
     }
 
     private void hide() {

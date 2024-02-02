@@ -32,6 +32,7 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.FocusUtil;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.HasText;
 import com.google.gwt.user.client.ui.PopupPanel;
@@ -172,7 +173,10 @@ public class QuickFilter extends FlowPanel
     }
 
     public void focus() {
-        textBox.setFocus(true);
+        FocusUtil.forceFocus(() -> {
+            textBox.selectAll();
+            textBox.setFocus(true);
+        });
     }
 
     @Override
