@@ -16,6 +16,7 @@
 
 package stroom.pipeline.writer;
 
+import org.apache.commons.compress.compressors.bzip2.BZip2CompressorOutputStream;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.factory.ConfigurableElement;
@@ -24,6 +25,7 @@ import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.svg.shared.SvgImage;
 import stroom.util.io.ByteCountOutputStream;
+import stroom.util.io.CompressionUtil.CompressionMethod;
 import stroom.util.io.FileUtil;
 import stroom.util.io.GZipByteCountOutputStream;
 import stroom.util.io.GZipOutputStream;
@@ -68,7 +70,9 @@ public class FileAppender extends AbstractAppender {
     private final PathCreator pathCreator;
     private ByteCountOutputStream byteCountOutputStream;
     private String[] outputPaths;
-    private boolean useCompression;
+    private boolean useCompression = false;
+    private CompressionMethod compressionMethod = CompressionMethod.GZIP;
+    private int compressionLevel = 4;
     private String filePermissions;
 
     @Inject
@@ -130,11 +134,22 @@ public class FileAppender extends AbstractAppender {
 
             // Get a writer for the new lock file.
             if (useCompression) {
-                byteCountOutputStream =
-                        new GZipByteCountOutputStream(new GZipOutputStream(Files.newOutputStream(lockFile)));
+                switch (compressionMethod) {
+                    case GZIP:
+                        final GZipOutputStream gzipOutputStream = new GZipOutputStream(Files.newOutputStream(lockFile));
+                        gzipOutputStream.setCompressionLevel(compressionLevel);
+                        byteCountOutputStream = new GZipByteCountOutputStream(gzipOutputStream);
+                        break;
+                    case BZIP2:
+                        byteCountOutputStream = new ByteCountOutputStream(
+                                new BZip2CompressorOutputStream(Files.newOutputStream(lockFile), compressionLevel));
+                        break;
+                    default:
+                        throw new IllegalArgumentException("Unsupported compression method: " + compressionMethod);
+                }
             } else {
-                byteCountOutputStream =
-                        new ByteCountOutputStream(new BufferedOutputStream(Files.newOutputStream(lockFile)));
+                byteCountOutputStream = new ByteCountOutputStream(
+                        new BufferedOutputStream(Files.newOutputStream(lockFile)));
             }
 
             return new LockedOutputStream(byteCountOutputStream, lockFile, file, permissions);
@@ -204,15 +219,31 @@ public class FileAppender extends AbstractAppender {
     }
 
     @PipelineProperty(
-            description = "Apply GZIP compression to output files",
+            description = "Apply compression to output files.",
             defaultValue = "false",
             displayPriority = 5)
     public void setUseCompression(final boolean useCompression) {
         this.useCompression = useCompression;
     }
 
-    @PipelineProperty(description = "Set file system permissions of finished files (example: 'rwxr--r--')",
+    @PipelineProperty(
+            description = "Compression method to apply, if enabled. Available types: GZIP, BZIP2.",
+            defaultValue = "GZIP",
             displayPriority = 6)
+    public void setCompressionMethod(final String compressionMethod) {
+        this.compressionMethod = CompressionMethod.valueOf(compressionMethod);
+    }
+
+    @PipelineProperty(
+            description = "Compression level, in the range 1 (fastest) through 9 (slowest).",
+            defaultValue = "4",
+            displayPriority = 7)
+    public void setCompressionLevel(final int compressionLevel) {
+        this.compressionLevel = compressionLevel;
+    }
+
+    @PipelineProperty(description = "Set file system permissions of finished files (example: 'rwxr--r--')",
+            displayPriority = 8)
     public void setFilePermissions(final String filePermissions) {
         this.filePermissions = filePermissions;
     }

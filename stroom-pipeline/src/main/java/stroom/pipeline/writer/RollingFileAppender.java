@@ -25,6 +25,7 @@ import stroom.pipeline.factory.PipelineProperty;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.svg.shared.SvgImage;
+import stroom.util.io.CompressionUtil.CompressionMethod;
 import stroom.util.io.FileUtil;
 import stroom.util.io.PathCreator;
 
@@ -70,8 +71,9 @@ public class RollingFileAppender extends AbstractRollingAppender {
     private String fileNamePattern;
     private String rolledFileNamePattern;
     private boolean useCompression;
+    private CompressionMethod compressionMethod = CompressionMethod.GZIP;
+    private int compressionLevel = 4;
     private String filePermissions;
-
     private String dir;
     private String fileName;
     private String rolledFileName;
@@ -125,6 +127,8 @@ public class RollingFileAppender extends AbstractRollingAppender {
                 parentDir,
                 file,
                 useCompression,
+                compressionMethod,
+                compressionLevel,
                 permissions
         );
     }
@@ -257,8 +261,24 @@ public class RollingFileAppender extends AbstractRollingAppender {
         this.useCompression = useCompression;
     }
 
-    @PipelineProperty(description = "Set file system permissions of finished files (example: 'rwxr--r--')",
+    @PipelineProperty(
+            description = "Compression method to apply, if enabled. Available types: GZIP, BZIP2.",
+            defaultValue = "GZIP",
             displayPriority = 8)
+    public void setCompressionMethod(final String compressionMethod) {
+        this.compressionMethod = CompressionMethod.valueOf(compressionMethod);
+    }
+
+    @PipelineProperty(
+            description = "Compression level, in the range 1 (fastest) through 9 (slowest).",
+            defaultValue = "4",
+            displayPriority = 7)
+    public void setCompressionLevel(final int compressionLevel) {
+        this.compressionLevel = compressionLevel;
+    }
+
+    @PipelineProperty(description = "Set file system permissions of finished files (example: 'rwxr--r--')",
+            displayPriority = 10)
     public void setFilePermissions(final String filePermissions) {
         this.filePermissions = filePermissions;
     }
