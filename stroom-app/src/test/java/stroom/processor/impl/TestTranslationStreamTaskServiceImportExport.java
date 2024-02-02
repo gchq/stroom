@@ -92,7 +92,7 @@ class TestTranslationStreamTaskServiceImportExport extends AbstractCoreIntegrati
     //
     // assertThat(testFile.isFile()).isTrue();
     //
-    // StroomZipFile stroomZipFile = new StroomZipFile(testFile);
+    // try (final StroomZipFile stroomZipFile = new StroomZipFile(testFile);
     //
     // assertThat(stroomZipFile.getStroomZipNameSet().getBaseNameSet()
     // .size()).isEqualTo(2);

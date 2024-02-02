@@ -329,11 +329,11 @@ public class StroomZipRepository {
         return currentDir;
     }
 
-    StroomZipOutputStream getStroomZipOutputStream() throws IOException {
-        return getStroomZipOutputStream(null);
+    StroomZipOutputStream getStrosomZipOutputStream() throws IOException {
+        return getStrsoomZipOutputStream(null);
     }
 
-    StroomZipOutputStream getStroomZipOutputStream(final AttributeMap attributeMap)
+    StroomZipOutputStream getStrsoomZipOutputStream(final AttributeMap attributeMap)
             throws IOException {
         if (readOnly) {
             throw new RuntimeException("This is a read only repository");

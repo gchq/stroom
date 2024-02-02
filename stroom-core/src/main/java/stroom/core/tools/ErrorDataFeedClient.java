@@ -18,6 +18,9 @@ package stroom.core.tools;
 
 import stroom.util.io.StreamUtil;
 
+import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
+import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
+import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
 import org.apache.commons.lang3.RandomUtils;
 
 import java.io.IOException;
@@ -26,9 +29,6 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map.Entry;
-import java.util.zip.GZIPOutputStream;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 import javax.net.ssl.HttpsURLConnection;
 
 /**
@@ -112,32 +112,28 @@ public final class ErrorDataFeedClient {
             connection.setChunkedStreamingMode(chunkSize);
             connection.connect();
 
-            OutputStream out = connection.getOutputStream();
             // Using Zip Compression we just have 1 file (called 1)
             if (ZIP.equalsIgnoreCase(argsMap.get(ARG_COMPRESSION))) {
-                final ZipOutputStream zout = new ZipOutputStream(out);
-                zout.putNextEntry(new ZipEntry("1"));
-                out = zout;
                 System.out.println("Using ZIP");
-            }
-            if (GZIP.equalsIgnoreCase(argsMap.get(ARG_COMPRESSION))) {
-                out = new GZIPOutputStream(out);
+                try (final ZipArchiveOutputStream zout = new ZipArchiveOutputStream(connection.getOutputStream())) {
+                    zout.putArchiveEntry(new ZipArchiveEntry("1"));
+                    try {
+                        write(zout, bufferSize, writeSize);
+                    } finally {
+                        zout.closeArchiveEntry();
+                    }
+                }
+            } else if (GZIP.equalsIgnoreCase(argsMap.get(ARG_COMPRESSION))) {
                 System.out.println("Using GZIP");
+                try (final GzipCompressorOutputStream out =
+                        new GzipCompressorOutputStream(connection.getOutputStream())) {
+                    write(out, bufferSize, writeSize);
+                }
+            } else {
+                try (final OutputStream out = connection.getOutputStream()) {
+                    write(out, bufferSize, writeSize);
+                }
             }
-
-            // Write the output
-            final byte[] buffer = buildDataBuffer(bufferSize);
-            int writtenSize = 0;
-            while (writtenSize < writeSize) {
-                out.write(buffer, 0, bufferSize);
-                out.flush();
-                writtenSize += bufferSize;
-            }
-            if (writtenSize >= writeSize) {
-                throw new IOException("Test Error");
-            }
-
-            out.close();
 
             final int response = connection.getResponseCode();
             final String msg = connection.getResponseMessage();
@@ -152,6 +148,22 @@ public final class ErrorDataFeedClient {
 
         } catch (final IOException | RuntimeException e) {
             e.printStackTrace();
+        }
+    }
+
+    private static void write(final OutputStream out,
+                              final int bufferSize,
+                              final int writeSize) throws IOException {
+        // Write the output
+        final byte[] buffer = buildDataBuffer(bufferSize);
+        int writtenSize = 0;
+        while (writtenSize < writeSize) {
+            out.write(buffer, 0, bufferSize);
+            out.flush();
+            writtenSize += bufferSize;
+        }
+        if (writtenSize >= writeSize) {
+            throw new IOException("Test Error");
         }
     }
 }

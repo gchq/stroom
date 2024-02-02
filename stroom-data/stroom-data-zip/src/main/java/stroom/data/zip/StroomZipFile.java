@@ -3,13 +3,12 @@ package stroom.data.zip;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipFile;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.Enumeration;
 
-public class StroomZipFile implements Closeable {
+public class StroomZipFile implements AutoCloseable {
 
     private static final String SINGLE_ENTRY_ZIP_BASE_NAME = "001";
 
@@ -21,12 +20,17 @@ public class StroomZipFile implements Closeable {
     private final Path file;
     private ZipFile zipFile;
     private StroomZipNameSet stroomZipNameSet;
+    private boolean closed;
 
-    public StroomZipFile(Path path) {
+    public StroomZipFile(final Path path) {
         this.file = path;
     }
 
-    private ZipFile getZipFile() throws IOException {
+    private synchronized ZipFile getZipFile() throws IOException {
+        if (closed) {
+            throw new IOException("StroomZipFile is closed");
+        }
+
         if (zipFile == null) {
             this.zipFile = new ZipFile(file.toFile());
         }
@@ -56,13 +60,13 @@ public class StroomZipFile implements Closeable {
     }
 
     @Override
-    public void close() throws IOException {
+    public synchronized void close() throws IOException {
         if (zipFile != null) {
             zipFile.close();
             zipFile = null;
         }
         stroomZipNameSet = null;
-
+        closed = true;
     }
 
     public InputStream getInputStream(String baseName, StroomZipFileType fileType) throws IOException {

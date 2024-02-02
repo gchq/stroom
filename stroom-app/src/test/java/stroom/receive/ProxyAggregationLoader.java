@@ -3,13 +3,14 @@ package stroom.receive;
 import stroom.data.zip.StroomZipFile;
 import stroom.util.io.FileUtil;
 
+import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
+import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
+
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 
 /**
  * Class for creating test files in the proxy aggregation directory for manually
@@ -21,19 +22,20 @@ public class ProxyAggregationLoader {
             throws IOException {
 
         FileUtil.mkdirs(testFile.getParent());
-        final ZipOutputStream zipOutputStream = new ZipOutputStream(Files.newOutputStream(testFile));
-        zipOutputStream.putNextEntry(new ZipEntry(StroomZipFile.SINGLE_META_ENTRY.getFullName()));
-        PrintWriter printWriter = new PrintWriter(zipOutputStream);
-        printWriter.println("Feed:" + feedName);
-        printWriter.println("Proxy:ProxyTest");
-        printWriter.flush();
-        zipOutputStream.closeEntry();
-        zipOutputStream.putNextEntry(new ZipEntry(StroomZipFile.SINGLE_DATA_ENTRY.getFullName()));
-        printWriter = new PrintWriter(zipOutputStream);
-        printWriter.print(data);
-        printWriter.flush();
-        zipOutputStream.closeEntry();
-        zipOutputStream.close();
+        try (final ZipArchiveOutputStream zipOutputStream =
+                new ZipArchiveOutputStream(Files.newOutputStream(testFile))) {
+            zipOutputStream.putArchiveEntry(new ZipArchiveEntry(StroomZipFile.SINGLE_META_ENTRY.getFullName()));
+            PrintWriter printWriter = new PrintWriter(zipOutputStream);
+            printWriter.println("Feed:" + feedName);
+            printWriter.println("Proxy:ProxyTest");
+            printWriter.flush();
+            zipOutputStream.closeArchiveEntry();
+            zipOutputStream.putArchiveEntry(new ZipArchiveEntry(StroomZipFile.SINGLE_DATA_ENTRY.getFullName()));
+            printWriter = new PrintWriter(zipOutputStream);
+            printWriter.print(data);
+            printWriter.flush();
+            zipOutputStream.closeArchiveEntry();
+        }
     }
 
     //main method for manually testing proxy aggregation with a running stroom instance

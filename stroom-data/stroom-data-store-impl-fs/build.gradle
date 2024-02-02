@@ -18,6 +18,7 @@ dependencies {
     compile project(':stroom-docref')
     compile libs.eventLogging
 
+    compile libs.commons_compress
     compile libs.guava
     compile libs.guice5
     compile libs.hikari

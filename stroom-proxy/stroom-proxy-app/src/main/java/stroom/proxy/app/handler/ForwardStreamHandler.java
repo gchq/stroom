@@ -10,6 +10,8 @@ import stroom.util.cert.SSLUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
+import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
+import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,8 +20,6 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Map.Entry;
 import java.util.UUID;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 import javax.net.ssl.SSLSocketFactory;
 
 /**
@@ -40,7 +40,7 @@ class ForwardStreamHandler implements StreamHandler {
     private final Integer forwardChunkSize;
 
     private HttpURLConnection connection = null;
-    private ZipOutputStream zipOutputStream;
+    private ZipArchiveOutputStream zipOutputStream;
     private long startTimeMs;
     private long bytesSent = 0;
 
@@ -108,7 +108,7 @@ class ForwardStreamHandler implements StreamHandler {
             connection.setChunkedStreamingMode(forwardChunkSize);
         }
         connection.connect();
-        zipOutputStream = new ZipOutputStream(connection.getOutputStream());
+        zipOutputStream = new ZipArchiveOutputStream(connection.getOutputStream());
     }
 
     @Override
@@ -136,12 +136,12 @@ class ForwardStreamHandler implements StreamHandler {
     @Override
     public void handleEntryStart(final StroomZipEntry stroomZipEntry) throws IOException {
         // First call we set up if we are going to do chunked streaming
-        zipOutputStream.putNextEntry(new ZipEntry(stroomZipEntry.getFullName()));
+        zipOutputStream.putArchiveEntry(new ZipArchiveEntry(stroomZipEntry.getFullName()));
     }
 
     @Override
     public void handleEntryEnd() throws IOException {
-        zipOutputStream.closeEntry();
+        zipOutputStream.closeArchiveEntry();
     }
 
     /**

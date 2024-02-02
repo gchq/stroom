@@ -270,22 +270,20 @@ public class Cli extends AbstractCommandLineTool {
         try {
             LOGGER.info("Processing: " + FileUtil.getCanonicalPath(path));
 
-            final StroomZipFile stroomZipFile = new StroomZipFile(path);
-            final StroomZipNameSet nameSet = stroomZipFile.getStroomZipNameSet();
+            try (final StroomZipFile stroomZipFile = new StroomZipFile(path)) {
+                final StroomZipNameSet nameSet = stroomZipFile.getStroomZipNameSet();
 
-            // Process each base file in a consistent order
-            for (final String baseName : nameSet.getBaseNameList()) {
-                final InputStream dataStream = stroomZipFile.getInputStream(baseName, StroomZipFileType.Data);
-                final InputStream metaStream = stroomZipFile.getInputStream(baseName, StroomZipFileType.Meta);
-                final InputStream contextStream = stroomZipFile.getInputStream(baseName, StroomZipFileType.Context);
+                // Process each base file in a consistent order
+                for (final String baseName : nameSet.getBaseNameList()) {
+                    final InputStream dataStream = stroomZipFile.getInputStream(baseName, StroomZipFileType.Data);
+                    final InputStream metaStream = stroomZipFile.getInputStream(baseName, StroomZipFileType.Meta);
+                    final InputStream contextStream = stroomZipFile.getInputStream(baseName, StroomZipFileType.Context);
 
-                final CliTranslationTaskHandler handler = translationTaskHandlerProvider.get();
-                handler.exec(IgnoreCloseInputStream.wrap(dataStream), IgnoreCloseInputStream.wrap(metaStream),
-                        IgnoreCloseInputStream.wrap(contextStream), errorWriter, new SimpleTaskContext());
+                    final CliTranslationTaskHandler handler = translationTaskHandlerProvider.get();
+                    handler.exec(IgnoreCloseInputStream.wrap(dataStream), IgnoreCloseInputStream.wrap(metaStream),
+                            IgnoreCloseInputStream.wrap(contextStream), errorWriter, new SimpleTaskContext());
+                }
             }
-
-            // Close the zip file.
-            stroomZipFile.close();
         } catch (final IOException e) {
             LOGGER.error(e.getMessage(), e);
         }

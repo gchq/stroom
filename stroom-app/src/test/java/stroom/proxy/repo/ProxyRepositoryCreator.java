@@ -100,7 +100,7 @@ public class ProxyRepositoryCreator {
             if (feedProperties.isReference(feedName) == mandateEffectiveDate) {
                 LOGGER.info("Loading data: " + FileUtil.getCanonicalPath(file));
 
-                try (final StroomZipOutputStream zipOutputStream = repository.getStroomZipOutputStream()) {
+                try (final StroomZipOutputStream zipOutputStream = repository.getStrosomZipOutputStream()) {
                     int i = 0;
                     i++;
                     String newName = Integer.toString(i);
@@ -135,54 +135,54 @@ public class ProxyRepositoryCreator {
         if (feedProperties.isReference(feedName) == mandateEffectiveDate) {
             LOGGER.info("Loading data: " + FileUtil.getCanonicalPath(file));
 
-            try (final StroomZipOutputStream zipOutputStream = repository.getStroomZipOutputStream()) {
-                final StroomZipFile stroomZipFile = new StroomZipFile(file);
+            try (final StroomZipOutputStream zipOutputStream = repository.getStrosomZipOutputStream()) {
+                try (final StroomZipFile stroomZipFile = new StroomZipFile(file)) {
 
-                int i = 0;
-                for (String baseName : stroomZipFile.getStroomZipNameSet().getBaseNameSet()) {
-                    i++;
-                    String newName = Integer.toString(i);
-                    newName = Strings.padStart(newName, 3, '0');
+                    int i = 0;
+                    for (String baseName : stroomZipFile.getStroomZipNameSet().getBaseNameSet()) {
+                        i++;
+                        String newName = Integer.toString(i);
+                        newName = Strings.padStart(newName, 3, '0');
 
-                    // Add meta data.
-                    final AttributeMap map = createMap(feedName, effectiveMs);
-                    try (final InputStream inputStream = stroomZipFile.getInputStream(baseName,
-                            StroomZipFileType.Meta)) {
-                        if (inputStream != null) {
-                            AttributeMapUtil.read(inputStream, map);
-                        }
-                    }
-                    try (final OutputStream outputStream = zipOutputStream
-                            .addEntry(new StroomZipEntry(null, newName, StroomZipFileType.Meta).getFullName())) {
-                        AttributeMapUtil.write(map, outputStream);
-                    }
-
-                    // Add context data.
-                    try (InputStream inputStream = stroomZipFile.getInputStream(baseName, StroomZipFileType.Context)) {
-                        if (inputStream != null) {
-                            try (final OutputStream outputStream = zipOutputStream
-                                    .addEntry(new StroomZipEntry(null,
-                                            newName,
-                                            StroomZipFileType.Context).getFullName())) {
-                                StreamUtil.streamToStream(inputStream, outputStream);
+                        // Add meta data.
+                        final AttributeMap map = createMap(feedName, effectiveMs);
+                        try (final InputStream inputStream = stroomZipFile.getInputStream(baseName,
+                                StroomZipFileType.Meta)) {
+                            if (inputStream != null) {
+                                AttributeMapUtil.read(inputStream, map);
                             }
                         }
-                    }
+                        try (final OutputStream outputStream = zipOutputStream.addEntry(
+                                new StroomZipEntry(null, newName, StroomZipFileType.Meta).getFullName())) {
+                            AttributeMapUtil.write(map, outputStream);
+                        }
 
-                    // Add data.
-                    try (InputStream inputStream = stroomZipFile.getInputStream(baseName, StroomZipFileType.Data)) {
-                        if (inputStream != null) {
-                            try (final OutputStream outputStream = zipOutputStream
-                                    .addEntry(new StroomZipEntry(null,
-                                            newName,
-                                            StroomZipFileType.Data).getFullName())) {
-                                StreamUtil.streamToStream(inputStream, outputStream);
+                        // Add context data.
+                        try (InputStream inputStream = stroomZipFile.getInputStream(baseName,
+                                StroomZipFileType.Context)) {
+                            if (inputStream != null) {
+                                try (final OutputStream outputStream = zipOutputStream
+                                        .addEntry(new StroomZipEntry(null,
+                                                newName,
+                                                StroomZipFileType.Context).getFullName())) {
+                                    StreamUtil.streamToStream(inputStream, outputStream);
+                                }
+                            }
+                        }
+
+                        // Add data.
+                        try (InputStream inputStream = stroomZipFile.getInputStream(baseName, StroomZipFileType.Data)) {
+                            if (inputStream != null) {
+                                try (final OutputStream outputStream = zipOutputStream
+                                        .addEntry(new StroomZipEntry(null,
+                                                newName,
+                                                StroomZipFileType.Data).getFullName())) {
+                                    StreamUtil.streamToStream(inputStream, outputStream);
+                                }
                             }
                         }
                     }
                 }
-
-                stroomZipFile.close();
             } catch (final IOException e) {
                 throw new UncheckedIOException(e);
             }

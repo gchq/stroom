@@ -23,7 +23,6 @@ import stroom.data.zip.StroomZipFile;
 import stroom.data.zip.StroomZipFileType;
 import stroom.receive.common.StroomStreamHandler;
 import stroom.util.io.BufferFactory;
-import stroom.util.io.CloseableUtil;
 import stroom.util.shared.ModelStringUtil;
 
 import org.slf4j.Logger;
@@ -49,7 +48,6 @@ public final class ProxyFileHandler {
                                 final StreamProgressMonitor streamProgress,
                                 final long startSequence) throws IOException {
         long entrySequence = startSequence;
-        StroomZipFile stroomZipFile = null;
         boolean bad = true;
 
         if (LOGGER.isDebugEnabled()) {
@@ -57,9 +55,7 @@ public final class ProxyFileHandler {
         }
 
         IOException exception = null;
-        try {
-            stroomZipFile = new StroomZipFile(file);
-
+        try (final StroomZipFile stroomZipFile = new StroomZipFile(file)) {
             for (final String sourceName : stroomZipFile.getStroomZipNameSet().getBaseNameSet()) {
                 bad = false;
 
@@ -74,8 +70,6 @@ public final class ProxyFileHandler {
             }
         } catch (final IOException io) {
             exception = io;
-        } finally {
-            CloseableUtil.close(stroomZipFile);
         }
 
         if (exception != null) {

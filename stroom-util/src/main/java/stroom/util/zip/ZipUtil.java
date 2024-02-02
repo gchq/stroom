@@ -17,9 +17,11 @@
 package stroom.util.zip;
 
 import stroom.util.io.AbstractFileVisitor;
-import stroom.util.io.CloseableUtil;
 import stroom.util.io.StreamUtil;
 
+import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
+import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
+import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,13 +38,8 @@ import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.EnumSet;
-import java.util.Enumeration;
 import java.util.List;
 import java.util.regex.Pattern;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
-import java.util.zip.ZipInputStream;
-import java.util.zip.ZipOutputStream;
 
 public final class ZipUtil {
 
@@ -58,15 +55,13 @@ public final class ZipUtil {
 
     public static void zip(final Path zipFile, final Path dir, final Pattern includePattern,
                            final Pattern excludePattern) throws IOException {
-        final ZipOutputStream zipStream = new ZipOutputStream(new BufferedOutputStream(Files.newOutputStream(zipFile)));
-
-        zip(dir, zipStream, includePattern, excludePattern);
-
-        zipStream.flush();
-        zipStream.close();
+        try (final ZipArchiveOutputStream zipStream =
+                new ZipArchiveOutputStream(new BufferedOutputStream(Files.newOutputStream(zipFile)))) {
+            zip(dir, zipStream, includePattern, excludePattern);
+        }
     }
 
-    private static void zip(final Path parent, final ZipOutputStream zip,
+    private static void zip(final Path parent, final ZipArchiveOutputStream zip,
                             final Pattern includePattern, final Pattern excludePattern) {
         try {
             Files.walkFileTree(
@@ -95,43 +90,39 @@ public final class ZipUtil {
         }
     }
 
-    private static void putEntry(final ZipOutputStream zipOutputStream, final Path file, final String name)
+    private static void putEntry(final ZipArchiveOutputStream zipOutputStream, final Path file, final String name)
             throws IOException {
         LOGGER.debug("zip() - Putting entry {}", name);
-        final ZipEntry zipEntry = new ZipEntry(name);
-        zipOutputStream.putNextEntry(zipEntry);
-        InputStream is = null;
+        final ZipArchiveEntry zipEntry = new ZipArchiveEntry(name);
         try {
-            is = new BufferedInputStream(Files.newInputStream(file));
-            StreamUtil.streamToStream(is, zipOutputStream);
+            zipOutputStream.putArchiveEntry(zipEntry);
+            try (final InputStream is = new BufferedInputStream(Files.newInputStream(file))) {
+                StreamUtil.streamToStream(is, zipOutputStream);
+            }
         } finally {
-            CloseableUtil.close(is);
+            zipOutputStream.closeArchiveEntry();
         }
-        zipOutputStream.closeEntry();
     }
 
     public static void unzip(final Path zipFile, final Path dir) throws IOException {
-        try (final ZipInputStream zip = new ZipInputStream(new BufferedInputStream(Files.newInputStream(zipFile)))) {
-            ZipEntry zipEntry;
+        try (final ZipArchiveInputStream zip =
+                new ZipArchiveInputStream(new BufferedInputStream(Files.newInputStream(zipFile)))) {
+            ZipArchiveEntry zipEntry;
             while ((zipEntry = zip.getNextEntry()) != null) {
-                try {
-                    // Get output file.
-                    final Path file = dir.resolve(zipEntry.getName());
+                // Get output file.
+                final Path file = dir.resolve(zipEntry.getName());
 
-                    if (zipEntry.isDirectory()) {
-                        // Make sure output directories exist.
-                        Files.createDirectories(file);
-                    } else {
-                        // Make sure output directories exist.
-                        Files.createDirectories(file.getParent());
+                if (zipEntry.isDirectory()) {
+                    // Make sure output directories exist.
+                    Files.createDirectories(file);
+                } else {
+                    // Make sure output directories exist.
+                    Files.createDirectories(file.getParent());
 
-                        // Write file.
-                        try (final OutputStream outputStream = Files.newOutputStream(file)) {
-                            StreamUtil.streamToStream(zip, outputStream);
-                        }
+                    // Write file.
+                    try (final OutputStream outputStream = Files.newOutputStream(file)) {
+                        StreamUtil.streamToStream(zip, outputStream);
                     }
-                } finally {
-                    zip.closeEntry();
                 }
             }
         }
@@ -139,20 +130,13 @@ public final class ZipUtil {
 
     public static List<String> pathList(final Path zipFile) throws IOException {
         final List<String> pathList = new ArrayList<>();
-        ZipFile zipFile2 = null;
-        try {
-            zipFile2 = new ZipFile(zipFile.toFile());
-
-            final Enumeration<? extends ZipEntry> zipEnumeration = zipFile2.entries();
-
-            while (zipEnumeration.hasMoreElements()) {
-                final ZipEntry zipEntry = zipEnumeration.nextElement();
+        try (final ZipArchiveInputStream zip =
+                new ZipArchiveInputStream(new BufferedInputStream(Files.newInputStream(zipFile)))) {
+            ZipArchiveEntry zipEntry;
+            while ((zipEntry = zip.getNextEntry()) != null) {
                 pathList.add(zipEntry.getName());
             }
-        } finally {
-            CloseableUtil.close(zipFile2);
         }
-
         return pathList;
     }
 }
