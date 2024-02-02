@@ -638,19 +638,20 @@ class DynamicTestBuilder {
                                      final int caseNo,
                                      final int casesCount) {
 
+            // No name or namefunc provided so build a name from the case number and the input
+            // Case number may help in linking a failed test to the source
+            final int padLen = Integer.toString(casesCount).length();
+            final String paddedCaseNo = Strings.padStart(Integer.toString(caseNo), padLen, '0');
+
             final Function<TestCase<I, O>, String> nameFunc;
             if (!NullSafe.isBlankString(testCase.getName())) {
                 nameFunc = TestCase::getName;
-            } else if (nameFunction != null) {
-                nameFunc = nameFunction;
             } else {
-                // No name or namefunc provided so build a name from the case number and the input
-                // Case number may help in linking a failed test to the source
-                final int padLen = Integer.toString(casesCount).length();
-                final String paddedCaseNo = Strings.padStart(Integer.toString(caseNo), padLen, '0');
-                nameFunc = testCase2 -> paddedCaseNo + " " + buildTestNameFromInput(testCase2);
+                nameFunc = Objects.requireNonNullElseGet(
+                        nameFunction,
+                        () -> this::buildTestNameFromInput);
             }
-            return nameFunc.apply(testCase);
+            return paddedCaseNo + " " + nameFunc.apply(testCase);
         }
 
         private void logCaseToDebug(final TestCase<I, O> testCase) {

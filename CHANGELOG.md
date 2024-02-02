@@ -13,6 +13,13 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Issue **#4054** : Fix comparison of double values, e.g. `toDouble(20000) > toDouble(125000000)`. Improve comparison/sorting logic to cope with the new Duration type and to better handle mixed type comparison.
+
+* Issue **#4056** : Fix display value of Error type values in query/dashboard. Now shows error message prefixed with `ERR: `.
+
+* Issue **#4055** : Fix parsing/formatting of durations in query/dashboard expressions.
+
+
 ## [v7.3-beta.7] - 2024-01-24
 
 * Issue **#4029** : Remove the need to specify node name for query and dashboard API.

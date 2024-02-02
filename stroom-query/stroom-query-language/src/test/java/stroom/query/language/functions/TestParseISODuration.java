@@ -14,6 +14,26 @@ public class TestParseISODuration extends AbstractFunctionTest<ParseISODuration>
     Stream<TestCase> getTestCases() {
         return Stream.of(
                 TestCase.of(
+                        "null",
+                        ValNull.INSTANCE,
+                        Val.create(null)),
+                TestCase.of(
+                        "",
+                        ValNull.INSTANCE,
+                        Val.create("")),
+                TestCase.of(
+                        "foo",
+                        ValErr.create(ValDurationUtil.PARSE_ERROR_MESSAGE),
+                        Val.create("foo")),
+                TestCase.of(
+                        "P1D foo",
+                        ValErr.create(ValDurationUtil.PARSE_ERROR_MESSAGE),
+                        Val.create("P1D foo")),
+                TestCase.of(
+                        "1000 (long)",
+                        ValErr.create(ValDurationUtil.PARSE_ERROR_MESSAGE),
+                        Val.create(1000L)),
+                TestCase.of(
                         "PT1H",
                         ValDuration.create(Duration.ofHours(1).toMillis()),
                         ValString.create("PT1H")),
