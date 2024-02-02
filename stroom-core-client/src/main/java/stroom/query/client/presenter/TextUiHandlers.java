@@ -23,4 +23,6 @@ public interface TextUiHandlers extends UiHandlers {
     void clear();
 
     void beginStepping();
+
+    void close();
 }

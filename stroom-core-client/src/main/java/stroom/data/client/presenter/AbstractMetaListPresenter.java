@@ -21,7 +21,6 @@ import stroom.alert.client.event.ConfirmEvent;
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.core.client.LocationManager;
-import stroom.dashboard.shared.ValidateExpressionResult;
 import stroom.data.client.event.DataSelectionEvent;
 import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.data.client.event.HasDataSelectionHandlers;
@@ -56,14 +55,12 @@ import stroom.processor.shared.QueryData;
 import stroom.processor.shared.ReprocessDataInfo;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionUtil;
-import stroom.query.client.presenter.DateTimeSettingsFactory;
-import stroom.query.shared.ExpressionResource;
-import stroom.query.shared.ValidateExpressionRequest;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.util.client.DataGridUtil;
 import stroom.util.client.MyDataGridUtil;
+import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Selection;
@@ -96,7 +93,6 @@ public abstract class AbstractMetaListPresenter
 
     private static final MetaResource META_RESOURCE = GWT.create(MetaResource.class);
     private static final DataResource DATA_RESOURCE = GWT.create(DataResource.class);
-    private static final ExpressionResource EXPRESSION_RESOURCE = GWT.create(ExpressionResource.class);
     private static final ProcessorFilterResource PROCESSOR_FILTER_RESOURCE = GWT.create(ProcessorFilterResource.class);
 
     private final Selection<Long> selection = new Selection<>(false, new HashSet<>());
@@ -108,7 +104,7 @@ public abstract class AbstractMetaListPresenter
     private final Provider<SelectionSummaryPresenter> selectionSummaryPresenterProvider;
     private final Provider<ProcessChoicePresenter> processChoicePresenterProvider;
     private final Provider<EntityChooser> pipelineSelection;
-    private final DateTimeSettingsFactory dateTimeSettingsFactory;
+    private final ExpressionValidator expressionValidator;
 
     private ResultPage<MetaRow> resultPage;
     private boolean initialised;
@@ -124,7 +120,8 @@ public abstract class AbstractMetaListPresenter
                               final Provider<SelectionSummaryPresenter> selectionSummaryPresenterProvider,
                               final Provider<ProcessChoicePresenter> processChoicePresenterProvider,
                               final Provider<EntityChooser> pipelineSelection,
-                              final DateTimeSettingsFactory dateTimeSettingsFactory, final boolean allowSelectAll) {
+                              final ExpressionValidator expressionValidator,
+                              final boolean allowSelectAll) {
         super(eventBus, view);
         this.restFactory = restFactory;
         this.locationManager = locationManager;
@@ -132,7 +129,7 @@ public abstract class AbstractMetaListPresenter
         this.selectionSummaryPresenterProvider = selectionSummaryPresenterProvider;
         this.processChoicePresenterProvider = processChoicePresenterProvider;
         this.pipelineSelection = pipelineSelection;
-        this.dateTimeSettingsFactory = dateTimeSettingsFactory;
+        this.expressionValidator = expressionValidator;
 
         this.dataGrid = new MyDataGrid<>();
         selectionModel = new MultiSelectionModelImpl<>(dataGrid);
@@ -500,8 +497,15 @@ public abstract class AbstractMetaListPresenter
         dataGrid.addEndColumn(new EndColumn<>());
     }
 
-    public void setExpression(final ExpressionOperator expression) {
-        validateExpression(expression, this.criteria::setExpression);
+    /**
+     * @param onSetExpression Called after the expression has been successfully
+     *                        validated and set on the criteria. Can be null.
+     */
+    public void setExpression(final ExpressionOperator expression, final Runnable onSetExpression) {
+        validateExpression(expression, expression2 -> {
+            this.criteria.setExpression(expression2);
+            GwtNullSafe.run(onSetExpression);
+        });
     }
 
     public void info() {
@@ -593,27 +597,11 @@ public abstract class AbstractMetaListPresenter
 
     private void validateExpression(final ExpressionOperator expression,
                                     final Consumer<ExpressionOperator> consumer) {
-        if (expression != null) {
-            restFactory.builder()
-                    .forType(ValidateExpressionResult.class)
-                    .onSuccess(result -> {
-                        if (result.isOk()) {
-                            consumer.accept(expression);
-                        } else {
-                            AlertEvent.fireError(
-                                    AbstractMetaListPresenter.this, result.getString(), null);
-                        }
-                    })
-                    .onFailure(throwable -> {
-                        AlertEvent.fireError(
-                                AbstractMetaListPresenter.this, throwable.getMessage(), null);
-                    })
-                    .call(EXPRESSION_RESOURCE)
-                    .validate(new ValidateExpressionRequest(
-                            expression,
-                            MetaFields.getFields(),
-                            dateTimeSettingsFactory.getDateTimeSettings()));
-        }
+        expressionValidator.validateExpression(
+                AbstractMetaListPresenter.this,
+                MetaFields.getFields(),
+                expression,
+                consumer);
     }
 
     private void choosePipeline(final Consumer<DocRef> consumer) {

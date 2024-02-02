@@ -86,8 +86,11 @@ public class QueryResultTableSplitPresenter
                             .withPartIndex(0L)
                             .withRecordIndex(evtId - 1)
                             .build();
-                    textPresenter.show(sourceLocation);
-                    showSplit(true);
+                    textPresenter.show(
+                            sourceLocation,
+                            () -> showSplit(true),
+                            () -> showSplit(false));
+
 
                 } catch (final RuntimeException e) {
                     showSplit(false);

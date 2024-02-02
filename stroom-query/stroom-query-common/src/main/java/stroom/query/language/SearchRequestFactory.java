@@ -491,11 +491,8 @@ public class SearchRequestFactory {
 
             final String expression = sb.toString();
             if (dateExpression) {
-                try {
-                    DateExpressionParser.parse(expression, expressionContext.getDateTimeSettings());
-                } catch (final RuntimeException e) {
-                    throw new TokenException(tokens.get(0), "Unexpected token");
-                }
+                DateExpressionParser.parse(tokens, expressionContext.getDateTimeSettings());
+
             } else if (numericExpression) {
                 boolean seenSign = false;
                 boolean seenNumber = false;
