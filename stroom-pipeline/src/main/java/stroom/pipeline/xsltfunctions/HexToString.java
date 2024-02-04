@@ -70,7 +70,7 @@ class HexToString extends StroomExtensionFunctionCall {
 
         final ByteBuffer bytes = ByteBuffer.allocate(length / 2);
         for (int i = 0; i < length; i += 2) {
-            bytes.put((byte)Integer.parseInt(hex.substring(i, i + 2), 16));
+            bytes.put((byte) Integer.parseInt(hex.substring(i, i + 2), 16));
         }
 
         return bytes.rewind();
