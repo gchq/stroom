@@ -36,6 +36,11 @@ class TestHexToString extends AbstractXsltFunctionTest<HexToString> {
                 .isEqualTo("testing 123")
                 .describedAs("UTF-8 encoded text should be decoded correctly");
 
+        sequence = callFunctionWithSimpleArgs("74 65 73 74 69 6E 67 20 31 32 33", "UTF-8");
+        assertThat(getAsStringValue(sequence).orElseThrow())
+                .isEqualTo("testing 123")
+                .describedAs("UTF-8 encoded text should be decoded correctly, regardless of input case");
+
         sequence = callFunctionWithSimpleArgs("00 74 00 65 00 73 00 74 00 69 00 6e 00 67 00 20 00 31 00 32 00 33", "UTF-16BE");
         assertThat(getAsStringValue(sequence).orElseThrow())
                 .isEqualTo("testing 123")
