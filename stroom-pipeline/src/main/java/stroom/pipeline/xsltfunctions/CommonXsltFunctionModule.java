@@ -35,6 +35,7 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         bindFunction(HashFunction.class);
         bindFunction(HexToDecFunction.class);
         bindFunction(HexToOctFunction.class);
+        bindFunction(HexToStringFunction.class);
         bindFunction(HostAddressFunction.class);
         bindFunction(HostNameFunction.class);
         bindFunction(HttpCallFunction.class);
@@ -299,6 +300,23 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
                     1,
                     1,
                     new SequenceType[]{SequenceType.SINGLE_STRING},
+                    SequenceType.OPTIONAL_STRING,
+                    functionCallProvider);
+        }
+    }
+
+    private static class HexToStringFunction extends StroomExtensionFunctionDefinition<HexToString> {
+
+        @Inject
+        HexToStringFunction(final Provider<HexToString> functionCallProvider) {
+            super(
+                    "hex-to-string",
+                    2,
+                    2,
+                    new SequenceType[]{
+                            SequenceType.SINGLE_STRING,
+                            SequenceType.SINGLE_STRING
+                    },
                     SequenceType.OPTIONAL_STRING,
                     functionCallProvider);
         }
