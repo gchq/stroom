@@ -222,7 +222,13 @@ public class FileAppender extends AbstractAppender {
             defaultValue = CompressorStreamFactory.GZIP,
             displayPriority = 6)
     public void setCompressionMethod(final String compressionMethod) {
-        this.compressionMethod = compressionMethod;
+        if (CompressionUtil.isSupportedCompressor(compressionMethod)) {
+            this.compressionMethod = compressionMethod;
+        } else {
+            String errorMsg = "Unsupported compression method: " + compressionMethod;
+            error(errorMsg, null);
+            throw ProcessException.create(errorMsg);
+        }
     }
 
     @PipelineProperty(description = "Set file system permissions of finished files (example: 'rwxr--r--')",
