@@ -201,7 +201,7 @@ public class ExplorerTreePresenter
         typeFilterPresenter.show(target, filterStateConsumer);
     }
 
-    @ProxyEvent
+//    @ProxyEvent
     @Override
     public void onShowMain(final ShowMainEvent event) {
         documentTypeCache.clear();

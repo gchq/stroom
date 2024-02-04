@@ -15,6 +15,8 @@ public class KeyBinding {
     private static final List<Binding> BINDINGS = new ArrayList<>();
     private static final Map<Action, Command> COMMANDS = new HashMap<>();
 
+    private static final DoubleClickTester DOUBLE_PRESS_TESTER = new DoubleClickTester();
+
     static {
         add(Action.MOVE_UP, KeyCodes.KEY_W, KeyCodes.KEY_K, KeyCodes.KEY_UP);
         add(Action.MOVE_DOWN, KeyCodes.KEY_S, KeyCodes.KEY_J, KeyCodes.KEY_DOWN);
@@ -36,7 +38,9 @@ public class KeyBinding {
         add(Action.ITEM_CLOSE, new Builder().keyCode(KeyCodes.KEY_W).alt(true).build());
         add(Action.ITEM_CLOSE_ALL, new Builder().keyCode(KeyCodes.KEY_W).shift(true).alt(true).build());
 
-        add(Action.FIND, new Builder().keyCode(KeyCodes.KEY_F).shift(true).ctrl(true).build());
+        add(Action.FIND, new Builder().keyCode(KeyCodes.KEY_F).alt(true).shift(true).build());
+        add(Action.FIND_IN_CONTENT, new Builder().keyCode(KeyCodes.KEY_F).ctrl(true).shift(true).build());
+        add(Action.RECENT_ITEMS, new Builder().keyCode(KeyCodes.KEY_E).ctrl(true).build());
         add(Action.LOCATE, new Builder().keyCode(KeyCodes.KEY_L).alt(true).build());
     }
 
@@ -62,6 +66,9 @@ public class KeyBinding {
                 .meta(e.getMetaKey())
                 .build();
 
+        // Test for double press.
+        testFind(e, shortcut);
+
 //        GWT.log("SHORTCUT = " + shortcut);
 
         final Binding binding = getBinding(shortcut);
@@ -84,6 +91,26 @@ public class KeyBinding {
         return null;
     }
 
+    private static void testFind(final NativeEvent e,
+                                 final Shortcut shortcut) {
+        if (shortcut.keyCode == KeyCodes.KEY_SHIFT &&
+                shortcut.shift &&
+                !shortcut.ctrl &&
+                !shortcut.alt &&
+                !shortcut.meta) {
+            e.preventDefault();
+            e.stopPropagation();
+            if (DOUBLE_PRESS_TESTER.isDoubleClick(shortcut)) {
+                final Command command = COMMANDS.get(Action.FIND);
+                if (command != null) {
+                    command.execute();
+                }
+            }
+        } else {
+            DOUBLE_PRESS_TESTER.clear();
+        }
+    }
+
     private static Binding getBinding(final Shortcut shortcut) {
         // Favour exact matches
         for (final Binding binding : BINDINGS) {
@@ -102,78 +129,6 @@ public class KeyBinding {
 
         return null;
     }
-
-//    public static boolean is(final NativeEvent e,
-//                             final Action... actions) {
-//        final Shortcut eventAsBinding = new Builder()
-//                .keyCode(e.getKeyCode())
-//                .shift(e.getShiftKey())
-//                .ctrl(e.getCtrlKey())
-//                .alt(e.getAltKey())
-//                .meta(e.getMetaKey())
-//                .build();
-//
-//        for (final Action action : actions) {
-//            final boolean matchesAction = matchesAction(eventAsBinding, action);
-//            if (matchesAction) {
-//                e.preventDefault();
-//                e.stopPropagation();
-//                return true;
-//            }
-//        }
-//
-//        return false;
-//    }
-//
-//    public static boolean isCommand(final NativeEvent e) {
-//        final Shortcut eventAsBinding = new Builder()
-//                .keyCode(e.getKeyCode())
-//                .shift(e.getShiftKey())
-//                .ctrl(e.getCtrlKey())
-//                .alt(e.getAltKey())
-//                .meta(e.getMetaKey())
-//                .build();
-//
-//        // Check to see if the keypress is supposed to execute a command.
-//        if (eventAsBinding.hasModifiers()) {
-//            for (final Entry<Action, Command> entry : COMMANDS.entrySet()) {
-//                final boolean matchesAction = matchesAction(eventAsBinding, entry.getKey());
-//                if (matchesAction) {
-//                    GWT.log("Execute command: " + getShortcut(entry.getKey()));
-//                    entry.getValue().execute();
-//                    e.preventDefault();
-//                    e.stopPropagation();
-//                    return true;
-//                }
-//            }
-//        }
-//        return false;
-//    }
-//
-//
-//    private static boolean matchesAction(final Shortcut eventAsBinding, final Action action) {
-//        final List<Shortcut> bindings = BINDINGS.get(action);
-//        if (bindings != null) {
-//            for (final Shortcut binding : bindings) {
-//                // If the binding requires the use of modifiers then test the modifiers that are present on the
-//                // event.
-//                if (binding.hasModifiers()) {
-//                    if (eventAsBinding.equals(binding)) {
-//                        GWT.log(action.toString());
-//                        GWT.log("eventAsBinding: " + eventAsBinding);
-//                        GWT.log("binding: " + binding);
-//                        return true;
-//                    }
-//                } else if (binding.keyCode == eventAsBinding.keyCode) {
-//                    GWT.log(action.toString());
-//                    GWT.log("eventAsBinding: " + eventAsBinding);
-//                    GWT.log("binding: " + binding);
-//                    return true;
-//                }
-//            }
-//        }
-//        return false;
-//    }
 
     public enum Action {
         MOVE_UP,
@@ -195,6 +150,8 @@ public class KeyBinding {
         ITEM_CLOSE,
         ITEM_CLOSE_ALL,
         FIND,
+        FIND_IN_CONTENT,
+        RECENT_ITEMS,
         LOCATE
     }
 
@@ -329,7 +286,13 @@ public class KeyBinding {
             if (sb.length() > 0) {
                 sb.append("+");
             }
-            sb.append((char) keyCode);
+            if (keyCode == KeyCodes.KEY_SPACE) {
+                sb.append("space");
+            } else if (keyCode == KeyCodes.KEY_TAB) {
+                sb.append("tab");
+            } else {
+                sb.append((char) keyCode);
+            }
             return sb.toString();
         }
 

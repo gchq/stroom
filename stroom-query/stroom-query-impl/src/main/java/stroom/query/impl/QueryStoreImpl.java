@@ -17,6 +17,7 @@
 
 package stroom.query.impl;
 
+import stroom.docref.DocContentHighlights;
 import stroom.docref.DocContentMatch;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
@@ -271,5 +272,12 @@ class QueryStoreImpl implements QueryStore {
     @Override
     public List<DocContentMatch> findByContent(final StringMatch filter) {
         return store.findByContent(filter);
+    }
+
+    @Override
+    public DocContentHighlights fetchHighlights(final DocRef docRef,
+                                                final String extension,
+                                                final StringMatch filter) {
+        return store.fetchHighlights(docRef, extension, filter);
     }
 }

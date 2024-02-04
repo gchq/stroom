@@ -14,15 +14,15 @@ import java.util.List;
 import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
-public class FindExplorerNodeQuery extends BaseCriteria {
+public class FindInContentRequest extends BaseCriteria {
 
     @JsonProperty
     private final StringMatch filter;
 
     @JsonCreator
-    public FindExplorerNodeQuery(@JsonProperty("pageRequest") final PageRequest pageRequest,
-                                 @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,
-                                 @JsonProperty("filter") final StringMatch filter) {
+    public FindInContentRequest(@JsonProperty("pageRequest") final PageRequest pageRequest,
+                                @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,
+                                @JsonProperty("filter") final StringMatch filter) {
         super(pageRequest, sortList);
         this.filter = filter;
     }
@@ -36,14 +36,14 @@ public class FindExplorerNodeQuery extends BaseCriteria {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof FindExplorerNodeQuery)) {
+        if (!(o instanceof FindInContentRequest)) {
             return false;
         }
         if (!super.equals(o)) {
             return false;
         }
-        final FindExplorerNodeQuery findExplorerNodeQuery = (FindExplorerNodeQuery) o;
-        return Objects.equals(filter, findExplorerNodeQuery.filter);
+        final FindInContentRequest that = (FindInContentRequest) o;
+        return Objects.equals(filter, that.filter);
     }
 
     @Override

@@ -16,58 +16,40 @@
 
 package stroom.explorer.client.view;
 
-import stroom.explorer.client.presenter.FindPresenter;
+import stroom.explorer.client.presenter.AbstractFindPresenter;
 import stroom.explorer.client.presenter.FindUiHandlers;
-import stroom.svg.shared.SvgImage;
-import stroom.widget.button.client.InlineSvgToggleButton;
+import stroom.widget.dropdowntree.client.view.QuickFilter;
 
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.KeyUpEvent;
+import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.SimplePanel;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
-public class FindViewImpl extends ViewWithUiHandlers<FindUiHandlers>
-        implements FindPresenter.FindView {
+public class FindViewImpl
+        extends ViewWithUiHandlers<FindUiHandlers>
+        implements AbstractFindPresenter.FindView {
 
     private final Widget widget;
 
     @UiField
-    TextBox pattern;
+    QuickFilter nameFilter;
     @UiField
     SimplePanel resultContainer;
-    @UiField
-    InlineSvgToggleButton toggleMatchCase;
-    @UiField
-    InlineSvgToggleButton toggleRegex;
 
     @Inject
     public FindViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
-
-        toggleMatchCase.setSvg(SvgImage.CASE_SENSITIVE);
-        toggleMatchCase.setTitle("Match case");
-        toggleMatchCase.setEnabled(true);
-
-        toggleRegex.setSvg(SvgImage.REGEX);
-        toggleRegex.setTitle("Regex");
-        toggleRegex.setEnabled(true);
     }
 
     @Override
     public Widget asWidget() {
         return widget;
-    }
-
-    @Override
-    public String getPattern() {
-        return pattern.getValue();
     }
 
     @Override
@@ -77,27 +59,18 @@ public class FindViewImpl extends ViewWithUiHandlers<FindUiHandlers>
 
     @Override
     public void focus() {
-        pattern.setFocus(true);
+        nameFilter.focus();
     }
 
-    @UiHandler("pattern")
-    void onPatternChange(final KeyUpEvent e) {
-        getUiHandlers().changePattern(pattern.getText(), toggleMatchCase.getState(), toggleRegex.getState());
+    @UiHandler("nameFilter")
+    void onFilterChange(final ValueChangeEvent<String> event) {
+        getUiHandlers().changeQuickFilter(nameFilter.getText());
     }
 
-    @UiHandler("toggleMatchCase")
-    void onToggleMatchCase(final ClickEvent e) {
-        getUiHandlers().changePattern(pattern.getText(), toggleMatchCase.getState(), toggleRegex.getState());
+    @UiHandler("nameFilter")
+    void onFilterKeyDown(final KeyDownEvent event) {
+        getUiHandlers().onFilterKeyDown(event);
     }
-
-    @UiHandler("toggleRegex")
-    void onToggleRegex(final ClickEvent e) {
-        getUiHandlers().changePattern(pattern.getText(), toggleMatchCase.getState(), toggleRegex.getState());
-    }
-
-
-    // --------------------------------------------------------------------------------
-
 
     public interface Binder extends UiBinder<Widget, FindViewImpl> {
 

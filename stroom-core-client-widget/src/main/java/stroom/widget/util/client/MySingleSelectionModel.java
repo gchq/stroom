@@ -111,7 +111,7 @@ public class MySingleSelectionModel<T> extends AbstractSelectionModel<T> impleme
 
         boolean ignore = false;
         if (doubleSelectTest != null) {
-            if (doubleSelectTest.test(selected)) {
+            if (doubleSelectTest.test(item)) {
                 DoubleSelectEvent.fire(this);
                 ignore = true;
             }

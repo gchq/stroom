@@ -144,6 +144,10 @@ class FormatDate extends AbstractFunction {
         return Type.STRING;
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class Gen extends AbstractSingleChildGenerator {
 
 

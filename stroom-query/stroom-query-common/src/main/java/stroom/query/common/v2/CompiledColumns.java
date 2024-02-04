@@ -24,7 +24,9 @@ import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Generator;
 import stroom.query.language.functions.Null;
 import stroom.query.language.functions.ParamFactory;
+import stroom.query.language.functions.Type;
 import stroom.query.language.functions.ref.ValueReferenceIndex;
+import stroom.util.NullSafe;
 
 import java.text.ParseException;
 import java.util.Collections;
@@ -77,7 +79,8 @@ public class CompiledColumns {
             Generator generator = Null.GEN;
             boolean hasAggregate = false;
             boolean requiresChildData = false;
-            if (column.getExpression() != null && column.getExpression().trim().length() > 0) {
+            Type commonReturnType = null;
+            if (!NullSafe.isBlankString(column.getExpression())) {
                 try {
                     final Expression expression = expressionParser.parse(
                             expressionContext,
@@ -88,6 +91,7 @@ public class CompiledColumns {
                     generator = expression.createGenerator();
                     hasAggregate = expression.hasAggregate();
                     requiresChildData = expression.requiresChildData();
+                    commonReturnType = expression.getCommonReturnType();
                 } catch (final ParseException e) {
                     throw new RuntimeException(e.getMessage(), e);
                 }
@@ -99,7 +103,14 @@ public class CompiledColumns {
             }
 
             final CompiledColumn compiledField =
-                    new CompiledColumn(column, groupDepth, generator, hasAggregate, requiresChildData, filter);
+                    new CompiledColumn(
+                            column,
+                            groupDepth,
+                            generator,
+                            hasAggregate,
+                            requiresChildData,
+                            filter,
+                            commonReturnType);
 
             // Only include this field if it is used for display, grouping,
             // sorting.

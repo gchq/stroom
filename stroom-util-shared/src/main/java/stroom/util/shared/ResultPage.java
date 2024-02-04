@@ -46,6 +46,7 @@ import java.util.stream.Stream;
 @JsonInclude(Include.NON_NULL)
 @Schema(description = "A page of results.")
 public class ResultPage<T> implements Serializable {
+    private static final ResultPage<?> EMPTY = new ResultPage<>(Collections.emptyList(), PageResponse.empty());
 
     @JsonProperty
     @JsonPropertyDescription("The values in this page of data.")
@@ -76,6 +77,10 @@ public class ResultPage<T> implements Serializable {
      */
     public static <T> ResultPage<T> createPageLimitedList(final List<T> fullList,
                                                           final PageRequest pageRequest) {
+        if (fullList == null || fullList.isEmpty()) {
+            return empty();
+        }
+
         if (pageRequest != null) {
             int offset = 0;
             if (pageRequest.getOffset() != null) {
@@ -118,18 +123,23 @@ public class ResultPage<T> implements Serializable {
      * Used for full queries (not bounded).
      */
     public static <T> ResultPage<T> createUnboundedList(final List<T> realList) {
-        if (realList != null) {
+        if (realList != null && !realList.isEmpty()) {
             return new ResultPage<>(realList, createPageResponse(realList));
         } else {
-            return new ResultPage<>(Collections.emptyList());
+            return empty();
         }
     }
 
+    @SuppressWarnings("unchecked")
+    public static <T> ResultPage<T> empty() {
+        return (ResultPage<T>) EMPTY;
+    }
+
     public static PageResponse createPageResponse(final List<?> values) {
-        if (values != null) {
+        if (values != null && !values.isEmpty()) {
             return new PageResponse(0L, values.size(), (long) values.size(), true);
         }
-        return new PageResponse(0L, 0, 0L, true);
+        return PageResponse.empty();
     }
 
     public static PageResponse createPageResponse(final List<?> values, final PageResponse pageResponse) {

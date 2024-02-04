@@ -31,7 +31,7 @@ import stroom.explorer.client.event.ExplorerTreeSelectEvent;
 import stroom.explorer.client.event.HighlightExplorerNodeEvent;
 import stroom.explorer.client.event.LocateDocEvent;
 import stroom.explorer.client.event.RefreshExplorerTreeEvent;
-import stroom.explorer.client.event.ShowFindEvent;
+import stroom.explorer.client.event.ShowFindInContentEvent;
 import stroom.explorer.client.event.ShowNewMenuEvent;
 import stroom.explorer.client.presenter.NavigationPresenter.NavigationProxy;
 import stroom.explorer.client.presenter.NavigationPresenter.NavigationView;
@@ -88,6 +88,8 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
 
     private final InlineSvgButton locate;
     private final InlineSvgButton find;
+    private final InlineSvgButton collapseAll;
+    private final InlineSvgButton expandAll;
     private final InlineSvgButton add;
     private final InlineSvgButton delete;
     private final InlineSvgToggleButton filter;
@@ -138,15 +140,27 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
         showAlertsBtn.setTitle("Toggle Alerts");
         showAlertsBtn.setEnabled(true);
 
+        collapseAll = new InlineSvgButton();
+        collapseAll.setSvg(SvgImage.COLLAPSE_ALL);
+        collapseAll.getElement().addClassName("navigation-header-button explorer-collapse-all");
+        collapseAll.setTitle("Collapse All");
+        collapseAll.setEnabled(true);
+
+        expandAll = new InlineSvgButton();
+        expandAll.setSvg(SvgImage.EXPAND_ALL);
+        expandAll.getElement().addClassName("navigation-header-button explorer-expand-all");
+        expandAll.setTitle("Expand All");
+        expandAll.setEnabled(true);
+
         find = new InlineSvgButton();
         find.setSvg(SvgImage.FIND);
         find.getElement().addClassName("navigation-header-button find");
-        find.setTitle("Find Content");
+        find.setTitle("Find In Content");
         find.setEnabled(true);
 
         locate = new InlineSvgButton();
         locate.setSvg(SvgImage.LOCATE);
-        locate.getElement().addClassName("navigation-header-button locate");
+        locate.getElement().addClassName("navigation-header-button locate-in-explorer");
         locate.setTitle("Locate Current Item");
         locate.setEnabled(false);
 
@@ -154,9 +168,11 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
         buttons.add(add);
         buttons.add(delete);
         buttons.add(showAlertsBtn);
+        buttons.add(locate);
+        buttons.add(expandAll);
+        buttons.add(collapseAll);
         buttons.add(filter);
         buttons.add(find);
-        buttons.add(locate);
 
         view.setUiHandlers(this);
 
@@ -190,16 +206,13 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
             }
             locate.setEnabled(selectedDoc != null);
         }));
-        registerHandler(locate.addClickHandler((e) ->
-                LocateDocEvent.fire(this, selectedDoc)));
-        registerHandler(find.addClickHandler((e) ->
-                ShowFindEvent.fire(this)));
-        registerHandler(add.addClickHandler((e) ->
-                newItem(add.getElement())));
-        registerHandler(delete.addClickHandler((e) ->
-                deleteItem()));
-        registerHandler(filter.addClickHandler((e) ->
-                showTypeFilter(filter.getElement())));
+        registerHandler(collapseAll.addClickHandler((e) -> explorerTree.getTreeModel().collapseAll()));
+        registerHandler(expandAll.addClickHandler((e) -> explorerTree.getTreeModel().expandAll()));
+        registerHandler(locate.addClickHandler((e) -> LocateDocEvent.fire(this, selectedDoc)));
+        registerHandler(find.addClickHandler((e) -> ShowFindInContentEvent.fire(this)));
+        registerHandler(add.addClickHandler((e) -> newItem(add.getElement())));
+        registerHandler(delete.addClickHandler((e) -> deleteItem()));
+        registerHandler(filter.addClickHandler((e) -> showTypeFilter(filter.getElement())));
         registerHandler(showAlertsBtn.addClickHandler((e) -> {
             explorerTree.setShowAlerts(showAlertsBtn.getState());
             explorerTree.refresh();

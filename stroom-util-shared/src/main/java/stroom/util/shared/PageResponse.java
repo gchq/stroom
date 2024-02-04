@@ -30,6 +30,8 @@ import java.util.Objects;
 @Schema(description = "Details of the page of results being returned.")
 public class PageResponse implements Serializable {
 
+    private static final PageResponse EMPTY = new PageResponse(0L, 0, 0L, true);
+
     @JsonProperty
     @JsonPropertyDescription("The offset of the first item in the page relative to the full result set, zero based.")
     private final long offset;
@@ -102,6 +104,10 @@ public class PageResponse implements Serializable {
                 : "");
     }
 
+    public static PageResponse empty() {
+        return EMPTY;
+    }
+
     public Builder copy() {
         return new Builder(this);
     }
@@ -148,6 +154,7 @@ public class PageResponse implements Serializable {
         }
 
         public PageResponse build() {
+
             return new PageResponse(offset, length, total, exact);
         }
     }

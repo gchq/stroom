@@ -24,7 +24,7 @@ import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.explorer.shared.FetchExplorerNodeResult;
-import stroom.explorer.shared.FindExplorerNodeCriteria;
+import stroom.explorer.shared.FetchExplorerNodesRequest;
 import stroom.security.api.SecurityContext;
 import stroom.security.impl.DocumentPermissionServiceImpl;
 import stroom.security.impl.UserService;
@@ -78,7 +78,7 @@ class TestExplorerTreePerformance extends AbstractCoreIntegrationTest {
     @Test
     void testLargeTreePerformance() {
         securityContext.asProcessingUser(() -> {
-            final FindExplorerNodeCriteria findExplorerNodeCriteria = new FindExplorerNodeCriteria(
+            final FetchExplorerNodesRequest findExplorerNodeCriteria = new FetchExplorerNodesRequest(
                     new HashSet<>(),
                     new HashSet<>(),
                     new ExplorerTreeFilter(
@@ -88,7 +88,8 @@ class TestExplorerTreePerformance extends AbstractCoreIntegrationTest {
                             null,
                             Collections.singleton(DocumentPermissionNames.READ),
                             null,
-                            false),
+                            false,
+                            null),
                     Integer.MAX_VALUE,
                     new HashSet<>(),
                     true);
@@ -153,7 +154,7 @@ class TestExplorerTreePerformance extends AbstractCoreIntegrationTest {
         });
     }
 
-    private ExplorerNode expandTree(final FindExplorerNodeCriteria findExplorerNodeCriteria,
+    private ExplorerNode expandTree(final FetchExplorerNodesRequest findExplorerNodeCriteria,
                                     final int expected) {
         final AtomicInteger count = new AtomicInteger();
         final AtomicReference<ExplorerNode> lastChild = new AtomicReference<>();

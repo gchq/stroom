@@ -16,6 +16,7 @@
 
 package stroom.explorer.impl;
 
+import stroom.docref.DocContentHighlights;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.docrefinfo.api.DocRefInfoService;
@@ -30,7 +31,6 @@ import stroom.explorer.shared.AddRemoveTagsRequest;
 import stroom.explorer.shared.BulkActionResult;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypes;
-import stroom.explorer.shared.ExplorerDocContentMatch;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerNodeInfo;
 import stroom.explorer.shared.ExplorerNodePermissions;
@@ -42,8 +42,12 @@ import stroom.explorer.shared.ExplorerServiceMoveRequest;
 import stroom.explorer.shared.ExplorerServiceRenameRequest;
 import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.explorer.shared.FetchExplorerNodeResult;
-import stroom.explorer.shared.FindExplorerNodeCriteria;
-import stroom.explorer.shared.FindExplorerNodeQuery;
+import stroom.explorer.shared.FetchExplorerNodesRequest;
+import stroom.explorer.shared.FetchHighlightsRequest;
+import stroom.explorer.shared.FindInContentRequest;
+import stroom.explorer.shared.FindInContentResult;
+import stroom.explorer.shared.FindRequest;
+import stroom.explorer.shared.FindResult;
 import stroom.security.api.DocumentPermissionService;
 import stroom.security.user.api.UserNameService;
 import stroom.util.NullSafe;
@@ -183,7 +187,7 @@ class ExplorerResourceImpl implements ExplorerResource {
     public DocRef decorate(final DocRef docRef) {
         return NullSafe.get(docRef,
                 docRef2 -> docRefInfoServiceProvider.get()
-                .decorate(docRef, true));
+                        .decorate(docRef, true));
     }
 
     @Override
@@ -232,7 +236,7 @@ class ExplorerResourceImpl implements ExplorerResource {
 
     @Override
     @AutoLogged(value = OperationType.MANUALLY_LOGGED)
-    public FetchExplorerNodeResult fetchExplorerNodes(final FindExplorerNodeCriteria request) {
+    public FetchExplorerNodeResult fetchExplorerNodes(final FetchExplorerNodesRequest request) {
 
         return stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
                 .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "fetchExplorerNodes"))
@@ -271,7 +275,17 @@ class ExplorerResourceImpl implements ExplorerResource {
     }
 
     @Override
-    public ResultPage<ExplorerDocContentMatch> findContent(final FindExplorerNodeQuery request) {
-        return explorerServiceProvider.get().findContent(request);
+    public ResultPage<FindResult> find(final FindRequest request) {
+        return explorerServiceProvider.get().find(request);
+    }
+
+    @Override
+    public ResultPage<FindInContentResult> findInContent(final FindInContentRequest request) {
+        return explorerServiceProvider.get().findInContent(request);
+    }
+
+    @Override
+    public DocContentHighlights fetchHighlights(final FetchHighlightsRequest request) {
+        return explorerServiceProvider.get().fetchHighlights(request);
     }
 }

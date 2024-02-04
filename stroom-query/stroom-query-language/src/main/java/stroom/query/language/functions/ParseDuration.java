@@ -91,6 +91,10 @@ class ParseDuration extends AbstractFunction {
         return Type.DURATION;
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static final class Gen extends AbstractSingleChildGenerator {
 
         Gen(final Generator childGenerator) {

@@ -1851,7 +1851,7 @@ button.main-menu svg {
     flex-grow: 0;
     align-items: end;
     white-space: nowrap;
-    opacity: .7;
+    color: var(--navigation__text-color);
 }
 
 .findCell-sub {

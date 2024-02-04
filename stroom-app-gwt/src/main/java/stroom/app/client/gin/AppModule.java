@@ -35,6 +35,7 @@ import stroom.data.grid.client.PagerView;
 import stroom.data.grid.client.PagerViewImpl;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.view.LinkTabPanelViewImpl;
+import stroom.explorer.client.presenter.AbstractFindPresenter;
 import stroom.explorer.client.presenter.EntityCheckTreePresenter;
 import stroom.explorer.client.presenter.EntityCheckTreePresenter.EntityCheckTreeView;
 import stroom.explorer.client.presenter.EntityTreePresenter;
@@ -48,12 +49,16 @@ import stroom.explorer.client.presenter.ExplorerNodeRemoveTagsPresenter.Explorer
 import stroom.explorer.client.presenter.ExplorerTreePresenter;
 import stroom.explorer.client.presenter.ExplorerTreePresenter.ExplorerTreeProxy;
 import stroom.explorer.client.presenter.ExplorerTreePresenter.ExplorerTreeView;
+import stroom.explorer.client.presenter.FindInContentPresenter;
+import stroom.explorer.client.presenter.FindInContentPresenter.FindInContentProxy;
+import stroom.explorer.client.presenter.FindInContentPresenter.FindInContentView;
 import stroom.explorer.client.presenter.FindPresenter;
 import stroom.explorer.client.presenter.FindPresenter.FindProxy;
-import stroom.explorer.client.presenter.FindPresenter.FindView;
 import stroom.explorer.client.presenter.NavigationPresenter;
 import stroom.explorer.client.presenter.NavigationPresenter.NavigationProxy;
 import stroom.explorer.client.presenter.NavigationPresenter.NavigationView;
+import stroom.explorer.client.presenter.RecentItemsPresenter;
+import stroom.explorer.client.presenter.RecentItemsPresenter.RecentItemsProxy;
 import stroom.explorer.client.presenter.TypeFilterPresenter;
 import stroom.explorer.client.presenter.TypeFilterPresenter.TypeFilterView;
 import stroom.explorer.client.presenter.TypeFilterViewImpl;
@@ -62,6 +67,7 @@ import stroom.explorer.client.view.EntityTreeViewImpl;
 import stroom.explorer.client.view.ExplorerNodeEditTagsViewImpl;
 import stroom.explorer.client.view.ExplorerNodeRemoveTagsViewImpl;
 import stroom.explorer.client.view.ExplorerTreeViewImpl;
+import stroom.explorer.client.view.FindInContentViewImpl;
 import stroom.explorer.client.view.FindViewImpl;
 import stroom.explorer.client.view.NavigationViewImpl;
 import stroom.hyperlink.client.HyperlinkEventHandlerImpl;
@@ -157,7 +163,20 @@ public class AppModule extends AbstractPresenterModule {
                 ExplorerNodeRemoveTagsViewImpl.class,
                 ExplorerNodeRemoveTagsProxy.class);
 
-        bindPresenter(FindPresenter.class, FindView.class, FindViewImpl.class, FindProxy.class);
+        bindPresenter(
+                FindInContentPresenter.class,
+                FindInContentView.class,
+                FindInContentViewImpl.class,
+                FindInContentProxy.class);
+        bindSharedView(
+                AbstractFindPresenter.FindView.class,
+                FindViewImpl.class);
+        bindPresenter(
+                FindPresenter.class,
+                FindProxy.class);
+        bindPresenter(
+                RecentItemsPresenter.class,
+                RecentItemsProxy.class);
 
         // Menu
         bind(Menu.class).asEagerSingleton();

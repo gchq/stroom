@@ -16,10 +16,12 @@
 
 package stroom.explorer.client.presenter;
 
+import stroom.docref.DocRef;
 import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.explorer.shared.NodeFlag;
 import stroom.util.shared.GwtNullSafe;
 
+import java.util.List;
 import java.util.Set;
 
 public class ExplorerTreeFilterBuilder {
@@ -31,6 +33,7 @@ public class ExplorerTreeFilterBuilder {
     private Set<String> requiredPermissions;
     private String nameFilter;
     private boolean nameFilterChange;
+    private List<DocRef> recentItems;
 
     public void setIncludedTypeSet(final Set<String> types) {
         includedTypes = types;
@@ -96,6 +99,10 @@ public class ExplorerTreeFilterBuilder {
         }
     }
 
+    public void setRecentItems(final List<DocRef> recentItems) {
+        this.recentItems = recentItems;
+    }
+
     public ExplorerTreeFilter build() {
         final boolean nameFilterChange = this.nameFilterChange;
         this.nameFilterChange = false;
@@ -107,6 +114,7 @@ public class ExplorerTreeFilterBuilder {
                 nodeFlags,
                 SetUtil.copySet(requiredPermissions),
                 nameFilter,
-                nameFilterChange);
+                nameFilterChange,
+                recentItems);
     }
 }

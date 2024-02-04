@@ -9,7 +9,7 @@ import java.util.Objects;
 import java.util.Set;
 
 @JsonInclude(Include.NON_NULL)
-public class FindExplorerNodeCriteria {
+public class FetchExplorerNodesRequest {
 
     @JsonProperty
     private final Set<ExplorerNodeKey> openItems;
@@ -25,7 +25,7 @@ public class FindExplorerNodeCriteria {
     private final boolean showAlerts;
 
     @JsonCreator
-    public FindExplorerNodeCriteria(
+    public FetchExplorerNodesRequest(
             @JsonProperty("openItems") final Set<ExplorerNodeKey> openItems,
             @JsonProperty("temporaryOpenedItems") final Set<ExplorerNodeKey> temporaryOpenedItems,
             @JsonProperty("filter") final ExplorerTreeFilter filter,
@@ -72,7 +72,7 @@ public class FindExplorerNodeCriteria {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        final FindExplorerNodeCriteria criteria = (FindExplorerNodeCriteria) o;
+        final FetchExplorerNodesRequest criteria = (FetchExplorerNodesRequest) o;
         return Objects.equals(openItems, criteria.openItems) &&
                 Objects.equals(temporaryOpenedItems, criteria.temporaryOpenedItems) &&
                 Objects.equals(filter, criteria.filter) &&
