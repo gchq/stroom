@@ -310,7 +310,7 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         @Inject
         HexToStringFunction(final Provider<HexToString> functionCallProvider) {
             super(
-                    "hex-to-string",
+                    HexToString.FUNCTION_NAME,
                     2,
                     2,
                     new SequenceType[]{
