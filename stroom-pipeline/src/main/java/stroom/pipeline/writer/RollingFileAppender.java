@@ -25,11 +25,12 @@ import stroom.pipeline.factory.PipelineProperty;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.svg.shared.SvgImage;
-import stroom.util.io.CompressionUtil.CompressionMethod;
+import stroom.util.io.CompressionUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.PathCreator;
 
 import jakarta.inject.Inject;
+import org.apache.commons.compress.compressors.CompressorStreamFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -71,8 +72,7 @@ public class RollingFileAppender extends AbstractRollingAppender {
     private String fileNamePattern;
     private String rolledFileNamePattern;
     private boolean useCompression;
-    private CompressionMethod compressionMethod = CompressionMethod.GZIP;
-    private int compressionLevel = 4;
+    private String compressionMethod = CompressorStreamFactory.GZIP;
     private String filePermissions;
     private String dir;
     private String fileName;
@@ -128,7 +128,6 @@ public class RollingFileAppender extends AbstractRollingAppender {
                 file,
                 useCompression,
                 compressionMethod,
-                compressionLevel,
                 permissions
         );
     }
@@ -262,19 +261,12 @@ public class RollingFileAppender extends AbstractRollingAppender {
     }
 
     @PipelineProperty(
-            description = "Compression method to apply, if enabled. Available types: GZIP, BZIP2.",
-            defaultValue = "GZIP",
-            displayPriority = 8)
+            description = "Compression method to apply, if compression is enabled. Supported values: " +
+                    CompressionUtil.SUPPORTED_COMPRESSORS + ".",
+            defaultValue = CompressorStreamFactory.GZIP,
+            displayPriority = 6)
     public void setCompressionMethod(final String compressionMethod) {
-        this.compressionMethod = CompressionMethod.valueOf(compressionMethod);
-    }
-
-    @PipelineProperty(
-            description = "Compression level, in the range 1 (fastest) through 9 (slowest).",
-            defaultValue = "4",
-            displayPriority = 7)
-    public void setCompressionLevel(final int compressionLevel) {
-        this.compressionLevel = compressionLevel;
+        this.compressionMethod = compressionMethod;
     }
 
     @PipelineProperty(description = "Set file system permissions of finished files (example: 'rwxr--r--')",

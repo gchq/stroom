@@ -16,7 +16,6 @@
 
 package stroom.pipeline.writer;
 
-import org.apache.commons.compress.compressors.bzip2.BZip2CompressorOutputStream;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.factory.ConfigurableElement;
@@ -25,13 +24,13 @@ import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.svg.shared.SvgImage;
 import stroom.util.io.ByteCountOutputStream;
-import stroom.util.io.CompressionUtil.CompressionMethod;
+import stroom.util.io.CompressionUtil;
 import stroom.util.io.FileUtil;
-import stroom.util.io.GZipByteCountOutputStream;
-import stroom.util.io.GZipOutputStream;
 import stroom.util.io.PathCreator;
 
 import jakarta.inject.Inject;
+import org.apache.commons.compress.compressors.CompressorException;
+import org.apache.commons.compress.compressors.CompressorStreamFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -71,8 +70,7 @@ public class FileAppender extends AbstractAppender {
     private ByteCountOutputStream byteCountOutputStream;
     private String[] outputPaths;
     private boolean useCompression = false;
-    private CompressionMethod compressionMethod = CompressionMethod.GZIP;
-    private int compressionLevel = 4;
+    private String compressionMethod = CompressorStreamFactory.GZIP;
     private String filePermissions;
 
     @Inject
@@ -134,19 +132,8 @@ public class FileAppender extends AbstractAppender {
 
             // Get a writer for the new lock file.
             if (useCompression) {
-                switch (compressionMethod) {
-                    case GZIP:
-                        final GZipOutputStream gzipOutputStream = new GZipOutputStream(Files.newOutputStream(lockFile));
-                        gzipOutputStream.setCompressionLevel(compressionLevel);
-                        byteCountOutputStream = new GZipByteCountOutputStream(gzipOutputStream);
-                        break;
-                    case BZIP2:
-                        byteCountOutputStream = new ByteCountOutputStream(
-                                new BZip2CompressorOutputStream(Files.newOutputStream(lockFile), compressionLevel));
-                        break;
-                    default:
-                        throw new IllegalArgumentException("Unsupported compression method: " + compressionMethod);
-                }
+                byteCountOutputStream = new ByteCountOutputStream(new CompressorStreamFactory()
+                        .createCompressorOutputStream(compressionMethod, Files.newOutputStream(lockFile)));
             } else {
                 byteCountOutputStream = new ByteCountOutputStream(
                         new BufferedOutputStream(Files.newOutputStream(lockFile)));
@@ -156,6 +143,9 @@ public class FileAppender extends AbstractAppender {
 
         } catch (final RuntimeException e) {
             throw new IOException(e.getMessage(), e);
+        } catch (CompressorException e) {
+            error(e.getMessage(), e);
+            throw new IOException(e);
         }
     }
 
@@ -227,19 +217,12 @@ public class FileAppender extends AbstractAppender {
     }
 
     @PipelineProperty(
-            description = "Compression method to apply, if enabled. Available types: GZIP, BZIP2.",
-            defaultValue = "GZIP",
+            description = "Compression method to apply, if compression is enabled. Supported values: " +
+                    CompressionUtil.SUPPORTED_COMPRESSORS + ".",
+            defaultValue = CompressorStreamFactory.GZIP,
             displayPriority = 6)
     public void setCompressionMethod(final String compressionMethod) {
-        this.compressionMethod = CompressionMethod.valueOf(compressionMethod);
-    }
-
-    @PipelineProperty(
-            description = "Compression level, in the range 1 (fastest) through 9 (slowest).",
-            defaultValue = "4",
-            displayPriority = 7)
-    public void setCompressionLevel(final int compressionLevel) {
-        this.compressionLevel = compressionLevel;
+        this.compressionMethod = compressionMethod;
     }
 
     @PipelineProperty(description = "Set file system permissions of finished files (example: 'rwxr--r--')",
