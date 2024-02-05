@@ -45,7 +45,8 @@ class TestHexToString extends AbstractXsltFunctionTest<HexToString> {
 
     @Test
     void decodeUtf16Be() {
-        final Sequence sequence = callFunctionWithSimpleArgs("00 74 00 65 00 73 00 74 00 69 00 6e 00 67 00 20 00 31 00 32 00 33",
+        final Sequence sequence = callFunctionWithSimpleArgs(
+                "00 74 00 65 00 73 00 74 00 69 00 6e 00 67 00 20 00 31 00 32 00 33",
                 "UTF-16BE");
         assertThat(getAsStringValue(sequence).orElseThrow())
                 .isEqualTo("testing 123")
