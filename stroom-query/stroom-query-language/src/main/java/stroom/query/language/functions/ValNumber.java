@@ -1,5 +1,11 @@
 package stroom.query.language.functions;
 
-public interface ValNumber extends Val {
+public sealed interface ValNumber
+        extends Val
+        permits ValDate, ValDouble, ValDuration, ValFloat, ValInteger, ValLong {
 
+    @Override
+    default boolean hasNumericValue() {
+        return true;
+    }
 }
