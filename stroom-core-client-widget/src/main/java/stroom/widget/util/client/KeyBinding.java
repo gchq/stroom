@@ -1,8 +1,11 @@
 package stroom.widget.util.client;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.BrowserEvents;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Timer;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -15,7 +18,13 @@ public class KeyBinding {
     private static final List<Binding> BINDINGS = new ArrayList<>();
     private static final Map<Action, Command> COMMANDS = new HashMap<>();
 
-    private static final DoubleClickTester DOUBLE_PRESS_TESTER = new DoubleClickTester();
+    private static int shiftCount = 0;
+    private static final Timer doubleShiftTimer = new Timer() {
+        @Override
+        public void run() {
+            shiftCount = 0;
+        }
+    };
 
     static {
         add(Action.MOVE_UP, KeyCodes.KEY_W, KeyCodes.KEY_K, KeyCodes.KEY_UP);
@@ -57,19 +66,76 @@ public class KeyBinding {
         return null;
     }
 
-    public static Action getAction(final NativeEvent e) {
-        final Shortcut shortcut = new Builder()
-                .keyCode(e.getKeyCode())
-                .shift(e.getShiftKey())
-                .ctrl(e.getCtrlKey())
-                .alt(e.getAltKey())
-                .meta(e.getMetaKey())
-                .build();
+    public static Action test(final NativeEvent e) {
+//        log(e);
 
-        // Test for double press.
-        testFind(e, shortcut);
+        Command command = null;
+        if (BrowserEvents.KEYDOWN.equals(e.getType())) {
+            if (e.getKeyCode() == KeyCodes.KEY_SHIFT &&
+                    e.getShiftKey() &&
+                    !e.getCtrlKey() &&
+                    !e.getAltKey() &&
+                    !e.getMetaKey()) {
+                if (shiftCount == 0) {
+                    shiftCount = 1;
+                    doubleShiftTimer.cancel();
+                    doubleShiftTimer.schedule(DoubleClickTester.DOUBLE_CLICK_PERIOD);
+                } else if (shiftCount == 2) {
+                    shiftCount = 0;
+                    command = COMMANDS.get(Action.FIND);
+                    if (command != null) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        command.execute();
+                    }
+                }
+            } else {
+                shiftCount = 0;
+                doubleShiftTimer.cancel();
+            }
+        } else if (BrowserEvents.KEYUP.equals(e.getType())) {
+//            GWT.log("key up " + e.getKeyCode());
+            if (e.getKeyCode() == KeyCodes.KEY_SHIFT &&
+                    !e.getShiftKey() &&
+                    !e.getCtrlKey() &&
+                    !e.getAltKey() &&
+                    !e.getMetaKey()) {
+//                GWT.log("key up shift");
+                if (shiftCount == 1) {
+                    shiftCount = 2;
+                }
+            } else {
+                shiftCount = 0;
+                doubleShiftTimer.cancel();
+            }
+        }
 
-//        GWT.log("SHORTCUT = " + shortcut);
+        if (command == null && BrowserEvents.KEYDOWN.equals(e.getType())) {
+            return onKeyDown(e);
+        }
+
+        return null;
+    }
+
+    private static void log(final NativeEvent e) {
+        GWT.log(e.getType() +
+                "\nkeyCode=" +
+                e.getKeyCode() +
+                "\nshift=" +
+                e.getShiftKey() +
+                "\nctrlKey=" +
+                e.getCtrlKey() +
+                "\naltKey=" +
+                e.getAltKey() +
+                "\nmetaKey=" +
+                e.getMetaKey() +
+                "\n\n");
+    }
+
+    private static Action onKeyDown(final NativeEvent e) {
+        final Shortcut shortcut = getShortcut(e);
+
+//        GWT.log("KEYDOWN = " + shortcut);
 
         final Binding binding = getBinding(shortcut);
         if (binding != null) {
@@ -91,24 +157,14 @@ public class KeyBinding {
         return null;
     }
 
-    private static void testFind(final NativeEvent e,
-                                 final Shortcut shortcut) {
-        if (shortcut.keyCode == KeyCodes.KEY_SHIFT &&
-                shortcut.shift &&
-                !shortcut.ctrl &&
-                !shortcut.alt &&
-                !shortcut.meta) {
-            e.preventDefault();
-            e.stopPropagation();
-            if (DOUBLE_PRESS_TESTER.isDoubleClick(shortcut)) {
-                final Command command = COMMANDS.get(Action.FIND);
-                if (command != null) {
-                    command.execute();
-                }
-            }
-        } else {
-            DOUBLE_PRESS_TESTER.clear();
-        }
+    private static Shortcut getShortcut(final NativeEvent e) {
+        return new Builder()
+                .keyCode(e.getKeyCode())
+                .shift(e.getShiftKey())
+                .ctrl(e.getCtrlKey())
+                .alt(e.getAltKey())
+                .meta(e.getMetaKey())
+                .build();
     }
 
     private static Binding getBinding(final Shortcut shortcut) {

@@ -24,10 +24,11 @@ public abstract class AbstractSelectionEventManager<T>
     public void onCellPreview(final CellPreviewEvent<T> event) {
         final NativeEvent nativeEvent = event.getNativeEvent();
         final String type = nativeEvent.getType();
-        if (BrowserEvents.KEYDOWN.equals(type)) {
-            final Action action = KeyBinding.getAction(nativeEvent);
+
+        final Action action = KeyBinding.test(nativeEvent);
+        if (action != null) {
             final List<T> items = cellTable.getVisibleItems();
-            if (action != null && items.size() > 0) {
+            if (items.size() > 0) {
                 switch (action) {
                     case MOVE_UP:
                         onMoveUp(event);

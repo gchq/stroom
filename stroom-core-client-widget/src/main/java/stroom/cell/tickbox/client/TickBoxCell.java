@@ -115,10 +115,10 @@ public class TickBoxCell extends AbstractEditableCell<TickBoxState, TickBoxState
             super.onBrowserEvent(context, parent, value, event, valueUpdater);
             final String type = event.getType();
 
-//            GWT.log(type);
+            final Action action = KeyBinding.test(event);
             if (clickable && isTickBox(event) &&
                     ((BrowserEvents.MOUSEDOWN.equals(type) && MouseUtil.isPrimary(event)) ||
-                            (BrowserEvents.KEYDOWN.equals(type) && KeyBinding.getAction(event) == Action.SELECT))) {
+                            (BrowserEvents.KEYDOWN.equals(type) && action == Action.SELECT))) {
                 event.preventDefault();
 
                 TickBoxState state = value;

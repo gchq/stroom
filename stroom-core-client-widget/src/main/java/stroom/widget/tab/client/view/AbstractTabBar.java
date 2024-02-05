@@ -389,8 +389,8 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
     @Override
     public void onBrowserEvent(final Event event) {
 //        GWT.log("onBrowserEvent " + event.getType());
+        final Action action = KeyBinding.test(event);
         if (Event.ONKEYDOWN == event.getTypeInt()) {
-            final Action action = KeyBinding.getAction(event);
             TabData tabData = null;
             if (action != null) {
                 switch (action) {
