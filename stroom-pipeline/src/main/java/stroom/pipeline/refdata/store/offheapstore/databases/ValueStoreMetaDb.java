@@ -39,8 +39,6 @@ import org.lmdbjava.Cursor;
 import org.lmdbjava.GetOp;
 import org.lmdbjava.PutFlags;
 import org.lmdbjava.Txn;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 import java.util.Optional;
@@ -58,14 +56,13 @@ import java.util.OptionalInt;
  * key        | value
  * (hash|id)  | (type|referenceCount)
  * ---------------------------------------------
- * (1234|00)  | (0|0001)
- * (1234|01)  | (0|0001)
- * (4567|00)  | (0|0001)
- * (7890|00)  | (1|0001)
+ * (1234|00)  | (0|001)
+ * (1234|01)  | (0|001)
+ * (4567|00)  | (0|001)
+ * (7890|00)  | (1|001)
  */
 public class ValueStoreMetaDb extends AbstractLmdbDb<ValueStoreKey, ValueStoreMeta> {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ValueStoreMetaDb.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(ValueStoreMetaDb.class);
 
     private static final String DB_NAME = "ValueStoreMeta";
