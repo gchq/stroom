@@ -4,9 +4,13 @@
              xmlns:l="urn:import:stroom.data.client.view"
              xmlns:b="urn:import:stroom.widget.button.client">
     <g:FlowPanel styleName="TextView max dock-container-vertical">
-        <b:ButtonPanel addStyleNames="dock-min icon-button-group">
-            <b:InlineSvgButton ui:field="close" title="Close" enabled="true"/>
-        </b:ButtonPanel>
+        <g:FlowPanel styleName="dock-min dock-container-horizontal">
+            <b:ButtonPanel addStyleNames="dock-max icon-button-group">
+            </b:ButtonPanel>
+            <b:ButtonPanel addStyleNames="dock-min icon-button-group">
+                <b:InlineSvgButton ui:field="close" title="Close" enabled="true"/>
+            </b:ButtonPanel>
+        </g:FlowPanel>
         <g:FlowPanel styleName="dock-max stepping-button-container">
             <g:SimplePanel ui:field="content" styleName="max"/>
             <b:FabButton ui:field="steppingButton"
