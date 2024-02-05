@@ -50,6 +50,10 @@ class HexToString extends StroomExtensionFunctionCall {
             } else {
                 result = "";
             }
+        } catch (final IllegalArgumentException e) {
+            final StringBuilder sb = new StringBuilder();
+            sb.append(e.getMessage());
+            outputError(context, sb, e);
         } catch (final XPathException | RuntimeException e) {
             final StringBuilder sb = new StringBuilder();
             sb.append(e.getMessage());
@@ -65,7 +69,7 @@ class HexToString extends StroomExtensionFunctionCall {
     private ByteBuffer decodeHex(final String hex) {
         final int length = hex.length();
         if (length % 2 > 0) {
-            throw new IllegalArgumentException("Invalid string length: " + length);
+            throw new RuntimeException("Invalid string length: " + length);
         }
 
         final ByteBuffer bytes = ByteBuffer.allocate(length / 2);
