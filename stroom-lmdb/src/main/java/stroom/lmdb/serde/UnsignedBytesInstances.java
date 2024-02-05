@@ -19,6 +19,7 @@ package stroom.lmdb.serde;
 
 import stroom.bytebuffer.ByteBufferUtils;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.ModelStringUtil;
 
 import java.nio.ByteBuffer;
 import java.util.Objects;
@@ -162,7 +163,9 @@ public enum UnsignedBytesInstances implements UnsignedBytes {
                 if (b == (byte) 0xFF) {
                     if (i == index) {
                         // Every byte is FF so we can't increment anymore
-                        throw new IllegalArgumentException("Can't increment without overflowing");
+                        throw new IllegalArgumentException(
+                                "Can't increment without overflowing. Maximum value is "
+                                        + ModelStringUtil.formatCsv(maxVal));
                     }
                     // Byte rolls around to zero and we need to carry over to the next one
                     byteBuffer.put(i, (byte) 0x00);
