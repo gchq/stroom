@@ -6,15 +6,27 @@ public class ElementUtil {
 
     public static boolean hasClassName(final Element element,
                                        final String className) {
-        return hasClassName(element, className, 0, 0);
+        return findMatching(element, className, 0, 0) != null;
     }
 
     public static boolean hasClassName(final Element element,
                                        final String className,
                                        final int depth,
                                        final int maxDepth) {
+        return findMatching(element, className, depth, maxDepth) != null;
+    }
+
+    public static Element findMatching(final Element element,
+                                       final String className) {
+        return findMatching(element, className, 0, 0);
+    }
+
+    public static Element findMatching(final Element element,
+                                       final String className,
+                                       final int depth,
+                                       final int maxDepth) {
         if (element == null) {
-            return false;
+            return null;
         }
 
         /*
@@ -28,14 +40,14 @@ public class ElementUtil {
          */
         final String elementClassName = element.getAttribute("class");
         if (elementClassName.contains(className)) {
-            return true;
+            return element;
         }
 
         if (depth < maxDepth) {
-            return hasClassName(element.getParentElement(), className, depth + 1, maxDepth);
+            return findMatching(element.getParentElement(), className, depth + 1, maxDepth);
         }
 
-        return false;
+        return null;
     }
 
     public static Rect getClientRect(Element el) {

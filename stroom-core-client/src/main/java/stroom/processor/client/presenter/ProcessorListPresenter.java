@@ -28,6 +28,7 @@ import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.cell.valuespinner.client.ValueSpinnerCell;
 import stroom.cell.valuespinner.shared.EditableInteger;
 import stroom.data.client.presenter.ColumnSizeConstants;
+import stroom.data.client.presenter.DocRefCell;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
@@ -272,25 +273,29 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
     }
 
     private void addPipelineColumn() {
-        dataGrid.addResizableColumn(new Column<ProcessorListRow, String>(new TextCell()) {
+        dataGrid.addResizableColumn(new Column<ProcessorListRow, DocRef>(new DocRefCell(getEventBus(), false)) {
             @Override
-            public String getValue(final ProcessorListRow row) {
-                String name = null;
+            public DocRef getValue(final ProcessorListRow row) {
+                DocRef docRef = null;
                 if (row instanceof ProcessorFilterRow) {
                     final ProcessorFilterRow processorFilterRow = (ProcessorFilterRow) row;
                     final ProcessorFilter processorFilter = processorFilterRow.getProcessorFilter();
-                    name = processorFilter.getPipelineName();
-                    if (name == null) {
+
+                    if (processorFilter.getPipelineUuid() != null) {
+                        docRef = new DocRef(
+                                PipelineDoc.DOCUMENT_TYPE,
+                                processorFilter.getPipelineUuid(),
+                                processorFilter.getPipelineName());
+                    }
+
+                    if (docRef == null) {
                         final Processor processor = processorFilter.getProcessor();
                         if (processor != null) {
-                            final String pipelineName = processor.getPipelineName();
-                            if (pipelineName != null) {
-                                name = pipelineName;
-                            } else {
-                                final String pipelineUuid = processor.getPipelineUuid();
-                                if (pipelineUuid != null) {
-                                    name = pipelineUuid;
-                                }
+                            if (processor.getPipelineUuid() != null || processor.getPipelineName() != null) {
+                                docRef = new DocRef(
+                                        PipelineDoc.DOCUMENT_TYPE,
+                                        processor.getPipelineUuid(),
+                                        processor.getPipelineName());
                             }
                         }
                     }
@@ -298,19 +303,16 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
                     final ProcessorRow processorRow = (ProcessorRow) row;
                     final Processor processor = processorRow.getProcessor();
                     if (processor != null) {
-                        final String pipelineName = processor.getPipelineName();
-                        if (pipelineName != null) {
-                            name = pipelineName;
-                        } else {
-                            final String pipelineUuid = processor.getPipelineUuid();
-                            if (pipelineUuid != null) {
-                                name = pipelineUuid;
-                            }
+                        if (processor.getPipelineUuid() != null || processor.getPipelineName() != null) {
+                            docRef = new DocRef(
+                                    PipelineDoc.DOCUMENT_TYPE,
+                                    processor.getPipelineUuid(),
+                                    processor.getPipelineName());
                         }
                     }
                 }
 
-                return name;
+                return docRef;
             }
         }, "Pipeline", 300);
     }

@@ -382,7 +382,20 @@
 	border: 1px solid var(--control__border-color);
 	background: var(--control__background-color);
 	color: var(--control__text-color);
-	white-space: pre;
+	padding: 5px;
+  	-webkit-user-select: text;
+  	-moz-user-select: text;
+  	user-select: text;
+}
+
+.infoLine {
+    display: flex;
+    gap: 5px;
+}
+
+.docRefLinkCopy,
+.docRefLinkOpen {
+    cursor: pointer;
 }
 
 .userTaskView-layout {
@@ -2077,4 +2090,17 @@ button.main-menu svg {
     margin-bottom: 0px;
 }
 
+.docRefLinkContainer {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
 
+.docRefLinkContainer .svg-image {
+    opacity: 0;
+}
+
+.dataGridCell:hover .docRefLinkContainer .svg-image,
+.docRefLinkContainer:hover .svg-image {
+    opacity: .8;
+}

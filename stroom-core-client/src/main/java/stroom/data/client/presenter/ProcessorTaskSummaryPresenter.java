@@ -129,18 +129,20 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<PagerView>
         };
         dataGrid.addColumn(infoColumn, "<br/>", ColumnSizeConstants.ICON_COL);
 
-        dataGrid.addResizableColumn(new Column<ProcessorTaskSummary, String>(new TextCell()) {
+        dataGrid.addResizableColumn(new Column<ProcessorTaskSummary, DocRef>(
+                new DocRefCell(getEventBus(), false)) {
             @Override
-            public String getValue(final ProcessorTaskSummary row) {
-                return row.getPipeline().getName();
+            public DocRef getValue(final ProcessorTaskSummary row) {
+                return row.getPipeline();
             }
         }, "Pipeline", ColumnSizeConstants.BIG_COL);
 
         dataGrid.addResizableColumn(
-                new OrderByColumn<ProcessorTaskSummary, String>(new TextCell(), ProcessorTaskFields.FIELD_FEED, true) {
+                new OrderByColumn<ProcessorTaskSummary, DocRef>(
+                        new DocRefCell(getEventBus(), true), ProcessorTaskFields.FIELD_FEED, true) {
                     @Override
-                    public String getValue(final ProcessorTaskSummary row) {
-                        return row.getFeed();
+                    public DocRef getValue(final ProcessorTaskSummary row) {
+                        return new DocRef(FeedDoc.DOCUMENT_TYPE, null, row.getFeed());
                     }
                 }, "Feed", ColumnSizeConstants.BIG_COL);
 

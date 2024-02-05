@@ -5,6 +5,7 @@ import stroom.docref.DocRefInfo;
 import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.explorer.shared.DocumentType;
+import stroom.feed.shared.FeedDoc;
 import stroom.security.api.SecurityContext;
 import stroom.util.NullSafe;
 
@@ -124,6 +125,17 @@ class DocRefInfoServiceImpl implements DocRefInfoService {
     @Override
     public DocRef decorate(final DocRef docRef, final boolean force) {
         Objects.requireNonNull(docRef);
+
+        // Allow decorate by name alone if feed (special case).
+        if (FeedDoc.DOCUMENT_TYPE.equals(docRef.getType()) && docRef.getUuid() == null) {
+            final List<DocRef> list = findByName(docRef.getType(), docRef.getName(), false);
+            if (!NullSafe.isEmptyCollection(list)) {
+                return list.getFirst();
+            } else {
+                return null;
+            }
+        }
+
         Objects.requireNonNull(docRef.getUuid(), "DocRef UUID is not set.");
 
         // The passed docRef may have all the parts, but it may be from before a rename, so if force

@@ -37,6 +37,7 @@ import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.EntityChooser;
+import stroom.feed.shared.FeedDoc;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaExpressionUtil;
@@ -340,9 +341,8 @@ public abstract class AbstractMetaListPresenter
     }
 
     void addCreatedColumn() {
-
         dataGrid.addResizableColumn(
-                DataGridUtil.textColumnBuilder((MetaRow metaRow) ->
+                DataGridUtil.copyTextColumnBuilder((MetaRow metaRow) ->
                                 dateTimeFormatter.format(metaRow.getMeta().getCreateMs()))
                         .withSorting(MetaFields.CREATE_TIME)
                         .build(),
@@ -352,11 +352,11 @@ public abstract class AbstractMetaListPresenter
 
     void addFeedColumn() {
         dataGrid.addResizableColumn(
-                DataGridUtil.textColumnBuilder((MetaRow metaRow) ->
-                                Optional.ofNullable(metaRow)
-                                        .map(MetaRow::getMeta)
-                                        .map(Meta::getFeedName)
-                                        .orElse(""))
+                DataGridUtil.docRefColumnBuilder((MetaRow metaRow) ->
+                                        Optional.ofNullable(metaRow)
+                                                .map(this::getFeed)
+                                                .orElse(null),
+                                getEventBus(), true)
                         .withSorting(MetaFields.FEED)
                         .build(),
                 "Feed",
@@ -376,19 +376,38 @@ public abstract class AbstractMetaListPresenter
                 80);
     }
 
+    private DocRef getFeed(final MetaRow metaRow) {
+        if (metaRow.getMeta() != null && metaRow.getMeta().getFeedName() != null) {
+            return new DocRef(
+                    FeedDoc.DOCUMENT_TYPE,
+                    null,
+                    metaRow.getMeta().getFeedName());
+        }
+        return null;
+    }
+
+    private DocRef getPipeline(final MetaRow metaRow) {
+        if (metaRow.getMeta().getProcessorUuid() != null) {
+            if (metaRow.getPipelineName() != null) {
+                return new DocRef(
+                        PipelineDoc.DOCUMENT_TYPE,
+                        metaRow.getMeta().getPipelineUuid(),
+                        metaRow.getPipelineName());
+            } else {
+                return new DocRef(null, null, null);
+            }
+        }
+        return null;
+    }
+
     void addPipelineColumn() {
         dataGrid.addResizableColumn(
-                DataGridUtil
-                        .textColumnBuilder((MetaRow metaRow) -> {
-                            if (metaRow.getMeta().getProcessorUuid() != null) {
-                                if (metaRow.getPipelineName() != null) {
-                                    return metaRow.getPipelineName();
-                                } else {
-                                    return "Not visible";
-                                }
-                            }
-                            return "";
-                        })
+                DataGridUtil.docRefColumnBuilder((MetaRow metaRow) ->
+                                        Optional.ofNullable(metaRow)
+                                                .map(this::getPipeline)
+                                                .orElse(null),
+                                getEventBus(), false)
+                        .withSorting(MetaFields.PIPELINE_NAME)
                         .build(),
                 "Pipeline",
                 ColumnSizeConstants.BIG_COL);

@@ -103,7 +103,11 @@ public class DataGridSelectionEventManager<T>
                 // the parent of the target is the td.
                 if (!"td".equalsIgnoreCase(parentTag)) {
                     final Cell<?> cell = dataGrid.getColumn(event.getColumn()).getCell();
-                    if (cell != null && cell.getConsumedEvents() != null) {
+                    if (cell instanceof EventCell) {
+                        final EventCell eventCell = (EventCell) cell;
+                        consumed = eventCell.isConsumed(event);
+
+                    } else if (cell != null && cell.getConsumedEvents() != null) {
                         if (cell.getConsumedEvents().contains(BrowserEvents.CLICK)
                                 || cell.getConsumedEvents().contains(BrowserEvents.MOUSEDOWN)
                                 || cell.getConsumedEvents().contains(BrowserEvents.MOUSEUP)) {

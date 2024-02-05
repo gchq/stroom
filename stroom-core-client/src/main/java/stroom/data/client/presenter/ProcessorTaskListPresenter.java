@@ -164,14 +164,14 @@ public class ProcessorTaskListPresenter
                     }
                 }, "Node", ColumnSizeConstants.MEDIUM_COL);
         dataGrid
-                .addResizableColumn(new OrderByColumn<ProcessorTask, String>(
-                        new TextCell(), ProcessorTaskFields.FIELD_FEED, true) {
+                .addResizableColumn(new OrderByColumn<ProcessorTask, DocRef>(
+                        new DocRefCell(getEventBus(), true), ProcessorTaskFields.FIELD_FEED, true) {
                     @Override
-                    public String getValue(final ProcessorTask row) {
+                    public DocRef getValue(final ProcessorTask row) {
                         if (row.getFeedName() != null) {
-                            return row.getFeedName();
+                            return new DocRef(FeedDoc.DOCUMENT_TYPE, null, row.getFeedName());
                         } else {
-                            return "";
+                            return null;
                         }
                     }
                 }, "Feed", ColumnSizeConstants.BIG_COL);
@@ -187,16 +187,13 @@ public class ProcessorTaskListPresenter
             }
         }, "Priority", 60);
         dataGrid.addResizableColumn(
-                new Column<ProcessorTask, String>(new TextCell()) {
+                new Column<ProcessorTask, DocRef>(new DocRefCell(getEventBus(), false)) {
                     @Override
-                    public String getValue(final ProcessorTask row) {
+                    public DocRef getValue(final ProcessorTask row) {
                         if (row.getProcessorFilter() != null) {
-                            if (row.getProcessorFilter().getPipelineName() != null) {
-                                return row.getProcessorFilter().getPipelineName();
-                            }
+                            return row.getProcessorFilter().getPipeline();
                         }
-                        return "";
-
+                        return null;
                     }
                 }, "Pipeline", ColumnSizeConstants.BIG_COL);
         dataGrid.addResizableColumn(

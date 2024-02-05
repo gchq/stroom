@@ -655,12 +655,13 @@ public class DocumentPluginEventManager extends Plugin {
                     .forType(DocRef.class)
                     .onSuccess(decoratedDocRef -> {
                         if (decoratedDocRef != null) {
-                            docRef.setName(decoratedDocRef.getName());
+//                            docRef.setUuid(decoratedDocRef.getUuid());
+//                            docRef.setName(decoratedDocRef.getName());
+                            documentPlugin.open(decoratedDocRef, forceOpen, fullScreen);
                         }
                     })
                     .call(EXPLORER_RESOURCE)
                     .decorate(docRef);
-            documentPlugin.open(docRef, forceOpen, fullScreen);
         } else {
             throw new IllegalArgumentException("Document type '" + docRef.getType() + "' not registered");
         }
