@@ -45,6 +45,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Supplier;
 
 /**
  * This class executes all tasks that are currently queued for execution. This
@@ -167,8 +168,7 @@ public class DistributedTaskFetcher {
 
     private int doFetch(final TaskContext taskContext) {
         int executingTaskCount = 0;
-        taskContext.info(() -> "Fetching tasks");
-        LOGGER.trace("Trying to fetch tasks");
+        info(taskContext, () -> "Starting task fetch");
 
         // We will force a fetch if it has been more than one minute since
         // our last fetch. This allows the master node to know that the
@@ -179,12 +179,14 @@ public class DistributedTaskFetcher {
         final boolean forceFetch = now.isAfter(lastFetch.plus(1, ChronoUnit.MINUTES));
 
         // Get the trackers.
+        info(taskContext, () -> "Getting trackers");
         final JobNodeTrackers trackers = jobNodeTrackerCache.getTrackers();
 
         // Get this node.
         final String nodeName = nodeInfo.getThisNodeName();
 
         // Find out how many tasks we need in total.
+        info(taskContext, () -> "Get required task count");
         final int count = getRequiredTaskCount(trackers);
 
         // If there are some tasks we need to get then get them.
@@ -202,9 +204,11 @@ public class DistributedTaskFetcher {
                             nodeName,
                             distributedTaskFactory));
 
+                    info(taskContext, () -> "Calling distributed task factory");
                     final List<DistributedTask> tasks = distributedTaskFactory.fetch(
                             nodeName,
                             count);
+                    info(taskContext, () -> "Executing " + tasks.size() + " new tasks");
                     handleResult(nodeName, jobName, tasks);
                     executingTaskCount += tasks.size();
                 }
@@ -283,5 +287,11 @@ public class DistributedTaskFetcher {
             totalRequiredTasks += requiredTaskCount;
         }
         return totalRequiredTasks;
+    }
+
+    private void info(final TaskContext taskContext,
+                      final Supplier<String> messageSupplier) {
+        LOGGER.debug(messageSupplier);
+        taskContext.info(messageSupplier);
     }
 }

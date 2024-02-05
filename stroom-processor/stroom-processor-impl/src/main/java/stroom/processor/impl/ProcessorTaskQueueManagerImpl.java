@@ -35,7 +35,9 @@ import stroom.statistics.api.InternalStatisticsReceiver;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
+import stroom.task.api.TerminateHandlerFactory;
 import stroom.task.api.ThreadPoolImpl;
+import stroom.task.shared.TaskId;
 import stroom.task.shared.ThreadPool;
 import stroom.util.NullSafe;
 import stroom.util.concurrent.ThreadUtil;
@@ -65,6 +67,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -174,7 +177,28 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
      * the task to the node asking for the job
      */
     @Override
-    public ProcessorTaskList assignTasks(final String nodeName, final int count) {
+    public ProcessorTaskList assignTasks(final TaskId sourceTaskId,
+                                         final String nodeName,
+                                         final int count) {
+        final Supplier<ProcessorTaskList> runnable = taskContextFactory.contextResult(
+                "Assign Tasks",
+                TerminateHandlerFactory.NOOP_FACTORY,
+                taskContext -> {
+                    try {
+                        taskContext.getTaskId().setParentId(sourceTaskId);
+                        return assignTasks(nodeName, count, taskContext);
+                    } catch (final RuntimeException e) {
+                        LOGGER.error(e.getMessage(), e);
+                    }
+                    return null;
+                });
+        return runnable.get();
+    }
+
+
+    private ProcessorTaskList assignTasks(final String nodeName,
+                                          final int count,
+                                          final TaskContext taskContext) {
         LOGGER.debug("assignTasks() called for node {}, count {}", nodeName, count);
 
         if (!securityContext.isProcessingUser()) {
@@ -183,15 +207,38 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
         }
 
         final List<ProcessorTask> assignedStreamTasks = new ArrayList<>();
-        int attempt = 0;
-        while (attempt < MAX_ASSIGNMENT_ATTEMPTS) {
-            attempt++;
+        final AtomicInteger attempt = new AtomicInteger();
+        while (attempt.getAndIncrement() < MAX_ASSIGNMENT_ATTEMPTS) {
             try {
+                info(taskContext, () -> "Attempting task assignment " +
+                        "(attempt=" +
+                        attempt.get() +
+                        ")");
                 if (processorConfigProvider.get().isAssignTasks() && count > 0) {
                     // Get local reference to list in case it is swapped out.
                     final List<ProcessorFilter> filters = prioritisedFilters.get();
                     // Try and get a bunch of tasks from the queue to assign to the requesting node.
+                    info(taskContext, () ->
+                            "Attempting task assignment for " +
+                                    filters.size() +
+                                    " filters " +
+                                    "(attempt=" +
+                                    attempt.get() +
+                                    ")");
+                    final AtomicInteger filterCount = new AtomicInteger();
                     for (final ProcessorFilter filter : filters) {
+                        info(taskContext, () ->
+                                "Attempting task assignment for " +
+                                        filterCount.incrementAndGet() +
+                                        "/" +
+                                        filters.size() +
+                                        " filters " +
+                                        " (filter=" +
+                                        filter +
+                                        ", attempt=" +
+                                        attempt.get() +
+                                        ")");
+
                         if (assignedStreamTasks.size() >= count) {
                             break;
                         }
@@ -240,6 +287,12 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
             taskStatusTraceLog.assignTasks(ProcessorTaskQueueManagerImpl.class, assignedStreamTasks, nodeName);
 
             if (LOGGER.isDebugEnabled()) {
+                info(taskContext, () -> "Assigning " +
+                        assignedStreamTasks.size() +
+                        " tasks (" +
+                        count +
+                        " requested) to node " +
+                        nodeName);
                 LOGGER.debug("Assigning " + assignedStreamTasks.size()
                         + " tasks (" + count + " requested) to node " + nodeName);
             }
@@ -247,14 +300,20 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
             // If we don't get any tasks then force synchronous queueing of tasks.
             if (allowTaskQueueFill) {
                 if (assignedStreamTasks.isEmpty()) {
+                    info(taskContext, () -> "Assigned " +
+                            assignedStreamTasks.size() +
+                            " tasks, filling queue synchronously");
                     fillTaskQueueSync();
                 } else {
                     // Kick off a queue fill.
+                    info(taskContext, () -> "Assigned " +
+                            assignedStreamTasks.size() +
+                            " tasks, filling queue asynchronously");
                     fillTaskQueueAsync();
-                    attempt = MAX_ASSIGNMENT_ATTEMPTS;
+                    attempt.set(MAX_ASSIGNMENT_ATTEMPTS);
                 }
             } else {
-                attempt = MAX_ASSIGNMENT_ATTEMPTS;
+                attempt.set(MAX_ASSIGNMENT_ATTEMPTS);
             }
         }
 

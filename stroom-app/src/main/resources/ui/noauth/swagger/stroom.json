@@ -11056,6 +11056,9 @@
           },
           "nodeName" : {
             "type" : "string"
+          },
+          "sourceTaskId" : {
+            "$ref" : "#/components/schemas/TaskId"
           }
         }
       },

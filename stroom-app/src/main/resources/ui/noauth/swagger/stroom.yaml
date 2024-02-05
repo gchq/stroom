@@ -7611,6 +7611,8 @@ components:
           format: int32
         nodeName:
           type: string
+        sourceTaskId:
+          $ref: '#/components/schemas/TaskId'
     AuthenticationState:
       type: object
       properties:
