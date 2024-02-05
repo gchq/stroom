@@ -39,25 +39,33 @@ class HexToString extends StroomExtensionFunctionCall {
             String hex = getSafeString(functionName, context, arguments, 0);
             final String charsetName = getSafeString(functionName, context, arguments, 1);
 
-            // Strip any whitespace characters
-            if (hex != null) {
-                hex = hex.replaceAll("\\s*", "");
+            try {
+                // Strip any whitespace characters
+                if (hex != null) {
+                    hex = hex.replaceAll("\\s*", "");
+                }
+                if (!StringUtil.isBlank(hex)) {
+                    final Charset charset = Charset.forName(charsetName);
+                    final ByteBuffer bytes = decodeHex(hex);
+                    result = charset.decode(bytes).toString();
+                } else {
+                    result = "";
+                }
+            } catch (final IllegalArgumentException e) {
+                final StringBuilder sb = new StringBuilder()
+                        .append("Failed to decode hex value ").append(hex).append(". ")
+                        .append(e.getMessage());
+                outputError(context, sb, e);
+            } catch (final RuntimeException e) {
+                final StringBuilder sb = new StringBuilder()
+                        .append("Failed to decode hex value ").append(hex).append(". ")
+                        .append(e.getMessage());
+                outputWarning(context, sb, e);
             }
-            if (!StringUtil.isBlank(hex)) {
-                final Charset charset = Charset.forName(charsetName);
-                final ByteBuffer bytes = decodeHex(hex);
-                result = charset.decode(bytes).toString();
-            } else {
-                result = "";
-            }
-        } catch (final IllegalArgumentException e) {
+        } catch (final XPathException e) {
             final StringBuilder sb = new StringBuilder();
             sb.append(e.getMessage());
             outputError(context, sb, e);
-        } catch (final XPathException | RuntimeException e) {
-            final StringBuilder sb = new StringBuilder();
-            sb.append(e.getMessage());
-            outputWarning(context, sb, e);
         }
 
         if (result == null) {
