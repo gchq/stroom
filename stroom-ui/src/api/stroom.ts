@@ -299,6 +299,7 @@ export interface AssignTasksRequest {
   /** @format int32 */
   count?: number;
   nodeName?: string;
+  sourceTaskId?: TaskId;
 }
 
 export interface AuthenticationState {
@@ -931,15 +932,18 @@ export interface DictionaryDoc {
   version?: string;
 }
 
+export interface DocContentHighlights {
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
+  docRef?: DocRef;
+  highlights?: StringMatchLocation[];
+  text?: string;
+}
+
 export interface DocContentMatch {
   /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   docRef?: DocRef;
-
-  /** @format int64 */
-  matchLength?: number;
-
-  /** @format int64 */
-  matchOffset?: number;
+  extension?: string;
+  location?: StringMatchLocation;
   sample?: string;
 }
 
@@ -1016,6 +1020,7 @@ export interface DocumentType {
     | "CLIPBOARD"
     | "CLOSE"
     | "CODE"
+    | "COLLAPSE_ALL"
     | "COLLAPSE_UP"
     | "COPY"
     | "DATABASE"
@@ -1061,6 +1066,7 @@ export interface DocumentType {
     | "ELLIPSES_VERTICAL"
     | "ERROR"
     | "EXCLAMATION"
+    | "EXPAND_ALL"
     | "EXPAND_DOWN"
     | "EXPLORER"
     | "FAST_BACKWARD"
@@ -1374,190 +1380,6 @@ export interface Expander {
   leaf?: boolean;
 }
 
-export interface ExplorerDocContentMatch {
-  docContentMatch?: DocContentMatch;
-  icon?:
-    | "ADD"
-    | "ADD_ABOVE"
-    | "ADD_BELOW"
-    | "ADD_MULTIPLE"
-    | "ALERT"
-    | "ALERT_SIMPLE"
-    | "ARROW_DOWN"
-    | "ARROW_LEFT"
-    | "ARROW_RIGHT"
-    | "ARROW_UP"
-    | "AUTO_REFRESH"
-    | "BACKWARD"
-    | "BORDERED_CIRCLE"
-    | "CANCEL"
-    | "CASE_SENSITIVE"
-    | "CLEAR"
-    | "CLIPBOARD"
-    | "CLOSE"
-    | "CODE"
-    | "COLLAPSE_UP"
-    | "COPY"
-    | "DATABASE"
-    | "DELETE"
-    | "DEPENDENCIES"
-    | "DISABLE"
-    | "DOCUMENT_ANALYTIC_OUTPUT_STORE"
-    | "DOCUMENT_ANALYTIC_RULE"
-    | "DOCUMENT_ANNOTATIONS_INDEX"
-    | "DOCUMENT_DASHBOARD"
-    | "DOCUMENT_DICTIONARY"
-    | "DOCUMENT_DOCUMENTATION"
-    | "DOCUMENT_ELASTIC_CLUSTER"
-    | "DOCUMENT_ELASTIC_INDEX"
-    | "DOCUMENT_FAVOURITES"
-    | "DOCUMENT_FEED"
-    | "DOCUMENT_FOLDER"
-    | "DOCUMENT_INDEX"
-    | "DOCUMENT_KAFKA_CONFIG"
-    | "DOCUMENT_PIPELINE"
-    | "DOCUMENT_QUERY"
-    | "DOCUMENT_RECEIVE_DATA_RULE_SET"
-    | "DOCUMENT_SCRIPT"
-    | "DOCUMENT_SEARCHABLE"
-    | "DOCUMENT_SELECT_ALL_OR_NONE"
-    | "DOCUMENT_SIGMA_RULE"
-    | "DOCUMENT_SOLR_INDEX"
-    | "DOCUMENT_STATISTIC_STORE"
-    | "DOCUMENT_STROOM_STATS_STORE"
-    | "DOCUMENT_SYSTEM"
-    | "DOCUMENT_TEXT_CONVERTER"
-    | "DOCUMENT_VIEW"
-    | "DOCUMENT_VISUALISATION"
-    | "DOCUMENT_XMLSCHEMA"
-    | "DOCUMENT_XSLT"
-    | "DOT"
-    | "DOUBLE_ARROW"
-    | "DOWN"
-    | "DOWNLOAD"
-    | "DROP_DOWN"
-    | "EDIT"
-    | "ELLIPSES_HORIZONTAL"
-    | "ELLIPSES_VERTICAL"
-    | "ERROR"
-    | "EXCLAMATION"
-    | "EXPAND_DOWN"
-    | "EXPLORER"
-    | "FAST_BACKWARD"
-    | "FAST_FORWARD"
-    | "FATAL"
-    | "FATAL_DARK"
-    | "FAVOURITES"
-    | "FAVOURITES_OUTLINE"
-    | "FEED"
-    | "FIELD"
-    | "FIELDS_EXPRESSION"
-    | "FIELDS_FILTER"
-    | "FIELDS_FORMAT"
-    | "FIELDS_GROUP"
-    | "FIELDS_SORTAZ"
-    | "FIELDS_SORTZA"
-    | "FILE"
-    | "FILE_FORMATTED"
-    | "FILE_RAW"
-    | "FILTER"
-    | "FIND"
-    | "FOLDER"
-    | "FOLDER_TREE"
-    | "FORMAT"
-    | "FORWARD"
-    | "FUNCTION"
-    | "GENERATE"
-    | "HELP"
-    | "HIDE"
-    | "HIDE_MENU"
-    | "HISTORY"
-    | "INFO"
-    | "INSERT"
-    | "JOBS"
-    | "KEY"
-    | "LOCATE"
-    | "LOCKED"
-    | "LOGO"
-    | "LOGOUT"
-    | "MENU"
-    | "MONITORING"
-    | "MOVE"
-    | "NODES"
-    | "OK"
-    | "OO"
-    | "OPEN"
-    | "OPERATOR"
-    | "PASSWORD"
-    | "PAUSE"
-    | "PEN"
-    | "PIPELINE_ELASTIC_INDEX"
-    | "PIPELINE_FILE"
-    | "PIPELINE_FILES"
-    | "PIPELINE_HADOOP"
-    | "PIPELINE_ID"
-    | "PIPELINE_INDEX"
-    | "PIPELINE_JSON"
-    | "PIPELINE_KAFKA"
-    | "PIPELINE_RECORD_COUNT"
-    | "PIPELINE_RECORD_OUTPUT"
-    | "PIPELINE_REFERENCE_DATA"
-    | "PIPELINE_SEARCH_OUTPUT"
-    | "PIPELINE_SOLR"
-    | "PIPELINE_SPLIT"
-    | "PIPELINE_STATISTICS"
-    | "PIPELINE_STREAM"
-    | "PIPELINE_STROOM_STATS"
-    | "PIPELINE_STROOM_STATS_STORE"
-    | "PIPELINE_TEXT"
-    | "PIPELINE_XML"
-    | "PIPELINE_XML_SEARCH"
-    | "PIPELINE_XSD"
-    | "PIPELINE_XSLT"
-    | "PLAY"
-    | "PROCESS"
-    | "PROPERTIES"
-    | "QUESTION"
-    | "RAW"
-    | "REFRESH"
-    | "REGEX"
-    | "REMOVE"
-    | "RESIZE"
-    | "RESIZE_HANDLE"
-    | "SAVE"
-    | "SAVEAS"
-    | "SEARCH"
-    | "SETTINGS"
-    | "SHARD_CLOSE"
-    | "SHARD_FLUSH"
-    | "SHARE"
-    | "SHIELD"
-    | "SHOW"
-    | "SHOW_MENU"
-    | "STEP"
-    | "STEPPING"
-    | "STEPPING_CIRCLE"
-    | "STEP_BACKWARD"
-    | "STEP_FORWARD"
-    | "STOP"
-    | "TABLE"
-    | "TABLE_NESTED"
-    | "TAB_CLOSE"
-    | "TAGS"
-    | "TEXT_WRAP"
-    | "TICK"
-    | "UNDO"
-    | "UNLOCK"
-    | "UP"
-    | "UPLOAD"
-    | "USER"
-    | "USERS"
-    | "VOLUMES"
-    | "WARNING";
-  isFavourite?: boolean;
-  path?: string;
-}
-
 export interface ExplorerNode {
   children?: ExplorerNode[];
 
@@ -1583,6 +1405,7 @@ export interface ExplorerNode {
     | "CLIPBOARD"
     | "CLOSE"
     | "CODE"
+    | "COLLAPSE_ALL"
     | "COLLAPSE_UP"
     | "COPY"
     | "DATABASE"
@@ -1628,6 +1451,7 @@ export interface ExplorerNode {
     | "ELLIPSES_VERTICAL"
     | "ERROR"
     | "EXCLAMATION"
+    | "EXPAND_ALL"
     | "EXPAND_DOWN"
     | "EXPLORER"
     | "FAST_BACKWARD"
@@ -1806,6 +1630,7 @@ export interface ExplorerTreeFilter {
   nameFilter?: string;
   nameFilterChange?: boolean;
   nodeFlags?: ("C" | "D" | "I" | "V" | "FM" | "FN" | "F" | "L" | "O")[];
+  recentItems?: DocRef[];
   requiredPermissions?: string[];
   tags?: string[];
 }
@@ -1936,6 +1761,24 @@ export interface FetchExplorerNodeResult {
   qualifiedFilterInput?: string;
   rootNodes?: ExplorerNode[];
   temporaryOpenedItems?: ExplorerNodeKey[];
+}
+
+export interface FetchExplorerNodesRequest {
+  ensureVisible?: ExplorerNodeKey[];
+  filter?: ExplorerTreeFilter;
+
+  /** @format int32 */
+  minDepth?: number;
+  openItems?: ExplorerNodeKey[];
+  showAlerts?: boolean;
+  temporaryOpenedItems?: ExplorerNodeKey[];
+}
+
+export interface FetchHighlightsRequest {
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
+  docRef?: DocRef;
+  extension?: string;
+  filter?: StringMatch;
 }
 
 export interface FetchLinkedScriptRequest {
@@ -2074,24 +1917,6 @@ export interface FindElementDocRequest {
   properties?: PipelineProperty[];
 }
 
-export interface FindExplorerNodeCriteria {
-  ensureVisible?: ExplorerNodeKey[];
-  filter?: ExplorerTreeFilter;
-
-  /** @format int32 */
-  minDepth?: number;
-  openItems?: ExplorerNodeKey[];
-  showAlerts?: boolean;
-  temporaryOpenedItems?: ExplorerNodeKey[];
-}
-
-export interface FindExplorerNodeQuery {
-  filter?: StringMatch;
-  pageRequest?: PageRequest;
-  sort?: string;
-  sortList?: CriteriaFieldSort[];
-}
-
 export interface FindFieldInfoCriteria {
   /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   dataSourceRef?: DocRef;
@@ -2107,6 +1932,199 @@ export interface FindFsVolumeCriteria {
   selection?: SelectionVolumeUseStatus;
   sort?: string;
   sortList?: CriteriaFieldSort[];
+}
+
+export interface FindInContentRequest {
+  filter?: StringMatch;
+  pageRequest?: PageRequest;
+  sort?: string;
+  sortList?: CriteriaFieldSort[];
+}
+
+export interface FindInContentResult {
+  docContentMatch?: DocContentMatch;
+  icon?:
+    | "ADD"
+    | "ADD_ABOVE"
+    | "ADD_BELOW"
+    | "ADD_MULTIPLE"
+    | "ALERT"
+    | "ALERT_SIMPLE"
+    | "ARROW_DOWN"
+    | "ARROW_LEFT"
+    | "ARROW_RIGHT"
+    | "ARROW_UP"
+    | "AUTO_REFRESH"
+    | "BACKWARD"
+    | "BORDERED_CIRCLE"
+    | "CANCEL"
+    | "CASE_SENSITIVE"
+    | "CLEAR"
+    | "CLIPBOARD"
+    | "CLOSE"
+    | "CODE"
+    | "COLLAPSE_ALL"
+    | "COLLAPSE_UP"
+    | "COPY"
+    | "DATABASE"
+    | "DELETE"
+    | "DEPENDENCIES"
+    | "DISABLE"
+    | "DOCUMENT_ANALYTIC_OUTPUT_STORE"
+    | "DOCUMENT_ANALYTIC_RULE"
+    | "DOCUMENT_ANNOTATIONS_INDEX"
+    | "DOCUMENT_DASHBOARD"
+    | "DOCUMENT_DICTIONARY"
+    | "DOCUMENT_DOCUMENTATION"
+    | "DOCUMENT_ELASTIC_CLUSTER"
+    | "DOCUMENT_ELASTIC_INDEX"
+    | "DOCUMENT_FAVOURITES"
+    | "DOCUMENT_FEED"
+    | "DOCUMENT_FOLDER"
+    | "DOCUMENT_INDEX"
+    | "DOCUMENT_KAFKA_CONFIG"
+    | "DOCUMENT_PIPELINE"
+    | "DOCUMENT_QUERY"
+    | "DOCUMENT_RECEIVE_DATA_RULE_SET"
+    | "DOCUMENT_SCRIPT"
+    | "DOCUMENT_SEARCHABLE"
+    | "DOCUMENT_SELECT_ALL_OR_NONE"
+    | "DOCUMENT_SIGMA_RULE"
+    | "DOCUMENT_SOLR_INDEX"
+    | "DOCUMENT_STATISTIC_STORE"
+    | "DOCUMENT_STROOM_STATS_STORE"
+    | "DOCUMENT_SYSTEM"
+    | "DOCUMENT_TEXT_CONVERTER"
+    | "DOCUMENT_VIEW"
+    | "DOCUMENT_VISUALISATION"
+    | "DOCUMENT_XMLSCHEMA"
+    | "DOCUMENT_XSLT"
+    | "DOT"
+    | "DOUBLE_ARROW"
+    | "DOWN"
+    | "DOWNLOAD"
+    | "DROP_DOWN"
+    | "EDIT"
+    | "ELLIPSES_HORIZONTAL"
+    | "ELLIPSES_VERTICAL"
+    | "ERROR"
+    | "EXCLAMATION"
+    | "EXPAND_ALL"
+    | "EXPAND_DOWN"
+    | "EXPLORER"
+    | "FAST_BACKWARD"
+    | "FAST_FORWARD"
+    | "FATAL"
+    | "FATAL_DARK"
+    | "FAVOURITES"
+    | "FAVOURITES_OUTLINE"
+    | "FEED"
+    | "FIELD"
+    | "FIELDS_EXPRESSION"
+    | "FIELDS_FILTER"
+    | "FIELDS_FORMAT"
+    | "FIELDS_GROUP"
+    | "FIELDS_SORTAZ"
+    | "FIELDS_SORTZA"
+    | "FILE"
+    | "FILE_FORMATTED"
+    | "FILE_RAW"
+    | "FILTER"
+    | "FIND"
+    | "FOLDER"
+    | "FOLDER_TREE"
+    | "FORMAT"
+    | "FORWARD"
+    | "FUNCTION"
+    | "GENERATE"
+    | "HELP"
+    | "HIDE"
+    | "HIDE_MENU"
+    | "HISTORY"
+    | "INFO"
+    | "INSERT"
+    | "JOBS"
+    | "KEY"
+    | "LOCATE"
+    | "LOCKED"
+    | "LOGO"
+    | "LOGOUT"
+    | "MENU"
+    | "MONITORING"
+    | "MOVE"
+    | "NODES"
+    | "OK"
+    | "OO"
+    | "OPEN"
+    | "OPERATOR"
+    | "PASSWORD"
+    | "PAUSE"
+    | "PEN"
+    | "PIPELINE_ELASTIC_INDEX"
+    | "PIPELINE_FILE"
+    | "PIPELINE_FILES"
+    | "PIPELINE_HADOOP"
+    | "PIPELINE_ID"
+    | "PIPELINE_INDEX"
+    | "PIPELINE_JSON"
+    | "PIPELINE_KAFKA"
+    | "PIPELINE_RECORD_COUNT"
+    | "PIPELINE_RECORD_OUTPUT"
+    | "PIPELINE_REFERENCE_DATA"
+    | "PIPELINE_SEARCH_OUTPUT"
+    | "PIPELINE_SOLR"
+    | "PIPELINE_SPLIT"
+    | "PIPELINE_STATISTICS"
+    | "PIPELINE_STREAM"
+    | "PIPELINE_STROOM_STATS"
+    | "PIPELINE_STROOM_STATS_STORE"
+    | "PIPELINE_TEXT"
+    | "PIPELINE_XML"
+    | "PIPELINE_XML_SEARCH"
+    | "PIPELINE_XSD"
+    | "PIPELINE_XSLT"
+    | "PLAY"
+    | "PROCESS"
+    | "PROPERTIES"
+    | "QUESTION"
+    | "RAW"
+    | "REFRESH"
+    | "REGEX"
+    | "REMOVE"
+    | "RESIZE"
+    | "RESIZE_HANDLE"
+    | "SAVE"
+    | "SAVEAS"
+    | "SEARCH"
+    | "SETTINGS"
+    | "SHARD_CLOSE"
+    | "SHARD_FLUSH"
+    | "SHARE"
+    | "SHIELD"
+    | "SHOW"
+    | "SHOW_MENU"
+    | "STEP"
+    | "STEPPING"
+    | "STEPPING_CIRCLE"
+    | "STEP_BACKWARD"
+    | "STEP_FORWARD"
+    | "STOP"
+    | "TABLE"
+    | "TABLE_NESTED"
+    | "TAB_CLOSE"
+    | "TAGS"
+    | "TEXT_WRAP"
+    | "TICK"
+    | "UNDO"
+    | "UNLOCK"
+    | "UP"
+    | "UPLOAD"
+    | "USER"
+    | "USERS"
+    | "VOLUMES"
+    | "WARNING";
+  isFavourite?: boolean;
+  path?: string;
 }
 
 export interface FindIndexShardCriteria {
@@ -2144,6 +2162,199 @@ export interface FindNodeStatusCriteria {
   pageRequest?: PageRequest;
   sort?: string;
   sortList?: CriteriaFieldSort[];
+}
+
+export interface FindRequest {
+  filter?: ExplorerTreeFilter;
+  pageRequest?: PageRequest;
+  sort?: string;
+  sortList?: CriteriaFieldSort[];
+}
+
+export interface FindResult {
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
+  docRef?: DocRef;
+  icon?:
+    | "ADD"
+    | "ADD_ABOVE"
+    | "ADD_BELOW"
+    | "ADD_MULTIPLE"
+    | "ALERT"
+    | "ALERT_SIMPLE"
+    | "ARROW_DOWN"
+    | "ARROW_LEFT"
+    | "ARROW_RIGHT"
+    | "ARROW_UP"
+    | "AUTO_REFRESH"
+    | "BACKWARD"
+    | "BORDERED_CIRCLE"
+    | "CANCEL"
+    | "CASE_SENSITIVE"
+    | "CLEAR"
+    | "CLIPBOARD"
+    | "CLOSE"
+    | "CODE"
+    | "COLLAPSE_ALL"
+    | "COLLAPSE_UP"
+    | "COPY"
+    | "DATABASE"
+    | "DELETE"
+    | "DEPENDENCIES"
+    | "DISABLE"
+    | "DOCUMENT_ANALYTIC_OUTPUT_STORE"
+    | "DOCUMENT_ANALYTIC_RULE"
+    | "DOCUMENT_ANNOTATIONS_INDEX"
+    | "DOCUMENT_DASHBOARD"
+    | "DOCUMENT_DICTIONARY"
+    | "DOCUMENT_DOCUMENTATION"
+    | "DOCUMENT_ELASTIC_CLUSTER"
+    | "DOCUMENT_ELASTIC_INDEX"
+    | "DOCUMENT_FAVOURITES"
+    | "DOCUMENT_FEED"
+    | "DOCUMENT_FOLDER"
+    | "DOCUMENT_INDEX"
+    | "DOCUMENT_KAFKA_CONFIG"
+    | "DOCUMENT_PIPELINE"
+    | "DOCUMENT_QUERY"
+    | "DOCUMENT_RECEIVE_DATA_RULE_SET"
+    | "DOCUMENT_SCRIPT"
+    | "DOCUMENT_SEARCHABLE"
+    | "DOCUMENT_SELECT_ALL_OR_NONE"
+    | "DOCUMENT_SIGMA_RULE"
+    | "DOCUMENT_SOLR_INDEX"
+    | "DOCUMENT_STATISTIC_STORE"
+    | "DOCUMENT_STROOM_STATS_STORE"
+    | "DOCUMENT_SYSTEM"
+    | "DOCUMENT_TEXT_CONVERTER"
+    | "DOCUMENT_VIEW"
+    | "DOCUMENT_VISUALISATION"
+    | "DOCUMENT_XMLSCHEMA"
+    | "DOCUMENT_XSLT"
+    | "DOT"
+    | "DOUBLE_ARROW"
+    | "DOWN"
+    | "DOWNLOAD"
+    | "DROP_DOWN"
+    | "EDIT"
+    | "ELLIPSES_HORIZONTAL"
+    | "ELLIPSES_VERTICAL"
+    | "ERROR"
+    | "EXCLAMATION"
+    | "EXPAND_ALL"
+    | "EXPAND_DOWN"
+    | "EXPLORER"
+    | "FAST_BACKWARD"
+    | "FAST_FORWARD"
+    | "FATAL"
+    | "FATAL_DARK"
+    | "FAVOURITES"
+    | "FAVOURITES_OUTLINE"
+    | "FEED"
+    | "FIELD"
+    | "FIELDS_EXPRESSION"
+    | "FIELDS_FILTER"
+    | "FIELDS_FORMAT"
+    | "FIELDS_GROUP"
+    | "FIELDS_SORTAZ"
+    | "FIELDS_SORTZA"
+    | "FILE"
+    | "FILE_FORMATTED"
+    | "FILE_RAW"
+    | "FILTER"
+    | "FIND"
+    | "FOLDER"
+    | "FOLDER_TREE"
+    | "FORMAT"
+    | "FORWARD"
+    | "FUNCTION"
+    | "GENERATE"
+    | "HELP"
+    | "HIDE"
+    | "HIDE_MENU"
+    | "HISTORY"
+    | "INFO"
+    | "INSERT"
+    | "JOBS"
+    | "KEY"
+    | "LOCATE"
+    | "LOCKED"
+    | "LOGO"
+    | "LOGOUT"
+    | "MENU"
+    | "MONITORING"
+    | "MOVE"
+    | "NODES"
+    | "OK"
+    | "OO"
+    | "OPEN"
+    | "OPERATOR"
+    | "PASSWORD"
+    | "PAUSE"
+    | "PEN"
+    | "PIPELINE_ELASTIC_INDEX"
+    | "PIPELINE_FILE"
+    | "PIPELINE_FILES"
+    | "PIPELINE_HADOOP"
+    | "PIPELINE_ID"
+    | "PIPELINE_INDEX"
+    | "PIPELINE_JSON"
+    | "PIPELINE_KAFKA"
+    | "PIPELINE_RECORD_COUNT"
+    | "PIPELINE_RECORD_OUTPUT"
+    | "PIPELINE_REFERENCE_DATA"
+    | "PIPELINE_SEARCH_OUTPUT"
+    | "PIPELINE_SOLR"
+    | "PIPELINE_SPLIT"
+    | "PIPELINE_STATISTICS"
+    | "PIPELINE_STREAM"
+    | "PIPELINE_STROOM_STATS"
+    | "PIPELINE_STROOM_STATS_STORE"
+    | "PIPELINE_TEXT"
+    | "PIPELINE_XML"
+    | "PIPELINE_XML_SEARCH"
+    | "PIPELINE_XSD"
+    | "PIPELINE_XSLT"
+    | "PLAY"
+    | "PROCESS"
+    | "PROPERTIES"
+    | "QUESTION"
+    | "RAW"
+    | "REFRESH"
+    | "REGEX"
+    | "REMOVE"
+    | "RESIZE"
+    | "RESIZE_HANDLE"
+    | "SAVE"
+    | "SAVEAS"
+    | "SEARCH"
+    | "SETTINGS"
+    | "SHARD_CLOSE"
+    | "SHARD_FLUSH"
+    | "SHARE"
+    | "SHIELD"
+    | "SHOW"
+    | "SHOW_MENU"
+    | "STEP"
+    | "STEPPING"
+    | "STEPPING_CIRCLE"
+    | "STEP_BACKWARD"
+    | "STEP_FORWARD"
+    | "STOP"
+    | "TABLE"
+    | "TABLE_NESTED"
+    | "TAB_CLOSE"
+    | "TAGS"
+    | "TEXT_WRAP"
+    | "TICK"
+    | "UNDO"
+    | "UNLOCK"
+    | "UP"
+    | "UPLOAD"
+    | "USER"
+    | "USERS"
+    | "VOLUMES"
+    | "WARNING";
+  path?: string;
 }
 
 export interface FindResultStoreCriteria {
@@ -3006,6 +3217,7 @@ export interface PipelineElementType {
     | "CLIPBOARD"
     | "CLOSE"
     | "CODE"
+    | "COLLAPSE_ALL"
     | "COLLAPSE_UP"
     | "COPY"
     | "DATABASE"
@@ -3051,6 +3263,7 @@ export interface PipelineElementType {
     | "ELLIPSES_VERTICAL"
     | "ERROR"
     | "EXCLAMATION"
+    | "EXPAND_ALL"
     | "EXPAND_DOWN"
     | "EXPLORER"
     | "FAST_BACKWARD"
@@ -3628,6 +3841,7 @@ export interface QueryHelpRow {
     | "CLIPBOARD"
     | "CLOSE"
     | "CODE"
+    | "COLLAPSE_ALL"
     | "COLLAPSE_UP"
     | "COPY"
     | "DATABASE"
@@ -3673,6 +3887,7 @@ export interface QueryHelpRow {
     | "ELLIPSES_VERTICAL"
     | "ERROR"
     | "EXCLAMATION"
+    | "EXPAND_ALL"
     | "EXPAND_DOWN"
     | "EXPLORER"
     | "FAST_BACKWARD"
@@ -4042,19 +4257,28 @@ export interface ResultPageDependency {
 /**
  * A page of results.
  */
-export interface ResultPageExplorerDocContentMatch {
+export interface ResultPageFieldInfo {
   /** Details of the page of results being returned. */
   pageResponse?: PageResponse;
-  values?: ExplorerDocContentMatch[];
+  values?: FieldInfo[];
 }
 
 /**
  * A page of results.
  */
-export interface ResultPageFieldInfo {
+export interface ResultPageFindInContentResult {
   /** Details of the page of results being returned. */
   pageResponse?: PageResponse;
-  values?: FieldInfo[];
+  values?: FindInContentResult[];
+}
+
+/**
+ * A page of results.
+ */
+export interface ResultPageFindResult {
+  /** Details of the page of results being returned. */
+  pageResponse?: PageResponse;
+  values?: FindResult[];
 }
 
 /**
@@ -4827,6 +5051,14 @@ export interface StringMatch {
     | "ENDS_WITH"
     | "REGEX";
   pattern?: string;
+}
+
+export interface StringMatchLocation {
+  /** @format int32 */
+  length?: number;
+
+  /** @format int32 */
+  offset?: number;
 }
 
 export interface StroomStatsStoreDoc {
@@ -7799,7 +8031,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @request POST:/explorer/v2/fetchExplorerNodes
      * @secure
      */
-    fetchExplorerNodes: (data: FindExplorerNodeCriteria, params: RequestParams = {}) =>
+    fetchExplorerNodes: (data: FetchExplorerNodesRequest, params: RequestParams = {}) =>
       this.request<any, FetchExplorerNodeResult>({
         path: `/explorer/v2/fetchExplorerNodes`,
         method: "POST",
@@ -7832,14 +8064,52 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Explorer (v2)
-     * @name FindExplorerNodes
-     * @summary Find explorer nodes using a query
-     * @request POST:/explorer/v2/findExplorerNodes
+     * @name FetchHighlights
+     * @summary Fetch match highlights on found content
+     * @request POST:/explorer/v2/fetchHighlights
      * @secure
      */
-    findExplorerNodes: (data: FindExplorerNodeQuery, params: RequestParams = {}) =>
-      this.request<any, ResultPageExplorerDocContentMatch>({
-        path: `/explorer/v2/findExplorerNodes`,
+    fetchHighlights: (data: FetchHighlightsRequest, params: RequestParams = {}) =>
+      this.request<any, DocContentHighlights>({
+        path: `/explorer/v2/fetchHighlights`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Explorer (v2)
+     * @name Find
+     * @summary Find documents with names and types matching the supplied request
+     * @request POST:/explorer/v2/find
+     * @secure
+     */
+    find: (data: FindRequest, params: RequestParams = {}) =>
+      this.request<any, ResultPageFindResult>({
+        path: `/explorer/v2/find`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Explorer (v2)
+     * @name FindInContent
+     * @summary Find documents with content matching the supplied request
+     * @request POST:/explorer/v2/findInContent
+     * @secure
+     */
+    findInContent: (data: FindInContentRequest, params: RequestParams = {}) =>
+      this.request<any, ResultPageFindInContentResult>({
+        path: `/explorer/v2/findInContent`,
         method: "POST",
         body: data,
         secure: true,
