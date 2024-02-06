@@ -222,6 +222,31 @@ class TestByteStreamDecoder {
     }
 
     @Test
+    void testMalformed_lenient5() {
+        mode = Mode.LENIENT;
+        final String validStr1 = "hello this is";
+        final String validStr2 = "my little string";
+        final Charset charset = StandardCharsets.UTF_8;
+        // bad bytes in two diff places
+        final byte[] bytes = new ByteArrayBuilder(charset)
+                .append("\"Da")
+                .append(0x80)
+                .append(0x8E)
+                .append("te\"")
+                .toByteArray();
+
+        final int expectedValidCharCount = 6;
+        final int expectedUnknownCharCount = 1; // two replacement chars as bad bytes in two places
+
+        doMalformedTest(
+                bytes,
+                charset,
+                expectedValidCharCount,
+                expectedUnknownCharCount,
+                "\"Da�te\"");
+    }
+
+    @Test
     void testMalformed_strict() throws IOException {
         mode = Mode.STRICT;
         final String validStr1 = "hello this is";
@@ -459,8 +484,7 @@ class TestByteStreamDecoder {
     @Test
     void createTestFileWithBadBytes2() throws IOException {
 
-        @SuppressWarnings("checkstyle:LineLength")
-        final byte[] bytes = new ByteArrayBuilder(StandardCharsets.UTF_8)
+        @SuppressWarnings("checkstyle:LineLength") final byte[] bytes = new ByteArrayBuilder(StandardCharsets.UTF_8)
                 .append("""
                         {
                             "id": "2489651045""")
@@ -491,6 +515,57 @@ class TestByteStreamDecoder {
 
         Files.write(
                 Path.of("/tmp/2.json"),
+                bytes,
+                StandardOpenOption.CREATE,
+                StandardOpenOption.WRITE);
+    }
+
+    /**
+     * Little manual test to make a file with bad bytes in it for curling into stroom
+     */
+    @Disabled // Manual only
+    @Test
+    void createTestFileWithBadBytes3() throws IOException {
+
+        @SuppressWarnings("checkstyle:LineLength") final byte[] bytes = new ByteArrayBuilder(StandardCharsets.UTF_8)
+                .append("""
+                        <?xml version="1.0" encoding="UTF-8"?>
+                        <records
+                          xmlns="records:2"
+                          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="records:2 file://records-v2.0.xsd" version="2.0">
+                          <record>
+                            <data name="Da""")
+                .append(0x80)
+                .append(0x8E)
+                .append("""
+                        te" value="01/01/2010"/>
+                            <data name="Time" value="00:00:00"/>
+                            <data name="FileNo" value="4"/>
+                            <data name="LineNo" value="1"/>
+                            <data name="User" value="user1"/>
+                            <data name="Message" value="Some message 1"/>
+                          </record>
+                          <record>
+                            <data name="Date" value="01/01/2010"/>
+                            <data name="Time" value="00:01:00"/>
+                            <data name="FileNo" value="4"/>
+                            <data name="LineNo" value="2"/>
+                            <data name="User" value="user2"/>
+                            <data name="Message" value="Some message 2"/>
+                          </record>
+                          <record>
+                            <data name="Date" value="01/01/2010"/>
+                            <data name="Time" value="00:02:00"/>
+                            <data name="FileNo" value="4"/>
+                            <data name="LineNo" value="3"/>
+                            <data name="User" value="user3"/>
+                            <data name="Message" value="Some message 3"/>
+                          </record>
+                        </records>""")
+                .toByteArray();
+
+        Files.write(
+                Path.of("/tmp/3.xml"),
                 bytes,
                 StandardOpenOption.CREATE,
                 StandardOpenOption.WRITE);

@@ -54,7 +54,7 @@ public class ByteStreamDecoder {
     private final ByteBuffer largeInputBuffer = ByteBuffer.allocate(MAX_BYTES_PER_CHAR * 2);
     // The Buffer to output our decode char into, only needs to be length 1 as we are only dealing
     // in one char at time.
-    private final java.nio.CharBuffer outputBuffer = java.nio.CharBuffer.allocate(10);
+    private final java.nio.CharBuffer outputBuffer = java.nio.CharBuffer.allocate(MAX_BYTES_PER_CHAR * 2);
     private final MalformedBytesReport malformedBytesReport = new MalformedBytesReport();
 
     /**
@@ -262,9 +262,10 @@ public class ByteStreamDecoder {
         // big the block of bad bytes is.
         for (int i = 1; i < byteCount; i++) {
             final ByteBuffer slicedInputBuffer = largeInputBuffer.slice(i, byteCount - i);
-            LOGGER.trace("slicedInputBuffer: {}", ByteBufferUtils.byteBufferInfo(slicedInputBuffer));
+//            LOGGER.trace("slicedInputBuffer: {}", ByteBufferUtils.byteBufferInfo(slicedInputBuffer));
             outputBuffer.clear();
-            lenientCharsetDecoder.decode(slicedInputBuffer, outputBuffer, true);
+            final CoderResult result = lenientCharsetDecoder.decode(
+                    slicedInputBuffer, outputBuffer, true);
             outputBuffer.flip();
             if (outputBuffer.get(0) != DecodedChar.UNKNOWN_CHAR_REPLACEMENT) {
                 goodCharByteOffset = i;
@@ -297,7 +298,7 @@ public class ByteStreamDecoder {
             final int malformedBytesCount = goodCharByteOffset;
 
             byte[] malformedBytes = new byte[malformedBytesCount];
-            inputBuffer.get(malformedBytes, 0, malformedBytesCount);
+            inputBuffer.get(0, malformedBytes, 0, malformedBytesCount);
 
             // Keep a record of some of the nasty bits we have found
             final int offsetOfFirstBadByte = lastSuppliedByteOffset - malformedBytesCount - 1;
