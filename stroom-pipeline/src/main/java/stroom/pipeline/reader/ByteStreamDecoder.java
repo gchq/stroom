@@ -6,6 +6,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.ModelStringUtil;
+import stroom.util.shared.StringUtil;
 import stroom.util.string.HexDumpUtil;
 
 import java.nio.ByteBuffer;
@@ -14,10 +15,16 @@ import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CoderResult;
 import java.nio.charset.CodingErrorAction;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Deque;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 /**
  * Class to decode a byte stream one 'char' at a time. A 'char' may consist of one or more bytes
@@ -36,7 +43,7 @@ public class ByteStreamDecoder {
     // Don't call this directly, use getNextByte()
     private final Supplier<Byte> byteSupplier;
 
-    private long lastSuppliedByteOffset = -1;
+    private int lastSuppliedByteOffset = -1;
     private boolean isEndOfStream = false;
 
     private static final int MAX_BYTES_PER_CHAR = 10;
@@ -48,6 +55,7 @@ public class ByteStreamDecoder {
     // The Buffer to output our decode char into, only needs to be length 1 as we are only dealing
     // in one char at time.
     private final java.nio.CharBuffer outputBuffer = java.nio.CharBuffer.allocate(10);
+    private final MalformedBytesReport malformedBytesReport = new MalformedBytesReport();
 
     /**
      * @param encoding The charset to use
@@ -74,7 +82,9 @@ public class ByteStreamDecoder {
      *                     one or more times (up to a maximum of MAX_BYTES_PER_CHAR) until a 'char' can be
      *                     decoded from the bytes supplied.
      */
-    public ByteStreamDecoder(final Charset charset, final Mode mode, final Supplier<Byte> byteSupplier) {
+    public ByteStreamDecoder(final Charset charset,
+                             final Mode mode,
+                             final Supplier<Byte> byteSupplier) {
         this.byteSupplier = byteSupplier;
         this.charsetDecoder = Objects.requireNonNull(charset)
                 .newDecoder();
@@ -103,6 +113,7 @@ public class ByteStreamDecoder {
             // end of stream
             isEndOfStream = true;
         } else {
+            isEndOfStream = false;
             lastSuppliedByteOffset++;
         }
         return suppliedByte;
@@ -138,7 +149,7 @@ public class ByteStreamDecoder {
                     }
                     b = suppliedByte;
                 } catch (Exception e) {
-                    throw new RuntimeException("Error getting next byte");
+                    throw new RuntimeException("Error getting next byte: " + e.getMessage(), e);
                 }
 
                 // Add the byte to our input buffer and get it ready for reading
@@ -211,7 +222,8 @@ public class ByteStreamDecoder {
         } catch (DecoderException e) {
             throw e;
         } catch (RuntimeException e) {
-            throw new RuntimeException(LogUtil.message("Error decoding bytes after {} iterations", byteCnt), e);
+            throw new RuntimeException(LogUtil.message("Error decoding bytes after {} iterations: {}",
+                    byteCnt, e.getMessage()), e);
         }
 
         return decodedChar;
@@ -262,7 +274,9 @@ public class ByteStreamDecoder {
 
         if (goodCharByteOffset == -1) {
             if (isEndOfStream) {
-                return DecodedChar.unknownChar(byteCount);
+                byte[] malformedBytes = new byte[byteCount];
+                inputBuffer.get(0, malformedBytes, 0, byteCount);
+                return DecodedChar.unknownChar(malformedBytes);
             } else {
                 // If we couldn't find a valid char in 20 bytes then just give up
                 final long offsetOfBadBytes = lastSuppliedByteOffset - (byteCount - 1);
@@ -279,17 +293,40 @@ public class ByteStreamDecoder {
                 // Need to return the offset back to the last of the malformed bytes
                 lastSuppliedByteOffset--;
             }
+            //noinspection UnnecessaryLocalVariable // Added for clarity
             final int malformedBytesCount = goodCharByteOffset;
-            return DecodedChar.unknownChar(malformedBytesCount);
+
+            byte[] malformedBytes = new byte[malformedBytesCount];
+            inputBuffer.get(malformedBytes, 0, malformedBytesCount);
+
+            // Keep a record of some of the nasty bits we have found
+            final int offsetOfFirstBadByte = lastSuppliedByteOffset - malformedBytesCount - 1;
+            malformedBytesReport.putMalformedBytes(
+                    malformedBytes,
+                    offsetOfFirstBadByte);
+
+            return DecodedChar.unknownChar(malformedBytes);
         }
     }
 
-    public long getLastSuppliedByteOffset() {
+    public int getLastSuppliedByteOffset() {
         return lastSuppliedByteOffset;
     }
 
     public long getBytesConsumedCount() {
         return lastSuppliedByteOffset + 1;
+    }
+
+    public int getMalformedBytesInstanceCount() {
+        return malformedBytesReport.putCount;
+    }
+
+    public String getMalformedBytesReport() {
+        return malformedBytesReport.toString();
+    }
+
+    public boolean foundMalformedBytes() {
+        return malformedBytesReport.putCount > 0;
     }
 
 
@@ -370,20 +407,36 @@ public class ByteStreamDecoder {
         private final String str;
         private final int byteCount;
         private final boolean isUnknown;
+        private final byte[] malFormedBytes;
         private static final char BYTE_ORDER_MARK = '\ufeff';
 
         public DecodedChar(final String str, final int byteCount) {
-            this(str, byteCount, false);
+            this(str, byteCount, false, null);
         }
 
-        private DecodedChar(final String str, final int byteCount, final boolean isUnknown) {
+        private DecodedChar(final String str,
+                            final int byteCount,
+                            final boolean isUnknown) {
+            this(str, byteCount, isUnknown, null);
+        }
+
+        private DecodedChar(final String str,
+                            final int byteCount,
+                            final boolean isUnknown,
+                            final byte[] malFormedBytes) {
             this.str = str;
             this.byteCount = byteCount;
             this.isUnknown = isUnknown;
+            this.malFormedBytes = malFormedBytes;
         }
 
-        public static DecodedChar unknownChar(final int byteCount) {
-            return new DecodedChar(UNKNOWN_CHAR_REPLACEMENT_STRING, byteCount, true);
+        public static DecodedChar unknownChar(final byte[] malFormedBytes) {
+            Objects.requireNonNull(malFormedBytes);
+            return new DecodedChar(
+                    UNKNOWN_CHAR_REPLACEMENT_STRING,
+                    malFormedBytes.length,
+                    true,
+                    malFormedBytes);
         }
 
         public String getAsString() {
@@ -404,6 +457,10 @@ public class ByteStreamDecoder {
 
         public boolean isLineBreak() {
             return str.length() == 1 && str.charAt(0) == '\n';
+        }
+
+        public byte[] getMalFormedBytes() {
+            return malFormedBytes;
         }
 
         public boolean isNonVisibleCharacter() {
@@ -441,6 +498,124 @@ public class ByteStreamDecoder {
                     ", isByteOrderMark=" + isByteOrderMark() +
                     ", isUnknown=" + isUnknown() +
                     '}';
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private static class MalformedBytesReport {
+
+        private final Map<byte[], Value> map = new HashMap<>();
+        private int putCount = 0;
+        private int uniqueBytesCount = 0;
+        private static final int MAX_UNIQUE_BYTES = 50;
+        private static final int MAX_OFFSETS = 50;
+        private boolean wasTruncated = false;
+
+        void putMalformedBytes(final byte[] malformedBytes, final int offsetOfFirstByte) {
+            if (putCount < MAX_UNIQUE_BYTES) {
+                if (!map.containsKey(malformedBytes)) {
+                    uniqueBytesCount++;
+                }
+                final boolean exceededMaxOffsets = map.computeIfAbsent(malformedBytes, k -> new Value())
+                        .addOffset(offsetOfFirstByte);
+                if (exceededMaxOffsets) {
+                    wasTruncated = true;
+                }
+            }
+            putCount++;
+        }
+
+        public String toString() {
+            if (putCount == 0) {
+                return "";
+            } else {
+                final StringBuilder sb = new StringBuilder();
+                final String detail = map.entrySet()
+                        .stream()
+                        .sorted(Comparator.nullsFirst(Comparator.comparing(valueEntry ->
+                                valueEntry.getValue().getFirstOffset())))
+                        .map(valueEntry -> {
+                            final byte[] bytes = valueEntry.getKey();
+                            final String hexBytes = ByteArrayUtils.byteArrayToHex(bytes);
+                            final int instances = valueEntry.getValue().count;
+                            final int offsetsCount = valueEntry.getValue().getOffsetCount();
+                            final String offsets = valueEntry.getValue().offsets
+                                    .stream()
+                                    .map(i -> Integer.toString(i))
+                                    .collect(Collectors.joining(", "));
+
+                            return sb.append(instances)
+                                    .append(StringUtil.plural(" instance", instances))
+                                    .append(" of ")
+                                    .append(StringUtil.plural("byte", bytes.length))
+                                    .append(" [")
+                                    .append(hexBytes)
+                                    .append("] at ")
+                                    .append(StringUtil.plural("offset", offsetsCount))
+                                    .append("[")
+                                    .append(offsets)
+                                    .append("]")
+                                    .toString();
+                        })
+                        .collect(Collectors.joining("\n"));
+
+                final StringBuilder sb2 = new StringBuilder()
+                        .append("Found ")
+                        .append(putCount)
+                        .append(StringUtil.plural("instance", "instances", putCount))
+                        .append(" of un-decodable bytes:")
+                        .append("\n")
+                        .append(detail);
+                if (wasTruncated()) {
+                    sb2.append("\nSome instances have been omitted.");
+                }
+                return sb2.toString();
+            }
+        }
+
+        public boolean wasTruncated() {
+            return wasTruncated || uniqueBytesCount > MAX_UNIQUE_BYTES;
+        }
+
+
+        // --------------------------------------------------------------------------------
+
+
+        private static class Value {
+
+            private final List<Integer> offsets;
+            private int count = 0;
+
+            private Value() {
+                offsets = new ArrayList<>();
+            }
+
+            private boolean addOffset(final int offset) {
+                count++;
+                if (offsets.size() < MAX_OFFSETS) {
+                    offsets.add(offset);
+                    return true;
+                } else {
+                    return false;
+                }
+            }
+
+            private int getOffsetCount() {
+                return offsets.size();
+            }
+
+            private int getCount() {
+                return count;
+            }
+
+            private Integer getFirstOffset() {
+                return count == 0
+                        ? null
+                        : offsets.get(0);
+            }
         }
     }
 }

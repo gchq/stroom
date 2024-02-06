@@ -452,6 +452,50 @@ class TestByteStreamDecoder {
                 StandardOpenOption.WRITE);
     }
 
+    /**
+     * Little manual test to make a file with bad bytes in it for curling into stroom
+     */
+    @Disabled // Manual only
+    @Test
+    void createTestFileWithBadBytes2() throws IOException {
+
+        @SuppressWarnings("checkstyle:LineLength")
+        final byte[] bytes = new ByteArrayBuilder(StandardCharsets.UTF_8)
+                .append("""
+                        {
+                            "id": "2489651045""")
+                .append(0x8E)
+                .append(0x80)
+                .append("""
+                        ",
+                        {
+                            "id": "2489651045",
+                            "type": "CreateEvent",
+                            "actor": {
+                              "id": 665991,
+                              "gravatar_id": "",
+                            },
+                            "repo": {
+                              "id": 28688495,
+                            },
+                            "payload": {
+                              "ref": "master",
+                              "ref_type": "branch",
+                              "master_branch": "master",
+                              "pusher_type": "user"
+                            },
+                            "public": true,
+                            "created_at": "2015-01-01T15:00:00Z"
+                          }""")
+                .toByteArray();
+
+        Files.write(
+                Path.of("/tmp/2.json"),
+                bytes,
+                StandardOpenOption.CREATE,
+                StandardOpenOption.WRITE);
+    }
+
 
     // --------------------------------------------------------------------------------
 
