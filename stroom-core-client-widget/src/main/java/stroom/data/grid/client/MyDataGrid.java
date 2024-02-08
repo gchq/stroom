@@ -456,8 +456,9 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
      * Add a resizable column that will initially expand so that the table fills the available space.
      * Unless manually resized, it will expand to fill but not go below the initialMinimumWidth.
      * Once the user resizes it, it becomes a fixed width column under their control.
-     * @param pct Set this when you want more than one column to expand to fill the space but with
-     *            different proportions. All columns pct values should add up to 100.
+     *
+     * @param pct                 Set this when you want more than one column to expand to fill the space but with
+     *                            different proportions. All columns pct values should add up to 100.
      * @param initialMinimumWidth Initial minimum width in pixels. Ignored once the user has resized it.
      */
     public void addAutoResizableColumn(final Column<R, ?> column,
@@ -476,6 +477,7 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
      * Add a resizable column that will initially expand so that the table fills the available space.
      * Unless manually resized, it will expand to fill but not go below the initialMinimumWidth.
      * Once the user resizes it, it becomes a fixed width column under their control.
+     *
      * @param initialMinimumWidth Initial minimum width in pixels. Ignored once the user has resized it.
      */
     public void addAutoResizableColumn(final Column<R, ?> column,

@@ -436,16 +436,6 @@ public class DataGridUtil {
 
         public ColumnBuilder<T_ROW, T_RAW_VAL, T_CELL_VAL, T_CELL> withSorting(
                 final String fieldName,
-                final BooleanSupplier isSortableSupplier) {
-
-            this.isSorted = true;
-            this.isSortableSupplier = isSortableSupplier;
-            this.fieldName = Objects.requireNonNull(fieldName);
-            return this;
-        }
-
-        public ColumnBuilder<T_ROW, T_RAW_VAL, T_CELL_VAL, T_CELL> withSorting(
-                final String fieldName,
                 final boolean isIgnoreCase) {
             this.isSorted = true;
             this.isIgnoreCaseOrdering = isIgnoreCase;
@@ -462,26 +452,6 @@ public class DataGridUtil {
         public ColumnBuilder<T_ROW, T_RAW_VAL, T_CELL_VAL, T_CELL> centerAligned() {
             horizontalAlignment = HasHorizontalAlignment.ALIGN_CENTER;
             return this;
-        }
-
-        public ColumnBuilder<T_ROW, T_RAW_VAL, T_CELL_VAL, T_CELL> withHorizontalAlignment(
-                final HorizontalAlignmentConstant alignment) {
-            horizontalAlignment = Objects.requireNonNull(alignment);
-            return this;
-        }
-
-        public ColumnBuilder<T_ROW, T_RAW_VAL, T_CELL_VAL, T_CELL> withVerticalAlignment(
-                final VerticalAlignmentConstant alignment) {
-            verticalAlignment = Objects.requireNonNull(alignment);
-            return this;
-        }
-
-        public ColumnBuilder<T_ROW, T_RAW_VAL, T_CELL_VAL, T_CELL> topAligned() {
-            return withVerticalAlignment(HasVerticalAlignment.ALIGN_TOP);
-        }
-
-        public ColumnBuilder<T_ROW, T_RAW_VAL, T_CELL_VAL, T_CELL> bottomAligned() {
-            return withVerticalAlignment(HasVerticalAlignment.ALIGN_BOTTOM);
         }
 
         /**

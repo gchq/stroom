@@ -7,7 +7,6 @@ import stroom.data.grid.client.PagerView;
 import stroom.entity.client.presenter.TreeRowHandler;
 import stroom.util.shared.Expander;
 
-import com.google.gwt.cell.client.Cell;
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.inject.Inject;
@@ -39,6 +38,7 @@ public class ConfigPropertyClusterValuesListPresenter
         super(eventBus, view);
 
         dataGrid = new MyDataGrid<>(1000);
+        dataGrid.setMultiLine(true);
         view.setDataWidget(dataGrid);
 
         dataProvider = new ListDataProvider<>();
@@ -89,12 +89,6 @@ public class ConfigPropertyClusterValuesListPresenter
             public Expander getValue(final ClusterValuesRow row) {
                 return buildExpander(row);
             }
-
-            @Override
-            public String getCellStyleNames(Cell.Context context, ClusterValuesRow object) {
-                return super.getCellStyleNames(context, object) + " "
-                        + MyDataGrid.RESOURCES.dataGridStyle().dataGridCellVerticalTop();
-            }
         };
         expanderColumn.setFieldUpdater((index, row, value) -> {
             treeAction.setRowExpanded(row, !value.isExpanded());
@@ -136,12 +130,6 @@ public class ConfigPropertyClusterValuesListPresenter
                     return null;
                 }
                 return row.getEffectiveValue();
-            }
-
-            @Override
-            public String getCellStyleNames(Cell.Context context, ClusterValuesRow object) {
-                return super.getCellStyleNames(context, object) + " "
-                        + MyDataGrid.RESOURCES.dataGridStyle().dataGridCellWrapText();
             }
         };
     }

@@ -6,10 +6,6 @@ public interface DefaultStyle extends Style {
 
     String dataGridHeaderBackground();
 
-    String dataGridCellWrapText();
-
-    String dataGridCellVerticalTop();
-
     String resizeHandle();
 
     String resizeLine();
