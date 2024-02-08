@@ -42,7 +42,6 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class IndexSettingsPresenter extends DocumentEditPresenter<IndexSettingsView, IndexDoc>
@@ -53,8 +52,6 @@ public class IndexSettingsPresenter extends DocumentEditPresenter<IndexSettingsV
 
     private final RestFactory restFactory;
     private final EntityDropDownPresenter pipelinePresenter;
-
-    private DocRef defaultExtractionPipeline;
 
     @Inject
     public IndexSettingsPresenter(final EventBus eventBus,
@@ -74,12 +71,7 @@ public class IndexSettingsPresenter extends DocumentEditPresenter<IndexSettingsV
 
     @Override
     protected void onBind() {
-        registerHandler(pipelinePresenter.addDataSelectionHandler(selection -> {
-            if (!Objects.equals(pipelinePresenter.getSelectedEntityReference(), defaultExtractionPipeline)) {
-                setDirty(true);
-                defaultExtractionPipeline = pipelinePresenter.getSelectedEntityReference();
-            }
-        }));
+        registerHandler(pipelinePresenter.addDataSelectionHandler(selection -> setDirty(true)));
     }
 
     @Override
@@ -96,9 +88,7 @@ public class IndexSettingsPresenter extends DocumentEditPresenter<IndexSettingsV
         getView().setTimeField(index.getTimeField());
         updateRetentionAge(SupportedRetentionAge.get(index.getRetentionDayAge()));
         updateGroupList(index.getVolumeGroupName());
-
-        defaultExtractionPipeline = index.getDefaultExtractionPipeline();
-        pipelinePresenter.setSelectedEntityReference(defaultExtractionPipeline);
+        pipelinePresenter.setSelectedEntityReference(index.getDefaultExtractionPipeline());
     }
 
     @Override

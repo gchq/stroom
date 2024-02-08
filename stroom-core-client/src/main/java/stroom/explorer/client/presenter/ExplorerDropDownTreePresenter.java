@@ -45,6 +45,9 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
+import java.util.Objects;
+import java.util.function.Consumer;
+
 public class ExplorerDropDownTreePresenter
         extends MyPresenterWidget<DropDownTreeView>
         implements DropDownTreeUiHandlers, HasDataSelectionHandlers<ExplorerNode> {
@@ -55,8 +58,11 @@ public class ExplorerDropDownTreePresenter
     private final RestFactory restFactory;
     private boolean allowFolderSelection;
     private String caption = "Choose item";
-    private ExplorerNode selectedExplorerNode;
     private String initialQuickFilter;
+    private ExplorerNode initialSelection;
+    private Consumer<ExplorerNode> selectionChangeConsumer = e -> {
+
+    };
 
     @Inject
     ExplorerDropDownTreePresenter(final EventBus eventBus,
@@ -82,11 +88,16 @@ public class ExplorerDropDownTreePresenter
                                 uiConfig.getHelpUrlQuickFilter())));
     }
 
+    public void setSelectionChangeConsumer(final Consumer<ExplorerNode> selectionChangeConsumer) {
+        this.selectionChangeConsumer = selectionChangeConsumer;
+    }
+
     @Override
     protected void onHide() {
     }
 
     public void show() {
+        initialSelection = explorerTree.getSelectionModel().getSelected();
         refresh();
         final PopupSize popupSize = PopupSize.resizable(500, 550);
         ShowPopupEvent.builder(this)
@@ -98,14 +109,20 @@ public class ExplorerDropDownTreePresenter
                     if (e.isOk()) {
                         final ExplorerNode selected = getSelectedEntityData();
                         if (isSelectionAllowed(selected)) {
-                            DataSelectionEvent.fire(ExplorerDropDownTreePresenter.this, selected, false);
-                            selectedExplorerNode = selected;
+                            selectionChangeConsumer.accept(selected);
+                            explorerTree.getSelectionModel().setSelected(selected);
+
+                            // Don't fire an event if the selection is unchanged.
+                            if (!Objects.equals(initialSelection, selected)) {
+                                DataSelectionEvent.fire(ExplorerDropDownTreePresenter.this, selected, true);
+                            }
                             e.hide();
                         } else {
                             AlertEvent.fireError(ExplorerDropDownTreePresenter.this,
                                     "You must choose a valid item.", null);
                         }
                     } else {
+                        explorerTree.getSelectionModel().setSelected(initialSelection);
                         e.hide();
                     }
                 })
@@ -116,18 +133,25 @@ public class ExplorerDropDownTreePresenter
         explorerTree.getTreeModel().setIncludeNullSelection(includeNullSelection);
     }
 
-    protected void setSelectedTreeItem(final ExplorerNode selectedItem,
+    protected void setSelectedTreeItem(final ExplorerNode selected,
                                        final SelectionType selectionType,
                                        final boolean initial) {
         // Is the selection type valid?
-        if (isSelectionAllowed(selectedItem)) {
+        if (isSelectionAllowed(selected)) {
             // Drop down presenters need to know what the initial selection was so that they can
             // update the name of their selected item properly.
             if (initial) {
-                DataSelectionEvent.fire(this, selectedItem, false);
+                selectionChangeConsumer.accept(selected);
+                initialSelection = selected;
+
             } else if (selectionType.isDoubleSelect()) {
-                DataSelectionEvent.fire(this, selectedItem, true);
-                this.selectedExplorerNode = selectedItem;
+                selectionChangeConsumer.accept(selected);
+                explorerTree.getSelectionModel().setSelected(selected);
+
+                // Don't fire an event if the selection is unchanged.
+                if (!Objects.equals(initialSelection, selected)) {
+                    DataSelectionEvent.fire(this, selected, true);
+                }
                 HidePopupEvent.builder(this).fire();
             }
         }
@@ -152,11 +176,10 @@ public class ExplorerDropDownTreePresenter
 
     public void refresh() {
         // Refresh gets called on show so no point doing it before then
-        explorerTree.setSelectedItem(selectedExplorerNode);
         getView().setQuickFilter(initialQuickFilter);
         explorerTree.getTreeModel().setInitialNameFilter(initialQuickFilter);
         explorerTree.getTreeModel().reset(initialQuickFilter);
-        explorerTree.getTreeModel().setEnsureVisible(selectedExplorerNode);
+        explorerTree.getTreeModel().setEnsureVisible(explorerTree.getSelectionModel().getSelected());
         explorerTree.getTreeModel().refresh();
     }
 
@@ -189,13 +212,14 @@ public class ExplorerDropDownTreePresenter
     }
 
     public void setSelectedEntityReference(final DocRef docRef) {
-        setSelectedEntityReference(docRef, true);
+        setSelectedEntityReference(docRef, false);
     }
 
     public void setSelectedEntityReference(final DocRef docRef, final boolean fireEvents) {
         restFactory
-                .create()
-                .onSuccess(explorerNode -> setSelectedEntityData((ExplorerNode) explorerNode, fireEvents))
+                .builder()
+                .forType(ExplorerNode.class)
+                .onSuccess(explorerNode -> setSelectedEntityData(explorerNode, fireEvents))
                 .call(EXPLORER_RESOURCE)
                 .getFromDocRef(docRef);
     }
@@ -206,7 +230,8 @@ public class ExplorerDropDownTreePresenter
 
     private void setSelectedEntityData(final ExplorerNode explorerNode, final boolean fireEvents) {
 //        GWT.log("setSelectedEntityData: " + explorerNode);
-        this.selectedExplorerNode = explorerNode;
+        explorerTree.getSelectionModel().setSelected(explorerNode);
+        selectionChangeConsumer.accept(explorerNode);
         if (fireEvents) {
             DataSelectionEvent.fire(this, explorerNode, false);
         }
@@ -256,8 +281,7 @@ public class ExplorerDropDownTreePresenter
         protected void setInitialSelectedItem(final ExplorerNode selection) {
             super.setInitialSelectedItem(selection);
             explorerDropDownTreePresenter.setSelectedTreeItem(resolve(selection),
-                    new SelectionType(false, false),
-                    true);
+                    new SelectionType(false, false), true);
         }
 
         @Override

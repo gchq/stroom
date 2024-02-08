@@ -47,14 +47,8 @@ public class EntityDropDownPresenter extends MyPresenterWidget<DropDownView>
         super(eventBus, view);
         view.setUiHandlers(this);
         this.explorerDropDownTreePresenter = explorerDropDownTreePresenter;
+        explorerDropDownTreePresenter.setSelectionChangeConsumer(this::changeSelection);
         changeSelection(null);
-    }
-
-    @Override
-    protected void onBind() {
-        super.onBind();
-        registerHandler(explorerDropDownTreePresenter.addDataSelectionHandler(event ->
-                changeSelection(event.getSelectedItem())));
     }
 
     @Override

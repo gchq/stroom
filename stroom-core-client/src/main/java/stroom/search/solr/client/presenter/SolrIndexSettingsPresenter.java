@@ -43,7 +43,6 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.List;
-import java.util.Objects;
 
 public class SolrIndexSettingsPresenter extends DocumentEditPresenter<SolrIndexSettingsView, SolrIndexDoc>
         implements SolrIndexSettingsUiHandlers {
@@ -54,7 +53,6 @@ public class SolrIndexSettingsPresenter extends DocumentEditPresenter<SolrIndexS
     private final EntityDropDownPresenter pipelinePresenter;
     private final RestFactory restFactory;
     private final DynamicFieldSelectionListModel fieldSelectionBoxModel;
-    private DocRef defaultExtractionPipeline;
 
     @Inject
     public SolrIndexSettingsPresenter(final EventBus eventBus,
@@ -80,12 +78,7 @@ public class SolrIndexSettingsPresenter extends DocumentEditPresenter<SolrIndexS
     @Override
     protected void onBind() {
         registerHandler(editExpressionPresenter.addDirtyHandler(dirty -> setDirty(true)));
-        registerHandler(pipelinePresenter.addDataSelectionHandler(selection -> {
-            if (!Objects.equals(pipelinePresenter.getSelectedEntityReference(), defaultExtractionPipeline)) {
-                setDirty(true);
-                defaultExtractionPipeline = pipelinePresenter.getSelectedEntityReference();
-            }
-        }));
+        registerHandler(pipelinePresenter.addDataSelectionHandler(selection -> setDirty(true)));
     }
 
     @Override
@@ -131,9 +124,7 @@ public class SolrIndexSettingsPresenter extends DocumentEditPresenter<SolrIndexS
         fieldSelectionBoxModel.setDataSourceRef(docRef);
         editExpressionPresenter.init(restFactory, docRef, fieldSelectionBoxModel);
         editExpressionPresenter.read(index.getRetentionExpression());
-
-        defaultExtractionPipeline = index.getDefaultExtractionPipeline();
-        pipelinePresenter.setSelectedEntityReference(defaultExtractionPipeline);
+        pipelinePresenter.setSelectedEntityReference(index.getDefaultExtractionPipeline());
     }
 
     @Override

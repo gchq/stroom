@@ -43,8 +43,6 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 
-import java.util.Objects;
-
 public class ElasticIndexSettingsPresenter extends DocumentEditPresenter<ElasticIndexSettingsView, ElasticIndexDoc>
         implements ElasticIndexSettingsUiHandlers {
 
@@ -55,8 +53,6 @@ public class ElasticIndexSettingsPresenter extends DocumentEditPresenter<Elastic
     private final EntityDropDownPresenter pipelinePresenter;
     private final RestFactory restFactory;
     private final DynamicFieldSelectionListModel fieldSelectionBoxModel;
-
-    private DocRef defaultExtractionPipeline;
 
     @Inject
     public ElasticIndexSettingsPresenter(
@@ -97,13 +93,7 @@ public class ElasticIndexSettingsPresenter extends DocumentEditPresenter<Elastic
         }));
 
         registerHandler(editExpressionPresenter.addDirtyHandler(dirty -> setDirty(true)));
-
-        registerHandler(pipelinePresenter.addDataSelectionHandler(selection -> {
-            if (!Objects.equals(pipelinePresenter.getSelectedEntityReference(), defaultExtractionPipeline)) {
-                setDirty(true);
-                defaultExtractionPipeline = pipelinePresenter.getSelectedEntityReference();
-            }
-        }));
+        registerHandler(pipelinePresenter.addDataSelectionHandler(selection -> setDirty(true)));
     }
 
     @Override
@@ -144,9 +134,7 @@ public class ElasticIndexSettingsPresenter extends DocumentEditPresenter<Elastic
         fieldSelectionBoxModel.setDataSourceRef(docRef);
         editExpressionPresenter.init(restFactory, docRef, fieldSelectionBoxModel);
         editExpressionPresenter.read(index.getRetentionExpression());
-
-        defaultExtractionPipeline = index.getDefaultExtractionPipeline();
-        pipelinePresenter.setSelectedEntityReference(defaultExtractionPipeline);
+        pipelinePresenter.setSelectedEntityReference(index.getDefaultExtractionPipeline());
     }
 
     @Override
