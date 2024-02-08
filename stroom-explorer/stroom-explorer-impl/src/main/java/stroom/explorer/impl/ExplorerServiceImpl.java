@@ -150,12 +150,11 @@ class ExplorerServiceImpl
             allOpen.addAll(NullSafe.set(criteria.getOpenItems()));
             allOpen.addAll(NullSafe.set(criteria.getTemporaryOpenedItems()));
             allOpen.addAll(NullSafe.set(forcedOpenItems));
-            final OpenItems allOpenItems = OpenItemsImpl.create(allOpen);
+            final OpenItems openItems = OpenItemsImpl.createWithForced(allOpen, forcedOpenItems);
             final FetchExplorerNodeResult result = getData(
                     criteria.getFilter(),
                     masterTreeModelClone,
-                    allOpenItems,
-                    OpenItemsImpl.create(forcedOpenItems),
+                    openItems,
                     metrics,
                     criteria.getShowAlerts());
             if (LOGGER.isDebugEnabled()) {
@@ -172,8 +171,7 @@ class ExplorerServiceImpl
 
     private FetchExplorerNodeResult getData(final ExplorerTreeFilter filter,
                                             final TreeModel masterTreeModelClone,
-                                            final OpenItems allOpenItems,
-                                            final OpenItems forcedOpenItems,
+                                            final OpenItems openItems,
                                             final LocalMetrics metrics,
                                             final boolean includeNodeInfo) {
         // Generate a hashset of all favourites for the user, so we can mark matching nodes with a star
@@ -199,7 +197,7 @@ class ExplorerServiceImpl
                 filter,
                 nodeInclusionChecker,
                 false,
-                allOpenItems,
+                openItems,
                 userFavouriteUuids,
                 0,
                 includeNodeInfo,
@@ -211,10 +209,11 @@ class ExplorerServiceImpl
         // If the name filter has changed then we want to temporarily expand all nodes.
         Set<ExplorerNodeKey> temporaryOpenItems;
         if (filter.isNameFilterChange()) {
-            if (NullSafe.isBlankString(filter.getNameFilter())) {
-                temporaryOpenItems = new HashSet<>();
+            if (NullSafe.isBlankString(filter.getNameFilter()) || nodeStates.openNodes.isEmpty()) {
+                temporaryOpenItems = Collections.emptySet();
             } else {
                 temporaryOpenItems = new HashSet<>(nodeStates.openNodes);
+                openItems.addAll(nodeStates.openNodes);
             }
         } else {
             temporaryOpenItems = null;
@@ -223,8 +222,7 @@ class ExplorerServiceImpl
         List<ExplorerNodeKey> openedItems = new ArrayList<>();
         List<ExplorerNode> rootNodes = addRoots(
                 filteredModel,
-                allOpenItems,
-                forcedOpenItems,
+                openItems,
                 openedItems,
                 metrics);
 
@@ -308,11 +306,7 @@ class ExplorerServiceImpl
         // so we have to just check its direct children
         final boolean foundNodeInfo = NullSafe.stream(favouritesNode.getChildren())
                 .anyMatch(ExplorerNode::hasDescendantNodeInfo);
-//        final List<NodeInfo> nodeInfoList = foundNodeInfo
-//                ? Collections.singletonList(buildBrancNodeInfo())
-//                : null;
         favouritesNode = favouritesNode.copy()
-//                .nodeInfoList(nodeInfoList)
                 .setNodeFlag(NodeFlag.DESCENDANT_NODE_INFO, foundNodeInfo)
                 .build();
 
@@ -329,7 +323,7 @@ class ExplorerServiceImpl
 
         // We may have no nodes under Favourites/System so ensure they are always present.
         // If a quick filter is active then mark them as non-matches.
-        final ExplorerNode newRootNode = removeMatchingNode(nodes, rootNodeConstant)
+        return removeMatchingNode(nodes, rootNodeConstant)
                 .orElseGet(() ->
                         rootNodeConstant.copy()
                                 .addNodeFlag(NodeFlag.LEAF)
@@ -337,7 +331,6 @@ class ExplorerServiceImpl
                                         NodeFlagGroups.FILTER_MATCH_PAIR,
                                         NullSafe.isBlankString(filter.getNameFilter()))
                                 .build());
-        return newRootNode;
     }
 
     private static Optional<ExplorerNode> removeMatchingNode(final List<ExplorerNode> nodes,
@@ -636,7 +629,6 @@ class ExplorerServiceImpl
 
                     if (includeNodeInfo && result.hasIssues && result.isFolder) {
                         // Mark the node as having descendants with issues
-//                        builder.addNodeInfo(buildBrancNodeInfo());
                         builder.addNodeFlag(NodeFlag.DESCENDANT_NODE_INFO);
                     }
                     decoratedChild = builder.build();
@@ -724,7 +716,7 @@ class ExplorerServiceImpl
 
             if (NullSafe.hasItems(childrenWithDescendantInfo)) {
                 // At least one descendant has node info, but there may be filter/perms limiting what
-                // the user can see or they are in un-opened branches, so we need to walk the full tree
+                // the user can see, or they are in un-opened branches, so we need to walk the full tree
                 // to check based on what we can see
                 for (final ExplorerNode childNode : childrenWithDescendantInfo) {
                     final boolean isNodeIncluded = metrics.measure("isNodeIncluded", () ->
@@ -770,7 +762,6 @@ class ExplorerServiceImpl
 
     private List<ExplorerNode> addRoots(final FilteredTreeModel filteredModel,
                                         final OpenItems openItems,
-                                        final OpenItems forcedOpenItems,
                                         final List<ExplorerNodeKey> openedItems,
                                         final LocalMetrics metrics) {
         return metrics.measure("addRoots", () -> {
@@ -789,7 +780,6 @@ class ExplorerServiceImpl
                                     child,
                                     filteredModel,
                                     openItems,
-                                    forcedOpenItems,
                                     0,
                                     openedItems,
                                     metrics);
@@ -804,7 +794,6 @@ class ExplorerServiceImpl
                                      final ExplorerNode parent,
                                      final FilteredTreeModel filteredModel,
                                      final OpenItems openItems,
-                                     final OpenItems forcedOpenItems,
                                      final int currentDepth,
                                      final List<ExplorerNodeKey> openedItems,
                                      final LocalMetrics metrics) {
@@ -814,17 +803,16 @@ class ExplorerServiceImpl
 
             final ExplorerNodeKey parentNodeKey = parent.getUniqueKey();
 
-            // See if we need to force this item open.
-            boolean force = false;
-            if (forcedOpenItems.isOpen(parentNodeKey)) {
-                force = true;
+            // Remember if this item was forced open. This allows us to filter down the items that were actually opened
+            // in the filtered tree as a result of forcing.
+            if (openItems.isForcedOpen(parentNodeKey)) {
                 openedItems.add(parentNodeKey);
             }
 
             final List<ExplorerNode> children = filteredModel.getChildren(parent);
             if (!parent.hasNodeFlagGroup(NodeFlagGroups.EXPANDER_GROUP) && NullSafe.isEmptyCollection(children)) {
                 builder.setGroupedNodeFlag(NodeFlagGroups.EXPANDER_GROUP, NodeFlag.LEAF);
-            } else if (force || openItems.isOpen(parentNodeKey)) {
+            } else if (openItems.isOpen(parentNodeKey)) {
                 final List<ExplorerNode> newChildren = new ArrayList<>();
                 for (final ExplorerNode child : NullSafe.list(children)) {
                     final ExplorerNode copy = addChildren(
@@ -832,7 +820,6 @@ class ExplorerServiceImpl
                             child,
                             filteredModel,
                             openItems,
-                            forcedOpenItems,
                             currentDepth + 1,
                             openedItems,
                             metrics);
@@ -997,7 +984,7 @@ class ExplorerServiceImpl
 
                 // Copy the item to the destination folder.
                 String name = sourceNode.getDocRef().getName();
-                if (allowRename && docName != null && docName.trim().length() > 0) {
+                if (allowRename && docName != null && !docName.trim().isEmpty()) {
                     name = docName;
                 }
                 final DocRef destinationDocRef = handler.copyDocument(
@@ -1053,7 +1040,7 @@ class ExplorerServiceImpl
         final ExplorerNode destinationFolder = remappings.get(sourceFolder);
         if (destinationFolder != null) {
             final List<ExplorerNode> children = childMap.get(sourceFolder);
-            if (children != null && children.size() > 0) {
+            if (children != null && !children.isEmpty()) {
                 children.forEach(child -> {
                     copy(child, destinationFolder, false, null, permissionInheritance, resultMessage, remappings);
                     recurseCopy(child, permissionInheritance, resultMessage, remappings, childMap);
@@ -1069,7 +1056,7 @@ class ExplorerServiceImpl
                                 final Map<ExplorerNode, List<ExplorerNode>> childMap) {
         explorerNodes.forEach(explorerNode -> {
             final List<ExplorerNode> children = explorerNodeService.getChildren(explorerNode.getDocRef());
-            if (children != null && children.size() > 0) {
+            if (children != null && !children.isEmpty()) {
                 childMap.put(explorerNode, children);
                 createChildMap(children, childMap);
             }
@@ -1255,14 +1242,14 @@ class ExplorerServiceImpl
             if (!deleted.contains(explorerNode)) {
                 // Get any children that might need to be deleted.
                 List<ExplorerNode> children = explorerNodeService.getChildren(explorerNode.getDocRef());
-                if (children != null && children.size() > 0) {
+                if (children != null && !children.isEmpty()) {
                     // Recursive delete.
                     recursiveDelete(children, deleted, resultDocRefs, resultMessage);
                 }
 
                 // Check to see if we still have children.
                 children = explorerNodeService.getChildren(explorerNode.getDocRef());
-                if (children != null && children.size() > 0) {
+                if (children != null && !children.isEmpty()) {
                     final String message = "Unable to delete '" + explorerNode.getName() +
                             "' because the folder is not empty";
                     resultMessage.append(message);
@@ -1441,7 +1428,6 @@ class ExplorerServiceImpl
 
     @Override
     public ResultPage<FindResult> find(final FindRequest request) {
-        final DurationTimer timer = DurationTimer.start();
         final LocalMetrics metrics = Metrics.createLocalMetrics(LOGGER.isDebugEnabled());
         try {
             if (request.getFilter() == null) {
@@ -1463,7 +1449,6 @@ class ExplorerServiceImpl
                     request.getFilter(),
                     masterTreeModelClone,
                     OpenItemsImpl.all(),
-                    OpenItemsImpl.none(),
                     metrics,
                     false);
             final List<FindResult> results = new ArrayList<>();
@@ -1611,6 +1596,6 @@ class ExplorerServiceImpl
 
     private enum TagOperation {
         ADD,
-        REMOVE;
+        REMOVE
     }
 }
