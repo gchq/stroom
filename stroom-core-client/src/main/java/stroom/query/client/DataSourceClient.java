@@ -3,7 +3,6 @@ package stroom.query.client;
 import stroom.datasource.api.v2.FieldInfo;
 import stroom.datasource.api.v2.FindFieldInfoCriteria;
 import stroom.datasource.shared.DataSourceResource;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docref.StringMatch;
@@ -31,8 +30,9 @@ public class DataSourceClient {
 
     public void findFields(final FindFieldInfoCriteria findFieldInfoCriteria,
                            final Consumer<ResultPage<FieldInfo>> consumer) {
-        final Rest<ResultPage<FieldInfo>> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forResultPageOf(FieldInfo.class)
                 .onSuccess(consumer)
                 .call(DATA_SOURCE_RESOURCE)
                 .findFields(findFieldInfoCriteria);
@@ -46,9 +46,10 @@ public class DataSourceClient {
                     new PageRequest(0, 1),
                     null,
                     dataSourceRef,
-                    StringMatch.equals(fieldName, true));
-            final Rest<ResultPage<FieldInfo>> rest = restFactory.create();
-            rest
+                    StringMatch.contains(fieldName, true));
+            restFactory
+                    .builder()
+                    .forResultPageOf(FieldInfo.class)
                     .onSuccess(result -> {
                         if (result.getValues().size() > 0) {
                             consumer.accept(result.getFirst());
@@ -63,8 +64,9 @@ public class DataSourceClient {
                                            final Consumer<Optional<String>> descriptionConsumer) {
 
         if (dataSourceDocRef != null) {
-            final Rest<Documentation> rest = restFactory.create();
-            rest
+            restFactory
+                    .builder()
+                    .forType(Documentation.class)
                     .onSuccess(documentation -> {
                         final Optional<String> optMarkDown = GwtNullSafe.getAsOptional(documentation,
                                 Documentation::getMarkdown);
@@ -78,8 +80,9 @@ public class DataSourceClient {
     }
 
     public void fetchDefaultExtractionPipeline(DocRef dataSourceRef, Consumer<DocRef> consumer) {
-        final Rest<DocRef> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forType(DocRef.class)
                 .onSuccess(consumer)
                 .call(DATA_SOURCE_RESOURCE)
                 .fetchDefaultExtractionPipeline(dataSourceRef);

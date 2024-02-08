@@ -14,7 +14,11 @@ public class SimpleFieldSelectionListModel
         if (fieldName != null) {
             items.stream()
                     .filter(fieldInfo -> fieldInfo.getLabel().equals(fieldName))
-                    .findAny()
+                    .findFirst()
+                    .ifPresent(item -> consumer.accept(item.getFieldInfo()));
+        } else {
+            items.stream()
+                    .findFirst()
                     .ifPresent(item -> consumer.accept(item.getFieldInfo()));
         }
     }
