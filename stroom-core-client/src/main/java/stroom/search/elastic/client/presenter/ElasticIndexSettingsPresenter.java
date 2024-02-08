@@ -35,7 +35,6 @@ import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.search.elastic.shared.ElasticIndexResource;
 import stroom.search.elastic.shared.ElasticIndexTestResponse;
 import stroom.security.shared.DocumentPermissionNames;
-import stroom.util.shared.EqualsUtil;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
@@ -86,12 +85,7 @@ public class ElasticIndexSettingsPresenter extends DocumentEditPresenter<Elastic
     @Override
     protected void onBind() {
         // If the selected `ElasticCluster` changes, set the dirty flag to `true`
-        registerHandler(clusterPresenter.addDataSelectionHandler(event -> {
-            if (!EqualsUtil.isEquals(clusterPresenter.getSelectedEntityReference(), getEntity().getClusterRef())) {
-                setDirty(true);
-            }
-        }));
-
+        registerHandler(clusterPresenter.addDataSelectionHandler(event -> setDirty(true)));
         registerHandler(editExpressionPresenter.addDirtyHandler(dirty -> setDirty(true)));
         registerHandler(pipelinePresenter.addDataSelectionHandler(selection -> setDirty(true)));
     }

@@ -5,7 +5,6 @@ import stroom.analytics.shared.AnalyticProcessResource;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.StreamingAnalyticProcessConfig;
 import stroom.dispatch.client.RestFactory;
-import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
@@ -22,8 +21,6 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
-import java.util.Objects;
-
 public class StreamingProcessingPresenter
         extends MyPresenterWidget<StreamingProcessingView>
         implements HasDirtyHandlers {
@@ -33,8 +30,6 @@ public class StreamingProcessingPresenter
     private final EntityDropDownPresenter errorFeedPresenter;
     private final ProcessorPresenter processorPresenter;
     private final RestFactory restFactory;
-    private DocRef currentErrorFeed;
-    private boolean isErrorFeedInitialised = false;
 
     @Inject
     public StreamingProcessingPresenter(final EventBus eventBus,
@@ -57,23 +52,18 @@ public class StreamingProcessingPresenter
     @Override
     protected void onBind() {
         super.onBind();
-        registerHandler(errorFeedPresenter.addDataSelectionHandler(e -> {
-            final DocRef selectedEntityReference = errorFeedPresenter.getSelectedEntityReference();
-            // Don't want to fire dirty event when the entity is first set
-            if (isErrorFeedInitialised) {
-                if (!Objects.equals(selectedEntityReference, currentErrorFeed)) {
-                    currentErrorFeed = selectedEntityReference;
-                    onDirty();
-                }
-            } else {
-                isErrorFeedInitialised = true;
-            }
-        }));
+        registerHandler(errorFeedPresenter.addDataSelectionHandler(e -> onDirty()));
     }
 
     public void read(final StreamingAnalyticProcessConfig streamingAnalyticProcessConfig) {
-        this.currentErrorFeed = streamingAnalyticProcessConfig.getErrorFeed();
-        errorFeedPresenter.setSelectedEntityReference(currentErrorFeed);
+        errorFeedPresenter.setSelectedEntityReference(streamingAnalyticProcessConfig.getErrorFeed());
+    }
+
+    public StreamingAnalyticProcessConfig write() {
+        return StreamingAnalyticProcessConfig
+                .builder()
+                .errorFeed(errorFeedPresenter.getSelectedEntityReference())
+                .build();
     }
 
     public void update(final AnalyticRuleDoc analyticRuleDoc,
@@ -88,12 +78,6 @@ public class StreamingProcessingPresenter
                 })
                 .call(ANALYTIC_PROCESS_RESOURCE)
                 .getDefaultProcessingFilterExpression(query);
-    }
-
-    public StreamingAnalyticProcessConfig write() {
-        return StreamingAnalyticProcessConfig
-                .builder()
-                .build();
     }
 
     public void onDirty() {

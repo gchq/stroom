@@ -40,7 +40,6 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
 
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class ViewSettingsPresenter extends DocumentEditPresenter<ViewSettingsView, ViewDoc> {
@@ -49,8 +48,6 @@ public class ViewSettingsPresenter extends DocumentEditPresenter<ViewSettingsVie
     private final EntityDropDownPresenter dataSourceSelectionPresenter;
     private final EntityDropDownPresenter pipelineSelectionPresenter;
     private final EditExpressionPresenter expressionPresenter;
-    private boolean isDataSourceSelectionInitialised = false;
-    private boolean isPipelineSelectionInitialised = false;
 
     @Inject
     public ViewSettingsPresenter(final EventBus eventBus,
@@ -91,28 +88,8 @@ public class ViewSettingsPresenter extends DocumentEditPresenter<ViewSettingsVie
     }
 
     private void registerHandlers() {
-        registerHandler(dataSourceSelectionPresenter.addDataSelectionHandler(event -> {
-            final DocRef selectedEntityReference = dataSourceSelectionPresenter.getSelectedEntityReference();
-            // Don't want to fire dirty event when the entity is first set
-            if (isDataSourceSelectionInitialised) {
-                if (!Objects.equals(getEntity().getDataSource(), selectedEntityReference)) {
-                    setDirty(true);
-                }
-            } else {
-                isDataSourceSelectionInitialised = true;
-            }
-        }));
-        registerHandler(pipelineSelectionPresenter.addDataSelectionHandler(event -> {
-            final DocRef selectedEntityReference = pipelineSelectionPresenter.getSelectedEntityReference();
-            // Don't want to fire dirty event when the entity is first set
-            if (isPipelineSelectionInitialised) {
-                if (!Objects.equals(getEntity().getPipeline(), selectedEntityReference)) {
-                    setDirty(true);
-                }
-            } else {
-                isPipelineSelectionInitialised = true;
-            }
-        }));
+        registerHandler(dataSourceSelectionPresenter.addDataSelectionHandler(event -> setDirty(true)));
+        registerHandler(pipelineSelectionPresenter.addDataSelectionHandler(event -> setDirty(true)));
         registerHandler(expressionPresenter.addDirtyHandler(event -> setDirty(true)));
     }
 

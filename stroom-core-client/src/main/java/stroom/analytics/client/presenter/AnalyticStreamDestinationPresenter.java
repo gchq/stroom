@@ -19,7 +19,6 @@ package stroom.analytics.client.presenter;
 
 import stroom.analytics.client.presenter.AnalyticStreamDestinationPresenter.AnalyticStreamDestinationView;
 import stroom.analytics.shared.AnalyticNotificationStreamDestination;
-import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.DirtyUiHandlers;
@@ -35,14 +34,11 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
-import java.util.Objects;
-
 public class AnalyticStreamDestinationPresenter
         extends MyPresenterWidget<AnalyticStreamDestinationView>
         implements DirtyUiHandlers, HasDirtyHandlers {
 
     private final EntityDropDownPresenter feedPresenter;
-    private DocRef currentFeed;
 
     @Inject
     public AnalyticStreamDestinationPresenter(final EventBus eventBus,
@@ -59,19 +55,13 @@ public class AnalyticStreamDestinationPresenter
 
     @Override
     protected void onBind() {
-        registerHandler(feedPresenter.addDataSelectionHandler(e -> {
-            if (!Objects.equals(feedPresenter.getSelectedEntityReference(), currentFeed)) {
-                currentFeed = feedPresenter.getSelectedEntityReference();
-                onDirty();
-            }
-        }));
+        registerHandler(feedPresenter.addDataSelectionHandler(e -> onDirty()));
     }
 
     public void read(final AnalyticNotificationStreamDestination streamDestination) {
         if (streamDestination != null) {
-            this.currentFeed = streamDestination.getDestinationFeed();
             getView().setUseSourceFeedIfPossible(streamDestination.isUseSourceFeedIfPossible());
-            feedPresenter.setSelectedEntityReference(currentFeed, false);
+            feedPresenter.setSelectedEntityReference(streamDestination.getDestinationFeed(), false);
         }
     }
 

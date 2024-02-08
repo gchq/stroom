@@ -24,7 +24,6 @@ import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
 import stroom.script.shared.ScriptDoc;
 import stroom.security.shared.DocumentPermissionNames;
-import stroom.util.shared.EqualsUtil;
 import stroom.visualisation.client.presenter.VisualisationSettingsPresenter.VisualisationSettingsView;
 import stroom.visualisation.shared.VisualisationDoc;
 
@@ -72,12 +71,7 @@ public class VisualisationSettingsPresenter extends DocumentEditPresenter<Visual
 
     @Override
     protected void onBind() {
-        registerHandler(scriptPresenter.addDataSelectionHandler(event -> {
-            if (!EqualsUtil.isEquals(scriptPresenter.getSelectedEntityReference(),
-                    getEntity().getScriptRef())) {
-                setDirty(true);
-            }
-        }));
+        registerHandler(scriptPresenter.addDataSelectionHandler(event -> setDirty(true)));
     }
 
     @Override

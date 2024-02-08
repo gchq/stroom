@@ -33,7 +33,6 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.List;
-import java.util.Objects;
 
 public class ScheduledQueryProcessingPresenter
         extends MyPresenterWidget<ScheduledQueryProcessingPresenter.ScheduledQueryProcessingView>
@@ -45,8 +44,6 @@ public class ScheduledQueryProcessingPresenter
     private final EntityDropDownPresenter errorFeedPresenter;
     private final DateTimeFormatter dateTimeFormatter;
     private final RestFactory restFactory;
-    private DocRef currentErrorFeed;
-    private boolean isErrorFeedInitialised = false;
 
     private DocRef ruleDocRef;
 
@@ -83,26 +80,13 @@ public class ScheduledQueryProcessingPresenter
     @Override
     protected void onBind() {
         super.onBind();
-        registerHandler(errorFeedPresenter.addDataSelectionHandler(e -> {
-            final DocRef selectedEntityReference = errorFeedPresenter.getSelectedEntityReference();
-            // Don't want to fire dirty event when the entity is first set
-            if (isErrorFeedInitialised) {
-                if (!Objects.equals(selectedEntityReference, currentErrorFeed)) {
-                    currentErrorFeed = selectedEntityReference;
-                    onDirty();
-                }
-            } else {
-                isErrorFeedInitialised = true;
-            }
-        }));
+        registerHandler(errorFeedPresenter.addDataSelectionHandler(e -> onDirty()));
     }
 
     public void read(final DocRef ruleDocRef,
                      final ScheduledQueryAnalyticProcessConfig scheduledQueryAnalyticProcessConfig) {
         this.ruleDocRef = ruleDocRef;
-        this.currentErrorFeed = scheduledQueryAnalyticProcessConfig.getErrorFeed();
-        errorFeedPresenter.setSelectedEntityReference(currentErrorFeed);
-
+        errorFeedPresenter.setSelectedEntityReference(scheduledQueryAnalyticProcessConfig.getErrorFeed());
         getView().setEnabled(scheduledQueryAnalyticProcessConfig.isEnabled());
         getView().setNode(scheduledQueryAnalyticProcessConfig.getNode());
         getView().setMinEventTimeMs(scheduledQueryAnalyticProcessConfig.getMinEventTimeMs());
@@ -118,7 +102,7 @@ public class ScheduledQueryProcessingPresenter
                 .builder()
                 .enabled(getView().isEnabled())
                 .node(getView().getNode())
-                .errorFeed(currentErrorFeed)
+                .errorFeed(errorFeedPresenter.getSelectedEntityReference())
                 .minEventTimeMs(getView().getMinEventTimeMs())
                 .maxEventTimeMs(getView().getMaxEventTimeMs())
                 .timeToWaitForData(getView().getTimeToWaitForData())
