@@ -21,6 +21,8 @@ import stroom.docref.HasDisplayValue;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 
@@ -51,6 +53,14 @@ public enum Severity implements HasDisplayValue {
             .sorted(HIGH_TO_LOW_COMPARATOR)
             .toArray(Severity[]::new);
 
+    private static final Map<String, Severity> NAME_TO_SEVERITY_MAP = new HashMap<>();
+
+    static {
+        for (final Severity severity : Severity.values()) {
+            NAME_TO_SEVERITY_MAP.put(severity.displayValue.trim().toLowerCase(), severity);
+        }
+    }
+
     private final int id;
     private final String displayValue;
     private final String summaryValue;
@@ -62,20 +72,11 @@ public enum Severity implements HasDisplayValue {
     }
 
     public static Severity getSeverity(final String displayValue) {
-        if (displayValue != null) {
-            final String val = displayValue.trim();
-            if (INFO.getDisplayValue().equalsIgnoreCase(val)) {
-                return INFO;
-            } else if (WARNING.getDisplayValue().equalsIgnoreCase(val)) {
-                return WARNING;
-            } else if (ERROR.getDisplayValue().equalsIgnoreCase(val)) {
-                return ERROR;
-            } else if (FATAL_ERROR.getDisplayValue().equalsIgnoreCase(val)) {
-                return FATAL_ERROR;
-            }
+        if (GwtNullSafe.isBlankString(displayValue)) {
+            return null;
+        } else {
+            return NAME_TO_SEVERITY_MAP.get(displayValue.trim().toLowerCase());
         }
-
-        return null;
     }
 
     public boolean greaterThan(final Severity o) {
