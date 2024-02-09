@@ -16,24 +16,37 @@
 
 package stroom.job.client.view;
 
+import stroom.item.client.SelectionBox;
 import stroom.job.client.presenter.SchedulePresenter.ScheduleView;
+import stroom.job.client.presenter.ScheduleUiHandlers;
+import stroom.job.shared.ScheduleType;
+import stroom.query.api.v2.CronExpression;
+import stroom.query.api.v2.FrequencyExpression;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.Button;
 
 import com.google.gwt.event.dom.client.HasClickHandlers;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.uibinder.client.UiHandler;
+import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HasText;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.ViewImpl;
+import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
-public class ScheduleViewImpl extends ViewImpl implements ScheduleView {
+public class ScheduleViewImpl extends ViewWithUiHandlers<ScheduleUiHandlers> implements ScheduleView {
 
     private final Widget widget;
 
+    @UiField
+    SelectionBox<ScheduleType> scheduleType;
+    @UiField
+    SimplePanel quickSettings;
     @UiField
     TextBox expression;
     @UiField
@@ -46,65 +59,88 @@ public class ScheduleViewImpl extends ViewImpl implements ScheduleView {
     @Inject
     public ScheduleViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
+        scheduleType.addItem(ScheduleType.FREQUENCY);
+        scheduleType.addItem(ScheduleType.CRON);
         calculate.setIcon(SvgImage.HISTORY);
+        enterCronMode();
     }
 
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//    private final Label lblScheduleType = new Label("", false);
-//    private final TextBox txtScheduleString = new TextBox();
-//    private final Label lblLastExecutedTime = new Label("", false);
-//    private final Label lblNextScheduledTime = new Label("", false);
-//    private final Button btnCalculate = new Button("Calculate");
-//
-//    private final Widget widget;
-//
-//    public ScheduleViewImpl() {
-//        final Label lbl1 = lblScheduleType;
-//        final Label lbl2 = new Label("Last Executed:       ", false);
-//        final Label lbl3 = new Label("Next Scheduled Time: ", false);
-//
-//        final Grid grid = new Grid(4, 2);
-//        grid.setSize("100%", "100%");
-//        grid.setWidget(0, 0, lbl1);
-//        grid.setWidget(0, 1, txtScheduleString);
-//        grid.setWidget(1, 0, lbl2);
-//        grid.setWidget(1, 1, lblLastExecutedTime);
-//        grid.setWidget(2, 0, lbl3);
-//        grid.setWidget(2, 1, lblNextScheduledTime);
-//        grid.setWidget(3, 0, btnCalculate);
-//
-//        lbl2.getElement().getStyle().setPaddingRight(5, Unit.PX);
-//        lbl2.getElement().getStyle().setPaddingBottom(5, Unit.PX);
-//        lbl3.getElement().getStyle().setPaddingRight(5, Unit.PX);
-//        lbl3.getElement().getStyle().setPaddingBottom(5, Unit.PX);
-//
-//        lblLastExecutedTime.getElement().getStyle().setPaddingBottom(5, Unit.PX);
-//        lblNextScheduledTime.getElement().getStyle().setPaddingBottom(5, Unit.PX);
-//
-//        widget = grid;
-//    }
+    private void enterFrequencyMode() {
+        final FlowPanel minute = createPanel("Minute");
+        for (final FrequencyExpression cronExpression : FrequencyExpressions.MINUTE) {
+            minute.add(createLabel(cronExpression));
+        }
+
+        final FlowPanel hour = createPanel("Hour");
+        for (final FrequencyExpression cronExpression : FrequencyExpressions.HOUR) {
+            hour.add(createLabel(cronExpression));
+        }
+
+        final FlowPanel quickSettingsPanel = new FlowPanel();
+        quickSettingsPanel.setStyleName("timeRange-quickSettings");
+        quickSettingsPanel.add(minute);
+        quickSettingsPanel.add(hour);
+
+        this.quickSettings.setWidget(quickSettingsPanel);
+    }
+
+    private void enterCronMode() {
+        final FlowPanel minute = createPanel("Minute");
+        for (final CronExpression cronExpression : CronExpressions.MINUTE) {
+            minute.add(createLabel(cronExpression));
+        }
+
+        final FlowPanel hour = createPanel("Hour");
+        for (final CronExpression cronExpression : CronExpressions.HOUR) {
+            hour.add(createLabel(cronExpression));
+        }
+
+        final FlowPanel day = createPanel("Day");
+        for (final CronExpression cronExpression : CronExpressions.DAY) {
+            day.add(createLabel(cronExpression));
+        }
+
+        final FlowPanel month = createPanel("Month");
+        for (final CronExpression cronExpression : CronExpressions.MONTH) {
+            month.add(createLabel(cronExpression));
+        }
+
+        final FlowPanel quickSettingsPanel = new FlowPanel();
+        quickSettingsPanel.setStyleName("timeRange-quickSettings");
+        quickSettingsPanel.add(minute);
+        quickSettingsPanel.add(hour);
+        quickSettingsPanel.add(day);
+        quickSettingsPanel.add(month);
+
+        this.quickSettings.setWidget(quickSettingsPanel);
+    }
+
+    private FlowPanel createPanel(final String name) {
+        final FlowPanel panel = new FlowPanel();
+        panel.addStyleName("timeRange-quickSettingPanel");
+        final Label label = new Label(name, false);
+        label.addStyleName("timeRange-quickSettingPanel-title");
+        panel.add(label);
+        return panel;
+    }
+
+    private Label createLabel(final CronExpression cronExpression) {
+        final Label label = new Label(cronExpression.getName(), false);
+        label.addStyleName("timeRange-quickSetting");
+        label.addClickHandler(event -> {
+            expression.setValue(cronExpression.getExpression(), true);
+        });
+        return label;
+    }
+
+    private Label createLabel(final FrequencyExpression cronExpression) {
+        final Label label = new Label(cronExpression.getName(), false);
+        label.addStyleName("timeRange-quickSetting");
+        label.addClickHandler(event -> {
+            expression.setValue(cronExpression.getExpression(), true);
+        });
+        return label;
+    }
 
     @Override
     public Widget asWidget() {
@@ -117,6 +153,26 @@ public class ScheduleViewImpl extends ViewImpl implements ScheduleView {
     }
 
     @Override
+    public ScheduleType getScheduleType() {
+        return scheduleType.getValue();
+    }
+
+    @Override
+    public void setScheduleType(final ScheduleType scheduleType) {
+        this.scheduleType.setValue(scheduleType);
+        switch (scheduleType) {
+            case CRON: {
+                enterCronMode();
+                break;
+            }
+            case FREQUENCY: {
+                enterFrequencyMode();
+                break;
+            }
+        }
+    }
+
+    @Override
     public HasText getLastExecutedTime() {
         return lastExecuted;
     }
@@ -126,13 +182,8 @@ public class ScheduleViewImpl extends ViewImpl implements ScheduleView {
         return nextScheduledTime;
     }
 
-//    @Override
-//    public HasText getScheduledType() {
-//        return lblNextScheduledTime;
-//    }
-
     @Override
-    public HasText getScheduledString() {
+    public HasText getExpression() {
         return expression;
     }
 
@@ -143,5 +194,10 @@ public class ScheduleViewImpl extends ViewImpl implements ScheduleView {
 
     public interface Binder extends UiBinder<Widget, ScheduleViewImpl> {
 
+    }
+
+    @UiHandler("scheduleType")
+    public void onScheduleType(final ValueChangeEvent<ScheduleType> event) {
+        getUiHandlers().onScheduleTypeChange(event.getValue());
     }
 }

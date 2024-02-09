@@ -86,7 +86,7 @@ public interface JobNodeResource extends RestResource, DirectRestService {
             summary = "Sets the schedule job node",
             operationId = "setJobNodeSchedule")
     void setSchedule(@PathParam("id") Integer id,
-                     @Parameter(description = "schedule", required = true) String schedule);
+                     @Parameter(description = "schedule", required = true) Schedule schedule);
 
     @PUT
     @Path("/{id}" + ENABLED_PATH_PART)

@@ -24,6 +24,8 @@ import stroom.job.shared.JobNode;
 import stroom.job.shared.JobNodeInfo;
 import stroom.job.shared.JobNodeListResponse;
 import stroom.job.shared.JobNodeResource;
+import stroom.job.shared.JobNodeUtil;
+import stroom.job.shared.Schedule;
 import stroom.node.api.NodeCallUtil;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
@@ -167,8 +169,10 @@ class JobNodeResourceImpl implements JobNodeResource {
     }
 
     @Override
-    public void setSchedule(final Integer id, final String schedule) {
-        modifyJobNode(id, jobNode -> jobNode.setSchedule(schedule));
+    public void setSchedule(final Integer id, final Schedule schedule) {
+        if (schedule != null) {
+            modifyJobNode(id, jobNode -> JobNodeUtil.setSchedule(jobNode, schedule));
+        }
     }
 
     @Override

@@ -16,40 +16,32 @@
 
 package stroom.job.shared;
 
-import stroom.job.shared.JobNode.JobType;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.swagger.v3.oas.annotations.media.Schema;
 
-@Schema
 @JsonInclude(Include.NON_NULL)
 public class GetScheduledTimesRequest {
 
     @JsonProperty
-    private final JobType jobType;
+    private final Schedule schedule;
     @JsonProperty
     private final Long scheduleReferenceTime;
     @JsonProperty
     private final Long lastExecutedTime;
-    @JsonProperty
-    private final String schedule;
 
     @JsonCreator
-    public GetScheduledTimesRequest(@JsonProperty("jobType") final JobType jobType,
+    public GetScheduledTimesRequest(@JsonProperty("schedule") final Schedule schedule,
                                     @JsonProperty("scheduleReferenceTime") final Long scheduleReferenceTime,
-                                    @JsonProperty("lastExecutedTime") final Long lastExecutedTime,
-                                    @JsonProperty("schedule") final String schedule) {
-        this.jobType = jobType;
+                                    @JsonProperty("lastExecutedTime") final Long lastExecutedTime) {
+        this.schedule = schedule;
         this.scheduleReferenceTime = scheduleReferenceTime;
         this.lastExecutedTime = lastExecutedTime;
-        this.schedule = schedule;
     }
 
-    public JobType getJobType() {
-        return jobType;
+    public Schedule getSchedule() {
+        return schedule;
     }
 
     public Long getScheduleReferenceTime() {
@@ -58,9 +50,5 @@ public class GetScheduledTimesRequest {
 
     public Long getLastExecutedTime() {
         return lastExecutedTime;
-    }
-
-    public String getSchedule() {
-        return schedule;
     }
 }

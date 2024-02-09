@@ -28,7 +28,6 @@ import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.OrderByColumn;
 import stroom.data.grid.client.PagerView;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.job.client.JobTypeCell;
 import stroom.job.shared.FindJobNodeCriteria;
@@ -37,6 +36,8 @@ import stroom.job.shared.JobNode;
 import stroom.job.shared.JobNode.JobType;
 import stroom.job.shared.JobNodeInfo;
 import stroom.job.shared.JobNodeResource;
+import stroom.job.shared.JobNodeUtil;
+import stroom.job.shared.Schedule;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
@@ -44,7 +45,7 @@ import stroom.ui.config.client.UiConfigCache;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultPage;
-import stroom.widget.util.client.ElementUtil;
+import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.cell.client.Cell.Context;
 import com.google.gwt.cell.client.TextCell;
@@ -103,9 +104,10 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
             protected void exec(final Range range,
                                 final Consumer<ResultPage<JobNode>> dataConsumer,
                                 final Consumer<Throwable> throwableConsumer) {
-                final Rest<ResultPage<JobNode>> rest = restFactory.create();
                 findJobNodeCriteria.getJobName().setString(jobName);
-                rest
+                restFactory
+                        .builder()
+                        .forResultPageOf(JobNode.class)
                         .onSuccess(dataConsumer)
                         .onFailure(throwableConsumer)
                         .call(JOB_NODE_RESOURCE)
@@ -116,8 +118,9 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
             protected void changeData(final ResultPage<JobNode> data) {
                 // Ping each node.
                 data.getValues().forEach(row -> {
-                    final Rest<JobNodeInfo> rest = restFactory.create();
-                    rest
+                    restFactory
+                            .builder()
+                            .forType(JobNodeInfo.class)
                             .onSuccess(info -> {
                                 latestNodeInfo.put(row, info);
                                 super.changeData(data);
@@ -157,8 +160,11 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
         };
         enabledColumn.setFieldUpdater((index, row, value) -> {
             row.setEnabled(value.toBoolean());
-            final Rest<JobNode> rest = restFactory.create();
-            rest.call(JOB_NODE_RESOURCE).setEnabled(row.getId(), value.toBoolean());
+            restFactory
+                    .builder()
+                    .forType(JobNode.class)
+                    .call(JOB_NODE_RESOURCE)
+                    .setEnabled(row.getId(), value.toBoolean());
         });
         dataGrid.addColumn(enabledColumn, "Enabled", 80);
 
@@ -230,6 +236,15 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
                 }
                 return null;
             }
+
+            @Override
+            public void onBrowserEvent(final Context context, final Element elem, final JobNode row,
+                                       final NativeEvent event) {
+                super.onBrowserEvent(context, elem, row, event);
+                if (row != null && MouseUtil.isPrimary(event)) {
+                    showSchedule(row);
+                }
+            }
         };
         dataGrid.addResizableColumn(typeColumn, "Type", 250);
 
@@ -247,20 +262,8 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
             public void onBrowserEvent(final Context context, final Element elem, final JobNode row,
                                        final NativeEvent event) {
                 super.onBrowserEvent(context, elem, row, event);
-
-                // Get the target element.
-                final Element target = event.getEventTarget().cast();
-
-                final String eventType = event.getType();
-                if (row != null && "click".equals(eventType)) {
-                    if (ElementUtil.hasClassName(target, "svgIcon", 0, 10)) {
-                        final Rest<JobNodeInfo> rest = restFactory.create();
-                        rest
-                                .onSuccess(result -> setSchedule(row, result))
-                                .onFailure(throwable -> setSchedule(row, null))
-                                .call(JOB_NODE_RESOURCE)
-                                .info(row.getJob().getName(), row.getNodeName());
-                    }
+                if (row != null && MouseUtil.isPrimary(event)) {
+                    showSchedule(row);
                 }
             }
         };
@@ -279,8 +282,11 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
 
         maxColumn.setFieldUpdater((index, row, value) -> {
             row.setTaskLimit(value.intValue());
-            final Rest<JobNode> rest = restFactory.create();
-            rest.call(JOB_NODE_RESOURCE).setTaskLimit(row.getId(), value.intValue());
+            restFactory
+                    .builder()
+                    .forType(JobNode.class)
+                    .call(JOB_NODE_RESOURCE)
+                    .setTaskLimit(row.getId(), value.intValue());
         });
         dataGrid.addColumn(maxColumn, "Max", 62);
 
@@ -315,24 +321,37 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
         dataGrid.addEndColumn(new EndColumn<>());
     }
 
-    private void setSchedule(final JobNode jobNode, JobNodeInfo jobNodeInfo) {
-        if (jobNodeInfo == null) {
-            jobNodeInfo = new JobNodeInfo();
-        }
+    private void showSchedule(final JobNode row) {
+        restFactory
+                .builder()
+                .forType(JobNodeInfo.class)
+                .onSuccess(result -> setSchedule(row, result))
+                .onFailure(throwable -> setSchedule(row, null))
+                .call(JOB_NODE_RESOURCE)
+                .info(row.getJob().getName(), row.getNodeName());
+    }
 
-        schedulePresenter.setSchedule(jobNode.getJobType(),
-                jobNodeInfo.getScheduleReferenceTime(),
-                jobNodeInfo.getLastExecutedTime(),
-                jobNode.getSchedule());
-        schedulePresenter.show(schedule -> {
-            jobNode.setSchedule(schedule);
-            final Rest<JobNode> rest = restFactory.create();
-            rest
-                    .onSuccess(result ->
-                            dataProvider.refresh())
-                    .call(JOB_NODE_RESOURCE)
-                    .setSchedule(jobNode.getId(), schedule);
-        });
+    private void setSchedule(final JobNode jobNode, JobNodeInfo jobNodeInfo) {
+        final Schedule currentSchedule = JobNodeUtil.getSchedule(jobNode);
+        if (currentSchedule != null) {
+            if (jobNodeInfo == null) {
+                jobNodeInfo = new JobNodeInfo();
+            }
+
+            schedulePresenter.setSchedule(currentSchedule,
+                    jobNodeInfo.getScheduleReferenceTime(),
+                    jobNodeInfo.getLastExecutedTime());
+            schedulePresenter.show(schedule -> {
+                JobNodeUtil.setSchedule(jobNode, schedule);
+                restFactory
+                        .builder()
+                        .forType(JobNode.class)
+                        .onSuccess(result ->
+                                dataProvider.refresh())
+                        .call(JOB_NODE_RESOURCE)
+                        .setSchedule(jobNode.getId(), schedule);
+            });
+        }
     }
 
     public void read(final Job job) {

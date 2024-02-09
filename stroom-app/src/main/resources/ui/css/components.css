@@ -1679,11 +1679,12 @@ button.main-menu svg {
 
 .timeRange-quickSettings {
     display: flex;
+    min-width: 36rem;
 }
 
 .timeRange-quickSettingPanel {
     padding: 0.4rem;
-    width: 9rem;
+    min-width: 9rem;
 }
 
 .timeRange-quickSettingPanel-title {

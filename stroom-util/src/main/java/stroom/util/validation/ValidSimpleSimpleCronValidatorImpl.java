@@ -1,5 +1,6 @@
 package stroom.util.validation;
 
+import stroom.util.scheduler.QuartzCronUtil;
 import stroom.util.shared.validation.ValidSimpleCron;
 import stroom.util.shared.validation.ValidSimpleCronValidator;
 
@@ -37,9 +38,10 @@ public class ValidSimpleSimpleCronValidatorImpl implements ValidSimpleCronValida
 
         if (value != null) {
             try {
+                final String converted = QuartzCronUtil.convertLegacy(value);
                 TriggerBuilder
                         .newTrigger()
-                        .withSchedule(CronScheduleBuilder.cronSchedule(value).inTimeZone(UTC))
+                        .withSchedule(CronScheduleBuilder.cronSchedule(converted).inTimeZone(UTC))
                         .startAt(Date.from(Instant.ofEpochMilli(0)))
                         .build();
             } catch (RuntimeException e) {

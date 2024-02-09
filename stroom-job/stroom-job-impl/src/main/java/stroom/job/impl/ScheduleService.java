@@ -16,7 +16,8 @@
 
 package stroom.job.impl;
 
-import stroom.job.shared.JobNode.JobType;
+import stroom.job.shared.Schedule;
+import stroom.job.shared.ScheduleType;
 import stroom.job.shared.ScheduledTimes;
 import stroom.util.date.DateUtil;
 import stroom.util.scheduler.QuartzCronScheduler;
@@ -33,24 +34,23 @@ class ScheduleService {
      * @return The scheduled times based on the supplied cron expression.
      * @throws RuntimeException Could be thrown.
      */
-    ScheduledTimes getScheduledTimes(final JobType jobType,
+    ScheduledTimes getScheduledTimes(final Schedule schedule,
                                      final Long scheduleReferenceTime,
-                                     final Long lastExecutedTime,
-                                     final String expression) {
+                                     final Long lastExecutedTime) {
         ScheduledTimes scheduledTimes = null;
 
-        if (JobType.CRON.equals(jobType)) {
-            final QuartzCronScheduler cron = new QuartzCronScheduler(expression);
+        if (ScheduleType.CRON.equals(schedule.getType())) {
+            final QuartzCronScheduler cron = new QuartzCronScheduler(schedule.getExpression());
             Long time = System.currentTimeMillis();
             time = cron.getNextExecute(time);
             scheduledTimes = getScheduledTimes(lastExecutedTime, time);
 
-        } else if (JobType.FREQUENCY.equals(jobType)) {
-            if (expression == null || expression.trim().length() == 0) {
+        } else if (ScheduleType.FREQUENCY.equals(schedule.getType())) {
+            if (schedule.getExpression() == null || schedule.getExpression().trim().length() == 0) {
                 throw new NumberFormatException("Frequency expression cannot be null");
             }
 
-            final Long duration = ModelStringUtil.parseDurationString(expression);
+            final Long duration = ModelStringUtil.parseDurationString(schedule.getExpression());
             if (duration == null) {
                 throw new NumberFormatException("Unable to parse frequency expression");
             }

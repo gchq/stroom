@@ -16,10 +16,12 @@
 
 package stroom.job.client.presenter;
 
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
+import stroom.job.client.view.CronExpressions;
+import stroom.job.client.view.FrequencyExpressions;
 import stroom.job.shared.GetScheduledTimesRequest;
-import stroom.job.shared.JobNode.JobType;
+import stroom.job.shared.Schedule;
+import stroom.job.shared.ScheduleType;
 import stroom.job.shared.ScheduledTimeResource;
 import stroom.job.shared.ScheduledTimes;
 import stroom.util.shared.StringUtil;
@@ -32,20 +34,28 @@ import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.HasText;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.function.Consumer;
 
-public class SchedulePresenter extends MyPresenterWidget<SchedulePresenter.ScheduleView> {
+public class SchedulePresenter
+        extends MyPresenterWidget<SchedulePresenter.ScheduleView>
+        implements ScheduleUiHandlers {
 
     private static final ScheduledTimeResource SCHEDULED_TIME_RESOURCE = GWT.create(ScheduledTimeResource.class);
 
     private final RestFactory restFactory;
-    private JobType jobType = JobType.UNKNOWN;
+    private Schedule frequencySchedule =
+            new Schedule(ScheduleType.FREQUENCY, FrequencyExpressions.EVERY_10_MINUTES.getExpression());
+    private Schedule cronSchedule =
+            new Schedule(ScheduleType.CRON, CronExpressions.EVERY_10TH_MINUTE.getExpression());
+    private Schedule currentSchedule = frequencySchedule;
+
     private Long scheduleReferenceTime = 0L;
     private Long lastExecutedTime = 0L;
-    private String scheduleString = "";
+
 
     @Inject
     public SchedulePresenter(final EventBus eventBus,
@@ -53,6 +63,7 @@ public class SchedulePresenter extends MyPresenterWidget<SchedulePresenter.Sched
                              final RestFactory restFactory) {
         super(eventBus, view);
         this.restFactory = restFactory;
+        view.setUiHandlers(this);
     }
 
     @Override
@@ -60,37 +71,65 @@ public class SchedulePresenter extends MyPresenterWidget<SchedulePresenter.Sched
         registerHandler(getView().getCalculateButton().addClickHandler(event -> calcTimes()));
     }
 
-    public void setSchedule(final JobType jobType, final Long scheduleReferenceTime, final Long lastExecutedTime,
-                            final String scheduleString) {
-        this.jobType = jobType;
+    public void setSchedule(final Schedule schedule,
+                            final Long scheduleReferenceTime,
+                            final Long lastExecutedTime) {
+        this.currentSchedule = schedule;
         this.scheduleReferenceTime = scheduleReferenceTime;
         this.lastExecutedTime = lastExecutedTime;
-        this.scheduleString = scheduleString;
         read();
+        onScheduleTypeChange(currentSchedule.getType());
     }
 
     private void read() {
-//        getView().getScheduledType().setText(StringUtil.toString(jobType));
-        getView().getScheduledString().setText(StringUtil.toString(scheduleString));
+        getView().setScheduleType(currentSchedule.getType());
+        getView().getExpression().setText(StringUtil.toString(currentSchedule.getExpression()));
         calcTimes();
     }
 
-    private void write() {
-        scheduleString = getView().getScheduledString().getText().trim();
+    @Override
+    public void onScheduleTypeChange(final ScheduleType scheduleType) {
+        switch (currentSchedule.getType()) {
+            case FREQUENCY: {
+                frequencySchedule = new Schedule(currentSchedule.getType(), getView().getExpression().getText().trim());
+                break;
+            }
+            case CRON: {
+                cronSchedule = new Schedule(currentSchedule.getType(), getView().getExpression().getText().trim());
+                break;
+            }
+        }
+        switch (scheduleType) {
+            case FREQUENCY: {
+                currentSchedule = frequencySchedule;
+                break;
+            }
+            case CRON: {
+                currentSchedule = cronSchedule;
+                break;
+            }
+        }
+        read();
+    }
+
+    private Schedule createSchedule() {
+        return new Schedule(getView().getScheduleType(), getView().getExpression().getText().trim());
     }
 
     private void calcTimes() {
-        final String currentString = getView().getScheduledString().getText();
-        final JobType jobType = this.jobType;
+        final ScheduleType scheduleType = getView().getScheduleType();
+        final String currentString = getView().getExpression().getText();
         final Long scheduleReferenceTime = this.scheduleReferenceTime;
         final Long lastExecutedTime = this.lastExecutedTime;
-        if (currentString != null && currentString.trim().length() > 0 && jobType != null) {
-            final GetScheduledTimesRequest request = new GetScheduledTimesRequest(jobType,
+        if (currentString != null && currentString.trim().length() > 0 && scheduleType != null) {
+            final Schedule schedule = createSchedule();
+            final GetScheduledTimesRequest request = new GetScheduledTimesRequest(
+                    schedule,
                     scheduleReferenceTime,
-                    lastExecutedTime,
-                    currentString);
-            final Rest<ScheduledTimes> rest = restFactory.create();
-            rest
+                    lastExecutedTime);
+            restFactory
+                    .builder()
+                    .forType(ScheduledTimes.class)
                     .onSuccess(result -> {
                         if (result != null) {
                             getView().getLastExecutedTime().setText(result.getLastExecutedTime());
@@ -102,7 +141,7 @@ public class SchedulePresenter extends MyPresenterWidget<SchedulePresenter.Sched
         }
     }
 
-    public void show(final Consumer<String> consumer) {
+    public void show(final Consumer<Schedule> consumer) {
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .caption("Change Schedule")
@@ -111,14 +150,13 @@ public class SchedulePresenter extends MyPresenterWidget<SchedulePresenter.Sched
                     // This method is overwritten so that we can validate the schedule
                     // before saving. Getting the scheduled times acts as validation.
                     if (e.isOk()) {
-                        write();
-
-                        final GetScheduledTimesRequest request = new GetScheduledTimesRequest(jobType,
+                        final GetScheduledTimesRequest request = new GetScheduledTimesRequest(
+                                createSchedule(),
                                 scheduleReferenceTime,
-                                lastExecutedTime,
-                                scheduleString);
-                        final Rest<ScheduledTimes> rest = restFactory.create();
-                        rest
+                                lastExecutedTime);
+                        restFactory
+                                .builder()
+                                .forType(ScheduledTimes.class)
                                 .onSuccess(result -> e.hide())
                                 .call(SCHEDULED_TIME_RESOURCE)
                                 .get(request);
@@ -128,17 +166,19 @@ public class SchedulePresenter extends MyPresenterWidget<SchedulePresenter.Sched
                 })
                 .onHide(e -> {
                     if (e.isOk()) {
-                        consumer.accept(scheduleString);
+                        consumer.accept(createSchedule());
                     }
                 })
                 .fire();
     }
 
-    public interface ScheduleView extends View, Focus {
+    public interface ScheduleView extends View, Focus, HasUiHandlers<ScheduleUiHandlers> {
 
-//        HasText getScheduledType();
+        ScheduleType getScheduleType();
 
-        HasText getScheduledString();
+        void setScheduleType(ScheduleType scheduleType);
+
+        HasText getExpression();
 
         HasText getLastExecutedTime();
 

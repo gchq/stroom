@@ -45,14 +45,7 @@ public class QuartzCronScheduler implements Scheduler {
 ////                .forJob("myJob", "group1")
 //                .build();
 
-        String converted = expression;
-        final String[] parts = expression.split(" ");
-        if (parts.length < 3) {
-            throw new RuntimeException("CronExpression '" + expression + "' is invalid.");
-        } else if (parts.length == 3) {
-            converted = "0 " + expression + " * ?";
-        }
-
+        final String converted = QuartzCronUtil.convertLegacy(expression);
         cronTrigger = TriggerBuilder.newTrigger()
 //                .withIdentity("trigger3", "group1")
 
