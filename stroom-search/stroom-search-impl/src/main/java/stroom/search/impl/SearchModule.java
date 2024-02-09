@@ -34,8 +34,6 @@ import stroom.util.shared.Clearable;
 import com.google.inject.AbstractModule;
 import jakarta.inject.Inject;
 
-import static stroom.job.api.Schedule.ScheduleType.PERIODIC;
-
 public class SearchModule extends AbstractModule {
 
     @Override
@@ -66,7 +64,7 @@ public class SearchModule extends AbstractModule {
                 .bindJobTo(EvictExpiredElements.class, builder -> builder
                         .name("Evict expired elements")
                         .managed(false)
-                        .schedule(PERIODIC, "10s"));
+                        .periodicSchedule("10s"));
     }
 
     @Override

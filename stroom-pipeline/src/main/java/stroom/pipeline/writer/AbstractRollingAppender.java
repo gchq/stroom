@@ -22,7 +22,7 @@ import stroom.pipeline.destination.RollingDestinationFactory;
 import stroom.pipeline.destination.RollingDestinations;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.factory.PipelineFactoryException;
-import stroom.util.scheduler.SimpleCron;
+import stroom.util.scheduler.QuartzCronScheduler;
 import stroom.util.shared.ModelStringUtil;
 
 import java.io.IOException;
@@ -36,7 +36,7 @@ public abstract class AbstractRollingAppender extends AbstractDestinationProvide
     private static final long HOUR = 60 * MINUTE;
 
     private Long frequency;
-    private SimpleCron schedule;
+    private QuartzCronScheduler schedule;
     private long rollSize = DEFAULT_ROLL_SIZE;
 
     private boolean validatedSettings;
@@ -92,7 +92,7 @@ public abstract class AbstractRollingAppender extends AbstractDestinationProvide
         return frequency;
     }
 
-    protected SimpleCron getSchedule() {
+    protected QuartzCronScheduler getSchedule() {
         return schedule;
     }
 
@@ -136,7 +136,7 @@ public abstract class AbstractRollingAppender extends AbstractDestinationProvide
             this.schedule = null;
         } else {
             try {
-                this.schedule = SimpleCron.compile(expression);
+                this.schedule = new QuartzCronScheduler(expression);
             } catch (final NumberFormatException e) {
                 throw new PipelineFactoryException("Incorrect value for schedule: " + expression);
             }

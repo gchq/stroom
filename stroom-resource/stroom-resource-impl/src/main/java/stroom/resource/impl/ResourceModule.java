@@ -24,8 +24,6 @@ import stroom.util.RunnableWrapper;
 import com.google.inject.AbstractModule;
 import jakarta.inject.Inject;
 
-import static stroom.job.api.Schedule.ScheduleType.PERIODIC;
-
 public class ResourceModule extends AbstractModule {
 
     @Override
@@ -37,7 +35,7 @@ public class ResourceModule extends AbstractModule {
                         .name("Delete temp file")
                         .description("Deletes the resource store temporary file.")
                         .managed(false)
-                        .schedule(PERIODIC, "1h"));
+                        .periodicSchedule("1h"));
 
         LifecycleBinder.create(binder())
                 .bindStartupTaskTo(ResourceStoreStartup.class)

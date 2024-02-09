@@ -1,13 +1,19 @@
 package stroom.util.validation;
 
-import stroom.util.scheduler.MalformedCronException;
-import stroom.util.scheduler.SimpleCron;
 import stroom.util.shared.validation.ValidSimpleCron;
 import stroom.util.shared.validation.ValidSimpleCronValidator;
 
 import jakarta.validation.ConstraintValidatorContext;
+import org.quartz.CronScheduleBuilder;
+import org.quartz.TriggerBuilder;
+
+import java.time.Instant;
+import java.util.Date;
+import java.util.TimeZone;
 
 public class ValidSimpleSimpleCronValidatorImpl implements ValidSimpleCronValidator {
+
+    private static final TimeZone UTC = TimeZone.getTimeZone("UTC");
 
     @Override
     public void initialize(final ValidSimpleCron constraintAnnotation) {
@@ -31,8 +37,12 @@ public class ValidSimpleSimpleCronValidatorImpl implements ValidSimpleCronValida
 
         if (value != null) {
             try {
-                SimpleCron.compile(value);
-            } catch (MalformedCronException e) {
+                TriggerBuilder
+                        .newTrigger()
+                        .withSchedule(CronScheduleBuilder.cronSchedule(value).inTimeZone(UTC))
+                        .startAt(Date.from(Instant.ofEpochMilli(0)))
+                        .build();
+            } catch (RuntimeException e) {
                 final String msgTemplate =
                         context.getDefaultConstraintMessageTemplate() +
                                 ". caused by: " +

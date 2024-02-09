@@ -1,5 +1,7 @@
 package stroom.job.api;
 
+import stroom.job.api.Schedule.ScheduleType;
+
 import java.util.Objects;
 
 public class ScheduledJob {
@@ -104,14 +106,13 @@ public class ScheduledJob {
          * See {@link stroom.util.scheduler.SimpleCronScheduler} or
          * {@link stroom.util.scheduler.FrequencyScheduler} for schedule string format.
          */
-        public Builder schedule(Schedule.ScheduleType scheduleType, String schedule) {
-            this.schedule = new Schedule(scheduleType, schedule);
+        public Builder cronSchedule(String schedule) {
+            this.schedule = new Schedule(ScheduleType.CRON, schedule);
             return this;
         }
 
-        public Builder schedule(final Schedule schedule) {
-            Objects.requireNonNull(schedule);
-            this.schedule = schedule;
+        public Builder periodicSchedule(String schedule) {
+            this.schedule = new Schedule(ScheduleType.PERIODIC, schedule);
             return this;
         }
 

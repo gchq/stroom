@@ -18,18 +18,49 @@ package stroom.util.scheduler;
 
 import stroom.util.date.DateUtil;
 
-public class SimpleCronScheduler implements Scheduler {
+import org.quartz.CronScheduleBuilder;
+import org.quartz.CronTrigger;
+import org.quartz.TriggerBuilder;
 
-    private final SimpleCron simpleCron;
+import java.time.Instant;
+import java.util.Date;
+import java.util.TimeZone;
+
+public class QuartzCronScheduler implements Scheduler {
+
+    private static final TimeZone UTC = TimeZone.getTimeZone("UTC");
+
+//    private final SimpleCron simpleCron;
+
+    private final CronTrigger cronTrigger;
     private Long lastExecute;
     private Long nextExecute;
 
-    public SimpleCronScheduler(final String expression) {
-        this.simpleCron = SimpleCron.compile(expression);
-    }
+    public QuartzCronScheduler(final String expression) {
+////        this.simpleCron = SimpleCron.compile(expression);
+//
+//        CronTrigger trigger = TriggerBuilder.newTrigger()
+////                .withIdentity("trigger3", "group1")
+//                .withSchedule(CronScheduleBuilder.cronSchedule("0 0/2 8-17 * * ?"))
+////                .forJob("myJob", "group1")
+//                .build();
 
-    SimpleCronScheduler(final SimpleCron simpleCron) {
-        this.simpleCron = simpleCron;
+        String converted = expression;
+        final String[] parts = expression.split(" ");
+        if (parts.length < 3) {
+            throw new RuntimeException("CronExpression '" + expression + "' is invalid.");
+        } else if (parts.length == 3) {
+            converted = "0 " + expression + " * ?";
+        }
+
+        cronTrigger = TriggerBuilder.newTrigger()
+//                .withIdentity("trigger3", "group1")
+
+                .withSchedule(CronScheduleBuilder.cronSchedule(converted).inTimeZone(UTC))
+                .startAt(Date.from(Instant.ofEpochMilli(0)))
+//                .forJob("myJob", "group1")
+                .build();
+
     }
 
     /**
@@ -45,15 +76,23 @@ public class SimpleCronScheduler implements Scheduler {
      * @return
      */
     public boolean execute(final long timeNow) {
-        final Long now = timeNow;
         if (nextExecute == null) {
-            nextExecute = simpleCron.getNextTime(now);
-        } else if (now > nextExecute) {
-            nextExecute = simpleCron.getNextTime(now);
-            lastExecute = now;
+            nextExecute = getNextExecute(timeNow);
+        } else if (timeNow > nextExecute) {
+            nextExecute = getNextExecute(timeNow);
+            lastExecute = timeNow;
             return true;
         }
         return false;
+    }
+
+    public Long getNextExecute(final long timeNow) {
+        final Date now = Date.from(Instant.ofEpochMilli(timeNow));
+        final Date next = cronTrigger.getFireTimeAfter(now);
+        if (next != null) {
+            return next.getTime();
+        }
+        return null;
     }
 
     /**

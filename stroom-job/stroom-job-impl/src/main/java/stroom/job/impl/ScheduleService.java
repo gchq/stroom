@@ -19,7 +19,7 @@ package stroom.job.impl;
 import stroom.job.shared.JobNode.JobType;
 import stroom.job.shared.ScheduledTimes;
 import stroom.util.date.DateUtil;
-import stroom.util.scheduler.SimpleCron;
+import stroom.util.scheduler.QuartzCronScheduler;
 import stroom.util.shared.ModelStringUtil;
 
 class ScheduleService {
@@ -40,9 +40,9 @@ class ScheduleService {
         ScheduledTimes scheduledTimes = null;
 
         if (JobType.CRON.equals(jobType)) {
-            final SimpleCron cron = SimpleCron.compile(expression);
+            final QuartzCronScheduler cron = new QuartzCronScheduler(expression);
             Long time = System.currentTimeMillis();
-            time = cron.getNextTime(time);
+            time = cron.getNextExecute(time);
             scheduledTimes = getScheduledTimes(lastExecutedTime, time);
 
         } else if (JobType.FREQUENCY.equals(jobType)) {

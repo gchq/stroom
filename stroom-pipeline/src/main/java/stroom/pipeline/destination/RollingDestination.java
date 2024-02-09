@@ -17,7 +17,7 @@
 package stroom.pipeline.destination;
 
 import stroom.util.io.ByteCountOutputStream;
-import stroom.util.scheduler.SimpleCron;
+import stroom.util.scheduler.QuartzCronScheduler;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,7 +51,7 @@ public abstract class RollingDestination implements Destination {
 
     protected RollingDestination(final Object key,
                                  final Long frequency,
-                                 final SimpleCron schedule,
+                                 final QuartzCronScheduler schedule,
                                  final long rollSize,
                                  final long creationTime) {
         this.key = key;
@@ -60,7 +60,7 @@ public abstract class RollingDestination implements Destination {
         // Determine the oldest this destination can be.
         Long time = null;
         if (schedule != null) {
-            time = schedule.getNextTime(creationTime);
+            time = schedule.getNextExecute(creationTime);
         }
         if (frequency != null) {
             final long value = creationTime + frequency;

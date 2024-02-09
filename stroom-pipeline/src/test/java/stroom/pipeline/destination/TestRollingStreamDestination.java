@@ -23,7 +23,7 @@ import stroom.data.store.mock.MockStore;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.mock.MockMetaService;
 import stroom.util.date.DateUtil;
-import stroom.util.scheduler.SimpleCron;
+import stroom.util.scheduler.QuartzCronScheduler;
 
 import org.junit.jupiter.api.Test;
 
@@ -63,7 +63,7 @@ class TestRollingStreamDestination {
         final StreamKey streamKey = new StreamKey("test", StreamTypeNames.EVENTS, false);
         final RollingStreamDestination rollingStreamDestination = new RollingStreamDestination(streamKey,
                 null,
-                SimpleCron.compile("* * *"),
+                new QuartzCronScheduler("0 * * * * ?"),
                 100,
                 time,
                 streamStore,

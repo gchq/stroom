@@ -8,8 +8,6 @@ import stroom.util.guice.RestResourcesBinder;
 import com.google.inject.AbstractModule;
 import jakarta.inject.Inject;
 
-import static stroom.job.api.Schedule.ScheduleType.CRON;
-
 public class StoredQueryModule extends AbstractModule {
 
     @Override
@@ -23,7 +21,7 @@ public class StoredQueryModule extends AbstractModule {
                 .bindJobTo(QueryHistoryClean.class, builder -> builder
                         .name("Query History Clean")
                         .description("Job to clean up old query history items")
-                        .schedule(CRON, "0 0 *")
+                        .cronSchedule("0 0 0 * * ?")
                         .advanced(false));
     }
 

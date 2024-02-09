@@ -21,13 +21,14 @@ import stroom.data.store.api.Store;
 import stroom.data.store.api.Target;
 import stroom.meta.shared.MetaFields;
 import stroom.util.io.ByteCountOutputStream;
-import stroom.util.scheduler.SimpleCron;
+import stroom.util.scheduler.QuartzCronScheduler;
 
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
 public class RollingStreamDestination extends RollingDestination {
+
     private final Store streamStore;
     private final Target streamTarget;
     private final String nodeName;
@@ -37,7 +38,7 @@ public class RollingStreamDestination extends RollingDestination {
 
     public RollingStreamDestination(final StreamKey key,
                                     final Long frequency,
-                                    final SimpleCron schedule,
+                                    final QuartzCronScheduler schedule,
                                     final long rollSize,
                                     final long creationTime,
                                     final Store streamStore,

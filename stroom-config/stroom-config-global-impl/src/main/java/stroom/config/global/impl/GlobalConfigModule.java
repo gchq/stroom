@@ -11,8 +11,6 @@ import com.google.inject.AbstractModule;
 import io.dropwizard.lifecycle.Managed;
 import jakarta.inject.Inject;
 
-import static stroom.job.api.Schedule.ScheduleType.PERIODIC;
-
 public class GlobalConfigModule extends AbstractModule {
 
     @Override
@@ -38,7 +36,7 @@ public class GlobalConfigModule extends AbstractModule {
                 .bindJobTo(PropertyCacheReload.class, builder -> builder
                         .name("Property Cache Reload")
                         .description("Reload properties in the cluster")
-                        .schedule(PERIODIC, "1m"));
+                        .periodicSchedule("1m"));
     }
 
     @Override

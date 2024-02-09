@@ -24,8 +24,8 @@ import stroom.task.api.TaskTerminatedException;
 import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.scheduler.FrequencyScheduler;
+import stroom.util.scheduler.QuartzCronScheduler;
 import stroom.util.scheduler.Scheduler;
-import stroom.util.scheduler.SimpleCron;
 import stroom.util.thread.CustomThreadFactory;
 import stroom.util.thread.StroomThreadGroup;
 
@@ -228,8 +228,7 @@ class ScheduledTaskExecutor {
         if (scheduler == null) {
             switch (scheduledJob.getSchedule().getScheduleType()) {
                 case CRON:
-                    final SimpleCron simpleCron = SimpleCron.compile(scheduledJob.getSchedule().getSchedule());
-                    scheduler = simpleCron.createScheduler();
+                    scheduler = new QuartzCronScheduler(scheduledJob.getSchedule().getSchedule());
                     break;
 
                 case PERIODIC:

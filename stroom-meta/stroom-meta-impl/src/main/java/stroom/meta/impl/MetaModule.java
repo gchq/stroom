@@ -16,8 +16,6 @@ import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.OptionalBinder;
 import jakarta.inject.Inject;
 
-import static stroom.job.api.Schedule.ScheduleType.PERIODIC;
-
 public class MetaModule extends AbstractModule {
 
     @Override
@@ -44,12 +42,12 @@ public class MetaModule extends AbstractModule {
                         .name("Flush Data Attributes To DB")
                         .description("Flush meta data attribute values to the database")
                         .managed(false)
-                        .schedule(PERIODIC, "10s"))
+                        .periodicSchedule("10s"))
                 .bindJobTo(DataAttributesRetention.class, builder -> builder
                         .name("Attribute Value Data Retention")
                         .description("Delete data attribute values older than system property " +
                                 "stroom.data.meta.metaValue.deleteAge")
-                        .schedule(PERIODIC, "1d"));
+                        .periodicSchedule("1d"));
     }
 
     @Override

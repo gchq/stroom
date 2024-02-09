@@ -24,8 +24,8 @@ import stroom.node.api.NodeInfo;
 import stroom.task.api.ExecutorProvider;
 import stroom.util.concurrent.AsyncReference;
 import stroom.util.scheduler.FrequencyScheduler;
+import stroom.util.scheduler.QuartzCronScheduler;
 import stroom.util.scheduler.Scheduler;
-import stroom.util.scheduler.SimpleCron;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -121,8 +121,7 @@ class JobNodeTrackerCacheImpl implements JobNodeTrackerCache {
                                 } else {
                                     try {
                                         if (JobType.CRON.equals(jobNode.getJobType())) {
-                                            schedulerMap.put(jobNode,
-                                                    SimpleCron.compile(jobNode.getSchedule()).createScheduler());
+                                            schedulerMap.put(jobNode, new QuartzCronScheduler(jobNode.getSchedule()));
                                         } else if (JobType.FREQUENCY.equals(jobNode.getJobType())) {
                                             schedulerMap.put(jobNode, new FrequencyScheduler(jobNode.getSchedule()));
                                         }

@@ -21,7 +21,7 @@ import stroom.util.io.FileUtil;
 import stroom.util.io.GZipByteCountOutputStream;
 import stroom.util.io.GZipOutputStream;
 import stroom.util.io.PathCreator;
-import stroom.util.scheduler.SimpleCron;
+import stroom.util.scheduler.QuartzCronScheduler;
 
 import com.google.common.base.Strings;
 import org.slf4j.Logger;
@@ -63,7 +63,7 @@ public class RollingFileDestination extends RollingDestination {
     public RollingFileDestination(final PathCreator pathCreator,
                                   final String key,
                                   final Long frequency,
-                                  final SimpleCron schedule,
+                                  final QuartzCronScheduler schedule,
                                   final long rollSize,
                                   final long creationTime,
                                   final String fileName,

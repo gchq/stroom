@@ -36,8 +36,6 @@ import stroom.util.guice.RestResourcesBinder;
 import com.google.inject.AbstractModule;
 import jakarta.inject.Inject;
 
-import static stroom.job.api.Schedule.ScheduleType.PERIODIC;
-
 public class PipelineModule extends AbstractModule {
 
     @Override
@@ -72,7 +70,7 @@ public class PipelineModule extends AbstractModule {
                 .bindJobTo(PipelineDestinationRoll.class, builder -> builder
                         .name("Pipeline Destination Roll")
                         .description("Roll any destinations based on their roll settings")
-                        .schedule(PERIODIC, "1m"));
+                        .periodicSchedule("1m"));
 
         LifecycleBinder.create(binder())
                 .bindShutdownTaskTo(RollingDestinationsForceRoll.class);

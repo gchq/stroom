@@ -20,7 +20,7 @@ package stroom.pipeline.destination;
 import stroom.util.date.DateUtil;
 import stroom.util.io.PathCreator;
 import stroom.util.io.SimplePathCreator;
-import stroom.util.scheduler.SimpleCron;
+import stroom.util.scheduler.QuartzCronScheduler;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -69,7 +69,7 @@ class TestRollingFileDestination {
                 pathCreator,
                 "test",
                 null,
-                SimpleCron.compile("* * *"),
+                new QuartzCronScheduler("0 * * * * ?"),
                 100,
                 time,
                 "test.tmp",

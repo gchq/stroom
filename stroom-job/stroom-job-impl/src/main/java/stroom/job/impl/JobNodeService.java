@@ -25,8 +25,8 @@ import stroom.job.shared.JobNodeListResponse;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.util.AuditUtil;
+import stroom.util.scheduler.QuartzCronScheduler;
 import stroom.util.scheduler.Scheduler;
-import stroom.util.scheduler.SimpleCron;
 import stroom.util.shared.ModelStringUtil;
 
 import jakarta.inject.Inject;
@@ -219,7 +219,7 @@ class JobNodeService {
         if (JobType.CRON.equals(jobNode.getJobType())) {
             if (jobNode.getSchedule() != null) {
                 // This will throw a runtime exception if the expression is invalid.
-                SimpleCron.compile(jobNode.getSchedule());
+                new QuartzCronScheduler(jobNode.getSchedule());
             }
         }
         if (JobType.FREQUENCY.equals(jobNode.getJobType())) {

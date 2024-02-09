@@ -10,8 +10,6 @@ import stroom.util.shared.Clearable;
 import com.google.inject.AbstractModule;
 import jakarta.inject.Inject;
 
-import static stroom.job.api.Schedule.ScheduleType.PERIODIC;
-
 public class ClusterLockModule extends AbstractModule {
 
     @Override
@@ -33,12 +31,12 @@ public class ClusterLockModule extends AbstractModule {
                         .description("Every 10 minutes try and unlock/remove any locks that " +
                                 "we hold that have not been refreshed by their owner for 10 minutes.")
                         .managed(false)
-                        .schedule(PERIODIC, "10m"))
+                        .periodicSchedule("10m"))
                 .bindJobTo(KeepAlive.class, builder -> builder
                         .name("Keep alive")
                         .description("Keeps a locks alive")
                         .managed(false)
-                        .schedule(PERIODIC, "1m"));
+                        .periodicSchedule("1m"));
     }
 
     private static class UnlockOldLocks extends RunnableWrapper {
