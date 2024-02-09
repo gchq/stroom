@@ -728,7 +728,6 @@ public class AceEditor extends Composite implements RequiresResize, HasText, Tak
     public native void setAnnotations() /*-{
 		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
 		var annotations = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::annotations;
-		console.log(annotations)
 		editor.getSession().setAnnotations(annotations);
 	}-*/;
 
