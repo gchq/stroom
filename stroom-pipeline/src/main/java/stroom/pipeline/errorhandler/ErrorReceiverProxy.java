@@ -17,6 +17,7 @@
 package stroom.pipeline.errorhandler;
 
 import stroom.util.pipeline.scope.PipelineScoped;
+import stroom.util.shared.ErrorType;
 import stroom.util.shared.Location;
 import stroom.util.shared.Severity;
 
@@ -44,6 +45,7 @@ public class ErrorReceiverProxy implements ErrorReceiver {
                     final Location location,
                     final String elementId,
                     final String message,
+                    final ErrorType errorType,
                     final Throwable e) {
 
         // TRACE for full stack traces, DEBUG for message only
@@ -58,7 +60,7 @@ public class ErrorReceiverProxy implements ErrorReceiver {
                         + " (Enable TRACE for full stack traces)");
             }
         }
-        errorReceiver.log(severity, location, elementId, message, e);
+        errorReceiver.log(severity, location, elementId, message, errorType, e);
     }
 
     public ErrorReceiver getErrorReceiver() {

@@ -17,6 +17,7 @@
 package stroom.pipeline.errorhandler;
 
 import stroom.util.shared.DefaultLocation;
+import stroom.util.shared.ErrorType;
 import stroom.util.shared.Location;
 import stroom.util.shared.Severity;
 import stroom.util.shared.StoredError;
@@ -36,7 +37,11 @@ public class StoredErrorReceiver implements ErrorReceiver {
     private List<StoredError> list = new ArrayList<>();
 
     @Override
-    public void log(final Severity severity, final Location location, final String elementId, final String message,
+    public void log(final Severity severity,
+                    final Location location,
+                    final String elementId,
+                    final String message,
+                    final ErrorType errorType,
                     final Throwable e) {
         // Get cause SAXParseException if there is one.
         final Throwable cause = getCause(e);
@@ -51,7 +56,7 @@ public class StoredErrorReceiver implements ErrorReceiver {
         final Location loc = resolveLocation(location, cause);
 
         totalErrors++;
-        list.add(new StoredError(severity, loc, elementId, msg));
+        list.add(new StoredError(severity, loc, elementId, msg, errorType));
 
         if (LOGGER.isTraceEnabled()) {
             LOGGER.trace(msg, e);

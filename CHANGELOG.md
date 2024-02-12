@@ -13,6 +13,14 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Issue **#4033** : Fix an infinite loop when stepping raw JSON with a FindReplaceFilter. Change the way character data is decoded in the stepper so that it is more lenient to un-decodable bytes, replacing them with '�'. Also make the reader code in the stepper respond to task termination. Add stepper error for each byte sequence that can't be decoded.
+
+* Fix missing fatal/error/warn/info gutter icons in the Ace editor.
+
+* Change stepper so that errors/warn/etc. with no line/col location are not included in the coloured indicator at the top right of the pane. Location agnostic errors now only feature in the log pane at the bottom.
+
+* Change the stepper log pane so that it only provides location/pane information if the location is known. The code has been changed to allow the server to explicitly state which pane an error relates to or if it is not specific to a pane. Elements with no code pane, now default errors with location information to belonging to the Input pane rather than the Output pane as previously.
+
 * Issue **#4054** : Fix comparison of double values, e.g. `toDouble(20000) > toDouble(125000000)`. Improve comparison/sorting logic to cope with the new Duration type and to better handle mixed type comparison.
 
 * Issue **#4056** : Fix display value of Error type values in query/dashboard. Now shows error message prefixed with `ERR: `.

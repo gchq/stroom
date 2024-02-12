@@ -618,7 +618,7 @@ public abstract class AbstractMetaListPresenter
                                     final Consumer<ExpressionOperator> consumer) {
         expressionValidator.validateExpression(
                 AbstractMetaListPresenter.this,
-                MetaFields.getFields(),
+                MetaFields.getAllFields(),
                 expression,
                 consumer);
     }

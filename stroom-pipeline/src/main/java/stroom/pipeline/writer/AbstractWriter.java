@@ -31,6 +31,7 @@ import stroom.util.io.MultiOutputStream;
 import stroom.util.io.NullOutputStream;
 import stroom.util.io.OutputStreamWrapper;
 import stroom.util.io.StreamUtil;
+import stroom.util.shared.ErrorType;
 import stroom.util.shared.Severity;
 
 import java.io.IOException;
@@ -79,7 +80,13 @@ public abstract class AbstractWriter extends AbstractXMLFilter implements Target
                 try {
                     charset = Charset.forName(encoding);
                 } catch (final RuntimeException e) {
-                    error("Unsupported encoding '" + encoding + "', defaulting to UTF-8", e);
+                    errorReceiver.log(
+                            Severity.ERROR,
+                            null,
+                            getElementId(),
+                            "Unsupported encoding '" + encoding + "', defaulting to 'UTF-8.'",
+                            ErrorType.GENERIC,
+                            e);
                 }
             }
 

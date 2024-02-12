@@ -63,7 +63,7 @@ public class SharedStepData {
                 .stream()
                 .anyMatch(elmData -> GwtNullSafe.test(
                         elmData,
-                        SharedElementData::getAllIndicators,
+                        SharedElementData::getIndicators,
                         allIndicators -> !allIndicators.isEmpty()));
     }
 }
