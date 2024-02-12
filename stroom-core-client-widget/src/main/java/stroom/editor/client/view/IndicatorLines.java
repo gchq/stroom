@@ -1,5 +1,7 @@
 package stroom.editor.client.view;
 
+import stroom.util.shared.ErrorType;
+import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.Indicators;
 import stroom.util.shared.Severity;
 import stroom.util.shared.StoredError;
@@ -20,20 +22,6 @@ public class IndicatorLines {
     private final Map<Integer, Indicator> map;
     private final Indicator locationAgnosticIndicator;
 
-//    public IndicatorLines(final IndicatorLines indicatorLines) {
-//        if (indicatorLines == null) {
-//            this.allIndicators = new Indicators();
-//            this.map = new HashMap<>();
-//            this.locationAgnosticIndicator = new Indicator();
-//        } else {
-//            this.allIndicators = new Indicators(indicatorLines.allIndicators);
-//            this.map = new HashMap<>(indicatorLines.map);
-//            this.locationAgnosticIndicator = new Indicator(indicatorLines.getLocationAgnosticIndicator());
-//        }
-//        GWT.log("map(25) at end of ctor2:\n>> " + map.get(25));
-//        GWT.log("locationAgnosticIndicator at end of ctor1:\n>> " + locationAgnosticIndicator);
-//    }
-
     public IndicatorLines(final Indicators indicators) {
         this.allIndicators = indicators != null
                 ? new Indicators(indicators)
@@ -43,12 +31,10 @@ public class IndicatorLines {
 
         if (indicators != null && indicators.getErrorList() != null) {
             for (final StoredError storedError : indicators.getErrorList()) {
-//                int lineNo = 1;
                 if (storedError.getLocation() != null && storedError.getLocation().getLineNo() > 0) {
                     map.computeIfAbsent(storedError.getLocation().getLineNo(), k -> new Indicator())
                             .add(storedError.getSeverity(), storedError);
 //                    GWT.log("map(25) after add:\n>> " + map.get(25));
-//                    lineNo = storedError.getLocation().getLineNo();
                 } else {
                     locationAgnosticIndicator.add(storedError.getSeverity(), storedError);
 //                    GWT.log("locationAgnosticIndicator after add:\n>> " + locationAgnosticIndicator);
@@ -59,10 +45,46 @@ public class IndicatorLines {
 //        GWT.log("locationAgnosticIndicator at end of ctor2:\n>> " + locationAgnosticIndicator);
     }
 
+    private IndicatorLines(final Indicators allIndicators,
+                          final Map<Integer, Indicator> map,
+                          final Indicator locationAgnosticIndicator) {
+        this.allIndicators = allIndicators;
+        this.map = map;
+        this.locationAgnosticIndicator = locationAgnosticIndicator;
+    }
+
+    public static IndicatorLines filter(final Indicators indicators,
+                                        final boolean includeLocationAgnostic,
+                                        final ErrorType... includedErrorTypes) {
+        final Indicators allIndicators = GwtNullSafe.getOrElseGet(
+                indicators,
+                indicators2 ->
+                        indicators2.filter(includeLocationAgnostic, includedErrorTypes),
+                Indicators::new);
+        final Map<Integer, Indicator> map = new HashMap<>();
+        final Indicator locationAgnosticIndicator = new Indicator();
+        final Set<ErrorType> includedErrorTypesSet = ErrorType.asSet(includedErrorTypes);
+
+        if (GwtNullSafe.test(indicators, indicators2 -> !indicators2.isEmpty())) {
+            for (final StoredError storedError : indicators.getErrorList()) {
+                if (includedErrorTypesSet.contains(storedError.getErrorType())) {
+                    if (storedError.getLocation() != null
+                            && storedError.getLocation().getLineNo() > 0) {
+
+                        map.computeIfAbsent(storedError.getLocation().getLineNo(), k -> new Indicator())
+                                .add(storedError.getSeverity(), storedError);
+                    } else if (includeLocationAgnostic) {
+                        locationAgnosticIndicator.add(storedError.getSeverity(), storedError);
+                    }
+                }
+            }
+        }
+
+        return new IndicatorLines(allIndicators, map, locationAgnosticIndicator);
+    }
+
     public boolean isEmpty() {
         return allIndicators.isEmpty();
-//        return locationAgnosticIndicator.isEmpty()
-//                && map.isEmpty();
     }
 
     public Severity getMaxSeverity() {
@@ -75,13 +97,6 @@ public class IndicatorLines {
                     break;
                 }
             }
-//            if (locationAgnosticIndicator != null) {
-//                final Severity maxSeverity = locationAgnosticIndicator.getMaxSeverity();
-//                if (maxSeverity != null) {
-//                    severities.add(maxSeverity);
-//                }
-//            }
-//
             return Severity.getMaxSeverity(severities, null);
         }
         return null;
@@ -92,9 +107,6 @@ public class IndicatorLines {
         return errorCount != null
                 ? errorCount
                 : 0;
-//        return Stream.concat(map.values().stream(), Stream.of(locationAgnosticIndicator))
-//                .mapToInt(indicator -> indicator.getCount(severity))
-//                .sum();
     }
 
     /**

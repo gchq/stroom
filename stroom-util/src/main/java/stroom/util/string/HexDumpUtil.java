@@ -252,17 +252,25 @@ public class HexDumpUtil {
         return charToAppend;
     }
 
-    public static String decodeAsPrintableChars(final byte[] bytes, final Charset charset) {
+    public static String decodeAsPrintableChars(final byte[] bytes,
+                                                final Charset charset) {
+        return decodeAsPrintableChars(bytes, charset, DEFAULT_REPLACEMENT_CHAR);
+    }
+
+    public static String decodeAsPrintableChars(final byte[] bytes,
+                                                final Charset charset,
+                                                final char unknownCharReplacement) {
 
         final CharsetDecoder charsetDecoder = getCharsetDecoder(charset);
         final StringBuilder stringBuilder = new StringBuilder();
-        decodeAsPrintableChars(charsetDecoder, bytes, stringBuilder);
+        decodeAsPrintableChars(charsetDecoder, bytes, stringBuilder, unknownCharReplacement);
         return stringBuilder.toString();
     }
 
     private static void decodeAsPrintableChars(final CharsetDecoder charsetDecoder,
                                                final byte[] bytes,
-                                               final StringBuilder stringBuilder) {
+                                               final StringBuilder stringBuilder,
+                                               final char unknownCharReplacement) {
 
         final ByteBuffer byteBuffer = ByteBuffer.wrap(bytes);
 
@@ -274,7 +282,7 @@ public class HexDumpUtil {
                 final CharBuffer charBuffer = charsetDecoder.decode(byteBuffer);
                 chr = charBuffer.charAt(0);
             } catch (CharacterCodingException e) {
-                chr = DEFAULT_REPLACEMENT_CHAR;
+                chr = unknownCharReplacement;
             }
             final char printableChar = asPrintableChar(chr);
             stringBuilder.append(printableChar);

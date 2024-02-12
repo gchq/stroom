@@ -169,13 +169,13 @@ public class ExtractionTaskHandler {
                              final DocRef pipelineRef,
                              final Pipeline pipeline,
                              final ErrorConsumer errorConsumer) {
-        final ErrorReceiver errorReceiver = (severity, location, elementId, message, e) -> {
+        final ErrorReceiver errorReceiver = (severity, location, elementId, message, errorType, e) -> {
             final Optional<TaskTerminatedException> optional = TaskTerminatedException.unwrap(e);
             if (optional.isPresent()) {
                 throw optional.get();
             }
 
-            final StoredError storedError = new StoredError(severity, location, elementId, message);
+            final StoredError storedError = new StoredError(severity, location, elementId, message, errorType);
             errorConsumer.add(storedError::toString);
             throw ProcessException.wrap(message, e);
         };
