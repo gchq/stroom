@@ -56,8 +56,10 @@ public class PipelineSteppingPlugin extends Plugin implements BeginPipelineStepp
     private final RestFactory restFactory;
 
     @Inject
-    public PipelineSteppingPlugin(final EventBus eventBus, final Provider<SteppingContentTabPresenter> editorProvider,
-                                  final Provider<DocSelectionPopup> pipelineSelection, final ContentManager contentManager,
+    public PipelineSteppingPlugin(final EventBus eventBus,
+                                  final Provider<SteppingContentTabPresenter> editorProvider,
+                                  final Provider<DocSelectionPopup> pipelineSelection,
+                                  final ContentManager contentManager,
                                   final RestFactory restFactory) {
         super(eventBus);
         this.pipelineSelection = pipelineSelection;
