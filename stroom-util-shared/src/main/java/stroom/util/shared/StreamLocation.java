@@ -17,6 +17,7 @@
 package stroom.util.shared;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -75,6 +76,14 @@ public class StreamLocation implements Location {
         return partIndex == that.partIndex &&
                 lineNo == that.lineNo &&
                 colNo == that.colNo;
+    }
+
+    @JsonIgnore
+    @Override
+    public boolean isUnknown() {
+        return partIndex < 0 // idx so zero based
+                && colNo <= 0 // number so one based
+                && lineNo <= 0;
     }
 
     @Override

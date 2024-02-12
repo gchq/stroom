@@ -147,7 +147,7 @@ public class SAXEventRecorder extends TinyTreeBufferFilter implements Recorder, 
                 // If this is a stepping filter being used for input then catch
                 // indicators raised by the code.
                 if (elementId != null) {
-                    final Indicators indicators = loggingErrorReceiver.getIndicatorsMap().get(elementId);
+                    final Indicators indicators = loggingErrorReceiver.getIndicators(elementId);
                     if (indicators != null) {
                         final Severity maxSeverity = indicators.getMaxSeverity();
                         if (maxSeverity != null && maxSeverity.greaterThanOrEqual(settings.getSkipToSeverity())) {

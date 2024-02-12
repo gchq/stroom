@@ -104,15 +104,9 @@ public class ElementMonitor {
 
         if (loggingErrorReceiver != null) {
             // Get indicators.
-            final Indicators indicators = loggingErrorReceiver.getIndicatorsMap().get(elementId);
+            final Indicators indicators = loggingErrorReceiver.getIndicators(elementId);
             if (indicators != null && indicators.getMaxSeverity() != null) {
-                if (elementType.hasRole(PipelineElementType.ROLE_HAS_CODE)) {
-                    // Take a copy.
-                    elementData.setCodeIndicators(new Indicators(indicators));
-                } else {
-                    // Take a copy.
-                    elementData.setOutputIndicators(new Indicators(indicators));
-                }
+                elementData.setIndicators(new Indicators(indicators));
             }
         }
 
