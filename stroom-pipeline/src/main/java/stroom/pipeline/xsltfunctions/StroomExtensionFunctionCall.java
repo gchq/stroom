@@ -42,6 +42,13 @@ abstract class StroomExtensionFunctionCall {
     private ErrorReceiver errorReceiver;
     private LocationFactory locationFactory;
     private List<PipelineReference> pipelineReferences;
+    private Location location = null;
+
+    Sequence call(String functionName, XPathContext context, Sequence[] arguments, Location location)
+            throws XPathException {
+        this.location = location;
+        return call(functionName, context, arguments);
+    }
 
     abstract Sequence call(String functionName, XPathContext context, Sequence[] arguments) throws XPathException;
 
@@ -149,13 +156,21 @@ abstract class StroomExtensionFunctionCall {
     }
 
     private Location getLocation(final XPathContext context) {
-        final Item item = context.getContextItem();
-        if (item instanceof NodeInfo) {
-            final NodeInfo nodeInfo = (NodeInfo) item;
-            return locationFactory.create(nodeInfo.getLineNumber(), nodeInfo.getColumnNumber());
+        if (location != null) {
+            // Favour the location passed in. Use the locationFactory to decorate it with a stream
+            // if it is stream aware
+            return locationFactory.create(location);
+        } else {
+            // Not sure that there is any point in getting the location from the context as
+            // the extension functions operate in their own fresh context, so can't see the location
+            // of the function in the XSLT.
+            final Item<?> item = context.getContextItem();
+            if (item instanceof final NodeInfo nodeInfo) {
+                return locationFactory.create(nodeInfo.getLineNumber(), nodeInfo.getColumnNumber());
+            } else {
+                return locationFactory.create();
+            }
         }
-
-        return locationFactory.create();
     }
 
     void configure(final ErrorReceiver errorReceiver,

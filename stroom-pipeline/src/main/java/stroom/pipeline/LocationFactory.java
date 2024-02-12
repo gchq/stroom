@@ -19,7 +19,21 @@ package stroom.pipeline;
 import stroom.util.shared.Location;
 
 public interface LocationFactory {
+
     Location create(int colNo, int lineNo);
 
     Location create();
+
+    /**
+     * Create a {@link Location} from the passed {@link Location}, which allows the
+     * {@link LocationFactory} implementation to add any location information in
+     * addition to the line/col. If location is null, creates a new {@link Location}.
+     */
+    default Location create(final Location location) {
+        if (location == null) {
+            return create();
+        } else {
+            return create(location.getLineNo(), location.getColNo());
+        }
+    }
 }

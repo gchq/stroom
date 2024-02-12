@@ -506,7 +506,7 @@ class TestNullSafe {
     @TestFactory
     Stream<DynamicTest> testIsEmptyArray() {
         final String[] emptyArr = new String[0];
-        final String[] nonEmptyArr = new String[]{ "foo", "bar" };
+        final String[] nonEmptyArr = new String[]{"foo", "bar"};
 
         return TestUtil.buildDynamicTestStream()
                 .withWrappedInputType(new TypeLiteral<String[]>() {
@@ -542,7 +542,7 @@ class TestNullSafe {
     @TestFactory
     Stream<DynamicTest> testHasItems_array() {
         final String[] emptyArr = new String[0];
-        final String[] nonEmptyArr = new String[]{ "foo", "bar" };
+        final String[] nonEmptyArr = new String[]{"foo", "bar"};
 
         return TestUtil.buildDynamicTestStream()
                 .withWrappedInputType(new TypeLiteral<String[]>() {
@@ -556,6 +556,34 @@ class TestNullSafe {
                 .addCase(nonEmptyArr, true)
                 .build();
     }
+
+    @TestFactory
+    Stream<DynamicTest> testForEach() {
+        final List<Integer> nonEmptyList = List.of(1, 2, 3);
+        final List<Integer> emptyList = Collections.emptyList();
+        final List<Integer> nullList = null;
+
+        final List<Integer> output = new ArrayList<>();
+
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(new TypeLiteral<List<Integer>>() {
+                })
+                .withWrappedOutputType(new TypeLiteral<List<Integer>>() {
+                })
+                .withTestFunction(testCase -> {
+                    NullSafe.forEach(
+                            testCase.getInput(),
+                            output::add);
+                    return output;
+                })
+                .withSimpleEqualityAssertion()
+                .withBeforeTestCaseAction(output::clear)
+                .addCase(null, emptyList)
+                .addCase(emptyList, emptyList)
+                .addCase(nonEmptyList, nonEmptyList)
+                .build();
+    }
+
 
     @TestFactory
     Stream<DynamicTest> testSize_collection() {
