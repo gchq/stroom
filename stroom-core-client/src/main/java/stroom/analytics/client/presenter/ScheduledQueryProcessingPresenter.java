@@ -12,7 +12,7 @@ import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
-import stroom.explorer.client.presenter.EntityDropDownPresenter;
+import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.feed.shared.FeedDoc;
 import stroom.node.client.NodeManager;
 import stroom.preferences.client.DateTimeFormatter;
@@ -41,7 +41,7 @@ public class ScheduledQueryProcessingPresenter
     private static final AnalyticProcessResource ANALYTIC_PROCESSOR_FILTER_RESOURCE =
             GWT.create(AnalyticProcessResource.class);
 
-    private final EntityDropDownPresenter errorFeedPresenter;
+    private final DocSelectionBoxPresenter errorFeedPresenter;
     private final DateTimeFormatter dateTimeFormatter;
     private final RestFactory restFactory;
 
@@ -50,7 +50,7 @@ public class ScheduledQueryProcessingPresenter
     @Inject
     public ScheduledQueryProcessingPresenter(final EventBus eventBus,
                                              final ScheduledQueryProcessingView view,
-                                             final EntityDropDownPresenter errorFeedPresenter,
+                                             final DocSelectionBoxPresenter errorFeedPresenter,
                                              final DateTimeFormatter dateTimeFormatter,
                                              final RestFactory restFactory,
                                              final NodeManager nodeManager) {

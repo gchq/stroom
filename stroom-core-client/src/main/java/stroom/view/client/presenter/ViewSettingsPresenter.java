@@ -22,7 +22,7 @@ import stroom.datasource.api.v2.FieldInfo;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocumentEditPresenter;
-import stroom.explorer.client.presenter.EntityDropDownPresenter;
+import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.explorer.shared.NodeFlag;
 import stroom.meta.shared.MetaFields;
@@ -45,16 +45,16 @@ import java.util.stream.Collectors;
 public class ViewSettingsPresenter extends DocumentEditPresenter<ViewSettingsView, ViewDoc> {
 
     private final RestFactory restFactory;
-    private final EntityDropDownPresenter dataSourceSelectionPresenter;
-    private final EntityDropDownPresenter pipelineSelectionPresenter;
+    private final DocSelectionBoxPresenter dataSourceSelectionPresenter;
+    private final DocSelectionBoxPresenter pipelineSelectionPresenter;
     private final EditExpressionPresenter expressionPresenter;
 
     @Inject
     public ViewSettingsPresenter(final EventBus eventBus,
                                  final ViewSettingsView view,
                                  final RestFactory restFactory,
-                                 final EntityDropDownPresenter dataSourceSelectionPresenter,
-                                 final EntityDropDownPresenter pipelineSelectionPresenter,
+                                 final DocSelectionBoxPresenter dataSourceSelectionPresenter,
+                                 final DocSelectionBoxPresenter pipelineSelectionPresenter,
                                  final EditExpressionPresenter expressionPresenter,
                                  final UiConfigCache uiConfigCache) {
         super(eventBus, view);

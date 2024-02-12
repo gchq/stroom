@@ -24,7 +24,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
-import stroom.explorer.client.presenter.EntityDropDownPresenter;
+import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.client.presenter.DynamicFieldSelectionListModel;
@@ -50,7 +50,7 @@ public class SolrIndexSettingsPresenter extends DocumentEditPresenter<SolrIndexS
     private static final SolrIndexResource SOLR_INDEX_RESOURCE = GWT.create(SolrIndexResource.class);
 
     private final EditExpressionPresenter editExpressionPresenter;
-    private final EntityDropDownPresenter pipelinePresenter;
+    private final DocSelectionBoxPresenter pipelinePresenter;
     private final RestFactory restFactory;
     private final DynamicFieldSelectionListModel fieldSelectionBoxModel;
 
@@ -58,7 +58,7 @@ public class SolrIndexSettingsPresenter extends DocumentEditPresenter<SolrIndexS
     public SolrIndexSettingsPresenter(final EventBus eventBus,
                                       final SolrIndexSettingsView view,
                                       final EditExpressionPresenter editExpressionPresenter,
-                                      final EntityDropDownPresenter pipelinePresenter,
+                                      final DocSelectionBoxPresenter pipelinePresenter,
                                       final RestFactory restFactory,
                                       final DynamicFieldSelectionListModel fieldSelectionBoxModel) {
         super(eventBus, view);

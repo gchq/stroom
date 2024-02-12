@@ -29,7 +29,7 @@ import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 import java.util.function.Supplier;
 
-public class DropDownTreeViewImpl extends ViewWithUiHandlers<DropDownTreeUiHandlers> implements DropDownTreeView {
+public class ExplorerPopupViewImpl extends ViewWithUiHandlers<ExplorerPopupUiHandlers> implements ExplorerPopupView {
 
     private final Widget widget;
     @UiField
@@ -38,7 +38,7 @@ public class DropDownTreeViewImpl extends ViewWithUiHandlers<DropDownTreeUiHandl
     SimplePanel treeContainer;
 
     @Inject
-    public DropDownTreeViewImpl(final Binder binder) {
+    public ExplorerPopupViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
         widget.sinkEvents(Event.ONMOUSEUP | Event.FOCUSEVENTS);
     }
@@ -85,7 +85,7 @@ public class DropDownTreeViewImpl extends ViewWithUiHandlers<DropDownTreeUiHandl
     // --------------------------------------------------------------------------------
 
 
-    public interface Binder extends UiBinder<Widget, DropDownTreeViewImpl> {
+    public interface Binder extends UiBinder<Widget, ExplorerPopupViewImpl> {
 
     }
 }

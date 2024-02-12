@@ -18,18 +18,18 @@ package stroom.explorer.client.presenter;
 
 import stroom.dispatch.client.RestFactory;
 import stroom.ui.config.client.UiConfigCache;
-import stroom.widget.dropdowntree.client.view.DropDownTreeView;
+import stroom.widget.dropdowntree.client.view.ExplorerPopupView;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
-public class EntityChooser extends ExplorerDropDownTreePresenter {
+public class DocSelectionPopup extends ExplorerPopupPresenter {
 
     @Inject
-    EntityChooser(final EventBus eventBus,
-                  final DropDownTreeView view,
-                  final RestFactory restFactory,
-                  final UiConfigCache uiConfigCache) {
+    DocSelectionPopup(final EventBus eventBus,
+                      final ExplorerPopupView view,
+                      final RestFactory restFactory,
+                      final UiConfigCache uiConfigCache) {
         super(eventBus, view, restFactory, uiConfigCache);
         setIncludeNullSelection(false);
     }

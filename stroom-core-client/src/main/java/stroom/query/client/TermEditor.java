@@ -21,7 +21,7 @@ import stroom.datasource.api.v2.FieldInfo;
 import stroom.datasource.api.v2.FieldType;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.explorer.client.presenter.EntityDropDownPresenter;
+import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.item.client.BaseSelectionBox;
 import stroom.item.client.SelectionBox;
 import stroom.query.api.v2.ExpressionTerm.Condition;
@@ -65,7 +65,7 @@ public class TermEditor extends Composite {
     private final MyDateBox dateTo;
     private final Widget docRefWidget;
     private final Label fieldTypeLabel;
-    private final EntityDropDownPresenter docRefPresenter;
+    private final DocSelectionBoxPresenter docSelectionBoxPresenter;
     private final List<Widget> activeWidgets = new ArrayList<>();
     private final List<HandlerRegistration> registrations = new ArrayList<>();
 
@@ -77,10 +77,10 @@ public class TermEditor extends Composite {
     private final AsyncSuggestOracle suggestOracle = new AsyncSuggestOracle();
     private FieldSelectionListModel fieldSelectionListModel;
 
-    public TermEditor(final EntityDropDownPresenter docRefPresenter) {
-        this.docRefPresenter = docRefPresenter;
-        if (docRefPresenter != null) {
-            docRefWidget = docRefPresenter.getWidget();
+    public TermEditor(final DocSelectionBoxPresenter docSelectionBoxPresenter) {
+        this.docSelectionBoxPresenter = docSelectionBoxPresenter;
+        if (docSelectionBoxPresenter != null) {
+            docRefWidget = docSelectionBoxPresenter.getWidget();
         } else {
             docRefWidget = new Label();
         }
@@ -204,8 +204,8 @@ public class TermEditor extends Composite {
                     sb.append(((MyDateBox) widget).getValue());
                     sb.append(",");
                 } else if (widget.equals(docRefWidget)) {
-                    if (docRefPresenter != null) {
-                        docRef = docRefPresenter.getSelectedEntityReference();
+                    if (docSelectionBoxPresenter != null) {
+                        docRef = docSelectionBoxPresenter.getSelectedEntityReference();
                         if (docRef != null) {
                             sb.append(docRef.getName());
                         }
@@ -344,17 +344,17 @@ public class TermEditor extends Composite {
     private void enterDocRefMode(final FieldInfo field, final Condition condition) {
         setActiveWidgets(docRefWidget);
 
-        if (docRefPresenter != null) {
-            docRefPresenter.setAllowFolderSelection(false);
+        if (docSelectionBoxPresenter != null) {
+            docSelectionBoxPresenter.setAllowFolderSelection(false);
             if (Condition.IN_DICTIONARY.equals(condition)) {
-                docRefPresenter.setIncludedTypes("Dictionary");
+                docSelectionBoxPresenter.setIncludedTypes("Dictionary");
             } else if (Condition.IN_FOLDER.equals(condition)) {
-                docRefPresenter.setIncludedTypes("Folder");
-                docRefPresenter.setAllowFolderSelection(true);
+                docSelectionBoxPresenter.setIncludedTypes("Folder");
+                docSelectionBoxPresenter.setAllowFolderSelection(true);
             } else if (FieldType.DOC_REF.equals(field.getFieldType())) {
-                docRefPresenter.setIncludedTypes(field.getDocRefType());
+                docSelectionBoxPresenter.setIncludedTypes(field.getDocRefType());
             }
-            docRefPresenter.setSelectedEntityReference(term.getDocRef());
+            docSelectionBoxPresenter.setSelectedEntityReference(term.getDocRef());
         }
     }
 
@@ -437,9 +437,9 @@ public class TermEditor extends Composite {
         registerHandler(dateFrom.addValueChangeHandler(event -> fireDirty()));
         registerHandler(dateTo.addValueChangeHandler(event -> fireDirty()));
 
-        if (docRefPresenter != null) {
-            registerHandler(docRefPresenter.addDataSelectionHandler(event -> {
-                final DocRef selection = docRefPresenter.getSelectedEntityReference();
+        if (docSelectionBoxPresenter != null) {
+            registerHandler(docSelectionBoxPresenter.addDataSelectionHandler(event -> {
+                final DocRef selection = docSelectionBoxPresenter.getSelectedEntityReference();
                 if (!EqualsUtil.isEquals(term.getDocRef(), selection)) {
                     write(term);
                     fireDirty();

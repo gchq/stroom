@@ -8,7 +8,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
-import stroom.explorer.client.presenter.EntityDropDownPresenter;
+import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.feed.shared.FeedDoc;
 import stroom.processor.client.presenter.ProcessorPresenter;
 import stroom.query.api.v2.ExpressionOperator;
@@ -27,14 +27,14 @@ public class StreamingProcessingPresenter
 
     private static final AnalyticProcessResource ANALYTIC_PROCESS_RESOURCE = GWT.create(AnalyticProcessResource.class);
 
-    private final EntityDropDownPresenter errorFeedPresenter;
+    private final DocSelectionBoxPresenter errorFeedPresenter;
     private final ProcessorPresenter processorPresenter;
     private final RestFactory restFactory;
 
     @Inject
     public StreamingProcessingPresenter(final EventBus eventBus,
                                         final StreamingProcessingView view,
-                                        final EntityDropDownPresenter errorFeedPresenter,
+                                        final DocSelectionBoxPresenter errorFeedPresenter,
                                         final ProcessorPresenter processorPresenter,
                                         final RestFactory restFactory) {
         super(eventBus, view);

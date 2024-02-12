@@ -22,7 +22,7 @@ import stroom.dashboard.client.main.BasicSettingsView;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ListInputComponentSettings;
 import stroom.dictionary.shared.DictionaryDoc;
-import stroom.explorer.client.presenter.EntityDropDownPresenter;
+import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.security.shared.DocumentPermissionNames;
 
 import com.google.gwt.user.client.ui.Focus;
@@ -37,12 +37,12 @@ public class BasicListInputSettingsPresenter
         extends BasicSettingsTabPresenter<BasicListInputSettingsView>
         implements Focus {
 
-    private final EntityDropDownPresenter dictionaryPresenter;
+    private final DocSelectionBoxPresenter dictionaryPresenter;
 
     @Inject
     public BasicListInputSettingsPresenter(final EventBus eventBus,
                                            final BasicListInputSettingsView view,
-                                           final EntityDropDownPresenter dictionaryPresenter) {
+                                           final DocSelectionBoxPresenter dictionaryPresenter) {
         super(eventBus, view);
         this.dictionaryPresenter = dictionaryPresenter;
 

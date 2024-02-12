@@ -19,7 +19,7 @@ package stroom.query.client;
 import stroom.data.grid.client.MouseHelper;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.explorer.client.presenter.EntityDropDownPresenter;
+import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.pipeline.structure.client.view.Box;
 import stroom.pipeline.structure.client.view.TreePanel;
 import stroom.query.client.presenter.FieldSelectionListModel;
@@ -59,9 +59,9 @@ public class ExpressionTreePanel extends TreePanel<Item> {
     private ExpressionItemRenderer cellRenderer;
     private DefaultTreeForTreeLayout<Item> tree;
 
-    public ExpressionTreePanel(final Provider<EntityDropDownPresenter> docRefProvider,
+    public ExpressionTreePanel(final Provider<DocSelectionBoxPresenter> docRefProvider,
                                final boolean utc) {
-        final EntityDropDownPresenter docRefPresenter = docRefProvider.get();
+        final DocSelectionBoxPresenter docRefPresenter = docRefProvider.get();
         docRefPresenter.setRequiredPermissions(DocumentPermissionNames.USE);
         docRefPresenter.getWidget().getElement().getStyle().setMargin(0, Unit.PX);
 

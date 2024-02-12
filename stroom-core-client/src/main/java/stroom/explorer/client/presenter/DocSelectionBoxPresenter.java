@@ -16,6 +16,7 @@
 
 package stroom.explorer.client.presenter;
 
+import stroom.data.client.event.DataSelectionEvent;
 import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.data.client.event.HasDataSelectionHandlers;
 import stroom.docref.DocRef;
@@ -33,21 +34,22 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.Collection;
+import java.util.Objects;
 
-public class EntityDropDownPresenter extends MyPresenterWidget<DropDownView>
-        implements DropDownUiHandlers, HasDataSelectionHandlers<ExplorerNode>, Focus {
+public class DocSelectionBoxPresenter extends MyPresenterWidget<DropDownView>
+        implements DropDownUiHandlers, HasDataSelectionHandlers<DocRef>, Focus {
 
-    private final ExplorerDropDownTreePresenter explorerDropDownTreePresenter;
+    private final ExplorerPopupPresenter explorerPopupPresenter;
     private boolean enabled = true;
 
     @Inject
-    public EntityDropDownPresenter(final EventBus eventBus,
-                                   final DropDownView view,
-                                   final ExplorerDropDownTreePresenter explorerDropDownTreePresenter) {
+    public DocSelectionBoxPresenter(final EventBus eventBus,
+                                    final DropDownView view,
+                                    final ExplorerPopupPresenter explorerPopupPresenter) {
         super(eventBus, view);
         view.setUiHandlers(this);
-        this.explorerDropDownTreePresenter = explorerDropDownTreePresenter;
-        explorerDropDownTreePresenter.setSelectionChangeConsumer(this::changeSelection);
+        this.explorerPopupPresenter = explorerPopupPresenter;
+        explorerPopupPresenter.setSelectionChangeConsumer(this::changeSelection);
         changeSelection(null);
     }
 
@@ -57,72 +59,74 @@ public class EntityDropDownPresenter extends MyPresenterWidget<DropDownView>
     }
 
     public void setQuickFilter(final String filterInput) {
-        explorerDropDownTreePresenter.setInitialQuickFilter(filterInput);
+        explorerPopupPresenter.setInitialQuickFilter(filterInput);
     }
 
     public void setIncludedTypes(final String... includedTypes) {
-        explorerDropDownTreePresenter.setIncludedTypes(includedTypes);
+        explorerPopupPresenter.setIncludedTypes(includedTypes);
     }
 
     public void setIncludedTypes(final Collection<String> includedTypes) {
-        explorerDropDownTreePresenter.setIncludedTypes(GwtNullSafe.stream(includedTypes)
+        explorerPopupPresenter.setIncludedTypes(GwtNullSafe.stream(includedTypes)
                 .toArray(String[]::new));
     }
 
     public void setTags(final String... tags) {
-        explorerDropDownTreePresenter.setTags(tags);
+        explorerPopupPresenter.setTags(tags);
     }
 
     public void setTags(final Collection<String> tags) {
-        explorerDropDownTreePresenter.setTags(GwtNullSafe.stream(tags)
+        explorerPopupPresenter.setTags(GwtNullSafe.stream(tags)
                 .toArray(String[]::new));
     }
 
     public void setTags(final StandardExplorerTags... tags) {
-        explorerDropDownTreePresenter.setTags(GwtNullSafe.stream(tags)
+        explorerPopupPresenter.setTags(GwtNullSafe.stream(tags)
                 .map(StandardExplorerTags::getTagName)
                 .toArray(String[]::new));
     }
 
     public void setNodeFlags(final NodeFlag... nodeFlags) {
-        explorerDropDownTreePresenter.setNodeFlags(nodeFlags);
+        explorerPopupPresenter.setNodeFlags(nodeFlags);
     }
 
     public void setNodeFlags(final Collection<NodeFlag> nodeFlags) {
-        explorerDropDownTreePresenter.setNodeFlags(GwtNullSafe.stream(nodeFlags)
+        explorerPopupPresenter.setNodeFlags(GwtNullSafe.stream(nodeFlags)
                 .toArray(NodeFlag[]::new));
     }
 
     public void setRequiredPermissions(final String... requiredPermissions) {
-        explorerDropDownTreePresenter.setRequiredPermissions(requiredPermissions);
+        explorerPopupPresenter.setRequiredPermissions(requiredPermissions);
     }
 
     public DocRef getSelectedEntityReference() {
-        return explorerDropDownTreePresenter.getSelectedEntityReference();
+        return explorerPopupPresenter.getSelectedEntityReference();
     }
 
     public void setSelectedEntityReference(final DocRef docRef) {
-        explorerDropDownTreePresenter.setSelectedEntityReference(docRef);
-    }
-
-    public void setSelectedEntityReference(final DocRef docRef, final boolean fireEvents) {
-        explorerDropDownTreePresenter.setSelectedEntityReference(docRef, fireEvents);
+        explorerPopupPresenter.setSelectedEntityReference(docRef);
     }
 
     public void setAllowFolderSelection(final boolean allowFolderSelection) {
-        explorerDropDownTreePresenter.setAllowFolderSelection(allowFolderSelection);
+        explorerPopupPresenter.setAllowFolderSelection(allowFolderSelection);
     }
 
     @Override
     public void showPopup() {
         if (enabled) {
-            explorerDropDownTreePresenter.show();
+            final ExplorerNode initialSelection = explorerPopupPresenter.getCurrentSelection();
+            explorerPopupPresenter.show(docRef -> {
+                final ExplorerNode currentSelection = explorerPopupPresenter.getCurrentSelection();
+                if (!Objects.equals(initialSelection, currentSelection)) {
+                    DataSelectionEvent.fire(DocSelectionBoxPresenter.this, docRef, true);
+                }
+            });
         }
     }
 
     @Override
-    public HandlerRegistration addDataSelectionHandler(final DataSelectionHandler<ExplorerNode> handler) {
-        return explorerDropDownTreePresenter.addDataSelectionHandler(handler);
+    public HandlerRegistration addDataSelectionHandler(final DataSelectionHandler<DocRef> handler) {
+        return addHandlerToSource(DataSelectionEvent.getType(), handler);
     }
 
     private void changeSelection(final ExplorerNode selection) {

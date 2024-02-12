@@ -23,7 +23,7 @@ import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.DirtyUiHandlers;
 import stroom.document.client.event.HasDirtyHandlers;
-import stroom.explorer.client.presenter.EntityDropDownPresenter;
+import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.feed.shared.FeedDoc;
 import stroom.security.shared.DocumentPermissionNames;
 
@@ -38,12 +38,12 @@ public class AnalyticStreamDestinationPresenter
         extends MyPresenterWidget<AnalyticStreamDestinationView>
         implements DirtyUiHandlers, HasDirtyHandlers {
 
-    private final EntityDropDownPresenter feedPresenter;
+    private final DocSelectionBoxPresenter feedPresenter;
 
     @Inject
     public AnalyticStreamDestinationPresenter(final EventBus eventBus,
                                               final AnalyticStreamDestinationView view,
-                                              final EntityDropDownPresenter feedPresenter) {
+                                              final DocSelectionBoxPresenter feedPresenter) {
         super(eventBus, view);
         view.setUiHandlers(this);
         this.feedPresenter = feedPresenter;
@@ -61,7 +61,7 @@ public class AnalyticStreamDestinationPresenter
     public void read(final AnalyticNotificationStreamDestination streamDestination) {
         if (streamDestination != null) {
             getView().setUseSourceFeedIfPossible(streamDestination.isUseSourceFeedIfPossible());
-            feedPresenter.setSelectedEntityReference(streamDestination.getDestinationFeed(), false);
+            feedPresenter.setSelectedEntityReference(streamDestination.getDestinationFeed());
         }
     }
 

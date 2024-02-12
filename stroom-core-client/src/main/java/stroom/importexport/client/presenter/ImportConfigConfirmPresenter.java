@@ -28,9 +28,8 @@ import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.explorer.client.event.RefreshExplorerTreeEvent;
-import stroom.explorer.client.presenter.EntityDropDownPresenter;
+import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.explorer.shared.ExplorerConstants;
-import stroom.explorer.shared.ExplorerNode;
 import stroom.importexport.client.event.ImportConfigConfirmEvent;
 import stroom.importexport.shared.ContentResource;
 import stroom.importexport.shared.ImportConfigRequest;
@@ -90,7 +89,7 @@ public class ImportConfigConfirmPresenter extends
     private final RestFactory restFactory;
     private ResourceKey resourceKey;
     private List<ImportState> confirmList = new ArrayList<>();
-    private final EntityDropDownPresenter rootFolderPresenter;
+    private final DocSelectionBoxPresenter rootFolderPresenter;
 
     private final ImportSettings.Builder importSettingsBuilder = ImportSettings.builder();
 
@@ -99,7 +98,7 @@ public class ImportConfigConfirmPresenter extends
                                         final ImportConfigConfirmView view,
                                         final ImportConfirmProxy proxy,
                                         final TooltipPresenter tooltipPresenter,
-                                        final EntityDropDownPresenter rootFolderPresenter,
+                                        final DocSelectionBoxPresenter rootFolderPresenter,
                                         final RestFactory restFactory) {
         super(eventBus, view, proxy);
         this.rootFolderPresenter = rootFolderPresenter;
@@ -145,10 +144,9 @@ public class ImportConfigConfirmPresenter extends
 
         registerHandler(rootFolderPresenter.addDataSelectionHandler(event -> {
             if (event.getSelectedItem() != null &&
-                    event.getSelectedItem().getDocRef().compareTo(ExplorerConstants.SYSTEM_DOC_REF) != 0 &&
-                    event.getSelectedItem().getDocRef().getUuid().length() > 1) {
-                final ExplorerNode entityData = event.getSelectedItem();
-                setRootDocRef(entityData.getDocRef());
+                    event.getSelectedItem().compareTo(ExplorerConstants.SYSTEM_DOC_REF) != 0 &&
+                    event.getSelectedItem().getUuid().length() > 1) {
+                setRootDocRef(event.getSelectedItem());
             } else {
                 setRootDocRef(null);
             }
