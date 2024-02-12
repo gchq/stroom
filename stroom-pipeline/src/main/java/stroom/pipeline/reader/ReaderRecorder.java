@@ -31,6 +31,7 @@ import stroom.pipeline.stepping.Recorder;
 import stroom.task.api.TaskTerminatedException;
 import stroom.util.NullSafe;
 import stroom.util.shared.DefaultLocation;
+import stroom.util.shared.ErrorType;
 import stroom.util.shared.Severity;
 import stroom.util.shared.StringUtil;
 import stroom.util.shared.TextRange;
@@ -436,12 +437,15 @@ public class ReaderRecorder extends AbstractIOElement implements TakesInput, Tak
                             " [" +
                             ByteArrayUtils.byteArrayToHex(decodedChar.getMalFormedBytes()) +
                             "] at byte offset " +
-                            (byteStreamDecoder.getLastSuppliedByteOffset() - decodedChar.getByteCount() - 1);
+                            (byteStreamDecoder.getLastSuppliedByteOffset() - decodedChar.getByteCount() - 1) +
+                            ". Replacing with '" + DecodedChar.UNKNOWN_CHAR_REPLACEMENT_STRING + "'.";
+
                     errorReceiverProxy.log(
                             Severity.ERROR,
                             DefaultLocation.of(lineNo, colNo),
                             elementId,
                             msg,
+                            ErrorType.INPUT, // Un-decodable is an issue of the input stream
                             null);
                 }
 

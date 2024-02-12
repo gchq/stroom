@@ -16,6 +16,7 @@
 
 package stroom.editor.client.view;
 
+import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.Severity;
 import stroom.util.shared.StoredError;
 
@@ -70,7 +71,7 @@ public class Indicator implements Serializable {
     public Severity getMaxSeverity() {
         for (final Severity sev : Severity.SEVERITIES) {
             final Set<StoredError> messages = errorMap.get(sev);
-            if (messages != null && messages.size() > 0) {
+            if (GwtNullSafe.hasItems(messages)) {
                 return sev;
             }
         }

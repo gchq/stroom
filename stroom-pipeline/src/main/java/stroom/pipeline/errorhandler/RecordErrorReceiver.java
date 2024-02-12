@@ -18,6 +18,7 @@ package stroom.pipeline.errorhandler;
 
 import stroom.pipeline.ErrorWriterProxy;
 import stroom.util.pipeline.scope.PipelineScoped;
+import stroom.util.shared.ErrorType;
 import stroom.util.shared.Location;
 import stroom.util.shared.Severity;
 import stroom.util.shared.StoredError;
@@ -46,7 +47,11 @@ public class RecordErrorReceiver implements ErrorReceiver, ErrorStatistics {
     }
 
     @Override
-    public void log(final Severity severity, final Location location, final String elementId, final String message,
+    public void log(final Severity severity,
+                    final Location location,
+                    final String elementId,
+                    final String message,
+                    final ErrorType errorType,
                     final Throwable e) {
         final String msg = MessageUtil.getMessage(message, e);
 
@@ -61,9 +66,10 @@ public class RecordErrorReceiver implements ErrorReceiver, ErrorStatistics {
         // Only store this message for the current record if one hasn't been
         // stored already or if the new message is more severe.
         if (stats.getCurrentError() == null) {
-            stats.setCurrentError(new StoredError(severity, location, elementId, msg));
+            stats.setCurrentError(new StoredError(severity, location, elementId, msg, errorType));
         }
 
+        // Do we need to write the error type?
         if (stats.getTotalCount() <= MAX_TOTAL_WRITTEN_MARKERS) {
             errorWriter.log(severity, location, elementId, msg);
         }

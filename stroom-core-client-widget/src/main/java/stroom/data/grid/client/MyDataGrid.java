@@ -580,7 +580,7 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
                     // Col is set to expand to fit space but if all cols are bigger than available
                     // space then we need an absolute size for it so the table can be wider than
                     // the space and scroll
-                    GWT.log("minWidth: " + minimumWidths.get(i) + " minimumWidths map: " + minimumWidths);
+//                    GWT.log("minWidth: " + minimumWidths.get(i) + " minimumWidths map: " + minimumWidths);
                     w = GwtNullSafe.requireNonNullElse(
                             minimumWidths.get(i),
                             DEFAULT_INITIAL_MINIMUM_WIDTH);

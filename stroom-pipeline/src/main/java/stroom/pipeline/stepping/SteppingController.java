@@ -270,7 +270,7 @@ public class SteppingController {
         // Clear all indicators.
         final LoggingErrorReceiver loggingErrorReceiver = getErrorReceiver();
         if (loggingErrorReceiver != null) {
-            loggingErrorReceiver.getIndicatorsMap().clear();
+            loggingErrorReceiver.clearIndicators();
         }
     }
 
