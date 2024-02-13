@@ -43,7 +43,7 @@ public class NumberFormatter implements Formatter {
     @Override
     public String format(final Val value) {
         final String result;
-        if (value == null) {
+        if (value == null || value.type().isNull()) {
             result = null;
         } else {
             final Number number = value.toNumber();
