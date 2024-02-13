@@ -48,6 +48,7 @@ import stroom.util.NullSafe;
 import stroom.util.io.PathCreator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.ErrorType;
 import stroom.util.shared.Location;
 import stroom.util.shared.Severity;
 
@@ -402,7 +403,7 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
                 locationFactory.create(locator),
                 getElementId(),
                 msg,
-//                ErrorType.CODE, // Un-comment once 7.2 merged in
+                ErrorType.CODE,
                 null);
     }
 
