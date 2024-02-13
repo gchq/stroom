@@ -428,7 +428,10 @@ class DynamicTestBuilder {
          * Add a test case to the {@link DynamicTest} {@link Stream} by specifying the input
          * and expected output of the test.
          *
-         * @param name           The name of the test case.
+         * @param name           The name of the test case. This name overrides any name provided by
+         *                       {@link CasesBuilder#withNameFunction(Function)}. The name is appended
+         *                       to the case number, e.g. if name is "{@code foo}" then the test name will be
+         *                       something like "{@code 03 foo}".
          * @param input          The input to the test case.
          * @param expectedOutput The expected output of the test case.
          */
@@ -481,6 +484,8 @@ class DynamicTestBuilder {
          * that generates a name from a {@link TestCase}. The default name function basically
          * does a toString() on {@link TestCase#getInput()}.
          * A name explicitly set on {@link TestCase} will override any name function.
+         * The name is appended to the case number, e.g. if name is 'foo' then the test name will be
+         * something like "{@code 03 foo}".
          */
         @SuppressWarnings("unused")
         public CasesBuilder<I, O> withNameFunction(final Function<TestCase<I, O>, String> nameFunction) {

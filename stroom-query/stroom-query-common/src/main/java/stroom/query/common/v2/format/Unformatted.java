@@ -18,21 +18,23 @@ package stroom.query.common.v2.format;
 
 
 import stroom.query.language.functions.Val;
+import stroom.util.NullSafe;
+
+import java.util.Objects;
 
 public class Unformatted implements Formatter {
+
+    private static Unformatted INSTANCE = new Unformatted();
 
     private Unformatted() {
     }
 
     public static Unformatted create() {
-        return new Unformatted();
+        return INSTANCE;
     }
 
     @Override
     public String format(final Val value) {
-        if (value == null) {
-            return null;
-        }
-        return value.toString();
+        return NullSafe.get(value, Objects::toString);
     }
 }

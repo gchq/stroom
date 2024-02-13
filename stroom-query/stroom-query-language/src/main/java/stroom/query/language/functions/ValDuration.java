@@ -73,6 +73,11 @@ public final class ValDuration implements ValNumber {
     }
 
     @Override
+    public Number toNumber() {
+        return milliseconds;
+    }
+
+    @Override
     public void appendString(final StringBuilder sb) {
         sb.append(this);
     }

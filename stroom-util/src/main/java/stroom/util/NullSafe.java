@@ -156,6 +156,24 @@ public class NullSafe {
         return val != null && val;
     }
 
+    /**
+     * @return The un-boxed value if non-null, else zero.
+     */
+    public static int getInt(final Integer val) {
+        return val != null
+                ? val
+                : 0;
+    }
+
+    /**
+     * @return The un-boxed value if non-null, else zero.
+     */
+    public static long getLong(final Long val) {
+        return val != null
+                ? val
+                : 0;
+    }
+
     public static Optional<String> nonBlank(final String str) {
         if (isBlankString(str)) {
             return Optional.empty();
