@@ -28,11 +28,11 @@ public final class ValDate implements ValNumber {
             ValDate.class, ValComparators.AS_LONG_COMPARATOR);
 
     public static final Type TYPE = Type.DATE;
-    private final long value;
+    private final long epochMs;
     private final transient LazyValue<String> lazyStringValue;
 
-    private ValDate(final long value) {
-        this.value = value;
+    private ValDate(final long epochMs) {
+        this.epochMs = epochMs;
         this.lazyStringValue = LazyValue.initialisedBy(this::deriveStringValue);
     }
 
@@ -50,27 +50,27 @@ public final class ValDate implements ValNumber {
 
     @Override
     public Integer toInteger() {
-        return (int) value;
+        return (int) epochMs;
     }
 
     @Override
     public Long toLong() {
-        return value;
+        return epochMs;
     }
 
     @Override
     public Float toFloat() {
-        return (float) value;
+        return (float) epochMs;
     }
 
     @Override
     public Double toDouble() {
-        return (double) value;
+        return (double) epochMs;
     }
 
     @Override
     public Boolean toBoolean() {
-        return value != 0;
+        return epochMs != 0;
     }
 
     @Override
@@ -78,9 +78,14 @@ public final class ValDate implements ValNumber {
         return lazyStringValue.getValueWithoutLocks();
     }
 
+    @Override
+    public Number toNumber() {
+        return epochMs;
+    }
+
     private String deriveStringValue() {
         try {
-            return DateUtil.createNormalDateTimeString(value);
+            return DateUtil.createNormalDateTimeString(epochMs);
         } catch (final RuntimeException e) {
             return null;
         }
@@ -105,12 +110,12 @@ public final class ValDate implements ValNumber {
             return false;
         }
         final ValDate valDate = (ValDate) o;
-        return value == valDate.value;
+        return epochMs == valDate.epochMs;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(value);
+        return Objects.hash(epochMs);
     }
 
     @Override

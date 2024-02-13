@@ -18,6 +18,7 @@ package stroom.query.language.functions;
 
 
 import stroom.query.language.token.Param;
+import stroom.util.time.StroomDuration;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -43,6 +44,23 @@ public sealed interface Val
 
     String toString();
 
+    /**
+     * @return The {@link Val} as a number or null if it cannot be represented as a number.
+     * Returns an impl of {@link Number} that is appropriate for this value. The returned type may differ for
+     * different values of the same Val impl, e.g. "123" and "1.23"
+     */
+    default Number toNumber() {
+        if (hasNumericValue()) {
+            if (hasFractionalPart()) {
+                return toDouble();
+            } else {
+                return toLong();
+            }
+        } else {
+            return null;
+        }
+    }
+
     Type type();
 
     /**
@@ -64,14 +82,14 @@ public sealed interface Val
     }
 
     /**
+     * @param isCaseSensitive Set to false for a case-insensitive comparator.
+     *                        Some impls may ignore this parameter, e.g. numeric {@link Val}
+     *                        impls.
      * @return A comparator that will compare {@link Val} instances using the
      * comparison method of the subclass in question. Only intended for use on
      * {@link Val} instances of the same class. To compare {@link Val} instances
      * of potentially mixed types in a null-safe way, see
      * {@link ValComparators#getComparator(boolean)}.
-     * @param isCaseSensitive Set to false for a case-insensitive comparator.
-     *                        Some impls may ignore this parameter, e.g. numeric {@link Val}
-     *                        impls.
      */
     Comparator<Val> getDefaultComparator(final boolean isCaseSensitive);
 
@@ -146,32 +164,21 @@ public sealed interface Val
      * </pre>
      */
     static Val create(final Object object) {
-        // TODO consider using java pattern match switch in J21+
-        if (object == null) {
-            return ValNull.INSTANCE;
-        } else if (object instanceof String val) {
-            return ValString.create(val);
-        } else if (object instanceof Integer val) {
-            return ValInteger.create(val);
-        } else if (object instanceof Long val) {
-            return ValLong.create(val);
-        } else if (object instanceof Double val) {
-            return ValDouble.create(val);
-        } else if (object instanceof Float val) {
-            return ValFloat.create(val);
-        } else if (object instanceof Boolean val) {
-            return ValBoolean.create(val);
-        } else if (object instanceof Instant val) {
-            return ValDate.create(val.toEpochMilli());
-        } else if (object instanceof Duration val) {
-            return ValDuration.create(val.toMillis());
-        } else if (object instanceof Throwable val) {
-            return ValErr.create(val.getMessage());
-        } else if (object instanceof Val val) {
-            return val;
-        } else {
-            throw new UnsupportedOperationException("Unsupported type " + object.getClass());
-        }
+        return switch (object) {
+            case null -> ValNull.INSTANCE;
+            case Boolean val -> ValBoolean.create(val);
+            case Double val -> ValDouble.create(val);
+            case Duration val -> ValDuration.create(val.toMillis());
+            case Float val -> ValFloat.create(val);
+            case Instant val -> ValDate.create(val.toEpochMilli());
+            case Integer val -> ValInteger.create(val);
+            case Long val -> ValLong.create(val);
+            case String val -> ValString.create(val);
+            case StroomDuration val -> ValDuration.create(val.toMillis());
+            case Throwable val -> ValErr.create(val.getMessage());
+            case Val val -> val;
+            default -> throw new UnsupportedOperationException("Unsupported type " + object.getClass());
+        };
     }
 
     @Override

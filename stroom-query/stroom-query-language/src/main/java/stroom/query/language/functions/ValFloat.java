@@ -75,6 +75,13 @@ public final class ValFloat implements ValNumber {
         return lazyStringValue.getValueWithoutLocks();
     }
 
+    @Override
+    public Number toNumber() {
+        return hasFractionalPart()
+                ? value
+                : toLong();
+    }
+
     private String deriveStringValue() {
         String stringValue = null;
         try {

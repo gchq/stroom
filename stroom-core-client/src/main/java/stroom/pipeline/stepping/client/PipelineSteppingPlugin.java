@@ -110,13 +110,18 @@ public class PipelineSteppingPlugin extends Plugin implements BeginPipelineStepp
 
         chooser.show(pipeline -> {
             if (pipeline != null) {
-                final FindMetaCriteria findMetaCriteria = FindMetaCriteria.createFromId(stepLocation.getMetaId());
+                final FindMetaCriteria findMetaCriteria = FindMetaCriteria.createFromId(
+                        stepLocation.getMetaId());
                 final Rest<ResultPage<MetaRow>> rest = restFactory.create();
                 rest
                         .onSuccess(result -> {
                             if (result != null && result.size() == 1) {
                                 final MetaRow row = result.getFirst();
-                                openEditor(pipeline, stepType, stepLocation, row.getMeta(), childStreamType);
+                                openEditor(pipeline,
+                                        stepType,
+                                        stepLocation,
+                                        row.getMeta(),
+                                        childStreamType);
                             }
                         })
                         .call(META_RESOURCE).findMetaRow(findMetaCriteria);
