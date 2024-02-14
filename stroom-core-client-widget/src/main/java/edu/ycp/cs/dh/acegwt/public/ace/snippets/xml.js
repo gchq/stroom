@@ -105,6 +105,16 @@ exports.snippets = [
     },
 
     {
+        "tabTrigger": "elem",
+        "name": "element blank",
+        "content": `
+<xsl:element name="\${1:name}">
+  \${2}
+</xsl:element>
+\${0}`.trim()
+    },
+
+    {
         "tabTrigger": "foreach",
         "name": "for-each",
         "content": `
