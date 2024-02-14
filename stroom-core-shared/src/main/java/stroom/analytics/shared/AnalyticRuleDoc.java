@@ -18,6 +18,8 @@ package stroom.analytics.shared;
 
 import stroom.docref.DocRef;
 import stroom.docstore.shared.Doc;
+import stroom.query.api.v2.Param;
+import stroom.query.api.v2.TimeRange;
 import stroom.svg.shared.SvgImage;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -26,6 +28,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.List;
 import java.util.Objects;
 
 @JsonPropertyOrder(alphabetic = true)
@@ -40,6 +43,10 @@ public class AnalyticRuleDoc extends Doc {
     @JsonProperty
     private final QueryLanguageVersion languageVersion;
     @JsonProperty
+    private final List<Param> parameters;
+    @JsonProperty
+    private final TimeRange timeRange;
+    @JsonProperty
     private String query;
     @JsonProperty
     private final AnalyticProcessType analyticProcessType;
@@ -51,12 +58,15 @@ public class AnalyticRuleDoc extends Doc {
     public AnalyticRuleDoc() {
         description = null;
         languageVersion = null;
+        parameters = null;
+        timeRange = null;
         query = null;
         analyticProcessType = null;
         analyticProcessConfig = null;
         analyticNotificationConfig = null;
     }
 
+    @SuppressWarnings("checkstyle:linelength")
     @JsonCreator
     public AnalyticRuleDoc(@JsonProperty("type") final String type,
                            @JsonProperty("uuid") final String uuid,
@@ -68,14 +78,17 @@ public class AnalyticRuleDoc extends Doc {
                            @JsonProperty("updateUser") final String updateUser,
                            @JsonProperty("description") final String description,
                            @JsonProperty("languageVersion") final QueryLanguageVersion languageVersion,
+                           @JsonProperty("parameters") final List<Param> parameters,
+                           @JsonProperty("timeRange") final TimeRange timeRange,
                            @JsonProperty("query") final String query,
                            @JsonProperty("analyticProcessType") AnalyticProcessType analyticProcessType,
                            @JsonProperty("analyticProcessConfig") final AnalyticProcessConfig analyticProcessConfig,
-                           @JsonProperty("analyticNotificationConfig")
-                               final AnalyticNotificationConfig analyticNotificationConfig) {
+                           @JsonProperty("analyticNotificationConfig") final AnalyticNotificationConfig analyticNotificationConfig) {
         super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.languageVersion = languageVersion;
+        this.parameters = parameters;
+        this.timeRange = timeRange;
         this.query = query;
         this.analyticProcessType = analyticProcessType;
         this.analyticProcessConfig = analyticProcessConfig;
@@ -104,6 +117,14 @@ public class AnalyticRuleDoc extends Doc {
 
     public QueryLanguageVersion getLanguageVersion() {
         return languageVersion;
+    }
+
+    public List<Param> getParameters() {
+        return parameters;
+    }
+
+    public TimeRange getTimeRange() {
+        return timeRange;
     }
 
     public String getQuery() {
@@ -181,6 +202,8 @@ public class AnalyticRuleDoc extends Doc {
 
         private String description;
         private QueryLanguageVersion languageVersion;
+        private List<Param> parameters;
+        private TimeRange timeRange;
         private String query;
         private AnalyticProcessType analyticProcessType;
         private AnalyticProcessConfig analyticProcessConfig;
@@ -193,6 +216,8 @@ public class AnalyticRuleDoc extends Doc {
             super(doc);
             this.description = doc.description;
             this.languageVersion = doc.languageVersion;
+            this.parameters = doc.parameters;
+            this.timeRange = doc.timeRange;
             this.query = doc.query;
             this.analyticProcessType = doc.analyticProcessType;
             this.analyticProcessConfig = doc.analyticProcessConfig;
@@ -206,6 +231,16 @@ public class AnalyticRuleDoc extends Doc {
 
         public Builder languageVersion(final QueryLanguageVersion languageVersion) {
             this.languageVersion = languageVersion;
+            return self();
+        }
+
+        public Builder parameters(final List<Param> parameters) {
+            this.parameters = parameters;
+            return self();
+        }
+
+        public Builder timeRange(final TimeRange timeRange) {
+            this.timeRange = timeRange;
             return self();
         }
 
@@ -247,6 +282,8 @@ public class AnalyticRuleDoc extends Doc {
                     updateUser,
                     description,
                     languageVersion,
+                    parameters,
+                    timeRange,
                     query,
                     analyticProcessType,
                     analyticProcessConfig,

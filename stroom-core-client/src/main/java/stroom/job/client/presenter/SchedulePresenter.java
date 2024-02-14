@@ -17,14 +17,14 @@
 package stroom.job.client.presenter;
 
 import stroom.dispatch.client.RestFactory;
-import stroom.job.client.view.CronExpressions;
-import stroom.job.client.view.FrequencyExpressions;
 import stroom.job.shared.GetScheduledTimesRequest;
-import stroom.job.shared.Schedule;
-import stroom.job.shared.ScheduleType;
 import stroom.job.shared.ScheduledTimeResource;
 import stroom.job.shared.ScheduledTimes;
+import stroom.query.api.v2.CronExpressions;
+import stroom.query.api.v2.FrequencyExpressions;
 import stroom.util.shared.StringUtil;
+import stroom.util.shared.scheduler.Schedule;
+import stroom.util.shared.scheduler.ScheduleType;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupType;
 
@@ -44,25 +44,25 @@ public class SchedulePresenter
         extends MyPresenterWidget<SchedulePresenter.ScheduleView>
         implements ScheduleUiHandlers {
 
-    private static final ScheduledTimeResource SCHEDULED_TIME_RESOURCE = GWT.create(ScheduledTimeResource.class);
 
-    private final RestFactory restFactory;
+
+    private final ScheduledTimeClient scheduledTimeClient;
     private Schedule frequencySchedule =
             new Schedule(ScheduleType.FREQUENCY, FrequencyExpressions.EVERY_10_MINUTES.getExpression());
     private Schedule cronSchedule =
             new Schedule(ScheduleType.CRON, CronExpressions.EVERY_10TH_MINUTE.getExpression());
     private Schedule currentSchedule = frequencySchedule;
 
-    private Long scheduleReferenceTime = 0L;
-    private Long lastExecutedTime = 0L;
+    private Long scheduleReferenceTime;
+    private Long lastExecutedTime;
 
 
     @Inject
     public SchedulePresenter(final EventBus eventBus,
                              final ScheduleView view,
-                             final RestFactory restFactory) {
+                             final ScheduledTimeClient scheduledTimeClient) {
         super(eventBus, view);
-        this.restFactory = restFactory;
+        this.scheduledTimeClient = scheduledTimeClient;
         view.setUiHandlers(this);
     }
 
@@ -127,17 +127,12 @@ public class SchedulePresenter
                     schedule,
                     scheduleReferenceTime,
                     lastExecutedTime);
-            restFactory
-                    .builder()
-                    .forType(ScheduledTimes.class)
-                    .onSuccess(result -> {
-                        if (result != null) {
-                            getView().getLastExecutedTime().setText(result.getLastExecutedTime());
-                            getView().getNextScheduledTime().setText(result.getNextScheduledTime());
-                        }
-                    })
-                    .call(SCHEDULED_TIME_RESOURCE)
-                    .get(request);
+            scheduledTimeClient.getScheduledTimes(request, result -> {
+                if (result != null) {
+                    getView().getLastExecutedTime().setText(result.getLastExecutedTime());
+                    getView().getNextScheduledTime().setText(result.getNextScheduledTime());
+                }
+            });
         }
     }
 
@@ -154,12 +149,7 @@ public class SchedulePresenter
                                 createSchedule(),
                                 scheduleReferenceTime,
                                 lastExecutedTime);
-                        restFactory
-                                .builder()
-                                .forType(ScheduledTimes.class)
-                                .onSuccess(result -> e.hide())
-                                .call(SCHEDULED_TIME_RESOURCE)
-                                .get(request);
+                        scheduledTimeClient.getScheduledTimes(request, result -> e.hide());
                     } else {
                         e.hide();
                     }

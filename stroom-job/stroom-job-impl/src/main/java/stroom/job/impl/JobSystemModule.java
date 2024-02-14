@@ -55,7 +55,7 @@ public class JobSystemModule extends AbstractModule {
                         .description("Every 10 seconds the Stroom lifecycle service will try and " +
                                 "fetch new tasks for execution.")
                         .managed(false)
-                        .periodicSchedule("10s"));
+                        .frequencySchedule("10s"));
 
         // Make sure the last thing to start and the first thing to stop is the scheduled task executor.
         LifecycleBinder.create(binder())

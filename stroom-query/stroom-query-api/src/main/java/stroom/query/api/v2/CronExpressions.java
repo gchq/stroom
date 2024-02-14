@@ -1,6 +1,4 @@
-package stroom.job.client.view;
-
-import stroom.query.api.v2.CronExpression;
+package stroom.query.api.v2;
 
 public class CronExpressions {
 

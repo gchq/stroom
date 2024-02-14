@@ -449,7 +449,8 @@ public class TableBuilderAnalyticExecutor {
                                 analytic.trackerData.addEventCount(extractionState.getCount());
                             });
                         }
-                    }).run();
+                        return !taskContext.isTerminated();
+                    }).get();
         }
     }
 
@@ -586,6 +587,7 @@ public class TableBuilderAnalyticExecutor {
                                         detectionConsumer,
                                         dataStore,
                                         currentDbState);
+                                return true;
                             } catch (final TaskTerminatedException | UncheckedInterruptedException e) {
                                 LOGGER.debug(e::getMessage, e);
                                 throw e;
@@ -596,7 +598,7 @@ public class TableBuilderAnalyticExecutor {
                         } finally {
                             detectionConsumer.end();
                         }
-                    }).run();
+                    }).get();
         }
     }
 

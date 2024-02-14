@@ -16,14 +16,9 @@
 
 package stroom.util.scheduler;
 
-public interface Scheduler {
+import java.time.Instant;
 
-    /**
-     * Should we execute.
-     *
-     * @return True if it is time to execute.
-     */
-    boolean execute();
+public interface Trigger {
 
-    Long getScheduleReferenceTime();
+    Instant getNextExecutionTimeAfter(Instant afterTime);
 }

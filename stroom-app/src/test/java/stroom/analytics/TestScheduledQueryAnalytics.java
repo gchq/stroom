@@ -16,11 +16,12 @@
 
 package stroom.analytics;
 
+import stroom.analytics.impl.ExecutionScheduleDao;
 import stroom.analytics.impl.ScheduledQueryAnalyticExecutor;
 import stroom.analytics.shared.AnalyticProcessType;
 import stroom.analytics.shared.AnalyticRuleDoc;
+import stroom.analytics.shared.ExecutionSchedule;
 import stroom.analytics.shared.QueryLanguageVersion;
-import stroom.analytics.shared.ScheduledQueryAnalyticProcessConfig;
 import stroom.app.guice.CoreModule;
 import stroom.app.guice.JerseyModule;
 import stroom.app.uri.UriFactoryModule;
@@ -31,6 +32,8 @@ import stroom.node.api.NodeInfo;
 import stroom.resource.impl.ResourceModule;
 import stroom.security.mock.MockSecurityContextModule;
 import stroom.test.BootstrapTestModule;
+import stroom.util.shared.scheduler.Schedule;
+import stroom.util.shared.scheduler.ScheduleType;
 
 import jakarta.inject.Inject;
 import name.falgout.jeffrey.testing.junit.guice.GuiceExtension;
@@ -58,6 +61,8 @@ class TestScheduledQueryAnalytics extends AbstractAnalyticsTest {
     private AnalyticsDataSetup analyticsDataSetup;
     @Inject
     private NodeInfo nodeInfo;
+    @Inject
+    private ExecutionScheduleDao executionScheduleDao;
 
     @Test
     void testSingleEventScheduledQuery() {
@@ -75,17 +80,22 @@ class TestScheduledQueryAnalytics extends AbstractAnalyticsTest {
                 .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
                 .query(query)
                 .analyticProcessType(AnalyticProcessType.SCHEDULED_QUERY)
-                .analyticProcessConfig(new ScheduledQueryAnalyticProcessConfig(
-                        true,
-                        nodeInfo.getThisNodeName(),
-                        analyticsDataSetup.getDetections(),
-                        null,
-                        null,
-                        INSTANT,
-                        INSTANT))
                 .analyticNotificationConfig(createNotificationConfig())
                 .build();
         writeRule(analyticRuleDoc);
+
+        executionScheduleDao.createExecutionSchedule(ExecutionSchedule
+                .builder()
+                .name("Test")
+                .enabled(true)
+                .nodeName(nodeInfo.getThisNodeName())
+                .schedule(Schedule
+                        .builder()
+                        .type(ScheduleType.INSTANT)
+                        .build())
+                .contiguous(true)
+                .owningDoc(analyticRuleDoc.asDocRef())
+                .build());
 
         // Now run the search process.
         analyticsExecutor.exec();

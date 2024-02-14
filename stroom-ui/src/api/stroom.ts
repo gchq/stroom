@@ -174,7 +174,9 @@ export interface AnalyticRuleDoc {
   description?: string;
   languageVersion?: "STROOM_QL_VERSION_0_1" | "SIGMA";
   name?: string;
+  parameters?: Param[];
   query?: string;
+  timeRange?: TimeRange;
   type?: string;
 
   /** @format int64 */
@@ -2549,11 +2551,9 @@ export interface GetPipelineForMetaRequest {
 }
 
 export interface GetScheduledTimesRequest {
-  jobType?: "UNKNOWN" | "CRON" | "FREQUENCY" | "DISTRIBUTED";
-
   /** @format int64 */
   lastExecutedTime?: number;
-  schedule?: string;
+  schedule?: Schedule;
 
   /** @format int64 */
   scheduleReferenceTime?: number;
@@ -4525,20 +4525,32 @@ export interface SavePipelineXmlRequest {
   xml?: string;
 }
 
+export interface Schedule {
+  expression?: string;
+  type?: "INSTANT" | "CRON" | "FREQUENCY";
+}
+
+export interface ScheduleBounds {
+  /** @format int64 */
+  endTimeMs?: number;
+
+  /** @format int64 */
+  startTimeMs?: number;
+}
+
 export type ScheduledQueryAnalyticProcessConfig = AnalyticProcessConfig & {
+  contiguous?: boolean;
   enabled?: boolean;
   errorFeed?: DocRef;
-  maxEventTimeMs?: number;
-  minEventTimeMs?: number;
   node?: string;
-  queryFrequency?: SimpleDuration;
-  timeToWaitForData?: SimpleDuration;
+  schedule?: Schedule;
+  scheduleBounds?: ScheduleBounds;
 };
 
 export type ScheduledQueryAnalyticTrackerData = AnalyticTrackerData & {
-  lastExecutionTimeMs?: number;
-  lastWindowEndTimeMs?: number;
-  lastWindowStartTimeMs?: number;
+  actualExecutionTimeMs?: number;
+  lastEffectiveExecutionTimeMs?: number;
+  nextEffectiveExecutionTimeMs?: number;
 };
 
 export interface ScheduledTimes {
@@ -9107,7 +9119,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @request PUT:/jobNode/v1/{id}/schedule
      * @secure
      */
-    setJobNodeSchedule: (id: number, data: string, params: RequestParams = {}) =>
+    setJobNodeSchedule: (id: number, data: Schedule, params: RequestParams = {}) =>
       this.request<any, void>({
         path: `/jobNode/v1/${id}/schedule`,
         method: "PUT",

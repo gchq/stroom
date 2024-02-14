@@ -55,7 +55,7 @@ public class XmlSchemaModule extends AbstractModule {
                         .name("Clear Old Schemas")
                         .description("Every 10 minutes try to clear old cached schemas.")
                         .managed(false)
-                        .periodicSchedule("10m"));
+                        .frequencySchedule("10m"));
     }
 
     private static class ClearOldSchemas extends RunnableWrapper {

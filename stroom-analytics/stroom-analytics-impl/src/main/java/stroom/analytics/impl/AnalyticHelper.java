@@ -4,7 +4,6 @@ import stroom.analytics.rule.impl.AnalyticRuleStore;
 import stroom.analytics.shared.AnalyticProcessConfig;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.AnalyticTracker;
-import stroom.analytics.shared.ScheduledQueryAnalyticProcessConfig;
 import stroom.analytics.shared.TableBuilderAnalyticProcessConfig;
 import stroom.docref.DocRef;
 import stroom.meta.api.MetaService;
@@ -76,14 +75,6 @@ public class AnalyticHelper {
             final AnalyticRuleDoc modified = analyticRuleDoc
                     .copy()
                     .analyticProcessConfig(tableBuilderAnalyticProcessConfig)
-                    .build();
-            analyticRuleStore.writeDocument(modified);
-        } else if (analyticProcessConfig instanceof
-                final ScheduledQueryAnalyticProcessConfig scheduledQueryAnalyticProcessConfig) {
-            scheduledQueryAnalyticProcessConfig.setEnabled(false);
-            final AnalyticRuleDoc modified = analyticRuleDoc
-                    .copy()
-                    .analyticProcessConfig(scheduledQueryAnalyticProcessConfig)
                     .build();
             analyticRuleStore.writeDocument(modified);
         }
@@ -158,17 +149,9 @@ public class AnalyticHelper {
 
     public String getErrorFeedName(final AnalyticRuleDoc analyticRuleDoc) {
         String errorFeedName = null;
-        if (analyticRuleDoc.getAnalyticProcessConfig() instanceof
-                final ScheduledQueryAnalyticProcessConfig scheduledQueryAnalyticProcessConfig) {
-            if (scheduledQueryAnalyticProcessConfig.getErrorFeed() != null) {
-                errorFeedName = scheduledQueryAnalyticProcessConfig.getErrorFeed().getName();
-            }
-        }
-        if (analyticRuleDoc.getAnalyticProcessConfig() instanceof
-                final TableBuilderAnalyticProcessConfig tableBuilderAnalyticProcessConfig) {
-            if (tableBuilderAnalyticProcessConfig.getErrorFeed() != null) {
-                errorFeedName = tableBuilderAnalyticProcessConfig.getErrorFeed().getName();
-            }
+        if (analyticRuleDoc.getAnalyticNotificationConfig() != null &&
+                analyticRuleDoc.getAnalyticNotificationConfig().getErrorFeed() != null) {
+            errorFeedName = analyticRuleDoc.getAnalyticNotificationConfig().getErrorFeed().getName();
         }
         if (errorFeedName == null) {
             LOGGER.debug(() -> "Error feed not defined: " +

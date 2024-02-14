@@ -1,4 +1,4 @@
-package stroom.job.shared;
+package stroom.util.shared.scheduler;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -55,9 +55,51 @@ public class Schedule {
 
     @Override
     public String toString() {
-        return "Schedule{" +
-                "type=" + type +
-                ", expression='" + expression + '\'' +
-                '}';
+        final StringBuilder sb = new StringBuilder();
+        if (type != null) {
+            sb.append(type.getDisplayValue());
+        }
+        if ((ScheduleType.FREQUENCY.equals(type) || ScheduleType.CRON.equals(type)) && expression != null) {
+            sb.append(" ");
+            sb.append(expression);
+        }
+        return sb.toString();
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static class Builder {
+
+        private ScheduleType type;
+        private String expression;
+
+        private Builder() {
+        }
+
+        private Builder(final Schedule schedule) {
+            this.type = schedule.type;
+            this.expression = schedule.expression;
+        }
+
+
+        public Builder type(final ScheduleType type) {
+            this.type = type;
+            return this;
+        }
+
+        public Builder expression(final String expression) {
+            this.expression = expression;
+            return this;
+        }
+
+        public Schedule build() {
+            return new Schedule(type, expression);
+        }
     }
 }

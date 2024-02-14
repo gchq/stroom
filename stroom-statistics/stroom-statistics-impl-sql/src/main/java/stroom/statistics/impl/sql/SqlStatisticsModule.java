@@ -26,7 +26,7 @@ public class SqlStatisticsModule extends AbstractModule {
                         .name("Evict from object pool")
                         .description("Evict from SQL Statistics event store object pool")
                         .managed(false)
-                        .periodicSchedule("1m"))
+                        .frequencySchedule("1m"))
                 .bindJobTo(SQLStatsFlush.class, builder -> builder
                         .name("SQL Stats In Memory Flush")
                         .description("SQL Stats In Memory Flush (Cache to DB)")

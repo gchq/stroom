@@ -96,10 +96,12 @@ public class StreamingAnalyticProcessorTaskDecorator implements ProcessorTaskDec
             throw new RuntimeException("Unable to get analytic from cache: " + analyticRuleRef);
         }
         analytic = optional.get();
-        if (analytic.streamingAnalyticProcessConfig() != null &&
-                analytic.streamingAnalyticProcessConfig().getErrorFeed() != null &&
-                analytic.streamingAnalyticProcessConfig().getErrorFeed().getName() != null) {
-            userDefinedErrorFeedName = analytic.streamingAnalyticProcessConfig().getErrorFeed().getName();
+        final AnalyticRuleDoc doc = analytic.analyticRuleDoc();
+        if (doc != null &&
+                doc.getAnalyticNotificationConfig() != null &&
+                doc.getAnalyticNotificationConfig().getErrorFeed() != null &&
+                doc.getAnalyticNotificationConfig().getErrorFeed().getName() != null) {
+            userDefinedErrorFeedName = doc.getAnalyticNotificationConfig().getErrorFeed().getName();
         }
     }
 

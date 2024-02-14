@@ -24,5 +24,8 @@
             <l:SelectionBox ui:field="destinationType"/>
         </form:FormGroup>
         <g:SimplePanel ui:field="destinationContainer" styleName="form-group"/>
+        <form:FormGroup identity="analyticProcessingErrorFeed" label="Feed For Errors">
+            <g:SimplePanel ui:field="errorFeed"/>
+        </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder> 

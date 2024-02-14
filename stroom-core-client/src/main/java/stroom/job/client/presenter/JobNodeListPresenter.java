@@ -37,7 +37,6 @@ import stroom.job.shared.JobNode.JobType;
 import stroom.job.shared.JobNodeInfo;
 import stroom.job.shared.JobNodeResource;
 import stroom.job.shared.JobNodeUtil;
-import stroom.job.shared.Schedule;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
@@ -45,6 +44,7 @@ import stroom.ui.config.client.UiConfigCache;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.scheduler.Schedule;
 import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.cell.client.Cell.Context;

@@ -41,7 +41,7 @@ public class CacheModule extends AbstractModule {
                         .name("Evict expired elements")
                         .description("Evicts expired cache entries")
                         .managed(false)
-                        .periodicSchedule("1m"));
+                        .frequencySchedule("1m"));
 
         HasSystemInfoBinder.create(binder())
                 .bind(CacheManagerImpl.class);

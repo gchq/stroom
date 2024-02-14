@@ -39,7 +39,7 @@ public class AnalyticsModule extends AbstractModule {
                 .bindJobTo(TableBuilderAnalyticExecutorRunnable.class, builder -> builder
                         .name("Analytic Executor: Table Builder")
                         .description("Run table building analytics periodically")
-                        .periodicSchedule("10m")
+                        .frequencySchedule("10m")
                         .enabled(false)
                         .advanced(true))
 //                .bindJobTo(StreamingAnalyticExecutorRunnable.class, builder -> builder
@@ -51,14 +51,15 @@ public class AnalyticsModule extends AbstractModule {
                 .bindJobTo(ScheduledAnalyticExecutorRunnable.class, builder -> builder
                         .name("Analytic Executor: Scheduled Query")
                         .description("Run scheduled index query analytics periodically")
-                        .periodicSchedule("10m")
+                        .frequencySchedule("10m")
                         .enabled(false)
                         .advanced(true));
         GuiceUtil.buildMultiBinder(binder(), HasResultStoreInfo.class).addBinding(AnalyticDataStores.class);
 
         RestResourcesBinder.create(binder())
                 .bind(AnalyticProcessResourceImpl.class)
-                .bind(AnalyticDataShardResourceImpl.class);
+                .bind(AnalyticDataShardResourceImpl.class)
+                .bind(ExecutionScheduleResourceImpl.class);
 
         // Live federated search provision.
         GuiceUtil.buildMultiBinder(binder(), DataSourceProvider.class)

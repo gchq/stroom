@@ -42,12 +42,12 @@ public class MetaModule extends AbstractModule {
                         .name("Flush Data Attributes To DB")
                         .description("Flush meta data attribute values to the database")
                         .managed(false)
-                        .periodicSchedule("10s"))
+                        .frequencySchedule("10s"))
                 .bindJobTo(DataAttributesRetention.class, builder -> builder
                         .name("Attribute Value Data Retention")
                         .description("Delete data attribute values older than system property " +
                                 "stroom.data.meta.metaValue.deleteAge")
-                        .periodicSchedule("1d"));
+                        .frequencySchedule("1d"));
     }
 
     @Override

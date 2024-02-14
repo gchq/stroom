@@ -20,6 +20,8 @@ import stroom.util.date.DateUtil;
 
 import org.junit.jupiter.api.Test;
 
+import java.time.Instant;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
@@ -171,12 +173,12 @@ class TestQuartzCronScheduler {
 
     public String textNext(String expression, String start, String end) {
         try {
-            final QuartzCron cron = QuartzCron.compile(expression);
-            final long time = DateUtil.parseNormalDateTimeString(start);
+            Trigger cron = new CronTrigger(expression);
+            final Instant time = DateUtil.parseNormalDateTimeStringToInstant(start);
 
             final String timeString = DateUtil.createNormalDateTimeString(time);
             assertThat(timeString).isEqualTo(start);
-            final long nextTime = cron.getNextTime(time);
+            final Instant nextTime = cron.getNextExecutionTimeAfter(time);
             final String nextTimeString = DateUtil.createNormalDateTimeString(nextTime);
             assertThat(nextTimeString).isEqualTo(end);
 
@@ -188,7 +190,7 @@ class TestQuartzCronScheduler {
 
     public String textLast(String expression, String start, String end) {
         try {
-            QuartzCron cron = QuartzCron.compile(expression);
+            Trigger cron = new CronTrigger(expression);
             Long time = DateUtil.parseNormalDateTimeString(start);
 
             assertThat(DateUtil.createNormalDateTimeString(time)).isEqualTo(start);
@@ -204,103 +206,84 @@ class TestQuartzCronScheduler {
     @Test
     void testUnderLoadTypical() {
         // Every Day
-        QuartzCronScheduler executor = new QuartzCronScheduler("0 0 *") {
-            @Override
-            protected Long getCurrentTime() {
-                return currentTime;
-            }
-        };
+        SimpleScheduleExec executor = new SimpleScheduleExec(new CronTrigger("0 0 *"));
 
         // Application starts at 2pm
-        currentTime = DateUtil.parseNormalDateTimeString("2010-03-29T14:00:00.000Z");
+        Instant currentTime = DateUtil.parseNormalDateTimeStringToInstant("2010-03-29T14:00:00.000Z");
 
-        assertThat(executor.execute()).isFalse();
-        assertThat(executor.execute()).isFalse();
+        assertThat(executor.execute(currentTime)).isFalse();
+        assertThat(executor.execute(currentTime)).isFalse();
 
         // Our 1 minute thread timer fires a bit later
-        currentTime = DateUtil.parseNormalDateTimeString("2010-03-29T14:01:10.000Z");
-        assertThat(executor.execute()).isFalse();
+        currentTime = DateUtil.parseNormalDateTimeStringToInstant("2010-03-29T14:01:10.000Z");
+        assertThat(executor.execute(currentTime)).isFalse();
         // And Again
-        currentTime = DateUtil.parseNormalDateTimeString("2010-03-29T14:02:11.000Z");
-        assertThat(executor.execute()).isFalse();
+        currentTime = DateUtil.parseNormalDateTimeStringToInstant("2010-03-29T14:02:11.000Z");
+        assertThat(executor.execute(currentTime)).isFalse();
 
         // And just before it rolls
-        currentTime = DateUtil.parseNormalDateTimeString("2010-03-29T23:59:59.999Z");
-        assertThat(executor.execute()).isFalse();
+        currentTime = DateUtil.parseNormalDateTimeStringToInstant("2010-03-29T23:59:59.999Z");
+        assertThat(executor.execute(currentTime)).isFalse();
 
         // Now it should roll but we are under load to we don't fire under a lot
         // later
-        currentTime = DateUtil.parseNormalDateTimeString("2010-03-30T01:59:59.999Z");
-        assertThat(executor.execute()).isTrue();
-        assertThat(executor.execute()).isFalse();
+        currentTime = DateUtil.parseNormalDateTimeStringToInstant("2010-03-30T01:59:59.999Z");
+        assertThat(executor.execute(currentTime)).isTrue();
+        assertThat(executor.execute(currentTime)).isFalse();
     }
 
     @Test
     void testMove() {
-        QuartzCron cron = QuartzCron.compile("0,10,20,30,40,50 * *");
+        Trigger cron = new CronTrigger("0,10,20,30,40,50 * *");
 
         assertThat(DateUtil.createNormalDateTimeString(
-                cron.getNextTime(DateUtil.parseNormalDateTimeString("2010-01-01T08:00:00.000Z")))).isEqualTo(
-                "2010-01-01T08:10:00.000Z");
+                cron.getNextExecutionTimeAfter(
+                        DateUtil.parseNormalDateTimeStringToInstant(
+                                "2010-01-01T08:00:00.000Z")))).isEqualTo("2010-01-01T08:10:00.000Z");
 
         assertThat(DateUtil.createNormalDateTimeString(
-                cron.getNextTime(DateUtil.parseNormalDateTimeString("2010-01-01T08:05:00.000Z")))).isEqualTo(
-                "2010-01-01T08:10:00.000Z");
+                cron.getNextExecutionTimeAfter(DateUtil
+                        .parseNormalDateTimeStringToInstant(
+                                "2010-01-01T08:05:00.000Z")))).isEqualTo("2010-01-01T08:10:00.000Z");
 
         assertThat(DateUtil.createNormalDateTimeString(
-                cron.getNextTime(DateUtil.parseNormalDateTimeString("2010-01-01T08:09:00.000Z")))).isEqualTo(
-                "2010-01-01T08:10:00.000Z");
+                cron.getNextExecutionTimeAfter(DateUtil
+                        .parseNormalDateTimeStringToInstant(
+                                "2010-01-01T08:09:00.000Z")))).isEqualTo("2010-01-01T08:10:00.000Z");
     }
 
     @Test
     void testNextAndLast() {
-        final long time = 1331803020017L;
+        final Instant time = Instant.ofEpochMilli(1331803020017L);
         assertThat(DateUtil.createNormalDateTimeString(time)).isEqualTo("2012-03-15T09:17:00.017Z");
-        QuartzCron cron = QuartzCron.compile("* * *");
-        long nextExecute = cron.getNextTime(time);
+        Trigger cron = new CronTrigger("* * *");
+        Instant nextExecute = cron.getNextExecutionTimeAfter(time);
         assertThat(DateUtil.createNormalDateTimeString(nextExecute)).isEqualTo("2012-03-15T09:18:00.000Z");
 //        long lastExecute = cron.getLastTime(time);
 //        assertThat(DateUtil.createNormalDateTimeString(lastExecute)).isEqualTo("2012-03-15T09:17:00.000Z");
 
-        cron = QuartzCron.compile("0,10,20,30,40,50 * *");
-        nextExecute = cron.getNextTime(time);
+        cron = new CronTrigger("0,10,20,30,40,50 * *");
+        nextExecute = cron.getNextExecutionTimeAfter(time);
         assertThat(DateUtil.createNormalDateTimeString(nextExecute)).isEqualTo("2012-03-15T09:20:00.000Z");
 //        lastExecute = cron.getLastTime(time);
 //        assertThat(DateUtil.createNormalDateTimeString(lastExecute)).isEqualTo("2012-03-15T09:10:00.000Z");
 
-        cron = QuartzCron.compile("0 * *");
-        nextExecute = cron.getNextTime(time);
+        cron = new CronTrigger("0 * *");
+        nextExecute = cron.getNextExecutionTimeAfter(time);
         assertThat(DateUtil.createNormalDateTimeString(nextExecute)).isEqualTo("2012-03-15T10:00:00.000Z");
 //        lastExecute = cron.getLastTime(time);
 //        assertThat(DateUtil.createNormalDateTimeString(lastExecute)).isEqualTo("2012-03-15T09:00:00.000Z");
 
-        cron = QuartzCron.compile("0 0 *");
-        nextExecute = cron.getNextTime(time);
+        cron = new CronTrigger("0 0 *");
+        nextExecute = cron.getNextExecutionTimeAfter(time);
         assertThat(DateUtil.createNormalDateTimeString(nextExecute)).isEqualTo("2012-03-16T00:00:00.000Z");
 //        lastExecute = cron.getLastTime(time);
 //        assertThat(DateUtil.createNormalDateTimeString(lastExecute)).isEqualTo("2012-03-15T00:00:00.000Z");
 
-        cron = QuartzCron.compile("0 0 1");
-        nextExecute = cron.getNextTime(time);
+        cron = new CronTrigger("0 0 1");
+        nextExecute = cron.getNextExecutionTimeAfter(time);
         assertThat(DateUtil.createNormalDateTimeString(nextExecute)).isEqualTo("2012-04-01T00:00:00.000Z");
 //        lastExecute = cron.getLastTime(time);
 //        assertThat(DateUtil.createNormalDateTimeString(lastExecute)).isEqualTo("2012-03-01T00:00:00.000Z");
-    }
-
-    private static class QuartzCron {
-
-        private final QuartzCronScheduler scheduler;
-
-        private QuartzCron(final QuartzCronScheduler scheduler) {
-            this.scheduler = scheduler;
-        }
-
-        public static QuartzCron compile(final String expression) {
-            return new QuartzCron(new QuartzCronScheduler(expression));
-        }
-
-        public long getNextTime(final long time) {
-            return scheduler.getNextExecute(time);
-        }
     }
 }

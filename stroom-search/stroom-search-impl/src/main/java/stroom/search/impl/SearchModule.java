@@ -64,7 +64,7 @@ public class SearchModule extends AbstractModule {
                 .bindJobTo(EvictExpiredElements.class, builder -> builder
                         .name("Evict expired elements")
                         .managed(false)
-                        .periodicSchedule("10s"));
+                        .frequencySchedule("10s"));
     }
 
     @Override

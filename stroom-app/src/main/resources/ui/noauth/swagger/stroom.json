@@ -5236,7 +5236,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "type" : "string"
+                "$ref" : "#/components/schemas/Schedule"
               }
             }
           },
@@ -10794,8 +10794,17 @@
           "name" : {
             "type" : "string"
           },
+          "parameters" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Param"
+            }
+          },
           "query" : {
             "type" : "string"
+          },
+          "timeRange" : {
+            "$ref" : "#/components/schemas/TimeRange"
           },
           "type" : {
             "type" : "string"
@@ -14541,16 +14550,12 @@
       "GetScheduledTimesRequest" : {
         "type" : "object",
         "properties" : {
-          "jobType" : {
-            "type" : "string",
-            "enum" : [ "UNKNOWN", "CRON", "FREQUENCY", "DISTRIBUTED" ]
-          },
           "lastExecutedTime" : {
             "type" : "integer",
             "format" : "int64"
           },
           "schedule" : {
-            "type" : "string"
+            "$ref" : "#/components/schemas/Schedule"
           },
           "scheduleReferenceTime" : {
             "type" : "integer",
@@ -17869,6 +17874,31 @@
           }
         }
       },
+      "Schedule" : {
+        "type" : "object",
+        "properties" : {
+          "expression" : {
+            "type" : "string"
+          },
+          "type" : {
+            "type" : "string",
+            "enum" : [ "INSTANT", "CRON", "FREQUENCY" ]
+          }
+        }
+      },
+      "ScheduleBounds" : {
+        "type" : "object",
+        "properties" : {
+          "endTimeMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "startTimeMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }
+      },
       "ScheduledQueryAnalyticProcessConfig" : {
         "type" : "object",
         "allOf" : [ {
@@ -17876,28 +17906,23 @@
         }, {
           "type" : "object",
           "properties" : {
+            "contiguous" : {
+              "type" : "boolean"
+            },
             "enabled" : {
               "type" : "boolean"
             },
             "errorFeed" : {
               "$ref" : "#/components/schemas/DocRef"
             },
-            "maxEventTimeMs" : {
-              "type" : "integer",
-              "format" : "int64"
-            },
-            "minEventTimeMs" : {
-              "type" : "integer",
-              "format" : "int64"
-            },
             "node" : {
               "type" : "string"
             },
-            "queryFrequency" : {
-              "$ref" : "#/components/schemas/SimpleDuration"
+            "schedule" : {
+              "$ref" : "#/components/schemas/Schedule"
             },
-            "timeToWaitForData" : {
-              "$ref" : "#/components/schemas/SimpleDuration"
+            "scheduleBounds" : {
+              "$ref" : "#/components/schemas/ScheduleBounds"
             }
           }
         } ]
@@ -17909,15 +17934,15 @@
         }, {
           "type" : "object",
           "properties" : {
-            "lastExecutionTimeMs" : {
+            "actualExecutionTimeMs" : {
               "type" : "integer",
               "format" : "int64"
             },
-            "lastWindowEndTimeMs" : {
+            "lastEffectiveExecutionTimeMs" : {
               "type" : "integer",
               "format" : "int64"
             },
-            "lastWindowStartTimeMs" : {
+            "nextEffectiveExecutionTimeMs" : {
               "type" : "integer",
               "format" : "int64"
             }

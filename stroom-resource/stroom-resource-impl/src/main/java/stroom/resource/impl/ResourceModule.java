@@ -35,7 +35,7 @@ public class ResourceModule extends AbstractModule {
                         .name("Delete temp file")
                         .description("Deletes the resource store temporary file.")
                         .managed(false)
-                        .periodicSchedule("1h"));
+                        .frequencySchedule("1h"));
 
         LifecycleBinder.create(binder())
                 .bindStartupTaskTo(ResourceStoreStartup.class)

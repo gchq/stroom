@@ -20,8 +20,6 @@ package stroom.analytics.rule.impl;
 import stroom.analytics.shared.AnalyticProcessConfig;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.AnalyticRuleDoc.Builder;
-import stroom.analytics.shared.ScheduledQueryAnalyticProcessConfig;
-import stroom.analytics.shared.StreamingAnalyticProcessConfig;
 import stroom.analytics.shared.TableBuilderAnalyticProcessConfig;
 import stroom.docref.DocContentHighlights;
 import stroom.docref.DocContentMatch;
@@ -119,19 +117,21 @@ class AnalyticRuleStoreImpl implements AnalyticRuleStore {
 
                     final AnalyticProcessConfig analyticProcessConfig = document.getAnalyticProcessConfig();
                     if (analyticProcessConfig != null) {
+//                        if (analyticProcessConfig instanceof
+//                                final ScheduledQueryAnalyticProcessConfig scheduledQueryAnalyticProcessConfig) {
+//                            builder.analyticProcessConfig(
+//                                    scheduledQueryAnalyticProcessConfig.copy().enabled(false).build());
+//                        } else
                         if (analyticProcessConfig instanceof
-                                final ScheduledQueryAnalyticProcessConfig scheduledQueryAnalyticProcessConfig) {
-                            builder.analyticProcessConfig(
-                                    scheduledQueryAnalyticProcessConfig.copy().enabled(false).build());
-                        } else if (analyticProcessConfig instanceof
                                 final TableBuilderAnalyticProcessConfig tableBuilderAnalyticProcessConfig) {
                             builder.analyticProcessConfig(
                                     tableBuilderAnalyticProcessConfig.copy().enabled(false).build());
-                        } else if (analyticProcessConfig instanceof
-                                final StreamingAnalyticProcessConfig streamingAnalyticProcessConfig) {
-//                            builder.analyticProcessConfig(
-//                                    streamingAnalyticProcessConfig.copy().enabled(false).build());
                         }
+//                        } else if (analyticProcessConfig instanceof
+//                                final StreamingAnalyticProcessConfig streamingAnalyticProcessConfig) {
+////                            builder.analyticProcessConfig(
+////                                    streamingAnalyticProcessConfig.copy().enabled(false).build());
+//                        }
 
                         builder.analyticProcessConfig(analyticProcessConfig);
                     }

@@ -21,15 +21,13 @@ import stroom.datasource.api.v2.FieldInfo;
 import stroom.datasource.api.v2.FieldType;
 import stroom.datasource.api.v2.FindFieldInfoCriteria;
 import stroom.db.util.JooqUtil;
+import stroom.db.util.StringMatchConditionUtil;
 import stroom.docref.DocRef;
-import stroom.docref.StringMatch;
 import stroom.query.field.impl.QueryFieldDao;
 import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
 import org.jooq.Condition;
-import org.jooq.Field;
-import org.jooq.impl.DSL;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -101,7 +99,7 @@ public class QueryFieldDaoImpl implements QueryFieldDao {
             return ResultPage.createCriterialBasedList(Collections.emptyList(), criteria);
         }
 
-        final Condition condition = getStringMatchCondition(
+        final Condition condition = StringMatchConditionUtil.getCondition(
                 FIELD_INFO.FIELD_NAME,
                 criteria.getStringMatch());
         final int offset = JooqUtil.getOffset(criteria.getPageRequest());
@@ -125,60 +123,5 @@ public class QueryFieldDaoImpl implements QueryFieldDao {
                     return new FieldInfo(fieldType, name, conditions, null, null);
                 });
         return ResultPage.createCriterialBasedList(fieldInfoList, criteria);
-    }
-
-    private Condition getStringMatchCondition(final Field<String> field,
-                                              final StringMatch stringMatch) {
-        Condition condition = DSL.trueCondition();
-        if (stringMatch != null) {
-            switch (stringMatch.getMatchType()) {
-                case ANY -> condition = DSL.trueCondition();
-                case NULL -> condition = field.isNull();
-                case NON_NULL -> condition = field.isNotNull();
-                case BLANK -> condition = field.likeRegex("^[[:space:]]*$");
-                case EMPTY -> condition = field.eq("");
-                case NULL_OR_BLANK -> condition = field.isNull().or(field.likeRegex(
-                        "^[[:space:]]*$"));
-                case NULL_OR_EMPTY -> condition = field.isNull().or(field.eq(
-                        ""));
-                case CONTAINS -> {
-                    if (stringMatch.isCaseSensitive()) {
-                        condition = field.contains(stringMatch.getPattern());
-                    } else {
-                        condition = field.containsIgnoreCase(stringMatch.getPattern());
-                    }
-                }
-                case EQUALS -> {
-                    if (stringMatch.isCaseSensitive()) {
-                        condition = field.equal(stringMatch.getPattern());
-                    } else {
-                        condition = field.equalIgnoreCase(stringMatch.getPattern());
-                    }
-                }
-                case NOT_EQUALS -> {
-                    if (stringMatch.isCaseSensitive()) {
-                        condition = field.notEqual(stringMatch.getPattern());
-                    } else {
-                        condition = field.notEqualIgnoreCase(stringMatch.getPattern());
-                    }
-                }
-                case STARTS_WITH -> {
-                    if (stringMatch.isCaseSensitive()) {
-                        condition = field.startsWith(stringMatch.getPattern());
-                    } else {
-                        condition = field.startsWithIgnoreCase(stringMatch.getPattern());
-                    }
-                }
-                case ENDS_WITH -> {
-                    if (stringMatch.isCaseSensitive()) {
-                        condition = field.endsWith(stringMatch.getPattern());
-                    } else {
-                        condition = field.endsWithIgnoreCase(stringMatch.getPattern());
-                    }
-                }
-                case REGEX -> condition = field.likeRegex(stringMatch.getPattern());
-            }
-        }
-        return condition;
     }
 }

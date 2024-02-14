@@ -1,6 +1,6 @@
 package stroom.job.client.presenter;
 
-import stroom.job.shared.ScheduleType;
+import stroom.util.shared.scheduler.ScheduleType;
 
 import com.gwtplatform.mvp.client.UiHandlers;
 

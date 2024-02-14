@@ -4,6 +4,8 @@ import stroom.document.client.event.DirtyUiHandlers;
 
 public interface ProcessingStatusUiHandlers extends DirtyUiHandlers {
 
+    void onScheduleClick();
+
     void onRefreshProcessingStatus();
 
 }

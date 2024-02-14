@@ -17,13 +17,15 @@
 package stroom.pipeline.destination;
 
 import stroom.util.io.ByteCountOutputStream;
-import stroom.util.scheduler.QuartzCronScheduler;
+import stroom.util.scheduler.Trigger;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Optional;
@@ -37,11 +39,11 @@ public abstract class RollingDestination implements Destination {
     private static final int ONE_MINUTE = 60000;
 
     private final Object key;
-    private final Long oldestAllowed;
+    private final Instant oldestAllowed;
     private final long rollSize;
     private volatile byte[] footer;
 
-    private volatile long lastFlushTime;
+    private volatile Instant lastFlushTime;
 
     private final ReentrantLock lock = new ReentrantLock();
 
@@ -50,21 +52,21 @@ public abstract class RollingDestination implements Destination {
     private ByteCountOutputStream outputStream;
 
     protected RollingDestination(final Object key,
-                                 final Long frequency,
-                                 final QuartzCronScheduler schedule,
+                                 final Trigger frequencyTrigger,
+                                 final Trigger cronTrigger,
                                  final long rollSize,
-                                 final long creationTime) {
+                                 final Instant creationTime) {
         this.key = key;
         this.rollSize = rollSize;
 
         // Determine the oldest this destination can be.
-        Long time = null;
-        if (schedule != null) {
-            time = schedule.getNextExecute(creationTime);
+        Instant time = null;
+        if (cronTrigger != null) {
+            time = cronTrigger.getNextExecutionTimeAfter(creationTime);
         }
-        if (frequency != null) {
-            final long value = creationTime + frequency;
-            if (time == null || time > value) {
+        if (frequencyTrigger != null) {
+            final Instant value = frequencyTrigger.getNextExecutionTimeAfter(creationTime);
+            if (time == null || time.isAfter(value)) {
                 time = value;
             }
         }
@@ -127,7 +129,7 @@ public abstract class RollingDestination implements Destination {
      *
      * @return True if this destination has been rolled.
      */
-    boolean tryFlushAndRoll(final boolean force, final long currentTime) throws IOException {
+    boolean tryFlushAndRoll(final boolean force, final Instant currentTime) throws IOException {
         final Collection<Throwable> exceptions = new ArrayList<>();
 
         try {
@@ -159,14 +161,14 @@ public abstract class RollingDestination implements Destination {
         return rolled;
     }
 
-    private boolean shouldFlush(final long currentTime) {
-        final long lastFlushTime = this.lastFlushTime;
+    private boolean shouldFlush(final Instant currentTime) {
+        final Instant lastFlushTime = this.lastFlushTime;
         this.lastFlushTime = currentTime;
-        return lastFlushTime > 0 && currentTime - lastFlushTime > ONE_MINUTE;
+        return lastFlushTime != null && lastFlushTime.plus(1, ChronoUnit.MINUTES).isBefore(currentTime);
     }
 
-    private boolean shouldRoll(final long currentTime) {
-        return (oldestAllowed != null && currentTime > oldestAllowed) ||
+    private boolean shouldRoll(final Instant currentTime) {
+        return (oldestAllowed != null && currentTime.isAfter(oldestAllowed)) ||
                 outputStream.getCount() > rollSize;
     }
 

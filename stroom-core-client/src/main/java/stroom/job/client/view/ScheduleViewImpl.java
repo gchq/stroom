@@ -19,10 +19,12 @@ package stroom.job.client.view;
 import stroom.item.client.SelectionBox;
 import stroom.job.client.presenter.SchedulePresenter.ScheduleView;
 import stroom.job.client.presenter.ScheduleUiHandlers;
-import stroom.job.shared.ScheduleType;
 import stroom.query.api.v2.CronExpression;
+import stroom.query.api.v2.CronExpressions;
 import stroom.query.api.v2.FrequencyExpression;
+import stroom.query.api.v2.FrequencyExpressions;
 import stroom.svg.shared.SvgImage;
+import stroom.util.shared.scheduler.ScheduleType;
 import stroom.widget.button.client.Button;
 
 import com.google.gwt.event.dom.client.HasClickHandlers;

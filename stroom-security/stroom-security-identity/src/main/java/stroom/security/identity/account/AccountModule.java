@@ -52,7 +52,7 @@ public final class AccountModule extends AbstractModule {
                 .bindJobTo(AccountMaintenance.class, jobBuilder -> jobBuilder
                         .name("Account Maintenance")
                         .description("Maintain user accounts such as disabling unused ones.")
-                        .periodicSchedule("1d"));
+                        .frequencySchedule("1d"));
     }
 
     private static class AccountMaintenance extends RunnableWrapper {

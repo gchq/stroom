@@ -1,6 +1,7 @@
 package stroom.job.api;
 
-import stroom.job.api.Schedule.ScheduleType;
+import stroom.util.shared.scheduler.Schedule;
+import stroom.util.shared.scheduler.ScheduleType;
 
 import java.util.Objects;
 
@@ -102,17 +103,13 @@ public class ScheduledJob {
             return this;
         }
 
-        /**
-         * See {@link stroom.util.scheduler.SimpleCronScheduler} or
-         * {@link stroom.util.scheduler.FrequencyScheduler} for schedule string format.
-         */
         public Builder cronSchedule(String schedule) {
             this.schedule = new Schedule(ScheduleType.CRON, schedule);
             return this;
         }
 
-        public Builder periodicSchedule(String schedule) {
-            this.schedule = new Schedule(ScheduleType.PERIODIC, schedule);
+        public Builder frequencySchedule(String schedule) {
+            this.schedule = new Schedule(ScheduleType.FREQUENCY, schedule);
             return this;
         }
 

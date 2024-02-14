@@ -85,19 +85,19 @@ public class IndexModule extends AbstractModule {
                         .name("Index Shard Retention")
                         .description("Job to set index shards to have a status of deleted that have past their " +
                                 "retention period")
-                        .periodicSchedule("10m"))
+                        .frequencySchedule("10m"))
                 .bindJobTo(IndexWriterCacheSweep.class, builder -> builder
                         .name("Index Writer Cache Sweep")
                         .description("Job to remove old index shard writers from the cache")
-                        .periodicSchedule("10m"))
+                        .frequencySchedule("10m"))
                 .bindJobTo(IndexWriterFlush.class, builder -> builder
                         .name("Index Writer Flush")
                         .description("Job to flush index shard data to disk")
-                        .periodicSchedule("10m"))
+                        .frequencySchedule("10m"))
                 .bindJobTo(VolumeStatus.class, builder -> builder
                         .name("Index Volume Status")
                         .description("Update the usage status of volumes owned by the node")
-                        .periodicSchedule("5m"));
+                        .frequencySchedule("5m"));
 
         LifecycleBinder.create(binder())
                 .bindStartupTaskTo(IndexShardWriterCacheStartup.class)

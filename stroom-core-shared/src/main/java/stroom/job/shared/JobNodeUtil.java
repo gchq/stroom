@@ -1,6 +1,8 @@
 package stroom.job.shared;
 
 import stroom.job.shared.JobNode.JobType;
+import stroom.util.shared.scheduler.Schedule;
+import stroom.util.shared.scheduler.ScheduleType;
 
 public class JobNodeUtil {
 

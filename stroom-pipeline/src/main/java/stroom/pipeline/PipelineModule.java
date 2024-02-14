@@ -70,7 +70,7 @@ public class PipelineModule extends AbstractModule {
                 .bindJobTo(PipelineDestinationRoll.class, builder -> builder
                         .name("Pipeline Destination Roll")
                         .description("Roll any destinations based on their roll settings")
-                        .periodicSchedule("1m"));
+                        .frequencySchedule("1m"));
 
         LifecycleBinder.create(binder())
                 .bindShutdownTaskTo(RollingDestinationsForceRoll.class);

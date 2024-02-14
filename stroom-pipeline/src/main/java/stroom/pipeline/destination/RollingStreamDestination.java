@@ -21,9 +21,10 @@ import stroom.data.store.api.Store;
 import stroom.data.store.api.Target;
 import stroom.meta.shared.MetaFields;
 import stroom.util.io.ByteCountOutputStream;
-import stroom.util.scheduler.QuartzCronScheduler;
+import stroom.util.scheduler.Trigger;
 
 import java.io.IOException;
+import java.time.Instant;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
@@ -37,14 +38,14 @@ public class RollingStreamDestination extends RollingDestination {
     private final boolean segmentOutput;
 
     public RollingStreamDestination(final StreamKey key,
-                                    final Long frequency,
-                                    final QuartzCronScheduler schedule,
+                                    final Trigger frequencyTrigger,
+                                    final Trigger cronTrigger,
                                     final long rollSize,
-                                    final long creationTime,
+                                    final Instant creationTime,
                                     final Store streamStore,
                                     final Target streamTarget,
                                     final String nodeName) {
-        super(key, frequency, schedule, rollSize, creationTime);
+        super(key, frequencyTrigger, cronTrigger, rollSize, creationTime);
 
         this.streamStore = streamStore;
         this.streamTarget = streamTarget;

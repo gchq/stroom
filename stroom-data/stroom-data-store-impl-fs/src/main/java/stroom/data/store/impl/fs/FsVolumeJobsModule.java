@@ -15,7 +15,7 @@ public class FsVolumeJobsModule extends AbstractModule {
                 .bindJobTo(FileVolumeStatus.class, builder -> builder
                         .name("File System Volume Status")
                         .description("Update the usage status of file system volumes")
-                        .periodicSchedule("5m"));
+                        .frequencySchedule("5m"));
     }
 
     private static class FileVolumeStatus extends RunnableWrapper {

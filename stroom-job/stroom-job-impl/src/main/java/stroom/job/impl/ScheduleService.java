@@ -16,12 +16,13 @@
 
 package stroom.job.impl;
 
-import stroom.job.shared.Schedule;
-import stroom.job.shared.ScheduleType;
 import stroom.job.shared.ScheduledTimes;
 import stroom.util.date.DateUtil;
-import stroom.util.scheduler.QuartzCronScheduler;
-import stroom.util.shared.ModelStringUtil;
+import stroom.util.scheduler.Trigger;
+import stroom.util.scheduler.TriggerFactory;
+import stroom.util.shared.scheduler.Schedule;
+
+import java.time.Instant;
 
 class ScheduleService {
 
@@ -37,32 +38,12 @@ class ScheduleService {
     ScheduledTimes getScheduledTimes(final Schedule schedule,
                                      final Long scheduleReferenceTime,
                                      final Long lastExecutedTime) {
-        ScheduledTimes scheduledTimes = null;
-
-        if (ScheduleType.CRON.equals(schedule.getType())) {
-            final QuartzCronScheduler cron = new QuartzCronScheduler(schedule.getExpression());
-            Long time = System.currentTimeMillis();
-            time = cron.getNextExecute(time);
-            scheduledTimes = getScheduledTimes(lastExecutedTime, time);
-
-        } else if (ScheduleType.FREQUENCY.equals(schedule.getType())) {
-            if (schedule.getExpression() == null || schedule.getExpression().trim().length() == 0) {
-                throw new NumberFormatException("Frequency expression cannot be null");
-            }
-
-            final Long duration = ModelStringUtil.parseDurationString(schedule.getExpression());
-            if (duration == null) {
-                throw new NumberFormatException("Unable to parse frequency expression");
-            }
-
-            Long time = scheduleReferenceTime;
-            if (time != null) {
-                time = time + duration;
-            }
-            scheduledTimes = getScheduledTimes(lastExecutedTime, time);
-        }
-
-        return scheduledTimes;
+        final Instant afterTime = scheduleReferenceTime == null
+                ? Instant.now()
+                : Instant.ofEpochMilli(scheduleReferenceTime);
+        final Trigger trigger = TriggerFactory.create(schedule);
+        final Instant nextScheduledTime = trigger.getNextExecutionTimeAfter(afterTime);
+        return getScheduledTimes(lastExecutedTime, nextScheduledTime.toEpochMilli());
     }
 
     private ScheduledTimes getScheduledTimes(final Long lastExecutedTime, final Long nextScheduledTime) {

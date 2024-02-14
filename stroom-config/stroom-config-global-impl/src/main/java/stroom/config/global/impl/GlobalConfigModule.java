@@ -36,7 +36,7 @@ public class GlobalConfigModule extends AbstractModule {
                 .bindJobTo(PropertyCacheReload.class, builder -> builder
                         .name("Property Cache Reload")
                         .description("Reload properties in the cluster")
-                        .periodicSchedule("1m"));
+                        .frequencySchedule("1m"));
     }
 
     @Override

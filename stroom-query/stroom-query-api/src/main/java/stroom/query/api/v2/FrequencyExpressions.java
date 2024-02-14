@@ -1,6 +1,4 @@
-package stroom.job.client.view;
-
-import stroom.query.api.v2.FrequencyExpression;
+package stroom.query.api.v2;
 
 public class FrequencyExpressions {
 
@@ -16,7 +14,7 @@ public class FrequencyExpressions {
             new FrequencyExpression("Every 30 Minutes", "30m");
 
     public static final FrequencyExpression EVERY_HOUR =
-            new FrequencyExpression("Every Hour", "1m");
+            new FrequencyExpression("Every Hour", "1h");
     public static final FrequencyExpression EVERY_2_HOURS =
             new FrequencyExpression("Every 2 Hours", "2h");
     public static final FrequencyExpression EVERY_6_HOURS =
