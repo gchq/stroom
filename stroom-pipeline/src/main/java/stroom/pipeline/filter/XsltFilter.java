@@ -350,8 +350,9 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
      * It will log a message to the errorReceiver as ERROR.
      * If the {@code terminate} attribute is used like so:
      * <pre>{@code <xsl:message terminate="yes">my message</xsl:message>}</pre>
-     * then it will log it as FATAL which will terminate processing.
-     * You can do this to set the severity:
+     * then it will log it as FATAL and throw an exception which will immediately terminate processing
+     * of the current stream part. Subsequent parts will still be processed.
+     * You can do this to set the severity (namespace of the inner element does not matter):
      * <pre>{@code <xsl:message><info>my message</info></xsl:message>}</pre>
      * Setting {@code terminate} trumps any severity set.
      */
@@ -405,6 +406,11 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
                 msg,
                 ErrorType.CODE,
                 null);
+
+        if (terminate) {
+            throw ProcessException.create(
+                    "Processing terminated due to <xsl:message terminate=\"yes\"> with message: " + msg);
+        }
     }
 
     private Location getLocation(final Throwable e) {
