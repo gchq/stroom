@@ -786,21 +786,21 @@ public class TableBuilderAnalyticExecutor {
                         index++;
                     }
 
-                    final Detection detection = new Detection(
-                            DateUtil.createNormalDateTimeString(),
-                            analyticRuleDoc.getName(),
-                            analyticRuleDoc.getUuid(),
-                            analyticRuleDoc.getVersion(),
-                            null,
-                            null,
-                            analyticRuleDoc.getDescription(),
-                            null,
-                            UUID.randomUUID().toString(),
-                            0,
-                            false,
-                            values,
-                            List.of(new DetectionLinkedEvent(null, streamId, eventId))
-                    );
+                    final List<DetectionLinkedEvent> linkedEvents =
+                            List.of(new DetectionLinkedEvent(null, streamId, eventId));
+                    final Detection detection = Detection
+                            .builder()
+                            .detectTime(DateUtil.createNormalDateTimeString())
+                            .detectorName(analyticRuleDoc.getName())
+                            .detectorUuid(analyticRuleDoc.getUuid())
+                            .detectorVersion(analyticRuleDoc.getVersion())
+                            .detailedDescription(analyticRuleDoc.getDescription())
+                            .detectionUniqueId(UUID.randomUUID().toString())
+                            .detectionRevision(0)
+                            .defunct(false)
+                            .values(values)
+                            .linkedEvents(linkedEvents)
+                            .build();
 
                     detectionConsumer.accept(detection);
 

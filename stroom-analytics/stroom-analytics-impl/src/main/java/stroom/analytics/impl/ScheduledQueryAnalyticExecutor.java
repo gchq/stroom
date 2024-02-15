@@ -372,22 +372,25 @@ public class ScheduledQueryAnalyticExecutor {
                                         linkedEvents = List.of(new DetectionLinkedEvent(null, streamId, eventId));
                                     }
 
-                                    final Detection detection = new Detection(
-                                            DateUtil.createNormalDateTimeString(),
-                                            analytic.getName(),
-                                            analytic.getUuid(),
-                                            analytic.getVersion(),
-                                            executionSchedule == null
-                                                    ? null
-                                                    : executionSchedule.getName(),
-                                            null,
-                                            analytic.getDescription(),
-                                            null,
-                                            UUID.randomUUID().toString(),
-                                            0,
-                                            false,
-                                            values,
-                                            linkedEvents);
+                                    final Detection detection = Detection
+                                            .builder()
+                                            .detectTime(DateUtil.createNormalDateTimeString())
+                                            .detectorName(analytic.getName())
+                                            .detectorUuid(analytic.getUuid())
+                                            .detectorVersion(analytic.getVersion())
+                                            .detailedDescription(analytic.getDescription())
+                                            .detectionUniqueId(UUID.randomUUID().toString())
+                                            .detectionRevision(0)
+                                            .executionSchedule(NullSafe
+                                                    .get(executionSchedule, ExecutionSchedule::getName))
+                                            .executionTime(NullSafe
+                                                    .get(executionTime, DateUtil::createNormalDateTimeString))
+                                            .effectiveExecutionTime(NullSafe
+                                                    .get(effectiveExecutionTime, DateUtil::createNormalDateTimeString))
+                                            .defunct(false)
+                                            .values(values)
+                                            .linkedEvents(linkedEvents)
+                                            .build();
                                     detectionConsumerProxy.getDetectionConsumer().accept(detection);
                                 }
                             };
