@@ -47,6 +47,7 @@ import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskTerminatedException;
 import stroom.util.NullSafe;
 import stroom.util.concurrent.UncheckedInterruptedException;
+import stroom.util.concurrent.WorkQueue;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -67,7 +68,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -131,13 +131,13 @@ public class ScheduledQueryAnalyticExecutor {
             final List<AnalyticRuleDoc> analytics = loadScheduledQueryAnalytics();
 
             info(() -> "Processing " + LogUtil.namedCount("scheduled analytic rule", NullSafe.size(analytics)));
-            final List<CompletableFuture<Void>> completableFutures = new ArrayList<>();
+            final WorkQueue workQueue = new WorkQueue(executorProvider.get(), 1, 1);
             for (final AnalyticRuleDoc analytic : analytics) {
                 final Runnable runnable = () -> processScheduledQueryAnalytics(
                         analytic,
                         taskContext);
                 try {
-                    completableFutures.add(CompletableFuture.runAsync(runnable, executorProvider.get()));
+                    workQueue.exec(runnable);
                 } catch (final TaskTerminatedException | UncheckedInterruptedException e) {
                     LOGGER.debug(e::getMessage, e);
                     throw e;
@@ -147,7 +147,7 @@ public class ScheduledQueryAnalyticExecutor {
             }
 
             // Join.
-            CompletableFuture.allOf(completableFutures.toArray(new CompletableFuture[0])).join();
+            workQueue.join();
             info(() -> LogUtil.message("Finished scheduled analytic processing in {}", logExecutionTime));
         } catch (final TaskTerminatedException | UncheckedInterruptedException e) {
             LOGGER.debug("Task terminated", e);
@@ -165,11 +165,11 @@ public class ScheduledQueryAnalyticExecutor {
                 final String ownerUuid = securityContext.getDocumentOwnerUuid(analytic.asDocRef());
                 final UserIdentity userIdentity = securityContext.createIdentityByUserUuid(ownerUuid);
                 securityContext.asUser(userIdentity, () ->
-                        securityContext.useAsRead(() ->
-                                processScheduledQueryAnalytic(
-                                        ruleIdentity,
-                                        analytic,
-                                        parentTaskContext)));
+                        processScheduledQueryAnalytic(
+                                ruleIdentity,
+                                analytic,
+                                userIdentity,
+                                parentTaskContext));
             } catch (final RuntimeException e) {
                 LOGGER.error(() -> "Error executing rule: " + ruleIdentity, e);
             }
@@ -178,6 +178,7 @@ public class ScheduledQueryAnalyticExecutor {
 
     private void processScheduledQueryAnalytic(final String ruleIdentity,
                                                final AnalyticRuleDoc analytic,
+                                               final UserIdentity userIdentity,
                                                final TaskContext parentTaskContext) {
         // Load schedules for the analytic.
         final ExecutionScheduleRequest request = ExecutionScheduleRequest
@@ -188,19 +189,33 @@ public class ScheduledQueryAnalyticExecutor {
                 .build();
 
         final ResultPage<ExecutionSchedule> executionSchedules = executionScheduleDao.fetchExecutionSchedule(request);
+        final WorkQueue workQueue = new WorkQueue(executorProvider.get(), 1, 1);
         for (final ExecutionSchedule executionSchedule : executionSchedules.getValues()) {
-            boolean success = true;
-            while (success && !parentTaskContext.isTerminated()) {
-                success = taskContextFactory.childContextResult(
-                        parentTaskContext,
-                        "Scheduled Query Analytic: " + ruleIdentity,
-                        taskContext -> processScheduledQueryAnalytic(
-                                ruleIdentity,
-                                analytic,
-                                executionSchedule,
-                                taskContext)).get();
-            }
+            final Runnable runnable = () -> {
+                try {
+                    // We need to set the user again here as it will have been lost from the parent context as we are
+                    // running within a new thread.
+                    securityContext.asUser(userIdentity, () -> securityContext.useAsRead(() -> {
+                        boolean success = true;
+                        while (success && !parentTaskContext.isTerminated()) {
+                            success = taskContextFactory.childContextResult(
+                                    parentTaskContext,
+                                    "Scheduled Query Analytic: " +
+                                            ruleIdentity,
+                                    taskContext -> processScheduledQueryAnalytic(
+                                            ruleIdentity,
+                                            analytic,
+                                            executionSchedule,
+                                            taskContext)).get();
+                        }
+                    }));
+                } catch (final RuntimeException e) {
+                    LOGGER.error(() -> "Error executing rule: " + ruleIdentity, e);
+                }
+            };
+            workQueue.exec(runnable);
         }
+        workQueue.join();
     }
 
     private boolean processScheduledQueryAnalytic(final String ruleIdentity,
@@ -234,7 +249,9 @@ public class ScheduledQueryAnalyticExecutor {
 
         if ((effectiveExecutionTime.isBefore(executionTime) || effectiveExecutionTime.equals(executionTime)) &&
                 (effectiveExecutionTime.isBefore(endTime) || effectiveExecutionTime.equals(endTime))) {
-            taskContext.info(() -> "Executing for effective time: " +
+            taskContext.info(() -> "Executing schedule '" +
+                    executionSchedule.getName() +
+                    "' with effective time: " +
                     DateUtil.createNormalDateTimeString(effectiveExecutionTime.toEpochMilli()));
             final String errorFeedName = analyticHelper.getErrorFeedName(analytic);
             final AnalyticErrorWriter analyticErrorWriter = analyticErrorWriterProvider.get();

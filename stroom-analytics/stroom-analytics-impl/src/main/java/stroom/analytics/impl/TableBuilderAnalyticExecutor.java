@@ -161,16 +161,12 @@ public class TableBuilderAnalyticExecutor {
         this.fieldValueExtractorFactory = fieldValueExtractorFactory;
     }
 
-    private void info(final Supplier<String> messageSupplier) {
-        LOGGER.info(messageSupplier);
-        taskContextFactory.current().info(messageSupplier);
-    }
-
     public void exec() {
+        final TaskContext taskContext = taskContextFactory.current();
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         try {
             info(() -> "Starting table builder analytic processing");
-            processUntilAllComplete();
+            processUntilAllComplete(taskContext);
             info(() -> LogUtil.message("Finished table builder analytic processing in {}", logExecutionTime));
         } catch (final TaskTerminatedException | UncheckedInterruptedException e) {
             LOGGER.debug("Task terminated", e);
@@ -182,7 +178,7 @@ public class TableBuilderAnalyticExecutor {
         }
     }
 
-    private void processUntilAllComplete() {
+    private void processUntilAllComplete(final TaskContext taskContext) {
         securityContext.asProcessingUser(() -> {
             // Delete old data stores.
             deleteOldStores();
@@ -190,12 +186,12 @@ public class TableBuilderAnalyticExecutor {
             boolean allComplete = false;
             // Keep going until we have processed everything we can.
             while (!allComplete) {
-                allComplete = processAll();
+                allComplete = processAll(taskContext);
             }
         });
     }
 
-    private boolean processAll() {
+    private boolean processAll(final TaskContext taskContext) {
         final AtomicBoolean allComplete = new AtomicBoolean(true);
 
         // Load event and aggregate rules.
@@ -225,17 +221,16 @@ public class TableBuilderAnalyticExecutor {
                         LogUtil.namedCount("group", analyticGroupMap.size())));
 
         final List<CompletableFuture<Void>> completableFutures = new ArrayList<>();
-        final TaskContext parentTaskContext = taskContextFactory.current();
         for (final Entry<GroupKey, List<TableBuilderAnalytic>> entry : analyticGroupMap.entrySet()) {
             final Optional<CompletableFuture<Void>> optional =
-                    processGroup(parentTaskContext, entry.getKey(), entry.getValue(), allComplete);
+                    processGroup(taskContext, entry.getKey(), entry.getValue(), allComplete);
             optional.ifPresent(completableFutures::add);
         }
 
         // Join.
         CompletableFuture.allOf(completableFutures.toArray(new CompletableFuture[0])).join();
 
-        return allComplete.get() || parentTaskContext.isTerminated();
+        return allComplete.get() || taskContext.isTerminated();
     }
 
     private Optional<CompletableFuture<Void>> processGroup(final TaskContext parentTaskContext,
@@ -921,6 +916,11 @@ public class TableBuilderAnalyticExecutor {
         }
         info(() -> LogUtil.message("Finished loading rules in {}", logExecutionTime));
         return analyticList;
+    }
+
+    private void info(final Supplier<String> messageSupplier) {
+        LOGGER.info(messageSupplier);
+        taskContextFactory.current().info(messageSupplier);
     }
 
     private record TableBuilderAnalytic(String ruleIdentity,

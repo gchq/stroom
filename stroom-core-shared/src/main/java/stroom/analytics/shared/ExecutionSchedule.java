@@ -101,19 +101,12 @@ public class ExecutionSchedule {
             return false;
         }
         final ExecutionSchedule that = (ExecutionSchedule) o;
-        return Objects.equals(id, that.id) &&
-                Objects.equals(name, that.name) &&
-                enabled == that.enabled &&
-                contiguous == that.contiguous &&
-                Objects.equals(nodeName, that.nodeName) &&
-                Objects.equals(schedule, that.schedule) &&
-                Objects.equals(scheduleBounds, that.scheduleBounds) &&
-                Objects.equals(owningDoc, that.owningDoc);
+        return Objects.equals(id, that.id);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, name, enabled, nodeName, schedule, contiguous, scheduleBounds, owningDoc);
+        return Objects.hash(id);
     }
 
     @Override
