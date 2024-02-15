@@ -2233,6 +2233,106 @@ paths:
       summary: Sends an entity event
       tags:
       - Entity Events
+  /executionSchedule/v1/createExecutionSchedule:
+    post:
+      operationId: createExecutionSchedule
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExecutionSchedule'
+        description: executionSchedule
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExecutionSchedule'
+          description: default response
+      summary: Create Execution Schedule
+      tags:
+      - ExecutionSchedule
+  /executionSchedule/v1/deleteExecutionSchedule:
+    post:
+      operationId: deleteExecutionSchedule
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExecutionSchedule'
+        description: executionSchedule
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: Delete Execution Schedule
+      tags:
+      - ExecutionSchedule
+  /executionSchedule/v1/fetchExecutionHistory:
+    post:
+      operationId: fetchExecutionHistory
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExecutionHistoryRequest'
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultPageExecutionHistory'
+          description: default response
+      summary: Fetch execution history
+      tags:
+      - ExecutionSchedule
+  /executionSchedule/v1/fetchExecutionSchedule:
+    post:
+      operationId: fetchExecutionSchedule
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExecutionScheduleRequest'
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultPageExecutionSchedule'
+          description: default response
+      summary: Fetch execution schedule
+      tags:
+      - ExecutionSchedule
+  /executionSchedule/v1/updateExecutionSchedule:
+    post:
+      operationId: updateExecutionSchedule
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExecutionSchedule'
+        description: executionSchedule
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExecutionSchedule'
+          description: default response
+      summary: Update Execution Schedule
+      tags:
+      - ExecutionSchedule
   /explorer/v2/addTags:
     put:
       operationId: addTags
@@ -7349,6 +7449,8 @@ components:
           enum:
           - STREAM
           - EMAIL
+        errorFeed:
+          $ref: '#/components/schemas/DocRef'
         limitNotifications:
           type: boolean
         maxNotifications:
@@ -9221,6 +9323,76 @@ components:
         streamId:
           type: integer
           format: int64
+    ExecutionHistory:
+      type: object
+      properties:
+        effectiveExecutionTimeMs:
+          type: integer
+          format: int64
+        executionSchedule:
+          $ref: '#/components/schemas/ExecutionSchedule'
+        executionTimeMs:
+          type: integer
+          format: int64
+        id:
+          type: integer
+          format: int64
+        message:
+          type: string
+        status:
+          type: string
+    ExecutionHistoryRequest:
+      type: object
+      properties:
+        executionSchedule:
+          $ref: '#/components/schemas/ExecutionSchedule'
+        pageRequest:
+          $ref: '#/components/schemas/PageRequest'
+        sort:
+          type: string
+          writeOnly: true
+        sortList:
+          type: array
+          items:
+            $ref: '#/components/schemas/CriteriaFieldSort'
+    ExecutionSchedule:
+      type: object
+      properties:
+        contiguous:
+          type: boolean
+        enabled:
+          type: boolean
+        id:
+          type: integer
+          format: int32
+        name:
+          type: string
+        nodeName:
+          type: string
+        owningDoc:
+          $ref: '#/components/schemas/DocRef'
+        schedule:
+          $ref: '#/components/schemas/Schedule'
+        scheduleBounds:
+          $ref: '#/components/schemas/ScheduleBounds'
+    ExecutionScheduleRequest:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+        nodeName:
+          $ref: '#/components/schemas/StringMatch'
+        ownerDocRef:
+          $ref: '#/components/schemas/DocRef'
+        pageRequest:
+          $ref: '#/components/schemas/PageRequest'
+        sort:
+          type: string
+          writeOnly: true
+        sortList:
+          type: array
+          items:
+            $ref: '#/components/schemas/CriteriaFieldSort'
     Expander:
       type: object
       properties:
@@ -12699,6 +12871,8 @@ components:
           type: string
         query:
           type: string
+        timeRange:
+          $ref: '#/components/schemas/TimeRange'
         type:
           type: string
         updateTimeMs:
@@ -13418,6 +13592,26 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Dependency'
+    ResultPageExecutionHistory:
+      type: object
+      description: A page of results.
+      properties:
+        pageResponse:
+          $ref: '#/components/schemas/PageResponse'
+        values:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExecutionHistory'
+    ResultPageExecutionSchedule:
+      type: object
+      description: A page of results.
+      properties:
+        pageResponse:
+          $ref: '#/components/schemas/PageResponse'
+        values:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExecutionSchedule'
     ResultPageFieldInfo:
       type: object
       description: A page of results.
@@ -13792,18 +13986,22 @@ components:
       - $ref: '#/components/schemas/AnalyticProcessConfig'
       - type: object
         properties:
-          contiguous:
-            type: boolean
           enabled:
             type: boolean
           errorFeed:
             $ref: '#/components/schemas/DocRef'
+          maxEventTimeMs:
+            type: integer
+            format: int64
+          minEventTimeMs:
+            type: integer
+            format: int64
           node:
             type: string
-          schedule:
-            $ref: '#/components/schemas/Schedule'
-          scheduleBounds:
-            $ref: '#/components/schemas/ScheduleBounds'
+          queryFrequency:
+            $ref: '#/components/schemas/SimpleDuration'
+          timeToWaitForData:
+            $ref: '#/components/schemas/SimpleDuration'
     ScheduledQueryAnalyticTrackerData:
       type: object
       allOf:
@@ -14840,8 +15038,6 @@ components:
             $ref: '#/components/schemas/SimpleDuration'
           enabled:
             type: boolean
-          errorFeed:
-            $ref: '#/components/schemas/DocRef'
           maxMetaCreateTimeMs:
             type: integer
             format: int64

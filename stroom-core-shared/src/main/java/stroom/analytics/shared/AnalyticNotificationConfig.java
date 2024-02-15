@@ -44,6 +44,7 @@ public class AnalyticNotificationConfig {
     @JsonProperty
     private final DocRef errorFeed;
 
+    @SuppressWarnings("checkstyle:lineLength")
     @JsonCreator
     public AnalyticNotificationConfig(@JsonProperty("limitNotifications") final boolean limitNotifications,
                                       @JsonProperty("maxNotifications") final int maxNotifications,
