@@ -137,6 +137,9 @@ export interface AnalyticDataShard {
 export interface AnalyticNotificationConfig {
   destination?: AnalyticNotificationDestination;
   destinationType?: "STREAM" | "EMAIL";
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
+  errorFeed?: DocRef;
   limitNotifications?: boolean;
 
   /** @format int32 */
@@ -1373,6 +1376,53 @@ export interface EventRef {
 
   /** @format int64 */
   streamId?: number;
+}
+
+export interface ExecutionHistory {
+  /** @format int64 */
+  effectiveExecutionTimeMs?: number;
+  executionSchedule?: ExecutionSchedule;
+
+  /** @format int64 */
+  executionTimeMs?: number;
+
+  /** @format int64 */
+  id?: number;
+  message?: string;
+  status?: string;
+}
+
+export interface ExecutionHistoryRequest {
+  executionSchedule?: ExecutionSchedule;
+  pageRequest?: PageRequest;
+  sort?: string;
+  sortList?: CriteriaFieldSort[];
+}
+
+export interface ExecutionSchedule {
+  contiguous?: boolean;
+  enabled?: boolean;
+
+  /** @format int32 */
+  id?: number;
+  name?: string;
+  nodeName?: string;
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
+  owningDoc?: DocRef;
+  schedule?: Schedule;
+  scheduleBounds?: ScheduleBounds;
+}
+
+export interface ExecutionScheduleRequest {
+  enabled?: boolean;
+  nodeName?: StringMatch;
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
+  ownerDocRef?: DocRef;
+  pageRequest?: PageRequest;
+  sort?: string;
+  sortList?: CriteriaFieldSort[];
 }
 
 export interface Expander {
@@ -3739,6 +3789,7 @@ export interface QueryDoc {
   description?: string;
   name?: string;
   query?: string;
+  timeRange?: TimeRange;
   type?: string;
 
   /** @format int64 */
@@ -4257,6 +4308,24 @@ export interface ResultPageDependency {
 /**
  * A page of results.
  */
+export interface ResultPageExecutionHistory {
+  /** Details of the page of results being returned. */
+  pageResponse?: PageResponse;
+  values?: ExecutionHistory[];
+}
+
+/**
+ * A page of results.
+ */
+export interface ResultPageExecutionSchedule {
+  /** Details of the page of results being returned. */
+  pageResponse?: PageResponse;
+  values?: ExecutionSchedule[];
+}
+
+/**
+ * A page of results.
+ */
 export interface ResultPageFieldInfo {
   /** Details of the page of results being returned. */
   pageResponse?: PageResponse;
@@ -4539,12 +4608,13 @@ export interface ScheduleBounds {
 }
 
 export type ScheduledQueryAnalyticProcessConfig = AnalyticProcessConfig & {
-  contiguous?: boolean;
   enabled?: boolean;
   errorFeed?: DocRef;
+  maxEventTimeMs?: number;
+  minEventTimeMs?: number;
   node?: string;
-  schedule?: Schedule;
-  scheduleBounds?: ScheduleBounds;
+  queryFrequency?: SimpleDuration;
+  timeToWaitForData?: SimpleDuration;
 };
 
 export type ScheduledQueryAnalyticTrackerData = AnalyticTrackerData & {
@@ -5131,7 +5201,6 @@ export type TabLayoutConfig = LayoutConfig & { selected?: number; tabs?: TabConf
 export type TableBuilderAnalyticProcessConfig = AnalyticProcessConfig & {
   dataRetention?: SimpleDuration;
   enabled?: boolean;
-  errorFeed?: DocRef;
   maxMetaCreateTimeMs?: number;
   minMetaCreateTimeMs?: number;
   node?: string;
@@ -7860,6 +7929,102 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
       this.request<any, boolean>({
         path: `/entityEvent/v1/${nodeName}`,
         method: "PUT",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+  };
+  executionSchedule = {
+    /**
+     * No description
+     *
+     * @tags ExecutionSchedule
+     * @name CreateExecutionSchedule
+     * @summary Create Execution Schedule
+     * @request POST:/executionSchedule/v1/createExecutionSchedule
+     * @secure
+     */
+    createExecutionSchedule: (data: ExecutionSchedule, params: RequestParams = {}) =>
+      this.request<any, ExecutionSchedule>({
+        path: `/executionSchedule/v1/createExecutionSchedule`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags ExecutionSchedule
+     * @name DeleteExecutionSchedule
+     * @summary Delete Execution Schedule
+     * @request POST:/executionSchedule/v1/deleteExecutionSchedule
+     * @secure
+     */
+    deleteExecutionSchedule: (data: ExecutionSchedule, params: RequestParams = {}) =>
+      this.request<any, boolean>({
+        path: `/executionSchedule/v1/deleteExecutionSchedule`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags ExecutionSchedule
+     * @name FetchExecutionHistory
+     * @summary Fetch execution history
+     * @request POST:/executionSchedule/v1/fetchExecutionHistory
+     * @secure
+     */
+    fetchExecutionHistory: (data: ExecutionHistoryRequest, params: RequestParams = {}) =>
+      this.request<any, ResultPageExecutionHistory>({
+        path: `/executionSchedule/v1/fetchExecutionHistory`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags ExecutionSchedule
+     * @name FetchExecutionSchedule
+     * @summary Fetch execution schedule
+     * @request POST:/executionSchedule/v1/fetchExecutionSchedule
+     * @secure
+     */
+    fetchExecutionSchedule: (data: ExecutionScheduleRequest, params: RequestParams = {}) =>
+      this.request<any, ResultPageExecutionSchedule>({
+        path: `/executionSchedule/v1/fetchExecutionSchedule`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags ExecutionSchedule
+     * @name UpdateExecutionSchedule
+     * @summary Update Execution Schedule
+     * @request POST:/executionSchedule/v1/updateExecutionSchedule
+     * @secure
+     */
+    updateExecutionSchedule: (data: ExecutionSchedule, params: RequestParams = {}) =>
+      this.request<any, ExecutionSchedule>({
+        path: `/executionSchedule/v1/updateExecutionSchedule`,
+        method: "POST",
         body: data,
         secure: true,
         type: ContentType.Json,

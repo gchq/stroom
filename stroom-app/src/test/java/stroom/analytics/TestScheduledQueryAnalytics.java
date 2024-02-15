@@ -22,9 +22,11 @@ import stroom.analytics.shared.AnalyticProcessType;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.ExecutionSchedule;
 import stroom.analytics.shared.QueryLanguageVersion;
+import stroom.analytics.shared.ScheduleBounds;
 import stroom.app.guice.CoreModule;
 import stroom.app.guice.JerseyModule;
 import stroom.app.uri.UriFactoryModule;
+import stroom.docref.DocRef;
 import stroom.index.VolumeTestConfigModule;
 import stroom.index.mock.MockIndexShardWriterExecutorModule;
 import stroom.meta.statistics.impl.MockMetaStatisticsModule;
@@ -82,8 +84,8 @@ class TestScheduledQueryAnalytics extends AbstractAnalyticsTest {
                 .analyticProcessType(AnalyticProcessType.SCHEDULED_QUERY)
                 .analyticNotificationConfig(createNotificationConfig())
                 .build();
-        writeRule(analyticRuleDoc);
-
+        final DocRef docRef = writeRule(analyticRuleDoc);
+        final long now = System.currentTimeMillis();
         executionScheduleDao.createExecutionSchedule(ExecutionSchedule
                 .builder()
                 .name("Test")
@@ -91,10 +93,16 @@ class TestScheduledQueryAnalytics extends AbstractAnalyticsTest {
                 .nodeName(nodeInfo.getThisNodeName())
                 .schedule(Schedule
                         .builder()
-                        .type(ScheduleType.INSTANT)
+                        .type(ScheduleType.CRON)
+                        .expression("* * * * * ?")
                         .build())
                 .contiguous(true)
-                .owningDoc(analyticRuleDoc.asDocRef())
+                .scheduleBounds(ScheduleBounds
+                        .builder()
+                        .startTimeMs(now)
+                        .endTimeMs(now)
+                        .build())
+                .owningDoc(docRef)
                 .build());
 
         // Now run the search process.
