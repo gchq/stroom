@@ -20,7 +20,6 @@ import org.slf4j.MarkerFactory;
 
 import java.io.IOException;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 @PipelineScoped
 public class AnalyticErrorWriter {
@@ -50,9 +49,9 @@ public class AnalyticErrorWriter {
     }
 
     <R> R exec(final String errorFeedName,
-                         final String pipelineUuid,
-                         final TaskContext taskContext,
-                         final Function<TaskContext, R> function) {
+               final String pipelineUuid,
+               final TaskContext taskContext,
+               final Function<TaskContext, R> function) {
         // Setup the error handler and receiver.
         errorReceiverProxy.setErrorReceiver(recordErrorReceiver);
 
