@@ -2313,6 +2313,26 @@ paths:
       summary: Fetch execution schedule
       tags:
       - ExecutionSchedule
+  /executionSchedule/v1/fetchTracker:
+    post:
+      operationId: fetchTracker
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExecutionSchedule'
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExecutionTracker'
+          description: default response
+      summary: Fetch execution tracker
+      tags:
+      - ExecutionSchedule
   /executionSchedule/v1/updateExecutionSchedule:
     post:
       operationId: updateExecutionSchedule
@@ -9393,6 +9413,18 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CriteriaFieldSort'
+    ExecutionTracker:
+      type: object
+      properties:
+        actualExecutionTimeMs:
+          type: integer
+          format: int64
+        lastEffectiveExecutionTimeMs:
+          type: integer
+          format: int64
+        nextEffectiveExecutionTimeMs:
+          type: integer
+          format: int64
     Expander:
       type: object
       properties:
@@ -11074,14 +11106,13 @@ components:
     GetScheduledTimesRequest:
       type: object
       properties:
-        lastExecutedTime:
-          type: integer
-          format: int64
         schedule:
           $ref: '#/components/schemas/Schedule'
         scheduleReferenceTime:
           type: integer
           format: int64
+        scheduleRestriction:
+          $ref: '#/components/schemas/ScheduleRestriction'
     GlobalConfigCriteria:
       type: object
       properties:
@@ -13980,6 +14011,15 @@ components:
         startTimeMs:
           type: integer
           format: int64
+    ScheduleRestriction:
+      type: object
+      properties:
+        allowHour:
+          type: boolean
+        allowMinute:
+          type: boolean
+        allowSecond:
+          type: boolean
     ScheduledQueryAnalyticProcessConfig:
       type: object
       allOf:
@@ -14020,10 +14060,13 @@ components:
     ScheduledTimes:
       type: object
       properties:
-        lastExecutedTime:
+        error:
           type: string
-        nextScheduledTime:
-          type: string
+        nextScheduledTimeMs:
+          type: integer
+          format: int64
+        schedule:
+          $ref: '#/components/schemas/Schedule'
     ScriptDoc:
       type: object
       properties:
