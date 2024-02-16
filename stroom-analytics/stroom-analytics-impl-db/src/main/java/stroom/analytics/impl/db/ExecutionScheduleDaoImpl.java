@@ -284,6 +284,11 @@ public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
                 .execute());
     }
 
+    @Override
+    public ExecutionTracker fetchTracker(final ExecutionSchedule schedule) {
+        return getTracker(schedule).orElse(null);
+    }
+
     private ExecutionSchedule recordToExecutionSchedule(final Record record) {
         final ScheduleType scheduleType = ScheduleType.valueOf(record.get(EXECUTION_SCHEDULE.SCHEDULE_TYPE));
         final Schedule schedule = new Schedule(scheduleType, record.get(EXECUTION_SCHEDULE.EXPRESSION));

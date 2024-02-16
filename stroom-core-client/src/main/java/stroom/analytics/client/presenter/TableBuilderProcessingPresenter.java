@@ -153,11 +153,6 @@ public class TableBuilderProcessingPresenter
     }
 
     @Override
-    public void onScheduleClick() {
-
-    }
-
-    @Override
     public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
         return addHandlerToSource(DirtyEvent.getType(), handler);
     }

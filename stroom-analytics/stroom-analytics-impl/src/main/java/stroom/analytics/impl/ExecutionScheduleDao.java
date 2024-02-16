@@ -5,10 +5,8 @@ import stroom.analytics.shared.ExecutionHistoryRequest;
 import stroom.analytics.shared.ExecutionSchedule;
 import stroom.analytics.shared.ExecutionScheduleRequest;
 import stroom.analytics.shared.ExecutionTracker;
-import stroom.docref.DocRef;
 import stroom.util.shared.ResultPage;
 
-import java.util.List;
 import java.util.Optional;
 
 public interface ExecutionScheduleDao {
@@ -30,4 +28,6 @@ public interface ExecutionScheduleDao {
     ResultPage<ExecutionHistory> fetchExecutionHistory(ExecutionHistoryRequest request);
 
     void addExecutionHistory(ExecutionHistory executionHistory);
+
+    ExecutionTracker fetchTracker(ExecutionSchedule schedule);
 }

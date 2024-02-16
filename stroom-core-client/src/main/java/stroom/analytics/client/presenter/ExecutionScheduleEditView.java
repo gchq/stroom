@@ -1,6 +1,7 @@
 package stroom.analytics.client.presenter;
 
 import stroom.analytics.shared.ScheduleBounds;
+import stroom.job.client.presenter.ScheduleBox;
 
 import com.google.gwt.user.client.ui.Focus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
@@ -26,7 +27,7 @@ public interface ExecutionScheduleEditView extends View,
 
     void setNode(String node);
 
-    void setScheduleText(String scheduleText);
+    ScheduleBox getScheduleBox();
 
     ScheduleBounds getScheduleBounds();
 

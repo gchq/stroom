@@ -76,4 +76,12 @@ public interface ExecutionScheduleResource
             operationId = "fetchExecutionHistory")
     ResultPage<ExecutionHistory> fetchExecutionHistory(@Parameter(description = "request", required = true)
                                                        ExecutionHistoryRequest request);
+
+    @POST
+    @Path("/fetchTracker")
+    @Operation(
+            summary = "Fetch execution tracker",
+            operationId = "fetchTracker")
+    ExecutionTracker fetchTracker(@Parameter(description = "request", required = true)
+                                  ExecutionSchedule schedule);
 }

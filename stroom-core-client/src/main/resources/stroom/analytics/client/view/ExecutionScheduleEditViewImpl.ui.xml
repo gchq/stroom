@@ -4,6 +4,7 @@
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
              xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:c="urn:import:stroom.widget.customdatebox.client"
+             xmlns:s="urn:import:stroom.job.client.presenter"
              xmlns:l="urn:import:stroom.item.client">
     <g:FlowPanel styleName="max form-padding form">
         <form:FormGroup identity="name" label="Name">
@@ -16,7 +17,7 @@
             <l:SelectionBox ui:field="node" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup identity="schedule" label="Schedule">
-            <g:Label ui:field="schedule" text="Schedule" addStyleNames="w-100 timeRange-selector"/>
+            <s:ScheduleBox ui:field="schedule" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup identity="startTime" label="Start Time">
             <c:MyDateBox ui:field="startTime" addStyleNames="w-100"/>

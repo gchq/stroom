@@ -247,8 +247,7 @@ public class ScheduledQueryAnalyticExecutor {
             endTime = Instant.ofEpochMilli(scheduleBounds.getEndTimeMs());
         }
 
-        if ((effectiveExecutionTime.isBefore(executionTime) || effectiveExecutionTime.equals(executionTime)) &&
-                (effectiveExecutionTime.isBefore(endTime) || effectiveExecutionTime.equals(endTime))) {
+        if (!effectiveExecutionTime.isAfter(executionTime) && !effectiveExecutionTime.isAfter(endTime)) {
             taskContext.info(() -> "Executing schedule '" +
                     executionSchedule.getName() +
                     "' with effective time: " +

@@ -20,15 +20,14 @@ import stroom.analytics.client.presenter.ExecutionScheduleEditView;
 import stroom.analytics.client.presenter.ProcessingStatusUiHandlers;
 import stroom.analytics.shared.ScheduleBounds;
 import stroom.item.client.SelectionBox;
+import stroom.job.client.presenter.ScheduleBox;
 import stroom.widget.customdatebox.client.MyDateBox;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 
-import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -49,7 +48,7 @@ public class ExecutionScheduleEditViewImpl
     @UiField
     SelectionBox<String> node;
     @UiField
-    Label schedule;
+    ScheduleBox schedule;
     @UiField
     MyDateBox startTime;
     @UiField
@@ -121,8 +120,8 @@ public class ExecutionScheduleEditViewImpl
     }
 
     @Override
-    public void setScheduleText(final String scheduleText) {
-        this.schedule.setText(scheduleText);
+    public ScheduleBox getScheduleBox() {
+        return schedule;
     }
 
     @Override
@@ -154,11 +153,6 @@ public class ExecutionScheduleEditViewImpl
     @UiHandler("node")
     public void onNode(final ValueChangeEvent<String> event) {
         getUiHandlers().onDirty();
-    }
-
-    @UiHandler("schedule")
-    public void onSchedule(final ClickEvent event) {
-        getUiHandlers().onScheduleClick();
     }
 
     @UiHandler("startTime")

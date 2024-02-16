@@ -1,8 +1,8 @@
 package stroom.job.client.presenter;
 
-import stroom.alert.client.event.AlertEvent;
 import stroom.dispatch.client.RestFactory;
 import stroom.job.shared.GetScheduledTimesRequest;
+import stroom.job.shared.ScheduleRestriction;
 import stroom.job.shared.ScheduledTimeResource;
 import stroom.job.shared.ScheduledTimes;
 import stroom.util.shared.scheduler.Schedule;
@@ -28,45 +28,22 @@ public class ScheduledTimeClient implements HasHandlers {
         this.restFactory = restFactory;
     }
 
-    public void validate(final Schedule schedule, final Consumer<ScheduledTimes> consumer) {
-        final GetScheduledTimesRequest request = new GetScheduledTimesRequest(schedule, null, null);
+    public void validate(final Schedule schedule,
+                         final ScheduleRestriction scheduleRestriction,
+                         final Consumer<ScheduledTimes> consumer) {
+        final GetScheduledTimesRequest request =
+                new GetScheduledTimesRequest(schedule, null, scheduleRestriction);
         getScheduledTimes(request, consumer);
     }
 
     public void getScheduledTimes(final GetScheduledTimesRequest request,
                                   final Consumer<ScheduledTimes> consumer) {
-        try {
-            validateExpression(request.getSchedule());
-            restFactory
-                    .builder()
-                    .forType(ScheduledTimes.class)
-                    .onSuccess(consumer)
-                    .call(SCHEDULED_TIME_RESOURCE)
-                    .get(request);
-        } catch (final RuntimeException e) {
-            AlertEvent.fireWarn(
-                    this,
-                    e.getMessage(),
-                    null);
-        }
-    }
-
-    private void validateExpression(final Schedule schedule) {
-        if (schedule == null) {
-            throw new RuntimeException("No schedule has been set");
-        }
-        if (schedule.getType() == null) {
-            throw new RuntimeException("Schedule type has not been set");
-        }
-        if (schedule.getExpression() == null || schedule.getExpression().length() == 0) {
-            throw new RuntimeException("Schedule expression has not been set");
-        }
-        final String[] expressionParts = schedule.getExpression().split(" ");
-        if (expressionParts.length > 0 && expressionParts[0].equals("*")) {
-            throw new RuntimeException("You cannot execute every second");
-        } else if (expressionParts.length > 1 && expressionParts[1].equals("*")) {
-            throw new RuntimeException("You cannot execute every minute");
-        }
+        restFactory
+                .builder()
+                .forType(ScheduledTimes.class)
+                .onSuccess(consumer)
+                .call(SCHEDULED_TIME_RESOURCE)
+                .get(request);
     }
 
     @Override

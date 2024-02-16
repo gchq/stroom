@@ -2,20 +2,26 @@ package stroom.analytics.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.analytics.shared.ExecutionSchedule;
+import stroom.analytics.shared.ExecutionScheduleResource;
+import stroom.analytics.shared.ExecutionTracker;
+import stroom.analytics.shared.ScheduleBounds;
+import stroom.dispatch.client.RestFactory;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
 import stroom.job.client.presenter.SchedulePresenter;
-import stroom.job.client.presenter.ScheduledTimeClient;
+import stroom.job.shared.ScheduleReferenceTime;
+import stroom.job.shared.ScheduleRestriction;
 import stroom.node.client.NodeManager;
-import stroom.util.shared.scheduler.Schedule;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.popup.client.presenter.Size;
 
+import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
@@ -26,24 +32,49 @@ public class ExecutionScheduleEditPresenter
         extends MyPresenterWidget<ExecutionScheduleEditView>
         implements ProcessingStatusUiHandlers, HasDirtyHandlers {
 
+    private static final ExecutionScheduleResource EXECUTION_SCHEDULE_RESOURCE =
+            GWT.create(ExecutionScheduleResource.class);
+
     private final EntityDropDownPresenter errorFeedPresenter;
-    private final SchedulePresenter schedulePresenter;
-    private final ScheduledTimeClient scheduledTimeClient;
     private ExecutionSchedule executionSchedule;
-    private Schedule schedule;
 
     @Inject
     public ExecutionScheduleEditPresenter(final EventBus eventBus,
                                           final ExecutionScheduleEditView view,
                                           final EntityDropDownPresenter errorFeedPresenter,
                                           final NodeManager nodeManager,
-                                          final SchedulePresenter schedulePresenter,
-                                          final ScheduledTimeClient scheduledTimeClient) {
+                                          final Provider<SchedulePresenter> schedulePresenterProvider,
+                                          final RestFactory restFactory) {
         super(eventBus, view);
         view.setUiHandlers(this);
         this.errorFeedPresenter = errorFeedPresenter;
-        this.schedulePresenter = schedulePresenter;
-        this.scheduledTimeClient = scheduledTimeClient;
+
+        view.getScheduleBox().setSchedulePresenterProvider(schedulePresenterProvider);
+        view.getScheduleBox().setScheduleRestriction(new ScheduleRestriction(false, false, true));
+        view.getScheduleBox().setScheduleReferenceTimeConsumer(scheduleReferenceTimeConsumer -> {
+            final ScheduleBounds scheduleBounds = getView().getScheduleBounds();
+            restFactory
+                    .builder()
+                    .forType(ExecutionTracker.class)
+                    .onSuccess(tracker -> {
+                        Long lastExecuted = null;
+                        if (tracker != null) {
+                            lastExecuted = tracker.getLastEffectiveExecutionTimeMs();
+                        }
+                        Long referenceTime = lastExecuted;
+                        if (referenceTime == null && scheduleBounds != null) {
+                            referenceTime = scheduleBounds.getStartTimeMs();
+                        }
+                        if (referenceTime == null) {
+                            referenceTime = System.currentTimeMillis();
+                        }
+
+                        scheduleReferenceTimeConsumer.accept(new ScheduleReferenceTime(referenceTime, lastExecuted));
+                    })
+                    .call(EXECUTION_SCHEDULE_RESOURCE)
+                    .fetchTracker(executionSchedule);
+
+        });
 
         nodeManager.listAllNodes(
                 list -> {
@@ -62,6 +93,7 @@ public class ExecutionScheduleEditPresenter
     protected void onBind() {
         super.onBind();
         registerHandler(errorFeedPresenter.addDataSelectionHandler(e -> onDirty()));
+        registerHandler(getView().getScheduleBox().addValueChangeHandler(e -> onDirty()));
     }
 
     public void show(final ExecutionSchedule executionSchedule,
@@ -81,8 +113,7 @@ public class ExecutionScheduleEditPresenter
                 .onShow(e -> getView().focus())
                 .onHideRequest(e -> {
                     if (e.isOk()) {
-                        final ExecutionSchedule written = write();
-                        scheduledTimeClient.validate(written.getSchedule(), scheduledTimes -> {
+                        write(written -> {
                             consumer.accept(written);
                             e.hide();
                         });
@@ -95,46 +126,34 @@ public class ExecutionScheduleEditPresenter
 
     public void read(final ExecutionSchedule executionSchedule) {
         this.executionSchedule = executionSchedule;
-        this.schedule = executionSchedule.getSchedule();
         getView().setName(executionSchedule.getName());
         getView().setEnabled(executionSchedule.isEnabled());
         getView().setNode(executionSchedule.getNodeName());
         getView().setScheduleBounds(executionSchedule.getScheduleBounds());
-        updateScheduleLabel();
+        getView().getScheduleBox().setValue(executionSchedule.getSchedule());
     }
 
-    public ExecutionSchedule write() {
-        return executionSchedule
-                .copy()
-                .name(getView().getName())
-                .enabled(getView().isEnabled())
-                .nodeName(getView().getNode())
-                .schedule(schedule)
-                .contiguous(true)
-                .scheduleBounds(getView().getScheduleBounds())
-                .build();
+    public void write(final Consumer<ExecutionSchedule> consumer) {
+        getView().getScheduleBox().validate(scheduledTimes -> {
+            if (scheduledTimes.isError()) {
+                AlertEvent.fireWarn(this, scheduledTimes.getError(), null);
+            } else {
+                final ExecutionSchedule schedule = executionSchedule
+                        .copy()
+                        .name(getView().getName())
+                        .enabled(getView().isEnabled())
+                        .nodeName(getView().getNode())
+                        .schedule(scheduledTimes.getSchedule())
+                        .contiguous(true)
+                        .scheduleBounds(getView().getScheduleBounds())
+                        .build();
+                consumer.accept(schedule);
+            }
+        });
     }
 
     @Override
     public void onRefreshProcessingStatus() {
-    }
-
-    @Override
-    public void onScheduleClick() {
-        schedulePresenter.setSchedule(schedule, null, null);
-        schedulePresenter.show(schedule -> {
-            this.schedule = schedule;
-            updateScheduleLabel();
-            onDirty();
-        });
-    }
-
-    private void updateScheduleLabel() {
-        if (schedule == null) {
-            getView().setScheduleText("Set schedule");
-        } else {
-            getView().setScheduleText(schedule.toString());
-        }
     }
 
     @Override

@@ -21,6 +21,7 @@ import stroom.analytics.shared.ExecutionHistoryRequest;
 import stroom.analytics.shared.ExecutionSchedule;
 import stroom.analytics.shared.ExecutionScheduleRequest;
 import stroom.analytics.shared.ExecutionScheduleResource;
+import stroom.analytics.shared.ExecutionTracker;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.util.shared.ResultPage;
@@ -61,5 +62,10 @@ class ExecutionScheduleResourceImpl implements ExecutionScheduleResource {
     @Override
     public ResultPage<ExecutionHistory> fetchExecutionHistory(final ExecutionHistoryRequest request) {
         return executionScheduleDaoProvider.get().fetchExecutionHistory(request);
+    }
+
+    @Override
+    public ExecutionTracker fetchTracker(final ExecutionSchedule schedule) {
+        return executionScheduleDaoProvider.get().fetchTracker(schedule);
     }
 }

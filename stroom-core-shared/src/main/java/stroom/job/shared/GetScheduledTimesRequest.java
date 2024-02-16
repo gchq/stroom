@@ -31,15 +31,17 @@ public class GetScheduledTimesRequest {
     @JsonProperty
     private final Long scheduleReferenceTime;
     @JsonProperty
-    private final Long lastExecutedTime;
+    private final ScheduleRestriction scheduleRestriction;
 
+
+    @SuppressWarnings("checkstyle:lineLength")
     @JsonCreator
     public GetScheduledTimesRequest(@JsonProperty("schedule") final Schedule schedule,
                                     @JsonProperty("scheduleReferenceTime") final Long scheduleReferenceTime,
-                                    @JsonProperty("lastExecutedTime") final Long lastExecutedTime) {
+                                    @JsonProperty("scheduleRestriction") final ScheduleRestriction scheduleRestriction) {
         this.schedule = schedule;
         this.scheduleReferenceTime = scheduleReferenceTime;
-        this.lastExecutedTime = lastExecutedTime;
+        this.scheduleRestriction = scheduleRestriction;
     }
 
     public Schedule getSchedule() {
@@ -50,7 +52,7 @@ public class GetScheduledTimesRequest {
         return scheduleReferenceTime;
     }
 
-    public Long getLastExecutedTime() {
-        return lastExecutedTime;
+    public ScheduleRestriction getScheduleRestriction() {
+        return scheduleRestriction;
     }
 }

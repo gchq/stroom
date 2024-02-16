@@ -37,6 +37,7 @@ import stroom.job.shared.JobNode.JobType;
 import stroom.job.shared.JobNodeInfo;
 import stroom.job.shared.JobNodeResource;
 import stroom.job.shared.JobNodeUtil;
+import stroom.job.shared.ScheduleReferenceTime;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
@@ -338,9 +339,9 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
                 jobNodeInfo = new JobNodeInfo();
             }
 
-            schedulePresenter.setSchedule(currentSchedule,
+            schedulePresenter.setSchedule(currentSchedule, new ScheduleReferenceTime(
                     jobNodeInfo.getScheduleReferenceTime(),
-                    jobNodeInfo.getLastExecutedTime());
+                    jobNodeInfo.getLastExecutedTime()));
             schedulePresenter.show(schedule -> {
                 JobNodeUtil.setSchedule(jobNode, schedule);
                 restFactory

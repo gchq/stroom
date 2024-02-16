@@ -16,19 +16,21 @@
 
 package stroom.job.client.presenter;
 
-import stroom.dispatch.client.RestFactory;
+import stroom.alert.client.event.AlertEvent;
 import stroom.job.shared.GetScheduledTimesRequest;
-import stroom.job.shared.ScheduledTimeResource;
+import stroom.job.shared.ScheduleReferenceTime;
+import stroom.job.shared.ScheduleRestriction;
 import stroom.job.shared.ScheduledTimes;
+import stroom.preferences.client.DateTimeFormatter;
 import stroom.query.api.v2.CronExpressions;
 import stroom.query.api.v2.FrequencyExpressions;
+import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.StringUtil;
 import stroom.util.shared.scheduler.Schedule;
 import stroom.util.shared.scheduler.ScheduleType;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupType;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.HasText;
@@ -44,25 +46,27 @@ public class SchedulePresenter
         extends MyPresenterWidget<SchedulePresenter.ScheduleView>
         implements ScheduleUiHandlers {
 
-
-
     private final ScheduledTimeClient scheduledTimeClient;
+    private final DateTimeFormatter dateTimeFormatter;
     private Schedule frequencySchedule =
             new Schedule(ScheduleType.FREQUENCY, FrequencyExpressions.EVERY_10_MINUTES.getExpression());
     private Schedule cronSchedule =
             new Schedule(ScheduleType.CRON, CronExpressions.EVERY_10TH_MINUTE.getExpression());
     private Schedule currentSchedule = frequencySchedule;
 
-    private Long scheduleReferenceTime;
-    private Long lastExecutedTime;
+    private ScheduleRestriction scheduleRestriction = new ScheduleRestriction(false, true, true);
+
+    private ScheduleReferenceTime scheduleReferenceTime;
 
 
     @Inject
     public SchedulePresenter(final EventBus eventBus,
                              final ScheduleView view,
-                             final ScheduledTimeClient scheduledTimeClient) {
+                             final ScheduledTimeClient scheduledTimeClient,
+                             final DateTimeFormatter dateTimeFormatter) {
         super(eventBus, view);
         this.scheduledTimeClient = scheduledTimeClient;
+        this.dateTimeFormatter = dateTimeFormatter;
         view.setUiHandlers(this);
     }
 
@@ -72,11 +76,9 @@ public class SchedulePresenter
     }
 
     public void setSchedule(final Schedule schedule,
-                            final Long scheduleReferenceTime,
-                            final Long lastExecutedTime) {
+                            final ScheduleReferenceTime scheduleReferenceTime) {
         this.currentSchedule = schedule;
         this.scheduleReferenceTime = scheduleReferenceTime;
-        this.lastExecutedTime = lastExecutedTime;
         read();
         onScheduleTypeChange(currentSchedule.getType());
     }
@@ -85,6 +87,12 @@ public class SchedulePresenter
         getView().setScheduleType(currentSchedule.getType());
         getView().getExpression().setText(StringUtil.toString(currentSchedule.getExpression()));
         calcTimes();
+    }
+
+    public void validate(final Schedule schedule,
+                         final ScheduleRestriction scheduleRestriction,
+                         final Consumer<ScheduledTimes> consumer) {
+        scheduledTimeClient.validate(schedule, scheduleRestriction, consumer);
     }
 
     @Override
@@ -119,18 +127,33 @@ public class SchedulePresenter
     private void calcTimes() {
         final ScheduleType scheduleType = getView().getScheduleType();
         final String currentString = getView().getExpression().getText();
-        final Long scheduleReferenceTime = this.scheduleReferenceTime;
-        final Long lastExecutedTime = this.lastExecutedTime;
+        final Long scheduleReferenceTime = GwtNullSafe
+                .get(this.scheduleReferenceTime, ScheduleReferenceTime::getScheduleReferenceTime);
+        final Long lastExecutedTime = GwtNullSafe
+                .get(this.scheduleReferenceTime, ScheduleReferenceTime::getLastExecutedTime);
         if (currentString != null && currentString.trim().length() > 0 && scheduleType != null) {
             final Schedule schedule = createSchedule();
             final GetScheduledTimesRequest request = new GetScheduledTimesRequest(
                     schedule,
                     scheduleReferenceTime,
-                    lastExecutedTime);
+                    null);
             scheduledTimeClient.getScheduledTimes(request, result -> {
                 if (result != null) {
-                    getView().getLastExecutedTime().setText(result.getLastExecutedTime());
-                    getView().getNextScheduledTime().setText(result.getNextScheduledTime());
+                    if (lastExecutedTime == null) {
+                        getView().getLastExecutedTime().setText("Never");
+                    } else {
+                        getView().getLastExecutedTime().setText(dateTimeFormatter
+                                .format(lastExecutedTime));
+                    }
+
+                    if (result.isError()) {
+                        getView().getNextScheduledTime().setText(result.getError());
+                    } else if (result.getNextScheduledTimeMs() != null) {
+                        getView().getNextScheduledTime().setText(dateTimeFormatter
+                                .format(result.getNextScheduledTimeMs()));
+                    } else {
+                        getView().getNextScheduledTime().setText("");
+                    }
                 }
             });
         }
@@ -145,11 +168,13 @@ public class SchedulePresenter
                     // This method is overwritten so that we can validate the schedule
                     // before saving. Getting the scheduled times acts as validation.
                     if (e.isOk()) {
-                        final GetScheduledTimesRequest request = new GetScheduledTimesRequest(
-                                createSchedule(),
-                                scheduleReferenceTime,
-                                lastExecutedTime);
-                        scheduledTimeClient.getScheduledTimes(request, result -> e.hide());
+                        validate(createSchedule(), scheduleRestriction, scheduledTimes -> {
+                            if (scheduledTimes.isError()) {
+                                AlertEvent.fireWarn(this, scheduledTimes.getError(), null);
+                            } else {
+                                e.hide();
+                            }
+                        });
                     } else {
                         e.hide();
                     }
@@ -160,6 +185,10 @@ public class SchedulePresenter
                     }
                 })
                 .fire();
+    }
+
+    public void setScheduleRestriction(final ScheduleRestriction scheduleRestriction) {
+        this.scheduleRestriction = scheduleRestriction;
     }
 
     public interface ScheduleView extends View, Focus, HasUiHandlers<ScheduleUiHandlers> {

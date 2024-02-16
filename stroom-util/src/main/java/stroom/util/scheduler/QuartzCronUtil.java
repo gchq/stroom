@@ -12,7 +12,7 @@ public class QuartzCronUtil {
         String converted = expression;
         final String[] parts = expression.split(" ");
         if (parts.length < 3) {
-            throw new RuntimeException("CronExpression '" + expression + "' is invalid.");
+            throw new RuntimeException("Cron expression '" + expression + "' is invalid.");
         } else if (parts.length == 3) {
             converted = "0 " + expression + " * ?";
         }
