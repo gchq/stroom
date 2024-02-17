@@ -26,6 +26,7 @@ import stroom.core.client.MenuKeys;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.DocumentTabData;
+import stroom.document.client.event.OpenDocumentEvent;
 import stroom.explorer.client.event.ExplorerTreeDeleteEvent;
 import stroom.explorer.client.event.ExplorerTreeSelectEvent;
 import stroom.explorer.client.event.HighlightExplorerNodeEvent;
@@ -359,6 +360,10 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
 
         // Show the tree.
         forceReveal();
+
+        if (event.getInitialDocRef() != null) {
+            OpenDocumentEvent.fire(this, event.getInitialDocRef(), true);
+        }
     }
 
     @Override

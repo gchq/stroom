@@ -48,7 +48,6 @@ import stroom.entity.client.gin.EntityGinjector;
 import stroom.entity.client.gin.EntityModule;
 import stroom.explorer.client.presenter.ExplorerNodeEditTagsPresenter;
 import stroom.explorer.client.presenter.ExplorerNodeRemoveTagsPresenter;
-import stroom.explorer.client.presenter.ExplorerTreePresenter;
 import stroom.explorer.client.presenter.FindInContentPresenter;
 import stroom.explorer.client.presenter.FindPresenter;
 import stroom.explorer.client.presenter.NavigationPresenter;
@@ -197,8 +196,6 @@ public interface AppGinjectorUser extends
     AsyncProvider<NavigationPresenter> getExplorerTabPanePresenter();
 
     AsyncProvider<ContentTabPanePresenter> getContentTabPanePresenter();
-
-    AsyncProvider<ExplorerTreePresenter> getExplorerTreePresenter();
 
     AsyncProvider<FindPresenter> getFindPresenter();
 
