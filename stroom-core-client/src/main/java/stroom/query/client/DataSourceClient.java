@@ -46,7 +46,7 @@ public class DataSourceClient {
                     new PageRequest(0, 1),
                     null,
                     dataSourceRef,
-                    StringMatch.contains(fieldName, true));
+                    StringMatch.equals(fieldName, true));
             restFactory
                     .builder()
                     .forResultPageOf(FieldInfo.class)
