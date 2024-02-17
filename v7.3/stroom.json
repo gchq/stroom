@@ -3516,7 +3516,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/FindExplorerNodeCriteria"
+                "$ref" : "#/components/schemas/FetchExplorerNodesRequest"
               }
             }
           },
@@ -3576,14 +3576,14 @@
         "tags" : [ "Explorer (v2)" ]
       }
     },
-    "/explorer/v2/findExplorerNodes" : {
+    "/explorer/v2/fetchHighlights" : {
       "post" : {
-        "operationId" : "findExplorerNodes",
+        "operationId" : "fetchHighlights",
         "requestBody" : {
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/FindExplorerNodeQuery"
+                "$ref" : "#/components/schemas/FetchHighlightsRequest"
               }
             }
           },
@@ -3595,14 +3595,74 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ResultPageExplorerDocContentMatch"
+                  "$ref" : "#/components/schemas/DocContentHighlights"
                 }
               }
             },
             "description" : "default response"
           }
         },
-        "summary" : "Find explorer nodes using a query",
+        "summary" : "Fetch match highlights on found content",
+        "tags" : [ "Explorer (v2)" ]
+      }
+    },
+    "/explorer/v2/find" : {
+      "post" : {
+        "operationId" : "find",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/FindRequest"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ResultPageFindResult"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Find documents with names and types matching the supplied request",
+        "tags" : [ "Explorer (v2)" ]
+      }
+    },
+    "/explorer/v2/findInContent" : {
+      "post" : {
+        "operationId" : "findInContent",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/FindInContentRequest"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ResultPageFindInContentResult"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Find documents with content matching the supplied request",
         "tags" : [ "Explorer (v2)" ]
       }
     },
@@ -10996,6 +11056,9 @@
           },
           "nodeName" : {
             "type" : "string"
+          },
+          "sourceTaskId" : {
+            "$ref" : "#/components/schemas/TaskId"
           }
         }
       },
@@ -12439,19 +12502,34 @@
           }
         }
       },
+      "DocContentHighlights" : {
+        "type" : "object",
+        "properties" : {
+          "docRef" : {
+            "$ref" : "#/components/schemas/DocRef"
+          },
+          "highlights" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/StringMatchLocation"
+            }
+          },
+          "text" : {
+            "type" : "string"
+          }
+        }
+      },
       "DocContentMatch" : {
         "type" : "object",
         "properties" : {
           "docRef" : {
             "$ref" : "#/components/schemas/DocRef"
           },
-          "matchLength" : {
-            "type" : "integer",
-            "format" : "int64"
+          "extension" : {
+            "type" : "string"
           },
-          "matchOffset" : {
-            "type" : "integer",
-            "format" : "int64"
+          "location" : {
+            "$ref" : "#/components/schemas/StringMatchLocation"
           },
           "sample" : {
             "type" : "string"
@@ -12568,7 +12646,7 @@
           },
           "icon" : {
             "type" : "string",
-            "enum" : [ "ADD", "ADD_ABOVE", "ADD_BELOW", "ADD_MULTIPLE", "ALERT", "ALERT_SIMPLE", "ARROW_DOWN", "ARROW_LEFT", "ARROW_RIGHT", "ARROW_UP", "AUTO_REFRESH", "BACKWARD", "BORDERED_CIRCLE", "CANCEL", "CASE_SENSITIVE", "CLEAR", "CLIPBOARD", "CLOSE", "CODE", "COLLAPSE_UP", "COPY", "DATABASE", "DELETE", "DEPENDENCIES", "DISABLE", "DOCUMENT_ANALYTIC_OUTPUT_STORE", "DOCUMENT_ANALYTIC_RULE", "DOCUMENT_ANNOTATIONS_INDEX", "DOCUMENT_DASHBOARD", "DOCUMENT_DICTIONARY", "DOCUMENT_DOCUMENTATION", "DOCUMENT_ELASTIC_CLUSTER", "DOCUMENT_ELASTIC_INDEX", "DOCUMENT_FAVOURITES", "DOCUMENT_FEED", "DOCUMENT_FOLDER", "DOCUMENT_INDEX", "DOCUMENT_KAFKA_CONFIG", "DOCUMENT_PIPELINE", "DOCUMENT_QUERY", "DOCUMENT_RECEIVE_DATA_RULE_SET", "DOCUMENT_SCRIPT", "DOCUMENT_SEARCHABLE", "DOCUMENT_SELECT_ALL_OR_NONE", "DOCUMENT_SIGMA_RULE", "DOCUMENT_SOLR_INDEX", "DOCUMENT_STATISTIC_STORE", "DOCUMENT_STROOM_STATS_STORE", "DOCUMENT_SYSTEM", "DOCUMENT_TEXT_CONVERTER", "DOCUMENT_VIEW", "DOCUMENT_VISUALISATION", "DOCUMENT_XMLSCHEMA", "DOCUMENT_XSLT", "DOT", "DOUBLE_ARROW", "DOWN", "DOWNLOAD", "DROP_DOWN", "EDIT", "ELLIPSES_HORIZONTAL", "ELLIPSES_VERTICAL", "ERROR", "EXCLAMATION", "EXPAND_DOWN", "EXPLORER", "FAST_BACKWARD", "FAST_FORWARD", "FATAL", "FATAL_DARK", "FAVOURITES", "FAVOURITES_OUTLINE", "FEED", "FIELD", "FIELDS_EXPRESSION", "FIELDS_FILTER", "FIELDS_FORMAT", "FIELDS_GROUP", "FIELDS_SORTAZ", "FIELDS_SORTZA", "FILE", "FILE_FORMATTED", "FILE_RAW", "FILTER", "FIND", "FOLDER", "FOLDER_TREE", "FORMAT", "FORWARD", "FUNCTION", "GENERATE", "HELP", "HIDE", "HIDE_MENU", "HISTORY", "INFO", "INSERT", "JOBS", "KEY", "LOCATE", "LOCKED", "LOGO", "LOGOUT", "MENU", "MONITORING", "MOVE", "NODES", "OK", "OO", "OPEN", "OPERATOR", "PASSWORD", "PAUSE", "PEN", "PIPELINE_ELASTIC_INDEX", "PIPELINE_FILE", "PIPELINE_FILES", "PIPELINE_HADOOP", "PIPELINE_ID", "PIPELINE_INDEX", "PIPELINE_JSON", "PIPELINE_KAFKA", "PIPELINE_RECORD_COUNT", "PIPELINE_RECORD_OUTPUT", "PIPELINE_REFERENCE_DATA", "PIPELINE_SEARCH_OUTPUT", "PIPELINE_SOLR", "PIPELINE_SPLIT", "PIPELINE_STATISTICS", "PIPELINE_STREAM", "PIPELINE_STROOM_STATS", "PIPELINE_STROOM_STATS_STORE", "PIPELINE_TEXT", "PIPELINE_XML", "PIPELINE_XML_SEARCH", "PIPELINE_XSD", "PIPELINE_XSLT", "PLAY", "PROCESS", "PROPERTIES", "QUESTION", "RAW", "REFRESH", "REGEX", "REMOVE", "RESIZE", "RESIZE_HANDLE", "SAVE", "SAVEAS", "SEARCH", "SETTINGS", "SHARD_CLOSE", "SHARD_FLUSH", "SHARE", "SHIELD", "SHOW", "SHOW_MENU", "STEP", "STEPPING", "STEPPING_CIRCLE", "STEP_BACKWARD", "STEP_FORWARD", "STOP", "TABLE", "TABLE_NESTED", "TAB_CLOSE", "TAGS", "TEXT_WRAP", "TICK", "UNDO", "UNLOCK", "UP", "UPLOAD", "USER", "USERS", "VOLUMES", "WARNING" ]
+            "enum" : [ "ADD", "ADD_ABOVE", "ADD_BELOW", "ADD_MULTIPLE", "ALERT", "ALERT_SIMPLE", "ARROW_DOWN", "ARROW_LEFT", "ARROW_RIGHT", "ARROW_UP", "AUTO_REFRESH", "BACKWARD", "BORDERED_CIRCLE", "CANCEL", "CASE_SENSITIVE", "CLEAR", "CLIPBOARD", "CLOSE", "CODE", "COLLAPSE_ALL", "COLLAPSE_UP", "COPY", "DATABASE", "DELETE", "DEPENDENCIES", "DISABLE", "DOCUMENT_ANALYTIC_OUTPUT_STORE", "DOCUMENT_ANALYTIC_RULE", "DOCUMENT_ANNOTATIONS_INDEX", "DOCUMENT_DASHBOARD", "DOCUMENT_DICTIONARY", "DOCUMENT_DOCUMENTATION", "DOCUMENT_ELASTIC_CLUSTER", "DOCUMENT_ELASTIC_INDEX", "DOCUMENT_FAVOURITES", "DOCUMENT_FEED", "DOCUMENT_FOLDER", "DOCUMENT_INDEX", "DOCUMENT_KAFKA_CONFIG", "DOCUMENT_PIPELINE", "DOCUMENT_QUERY", "DOCUMENT_RECEIVE_DATA_RULE_SET", "DOCUMENT_SCRIPT", "DOCUMENT_SEARCHABLE", "DOCUMENT_SELECT_ALL_OR_NONE", "DOCUMENT_SIGMA_RULE", "DOCUMENT_SOLR_INDEX", "DOCUMENT_STATISTIC_STORE", "DOCUMENT_STROOM_STATS_STORE", "DOCUMENT_SYSTEM", "DOCUMENT_TEXT_CONVERTER", "DOCUMENT_VIEW", "DOCUMENT_VISUALISATION", "DOCUMENT_XMLSCHEMA", "DOCUMENT_XSLT", "DOT", "DOUBLE_ARROW", "DOWN", "DOWNLOAD", "DROP_DOWN", "EDIT", "ELLIPSES_HORIZONTAL", "ELLIPSES_VERTICAL", "ERROR", "EXCLAMATION", "EXPAND_ALL", "EXPAND_DOWN", "EXPLORER", "FAST_BACKWARD", "FAST_FORWARD", "FATAL", "FATAL_DARK", "FAVOURITES", "FAVOURITES_OUTLINE", "FEED", "FIELD", "FIELDS_EXPRESSION", "FIELDS_FILTER", "FIELDS_FORMAT", "FIELDS_GROUP", "FIELDS_SORTAZ", "FIELDS_SORTZA", "FILE", "FILE_FORMATTED", "FILE_RAW", "FILTER", "FIND", "FOLDER", "FOLDER_TREE", "FORMAT", "FORWARD", "FUNCTION", "GENERATE", "HELP", "HIDE", "HIDE_MENU", "HISTORY", "INFO", "INSERT", "JOBS", "KEY", "LOCATE", "LOCKED", "LOGO", "LOGOUT", "MENU", "MONITORING", "MOVE", "NODES", "OK", "OO", "OPEN", "OPERATOR", "PASSWORD", "PAUSE", "PEN", "PIPELINE_ELASTIC_INDEX", "PIPELINE_FILE", "PIPELINE_FILES", "PIPELINE_HADOOP", "PIPELINE_ID", "PIPELINE_INDEX", "PIPELINE_JSON", "PIPELINE_KAFKA", "PIPELINE_RECORD_COUNT", "PIPELINE_RECORD_OUTPUT", "PIPELINE_REFERENCE_DATA", "PIPELINE_SEARCH_OUTPUT", "PIPELINE_SOLR", "PIPELINE_SPLIT", "PIPELINE_STATISTICS", "PIPELINE_STREAM", "PIPELINE_STROOM_STATS", "PIPELINE_STROOM_STATS_STORE", "PIPELINE_TEXT", "PIPELINE_XML", "PIPELINE_XML_SEARCH", "PIPELINE_XSD", "PIPELINE_XSLT", "PLAY", "PROCESS", "PROPERTIES", "QUESTION", "RAW", "REFRESH", "REGEX", "REMOVE", "RESIZE", "RESIZE_HANDLE", "SAVE", "SAVEAS", "SEARCH", "SETTINGS", "SHARD_CLOSE", "SHARD_FLUSH", "SHARE", "SHIELD", "SHOW", "SHOW_MENU", "STEP", "STEPPING", "STEPPING_CIRCLE", "STEP_BACKWARD", "STEP_FORWARD", "STOP", "TABLE", "TABLE_NESTED", "TAB_CLOSE", "TAGS", "TEXT_WRAP", "TICK", "UNDO", "UNLOCK", "UP", "UPLOAD", "USER", "USERS", "VOLUMES", "WARNING" ]
           },
           "type" : {
             "type" : "string"
@@ -12989,24 +13067,6 @@
           }
         }
       },
-      "ExplorerDocContentMatch" : {
-        "type" : "object",
-        "properties" : {
-          "docContentMatch" : {
-            "$ref" : "#/components/schemas/DocContentMatch"
-          },
-          "icon" : {
-            "type" : "string",
-            "enum" : [ "ADD", "ADD_ABOVE", "ADD_BELOW", "ADD_MULTIPLE", "ALERT", "ALERT_SIMPLE", "ARROW_DOWN", "ARROW_LEFT", "ARROW_RIGHT", "ARROW_UP", "AUTO_REFRESH", "BACKWARD", "BORDERED_CIRCLE", "CANCEL", "CASE_SENSITIVE", "CLEAR", "CLIPBOARD", "CLOSE", "CODE", "COLLAPSE_UP", "COPY", "DATABASE", "DELETE", "DEPENDENCIES", "DISABLE", "DOCUMENT_ANALYTIC_OUTPUT_STORE", "DOCUMENT_ANALYTIC_RULE", "DOCUMENT_ANNOTATIONS_INDEX", "DOCUMENT_DASHBOARD", "DOCUMENT_DICTIONARY", "DOCUMENT_DOCUMENTATION", "DOCUMENT_ELASTIC_CLUSTER", "DOCUMENT_ELASTIC_INDEX", "DOCUMENT_FAVOURITES", "DOCUMENT_FEED", "DOCUMENT_FOLDER", "DOCUMENT_INDEX", "DOCUMENT_KAFKA_CONFIG", "DOCUMENT_PIPELINE", "DOCUMENT_QUERY", "DOCUMENT_RECEIVE_DATA_RULE_SET", "DOCUMENT_SCRIPT", "DOCUMENT_SEARCHABLE", "DOCUMENT_SELECT_ALL_OR_NONE", "DOCUMENT_SIGMA_RULE", "DOCUMENT_SOLR_INDEX", "DOCUMENT_STATISTIC_STORE", "DOCUMENT_STROOM_STATS_STORE", "DOCUMENT_SYSTEM", "DOCUMENT_TEXT_CONVERTER", "DOCUMENT_VIEW", "DOCUMENT_VISUALISATION", "DOCUMENT_XMLSCHEMA", "DOCUMENT_XSLT", "DOT", "DOUBLE_ARROW", "DOWN", "DOWNLOAD", "DROP_DOWN", "EDIT", "ELLIPSES_HORIZONTAL", "ELLIPSES_VERTICAL", "ERROR", "EXCLAMATION", "EXPAND_DOWN", "EXPLORER", "FAST_BACKWARD", "FAST_FORWARD", "FATAL", "FATAL_DARK", "FAVOURITES", "FAVOURITES_OUTLINE", "FEED", "FIELD", "FIELDS_EXPRESSION", "FIELDS_FILTER", "FIELDS_FORMAT", "FIELDS_GROUP", "FIELDS_SORTAZ", "FIELDS_SORTZA", "FILE", "FILE_FORMATTED", "FILE_RAW", "FILTER", "FIND", "FOLDER", "FOLDER_TREE", "FORMAT", "FORWARD", "FUNCTION", "GENERATE", "HELP", "HIDE", "HIDE_MENU", "HISTORY", "INFO", "INSERT", "JOBS", "KEY", "LOCATE", "LOCKED", "LOGO", "LOGOUT", "MENU", "MONITORING", "MOVE", "NODES", "OK", "OO", "OPEN", "OPERATOR", "PASSWORD", "PAUSE", "PEN", "PIPELINE_ELASTIC_INDEX", "PIPELINE_FILE", "PIPELINE_FILES", "PIPELINE_HADOOP", "PIPELINE_ID", "PIPELINE_INDEX", "PIPELINE_JSON", "PIPELINE_KAFKA", "PIPELINE_RECORD_COUNT", "PIPELINE_RECORD_OUTPUT", "PIPELINE_REFERENCE_DATA", "PIPELINE_SEARCH_OUTPUT", "PIPELINE_SOLR", "PIPELINE_SPLIT", "PIPELINE_STATISTICS", "PIPELINE_STREAM", "PIPELINE_STROOM_STATS", "PIPELINE_STROOM_STATS_STORE", "PIPELINE_TEXT", "PIPELINE_XML", "PIPELINE_XML_SEARCH", "PIPELINE_XSD", "PIPELINE_XSLT", "PLAY", "PROCESS", "PROPERTIES", "QUESTION", "RAW", "REFRESH", "REGEX", "REMOVE", "RESIZE", "RESIZE_HANDLE", "SAVE", "SAVEAS", "SEARCH", "SETTINGS", "SHARD_CLOSE", "SHARD_FLUSH", "SHARE", "SHIELD", "SHOW", "SHOW_MENU", "STEP", "STEPPING", "STEPPING_CIRCLE", "STEP_BACKWARD", "STEP_FORWARD", "STOP", "TABLE", "TABLE_NESTED", "TAB_CLOSE", "TAGS", "TEXT_WRAP", "TICK", "UNDO", "UNLOCK", "UP", "UPLOAD", "USER", "USERS", "VOLUMES", "WARNING" ]
-          },
-          "isFavourite" : {
-            "type" : "boolean"
-          },
-          "path" : {
-            "type" : "string"
-          }
-        }
-      },
       "ExplorerNode" : {
         "type" : "object",
         "properties" : {
@@ -13022,7 +13082,7 @@
           },
           "icon" : {
             "type" : "string",
-            "enum" : [ "ADD", "ADD_ABOVE", "ADD_BELOW", "ADD_MULTIPLE", "ALERT", "ALERT_SIMPLE", "ARROW_DOWN", "ARROW_LEFT", "ARROW_RIGHT", "ARROW_UP", "AUTO_REFRESH", "BACKWARD", "BORDERED_CIRCLE", "CANCEL", "CASE_SENSITIVE", "CLEAR", "CLIPBOARD", "CLOSE", "CODE", "COLLAPSE_UP", "COPY", "DATABASE", "DELETE", "DEPENDENCIES", "DISABLE", "DOCUMENT_ANALYTIC_OUTPUT_STORE", "DOCUMENT_ANALYTIC_RULE", "DOCUMENT_ANNOTATIONS_INDEX", "DOCUMENT_DASHBOARD", "DOCUMENT_DICTIONARY", "DOCUMENT_DOCUMENTATION", "DOCUMENT_ELASTIC_CLUSTER", "DOCUMENT_ELASTIC_INDEX", "DOCUMENT_FAVOURITES", "DOCUMENT_FEED", "DOCUMENT_FOLDER", "DOCUMENT_INDEX", "DOCUMENT_KAFKA_CONFIG", "DOCUMENT_PIPELINE", "DOCUMENT_QUERY", "DOCUMENT_RECEIVE_DATA_RULE_SET", "DOCUMENT_SCRIPT", "DOCUMENT_SEARCHABLE", "DOCUMENT_SELECT_ALL_OR_NONE", "DOCUMENT_SIGMA_RULE", "DOCUMENT_SOLR_INDEX", "DOCUMENT_STATISTIC_STORE", "DOCUMENT_STROOM_STATS_STORE", "DOCUMENT_SYSTEM", "DOCUMENT_TEXT_CONVERTER", "DOCUMENT_VIEW", "DOCUMENT_VISUALISATION", "DOCUMENT_XMLSCHEMA", "DOCUMENT_XSLT", "DOT", "DOUBLE_ARROW", "DOWN", "DOWNLOAD", "DROP_DOWN", "EDIT", "ELLIPSES_HORIZONTAL", "ELLIPSES_VERTICAL", "ERROR", "EXCLAMATION", "EXPAND_DOWN", "EXPLORER", "FAST_BACKWARD", "FAST_FORWARD", "FATAL", "FATAL_DARK", "FAVOURITES", "FAVOURITES_OUTLINE", "FEED", "FIELD", "FIELDS_EXPRESSION", "FIELDS_FILTER", "FIELDS_FORMAT", "FIELDS_GROUP", "FIELDS_SORTAZ", "FIELDS_SORTZA", "FILE", "FILE_FORMATTED", "FILE_RAW", "FILTER", "FIND", "FOLDER", "FOLDER_TREE", "FORMAT", "FORWARD", "FUNCTION", "GENERATE", "HELP", "HIDE", "HIDE_MENU", "HISTORY", "INFO", "INSERT", "JOBS", "KEY", "LOCATE", "LOCKED", "LOGO", "LOGOUT", "MENU", "MONITORING", "MOVE", "NODES", "OK", "OO", "OPEN", "OPERATOR", "PASSWORD", "PAUSE", "PEN", "PIPELINE_ELASTIC_INDEX", "PIPELINE_FILE", "PIPELINE_FILES", "PIPELINE_HADOOP", "PIPELINE_ID", "PIPELINE_INDEX", "PIPELINE_JSON", "PIPELINE_KAFKA", "PIPELINE_RECORD_COUNT", "PIPELINE_RECORD_OUTPUT", "PIPELINE_REFERENCE_DATA", "PIPELINE_SEARCH_OUTPUT", "PIPELINE_SOLR", "PIPELINE_SPLIT", "PIPELINE_STATISTICS", "PIPELINE_STREAM", "PIPELINE_STROOM_STATS", "PIPELINE_STROOM_STATS_STORE", "PIPELINE_TEXT", "PIPELINE_XML", "PIPELINE_XML_SEARCH", "PIPELINE_XSD", "PIPELINE_XSLT", "PLAY", "PROCESS", "PROPERTIES", "QUESTION", "RAW", "REFRESH", "REGEX", "REMOVE", "RESIZE", "RESIZE_HANDLE", "SAVE", "SAVEAS", "SEARCH", "SETTINGS", "SHARD_CLOSE", "SHARD_FLUSH", "SHARE", "SHIELD", "SHOW", "SHOW_MENU", "STEP", "STEPPING", "STEPPING_CIRCLE", "STEP_BACKWARD", "STEP_FORWARD", "STOP", "TABLE", "TABLE_NESTED", "TAB_CLOSE", "TAGS", "TEXT_WRAP", "TICK", "UNDO", "UNLOCK", "UP", "UPLOAD", "USER", "USERS", "VOLUMES", "WARNING" ]
+            "enum" : [ "ADD", "ADD_ABOVE", "ADD_BELOW", "ADD_MULTIPLE", "ALERT", "ALERT_SIMPLE", "ARROW_DOWN", "ARROW_LEFT", "ARROW_RIGHT", "ARROW_UP", "AUTO_REFRESH", "BACKWARD", "BORDERED_CIRCLE", "CANCEL", "CASE_SENSITIVE", "CLEAR", "CLIPBOARD", "CLOSE", "CODE", "COLLAPSE_ALL", "COLLAPSE_UP", "COPY", "DATABASE", "DELETE", "DEPENDENCIES", "DISABLE", "DOCUMENT_ANALYTIC_OUTPUT_STORE", "DOCUMENT_ANALYTIC_RULE", "DOCUMENT_ANNOTATIONS_INDEX", "DOCUMENT_DASHBOARD", "DOCUMENT_DICTIONARY", "DOCUMENT_DOCUMENTATION", "DOCUMENT_ELASTIC_CLUSTER", "DOCUMENT_ELASTIC_INDEX", "DOCUMENT_FAVOURITES", "DOCUMENT_FEED", "DOCUMENT_FOLDER", "DOCUMENT_INDEX", "DOCUMENT_KAFKA_CONFIG", "DOCUMENT_PIPELINE", "DOCUMENT_QUERY", "DOCUMENT_RECEIVE_DATA_RULE_SET", "DOCUMENT_SCRIPT", "DOCUMENT_SEARCHABLE", "DOCUMENT_SELECT_ALL_OR_NONE", "DOCUMENT_SIGMA_RULE", "DOCUMENT_SOLR_INDEX", "DOCUMENT_STATISTIC_STORE", "DOCUMENT_STROOM_STATS_STORE", "DOCUMENT_SYSTEM", "DOCUMENT_TEXT_CONVERTER", "DOCUMENT_VIEW", "DOCUMENT_VISUALISATION", "DOCUMENT_XMLSCHEMA", "DOCUMENT_XSLT", "DOT", "DOUBLE_ARROW", "DOWN", "DOWNLOAD", "DROP_DOWN", "EDIT", "ELLIPSES_HORIZONTAL", "ELLIPSES_VERTICAL", "ERROR", "EXCLAMATION", "EXPAND_ALL", "EXPAND_DOWN", "EXPLORER", "FAST_BACKWARD", "FAST_FORWARD", "FATAL", "FATAL_DARK", "FAVOURITES", "FAVOURITES_OUTLINE", "FEED", "FIELD", "FIELDS_EXPRESSION", "FIELDS_FILTER", "FIELDS_FORMAT", "FIELDS_GROUP", "FIELDS_SORTAZ", "FIELDS_SORTZA", "FILE", "FILE_FORMATTED", "FILE_RAW", "FILTER", "FIND", "FOLDER", "FOLDER_TREE", "FORMAT", "FORWARD", "FUNCTION", "GENERATE", "HELP", "HIDE", "HIDE_MENU", "HISTORY", "INFO", "INSERT", "JOBS", "KEY", "LOCATE", "LOCKED", "LOGO", "LOGOUT", "MENU", "MONITORING", "MOVE", "NODES", "OK", "OO", "OPEN", "OPERATOR", "PASSWORD", "PAUSE", "PEN", "PIPELINE_ELASTIC_INDEX", "PIPELINE_FILE", "PIPELINE_FILES", "PIPELINE_HADOOP", "PIPELINE_ID", "PIPELINE_INDEX", "PIPELINE_JSON", "PIPELINE_KAFKA", "PIPELINE_RECORD_COUNT", "PIPELINE_RECORD_OUTPUT", "PIPELINE_REFERENCE_DATA", "PIPELINE_SEARCH_OUTPUT", "PIPELINE_SOLR", "PIPELINE_SPLIT", "PIPELINE_STATISTICS", "PIPELINE_STREAM", "PIPELINE_STROOM_STATS", "PIPELINE_STROOM_STATS_STORE", "PIPELINE_TEXT", "PIPELINE_XML", "PIPELINE_XML_SEARCH", "PIPELINE_XSD", "PIPELINE_XSLT", "PLAY", "PROCESS", "PROPERTIES", "QUESTION", "RAW", "REFRESH", "REGEX", "REMOVE", "RESIZE", "RESIZE_HANDLE", "SAVE", "SAVEAS", "SEARCH", "SETTINGS", "SHARD_CLOSE", "SHARD_FLUSH", "SHARE", "SHIELD", "SHOW", "SHOW_MENU", "STEP", "STEPPING", "STEPPING_CIRCLE", "STEP_BACKWARD", "STEP_FORWARD", "STOP", "TABLE", "TABLE_NESTED", "TAB_CLOSE", "TAGS", "TEXT_WRAP", "TICK", "UNDO", "UNLOCK", "UP", "UPLOAD", "USER", "USERS", "VOLUMES", "WARNING" ]
           },
           "name" : {
             "type" : "string"
@@ -13231,6 +13291,12 @@
               "enum" : [ "C", "D", "I", "V", "FM", "FN", "F", "L", "O" ]
             },
             "uniqueItems" : true
+          },
+          "recentItems" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/DocRef"
+            }
           },
           "requiredPermissions" : {
             "type" : "array",
@@ -13507,6 +13573,56 @@
           }
         }
       },
+      "FetchExplorerNodesRequest" : {
+        "type" : "object",
+        "properties" : {
+          "ensureVisible" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ExplorerNodeKey"
+            },
+            "uniqueItems" : true
+          },
+          "filter" : {
+            "$ref" : "#/components/schemas/ExplorerTreeFilter"
+          },
+          "minDepth" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "openItems" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ExplorerNodeKey"
+            },
+            "uniqueItems" : true
+          },
+          "showAlerts" : {
+            "type" : "boolean"
+          },
+          "temporaryOpenedItems" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ExplorerNodeKey"
+            },
+            "uniqueItems" : true
+          }
+        }
+      },
+      "FetchHighlightsRequest" : {
+        "type" : "object",
+        "properties" : {
+          "docRef" : {
+            "$ref" : "#/components/schemas/DocRef"
+          },
+          "extension" : {
+            "type" : "string"
+          },
+          "filter" : {
+            "$ref" : "#/components/schemas/StringMatch"
+          }
+        }
+      },
       "FetchLinkedScriptRequest" : {
         "type" : "object",
         "properties" : {
@@ -13780,63 +13896,6 @@
           }
         }
       },
-      "FindExplorerNodeCriteria" : {
-        "type" : "object",
-        "properties" : {
-          "ensureVisible" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/ExplorerNodeKey"
-            },
-            "uniqueItems" : true
-          },
-          "filter" : {
-            "$ref" : "#/components/schemas/ExplorerTreeFilter"
-          },
-          "minDepth" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "openItems" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/ExplorerNodeKey"
-            },
-            "uniqueItems" : true
-          },
-          "showAlerts" : {
-            "type" : "boolean"
-          },
-          "temporaryOpenedItems" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/ExplorerNodeKey"
-            },
-            "uniqueItems" : true
-          }
-        }
-      },
-      "FindExplorerNodeQuery" : {
-        "type" : "object",
-        "properties" : {
-          "filter" : {
-            "$ref" : "#/components/schemas/StringMatch"
-          },
-          "pageRequest" : {
-            "$ref" : "#/components/schemas/PageRequest"
-          },
-          "sort" : {
-            "type" : "string",
-            "writeOnly" : true
-          },
-          "sortList" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/CriteriaFieldSort"
-            }
-          }
-        }
-      },
       "FindFieldInfoCriteria" : {
         "type" : "object",
         "properties" : {
@@ -13882,6 +13941,45 @@
             "items" : {
               "$ref" : "#/components/schemas/CriteriaFieldSort"
             }
+          }
+        }
+      },
+      "FindInContentRequest" : {
+        "type" : "object",
+        "properties" : {
+          "filter" : {
+            "$ref" : "#/components/schemas/StringMatch"
+          },
+          "pageRequest" : {
+            "$ref" : "#/components/schemas/PageRequest"
+          },
+          "sort" : {
+            "type" : "string",
+            "writeOnly" : true
+          },
+          "sortList" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/CriteriaFieldSort"
+            }
+          }
+        }
+      },
+      "FindInContentResult" : {
+        "type" : "object",
+        "properties" : {
+          "docContentMatch" : {
+            "$ref" : "#/components/schemas/DocContentMatch"
+          },
+          "icon" : {
+            "type" : "string",
+            "enum" : [ "ADD", "ADD_ABOVE", "ADD_BELOW", "ADD_MULTIPLE", "ALERT", "ALERT_SIMPLE", "ARROW_DOWN", "ARROW_LEFT", "ARROW_RIGHT", "ARROW_UP", "AUTO_REFRESH", "BACKWARD", "BORDERED_CIRCLE", "CANCEL", "CASE_SENSITIVE", "CLEAR", "CLIPBOARD", "CLOSE", "CODE", "COLLAPSE_ALL", "COLLAPSE_UP", "COPY", "DATABASE", "DELETE", "DEPENDENCIES", "DISABLE", "DOCUMENT_ANALYTIC_OUTPUT_STORE", "DOCUMENT_ANALYTIC_RULE", "DOCUMENT_ANNOTATIONS_INDEX", "DOCUMENT_DASHBOARD", "DOCUMENT_DICTIONARY", "DOCUMENT_DOCUMENTATION", "DOCUMENT_ELASTIC_CLUSTER", "DOCUMENT_ELASTIC_INDEX", "DOCUMENT_FAVOURITES", "DOCUMENT_FEED", "DOCUMENT_FOLDER", "DOCUMENT_INDEX", "DOCUMENT_KAFKA_CONFIG", "DOCUMENT_PIPELINE", "DOCUMENT_QUERY", "DOCUMENT_RECEIVE_DATA_RULE_SET", "DOCUMENT_SCRIPT", "DOCUMENT_SEARCHABLE", "DOCUMENT_SELECT_ALL_OR_NONE", "DOCUMENT_SIGMA_RULE", "DOCUMENT_SOLR_INDEX", "DOCUMENT_STATISTIC_STORE", "DOCUMENT_STROOM_STATS_STORE", "DOCUMENT_SYSTEM", "DOCUMENT_TEXT_CONVERTER", "DOCUMENT_VIEW", "DOCUMENT_VISUALISATION", "DOCUMENT_XMLSCHEMA", "DOCUMENT_XSLT", "DOT", "DOUBLE_ARROW", "DOWN", "DOWNLOAD", "DROP_DOWN", "EDIT", "ELLIPSES_HORIZONTAL", "ELLIPSES_VERTICAL", "ERROR", "EXCLAMATION", "EXPAND_ALL", "EXPAND_DOWN", "EXPLORER", "FAST_BACKWARD", "FAST_FORWARD", "FATAL", "FATAL_DARK", "FAVOURITES", "FAVOURITES_OUTLINE", "FEED", "FIELD", "FIELDS_EXPRESSION", "FIELDS_FILTER", "FIELDS_FORMAT", "FIELDS_GROUP", "FIELDS_SORTAZ", "FIELDS_SORTZA", "FILE", "FILE_FORMATTED", "FILE_RAW", "FILTER", "FIND", "FOLDER", "FOLDER_TREE", "FORMAT", "FORWARD", "FUNCTION", "GENERATE", "HELP", "HIDE", "HIDE_MENU", "HISTORY", "INFO", "INSERT", "JOBS", "KEY", "LOCATE", "LOCKED", "LOGO", "LOGOUT", "MENU", "MONITORING", "MOVE", "NODES", "OK", "OO", "OPEN", "OPERATOR", "PASSWORD", "PAUSE", "PEN", "PIPELINE_ELASTIC_INDEX", "PIPELINE_FILE", "PIPELINE_FILES", "PIPELINE_HADOOP", "PIPELINE_ID", "PIPELINE_INDEX", "PIPELINE_JSON", "PIPELINE_KAFKA", "PIPELINE_RECORD_COUNT", "PIPELINE_RECORD_OUTPUT", "PIPELINE_REFERENCE_DATA", "PIPELINE_SEARCH_OUTPUT", "PIPELINE_SOLR", "PIPELINE_SPLIT", "PIPELINE_STATISTICS", "PIPELINE_STREAM", "PIPELINE_STROOM_STATS", "PIPELINE_STROOM_STATS_STORE", "PIPELINE_TEXT", "PIPELINE_XML", "PIPELINE_XML_SEARCH", "PIPELINE_XSD", "PIPELINE_XSLT", "PLAY", "PROCESS", "PROPERTIES", "QUESTION", "RAW", "REFRESH", "REGEX", "REMOVE", "RESIZE", "RESIZE_HANDLE", "SAVE", "SAVEAS", "SEARCH", "SETTINGS", "SHARD_CLOSE", "SHARD_FLUSH", "SHARE", "SHIELD", "SHOW", "SHOW_MENU", "STEP", "STEPPING", "STEPPING_CIRCLE", "STEP_BACKWARD", "STEP_FORWARD", "STOP", "TABLE", "TABLE_NESTED", "TAB_CLOSE", "TAGS", "TEXT_WRAP", "TICK", "UNDO", "UNLOCK", "UP", "UPLOAD", "USER", "USERS", "VOLUMES", "WARNING" ]
+          },
+          "isFavourite" : {
+            "type" : "boolean"
+          },
+          "path" : {
+            "type" : "string"
           }
         }
       },
@@ -13990,6 +14088,42 @@
             "items" : {
               "$ref" : "#/components/schemas/CriteriaFieldSort"
             }
+          }
+        }
+      },
+      "FindRequest" : {
+        "type" : "object",
+        "properties" : {
+          "filter" : {
+            "$ref" : "#/components/schemas/ExplorerTreeFilter"
+          },
+          "pageRequest" : {
+            "$ref" : "#/components/schemas/PageRequest"
+          },
+          "sort" : {
+            "type" : "string",
+            "writeOnly" : true
+          },
+          "sortList" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/CriteriaFieldSort"
+            }
+          }
+        }
+      },
+      "FindResult" : {
+        "type" : "object",
+        "properties" : {
+          "docRef" : {
+            "$ref" : "#/components/schemas/DocRef"
+          },
+          "icon" : {
+            "type" : "string",
+            "enum" : [ "ADD", "ADD_ABOVE", "ADD_BELOW", "ADD_MULTIPLE", "ALERT", "ALERT_SIMPLE", "ARROW_DOWN", "ARROW_LEFT", "ARROW_RIGHT", "ARROW_UP", "AUTO_REFRESH", "BACKWARD", "BORDERED_CIRCLE", "CANCEL", "CASE_SENSITIVE", "CLEAR", "CLIPBOARD", "CLOSE", "CODE", "COLLAPSE_ALL", "COLLAPSE_UP", "COPY", "DATABASE", "DELETE", "DEPENDENCIES", "DISABLE", "DOCUMENT_ANALYTIC_OUTPUT_STORE", "DOCUMENT_ANALYTIC_RULE", "DOCUMENT_ANNOTATIONS_INDEX", "DOCUMENT_DASHBOARD", "DOCUMENT_DICTIONARY", "DOCUMENT_DOCUMENTATION", "DOCUMENT_ELASTIC_CLUSTER", "DOCUMENT_ELASTIC_INDEX", "DOCUMENT_FAVOURITES", "DOCUMENT_FEED", "DOCUMENT_FOLDER", "DOCUMENT_INDEX", "DOCUMENT_KAFKA_CONFIG", "DOCUMENT_PIPELINE", "DOCUMENT_QUERY", "DOCUMENT_RECEIVE_DATA_RULE_SET", "DOCUMENT_SCRIPT", "DOCUMENT_SEARCHABLE", "DOCUMENT_SELECT_ALL_OR_NONE", "DOCUMENT_SIGMA_RULE", "DOCUMENT_SOLR_INDEX", "DOCUMENT_STATISTIC_STORE", "DOCUMENT_STROOM_STATS_STORE", "DOCUMENT_SYSTEM", "DOCUMENT_TEXT_CONVERTER", "DOCUMENT_VIEW", "DOCUMENT_VISUALISATION", "DOCUMENT_XMLSCHEMA", "DOCUMENT_XSLT", "DOT", "DOUBLE_ARROW", "DOWN", "DOWNLOAD", "DROP_DOWN", "EDIT", "ELLIPSES_HORIZONTAL", "ELLIPSES_VERTICAL", "ERROR", "EXCLAMATION", "EXPAND_ALL", "EXPAND_DOWN", "EXPLORER", "FAST_BACKWARD", "FAST_FORWARD", "FATAL", "FATAL_DARK", "FAVOURITES", "FAVOURITES_OUTLINE", "FEED", "FIELD", "FIELDS_EXPRESSION", "FIELDS_FILTER", "FIELDS_FORMAT", "FIELDS_GROUP", "FIELDS_SORTAZ", "FIELDS_SORTZA", "FILE", "FILE_FORMATTED", "FILE_RAW", "FILTER", "FIND", "FOLDER", "FOLDER_TREE", "FORMAT", "FORWARD", "FUNCTION", "GENERATE", "HELP", "HIDE", "HIDE_MENU", "HISTORY", "INFO", "INSERT", "JOBS", "KEY", "LOCATE", "LOCKED", "LOGO", "LOGOUT", "MENU", "MONITORING", "MOVE", "NODES", "OK", "OO", "OPEN", "OPERATOR", "PASSWORD", "PAUSE", "PEN", "PIPELINE_ELASTIC_INDEX", "PIPELINE_FILE", "PIPELINE_FILES", "PIPELINE_HADOOP", "PIPELINE_ID", "PIPELINE_INDEX", "PIPELINE_JSON", "PIPELINE_KAFKA", "PIPELINE_RECORD_COUNT", "PIPELINE_RECORD_OUTPUT", "PIPELINE_REFERENCE_DATA", "PIPELINE_SEARCH_OUTPUT", "PIPELINE_SOLR", "PIPELINE_SPLIT", "PIPELINE_STATISTICS", "PIPELINE_STREAM", "PIPELINE_STROOM_STATS", "PIPELINE_STROOM_STATS_STORE", "PIPELINE_TEXT", "PIPELINE_XML", "PIPELINE_XML_SEARCH", "PIPELINE_XSD", "PIPELINE_XSLT", "PLAY", "PROCESS", "PROPERTIES", "QUESTION", "RAW", "REFRESH", "REGEX", "REMOVE", "RESIZE", "RESIZE_HANDLE", "SAVE", "SAVEAS", "SEARCH", "SETTINGS", "SHARD_CLOSE", "SHARD_FLUSH", "SHARE", "SHIELD", "SHOW", "SHOW_MENU", "STEP", "STEPPING", "STEPPING_CIRCLE", "STEP_BACKWARD", "STEP_FORWARD", "STOP", "TABLE", "TABLE_NESTED", "TAB_CLOSE", "TAGS", "TEXT_WRAP", "TICK", "UNDO", "UNLOCK", "UP", "UPLOAD", "USER", "USERS", "VOLUMES", "WARNING" ]
+          },
+          "path" : {
+            "type" : "string"
           }
         }
       },
@@ -15190,6 +15324,9 @@
           },
           "type" : {
             "type" : "string"
+          },
+          "unknown" : {
+            "type" : "boolean"
           }
         },
         "required" : [ "type" ]
@@ -15755,7 +15892,7 @@
           },
           "icon" : {
             "type" : "string",
-            "enum" : [ "ADD", "ADD_ABOVE", "ADD_BELOW", "ADD_MULTIPLE", "ALERT", "ALERT_SIMPLE", "ARROW_DOWN", "ARROW_LEFT", "ARROW_RIGHT", "ARROW_UP", "AUTO_REFRESH", "BACKWARD", "BORDERED_CIRCLE", "CANCEL", "CASE_SENSITIVE", "CLEAR", "CLIPBOARD", "CLOSE", "CODE", "COLLAPSE_UP", "COPY", "DATABASE", "DELETE", "DEPENDENCIES", "DISABLE", "DOCUMENT_ANALYTIC_OUTPUT_STORE", "DOCUMENT_ANALYTIC_RULE", "DOCUMENT_ANNOTATIONS_INDEX", "DOCUMENT_DASHBOARD", "DOCUMENT_DICTIONARY", "DOCUMENT_DOCUMENTATION", "DOCUMENT_ELASTIC_CLUSTER", "DOCUMENT_ELASTIC_INDEX", "DOCUMENT_FAVOURITES", "DOCUMENT_FEED", "DOCUMENT_FOLDER", "DOCUMENT_INDEX", "DOCUMENT_KAFKA_CONFIG", "DOCUMENT_PIPELINE", "DOCUMENT_QUERY", "DOCUMENT_RECEIVE_DATA_RULE_SET", "DOCUMENT_SCRIPT", "DOCUMENT_SEARCHABLE", "DOCUMENT_SELECT_ALL_OR_NONE", "DOCUMENT_SIGMA_RULE", "DOCUMENT_SOLR_INDEX", "DOCUMENT_STATISTIC_STORE", "DOCUMENT_STROOM_STATS_STORE", "DOCUMENT_SYSTEM", "DOCUMENT_TEXT_CONVERTER", "DOCUMENT_VIEW", "DOCUMENT_VISUALISATION", "DOCUMENT_XMLSCHEMA", "DOCUMENT_XSLT", "DOT", "DOUBLE_ARROW", "DOWN", "DOWNLOAD", "DROP_DOWN", "EDIT", "ELLIPSES_HORIZONTAL", "ELLIPSES_VERTICAL", "ERROR", "EXCLAMATION", "EXPAND_DOWN", "EXPLORER", "FAST_BACKWARD", "FAST_FORWARD", "FATAL", "FATAL_DARK", "FAVOURITES", "FAVOURITES_OUTLINE", "FEED", "FIELD", "FIELDS_EXPRESSION", "FIELDS_FILTER", "FIELDS_FORMAT", "FIELDS_GROUP", "FIELDS_SORTAZ", "FIELDS_SORTZA", "FILE", "FILE_FORMATTED", "FILE_RAW", "FILTER", "FIND", "FOLDER", "FOLDER_TREE", "FORMAT", "FORWARD", "FUNCTION", "GENERATE", "HELP", "HIDE", "HIDE_MENU", "HISTORY", "INFO", "INSERT", "JOBS", "KEY", "LOCATE", "LOCKED", "LOGO", "LOGOUT", "MENU", "MONITORING", "MOVE", "NODES", "OK", "OO", "OPEN", "OPERATOR", "PASSWORD", "PAUSE", "PEN", "PIPELINE_ELASTIC_INDEX", "PIPELINE_FILE", "PIPELINE_FILES", "PIPELINE_HADOOP", "PIPELINE_ID", "PIPELINE_INDEX", "PIPELINE_JSON", "PIPELINE_KAFKA", "PIPELINE_RECORD_COUNT", "PIPELINE_RECORD_OUTPUT", "PIPELINE_REFERENCE_DATA", "PIPELINE_SEARCH_OUTPUT", "PIPELINE_SOLR", "PIPELINE_SPLIT", "PIPELINE_STATISTICS", "PIPELINE_STREAM", "PIPELINE_STROOM_STATS", "PIPELINE_STROOM_STATS_STORE", "PIPELINE_TEXT", "PIPELINE_XML", "PIPELINE_XML_SEARCH", "PIPELINE_XSD", "PIPELINE_XSLT", "PLAY", "PROCESS", "PROPERTIES", "QUESTION", "RAW", "REFRESH", "REGEX", "REMOVE", "RESIZE", "RESIZE_HANDLE", "SAVE", "SAVEAS", "SEARCH", "SETTINGS", "SHARD_CLOSE", "SHARD_FLUSH", "SHARE", "SHIELD", "SHOW", "SHOW_MENU", "STEP", "STEPPING", "STEPPING_CIRCLE", "STEP_BACKWARD", "STEP_FORWARD", "STOP", "TABLE", "TABLE_NESTED", "TAB_CLOSE", "TAGS", "TEXT_WRAP", "TICK", "UNDO", "UNLOCK", "UP", "UPLOAD", "USER", "USERS", "VOLUMES", "WARNING" ]
+            "enum" : [ "ADD", "ADD_ABOVE", "ADD_BELOW", "ADD_MULTIPLE", "ALERT", "ALERT_SIMPLE", "ARROW_DOWN", "ARROW_LEFT", "ARROW_RIGHT", "ARROW_UP", "AUTO_REFRESH", "BACKWARD", "BORDERED_CIRCLE", "CANCEL", "CASE_SENSITIVE", "CLEAR", "CLIPBOARD", "CLOSE", "CODE", "COLLAPSE_ALL", "COLLAPSE_UP", "COPY", "DATABASE", "DELETE", "DEPENDENCIES", "DISABLE", "DOCUMENT_ANALYTIC_OUTPUT_STORE", "DOCUMENT_ANALYTIC_RULE", "DOCUMENT_ANNOTATIONS_INDEX", "DOCUMENT_DASHBOARD", "DOCUMENT_DICTIONARY", "DOCUMENT_DOCUMENTATION", "DOCUMENT_ELASTIC_CLUSTER", "DOCUMENT_ELASTIC_INDEX", "DOCUMENT_FAVOURITES", "DOCUMENT_FEED", "DOCUMENT_FOLDER", "DOCUMENT_INDEX", "DOCUMENT_KAFKA_CONFIG", "DOCUMENT_PIPELINE", "DOCUMENT_QUERY", "DOCUMENT_RECEIVE_DATA_RULE_SET", "DOCUMENT_SCRIPT", "DOCUMENT_SEARCHABLE", "DOCUMENT_SELECT_ALL_OR_NONE", "DOCUMENT_SIGMA_RULE", "DOCUMENT_SOLR_INDEX", "DOCUMENT_STATISTIC_STORE", "DOCUMENT_STROOM_STATS_STORE", "DOCUMENT_SYSTEM", "DOCUMENT_TEXT_CONVERTER", "DOCUMENT_VIEW", "DOCUMENT_VISUALISATION", "DOCUMENT_XMLSCHEMA", "DOCUMENT_XSLT", "DOT", "DOUBLE_ARROW", "DOWN", "DOWNLOAD", "DROP_DOWN", "EDIT", "ELLIPSES_HORIZONTAL", "ELLIPSES_VERTICAL", "ERROR", "EXCLAMATION", "EXPAND_ALL", "EXPAND_DOWN", "EXPLORER", "FAST_BACKWARD", "FAST_FORWARD", "FATAL", "FATAL_DARK", "FAVOURITES", "FAVOURITES_OUTLINE", "FEED", "FIELD", "FIELDS_EXPRESSION", "FIELDS_FILTER", "FIELDS_FORMAT", "FIELDS_GROUP", "FIELDS_SORTAZ", "FIELDS_SORTZA", "FILE", "FILE_FORMATTED", "FILE_RAW", "FILTER", "FIND", "FOLDER", "FOLDER_TREE", "FORMAT", "FORWARD", "FUNCTION", "GENERATE", "HELP", "HIDE", "HIDE_MENU", "HISTORY", "INFO", "INSERT", "JOBS", "KEY", "LOCATE", "LOCKED", "LOGO", "LOGOUT", "MENU", "MONITORING", "MOVE", "NODES", "OK", "OO", "OPEN", "OPERATOR", "PASSWORD", "PAUSE", "PEN", "PIPELINE_ELASTIC_INDEX", "PIPELINE_FILE", "PIPELINE_FILES", "PIPELINE_HADOOP", "PIPELINE_ID", "PIPELINE_INDEX", "PIPELINE_JSON", "PIPELINE_KAFKA", "PIPELINE_RECORD_COUNT", "PIPELINE_RECORD_OUTPUT", "PIPELINE_REFERENCE_DATA", "PIPELINE_SEARCH_OUTPUT", "PIPELINE_SOLR", "PIPELINE_SPLIT", "PIPELINE_STATISTICS", "PIPELINE_STREAM", "PIPELINE_STROOM_STATS", "PIPELINE_STROOM_STATS_STORE", "PIPELINE_TEXT", "PIPELINE_XML", "PIPELINE_XML_SEARCH", "PIPELINE_XSD", "PIPELINE_XSLT", "PLAY", "PROCESS", "PROPERTIES", "QUESTION", "RAW", "REFRESH", "REGEX", "REMOVE", "RESIZE", "RESIZE_HANDLE", "SAVE", "SAVEAS", "SEARCH", "SETTINGS", "SHARD_CLOSE", "SHARD_FLUSH", "SHARE", "SHIELD", "SHOW", "SHOW_MENU", "STEP", "STEPPING", "STEPPING_CIRCLE", "STEP_BACKWARD", "STEP_FORWARD", "STOP", "TABLE", "TABLE_NESTED", "TAB_CLOSE", "TAGS", "TEXT_WRAP", "TICK", "UNDO", "UNLOCK", "UP", "UPLOAD", "USER", "USERS", "VOLUMES", "WARNING" ]
           },
           "roles" : {
             "type" : "array",
@@ -16785,7 +16922,7 @@
           },
           "icon" : {
             "type" : "string",
-            "enum" : [ "ADD", "ADD_ABOVE", "ADD_BELOW", "ADD_MULTIPLE", "ALERT", "ALERT_SIMPLE", "ARROW_DOWN", "ARROW_LEFT", "ARROW_RIGHT", "ARROW_UP", "AUTO_REFRESH", "BACKWARD", "BORDERED_CIRCLE", "CANCEL", "CASE_SENSITIVE", "CLEAR", "CLIPBOARD", "CLOSE", "CODE", "COLLAPSE_UP", "COPY", "DATABASE", "DELETE", "DEPENDENCIES", "DISABLE", "DOCUMENT_ANALYTIC_OUTPUT_STORE", "DOCUMENT_ANALYTIC_RULE", "DOCUMENT_ANNOTATIONS_INDEX", "DOCUMENT_DASHBOARD", "DOCUMENT_DICTIONARY", "DOCUMENT_DOCUMENTATION", "DOCUMENT_ELASTIC_CLUSTER", "DOCUMENT_ELASTIC_INDEX", "DOCUMENT_FAVOURITES", "DOCUMENT_FEED", "DOCUMENT_FOLDER", "DOCUMENT_INDEX", "DOCUMENT_KAFKA_CONFIG", "DOCUMENT_PIPELINE", "DOCUMENT_QUERY", "DOCUMENT_RECEIVE_DATA_RULE_SET", "DOCUMENT_SCRIPT", "DOCUMENT_SEARCHABLE", "DOCUMENT_SELECT_ALL_OR_NONE", "DOCUMENT_SIGMA_RULE", "DOCUMENT_SOLR_INDEX", "DOCUMENT_STATISTIC_STORE", "DOCUMENT_STROOM_STATS_STORE", "DOCUMENT_SYSTEM", "DOCUMENT_TEXT_CONVERTER", "DOCUMENT_VIEW", "DOCUMENT_VISUALISATION", "DOCUMENT_XMLSCHEMA", "DOCUMENT_XSLT", "DOT", "DOUBLE_ARROW", "DOWN", "DOWNLOAD", "DROP_DOWN", "EDIT", "ELLIPSES_HORIZONTAL", "ELLIPSES_VERTICAL", "ERROR", "EXCLAMATION", "EXPAND_DOWN", "EXPLORER", "FAST_BACKWARD", "FAST_FORWARD", "FATAL", "FATAL_DARK", "FAVOURITES", "FAVOURITES_OUTLINE", "FEED", "FIELD", "FIELDS_EXPRESSION", "FIELDS_FILTER", "FIELDS_FORMAT", "FIELDS_GROUP", "FIELDS_SORTAZ", "FIELDS_SORTZA", "FILE", "FILE_FORMATTED", "FILE_RAW", "FILTER", "FIND", "FOLDER", "FOLDER_TREE", "FORMAT", "FORWARD", "FUNCTION", "GENERATE", "HELP", "HIDE", "HIDE_MENU", "HISTORY", "INFO", "INSERT", "JOBS", "KEY", "LOCATE", "LOCKED", "LOGO", "LOGOUT", "MENU", "MONITORING", "MOVE", "NODES", "OK", "OO", "OPEN", "OPERATOR", "PASSWORD", "PAUSE", "PEN", "PIPELINE_ELASTIC_INDEX", "PIPELINE_FILE", "PIPELINE_FILES", "PIPELINE_HADOOP", "PIPELINE_ID", "PIPELINE_INDEX", "PIPELINE_JSON", "PIPELINE_KAFKA", "PIPELINE_RECORD_COUNT", "PIPELINE_RECORD_OUTPUT", "PIPELINE_REFERENCE_DATA", "PIPELINE_SEARCH_OUTPUT", "PIPELINE_SOLR", "PIPELINE_SPLIT", "PIPELINE_STATISTICS", "PIPELINE_STREAM", "PIPELINE_STROOM_STATS", "PIPELINE_STROOM_STATS_STORE", "PIPELINE_TEXT", "PIPELINE_XML", "PIPELINE_XML_SEARCH", "PIPELINE_XSD", "PIPELINE_XSLT", "PLAY", "PROCESS", "PROPERTIES", "QUESTION", "RAW", "REFRESH", "REGEX", "REMOVE", "RESIZE", "RESIZE_HANDLE", "SAVE", "SAVEAS", "SEARCH", "SETTINGS", "SHARD_CLOSE", "SHARD_FLUSH", "SHARE", "SHIELD", "SHOW", "SHOW_MENU", "STEP", "STEPPING", "STEPPING_CIRCLE", "STEP_BACKWARD", "STEP_FORWARD", "STOP", "TABLE", "TABLE_NESTED", "TAB_CLOSE", "TAGS", "TEXT_WRAP", "TICK", "UNDO", "UNLOCK", "UP", "UPLOAD", "USER", "USERS", "VOLUMES", "WARNING" ]
+            "enum" : [ "ADD", "ADD_ABOVE", "ADD_BELOW", "ADD_MULTIPLE", "ALERT", "ALERT_SIMPLE", "ARROW_DOWN", "ARROW_LEFT", "ARROW_RIGHT", "ARROW_UP", "AUTO_REFRESH", "BACKWARD", "BORDERED_CIRCLE", "CANCEL", "CASE_SENSITIVE", "CLEAR", "CLIPBOARD", "CLOSE", "CODE", "COLLAPSE_ALL", "COLLAPSE_UP", "COPY", "DATABASE", "DELETE", "DEPENDENCIES", "DISABLE", "DOCUMENT_ANALYTIC_OUTPUT_STORE", "DOCUMENT_ANALYTIC_RULE", "DOCUMENT_ANNOTATIONS_INDEX", "DOCUMENT_DASHBOARD", "DOCUMENT_DICTIONARY", "DOCUMENT_DOCUMENTATION", "DOCUMENT_ELASTIC_CLUSTER", "DOCUMENT_ELASTIC_INDEX", "DOCUMENT_FAVOURITES", "DOCUMENT_FEED", "DOCUMENT_FOLDER", "DOCUMENT_INDEX", "DOCUMENT_KAFKA_CONFIG", "DOCUMENT_PIPELINE", "DOCUMENT_QUERY", "DOCUMENT_RECEIVE_DATA_RULE_SET", "DOCUMENT_SCRIPT", "DOCUMENT_SEARCHABLE", "DOCUMENT_SELECT_ALL_OR_NONE", "DOCUMENT_SIGMA_RULE", "DOCUMENT_SOLR_INDEX", "DOCUMENT_STATISTIC_STORE", "DOCUMENT_STROOM_STATS_STORE", "DOCUMENT_SYSTEM", "DOCUMENT_TEXT_CONVERTER", "DOCUMENT_VIEW", "DOCUMENT_VISUALISATION", "DOCUMENT_XMLSCHEMA", "DOCUMENT_XSLT", "DOT", "DOUBLE_ARROW", "DOWN", "DOWNLOAD", "DROP_DOWN", "EDIT", "ELLIPSES_HORIZONTAL", "ELLIPSES_VERTICAL", "ERROR", "EXCLAMATION", "EXPAND_ALL", "EXPAND_DOWN", "EXPLORER", "FAST_BACKWARD", "FAST_FORWARD", "FATAL", "FATAL_DARK", "FAVOURITES", "FAVOURITES_OUTLINE", "FEED", "FIELD", "FIELDS_EXPRESSION", "FIELDS_FILTER", "FIELDS_FORMAT", "FIELDS_GROUP", "FIELDS_SORTAZ", "FIELDS_SORTZA", "FILE", "FILE_FORMATTED", "FILE_RAW", "FILTER", "FIND", "FOLDER", "FOLDER_TREE", "FORMAT", "FORWARD", "FUNCTION", "GENERATE", "HELP", "HIDE", "HIDE_MENU", "HISTORY", "INFO", "INSERT", "JOBS", "KEY", "LOCATE", "LOCKED", "LOGO", "LOGOUT", "MENU", "MONITORING", "MOVE", "NODES", "OK", "OO", "OPEN", "OPERATOR", "PASSWORD", "PAUSE", "PEN", "PIPELINE_ELASTIC_INDEX", "PIPELINE_FILE", "PIPELINE_FILES", "PIPELINE_HADOOP", "PIPELINE_ID", "PIPELINE_INDEX", "PIPELINE_JSON", "PIPELINE_KAFKA", "PIPELINE_RECORD_COUNT", "PIPELINE_RECORD_OUTPUT", "PIPELINE_REFERENCE_DATA", "PIPELINE_SEARCH_OUTPUT", "PIPELINE_SOLR", "PIPELINE_SPLIT", "PIPELINE_STATISTICS", "PIPELINE_STREAM", "PIPELINE_STROOM_STATS", "PIPELINE_STROOM_STATS_STORE", "PIPELINE_TEXT", "PIPELINE_XML", "PIPELINE_XML_SEARCH", "PIPELINE_XSD", "PIPELINE_XSLT", "PLAY", "PROCESS", "PROPERTIES", "QUESTION", "RAW", "REFRESH", "REGEX", "REMOVE", "RESIZE", "RESIZE_HANDLE", "SAVE", "SAVEAS", "SEARCH", "SETTINGS", "SHARD_CLOSE", "SHARD_FLUSH", "SHARE", "SHIELD", "SHOW", "SHOW_MENU", "STEP", "STEPPING", "STEPPING_CIRCLE", "STEP_BACKWARD", "STEP_FORWARD", "STOP", "TABLE", "TABLE_NESTED", "TAB_CLOSE", "TAGS", "TEXT_WRAP", "TICK", "UNDO", "UNLOCK", "UP", "UPLOAD", "USER", "USERS", "VOLUMES", "WARNING" ]
           },
           "id" : {
             "type" : "string"
@@ -17268,21 +17405,6 @@
           }
         }
       },
-      "ResultPageExplorerDocContentMatch" : {
-        "type" : "object",
-        "description" : "A page of results.",
-        "properties" : {
-          "pageResponse" : {
-            "$ref" : "#/components/schemas/PageResponse"
-          },
-          "values" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/ExplorerDocContentMatch"
-            }
-          }
-        }
-      },
       "ResultPageFieldInfo" : {
         "type" : "object",
         "description" : "A page of results.",
@@ -17294,6 +17416,36 @@
             "type" : "array",
             "items" : {
               "$ref" : "#/components/schemas/FieldInfo"
+            }
+          }
+        }
+      },
+      "ResultPageFindInContentResult" : {
+        "type" : "object",
+        "description" : "A page of results.",
+        "properties" : {
+          "pageResponse" : {
+            "$ref" : "#/components/schemas/PageResponse"
+          },
+          "values" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/FindInContentResult"
+            }
+          }
+        }
+      },
+      "ResultPageFindResult" : {
+        "type" : "object",
+        "description" : "A page of results.",
+        "properties" : {
+          "pageResponse" : {
+            "$ref" : "#/components/schemas/PageResponse"
+          },
+          "values" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/FindResult"
             }
           }
         }
@@ -18216,23 +18368,20 @@
       "SharedElementData" : {
         "type" : "object",
         "properties" : {
-          "codeIndicators" : {
-            "$ref" : "#/components/schemas/Indicators"
-          },
           "formatInput" : {
             "type" : "boolean"
           },
           "formatOutput" : {
             "type" : "boolean"
           },
+          "indicators" : {
+            "$ref" : "#/components/schemas/Indicators"
+          },
           "input" : {
             "type" : "string"
           },
           "output" : {
             "type" : "string"
-          },
-          "outputIndicators" : {
-            "$ref" : "#/components/schemas/Indicators"
           }
         }
       },
@@ -18743,6 +18892,10 @@
           "elementId" : {
             "type" : "string"
           },
+          "errorType" : {
+            "type" : "string",
+            "enum" : [ "CODE", "GENERIC", "INPUT", "OUTPUT", "UNKNOWN" ]
+          },
           "location" : {
             "$ref" : "#/components/schemas/Location"
           },
@@ -18909,6 +19062,19 @@
           },
           "pattern" : {
             "type" : "string"
+          }
+        }
+      },
+      "StringMatchLocation" : {
+        "type" : "object",
+        "properties" : {
+          "length" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "offset" : {
+            "type" : "integer",
+            "format" : "int32"
           }
         }
       },
