@@ -255,7 +255,7 @@ public class CombinedParser extends AbstractParser implements SupportsCodeInject
 
             Reader inputStreamReader = new InputStreamReader(bris, charsetName);
             if (fixInvalidChars) {
-                inputStreamReader = new InvalidXmlCharFilter(inputStreamReader, new Xml10Chars());
+                inputStreamReader = InvalidXmlCharFilter.createRemoveCharsFilter(inputStreamReader, new Xml10Chars());
             }
 
             final BufferedReader bufferedReader = new BufferedReader(inputStreamReader);

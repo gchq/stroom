@@ -82,7 +82,7 @@ public class AbstractIOElement extends AbstractElement implements HasTargets {
     @Override
     public List<Processor> createProcessors() {
         try {
-            if (targetList.size() == 0) {
+            if (targetList.isEmpty()) {
                 return Collections.emptyList();
             }
 

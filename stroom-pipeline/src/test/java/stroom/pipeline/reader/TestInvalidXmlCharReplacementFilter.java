@@ -88,7 +88,7 @@ public class TestInvalidXmlCharReplacementFilter {
 
     private Reader getReader(final char[] data, final XmlChars mode) {
         final Reader r = new CharArrayReader(data);
-        return new InvalidXmlCharFilter(r, mode, true, REPLACE_CHAR);
+        return InvalidXmlCharFilter.createReplaceCharsFilter(r, mode, true, REPLACE_CHAR);
     }
 
     private void readCharBMP(final char[] testData, final XmlChars mode) throws IOException {
