@@ -46,6 +46,13 @@ import java.util.Set;
 @ConfigurableElement(
         type = "IdEnrichmentFilter",
         category = Category.FILTER,
+        description = """
+                Adds the attributes 'StreamId' and 'EventId' to the 'event' element to enrich the event \
+                with its ordinal number in the stream and the ID of the stream that it belongs to.
+                ID enrichment is required to be able to index events as it provides them with an ID that is \
+                unique within Stroom.
+                It assumes that an record/event is an XML element at the first level below the root element, i.e. \
+                for 'event-logging:3' XML this means the `<Event>` element.""",
         roles = {
                 PipelineElementType.ROLE_TARGET,
                 PipelineElementType.ROLE_HAS_TARGETS,

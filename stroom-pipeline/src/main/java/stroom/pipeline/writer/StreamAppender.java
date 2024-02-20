@@ -58,6 +58,9 @@ import java.io.OutputStream;
 @ConfigurableElement(
         type = "StreamAppender",
         category = Category.DESTINATION,
+        description = """
+                A destination used to write the output stream to a new stream in the stream store.
+                The configuration allows for starting a new stream once a size threshold is reached.""",
         roles = {
                 PipelineElementType.ROLE_TARGET,
                 PipelineElementType.ROLE_DESTINATION,

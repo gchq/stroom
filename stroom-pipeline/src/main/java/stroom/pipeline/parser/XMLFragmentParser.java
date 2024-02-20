@@ -57,7 +57,14 @@ import java.util.function.Consumer;
         category = Category.PARSER,
         description = """
                 A parser to convert multiple XML fragments into an XML document.
-                """,
+                For example the data may contain:
+                ```xml
+                <Event>...</Event>
+                <Event>...</Event>
+                ```
+                i.e. with no root element, so not valid XML.
+                The XMLFragmentParser will wrap the fragments with a root element as defined in the TextConverter \
+                document configured with the `textConverterRef` property.""",
         roles = {
                 PipelineElementType.ROLE_PARSER,
                 PipelineElementType.ROLE_HAS_TARGETS,
@@ -178,7 +185,9 @@ public class XMLFragmentParser extends AbstractParser implements SupportsCodeInj
         this.textConverterRef = textConverterRef;
     }
 
-    @PipelineProperty(description = "A name pattern to load a text converter dynamically.", displayPriority = 2)
+    @PipelineProperty(
+            description = "A name pattern to load a text converter dynamically.",
+            displayPriority = 2)
     public void setNamePattern(final String namePattern) {
         this.namePattern = namePattern;
     }

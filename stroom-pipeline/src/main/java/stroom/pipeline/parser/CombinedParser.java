@@ -48,6 +48,7 @@ import stroom.pipeline.xml.converter.ParserFactory;
 import stroom.pipeline.xml.converter.json.JSONParserFactory;
 import stroom.pipeline.xml.converter.xmlfragment.XMLFragmentParser;
 import stroom.svg.shared.SvgImage;
+import stroom.util.NullSafe;
 import stroom.util.io.PathCreator;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Severity;
@@ -74,6 +75,10 @@ import javax.xml.parsers.SAXParserFactory;
         description = """
                 The original general-purpose reader/parser that covers all source data types but provides less \
                 flexibility than the source format-specific parsers such as dsParser.
+                It effectively combines a BOMRemovalFilterInput, an InvalidCharFilterReader and Parser (based on
+                the `type` property.
+                It is strongly recommended to instead use a combination of Readers and one of the type specific Parsers.
+                This will make the intent of the pipeline much clearer and allow for much greater control.
                 """,
         roles = {
                 PipelineElementType.ROLE_PARSER,
@@ -242,10 +247,8 @@ public class CombinedParser extends AbstractParser implements SupportsCodeInject
     @Override
     protected InputSource getInputSource(final InputSource inputSource) throws IOException {
         // Set the character encoding to use.
-        String charsetName = StreamUtil.DEFAULT_CHARSET_NAME;
-        if (inputSource.getEncoding() != null && inputSource.getEncoding().trim().length() > 0) {
-            charsetName = inputSource.getEncoding();
-        }
+        final String charsetName = NullSafe.nonBlankStringElse(
+                inputSource.getEncoding(), StreamUtil.DEFAULT_CHARSET_NAME);
 
         InputSource internalInputSource = inputSource;
         if (inputSource.getByteStream() != null) {
@@ -386,6 +389,10 @@ public class CombinedParser extends AbstractParser implements SupportsCodeInject
                 errorConsumer,
                 suppressDocumentNotFoundWarnings);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public enum Mode {
         UNKNOWN,

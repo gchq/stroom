@@ -91,7 +91,6 @@ public class XPathExtractionOutputFilter extends AbstractXMLFilter {
     private String topLevelQName = null;
     private Attributes topLevelAtts = null;
 
-
     @Inject
     public XPathExtractionOutputFilter(final LocationFactoryProxy locationFactory,
                                        final ErrorReceiverProxy errorReceiverProxy,

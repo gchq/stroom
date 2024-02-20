@@ -1,13 +1,19 @@
 package stroom.app.docs;
 
+import stroom.docref.DocRef;
 import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.factory.Element;
 import stroom.pipeline.factory.PipelineProperty;
+import stroom.pipeline.filter.XsltFilter;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.source.SourceElement;
+import stroom.test.common.docs.StroomDocsUtil;
+import stroom.test.common.docs.StroomDocsUtil.GeneratesDocumentation;
 import stroom.util.logging.AsciiTable;
 import stroom.util.logging.AsciiTable.Column;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
 import io.github.classgraph.ClassGraph;
@@ -18,23 +24,30 @@ import io.vavr.Tuple2;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
+import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /**
- * Generate the content for content/en/docs/user-guide/pipelines/element-reference.md
- * and layouts/shortcodes/pipe-elm.html in stroom-docs.
+ * Generate the content for
+ * content/en/docs/user-guide/pipelines/element-reference.md
+ * and
+ * layouts/shortcodes/pipe-elm.html in stroom-docs.
  * <p>
- * generatePipelineElementReferenceContent ploduces something like this, with
+ * generatePipelineElementReferenceContent produces something like this, with
  * a H2 for each category and a H3 for each element in that category.
  * <p>
  * Once the doc has been amended with descriptions you will prob need to run this
@@ -61,10 +74,43 @@ import java.util.stream.Collectors;
  */
 public class GeneratePipelineElementsDoc {
 
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(GeneratePipelineElementsDoc.class);
+
     private static final String PACKAGE_NAME = "stroom";
     private static final String MISSING_CATEGORY_DESCRIPTION = "> TODO - Add description";
 
+    private static final Path ELEMENENT_REFERENCE_SUB_PATH = Paths.get(
+            "content/en/docs/user-guide/pipelines/element-reference.md");
+    private static final Path PIPE_ELM_SHORT_CODE_SUB_PATH = Paths.get(
+            "layouts/shortcodes/pipe-elm.html");
+
+    private static final Map<Class<?>, String> ARG_TYPE_TO_DISPLAY_NAME_MAP = Map.of(
+            DocRef.class, "Document",
+            Integer.class, "Integer",
+            String.class, "String",
+            boolean.class, "Boolean",
+            int.class, "Integer"
+    );
+
+    private static final Set<Entry<Class<?>, String>> EXCLUDED_METHODS = Set.of(
+            // This one is not really a prop and needs special explanation.
+            Map.entry(XsltFilter.class, "setPipelineReference")
+    );
+
+    @GeneratesDocumentation
+    public static void main(String[] args) {
+        final GeneratePipelineElementsDoc generatePipelineElementsDoc = new GeneratePipelineElementsDoc();
+
+        generatePipelineElementsDoc.generatePipelineElementReferenceContent();
+        generatePipelineElementsDoc.generatePipeElmShortcodeNames();
+    }
+
+    /**
+     * This will modify the content of the file
+     * {@code [this repo]/../stroom-docs/content/en/docs/user-guide/pipelines/element-reference.md}
+     */
     @Disabled // Manual only
+    @GeneratesDocumentation
     @Test
     void generatePipelineElementReferenceContent() {
         try (ScanResult scanResult =
@@ -73,26 +119,37 @@ public class GeneratePipelineElementsDoc {
                         .acceptPackages(PACKAGE_NAME)  // Scan com.xyz and subpackages (omit to scan all packages)
                         .scan()) {                   // Start the scan
 
-            scanResult.getClassesImplementing(Element.class.getName())
+            final String generatedContent = scanResult.getClassesImplementing(Element.class.getName())
                     .parallelStream()
                     .map(GeneratePipelineElementsDoc::mapClassInfo)
                     .filter(Objects::nonNull)
                     .filter(elementInfo -> !Category.INTERNAL.equals(elementInfo.category))
                     .sequential()
-                    .collect(Collectors.groupingBy(ElementInfo::getCategory))
+                    .collect(Collectors.groupingBy(ElementInfo::category))
                     .entrySet()
                     .stream()
                     .sorted(Entry.comparingByKey())
                     .map(GeneratePipelineElementsDoc::mapCategoryGroup)
-                    .forEach(System.out::println);
+                    .collect(Collectors.joining("\n"));
+
+            final Path file = StroomDocsUtil.resolveStroomDocsFile(ELEMENENT_REFERENCE_SUB_PATH);
+
+            final boolean didReplace = StroomDocsUtil.replaceGeneratedContent(file, generatedContent);
+
+            if (didReplace) {
+                LOGGER.info("Replaced generated content in file: {}", file);
+            } else {
+                LOGGER.warn("No change made to file: {}", file);
+            }
         }
     }
 
     /**
-     * The output needs to be manually copied into
-     * layouts/shortcodes/pipe-elm.html in stroom-docs
+     * This will modify the content of the file
+     * {@code [this repo]/../stroom-docs/layouts/shortcodes/pipe-elm.html}
      */
     @Disabled // Manual only
+    @GeneratesDocumentation
     @Test
     void generatePipeElmShortcodeNames() {
         try (ScanResult scanResult =
@@ -101,7 +158,7 @@ public class GeneratePipelineElementsDoc {
                         .acceptPackages(PACKAGE_NAME)  // Scan com.xyz and subpackages (omit to scan all packages)
                         .scan()) {                   // Start the scan
 
-            scanResult.getClassesImplementing(Element.class.getName())
+            final String dictContent = scanResult.getClassesImplementing(Element.class.getName())
                     .parallelStream()
                     .map(GeneratePipelineElementsDoc::mapClassInfo)
                     .filter(Objects::nonNull)
@@ -109,12 +166,24 @@ public class GeneratePipelineElementsDoc {
                             !Category.INTERNAL.equals(elementInfo.category)
                                     || SourceElement.class.equals(elementInfo.clazz))
                     .sequential()
-                    .sorted(Comparator.comparing(ElementInfo::getType))
+                    .sorted(Comparator.comparing(ElementInfo::type))
                     .map(elementInfo -> {
                         final String template = "\"{}\" \"{}\"";
                         return LogUtil.message(template, elementInfo.type, elementInfo.iconFilename);
                     })
-                    .forEach(System.out::println);
+                    .collect(Collectors.joining("\n"));
+
+            final String dictDefinition = "{{ $element_map := dict\n" + dictContent + "\n}}";
+
+            final Path file = StroomDocsUtil.resolveStroomDocsFile(PIPE_ELM_SHORT_CODE_SUB_PATH);
+
+            final boolean didReplace = StroomDocsUtil.replaceGeneratedContent(file, dictDefinition);
+
+            if (didReplace) {
+                LOGGER.info("Replaced generated content in file: {}", file);
+            } else {
+                LOGGER.warn("No change made to file: {}", file);
+            }
         }
     }
 
@@ -140,7 +209,7 @@ public class GeneratePipelineElementsDoc {
 
     private static String convertElementsToText(final List<ElementInfo> elementInfoList) {
         final String elementsText = elementInfoList.stream()
-                .sorted(Comparator.comparing(ElementInfo::getType))
+                .sorted(Comparator.comparing(ElementInfo::type))
                 .map(elementInfo -> {
 
                     final String descriptionText = elementInfo.description != null
@@ -166,14 +235,19 @@ public class GeneratePipelineElementsDoc {
                     final String propsText;
                     if (!elementInfo.propertyInfoList.isEmpty()) {
                         propsText = "\n\n**Element properties:**\n\n" + AsciiTable.builder(elementInfo.propertyInfoList)
-                                .withColumn(Column.builder("Name", PropertyInfo::getName)
+                                .withColumn(Column.builder("Name", PropertyInfo::name)
                                         .build())
-                                .withColumn(Column.builder("Description", PropertyInfo::getDescription)
+                                .withColumn(Column.builder("Description", PropertyInfo::description)
                                         .build())
                                 .withColumn(Column.builder("Default Value", (PropertyInfo propInfo) ->
-                                                propInfo.getDefaultValue().isEmpty()
+                                                propInfo.defaultValue().isEmpty()
                                                         ? "-"
-                                                        : propInfo.getDefaultValue())
+                                                        : propInfo.defaultValue())
+                                        .build())
+                                .withColumn(Column.builder("Value Type", (PropertyInfo propInfo) ->
+                                                propInfo.argTypeStr().isEmpty()
+                                                        ? "-"
+                                                        : propInfo.argTypeStr())
                                         .build())
                                 .build();
                     } else {
@@ -191,7 +265,7 @@ public class GeneratePipelineElementsDoc {
 
                     return LogUtil.message(
                             template,
-                            elementInfo.getType(),
+                            elementInfo.type(),
                             iconText,
                             descriptionText,
 //                            elementInfo.category.getDisplayValue(),
@@ -255,15 +329,26 @@ public class GeneratePipelineElementsDoc {
 
         return Arrays.stream(clazz.getMethods())
                 .filter(method -> method.isAnnotationPresent(PipelineProperty.class))
+                .filter(Predicate.not(GeneratePipelineElementsDoc::isMethodExcluded))
                 .map(method -> {
                     final PipelineProperty pipelinePropertyAnno = method.getAnnotation(PipelineProperty.class);
+                    final Class<?> argType = method.getParameterTypes()[0];
+
+                    final String argTypeStr = Objects.requireNonNull(ARG_TYPE_TO_DISPLAY_NAME_MAP.get(argType),
+                            () ->
+                                    "No display name mapped for return type: "
+                                            + argType.getName()
+                                            + " on method: " + method.getName()
+                                            + " on class: " + clazz.getSimpleName());
+
                     final String name = makePropertyName(method.getName());
                     return new PropertyInfo(
                             name,
                             pipelinePropertyAnno.description(),
-                            pipelinePropertyAnno.defaultValue());
+                            pipelinePropertyAnno.defaultValue(),
+                            argTypeStr);
                 })
-                .sorted(Comparator.comparing(PropertyInfo::getName))
+                .sorted(Comparator.comparing(PropertyInfo::name))
                 .collect(Collectors.toList());
     }
 
@@ -274,43 +359,23 @@ public class GeneratePipelineElementsDoc {
         return name;
     }
 
+    private static boolean isMethodExcluded(final Method method) {
+        return EXCLUDED_METHODS.contains(Map.entry(method.getDeclaringClass(), method.getName()));
+    }
+
 
     // --------------------------------------------------------------------------------
 
 
-    private static class ElementInfo {
-
-        private final Class<? extends Element> clazz;
-        private final String type;
-        private final String iconFilename;
-        private final Category category;
-        private final String description;
-        private final Set<String> roles;
-        private final List<PropertyInfo> propertyInfoList;
-
-        public ElementInfo(final Class<? extends Element> clazz,
-                           final String type,
-                           final String iconFilename,
-                           final Category category,
-                           final String description,
-                           final Set<String> roles,
-                           final List<PropertyInfo> propertyInfoList) {
-            this.clazz = clazz;
-            this.type = type;
-            this.iconFilename = iconFilename;
-            this.category = category;
-            this.description = description;
-            this.roles = roles;
-            this.propertyInfoList = propertyInfoList;
-        }
-
-        public String getType() {
-            return type;
-        }
-
-        public Category getCategory() {
-            return category;
-        }
+    private record ElementInfo(
+            Class<? extends Element> clazz,
+            String type,
+            String iconFilename,
+            Category category,
+            String description,
+            Set<String> roles,
+            List<PropertyInfo> propertyInfoList
+    ) {
 
         @Override
         public String toString() {
@@ -325,31 +390,15 @@ public class GeneratePipelineElementsDoc {
         }
     }
 
-    private static class PropertyInfo {
 
-        private final String name;
-        private final String description;
-        private final String defaultValue;
+    // --------------------------------------------------------------------------------
 
-        public PropertyInfo(final String name,
-                            final String description,
-                            final String defaultValue) {
-            this.name = name;
-            this.description = description;
-            this.defaultValue = defaultValue;
-        }
 
-        public String getName() {
-            return name;
-        }
-
-        public String getDescription() {
-            return description;
-        }
-
-        public String getDefaultValue() {
-            return defaultValue;
-        }
+    private record PropertyInfo(
+            String name,
+            String description,
+            String defaultValue,
+            String argTypeStr) {
 
         @Override
         public String toString() {
@@ -357,6 +406,7 @@ public class GeneratePipelineElementsDoc {
                     "name='" + name + '\'' +
                     ", description='" + description + '\'' +
                     ", defaultValue='" + defaultValue + '\'' +
+                    ", returnTypeStr='" + argTypeStr + '\'' +
                     '}';
         }
     }

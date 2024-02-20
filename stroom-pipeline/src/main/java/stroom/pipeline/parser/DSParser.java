@@ -55,7 +55,9 @@ import java.util.function.Consumer;
         type = "DSParser",
         category = Category.PARSER,
         description = """
-                A parser for data that uses Data Splitter code.
+                A parser for handling structured plain text data (e.g. CSV or fixed width fields) using the \
+                Data Splitter domain specific language.
+                For more details see [Data Splitter]({{< relref "docs/user-guide/data-splitter" >}}).
                 """,
         roles = {
                 PipelineElementType.ROLE_PARSER,

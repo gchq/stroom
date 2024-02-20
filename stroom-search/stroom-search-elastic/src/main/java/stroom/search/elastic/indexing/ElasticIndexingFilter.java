@@ -95,6 +95,10 @@ import java.util.stream.Collectors;
 @ConfigurableElement(
         type = "ElasticIndexingFilter",
         category = Category.FILTER,
+        description = """
+                A filter consuming XML events in the `records:2` namespace to index/store the fields
+                and their values in an ElasticSearch Index.
+                """,
         roles = {
                 PipelineElementType.ROLE_TARGET,
                 PipelineElementType.ROLE_HAS_TARGETS,

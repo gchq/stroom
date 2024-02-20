@@ -143,6 +143,15 @@ public class NullSafe {
     }
 
     /**
+     * @return str if it is non-null and non-blank, else return other
+     */
+    public static String nonBlankStringElse(final String str, final String other) {
+        return str != null && !str.isBlank()
+                ? str
+                : other;
+    }
+
+    /**
      * @return True if str is null or empty
      */
     public static boolean isEmptyString(final String str) {
