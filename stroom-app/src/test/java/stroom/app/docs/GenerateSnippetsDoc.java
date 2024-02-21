@@ -1,5 +1,7 @@
 package stroom.app.docs;
 
+import stroom.test.common.docs.StroomDocsUtil;
+import stroom.test.common.docs.StroomDocsUtil.GeneratesDocumentation;
 import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -9,6 +11,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.github.classgraph.ScanResult;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -20,7 +23,7 @@ import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class GenerateSnippetsDoc {
+public class GenerateSnippetsDoc implements DocumentationGenerator {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(GenerateSnippetsDoc.class);
 
@@ -47,6 +50,9 @@ public class GenerateSnippetsDoc {
                     "stroom-core-client-widget/src/main/java/edu/ycp/cs/dh/acegwt/public/ace/snippets")
             .toAbsolutePath()
             .normalize();
+
+    private static final Path SNIPPETS_REFERENCE_FILE_SUB_PATH = Paths.get(
+            "content/en/docs/user-guide/content/editing-text/snippet-reference.md");
 
     private static final Path XML_SNIPPETS_FILE = SNIPPETS_DIR_PATH.resolve("xml.js");
     private static final Path MARKDOWN_SNIPPETS_FILE = SNIPPETS_DIR_PATH.resolve("markdown.js");
@@ -82,12 +88,20 @@ public class GenerateSnippetsDoc {
 
             All [Expression Functions]({{< relref "docs/user-guide/dashboards/expressions" >}}) are available as snippets.
             They do not currently have `tab` triggers.
-            """;
+
+
+            """; // One of the new lines seems to get lost when written to file
 
     private final ObjectMapper objectMapper;
 
+    @GeneratesDocumentation
     public static void main(String[] args) {
         new GenerateSnippetsDoc().generateDocs();
+    }
+
+    @Override
+    public void generateAll(final ScanResult scanResult) {
+        generateDocs();
     }
 
     public GenerateSnippetsDoc() {
@@ -96,7 +110,12 @@ public class GenerateSnippetsDoc {
 
     private void generateDocs() {
 
-        LOGGER.info("path: {}", SNIPPETS_DIR_PATH);
+        LOGGER.debug("path: {}", SNIPPETS_DIR_PATH);
+
+        if (!Files.isDirectory(SNIPPETS_DIR_PATH)) {
+            throw new RuntimeException(LogUtil.message("Ace snippets dir '{}' does not exist.",
+                    SNIPPETS_DIR_PATH.toAbsolutePath().normalize()));
+        }
 
         final StringBuilder stringBuilder = new StringBuilder();
         for (final SnippetDefinition definition : SNIPPETS_FILES) {
@@ -109,9 +128,17 @@ public class GenerateSnippetsDoc {
             stringBuilder.append(FOOTER);
         }
 
-        System.out.println("------------- Copy everything below here ---------------");
-        System.out.println(stringBuilder);
-        System.out.println("------------- Copy everything above here ---------------");
+        final String generatedContent = stringBuilder.toString();
+
+        final Path file = StroomDocsUtil.resolveStroomDocsFile(SNIPPETS_REFERENCE_FILE_SUB_PATH);
+
+        final boolean didReplace = StroomDocsUtil.replaceGeneratedContent(file, generatedContent);
+
+        if (didReplace) {
+            LOGGER.info("Replaced generated content in file: {}", file);
+        } else {
+            LOGGER.info("No change made to file: {}", file);
+        }
     }
 
     private void appendSnippets(final StringBuilder sb,
@@ -187,7 +214,6 @@ public class GenerateSnippetsDoc {
                         "Error extracting snippets JSON from file {} using pattern '{}'",
                         snippetFile, SNIPPETS_ARRAY_PATTERN.pattern()));
             }
-
 
             // Remove all comment lines, hopefully no snippets have java style comments in
             String jsonStr2 = jsonStr.trim();

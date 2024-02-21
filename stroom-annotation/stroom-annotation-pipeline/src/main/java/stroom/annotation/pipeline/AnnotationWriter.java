@@ -68,6 +68,9 @@ import java.util.ArrayList;
 @ConfigurableElement(
         type = "AnnotationWriter",
         category = PipelineElementType.Category.DESTINATION,
+        description = """
+                Consume XML documents in the `annotation:1` namespace and writes them as Stroom Annotations.
+                Allows for the annotating of events that meet some criteria.""",
         roles = {
                 PipelineElementType.ROLE_TARGET,
                 PipelineElementType.ROLE_HAS_TARGETS,

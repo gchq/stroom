@@ -43,6 +43,11 @@ import java.util.Set;
 @Singleton
 public class StatisticStoreStoreImpl implements StatisticStoreStore {
 
+    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.INDEXING,
+            StatisticStoreDoc.DOCUMENT_TYPE,
+            "Statistic Store",
+            StatisticStoreDoc.ICON);
     private final Store<StatisticStoreDoc> store;
 
     @Inject
@@ -94,11 +99,7 @@ public class StatisticStoreStoreImpl implements StatisticStoreStore {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(
-                DocumentTypeGroup.INDEXING,
-                StatisticStoreDoc.DOCUMENT_TYPE,
-                "Statistic Store",
-                StatisticStoreDoc.ICON);
+        return DOCUMENT_TYPE;
     }
 
     ////////////////////////////////////////////////////////////////////////

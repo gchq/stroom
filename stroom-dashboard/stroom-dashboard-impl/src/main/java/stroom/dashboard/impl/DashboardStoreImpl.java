@@ -61,6 +61,11 @@ class DashboardStoreImpl implements DashboardStore {
     private static final Logger LOGGER = LoggerFactory.getLogger(DashboardStoreImpl.class);
 
     private static final String TEMPLATE_FILE = "DashboardTemplate.json";
+    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.SEARCH,
+            DashboardDoc.DOCUMENT_TYPE,
+            DashboardDoc.DOCUMENT_TYPE,
+            DashboardDoc.ICON);
 
     private final Store<DashboardDoc> store;
     private final DashboardSerialiser serialiser;
@@ -145,11 +150,7 @@ class DashboardStoreImpl implements DashboardStore {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(
-                DocumentTypeGroup.SEARCH,
-                DashboardDoc.DOCUMENT_TYPE,
-                DashboardDoc.DOCUMENT_TYPE,
-                DashboardDoc.ICON);
+        return DOCUMENT_TYPE;
     }
 
     ////////////////////////////////////////////////////////////////////////

@@ -43,6 +43,11 @@ import java.util.Set;
 @Singleton
 class KafkaConfigStoreImpl implements KafkaConfigStore {
 
+    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.CONFIGURATION,
+            KafkaConfigDoc.DOCUMENT_TYPE,
+            "Kafka Configuration",
+            KafkaConfigDoc.ICON);
     private final Store<KafkaConfigDoc> store;
     private final Provider<KafkaConfig> kafkaConfigProvider;
 
@@ -112,11 +117,7 @@ class KafkaConfigStoreImpl implements KafkaConfigStore {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(
-                DocumentTypeGroup.CONFIGURATION,
-                KafkaConfigDoc.DOCUMENT_TYPE,
-                "Kafka Configuration",
-                KafkaConfigDoc.ICON);
+        return DOCUMENT_TYPE;
     }
 
     ////////////////////////////////////////////////////////////////////////

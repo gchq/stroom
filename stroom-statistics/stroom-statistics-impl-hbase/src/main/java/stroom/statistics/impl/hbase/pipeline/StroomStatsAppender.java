@@ -24,6 +24,8 @@ import jakarta.inject.Inject;
 @ConfigurableElement(
         type = "StroomStatsAppender",
         category = PipelineElementType.Category.DESTINATION,
+        description = """
+                This element is deprecated and should not be used.""",
         roles = {
                 PipelineElementType.ROLE_TARGET,
                 PipelineElementType.ROLE_DESTINATION,

@@ -43,6 +43,11 @@ import java.util.Set;
 @Singleton
 public class IndexStoreImpl implements IndexStore {
 
+    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.INDEXING,
+            IndexDoc.DOCUMENT_TYPE,
+            "Lucene Index",
+            IndexDoc.ICON);
     private final Store<IndexDoc> store;
 
     @Inject
@@ -91,11 +96,7 @@ public class IndexStoreImpl implements IndexStore {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(
-                DocumentTypeGroup.INDEXING,
-                IndexDoc.DOCUMENT_TYPE,
-                "Lucene Index",
-                IndexDoc.ICON);
+        return DOCUMENT_TYPE;
     }
 
     ////////////////////////////////////////////////////////////////////////

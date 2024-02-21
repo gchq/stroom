@@ -43,6 +43,11 @@ import java.util.Set;
 @Singleton
 class StroomStatsStoreStoreImpl implements StroomStatsStoreStore {
 
+    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.INDEXING,
+            StroomStatsStoreDoc.DOCUMENT_TYPE,
+            "Stroom-Stats Store",
+            StroomStatsStoreDoc.ICON);
     private final Store<StroomStatsStoreDoc> store;
 
     @Inject
@@ -91,11 +96,7 @@ class StroomStatsStoreStoreImpl implements StroomStatsStoreStore {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(
-                DocumentTypeGroup.INDEXING,
-                StroomStatsStoreDoc.DOCUMENT_TYPE,
-                "Stroom-Stats Store",
-                StroomStatsStoreDoc.ICON);
+        return DOCUMENT_TYPE;
     }
 
     ////////////////////////////////////////////////////////////////////////

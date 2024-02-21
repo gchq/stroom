@@ -54,6 +54,11 @@ import java.util.function.BiConsumer;
 class QueryStoreImpl implements QueryStore {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(QueryStoreImpl.class);
+    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.SEARCH,
+            QueryDoc.DOCUMENT_TYPE,
+            QueryDoc.DOCUMENT_TYPE,
+            QueryDoc.ICON);
 
     private final Store<QueryDoc> store;
     private final SecurityContext securityContext;
@@ -122,11 +127,7 @@ class QueryStoreImpl implements QueryStore {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(
-                DocumentTypeGroup.SEARCH,
-                QueryDoc.DOCUMENT_TYPE,
-                QueryDoc.DOCUMENT_TYPE,
-                QueryDoc.ICON);
+        return DOCUMENT_TYPE;
     }
 
     ////////////////////////////////////////////////////////////////////////

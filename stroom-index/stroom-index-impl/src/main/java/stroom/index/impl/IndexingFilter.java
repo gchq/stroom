@@ -63,7 +63,8 @@ import java.util.TreeMap;
         type = "IndexingFilter",
         category = Category.FILTER,
         description = """
-                A filter to send source data to an index.
+                A filter consuming XML events in the `records:2` namespace to index/store the fields
+                and their values in a Lucene Index.
                 """,
         roles = {
                 PipelineElementType.ROLE_TARGET,

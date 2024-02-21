@@ -18,6 +18,7 @@ package stroom.index.shared;
 
 import stroom.docref.DocRef;
 import stroom.docref.HasDisplayValue;
+import stroom.docs.shared.Description;
 import stroom.docstore.shared.Doc;
 import stroom.svg.shared.SvgImage;
 
@@ -31,6 +32,25 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+@Description(
+        "Lucene Index is the standard built-in index within Stroom and is one of may data sources.\n" +
+                "An index is like a catalog in a library and provides a very fast way to access " +
+                "documents/records/events when searching using fields that have been indexed.\n" +
+                "The index stores the field values and pointers to the document they came from " +
+                "(the Stream and Event IDs).\n" +
+                "Data can be indexed using multiple indexes to allow fast access in different ways.\n" +
+                "\n" +
+                "The Lucene Index Document optionally defines the fields that will be indexed (" +
+                "it is possible to define the fields dynamically) and their types.\n" +
+                "It also allows for configuration of the way the data in the index will be stored, " +
+                "partitioned and retained.\n" +
+                "\n" +
+                "The Lucene Index Document is used by the {{< pipe-elm \\\"IndexingFilter\\\" >}} " +
+                "and {{< pipe-elm \"DynamicIndexingFilter\" >}} pipeline elements.\n" +
+                "\n" +
+                "{{% see-also %}}" +
+                "[Lucene Indexes]({{< relref \"docs/user-guide/indexing/lucene\" >}})" +
+                "{{% /see-also %}}")
 @JsonPropertyOrder({
         "type",
         "uuid",

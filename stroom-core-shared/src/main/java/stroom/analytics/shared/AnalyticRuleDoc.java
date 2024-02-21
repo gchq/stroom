@@ -17,6 +17,7 @@
 package stroom.analytics.shared;
 
 import stroom.docref.DocRef;
+import stroom.docs.shared.Description;
 import stroom.docstore.shared.Doc;
 import stroom.svg.shared.SvgImage;
 
@@ -28,6 +29,13 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Objects;
 
+@Description(
+        "Defines an analytic rule which can be run to alert on events meeting a criteria.\n" +
+                "The criteria is defined using a StroomQL query.\n" +
+                "The analytic can be processed in different ways:\n\n" +
+                "* Streaming\n" +
+                "* Table Builder\n" +
+                "* Scheduled Query")
 @JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
 public class AnalyticRuleDoc extends Doc {
@@ -58,21 +66,22 @@ public class AnalyticRuleDoc extends Doc {
     }
 
     @JsonCreator
-    public AnalyticRuleDoc(@JsonProperty("type") final String type,
-                           @JsonProperty("uuid") final String uuid,
-                           @JsonProperty("name") final String name,
-                           @JsonProperty("version") final String version,
-                           @JsonProperty("createTimeMs") final Long createTimeMs,
-                           @JsonProperty("updateTimeMs") final Long updateTimeMs,
-                           @JsonProperty("createUser") final String createUser,
-                           @JsonProperty("updateUser") final String updateUser,
-                           @JsonProperty("description") final String description,
-                           @JsonProperty("languageVersion") final QueryLanguageVersion languageVersion,
-                           @JsonProperty("query") final String query,
-                           @JsonProperty("analyticProcessType") AnalyticProcessType analyticProcessType,
-                           @JsonProperty("analyticProcessConfig") final AnalyticProcessConfig analyticProcessConfig,
-                           @JsonProperty("analyticNotificationConfig")
-                               final AnalyticNotificationConfig analyticNotificationConfig) {
+    public AnalyticRuleDoc(
+            @JsonProperty("type") final String type,
+            @JsonProperty("uuid") final String uuid,
+            @JsonProperty("name") final String name,
+            @JsonProperty("version") final String version,
+            @JsonProperty("createTimeMs") final Long createTimeMs,
+            @JsonProperty("updateTimeMs") final Long updateTimeMs,
+            @JsonProperty("createUser") final String createUser,
+            @JsonProperty("updateUser") final String updateUser,
+            @JsonProperty("description") final String description,
+            @JsonProperty("languageVersion") final QueryLanguageVersion languageVersion,
+            @JsonProperty("query") final String query,
+            @JsonProperty("analyticProcessType") AnalyticProcessType analyticProcessType,
+            @JsonProperty("analyticProcessConfig") final AnalyticProcessConfig analyticProcessConfig,
+            @JsonProperty("analyticNotificationConfig") final AnalyticNotificationConfig analyticNotificationConfig) {
+
         super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.languageVersion = languageVersion;

@@ -45,6 +45,11 @@ import java.util.function.BiConsumer;
 @Singleton
 class VisualisationStoreImpl implements VisualisationStore {
 
+    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.CONFIGURATION,
+            VisualisationDoc.DOCUMENT_TYPE,
+            VisualisationDoc.DOCUMENT_TYPE,
+            VisualisationDoc.ICON);
     private final Store<VisualisationDoc> store;
 
     @Inject
@@ -93,11 +98,7 @@ class VisualisationStoreImpl implements VisualisationStore {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(
-                DocumentTypeGroup.CONFIGURATION,
-                VisualisationDoc.DOCUMENT_TYPE,
-                VisualisationDoc.DOCUMENT_TYPE,
-                VisualisationDoc.ICON);
+        return DOCUMENT_TYPE;
     }
 
     ////////////////////////////////////////////////////////////////////////

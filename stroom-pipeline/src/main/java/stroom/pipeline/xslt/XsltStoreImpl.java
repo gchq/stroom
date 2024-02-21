@@ -43,6 +43,11 @@ import java.util.Set;
 @Singleton
 class XsltStoreImpl implements XsltStore {
 
+    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.TRANSFORMATION,
+            XsltDoc.DOCUMENT_TYPE,
+            "XSL Translation",
+            XsltDoc.ICON);
     private final Store<XsltDoc> store;
 
     @Inject
@@ -91,11 +96,7 @@ class XsltStoreImpl implements XsltStore {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(
-                DocumentTypeGroup.TRANSFORMATION,
-                XsltDoc.DOCUMENT_TYPE,
-                "XSL Translation",
-                XsltDoc.ICON);
+        return DOCUMENT_TYPE;
     }
 
     ////////////////////////////////////////////////////////////////////////

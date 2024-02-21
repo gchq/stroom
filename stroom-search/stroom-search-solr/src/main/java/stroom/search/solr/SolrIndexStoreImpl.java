@@ -69,6 +69,11 @@ public class SolrIndexStoreImpl implements SolrIndexStore {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SolrIndexStoreImpl.class);
 
     private static final Pattern VALID_FIELD_NAME_PATTERN = Pattern.compile(SolrIndexField.VALID_FIELD_NAME_PATTERN);
+    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.INDEXING,
+            SolrIndexDoc.DOCUMENT_TYPE,
+            "Solr Index",
+            SolrIndexDoc.ICON);
 
     private final Store<SolrIndexDoc> store;
     private final SecurityContext securityContext;
@@ -124,11 +129,7 @@ public class SolrIndexStoreImpl implements SolrIndexStore {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(
-                DocumentTypeGroup.INDEXING,
-                SolrIndexDoc.DOCUMENT_TYPE,
-                "Solr Index",
-                SolrIndexDoc.ICON);
+        return DOCUMENT_TYPE;
     }
 
     ////////////////////////////////////////////////////////////////////////

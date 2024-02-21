@@ -17,6 +17,7 @@
 package stroom.search.solr.shared;
 
 import stroom.docref.DocRef;
+import stroom.docs.shared.Description;
 import stroom.docstore.shared.Doc;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.svg.shared.SvgImage;
@@ -32,6 +33,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+@Description(
+        "Solr Index represents an index on a Solr cluster.\n" +
+                "It defines the connection details for connecting to that cluster and the structure of the index.\n" +
+                "It is used by the {{< pipe-elm \"SolrIndexingFilter\" >}} pipeline element." +
+                "\n" +
+                "{{% see-also %}}" +
+                "[Solr Integration]({{< relref \"docs/user-guide/indexing/solr\" >}})" +
+                "{{% /see-also %}}"
+)
 @JsonPropertyOrder({
         "type",
         "uuid",

@@ -56,6 +56,11 @@ class DataRetentionRulesServiceImpl implements DataRetentionRulesService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DataRetentionRulesServiceImpl.class);
     private static final String POLICY_NAME = "Data Retention";
+    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.CONFIGURATION,
+            DataRetentionRules.DOCUMENT_TYPE,
+            "Data Retention Rules",
+            DataRetentionRules.ICON);
 
     private final Store<DataRetentionRules> store;
     private final SecurityContext securityContext;
@@ -110,11 +115,7 @@ class DataRetentionRulesServiceImpl implements DataRetentionRulesService {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(
-                DocumentTypeGroup.CONFIGURATION,
-                DataRetentionRules.DOCUMENT_TYPE,
-                "Data Retention Rules",
-                DataRetentionRules.ICON);
+        return DOCUMENT_TYPE;
     }
 
     ////////////////////////////////////////////////////////////////////////

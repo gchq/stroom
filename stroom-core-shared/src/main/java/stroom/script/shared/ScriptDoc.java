@@ -17,6 +17,7 @@
 package stroom.script.shared;
 
 import stroom.docref.DocRef;
+import stroom.docs.shared.Description;
 import stroom.docstore.shared.Doc;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.HasData;
@@ -30,6 +31,10 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import java.util.List;
 import java.util.Objects;
 
+@Description(
+        "Contains a Javascript script that is used as the source for a " +
+                "[visualisation]({{< relref \"#visualisation\" >}}) Document.\n" +
+                "Scripts can have dependencies on other Script Documents, e.g. to allow re-use of common code.")
 @JsonPropertyOrder({
         "type",
         "uuid",

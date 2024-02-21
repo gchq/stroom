@@ -52,7 +52,8 @@ public class TestInvalidCharFilterReader {
 
     private String convert(final String string) throws IOException {
         final StringWriter writer = new StringWriter();
-        try (final InvalidXmlCharFilter reader = new InvalidXmlCharFilter(new StringReader(string), new Xml10Chars())) {
+        try (final InvalidXmlCharFilter reader = InvalidXmlCharFilter.createRemoveCharsFilter(
+                new StringReader(string), new Xml10Chars())) {
             XMLUtil.prettyPrintXML(reader, writer);
         }
         return writer.toString();
@@ -125,14 +126,11 @@ public class TestInvalidCharFilterReader {
         return sb;
     }
 
-    private static class Params {
 
-        private final String attributeValue;
-        private final String content;
+    // --------------------------------------------------------------------------------
 
-        public Params(final String attributeValue, final String content) {
-            this.attributeValue = attributeValue;
-            this.content = content;
-        }
+
+    private record Params(String attributeValue, String content) {
+
     }
 }

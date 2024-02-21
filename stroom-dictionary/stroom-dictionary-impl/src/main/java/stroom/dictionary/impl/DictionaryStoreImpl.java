@@ -51,6 +51,11 @@ import java.util.stream.Collectors;
 @Singleton
 class DictionaryStoreImpl implements DictionaryStore, WordListProvider {
 
+    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.CONFIGURATION,
+            DictionaryDoc.DOCUMENT_TYPE,
+            DictionaryDoc.DOCUMENT_TYPE,
+            DictionaryDoc.ICON);
     private final Store<DictionaryDoc> store;
     // Split on unix or windows line ends
     private static final Pattern WORD_SPLIT_PATTERN = Pattern.compile("(\r?\n)+");
@@ -104,11 +109,7 @@ class DictionaryStoreImpl implements DictionaryStore, WordListProvider {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(
-                DocumentTypeGroup.CONFIGURATION,
-                DictionaryDoc.DOCUMENT_TYPE,
-                DictionaryDoc.DOCUMENT_TYPE,
-                DictionaryDoc.ICON);
+        return DOCUMENT_TYPE;
     }
 
     ////////////////////////////////////////////////////////////////////////

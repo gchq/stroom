@@ -24,6 +24,9 @@ import stroom.svg.shared.SvgImage;
 @ConfigurableElement(
         type = "Reader",
         category = Category.READER,
+        description = """
+                A basic reader that simply decodes the raw bytes using the Feed's configured character encoding.
+                It does not transform the data in any other way.""",
         roles = {
                 PipelineElementType.ROLE_TARGET,
                 PipelineElementType.ROLE_HAS_TARGETS,

@@ -47,6 +47,11 @@ import java.util.function.BiConsumer;
 @Singleton
 class ViewStoreImpl implements ViewStore {
 
+    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.SEARCH,
+            ViewDoc.DOCUMENT_TYPE,
+            ViewDoc.DOCUMENT_TYPE,
+            ViewDoc.ICON);
     private final Store<ViewDoc> store;
     private final SecurityContext securityContext;
 
@@ -108,11 +113,7 @@ class ViewStoreImpl implements ViewStore {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(
-                DocumentTypeGroup.SEARCH,
-                ViewDoc.DOCUMENT_TYPE,
-                ViewDoc.DOCUMENT_TYPE,
-                ViewDoc.ICON);
+        return DOCUMENT_TYPE;
     }
 
     ////////////////////////////////////////////////////////////////////////

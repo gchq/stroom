@@ -48,6 +48,11 @@ import java.util.Set;
 public class XmlSchemaStoreImpl implements XmlSchemaStore {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(XmlSchemaStoreImpl.class);
+    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.TRANSFORMATION,
+            XmlSchemaDoc.DOCUMENT_TYPE,
+            "XML Schema",
+            XmlSchemaDoc.ICON);
 
     private final Store<XmlSchemaDoc> store;
 
@@ -97,11 +102,7 @@ public class XmlSchemaStoreImpl implements XmlSchemaStore {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(
-                DocumentTypeGroup.TRANSFORMATION,
-                XmlSchemaDoc.DOCUMENT_TYPE,
-                "XML Schema",
-                XmlSchemaDoc.ICON);
+        return DOCUMENT_TYPE;
     }
 
     ////////////////////////////////////////////////////////////////////////
