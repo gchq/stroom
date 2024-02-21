@@ -43,6 +43,11 @@ import java.util.Set;
 @Singleton
 class TextConverterStoreImpl implements TextConverterStore {
 
+    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.TRANSFORMATION,
+            TextConverterDoc.DOCUMENT_TYPE,
+            "Text Converter",
+            TextConverterDoc.ICON);
     private final Store<TextConverterDoc> store;
 
     @Inject
@@ -91,11 +96,7 @@ class TextConverterStoreImpl implements TextConverterStore {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(
-                DocumentTypeGroup.TRANSFORMATION,
-                TextConverterDoc.DOCUMENT_TYPE,
-                "Text Converter",
-                TextConverterDoc.ICON);
+        return DOCUMENT_TYPE;
     }
 
     ////////////////////////////////////////////////////////////////////////

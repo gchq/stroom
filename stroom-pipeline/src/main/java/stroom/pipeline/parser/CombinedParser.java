@@ -75,10 +75,14 @@ import javax.xml.parsers.SAXParserFactory;
         description = """
                 The original general-purpose reader/parser that covers all source data types but provides less \
                 flexibility than the source format-specific parsers such as dsParser.
-                It effectively combines a BOMRemovalFilterInput, an InvalidCharFilterReader and Parser (based on
+                It effectively combines a BOMRemovalFilterInput, an InvalidCharFilterReader and Parser (based on \
                 the `type` property.
-                It is strongly recommended to instead use a combination of Readers and one of the type specific Parsers.
+
+                {{% warning %}}
+                It is strongly recommended to instead use a combination of Readers and one of the type \
+                specific Parsers.
                 This will make the intent of the pipeline much clearer and allow for much greater control.
+                {{% /warning %}}
                 """,
         roles = {
                 PipelineElementType.ROLE_PARSER,

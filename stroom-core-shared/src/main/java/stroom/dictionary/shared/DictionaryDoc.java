@@ -17,6 +17,7 @@
 package stroom.dictionary.shared;
 
 import stroom.docref.DocRef;
+import stroom.docs.shared.Description;
 import stroom.docstore.shared.Doc;
 import stroom.svg.shared.SvgImage;
 
@@ -29,6 +30,12 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import java.util.List;
 import java.util.Objects;
 
+@Description(
+        "A Dictionary is essentially a list of 'words', where each 'word' is separated by a new line.\n" +
+                "Dictionaries can be used in filter expressions, i.e. `IN DICTIONARY`.\n" +
+                "They allow for the reuse of the same set of values across many search expressions.\n" +
+                "Dictionaries also support inheritance so one dictionary can import the contents of other " +
+                "dictionaries.")
 @JsonPropertyOrder({
         "type",
         "uuid",

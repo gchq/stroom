@@ -1,8 +1,11 @@
 package stroom.app.docs;
 
+import stroom.test.common.docs.StroomDocsUtil;
 import stroom.test.common.docs.StroomDocsUtil.GeneratesDocumentation;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+
+import java.util.List;
 
 public class GenerateAllDocumentation {
 
@@ -18,10 +21,17 @@ public class GenerateAllDocumentation {
     @GeneratesDocumentation
     public static void main(String[] args) {
         LOGGER.info("Generating documentation for pipeline elements");
-        GeneratePipelineElementsDoc.main(args);
+        final List<DocumentationGenerator> documentationGenerators = List.of(
+                new GenerateDocumentReferenceDoc(),
+                new GeneratePipelineElementsDoc(),
+                new GenerateSnippetsDoc());
 
-        LOGGER.info("Generating documentation for snippets");
-        GenerateSnippetsDoc.main(args);
+        StroomDocsUtil.doWithClassScanResult(scanResult -> {
+            documentationGenerators.forEach(documentationGenerator -> {
+                LOGGER.info("Generating documentation for " + documentationGenerator.getClass().getSimpleName());
+                documentationGenerator.generateAll(scanResult);
+            });
+        });
 
         LOGGER.info("Done");
     }

@@ -48,7 +48,7 @@ import javax.net.ssl.SSLSocketFactory;
         type = "HTTPAppender",
         description = """
                 A destination used to write an output stream to a remote HTTP(S) server.
-                                
+
                 This element should be preferred over the deprecated {{< pipe-elm "HttpPostFilter" >}}.
                 """,
         category = Category.DESTINATION,

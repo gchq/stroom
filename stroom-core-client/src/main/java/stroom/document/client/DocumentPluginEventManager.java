@@ -859,7 +859,7 @@ public class DocumentPluginEventManager extends Plugin {
 
                         // Add the group level item with its children
                         children.add(new IconParentMenuItem.Builder()
-                                .text(group.getName())
+                                .text(group.getDisplayName())
                                 .children(grandChildren)
                                 .build());
                     }

@@ -49,6 +49,11 @@ import java.util.stream.Collectors;
 @Singleton
 class ScriptStoreImpl implements ScriptStore {
 
+    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.CONFIGURATION,
+            ScriptDoc.DOCUMENT_TYPE,
+            ScriptDoc.DOCUMENT_TYPE,
+            ScriptDoc.ICON);
     private final Store<ScriptDoc> store;
     private final SecurityContext securityContext;
 
@@ -100,11 +105,7 @@ class ScriptStoreImpl implements ScriptStore {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(
-                DocumentTypeGroup.CONFIGURATION,
-                ScriptDoc.DOCUMENT_TYPE,
-                ScriptDoc.DOCUMENT_TYPE,
-                ScriptDoc.ICON);
+        return DOCUMENT_TYPE;
     }
 
     ////////////////////////////////////////////////////////////////////////

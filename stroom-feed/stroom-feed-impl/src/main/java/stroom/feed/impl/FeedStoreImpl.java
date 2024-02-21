@@ -47,6 +47,11 @@ import java.util.stream.Collectors;
 @Singleton
 public class FeedStoreImpl implements FeedStore {
 
+    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.DATA_PROCESSING,
+            FeedDoc.DOCUMENT_TYPE,
+            FeedDoc.DOCUMENT_TYPE,
+            FeedDoc.ICON);
     private final Store<FeedDoc> store;
     private final FeedNameValidator feedNameValidator;
     private final SecurityContext securityContext;
@@ -132,11 +137,7 @@ public class FeedStoreImpl implements FeedStore {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(
-                DocumentTypeGroup.DATA_PROCESSING,
-                FeedDoc.DOCUMENT_TYPE,
-                FeedDoc.DOCUMENT_TYPE,
-                FeedDoc.ICON);
+        return DOCUMENT_TYPE;
     }
 
     ////////////////////////////////////////////////////////////////////////

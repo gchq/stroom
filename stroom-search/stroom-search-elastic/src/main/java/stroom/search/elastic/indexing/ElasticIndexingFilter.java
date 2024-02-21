@@ -97,7 +97,7 @@ import java.util.stream.Collectors;
         category = Category.FILTER,
         description = """
                 A filter consuming XML events in the `records:2` namespace to index/store the fields
-                and their values in an ElasticSearch Index.
+                and their values in an Elasticsearch Index.
                 """,
         roles = {
                 PipelineElementType.ROLE_TARGET,

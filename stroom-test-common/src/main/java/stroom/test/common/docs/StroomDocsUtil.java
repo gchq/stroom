@@ -7,6 +7,9 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
+import io.github.classgraph.ClassGraph;
+import io.github.classgraph.ScanResult;
+
 import java.io.IOException;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -19,6 +22,7 @@ import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 
 /**
  * Utils to help with generating docs content for the stroom-docs repo from stroom code.
@@ -26,6 +30,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class StroomDocsUtil {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StroomDocsUtil.class);
+
+    private static final String STROOM_PACKAGE_NAME = "stroom";
 
     // Set this prop if stroom-docs is not in a dir called 'stroom-docs' and is not in
     // a dir that is a sibling of this stroom repo.
@@ -180,6 +186,17 @@ public class StroomDocsUtil {
                     stroomDocsRepoDir.toAbsolutePath().normalize()));
         }
         return file;
+    }
+
+    public static void doWithClassScanResult(final Consumer<ScanResult> scanResultConsumer) {
+        try (ScanResult scanResult =
+                new ClassGraph()
+                        .enableAllInfo()             // Scan classes, methods, fields, annotations
+                        .acceptPackages(STROOM_PACKAGE_NAME)  // Scan com.xyz and subpkgs (omit to scan all packages)
+                        .scan()) {                   // Start the scan
+
+            NullSafe.consume(scanResult, scanResultConsumer);
+        }
     }
 
 

@@ -56,6 +56,11 @@ import java.util.stream.Collectors;
 @Singleton
 public class PipelineStoreImpl implements PipelineStore {
 
+    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.DATA_PROCESSING,
+            PipelineDoc.DOCUMENT_TYPE,
+            PipelineDoc.DOCUMENT_TYPE,
+            PipelineDoc.ICON);
     private final Store<PipelineDoc> store;
     private final Provider<ProcessorFilterService> processorFilterServiceProvider;
     private final Provider<ProcessorService> processorServiceProvider;
@@ -114,11 +119,7 @@ public class PipelineStoreImpl implements PipelineStore {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(
-                DocumentTypeGroup.DATA_PROCESSING,
-                PipelineDoc.DOCUMENT_TYPE,
-                PipelineDoc.DOCUMENT_TYPE,
-                PipelineDoc.ICON);
+        return DOCUMENT_TYPE;
     }
 
     ////////////////////////////////////////////////////////////////////////

@@ -43,6 +43,11 @@ import java.util.Set;
 @Singleton
 public class ElasticIndexStoreImpl implements ElasticIndexStore {
 
+    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.INDEXING,
+            ElasticIndexDoc.DOCUMENT_TYPE,
+            "Elastic Index",
+            ElasticIndexDoc.ICON);
     private final Store<ElasticIndexDoc> store;
     private final ElasticIndexService elasticIndexService;
 
@@ -95,11 +100,7 @@ public class ElasticIndexStoreImpl implements ElasticIndexStore {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(
-                DocumentTypeGroup.INDEXING,
-                ElasticIndexDoc.DOCUMENT_TYPE,
-                "Elastic Index",
-                ElasticIndexDoc.ICON);
+        return DOCUMENT_TYPE;
     }
 
     ////////////////////////////////////////////////////////////////////////

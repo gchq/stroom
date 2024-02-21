@@ -11,6 +11,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.github.classgraph.ScanResult;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -22,7 +23,7 @@ import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class GenerateSnippetsDoc {
+public class GenerateSnippetsDoc implements DocumentationGenerator {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(GenerateSnippetsDoc.class);
 
@@ -98,6 +99,11 @@ public class GenerateSnippetsDoc {
         new GenerateSnippetsDoc().generateDocs();
     }
 
+    @Override
+    public void generateAll(final ScanResult scanResult) {
+        generateDocs();
+    }
+
     public GenerateSnippetsDoc() {
         this.objectMapper = new ObjectMapper();
     }
@@ -131,7 +137,7 @@ public class GenerateSnippetsDoc {
         if (didReplace) {
             LOGGER.info("Replaced generated content in file: {}", file);
         } else {
-            LOGGER.warn("No change made to file: {}", file);
+            LOGGER.info("No change made to file: {}", file);
         }
     }
 

@@ -27,6 +27,11 @@ import java.util.Set;
 @Singleton
 public class DocumentationStoreImpl implements DocumentationStore {
 
+    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.CONFIGURATION,
+            DocumentationDoc.DOCUMENT_TYPE,
+            DocumentationDoc.DOCUMENT_TYPE,
+            DocumentationDoc.ICON);
     private final Store<DocumentationDoc> store;
 
     @Inject
@@ -78,11 +83,7 @@ public class DocumentationStoreImpl implements DocumentationStore {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(
-                DocumentTypeGroup.CONFIGURATION,
-                DocumentationDoc.DOCUMENT_TYPE,
-                DocumentationDoc.DOCUMENT_TYPE,
-                DocumentationDoc.ICON);
+        return DOCUMENT_TYPE;
     }
 
     ////////////////////////////////////////////////////////////////////////

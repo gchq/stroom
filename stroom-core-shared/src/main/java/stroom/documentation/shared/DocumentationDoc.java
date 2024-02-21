@@ -1,6 +1,7 @@
 package stroom.documentation.shared;
 
 import stroom.docref.DocRef;
+import stroom.docs.shared.Description;
 import stroom.docstore.shared.Doc;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.HasData;
@@ -13,6 +14,8 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Objects;
 
+@Description("A Document type for simply storing user created documentation, e.g. adding a Documentation document " +
+        "into a folder to describe the contents of that folder.")
 @JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
 public class DocumentationDoc extends Doc implements HasData {

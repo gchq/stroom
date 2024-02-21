@@ -27,6 +27,11 @@ import java.util.stream.Collectors;
 class FolderExplorerActionHandler implements ExplorerActionHandler {
 
     private static final String FOLDER = ExplorerConstants.FOLDER;
+    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.STRUCTURE,
+            FolderExplorerActionHandler.FOLDER,
+            FolderExplorerActionHandler.FOLDER,
+            SvgImage.FOLDER);
     private static final String NAME_PATTERN_VALUE = "^[a-zA-Z0-9_\\- \\.\\(\\)]{1,}$";
     private final SecurityContext securityContext;
     private final ExplorerTreeDao explorerTreeDao;
@@ -134,11 +139,7 @@ class FolderExplorerActionHandler implements ExplorerActionHandler {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(
-                DocumentTypeGroup.STRUCTURE,
-                FolderExplorerActionHandler.FOLDER,
-                FolderExplorerActionHandler.FOLDER,
-                SvgImage.FOLDER);
+        return DOCUMENT_TYPE;
     }
 
     ////////////////////////////////////////////////////////////////////////

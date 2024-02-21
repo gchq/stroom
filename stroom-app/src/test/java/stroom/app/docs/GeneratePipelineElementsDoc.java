@@ -16,7 +16,6 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
-import io.github.classgraph.ClassGraph;
 import io.github.classgraph.ClassInfo;
 import io.github.classgraph.ScanResult;
 import io.vavr.Tuple;
@@ -72,11 +71,10 @@ import java.util.stream.Collectors;
  * <p>
  * generatePipelineElementReferenceContent produces something like this, with
  */
-public class GeneratePipelineElementsDoc {
+public class GeneratePipelineElementsDoc implements DocumentationGenerator {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(GeneratePipelineElementsDoc.class);
 
-    private static final String PACKAGE_NAME = "stroom";
     private static final String MISSING_CATEGORY_DESCRIPTION = "> TODO - Add description";
 
     private static final Path ELEMENENT_REFERENCE_SUB_PATH = Paths.get(
@@ -105,6 +103,13 @@ public class GeneratePipelineElementsDoc {
         generatePipelineElementsDoc.generatePipeElmShortcodeNames();
     }
 
+    @Override
+    public void generateAll(final ScanResult scanResult) {
+        generatePipelineElementReferenceContent(scanResult);
+        generatePipeElmShortcodeNames(scanResult);
+    }
+
+
     /**
      * This will modify the content of the file
      * {@code [this repo]/../stroom-docs/content/en/docs/user-guide/pipelines/element-reference.md}
@@ -113,34 +118,31 @@ public class GeneratePipelineElementsDoc {
     @GeneratesDocumentation
     @Test
     void generatePipelineElementReferenceContent() {
-        try (ScanResult scanResult =
-                new ClassGraph()
-                        .enableAllInfo()             // Scan classes, methods, fields, annotations
-                        .acceptPackages(PACKAGE_NAME)  // Scan com.xyz and subpackages (omit to scan all packages)
-                        .scan()) {                   // Start the scan
+        StroomDocsUtil.doWithClassScanResult(this::generatePipelineElementReferenceContent);
+    }
 
-            final String generatedContent = scanResult.getClassesImplementing(Element.class.getName())
-                    .parallelStream()
-                    .map(GeneratePipelineElementsDoc::mapClassInfo)
-                    .filter(Objects::nonNull)
-                    .filter(elementInfo -> !Category.INTERNAL.equals(elementInfo.category))
-                    .sequential()
-                    .collect(Collectors.groupingBy(ElementInfo::category))
-                    .entrySet()
-                    .stream()
-                    .sorted(Entry.comparingByKey())
-                    .map(GeneratePipelineElementsDoc::mapCategoryGroup)
-                    .collect(Collectors.joining("\n"));
+    void generatePipelineElementReferenceContent(final ScanResult scanResult) {
+        final String generatedContent = scanResult.getClassesImplementing(Element.class.getName())
+                .parallelStream()
+                .map(GeneratePipelineElementsDoc::mapClassInfo)
+                .filter(Objects::nonNull)
+                .filter(elementInfo -> !Category.INTERNAL.equals(elementInfo.category))
+                .sequential()
+                .collect(Collectors.groupingBy(ElementInfo::category))
+                .entrySet()
+                .stream()
+                .sorted(Entry.comparingByKey())
+                .map(GeneratePipelineElementsDoc::mapCategoryGroup)
+                .collect(Collectors.joining("\n"));
 
-            final Path file = StroomDocsUtil.resolveStroomDocsFile(ELEMENENT_REFERENCE_SUB_PATH);
+        final Path file = StroomDocsUtil.resolveStroomDocsFile(ELEMENENT_REFERENCE_SUB_PATH);
 
-            final boolean didReplace = StroomDocsUtil.replaceGeneratedContent(file, generatedContent);
+        final boolean didReplace = StroomDocsUtil.replaceGeneratedContent(file, generatedContent);
 
-            if (didReplace) {
-                LOGGER.info("Replaced generated content in file: {}", file);
-            } else {
-                LOGGER.warn("No change made to file: {}", file);
-            }
+        if (didReplace) {
+            LOGGER.info("Replaced generated content in file: {}", file);
+        } else {
+            LOGGER.warn("No change made to file: {}", file);
         }
     }
 
@@ -152,38 +154,35 @@ public class GeneratePipelineElementsDoc {
     @GeneratesDocumentation
     @Test
     void generatePipeElmShortcodeNames() {
-        try (ScanResult scanResult =
-                new ClassGraph()
-                        .enableAllInfo()             // Scan classes, methods, fields, annotations
-                        .acceptPackages(PACKAGE_NAME)  // Scan com.xyz and subpackages (omit to scan all packages)
-                        .scan()) {                   // Start the scan
+        StroomDocsUtil.doWithClassScanResult(this::generatePipeElmShortcodeNames);
+    }
 
-            final String dictContent = scanResult.getClassesImplementing(Element.class.getName())
-                    .parallelStream()
-                    .map(GeneratePipelineElementsDoc::mapClassInfo)
-                    .filter(Objects::nonNull)
-                    .filter(elementInfo ->
-                            !Category.INTERNAL.equals(elementInfo.category)
-                                    || SourceElement.class.equals(elementInfo.clazz))
-                    .sequential()
-                    .sorted(Comparator.comparing(ElementInfo::type))
-                    .map(elementInfo -> {
-                        final String template = "\"{}\" \"{}\"";
-                        return LogUtil.message(template, elementInfo.type, elementInfo.iconFilename);
-                    })
-                    .collect(Collectors.joining("\n"));
+    void generatePipeElmShortcodeNames(final ScanResult scanResult) {
+        final String dictContent = scanResult.getClassesImplementing(Element.class.getName())
+                .parallelStream()
+                .map(GeneratePipelineElementsDoc::mapClassInfo)
+                .filter(Objects::nonNull)
+                .filter(elementInfo ->
+                        !Category.INTERNAL.equals(elementInfo.category)
+                                || SourceElement.class.equals(elementInfo.clazz))
+                .sequential()
+                .sorted(Comparator.comparing(ElementInfo::type))
+                .map(elementInfo -> {
+                    final String template = "\"{}\" \"{}\"";
+                    return LogUtil.message(template, elementInfo.type, elementInfo.iconFilename);
+                })
+                .collect(Collectors.joining("\n"));
 
-            final String dictDefinition = "{{ $element_map := dict\n" + dictContent + "\n}}";
+        final String dictDefinition = "{{ $element_map := dict\n" + dictContent + "\n}}";
 
-            final Path file = StroomDocsUtil.resolveStroomDocsFile(PIPE_ELM_SHORT_CODE_SUB_PATH);
+        final Path file = StroomDocsUtil.resolveStroomDocsFile(PIPE_ELM_SHORT_CODE_SUB_PATH);
 
-            final boolean didReplace = StroomDocsUtil.replaceGeneratedContent(file, dictDefinition);
+        final boolean didReplace = StroomDocsUtil.replaceGeneratedContent(file, dictDefinition);
 
-            if (didReplace) {
-                LOGGER.info("Replaced generated content in file: {}", file);
-            } else {
-                LOGGER.warn("No change made to file: {}", file);
-            }
+        if (didReplace) {
+            LOGGER.info("Replaced generated content in file: {}", file);
+        } else {
+            LOGGER.info("No change made to file: {}", file);
         }
     }
 
@@ -293,7 +292,6 @@ public class GeneratePipelineElementsDoc {
                 .withColumn(Column.builder("Yes/No", (Tuple2<String, String> tuple) -> tuple._2).build())
                 .build();
     }
-
 
     private static ElementInfo mapClassInfo(final ClassInfo elementClassInfo) {
         final Class<? extends Element> clazz = (Class<? extends Element>) elementClassInfo.loadClass();

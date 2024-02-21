@@ -59,6 +59,11 @@ import java.util.function.BiConsumer;
 class AnalyticRuleStoreImpl implements AnalyticRuleStore {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AnalyticRuleStoreImpl.class);
+    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.SEARCH,
+            AnalyticRuleDoc.DOCUMENT_TYPE,
+            "Analytic Rule",
+            AnalyticRuleDoc.ICON);
 
     private final Store<AnalyticRuleDoc> store;
     private final SecurityContext securityContext;
@@ -163,11 +168,7 @@ class AnalyticRuleStoreImpl implements AnalyticRuleStore {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(
-                DocumentTypeGroup.SEARCH,
-                AnalyticRuleDoc.DOCUMENT_TYPE,
-                "Analytic Rule",
-                AnalyticRuleDoc.ICON);
+        return DOCUMENT_TYPE;
     }
 
     ////////////////////////////////////////////////////////////////////////
