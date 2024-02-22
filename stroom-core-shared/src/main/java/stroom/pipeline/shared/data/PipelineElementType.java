@@ -70,6 +70,12 @@ public class PipelineElementType implements Comparable<PipelineElementType>, Has
      */
     public static final String VISABILITY_STEPPING = "stepping";
 
+    // Type names for some elements so the UI can refer to them without having
+    // to use hard coded strings.
+    public static final String TYPE_COMBINED_PARSER = "CombinedParser";
+    public static final String TYPE_DS_PARSER = "DSParser";
+    public static final String TYPE_XML_FRAGMENT_PARSER = "XMLFragmentParser";
+
     @JsonProperty
     private final String type;
     @JsonProperty

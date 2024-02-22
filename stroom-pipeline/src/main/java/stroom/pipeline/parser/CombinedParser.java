@@ -70,7 +70,7 @@ import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
 @ConfigurableElement(
-        type = "CombinedParser",
+        type = PipelineElementType.TYPE_COMBINED_PARSER,
         category = Category.PARSER,
         description = """
                 The original general-purpose reader/parser that covers all source data types but provides less \

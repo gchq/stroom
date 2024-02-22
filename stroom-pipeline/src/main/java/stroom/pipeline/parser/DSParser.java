@@ -52,7 +52,7 @@ import org.xml.sax.XMLReader;
 import java.util.function.Consumer;
 
 @ConfigurableElement(
-        type = "DSParser",
+        type = PipelineElementType.TYPE_DS_PARSER,
         category = Category.PARSER,
         description = """
                 A parser for handling structured plain text data (e.g. CSV or fixed width fields) using the \
