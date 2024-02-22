@@ -16,6 +16,10 @@ define("ace/snippets/stroom_combined_parser",["require","exports","module", "ace
 // A literal dollar in the rendered snippet is '\\\$' ('\\' to make a literal '\' which escapes the escaped dollar '\$')
 
 
+// NOTE:
+// The combinedParser mode is to support a TextConverter where the user has not set the type
+// so we don't know if it is a DS parser spec or an xml frag parser spec.
+
 exports.snippets = [];
 
 // Copy of snippets from stroom_data_splitter.js
@@ -187,6 +191,7 @@ exports.snippets.push(
 )
 
 
+// Copy of snippets from stroom_fragment_parser.js
 exports.snippets.push(
     {
         "tabTrigger": "evt",
