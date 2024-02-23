@@ -262,6 +262,38 @@ exports.snippets = [
     },
 
     {
+        "tabTrigger": "fatal",
+        "name": "Fatal message",
+        "content": `
+<xsl:message terminate=\"yes\">\${1}</xsl:message>
+\${0}`.trim() // trim the leading new line
+    },
+
+    {
+        "tabTrigger": "error",
+        "name": "Error message",
+        "content": `
+<xsl:message><error>\${1}</error></xsl:message>
+\${0}`.trim() // trim the leading new line
+    },
+
+    {
+        "tabTrigger": "warn",
+        "name": "Warning message",
+        "content": `
+<xsl:message><warn>\${1}</warn></xsl:message>
+\${0}`.trim() // trim the leading new line
+    },
+
+    {
+        "tabTrigger": "info",
+        "name": "Info message",
+        "content": `
+<xsl:message><info>\${1}</info></xsl:message>
+\${0}`.trim() // trim the leading new line
+    },
+
+    {
         "tabTrigger": "ident",
         "name": "Identity skeleton",
         "content": `
