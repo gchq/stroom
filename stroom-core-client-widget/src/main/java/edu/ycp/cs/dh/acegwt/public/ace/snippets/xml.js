@@ -265,7 +265,7 @@ exports.snippets = [
         "tabTrigger": "fatal",
         "name": "Fatal message",
         "content": `
-<xsl:message terminate=\"yes\">\${1}</xsl:message>
+<xsl:message terminate="yes">\${1}</xsl:message>
 \${0}`.trim() // trim the leading new line
     },
 
