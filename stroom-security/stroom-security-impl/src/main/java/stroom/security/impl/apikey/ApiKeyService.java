@@ -28,6 +28,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.ws.rs.core.HttpHeaders;
 import org.apache.commons.codec.digest.DigestUtils;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.Objects;
 import java.util.Optional;
@@ -44,6 +46,7 @@ public class ApiKeyService {
     private final SecurityContext securityContext;
     private final ApiKeyGenerator apiKeyGenerator;
     private final StroomCache<String, Optional<UserIdentity>> apiKeyToAuthenticatedUserCache;
+    private final Provider<AuthenticationConfig> authenticationConfigProvider;
 
     @Inject
     public ApiKeyService(final ApiKeyDao apiKeyDao,
@@ -54,6 +57,7 @@ public class ApiKeyService {
         this.apiKeyDao = apiKeyDao;
         this.securityContext = securityContext;
         this.apiKeyGenerator = apiKeyGenerator;
+        this.authenticationConfigProvider = authenticationConfigProvider;
 
         apiKeyToAuthenticatedUserCache = cacheManager.createLoadingCache(
                 CACHE_NAME,
@@ -165,6 +169,11 @@ public class ApiKeyService {
             throws DuplicateHashException, DuplicatePrefixException {
         LOGGER.debug(() -> LogUtil.message("Attempting to create new API key for {}",
                 createHashedApiKeyRequest.getOwner()));
+        Objects.requireNonNull(createHashedApiKeyRequest.getName(), "name cannot be null");
+        Objects.requireNonNull(createHashedApiKeyRequest.getOwner(), "owner cannot be null");
+
+        final CreateHashedApiKeyRequest request = ensureExpireTimeEpochMs(createHashedApiKeyRequest);
+
         final String apiKeyStr = apiKeyGenerator.generateRandomApiKey();
         final String apiKeyHash = computeApiKeyHash(apiKeyStr);
         final HashedApiKeyParts hashedApiKeyParts = new HashedApiKeyParts(
@@ -172,11 +181,47 @@ public class ApiKeyService {
                 ApiKeyGenerator.extractPrefixPart(apiKeyStr));
 
         final HashedApiKey hashedApiKey = apiKeyDao.create(
-                createHashedApiKeyRequest,
+                request,
                 hashedApiKeyParts);
 
         LOGGER.debug(() -> LogUtil.message("Created new API key for {}", createHashedApiKeyRequest.getOwner()));
         return new CreateHashedApiKeyResponse(apiKeyStr, hashedApiKey);
+    }
+
+    private CreateHashedApiKeyRequest ensureExpireTimeEpochMs(final CreateHashedApiKeyRequest request) {
+        final AuthenticationConfig authenticationConfig = authenticationConfigProvider.get();
+        final Duration maxApiKeyExpiryAge = authenticationConfig.getMaxApiKeyExpiryAge()
+                .getDuration();
+
+        final Long expireTimeEpochMs = request.getExpireTimeMs();
+        final Instant now = Instant.now();
+        final long maxExpireTimeEpochMs = now
+                .plus(maxApiKeyExpiryAge)
+                .plusSeconds(60) // Add 60s to allow for time elapsed since req was created
+                .toEpochMilli();
+
+        if (expireTimeEpochMs != null) {
+            if (expireTimeEpochMs < now.toEpochMilli()) {
+                throw new RuntimeException(LogUtil.message("Requested key expireTime {} is in the past.",
+                        Instant.ofEpochMilli(expireTimeEpochMs)));
+            }
+            if (expireTimeEpochMs > maxExpireTimeEpochMs) {
+                throw new RuntimeException(LogUtil.message("Requested key expireTime {} ({}) is after the configured " +
+                                "maximum expireTime {} ({})",
+                        Instant.ofEpochMilli(expireTimeEpochMs),
+                        Duration.ofMillis(expireTimeEpochMs - now.toEpochMilli()),
+                        Instant.ofEpochMilli(maxExpireTimeEpochMs),
+                        maxApiKeyExpiryAge));
+            }
+            return request;
+        } else {
+            final long expireTimeEpochMs2 = Instant.now()
+                    .plus(maxApiKeyExpiryAge)
+                    .toEpochMilli();
+            return CreateHashedApiKeyRequest.builder(request)
+                    .withExpireTimeMs(expireTimeEpochMs2)
+                    .build();
+        }
     }
 
     public HashedApiKey update(final HashedApiKey apiKey) {

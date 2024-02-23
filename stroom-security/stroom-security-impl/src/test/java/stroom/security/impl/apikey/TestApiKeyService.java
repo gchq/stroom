@@ -19,6 +19,8 @@ import stroom.util.shared.UserName;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.ws.rs.core.HttpHeaders;
+import org.assertj.core.api.Assertions;
+import org.assertj.core.data.Percentage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -27,6 +29,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Optional;
@@ -101,6 +104,83 @@ class TestApiKeyService {
         // Make sure hash passed to dao matched the hash of the returned key
         assertThat(hash)
                 .isEqualTo(hashRef.get());
+    }
+
+    @Test
+    void create_noExpireTime() throws DuplicateHashException, DuplicatePrefixException {
+        final UserName owner = SimpleUserName.builder()
+                .uuid("myUuid")
+                .subjectId("mySubjectId")
+                .displayName("myDisplayName")
+                .build();
+
+        CreateHashedApiKeyRequest request = new CreateHashedApiKeyRequest(
+                owner,
+                null,
+                "key1",
+                "some comments",
+                true);
+
+        final HashedApiKey hashedApiKey = HashedApiKey.builder()
+                .build();
+
+
+        final AtomicReference<String> hashRef = new AtomicReference<>();
+        final AtomicReference<Long> expireTimeRef = new AtomicReference<>();
+        Mockito.doAnswer(
+                        invocation -> {
+                            final CreateHashedApiKeyRequest request2 = invocation.getArgument(0);
+                            final HashedApiKeyParts parts = invocation.getArgument(1);
+                            hashRef.set(parts.apiKeyHash());
+                            expireTimeRef.set(request2.getExpireTimeMs());
+                            return hashedApiKey;
+                        })
+                .when(mockApiKeyDao)
+                .create(Mockito.any(), Mockito.any());
+
+        final CreateHashedApiKeyResponse response = apiKeyService.create(request);
+
+        assertThat(response.getHashedApiKey())
+                .isEqualTo(hashedApiKey);
+        final Duration maxExpireAge = new AuthenticationConfig().getMaxApiKeyExpiryAge().getDuration();
+        assertThat(expireTimeRef.get())
+                .isCloseTo(Instant.now().plus(maxExpireAge).toEpochMilli(), Percentage.withPercentage(5));
+
+        final String apiKey = response.getApiKey();
+        final String hash = apiKeyService.computeApiKeyHash(apiKey);
+
+        // Make sure hash passed to dao matched the hash of the returned key
+        assertThat(hash)
+                .isEqualTo(hashRef.get());
+    }
+
+    @Test
+    void create_expireTimeTooBig() throws DuplicateHashException, DuplicatePrefixException {
+        final UserName owner = SimpleUserName.builder()
+                .uuid("myUuid")
+                .subjectId("mySubjectId")
+                .displayName("myDisplayName")
+                .build();
+        final Instant now = Instant.now();
+        final Duration maxExpireAge = new AuthenticationConfig().getMaxApiKeyExpiryAge().getDuration();
+        final Instant maxExpireTime = now.plus(maxExpireAge);
+        // Over the limit
+        final Instant expireTime = maxExpireTime.plus(Duration.ofDays(10));
+
+        CreateHashedApiKeyRequest request = new CreateHashedApiKeyRequest(
+                owner,
+                expireTime.toEpochMilli(),
+                "key1",
+                "some comments",
+                true);
+
+        final HashedApiKey hashedApiKey = HashedApiKey.builder()
+                .build();
+
+        Assertions.assertThatThrownBy(() ->
+                        apiKeyService.create(request))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("is after");
     }
 
     @Test

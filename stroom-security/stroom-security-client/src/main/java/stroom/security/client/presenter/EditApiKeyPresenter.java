@@ -215,10 +215,14 @@ public class EditApiKeyPresenter
 
     private void handlePreCreateModeHide(final HidePopupRequestEvent event,
                                          final ExtendedUiConfig uiConfig) {
+        final long now = System.currentTimeMillis();
         final long expireTimeEpochMs = getView().getExpiresOnMs();
-        final long maxExpiryEpochMs = System.currentTimeMillis() + uiConfig.getMaxApiKeyExpiryAgeMs();
+        final long maxExpiryEpochMs = now + uiConfig.getMaxApiKeyExpiryAgeMs();
         final UserName owner = getView().getOwner();
-        if (expireTimeEpochMs > maxExpiryEpochMs) {
+        if (expireTimeEpochMs < now) {
+            AlertEvent.fireError(this, "API Key expiry date cannot be in the past "
+                    + ClientDateUtil.toISOString(maxExpiryEpochMs), null);
+        } else if (expireTimeEpochMs > maxExpiryEpochMs) {
             AlertEvent.fireError(this, "API Key expiry date cannot be after "
                     + ClientDateUtil.toISOString(maxExpiryEpochMs), null);
         } else if (GwtNullSafe.isBlankString(getView().getName())) {
