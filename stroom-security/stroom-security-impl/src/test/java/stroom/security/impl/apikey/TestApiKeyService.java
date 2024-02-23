@@ -174,9 +174,6 @@ class TestApiKeyService {
                 "some comments",
                 true);
 
-        final HashedApiKey hashedApiKey = HashedApiKey.builder()
-                .build();
-
         Assertions.assertThatThrownBy(() ->
                         apiKeyService.create(request))
                 .isInstanceOf(RuntimeException.class)
