@@ -22,7 +22,7 @@ define("ace/snippets/xml",["require","exports","module"], function(require, expo
 exports.snippets = [
     {
         "tabTrigger": "wapply",
-        "name": "apply-templates with-param",
+        "name": "Apply-templates with-param",
         "content": `
 <xsl:apply-templates select="\${1:*}">
   <xsl:with-param name="\${2:param}">\${3}</xsl:with-param>
@@ -32,7 +32,7 @@ exports.snippets = [
 
     {
         "tabTrigger": "applysort",
-        "name": "apply-templates sort-by",
+        "name": "Apply-templates sort-by",
         "content": `
 <xsl:apply-templates select="\${1:*}">
   <xsl:sort select="\${2:node}" order="\${3:ascending}" data-type="\${4:text}">\${5}
@@ -42,7 +42,7 @@ exports.snippets = [
 
     {
         "tabTrigger": "apply",
-        "name": "apply-templates plain",
+        "name": "Apply-templates plain",
         "content": `
 <xsl:apply-templates select="\${1:*}" />
 \${0}`.trim()
@@ -50,7 +50,7 @@ exports.snippets = [
 
     {
         "tabTrigger": "attr",
-        "name": "attribute blank",
+        "name": "Attribute blank",
         "content": `
 <xsl:attribute name="\${1:name}">\${2}</xsl:attribute>
 \${0}`.trim()
@@ -58,7 +58,7 @@ exports.snippets = [
 
     {
         "tabTrigger": "attrval",
-        "name": "attribute value-of",
+        "name": "Attribute value-of",
         "content": `
 <xsl:attribute name="\${1:name}">
   <xsl:value-of select="\${2:*}" />
@@ -68,7 +68,7 @@ exports.snippets = [
 
     {
         "tabTrigger": "call",
-        "name": "call-template",
+        "name": "Call-template",
         "content": `
 <xsl:call-template name="\${1:template}" />
 \${0}`.trim()
@@ -76,7 +76,7 @@ exports.snippets = [
 
     {
         "tabTrigger": "wcall",
-        "name": "call-template with-param",
+        "name": "Call-template with-param",
         "content": `
 <xsl:call-template name="\${1:template}">
   <xsl:with-param name="\${2:param}">\${3}</xsl:with-param>\${4}
@@ -86,7 +86,7 @@ exports.snippets = [
 
     {
         "tabTrigger": "choose",
-        "name": "choose",
+        "name": "Choose",
         "content": `
 <xsl:choose>
   <xsl:when test="\${1:value}">
@@ -98,7 +98,7 @@ exports.snippets = [
 
     {
         "tabTrigger": "copyof",
-        "name": "copy-of",
+        "name": "Copy-of",
         "content": `
 <xsl:copy-of select="\${1:*}" />
 \${0}`.trim()
@@ -106,7 +106,7 @@ exports.snippets = [
 
     {
         "tabTrigger": "elem",
-        "name": "element blank",
+        "name": "Element blank",
         "content": `
 <xsl:element name="\${1:name}">
   \${2}
@@ -116,7 +116,7 @@ exports.snippets = [
 
     {
         "tabTrigger": "foreach",
-        "name": "for-each",
+        "name": "For-each",
         "content": `
 <xsl:for-each select="\${1:*}">
   \${2}
@@ -126,7 +126,7 @@ exports.snippets = [
 
     {
         "tabTrigger": "if",
-        "name": "if",
+        "name": "If",
         "content": `
 <xsl:if test="\${1:test}">
   \${2}
@@ -136,7 +136,7 @@ exports.snippets = [
 
     {
         "tabTrigger": "imp",
-        "name": "import",
+        "name": "Import",
         "content": `
 <xsl:import href="\${1:stylesheet}" />
 \${0}`.trim()
@@ -144,7 +144,7 @@ exports.snippets = [
 
     {
         "tabTrigger": "inc",
-        "name": "include",
+        "name": "Include",
         "content": `
 <xsl:include href="\${1:stylesheet}" />
 \${0}`.trim()
@@ -152,7 +152,7 @@ exports.snippets = [
 
     {
         "tabTrigger": "otherwise",
-        "name": "otherwise",
+        "name": "Otherwise",
         "content": `
 <xsl:otherwise>
   \${1}
@@ -162,7 +162,7 @@ exports.snippets = [
 
     {
         "tabTrigger": "param",
-        "name": "param",
+        "name": "Param",
         "content": `
 <xsl:param name="\${1:name}">
   \${2}
@@ -172,16 +172,20 @@ exports.snippets = [
 
     {
         "tabTrigger": "style",
-        "name": "stylesheet",
+        "name": "Stylesheet",
         "content": `
-<xsl:stylesheet version="1.0" xmlns="\${1}" xpath-default-namespace="\${2:\${1}}" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+<xsl:stylesheet
+    version="1.0"
+    xmlns="\${1}"
+    xpath-default-namespace="\${2:\${1}}"
+    xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
   \${0}
 </xsl:stylesheet>`.trim()
     },
 
     {
         "tabTrigger": "temp",
-        "name": "template",
+        "name": "Template",
         "content": `
 <xsl:template match="\${1:*}">
   \${2}
@@ -191,7 +195,7 @@ exports.snippets = [
 
     {
         "tabTrigger": "ntemp",
-        "name": "template named",
+        "name": "Template named",
         "content": `
 <xsl:template name="\${1:name}">
   \${2}
@@ -201,7 +205,7 @@ exports.snippets = [
 
     {
         "tabTrigger": "text",
-        "name": "text",
+        "name": "Text",
         "content": `
 <xsl:text>\${1}</xsl:text>
 \$0`.trim()
@@ -209,7 +213,7 @@ exports.snippets = [
 
     {
         "tabTrigger": "valof",
-        "name": "value-of",
+        "name": "Value-of",
         "content": `
 <xsl:value-of select="\${1:*}" />
 \${0}`.trim()
@@ -217,7 +221,7 @@ exports.snippets = [
 
     {
         "tabTrigger": "var",
-        "name": "variable blank",
+        "name": "Variable blank",
         "content": `
 <xsl:variable name="\${1:name}">
   \${0}
@@ -226,7 +230,7 @@ exports.snippets = [
 
     {
         "tabTrigger": "varsel",
-        "name": "variable select",
+        "name": "Variable select",
         "content": `
 <xsl:variable select="\${1:*}" />
 \${0}`.trim()
@@ -234,7 +238,7 @@ exports.snippets = [
 
     {
         "tabTrigger": "when",
-        "name": "when",
+        "name": "When",
         "content": `
 <xsl:when test="\${1:test}">
   \${0}
@@ -243,7 +247,7 @@ exports.snippets = [
 
     {
         "tabTrigger": "wparam",
-        "name": "with-param",
+        "name": "With-param",
         "content": `
 <xsl:with-param name="\${1:name}">\${2}</xsl:with-param>
 \${0}`.trim()
@@ -251,7 +255,7 @@ exports.snippets = [
 
     {
         "tabTrigger": "wparamsel",
-        "name": "with-param select",
+        "name": "With-param select",
         "content": `
 <xsl:with-param name="\${1:name}" select="\${2:*}" />
 \${0}`.trim() // trim the leading new line
@@ -259,7 +263,7 @@ exports.snippets = [
 
     {
         "tabTrigger": "ident",
-        "name": "identity skeleton",
+        "name": "Identity skeleton",
         "content": `
 <xsl:stylesheet version="1.0" xpath-default-namespace="\${1:event-logging:3}" xmlns="\${2:\${1}}" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 
@@ -280,7 +284,7 @@ exports.snippets = [
 
     {
         "tabTrigger": "recident",
-        "name": "records identity skeleton",
+        "name": "Records identity skeleton",
         "content": `
 <xsl:stylesheet version="1.0" xpath-default-namespace="records:2" xmlns="event-logging:3" xmlns:stroom="stroom" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 
@@ -326,7 +330,7 @@ exports.snippets = [
 
     {
         "tabTrigger": "evtident",
-        "name": "events identity skeleton",
+        "name": "Events identity skeleton",
         "content": `
 <xsl:stylesheet version="1.0" xpath-default-namespace="event-logging:3" xmlns="event-logging:3" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 

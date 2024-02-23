@@ -26,9 +26,12 @@ import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.pipeline.shared.TextConverterDoc;
+import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
+import stroom.util.shared.GwtNullSafe;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
+import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
@@ -54,12 +57,16 @@ public class TextConverterPresenter extends DocumentEditTabPresenter<LinkTabPane
             @Override
             public EditorPresenter createPresenter() {
                 final EditorPresenter editorPresenter = editorPresenterProvider.get();
-                editorPresenter.setMode(AceEditorMode.XML);
                 editorPresenter.setReadOnly(isReadOnly());
                 editorPresenter.getFormatAction().setAvailable(!isReadOnly());
-                if (getEntity() != null && getEntity().getData() != null) {
-                    editorPresenter.setText(getEntity().getData());
-                }
+                setEditorMode(editorPresenter, getEntity());
+
+                GwtNullSafe.consume(
+                        getEntity(),
+                        TextConverterDoc::getData,
+                        editorPresenter::setText);
+
+
                 registerHandler(editorPresenter.addValueChangeHandler(event -> fireDirtyEvent(true)));
                 registerHandler(editorPresenter.addFormatHandler(event -> fireDirtyEvent(true)));
                 return editorPresenter;
@@ -73,6 +80,7 @@ public class TextConverterPresenter extends DocumentEditTabPresenter<LinkTabPane
                 presenter.setText(document.getData());
                 presenter.setReadOnly(readOnly);
                 presenter.getFormatAction().setAvailable(!readOnly);
+                setEditorMode(presenter, document);
             }
 
             @Override
@@ -89,6 +97,8 @@ public class TextConverterPresenter extends DocumentEditTabPresenter<LinkTabPane
                                final DocRef docRef,
                                final TextConverterDoc document,
                                final boolean readOnly) {
+
+
                 presenter.setText(document.getDescription());
                 presenter.setReadOnly(readOnly);
             }
@@ -102,6 +112,37 @@ public class TextConverterPresenter extends DocumentEditTabPresenter<LinkTabPane
         });
 
         selectTab(CONVERSION);
+    }
+
+    private void setEditorMode(final EditorPresenter editorPresenter,
+                               final TextConverterDoc document) {
+        final TextConverterType converterType = GwtNullSafe.get(
+                document,
+                TextConverterDoc::getConverterType);
+        // Fall back option if we don't know the type
+        AceEditorMode mode = AceEditorMode.STROOM_COMBINED_PARSER;
+        if (converterType != null && TextConverterType.NONE != converterType) {
+            //noinspection EnhancedSwitchMigration
+            switch (converterType) {
+                case XML_FRAGMENT:
+                    mode = AceEditorMode.STROOM_FRAGMENT_PARSER;
+                    break;
+                case DATA_SPLITTER:
+                    mode = AceEditorMode.STROOM_DATA_SPLITTER;
+                    break;
+            }
+        } else {
+            final String code = editorPresenter.getText();
+            if (!GwtNullSafe.isBlankString(code)) {
+                if (code.contains("dataSplitter")) {
+                    mode = AceEditorMode.STROOM_DATA_SPLITTER;
+                } else if (code.contains("!ENTITY")) {
+                    mode = AceEditorMode.STROOM_FRAGMENT_PARSER;
+                }
+            }
+        }
+        GWT.log("Setting editor mode to " + mode);
+        editorPresenter.setMode(mode);
     }
 
     @Override

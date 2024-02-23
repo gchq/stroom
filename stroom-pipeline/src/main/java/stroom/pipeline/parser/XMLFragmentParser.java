@@ -53,7 +53,7 @@ import org.xml.sax.XMLReader;
 import java.util.function.Consumer;
 
 @ConfigurableElement(
-        type = "XMLFragmentParser",
+        type = PipelineElementType.TYPE_XML_FRAGMENT_PARSER,
         category = Category.PARSER,
         description = """
                 A parser to convert multiple XML fragments into an XML document.

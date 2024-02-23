@@ -161,6 +161,10 @@ public class TextConverterDoc extends Doc implements HasData {
         return Objects.hash(super.hashCode(), description, data, converterType);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public enum TextConverterType implements HasDisplayValue {
         NONE("None"),
         DATA_SPLITTER("Data Splitter"),

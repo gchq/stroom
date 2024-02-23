@@ -120,7 +120,7 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements
             boolean loading = false;
 
             if (element.getElementType().hasRole(PipelineElementType.ROLE_HAS_CODE)) {
-                getView().setCodeView(getCodePresenter().getView());
+                getView().setCodeView(getCodePresenter(element).getView());
 
                 try {
                     final FindElementDocRequest findElementDocRequest = FindElementDocRequest.builder()
@@ -305,6 +305,8 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements
             codePresenter.getSnippetsOption().setOn();
             codePresenter.getLiveAutoCompletionOption().setAvailable();
             codePresenter.getLiveAutoCompletionOption().setOff();
+
+            codePresenter.setMode(getMode(element));
         }
     }
 
@@ -471,12 +473,16 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements
         updateLogView();
     }
 
-    private EditorPresenter getCodePresenter() {
+    private EditorPresenter getCodePresenter(final PipelineElement element) {
+        GWT.log("id: " + element.getId()
+                + ", type: " + element.getType()
+                + ", typeType: " + GwtNullSafe.get(element.getElementType(), PipelineElementType::getType));
         if (codePresenter == null) {
             codePresenter = editorProvider.get();
             presenterMap.put(IndicatorType.CODE, codePresenter);
             setCommonEditorOptions(codePresenter);
 
+            codePresenter.setMode(getMode(element));
             codePresenter.getFormatAction().setAvailable(true);
 
             registerHandler(codePresenter.addValueChangeHandler(event -> {
@@ -489,6 +495,37 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements
             }));
         }
         return codePresenter;
+    }
+
+    private AceEditorMode getMode(final PipelineElement element) {
+        // The default
+        AceEditorMode mode = AceEditorMode.XML;
+        if (element != null) {
+            final String elementType = element.getType();
+            if (PipelineElementType.TYPE_DS_PARSER.equals(elementType)) {
+                mode = AceEditorMode.STROOM_DATA_SPLITTER;
+            } else if (PipelineElementType.TYPE_XML_FRAGMENT_PARSER.equals(elementType)) {
+                mode = AceEditorMode.STROOM_FRAGMENT_PARSER;
+            } else if (PipelineElementType.TYPE_COMBINED_PARSER.equals(elementType)) {
+                // Bit hacky, but we have no access to the type of the text converter
+                // CombinedParser ought to be deprecated
+                final String code = getCode();
+                if (!GwtNullSafe.isBlankString(code)) {
+                    if (code.contains("dataSplitter")) {
+                        mode = AceEditorMode.STROOM_DATA_SPLITTER;
+                    } else if (code.contains("!ENTITY")) {
+                        mode = AceEditorMode.STROOM_FRAGMENT_PARSER;
+                    }
+                } else {
+                    // Fallback mode that contains snippets for both
+                    mode = AceEditorMode.STROOM_COMBINED_PARSER;
+                }
+            }
+            GWT.log("id: " + element.getId()
+                    + ", type: " + element.getType()
+                    + ", mode: " + mode);
+        }
+        return mode;
     }
 
     @Override

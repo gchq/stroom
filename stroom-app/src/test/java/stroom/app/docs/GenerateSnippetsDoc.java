@@ -55,6 +55,7 @@ public class GenerateSnippetsDoc implements DocumentationGenerator {
             "content/en/docs/user-guide/content/editing-text/snippet-reference.md");
 
     private static final Path XML_SNIPPETS_FILE = SNIPPETS_DIR_PATH.resolve("xml.js");
+    private static final Path DATA_SPLITTER_SNIPPETS_FILE = SNIPPETS_DIR_PATH.resolve("stroom_data_splitter.js");
     private static final Path MARKDOWN_SNIPPETS_FILE = SNIPPETS_DIR_PATH.resolve("markdown.js");
     private static final Path STROOM_SNIPPETS_FILE = SNIPPETS_DIR_PATH.resolve("stroom_query.js");
 
@@ -63,6 +64,11 @@ public class GenerateSnippetsDoc implements DocumentationGenerator {
             new SnippetDefinition(
                     "XML/XSLT",
                     XML_SNIPPETS_FILE,
+                    "",
+                    "xml"),
+            new SnippetDefinition(
+                    "Data Splitter",
+                    DATA_SPLITTER_SNIPPETS_FILE,
                     "",
                     "xml"),
             new SnippetDefinition(
@@ -121,7 +127,11 @@ public class GenerateSnippetsDoc implements DocumentationGenerator {
         for (final SnippetDefinition definition : SNIPPETS_FILES) {
             final List<Snippet> snippets = parseFile(definition.filePath);
 
-            appendSnippets(stringBuilder, definition.name, definition.description, definition.syntaxType, snippets);
+            appendSnippets(stringBuilder,
+                    definition.name,
+                    definition.description,
+                    definition.fencedBlockSyntaxType,
+                    snippets);
         }
 
         if (!NullSafe.isBlankString(FOOTER)) {
@@ -144,7 +154,7 @@ public class GenerateSnippetsDoc implements DocumentationGenerator {
     private void appendSnippets(final StringBuilder sb,
                                 final String name,
                                 final String description,
-                                final String syntaxType,
+                                final String fencedBlockSyntaxType,
                                 final List<Snippet> snippets) {
 
         sb.append("## ")
@@ -166,9 +176,9 @@ public class GenerateSnippetsDoc implements DocumentationGenerator {
             final String snippetSection = LogUtil.message("""
 
 
-                            ### {}
+                            ### {} (`{}`)
 
-                            **Tab Trigger**: `{}`
+                            **Name**: `{}`, **Tab Trigger**: `{}`
 
                             {}{}
                             {}
@@ -176,8 +186,10 @@ public class GenerateSnippetsDoc implements DocumentationGenerator {
                             """,
                     snippet.name,
                     snippet.tabTrigger,
+                    snippet.name,
+                    snippet.tabTrigger,
                     fenceStartEnd,
-                    syntaxType,
+                    Objects.requireNonNullElse(fencedBlockSyntaxType, ""),
                     snippet.content,
                     fenceStartEnd);
 
@@ -234,7 +246,7 @@ public class GenerateSnippetsDoc implements DocumentationGenerator {
                 final String originalContentValue = contentValueMatcher.group(0);
                 // The bit inside the back ticks
                 String newContentValue = contentValueMatcher.group(1);
-                // De-escape dollars
+                // De-escape dollars \$ => $
                 newContentValue = newContentValue.replace("\\$", "$");
                 // Escape dbl-quotes
                 newContentValue = newContentValue.replace("\"", "\\\"");
@@ -323,11 +335,11 @@ public class GenerateSnippetsDoc implements DocumentationGenerator {
     // --------------------------------------------------------------------------------
 
 
-    private static record SnippetDefinition(
+    private record SnippetDefinition(
             String name,
             Path filePath,
             String description,
-            String syntaxType) {
+            String fencedBlockSyntaxType) {
 
     }
 }
