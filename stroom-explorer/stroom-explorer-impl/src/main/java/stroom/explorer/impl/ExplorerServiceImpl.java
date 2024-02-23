@@ -1459,6 +1459,8 @@ class ExplorerServiceImpl
             if (recentItemsMode) {
                 final Map<DocRef, FindResult> resultMap = results
                         .stream()
+                        .filter(findResult ->
+                                !ExplorerConstants.FAVOURITES_NODE.getName().equals(findResult.getPath()))
                         .collect(Collectors.toMap(FindResult::getDocRef, Function.identity()));
                 final List<FindResult> recentItems = request
                         .getFilter().getRecentItems()
