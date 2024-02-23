@@ -56,6 +56,8 @@ public class GenerateSnippetsDoc implements DocumentationGenerator {
 
     private static final Path XML_SNIPPETS_FILE = SNIPPETS_DIR_PATH.resolve("xml.js");
     private static final Path DATA_SPLITTER_SNIPPETS_FILE = SNIPPETS_DIR_PATH.resolve("stroom_data_splitter.js");
+    private static final Path FRAGMENT_PARSER_SNIPPETS_FILE = SNIPPETS_DIR_PATH.resolve(
+            "stroom_fragment_parser.js");
     private static final Path MARKDOWN_SNIPPETS_FILE = SNIPPETS_DIR_PATH.resolve("markdown.js");
     private static final Path STROOM_SNIPPETS_FILE = SNIPPETS_DIR_PATH.resolve("stroom_query.js");
 
@@ -69,6 +71,11 @@ public class GenerateSnippetsDoc implements DocumentationGenerator {
             new SnippetDefinition(
                     "Data Splitter",
                     DATA_SPLITTER_SNIPPETS_FILE,
+                    "",
+                    "xml"),
+            new SnippetDefinition(
+                    "XMLFragmentParser",
+                    FRAGMENT_PARSER_SNIPPETS_FILE,
                     "",
                     "xml"),
             new SnippetDefinition(
