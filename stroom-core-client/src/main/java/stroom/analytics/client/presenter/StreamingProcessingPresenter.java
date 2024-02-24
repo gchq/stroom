@@ -73,6 +73,7 @@ public class StreamingProcessingPresenter
                 .builder()
                 .forType(ExpressionOperator.class)
                 .onSuccess(expressionOperator -> {
+                    processorPresenter.setDefaultExpression(expressionOperator);
                     processorPresenter.read(analyticRuleDoc.asDocRef(), analyticRuleDoc, readOnly);
                     processorPresenter.setAllowUpdate(true);
                 })

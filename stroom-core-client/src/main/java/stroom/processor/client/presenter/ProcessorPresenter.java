@@ -75,6 +75,8 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
     private boolean isAdmin;
     private boolean allowEdit;
 
+    private ExpressionOperator defaultExpression;
+
     @Inject
     public ProcessorPresenter(final EventBus eventBus,
                               final ProcessorView view,
@@ -251,7 +253,7 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
 
     private void addProcessor() {
         if (allowEdit) {
-            edit(null, null);
+            edit(null, defaultExpression, null);
         }
     }
 
@@ -273,7 +275,7 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
                     .updateUser(null)
                     .createTimeMs(null)
                     .build();
-            edit(copy, null);
+            edit(copy, null, null);
         }
     }
 
@@ -293,7 +295,7 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
                                         "Unable to load filter",
                                         null);
                             } else {
-                                edit(loadedFilter, processorFilterRow.getOwnerDisplayName());
+                                edit(loadedFilter, null, processorFilterRow.getOwnerDisplayName());
                             }
                         })
                         .call(PROCESSOR_FILTER_RESOURCE)
@@ -302,18 +304,26 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
         }
     }
 
-    private void edit(final ProcessorFilter filter, final String ownerDisplayName) {
+    private void edit(final ProcessorFilter filter,
+                      final ExpressionOperator defaultExpression,
+                      final String ownerDisplayName) {
         if (filter == null && ProcessorType.STREAMING_ANALYTIC.equals(processorType)) {
             processorEditPresenterProvider.get()
-                    .show(processorType, docRef, null, System.currentTimeMillis(), null, result -> {
-                        if (result != null) {
-                            // The owner can't be changed in the editor
-                            refresh(result, ownerDisplayName);
-                        }
-                    });
+                    .show(processorType,
+                            docRef,
+                            null,
+                            defaultExpression,
+                            System.currentTimeMillis(),
+                            null,
+                            result -> {
+                                if (result != null) {
+                                    // The owner can't be changed in the editor
+                                    refresh(result, ownerDisplayName);
+                                }
+                            });
         } else {
             processorEditPresenterProvider.get()
-                    .show(processorType, docRef, filter, result -> {
+                    .show(processorType, docRef, filter, null, result -> {
                         if (result != null) {
                             // The owner can't be changed in the editor
                             refresh(result, ownerDisplayName);
@@ -382,6 +392,9 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
         updateData();
     }
 
+    public void setDefaultExpression(final ExpressionOperator defaultExpression) {
+        this.defaultExpression = defaultExpression;
+    }
 
     // --------------------------------------------------------------------------------
 

@@ -89,6 +89,7 @@ public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView>
     public void show(final ProcessorType processorType,
                      final DocRef pipelineRef,
                      final ProcessorFilter filter,
+                     final ExpressionOperator defaultExpression,
                      final Consumer<ProcessorFilter> consumer) {
         final Long minMetaCreateTimeMs;
         final Long maxMetaCreateTimeMs;
@@ -99,12 +100,13 @@ public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView>
             minMetaCreateTimeMs = filter.getMinMetaCreateTimeMs();
             maxMetaCreateTimeMs = filter.getMaxMetaCreateTimeMs();
         }
-        show(processorType, pipelineRef, filter, minMetaCreateTimeMs, maxMetaCreateTimeMs, consumer);
+        show(processorType, pipelineRef, filter, defaultExpression, minMetaCreateTimeMs, maxMetaCreateTimeMs, consumer);
     }
 
     public void show(final ProcessorType processorType,
                      final DocRef pipelineRef,
                      final ProcessorFilter filter,
+                     final ExpressionOperator defaultExpression,
                      final Long minMetaCreateTimeMs,
                      final Long maxMetaCreateTimeMs,
                      final Consumer<ProcessorFilter> consumer) {
@@ -113,7 +115,7 @@ public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView>
         this.consumer = consumer;
 
         final boolean existingFilter = filter != null && filter.getId() != null;
-        final QueryData queryData = getOrCreateQueryData(filter);
+        final QueryData queryData = getOrCreateQueryData(filter, defaultExpression);
         final List<QueryField> fields = MetaFields.getAllFields();
         read(
                 queryData.getExpression(),
@@ -199,11 +201,12 @@ public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView>
         HidePopupEvent.builder(ProcessorEditPresenter.this).ok(result != null).fire();
     }
 
-    private QueryData getOrCreateQueryData(final ProcessorFilter filter) {
+    private QueryData getOrCreateQueryData(final ProcessorFilter filter,
+                                           final ExpressionOperator defaultExpression) {
         if (filter != null && filter.getQueryData() != null) {
             return filter.getQueryData();
         }
-        return new QueryData();
+        return QueryData.builder().expression(defaultExpression).build();
     }
 
     private void validateFeed(final ProcessorFilter filter,
