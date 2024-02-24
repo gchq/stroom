@@ -47,6 +47,7 @@ import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskTerminatedException;
+import stroom.task.api.TerminateHandlerFactory;
 import stroom.util.NullSafe;
 import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.date.DateUtil;
@@ -81,7 +82,7 @@ public class ScheduledQueryAnalyticExecutor {
     private final ExecutorProvider executorProvider;
     private final ResultStoreManager searchResponseCreatorManager;
     private final Provider<DetectionConsumerProxy> detectionConsumerProxyProvider;
-    private final AnalyticErrorWritingExecutor analyticErrorWritingExecutor;
+    private final Provider<AnalyticErrorWriter> analyticErrorWriterProvider;
     private final TaskContextFactory taskContextFactory;
     private final NodeInfo nodeInfo;
     private final AnalyticRuleSearchRequestHelper analyticRuleSearchRequestHelper;
@@ -97,7 +98,7 @@ public class ScheduledQueryAnalyticExecutor {
                                    final ExecutorProvider executorProvider,
                                    final ResultStoreManager searchResponseCreatorManager,
                                    final Provider<DetectionConsumerProxy> detectionConsumerProxyProvider,
-                                   final AnalyticErrorWritingExecutor analyticErrorWritingExecutor,
+                                   final Provider<AnalyticErrorWriter> analyticErrorWriterProvider,
                                    final TaskContextFactory taskContextFactory,
                                    final NodeInfo nodeInfo,
                                    final AnalyticRuleSearchRequestHelper analyticRuleSearchRequestHelper,
@@ -111,7 +112,7 @@ public class ScheduledQueryAnalyticExecutor {
         this.executorProvider = executorProvider;
         this.searchResponseCreatorManager = searchResponseCreatorManager;
         this.detectionConsumerProxyProvider = detectionConsumerProxyProvider;
-        this.analyticErrorWritingExecutor = analyticErrorWritingExecutor;
+        this.analyticErrorWriterProvider = analyticErrorWriterProvider;
         this.taskContextFactory = taskContextFactory;
         this.nodeInfo = nodeInfo;
         this.analyticRuleSearchRequestHelper = analyticRuleSearchRequestHelper;
@@ -124,6 +125,7 @@ public class ScheduledQueryAnalyticExecutor {
     }
 
     public void exec() {
+        final TaskContext taskContext = taskContextFactory.current();
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         try {
             info(() -> "Starting scheduled analytic processing");
@@ -131,11 +133,14 @@ public class ScheduledQueryAnalyticExecutor {
             // Load rules.
             final List<ScheduledQueryAnalytic> analytics = loadScheduledQueryAnalytics();
 
-            info(() -> "Processing " + LogUtil.namedCount("batch rule", NullSafe.size(analytics)));
+            info(() -> "Executing " +
+                    LogUtil.namedCount("scheduled analytic", NullSafe.size(analytics)));
             final List<CompletableFuture<Void>> completableFutures = new ArrayList<>();
-            processScheduledQueryAnalytics(analytics, completableFutures, taskContextFactory.current());
+            processScheduledQueryAnalytics(analytics, completableFutures, taskContext);
 
             // Join.
+            info(() -> "Executing " +
+                    LogUtil.namedCount("scheduled analytic", NullSafe.size(completableFutures)));
             CompletableFuture.allOf(completableFutures.toArray(new CompletableFuture[0])).join();
             info(() -> LogUtil.message("Finished scheduled analytic processing in {}", logExecutionTime));
         } catch (final TaskTerminatedException | UncheckedInterruptedException e) {
@@ -150,20 +155,15 @@ public class ScheduledQueryAnalyticExecutor {
                                                 final List<CompletableFuture<Void>> completableFutures,
                                                 final TaskContext parentTaskContext) {
         for (final ScheduledQueryAnalytic analytic : analytics) {
+            info(() -> "Executing analytic: " + analytic.ruleIdentity);
             if (!parentTaskContext.isTerminated()) {
                 try {
                     final String ownerUuid = securityContext.getDocumentOwnerUuid(analytic.analyticRuleDoc.asDocRef());
                     final UserIdentity userIdentity = securityContext.createIdentityByUserUuid(ownerUuid);
-                    securityContext.asUser(userIdentity, () -> securityContext.useAsRead(() -> {
-                        final Runnable runnable = taskContextFactory.childContext(
-                                parentTaskContext,
-                                "Scheduled Query Analytic: " + analytic.ruleIdentity(),
-                                taskContext ->
-                                        processScheduledQueryAnalytic(analytic, completableFutures, taskContext));
-                        runnable.run();
-                    }));
+                    securityContext.asUser(userIdentity, () -> securityContext.useAsRead(() ->
+                            processScheduledQueryAnalytic(analytic, completableFutures, parentTaskContext)));
                 } catch (final RuntimeException e) {
-                    LOGGER.error(() -> "Error executing rule: " + analytic.ruleIdentity(), e);
+                    LOGGER.error(() -> "Error executing analytic: " + analytic.ruleIdentity(), e);
                 }
             }
         }
@@ -206,12 +206,18 @@ public class ScheduledQueryAnalyticExecutor {
             if (to.isAfter(from)) {
                 final String errorFeedName = analyticHelper.getErrorFeedName(analytic.analyticRuleDoc);
                 final TimeFilter timeFilter = new TimeFilter(from.toEpochMilli(), to.toEpochMilli());
-                final Runnable runnable = analyticErrorWritingExecutor.wrap(
-                        "Scheduled Query Analytic: " + analytic.ruleIdentity(),
-                        errorFeedName,
-                        null,
+
+                final Runnable runnable = taskContextFactory.childContext(
                         parentTaskContext,
-                        taskContext -> processScheduledQueryAnalytic(analytic, timeFilter));
+                        "Scheduled Query Analytic: " + analytic.ruleIdentity(),
+                        TerminateHandlerFactory.NOOP_FACTORY,
+                        taskContext -> {
+                            final AnalyticErrorWriter analyticErrorWriter = analyticErrorWriterProvider.get();
+                            analyticErrorWriter.exec(
+                                    errorFeedName,
+                                    null,
+                                    () -> processScheduledQueryAnalytic(analytic, timeFilter));
+                        });
 
                 try {
                     completableFutures.add(CompletableFuture.runAsync(runnable, executorProvider.get()));
