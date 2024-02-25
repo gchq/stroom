@@ -13,6 +13,27 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.3-beta.9] - 2024-02-25
+
+* Issue **#4107** : Add property `warnOnRemoval` to `InvalidCharFilterReader` and `warnOnReplacement` to `InvalidXMLCharFilterReaderElement` allow control of logged warnings for removal/replacement respectively.
+
+* Fix background styling issue with markdown preview pane.
+
+* Issue **#4108** : Add editor snippets for Data Splitter and XML Fragment Parsing.
+
+* Issue **#4117** : Fix inconsistencies between UI and CLI when creating API Keys.
+
+* Issue **#3890** : Fix processing info task message.
+
+* Issue **#4128** : Fix streaming analytics.
+
+* Issue **#4077** : Auto open query helper folders to find functions by name.
+
+* Issue **#3971** : Allow use of date expressions with `filter` keyword.
+
+* Issue **#4090** : Fix JSON error location reporting.
+
+
 ## [v7.3-beta.8] - 2024-02-17
 
 * Issue **#4030** : Fix token validation for date expressions.
@@ -316,7 +337,8 @@ eval EventId = first(EventId)`, `evt` => `eval EventId = first(EventId)` and `st
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.3-beta.8...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.3-beta.9...HEAD
+[v7.3-beta.9]: https://github.com/gchq/stroom/compare/v7.3-beta.8...v7.3-beta.9
 [v7.3-beta.8]: https://github.com/gchq/stroom/compare/v7.3-beta.7...v7.3-beta.8
 [v7.3-beta.7]: https://github.com/gchq/stroom/compare/v7.3-beta.6...v7.3-beta.7
 [v7.3-beta.6]: https://github.com/gchq/stroom/compare/v7.3-beta.5...v7.3-beta.6
