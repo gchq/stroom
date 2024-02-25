@@ -1039,8 +1039,7 @@
 }
 
 .columnFunctionEditorViewImpl {
-    border: 1px solid var(--control__border-color);
-    background-color: var(--dashboard-panel__background-color);
+
 }
 
 .columnFunctionEditorViewImpl-resizePanel {
@@ -1048,6 +1047,7 @@
 }
 
 .columnFunctionEditorViewImpl-editorContainer {
+    border: 1px solid var(--control__border-color);
     background-color: var(--dashboard-panel__background-color);
 }
 
