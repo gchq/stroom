@@ -3,8 +3,6 @@ package stroom.item.client;
 import stroom.data.grid.client.PagerViewImpl;
 import stroom.data.table.client.MyCellTable;
 import stroom.util.shared.PageRequest;
-import stroom.util.shared.PageResponse;
-import stroom.util.shared.ResultPage;
 import stroom.widget.dropdowntree.client.view.QuickFilter;
 import stroom.widget.util.client.AbstractSelectionEventManager;
 import stroom.widget.util.client.DoubleSelectTester;
@@ -46,8 +44,7 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
     private final CellTable<I> cellTable;
     private SelectionListModel<T, I> model;
     private final MultiSelectionModelImpl<I> selectionModel;
-    private List<NavigationState<I>> navigationStates = new ArrayList<>();
-    private ResultPage<I> currentResult;
+    private final List<NavigationState<I>> navigationStates = new ArrayList<>();
     private String lastFilter;
 
     private final EventBinder eventBinder = new EventBinder() {
@@ -56,7 +53,7 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
             registerHandler(quickFilter.addValueChangeHandler(e -> {
                 if (!Objects.equals(e.getValue(), lastFilter)) {
                     lastFilter = e.getValue();
-                    refresh();
+                    refresh(true, false);
                 }
             }));
         }
@@ -95,7 +92,7 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
         final AsyncDataProvider<I> dataProvider = new AsyncDataProvider<I>() {
             @Override
             protected void onRangeChanged(final HasData<I> display) {
-                refresh();
+                refresh(false, false);
             }
         };
         dataProvider.addDataDisplay(cellTable);
@@ -158,27 +155,40 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
         eventBinder.unbind();
     }
 
-    public void refresh() {
-        refresh(new ArrayList<>(navigationStates));
+    public I getCurrentParent() {
+        final NavigationState<I> currentState = getCurrentState();
+        if (currentState == null) {
+            return null;
+        }
+        return currentState.getSelected();
     }
 
-    public void refresh(final List<NavigationState<I>> navigationStates) {
+    public NavigationState<I> getCurrentState() {
+        if (navigationStates.isEmpty()) {
+            return null;
+        }
+        return navigationStates.get(navigationStates.size() - 1);
+    }
+
+    public void refresh(final boolean filterChange, final boolean stealFocus) {
+        refresh(getCurrentParent(), null, filterChange, cellTable.getVisibleRange(), stealFocus);
+    }
+
+    public void refresh(final I parent,
+                        final I selection,
+                        final boolean filterChange,
+                        final Range range,
+                        final boolean stealFocus) {
         if (model != null) {
-            final Range range = cellTable.getVisibleRange();
             final PageRequest pageRequest = new PageRequest(range.getStart(), range.getLength());
-
-            final I parentItem;
-            if (!navigationStates.isEmpty()) {
-                parentItem = navigationStates.get(navigationStates.size() - 1).getSelectedItem();
-            } else {
-                parentItem = null;
-            }
-
-            model.onRangeChange(parentItem, lastFilter, pageRequest, pageResponse -> {
-                this.navigationStates = navigationStates;
-                currentResult = pageResponse;
+            model.onRangeChange(parent, lastFilter, filterChange, pageRequest, pageResponse -> {
                 cellTable.setRowData(pageResponse.getPageStart(), pageResponse.getValues());
                 cellTable.setRowCount(pageResponse.getPageSize(), pageResponse.isExact());
+
+                if (selection != null) {
+                    selectionModel.setSelected(selection);
+                    setKeyboardSelection(selection, stealFocus);
+                }
             });
         }
     }
@@ -193,7 +203,7 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
         links.setVisible(model.displayPath());
         pagerView.setPagerVisible(model.displayPager());
 
-        refresh();
+        refresh(false, false);
     }
 
     public void destroy() {
@@ -228,13 +238,13 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
         protected void onMoveRight(final CellPreviewEvent<I> e) {
             final I value = e.getValue();
             if (value != null && value.isHasChildren()) {
-                selectionList.navigate(value);
+                selectionList.navigate(value, false, true);
             }
         }
 
         @Override
         protected void onMoveLeft(final CellPreviewEvent<I> e) {
-            selectionList.navigateBack();
+            selectionList.navigateBack(false, true);
         }
 
         @Override
@@ -246,7 +256,7 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
                             false,
                             allowMultiSelect,
                             nativeEvent.getCtrlKey(),
-                            nativeEvent.getShiftKey()));
+                            nativeEvent.getShiftKey()), false);
         }
 
         @Override
@@ -258,7 +268,7 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
                             false,
                             true,
                             nativeEvent.getCtrlKey(),
-                            nativeEvent.getShiftKey()));
+                            nativeEvent.getShiftKey()), true);
         }
 
         @Override
@@ -275,11 +285,12 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
         protected void onMouseDown(final CellPreviewEvent<I> e) {
             final NativeEvent nativeEvent = e.getNativeEvent();
             if (MouseUtil.isPrimary(nativeEvent)) {
-                select(e);
+                select(e, true);
             }
         }
 
-        private void select(final CellPreviewEvent<I> e) {
+        private void select(final CellPreviewEvent<I> e,
+                            final boolean stealFocus) {
             final NativeEvent nativeEvent = e.getNativeEvent();
             final I selectedItem = e.getValue();
             if (selectedItem != null && MouseUtil.isPrimary(nativeEvent)) {
@@ -289,11 +300,11 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
                                 false,
                                 allowMultiSelect,
                                 nativeEvent.getCtrlKey(),
-                                nativeEvent.getShiftKey()));
+                                nativeEvent.getShiftKey()), stealFocus);
             }
         }
 
-        void doSelect(final I row, final SelectionType selectionType) {
+        void doSelect(final I row, final SelectionType selectionType, final boolean stealFocus) {
             if (selectionModel != null) {
                 if (!selectionModel.isSelected(row)) {
                     selectionModel.setSelected(row);
@@ -302,20 +313,20 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
                 }
 
                 if (row != null && row.isHasChildren()) {
-                    selectionList.navigate(row);
+                    selectionList.navigate(row, false, stealFocus);
                 } else {
-                    selectionList.setKeyboardSelection(row);
+                    selectionList.setKeyboardSelection(row, stealFocus);
                 }
             }
         }
     }
 
-    private void setKeyboardSelection(final I value) {
+    private void setKeyboardSelection(final I value, final boolean stealFocus) {
         final int row = cellTable.getVisibleItems().indexOf(value);
         if (row >= 0) {
-            cellTable.setKeyboardSelectedRow(row, true);
+            cellTable.setKeyboardSelectedRow(row, stealFocus);
         } else {
-            cellTable.setKeyboardSelectedRow(cellTable.getKeyboardSelectedRow(), true);
+            cellTable.setKeyboardSelectedRow(cellTable.getKeyboardSelectedRow(), stealFocus);
         }
     }
 
@@ -329,7 +340,7 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
         for (int i = 0; i < navigationStates.size(); i++) {
             links.add(new Label("/"));
             final NavigationState<I> navigationState = navigationStates.get(i);
-            final I selectedItem = navigationState.getSelectedItem();
+            final I selectedItem = navigationState.getSelected();
             if (i < navigationStates.size() - 1) {
                 links.add(createLink(selectedItem.getLabel(), selectedItem));
             } else {
@@ -343,73 +354,75 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
         link.setText(label);
         link.addHandler(event -> {
             if (MouseUtil.isPrimary(event)) {
-                navigateBack(row);
+                navigateBack(row, false, false);
             }
         }, ClickEvent.getType());
         return link;
     }
 
-    public void navigate(I selectionItem) {
-        final List<I> list = new ArrayList<>(currentResult.getValues());
-        final PageResponse pageResponse = currentResult.getPageResponse();
-        final PageResponse pageResponseCopy = pageResponse.copy().build();
-        final ResultPage<I> resultPage = new ResultPage<>(list, pageResponseCopy);
-        final NavigationState<I> navigationState = new NavigationState<>(selectionItem, resultPage);
-        final List<NavigationState<I>> navigationStates = new ArrayList<>(this.navigationStates);
+    public void navigate(final I selectionItem,
+                         final boolean filterChange,
+                         final boolean stealFocus) {
+        final NavigationState<I> navigationState = new NavigationState<>(
+                selectionItem,
+                cellTable.getVisibleRange());
         navigationStates.add(navigationState);
-        refresh(navigationStates);
+        refresh(selectionItem, null, filterChange, new Range(0, cellTable.getPageSize()), stealFocus);
     }
 
-    private void navigateBack() {
+    public void navigateBack(final boolean filterChange, final boolean stealFocus) {
+        final NavigationState<I> navigationState;
         if (!navigationStates.isEmpty()) {
-            final NavigationState<I> navigationState = navigationStates.remove(navigationStates.size() - 1);
-            setState(navigationState);
+            navigationState = navigationStates.remove(navigationStates.size() - 1);
+        } else {
+            navigationState = null;
         }
+        navigateBack(navigationState, filterChange, stealFocus);
     }
 
-    private void navigateBack(I selectionItem) {
+    private void navigateBack(final I selectionItem, final boolean filterChange, final boolean stealFocus) {
         NavigationState<I> navigationState = null;
         while (!navigationStates.isEmpty() && !navigationStates
                 .get(navigationStates.size() - 1)
-                .getSelectedItem()
+                .getSelected()
                 .equals(selectionItem)) {
             navigationState = navigationStates.remove(navigationStates.size() - 1);
         }
-        if (navigationState == null && !navigationStates.isEmpty()) {
-            navigationState = navigationStates.get(navigationStates.size() - 1);
-        }
-        if (navigationState != null) {
-            setState(navigationState);
-        }
+        navigateBack(navigationState, filterChange, stealFocus);
     }
 
-    private void setState(final NavigationState<I> navigationState) {
+    private void navigateBack(final NavigationState<I> navigationState,
+                              final boolean filterChange,
+                              final boolean stealFocus) {
+        final I selection;
+        final Range range;
         if (navigationState != null) {
-            currentResult = navigationState.getResultPage();
-            cellTable.setRowData(currentResult.getPageStart(), currentResult.getValues());
-            cellTable.setRowCount(currentResult.getPageSize(), currentResult.isExact());
-            selectionModel.setSelected(navigationState.getSelectedItem());
-            setKeyboardSelection(navigationState.getSelectedItem());
+            selection = navigationState.getSelected();
+            range = navigationState.getRange();
+        } else {
+            selection = null;
+            range = new Range(0, cellTable.getPageSize());
         }
+        refresh(getCurrentParent(), selection, filterChange, range, stealFocus);
     }
 
     public static class NavigationState<I extends SelectionItem> {
 
-        private final I selectedItem;
-        private final ResultPage<I> resultPage;
+        private final I selected;
+        private final Range range;
 
-        public NavigationState(final I selectedItem,
-                               final ResultPage<I> resultPage) {
-            this.selectedItem = selectedItem;
-            this.resultPage = resultPage;
+        public NavigationState(final I selected,
+                               final Range range) {
+            this.selected = selected;
+            this.range = range;
         }
 
-        public I getSelectedItem() {
-            return selectedItem;
+        public I getSelected() {
+            return selected;
         }
 
-        public ResultPage<I> getResultPage() {
-            return resultPage;
+        public Range getRange() {
+            return range;
         }
     }
 }

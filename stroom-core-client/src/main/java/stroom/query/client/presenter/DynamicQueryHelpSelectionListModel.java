@@ -4,6 +4,7 @@ import stroom.datasource.api.v2.FindFieldInfoCriteria;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docref.StringMatch;
+import stroom.item.client.SelectionList;
 import stroom.item.client.SelectionListModel;
 import stroom.query.shared.QueryHelpRequest;
 import stroom.query.shared.QueryHelpRow;
@@ -32,15 +33,21 @@ public class DynamicQueryHelpSelectionListModel implements SelectionListModel<Qu
     private String query;
     private boolean showAll = true;
     private QueryHelpRequest lastRequest;
+    private SelectionList<QueryHelpRow, QueryHelpSelectionItem> selectionList;
 
     @Inject
     public DynamicQueryHelpSelectionListModel(final RestFactory restFactory) {
         this.restFactory = restFactory;
     }
 
+    public void setSelectionList(final SelectionList<QueryHelpRow, QueryHelpSelectionItem> selectionList) {
+        this.selectionList = selectionList;
+    }
+
     @Override
     public void onRangeChange(final QueryHelpSelectionItem parent,
                               final String filter,
+                              final boolean filterChange,
                               final PageRequest pageRequest,
                               final Consumer<ResultPage<QueryHelpSelectionItem>> consumer) {
         final String parentId;
@@ -94,6 +101,20 @@ public class DynamicQueryHelpSelectionListModel implements SelectionListModel<Qu
                             }
 
                             consumer.accept(resultPage);
+
+                            // Navigate into some items if needed.
+                            if (filterChange) {
+                                if (response.getValues().size() == 1) {
+                                    final QueryHelpRow row = response.getValues().get(0);
+                                    final QueryHelpSelectionItem selectionItem = wrap(row);
+                                    if (selectionItem.isHasChildren()) {
+                                        selectionList.navigate(selectionItem, filterChange, false);
+                                    }
+                                } else if (response.getValues().size() == 0 &&
+                                        selectionList.getCurrentState() != null) {
+                                    selectionList.navigateBack(filterChange, false);
+                                }
+                            }
                         }
                     })
                     .call(QUERY_RESOURCE)

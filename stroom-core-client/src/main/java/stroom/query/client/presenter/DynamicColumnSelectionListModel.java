@@ -48,6 +48,7 @@ public class DynamicColumnSelectionListModel implements SelectionListModel<Colum
     @Override
     public void onRangeChange(final ColumnSelectionItem parent,
                               final String filter,
+                              final boolean filterChange,
                               final PageRequest pageRequest,
                               final Consumer<ResultPage<ColumnSelectionItem>> consumer) {
         final String parentPath = getParentPath(parent);

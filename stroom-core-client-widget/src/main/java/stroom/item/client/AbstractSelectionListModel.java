@@ -15,6 +15,7 @@ public abstract class AbstractSelectionListModel<T, I extends SelectionItem> imp
     @Override
     public void onRangeChange(final I parent,
                               final String filter,
+                              final boolean filterChange,
                               final PageRequest pageRequest,
                               final Consumer<ResultPage<I>> consumer) {
         if (filter != null && !filter.isEmpty()) {

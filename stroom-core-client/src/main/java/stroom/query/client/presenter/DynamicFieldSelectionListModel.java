@@ -29,6 +29,7 @@ public class DynamicFieldSelectionListModel implements FieldSelectionListModel {
     @Override
     public void onRangeChange(final FieldInfoSelectionItem parent,
                               final String filter,
+                              final boolean filterChange,
                               final PageRequest pageRequest,
                               final Consumer<ResultPage<FieldInfoSelectionItem>> consumer) {
         if (dataSourceRef != null) {
