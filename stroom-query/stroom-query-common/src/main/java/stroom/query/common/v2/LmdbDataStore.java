@@ -17,6 +17,7 @@
 
 package stroom.query.common.v2;
 
+import stroom.expression.api.DateTimeSettings;
 import stroom.expression.api.ExpressionContext;
 import stroom.lmdb.LmdbEnv;
 import stroom.lmdb.LmdbEnv.BatchingWriteTxn;
@@ -126,6 +127,7 @@ public class LmdbDataStore implements DataStore {
 
     private final StoredValueKeyFactory storedValueKeyFactory;
     private final int maxSortedItems;
+    private final DateTimeSettings dateTimeSettings;
 
 
     public LmdbDataStore(final SearchRequestSource searchRequestSource,
@@ -163,7 +165,10 @@ public class LmdbDataStore implements DataStore {
         queue = new LmdbWriteQueue(resultStoreConfig.getValueQueueSize());
         maxSortedItems = resultStoreConfig.getMaxSortedItems();
         valueFilter = modifiedTableSettings.getValueFilter();
-        columnExpressionMatcher = new ColumnExpressionMatcher(columns);
+        this.dateTimeSettings = expressionContext == null
+                ? null
+                : expressionContext.getDateTimeSettings();
+        columnExpressionMatcher = new ColumnExpressionMatcher(columns, dateTimeSettings);
         this.compiledColumns = CompiledColumns.create(expressionContext, columns, fieldIndex, paramMap);
         this.compiledColumnArray = compiledColumns.getCompiledColumns();
         valueReferenceIndex = compiledColumns.getValueReferenceIndex();
@@ -791,6 +796,11 @@ public class LmdbDataStore implements DataStore {
 
     public QueryKey getQueryKey() {
         return queryKey;
+    }
+
+    @Override
+    public DateTimeSettings getDateTimeSettings() {
+        return dateTimeSettings;
     }
 
     @Override

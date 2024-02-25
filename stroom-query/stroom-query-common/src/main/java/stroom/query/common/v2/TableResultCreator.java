@@ -90,6 +90,7 @@ public class TableResultCreator implements ResultCreator {
                         tableSettings.getAggregateFilter(),
                         tableSettings.getConditionalFormattingRules(),
                         columns,
+                        dataStore.getDateTimeSettings(),
                         errorConsumer);
                 if (optionalRowCreator.isEmpty()) {
                     optionalRowCreator = FilteredRowCreator.create(
@@ -97,6 +98,7 @@ public class TableResultCreator implements ResultCreator {
                             keyFactory,
                             tableSettings.getAggregateFilter(),
                             columns,
+                            dataStore.getDateTimeSettings(),
                             errorConsumer);
                 }
             }

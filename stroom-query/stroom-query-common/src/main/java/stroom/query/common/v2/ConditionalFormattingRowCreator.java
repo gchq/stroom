@@ -1,5 +1,6 @@
 package stroom.query.common.v2;
 
+import stroom.expression.api.DateTimeSettings;
 import stroom.query.api.v2.Column;
 import stroom.query.api.v2.ConditionalFormattingRule;
 import stroom.query.api.v2.ExpressionOperator;
@@ -47,6 +48,7 @@ public class ConditionalFormattingRowCreator implements ItemMapper<Row> {
                                                    final ExpressionOperator rowFilter,
                                                    final List<ConditionalFormattingRule> rules,
                                                    final List<Column> columns,
+                                                   final DateTimeSettings dateTimeSettings,
                                                    final ErrorConsumer errorConsumer) {
         // Create conditional formatting expression matcher.
         if (rules != null) {
@@ -56,7 +58,7 @@ public class ConditionalFormattingRowCreator implements ItemMapper<Row> {
                     .collect(Collectors.toList());
             if (activeRules.size() > 0) {
                 final ColumnExpressionMatcher expressionMatcher =
-                        new ColumnExpressionMatcher(columns);
+                        new ColumnExpressionMatcher(columns, dateTimeSettings);
                 return Optional.of(new ConditionalFormattingRowCreator(
                         fieldFormatter,
                         keyFactory,

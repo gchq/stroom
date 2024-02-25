@@ -1,5 +1,6 @@
 package stroom.query.common.v2;
 
+import stroom.expression.api.DateTimeSettings;
 import stroom.query.api.v2.Column;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.Row;
@@ -41,9 +42,11 @@ public class FilteredRowCreator implements ItemMapper<Row> {
                                                    final KeyFactory keyFactory,
                                                    final ExpressionOperator rowFilter,
                                                    final List<Column> columns,
+                                                   final DateTimeSettings dateTimeSettings,
                                                    final ErrorConsumer errorConsumer) {
         if (rowFilter != null) {
-            final ColumnExpressionMatcher expressionMatcher = new ColumnExpressionMatcher(columns);
+            final ColumnExpressionMatcher expressionMatcher =
+                    new ColumnExpressionMatcher(columns, dateTimeSettings);
             return Optional.of(new FilteredRowCreator(
                     columnFormatter,
                     keyFactory,
