@@ -27,6 +27,8 @@ public class DynamicQueryHelpSelectionListModel implements SelectionListModel<Qu
 
     private static final QueryResource QUERY_RESOURCE = GWT.create(QueryResource.class);
 
+    private static final String NONE_TITLE = "[ none ]";
+
     private final RestFactory restFactory;
 
     private DocRef dataSourceRef;
@@ -95,26 +97,12 @@ public class DynamicQueryHelpSelectionListModel implements SelectionListModel<Qu
                                                 .builder()
                                                 .type(QueryHelpType.TITLE)
                                                 .id(parentId + "none")
-                                                .title("[ none ]")
+                                                .title(NONE_TITLE)
                                                 .build()));
                                 resultPage = new ResultPage<>(rows, new PageResponse(0, 1, 1L, true));
                             }
 
                             consumer.accept(resultPage);
-
-                            // Navigate into some items if needed.
-                            if (filterChange) {
-                                if (response.getValues().size() == 1) {
-                                    final QueryHelpRow row = response.getValues().get(0);
-                                    final QueryHelpSelectionItem selectionItem = wrap(row);
-                                    if (selectionItem.isHasChildren()) {
-                                        selectionList.navigate(selectionItem, filterChange, false);
-                                    }
-                                } else if (response.getValues().size() == 0 &&
-                                        selectionList.getCurrentState() != null) {
-                                    selectionList.navigateBack(filterChange, false);
-                                }
-                            }
                         }
                     })
                     .call(QUERY_RESOURCE)
@@ -157,6 +145,11 @@ public class DynamicQueryHelpSelectionListModel implements SelectionListModel<Qu
             return null;
         }
         return selectionItem.getQueryHelpRow();
+    }
+
+    @Override
+    public boolean isEmptyItem(final QueryHelpSelectionItem selectionItem) {
+        return NONE_TITLE.equals(selectionItem.getLabel());
     }
 
     public void setDataSourceRef(final DocRef dataSourceRef) {

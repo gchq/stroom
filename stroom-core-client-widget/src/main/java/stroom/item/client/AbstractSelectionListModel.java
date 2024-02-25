@@ -74,4 +74,9 @@ public abstract class AbstractSelectionListModel<T, I extends SelectionItem> imp
     public boolean displayPager() {
         return items.size() > 100;
     }
+
+    @Override
+    public boolean isEmptyItem(final I selectionItem) {
+        return false;
+    }
 }

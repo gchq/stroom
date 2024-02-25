@@ -119,4 +119,9 @@ public class SimpleSelectionListModel<T> implements SelectionListModel<T, Simple
     public T unwrap(final SimpleSelectionItemWrapper<T> selectionItem) {
         return GwtNullSafe.get(selectionItem, SimpleSelectionItemWrapper::getItem);
     }
+
+    @Override
+    public boolean isEmptyItem(final SimpleSelectionItemWrapper<T> selectionItem) {
+        return nonSelectItem != null && nonSelectItem.equals(selectionItem);
+    }
 }

@@ -155,7 +155,7 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
         eventBinder.unbind();
     }
 
-    public I getCurrentParent() {
+    private I getCurrentParent() {
         final NavigationState<I> currentState = getCurrentState();
         if (currentState == null) {
             return null;
@@ -163,7 +163,7 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
         return currentState.getSelected();
     }
 
-    public NavigationState<I> getCurrentState() {
+    private NavigationState<I> getCurrentState() {
         if (navigationStates.isEmpty()) {
             return null;
         }
@@ -182,12 +182,30 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
         if (model != null) {
             final PageRequest pageRequest = new PageRequest(range.getStart(), range.getLength());
             model.onRangeChange(parent, lastFilter, filterChange, pageRequest, pageResponse -> {
+                selectionModel.clear();
+
                 cellTable.setRowData(pageResponse.getPageStart(), pageResponse.getValues());
                 cellTable.setRowCount(pageResponse.getPageSize(), pageResponse.isExact());
 
                 if (selection != null) {
                     selectionModel.setSelected(selection);
                     setKeyboardSelection(selection, stealFocus);
+                }
+
+                // Navigate into some items if needed.
+                if (filterChange && pageResponse.getPageStart() == 0) {
+                    if (pageResponse.getPageSize() == 1) {
+                        final I selectionItem = pageResponse.getValues().get(0);
+                        if (selectionItem.isHasChildren()) {
+                            navigate(selectionItem, filterChange, false);
+                        } else if (getCurrentState() != null) {
+                            if (model.isEmptyItem(selectionItem)) {
+                                navigateBack(filterChange, false);
+                            }
+                        }
+                    } else if (pageResponse.getPageSize() == 0 && getCurrentState() != null) {
+                        navigateBack(filterChange, false);
+                    }
                 }
             });
         }
@@ -360,9 +378,9 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
         return link;
     }
 
-    public void navigate(final I selectionItem,
-                         final boolean filterChange,
-                         final boolean stealFocus) {
+    private void navigate(final I selectionItem,
+                          final boolean filterChange,
+                          final boolean stealFocus) {
         final NavigationState<I> navigationState = new NavigationState<>(
                 selectionItem,
                 cellTable.getVisibleRange());
@@ -370,7 +388,7 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
         refresh(selectionItem, null, filterChange, new Range(0, cellTable.getPageSize()), stealFocus);
     }
 
-    public void navigateBack(final boolean filterChange, final boolean stealFocus) {
+    private void navigateBack(final boolean filterChange, final boolean stealFocus) {
         final NavigationState<I> navigationState;
         if (!navigationStates.isEmpty()) {
             navigationState = navigationStates.remove(navigationStates.size() - 1);

@@ -28,4 +28,6 @@ public interface SelectionListModel<T, I extends SelectionItem> {
     I wrap(T item);
 
     T unwrap(I selectionItem);
+
+    boolean isEmptyItem(I selectionItem);
 }

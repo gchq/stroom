@@ -109,4 +109,9 @@ public class DynamicFieldSelectionListModel implements FieldSelectionListModel {
         }
         return selectionItem.getFieldInfo();
     }
+
+    @Override
+    public boolean isEmptyItem(final FieldInfoSelectionItem selectionItem) {
+        return unwrap(selectionItem) == null;
+    }
 }
