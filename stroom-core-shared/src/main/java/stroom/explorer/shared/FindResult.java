@@ -84,6 +84,14 @@ public class FindResult {
         return new Builder(this);
     }
 
+    @Override
+    public String toString() {
+        return "FindResult{" +
+                "docRef=" + docRef +
+                ", path='" + path + '\'' +
+                ", icon=" + icon +
+                '}';
+    }
 
     // --------------------------------------------------------------------------------
 

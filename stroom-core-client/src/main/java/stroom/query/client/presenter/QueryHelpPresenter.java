@@ -68,6 +68,7 @@ public class QueryHelpPresenter
         this.markdownConverter = markdownConverter;
 
         view.getSelectionList().setKeyboardSelectionPolicy(KeyboardSelectionPolicy.BOUND_TO_SELECTION);
+        model.setSelectionList(view.getSelectionList());
         view.getSelectionList().init(model);
     }
 
@@ -114,7 +115,7 @@ public class QueryHelpPresenter
     }
 
     public void refresh() {
-        getView().getSelectionList().refresh();
+        getView().getSelectionList().refresh(false, false);
     }
 
     @Override

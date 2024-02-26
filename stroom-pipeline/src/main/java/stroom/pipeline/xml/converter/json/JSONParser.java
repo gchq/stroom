@@ -19,6 +19,7 @@ package stroom.pipeline.xml.converter.json;
 import stroom.pipeline.xml.converter.AbstractParser;
 
 import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonParser.Feature;
 import com.fasterxml.jackson.core.JsonTokenId;
@@ -27,13 +28,16 @@ import org.slf4j.LoggerFactory;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
+import org.xml.sax.SAXParseException;
 import org.xml.sax.helpers.AttributesImpl;
+import org.xml.sax.helpers.LocatorImpl;
 
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class JSONParser extends AbstractParser {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(JSONParser.class);
 
     public static final String XML_ELEMENT_MAP = "map";
@@ -91,44 +95,54 @@ public class JSONParser extends AbstractParser {
         // Start creating the XML output.
         startDocument();
 
-        while (jp.nextToken() != null) {
-            switch (jp.getCurrentTokenId()) {
-                case JsonTokenId.ID_START_OBJECT:
-                    startElement(XML_ELEMENT_MAP, jp.getCurrentName());
-                    break;
-                case JsonTokenId.ID_END_OBJECT:
-                    endElement(XML_ELEMENT_MAP);
-                    break;
-                case JsonTokenId.ID_START_ARRAY:
-                    startElement(XML_ELEMENT_ARRAY, jp.getCurrentName());
-                    break;
-                case JsonTokenId.ID_END_ARRAY:
-                    endElement(XML_ELEMENT_ARRAY);
-                    break;
-                case JsonTokenId.ID_STRING:
-                    dataElement(XML_ELEMENT_STRING, jp.getCurrentName(), jp.getValueAsString());
-                    break;
-                case JsonTokenId.ID_NUMBER_INT:
-                    dataElement(XML_ELEMENT_NUMBER, jp.getCurrentName(), jp.getValueAsString());
-                    break;
-                case JsonTokenId.ID_NUMBER_FLOAT:
-                    dataElement(XML_ELEMENT_NUMBER, jp.getCurrentName(), jp.getValueAsString());
-                    break;
-                case JsonTokenId.ID_FALSE:
-                    dataElement(XML_ELEMENT_BOOLEAN, jp.getCurrentName(), jp.getValueAsString());
-                    break;
-                case JsonTokenId.ID_TRUE:
-                    dataElement(XML_ELEMENT_BOOLEAN, jp.getCurrentName(), jp.getValueAsString());
-                    break;
-                case JsonTokenId.ID_NULL:
-                    dataElement(XML_ELEMENT_NULL, jp.getCurrentName(), jp.getValueAsString());
-                    break;
+        try {
+            while (jp.nextToken() != null) {
+                switch (jp.getCurrentTokenId()) {
+                    case JsonTokenId.ID_START_OBJECT:
+                        startElement(XML_ELEMENT_MAP, jp.getCurrentName());
+                        break;
+                    case JsonTokenId.ID_END_OBJECT:
+                        endElement(XML_ELEMENT_MAP);
+                        break;
+                    case JsonTokenId.ID_START_ARRAY:
+                        startElement(XML_ELEMENT_ARRAY, jp.getCurrentName());
+                        break;
+                    case JsonTokenId.ID_END_ARRAY:
+                        endElement(XML_ELEMENT_ARRAY);
+                        break;
+                    case JsonTokenId.ID_STRING:
+                        dataElement(XML_ELEMENT_STRING, jp.getCurrentName(), jp.getValueAsString());
+                        break;
+                    case JsonTokenId.ID_NUMBER_INT:
+                        dataElement(XML_ELEMENT_NUMBER, jp.getCurrentName(), jp.getValueAsString());
+                        break;
+                    case JsonTokenId.ID_NUMBER_FLOAT:
+                        dataElement(XML_ELEMENT_NUMBER, jp.getCurrentName(), jp.getValueAsString());
+                        break;
+                    case JsonTokenId.ID_FALSE:
+                        dataElement(XML_ELEMENT_BOOLEAN, jp.getCurrentName(), jp.getValueAsString());
+                        break;
+                    case JsonTokenId.ID_TRUE:
+                        dataElement(XML_ELEMENT_BOOLEAN, jp.getCurrentName(), jp.getValueAsString());
+                        break;
+                    case JsonTokenId.ID_NULL:
+                        dataElement(XML_ELEMENT_NULL, jp.getCurrentName(), jp.getValueAsString());
+                        break;
+                }
             }
+        } catch (final JsonParseException e) {
+            final LocatorImpl locator = new LocatorImpl();
+            locator.setLineNumber(e.getLocation().getLineNr());
+            locator.setColumnNumber(e.getLocation().getColumnNr());
+            getErrorHandler().fatalError(new SAXParseException(e.getMessage(), locator));
+//            throw e;
+        } catch (final RuntimeException e) {
+            getErrorHandler().fatalError(new SAXParseException(e.getMessage(), null));
+//            throw e;
+        } finally {
+            reader.close();
+            endDocument();
         }
-
-        reader.close();
-
-        endDocument();
     }
 
     private void startDocument() throws SAXException {

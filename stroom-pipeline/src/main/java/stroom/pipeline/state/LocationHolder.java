@@ -56,8 +56,7 @@ public class LocationHolder implements Holder {
     private boolean isFragmentXml = false;
 
     @Inject
-    public LocationHolder(final MetaHolder metaHolder,
-                          final PipelineHolder pipelineHolder) {
+    public LocationHolder(final MetaHolder metaHolder) {
         this.metaHolder = metaHolder;
         reset();
     }

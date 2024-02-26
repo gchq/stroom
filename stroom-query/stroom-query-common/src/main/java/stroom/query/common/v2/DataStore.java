@@ -1,5 +1,6 @@
 package stroom.query.common.v2;
 
+import stroom.expression.api.DateTimeSettings;
 import stroom.query.api.v2.Column;
 import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.TimeFilter;
@@ -66,4 +67,6 @@ public interface DataStore extends ValuesConsumer {
     Serialisers getSerialisers();
 
     KeyFactory getKeyFactory();
+
+    DateTimeSettings getDateTimeSettings();
 }
