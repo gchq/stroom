@@ -3,6 +3,7 @@ package stroom.preferences.client;
 import stroom.expression.api.TimeZone;
 import stroom.expression.api.TimeZone.Use;
 import stroom.ui.config.shared.UserPreferences;
+import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.customdatebox.client.ClientDurationUtil;
 
 import javax.inject.Inject;
@@ -42,8 +43,8 @@ public class DateTimeFormatter {
 
         final UserPreferences userPreferences = userPreferencesManager.getCurrentUserPreferences();
         if (userPreferences != null) {
-            if (userPreferences.getDateTimePattern() != null
-                    && userPreferences.getDateTimePattern().trim().length() > 0) {
+            if (userPreferences.getDateTimePattern() != null &&
+                    userPreferences.getDateTimePattern().trim().length() > 0) {
                 pattern = userPreferences.getDateTimePattern();
                 pattern = convertJavaDateTimePattern(pattern);
 
@@ -66,6 +67,22 @@ public class DateTimeFormatter {
         }
 
         return nativeToDateString(ms, use.getDisplayValue(), pattern, zoneId, offsetMinutes);
+    }
+
+    public Long parse(final String dateTime) {
+        Long ms = ClientDateUtil.fromISOString(dateTime);
+        if (ms == null) {
+            String pattern = "YYYY-MM-DDTHH:mm:ss.SSS[Z]";
+            final UserPreferences userPreferences = userPreferencesManager.getCurrentUserPreferences();
+            if (userPreferences != null) {
+                if (userPreferences.getDateTimePattern() != null &&
+                        userPreferences.getDateTimePattern().trim().length() > 0) {
+                    pattern = userPreferences.getDateTimePattern();
+                }
+            }
+            ms = ClientDateUtil.parseWithJavaFormat(dateTime, pattern).orElse(null);
+        }
+        return ms;
     }
 
     String convertJavaDateTimePattern(final String pattern) {

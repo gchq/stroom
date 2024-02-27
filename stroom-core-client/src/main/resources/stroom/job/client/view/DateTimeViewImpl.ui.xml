@@ -1,0 +1,36 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:valuespinner="urn:import:stroom.widget.valuespinner.client"
+             xmlns:l="urn:import:stroom.item.client"
+             xmlns:date="urn:import:stroom.widget.datepicker.client">
+    <g:FlowPanel styleName="max dock-container-horizontal">
+        <g:FlowPanel styleName="DateTimeView-left dock-min">
+            <form:FormLabel identity="dateHeading" label="Date" addStyleNames="DateTimeView-heading"/>
+            <g:Label ui:field="date" addStyleNames="DateTimeView-date"/>
+            <form:FormGroup identity="date" label="Select date" addStyleNames="dock-min">
+                <date:CustomDatePicker ui:field="datePicker"/>
+            </form:FormGroup>
+        </g:FlowPanel>
+        <g:FlowPanel styleName="DateTimeView-right dock-max">
+            <form:FormLabel identity="timeHeading" label="Time" addStyleNames="DateTimeView-heading"/>
+            <g:Label ui:field="time" addStyleNames="DateTimeView-time"/>
+            <form:FormGroup identity="hour" label="Hour" addStyleNames="dock-min">
+                <valuespinner:ValueSpinner ui:field="hour" width="80px"/>
+            </form:FormGroup>
+            <form:FormGroup identity="minute" label="Minute" addStyleNames="dock-min">
+                <valuespinner:ValueSpinner ui:field="minute" width="80px"/>
+            </form:FormGroup>
+            <form:FormGroup identity="second" label="Second" addStyleNames="dock-min">
+                <valuespinner:ValueSpinner ui:field="second" width="80px"/>
+            </form:FormGroup>
+            <form:FormGroup identity="millisecond" label="Millisecond" addStyleNames="dock-min">
+                <valuespinner:ValueSpinner ui:field="millisecond" width="80px"/>
+            </form:FormGroup>
+            <form:FormGroup identity="timeZone" label="Time Zone" addStyleNames="dock-min">
+                <l:SelectionBox ui:field="timeZone"/>
+            </form:FormGroup>
+        </g:FlowPanel>
+    </g:FlowPanel>
+</ui:UiBinder>

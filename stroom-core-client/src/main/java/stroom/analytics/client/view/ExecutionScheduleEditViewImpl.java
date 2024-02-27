@@ -18,10 +18,9 @@ package stroom.analytics.client.view;
 
 import stroom.analytics.client.presenter.ExecutionScheduleEditView;
 import stroom.analytics.client.presenter.ProcessingStatusUiHandlers;
-import stroom.analytics.shared.ScheduleBounds;
 import stroom.item.client.SelectionBox;
+import stroom.job.client.presenter.DateTimeBox;
 import stroom.job.client.presenter.ScheduleBox;
-import stroom.widget.customdatebox.client.MyDateBox;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -50,9 +49,9 @@ public class ExecutionScheduleEditViewImpl
     @UiField
     ScheduleBox schedule;
     @UiField
-    MyDateBox startTime;
+    DateTimeBox startTime;
     @UiField
-    MyDateBox endTime;
+    DateTimeBox endTime;
 
     private String selectedNode;
 
@@ -125,19 +124,13 @@ public class ExecutionScheduleEditViewImpl
     }
 
     @Override
-    public ScheduleBounds getScheduleBounds() {
-        return new ScheduleBounds(startTime.getMilliseconds(), endTime.getMilliseconds());
+    public DateTimeBox getStartTime() {
+        return startTime;
     }
 
     @Override
-    public void setScheduleBounds(final ScheduleBounds scheduleBounds) {
-        if (scheduleBounds == null) {
-            startTime.setValue(null);
-            endTime.setValue(null);
-        } else {
-            startTime.setMilliseconds(scheduleBounds.getStartTimeMs());
-            endTime.setMilliseconds(scheduleBounds.getEndTimeMs());
-        }
+    public DateTimeBox getEndTime() {
+        return endTime;
     }
 
     @UiHandler("name")

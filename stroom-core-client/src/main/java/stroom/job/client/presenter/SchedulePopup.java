@@ -42,8 +42,8 @@ import com.gwtplatform.mvp.client.View;
 
 import java.util.function.Consumer;
 
-public class SchedulePresenter
-        extends MyPresenterWidget<SchedulePresenter.ScheduleView>
+public class SchedulePopup
+        extends MyPresenterWidget<SchedulePopup.ScheduleView>
         implements ScheduleUiHandlers {
 
     private final ScheduledTimeClient scheduledTimeClient;
@@ -60,10 +60,10 @@ public class SchedulePresenter
 
 
     @Inject
-    public SchedulePresenter(final EventBus eventBus,
-                             final ScheduleView view,
-                             final ScheduledTimeClient scheduledTimeClient,
-                             final DateTimeFormatter dateTimeFormatter) {
+    public SchedulePopup(final EventBus eventBus,
+                         final ScheduleView view,
+                         final ScheduledTimeClient scheduledTimeClient,
+                         final DateTimeFormatter dateTimeFormatter) {
         super(eventBus, view);
         this.scheduledTimeClient = scheduledTimeClient;
         this.dateTimeFormatter = dateTimeFormatter;

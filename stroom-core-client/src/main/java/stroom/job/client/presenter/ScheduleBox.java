@@ -25,14 +25,14 @@ public class ScheduleBox
         extends Composite
         implements Focus, HasValueChangeHandlers<Schedule> {
 
-    private Provider<SchedulePresenter> schedulePresenterProvider;
+    private Provider<SchedulePopup> schedulePresenterProvider;
     private final TextBox textBox;
     private final SvgIconBox svgIconBox;
     private Schedule value = Schedule
             .builder()
             .type(ScheduleType.CRON)
             .build();
-    private SchedulePresenter popup;
+    private SchedulePopup popup;
     private ScheduleRestriction scheduleRestriction = new ScheduleRestriction(false, true, true);
 
     private Consumer<Consumer<ScheduleReferenceTime>> scheduleReferenceTimeConsumer = (consumer) ->
@@ -61,7 +61,7 @@ public class ScheduleBox
 
     public void validate(final Consumer<ScheduledTimes> consumer) {
         final Schedule schedule = value.copy().expression(textBox.getValue()).build();
-        final SchedulePresenter popup = getSchedulePresenter();
+        final SchedulePopup popup = getSchedulePresenter();
         if (popup != null) {
             schedulePresenterProvider.get().validate(schedule, scheduleRestriction, scheduledTimes -> {
                 if (scheduledTimes.isError()) {
@@ -102,12 +102,12 @@ public class ScheduleBox
         eventBinder.unbind();
     }
 
-    public void setSchedulePresenterProvider(final Provider<SchedulePresenter> schedulePresenterProvider) {
+    public void setSchedulePresenterProvider(final Provider<SchedulePopup> schedulePresenterProvider) {
         this.schedulePresenterProvider = schedulePresenterProvider;
     }
 
     private void showPopup() {
-        final SchedulePresenter popup = getSchedulePresenter();
+        final SchedulePopup popup = getSchedulePresenter();
         if (popup != null) {
             value = value.copy().expression(textBox.getValue()).build();
             popup.validate(value,
@@ -127,7 +127,7 @@ public class ScheduleBox
         }
     }
 
-    private SchedulePresenter getSchedulePresenter() {
+    private SchedulePopup getSchedulePresenter() {
         if (popup == null && schedulePresenterProvider != null) {
             popup = schedulePresenterProvider.get();
         }

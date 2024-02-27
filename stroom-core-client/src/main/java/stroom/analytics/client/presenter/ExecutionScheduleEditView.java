@@ -1,6 +1,6 @@
 package stroom.analytics.client.presenter;
 
-import stroom.analytics.shared.ScheduleBounds;
+import stroom.job.client.presenter.DateTimeBox;
 import stroom.job.client.presenter.ScheduleBox;
 
 import com.google.gwt.user.client.ui.Focus;
@@ -29,7 +29,7 @@ public interface ExecutionScheduleEditView extends View,
 
     ScheduleBox getScheduleBox();
 
-    ScheduleBounds getScheduleBounds();
+    DateTimeBox getStartTime();
 
-    void setScheduleBounds(ScheduleBounds scheduleBounds);
+    DateTimeBox getEndTime();
 }

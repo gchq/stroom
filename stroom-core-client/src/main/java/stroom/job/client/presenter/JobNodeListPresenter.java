@@ -70,7 +70,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
 
     private final RestFactory restFactory;
     private final DateTimeFormatter dateTimeFormatter;
-    private final SchedulePresenter schedulePresenter;
+    private final SchedulePopup schedulePresenter;
     private final UiConfigCache clientPropertyCache;
 
     private final RestDataProvider<JobNode, ResultPage<JobNode>> dataProvider;
@@ -86,7 +86,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
                                 final PagerView view,
                                 final RestFactory restFactory,
                                 final DateTimeFormatter dateTimeFormatter,
-                                final SchedulePresenter schedulePresenter,
+                                final SchedulePopup schedulePresenter,
                                 final UiConfigCache clientPropertyCache) {
         super(eventBus, view);
         this.restFactory = restFactory;

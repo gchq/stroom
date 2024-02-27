@@ -17,7 +17,7 @@
 package stroom.job.client.view;
 
 import stroom.item.client.SelectionBox;
-import stroom.job.client.presenter.SchedulePresenter.ScheduleView;
+import stroom.job.client.presenter.SchedulePopup.ScheduleView;
 import stroom.job.client.presenter.ScheduleUiHandlers;
 import stroom.query.api.v2.CronExpression;
 import stroom.query.api.v2.CronExpressions;

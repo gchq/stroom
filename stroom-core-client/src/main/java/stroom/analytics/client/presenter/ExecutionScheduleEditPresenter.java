@@ -10,7 +10,8 @@ import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
-import stroom.job.client.presenter.SchedulePresenter;
+import stroom.job.client.presenter.DateTimePopup;
+import stroom.job.client.presenter.SchedulePopup;
 import stroom.job.shared.ScheduleReferenceTime;
 import stroom.job.shared.ScheduleRestriction;
 import stroom.node.client.NodeManager;
@@ -43,38 +44,38 @@ public class ExecutionScheduleEditPresenter
                                           final ExecutionScheduleEditView view,
                                           final EntityDropDownPresenter errorFeedPresenter,
                                           final NodeManager nodeManager,
-                                          final Provider<SchedulePresenter> schedulePresenterProvider,
+                                          final Provider<SchedulePopup> schedulePresenterProvider,
+                                          final Provider<DateTimePopup> dateTimePopupProvider,
                                           final RestFactory restFactory) {
         super(eventBus, view);
         view.setUiHandlers(this);
+        view.getStartTime().setPopupProvider(dateTimePopupProvider);
+        view.getEndTime().setPopupProvider(dateTimePopupProvider);
         this.errorFeedPresenter = errorFeedPresenter;
 
         view.getScheduleBox().setSchedulePresenterProvider(schedulePresenterProvider);
         view.getScheduleBox().setScheduleRestriction(new ScheduleRestriction(false, false, true));
-        view.getScheduleBox().setScheduleReferenceTimeConsumer(scheduleReferenceTimeConsumer -> {
-            final ScheduleBounds scheduleBounds = getView().getScheduleBounds();
-            restFactory
-                    .builder()
-                    .forType(ExecutionTracker.class)
-                    .onSuccess(tracker -> {
-                        Long lastExecuted = null;
-                        if (tracker != null) {
-                            lastExecuted = tracker.getLastEffectiveExecutionTimeMs();
-                        }
-                        Long referenceTime = lastExecuted;
-                        if (referenceTime == null && scheduleBounds != null) {
-                            referenceTime = scheduleBounds.getStartTimeMs();
-                        }
-                        if (referenceTime == null) {
-                            referenceTime = System.currentTimeMillis();
-                        }
+        view.getScheduleBox().setScheduleReferenceTimeConsumer(scheduleReferenceTimeConsumer -> restFactory
+                .builder()
+                .forType(ExecutionTracker.class)
+                .onSuccess(tracker -> {
+                    Long lastExecuted = null;
+                    if (tracker != null) {
+                        lastExecuted = tracker.getLastEffectiveExecutionTimeMs();
+                    }
+                    Long referenceTime = lastExecuted;
+                    if (referenceTime == null) {
+                        referenceTime = getView().getStartTime().getLongValue();
+                    }
+                    if (referenceTime == null) {
+                        referenceTime = System.currentTimeMillis();
+                    }
 
-                        scheduleReferenceTimeConsumer.accept(new ScheduleReferenceTime(referenceTime, lastExecuted));
-                    })
-                    .call(EXECUTION_SCHEDULE_RESOURCE)
-                    .fetchTracker(executionSchedule);
-
-        });
+                    scheduleReferenceTimeConsumer.accept(new ScheduleReferenceTime(referenceTime,
+                            lastExecuted));
+                })
+                .call(EXECUTION_SCHEDULE_RESOURCE)
+                .fetchTracker(executionSchedule));
 
         nodeManager.listAllNodes(
                 list -> {
@@ -129,7 +130,7 @@ public class ExecutionScheduleEditPresenter
         getView().setName(executionSchedule.getName());
         getView().setEnabled(executionSchedule.isEnabled());
         getView().setNode(executionSchedule.getNodeName());
-        getView().setScheduleBounds(executionSchedule.getScheduleBounds());
+        setScheduleBounds(executionSchedule.getScheduleBounds());
         getView().getScheduleBox().setValue(executionSchedule.getSchedule());
     }
 
@@ -138,16 +139,25 @@ public class ExecutionScheduleEditPresenter
             if (scheduledTimes.isError()) {
                 AlertEvent.fireWarn(this, scheduledTimes.getError(), null);
             } else {
-                final ExecutionSchedule schedule = executionSchedule
-                        .copy()
-                        .name(getView().getName())
-                        .enabled(getView().isEnabled())
-                        .nodeName(getView().getNode())
-                        .schedule(scheduledTimes.getSchedule())
-                        .contiguous(true)
-                        .scheduleBounds(getView().getScheduleBounds())
-                        .build();
-                consumer.accept(schedule);
+                if (!getView().getStartTime().isValid()) {
+                    AlertEvent.fireWarn(this, "Invalid start time", null);
+                } else if (!getView().getEndTime().isValid()) {
+                    AlertEvent.fireWarn(this, "Invalid end time", null);
+                } else {
+                    final ScheduleBounds scheduleBounds = new ScheduleBounds(
+                            getView().getStartTime().getLongValue(),
+                            getView().getEndTime().getLongValue());
+                    final ExecutionSchedule schedule = executionSchedule
+                            .copy()
+                            .name(getView().getName())
+                            .enabled(getView().isEnabled())
+                            .nodeName(getView().getNode())
+                            .schedule(scheduledTimes.getSchedule())
+                            .contiguous(true)
+                            .scheduleBounds(scheduleBounds)
+                            .build();
+                    consumer.accept(schedule);
+                }
             }
         });
     }
@@ -164,5 +174,15 @@ public class ExecutionScheduleEditPresenter
     @Override
     public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
         return addHandlerToSource(DirtyEvent.getType(), handler);
+    }
+
+    private void setScheduleBounds(final ScheduleBounds scheduleBounds) {
+        if (scheduleBounds == null) {
+            getView().getStartTime().setLongValue(null);
+            getView().getEndTime().setLongValue(null);
+        } else {
+            getView().getStartTime().setLongValue(scheduleBounds.getStartTimeMs());
+            getView().getEndTime().setLongValue(scheduleBounds.getEndTimeMs());
+        }
     }
 }
