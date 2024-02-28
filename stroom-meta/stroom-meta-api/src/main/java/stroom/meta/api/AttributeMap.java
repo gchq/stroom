@@ -1,7 +1,9 @@
 package stroom.meta.api;
 
 import stroom.util.NullSafe;
+import stroom.util.date.DateUtil;
 
+import java.time.Instant;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
@@ -40,6 +42,55 @@ public class AttributeMap extends CIStringHashMap {
         putAll(builder.attributes);
     }
 
+    @Override
+    public String put(final String key, final String value) {
+        if (key != null && StandardHeaderArguments.DATE_HEADER_KEYS.contains(key)) {
+            final String normalisedValue = DateUtil.normaliseDate(value, true);
+            return super.put(key, normalisedValue);
+        } else {
+            return super.put(key, value);
+        }
+    }
+
+    /**
+     * Puts the current date time into the map in Stroom standard ISO 8601 format,
+     * e.g. {@link DateUtil#createNormalDateTimeString()} using the specified key.
+     *
+     * @return The previous value for the key.
+     */
+    public String putCurrentDateTime(final String key) {
+        // Already normalised, so use super.put not the local one
+        return super.put(key, DateUtil.createNormalDateTimeString());
+    }
+
+    /**
+     * Puts the specified date time (as epoch millis) into the map in Stroom standard ISO 8601 format,
+     * e.g. {@link DateUtil#createNormalDateTimeString()} using the specified key.
+     *
+     * @return The previous value for the key.
+     */
+    public String putDateTime(final String key, final Long epochMs) {
+        final String dateStr = DateUtil.createNormalDateTimeString(epochMs);
+        // Already normalised, so use super.put not the local one
+        return super.put(key, dateStr);
+    }
+
+    /**
+     * Puts the specified {@link Instant} into the map in Stroom standard ISO 8601 format,
+     * e.g. {@link DateUtil#createNormalDateTimeString()} using the specified key.
+     *
+     * @return The previous value for the key.
+     */
+    public String putDateTime(final String key, final Instant instant) {
+        if (instant == null) {
+            return super.put(key, null);
+        } else {
+            final String dateStr = DateUtil.createNormalDateTimeString(instant.toEpochMilli());
+            // Already normalised, so use super.put not the local one
+            return super.put(key, dateStr);
+        }
+    }
+
     /**
      * Put an entry where the value is itself a collection of values, e.g. a list of files
      */
@@ -69,7 +120,6 @@ public class AttributeMap extends CIStringHashMap {
                     .toList();
         }
     }
-
 
     public static Builder copy(final AttributeMap copy) {
         final Builder builder = new Builder();

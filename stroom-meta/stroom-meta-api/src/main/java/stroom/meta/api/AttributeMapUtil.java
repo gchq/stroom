@@ -18,7 +18,6 @@ package stroom.meta.api;
 
 import stroom.util.NullSafe;
 import stroom.util.cert.CertificateExtractor;
-import stroom.util.date.DateUtil;
 import stroom.util.io.StreamUtil;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -36,6 +35,7 @@ import java.io.Writer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.security.cert.X509Certificate;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
@@ -232,8 +232,8 @@ public class AttributeMapUtil {
             }
 
             if (cert.getNotAfter() != null) {
-                final String remoteCertExpiry = DateUtil.createNormalDateTimeString(cert.getNotAfter().getTime());
-                attributeMap.put(StandardHeaderArguments.REMOTE_CERT_EXPIRY, remoteCertExpiry);
+                final long timeEpochMs = cert.getNotAfter().getTime();
+                attributeMap.putDateTime(StandardHeaderArguments.REMOTE_CERT_EXPIRY, timeEpochMs);
             } else {
                 LOGGER.debug("Cert {} doesn't have a Not After date", cert);
             }
@@ -276,10 +276,10 @@ public class AttributeMapUtil {
         if (CERT_EXPIRY_HEADER_TOKEN.equals(headerToken)) {
             try {
                 final LocalDateTime localDateTime = LocalDateTime.parse(headerValue, CERT_EXPIRY_DATE_FORMATTER);
-                final String newHeaderValue = DateUtil.createNormalDateTimeString(
-                        localDateTime.toInstant(ZoneOffset.UTC).toEpochMilli());
-                LOGGER.debug("Converting certificate expiry date from [{}] to [{}]", headerValue, newHeaderValue);
-                attributeMap.put(StandardHeaderArguments.REMOTE_CERT_EXPIRY, newHeaderValue);
+                final Instant instant = localDateTime.toInstant(ZoneOffset.UTC);
+                LOGGER.debug("Converting certificate expiry date from [{}] to [{}]", headerValue, instant);
+                attributeMap.putDateTime(StandardHeaderArguments.REMOTE_CERT_EXPIRY, instant);
+
             } catch (Exception e) {
                 LOGGER.error("Unable to create header {} from header {} with value [{}].",
                         StandardHeaderArguments.REMOTE_CERT_EXPIRY, CERT_EXPIRY_HEADER_TOKEN, headerValue, e);

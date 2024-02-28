@@ -27,7 +27,6 @@ import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskProgressHandler;
 import stroom.util.EntityServiceExceptionUtil;
-import stroom.util.date.DateUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.EntityServiceException;
 
@@ -103,14 +102,12 @@ public class DataUploadTaskHandler {
             }
 
             if (effectiveMs != null) {
-                attributeMap.put(StandardHeaderArguments.EFFECTIVE_TIME,
-                        DateUtil.createNormalDateTimeString(effectiveMs));
+                attributeMap.putDateTime(StandardHeaderArguments.EFFECTIVE_TIME, effectiveMs);
             }
             attributeMap.put(StandardHeaderArguments.REMOTE_FILE, fileName);
             attributeMap.put(StandardHeaderArguments.FEED, feedName);
             attributeMap.put(StandardHeaderArguments.TYPE, typeName);
-            attributeMap.put(StandardHeaderArguments.RECEIVED_TIME,
-                    DateUtil.createNormalDateTimeString(System.currentTimeMillis()));
+            attributeMap.putCurrentDateTime(StandardHeaderArguments.RECEIVED_TIME);
             attributeMap.put(StandardHeaderArguments.USER_AGENT, "STROOM-UI");
             attributeMap.put("UploadedBy", securityContext.getUserIdentityForAudit());
 
