@@ -262,6 +262,10 @@ ext.libs = [
         junit_platform_launcher             : "org.junit.platform:junit-platform-launcher", // version controlled by junit-bom
         kafka_clients                       : "org.apache.kafka:kafka-clients:$versions.kafka", // version controlled by junit-bom
         kryo                                : "com.esotericsoftware:kryo:5.5.0",
+        // lmdbjava 0.8.3 causes FFI errors on centos7 due to glibc version
+        // See https://github.com/gchq/stroom/issues/3485 & https://github.com/gchq/stroom/issues/4133
+        // Potentially caused by https://github.com/jnr/jffi/issues/138 and fixable with a jnr-ffi uplift in lmdbjava
+        // lmdbjava 0.9.0 has a cursor bug though, https://github.com/lmdbjava/lmdbjava/issues/228
         lmdbjava                            : "org.lmdbjava:lmdbjava:0.8.2",
         log4j_over_slf4j                    : "org.slf4j:log4j-over-slf4j", // version controlled by dropwizard-dependencies
         logback_classic                     : "ch.qos.logback:logback-classic", // version controlled by dropwizard-dependencies
