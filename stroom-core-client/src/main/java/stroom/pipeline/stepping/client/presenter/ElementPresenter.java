@@ -34,6 +34,7 @@ import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.pipeline.shared.stepping.FindElementDocRequest;
+import stroom.pipeline.shared.stepping.StepType;
 import stroom.pipeline.shared.stepping.SteppingResource;
 import stroom.pipeline.stepping.client.presenter.ElementPresenter.ElementView;
 import stroom.util.shared.ErrorType;
@@ -48,6 +49,8 @@ import stroom.widget.util.client.FutureImpl;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -60,6 +63,7 @@ import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -97,6 +101,7 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements
     private ClassificationWrapperView inputView;
     private ClassificationWrapperView outputView;
     private View logView;
+    private Consumer<StepType> stepRequestHandler = null;
 
     @Inject
     public ElementPresenter(final EventBus eventBus,
@@ -307,6 +312,17 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements
             codePresenter.getLiveAutoCompletionOption().setOff();
 
             codePresenter.setMode(getMode(element));
+
+
+            registerHandler(codePresenter.getView().asWidget().addDomHandler(e -> {
+                if (KeyCodes.KEY_ENTER == e.getNativeKeyCode() &&
+                        (e.isShiftKeyDown() || e.isControlKeyDown())) {
+                    e.preventDefault();
+                    if (stepRequestHandler != null) {
+                        stepRequestHandler.accept(StepType.REFRESH);
+                    }
+                }
+            }, KeyDownEvent.getType()));
         }
     }
 
@@ -609,6 +625,10 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements
         editorPresenter.getShowInvisiblesOption().setOff();
 
         editorPresenter.getUseVimBindingsOption().setAvailable();
+    }
+
+    public void setStepRequestHandler(final Consumer<StepType> onStepRefreshRequest) {
+        this.stepRequestHandler = onStepRefreshRequest;
     }
 
 

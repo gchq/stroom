@@ -61,6 +61,10 @@ public class KeyboardInterceptor {
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface KeyTest {
 
         boolean match(NativeEvent event);
