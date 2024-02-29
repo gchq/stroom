@@ -32,6 +32,7 @@ public class GwtNullSafe {
 
     /**
      * Allows you to safely compare a child property of val1 to other.
+     *
      * @return False if val1 is null else whether the child property of val1 is equal to other
      */
     public static <T1, T2> boolean equals(final T1 val1,
@@ -47,6 +48,7 @@ public class GwtNullSafe {
 
     /**
      * Allows you to safely compare a grandchild property of val1 to other.
+     *
      * @return False if val1 is null or if val1's child property is null,
      * else whether the grandchild property of val1 is equal to other
      */
@@ -162,6 +164,34 @@ public class GwtNullSafe {
     }
 
     /**
+     * @return str if it is not null/empty/blank, else other.
+     */
+    public static String nonBlankStringElse(final String str, final String other) {
+        return isBlankString(str)
+                ? Objects.requireNonNull(other)
+                : str;
+    }
+
+    /**
+     * @return str if it is not null/empty/blank, else result of calling otherSupplier.
+     */
+    public static String nonBlankStringElseGet(final String str, final Supplier<String> otherSupplier) {
+        return isBlankString(str)
+                ? Objects.requireNonNull(Objects.requireNonNull(otherSupplier).get())
+                : str;
+    }
+
+    /**
+     * If str is not null/empty/blank then pass it to consumer (if that is not null).
+     */
+    public static void consumeNonBlankString(final String str, final Consumer<String> consumer) {
+        // GWT doesn't emulate String::isBlank
+        if (!isBlankString(str) && consumer != null) {
+            consumer.accept(str);
+        }
+    }
+
+    /**
      * @return True if str is null or empty
      */
     public static boolean isEmptyString(final String str) {
@@ -228,7 +258,7 @@ public class GwtNullSafe {
     }
 
     /**
-     * @return True if value is null or the string property is null or empty
+     * @return True if value is null or the string property is null/empty/blank
      */
     public static <T> boolean isBlankString(final T value,
                                             final Function<T, String> stringGetter) {
@@ -237,6 +267,22 @@ public class GwtNullSafe {
         } else {
             final String str = Objects.requireNonNull(stringGetter).apply(value);
             return str == null || isBlankString(str);
+        }
+    }
+
+    /**
+     * If str is not null/empty/blank then pass it to consumer (if that is not null).
+     */
+    public static <T> void consumeNonBlankString(final T value,
+                                                 final Function<T, String> stringGetter,
+                                                 final Consumer<String> consumer) {
+        // GWT doesn't emulate String::isBlank
+        if (value != null && stringGetter != null && consumer != null) {
+            final String str = stringGetter.apply(value);
+
+            if (!isBlankString(str)) {
+                Objects.requireNonNull(consumer).accept(str);
+            }
         }
     }
 
@@ -373,6 +419,7 @@ public class GwtNullSafe {
     /**
      * Returns the passed array of items or varargs items as a non-null list.
      * Does not support null items in the list.
+     *
      * @return A non-null list of items. List should be assumed to be immutable.
      */
     public static <T> List<T> asList(final T... items) {
@@ -384,6 +431,7 @@ public class GwtNullSafe {
     /**
      * Returns the passed array of items or varargs items as a non-null set.
      * Does not support null items in the array.
+     *
      * @return A non-null unmodifiable set of items.
      */
     public static <T> Set<T> asSet(final T... items) {
@@ -971,7 +1019,9 @@ public class GwtNullSafe {
      * GWT currently doesn't emulate requireNonNullElse
      */
     public static <T> T requireNonNullElse(T obj, T other) {
-        return (obj != null) ? obj : Objects.requireNonNull(other, "other");
+        return (obj != null)
+                ? obj
+                : Objects.requireNonNull(other, "other");
     }
 
     /**
