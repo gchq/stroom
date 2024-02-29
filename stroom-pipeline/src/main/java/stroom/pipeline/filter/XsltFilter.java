@@ -399,6 +399,10 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
             msg = NullSafe.getOrElse(content, XdmNode::getStringValue, "");
         }
 
+        if (NullSafe.isEmptyString(msg)) {
+            msg = "NO MESSAGE";
+        }
+
         errorReceiverProxy.log(
                 severity,
                 locationFactory.create(locator),
