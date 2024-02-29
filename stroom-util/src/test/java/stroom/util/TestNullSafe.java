@@ -988,8 +988,10 @@ class TestNullSafe {
                     return Tuple.of(counter.get(), newList);
                 })
                 .withSimpleEqualityAssertion()
+                .withBeforeTestCaseAction(() -> counter.set(0))
                 .addCase(null, Tuple.of(0, Collections.emptyList()))
                 .addCase(new String[0], Tuple.of(0, Collections.emptyList()))
+                .addCase(new String[]{"foo"}, Tuple.of(1, List.of("foo")))
                 .addCase(new String[]{"foo", "bar"}, Tuple.of(2, List.of("foo", "bar")))
                 .build();
     }

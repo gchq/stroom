@@ -153,12 +153,12 @@ class TestAttributeMap {
                         /some/path/file1
                         /some/path/file2
                         /some/path/file3""");
-        assertThat(attributeMap.getAsCollection("files"))
+        assertThat(attributeMap.getAsList("files"))
                 .containsExactly(
                         "/some/path/file1",
                         "/some/path/file2",
                         "/some/path/file3");
-        assertThat(attributeMap.getAsCollection("foo"))
+        assertThat(attributeMap.getAsList("foo"))
                 .containsExactly("123");
     }
 
