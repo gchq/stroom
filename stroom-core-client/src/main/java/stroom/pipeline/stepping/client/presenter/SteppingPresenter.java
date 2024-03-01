@@ -367,6 +367,13 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
                 elementPresenterMap.put(elementId, presenter);
                 presenter.addDirtyHandler(dirtyEditorHandler);
 
+                // Allow step refresh to be called from the editor
+                presenter.setStepRequestHandler(stepType -> {
+                    if (stepControlPresenter.isEnabled(stepType)) {
+                        stepControlPresenter.step(stepType);
+                    }
+                });
+
                 elementPresenter = presenter;
             }
             currentElementPresenter = elementPresenter;
