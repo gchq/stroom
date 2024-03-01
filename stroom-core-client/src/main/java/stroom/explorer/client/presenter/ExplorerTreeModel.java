@@ -60,6 +60,7 @@ public class ExplorerTreeModel {
 
     private Integer minDepth = 1;
     private Set<ExplorerNodeKey> ensureVisible;
+    private ExplorerNode forceSelection;
     private boolean showAlerts = false;
 
     private FetchExplorerNodesRequest currentCriteria;
@@ -117,9 +118,13 @@ public class ExplorerTreeModel {
         explorerTreeFilterBuilder.setRequiredPermissions(requiredPermissions);
     }
 
+    public void setForceSelection(final ExplorerNode forceSelection) {
+        this.forceSelection = forceSelection;
+    }
+
     public void setEnsureVisible(final Set<ExplorerNode> ensureVisible) {
         this.ensureVisible = null;
-        if (ensureVisible != null) {
+        if (ensureVisible != null && ensureVisible.size() > 0) {
             this.ensureVisible = new HashSet<>();
             for (ExplorerNode node : ensureVisible) {
                 if (node != null && node.getUniqueKey() != null) {
@@ -131,7 +136,7 @@ public class ExplorerTreeModel {
 
     public void setEnsureVisible(final ExplorerNode... ensureVisible) {
         this.ensureVisible = null;
-        if (ensureVisible != null) {
+        if (ensureVisible != null && ensureVisible.length > 0) {
             this.ensureVisible = new HashSet<>();
             for (ExplorerNode node : ensureVisible) {
                 if (node != null && node.getUniqueKey() != null) {
@@ -230,9 +235,11 @@ public class ExplorerTreeModel {
             // Try and find the item we have asked to make visible first and if we can't find
             // that try and select one of the folders that has been forced open in an attempt to
             // make the requested item visible.
-            if (criteria.getEnsureVisible() != null && criteria.getEnsureVisible().size() > 0) {
+            ExplorerNode nextSelection = forceSelection;
+            if (nextSelection == null &&
+                    criteria.getEnsureVisible() != null &&
+                    criteria.getEnsureVisible().size() > 0) {
                 final ExplorerNodeKey uniqueKey = criteria.getEnsureVisible().iterator().next();
-                ExplorerNode nextSelection = null;
                 if (uniqueKey != null) {
                     nextSelection = ExplorerNode.builder()
                             .type(uniqueKey.getType())
@@ -269,10 +276,9 @@ public class ExplorerTreeModel {
                     // that we get the latest version with any new name it might have.
                     nextSelection = rows.get(index);
                 }
-
-                if (nextSelection != null) {
-                    explorerTree.setInitialSelectedItem(nextSelection);
-                }
+            }
+            if (nextSelection != null) {
+                explorerTree.setInitialSelectedItem(nextSelection);
             }
 
             // We do not want the root to always be forced open.
@@ -283,6 +289,7 @@ public class ExplorerTreeModel {
             // ensure visibility of. We can forget them now as we have a result that should have
             // opened required folders to make them visible.
             ensureVisible = null;
+            forceSelection = null;
 
             // We aren't loading any more.
             loading.setVisible(false);
