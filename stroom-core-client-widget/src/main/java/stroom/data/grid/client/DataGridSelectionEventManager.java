@@ -117,16 +117,18 @@ public class DataGridSelectionEventManager<T>
             }
 
             if (!consumed) {
-                // We set focus here so that we can use the keyboard to navigate once we have focus.
-                dataGrid.setFocus(true);
-
-                GwtNullSafe.consume(event.getValue(), value -> {
+                int index = -1;
+                if (event.getValue() != null) {
                     final List<T> rows = dataGrid.getVisibleItems();
-                    final int index = rows.indexOf(value);
-                    if (index != -1) {
-                        dataGrid.setKeyboardSelectedRow(index);
-                    }
-                });
+                    index = rows.indexOf(event.getValue());
+                }
+                if (index == -1) {
+                    index = dataGrid.getKeyboardSelectedRow();
+                }
+                if (index != -1) {
+                    // We set focus here so that we can use the keyboard to navigate once we have focus.
+                    dataGrid.setKeyboardSelectedRow(index, true);
+                }
 
                 GwtNullSafe.consume(event.getValue(), row -> {
                     final boolean doubleClick = doubleClickTest.test(row);
