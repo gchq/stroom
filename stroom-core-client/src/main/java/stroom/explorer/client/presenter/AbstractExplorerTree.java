@@ -217,7 +217,7 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
             selection = ExplorerTreeModel.NULL_SELECTION;
         }
 
-        doSelect(selection, new SelectionType(false, false));
+        doSelect(selection, new SelectionType());
     }
 
     void doSelect(final ExplorerNode row, final SelectionType selectionType) {

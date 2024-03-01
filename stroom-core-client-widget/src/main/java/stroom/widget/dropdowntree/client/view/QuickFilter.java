@@ -172,11 +172,13 @@ public class QuickFilter extends FlowPanel
         return textBox.addDomHandler(handler, KeyDownEvent.getType());
     }
 
+    public void forceFocus() {
+        FocusUtil.forceFocus(this::focus);
+    }
+
     public void focus() {
-        FocusUtil.forceFocus(() -> {
-            textBox.selectAll();
-            textBox.setFocus(true);
-        });
+        textBox.selectAll();
+        textBox.setFocus(true);
     }
 
     @Override

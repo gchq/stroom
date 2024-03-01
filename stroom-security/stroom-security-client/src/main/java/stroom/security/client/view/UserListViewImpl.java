@@ -60,7 +60,7 @@ public class UserListViewImpl extends ViewWithUiHandlers<UserListUiHandlers> imp
 
     @Override
     public void focus() {
-        nameFilter.focus();
+        nameFilter.forceFocus();
     }
 
     @Override
