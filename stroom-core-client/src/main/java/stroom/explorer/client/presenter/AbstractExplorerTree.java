@@ -205,8 +205,9 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
                 final int index = getItemIndex(selected);
                 if (index > 0) {
                     final TableRowElement tableRowElement = cellTable.getRowElement(index);
-                    tableRowElement.scrollIntoView();
-                    scrollPanel.scrollToLeft();
+                    ElementUtil.scrollIntoViewNearest(tableRowElement);
+//                    tableRowElement.scrollIntoView();
+//                    scrollPanel.scrollToLeft();
                 }
             }
         }

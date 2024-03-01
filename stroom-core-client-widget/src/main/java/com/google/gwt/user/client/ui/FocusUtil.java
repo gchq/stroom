@@ -26,7 +26,7 @@ public class FocusUtil {
             tr = tr.getParentElement();
         }
         if (tr != null) {
-            ElementUtil.scrollIntoViewVertical(tr);
+            ElementUtil.scrollIntoViewNearest(tr);
         }
 
         ElementUtil.focus(elem, false, true);
