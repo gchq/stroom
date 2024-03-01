@@ -156,4 +156,20 @@ public class ElementUtil {
     public static native double getSubPixelScrollWidth(Element el) /*-{
         return el.scrollWidth || 0;
     }-*/;
+
+    public static native void focus(Element el) /*-{
+        el.focus();
+    }-*/;
+
+    public static native void focus(Element el, boolean focusVisible, boolean preventScroll) /*-{
+        el.focus({ focusVisible: focusVisible, preventScroll: preventScroll });
+    }-*/;
+
+    public static native void scrollIntoView(Element el, boolean alignToTop) /*-{
+        el.scrollIntoView(alignToTop);
+    }-*/;
+
+    public static native void scrollIntoViewNearest(Element el) /*-{
+        el.scrollIntoView({behaviour: "auto", block: "nearest", inline: "nearest"});
+    }-*/;
 }

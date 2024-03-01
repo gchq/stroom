@@ -36,6 +36,7 @@ import com.google.gwt.user.cellview.client.LoadingStateChangeEvent.LoadingState;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.FocusUtil;
 import com.google.gwt.user.client.ui.Focusable;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.user.client.ui.impl.FocusImpl;
@@ -320,7 +321,7 @@ public abstract class AbstractHasData<T> extends Composite implements HasData<T>
                         if (!hasData.resetFocusOnCell()) {
                             Element elem = hasData.getKeyboardSelectedElement();
                             if (elem != null) {
-                                elem.focus();
+                                FocusUtil.focusRow(elem);
                             }
                         }
                     }
@@ -809,7 +810,7 @@ public abstract class AbstractHasData<T> extends Composite implements HasData<T>
         Element elem = getKeyboardSelectedElement();
         if (elem != null) {
             if (focused) {
-                elem.focus();
+                FocusUtil.focusRow(elem);
             } else {
                 elem.blur();
             }

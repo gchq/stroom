@@ -50,7 +50,7 @@ public class CopyTextUtil {
                         ? (str.substring(0, TRUNCATE_THRESHOLD) + "...")
                         : str;
                 sb.append(TEMPLATE.divWithToolTip(
-                        "Copy value '" + truncatedStr + "' to clipboard.",
+                        "Copy value '" + truncatedStr + "' to clipboard",
                         copy));
             });
 

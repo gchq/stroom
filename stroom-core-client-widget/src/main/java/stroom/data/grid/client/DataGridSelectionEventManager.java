@@ -18,7 +18,6 @@ import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.event.shared.SimpleEventBus;
-import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.gwt.view.client.CellPreviewEvent;
 
 import java.util.List;
@@ -28,14 +27,14 @@ public class DataGridSelectionEventManager<T>
         implements SelectAllEvent.HasSelectAllHandlers {
 
     private final EventBus eventBus = new SimpleEventBus();
-    private final DataGrid<T> dataGrid;
+    private final MyDataGrid<T> dataGrid;
     private final MultiSelectionModel<T> selectionModel;
     private final boolean allowMultiSelect;
     private final DoubleSelectTester doubleClickTest = new DoubleSelectTester();
     // Required for multiple selection using shift and control key modifiers.
     private T multiSelectStart;
 
-    public DataGridSelectionEventManager(final DataGrid<T> dataGrid,
+    public DataGridSelectionEventManager(final MyDataGrid<T> dataGrid,
                                          final MultiSelectionModel<T> selectionModel,
                                          final boolean allowMultiSelect) {
         super(dataGrid);

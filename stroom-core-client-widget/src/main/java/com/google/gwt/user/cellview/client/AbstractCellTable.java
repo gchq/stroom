@@ -47,6 +47,7 @@ import com.google.gwt.uibinder.client.UiChild;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.ui.FocusUtil;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment.HorizontalAlignmentConstant;
 import com.google.gwt.user.client.ui.HasVerticalAlignment.VerticalAlignmentConstant;
 import com.google.gwt.user.client.ui.Widget;
@@ -2245,7 +2246,7 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
                 CellBasedWidgetImpl.get().resetFocus(new Scheduler.ScheduledCommand() {
                     @Override
                     public void execute() {
-                        focusable.focus();
+                        FocusUtil.focusRow(focusable);
                     }
                 });
             }
