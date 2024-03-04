@@ -6,16 +6,14 @@ import stroom.util.date.DateUtil;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.regex.Pattern;
 
 /**
  * Map that does not care about key case.
  */
 public class AttributeMap extends CIStringHashMap {
-
-    private static final Pattern DE_SERIALISED_VALUE_DELIMITER_PATTERN = Pattern.compile("\\n");
 
     private final boolean overrideEmbeddedMeta;
 
@@ -101,24 +99,30 @@ public class AttributeMap extends CIStringHashMap {
         } else if (values.isEmpty()) {
             value = "";
         } else {
-            value = String.join(AttributeMapUtil.DE_SERIALISED_VALUE_DELIMITER, values);
+            value = String.join(AttributeMapUtil.VALUE_DELIMITER, values);
         }
         return put(key, value);
     }
 
     /**
-     * Get the value for a given key as a collection, e.g. where the value is known to be a
+     * Get the value for a given key as a {@link List}, e.g. where the value is known to be a
      * delimited collection of items. If the value only contains one item, then a singleton
-     * collection is returned.
+     * {@link List} is returned.
      */
-    public Collection<String> getAsCollection(final String key) {
+    public List<String> getAsList(final String key) {
         final String val = get(key);
         if (NullSafe.isEmptyString(val)) {
             return Collections.emptyList();
         } else {
-            return DE_SERIALISED_VALUE_DELIMITER_PATTERN.splitAsStream(val)
+            return AttributeMapUtil.VALUE_DELIMITER_PATTERN.splitAsStream(val)
                     .toList();
         }
+    }
+
+    public boolean isDelimited(final String key) {
+        final String val = get(key);
+        return NullSafe.test(val, val2 ->
+                val2.contains(AttributeMapUtil.VALUE_DELIMITER));
     }
 
     public static Builder copy(final AttributeMap copy) {

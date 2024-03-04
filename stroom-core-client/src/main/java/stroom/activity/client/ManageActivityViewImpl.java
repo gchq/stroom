@@ -65,7 +65,7 @@ public class ManageActivityViewImpl extends ViewWithUiHandlers<ManageActivityUiH
 
     @Override
     public void focus() {
-        nameFilter.focus();
+        nameFilter.forceFocus();
     }
 
     @UiHandler("nameFilter")

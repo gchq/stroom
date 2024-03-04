@@ -207,8 +207,14 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
             }
             locate.setEnabled(selectedDoc != null);
         }));
-        registerHandler(collapseAll.addClickHandler((e) -> explorerTree.getTreeModel().collapseAll()));
-        registerHandler(expandAll.addClickHandler((e) -> explorerTree.getTreeModel().expandAll()));
+        registerHandler(collapseAll.addClickHandler((e) -> {
+            explorerTree.getTreeModel().setForceSelection(explorerTree.getSelectionModel().getSelected());
+            explorerTree.getTreeModel().collapseAll();
+        }));
+        registerHandler(expandAll.addClickHandler((e) -> {
+            explorerTree.getTreeModel().setForceSelection(explorerTree.getSelectionModel().getSelected());
+            explorerTree.getTreeModel().expandAll();
+        }));
         registerHandler(locate.addClickHandler((e) -> LocateDocEvent.fire(this, selectedDoc)));
         registerHandler(find.addClickHandler((e) -> ShowFindInContentEvent.fire(this)));
         registerHandler(add.addClickHandler((e) -> newItem(add.getElement())));

@@ -50,7 +50,7 @@ public class ExplorerPopupViewImpl extends ViewWithUiHandlers<ExplorerPopupUiHan
 
     @Override
     public void focus() {
-        nameFilter.focus();
+        nameFilter.forceFocus();
     }
 
     @Override

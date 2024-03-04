@@ -102,10 +102,7 @@ class TestAttributeMap {
     void testWriteMultiLineValues() throws IOException {
         AttributeMap attributeMap = AttributeMap.builder()
                 .put("foo", "123")
-                .put("files", """
-                        /some/path/file1
-                        /some/path/file2
-                        /some/path/file3""")
+                .put("files", "/some/path/file1,/some/path/file2,/some/path/file3")
                 .put("bar", "456")
                 .build();
         final String str = new String(AttributeMapUtil.toByteArray(attributeMap), AttributeMapUtil.DEFAULT_CHARSET);
@@ -150,16 +147,13 @@ class TestAttributeMap {
                 .build();
 
         assertThat(attributeMap.get("files"))
-                .isEqualTo("""
-                        /some/path/file1
-                        /some/path/file2
-                        /some/path/file3""");
-        assertThat(attributeMap.getAsCollection("files"))
+                .isEqualTo("/some/path/file1,/some/path/file2,/some/path/file3");
+        assertThat(attributeMap.getAsList("files"))
                 .containsExactly(
                         "/some/path/file1",
                         "/some/path/file2",
                         "/some/path/file3");
-        assertThat(attributeMap.getAsCollection("foo"))
+        assertThat(attributeMap.getAsList("foo"))
                 .containsExactly("123");
     }
 

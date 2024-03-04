@@ -267,7 +267,7 @@ public class ExplorerPopupPresenter
         protected void setInitialSelectedItem(final ExplorerNode selection) {
             super.setInitialSelectedItem(selection);
             explorerDropDownTreePresenter.setSelectedTreeItem(resolve(selection),
-                    new SelectionType(false, false), true);
+                    new SelectionType(), true);
         }
 
         @Override

@@ -59,7 +59,7 @@ public class FindViewImpl
 
     @Override
     public void focus() {
-        nameFilter.focus();
+        nameFilter.forceFocus();
     }
 
     @UiHandler("nameFilter")

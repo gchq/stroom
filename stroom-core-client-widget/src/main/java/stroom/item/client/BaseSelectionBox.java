@@ -2,6 +2,7 @@ package stroom.item.client;
 
 import stroom.svg.client.SvgIconBox;
 import stroom.svg.shared.SvgImage;
+import stroom.widget.util.client.SelectionType;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.KeyCodes;
@@ -79,7 +80,7 @@ public class BaseSelectionBox<T, I extends SelectionItem>
 
             final I selectionItem = model.wrap(value);
             if (selectionItem != null) {
-                popup.getSelectionModel().setSelected(selectionItem, true);
+                popup.getSelectionModel().setSelected(selectionItem, true, new SelectionType(), false);
             }
             final List<HandlerRegistration> handlerRegistrations = new ArrayList<>();
             handlerRegistrations.add(popup.addCloseHandler(event -> {

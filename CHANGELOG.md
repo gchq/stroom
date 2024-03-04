@@ -13,6 +13,32 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.3-beta.11] - 2024-03-01
+
+* Issue **#4132** : Add tooltips to the copy/open hover buttons on table cell values.
+
+* Issue **#4018** : Change the way delimited meta values are held internally. They are now comma delimited internally and when written to file.
+
+* Change `<xsl:message>` to output `NO MESSAGE` if the element contains no text value.
+
+* Add the key bind `ctrl-enter` to do a step refresh on the code pane of the stepper.
+
+* Issue **#4140** : Fix selection box popup close issue.
+
+* Issue **#4143** : Fix horizontal scroll.
+
+* Issue **#4144** : Increase size of part no box.
+
+* Issue **#4141** : Show selected item after expand all.
+
+
+## [v7.3-beta.10] - 2024-02-28
+
+* Issue **#4115** : Fix error when opening Recent Items screen if a recent item is in the favourites list.
+
+* Issue **#4133** : Rollback `lmdbjava` to 0.8.2 to fix FFI issue on centos7.
+
+
 ## [v7.3-beta.9] - 2024-02-25
 
 * Issue **#4107** : Add property `warnOnRemoval` to `InvalidCharFilterReader` and `warnOnReplacement` to `InvalidXMLCharFilterReaderElement` allow control of logged warnings for removal/replacement respectively.
@@ -337,7 +363,9 @@ eval EventId = first(EventId)`, `evt` => `eval EventId = first(EventId)` and `st
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.3-beta.9...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.3-beta.11...HEAD
+[v7.3-beta.11]: https://github.com/gchq/stroom/compare/v7.3-beta.10...v7.3-beta.11
+[v7.3-beta.10]: https://github.com/gchq/stroom/compare/v7.3-beta.9...v7.3-beta.10
 [v7.3-beta.9]: https://github.com/gchq/stroom/compare/v7.3-beta.8...v7.3-beta.9
 [v7.3-beta.8]: https://github.com/gchq/stroom/compare/v7.3-beta.7...v7.3-beta.8
 [v7.3-beta.7]: https://github.com/gchq/stroom/compare/v7.3-beta.6...v7.3-beta.7

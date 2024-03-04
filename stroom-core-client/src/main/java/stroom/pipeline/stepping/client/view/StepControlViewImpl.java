@@ -16,6 +16,7 @@
 
 package stroom.pipeline.stepping.client.view;
 
+import stroom.pipeline.shared.stepping.StepType;
 import stroom.pipeline.stepping.client.presenter.StepControlPresenter.StepControlView;
 import stroom.pipeline.stepping.client.presenter.StepControlUIHandlers;
 import stroom.svg.shared.SvgImage;
@@ -103,6 +104,25 @@ public class StepControlViewImpl extends ViewWithUiHandlers<StepControlUIHandler
         refreshButton.setEnabled(enabled);
     }
 
+    @Override
+    public boolean isEnabled(final StepType stepType) {
+        //noinspection EnhancedSwitchMigration // cos GWT
+        switch (stepType) {
+            case FIRST:
+                return firstButton.isEnabled();
+            case BACKWARD:
+                return backwardButton.isEnabled();
+            case FORWARD:
+                return forwardButton.isEnabled();
+            case LAST:
+                return lastButton.isEnabled();
+            case REFRESH:
+                return refreshButton.isEnabled();
+            default:
+                return false;
+        }
+    }
+
     @UiHandler("filterButton")
     public void onFilterButtonClick(final ClickEvent event) {
         if (getUiHandlers() != null) {
@@ -144,6 +164,10 @@ public class StepControlViewImpl extends ViewWithUiHandlers<StepControlUIHandler
             getUiHandlers().stepRefresh();
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface Binder extends UiBinder<Widget, StepControlViewImpl> {
 

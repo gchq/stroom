@@ -374,6 +374,8 @@ public class NullSafe {
     public static <T> Stream<T> stream(final T... items) {
         if (items == null || items.length == 0) {
             return Stream.empty();
+        } else if (items.length == 1) {
+            return Stream.of(items[0]);
         } else {
             return Arrays.stream(items);
         }

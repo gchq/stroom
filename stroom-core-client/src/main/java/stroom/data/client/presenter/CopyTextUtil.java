@@ -2,6 +2,7 @@ package stroom.data.client.presenter;
 
 import stroom.svg.shared.SvgImage;
 import stroom.util.client.ClipboardUtil;
+import stroom.util.shared.GwtNullSafe;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.SvgImageUtil;
@@ -20,6 +21,7 @@ public class CopyTextUtil {
     public static final String ICON_NAME = "svgIcon";
     public static final String COPY_CLASS_NAME = "docRefLinkCopy";
     private static final Template TEMPLATE;
+    private static final int TRUNCATE_THRESHOLD = 30;
 
     static {
         TEMPLATE = GWT.create(Template.class);
@@ -41,10 +43,16 @@ public class CopyTextUtil {
             sb.appendHtmlConstant("<div class=\"docRefLinkContainer\">");
             sb.append(textSafeHtml);
 
-            if (value.trim().length() > 0) {
+            GwtNullSafe.consumeNonBlankString(value, str -> {
                 final SafeHtml copy = SvgImageUtil.toSafeHtml(SvgImage.COPY, ICON_NAME, COPY_CLASS_NAME);
-                sb.append(copy);
-            }
+                // Cell values could be huge so truncate big ones
+                final String truncatedStr = str.length() > TRUNCATE_THRESHOLD
+                        ? (str.substring(0, TRUNCATE_THRESHOLD) + "...")
+                        : str;
+                sb.append(TEMPLATE.divWithToolTip(
+                        "Copy value '" + truncatedStr + "' to clipboard",
+                        copy));
+            });
 
             sb.appendHtmlConstant("</div>");
         }
@@ -56,11 +64,11 @@ public class CopyTextUtil {
             final Element copy =
                     ElementUtil.findMatching(element, CopyTextUtil.COPY_CLASS_NAME, 0, 5);
             if (copy != null) {
-                final Element container =
-                        ElementUtil.findMatching(element, "docRefLinkContainer", 0, 5);
-                if (container != null && container.getInnerText().trim().length() > 0) {
-                    ClipboardUtil.copy(container.getInnerText().trim());
-                }
+                final Element container = ElementUtil.findMatching(
+                        element, "docRefLinkContainer", 0, 5);
+
+                GwtNullSafe.consumeNonBlankString(container, Element::getInnerText, text ->
+                        ClipboardUtil.copy(text.trim()));
             }
         }
     }
@@ -69,9 +77,14 @@ public class CopyTextUtil {
         return TEMPLATE.div(className, content);
     }
 
+    // --------------------------------------------------------------------------------
+
     interface Template extends SafeHtmlTemplates {
 
         @Template("<div class=\"{0}\">{1}</div>")
         SafeHtml div(String className, SafeHtml content);
+
+        @Template("<div title=\"{0}\">{1}</div>")
+        SafeHtml divWithToolTip(String title, SafeHtml content);
     }
 }

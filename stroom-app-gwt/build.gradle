@@ -193,14 +193,36 @@ tasks.register('makeGwtSourceDirs') {
     group "gwt"
 
     doLast {
+        def rsyncInput = layout.buildDirectory.dir("rsync-input").get()
+        def rsyncOutput = layout.buildDirectory.dir("rsync-output").get()
+
+        println "copy ${gwtSourceDirs.size()} gwtSourceDirs"
+        delete rsyncInput
+        copy {
+            from layout.buildDirectory.dir("all-source").get()
+            into rsyncInput;
+        }
+        copy {
+            from layout.buildDirectory.dir("transformed-build").get()
+            into rsyncInput;
+        }
+
+        println "rsync ${gwtSourceDirs.size()} gwtSourceDirs"
+        exec {
+            executable = 'rsync'
+            args = ["--recursive", "--checksum", "--delete", rsyncInput.toString() + "/", rsyncOutput]
+        }
+
+
         gwtSourceDirs = []
 
         // Add all of the library sources from the gwtSource source set defined above.
         gwtSourceDirs.addAll(sourceSets.gwtDevSource.compileClasspath)
         gwtSourceDirs.addAll(project(':stroom-gwt').sourceSets.main.output.classesDirs)
 
-        gwtSourceDirs.add(layout.buildDirectory.dir("all-source").get())
-        gwtSourceDirs.add(layout.buildDirectory.dir("transformed-build").get())
+//        gwtSourceDirs.add(layout.buildDirectory.dir("all-source").get())
+//        gwtSourceDirs.add(layout.buildDirectory.dir("transformed-build").get())
+        gwtSourceDirs.add(rsyncOutput)
 
         println "Dumping ${gwtSourceDirs.size()} gwtSourceDirs"
         gwtSourceDirs.each {
