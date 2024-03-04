@@ -9,7 +9,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
-import stroom.explorer.client.presenter.EntityDropDownPresenter;
+import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.job.client.presenter.DateTimePopup;
 import stroom.job.client.presenter.SchedulePopup;
 import stroom.job.shared.ScheduleReferenceTime;
@@ -36,13 +36,13 @@ public class ExecutionScheduleEditPresenter
     private static final ExecutionScheduleResource EXECUTION_SCHEDULE_RESOURCE =
             GWT.create(ExecutionScheduleResource.class);
 
-    private final EntityDropDownPresenter errorFeedPresenter;
+    private final DocSelectionBoxPresenter errorFeedPresenter;
     private ExecutionSchedule executionSchedule;
 
     @Inject
     public ExecutionScheduleEditPresenter(final EventBus eventBus,
                                           final ExecutionScheduleEditView view,
-                                          final EntityDropDownPresenter errorFeedPresenter,
+                                          final DocSelectionBoxPresenter errorFeedPresenter,
                                           final NodeManager nodeManager,
                                           final Provider<SchedulePopup> schedulePresenterProvider,
                                           final Provider<DateTimePopup> dateTimePopupProvider,

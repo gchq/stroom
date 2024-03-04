@@ -386,6 +386,7 @@ import java.util.Map;
  *
  * <h3>Example</h3> {@example com.google.gwt.examples.DateTimeFormatExample}
  */
+@SuppressWarnings({"checkstyle:LineLength", "checkstyle:FileLength", "checkstyle:MultipleVariableDeclarations"})
 public class DateTimeFormatImpl implements DateTimeFormat {
 
     /**

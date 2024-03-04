@@ -8883,6 +8883,7 @@ components:
           - AUTO_REFRESH
           - BACKWARD
           - BORDERED_CIRCLE
+          - CALENDAR
           - CANCEL
           - CASE_SENSITIVE
           - CLEAR
@@ -9461,6 +9462,7 @@ components:
           - AUTO_REFRESH
           - BACKWARD
           - BORDERED_CIRCLE
+          - CALENDAR
           - CANCEL
           - CASE_SENSITIVE
           - CLEAR
@@ -10347,6 +10349,7 @@ components:
           - AUTO_REFRESH
           - BACKWARD
           - BORDERED_CIRCLE
+          - CALENDAR
           - CANCEL
           - CASE_SENSITIVE
           - CLEAR
@@ -10624,6 +10627,7 @@ components:
           - AUTO_REFRESH
           - BACKWARD
           - BORDERED_CIRCLE
+          - CALENDAR
           - CANCEL
           - CASE_SENSITIVE
           - CLEAR
@@ -12127,6 +12131,7 @@ components:
           - AUTO_REFRESH
           - BACKWARD
           - BORDERED_CIRCLE
+          - CALENDAR
           - CANCEL
           - CASE_SENSITIVE
           - CLEAR
@@ -13102,6 +13107,7 @@ components:
           - AUTO_REFRESH
           - BACKWARD
           - BORDERED_CIRCLE
+          - CALENDAR
           - CANCEL
           - CASE_SENSITIVE
           - CLEAR

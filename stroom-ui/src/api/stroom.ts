@@ -1019,6 +1019,7 @@ export interface DocumentType {
     | "AUTO_REFRESH"
     | "BACKWARD"
     | "BORDERED_CIRCLE"
+    | "CALENDAR"
     | "CANCEL"
     | "CASE_SENSITIVE"
     | "CLEAR"
@@ -1425,6 +1426,17 @@ export interface ExecutionScheduleRequest {
   sortList?: CriteriaFieldSort[];
 }
 
+export interface ExecutionTracker {
+  /** @format int64 */
+  actualExecutionTimeMs?: number;
+
+  /** @format int64 */
+  lastEffectiveExecutionTimeMs?: number;
+
+  /** @format int64 */
+  nextEffectiveExecutionTimeMs?: number;
+}
+
 export interface Expander {
   /** @format int32 */
   depth?: number;
@@ -1451,6 +1463,7 @@ export interface ExplorerNode {
     | "AUTO_REFRESH"
     | "BACKWARD"
     | "BORDERED_CIRCLE"
+    | "CALENDAR"
     | "CANCEL"
     | "CASE_SENSITIVE"
     | "CLEAR"
@@ -2009,6 +2022,7 @@ export interface FindInContentResult {
     | "AUTO_REFRESH"
     | "BACKWARD"
     | "BORDERED_CIRCLE"
+    | "CALENDAR"
     | "CANCEL"
     | "CASE_SENSITIVE"
     | "CLEAR"
@@ -2240,6 +2254,7 @@ export interface FindResult {
     | "AUTO_REFRESH"
     | "BACKWARD"
     | "BORDERED_CIRCLE"
+    | "CALENDAR"
     | "CANCEL"
     | "CASE_SENSITIVE"
     | "CLEAR"
@@ -2601,12 +2616,11 @@ export interface GetPipelineForMetaRequest {
 }
 
 export interface GetScheduledTimesRequest {
-  /** @format int64 */
-  lastExecutedTime?: number;
   schedule?: Schedule;
 
   /** @format int64 */
   scheduleReferenceTime?: number;
+  scheduleRestriction?: ScheduleRestriction;
 }
 
 export interface GlobalConfigCriteria {
@@ -2968,6 +2982,7 @@ export interface Location {
   /** @format int32 */
   lineNo?: number;
   type: string;
+  unknown?: boolean;
 }
 
 export interface LoginRequest {
@@ -3261,6 +3276,7 @@ export interface PipelineElementType {
     | "AUTO_REFRESH"
     | "BACKWARD"
     | "BORDERED_CIRCLE"
+    | "CALENDAR"
     | "CANCEL"
     | "CASE_SENSITIVE"
     | "CLEAR"
@@ -3886,6 +3902,7 @@ export interface QueryHelpRow {
     | "AUTO_REFRESH"
     | "BACKWARD"
     | "BORDERED_CIRCLE"
+    | "CALENDAR"
     | "CANCEL"
     | "CASE_SENSITIVE"
     | "CLEAR"
@@ -4607,6 +4624,12 @@ export interface ScheduleBounds {
   startTimeMs?: number;
 }
 
+export interface ScheduleRestriction {
+  allowHour?: boolean;
+  allowMinute?: boolean;
+  allowSecond?: boolean;
+}
+
 export type ScheduledQueryAnalyticProcessConfig = AnalyticProcessConfig & {
   enabled?: boolean;
   errorFeed?: DocRef;
@@ -4624,8 +4647,11 @@ export type ScheduledQueryAnalyticTrackerData = AnalyticTrackerData & {
 };
 
 export interface ScheduledTimes {
-  lastExecutedTime?: string;
-  nextScheduledTime?: string;
+  error?: string;
+
+  /** @format int64 */
+  nextScheduledTimeMs?: number;
+  schedule?: Schedule;
 }
 
 export interface ScriptDoc {
@@ -4822,12 +4848,11 @@ export interface SetStatusRequest {
 }
 
 export interface SharedElementData {
-  codeIndicators?: Indicators;
   formatInput?: boolean;
   formatOutput?: boolean;
+  indicators?: Indicators;
   input?: string;
   output?: string;
-  outputIndicators?: Indicators;
 }
 
 export interface SharedStepData {
@@ -5062,6 +5087,7 @@ export interface SteppingResult {
 
 export interface StoredError {
   elementId?: string;
+  errorType?: "CODE" | "GENERIC" | "INPUT" | "OUTPUT" | "UNKNOWN";
   location?: Location;
   message?: string;
   severity?: "INFO" | "WARN" | "ERROR" | "FATAL";
@@ -8005,6 +8031,25 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     fetchExecutionSchedule: (data: ExecutionScheduleRequest, params: RequestParams = {}) =>
       this.request<any, ResultPageExecutionSchedule>({
         path: `/executionSchedule/v1/fetchExecutionSchedule`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags ExecutionSchedule
+     * @name FetchTracker
+     * @summary Fetch execution tracker
+     * @request POST:/executionSchedule/v1/fetchTracker
+     * @secure
+     */
+    fetchTracker: (data: ExecutionSchedule, params: RequestParams = {}) =>
+      this.request<any, ExecutionTracker>({
+        path: `/executionSchedule/v1/fetchTracker`,
         method: "POST",
         body: data,
         secure: true,

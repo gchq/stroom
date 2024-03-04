@@ -27,7 +27,7 @@ import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyUiHandlers;
 import stroom.entity.client.presenter.DocumentEditPresenter;
-import stroom.explorer.client.presenter.EntityDropDownPresenter;
+import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.feed.shared.FeedDoc;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.shared.time.SimpleDuration;
@@ -43,14 +43,14 @@ public class AnalyticNotificationPresenter
 
     private final AnalyticStreamDestinationPresenter analyticStreamDestinationPresenter;
     private final AnalyticEmailDestinationPresenter analyticEmailDestinationPresenter;
-    private final EntityDropDownPresenter errorFeedPresenter;
+    private final DocSelectionBoxPresenter errorFeedPresenter;
 
     @Inject
     public AnalyticNotificationPresenter(final EventBus eventBus,
                                          final AnalyticNotificationView view,
                                          final AnalyticStreamDestinationPresenter analyticStreamDestinationPresenter,
                                          final AnalyticEmailDestinationPresenter analyticEmailDestinationPresenter,
-                                         final EntityDropDownPresenter errorFeedPresenter) {
+                                         final DocSelectionBoxPresenter errorFeedPresenter) {
         super(eventBus, view);
         view.setUiHandlers(this);
         this.analyticStreamDestinationPresenter = analyticStreamDestinationPresenter;
