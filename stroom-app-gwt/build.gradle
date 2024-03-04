@@ -1,4 +1,6 @@
 import java.nio.file.Files
+import java.time.Duration
+import java.time.Instant
 
 ext.moduleName = 'stroom.app.gwt'
 
@@ -23,7 +25,7 @@ def outputDir = "${warDir}/stroom"
 def javaIoTmpDir = getSysPropertyOrDefault("java.io.tmpdir", "/tmp")
 logger.info('javaIoTmpDir: ' + javaIoTmpDir)
 // Append the rootDir so gwt builds from different dirs don't conflict
-def gwtBuildDir = javaIoTmpDir + "/app-gwt_build/" + rootDir
+def gwtBuildDir = "${javaIoTmpDir}/gwt/${rootProjectAbsPathStr}/app-gwt_build"
 gwtBuildDir = gwtBuildDir.replaceAll('//', '/')
 logger.info('gwtBuildDir: ' + gwtBuildDir)
 
@@ -32,10 +34,12 @@ logger.info('gwtTmpDir: ' + gwtTmpDir)
 def workDir = "${gwtBuildDir}/work"
 def deployDir = "${gwtBuildDir}/deploy"
 def extraDir = "${gwtBuildDir}/extra"
-// This is where eclipse transformer outputs to
-def modifiedProjectsBasePath = "${gwtBuildDir}/modified_projects"
-// This will contain a copy of modifiedProjectsBasePath that GWT uses on its classpath
-def modifiedProjectsBasePathGwt = "${gwtBuildDir}/modified_projects_gwt"
+
+
+def allSourceDir = "${gwtBuildDir}/all-source"
+def transformedSourceDir = "${gwtBuildDir}/transformed-source"
+def transformedBuildDir = "${gwtBuildDir}/transformed-build"
+def rsyncOutputDir = "${gwtBuildDir}/rsync-output"
 
 def gwtSourceDirs = []
 
@@ -123,15 +127,17 @@ tasks.register('copySources') {
     doLast {
         // This file has all the rename mappings for TransformerCLI to use
         def propFilePath = rootDir.toPath().resolve('jakarta-renames-reverse.properties')
-        def inputProjectPath = layout.buildDirectory.dir("raw-source").get()
-        def outputProjectPath = layout.buildDirectory.dir("transformed-source").get()
+        def inputProjectPath = "${gwtBuildDir}/raw-source"
 
         // Delete current source output.
         delete inputProjectPath
 
+        def start = Instant.now()
+
         // Copy all code into source output.
+        println("copy project source (java/resources) => ${inputProjectPath}")
         clientProjects.each { prj ->
-            println('copy: ' + prj.projectDir)
+            println('  ' + prj.projectDir)
             copy {
                 from prj.projectDir.toPath().resolve('src').resolve('main').resolve('java')
                 into inputProjectPath
@@ -141,44 +147,55 @@ tasks.register('copySources') {
                 into inputProjectPath
             }
         }
+        println("${Duration.between(start, Instant.now())}")
+        start = Instant.now()
 
         // Transform code.
         println 'Running eclipse TransformerCLI'
-        println('inputProjectPath: ' + inputProjectPath)
-        println('outputProjectPath: ' + outputProjectPath)
-        delete outputProjectPath
+        println('  input: ' + inputProjectPath)
+        println('  output: ' + transformedSourceDir)
+        delete transformedSourceDir
 
         javaexec {
             classpath = files(sourceSets.jakartaTransformer.compileClasspath)
             mainClass = "org.eclipse.transformer.cli.TransformerCLI"
             args = [
                     inputProjectPath,
-                    outputProjectPath,
+                    transformedSourceDir,
                     '-tr', propFilePath,
             ]
         }
+        println("${Duration.between(start, Instant.now())}")
+        start = Instant.now()
 
-        def allSourcePath = layout.buildDirectory.dir("all-source").get()
-        delete allSourcePath
-        // Copy dep jars.
+        delete allSourceDir
+
+        println("copy dep jars => ${allSourceDir}")
         sourceSets.gwtSource.compileClasspath.files.forEach {zipFile ->
-            println('copy: ' + zipFile)
+            println('  ' + zipFile)
             copy {
                 from zipTree(zipFile)
-                into allSourcePath
+                into allSourceDir
             }
         }
+        println("${Duration.between(start, Instant.now())}")
+        start = Instant.now()
+
+        println("copy ${transformedSourceDir} => ${allSourceDir}")
         copy {
-            from outputProjectPath
-            into allSourcePath
+            from transformedSourceDir
+            into allSourceDir
         }
+        println("${Duration.between(start, Instant.now())}")
     }
 }
 
 tasks.register('compileSources', JavaCompile) {
     dependsOn copySources
-    def sources = layout.buildDirectory.dir("transformed-source").get()
-    def build = layout.buildDirectory.dir("transformed-build").get()
+    def sources = transformedSourceDir
+    new File(sources).mkdirs()
+    def build = transformedBuildDir
+    new File(build).mkdirs()
 
     source = file(sources)
     destinationDirectory.set(file(build))
@@ -193,40 +210,62 @@ tasks.register('makeGwtSourceDirs') {
     group "gwt"
 
     doLast {
-        def rsyncInput = layout.buildDirectory.dir("rsync-input").get()
-        def rsyncOutput = layout.buildDirectory.dir("rsync-output").get()
+        def rsyncInputDir = "${gwtBuildDir}/rsync-input"
+        delete rsyncInputDir
 
-        println "copy ${gwtSourceDirs.size()} gwtSourceDirs"
-        delete rsyncInput
+        def start = Instant.now()
+
+        // Do this as two copies then one rsync rather than just two rsyncs
+        // so that we can be sure that any GWT classes that we have cloned and
+        // changed overwrite the original GWT version in  rsyncInputDir
+
+        println("copy ${allSourceDir} => ${rsyncInputDir}")
         copy {
-            from layout.buildDirectory.dir("all-source").get()
-            into rsyncInput;
-        }
-        copy {
-            from layout.buildDirectory.dir("transformed-build").get()
-            into rsyncInput;
+            from allSourceDir
+            into rsyncInputDir
         }
 
-        println "rsync ${gwtSourceDirs.size()} gwtSourceDirs"
+        println("${Duration.between(start, Instant.now())}")
+        start = Instant.now()
+
+        println("copy ${transformedBuildDir} => ${rsyncInputDir}")
+        copy {
+            from transformedBuildDir
+            into rsyncInputDir
+        }
+
+        println("${Duration.between(start, Instant.now())}")
+        start = Instant.now()
+
+        // Rsync the files so that we don't delete all the files that superdev is monitoring,
+        // which it doesn't like. Rsync should only change the files that have actually changed
+        // i.e. when doing superdev code changes.
+        println "rsync ${rsyncInputDir} => ${rsyncOutputDir}"
         exec {
             executable = 'rsync'
-            args = ["--recursive", "--checksum", "--delete", rsyncInput.toString() + "/", rsyncOutput]
+            args = [
+                    "--recursive",
+                    "--checksum",
+                    "--delete",
+                    "--stats",
+                    rsyncInputDir + "/",
+                    rsyncOutputDir]
         }
 
+        println("${Duration.between(start, Instant.now())}")
+        start = Instant.now()
 
+        // Now assemble the sourceDirs array for GWT to compile
         gwtSourceDirs = []
-
         // Add all of the library sources from the gwtSource source set defined above.
         gwtSourceDirs.addAll(sourceSets.gwtDevSource.compileClasspath)
         gwtSourceDirs.addAll(project(':stroom-gwt').sourceSets.main.output.classesDirs)
-
-//        gwtSourceDirs.add(layout.buildDirectory.dir("all-source").get())
-//        gwtSourceDirs.add(layout.buildDirectory.dir("transformed-build").get())
-        gwtSourceDirs.add(rsyncOutput)
+        // Add the rsync clone of our transformed build
+        gwtSourceDirs.add(rsyncOutputDir)
 
         println "Dumping ${gwtSourceDirs.size()} gwtSourceDirs"
         gwtSourceDirs.each {
-            println "${it.toString()}"
+            println "  ${it.toString()}"
         }
     }
 }
@@ -263,7 +302,6 @@ tasks.register('gwtCompile', JavaExec) {
         //gwtSourceDirs.each {
         //println "${it.toString()}"
         //}
-        logger.info('modifiedProjectsBasePath: ' + modifiedProjectsBasePath)
 
         gwtSourceDirs.each {
             if (it instanceof java.nio.file.Path && Files.exists(it)) {
@@ -436,14 +474,8 @@ tasks.register('gwtClean') {
 //        println 'Deleting GWT unit cache: ' + unitCacheDir.toString()
 //        delete unitCacheDir
 
-        logger.info('Deleting GWT compiled output: ' + outputDir.toString())
-        delete outputDir
-        logger.info('Deleting GWT build dir: ' + gwtBuildDir.toString())
+        logger.info('Deleting gwtBuildDir: ' + gwtBuildDir.toString())
         delete gwtBuildDir
-        logger.info('Deleting modified projects: ' + modifiedProjectsBasePath.toString())
-        delete modifiedProjectsBasePath
-        logger.info('Deleting modified projects (GWT copy): ' + modifiedProjectsBasePathGwt.toString())
-        delete modifiedProjectsBasePathGwt
 
         logger.info("Ensuring directory gwtBuildDir ${gwtBuildDir}")
         new File(gwtBuildDir).mkdirs()
