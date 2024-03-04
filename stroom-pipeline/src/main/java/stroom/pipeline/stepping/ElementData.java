@@ -20,8 +20,6 @@ import stroom.pipeline.shared.SharedElementData;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.util.shared.Indicators;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
 public class ElementData {
     private final String elementId;
     private final PipelineElementType elementType;
@@ -29,8 +27,7 @@ public class ElementData {
     private Object output;
     private boolean formatInput;
     private boolean formatOutput;
-    private Indicators codeIndicators;
-    private Indicators outputIndicators;
+    private Indicators indicators;
 
     public ElementData(final String elementId, final PipelineElementType elementType) {
         this.elementId = elementId;
@@ -83,29 +80,16 @@ public class ElementData {
         this.formatOutput = formatOutput;
     }
 
-    public Indicators getCodeIndicators() {
-        return codeIndicators;
+    public Indicators getIndicators() {
+        return indicators;
     }
 
-    public void setCodeIndicators(final Indicators codeIndicators) {
-        this.codeIndicators = codeIndicators;
-    }
-
-    public Indicators getOutputIndicators() {
-        return outputIndicators;
-    }
-
-    public void setOutputIndicators(final Indicators outputIndicators) {
-        this.outputIndicators = outputIndicators;
-    }
-
-    @JsonIgnore
-    public  Indicators getAllIndicators() {
-        return Indicators.combine(outputIndicators, codeIndicators);
+    public void setIndicators(final Indicators indicators) {
+        this.indicators = indicators;
     }
 
     public SharedElementData convertToShared() {
-        return new SharedElementData(getInput(), getOutput(), codeIndicators, outputIndicators, formatInput,
+        return new SharedElementData(getInput(), getOutput(), indicators, formatInput,
                 formatOutput);
     }
 
@@ -113,7 +97,7 @@ public class ElementData {
     public String toString() {
         return "ElementData{" +
                 "elementId='" + elementId + '\'' +
-                ", maxSeverity=" + getAllIndicators().getMaxSeverity() +
+                ", maxSeverity=" + indicators.getMaxSeverity() +
                 '}';
     }
 }

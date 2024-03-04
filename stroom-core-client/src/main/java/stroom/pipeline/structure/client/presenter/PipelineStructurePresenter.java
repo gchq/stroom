@@ -26,8 +26,7 @@ import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.RefreshDocumentEvent;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.presenter.DocumentEditPresenter;
-import stroom.explorer.client.presenter.EntityDropDownPresenter;
-import stroom.explorer.shared.ExplorerNode;
+import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.pipeline.shared.FetchPipelineXmlResponse;
 import stroom.pipeline.shared.FetchPropertyTypesResult;
 import stroom.pipeline.shared.PipelineDoc;
@@ -82,7 +81,7 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
     private static final PipelineResource PIPELINE_RESOURCE = GWT.create(PipelineResource.class);
     private static final DocRef NULL_SELECTION = DocRef.builder().uuid("").name("None").type("").build();
 
-    private final EntityDropDownPresenter pipelinePresenter;
+    private final DocSelectionBoxPresenter pipelinePresenter;
     private final RestFactory restFactory;
     private final NewElementPresenter newElementPresenter;
     private final PropertyListPresenter propertyListPresenter;
@@ -104,7 +103,7 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
     public PipelineStructurePresenter(final EventBus eventBus,
                                       final PipelineStructureView view,
                                       final PipelineTreePresenter pipelineTreePresenter,
-                                      final EntityDropDownPresenter pipelinePresenter,
+                                      final DocSelectionBoxPresenter pipelinePresenter,
                                       final RestFactory restFactory,
                                       final NewElementPresenter newElementPresenter,
                                       final PropertyListPresenter propertyListPresenter,
@@ -171,16 +170,16 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
         registerHandler(propertyListPresenter.addDirtyHandler(dirtyHandler));
         registerHandler(pipelineReferenceListPresenter.addDirtyHandler(dirtyHandler));
         registerHandler(pipelinePresenter.addDataSelectionHandler(event -> {
-            if (event.getSelectedItem() != null && event.getSelectedItem().getDocRef().compareTo(NULL_SELECTION) != 0) {
-                final ExplorerNode entityData = event.getSelectedItem();
-                if (EqualsUtil.isEquals(entityData.getDocRef().getUuid(), pipelineDoc.getUuid())) {
+            if (event.getSelectedItem() != null && event.getSelectedItem().compareTo(NULL_SELECTION) != 0) {
+                final DocRef docRef = event.getSelectedItem();
+                if (EqualsUtil.isEquals(docRef.getUuid(), pipelineDoc.getUuid())) {
                     AlertEvent.fireWarn(PipelineStructurePresenter.this, "A pipeline cannot inherit from itself",
                             () -> {
                                 // Reset selection.
                                 pipelinePresenter.setSelectedEntityReference(getParentPipeline());
                             });
                 } else {
-                    changeParentPipeline(entityData.getDocRef());
+                    changeParentPipeline(docRef);
                 }
             } else {
                 changeParentPipeline(null);

@@ -408,6 +408,7 @@ public class ScheduledQueryAnalyticExecutor {
                                     keyFactory,
                                     tableSettings.getAggregateFilter(),
                                     dataStore.getColumns(),
+                                    expressionContext.getDateTimeSettings(),
                                     errorConsumer);
 
                             if (optionalRowCreator.isEmpty()) {

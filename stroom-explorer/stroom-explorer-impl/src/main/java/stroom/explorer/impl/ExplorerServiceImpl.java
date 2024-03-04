@@ -530,6 +530,7 @@ class ExplorerServiceImpl
         if (criteria.getMinDepth() != null && criteria.getMinDepth() > 0) {
             forceMinDepthOpen(masterTreeModel, forcedOpen, null, null,
                     criteria.getMinDepth(), 1);
+            forcedOpen.add(ExplorerConstants.FAVOURITES_NODE.getUniqueKey());
         }
 
         return forcedOpen;
@@ -1458,6 +1459,8 @@ class ExplorerServiceImpl
             if (recentItemsMode) {
                 final Map<DocRef, FindResult> resultMap = results
                         .stream()
+                        .filter(findResult ->
+                                !ExplorerConstants.FAVOURITES_NODE.getName().equals(findResult.getPath()))
                         .collect(Collectors.toMap(FindResult::getDocRef, Function.identity()));
                 final List<FindResult> recentItems = request
                         .getFilter().getRecentItems()
@@ -1466,6 +1469,12 @@ class ExplorerServiceImpl
                         .filter(Objects::nonNull)
                         .toList();
                 return ResultPage.createPageLimitedList(recentItems, request.getPageRequest());
+            } else {
+                results.sort(Comparator
+                        .<FindResult, String>comparing(res -> res.getDocRef().getName(), Comparator.naturalOrder())
+                        .thenComparing(FindResult::getPath)
+                        .thenComparing(res -> res.getDocRef().getType())
+                        .thenComparing(res -> res.getDocRef().getUuid()));
             }
 
             return ResultPage.createPageLimitedList(results, request.getPageRequest());

@@ -17,6 +17,7 @@
 package stroom.query.shared;
 
 import stroom.docref.DocRef;
+import stroom.docs.shared.Description;
 import stroom.docstore.shared.Doc;
 import stroom.query.api.v2.TimeRange;
 import stroom.svg.shared.SvgImage;
@@ -29,6 +30,13 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Objects;
 
+@Description(
+        "A Query Document defines a {{< glossary \"StroomQL\" >}} query and is used to execute that query " +
+                "and view its results.\n" +
+                "A Query can query main types of data source including " +
+                "[Views]({{< relref \"#view\" >}}), [Lucene Indexes]({{< relref \"#lucene-index\" >}}), and " +
+                "{{< glossary \"searchable\" \"Searchables\" >}}."
+)
 @JsonPropertyOrder({
         "type",
         "uuid",

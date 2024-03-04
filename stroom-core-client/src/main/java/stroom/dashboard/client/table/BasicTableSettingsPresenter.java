@@ -23,7 +23,7 @@ import stroom.dashboard.client.query.QueryPresenter;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.TableComponentSettings;
 import stroom.docref.DocRef;
-import stroom.explorer.client.presenter.EntityDropDownPresenter;
+import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.security.shared.DocumentPermissionNames;
@@ -45,12 +45,12 @@ public class BasicTableSettingsPresenter
         extends BasicSettingsTabPresenter<BasicTableSettingsPresenter.BasicTableSettingsView>
         implements Focus, BasicTableSettingsUihandlers {
 
-    private final EntityDropDownPresenter pipelinePresenter;
+    private final DocSelectionBoxPresenter pipelinePresenter;
 
     @Inject
     public BasicTableSettingsPresenter(final EventBus eventBus,
                                        final BasicTableSettingsView view,
-                                       final EntityDropDownPresenter pipelinePresenter,
+                                       final DocSelectionBoxPresenter pipelinePresenter,
                                        final UiConfigCache uiConfigCache) {
         super(eventBus, view);
         this.pipelinePresenter = pipelinePresenter;

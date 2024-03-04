@@ -9,6 +9,7 @@ public interface SelectionListModel<T, I extends SelectionItem> {
 
     void onRangeChange(I parent,
                        String filter,
+                       boolean filterChange,
                        PageRequest pageRequest,
                        Consumer<ResultPage<I>> consumer);
 
@@ -27,4 +28,6 @@ public interface SelectionListModel<T, I extends SelectionItem> {
     I wrap(T item);
 
     T unwrap(I selectionItem);
+
+    boolean isEmptyItem(I selectionItem);
 }

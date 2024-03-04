@@ -131,7 +131,10 @@ abstract class AbstractDataStoreTest {
         for (long i = 1; i <= 10; i++) {
             for (long j = 1; j <= 10; j++) {
                 for (long k = 1; k <= 10; k++) {
-                    dataStore.accept(Val.of(ValLong.create(i), ValLong.create(j), ValLong.create(k)));
+                    dataStore.accept(Val.of(
+                            ValLong.create(i),
+                            ValLong.create(j),
+                            ValLong.create(k)));
                 }
             }
         }

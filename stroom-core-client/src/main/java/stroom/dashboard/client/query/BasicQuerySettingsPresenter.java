@@ -23,7 +23,7 @@ import stroom.dashboard.shared.Automate;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.QueryComponentSettings;
 import stroom.docref.DocRef;
-import stroom.explorer.client.presenter.EntityDropDownPresenter;
+import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.explorer.shared.NodeFlag;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.shared.ModelStringUtil;
@@ -39,11 +39,11 @@ public class BasicQuerySettingsPresenter
         extends BasicSettingsTabPresenter<BasicQuerySettingsPresenter.BasicQuerySettingsView>
         implements Focus {
 
-    private final EntityDropDownPresenter dataSourceSelectionPresenter;
+    private final DocSelectionBoxPresenter dataSourceSelectionPresenter;
 
     @Inject
     public BasicQuerySettingsPresenter(final EventBus eventBus, final BasicQuerySettingsView view,
-                                       final EntityDropDownPresenter dataSourceSelectionPresenter) {
+                                       final DocSelectionBoxPresenter dataSourceSelectionPresenter) {
         super(eventBus, view);
         this.dataSourceSelectionPresenter = dataSourceSelectionPresenter;
 

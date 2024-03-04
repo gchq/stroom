@@ -348,6 +348,11 @@ class TestSearchResponseCreator {
                         new BasicKeyFactoryConfig(),
                         new CompiledDepths(null, false));
             }
+
+            @Override
+            public DateTimeSettings getDateTimeSettings() {
+                return null;
+            }
         };
     }
 

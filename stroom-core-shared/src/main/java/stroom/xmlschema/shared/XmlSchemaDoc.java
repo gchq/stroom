@@ -17,6 +17,7 @@
 package stroom.xmlschema.shared;
 
 import stroom.docref.DocRef;
+import stroom.docs.shared.Description;
 import stroom.docstore.shared.Doc;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.HasData;
@@ -29,6 +30,23 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Objects;
 
+@Description(
+        "This Document defines an {{< glossary \"XML Schema\" >}} that can be used within Stroom for validation " +
+                "of XML documents.\n" +
+                "The XML Schema Document content is the XMLSchema text.\n" +
+                "This Document also defines the following:\n" +
+                "* Namespace URI - The XML namespace of the XMLSchema and the XML document that the schema " +
+                "will validate.\n" +
+                "* System Id - An ID (that is unique in Stroom) that can be used in the `xsi:schemaLocation` " +
+                "attribute, e.g. `xsi:schemaLocation=\"event-logging:3 file://event-logging-v3.4.2.xsd\"`.\n" +
+                "* Schema Group - A name to group multiple versions of the same schema.\n" +
+                "  The SchemaFilter can be configured to only use schemas matching a configured group.\n" +
+                "\n" +
+                "The XML Schema Document also provides a handy interactive viewer for viewing and navigating the " +
+                "XMLSchema in a graphical representation.\n" +
+                "\n" +
+                "This Document is used by the {{< pipe-elm \"SchemaFilter\" >}} pipeline element."
+)
 @JsonPropertyOrder({
         "type",
         "uuid",

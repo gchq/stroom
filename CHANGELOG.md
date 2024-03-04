@@ -13,6 +13,107 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.3-beta.11] - 2024-03-01
+
+* Issue **#4132** : Add tooltips to the copy/open hover buttons on table cell values.
+
+* Issue **#4018** : Change the way delimited meta values are held internally. They are now comma delimited internally and when written to file.
+
+* Change `<xsl:message>` to output `NO MESSAGE` if the element contains no text value.
+
+* Add the key bind `ctrl-enter` to do a step refresh on the code pane of the stepper.
+
+* Issue **#4140** : Fix selection box popup close issue.
+
+* Issue **#4143** : Fix horizontal scroll.
+
+* Issue **#4144** : Increase size of part no box.
+
+* Issue **#4141** : Show selected item after expand all.
+
+
+## [v7.3-beta.10] - 2024-02-28
+
+* Issue **#4115** : Fix error when opening Recent Items screen if a recent item is in the favourites list.
+
+* Issue **#4133** : Rollback `lmdbjava` to 0.8.2 to fix FFI issue on centos7.
+
+
+## [v7.3-beta.9] - 2024-02-25
+
+* Issue **#4107** : Add property `warnOnRemoval` to `InvalidCharFilterReader` and `warnOnReplacement` to `InvalidXMLCharFilterReaderElement` allow control of logged warnings for removal/replacement respectively.
+
+* Fix background styling issue with markdown preview pane.
+
+* Issue **#4108** : Add editor snippets for Data Splitter and XML Fragment Parsing.
+
+* Issue **#4117** : Fix inconsistencies between UI and CLI when creating API Keys.
+
+* Issue **#3890** : Fix processing info task message.
+
+* Issue **#4128** : Fix streaming analytics.
+
+* Issue **#4077** : Auto open query helper folders to find functions by name.
+
+* Issue **#3971** : Allow use of date expressions with `filter` keyword.
+
+* Issue **#4090** : Fix JSON error location reporting.
+
+
+## [v7.3-beta.8] - 2024-02-17
+
+* Issue **#4030** : Fix token validation for date expressions.
+
+* Issue **#3991** : Add close button to query text window.
+
+* Issue **#3337** : Improve find content feature to highlight the matches in found docs.
+
+* Issue **#4059** : Fix stream browser not showing any streams.
+
+* Issue **#3993** : Add recent items popup and find popup.
+
+* Issue **#1753** : Add expand all explorer option.
+
+* Issue **#4082** : Add XSLT function hex-to-string(hex, charsetName).
+
+* Issue **#4085** : Fix value in error message when the ref data reference count overflows.
+
+* Issue **#4084** : Fix double shift behaviour to show `find`.
+
+* Issue **#4088** : Add links and copy capability to meta browser.
+
+* Issue **#3966** : Add detailed task information for task fetching process.
+
+* Issue **#4092** : Fix explorer expand behaviour.
+
+* Issue **#4094** : Fix change behaviour of entity selection popup.
+
+* Add support for `<xsl:message>some message</xsl:message>` which will log the message as `ERROR`, which is consistent with the `stroom:log()` function. If the attribute `terminate="yes"` is set, the it will log as `FATAL`, which will stop processing. You can also use a suitably named child element to set the severity, `<xsl:message><info>my message</info></xsl:message>`. Use of `terminate="yes"` trumps any severity set. Previous behaviour was to log to `stdout` and throw an exception if `terminate` is `yes`.
+
+* Issue **#4096** : Improve wrapped table data CSS.
+
+* Issue **#4097** : Fix Meta filter giving 'unknown field' error for fields like 'Raw Size'.
+
+* Issue **#4101** : Expand favourites by default.
+
+* Issue **#4091** : Fix Number column format for duration and date values. Now shows the duration in millis and millis since unix epoch respectively. Also fix lack of rounding when setting a fixed number of decimal places.
+
+* Stop 'ADD TASKS TO QUEUE' from spamming the logs when there are no tasks to queue, i.e. a quiet system.
+
+* Change `<xsl:message terminate="yes">` to halt processing of the current stream part immediately, in addition to logging a FATAL error. This is different from the `stroom:log('FATAL'...)` call that will log a _FATAL_ error but won't halt processing.
+
+* Add a XML editor snippet for adding an `<xsl:element>` block with the alias `elem`.
+
+* Issue **#4104** : Fix open document direct links.
+
+* Issue **#4033** : Fix an infinite loop when stepping raw JSON with a FindReplaceFilter. Change the way character data is decoded in the stepper so that it is more lenient to un-decodable bytes, replacing them with '�'. Also make the reader code in the stepper respond to task termination. Add stepper error for each byte sequence that can't be decoded.
+
+* Fix missing fatal/error/warn/info gutter icons in the Ace editor.
+
+* Change stepper so that errors/warn/etc. with no line/col location are not included in the coloured indicator at the top right of the pane. Location agnostic errors now only feature in the log pane at the bottom.
+
+* Change the stepper log pane so that it only provides location/pane information if the location is known. The code has been changed to allow the server to explicitly state which pane an error relates to or if it is not specific to a pane. Elements with no code pane, now default errors with location information to belonging to the Input pane rather than the Output pane as previously.
+
 * Issue **#4054** : Fix comparison of double values, e.g. `toDouble(20000) > toDouble(125000000)`. Improve comparison/sorting logic to cope with the new Duration type and to better handle mixed type comparison.
 
 * Issue **#4056** : Fix display value of Error type values in query/dashboard. Now shows error message prefixed with `ERR: `.
@@ -262,7 +363,11 @@ eval EventId = first(EventId)`, `evt` => `eval EventId = first(EventId)` and `st
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.3-beta.7...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.3-beta.11...HEAD
+[v7.3-beta.11]: https://github.com/gchq/stroom/compare/v7.3-beta.10...v7.3-beta.11
+[v7.3-beta.10]: https://github.com/gchq/stroom/compare/v7.3-beta.9...v7.3-beta.10
+[v7.3-beta.9]: https://github.com/gchq/stroom/compare/v7.3-beta.8...v7.3-beta.9
+[v7.3-beta.8]: https://github.com/gchq/stroom/compare/v7.3-beta.7...v7.3-beta.8
 [v7.3-beta.7]: https://github.com/gchq/stroom/compare/v7.3-beta.6...v7.3-beta.7
 [v7.3-beta.6]: https://github.com/gchq/stroom/compare/v7.3-beta.5...v7.3-beta.6
 [v7.3-beta.5]: https://github.com/gchq/stroom/compare/v7.3-beta.4...v7.3-beta.5

@@ -36,7 +36,7 @@ import stroom.dispatch.client.ExportFileCompleteUtil;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.explorer.client.presenter.EntityChooser;
+import stroom.explorer.client.presenter.DocSelectionPopup;
 import stroom.feed.shared.FeedDoc;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
@@ -104,7 +104,7 @@ public abstract class AbstractMetaListPresenter
     private final RestDataProvider<MetaRow, ResultPage<MetaRow>> dataProvider;
     private final Provider<SelectionSummaryPresenter> selectionSummaryPresenterProvider;
     private final Provider<ProcessChoicePresenter> processChoicePresenterProvider;
-    private final Provider<EntityChooser> pipelineSelection;
+    private final Provider<DocSelectionPopup> pipelineSelection;
     private final ExpressionValidator expressionValidator;
 
     private ResultPage<MetaRow> resultPage;
@@ -120,7 +120,7 @@ public abstract class AbstractMetaListPresenter
                               final DateTimeFormatter dateTimeFormatter,
                               final Provider<SelectionSummaryPresenter> selectionSummaryPresenterProvider,
                               final Provider<ProcessChoicePresenter> processChoicePresenterProvider,
-                              final Provider<EntityChooser> pipelineSelection,
+                              final Provider<DocSelectionPopup> pipelineSelection,
                               final ExpressionValidator expressionValidator,
                               final boolean allowSelectAll) {
         super(eventBus, view);
@@ -618,21 +618,17 @@ public abstract class AbstractMetaListPresenter
                                     final Consumer<ExpressionOperator> consumer) {
         expressionValidator.validateExpression(
                 AbstractMetaListPresenter.this,
-                MetaFields.getFields(),
+                MetaFields.getAllFields(),
                 expression,
                 consumer);
     }
 
     private void choosePipeline(final Consumer<DocRef> consumer) {
-        final EntityChooser chooser = pipelineSelection.get();
+        final DocSelectionPopup chooser = pipelineSelection.get();
         chooser.setCaption("Choose Pipeline To Process Data With");
         chooser.setIncludedTypes(PipelineDoc.DOCUMENT_TYPE);
         chooser.setRequiredPermissions(DocumentPermissionNames.READ);
-        chooser.addDataSelectionHandler(event -> {
-            final DocRef pipeline = chooser.getSelectedEntityReference();
-            consumer.accept(pipeline);
-        });
-        chooser.show();
+        chooser.show(consumer);
     }
 
     public void delete() {

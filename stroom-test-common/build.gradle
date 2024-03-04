@@ -8,6 +8,7 @@ dependencies {
     implementation project(':stroom-util-shared')
 
     implementation libs.assertj_core
+    implementation libs.classgraph
     implementation libs.commons_lang
     implementation libs.data_faker
     implementation libs.dropwizard_jersey

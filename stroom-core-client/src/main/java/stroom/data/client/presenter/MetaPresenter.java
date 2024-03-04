@@ -207,7 +207,7 @@ public class MetaPresenter extends MyPresenterWidget<MetaView>
 
                     expressionValidator.validateExpression(
                             MetaPresenter.this,
-                            MetaFields.getFields(),
+                            MetaFields.getAllFields(),
                             expression, expression2 -> {
                                 if (!expression2.equals(getCriteria().getExpression())) {
                                     if (hasAdvancedCriteria(expression2)) {

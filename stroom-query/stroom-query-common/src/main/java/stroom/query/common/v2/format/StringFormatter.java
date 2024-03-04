@@ -17,21 +17,23 @@
 package stroom.query.common.v2.format;
 
 import stroom.query.language.functions.Val;
+import stroom.util.NullSafe;
+
+import java.util.Objects;
 
 public class StringFormatter implements Formatter {
+
+    private static StringFormatter INSTANCE = new StringFormatter();
 
     private StringFormatter() {
     }
 
     public static StringFormatter create() {
-        return new StringFormatter();
+        return INSTANCE;
     }
 
     @Override
     public String format(final Val value) {
-        if (value == null) {
-            return null;
-        }
-        return value.toString();
+        return NullSafe.get(value, Objects::toString);
     }
 }

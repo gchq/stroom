@@ -332,6 +332,14 @@ public class FindReplaceFilter extends FilterReader {
         allowReplacement = replacementCount != maxReplacements;
     }
 
+    public static Builder builder() {
+        return new Builder();
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
     static class PaddingWrapper implements CharSequence {
 
         private static final char PADDING = (char) 0;
@@ -386,6 +394,10 @@ public class FindReplaceFilter extends FilterReader {
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     static class SubSequence implements CharSequence {
 
         private final CharSequence charSequence;
@@ -418,6 +430,10 @@ public class FindReplaceFilter extends FilterReader {
             return charSequence.subSequence(start, end).toString();
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class InBuffer extends CharBuffer {
 
@@ -502,6 +518,9 @@ public class FindReplaceFilter extends FilterReader {
     }
 
 
+    // --------------------------------------------------------------------------------
+
+
     private static class OutBuffer {
 
         private StringBuilder sb = new StringBuilder();
@@ -546,9 +565,9 @@ public class FindReplaceFilter extends FilterReader {
         }
     }
 
-    public static Builder builder() {
-        return new Builder();
-    }
+
+    // --------------------------------------------------------------------------------
+
 
     static final class Builder {
 

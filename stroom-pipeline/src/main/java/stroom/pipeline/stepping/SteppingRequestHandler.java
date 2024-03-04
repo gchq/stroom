@@ -40,7 +40,6 @@ import stroom.pipeline.factory.PipelineDataCache;
 import stroom.pipeline.factory.PipelineFactory;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineData;
-import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.stepping.PipelineStepRequest;
 import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.shared.stepping.StepType;
@@ -241,18 +240,11 @@ class SteppingRequestHandler {
             startProcessIndicatorMap.forEach((elementId, startProcessingIndicators) -> {
                 final ElementData elementData = elementIdToDataMap.get(elementId);
                 Objects.requireNonNull(elementData, () -> "No elementData for elementId " + elementId);
-                final PipelineElementType elementType = elementData.getElementType();
-                if (elementType.hasRole(PipelineElementType.ROLE_HAS_CODE)) {
-                    final Indicators combinedIndicators = Indicators.combine(
-                            startProcessingIndicators,
-                            elementData.getCodeIndicators());
-                    elementData.setCodeIndicators(combinedIndicators);
-                } else {
-                    final Indicators combinedIndicators = Indicators.combine(
-                            startProcessingIndicators,
-                            elementData.getOutputIndicators());
-                    elementData.setOutputIndicators(combinedIndicators);
-                }
+
+                final Indicators combinedIndicators = Indicators.combine(
+                        startProcessingIndicators,
+                        elementData.getIndicators());
+                elementData.setIndicators(combinedIndicators);
             });
         }
     }

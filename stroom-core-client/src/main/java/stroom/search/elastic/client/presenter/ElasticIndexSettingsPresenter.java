@@ -24,7 +24,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
-import stroom.explorer.client.presenter.EntityDropDownPresenter;
+import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
@@ -47,9 +47,9 @@ public class ElasticIndexSettingsPresenter extends DocumentEditPresenter<Elastic
 
     private static final ElasticIndexResource ELASTIC_INDEX_RESOURCE = GWT.create(ElasticIndexResource.class);
 
-    private final EntityDropDownPresenter clusterPresenter;
+    private final DocSelectionBoxPresenter clusterPresenter;
     private final EditExpressionPresenter editExpressionPresenter;
-    private final EntityDropDownPresenter pipelinePresenter;
+    private final DocSelectionBoxPresenter pipelinePresenter;
     private final RestFactory restFactory;
     private final DynamicFieldSelectionListModel fieldSelectionBoxModel;
 
@@ -57,9 +57,9 @@ public class ElasticIndexSettingsPresenter extends DocumentEditPresenter<Elastic
     public ElasticIndexSettingsPresenter(
             final EventBus eventBus,
             final ElasticIndexSettingsView view,
-            final EntityDropDownPresenter clusterPresenter,
+            final DocSelectionBoxPresenter clusterPresenter,
             final EditExpressionPresenter editExpressionPresenter,
-            final EntityDropDownPresenter pipelinePresenter,
+            final DocSelectionBoxPresenter pipelinePresenter,
             final RestFactory restFactory,
             final DynamicFieldSelectionListModel fieldSelectionBoxModel) {
         super(eventBus, view);

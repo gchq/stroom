@@ -75,6 +75,14 @@ public final class ValDouble implements ValNumber {
         return lazyStringValue.getValueWithoutLocks();
     }
 
+    @Override
+    public Number toNumber() {
+        Number num = hasFractionalPart()
+                ? value
+                : toLong();
+        return num;
+    }
+
     private String deriveStringValue() {
         String stringValue = null;
         try {

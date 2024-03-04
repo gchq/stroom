@@ -42,7 +42,7 @@ import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.event.HasDirtyHandlers;
-import stroom.explorer.client.presenter.EntityChooser;
+import stroom.explorer.client.presenter.DocSelectionPopup;
 import stroom.pipeline.client.event.CreateProcessorEvent;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.shared.CreateProcessFilterRequest;
@@ -117,7 +117,7 @@ public class QueryPresenter
     private final ExpressionTreePresenter expressionPresenter;
     private final QueryHistoryPresenter historyPresenter;
     private final QueryFavouritesPresenter favouritesPresenter;
-    private final Provider<EntityChooser> pipelineSelection;
+    private final Provider<DocSelectionPopup> pipelineSelection;
     private final ProcessorLimitsPresenter processorLimitsPresenter;
     private final RestFactory restFactory;
     private final LocationManager locationManager;
@@ -149,7 +149,7 @@ public class QueryPresenter
                           final ExpressionTreePresenter expressionPresenter,
                           final QueryHistoryPresenter historyPresenter,
                           final QueryFavouritesPresenter favouritesPresenter,
-                          final Provider<EntityChooser> pipelineSelection,
+                          final Provider<DocSelectionPopup> pipelineSelection,
                           final ProcessorLimitsPresenter processorLimitsPresenter,
                           final IndexLoader indexLoader,
                           final RestFactory restFactory,
@@ -530,18 +530,15 @@ public class QueryPresenter
         queryData.setParams(dashboardContext.getParams());
         queryData.setTimeRange(dashboardContext.getTimeRange());
 
-        final EntityChooser chooser = pipelineSelection.get();
+        final DocSelectionPopup chooser = pipelineSelection.get();
         chooser.setCaption("Choose Pipeline To Process Results With");
         chooser.setIncludedTypes(PipelineDoc.DOCUMENT_TYPE);
         chooser.setRequiredPermissions(DocumentPermissionNames.USE);
-        chooser.addDataSelectionHandler(event -> {
-            final DocRef pipeline = chooser.getSelectedEntityReference();
+        chooser.show(pipeline -> {
             if (pipeline != null) {
                 setProcessorLimits(queryData, pipeline);
             }
         });
-
-        chooser.show();
     }
 
     private void setProcessorLimits(final QueryData queryData, final DocRef pipeline) {

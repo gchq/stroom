@@ -23,7 +23,7 @@ import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.entity.shared.ExpressionCriteria;
-import stroom.explorer.client.presenter.EntityDropDownPresenter;
+import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.feed.client.presenter.SupportedRetentionAge;
 import stroom.index.client.presenter.IndexSettingsPresenter.IndexSettingsView;
 import stroom.index.shared.IndexDoc;
@@ -51,12 +51,12 @@ public class IndexSettingsPresenter extends DocumentEditPresenter<IndexSettingsV
             GWT.create(IndexVolumeGroupResource.class);
 
     private final RestFactory restFactory;
-    private final EntityDropDownPresenter pipelinePresenter;
+    private final DocSelectionBoxPresenter pipelinePresenter;
 
     @Inject
     public IndexSettingsPresenter(final EventBus eventBus,
                                   final IndexSettingsView view,
-                                  final EntityDropDownPresenter pipelinePresenter,
+                                  final DocSelectionBoxPresenter pipelinePresenter,
                                   final RestFactory restFactory) {
         super(eventBus, view);
         this.pipelinePresenter = pipelinePresenter;

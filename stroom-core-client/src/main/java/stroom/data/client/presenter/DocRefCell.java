@@ -111,11 +111,15 @@ public class DocRefCell extends AbstractCell<DocRef> implements HasHandlers, Eve
                 sb.append(textSafeHtml);
 
                 final SafeHtml copy = SvgImageUtil.toSafeHtml(SvgImage.COPY, ICON_NAME, COPY_CLASS_NAME);
-                sb.append(copy);
+                sb.append(template.divWithToolTip(
+                        "Copy name '" + value.getName() + "' to clipboard",
+                        copy));
 
                 if (value.getUuid() != null || allowLinkByName) {
                     final SafeHtml open = SvgImageUtil.toSafeHtml(SvgImage.OPEN, ICON_NAME, OPEN_CLASS_NAME);
-                    sb.append(open);
+                    sb.append(template.divWithToolTip(
+                            "Open " + value.getType() + " " + value.getName() + " in new tab",
+                            open));
                 }
 
                 sb.appendHtmlConstant("</div>");
@@ -132,9 +136,16 @@ public class DocRefCell extends AbstractCell<DocRef> implements HasHandlers, Eve
         return null;
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     interface Template extends SafeHtmlTemplates {
 
         @Template("<div class=\"{0}\">{1}</div>")
         SafeHtml div(String expanderClass, SafeHtml icon);
+
+        @Template("<div title=\"{0}\">{1}</div>")
+        SafeHtml divWithToolTip(String title, SafeHtml content);
     }
 }

@@ -71,4 +71,8 @@ public class QueueProcessTasksState {
         sb.append("Total final queue size for considered filters: ");
         sb.append(totalQueuedCount.get());
     }
+
+    public int getTotalQueuedCount() {
+        return totalQueuedCount.get();
+    }
 }

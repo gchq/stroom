@@ -18,7 +18,7 @@ package stroom.widget.dropdowntree.client.view;
 
 import com.gwtplatform.mvp.client.UiHandlers;
 
-public interface DropDownTreeUiHandlers extends UiHandlers {
+public interface ExplorerPopupUiHandlers extends UiHandlers {
 
     void nameFilterChanged(String text);
 }

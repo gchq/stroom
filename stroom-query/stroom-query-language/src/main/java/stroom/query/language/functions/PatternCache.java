@@ -56,6 +56,10 @@ final class PatternCache {
         return cachedPattern.pattern;
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class CachedPattern {
 
         private final Pattern pattern;

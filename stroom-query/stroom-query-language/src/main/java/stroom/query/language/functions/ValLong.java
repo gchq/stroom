@@ -70,6 +70,11 @@ public final class ValLong implements ValNumber {
     }
 
     @Override
+    public Number toNumber() {
+        return value;
+    }
+
+    @Override
     public void appendString(final StringBuilder sb) {
         sb.append(this);
     }

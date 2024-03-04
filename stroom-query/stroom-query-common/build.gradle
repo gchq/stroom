@@ -54,6 +54,7 @@ dependencies {
     testImplementation libs.jaxb_api
     testImplementation libs.mockito_core
     testImplementation project(':stroom-query:stroom-query-language').sourceSets.test.output
+    testImplementation project(':stroom-test-common')
 
     testRuntimeOnly libs.junit_jupiter_engine
     testRuntimeOnly libs.logback_classic

@@ -18,7 +18,7 @@ package stroom.query.client;
 
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.explorer.client.presenter.EntityDropDownPresenter;
+import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.pipeline.structure.client.view.DraggableTreePanel;
 import stroom.preferences.client.UserPreferencesManager;
 import stroom.query.client.ExpressionTreePresenter.ExpressionTreeView;
@@ -41,7 +41,7 @@ public class ExpressionTreeViewImpl extends ViewWithUiHandlers<ExpressionUiHandl
     private MySingleSelectionModel<Item> selectionModel;
 
     @Inject
-    public ExpressionTreeViewImpl(final Provider<EntityDropDownPresenter> docRefProvider,
+    public ExpressionTreeViewImpl(final Provider<DocSelectionBoxPresenter> docRefProvider,
                                   final UserPreferencesManager userPreferencesManager) {
         treePanel = new ExpressionTreePanel(
                 docRefProvider,

@@ -17,6 +17,7 @@
 package stroom.analytics.shared;
 
 import stroom.docref.DocRef;
+import stroom.docs.shared.Description;
 import stroom.docstore.shared.Doc;
 import stroom.query.api.v2.Param;
 import stroom.query.api.v2.TimeRange;
@@ -31,6 +32,13 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import java.util.List;
 import java.util.Objects;
 
+@Description(
+        "Defines an analytic rule which can be run to alert on events meeting a criteria.\n" +
+                "The criteria is defined using a StroomQL query.\n" +
+                "The analytic can be processed in different ways:\n\n" +
+                "* Streaming\n" +
+                "* Table Builder\n" +
+                "* Scheduled Query")
 @JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
 public class AnalyticRuleDoc extends Doc {

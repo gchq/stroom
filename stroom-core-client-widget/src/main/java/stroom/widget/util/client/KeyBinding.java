@@ -231,6 +231,10 @@ public class KeyBinding {
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class Binding {
 
         private final Shortcut shortcut;
@@ -270,6 +274,10 @@ public class KeyBinding {
             }
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class Shortcut {
 
@@ -356,6 +364,10 @@ public class KeyBinding {
             return shift || ctrl || alt || meta;
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public static class Builder {
 

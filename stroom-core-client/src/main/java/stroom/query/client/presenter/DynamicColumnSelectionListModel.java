@@ -33,6 +33,7 @@ import javax.inject.Inject;
 
 public class DynamicColumnSelectionListModel implements SelectionListModel<Column, ColumnSelectionItem> {
 
+    private static final String NONE_TITLE = "[ none ]";
     private final DataSourceClient dataSourceClient;
     private final ClientSecurityContext clientSecurityContext;
     private DocRef dataSourceRef;
@@ -48,6 +49,7 @@ public class DynamicColumnSelectionListModel implements SelectionListModel<Colum
     @Override
     public void onRangeChange(final ColumnSelectionItem parent,
                               final String filter,
+                              final boolean filterChange,
                               final PageRequest pageRequest,
                               final Consumer<ResultPage<ColumnSelectionItem>> consumer) {
         final String parentPath = getParentPath(parent);
@@ -65,7 +67,9 @@ public class DynamicColumnSelectionListModel implements SelectionListModel<Colum
             dataSourceClient.findFields(findFieldInfoCriteria, response -> {
                 // Only update if the request is still current.
                 if (findFieldInfoCriteria == lastCriteria) {
-                    setResponse(stringMatch, parentPath, pageRequest, response, consumer);
+                    final ResultPage<ColumnSelectionItem> resultPage =
+                            createResults(stringMatch, parentPath, pageRequest, response);
+                    consumer.accept(resultPage);
                 }
             });
         }
@@ -83,11 +87,10 @@ public class DynamicColumnSelectionListModel implements SelectionListModel<Colum
         return parentPath;
     }
 
-    private void setResponse(final StringMatch filter,
-                             final String parentPath,
-                             final PageRequest pageRequest,
-                             final ResultPage<FieldInfo> response,
-                             final Consumer<ResultPage<ColumnSelectionItem>> consumer) {
+    private ResultPage<ColumnSelectionItem> createResults(final StringMatch filter,
+                                                          final String parentPath,
+                                                          final PageRequest pageRequest,
+                                                          final ResultPage<FieldInfo> response) {
         final ResultPage<ColumnSelectionItem> counts = getCounts(filter, pageRequest);
         final ResultPage<ColumnSelectionItem> annotations = getAnnotations(filter, pageRequest);
 
@@ -123,11 +126,11 @@ public class DynamicColumnSelectionListModel implements SelectionListModel<Colum
 
         if (resultPage == null || resultPage.getValues().isEmpty()) {
             resultPage = new ResultPage<>(Collections.singletonList(
-                    new ColumnSelectionItem(null, "[ none ]", false)),
+                    new ColumnSelectionItem(null, NONE_TITLE, false)),
                     new PageResponse(0, 1, 1L, true));
         }
 
-        consumer.accept(resultPage);
+        return resultPage;
     }
 
     private ResultPage<ColumnSelectionItem> getCounts(final StringMatch filter,
@@ -225,6 +228,11 @@ public class DynamicColumnSelectionListModel implements SelectionListModel<Colum
             return null;
         }
         return selectionItem.getColumn();
+    }
+
+    @Override
+    public boolean isEmptyItem(final ColumnSelectionItem selectionItem) {
+        return NONE_TITLE.equals(selectionItem.getLabel());
     }
 
     public static class ColumnSelectionItem implements SelectionItem {

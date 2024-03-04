@@ -156,4 +156,74 @@ public class ElementUtil {
     public static native double getSubPixelScrollWidth(Element el) /*-{
         return el.scrollWidth || 0;
     }-*/;
+
+    public static native void focus(Element el) /*-{
+        el.focus();
+    }-*/;
+
+    public static native void focus(Element el, boolean focusVisible, boolean preventScroll) /*-{
+        el.focus({ focusVisible: focusVisible, preventScroll: preventScroll });
+    }-*/;
+
+    public static native void scrollIntoView(Element el, boolean alignToTop) /*-{
+        el.scrollIntoView(alignToTop);
+    }-*/;
+
+    public static native void scrollIntoViewNearest(Element el) /*-{
+        el.scrollIntoView({behaviour: "smooth", block: "nearest", inline: "nearest"});
+    }-*/;
+
+    public static native void scrollIntoViewVertical(Element elem) /*-{
+        var top = elem.offsetTop;
+        var height = elem.offsetHeight;
+
+        if (elem.parentNode != elem.offsetParent) {
+            top -= elem.parentNode.offsetTop;
+        }
+
+        var cur = elem.parentNode;
+        while (cur && (cur.nodeType == 1)) {
+            if (top < cur.scrollTop) {
+                cur.scrollTop = top;
+            }
+            if (top + height > cur.scrollTop + cur.clientHeight) {
+                cur.scrollTop = (top + height) - cur.clientHeight;
+            }
+
+            var offsetTop = cur.offsetTop;
+            if (cur.parentNode != cur.offsetParent) {
+                offsetTop -= cur.parentNode.offsetTop;
+            }
+
+            top += offsetTop - cur.scrollTop;
+            cur = cur.parentNode;
+        }
+    }-*/;
+
+    public static native void scrollIntoViewHorizontal(Element elem) /*-{
+        var left = elem.offsetLeft;
+        var width = elem.offsetWidth;
+
+        if (elem.parentNode != elem.offsetParent) {
+            left -= elem.parentNode.offsetLeft;
+        }
+
+        var cur = elem.parentNode;
+        while (cur && (cur.nodeType == 1)) {
+            if (left < cur.scrollLeft) {
+                cur.scrollLeft = left;
+            }
+            if (left + width > cur.scrollLeft + cur.clientWidth) {
+                cur.scrollLeft = (left + width) - cur.clientWidth;
+            }
+
+            var offsetLeft = cur.offsetLeft;
+            if (cur.parentNode != cur.offsetParent) {
+                offsetLeft -= cur.parentNode.offsetLeft;
+            }
+
+            left += offsetLeft - cur.scrollLeft;
+            cur = cur.parentNode;
+        }
+    }-*/;
 }

@@ -46,9 +46,6 @@ import stroom.explorer.client.presenter.ExplorerNodeEditTagsPresenter.ExplorerNo
 import stroom.explorer.client.presenter.ExplorerNodeRemoveTagsPresenter;
 import stroom.explorer.client.presenter.ExplorerNodeRemoveTagsPresenter.ExplorerNodeRemoveTagsProxy;
 import stroom.explorer.client.presenter.ExplorerNodeRemoveTagsPresenter.ExplorerNodeRemoveTagsView;
-import stroom.explorer.client.presenter.ExplorerTreePresenter;
-import stroom.explorer.client.presenter.ExplorerTreePresenter.ExplorerTreeProxy;
-import stroom.explorer.client.presenter.ExplorerTreePresenter.ExplorerTreeView;
 import stroom.explorer.client.presenter.FindInContentPresenter;
 import stroom.explorer.client.presenter.FindInContentPresenter.FindInContentProxy;
 import stroom.explorer.client.presenter.FindInContentPresenter.FindInContentView;
@@ -66,7 +63,6 @@ import stroom.explorer.client.view.EntityCheckTreeViewImpl;
 import stroom.explorer.client.view.EntityTreeViewImpl;
 import stroom.explorer.client.view.ExplorerNodeEditTagsViewImpl;
 import stroom.explorer.client.view.ExplorerNodeRemoveTagsViewImpl;
-import stroom.explorer.client.view.ExplorerTreeViewImpl;
 import stroom.explorer.client.view.FindInContentViewImpl;
 import stroom.explorer.client.view.FindViewImpl;
 import stroom.explorer.client.view.NavigationViewImpl;
@@ -141,8 +137,6 @@ public class AppModule extends AbstractPresenterModule {
                 NavigationProxy.class);
         bindPresenter(ContentTabPanePresenter.class, ContentTabPaneProxy.class);
 
-        bindPresenter(ExplorerTreePresenter.class, ExplorerTreeView.class, ExplorerTreeViewImpl.class,
-                ExplorerTreeProxy.class);
         bindPresenterWidget(TypeFilterPresenter.class, TypeFilterView.class, TypeFilterViewImpl.class);
 
         bindPresenterWidget(TooltipPresenter.class, TooltipView.class, TooltipViewImpl.class);
@@ -185,10 +179,6 @@ public class AppModule extends AbstractPresenterModule {
 
 
         // Widgets
-        // bindPresenterWidget(CurveTabPresenter.class, CurveTabView.class,
-        // CurveTabLayoutViewImpl.class);
-        // bindSharedView(CellTreeView.class, CellTreeViewImpl.class);
-        // bind(LinkTabPanelPresenter.class);
         bindSharedView(CurveTabLayoutView.class, CurveTabLayoutViewImpl.class);
         bindSharedView(PagerView.class, PagerViewImpl.class);
         bindSharedView(LinkTabPanelView.class, LinkTabPanelViewImpl.class);

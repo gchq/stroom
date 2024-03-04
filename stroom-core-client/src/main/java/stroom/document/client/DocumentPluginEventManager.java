@@ -280,8 +280,6 @@ public class DocumentPluginEventManager extends Plugin {
         // 6. Handle save as events.
         registerHandler(getEventBus().addHandler(SaveAsDocumentEvent.getType(), event -> {
             // First get the explorer node for the docref.
-//            final Rest<ExplorerNode> rest = restFactory.create();
-//            rest
             restFactory.builder()
                     .forType(ExplorerNode.class)
                     .onSuccess(explorerNode -> {
@@ -655,9 +653,8 @@ public class DocumentPluginEventManager extends Plugin {
                     .forType(DocRef.class)
                     .onSuccess(decoratedDocRef -> {
                         if (decoratedDocRef != null) {
-//                            docRef.setUuid(decoratedDocRef.getUuid());
-//                            docRef.setName(decoratedDocRef.getName());
                             documentPlugin.open(decoratedDocRef, forceOpen, fullScreen);
+                            highlight(decoratedDocRef);
                         }
                     })
                     .call(EXPLORER_RESOURCE)
@@ -772,15 +769,6 @@ public class DocumentPluginEventManager extends Plugin {
                 .fetchExplorerPermissions(explorerNodes);
     }
 
-//    private DocRef getDocRef(final ExplorerNode explorerNode) {
-//        DocRef docRef = null;
-//        if (explorerNode != null && explorerNode instanceof EntityData) {
-//            final EntityData entityData = (EntityData) explorerNode;
-//            docRef = entityData.getDocRef();
-//        }
-//        return docRef;
-//    }
-
     private void addFavouritesMenuItem(final List<Item> menuItems, final boolean singleSelection, final int priority) {
         final ExplorerNode primarySelection = getPrimarySelection();
 
@@ -871,7 +859,7 @@ public class DocumentPluginEventManager extends Plugin {
 
                         // Add the group level item with its children
                         children.add(new IconParentMenuItem.Builder()
-                                .text(group.getName())
+                                .text(group.getDisplayName())
                                 .children(grandChildren)
                                 .build());
                     }
@@ -1299,10 +1287,6 @@ public class DocumentPluginEventManager extends Plugin {
 
     private boolean isTabItemSelected(final TabData tabData) {
         return tabData != null;
-    }
-
-    public boolean isTabSelected() {
-        return selectedTab != null;
     }
 
     private boolean isDirty(final TabData tabData) {

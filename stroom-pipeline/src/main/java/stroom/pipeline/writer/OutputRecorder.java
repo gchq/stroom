@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 public class OutputRecorder extends AbstractDestinationProvider implements Recorder {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(OutputRecorder.class);
     private final MemoryDestination destination = new MemoryDestination();
     private String elementId;
@@ -78,7 +79,12 @@ public class OutputRecorder extends AbstractDestinationProvider implements Recor
         this.elementId = elementId;
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class MemoryDestination implements Destination {
+
         private final ByteArrayOutputStream outputStream = new ByteArrayOutputStream(4096);
         private byte[] header;
         private byte[] footer;

@@ -67,10 +67,10 @@ import stroom.editor.client.presenter.DelegatingAceCompleter;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.editor.client.presenter.EditorView;
 import stroom.editor.client.view.EditorViewImpl;
-import stroom.widget.dropdowntree.client.view.DropDownTreeView;
-import stroom.widget.dropdowntree.client.view.DropDownTreeViewImpl;
 import stroom.widget.dropdowntree.client.view.DropDownView;
 import stroom.widget.dropdowntree.client.view.DropDownViewImpl;
+import stroom.widget.dropdowntree.client.view.ExplorerPopupView;
+import stroom.widget.dropdowntree.client.view.ExplorerPopupViewImpl;
 import stroom.widget.progress.client.presenter.ProgressPresenter;
 import stroom.widget.progress.client.presenter.ProgressPresenter.ProgressView;
 import stroom.widget.progress.client.view.ProgressViewImpl;
@@ -151,7 +151,7 @@ public class StreamStoreModule extends PluginModule {
         bind(ProcessorTaskListPresenter.class);
 
         bindSharedView(DropDownView.class, DropDownViewImpl.class);
-        bindSharedView(DropDownTreeView.class, DropDownTreeViewImpl.class);
+        bindSharedView(ExplorerPopupView.class, ExplorerPopupViewImpl.class);
         bindSharedView(ClassificationWrapperView.class, ClassificationWrapperViewImpl.class);
     }
 }

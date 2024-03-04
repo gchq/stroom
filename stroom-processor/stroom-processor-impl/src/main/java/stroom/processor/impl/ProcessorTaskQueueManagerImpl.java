@@ -303,7 +303,8 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
                     info(taskContext, () -> "Assigned " +
                             assignedStreamTasks.size() +
                             " tasks, filling queue synchronously");
-                    fillTaskQueueSync();
+                    // Only want to see an empty progress report on the first attempt
+                    fillTaskQueueSync(attempt.get() <= 1); // Has already been incremented
                 } else {
                     // Kick off a queue fill.
                     info(taskContext, () -> "Assigned " +
@@ -320,14 +321,14 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
         return new ProcessorTaskList(nodeName, assignedStreamTasks);
     }
 
-    private void fillTaskQueueSync() {
+    private void fillTaskQueueSync(final boolean isEmptyReportRequired) {
         if (allowTaskQueueFill) {
             try {
                 LOGGER.debug("fillTaskQueueAsync() - Executing fillTaskQueue");
                 securityContext.asProcessingUser(() ->
                         taskContextFactory.context(
                                 "Fill task queue",
-                                this::queueNewTasks).run());
+                                taskContext -> queueNewTasks(taskContext, isEmptyReportRequired)).run());
 
             } catch (final RuntimeException e) {
                 fillingQueue.set(false);
@@ -346,8 +347,10 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
                     securityContext.asProcessingUser(() ->
                             CompletableFuture
                                     .supplyAsync(taskContextFactory.contextResult(
-                                            "Fill task queue",
-                                            this::queueNewTasks), executor)
+                                                    "Fill task queue",
+                                                    (taskContext) ->
+                                                            queueNewTasks(taskContext)),
+                                            executor)
                                     .whenComplete((result, error) -> {
                                         try {
                                             if (error != null) {
@@ -553,7 +556,12 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
         queueNewTasks(taskContextFactory.current());
     }
 
-    private synchronized int queueNewTasks(final TaskContext taskContext) {
+    private int queueNewTasks(final TaskContext taskContext) {
+        return queueNewTasks(taskContext, true);
+    }
+
+    private synchronized int queueNewTasks(final TaskContext taskContext,
+                                           final boolean isEmptyReportRequired) {
         LOGGER.trace("queueNewTasks() - Starting");
         int totalAdded = 0;
 
@@ -621,7 +629,12 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
 
         info(taskContext, () -> "Finished");
 
-        progressMonitor.report("ADD TASKS TO QUEUE", queueProcessTasksState);
+        // No point spamming the logs when this method is called MAX_ASSIGNMENT_ATTEMPTS in succession
+        if (queueProcessTasksState.getTotalQueuedCount() > 0
+                || isEmptyReportRequired
+                || LOGGER.isDebugEnabled()) {
+            progressMonitor.report("ADD TASKS TO QUEUE", queueProcessTasksState);
+        }
 
         LOGGER.trace("queueNewTasks() - Finished");
         return totalAdded;

@@ -19,6 +19,7 @@ package stroom.pipeline.factory;
 import stroom.docstore.impl.Serialiser2FactoryImpl;
 import stroom.pipeline.PipelineSerialiser;
 import stroom.pipeline.PipelineTestUtil;
+import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.shared.PipelineDataMerger;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineData;
@@ -29,15 +30,22 @@ import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.common.StroomPipelineTestFileUtil;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@ExtendWith(MockitoExtension.class)
 class TestPipelineFactory extends AbstractProcessIntegrationTest {
 
     private final MockPipelineElementRegistryFactory elementRegistryFactory = new MockPipelineElementRegistryFactory();
     private final PipelineSerialiser pipelineSerialiser = new PipelineSerialiser(new Serialiser2FactoryImpl());
+
+    @Mock
+    private ErrorReceiverProxy mockErrorReceiverProxy;
 
     @Test
     void testSingle() {
@@ -55,7 +63,8 @@ class TestPipelineFactory extends AbstractProcessIntegrationTest {
         final PipelineFactory pipelineFactory = new PipelineFactory(
                 elementRegistryFactory,
                 elementRegistryFactory,
-                new SimpleProcessorFactory());
+                new SimpleProcessorFactory(),
+                mockErrorReceiverProxy);
         final Pipeline pipeline = pipelineFactory.create(mergedPipelineData, new SimpleTaskContext());
 
         System.out.println(pipeline);
@@ -66,7 +75,8 @@ class TestPipelineFactory extends AbstractProcessIntegrationTest {
         final PipelineFactory pipelineFactory = new PipelineFactory(
                 elementRegistryFactory,
                 elementRegistryFactory,
-                new SimpleProcessorFactory());
+                new SimpleProcessorFactory(),
+                mockErrorReceiverProxy);
 
         final String data1 = StroomPipelineTestFileUtil
                 .getString("TestPipelineFactory/EventDataPipeline.Pipeline.data.xml");
@@ -102,7 +112,8 @@ class TestPipelineFactory extends AbstractProcessIntegrationTest {
         final PipelineFactory pipelineFactory = new PipelineFactory(
                 elementRegistryFactory,
                 elementRegistryFactory,
-                new SimpleProcessorFactory());
+                new SimpleProcessorFactory(),
+                mockErrorReceiverProxy);
 
         final String data1 = StroomPipelineTestFileUtil
                 .getString("TestPipelineFactory/TestBasePipeline.Pipeline.data.xml");

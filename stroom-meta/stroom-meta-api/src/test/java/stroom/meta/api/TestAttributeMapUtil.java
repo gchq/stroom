@@ -58,10 +58,7 @@ class TestAttributeMapUtil {
                 "foo", "123",
                 "bar", "456"));
         final AttributeMap attributeMap3 = new AttributeMap(Map.of(
-                "files", """
-                        /some/path/file1
-                        /some/path/file2
-                        /some/path/file3""",
+                "files", "/some/path/file1,/some/path/file2,/some/path/file3",
                 "foo", "123"));
 
         final AttributeMap attributeMapEmpty = new AttributeMap();

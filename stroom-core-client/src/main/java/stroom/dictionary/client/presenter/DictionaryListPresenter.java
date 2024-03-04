@@ -26,7 +26,7 @@ import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.client.presenter.HasDocumentWrite;
-import stroom.explorer.client.presenter.EntityChooser;
+import stroom.explorer.client.presenter.DocSelectionPopup;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
@@ -46,7 +46,7 @@ public class DictionaryListPresenter extends MyPresenterWidget<WrapperView>
         implements HasDocumentRead<DictionaryDoc>, HasDocumentWrite<DictionaryDoc>, HasDirtyHandlers {
 
     private final DocRefListPresenter docRefListPresenter;
-    private final Provider<EntityChooser> dictionarySelection;
+    private final Provider<DocSelectionPopup> dictionarySelection;
     private final ButtonView addButton;
     private final ButtonView removeButton;
 
@@ -58,7 +58,7 @@ public class DictionaryListPresenter extends MyPresenterWidget<WrapperView>
     public DictionaryListPresenter(final EventBus eventBus,
                                    final WrapperView view,
                                    final DocRefListPresenter docRefListPresenter,
-                                   final Provider<EntityChooser> dictionarySelection) {
+                                   final Provider<DocSelectionPopup> dictionarySelection) {
         super(eventBus, view);
         this.docRefListPresenter = docRefListPresenter;
         this.dictionarySelection = dictionarySelection;
@@ -81,20 +81,17 @@ public class DictionaryListPresenter extends MyPresenterWidget<WrapperView>
     }
 
     private void onAdd(final ClickEvent event) {
-        final EntityChooser chooser = dictionarySelection.get();
+        final DocSelectionPopup chooser = dictionarySelection.get();
         chooser.setCaption("Import a dictionary");
         chooser.setIncludedTypes(DictionaryDoc.DOCUMENT_TYPE);
         chooser.setRequiredPermissions(DocumentPermissionNames.USE);
-        chooser.addDataSelectionHandler(e -> {
-            final DocRef docRef = chooser.getSelectedEntityReference();
+        chooser.show(docRef -> {
             if (docRef != null && !docRef.equals(currentDoc) && !imports.contains(docRef)) {
                 imports.add(docRef);
                 DirtyEvent.fire(DictionaryListPresenter.this, true);
                 refresh();
             }
         });
-
-        chooser.show();
     }
 
     public void onRemove(final ClickEvent event) {

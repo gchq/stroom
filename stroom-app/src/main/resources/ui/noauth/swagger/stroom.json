@@ -15632,6 +15632,9 @@
           },
           "type" : {
             "type" : "string"
+          },
+          "unknown" : {
+            "type" : "boolean"
           }
         },
         "required" : [ "type" ]
@@ -18749,23 +18752,20 @@
       "SharedElementData" : {
         "type" : "object",
         "properties" : {
-          "codeIndicators" : {
-            "$ref" : "#/components/schemas/Indicators"
-          },
           "formatInput" : {
             "type" : "boolean"
           },
           "formatOutput" : {
             "type" : "boolean"
           },
+          "indicators" : {
+            "$ref" : "#/components/schemas/Indicators"
+          },
           "input" : {
             "type" : "string"
           },
           "output" : {
             "type" : "string"
-          },
-          "outputIndicators" : {
-            "$ref" : "#/components/schemas/Indicators"
           }
         }
       },
@@ -19275,6 +19275,10 @@
         "properties" : {
           "elementId" : {
             "type" : "string"
+          },
+          "errorType" : {
+            "type" : "string",
+            "enum" : [ "CODE", "GENERIC", "INPUT", "OUTPUT", "UNKNOWN" ]
           },
           "location" : {
             "$ref" : "#/components/schemas/Location"
