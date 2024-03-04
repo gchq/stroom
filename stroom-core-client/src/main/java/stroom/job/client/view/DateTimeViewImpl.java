@@ -16,7 +16,6 @@
 
 package stroom.job.client.view;
 
-import stroom.item.client.SelectionBox;
 import stroom.job.client.presenter.DateTimePopup.DateTimeView;
 import stroom.widget.datepicker.client.CustomDatePicker;
 import stroom.widget.datepicker.client.IntlDateTimeFormat;
@@ -29,8 +28,9 @@ import stroom.widget.datepicker.client.IntlDateTimeFormat.FormatOptions.Second;
 import stroom.widget.datepicker.client.IntlDateTimeFormat.FormatOptions.TimeZoneName;
 import stroom.widget.datepicker.client.IntlDateTimeFormat.FormatOptions.Year;
 import stroom.widget.datepicker.client.JsDate;
-import stroom.widget.valuespinner.client.ValueSpinner;
+import stroom.widget.datepicker.client.ValueChooser;
 
+import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -51,21 +51,31 @@ public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
     @UiField
     Label time;
     @UiField
-    ValueSpinner hour;
+    ValueChooser hour;
     @UiField
-    ValueSpinner minute;
+    ValueChooser minute;
     @UiField
-    ValueSpinner second;
+    ValueChooser second;
     @UiField
-    ValueSpinner millisecond;
+    ValueChooser millisecond;
+
     @UiField
-    SelectionBox<String> timeZone;
+    Label today;
+    @UiField
+    Label yesterday;
+    @UiField
+    Label weekStart;
+    @UiField
+    Label now;
+    @UiField
+    Label midnight;
+    @UiField
+    Label midday;
 
     @Inject
     public DateTimeViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
         datePicker.setCurrentMonth(JsDate.create());
-//        datePicker.setVisibleYearCount(100);
         datePicker.setYearAndMonthDropdownVisible(true);
         datePicker.setYearArrowsVisible(true);
 
@@ -77,9 +87,6 @@ public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
         second.setMax(59);
         millisecond.setMin(0);
         millisecond.setMax(999);
-
-        timeZone.addItems(IntlDateTimeFormat.getTimeZones());
-        timeZone.setValue(IntlDateTimeFormat.getTimeZone());
     }
 
     private JsDate getCurrentDate() {
@@ -106,7 +113,6 @@ public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
                 FormatOptions
                         .builder()
                         .locale("en-GB")
-                        .timeZone(timeZone.getValue())
                         .hour(Hour.TWO_DIGIT)
                         .minute(Minute.TWO_DIGIT)
                         .timeZoneName(TimeZoneName.SHORT_OFFSET)
@@ -172,96 +178,25 @@ public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
     @Override
     public void setTime(final long time) {
         final JsDate current = JsDate.create(time);
-        hour.setValue(current.getHours());
-        minute.setValue(current.getMinutes());
-        second.setValue(current.getSeconds());
-        millisecond.setValue(current.getMilliseconds());
-
-        current.setHours(0, 0, 0, 0);
-        datePicker.setCurrentMonth(current);
-        datePicker.setValue(current);
-
+        setTimeFields(current);
+        setDateFields(current);
         updateDateLabel();
         updateTimeLabel();
     }
 
-    //
-//    private void enterFrequencyMode() {
-//        final FlowPanel minute = createPanel("Minute");
-//        for (final FrequencyExpression cronExpression : FrequencyExpressions.MINUTE) {
-//            minute.add(createLabel(cronExpression));
-//        }
-//
-//        final FlowPanel hour = createPanel("Hour");
-//        for (final FrequencyExpression cronExpression : FrequencyExpressions.HOUR) {
-//            hour.add(createLabel(cronExpression));
-//        }
-//
-//        final FlowPanel quickSettingsPanel = new FlowPanel();
-//        quickSettingsPanel.setStyleName("timeRange-quickSettings");
-//        quickSettingsPanel.add(minute);
-//        quickSettingsPanel.add(hour);
-//
-//        this.quickSettings.setWidget(quickSettingsPanel);
-//    }
-//
-//    private void enterCronMode() {
-//        final FlowPanel minute = createPanel("Minute");
-//        for (final CronExpression cronExpression : CronExpressions.MINUTE) {
-//            minute.add(createLabel(cronExpression));
-//        }
-//
-//        final FlowPanel hour = createPanel("Hour");
-//        for (final CronExpression cronExpression : CronExpressions.HOUR) {
-//            hour.add(createLabel(cronExpression));
-//        }
-//
-//        final FlowPanel day = createPanel("Day");
-//        for (final CronExpression cronExpression : CronExpressions.DAY) {
-//            day.add(createLabel(cronExpression));
-//        }
-//
-//        final FlowPanel month = createPanel("Month");
-//        for (final CronExpression cronExpression : CronExpressions.MONTH) {
-//            month.add(createLabel(cronExpression));
-//        }
-//
-//        final FlowPanel quickSettingsPanel = new FlowPanel();
-//        quickSettingsPanel.setStyleName("timeRange-quickSettings");
-//        quickSettingsPanel.add(minute);
-//        quickSettingsPanel.add(hour);
-//        quickSettingsPanel.add(day);
-//        quickSettingsPanel.add(month);
-//
-//        this.quickSettings.setWidget(quickSettingsPanel);
-//    }
-//
-//    private FlowPanel createPanel(final String name) {
-//        final FlowPanel panel = new FlowPanel();
-//        panel.addStyleName("timeRange-quickSettingPanel");
-//        final Label label = new Label(name, false);
-//        label.addStyleName("timeRange-quickSettingPanel-title");
-//        panel.add(label);
-//        return panel;
-//    }
-//
-//    private Label createLabel(final CronExpression cronExpression) {
-//        final Label label = new Label(cronExpression.getName(), false);
-//        label.addStyleName("timeRange-quickSetting");
-//        label.addClickHandler(event -> {
-//            expression.setValue(cronExpression.getExpression(), true);
-//        });
-//        return label;
-//    }
-//
-//    private Label createLabel(final FrequencyExpression cronExpression) {
-//        final Label label = new Label(cronExpression.getName(), false);
-//        label.addStyleName("timeRange-quickSetting");
-//        label.addClickHandler(event -> {
-//            expression.setValue(cronExpression.getExpression(), true);
-//        });
-//        return label;
-//    }
+    private void setDateFields(final JsDate date) {
+        final JsDate current = JsDate.create(date.getTime());
+        current.setHours(0, 0, 0, 0);
+        datePicker.setCurrentMonth(current);
+        datePicker.setValue(current);
+    }
+
+    private void setTimeFields(final JsDate date) {
+        hour.setValue(date.getHours());
+        minute.setValue(date.getMinutes());
+        second.setValue(date.getSeconds());
+        millisecond.setValue(date.getMilliseconds());
+    }
 
     @Override
     public Widget asWidget() {
@@ -302,8 +237,53 @@ public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
         updateTimeLabel();
     }
 
-    @UiHandler("timeZone")
-    public void onTimeZone(final ValueChangeEvent<String> event) {
+
+    @UiHandler("today")
+    public void onToday(final ClickEvent event) {
+        setDateFields(JsDate.create());
+        updateTimeLabel();
+    }
+
+    @UiHandler("yesterday")
+    public void onYesterday(final ClickEvent event) {
+        JsDate newDate = JsDate.create();
+        final int date = newDate.getDate();
+        newDate.setDate(date - 1);
+        setDateFields(newDate);
+        updateTimeLabel();
+    }
+
+    @UiHandler("weekStart")
+    public void onWeekStart(final ClickEvent event) {
+        JsDate newDate = JsDate.create();
+        final int date = newDate.getDate();
+        newDate.setDate(date - newDate.getDay());
+        setDateFields(newDate);
+        updateTimeLabel();
+    }
+
+    @UiHandler("now")
+    public void onNow(final ClickEvent event) {
+        final JsDate newDate = JsDate.create();
+        setTimeFields(newDate);
+        updateTimeLabel();
+    }
+
+    @UiHandler("midnight")
+    public void onMidnight(final ClickEvent event) {
+        hour.setValue(0);
+        minute.setValue(0);
+        second.setValue(0);
+        millisecond.setValue(0);
+        updateTimeLabel();
+    }
+
+    @UiHandler("midday")
+    public void onMidday(final ClickEvent event) {
+        hour.setValue(12);
+        minute.setValue(0);
+        second.setValue(0);
+        millisecond.setValue(0);
         updateTimeLabel();
     }
 
@@ -321,7 +301,6 @@ public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
         final JsDate date = getCurrentDate();
         final FormatOptions options = FormatOptions
                 .builder()
-                .timeZone(timeZone.getValue())
                 .hour(Hour.NUMERIC)
                 .minute(Minute.NUMERIC)
                 .second(Second.NUMERIC)

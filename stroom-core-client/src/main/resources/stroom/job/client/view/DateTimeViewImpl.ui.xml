@@ -3,12 +3,16 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:valuespinner="urn:import:stroom.widget.valuespinner.client"
-             xmlns:l="urn:import:stroom.item.client"
              xmlns:date="urn:import:stroom.widget.datepicker.client">
     <g:FlowPanel styleName="max dock-container-horizontal">
         <g:FlowPanel styleName="DateTimeView-left dock-min">
             <form:FormLabel identity="dateHeading" label="Date" addStyleNames="DateTimeView-heading"/>
             <g:Label ui:field="date" addStyleNames="DateTimeView-date"/>
+            <g:FlowPanel addStyleNames="dateTime-quickSettingPanel">
+                <g:Label ui:field="today" addStyleNames="dateTime-quickSetting">Today</g:Label>
+                <g:Label ui:field="yesterday" addStyleNames="dateTime-quickSetting">Yesterday</g:Label>
+                <g:Label ui:field="weekStart" addStyleNames="dateTime-quickSetting">Week Start</g:Label>
+            </g:FlowPanel>
             <form:FormGroup identity="date" label="Select date" addStyleNames="dock-min">
                 <date:CustomDatePicker ui:field="datePicker"/>
             </form:FormGroup>
@@ -16,20 +20,22 @@
         <g:FlowPanel styleName="DateTimeView-right dock-max">
             <form:FormLabel identity="timeHeading" label="Time" addStyleNames="DateTimeView-heading"/>
             <g:Label ui:field="time" addStyleNames="DateTimeView-time"/>
+            <g:FlowPanel addStyleNames="dateTime-quickSettingPanel">
+                <g:Label ui:field="now" addStyleNames="dateTime-quickSetting">Now</g:Label>
+                <g:Label ui:field="midnight" addStyleNames="dateTime-quickSetting">Midnight</g:Label>
+                <g:Label ui:field="midday" addStyleNames="dateTime-quickSetting">Midday</g:Label>
+            </g:FlowPanel>
             <form:FormGroup identity="hour" label="Hour" addStyleNames="dock-min">
-                <valuespinner:ValueSpinner ui:field="hour" width="80px"/>
+                <date:ValueChooser ui:field="hour" width="176px"/>
             </form:FormGroup>
             <form:FormGroup identity="minute" label="Minute" addStyleNames="dock-min">
-                <valuespinner:ValueSpinner ui:field="minute" width="80px"/>
+                <date:ValueChooser ui:field="minute" width="176px"/>
             </form:FormGroup>
             <form:FormGroup identity="second" label="Second" addStyleNames="dock-min">
-                <valuespinner:ValueSpinner ui:field="second" width="80px"/>
+                <date:ValueChooser ui:field="second" width="176px"/>
             </form:FormGroup>
             <form:FormGroup identity="millisecond" label="Millisecond" addStyleNames="dock-min">
-                <valuespinner:ValueSpinner ui:field="millisecond" width="80px"/>
-            </form:FormGroup>
-            <form:FormGroup identity="timeZone" label="Time Zone" addStyleNames="dock-min">
-                <l:SelectionBox ui:field="timeZone"/>
+                <date:ValueChooser ui:field="millisecond" width="176px"/>
             </form:FormGroup>
         </g:FlowPanel>
     </g:FlowPanel>

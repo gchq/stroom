@@ -90,19 +90,7 @@ public class ValueSpinner
         }
     }
 
-//    /**
-//     * @return the Spinner used by this widget
-//     */
-////    public Spinner getSpinner() {
-////        return spinner;
-////    }
-//
-//    /**
-//     * @return the TextBox used by this widget
-//     */
-////    public TextBox getTextBox() {
-////        return valueBox;
-////    }
+
 
     /**
      * @return whether this widget is enabled.
@@ -147,6 +135,10 @@ public class ValueSpinner
 
     public void setMin(final long min) {
         spinner.setMin(min);
+    }
+
+    public long getMin() {
+        return spinner.getMin();
     }
 
     public void setMinStep(final int minStep) {

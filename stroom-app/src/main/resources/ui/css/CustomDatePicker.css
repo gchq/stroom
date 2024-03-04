@@ -95,7 +95,8 @@ td:hover .customDatePickerDayIsValue {
     padding: 0 2px;
 }
 .customDatePickerYear .icon-button,
-.customDatePickerMonth .icon-button {
+.customDatePickerMonth .icon-button,
+.valueChooser .reset {
     width: 26px;
     height: 26px;
 }
@@ -144,4 +145,28 @@ td:hover .customDatePickerDayIsValue {
     padding: 5px 0 10px 0;
 }
 
+.dateTime-quickSettingPanel {
+    padding: 0.4rem;
+    min-width: 8rem;
+}
 
+.dateTime-quickSetting {
+    color: var(--link__text-color);
+    cursor: pointer;
+    padding-bottom: 0.2rem;
+}
+
+.dateTime-quickSetting:hover {
+    text-decoration: underline;
+}
+
+.valueChooser {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding-bottom: 4px;
+}
+
+.valueChooser svg {
+    color: var(--navigation__text-color);
+}

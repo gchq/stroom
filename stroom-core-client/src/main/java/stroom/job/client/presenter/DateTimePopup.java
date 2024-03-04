@@ -30,7 +30,7 @@ public class DateTimePopup extends MyPresenterWidget<DateTimeView> {
     public void show(final Consumer<Long> consumer) {
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
-                .popupSize(PopupSize.resizable(400, 430, 300, 430))
+                .popupSize(PopupSize.resizable(460, 560, 460, 560))
                 .caption("Set Date And Time")
                 .onShow(e -> getView().focus())
                 .onHideRequest(e -> {
