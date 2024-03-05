@@ -2,6 +2,8 @@ package stroom.widget.datepicker.client;
 
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.InlineSvgButton;
+import stroom.widget.valuespinner.client.DecreaseEvent;
+import stroom.widget.valuespinner.client.IncreaseEvent;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
@@ -100,6 +102,14 @@ public class ValueChooser
     @Override
     public HandlerRegistration addValueChangeHandler(final ValueChangeHandler<Long> handler) {
         return valueSpinner.addValueChangeHandler(handler);
+    }
+
+    public HandlerRegistration addIncreaseHandler(final IncreaseEvent.Handler handler) {
+        return valueSpinner.addIncreaseHandler(handler);
+    }
+
+    public HandlerRegistration addDecreaseHandler(final DecreaseEvent.Handler handler) {
+        return valueSpinner.addDecreaseHandler(handler);
     }
 
     @Override

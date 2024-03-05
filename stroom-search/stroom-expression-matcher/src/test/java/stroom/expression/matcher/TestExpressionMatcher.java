@@ -24,8 +24,8 @@ import stroom.dictionary.api.WordListProvider;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docref.DocRef;
 import stroom.expression.api.DateTimeSettings;
-import stroom.expression.api.TimeZone;
-import stroom.expression.api.TimeZone.Use;
+import stroom.expression.api.UserTimeZone;
+import stroom.expression.api.UserTimeZone.Use;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
@@ -174,7 +174,7 @@ class TestExpressionMatcher {
                 mockWordListProvider,
                 null,
                 DateTimeSettings.builder()
-                        .timeZone(TimeZone.builder()
+                        .timeZone(UserTimeZone.builder()
                                 .use(Use.UTC)
                                 .build())
                         .build());

@@ -2,7 +2,6 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:form="urn:import:stroom.widget.form.client"
-             xmlns:valuespinner="urn:import:stroom.widget.valuespinner.client"
              xmlns:date="urn:import:stroom.widget.datepicker.client">
     <g:FlowPanel styleName="max dock-container-horizontal">
         <g:FlowPanel styleName="DateTimeView-left dock-min">

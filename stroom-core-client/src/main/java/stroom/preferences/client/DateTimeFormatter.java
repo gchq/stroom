@@ -1,7 +1,7 @@
 package stroom.preferences.client;
 
-import stroom.expression.api.TimeZone;
-import stroom.expression.api.TimeZone.Use;
+import stroom.expression.api.UserTimeZone;
+import stroom.expression.api.UserTimeZone.Use;
 import stroom.ui.config.shared.UserPreferences;
 import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.customdatebox.client.ClientDurationUtil;
@@ -48,7 +48,7 @@ public class DateTimeFormatter {
                 pattern = userPreferences.getDateTimePattern();
                 pattern = convertJavaDateTimePattern(pattern);
 
-                final TimeZone timeZone = userPreferences.getTimeZone();
+                final UserTimeZone timeZone = userPreferences.getTimeZone();
                 if (timeZone != null) {
                     if (timeZone.getUse() != null) {
                         use = timeZone.getUse();

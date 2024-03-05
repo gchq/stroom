@@ -178,6 +178,14 @@ public class ValueSpinner
         return spinner.addValueChangeHandler(handler);
     }
 
+    public HandlerRegistration addIncreaseHandler(final IncreaseEvent.Handler handler) {
+        return spinner.addIncreaseHandler(handler);
+    }
+
+    public HandlerRegistration addDecreaseHandler(final DecreaseEvent.Handler handler) {
+        return spinner.addDecreaseHandler(handler);
+    }
+
     @Override
     public void fireEvent(final GwtEvent<?> event) {
         spinner.fireEvent(event);

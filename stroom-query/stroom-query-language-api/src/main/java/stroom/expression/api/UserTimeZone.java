@@ -30,7 +30,7 @@ import java.util.Objects;
 @JsonPropertyOrder({"use", "id", "offsetHours", "offsetMinutes"})
 @Schema(description = "The timezone to apply to a date time value")
 @JsonInclude(Include.NON_NULL)
-public final class TimeZone {
+public final class UserTimeZone {
 
     @Schema(description = "How the time zone will be specified, e.g. " +
             "from provided client 'Local' time, " +
@@ -57,30 +57,30 @@ public final class TimeZone {
     private final Integer offsetMinutes;
 
     @JsonCreator
-    public TimeZone(@JsonProperty("use") final Use use,
-                    @JsonProperty("id") final String id,
-                    @JsonProperty("offsetHours") final Integer offsetHours,
-                    @JsonProperty("offsetMinutes") final Integer offsetMinutes) {
+    public UserTimeZone(@JsonProperty("use") final Use use,
+                        @JsonProperty("id") final String id,
+                        @JsonProperty("offsetHours") final Integer offsetHours,
+                        @JsonProperty("offsetMinutes") final Integer offsetMinutes) {
         this.use = use;
         this.id = id;
         this.offsetHours = offsetHours;
         this.offsetMinutes = offsetMinutes;
     }
 
-    public static TimeZone local() {
-        return new TimeZone(Use.LOCAL, null, null, null);
+    public static UserTimeZone local() {
+        return new UserTimeZone(Use.LOCAL, null, null, null);
     }
 
-    public static TimeZone utc() {
-        return new TimeZone(Use.UTC, null, null, null);
+    public static UserTimeZone utc() {
+        return new UserTimeZone(Use.UTC, null, null, null);
     }
 
-    public static TimeZone fromId(final String id) {
-        return new TimeZone(Use.ID, id, null, null);
+    public static UserTimeZone fromId(final String id) {
+        return new UserTimeZone(Use.ID, id, null, null);
     }
 
-    public static TimeZone fromOffset(final int offsetHours, final int offsetMinutes) {
-        return new TimeZone(Use.OFFSET, null, offsetHours, offsetMinutes);
+    public static UserTimeZone fromOffset(final int offsetHours, final int offsetMinutes) {
+        return new UserTimeZone(Use.OFFSET, null, offsetHours, offsetMinutes);
     }
 
     public Use getUse() {
@@ -107,7 +107,7 @@ public final class TimeZone {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        final TimeZone timeZone = (TimeZone) o;
+        final UserTimeZone timeZone = (UserTimeZone) o;
         return use == timeZone.use &&
                 Objects.equals(id, timeZone.id) &&
                 Objects.equals(offsetHours, timeZone.offsetHours) &&
@@ -169,7 +169,7 @@ public final class TimeZone {
 
 
     /**
-     * Builder for constructing a {@link TimeZone timeZone}
+     * Builder for constructing a {@link UserTimeZone timeZone}
      */
     public static final class Builder {
 
@@ -181,7 +181,7 @@ public final class TimeZone {
         private Builder() {
         }
 
-        private Builder(final TimeZone timeZone) {
+        private Builder(final UserTimeZone timeZone) {
             this.use = timeZone.use;
             this.id = timeZone.id;
             this.offsetHours = timeZone.offsetHours;
@@ -224,8 +224,8 @@ public final class TimeZone {
             return this;
         }
 
-        public TimeZone build() {
-            return new TimeZone(use, id, offsetHours, offsetMinutes);
+        public UserTimeZone build() {
+            return new UserTimeZone(use, id, offsetHours, offsetMinutes);
         }
     }
 }

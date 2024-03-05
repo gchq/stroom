@@ -157,6 +157,14 @@ public class Spinner implements HasValueChangeHandlers<Long> {
         return handlerManager.addHandler(ValueChangeEvent.getType(), handler);
     }
 
+    public HandlerRegistration addIncreaseHandler(final IncreaseEvent.Handler handler) {
+        return handlerManager.addHandler(IncreaseEvent.getType(), handler);
+    }
+
+    public HandlerRegistration addDecreaseHandler(final DecreaseEvent.Handler handler) {
+        return handlerManager.addHandler(DecreaseEvent.getType(), handler);
+    }
+
     /**
      * @return the image representing the decreasing arrow
      */
@@ -289,18 +297,6 @@ public class Spinner implements HasValueChangeHandlers<Long> {
     }
 
     /**
-     * Decreases the current value of the spinner by subtracting current step
-     */
-    protected void decrease() {
-        value -= step;
-        if (constrained && value < min) {
-            value = min;
-            timer.cancel();
-        }
-        ValueChangeEvent.fire(this, value);
-    }
-
-    /**
      * Increases the current value of the spinner by adding current step
      */
     protected void increase() {
@@ -308,6 +304,22 @@ public class Spinner implements HasValueChangeHandlers<Long> {
         if (constrained && value > max) {
             value = max;
             timer.cancel();
+        } else {
+            IncreaseEvent.fire(this);
+        }
+        ValueChangeEvent.fire(this, value);
+    }
+
+    /**
+     * Decreases the current value of the spinner by subtracting current step
+     */
+    protected void decrease() {
+        value -= step;
+        if (constrained && value < min) {
+            value = min;
+            timer.cancel();
+        } else {
+            DecreaseEvent.fire(this);
         }
         ValueChangeEvent.fire(this, value);
     }
