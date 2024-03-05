@@ -28,7 +28,7 @@ public final class DefaultCalendarView extends CalendarView {
 
     private JsDate firstDisplayed;
 
-    private final JsDate lastDisplayed = JsDate.today();
+    private final JsDate lastDisplayed;
 
     private DateCell ariaSelectedCell;
 
@@ -36,6 +36,9 @@ public final class DefaultCalendarView extends CalendarView {
      * Constructor.
      */
     public DefaultCalendarView() {
+        final JsDate now = JsDate.create();
+        CalendarUtil.resetTime(now);
+        lastDisplayed = now;
     }
 
     @Override
@@ -93,8 +96,6 @@ public final class DefaultCalendarView extends CalendarView {
 
     private static void addDays(JsDate date, int days) {
         CalendarUtil.addDaysToDate(date, days);
-        // We might hit DST transition. Try resetting back so follow up days continue showing midnight.
-        CalendarUtil.resetTime(date);
     }
 
     @Override
@@ -179,19 +180,6 @@ public final class DefaultCalendarView extends CalendarView {
         if (index < 0 || grid.getNumCells() <= index) {
             return null;
         }
-
-        final DateCell cell = grid.getCell(index);
-        if (cell instanceof DateCell) {
-            final DateCell dateCell = (DateCell) cell;
-//            final double cellTime = dateCell.value.getTime();
-//            final double time = date.getTime();
-//            if (cellTime != time) {
-//                throw new IllegalStateException(date + " cannot be associated with cell "
-//                        + cell + " as it has date " + dateCell.value);
-//            }
-            return dateCell;
-        }
-
-        return null;
+        return grid.getCell(index);
     }
 }

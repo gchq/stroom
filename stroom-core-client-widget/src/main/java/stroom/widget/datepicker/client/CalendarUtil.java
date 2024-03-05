@@ -46,7 +46,7 @@ public class CalendarUtil {
      * @param days number of days
      */
     public static void addDaysToDate(JsDate date, int days) {
-        date.setDate(date.getDate() + days);
+        date.setUTCDate(date.getUTCDate() + days);
     }
 
     /**
@@ -57,18 +57,7 @@ public class CalendarUtil {
      */
     public static void addMonthsToDate(JsDate date, int months) {
         if (months != 0) {
-            date.setMonth(date.getMonth() + months);
-
-
-//            int month = date.getMonth();
-//            int year = date.getFullYear();
-//
-//            int resultMonthCount = year * 12 + month + months;
-//            int resultYear = (int) Math.floor(resultMonthCount / 12.0);
-//            int resultMonth = resultMonthCount - resultYear * 12;
-//
-//            date.setMonth(resultMonth);
-//            date.setFullYear(resultYear);
+            date.setUTCMonth(date.getUTCMonth() + months);
         }
     }
 
@@ -129,9 +118,9 @@ public class CalendarUtil {
     public static boolean isSameDate(JsDate date0, JsDate date1) {
         assert date0 != null : "date0 cannot be null";
         assert date1 != null : "date1 cannot be null";
-        return date0.getFullYear() == date1.getFullYear()
-                && date0.getMonth() == date1.getMonth()
-                && date0.getDate() == date1.getDate();
+        return date0.getUTCFullYear() == date1.getUTCFullYear()
+                && date0.getUTCMonth() == date1.getUTCMonth()
+                && date0.getUTCDate() == date1.getUTCDate();
     }
 
     /**
@@ -142,7 +131,7 @@ public class CalendarUtil {
      */
     public static void setToFirstDayOfMonth(JsDate date) {
         resetTime(date);
-        date.setDate(1);
+        date.setUTCDate(1);
     }
 
     /**
@@ -162,9 +151,9 @@ public class CalendarUtil {
      * @param date the date
      */
     public static void resetTime(JsDate date) {
-        date.setHours(0);
-        date.setMinutes(0);
-        date.setSeconds(0);
-        date.setMilliseconds(0);
+        date.setUTCHours(0);
+        date.setUTCMinutes(0);
+        date.setUTCSeconds(0);
+        date.setUTCMilliseconds(0);
     }
 }
