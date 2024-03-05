@@ -4,7 +4,7 @@ import stroom.expression.api.UserTimeZone;
 import stroom.expression.api.UserTimeZone.Use;
 import stroom.ui.config.shared.UserPreferences;
 import stroom.widget.customdatebox.client.ClientDateUtil;
-import stroom.widget.customdatebox.client.ClientDurationUtil;
+import stroom.widget.customdatebox.client.MomentJs;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -27,7 +27,7 @@ public class DateTimeFormatter {
         final long now = System.currentTimeMillis();
         return format(ms) +
                 " (" +
-                ClientDurationUtil.humanise(ms - now, true) +
+                MomentJs.humanise(ms - now, true) +
                 ")";
     }
 
@@ -66,7 +66,7 @@ public class DateTimeFormatter {
             }
         }
 
-        return nativeToDateString(ms, use.getDisplayValue(), pattern, zoneId, offsetMinutes);
+        return MomentJs.nativeToDateString(ms, use.getDisplayValue(), pattern, zoneId, offsetMinutes);
     }
 
     public Long parse(final String dateTime) {
@@ -108,31 +108,4 @@ public class DateTimeFormatter {
 
         return converted;
     }
-
-    private static native String nativeToDateString(final double ms,
-                                                    final String use,
-                                                    final String dateTimePattern,
-                                                    final String id,
-                                                    final Integer offsetMinutes)/*-{
-        var m = $wnd.moment.utc(ms);
-        switch (use) {
-            case "UTC": {
-                m = m.utc();
-                return m.format(dateTimePattern);
-            }
-            case "Local": {
-                m = m.local();
-                return m.format(dateTimePattern);
-            }
-            case "Offset": {
-                m = m.utcOffset(offsetMinutes);
-                return m.format(dateTimePattern);
-            }
-            case "Id": {
-                m = m.tz(id);
-                return m.format(dateTimePattern);
-            }
-        }
-        return m.format(dateTimePattern);
-    }-*/;
 }

@@ -5,7 +5,7 @@ import stroom.processor.shared.ProcessorFilterTracker;
 import stroom.processor.shared.ProcessorFilterTrackerStatus;
 import stroom.processor.shared.ProcessorListRow;
 import stroom.util.shared.GwtNullSafe;
-import stroom.widget.customdatebox.client.ClientDurationUtil;
+import stroom.widget.customdatebox.client.MomentJs;
 
 class ProcessorStatusUtil {
 
@@ -28,7 +28,7 @@ class ProcessorStatusUtil {
                     status = "Up to date";
                 } else if (tracker.getMetaCreateMs() != null) {
                     final long age = System.currentTimeMillis() - tracker.getMetaCreateMs();
-                    status = ClientDurationUtil.humanise(age) + " behind";
+                    status = MomentJs.humanise(age) + " behind";
                 }
             }
         }
