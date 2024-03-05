@@ -66,4 +66,11 @@ public interface StandardHeaderArguments {
             "transfer-encoding",
             "expect",
             COMPRESSION);
+
+    /**
+     * Header keys for values that are date/time strings
+     */
+    Set<String> DATE_HEADER_KEYS = Set.of(
+            EFFECTIVE_TIME,
+            RECEIVED_TIME);
 }
