@@ -141,14 +141,14 @@ public class JsDate extends JavaScriptObject {
      * Returns the internal millisecond representation of the specified UTC date
      * and time.
      */
-    public static native double utc(int year,
+    public static native JsDate utc(int year,
                                     int month,
                                     int dayOfMonth,
                                     int hours,
                                     int minutes,
                                     int seconds,
                                     int millis) /*-{
-        return Date.UTC(year, month, dayOfMonth, hours, minutes, seconds, millis);
+        return new Date(Date.UTC(year, month, dayOfMonth, hours, minutes, seconds, millis));
     }-*/;
 
     // CHECKSTYLE_ON

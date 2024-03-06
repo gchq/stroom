@@ -32,9 +32,8 @@ import stroom.widget.datepicker.client.IntlDateTimeFormat.FormatOptions.TimeZone
 import stroom.widget.datepicker.client.IntlDateTimeFormat.FormatOptions.Year;
 import stroom.widget.datepicker.client.JsDate;
 import stroom.widget.datepicker.client.ValueChooser;
-import stroom.widget.valuespinner.client.DecreaseEvent;
-import stroom.widget.valuespinner.client.IncreaseEvent;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -48,10 +47,6 @@ import com.gwtplatform.mvp.client.ViewImpl;
 public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
 
     private static final String[] EN_LOCALE = {"en-GB"};
-
-    private final long MILLIS_IN_SECOND = 1000;
-    private final long MILLIS_IN_MINUTE = 60 * MILLIS_IN_SECOND;
-    private final long MILLIS_IN_HOUR = 60 * MILLIS_IN_MINUTE;
 
     private final UserPreferencesManager userPreferencesManager;
 
@@ -99,7 +94,8 @@ public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
     Label midday;
 
     private JsDate value;
-    private TimeRecord currentTime;
+    private Offset currentOffset;
+    private String currentDateString;
 
     @Inject
     public DateTimeViewImpl(final Binder binder,
@@ -107,7 +103,6 @@ public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
         this.userPreferencesManager = userPreferencesManager;
 
         widget = binder.createAndBindUi(this);
-        setDatePickerTime(JsDate.create());
         datePicker.setYearAndMonthDropdownVisible(true);
         datePicker.setYearArrowsVisible(true);
 
@@ -123,8 +118,17 @@ public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
         setTime((long) JsDate.create().getTime());
     }
 
-    private void setDatePickerTime(final JsDate date) {
-        final JsDate utc = zoneToUTCDate(date);
+    private void setDatePickerTime(final JsDate value) {
+        final DateRecord dateRecord = parseDate(value);
+        final JsDate utc = JsDate.utc(
+                dateRecord.getYear(),
+                dateRecord.getMonth(),
+                dateRecord.getDay(),
+                0,
+                0,
+                0,
+                0);
+
         datePicker.setCurrentMonth(utc);
         datePicker.setValue(utc);
     }
@@ -136,12 +140,10 @@ public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
 
     @Override
     public void setTime(final long time) {
-        setTime(JsDate.create(time));
-    }
-
-    private void setTime(final JsDate time) {
-        value = JsDate.create(time.getTime());
-        update(value);
+        final JsDate date = JsDate.create(time);
+        currentOffset = getOffset(date);
+        this.value = date;
+        update();
     }
 
     @Override
@@ -157,212 +159,171 @@ public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
     @SuppressWarnings("unused")
     @UiHandler("today")
     public void onToday(final ClickEvent event) {
-        final JsDate newDate = JsDate.create();
-        setDatePickerTime(newDate);
-        setDate();
+        final DateRecord today = parseDate(JsDate.create());
+        final JsDate utc = JsDate.utc(
+                today.getYear(),
+                today.getMonth(),
+                today.getDay(),
+                0,
+                0,
+                0,
+                0);
+        setDatePickerTime(utc);
+        value = resolveDateTime(value);
+        update();
     }
 
     @SuppressWarnings("unused")
     @UiHandler("yesterday")
     public void onYesterday(final ClickEvent event) {
-        final JsDate newDate = JsDate.create();
-        final int date = newDate.getDate();
-        newDate.setDate(date - 1);
-        setDatePickerTime(newDate);
-        setDate();
+        final DateRecord today = parseDate(JsDate.create());
+        final JsDate utc = JsDate.utc(
+                today.getYear(),
+                today.getMonth(),
+                today.getDay(),
+                0,
+                0,
+                0,
+                0);
+        utc.setUTCDate(utc.getUTCDate() - 1);
+        setDatePickerTime(utc);
+        value = resolveDateTime(value);
+        update();
     }
 
     @SuppressWarnings("unused")
     @UiHandler("weekStart")
     public void onWeekStart(final ClickEvent event) {
-        final JsDate newDate = JsDate.create();
-        final int date = newDate.getDate();
-        newDate.setDate(date - newDate.getDay());
-        setDatePickerTime(newDate);
-        setDate();
+        final DateRecord today = parseDate(JsDate.create());
+        final JsDate utc = JsDate.utc(
+                today.getYear(),
+                today.getMonth(),
+                today.getDay(),
+                0,
+                0,
+                0,
+                0);
+        utc.setUTCDate(utc.getUTCDate() - utc.getUTCDay());
+        setDatePickerTime(utc);
+        value = resolveDateTime(value);
+        update();
     }
 
     @SuppressWarnings("unused")
     @UiHandler("datePicker")
     public void onDatePicker(final ValueChangeEvent<JsDate> event) {
-        setDate();
+        value = resolveDateTime(value);
+        updateDateLabel();
+        updateTime();
+    }
+
+    private JsDate resolveDateTime(final JsDate previousTime) {
+        final JsDate datePickerTime = datePicker.getValue();
+        String currentOffset = getOffsetString(previousTime);
+        final String isoDateString =
+                zeroPad(4, datePickerTime.getUTCFullYear()) +
+                        "-" +
+                        zeroPad(2, (datePickerTime.getUTCMonth() + 1)) +
+                        "-" +
+                        zeroPad(2, datePickerTime.getDate()) +
+                        "T" +
+                        zeroPad(2, hour.getIntValue()) +
+                        ":" +
+                        zeroPad(2, minute.getIntValue()) +
+                        ":" +
+                        zeroPad(2, second.getIntValue()) +
+                        "." +
+                        zeroPad(3, millisecond.getIntValue()) +
+                        currentOffset;
+        final JsDate isoDate = JsDate.create(isoDateString);
+        final String newOffset = getOffsetString(isoDate);
+        if (!newOffset.equals(currentOffset)) {
+            GWT.log("Offset changed!");
+            final String newIsoDateString =
+                    zeroPad(4, datePickerTime.getUTCFullYear()) +
+                            "-" +
+                            zeroPad(2, (datePickerTime.getUTCMonth() + 1)) +
+                            "-" +
+                            zeroPad(2, datePickerTime.getDate()) +
+                            "T" +
+                            zeroPad(2, hour.getIntValue()) +
+                            ":" +
+                            zeroPad(2, minute.getIntValue()) +
+                            ":" +
+                            zeroPad(2, second.getIntValue()) +
+                            "." +
+                            zeroPad(3, millisecond.getIntValue()) +
+                            newOffset;
+            final JsDate newIsoDate = JsDate.create(newIsoDateString);
+            return newIsoDate;
+
+        } else {
+            return isoDate;
+        }
     }
 
     @SuppressWarnings("unused")
     @UiHandler("now")
     public void onNow(final ClickEvent event) {
-        this.value = fixDate(JsDate.create());
-        updateTime(value);
+        final TimeRecord timeRecord = parseTime(JsDate.create());
+        hour.setValue(timeRecord.getHour());
+        minute.setValue(timeRecord.getMinute());
+        second.setValue(timeRecord.getSecond());
+        millisecond.setValue(timeRecord.getMillisecond());
+        value = resolveDateTime(value);
+        update();
     }
 
     @SuppressWarnings("unused")
     @UiHandler("midnight")
     public void onMidnight(final ClickEvent event) {
-        value.setTime(fixDate(value).getTime() -
-                (currentTime.getHour() * MILLIS_IN_HOUR) -
-                (currentTime.getMinute() * MILLIS_IN_MINUTE) -
-                (currentTime.getSecond() * MILLIS_IN_SECOND) -
-                currentTime.getMillisecond());
-        updateTime(value);
+        hour.setValue(0);
+        minute.setValue(0);
+        second.setValue(0);
+        millisecond.setValue(0);
+        value = resolveDateTime(value);
+        update();
     }
 
     @SuppressWarnings("unused")
     @UiHandler("midday")
     public void onMidday(final ClickEvent event) {
-        value.setTime(fixDate(value).getTime() -
-                (currentTime.getHour() * MILLIS_IN_HOUR) -
-                (currentTime.getMinute() * MILLIS_IN_MINUTE) -
-                (currentTime.getSecond() * MILLIS_IN_SECOND) -
-                currentTime.getMillisecond() +
-                (12 * MILLIS_IN_HOUR));
-        updateTime(value);
+        hour.setValue(12);
+        minute.setValue(0);
+        second.setValue(0);
+        millisecond.setValue(0);
+        value = resolveDateTime(value);
+        update();
     }
 
     @SuppressWarnings("unused")
     @UiHandler("hour")
     public void onHour(final ValueChangeEvent<Long> event) {
-        int diff = hour.getIntValue() - currentTime.getHour();
-        value.setTime(fixDate(value).getTime() + (diff * MILLIS_IN_HOUR));
-        updateTime(value);
-    }
-
-    @SuppressWarnings("unused")
-    @UiHandler("hour")
-    public void onIncreaseHour(final IncreaseEvent event) {
-        value.setTime(fixDate(value).getTime() + MILLIS_IN_HOUR);
-        updateTime(value);
-    }
-
-    @SuppressWarnings("unused")
-    @UiHandler("hour")
-    public void onDecreaseHour(final DecreaseEvent event) {
-        value.setTime(fixDate(value).getTime() - MILLIS_IN_HOUR);
-        updateTime(value);
+        final int hour = this.hour.getIntValue();
+        value.setUTCHours(hour - currentOffset.getHours());
+        updateTime();
     }
 
     @SuppressWarnings("unused")
     @UiHandler("minute")
     public void onMinute(final ValueChangeEvent<Long> event) {
-        int diff = minute.getIntValue() - currentTime.getMinute();
-        value.setTime(fixDate(value).getTime() + (diff * MILLIS_IN_MINUTE));
-        updateTime(value);
-    }
-
-    @SuppressWarnings("unused")
-    @UiHandler("minute")
-    public void onIncreaseMinute(final IncreaseEvent event) {
-        value.setTime(fixDate(value).getTime() + MILLIS_IN_MINUTE);
-        updateTime(value);
-    }
-
-    @SuppressWarnings("unused")
-    @UiHandler("minute")
-    public void onDecreaseMinute(final DecreaseEvent event) {
-        value.setTime(fixDate(value).getTime() - MILLIS_IN_MINUTE);
-        updateTime(value);
+        final int minute = this.minute.getIntValue();
+        value.setUTCMinutes(minute - currentOffset.getMinutes());
+        updateTime();
     }
 
     @SuppressWarnings("unused")
     @UiHandler("second")
     public void onSecond(final ValueChangeEvent<Long> event) {
-        int diff = second.getIntValue() - currentTime.getSecond();
-        value.setTime(fixDate(value).getTime() + (diff * MILLIS_IN_SECOND));
-        updateTime(value);
-    }
-
-    @SuppressWarnings("unused")
-    @UiHandler("second")
-    public void onIncreaseSecond(final IncreaseEvent event) {
-        value.setTime(fixDate(value).getTime() + MILLIS_IN_SECOND);
-        updateTime(value);
-    }
-
-    @SuppressWarnings("unused")
-    @UiHandler("second")
-    public void onDecreaseSecond(final DecreaseEvent event) {
-        value.setTime(fixDate(value).getTime() - MILLIS_IN_SECOND);
-        updateTime(value);
+        value.setUTCSeconds(second.getIntValue());
+        updateTimeLabel();
     }
 
     @SuppressWarnings("unused")
     @UiHandler("millisecond")
     public void onMillisecond(final ValueChangeEvent<Long> event) {
-        int diff = millisecond.getIntValue() - currentTime.getMillisecond();
-        value.setTime(fixDate(value).getTime() + diff);
-        updateTime(value);
-    }
-
-    @SuppressWarnings("unused")
-    @UiHandler("millisecond")
-    public void onIncreaseMillisecond(final IncreaseEvent event) {
-        value.setTime(fixDate(value).getTime() + 1);
-        updateTime(value);
-    }
-
-    @SuppressWarnings("unused")
-    @UiHandler("millisecond")
-    public void onDecreaseMillisecond(final DecreaseEvent event) {
-        value.setTime(fixDate(value).getTime() - 1);
-        updateTime(value);
-    }
-
-    private void setDate() {
-        setTime(fixDate(value));
-    }
-
-    private JsDate fixDate(final JsDate value) {
-        final TimeRecord timeRecord = parseTime(value);
-        final String timeZoneName = parseTimeZone(value);
-
-        final String year = zeroPad(4, datePicker.getValue().getUTCFullYear());
-        final String month = zeroPad(2, datePicker.getValue().getUTCMonth());
-        final String day = zeroPad(2, datePicker.getValue().getUTCDate());
-
-        final String dateTimeString =
-                year + "-" +
-                        month + "-" +
-                        day + "T" +
-                        zeroPad(2, timeRecord.getHour()) + ":" +
-                        zeroPad(2, timeRecord.getMinute()) + ":" +
-                        zeroPad(2, timeRecord.getSecond()) + "." +
-                        zeroPad(3, timeRecord.getMillisecond()) +
-                        timeZoneName;
-        return JsDate.create(JsDate.parse(dateTimeString));
-
-//
-//
-//
-//
-//        IntlDateTimeFormat.format(value, EN_LOCALE, builder.build());
-//
-//        final String timeZone = getTimeZone();
-//
-//        final FormatOptions.Builder builder = FormatOptions
-//                .builder()
-//                .year(Year.NUMERIC)
-//                .month(Month.NUMERIC)
-//                .day(Day.NUMERIC)
-//                .hour(Hour.NUMERIC)
-//                .minute(Minute.NUMERIC)
-//                .second(Second.NUMERIC)
-//                .fractionalSecondDigits(3)
-//                .timeZoneName(TimeZoneName.SHORT);
-//        if (timeZone != null) {
-//            builder.timeZone(timeZone);
-//        }
-//        final String dateTimeString = IntlDateTimeFormat.format(value, EN_LOCALE, builder.build());
-//
-//        final String[] dateTimeParts = dateTimeString.split(DATE_TIME_DELIMITER);
-//        final String dateString = dateTimeParts[0];
-//        final String timeString = dateTimeParts[1];
-//
-//        final String year = "" + datePicker.getValue().getUTCFullYear();
-//        final String month = "" + datePicker.getValue().getUTCMonth();
-//        final String day = "" + datePicker.getValue().getUTCDate();
-//        final String date = day + "/" + month + "/" + year;
-//
-//        final String newDateTimeString = date + DATE_TIME_DELIMITER + timeString;
-//        return JsDate.create(JsDate.parse(newDateTimeString));
+        value.setUTCMilliseconds(millisecond.getIntValue());
+        updateTimeLabel();
     }
 
     private static String zeroPad(final int amount, int value) {
@@ -379,17 +340,16 @@ public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
         return out.toString();
     }
 
-    private void update(final JsDate value) {
-        updateDate(value);
-        updateTime(value);
+    private void update() {
+        updateDate();
+        updateTime();
     }
 
-    private void updateDate(final JsDate value) {
+    private void updateDate() {
         setDatePickerTime(value);
-        updateDateLabel(value);
     }
 
-    private void updateDateLabel(final JsDate value) {
+    private void updateDateLabel() {
         final FormatOptions.Builder builder = FormatOptions
                 .builder()
                 .year(Year.NUMERIC)
@@ -397,107 +357,92 @@ public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
                 .day(Day.NUMERIC);
         setTimeZone(builder);
 
-        final String dateString = IntlDateTimeFormat.format(value, IntlDateTimeFormat.DEFAULT_LOCALE, builder.build());
+        final String dateString =
+                IntlDateTimeFormat.format(value, IntlDateTimeFormat.DEFAULT_LOCALE, builder.build());
+        logTime(value);
         this.date.setText(dateString);
+
+        if (currentDateString == null || !currentDateString.equals(dateString)) {
+            currentDateString = dateString;
+            setDatePickerTime(value);
+        }
     }
 
-    private void updateTime(final JsDate value) {
-        currentTime = parseTime(value);
-        this.hour.setValue(currentTime.getHour());
-        this.minute.setValue(currentTime.getMinute());
-        this.second.setValue(currentTime.getSecond());
-        this.millisecond.setValue(currentTime.getMillisecond());
+    private void updateTime() {
+        currentOffset = getOffset(value);
 
-        updateTimeLabel(value);
+        int hour = value.getUTCHours() + currentOffset.getHours();
+        if (hour > 23) {
+            hour = hour - 24;
+        } else if (hour < 0) {
+            hour = hour + 24;
+        }
+
+        int minute = value.getUTCMinutes() + currentOffset.getMinutes();
+        if (minute > 59) {
+            minute = minute - 60;
+        } else if (minute < 0) {
+            minute = minute + 60;
+        }
+
+        this.hour.setValue(hour);
+        this.minute.setValue(minute);
+        this.second.setValue(value.getUTCSeconds());
+        this.millisecond.setValue(value.getUTCMilliseconds());
+
+        updateDateLabel();
+        updateTimeLabel();
     }
 
-    private void updateTimeLabel(final JsDate value) {
+    private void updateTimeLabel() {
+        final String timeZone = getTimeZone();
         final FormatOptions.Builder builder = FormatOptions
                 .builder()
-                .hour(Hour.NUMERIC)
-                .minute(Minute.NUMERIC)
-                .second(Second.NUMERIC)
+                .hour(Hour.TWO_DIGIT)
+                .minute(Minute.TWO_DIGIT)
+                .second(Second.TWO_DIGIT)
                 .fractionalSecondDigits(3)
                 .timeZoneName(TimeZoneName.SHORT);
-        setTimeZone(builder);
+        if (timeZone != null) {
+            builder.timeZone(timeZone);
+        }
+        final String timeString =
+                IntlDateTimeFormat.format(value, IntlDateTimeFormat.DEFAULT_LOCALE, builder.build());
 
-        final String timeString = IntlDateTimeFormat.format(value, IntlDateTimeFormat.DEFAULT_LOCALE, builder.build());
         time.setText(timeString);
     }
 
-    private JsDate zoneToUTCDate(final JsDate value) {
-        final DateRecord dateRecord = parseDate(value);
-        final TimeRecord timeRecord = parseTime(value);
-        return JsDate.create(JsDate.utc(
-                dateRecord.getYear(),
-                dateRecord.getMonth(),
-                dateRecord.getDay(),
-                timeRecord.getHour(),
-                timeRecord.getMinute(),
-                timeRecord.getSecond(),
-                timeRecord.getMillisecond()));
+    private void logTime(final JsDate value) {
+        GWT.log(value.toUTCString());
     }
 
-    private DateRecord parseDate(final JsDate value) {
-        final FormatOptions.Builder builder = FormatOptions
-                .builder()
-                .year(Year.NUMERIC)
-                .month(Month.NUMERIC)
-                .day(Day.NUMERIC);
-        setTimeZone(builder);
-
-        final String dateString = IntlDateTimeFormat
-                .format(value, EN_LOCALE, builder.build());
-
-        final String[] dateParts = dateString.split("/");
-        final int day = getInt(dateParts[0]);
-        final int month = getInt(dateParts[1]) - 1;
-        final int year = getInt(dateParts[2]);
-        return new DateRecord(year, month, day);
-    }
-
-    private TimeRecord parseTime(final JsDate value) {
-        final FormatOptions.Builder builder = FormatOptions
-                .builder()
-                .hour(Hour.NUMERIC)
-                .minute(Minute.NUMERIC)
-                .second(Second.NUMERIC)
-                .fractionalSecondDigits(3)
-                .timeZoneName(TimeZoneName.SHORT);
-        setTimeZone(builder);
-
-        String timeString = IntlDateTimeFormat
-                .format(value, EN_LOCALE, builder.build());
-        final int timeZoneIndex = timeString.indexOf(" ");
-        if (timeZoneIndex != -1) {
-            timeString = timeString.substring(0, timeZoneIndex);
-        }
-        final String[] parts = timeString.split(":");
-        final String[] secondParts = parts[2].split("\\.");
-        final int hour = getInt(parts[0]);
-        final int minute = getInt(parts[1]);
-        final int second = getInt(secondParts[0]);
-        final int millisecond = getInt(secondParts[1]);
-        return new TimeRecord(hour, minute, second, millisecond);
-    }
-
-    private String parseTimeZone(final JsDate value) {
+    private String getOffsetString(final JsDate value) {
         final String tz = parseTimeZone(value, TimeZoneName.LONG_OFFSET);
         String offset = tz.replaceAll("GMT", "");
         offset = offset.replaceAll(":", "");
-
-        if (offset.length() > 0) {
-            return offset;
+        if (offset.length() == 0) {
+            offset = "+0000";
         }
-        return "+0000";
+        return offset;
+    }
+
+    private Offset getOffset(final JsDate value) {
+        final String offsetString = getOffsetString(value);
+        int hours = getInt(offsetString.substring(1, 3));
+        int minutes = getInt(offsetString.substring(3, 5));
+        if (offsetString.charAt(0) == '-') {
+            hours = hours * -1;
+            minutes = minutes * -1;
+        }
+        return new Offset(hours, minutes);
     }
 
     private String parseTimeZone(final JsDate value, final TimeZoneName timeZoneName) {
         final FormatOptions.Builder builder = FormatOptions
                 .builder()
-                .hour(Hour.NUMERIC)
-                .minute(Minute.NUMERIC)
-                .second(Second.NUMERIC)
+                .hour(Hour.TWO_DIGIT)
+                .minute(Minute.TWO_DIGIT)
+                .second(Second.TWO_DIGIT)
                 .fractionalSecondDigits(3)
                 .timeZoneName(timeZoneName);
         setTimeZone(builder);
@@ -566,7 +511,69 @@ public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
         return timeZone;
     }
 
+    private DateRecord parseDate(final JsDate value) {
+        final FormatOptions.Builder builder = FormatOptions
+                .builder()
+                .year(Year.NUMERIC)
+                .month(Month.TWO_DIGIT)
+                .day(Day.TWO_DIGIT);
+        setTimeZone(builder);
+
+        final String dateString = IntlDateTimeFormat
+                .format(value, EN_LOCALE, builder.build());
+
+        final String[] dateParts = dateString.split("/");
+        final int day = getInt(dateParts[0]);
+        final int month = getInt(dateParts[1]) - 1;
+        final int year = getInt(dateParts[2]);
+        return new DateRecord(year, month, day);
+    }
+
+    private TimeRecord parseTime(final JsDate value) {
+        final FormatOptions.Builder builder = FormatOptions
+                .builder()
+                .hour(Hour.TWO_DIGIT)
+                .minute(Minute.TWO_DIGIT)
+                .second(Second.TWO_DIGIT)
+                .fractionalSecondDigits(3)
+                .timeZoneName(TimeZoneName.SHORT);
+        setTimeZone(builder);
+
+        String timeString = IntlDateTimeFormat
+                .format(value, EN_LOCALE, builder.build());
+        final int timeZoneIndex = timeString.indexOf(" ");
+        if (timeZoneIndex != -1) {
+            timeString = timeString.substring(0, timeZoneIndex);
+        }
+        final String[] parts = timeString.split(":");
+        final String[] secondParts = parts[2].split("\\.");
+        final int hour = getInt(parts[0]);
+        final int minute = getInt(parts[1]);
+        final int second = getInt(secondParts[0]);
+        final int millisecond = getInt(secondParts[1]);
+        return new TimeRecord(hour, minute, second, millisecond);
+    }
+
     public interface Binder extends UiBinder<Widget, DateTimeViewImpl> {
 
+    }
+
+    private static class Offset {
+
+        private final int hours;
+        private final int minutes;
+
+        public Offset(final int hours, final int minutes) {
+            this.hours = hours;
+            this.minutes = minutes;
+        }
+
+        public int getHours() {
+            return hours;
+        }
+
+        public int getMinutes() {
+            return minutes;
+        }
     }
 }

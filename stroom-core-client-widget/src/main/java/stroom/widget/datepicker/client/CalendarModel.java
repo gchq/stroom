@@ -51,14 +51,14 @@ public class CalendarModel {
     }
 
     public static JsDate getFirstDayOfMonth(JsDate date) {
-        return JsDate.create(JsDate.utc(
+        return JsDate.utc(
                 date.getUTCFullYear(),
                 date.getUTCMonth(),
                 1,
                 0,
                 0,
                 0,
-                0));
+                0);
     }
 
     /**
