@@ -309,8 +309,13 @@ public class CustomDatePicker extends Composite implements
         monthAndYearSelector.setup();
         this.setup();
 
-        setCurrentMonth(JsDate.today());
-        addStyleToDates(css().dayIsToday(), JsDate.today());
+        final JsDate now = JsDate.create();
+        final JsDate todayUTC = JsDate.utc(now.getUTCFullYear(), now.getUTCMonth(), 1, 0, 0, 0, 0);
+        setCurrentMonth(todayUTC);
+    }
+
+    public void setToday(final JsDate today) {
+        addStyleToDates(css().dayIsToday(), today);
     }
 
     public HandlerRegistration addHighlightHandler(HighlightHandler<JsDate> handler) {

@@ -131,6 +131,7 @@ public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
 
         datePicker.setCurrentMonth(utc);
         datePicker.setValue(utc);
+        datePicker.setToday(getTodayUTC());
     }
 
     @Override
@@ -156,9 +157,7 @@ public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
         hour.focus();
     }
 
-    @SuppressWarnings("unused")
-    @UiHandler("today")
-    public void onToday(final ClickEvent event) {
+    private JsDate getTodayUTC() {
         final DateRecord today = parseDate(JsDate.create());
         final JsDate utc = JsDate.utc(
                 today.getYear(),
@@ -168,6 +167,13 @@ public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
                 0,
                 0,
                 0);
+        return utc;
+    }
+
+    @SuppressWarnings("unused")
+    @UiHandler("today")
+    public void onToday(final ClickEvent event) {
+        final JsDate utc = getTodayUTC();
         setDatePickerTime(utc);
         value = resolveDateTime(value);
         update();
@@ -176,15 +182,7 @@ public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
     @SuppressWarnings("unused")
     @UiHandler("yesterday")
     public void onYesterday(final ClickEvent event) {
-        final DateRecord today = parseDate(JsDate.create());
-        final JsDate utc = JsDate.utc(
-                today.getYear(),
-                today.getMonth(),
-                today.getDay(),
-                0,
-                0,
-                0,
-                0);
+        final JsDate utc = getTodayUTC();
         utc.setUTCDate(utc.getUTCDate() - 1);
         setDatePickerTime(utc);
         value = resolveDateTime(value);
@@ -194,15 +192,7 @@ public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
     @SuppressWarnings("unused")
     @UiHandler("weekStart")
     public void onWeekStart(final ClickEvent event) {
-        final DateRecord today = parseDate(JsDate.create());
-        final JsDate utc = JsDate.utc(
-                today.getYear(),
-                today.getMonth(),
-                today.getDay(),
-                0,
-                0,
-                0,
-                0);
+        final JsDate utc = getTodayUTC();
         utc.setUTCDate(utc.getUTCDate() - utc.getUTCDay());
         setDatePickerTime(utc);
         value = resolveDateTime(value);

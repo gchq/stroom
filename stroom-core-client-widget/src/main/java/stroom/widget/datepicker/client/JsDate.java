@@ -24,14 +24,6 @@ import com.google.gwt.core.client.JavaScriptObject;
 public class JsDate extends JavaScriptObject {
 
     /**
-     * Creates a new date set to the beginning of the current day.
-     */
-    public static JsDate today() {
-        final JsDate now = create();
-        return create(now.getFullYear(), now.getMonth(), now.getDate());
-    }
-
-    /**
      * Creates a new date with the current time.
      */
     public static native JsDate create() /*-{
