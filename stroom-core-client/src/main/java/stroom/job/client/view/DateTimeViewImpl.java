@@ -217,51 +217,6 @@ public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
         updateTime();
     }
 
-    private JsDate resolveDateTime(final JsDate previousTime) {
-        final JsDate datePickerTime = datePicker.getValue();
-        String currentOffset = getOffsetString(previousTime);
-        final String isoDateString =
-                zeroPad(4, datePickerTime.getUTCFullYear()) +
-                        "-" +
-                        zeroPad(2, (datePickerTime.getUTCMonth() + 1)) +
-                        "-" +
-                        zeroPad(2, datePickerTime.getDate()) +
-                        "T" +
-                        zeroPad(2, hour.getIntValue()) +
-                        ":" +
-                        zeroPad(2, minute.getIntValue()) +
-                        ":" +
-                        zeroPad(2, second.getIntValue()) +
-                        "." +
-                        zeroPad(3, millisecond.getIntValue()) +
-                        currentOffset;
-        final JsDate isoDate = JsDate.create(isoDateString);
-        final String newOffset = getOffsetString(isoDate);
-        if (!newOffset.equals(currentOffset)) {
-            GWT.log("Offset changed!");
-            final String newIsoDateString =
-                    zeroPad(4, datePickerTime.getUTCFullYear()) +
-                            "-" +
-                            zeroPad(2, (datePickerTime.getUTCMonth() + 1)) +
-                            "-" +
-                            zeroPad(2, datePickerTime.getDate()) +
-                            "T" +
-                            zeroPad(2, hour.getIntValue()) +
-                            ":" +
-                            zeroPad(2, minute.getIntValue()) +
-                            ":" +
-                            zeroPad(2, second.getIntValue()) +
-                            "." +
-                            zeroPad(3, millisecond.getIntValue()) +
-                            newOffset;
-            final JsDate newIsoDate = JsDate.create(newIsoDateString);
-            return newIsoDate;
-
-        } else {
-            return isoDate;
-        }
-    }
-
     @SuppressWarnings("unused")
     @UiHandler("now")
     public void onNow(final ClickEvent event) {
@@ -299,16 +254,26 @@ public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
     @SuppressWarnings("unused")
     @UiHandler("hour")
     public void onHour(final ValueChangeEvent<Long> event) {
+        final DateRecord dateBefore = parseDate(value);
         final int hour = this.hour.getIntValue();
-        value.setUTCHours(hour - currentOffset.getHours());
+        value = resolveDateTime(value, false);
         updateTime();
+
+        // Deal with daylight savings offset changes that could switch the day.
+        if (hour == 0) {
+            final DateRecord dateAfter = parseDate(value);
+            if (!dateBefore.equals(dateAfter)) {
+                GWT.log("Fix hour for DST: " + dateBefore + " -> " + dateAfter);
+                value.setTime(value.getTime() + 60 * 60 * 1000);
+                updateTime();
+            }
+        }
     }
 
     @SuppressWarnings("unused")
     @UiHandler("minute")
     public void onMinute(final ValueChangeEvent<Long> event) {
-        final int minute = this.minute.getIntValue();
-        value.setUTCMinutes(minute - currentOffset.getMinutes());
+        value = resolveDateTime(value, false);
         updateTime();
     }
 
@@ -326,18 +291,53 @@ public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
         updateTimeLabel();
     }
 
-    private static String zeroPad(final int amount, int value) {
-        return zeroPad(amount, "" + value);
+    private JsDate resolveDateTime(final JsDate previousTime) {
+        return resolveDateTime(previousTime, true);
     }
 
-    private static String zeroPad(final int amount, final String in) {
-        final int left = amount - in.length();
-        final StringBuilder out = new StringBuilder();
-        for (int i = 0; i < left; i++) {
-            out.append("0");
+    private JsDate resolveDateTime(final JsDate previousTime, final boolean allowOffsetChange) {
+        final JsDate datePickerTime = datePicker.getValue();
+        String currentOffset = getOffsetString(previousTime);
+        final String isoDateString =
+                zeroPad(4, datePickerTime.getUTCFullYear()) +
+                        "-" +
+                        zeroPad(2, (datePickerTime.getUTCMonth() + 1)) +
+                        "-" +
+                        zeroPad(2, datePickerTime.getDate()) +
+                        "T" +
+                        zeroPad(2, hour.getIntValue()) +
+                        ":" +
+                        zeroPad(2, minute.getIntValue()) +
+                        ":" +
+                        zeroPad(2, second.getIntValue()) +
+                        "." +
+                        zeroPad(3, millisecond.getIntValue()) +
+                        currentOffset;
+        final JsDate isoDate = JsDate.create(isoDateString);
+        final String newOffset = getOffsetString(isoDate);
+        if (allowOffsetChange && !newOffset.equals(currentOffset)) {
+            GWT.log("Offset changed: " + currentOffset + " -> " + newOffset);
+            final String newIsoDateString =
+                    zeroPad(4, datePickerTime.getUTCFullYear()) +
+                            "-" +
+                            zeroPad(2, (datePickerTime.getUTCMonth() + 1)) +
+                            "-" +
+                            zeroPad(2, datePickerTime.getDate()) +
+                            "T" +
+                            zeroPad(2, hour.getIntValue()) +
+                            ":" +
+                            zeroPad(2, minute.getIntValue()) +
+                            ":" +
+                            zeroPad(2, second.getIntValue()) +
+                            "." +
+                            zeroPad(3, millisecond.getIntValue()) +
+                            newOffset;
+            final JsDate newIsoDate = JsDate.create(newIsoDateString);
+            return newIsoDate;
+
+        } else {
+            return isoDate;
         }
-        out.append(in);
-        return out.toString();
     }
 
     private void update() {
@@ -359,7 +359,6 @@ public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
 
         final String dateString =
                 IntlDateTimeFormat.format(value, IntlDateTimeFormat.DEFAULT_LOCALE, builder.build());
-        logTime(value);
         this.date.setText(dateString);
 
         if (currentDateString == null || !currentDateString.equals(dateString)) {
@@ -412,10 +411,6 @@ public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
         time.setText(timeString);
     }
 
-    private void logTime(final JsDate value) {
-        GWT.log(value.toUTCString());
-    }
-
     private String getOffsetString(final JsDate value) {
         final String tz = parseTimeZone(value, TimeZoneName.LONG_OFFSET);
         String offset = tz.replaceAll("GMT", "");
@@ -452,6 +447,20 @@ public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
         final String tz = dateTimeString.substring(index + 1);
 
         return tz;
+    }
+
+    private static String zeroPad(final int amount, int value) {
+        return zeroPad(amount, "" + value);
+    }
+
+    private static String zeroPad(final int amount, final String in) {
+        final int left = amount - in.length();
+        final StringBuilder out = new StringBuilder();
+        for (int i = 0; i < left; i++) {
+            out.append("0");
+        }
+        out.append(in);
+        return out.toString();
     }
 
     private int getInt(final String string) {
