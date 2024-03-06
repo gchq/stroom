@@ -46,13 +46,15 @@ jooq {
                         // index_volume.state is a non-boolean tinyint
 
                         // Treat some tinyint columns as booleans
-                        //forcedTypes {
-                            //forcedType {
-                                //name = 'BOOLEAN'
-                                //// see https://github.com/jOOQ/jOOQ/issues/9405
-                                //includeTypes = '(?i:tinyint)(\\(1\\))?'
-                            //}
-                        //}
+                        forcedTypes {
+                            forcedType {
+                                name = 'BOOLEAN'
+                                includeExpression = '' +
+                                        '.*\\.index_volume_group\\.is_default'
+                                // see https://github.com/jOOQ/jOOQ/issues/9405
+                                includeTypes = '(?i:tinyint)(\\(1\\))?'
+                            }
+                        }
                     }
                     target {
                         packageName = 'stroom.index.impl.db.jooq'

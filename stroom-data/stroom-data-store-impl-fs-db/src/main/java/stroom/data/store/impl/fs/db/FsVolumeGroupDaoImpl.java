@@ -5,8 +5,10 @@ import stroom.data.store.impl.fs.db.jooq.tables.records.FsVolumeGroupRecord;
 import stroom.data.store.impl.fs.shared.FsVolumeGroup;
 import stroom.db.util.GenericDao;
 import stroom.db.util.JooqUtil;
+import stroom.docref.DocRef;
 
 import jakarta.inject.Inject;
+import org.jooq.DSLContext;
 import org.jooq.Record;
 import org.jooq.exception.DataAccessException;
 
@@ -29,6 +31,8 @@ class FsVolumeGroupDaoImpl implements FsVolumeGroupDao {
         fsVolumeGroup.setUpdateTimeMs(record.get(FS_VOLUME_GROUP.UPDATE_TIME_MS));
         fsVolumeGroup.setUpdateUser(record.get(FS_VOLUME_GROUP.UPDATE_USER));
         fsVolumeGroup.setName(record.get(FS_VOLUME_GROUP.NAME));
+        fsVolumeGroup.setUuid(record.get(FS_VOLUME_GROUP.UUID));
+        fsVolumeGroup.setDefaultVolume(record.get(FS_VOLUME_GROUP.IS_DEFAULT));
         return fsVolumeGroup;
     };
 
@@ -43,6 +47,8 @@ class FsVolumeGroupDaoImpl implements FsVolumeGroupDao {
                 record.set(FS_VOLUME_GROUP.UPDATE_TIME_MS, fsVolumeGroup.getUpdateTimeMs());
                 record.set(FS_VOLUME_GROUP.UPDATE_USER, fsVolumeGroup.getUpdateUser());
                 record.set(FS_VOLUME_GROUP.NAME, fsVolumeGroup.getName());
+                record.set(FS_VOLUME_GROUP.UUID, fsVolumeGroup.getUuid());
+                record.set(FS_VOLUME_GROUP.IS_DEFAULT, getDbIsDefaultValue(fsVolumeGroup));
                 return record;
             };
 
@@ -69,13 +75,17 @@ class FsVolumeGroupDaoImpl implements FsVolumeGroupDao {
                                 FS_VOLUME_GROUP.CREATE_TIME_MS,
                                 FS_VOLUME_GROUP.UPDATE_USER,
                                 FS_VOLUME_GROUP.UPDATE_TIME_MS,
-                                FS_VOLUME_GROUP.NAME)
+                                FS_VOLUME_GROUP.NAME,
+                                FS_VOLUME_GROUP.UUID,
+                                FS_VOLUME_GROUP.IS_DEFAULT)
                         .values(1,
                                 fsVolumeGroup.getCreateUser(),
                                 fsVolumeGroup.getCreateTimeMs(),
                                 fsVolumeGroup.getUpdateUser(),
                                 fsVolumeGroup.getUpdateTimeMs(),
-                                fsVolumeGroup.getName())
+                                fsVolumeGroup.getName(),
+                                fsVolumeGroup.getUuid(),
+                                fsVolumeGroup.isDefaultVolume())
                         .onDuplicateKeyIgnore()
                         .returning(FS_VOLUME_GROUP.ID)
                         .fetchOptional())
@@ -90,46 +100,43 @@ class FsVolumeGroupDaoImpl implements FsVolumeGroupDao {
 
     @Override
     public FsVolumeGroup update(FsVolumeGroup fsVolumeGroup) {
-        final FsVolumeGroup saved;
-        try {
-            saved = genericDao.update(fsVolumeGroup);
-        } catch (DataAccessException e) {
-            if (e.getCause() != null
-                    && e.getCause() instanceof SQLIntegrityConstraintViolationException) {
-                final var sqlEx = (SQLIntegrityConstraintViolationException) e.getCause();
-                if (sqlEx.getErrorCode() == 1062
-                        && sqlEx.getMessage().contains("Duplicate entry")
-                        && sqlEx.getMessage().contains("key")
-                        && sqlEx.getMessage().contains(FS_VOLUME_GROUP.NAME.getName())) {
-                    throw new RuntimeException("A data volume group already exists with name '"
-                            + fsVolumeGroup.getName() + "'");
+        return JooqUtil.transactionResultWithOptimisticLocking(fsDataStoreDbConnProvider, context -> {
+            final FsVolumeGroup saved;
+            try {
+                if (fsVolumeGroup.isDefaultVolume()) {
+                    // Can only have one that is default
+                    setAllOthersNonDefault(fsVolumeGroup, context);
                 }
+                saved = genericDao.update(fsVolumeGroup);
+            } catch (DataAccessException e) {
+                if (e.getCause() != null
+                        && e.getCause() instanceof SQLIntegrityConstraintViolationException) {
+                    final var sqlEx = (SQLIntegrityConstraintViolationException) e.getCause();
+                    if (sqlEx.getErrorCode() == 1062
+                            && sqlEx.getMessage().contains("Duplicate entry")
+                            && sqlEx.getMessage().contains("key")
+                            && sqlEx.getMessage().contains(FS_VOLUME_GROUP.NAME.getName())) {
+                        throw new RuntimeException("A data volume group already exists with name '"
+                                + fsVolumeGroup.getName() + "'");
+                    }
+                }
+                throw e;
             }
-            throw e;
-        }
+            return saved;
+        });
+    }
 
-//        // If the group name has changed then update indexes to point to the new group name.
-//        if (currentGroupName != null && !currentGroupName.equals(saved.getName())) {
-//            final IndexStore indexStore = indexStoreProvider.get();
-//            if (indexStore != null) {
-//                final List<DocRef> indexes = indexStore.list();
-//                for (final DocRef docRef : indexes) {
-//                    final IndexDoc indexDoc = indexStore.readDocument(docRef);
-//                    if (indexDoc.getVolumeGroupName() != null &&
-//                            indexDoc.getVolumeGroupName().equals(currentGroupName)) {
-//                        indexDoc.setVolumeGroupName(saved.getName());
-//                        LOGGER.info("Updating index {} ({}) to change volume group name from {} to {}",
-//                                indexDoc.getName(),
-//                                indexDoc.getUuid(),
-//                                currentGroupName,
-//                                saved.getName());
-//                        indexStore.writeDocument(indexDoc);
-//                    }
-//                }
-//            }
-//        }
+    private static Boolean getDbIsDefaultValue(final FsVolumeGroup fsVolumeGroup) {
+        return fsVolumeGroup.isDefaultVolume()
+                ? Boolean.TRUE
+                : null;
+    }
 
-        return saved;
+    private void setAllOthersNonDefault(final FsVolumeGroup fsVolumeGroup, final DSLContext context) {
+        context.update(FS_VOLUME_GROUP)
+                .set(FS_VOLUME_GROUP.IS_DEFAULT, getDbIsDefaultValue(fsVolumeGroup))
+                .where(FS_VOLUME_GROUP.ID.notEqual(fsVolumeGroup.getId()))
+                .execute();
     }
 
     @Override
@@ -149,6 +156,32 @@ class FsVolumeGroupDaoImpl implements FsVolumeGroupDao {
                         .select()
                         .from(FS_VOLUME_GROUP)
                         .where(FS_VOLUME_GROUP.NAME.eq(name))
+                        .fetchOptional())
+                .map(RECORD_TO_FS_VOLUME_GROUP_MAPPER)
+                .orElse(null);
+    }
+
+    @Override
+    public FsVolumeGroup get(final DocRef docRef) {
+        if (docRef != null) {
+            return JooqUtil.contextResult(fsDataStoreDbConnProvider, context -> context
+                            .select()
+                            .from(FS_VOLUME_GROUP)
+                            .where(FS_VOLUME_GROUP.UUID.eq(docRef.getUuid()))
+                            .fetchOptional())
+                    .map(RECORD_TO_FS_VOLUME_GROUP_MAPPER)
+                    .orElse(null);
+        } else {
+            return null;
+        }
+    }
+
+    @Override
+    public FsVolumeGroup getDefaultVolumeGroup() {
+        return JooqUtil.contextResult(fsDataStoreDbConnProvider, context -> context
+                        .select()
+                        .from(FS_VOLUME_GROUP)
+                        .where(FS_VOLUME_GROUP.IS_DEFAULT.eq(true))
                         .fetchOptional())
                 .map(RECORD_TO_FS_VOLUME_GROUP_MAPPER)
                 .orElse(null);

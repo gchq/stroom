@@ -24,6 +24,8 @@ public interface FsVolumeGroupService {
 
     FsVolumeGroup get(int id);
 
+    FsVolumeGroup get(DocRef docRef);
+
     void delete(int id);
 
     void ensureDefaultVolumes();

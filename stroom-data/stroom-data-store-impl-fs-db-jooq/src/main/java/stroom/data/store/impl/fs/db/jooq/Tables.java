@@ -16,7 +16,7 @@ import stroom.data.store.impl.fs.db.jooq.tables.FsVolumeState;
 /**
  * Convenience access to all tables in stroom.
  */
-@SuppressWarnings({ "all", "unchecked", "rawtypes" })
+@SuppressWarnings({ "all", "unchecked", "rawtypes", "this-escape" })
 public class Tables {
 
     /**

@@ -30,7 +30,7 @@ import stroom.data.store.impl.fs.db.jooq.tables.records.FsVolumeStateRecord;
  * A class modelling foreign key relationships and constraints of tables in
  * stroom.
  */
-@SuppressWarnings({ "all", "unchecked", "rawtypes" })
+@SuppressWarnings({ "all", "unchecked", "rawtypes", "this-escape" })
 public class Keys {
 
     // -------------------------------------------------------------------------
@@ -45,8 +45,10 @@ public class Keys {
     public static final UniqueKey<FsTypePathRecord> KEY_FS_TYPE_PATH_PRIMARY = Internal.createUniqueKey(FsTypePath.FS_TYPE_PATH, DSL.name("KEY_fs_type_path_PRIMARY"), new TableField[] { FsTypePath.FS_TYPE_PATH.ID }, true);
     public static final UniqueKey<FsVolumeRecord> KEY_FS_VOLUME_PATH = Internal.createUniqueKey(FsVolume.FS_VOLUME, DSL.name("KEY_fs_volume_path"), new TableField[] { FsVolume.FS_VOLUME.PATH }, true);
     public static final UniqueKey<FsVolumeRecord> KEY_FS_VOLUME_PRIMARY = Internal.createUniqueKey(FsVolume.FS_VOLUME, DSL.name("KEY_fs_volume_PRIMARY"), new TableField[] { FsVolume.FS_VOLUME.ID }, true);
+    public static final UniqueKey<FsVolumeGroupRecord> KEY_FS_VOLUME_GROUP_IS_DEFAULT_IDX = Internal.createUniqueKey(FsVolumeGroup.FS_VOLUME_GROUP, DSL.name("KEY_fs_volume_group_is_default_idx"), new TableField[] { FsVolumeGroup.FS_VOLUME_GROUP.IS_DEFAULT }, true);
     public static final UniqueKey<FsVolumeGroupRecord> KEY_FS_VOLUME_GROUP_NAME = Internal.createUniqueKey(FsVolumeGroup.FS_VOLUME_GROUP, DSL.name("KEY_fs_volume_group_name"), new TableField[] { FsVolumeGroup.FS_VOLUME_GROUP.NAME }, true);
     public static final UniqueKey<FsVolumeGroupRecord> KEY_FS_VOLUME_GROUP_PRIMARY = Internal.createUniqueKey(FsVolumeGroup.FS_VOLUME_GROUP, DSL.name("KEY_fs_volume_group_PRIMARY"), new TableField[] { FsVolumeGroup.FS_VOLUME_GROUP.ID }, true);
+    public static final UniqueKey<FsVolumeGroupRecord> KEY_FS_VOLUME_GROUP_UUID_IDX = Internal.createUniqueKey(FsVolumeGroup.FS_VOLUME_GROUP, DSL.name("KEY_fs_volume_group_uuid_idx"), new TableField[] { FsVolumeGroup.FS_VOLUME_GROUP.UUID }, true);
     public static final UniqueKey<FsVolumeStateRecord> KEY_FS_VOLUME_STATE_PRIMARY = Internal.createUniqueKey(FsVolumeState.FS_VOLUME_STATE, DSL.name("KEY_fs_volume_state_PRIMARY"), new TableField[] { FsVolumeState.FS_VOLUME_STATE.ID }, true);
 
     // -------------------------------------------------------------------------

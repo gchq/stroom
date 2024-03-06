@@ -81,8 +81,12 @@ public class FeedDoc extends Doc {
     private String streamType;
     @JsonProperty
     private FeedStatus status;
+    // The volume group used to be referenced by name, which is brittle, but is now done with a DocRef
+    @Deprecated(forRemoval = true) // Use VolumeGroupDocRef
     @JsonProperty
     private String volumeGroup;
+    @JsonProperty
+    private String volumeGroupDocRef;
 
     public FeedDoc() {
     }
@@ -218,13 +222,25 @@ public class FeedDoc extends Doc {
         this.reference = reference;
     }
 
+    /**
+     * The volume group used to be referenced by name, which is brittle, but is now done with a DocRef
+     */
+    @Deprecated(forRemoval = true)
     public String getVolumeGroup() {
         return volumeGroup;
     }
 
+    /**
+     * The volume group used to be referenced by name, which is brittle, but is now done with a DocRef
+     */
+    @Deprecated(forRemoval = true) // Use VolumeGroupDocRef
     public void setVolumeGroup(final String volumeGroup) {
         this.volumeGroup = volumeGroup;
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public enum FeedStatus implements HasDisplayValue, HasPrimitiveValue {
         RECEIVE("Receive", 1),

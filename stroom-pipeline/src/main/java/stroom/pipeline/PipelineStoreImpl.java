@@ -46,7 +46,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
-import java.util.HashSet;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -236,17 +236,17 @@ public class PipelineStoreImpl implements PipelineStore {
 
     @Override
     public Set<DocRef> findAssociatedNonExplorerDocRefs(DocRef docRef) {
-        Set<DocRef> processorFilters = new HashSet<>();
-
+        final Set<DocRef> processorFilters;
         if (docRef != null && PipelineDoc.DOCUMENT_TYPE.equals(docRef.getType())) {
-            ResultPage<ProcessorFilter> filterResultPage = processorFilterServiceProvider.get().find(docRef);
+            ResultPage<ProcessorFilter> filterResultPage = processorFilterServiceProvider.get()
+                    .find(docRef);
 
-            List<DocRef> docRefs = filterResultPage.getValues().stream()
+            processorFilters = filterResultPage.getValues().stream()
                     .filter(ProcessorFilterUtil::shouldExport)
                     .map(v -> new DocRef(ProcessorFilter.ENTITY_TYPE, v.getUuid()))
-                    .collect(Collectors.toList());
-
-            processorFilters.addAll(docRefs);
+                    .collect(Collectors.toSet());
+        } else {
+            processorFilters = Collections.emptySet();
         }
         return processorFilters;
     }

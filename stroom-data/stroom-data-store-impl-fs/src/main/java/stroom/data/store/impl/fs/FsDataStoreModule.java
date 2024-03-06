@@ -20,6 +20,7 @@ import stroom.data.store.api.Store;
 import stroom.data.store.impl.AttributeMapFactory;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.event.logging.api.ObjectInfoProviderBinder;
+import stroom.importexport.api.ImportExportActionHandler;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.HasSystemInfoBinder;
 import stroom.util.guice.RestResourcesBinder;
@@ -43,6 +44,9 @@ public class FsDataStoreModule extends AbstractModule {
         RestResourcesBinder.create(binder())
                 .bind(FsVolumeResourceImpl.class)
                 .bind(FsVolumeGroupResourceImpl.class);
+
+        GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
+                .addBinding(FsVolumeGroupImportExportHandler.class);
 
         ObjectInfoProviderBinder.create(binder())
                 .bind(FsVolume.class, FsVolumeObjectInfoProvider.class);

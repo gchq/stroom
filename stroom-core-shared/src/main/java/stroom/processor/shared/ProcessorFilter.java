@@ -17,6 +17,7 @@
 package stroom.processor.shared;
 
 import stroom.docref.DocRef;
+import stroom.docref.HasDocRef;
 import stroom.docref.HasUuid;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.util.shared.HasAuditInfo;
@@ -32,7 +33,7 @@ import java.util.Comparator;
 import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
-public class ProcessorFilter implements HasAuditInfo, HasUuid, HasIntegerId {
+public class ProcessorFilter implements HasAuditInfo, HasUuid, HasIntegerId, HasDocRef {
 
     public static final String ENTITY_TYPE = "ProcessorFilter";
 
@@ -377,6 +378,17 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid, HasIntegerId {
     }
 
     @Override
+    public String getName() {
+        // Doesn't have a name
+        return null;
+    }
+
+    @Override
+    public String getType() {
+        return ENTITY_TYPE;
+    }
+
+    @Override
     public boolean equals(final Object o) {
         if (this == o) {
             return true;
@@ -453,6 +465,10 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid, HasIntegerId {
     public static Builder builder() {
         return new Builder();
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public static class Builder {
 

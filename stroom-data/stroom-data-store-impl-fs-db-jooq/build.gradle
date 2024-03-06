@@ -45,14 +45,15 @@ jooq {
                         // fs_volume.status is non-boolean tinyint
 
                         // Treat some tinyint columns as booleans
-                        //forcedTypes {
-                        //forcedType {
-                        //name = 'BOOLEAN'
-                        //includeExpression = ''
-                        //// see https://github.com/jOOQ/jOOQ/issues/9405
-                        //includeTypes = '(?i:tinyint)(\\(1\\))?'
-                        //}
-                        //}
+                        forcedTypes {
+                            forcedType {
+                                name = 'BOOLEAN'
+                                includeExpression = '' +
+                                        '.*\\.fs_volume_group\\.is_default'
+                                // see https://github.com/jOOQ/jOOQ/issues/9405
+                                includeTypes = '(?i:tinyint)(\\(1\\))?'
+                            }
+                        }
                     }
                     target {
                         packageName = 'stroom.data.store.impl.fs.db.jooq'

@@ -1,5 +1,6 @@
 package stroom.index.shared;
 
+import stroom.docref.HasDocRef;
 import stroom.docref.HasNameMutable;
 import stroom.util.shared.HasAuditInfo;
 import stroom.util.shared.HasIntegerId;
@@ -12,7 +13,15 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
-public class IndexVolumeGroup implements HasAuditInfo, HasIntegerId, HasNameMutable {
+public class IndexVolumeGroup implements HasAuditInfo, HasIntegerId, HasNameMutable, HasDocRef {
+
+    public static final String DOCUMENT_TYPE = "IndexVolumeGroup";
+
+    // This uuid will be used for the auto created volume group.
+    // It is hard coded so that every stroom env that sets up a default volume
+    // will have the same uuid for it, which makes imp/exp between instances easier,
+    // similar to how context pack entities have fixed UUIDs.
+    public static final String DEFAULT_VOLUME_UUID = "5de2d603-cfc7-45cf-a8b4-e06bdf454f5e";
 
     @JsonProperty
     private Integer id;
@@ -28,6 +37,10 @@ public class IndexVolumeGroup implements HasAuditInfo, HasIntegerId, HasNameMuta
     private String updateUser;
     @JsonProperty
     private String name;
+    @JsonProperty
+    private String uuid;
+    @JsonProperty
+    private boolean defaultVolume;
 
     public IndexVolumeGroup() {
     }
@@ -39,7 +52,9 @@ public class IndexVolumeGroup implements HasAuditInfo, HasIntegerId, HasNameMuta
                             @JsonProperty("createUser") final String createUser,
                             @JsonProperty("updateTimeMs") final Long updateTimeMs,
                             @JsonProperty("updateUser") final String updateUser,
-                            @JsonProperty("name") final String name) {
+                            @JsonProperty("name") final String name,
+                            @JsonProperty("uuid") final String uuid,
+                            @JsonProperty("defaultVolume") final boolean defaultVolume) {
         this.id = id;
         this.version = version;
         this.createTimeMs = createTimeMs;
@@ -47,6 +62,8 @@ public class IndexVolumeGroup implements HasAuditInfo, HasIntegerId, HasNameMuta
         this.updateTimeMs = updateTimeMs;
         this.updateUser = updateUser;
         this.name = name;
+        this.uuid = uuid;
+        this.defaultVolume = defaultVolume;
     }
 
     @Override
@@ -112,6 +129,28 @@ public class IndexVolumeGroup implements HasAuditInfo, HasIntegerId, HasNameMuta
     }
 
     @Override
+    public String getType() {
+        return null;
+    }
+
+    @Override
+    public String getUuid() {
+        return uuid;
+    }
+
+    public void setUuid(final String uuid) {
+        this.uuid = uuid;
+    }
+
+    public boolean isDefaultVolume() {
+        return defaultVolume;
+    }
+
+    public void setDefaultVolume(final boolean defaultVolume) {
+        this.defaultVolume = defaultVolume;
+    }
+
+    @Override
     public String toString() {
         return "IndexVolumeGroup{" +
                 "id=" + id +
@@ -121,6 +160,8 @@ public class IndexVolumeGroup implements HasAuditInfo, HasIntegerId, HasNameMuta
                 ", updateTimeMs=" + updateTimeMs +
                 ", updateUser='" + updateUser + '\'' +
                 ", name='" + name + '\'' +
+                ", uuid='" + uuid + '\'' +
+                ", defaultVolume='" + defaultVolume + '\'' +
                 '}';
     }
 

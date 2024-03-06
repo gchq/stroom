@@ -18,6 +18,7 @@
 package stroom.docstore.shared;
 
 import stroom.docref.DocRef;
+import stroom.docref.HasDocRef;
 import stroom.docref.HasType;
 import stroom.docref.HasUuid;
 import stroom.util.shared.HasAuditInfo;
@@ -40,7 +41,7 @@ import java.util.Objects;
         "createUser",
         "updateUser"})
 @JsonInclude(Include.NON_NULL)
-public abstract class Doc implements HasAuditInfo, HasUuid, HasType {
+public abstract class Doc implements HasAuditInfo, HasUuid, HasType, HasDocRef {
 
     @JsonProperty
     private String type;

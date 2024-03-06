@@ -1,6 +1,7 @@
 package stroom.data.store.impl.fs;
 
 import stroom.data.store.impl.fs.shared.FsVolumeGroup;
+import stroom.docref.DocRef;
 
 import java.util.List;
 
@@ -13,6 +14,14 @@ public interface FsVolumeGroupDao {
     FsVolumeGroup get(int id);
 
     FsVolumeGroup get(String name);
+
+    FsVolumeGroup get(DocRef docRef);
+
+    /**
+     * @return The volume group that has been marked as the default one to use.
+     * May be null if no default is set.
+     */
+    FsVolumeGroup getDefaultVolumeGroup();
 
     List<String> getNames();
 

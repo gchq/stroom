@@ -63,7 +63,8 @@ public class IndexModule extends AbstractModule {
                 .addBinding(IndexStoreImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
-                .addBinding(IndexStoreImpl.class);
+                .addBinding(IndexStoreImpl.class)
+                .addBinding(IndexVolumeGroupImportExportHandler.class);
 
         GuiceUtil.buildMultiBinder(binder(), Searchable.class)
                 .addBinding(IndexShardServiceImpl.class);

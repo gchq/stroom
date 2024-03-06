@@ -1,6 +1,8 @@
 package stroom.data.store.impl.fs;
 
 import stroom.data.store.impl.fs.shared.FsVolumeGroup;
+import stroom.docref.DocRef;
+import stroom.index.shared.IndexVolumeGroup;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.util.AuditUtil;
@@ -109,6 +111,13 @@ public class FsVolumeGroupServiceImpl implements FsVolumeGroupService, Clearable
     }
 
     @Override
+    public FsVolumeGroup get(final DocRef docRef) {
+        ensureDefaultVolumes();
+        return securityContext.secureResult(() ->
+                volumeGroupDao.get(docRef));
+    }
+
+    @Override
     public void delete(int id) {
         securityContext.secure(PermissionNames.MANAGE_VOLUMES_PERMISSION,
                 () -> {
@@ -142,6 +151,8 @@ public class FsVolumeGroupServiceImpl implements FsVolumeGroupService, Clearable
                             final FsVolumeGroup indexVolumeGroup = new FsVolumeGroup();
                             final String groupName = volumeConfig.getDefaultStreamVolumeGroupName();
                             indexVolumeGroup.setName(groupName);
+                            indexVolumeGroup.setDefaultVolume(true);
+                            indexVolumeGroup.setUuid(IndexVolumeGroup.DEFAULT_VOLUME_UUID);
                             AuditUtil.stamp(securityContext, indexVolumeGroup);
 
                             LOGGER.info("Creating default volume group [{}]", groupName);

@@ -5,6 +5,7 @@ import stroom.index.shared.IndexVolumeGroup;
 import java.util.List;
 
 public interface IndexVolumeGroupDao {
+
     IndexVolumeGroup getOrCreate(IndexVolumeGroup indexVolumeGroup);
 
     IndexVolumeGroup update(IndexVolumeGroup indexVolumeGroup);
@@ -12,6 +13,12 @@ public interface IndexVolumeGroupDao {
     IndexVolumeGroup get(int id);
 
     IndexVolumeGroup get(String name);
+
+    /**
+     * @return The volume group that has been marked as the default one to use.
+     * May be null if no default is set.
+     */
+    IndexVolumeGroup getDefaultVolumeGroup();
 
     List<String> getNames();
 

@@ -38,7 +38,9 @@ import static org.assertj.core.api.Fail.fail;
 
 /**
  * <p>
- * Superclass for testing a single migration script.
+ * Superclass for testing a single DB migration script.
+ * </p>
+ * <p>
  * It works be writing the result of {@link AbstractSingleFlywayMigrationTest#getTestDataScript()}
  * to a file with a migration version number just before the migration under test.
  * It then runs all migrations up to and including the one under test. The inserted migration
@@ -50,6 +52,15 @@ import static org.assertj.core.api.Fail.fail;
  * the version part of the migration being tested. E.g. if the migration script under test is
  * called {@code V07_00_21_005__processor_task_status.sql}, then the class to test it must be
  * called {@code TestV07_00_21_005}.
+ * </p>
+ * <p>
+ * If you need multiple test classes for a migration script, e.g. so each one can set up different test
+ * data then you can name it like {@code TestVnn_nn_nn_nnn__MyTestName}, e.g.
+ * <pre>{@code
+ * TestV07_04_00_005__A
+ * TestV07_04_00_005__B
+ * TestV07_04_00_005__C
+ * }</pre>
  * </p>
  * <p>
  * Also, migration scripts should be numbered such that the migration number (the {@code nnn} bit)

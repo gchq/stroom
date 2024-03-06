@@ -1,6 +1,8 @@
 package stroom.data.store.impl.fs.shared;
 
+import stroom.docref.HasDocRef;
 import stroom.docref.HasNameMutable;
+import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.HasAuditInfo;
 import stroom.util.shared.HasIntegerId;
 
@@ -12,7 +14,15 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
-public class FsVolumeGroup implements HasAuditInfo, HasIntegerId, HasNameMutable {
+public class FsVolumeGroup implements HasAuditInfo, HasIntegerId, HasNameMutable, HasDocRef {
+
+    public static final String DOCUMENT_TYPE = "FsVolumeGroup";
+
+    // This uuid will be used for the auto created volume group.
+    // It is hard coded so that every stroom env that sets up a default volume
+    // will have the same uuid for it, which makes imp/exp between instances easier,
+    // similar to how context pack entities have fixed UUIDs.
+    private static final String DEFAULT_VOLUME_UUID = "dcf96afb-78a0-4a54-830f-0e3ae998f4af";
 
     @JsonProperty
     private Integer id;
@@ -28,6 +38,10 @@ public class FsVolumeGroup implements HasAuditInfo, HasIntegerId, HasNameMutable
     private String updateUser;
     @JsonProperty
     private String name;
+    @JsonProperty
+    private String uuid;
+    @JsonProperty
+    private boolean defaultVolume;
 
     public FsVolumeGroup() {
     }
@@ -39,7 +53,9 @@ public class FsVolumeGroup implements HasAuditInfo, HasIntegerId, HasNameMutable
                          @JsonProperty("createUser") final String createUser,
                          @JsonProperty("updateTimeMs") final Long updateTimeMs,
                          @JsonProperty("updateUser") final String updateUser,
-                         @JsonProperty("name") final String name) {
+                         @JsonProperty("name") final String name,
+                         @JsonProperty("uuid") final String uuid,
+                         @JsonProperty("defaultVolume") final Boolean defaultVolume) {
         this.id = id;
         this.version = version;
         this.createTimeMs = createTimeMs;
@@ -47,6 +63,8 @@ public class FsVolumeGroup implements HasAuditInfo, HasIntegerId, HasNameMutable
         this.updateTimeMs = updateTimeMs;
         this.updateUser = updateUser;
         this.name = name;
+        this.uuid = uuid;
+        this.defaultVolume = GwtNullSafe.requireNonNullElse(defaultVolume, false);
     }
 
     @Override
@@ -112,6 +130,28 @@ public class FsVolumeGroup implements HasAuditInfo, HasIntegerId, HasNameMutable
     }
 
     @Override
+    public String getType() {
+        return DOCUMENT_TYPE;
+    }
+
+    @Override
+    public String getUuid() {
+        return uuid;
+    }
+
+    public void setUuid(final String uuid) {
+        this.uuid = uuid;
+    }
+
+    public boolean isDefaultVolume() {
+        return defaultVolume;
+    }
+
+    public void setDefaultVolume(final Boolean defaultVolume) {
+        this.defaultVolume = GwtNullSafe.requireNonNullElse(defaultVolume, false);
+    }
+
+    @Override
     public String toString() {
         return "IndexVolumeGroup{" +
                 "id=" + id +
@@ -121,6 +161,8 @@ public class FsVolumeGroup implements HasAuditInfo, HasIntegerId, HasNameMutable
                 ", updateTimeMs=" + updateTimeMs +
                 ", updateUser='" + updateUser + '\'' +
                 ", name='" + name + '\'' +
+                ", uuid='" + uuid + '\'' +
+                ", defaultVolume='" + defaultVolume + '\'' +
                 '}';
     }
 
