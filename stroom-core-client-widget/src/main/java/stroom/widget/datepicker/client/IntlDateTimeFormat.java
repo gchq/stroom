@@ -611,7 +611,7 @@ public class IntlDateTimeFormat {
         }
     }
 
-    public static String format(final JsDate date, final String[] locales, final FormatOptions options) {
+    public static String format(final UTCDate date, final String[] locales, final FormatOptions options) {
         final JsFormatOptions jsFormatOptions = JsFormatOptions.create(
                 options.locale,
                 options.calendar,
@@ -661,7 +661,7 @@ public class IntlDateTimeFormat {
         return format(date, locales, jsFormatOptions);
     }
 
-    private static native String format(final JsDate date, final String[] locales, final JsFormatOptions options) /*-{
+    private static native String format(final UTCDate date, final String[] locales, final JsFormatOptions options) /*-{
         return new Intl.DateTimeFormat(locales, options).format(date);
     }-*/;
 

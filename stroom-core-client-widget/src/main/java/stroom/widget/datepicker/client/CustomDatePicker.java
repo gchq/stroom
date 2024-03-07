@@ -89,8 +89,8 @@ import java.util.Map;
  * </p>
  */
 public class CustomDatePicker extends Composite implements
-        HasHighlightHandlers<JsDate>, HasShowRangeHandlers<JsDate>, HasValue<JsDate>,
-        IsEditor<LeafValueEditor<JsDate>> {
+        HasHighlightHandlers<UTCDate>, HasShowRangeHandlers<UTCDate>, HasValue<UTCDate>,
+        IsEditor<LeafValueEditor<UTCDate>> {
 
     /**
      * Convenience class to group css style names.
@@ -213,14 +213,14 @@ public class CustomDatePicker extends Composite implements
     /**
      * A date highlighted event that copied on read.
      */
-    private static class DateHighlightEvent extends HighlightEvent<JsDate> {
+    private static class DateHighlightEvent extends HighlightEvent<UTCDate> {
 
-        protected DateHighlightEvent(JsDate highlighted) {
+        protected DateHighlightEvent(UTCDate highlighted) {
             super(highlighted);
         }
 
         @Override
-        public JsDate getHighlighted() {
+        public UTCDate getHighlighted() {
             return CalendarUtil.copyDate(super.getHighlighted());
         }
     }
@@ -229,11 +229,11 @@ public class CustomDatePicker extends Composite implements
 
         private Map<String, String> info = new HashMap<String, String>();
 
-        public String getStyleName(JsDate d) {
+        public String getStyleName(UTCDate d) {
             return info.get(genKey(d));
         }
 
-        public void setStyleName(JsDate d, String styleName, boolean add) {
+        public void setStyleName(UTCDate d, String styleName, boolean add) {
             // Code is easier to maintain if surrounded by " ", and on all browsers
             // this is a no-op.
             styleName = " " + styleName + " ";
@@ -258,7 +258,7 @@ public class CustomDatePicker extends Composite implements
             }
         }
 
-        private String genKey(JsDate d) {
+        private String genKey(UTCDate d) {
             return d.getFullYear() + "/" + d.getMonth() + "/" + d.getDate();
         }
     }
@@ -270,10 +270,10 @@ public class CustomDatePicker extends Composite implements
     private final MonthSelector monthAndYearSelector;
     private final CalendarView view;
     private final CalendarModel model;
-    private JsDate value;
-    private JsDate highlighted;
+    private UTCDate value;
+    private UTCDate highlighted;
     private StandardCss css = StandardCss.DEFAULT;
-    private LeafValueEditor<JsDate> editor;
+    private LeafValueEditor<UTCDate> editor;
     private int visibleYearCount = DEFAULT_VISIBLE_YEAR_COUNT;
     private boolean yearArrowsVisible;
     private boolean yearAndMonthDropdownVisible;
@@ -310,15 +310,15 @@ public class CustomDatePicker extends Composite implements
         this.setup();
     }
 
-    public void setToday(final JsDate today) {
+    public void setToday(final UTCDate today) {
         addStyleToDates(css().dayIsToday(), today);
     }
 
-    public HandlerRegistration addHighlightHandler(HighlightHandler<JsDate> handler) {
+    public HandlerRegistration addHighlightHandler(HighlightHandler<UTCDate> handler) {
         return addHandler(handler, HighlightEvent.getType());
     }
 
-    public HandlerRegistration addShowRangeHandler(ShowRangeHandler<JsDate> handler) {
+    public HandlerRegistration addShowRangeHandler(ShowRangeHandler<UTCDate> handler) {
         return addHandler(handler, ShowRangeEvent.getType());
     }
 
@@ -330,8 +330,8 @@ public class CustomDatePicker extends Composite implements
      * @return the handler registration
      */
     public HandlerRegistration addShowRangeHandlerAndFire(
-            ShowRangeHandler<JsDate> handler) {
-        ShowRangeEvent<JsDate> event = new ShowRangeEvent<JsDate>(
+            ShowRangeHandler<UTCDate> handler) {
+        ShowRangeEvent<UTCDate> event = new ShowRangeEvent<UTCDate>(
                 getView().getFirstDate(), getView().getLastDate()) {
         };
         handler.onShowRange(event);
@@ -341,7 +341,7 @@ public class CustomDatePicker extends Composite implements
     /**
      * Add a style name to the given dates.
      */
-    public void addStyleToDates(String styleName, JsDate date) {
+    public void addStyleToDates(String styleName, UTCDate date) {
         styler.setStyleName(date, styleName, true);
         if (isDateVisible(date)) {
             getView().addStyleToDate(styleName, date);
@@ -351,9 +351,9 @@ public class CustomDatePicker extends Composite implements
     /**
      * Add a style name to the given dates.
      */
-    public void addStyleToDates(String styleName, JsDate date, JsDate... moreDates) {
+    public void addStyleToDates(String styleName, UTCDate date, UTCDate... moreDates) {
         addStyleToDates(styleName, date);
-        for (JsDate d : moreDates) {
+        for (UTCDate d : moreDates) {
             addStyleToDates(styleName, d);
         }
     }
@@ -361,8 +361,8 @@ public class CustomDatePicker extends Composite implements
     /**
      * Add a style name to the given dates.
      */
-    public void addStyleToDates(String styleName, Iterable<JsDate> dates) {
-        for (JsDate d : dates) {
+    public void addStyleToDates(String styleName, Iterable<UTCDate> dates) {
+        for (UTCDate d : dates) {
             addStyleToDates(styleName, d);
         }
     }
@@ -371,7 +371,7 @@ public class CustomDatePicker extends Composite implements
      * Adds the given style name to the specified dates, which must be visible.
      * This is only set until the next time the DatePicker is refreshed.
      */
-    public void addTransientStyleToDates(String styleName, JsDate date) {
+    public void addTransientStyleToDates(String styleName, UTCDate date) {
         assert isDateVisible(date) : date + " must be visible";
         getView().addStyleToDate(styleName, date);
     }
@@ -380,10 +380,10 @@ public class CustomDatePicker extends Composite implements
      * Adds the given style name to the specified dates, which must be visible.
      * This is only set until the next time the DatePicker is refreshed.
      */
-    public final void addTransientStyleToDates(String styleName, JsDate date,
-                                               JsDate... moreDates) {
+    public final void addTransientStyleToDates(String styleName, UTCDate date,
+                                               UTCDate... moreDates) {
         addTransientStyleToDates(styleName, date);
-        for (JsDate d : moreDates) {
+        for (UTCDate d : moreDates) {
             addTransientStyleToDates(styleName, d);
         }
     }
@@ -393,21 +393,21 @@ public class CustomDatePicker extends Composite implements
      * This is only set until the next time the DatePicker is refreshed.
      */
     public final void addTransientStyleToDates(String styleName,
-                                               Iterable<JsDate> dates) {
-        for (JsDate d : dates) {
+                                               Iterable<UTCDate> dates) {
+        for (UTCDate d : dates) {
             addTransientStyleToDates(styleName, d);
         }
     }
 
     public HandlerRegistration addValueChangeHandler(
-            ValueChangeHandler<JsDate> handler) {
+            ValueChangeHandler<UTCDate> handler) {
         return addHandler(handler, ValueChangeEvent.getType());
     }
 
     /**
      * Returns a {@link TakesValueEditor} backed by the DatePicker.
      */
-    public LeafValueEditor<JsDate> asEditor() {
+    public LeafValueEditor<UTCDate> asEditor() {
         if (editor == null) {
             editor = TakesValueEditor.of(this);
         }
@@ -424,7 +424,7 @@ public class CustomDatePicker extends Composite implements
      *
      * @return the current month
      */
-    public JsDate getCurrentMonth() {
+    public UTCDate getCurrentMonth() {
         return getModel().getCurrentMonth();
     }
 
@@ -434,7 +434,7 @@ public class CustomDatePicker extends Composite implements
      * @return the first date.
      */
     // Final because the view should always control the value of the first date.
-    public final JsDate getFirstDate() {
+    public final UTCDate getFirstDate() {
         return view.getFirstDate();
     }
 
@@ -443,7 +443,7 @@ public class CustomDatePicker extends Composite implements
      *
      * @return the highlighted date
      */
-    public final JsDate getHighlightedDate() {
+    public final UTCDate getHighlightedDate() {
         return CalendarUtil.copyDate(highlighted);
     }
 
@@ -453,7 +453,7 @@ public class CustomDatePicker extends Composite implements
      * @return the last date.
      */
     // Final because the view should always control the value of the last date.
-    public final JsDate getLastDate() {
+    public final UTCDate getLastDate() {
         return view.getLastDate();
     }
 
@@ -471,7 +471,7 @@ public class CustomDatePicker extends Composite implements
      * @param date the date
      * @return the styles associated with this date
      */
-    public String getStyleOfDate(JsDate date) {
+    public String getStyleOfDate(UTCDate date) {
         return styler.getStyleName(date);
     }
 
@@ -480,7 +480,7 @@ public class CustomDatePicker extends Composite implements
      *
      * @return the selected date, or null
      */
-    public final JsDate getValue() {
+    public final UTCDate getValue() {
         return CalendarUtil.copyDate(value);
     }
 
@@ -490,7 +490,7 @@ public class CustomDatePicker extends Composite implements
      * @param date the date, which must be visible
      * @return is the date enabled?
      */
-    public boolean isDateEnabled(JsDate date) {
+    public boolean isDateEnabled(UTCDate date) {
         assert isDateVisible(date) : date + " is not visible";
         return getView().isDateEnabled(date);
     }
@@ -501,10 +501,10 @@ public class CustomDatePicker extends Composite implements
      * @param date
      * @return is the date currently shown
      */
-    public boolean isDateVisible(JsDate date) {
+    public boolean isDateVisible(UTCDate date) {
         CalendarView r = getView();
-        JsDate first = r.getFirstDate();
-        JsDate last = r.getLastDate();
+        UTCDate first = r.getFirstDate();
+        UTCDate last = r.getLastDate();
         return (date != null && (CalendarUtil.isSameDate(first, date)
                 || CalendarUtil.isSameDate(last, date) ||
                 (first.getTime() < date.getTime()) && last.getTime() > date.getTime()));
@@ -534,7 +534,7 @@ public class CustomDatePicker extends Composite implements
     /**
      * Removes the styleName from the given dates (even if it is transient).
      */
-    public void removeStyleFromDates(String styleName, JsDate date) {
+    public void removeStyleFromDates(String styleName, UTCDate date) {
         styler.setStyleName(date, styleName, false);
         if (isDateVisible(date)) {
             getView().removeStyleFromDate(styleName, date);
@@ -544,10 +544,10 @@ public class CustomDatePicker extends Composite implements
     /**
      * Removes the styleName from the given dates (even if it is transient).
      */
-    public void removeStyleFromDates(String styleName, JsDate date,
-                                     JsDate... moreDates) {
+    public void removeStyleFromDates(String styleName, UTCDate date,
+                                     UTCDate... moreDates) {
         removeStyleFromDates(styleName, date);
-        for (JsDate d : moreDates) {
+        for (UTCDate d : moreDates) {
             removeStyleFromDates(styleName, d);
         }
     }
@@ -555,8 +555,8 @@ public class CustomDatePicker extends Composite implements
     /**
      * Removes the styleName from the given dates (even if it is transient).
      */
-    public void removeStyleFromDates(String styleName, Iterable<JsDate> dates) {
-        for (JsDate d : dates) {
+    public void removeStyleFromDates(String styleName, Iterable<UTCDate> dates) {
+        for (UTCDate d : dates) {
             removeStyleFromDates(styleName, d);
         }
     }
@@ -572,7 +572,7 @@ public class CustomDatePicker extends Composite implements
      *
      * @param month the month to show
      */
-    public void setCurrentMonth(JsDate month) {
+    public void setCurrentMonth(UTCDate month) {
         getModel().setCurrentMonth(month);
         refreshAll();
     }
@@ -620,7 +620,7 @@ public class CustomDatePicker extends Composite implements
      * Sets a visible date to be enabled or disabled. This is only set until the
      * next time the DatePicker is refreshed.
      */
-    public final void setTransientEnabledOnDates(boolean enabled, JsDate date) {
+    public final void setTransientEnabledOnDates(boolean enabled, UTCDate date) {
         assert isDateVisible(date) : date + " must be visible";
         getView().setEnabledOnDate(enabled, date);
     }
@@ -629,10 +629,10 @@ public class CustomDatePicker extends Composite implements
      * Sets a visible date to be enabled or disabled. This is only set until the
      * next time the DatePicker is refreshed.
      */
-    public final void setTransientEnabledOnDates(boolean enabled, JsDate date,
-                                                 JsDate... moreDates) {
+    public final void setTransientEnabledOnDates(boolean enabled, UTCDate date,
+                                                 UTCDate... moreDates) {
         setTransientEnabledOnDates(enabled, date);
-        for (JsDate d : moreDates) {
+        for (UTCDate d : moreDates) {
             setTransientEnabledOnDates(enabled, d);
         }
     }
@@ -642,8 +642,8 @@ public class CustomDatePicker extends Composite implements
      * until the next time the DatePicker is refreshed.
      */
     public final void setTransientEnabledOnDates(boolean enabled,
-                                                 Iterable<JsDate> dates) {
-        for (JsDate d : dates) {
+                                                 Iterable<UTCDate> dates) {
+        for (UTCDate d : dates) {
             setTransientEnabledOnDates(enabled, d);
         }
     }
@@ -653,7 +653,7 @@ public class CustomDatePicker extends Composite implements
      *
      * @param newValue the new value
      */
-    public final void setValue(JsDate newValue) {
+    public final void setValue(UTCDate newValue) {
         setValue(newValue, false);
     }
 
@@ -663,8 +663,8 @@ public class CustomDatePicker extends Composite implements
      * @param newValue   the new value for this date picker
      * @param fireEvents should events be fired.
      */
-    public final void setValue(JsDate newValue, boolean fireEvents) {
-        JsDate oldValue = value;
+    public final void setValue(UTCDate newValue, boolean fireEvents) {
+        UTCDate oldValue = value;
 
         if (oldValue != null) {
             removeStyleFromDates(css().dayIsValue(), oldValue);
@@ -753,7 +753,7 @@ public class CustomDatePicker extends Composite implements
      *
      * @param highlighted highlighted date
      */
-    void setHighlightedDate(JsDate highlighted) {
+    void setHighlightedDate(UTCDate highlighted) {
         this.highlighted = highlighted;
         fireEvent(new DateHighlightEvent(highlighted));
     }

@@ -166,7 +166,7 @@ public final class DefaultMonthSelector extends MonthSelector {
                 getDatePicker().isYearArrowsVisible() != isYearNavigationCurrentlyEnabled;
     }
 
-    private void setDate(JsDate date) {
+    private void setDate(UTCDate date) {
         if (getDatePicker().isYearAndMonthDropdownVisible()) {
             // setup months dropdown
             int month = date.getMonth();
@@ -179,20 +179,20 @@ public final class DefaultMonthSelector extends MonthSelector {
             int startYear = year - getNoOfYearsToDisplayBefore();
             int endYear = year + getNoOfYearsToDisplayAfter();
 
-            JsDate newDate = JsDate.create();
+            UTCDate newDate = UTCDate.create();
 
             for (int i = startYear; i <= endYear; i++) {
                 newDate.setFullYear(i);
 
                 yearSelect.addItem(new IntItem(formatYear(newDate), i));
             }
-            yearSelect.setValue(new IntItem(formatYear(JsDate.create(year, 0)), year));
+            yearSelect.setValue(new IntItem(formatYear(UTCDate.create(year, 0)), year));
         } else {
 //            layout.getElement().setInnerHTML(getModel().formatCurrentMonthAndYear());
         }
     }
 
-    private String formatYear(JsDate newDate) {
+    private String formatYear(UTCDate newDate) {
         final FormatOptions yearFormat = FormatOptions.builder().year(Year.NUMERIC).build();
         return IntlDateTimeFormat.format(newDate, IntlDateTimeFormat.DEFAULT_LOCALE, yearFormat);
     }

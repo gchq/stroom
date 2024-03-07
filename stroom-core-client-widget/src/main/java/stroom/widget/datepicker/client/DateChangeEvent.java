@@ -23,7 +23,7 @@ import com.google.gwt.event.shared.HasHandlers;
 /**
  * Creates a new value every time a date is accessed.
  */
-class DateChangeEvent extends ValueChangeEvent<JsDate> {
+class DateChangeEvent extends ValueChangeEvent<UTCDate> {
 
     /**
      * Fires value change event if the old value is not equal to the new value.
@@ -35,8 +35,8 @@ class DateChangeEvent extends ValueChangeEvent<JsDate> {
      * @param oldValue the oldValue, may be null
      * @param newValue the newValue, may be null
      */
-    public static <S extends HasValueChangeHandlers<JsDate> & HasHandlers> void fireIfNotEqualDates(
-            S source, JsDate oldValue, JsDate newValue) {
+    public static <S extends HasValueChangeHandlers<UTCDate> & HasHandlers> void fireIfNotEqualDates(
+            S source, UTCDate oldValue, UTCDate newValue) {
         if (ValueChangeEvent.shouldFire(source, oldValue, newValue)) {
             source.fireEvent(new DateChangeEvent(newValue));
         }
@@ -47,13 +47,13 @@ class DateChangeEvent extends ValueChangeEvent<JsDate> {
      *
      * @param value the value
      */
-    protected DateChangeEvent(JsDate value) {
+    protected DateChangeEvent(UTCDate value) {
         // The date must be copied in case one handler causes it to change.
         super(CalendarUtil.copyDate(value));
     }
 
     @Override
-    public JsDate getValue() {
+    public UTCDate getValue() {
         return CalendarUtil.copyDate(super.getValue());
     }
 }

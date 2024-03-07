@@ -45,8 +45,8 @@ public class CalendarUtil {
      * @param date the date
      * @param days number of days
      */
-    public static void addDaysToDate(JsDate date, int days) {
-        date.setUTCDate(date.getUTCDate() + days);
+    public static void addDaysToDate(UTCDate date, int days) {
+        date.setDate(date.getDate() + days);
     }
 
     /**
@@ -55,9 +55,9 @@ public class CalendarUtil {
      * @param date the date
      * @param months number of months
      */
-    public static void addMonthsToDate(JsDate date, int months) {
+    public static void addMonthsToDate(UTCDate date, int months) {
         if (months != 0) {
-            date.setUTCMonth(date.getUTCMonth() + months);
+            date.setMonth(date.getMonth() + months);
         }
     }
 
@@ -67,11 +67,11 @@ public class CalendarUtil {
      * @param date the date
      * @return the copy
      */
-    public static JsDate copyDate(JsDate date) {
+    public static UTCDate copyDate(UTCDate date) {
         if (date == null) {
             return null;
         }
-        return JsDate.create(date.getTime());
+        return UTCDate.create(date.getTime());
     }
 
     /**
@@ -81,7 +81,7 @@ public class CalendarUtil {
      * @param finish ending date
      * @return the different
      */
-    public static int getDaysBetween(JsDate start, JsDate finish) {
+    public static int getDaysBetween(UTCDate start, UTCDate finish) {
         // Convert the dates to the same time
         start = copyDate(start);
         resetTime(start);
@@ -115,12 +115,12 @@ public class CalendarUtil {
      * @param date1 a second date
      * @return true if the dates are the same
      */
-    public static boolean isSameDate(JsDate date0, JsDate date1) {
+    public static boolean isSameDate(UTCDate date0, UTCDate date1) {
         assert date0 != null : "date0 cannot be null";
         assert date1 != null : "date1 cannot be null";
-        return date0.getUTCFullYear() == date1.getUTCFullYear()
-                && date0.getUTCMonth() == date1.getUTCMonth()
-                && date0.getUTCDate() == date1.getUTCDate();
+        return date0.getFullYear() == date1.getFullYear()
+                && date0.getMonth() == date1.getMonth()
+                && date0.getDate() == date1.getDate();
     }
 
     /**
@@ -129,9 +129,9 @@ public class CalendarUtil {
      *
      * @param date the date
      */
-    public static void setToFirstDayOfMonth(JsDate date) {
+    public static void setToFirstDayOfMonth(UTCDate date) {
         resetTime(date);
-        date.setUTCDate(1);
+        date.setDate(1);
     }
 
     /**
@@ -150,10 +150,10 @@ public class CalendarUtil {
      *
      * @param date the date
      */
-    public static void resetTime(JsDate date) {
-        date.setUTCHours(0);
-        date.setUTCMinutes(0);
-        date.setUTCSeconds(0);
-        date.setUTCMilliseconds(0);
+    public static void resetTime(UTCDate date) {
+        date.setHours(0);
+        date.setMinutes(0);
+        date.setSeconds(0);
+        date.setMilliseconds(0);
     }
 }

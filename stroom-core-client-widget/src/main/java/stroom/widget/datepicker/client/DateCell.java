@@ -12,7 +12,7 @@ public final class DateCell extends AbstractCell {
     private final CustomDatePicker.StandardCss css;
     private String cellStyle;
     private String dateStyle;
-    private JsDate value = JsDate.create();
+    private UTCDate value = UTCDate.create();
 
 
     public DateCell(final DefaultCalendarView defaultCalendarView,
@@ -38,12 +38,12 @@ public final class DateCell extends AbstractCell {
     }
 
     public boolean isSelected() {
-        final JsDate selected = defaultCalendarView.getDatePicker().getValue();
+        final UTCDate selected = defaultCalendarView.getDatePicker().getValue();
         return selected != null && value != null && value.getTime() == selected.getTime();
     }
 
     public boolean isHighlighted() {
-        final JsDate highlighted = defaultCalendarView.getDatePicker().getHighlightedDate();
+        final UTCDate highlighted = defaultCalendarView.getDatePicker().getHighlightedDate();
         return highlighted != null && value != null && value.getTime() == highlighted.getTime();
     }
 
@@ -84,7 +84,7 @@ public final class DateCell extends AbstractCell {
 
     public void onSelected(boolean selected) {
         if (selected) {
-            final JsDate selectedValue = CalendarUtil.copyDate(value);
+            final UTCDate selectedValue = CalendarUtil.copyDate(value);
             defaultCalendarView.getDatePicker().setValue(selectedValue, true);
             if (isFiller()) {
                 defaultCalendarView.getDatePicker().setCurrentMonth(selectedValue);
@@ -103,11 +103,11 @@ public final class DateCell extends AbstractCell {
         Roles.getGridcellRole().setAriaSelectedState(getElement(), SelectedValue.of(value));
     }
 
-    public JsDate getValue() {
+    public UTCDate getValue() {
         return value;
     }
 
-    void update(final JsDate current) {
+    void update(final UTCDate current) {
         setEnabled(true);
         value = CalendarUtil.copyDate(current);
         String text = defaultCalendarView.getModel().formatDayOfMonth(value);

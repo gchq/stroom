@@ -30,7 +30,7 @@ import stroom.widget.datepicker.client.IntlDateTimeFormat.FormatOptions.Month;
 import stroom.widget.datepicker.client.IntlDateTimeFormat.FormatOptions.Second;
 import stroom.widget.datepicker.client.IntlDateTimeFormat.FormatOptions.TimeZoneName;
 import stroom.widget.datepicker.client.IntlDateTimeFormat.FormatOptions.Year;
-import stroom.widget.datepicker.client.JsDate;
+import stroom.widget.datepicker.client.UTCDate;
 import stroom.widget.datepicker.client.ValueChooser;
 
 import com.google.gwt.core.client.GWT;
@@ -47,6 +47,10 @@ import com.gwtplatform.mvp.client.ViewImpl;
 public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
 
     private static final String[] EN_LOCALE = {"en-GB"};
+
+    private final long MILLIS_IN_SECOND = 1000;
+    private final long MILLIS_IN_MINUTE = 60 * MILLIS_IN_SECOND;
+    private final long MILLIS_IN_HOUR = 60 * MILLIS_IN_MINUTE;
 
     private final UserPreferencesManager userPreferencesManager;
 
@@ -93,7 +97,7 @@ public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
     @UiField
     Label midday;
 
-    private JsDate value;
+    private UTCDate value;
     private Offset currentOffset;
     private String currentDateString;
 
@@ -116,9 +120,9 @@ public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
         millisecond.setMax(999);
     }
 
-    private void setDatePickerTime(final JsDate value) {
+    private void setDatePickerTime(final UTCDate value) {
         final DateRecord dateRecord = parseDate(value);
-        final JsDate utc = JsDate.utc(
+        final UTCDate utc = UTCDate.create(
                 dateRecord.getYear(),
                 dateRecord.getMonth(),
                 dateRecord.getDay(),
@@ -139,7 +143,7 @@ public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
 
     @Override
     public void setTime(final long time) {
-        final JsDate date = JsDate.create(time);
+        final UTCDate date = UTCDate.create(time);
         currentOffset = getOffset(date);
         this.value = date;
         update();
@@ -155,9 +159,9 @@ public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
         hour.focus();
     }
 
-    private JsDate getTodayUTC() {
-        final DateRecord today = parseDate(JsDate.create());
-        final JsDate utc = JsDate.utc(
+    private UTCDate getTodayUTC() {
+        final DateRecord today = parseDate(UTCDate.create());
+        final UTCDate utc = UTCDate.create(
                 today.getYear(),
                 today.getMonth(),
                 today.getDay(),
@@ -171,7 +175,7 @@ public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
     @SuppressWarnings("unused")
     @UiHandler("today")
     public void onToday(final ClickEvent event) {
-        final JsDate utc = getTodayUTC();
+        final UTCDate utc = getTodayUTC();
         setDatePickerTime(utc);
         value = resolveDateTime(value);
         update();
@@ -180,8 +184,8 @@ public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
     @SuppressWarnings("unused")
     @UiHandler("yesterday")
     public void onYesterday(final ClickEvent event) {
-        final JsDate utc = getTodayUTC();
-        utc.setUTCDate(utc.getUTCDate() - 1);
+        final UTCDate utc = getTodayUTC();
+        utc.setDate(utc.getDate() - 1);
         setDatePickerTime(utc);
         value = resolveDateTime(value);
         update();
@@ -190,8 +194,8 @@ public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
     @SuppressWarnings("unused")
     @UiHandler("weekStart")
     public void onWeekStart(final ClickEvent event) {
-        final JsDate utc = getTodayUTC();
-        utc.setUTCDate(utc.getUTCDate() - utc.getUTCDay());
+        final UTCDate utc = getTodayUTC();
+        utc.setDate(utc.getDate() - utc.getDay());
         setDatePickerTime(utc);
         value = resolveDateTime(value);
         update();
@@ -199,7 +203,7 @@ public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
 
     @SuppressWarnings("unused")
     @UiHandler("datePicker")
-    public void onDatePicker(final ValueChangeEvent<JsDate> event) {
+    public void onDatePicker(final ValueChangeEvent<UTCDate> event) {
         value = resolveDateTime(value);
         updateDateLabel();
         updateTime();
@@ -208,7 +212,7 @@ public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
     @SuppressWarnings("unused")
     @UiHandler("now")
     public void onNow(final ClickEvent event) {
-        final TimeRecord timeRecord = parseTime(JsDate.create());
+        final TimeRecord timeRecord = parseTime(UTCDate.create());
         hour.setValue(timeRecord.getHour());
         minute.setValue(timeRecord.getMinute());
         second.setValue(timeRecord.getSecond());
@@ -252,7 +256,7 @@ public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
             final DateRecord dateAfter = parseDate(value);
             if (!dateBefore.equals(dateAfter)) {
                 GWT.log("Fix hour for DST: " + dateBefore + " -> " + dateAfter);
-                value.setTime(value.getTime() + 60 * 60 * 1000);
+                value.setTime(value.getTime() + MILLIS_IN_HOUR);
                 updateTime();
             }
         }
@@ -268,28 +272,61 @@ public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
     @SuppressWarnings("unused")
     @UiHandler("second")
     public void onSecond(final ValueChangeEvent<Long> event) {
-        value.setUTCSeconds(second.getIntValue());
+        value.setSeconds(second.getIntValue());
         updateTimeLabel();
     }
 
     @SuppressWarnings("unused")
     @UiHandler("millisecond")
     public void onMillisecond(final ValueChangeEvent<Long> event) {
-        value.setUTCMilliseconds(millisecond.getIntValue());
+        value.setMilliseconds(millisecond.getIntValue());
         updateTimeLabel();
     }
 
-    private JsDate resolveDateTime(final JsDate previousTime) {
+    private UTCDate resolveDateTime(final UTCDate previousTime) {
         return resolveDateTime(previousTime, true);
     }
 
-    private JsDate resolveDateTime(final JsDate previousTime, final boolean allowOffsetChange) {
-        final JsDate datePickerTime = datePicker.getValue();
+    private UTCDate resolveDateTime(final UTCDate previousTime, final boolean allowOffsetChange) {
+        final UTCDate datePickerTime = datePicker.getValue();
+
+        final long currentOffsetMs = getOffsetMillis(previousTime);
+        final UTCDate date = UTCDate.create(
+                datePickerTime.getFullYear(),
+                datePickerTime.getMonth(),
+                datePickerTime.getDate(),
+                hour.getIntValue(),
+                minute.getIntValue(),
+                second.getIntValue(),
+                millisecond.getIntValue());
+        date.setTime(date.getTime() - currentOffsetMs);
+
+        final long newOffsetMs = getOffsetMillis(date);
+        if (allowOffsetChange && newOffsetMs != currentOffsetMs) {
+            GWT.log("Offset changed: " + currentOffsetMs + " -> " + newOffsetMs);
+            final UTCDate newDate = UTCDate.create(
+                    datePickerTime.getFullYear(),
+                    datePickerTime.getMonth(),
+                    datePickerTime.getDate(),
+                    hour.getIntValue(),
+                    minute.getIntValue(),
+                    second.getIntValue(),
+                    millisecond.getIntValue());
+            newDate.setTime(newDate.getTime() - newOffsetMs);
+            return newDate;
+
+        } else {
+            return date;
+        }
+    }
+
+    private UTCDate resolveDateTimeOld(final UTCDate previousTime, final boolean allowOffsetChange) {
+        final UTCDate datePickerTime = datePicker.getValue();
         String currentOffset = getOffsetString(previousTime);
         final String isoDateString =
-                zeroPad(4, datePickerTime.getUTCFullYear()) +
+                zeroPad(4, datePickerTime.getFullYear()) +
                         "-" +
-                        zeroPad(2, (datePickerTime.getUTCMonth() + 1)) +
+                        zeroPad(2, (datePickerTime.getMonth() + 1)) +
                         "-" +
                         zeroPad(2, datePickerTime.getDate()) +
                         "T" +
@@ -301,14 +338,14 @@ public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
                         "." +
                         zeroPad(3, millisecond.getIntValue()) +
                         currentOffset;
-        final JsDate isoDate = JsDate.create(isoDateString);
+        final UTCDate isoDate = UTCDate.create(isoDateString);
         final String newOffset = getOffsetString(isoDate);
         if (allowOffsetChange && !newOffset.equals(currentOffset)) {
             GWT.log("Offset changed: " + currentOffset + " -> " + newOffset);
             final String newIsoDateString =
-                    zeroPad(4, datePickerTime.getUTCFullYear()) +
+                    zeroPad(4, datePickerTime.getFullYear()) +
                             "-" +
-                            zeroPad(2, (datePickerTime.getUTCMonth() + 1)) +
+                            zeroPad(2, (datePickerTime.getMonth() + 1)) +
                             "-" +
                             zeroPad(2, datePickerTime.getDate()) +
                             "T" +
@@ -320,7 +357,7 @@ public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
                             "." +
                             zeroPad(3, millisecond.getIntValue()) +
                             newOffset;
-            final JsDate newIsoDate = JsDate.create(newIsoDateString);
+            final UTCDate newIsoDate = UTCDate.create(newIsoDateString);
             return newIsoDate;
 
         } else {
@@ -358,14 +395,14 @@ public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
     private void updateTime() {
         currentOffset = getOffset(value);
 
-        int hour = value.getUTCHours() + currentOffset.getHours();
+        int hour = value.getHours() + currentOffset.getHours();
         if (hour > 23) {
             hour = hour - 24;
         } else if (hour < 0) {
             hour = hour + 24;
         }
 
-        int minute = value.getUTCMinutes() + currentOffset.getMinutes();
+        int minute = value.getMinutes() + currentOffset.getMinutes();
         if (minute > 59) {
             minute = minute - 60;
         } else if (minute < 0) {
@@ -374,8 +411,8 @@ public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
 
         this.hour.setValue(hour);
         this.minute.setValue(minute);
-        this.second.setValue(value.getUTCSeconds());
-        this.millisecond.setValue(value.getUTCMilliseconds());
+        this.second.setValue(value.getSeconds());
+        this.millisecond.setValue(value.getMilliseconds());
 
         updateDateLabel();
         updateTimeLabel();
@@ -399,7 +436,7 @@ public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
         time.setText(timeString);
     }
 
-    private String getOffsetString(final JsDate value) {
+    private String getOffsetString(final UTCDate value) {
         final String tz = parseTimeZone(value, TimeZoneName.LONG_OFFSET);
         String offset = tz.replaceAll("GMT", "");
         offset = offset.replaceAll(":", "");
@@ -409,7 +446,7 @@ public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
         return offset;
     }
 
-    private Offset getOffset(final JsDate value) {
+    private Offset getOffset(final UTCDate value) {
         final String offsetString = getOffsetString(value);
         int hours = getInt(offsetString.substring(1, 3));
         int minutes = getInt(offsetString.substring(3, 5));
@@ -420,7 +457,18 @@ public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
         return new Offset(hours, minutes);
     }
 
-    private String parseTimeZone(final JsDate value, final TimeZoneName timeZoneName) {
+    private long getOffsetMillis(final UTCDate value) {
+        final String offsetString = getOffsetString(value);
+        int hours = getInt(offsetString.substring(1, 3));
+        int minutes = getInt(offsetString.substring(3, 5));
+        long millis = (hours * MILLIS_IN_HOUR) + (minutes * MILLIS_IN_MINUTE);
+        if (offsetString.charAt(0) == '-') {
+            millis = millis * -1;
+        }
+        return millis;
+    }
+
+    private String parseTimeZone(final UTCDate value, final TimeZoneName timeZoneName) {
         final FormatOptions.Builder builder = FormatOptions
                 .builder()
                 .hour(Hour.TWO_DIGIT)
@@ -508,7 +556,7 @@ public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
         return timeZone;
     }
 
-    private DateRecord parseDate(final JsDate value) {
+    private DateRecord parseDate(final UTCDate value) {
         final FormatOptions.Builder builder = FormatOptions
                 .builder()
                 .year(Year.NUMERIC)
@@ -526,7 +574,7 @@ public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
         return new DateRecord(year, month, day);
     }
 
-    private TimeRecord parseTime(final JsDate value) {
+    private TimeRecord parseTime(final UTCDate value) {
         final FormatOptions.Builder builder = FormatOptions
                 .builder()
                 .hour(Hour.TWO_DIGIT)

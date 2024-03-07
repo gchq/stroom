@@ -26,9 +26,9 @@ public final class DefaultCalendarView extends CalendarView {
 
     private final DateGrid grid = new DateGrid();
 
-    private JsDate firstDisplayed;
+    private UTCDate firstDisplayed;
 
-    private final JsDate lastDisplayed;
+    private final UTCDate lastDisplayed;
 
     private DateCell ariaSelectedCell;
 
@@ -36,13 +36,13 @@ public final class DefaultCalendarView extends CalendarView {
      * Constructor.
      */
     public DefaultCalendarView() {
-        final JsDate now = JsDate.create();
+        final UTCDate now = UTCDate.create();
         CalendarUtil.resetTime(now);
         lastDisplayed = now;
     }
 
     @Override
-    public void addStyleToDate(String styleName, JsDate date) {
+    public void addStyleToDate(String styleName, UTCDate date) {
         assert getDatePicker().isDateVisible(date) : "You tried to add style " + styleName + " to "
                 + date + ". The calendar is currently showing " + getFirstDate()
                 + " to " + getLastDate();
@@ -53,17 +53,17 @@ public final class DefaultCalendarView extends CalendarView {
     }
 
     @Override
-    public JsDate getFirstDate() {
+    public UTCDate getFirstDate() {
         return firstDisplayed;
     }
 
     @Override
-    public JsDate getLastDate() {
+    public UTCDate getLastDate() {
         return lastDisplayed;
     }
 
     @Override
-    public boolean isDateEnabled(JsDate date) {
+    public boolean isDateEnabled(UTCDate date) {
         final DateCell dateCell = getCell(date);
         if (dateCell != null) {
             return dateCell.isEnabled();
@@ -94,12 +94,12 @@ public final class DefaultCalendarView extends CalendarView {
         setAriaSelectedCell(null);
     }
 
-    private static void addDays(JsDate date, int days) {
+    private static void addDays(UTCDate date, int days) {
         CalendarUtil.addDaysToDate(date, days);
     }
 
     @Override
-    public void removeStyleFromDate(String styleName, JsDate date) {
+    public void removeStyleFromDate(String styleName, UTCDate date) {
         final DateCell dateCell = getCell(date);
         if (dateCell != null) {
             dateCell.removeStyleName(styleName);
@@ -107,7 +107,7 @@ public final class DefaultCalendarView extends CalendarView {
     }
 
     @Override
-    public void setAriaSelectedCell(JsDate date) {
+    public void setAriaSelectedCell(UTCDate date) {
         if (ariaSelectedCell != null) {
             ariaSelectedCell.setAriaSelected(false);
         }
@@ -121,7 +121,7 @@ public final class DefaultCalendarView extends CalendarView {
     }
 
     @Override
-    public void setEnabledOnDate(boolean enabled, JsDate date) {
+    public void setEnabledOnDate(boolean enabled, UTCDate date) {
         final DateCell dateCell = getCell(date);
         if (dateCell != null) {
             dateCell.setEnabled(enabled);
@@ -175,7 +175,7 @@ public final class DefaultCalendarView extends CalendarView {
         grid.setStyleName(css().days());
     }
 
-    private DateCell getCell(JsDate date) {
+    private DateCell getCell(UTCDate date) {
         int index = CalendarUtil.getDaysBetween(firstDisplayed, date);
         if (index < 0 || grid.getNumCells() <= index) {
             return null;

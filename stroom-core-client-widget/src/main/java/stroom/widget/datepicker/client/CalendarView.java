@@ -36,21 +36,21 @@ public abstract class CalendarView extends DatePickerComponent {
      * @param styleName style name to add
      * @param date      date that will have the supplied style added
      */
-    public abstract void addStyleToDate(String styleName, JsDate date);
+    public abstract void addStyleToDate(String styleName, UTCDate date);
 
     /**
      * Returns the first date that is currently shown by the calendar.
      *
      * @return the first date.
      */
-    public abstract JsDate getFirstDate();
+    public abstract UTCDate getFirstDate();
 
     /**
      * Returns the last date that is currently shown by the calendar.
      *
      * @return the last date.
      */
-    public abstract JsDate getLastDate();
+    public abstract UTCDate getLastDate();
 
     /**
      * Is the cell representing the given date enabled?
@@ -58,7 +58,7 @@ public abstract class CalendarView extends DatePickerComponent {
      * @param date the date
      * @return is the date enabled
      */
-    public abstract boolean isDateEnabled(JsDate date);
+    public abstract boolean isDateEnabled(UTCDate date);
 
     /**
      * Removes a visible style name from the cell of the supplied date.
@@ -66,7 +66,7 @@ public abstract class CalendarView extends DatePickerComponent {
      * @param styleName style name to remove
      * @param date      date that will have the supplied style added
      */
-    public abstract void removeStyleFromDate(String styleName, JsDate date);
+    public abstract void removeStyleFromDate(String styleName, UTCDate date);
 
     /**
      * Sets aria-selected in the given date's cell and clears the other cells.
@@ -74,7 +74,7 @@ public abstract class CalendarView extends DatePickerComponent {
      * @param date the date of the cell where aria-selected should be set,
      *             or null to clear aria-selected.
      */
-    public void setAriaSelectedCell(JsDate date) {
+    public void setAriaSelectedCell(UTCDate date) {
     }
 
     /**
@@ -84,5 +84,5 @@ public abstract class CalendarView extends DatePickerComponent {
      * @param enabled true for enabled, false for disabled
      * @param date    date to enable or disable
      */
-    public abstract void setEnabledOnDate(boolean enabled, JsDate date);
+    public abstract void setEnabledOnDate(boolean enabled, UTCDate date);
 }

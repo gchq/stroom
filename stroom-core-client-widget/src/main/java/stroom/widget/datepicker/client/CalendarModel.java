@@ -41,19 +41,19 @@ public class CalendarModel {
     private final String[] dayOfWeekNames = DATE_TIME_CONSTANTS.getDayOfWeekNames();
     private final String[] dayOfMonthNames = DATE_TIME_CONSTANTS.getDayOfMonthNames();
     private final String[] monthOfYearNames = DATE_TIME_CONSTANTS.getMonthNames();
-    private final JsDate currentMonth;
+    private final UTCDate currentMonth;
 
     /**
      * Constructor.
      */
     public CalendarModel() {
-        currentMonth = getFirstDayOfMonth(JsDate.create());
+        currentMonth = getFirstDayOfMonth(UTCDate.create());
     }
 
-    public static JsDate getFirstDayOfMonth(JsDate date) {
-        return JsDate.utc(
-                date.getUTCFullYear(),
-                date.getUTCMonth(),
+    public static UTCDate getFirstDayOfMonth(UTCDate date) {
+        return UTCDate.create(
+                date.getFullYear(),
+                date.getMonth(),
                 1,
                 0,
                 0,
@@ -67,8 +67,8 @@ public class CalendarModel {
      * @param date the date
      * @return the formated day of month
      */
-    public String formatDayOfMonth(JsDate date) {
-        return dayOfMonthNames[date.getUTCDate()];
+    public String formatDayOfMonth(UTCDate date) {
+        return dayOfMonthNames[date.getDate()];
     }
 
     /**
@@ -96,10 +96,10 @@ public class CalendarModel {
      *
      * @return the first day
      */
-    public JsDate getCurrentFirstDayOfFirstWeek() {
-        final int wkDayOfMonth1st = currentMonth.getUTCDay();
+    public UTCDate getCurrentFirstDayOfFirstWeek() {
+        final int wkDayOfMonth1st = currentMonth.getDay();
         final int start = CalendarUtil.getStartingDayOfWeek();
-        final JsDate copy = CalendarUtil.copyDate(currentMonth);
+        final UTCDate copy = CalendarUtil.copyDate(currentMonth);
         if (wkDayOfMonth1st == start) {
             // always return a copy to allow SimpleCalendarView to adjust first
             // display date
@@ -120,7 +120,7 @@ public class CalendarModel {
      *
      * @return the month and year
      */
-    public JsDate getCurrentMonth() {
+    public UTCDate getCurrentMonth() {
         return currentMonth;
     }
 
@@ -130,8 +130,8 @@ public class CalendarModel {
      * @param date the date
      * @return date
      */
-    public boolean isInCurrentMonth(JsDate date) {
-        return currentMonth.getUTCMonth() == date.getUTCMonth();
+    public boolean isInCurrentMonth(UTCDate date) {
+        return currentMonth.getMonth() == date.getMonth();
     }
 
     /**
@@ -139,9 +139,9 @@ public class CalendarModel {
      *
      * @param currentDate the currently specified date
      */
-    public void setCurrentMonth(JsDate currentDate) {
-        this.currentMonth.setUTCFullYear(currentDate.getUTCFullYear());
-        this.currentMonth.setUTCMonth(currentDate.getUTCMonth());
+    public void setCurrentMonth(UTCDate currentDate) {
+        this.currentMonth.setFullYear(currentDate.getFullYear());
+        this.currentMonth.setMonth(currentDate.getMonth());
     }
 
     /**
