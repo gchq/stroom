@@ -3,7 +3,6 @@ package stroom.preferences.client;
 import stroom.expression.api.UserTimeZone;
 import stroom.expression.api.UserTimeZone.Use;
 import stroom.ui.config.shared.UserPreferences;
-import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.customdatebox.client.MomentJs;
 
 import javax.inject.Inject;
@@ -37,7 +36,7 @@ public class DateTimeFormatter {
         }
 
         Use use = Use.UTC;
-        String pattern = "YYYY-MM-DDTHH:mm:ss.SSS[Z]";
+        String pattern = "YYYY-MM-DD[T]HH:mm:ss.SSSZ";
         int offsetMinutes = 0;
         String zoneId = "UTC";
 
@@ -45,8 +44,6 @@ public class DateTimeFormatter {
         if (userPreferences != null) {
             if (userPreferences.getDateTimePattern() != null &&
                     userPreferences.getDateTimePattern().trim().length() > 0) {
-                pattern = userPreferences.getDateTimePattern();
-                pattern = convertJavaDateTimePattern(pattern);
 
                 final UserTimeZone timeZone = userPreferences.getTimeZone();
                 if (timeZone != null) {
@@ -63,26 +60,21 @@ public class DateTimeFormatter {
 
                     zoneId = timeZone.getId();
                 }
+
+                pattern = userPreferences.getDateTimePattern();
+                pattern = convertJavaDateTimePattern(pattern);
             }
         }
+
+        // If UTC then just display the `Z` suffix.
+        if (Use.UTC.equals(use)) {
+            pattern = pattern.replaceAll("Z", "[Z]");
+        }
+        // Ensure we haven't doubled up square brackets.
+        pattern = pattern.replaceAll("\\[+", "[");
+        pattern = pattern.replaceAll("]+", "]");
 
         return MomentJs.nativeToDateString(ms, use.getDisplayValue(), pattern, zoneId, offsetMinutes);
-    }
-
-    public Long parse(final String dateTime) {
-        Long ms = ClientDateUtil.fromISOString(dateTime);
-        if (ms == null) {
-            String pattern = "YYYY-MM-DDTHH:mm:ss.SSS[Z]";
-            final UserPreferences userPreferences = userPreferencesManager.getCurrentUserPreferences();
-            if (userPreferences != null) {
-                if (userPreferences.getDateTimePattern() != null &&
-                        userPreferences.getDateTimePattern().trim().length() > 0) {
-                    pattern = userPreferences.getDateTimePattern();
-                }
-            }
-            ms = ClientDateUtil.parseWithJavaFormat(dateTime, pattern).orElse(null);
-        }
-        return ms;
     }
 
     String convertJavaDateTimePattern(final String pattern) {
@@ -90,7 +82,8 @@ public class DateTimeFormatter {
         converted = converted.replace('y', 'Y');
         converted = converted.replace('d', 'D');
         converted = converted.replaceAll("'", "");
-        converted = converted.replaceAll("SSSXX", "SSS[Z]");
+        converted = converted.replaceAll("SSSXX", "SSSZ");
+        converted = converted.replaceAll("T", "[T]");
         converted = converted.replaceAll("xxx", "Z");
         converted = converted.replaceAll("xx", "z");
         converted = converted.replaceAll("VV", "ZZ");

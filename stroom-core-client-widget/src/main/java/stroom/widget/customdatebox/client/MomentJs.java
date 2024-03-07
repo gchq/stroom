@@ -57,10 +57,6 @@ public final class MomentJs {
         return -1;
     }-*/;
 
-    public static native boolean nativeIsValid(final String date)/*-{
-        return $wnd.moment(date).isValid();
-    }-*/;
-
     public static native String nativeToDateString(final double ms,
                                                    final String use,
                                                    final String dateTimePattern,
