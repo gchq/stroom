@@ -96,7 +96,7 @@ public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
 
     private UTCDate value;
     private String currentDateString;
-    private Provider<String> timeZoneProvider;
+    private DateTimeModel dateTimeModel;
 
     @Inject
     public DateTimeViewImpl(final Binder binder) {
@@ -427,8 +427,8 @@ public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
     }
 
     private void setTimeZone(final FormatOptions.Builder builder) {
-        if (timeZoneProvider != null) {
-            final String timeZone = timeZoneProvider.get();
+        if (dateTimeModel != null) {
+            final String timeZone = dateTimeModel.getTimeZone();
             if (timeZone != null) {
                 builder.timeZone(timeZone);
             }
@@ -479,8 +479,8 @@ public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
     }
 
     @Override
-    public void setTimeZoneProvider(final Provider<String> timeZoneProvider) {
-        this.timeZoneProvider = timeZoneProvider;
+    public void setDateTimeModel(final DateTimeModel dateTimeModel) {
+        this.dateTimeModel = dateTimeModel;
     }
 
     public interface Binder extends UiBinder<Widget, DateTimeViewImpl> {

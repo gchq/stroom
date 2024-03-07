@@ -1,9 +1,22 @@
 package stroom.job.client.presenter;
 
+import stroom.expression.api.UserTimeZone;
 import stroom.item.client.EventBinder;
 import stroom.svg.client.SvgIconBox;
 import stroom.svg.shared.SvgImage;
+import stroom.ui.config.shared.UserPreferences;
+import stroom.util.client.ClientStringUtil;
 import stroom.util.shared.GwtNullSafe;
+import stroom.widget.datepicker.client.IntlDateTimeFormat;
+import stroom.widget.datepicker.client.IntlDateTimeFormat.FormatOptions;
+import stroom.widget.datepicker.client.IntlDateTimeFormat.FormatOptions.Day;
+import stroom.widget.datepicker.client.IntlDateTimeFormat.FormatOptions.Hour;
+import stroom.widget.datepicker.client.IntlDateTimeFormat.FormatOptions.Minute;
+import stroom.widget.datepicker.client.IntlDateTimeFormat.FormatOptions.Month;
+import stroom.widget.datepicker.client.IntlDateTimeFormat.FormatOptions.Second;
+import stroom.widget.datepicker.client.IntlDateTimeFormat.FormatOptions.TimeZoneName;
+import stroom.widget.datepicker.client.IntlDateTimeFormat.FormatOptions.Year;
+import stroom.widget.datepicker.client.UTCDate;
 
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
@@ -90,7 +103,7 @@ public class DateTimeBox
             }
             popup.show(newValue -> {
                 if (!Objects.equals(longValue, newValue)) {
-                    setLongValue(newValue, true);
+                    setValue(newValue, true);
                 }
             });
         }
@@ -109,33 +122,33 @@ public class DateTimeBox
         textBox.setEnabled(enabled);
     }
 
-    public String getStringValue() {
-        return stringValue;
-    }
+//    public String getStringValue() {
+//        return stringValue;
+//    }
+//
+//    public void setStringValue(final String value) {
+//        setStringValue(value, false);
+//    }
+//
+//    public void setStringValue(final String value, final boolean fireEvents) {
+//        this.longValue = getPopup().parse(value);
+//        this.stringValue = value;
+//        textBox.setValue(stringValue);
+//        textBox.getElement().removeClassName("invalid");
+//        if (fireEvents) {
+//            ValueChangeEvent.fire(this, value);
+//        }
+//    }
 
-    public void setStringValue(final String value) {
-        setStringValue(value, false);
-    }
-
-    public void setStringValue(final String value, final boolean fireEvents) {
-        this.longValue = getPopup().parse(value);
-        this.stringValue = value;
-        textBox.setValue(stringValue);
-        textBox.getElement().removeClassName("invalid");
-        if (fireEvents) {
-            ValueChangeEvent.fire(this, value);
-        }
-    }
-
-    public Long getLongValue() {
+    public Long getValue() {
         return getPopup().parse(textBox.getValue());
     }
 
-    public void setLongValue(final Long value) {
-        setLongValue(value, false);
+    public void setValue(final Long value) {
+        setValue(value, false);
     }
 
-    public void setLongValue(final Long value, final boolean fireEvents) {
+    public void setValue(final Long value, final boolean fireEvents) {
         if (value != null) {
             this.longValue = value;
             this.stringValue = getPopup().format(value);
@@ -160,6 +173,11 @@ public class DateTimeBox
 
     private void onFocus() {
         textBox.getElement().removeClassName("invalid");
+//        if (longValue != null) {
+//            textBox.setValue(getPopup().format(longValue));
+//        } else {
+//            textBox.setValue("");
+//        }
     }
 
     private void onBlur() {

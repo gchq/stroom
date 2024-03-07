@@ -116,6 +116,13 @@ public class UTCDate extends JavaScriptObject {
     }-*/;
 
     /**
+     * Creates a new date from a string to be parsed.
+     */
+    public static native Double parse(String dateString) /*-{
+        return Date.parse(dateString);
+    }-*/;
+
+    /**
      * Returns the internal millisecond representation of the date, the number of
      * milliseconds since midnight on January 1st, 1970.
      */

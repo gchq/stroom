@@ -65,7 +65,7 @@ public class ExecutionScheduleEditPresenter
                     }
                     Long referenceTime = lastExecuted;
                     if (referenceTime == null) {
-                        referenceTime = getView().getStartTime().getLongValue();
+                        referenceTime = getView().getStartTime().getValue();
                     }
                     if (referenceTime == null) {
                         referenceTime = System.currentTimeMillis();
@@ -145,8 +145,8 @@ public class ExecutionScheduleEditPresenter
                     AlertEvent.fireWarn(this, "Invalid end time", null);
                 } else {
                     final ScheduleBounds scheduleBounds = new ScheduleBounds(
-                            getView().getStartTime().getLongValue(),
-                            getView().getEndTime().getLongValue());
+                            getView().getStartTime().getValue(),
+                            getView().getEndTime().getValue());
                     final ExecutionSchedule schedule = executionSchedule
                             .copy()
                             .name(getView().getName())
@@ -178,11 +178,11 @@ public class ExecutionScheduleEditPresenter
 
     private void setScheduleBounds(final ScheduleBounds scheduleBounds) {
         if (scheduleBounds == null) {
-            getView().getStartTime().setLongValue(null);
-            getView().getEndTime().setLongValue(null);
+            getView().getStartTime().setValue(null);
+            getView().getEndTime().setValue(null);
         } else {
-            getView().getStartTime().setLongValue(scheduleBounds.getStartTimeMs());
-            getView().getEndTime().setLongValue(scheduleBounds.getEndTimeMs());
+            getView().getStartTime().setValue(scheduleBounds.getStartTimeMs());
+            getView().getEndTime().setValue(scheduleBounds.getEndTimeMs());
         }
     }
 }

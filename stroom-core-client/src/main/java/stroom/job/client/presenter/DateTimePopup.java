@@ -2,18 +2,14 @@ package stroom.job.client.presenter;
 
 import stroom.expression.api.UserTimeZone;
 import stroom.job.client.presenter.DateTimePopup.DateTimeView;
+import stroom.job.client.view.DateTimeModel;
 import stroom.preferences.client.UserPreferencesManager;
 import stroom.ui.config.shared.UserPreferences;
 import stroom.util.client.ClientStringUtil;
 import stroom.widget.datepicker.client.IntlDateTimeFormat;
 import stroom.widget.datepicker.client.IntlDateTimeFormat.FormatOptions;
-import stroom.widget.datepicker.client.IntlDateTimeFormat.FormatOptions.Day;
-import stroom.widget.datepicker.client.IntlDateTimeFormat.FormatOptions.Hour;
-import stroom.widget.datepicker.client.IntlDateTimeFormat.FormatOptions.Minute;
-import stroom.widget.datepicker.client.IntlDateTimeFormat.FormatOptions.Month;
-import stroom.widget.datepicker.client.IntlDateTimeFormat.FormatOptions.Second;
-import stroom.widget.datepicker.client.IntlDateTimeFormat.FormatOptions.TimeZoneName;
-import stroom.widget.datepicker.client.IntlDateTimeFormat.FormatOptions.Year;
+import stroom.widget.datepicker.client.IntlDateTimeFormat.FormatOptions.DateStyle;
+import stroom.widget.datepicker.client.IntlDateTimeFormat.FormatOptions.TimeStyle;
 import stroom.widget.datepicker.client.UTCDate;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -30,15 +26,15 @@ import java.util.function.Consumer;
 
 public class DateTimePopup extends MyPresenterWidget<DateTimeView> {
 
-    private final UserPreferencesManager userPreferencesManager;
+    private final DateTimeModel dateTimeModel;
 
     @Inject
     public DateTimePopup(final EventBus eventBus,
                          final DateTimeView view,
-                         final UserPreferencesManager userPreferencesManager) {
+                         final DateTimeModel dateTimeModel) {
         super(eventBus, view);
-        this.userPreferencesManager = userPreferencesManager;
-        view.setTimeZoneProvider(this::getTimeZone);
+        this.dateTimeModel = dateTimeModel;
+        view.setDateTimeModel(dateTimeModel);
     }
 
     public void show(final Consumer<Long> consumer) {
@@ -71,7 +67,10 @@ public class DateTimePopup extends MyPresenterWidget<DateTimeView> {
         if (dateTime != null && dateTime.trim().length() > 0) {
             try {
                 // Deliberate wrap here to ensure
-                return (long) UTCDate.create(dateTime).getTime();
+                final Double d = UTCDate.parse(dateTime);
+                if (d != null) {
+                    return d.longValue();
+                }
             } catch (final RuntimeException e) {
                 GWT.log(e.getMessage());
             }
@@ -80,52 +79,30 @@ public class DateTimePopup extends MyPresenterWidget<DateTimeView> {
     }
 
     public String format(final long ms) {
-        final String timeZone = getTimeZone();
+        String str1 = format(ms, DateStyle.SHORT, TimeStyle.FULL);
+        String str2 = format(ms, DateStyle.FULL, TimeStyle.FULL);
+        String str3 = format(ms, DateStyle.LONG, TimeStyle.FULL);
+        String str4 = format(ms, DateStyle.MEDIUM, TimeStyle.FULL);
+        String str5 = format(ms, DateStyle.SHORT, TimeStyle.SHORT);
+        String str6 = format(ms, DateStyle.SHORT, TimeStyle.MEDIUM);
+        String str7 = format(ms, DateStyle.SHORT, TimeStyle.LONG);
+        String str8 = UTCDate.create(ms).toISOString();
+        String str9 = UTCDate.create(ms).toUTCString();
+        String str10 = UTCDate.create(ms).toString();
+        return str1;
+    }
+
+    private String format(final long ms, final DateStyle dateStyle, final TimeStyle timeStyle) {
+        final String timeZone = dateTimeModel.getTimeZone();
         final FormatOptions.Builder builder = FormatOptions
                 .builder()
-                .year(Year.NUMERIC)
-                .month(Month.TWO_DIGIT)
-                .day(Day.TWO_DIGIT)
-                .hour(Hour.TWO_DIGIT)
-                .minute(Minute.TWO_DIGIT)
-                .second(Second.TWO_DIGIT)
-                .fractionalSecondDigits(3)
-                .timeZoneName(TimeZoneName.SHORT);
+                .dateStyle(dateStyle)
+                .timeStyle(timeStyle);
         if (timeZone != null) {
             builder.timeZone(timeZone);
         }
         return IntlDateTimeFormat
                 .format(UTCDate.create(ms), IntlDateTimeFormat.DEFAULT_LOCALE, builder.build());
-    }
-
-    private String getTimeZone() {
-        final UserPreferences userPreferences = userPreferencesManager.getCurrentUserPreferences();
-        final UserTimeZone userTimeZone = userPreferences.getTimeZone();
-        String timeZone = null;
-        switch (userTimeZone.getUse()) {
-            case UTC: {
-                timeZone = "GMT";
-                break;
-            }
-            case ID: {
-                timeZone = userTimeZone.getId();
-                break;
-            }
-            case OFFSET: {
-                final String hours = ClientStringUtil.zeroPad(2, userTimeZone.getOffsetHours());
-                final String minutes = ClientStringUtil.zeroPad(2, userTimeZone.getOffsetMinutes());
-                String offset = hours + minutes;
-                if (userTimeZone.getOffsetHours() >= 0 && userTimeZone.getOffsetMinutes() >= 0) {
-                    offset = "+" + offset;
-                } else {
-                    offset = "-" + offset;
-                }
-
-                timeZone = "GMT" + offset;
-                break;
-            }
-        }
-        return timeZone;
     }
 
     public interface DateTimeView extends View, Focus {
@@ -134,6 +111,6 @@ public class DateTimePopup extends MyPresenterWidget<DateTimeView> {
 
         void setTime(long time);
 
-        void setTimeZoneProvider(Provider<String> timeZoneProvider);
+        void setDateTimeModel(DateTimeModel dateTimeModel);
     }
 }
