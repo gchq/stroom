@@ -205,8 +205,9 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
                 final int index = getItemIndex(selected);
                 if (index > 0) {
                     final TableRowElement tableRowElement = cellTable.getRowElement(index);
-                    tableRowElement.scrollIntoView();
-                    scrollPanel.scrollToLeft();
+                    ElementUtil.scrollIntoViewNearest(tableRowElement);
+//                    tableRowElement.scrollIntoView();
+//                    scrollPanel.scrollToLeft();
                 }
             }
         }
@@ -217,7 +218,7 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
             selection = ExplorerTreeModel.NULL_SELECTION;
         }
 
-        doSelect(selection, new SelectionType(false, false));
+        doSelect(selection, new SelectionType());
     }
 
     void doSelect(final ExplorerNode row, final SelectionType selectionType) {

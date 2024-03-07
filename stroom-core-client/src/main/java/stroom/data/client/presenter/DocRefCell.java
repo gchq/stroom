@@ -112,13 +112,13 @@ public class DocRefCell extends AbstractCell<DocRef> implements HasHandlers, Eve
 
                 final SafeHtml copy = SvgImageUtil.toSafeHtml(SvgImage.COPY, ICON_NAME, COPY_CLASS_NAME);
                 sb.append(template.divWithToolTip(
-                        "Copy name '" + value.getName() + "' to clipboard.",
+                        "Copy name '" + value.getName() + "' to clipboard",
                         copy));
 
                 if (value.getUuid() != null || allowLinkByName) {
                     final SafeHtml open = SvgImageUtil.toSafeHtml(SvgImage.OPEN, ICON_NAME, OPEN_CLASS_NAME);
                     sb.append(template.divWithToolTip(
-                            "Open " + value.getType() + " " + value.getName() + " in new tab.",
+                            "Open " + value.getType() + " " + value.getName() + " in new tab",
                             open));
                 }
 

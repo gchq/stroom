@@ -25,7 +25,6 @@ import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.StroomStatusCode;
-import stroom.util.date.DateUtil;
 import stroom.util.io.ByteCountInputStream;
 import stroom.util.io.StreamUtil;
 import stroom.util.net.HostNameUtil;
@@ -103,7 +102,7 @@ public class StroomStreamProcessor {
             }
 
             // Save the time the data was received.
-            globalAttributeMap.put(StandardHeaderArguments.RECEIVED_TIME, DateUtil.createNormalDateTimeString());
+            globalAttributeMap.putCurrentDateTime(StandardHeaderArguments.RECEIVED_TIME);
 
             // Allocate remote address if not set.
             if (httpServletRequest.getRemoteHost() != null && !httpServletRequest.getRemoteHost().isEmpty()) {

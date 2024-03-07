@@ -16,8 +16,10 @@
 
 package stroom.query.language.functions;
 
+import stroom.query.language.functions.FormatterCache.Mode;
 import stroom.query.language.functions.ref.StoredValues;
 import stroom.query.language.token.Param;
+import stroom.util.NullSafe;
 
 import java.text.ParseException;
 import java.time.ZoneId;
@@ -86,12 +88,12 @@ class ParseDate extends AbstractFunction {
     public void setParams(final Param[] params) throws ParseException {
         super.setParams(params);
 
-        DateTimeFormatter formatter = DateUtil.DEFAULT_FORMATTER;
+        DateTimeFormatter formatter = DateUtil.DEFAULT_ISO_PARSER;
         ZoneId zoneId = ZoneOffset.UTC;
 
         if (params.length >= 2) {
             pattern = ParamParseUtil.parseStringParam(params, 1, name);
-            formatter = FormatterCache.getFormatter(pattern);
+            formatter = FormatterCache.getFormatter(pattern, Mode.PARSE);
         }
         if (params.length >= 3) {
             timeZone = ParamParseUtil.parseStringParam(params, 2, name);
@@ -103,10 +105,19 @@ class ParseDate extends AbstractFunction {
             function = (Function) param;
             hasAggregate = function.hasAggregate();
 
+        } else if (param instanceof ValNull) {
+            // This is consistent with ParseDuration
+            gen = new StaticValueFunction(ValNull.INSTANCE).createGenerator();
         } else if (param instanceof ValString) {
             final String string = param.toString();
-            final long millis = DateUtil.parse(string, formatter, zoneId);
-            gen = new StaticValueFunction(ValLong.create(millis)).createGenerator();
+            final Val val;
+            if (!NullSafe.isBlankString(string)) {
+                final long millis = DateUtil.parse(string, formatter, zoneId);
+                val = ValLong.create(millis);
+            } else {
+                val = ValNull.INSTANCE;
+            }
+            gen = new StaticValueFunction(val).createGenerator();
 
         } else {
             final Long millis = ((Val) param).toLong();
@@ -144,6 +155,10 @@ class ParseDate extends AbstractFunction {
     public Type getCommonReturnType() {
         return Type.DATE;
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static final class Gen extends AbstractSingleChildGenerator {
 

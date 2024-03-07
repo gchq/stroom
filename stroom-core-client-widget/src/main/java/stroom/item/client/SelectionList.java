@@ -75,12 +75,12 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
 
             @Override
             protected void onBrowserEvent2(final Event event) {
-                super.onBrowserEvent2(event);
                 if (event.getTypeInt() == Event.ONKEYDOWN && event.getKeyCode() == KeyCodes.KEY_UP) {
                     if (cellTable.getKeyboardSelectedRow() == 0) {
                         quickFilter.focus();
                     }
                 }
+                super.onBrowserEvent2(event);
             }
         };
 
@@ -142,7 +142,7 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
     }
 
     public void focus() {
-        quickFilter.focus();
+        quickFilter.forceFocus();
     }
 
     @Override
@@ -182,13 +182,13 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
         if (model != null) {
             final PageRequest pageRequest = new PageRequest(range.getStart(), range.getLength());
             model.onRangeChange(parent, lastFilter, filterChange, pageRequest, pageResponse -> {
-                selectionModel.clear();
+                selectionModel.clear(false);
 
                 cellTable.setRowData(pageResponse.getPageStart(), pageResponse.getValues());
                 cellTable.setRowCount(pageResponse.getPageSize(), pageResponse.isExact());
 
                 if (selection != null) {
-                    selectionModel.setSelected(selection);
+                    selectionModel.setSelected(selection, false);
                     setKeyboardSelection(selection, stealFocus);
                 }
 
