@@ -16,20 +16,21 @@
 
 package stroom.data.store.impl.fs.client.view;
 
-import stroom.data.store.impl.fs.client.presenter.FsVolumeGroupEditPresenter.FsVolumeGroupEditView;
+import stroom.data.store.impl.fs.client.presenter.NewFsVolumeGroupPresenter.NewFsVolumeGroupView;
 import stroom.util.shared.GwtNullSafe;
+import stroom.widget.popup.client.view.HideRequestUiHandlers;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.View;
-import com.gwtplatform.mvp.client.ViewImpl;
+import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
-public class FsVolumeGroupEditViewImpl extends ViewImpl implements FsVolumeGroupEditView {
+public class NewFsVolumeGroupViewImpl
+        extends ViewWithUiHandlers<HideRequestUiHandlers>
+        implements NewFsVolumeGroupView {
 
     private final Widget widget;
 
@@ -37,11 +38,9 @@ public class FsVolumeGroupEditViewImpl extends ViewImpl implements FsVolumeGroup
     TextBox name;
     @UiField
     CustomCheckBox isDefaultCheckBox;
-    @UiField
-    SimplePanel list;
 
     @Inject
-    public FsVolumeGroupEditViewImpl(final Binder binder) {
+    public NewFsVolumeGroupViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
     }
 
@@ -76,15 +75,15 @@ public class FsVolumeGroupEditViewImpl extends ViewImpl implements FsVolumeGroup
     }
 
     @Override
-    public void setListView(final View listView) {
-        list.setWidget(listView.asWidget());
+    public void setUiHandlers(final HideRequestUiHandlers hideRequestUiHandlers) {
+
     }
 
 
     // --------------------------------------------------------------------------------
 
 
-    public interface Binder extends UiBinder<Widget, FsVolumeGroupEditViewImpl> {
+    public interface Binder extends UiBinder<Widget, NewFsVolumeGroupViewImpl> {
 
     }
 }

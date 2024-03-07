@@ -1,12 +1,12 @@
 package stroom.data.store.impl.fs;
 
 import stroom.data.store.impl.fs.shared.FsVolumeGroup;
+import stroom.data.store.impl.fs.shared.FsVolumeGroup.Builder;
 import stroom.docref.DocRef;
 import stroom.index.shared.IndexVolumeGroup;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.util.AuditUtil;
-import stroom.util.NextNameGenerator;
 import stroom.util.entityevent.EntityAction;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEventBus;
@@ -20,6 +20,7 @@ import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
 import java.util.List;
+import java.util.Objects;
 
 @Singleton
 @EntityEventHandler(type = FsVolumeGroupServiceImpl.ENTITY_TYPE, action = {
@@ -50,11 +51,11 @@ public class FsVolumeGroupServiceImpl implements FsVolumeGroupService, Clearable
         ensureDefaultVolumes();
     }
 
-    @Override
-    public List<String> getNames() {
-        ensureDefaultVolumes();
-        return securityContext.secureResult(volumeGroupDao::getNames);
-    }
+//    @Override
+//    public List<String> getNames() {
+//        ensureDefaultVolumes();
+//        return securityContext.secureResult(volumeGroupDao::getNames);
+//    }
 
     @Override
     public List<FsVolumeGroup> getAll() {
@@ -63,10 +64,28 @@ public class FsVolumeGroupServiceImpl implements FsVolumeGroupService, Clearable
     }
 
     @Override
-    public FsVolumeGroup getOrCreate(final String name) {
+    public FsVolumeGroup create(final FsVolumeGroup fsVolumeGroup) {
+        ensureDefaultVolumes();
+        Objects.requireNonNull(fsVolumeGroup);
+        final Builder builder = fsVolumeGroup.copy();
+        if (fsVolumeGroup.getUuid() == null) {
+            builder.withRandomUuid();
+        }
+        final FsVolumeGroup copy = builder.build();
+        AuditUtil.stamp(securityContext, copy);
+
+        return securityContext.secureResult(() ->
+                volumeGroupDao.create(copy));
+    }
+
+    @Override
+    public FsVolumeGroup getOrCreate(final DocRef docRef, final boolean isDefaultVolumeGroup) {
+        Objects.requireNonNull(docRef);
         ensureDefaultVolumes();
         final FsVolumeGroup indexVolumeGroup = new FsVolumeGroup();
-        indexVolumeGroup.setName(name);
+        indexVolumeGroup.setName(docRef.getName());
+        indexVolumeGroup.setUuid(docRef.getUuid());
+        indexVolumeGroup.setDefaultVolume(isDefaultVolumeGroup);
         AuditUtil.stamp(securityContext, indexVolumeGroup);
         final FsVolumeGroup result = securityContext.secureResult(PermissionNames.MANAGE_VOLUMES_PERMISSION,
                 () -> volumeGroupDao.getOrCreate(indexVolumeGroup));
@@ -74,18 +93,18 @@ public class FsVolumeGroupServiceImpl implements FsVolumeGroupService, Clearable
         return result;
     }
 
-    @Override
-    public FsVolumeGroup create() {
-        ensureDefaultVolumes();
-        final FsVolumeGroup indexVolumeGroup = new FsVolumeGroup();
-        var newName = NextNameGenerator.getNextName(volumeGroupDao.getNames(), "New group");
-        indexVolumeGroup.setName(newName);
-        AuditUtil.stamp(securityContext, indexVolumeGroup);
-        final FsVolumeGroup result = securityContext.secureResult(PermissionNames.MANAGE_VOLUMES_PERMISSION,
-                () -> volumeGroupDao.getOrCreate(indexVolumeGroup));
-        fireChange(EntityAction.CREATE);
-        return result;
-    }
+//    @Override
+//    public FsVolumeGroup create() {
+//        ensureDefaultVolumes();
+//        final FsVolumeGroup indexVolumeGroup = new FsVolumeGroup();
+//        var newName = NextNameGenerator.getNextName(volumeGroupDao.getNames(), "New group");
+//        indexVolumeGroup.setName(newName);
+//        AuditUtil.stamp(securityContext, indexVolumeGroup);
+//        final FsVolumeGroup result = securityContext.secureResult(PermissionNames.MANAGE_VOLUMES_PERMISSION,
+//                () -> volumeGroupDao.getOrCreate(indexVolumeGroup));
+//        fireChange(EntityAction.CREATE);
+//        return result;
+//    }
 
     @Override
     public FsVolumeGroup update(final FsVolumeGroup indexVolumeGroup) {

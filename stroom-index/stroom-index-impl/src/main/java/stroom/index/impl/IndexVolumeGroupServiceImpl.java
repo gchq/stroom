@@ -1,5 +1,6 @@
 package stroom.index.impl;
 
+import stroom.docref.DocRef;
 import stroom.index.impl.selection.VolumeConfig;
 import stroom.index.shared.IndexVolume;
 import stroom.index.shared.IndexVolumeGroup;
@@ -31,7 +32,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.OptionalLong;
-import java.util.stream.Collectors;
 
 @Singleton
 @EntityEventHandler(type = IndexVolumeServiceImpl.ENTITY_TYPE, action = {
@@ -132,6 +132,19 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService, Cle
         ensureDefaultVolumes();
         return securityContext.secureResult(() ->
                 indexVolumeGroupDao.get(id));
+    }
+
+    @Override
+    public IndexVolumeGroup get(final DocRef docRef) {
+        ensureDefaultVolumes();
+        return securityContext.secureResult(() ->
+                indexVolumeGroupDao.get(docRef));
+    }
+
+    @Override
+    public IndexVolumeGroup getDefaultVolumeGroup() {
+        ensureDefaultVolumes();
+        return securityContext.secureResult(indexVolumeGroupDao::getDefaultVolumeGroup);
     }
 
     @Override
@@ -243,7 +256,7 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService, Cle
                     (long) (totalBytes * volumeConfigProvider.get().getDefaultIndexVolumeFilesystemUtilisation()));
         } catch (IOException e) {
             LOGGER.warn(() -> LogUtil.message("Unable to determine the total space on the filesystem for path: {}." +
-                    " Please manually set limit for index volume. {}",
+                            " Please manually set limit for index volume. {}",
                     FileUtil.getCanonicalPath(Path.of(path)), e.getMessage()));
             return OptionalLong.empty();
         }

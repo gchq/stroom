@@ -1,5 +1,7 @@
 package stroom.index.shared;
 
+import stroom.docref.DocRef;
+import stroom.docref.DocRef.TypedBuilder;
 import stroom.docref.HasDocRef;
 import stroom.docref.HasNameMutable;
 import stroom.util.shared.HasAuditInfo;
@@ -22,6 +24,7 @@ public class IndexVolumeGroup implements HasAuditInfo, HasIntegerId, HasNameMuta
     // will have the same uuid for it, which makes imp/exp between instances easier,
     // similar to how context pack entities have fixed UUIDs.
     public static final String DEFAULT_VOLUME_UUID = "5de2d603-cfc7-45cf-a8b4-e06bdf454f5e";
+    public static final String DEFAULT_VOLUME_NAME = "Default Volume Group";
 
     @JsonProperty
     private Integer id;
@@ -64,6 +67,32 @@ public class IndexVolumeGroup implements HasAuditInfo, HasIntegerId, HasNameMuta
         this.name = name;
         this.uuid = uuid;
         this.defaultVolume = defaultVolume;
+    }
+
+    private IndexVolumeGroup(final Builder builder) {
+        setId(builder.id);
+        setVersion(builder.version);
+        setCreateTimeMs(builder.createTimeMs);
+        setCreateUser(builder.createUser);
+        setUpdateTimeMs(builder.updateTimeMs);
+        setUpdateUser(builder.updateUser);
+        setName(builder.name);
+        setUuid(builder.uuid);
+        setDefaultVolume(builder.defaultVolume);
+    }
+
+    public Builder copy() {
+        Builder builder = new Builder();
+        builder.id = this.getId();
+        builder.version = this.getVersion();
+        builder.createTimeMs = this.getCreateTimeMs();
+        builder.createUser = this.getCreateUser();
+        builder.updateTimeMs = this.getUpdateTimeMs();
+        builder.updateUser = this.getUpdateUser();
+        builder.name = this.getName();
+        builder.uuid = this.getUuid();
+        builder.defaultVolume = this.isDefaultVolume();
+        return builder;
     }
 
     @Override
@@ -150,6 +179,18 @@ public class IndexVolumeGroup implements HasAuditInfo, HasIntegerId, HasNameMuta
         this.defaultVolume = defaultVolume;
     }
 
+    public static TypedBuilder buildDocRef() {
+        return DocRef.builder(DOCUMENT_TYPE);
+    }
+
+    public static DocRef buildDefaultVolumeGroupDocRef(final String name) {
+        Objects.requireNonNull(name);
+        return buildDocRef()
+                .uuid(DEFAULT_VOLUME_UUID)
+                .name(name)
+                .build();
+    }
+
     @Override
     public String toString() {
         return "IndexVolumeGroup{" +
@@ -180,5 +221,78 @@ public class IndexVolumeGroup implements HasAuditInfo, HasIntegerId, HasNameMuta
     @Override
     public int hashCode() {
         return Objects.hash(id);
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    public static final class Builder {
+
+        private Integer id;
+        private Integer version;
+        private Long createTimeMs;
+        private String createUser;
+        private Long updateTimeMs;
+        private String updateUser;
+        private String name;
+        private String uuid;
+        private boolean defaultVolume;
+
+        private Builder() {
+        }
+
+        public Builder withId(final Integer val) {
+            id = val;
+            return this;
+        }
+
+        public Builder withVersion(final Integer val) {
+            version = val;
+            return this;
+        }
+
+        public Builder withCreateTimeMs(final Long val) {
+            createTimeMs = val;
+            return this;
+        }
+
+        public Builder withCreateUser(final String val) {
+            createUser = val;
+            return this;
+        }
+
+        public Builder withUpdateTimeMs(final Long val) {
+            updateTimeMs = val;
+            return this;
+        }
+
+        public Builder withUpdateUser(final String val) {
+            updateUser = val;
+            return this;
+        }
+
+        public Builder withName(final String val) {
+            name = val;
+            return this;
+        }
+
+        public Builder withUuid(final String val) {
+            uuid = val;
+            return this;
+        }
+
+        public Builder withDefaultVolume(final boolean val) {
+            defaultVolume = val;
+            return this;
+        }
+
+        public IndexVolumeGroup build() {
+            return new IndexVolumeGroup(this);
+        }
     }
 }

@@ -1,5 +1,6 @@
 package stroom.index.impl;
 
+import stroom.docref.DocRef;
 import stroom.index.shared.IndexVolumeGroup;
 
 import java.util.List;
@@ -27,4 +28,6 @@ public interface IndexVolumeGroupDao {
     void delete(String name);
 
     void delete(int id);
+
+    IndexVolumeGroup get(DocRef docRef);
 }

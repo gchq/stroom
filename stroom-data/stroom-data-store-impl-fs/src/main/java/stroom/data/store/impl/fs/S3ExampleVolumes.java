@@ -27,7 +27,12 @@ public class S3ExampleVolumes {
     }
 
     public void addS3ExampleVolume() {
-        final FsVolumeGroup s3VolumeGroup = fsVolumeGroupService.getOrCreate("S3");
+        final FsVolumeGroup volumeGroup = FsVolumeGroup.builder()
+                .withName("S3")
+                .withRandomUuid()
+                .withDefaultVolume(false)
+                .build();
+        final FsVolumeGroup s3VolumeGroup = fsVolumeGroupService.create(volumeGroup);
         final Optional<FsVolume> existing = fsVolumeService
                 .find(FindFsVolumeCriteria.matchAll())
                 .stream()

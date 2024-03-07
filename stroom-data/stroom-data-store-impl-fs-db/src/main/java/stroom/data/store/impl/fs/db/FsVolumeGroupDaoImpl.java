@@ -14,7 +14,6 @@ import org.jooq.exception.DataAccessException;
 
 import java.sql.SQLIntegrityConstraintViolationException;
 import java.util.List;
-import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
@@ -68,34 +67,7 @@ class FsVolumeGroupDaoImpl implements FsVolumeGroupDao {
 
     @Override
     public FsVolumeGroup getOrCreate(final FsVolumeGroup fsVolumeGroup) {
-        Optional<Integer> optional = JooqUtil.contextResult(fsDataStoreDbConnProvider, context -> context
-                        .insertInto(FS_VOLUME_GROUP,
-                                FS_VOLUME_GROUP.VERSION,
-                                FS_VOLUME_GROUP.CREATE_USER,
-                                FS_VOLUME_GROUP.CREATE_TIME_MS,
-                                FS_VOLUME_GROUP.UPDATE_USER,
-                                FS_VOLUME_GROUP.UPDATE_TIME_MS,
-                                FS_VOLUME_GROUP.NAME,
-                                FS_VOLUME_GROUP.UUID,
-                                FS_VOLUME_GROUP.IS_DEFAULT)
-                        .values(1,
-                                fsVolumeGroup.getCreateUser(),
-                                fsVolumeGroup.getCreateTimeMs(),
-                                fsVolumeGroup.getUpdateUser(),
-                                fsVolumeGroup.getUpdateTimeMs(),
-                                fsVolumeGroup.getName(),
-                                fsVolumeGroup.getUuid(),
-                                fsVolumeGroup.isDefaultVolume())
-                        .onDuplicateKeyIgnore()
-                        .returning(FS_VOLUME_GROUP.ID)
-                        .fetchOptional())
-                .map(FsVolumeGroupRecord::getId);
-
-        return optional.map(id -> {
-            fsVolumeGroup.setId(id);
-            fsVolumeGroup.setVersion(1);
-            return fsVolumeGroup;
-        }).orElse(get(fsVolumeGroup.getName()));
+        return genericDao.tryCreate(fsVolumeGroup, FS_VOLUME_GROUP.UUID);
     }
 
     @Override
@@ -215,5 +187,10 @@ class FsVolumeGroupDaoImpl implements FsVolumeGroupDao {
     @Override
     public void delete(int id) {
         genericDao.delete(id);
+    }
+
+    @Override
+    public FsVolumeGroup create(final FsVolumeGroup fsVolumeGroup) {
+        return genericDao.create(fsVolumeGroup);
     }
 }

@@ -2,6 +2,7 @@ package stroom.index.impl.db;
 
 import stroom.db.util.GenericDao;
 import stroom.db.util.JooqUtil;
+import stroom.docref.DocRef;
 import stroom.index.impl.IndexStore;
 import stroom.index.impl.IndexVolumeGroupDao;
 import stroom.index.impl.db.jooq.tables.records.IndexVolumeGroupRecord;
@@ -17,6 +18,7 @@ import org.slf4j.LoggerFactory;
 
 import java.sql.SQLIntegrityConstraintViolationException;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -157,6 +159,22 @@ class IndexVolumeGroupDaoImpl implements IndexVolumeGroupDao {
     }
 
     @Override
+    public IndexVolumeGroup get(final DocRef docRef) {
+        if (docRef != null) {
+            Objects.requireNonNull(docRef.getUuid());
+            return JooqUtil.contextResult(indexDbConnProvider, context -> context
+                            .select()
+                            .from(INDEX_VOLUME_GROUP)
+                            .where(INDEX_VOLUME_GROUP.UUID.eq(docRef.getUuid()))
+                            .fetchOptional())
+                    .map(RECORD_TO_INDEX_VOLUME_GROUP_MAPPER)
+                    .orElse(null);
+        } else {
+            return null;
+        }
+    }
+
+    @Override
     public IndexVolumeGroup getDefaultVolumeGroup() {
         return JooqUtil.contextResult(indexDbConnProvider, context -> context
                         .select()
@@ -196,6 +214,7 @@ class IndexVolumeGroupDaoImpl implements IndexVolumeGroupDao {
     public void delete(int id) {
         genericDao.delete(id);
     }
+
 
     private static Boolean getDbIsDefaultValue(final IndexVolumeGroup indexVolumeGroup) {
         return indexVolumeGroup.isDefaultVolume()

@@ -1,6 +1,7 @@
 package stroom.data.store.impl.fs;
 
 import stroom.data.shared.StreamTypeNames;
+import stroom.data.store.impl.fs.shared.FsVolumeGroup;
 import stroom.util.cache.CacheConfig;
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.io.capacity.HasCapacitySelectorFactory;
@@ -57,7 +58,7 @@ public class FsVolumeConfig extends AbstractConfig implements IsStroomConfig {
 
     public FsVolumeConfig() {
         volumeSelector = "RoundRobin";
-        defaultStreamVolumeGroupName = "Default Volume Group";
+        defaultStreamVolumeGroupName = FsVolumeGroup.DEFAULT_VOLUME_NAME;
         defaultStreamVolumePaths = List.of("volumes/default_stream_volume");
         defaultStreamVolumeFilesystemUtilisation = 0.9;
         createDefaultStreamVolumesOnStart = true;
@@ -150,7 +151,6 @@ public class FsVolumeConfig extends AbstractConfig implements IsStroomConfig {
         return defaultStreamVolumePaths;
     }
 
-    @Deprecated(forRemoval = true)
     public void setDefaultStreamVolumePaths(final List<String> defaultStreamVolumePaths) {
         this.defaultStreamVolumePaths = defaultStreamVolumePaths;
     }

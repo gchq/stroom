@@ -98,8 +98,12 @@ public class IndexDoc extends Doc {
     private List<IndexField> fields;
     @JsonProperty
     private String timeField;
+    // The volume group used to be referenced by name, which is brittle, but is now done with a DocRef
+    @Deprecated // Use VolumeGroupDocRef
     @JsonProperty
     private String volumeGroupName;
+    @JsonProperty
+    private DocRef volumeGroupDocRef;
     @JsonProperty
     private DocRef defaultExtractionPipeline;
 
@@ -129,6 +133,7 @@ public class IndexDoc extends Doc {
                     @JsonProperty("fields") final List<IndexField> fields,
                     @JsonProperty("timeField") final String timeField,
                     @JsonProperty("volumeGroupName") final String volumeGroupName,
+                    @JsonProperty("volumeGroupDocRef") final DocRef volumeGroupDocRef,
                     @JsonProperty("defaultExtractionPipeline") final DocRef defaultExtractionPipeline) {
         super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
@@ -140,6 +145,7 @@ public class IndexDoc extends Doc {
         this.fields = fields;
         this.timeField = timeField;
         this.volumeGroupName = volumeGroupName;
+        this.volumeGroupDocRef = volumeGroupDocRef;
         this.defaultExtractionPipeline = defaultExtractionPipeline;
 
         if (this.maxDocsPerShard == null) {
@@ -239,12 +245,28 @@ public class IndexDoc extends Doc {
         this.timeField = timeField;
     }
 
+    /**
+     * The volume group used to be referenced by name, which is brittle, but is now done with a DocRef
+     */
+    @Deprecated
     public String getVolumeGroupName() {
         return volumeGroupName;
     }
 
+    /**
+     * The volume group used to be referenced by name, which is brittle, but is now done with a DocRef
+     */
+    @Deprecated
     public void setVolumeGroupName(String volumeGroupName) {
         this.volumeGroupName = volumeGroupName;
+    }
+
+    public DocRef getVolumeGroupDocRef() {
+        return volumeGroupDocRef;
+    }
+
+    public void setVolumeGroupDocRef(final DocRef volumeGroupDocRef) {
+        this.volumeGroupDocRef = volumeGroupDocRef;
     }
 
     public DocRef getDefaultExtractionPipeline() {
@@ -294,6 +316,10 @@ public class IndexDoc extends Doc {
                 volumeGroupName,
                 defaultExtractionPipeline);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public enum PartitionBy implements HasDisplayValue {
         DAY("Day"),

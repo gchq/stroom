@@ -74,6 +74,12 @@ class RestFactoryImpl implements RestFactory, HasHandlers {
         @SuppressWarnings("Convert2Diamond")
         private static final TypeLiteral<Boolean> BOOLEAN_TYPE_LITERAL = new TypeLiteral<Boolean>() {
         };
+        @SuppressWarnings("Convert2Diamond")
+        private static final TypeLiteral<String> STRING_TYPE_LITERAL = new TypeLiteral<String>() {
+        };
+        @SuppressWarnings("Convert2Diamond")
+        private static final TypeLiteral<Long> LONG_TYPE_LITERAL = new TypeLiteral<Long>() {
+        };
 
         private final HasHandlers hasHandlers;
         private final boolean isQuiet;
@@ -98,6 +104,16 @@ class RestFactoryImpl implements RestFactory, HasHandlers {
         @Override
         public Rest<Boolean> forBoolean() {
             return createRest(BOOLEAN_TYPE_LITERAL);
+        }
+
+        @Override
+        public Rest<String> forString() {
+            return createRest(STRING_TYPE_LITERAL);
+        }
+
+        @Override
+        public Rest<Long> forLong() {
+            return createRest(LONG_TYPE_LITERAL);
         }
 
         @Override

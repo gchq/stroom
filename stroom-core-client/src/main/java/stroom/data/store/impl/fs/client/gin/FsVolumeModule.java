@@ -21,8 +21,11 @@ import stroom.data.store.impl.fs.client.presenter.FsVolumeEditPresenter;
 import stroom.data.store.impl.fs.client.presenter.FsVolumeEditPresenter.FsVolumeEditView;
 import stroom.data.store.impl.fs.client.presenter.FsVolumeGroupEditPresenter;
 import stroom.data.store.impl.fs.client.presenter.FsVolumeGroupEditPresenter.FsVolumeGroupEditView;
+import stroom.data.store.impl.fs.client.presenter.NewFsVolumeGroupPresenter;
+import stroom.data.store.impl.fs.client.presenter.NewFsVolumeGroupPresenter.NewFsVolumeGroupView;
 import stroom.data.store.impl.fs.client.view.FsVolumeEditViewImpl;
 import stroom.data.store.impl.fs.client.view.FsVolumeGroupEditViewImpl;
+import stroom.data.store.impl.fs.client.view.NewFsVolumeGroupViewImpl;
 
 public class FsVolumeModule extends PluginModule {
 
@@ -37,5 +40,10 @@ public class FsVolumeModule extends PluginModule {
                 FsVolumeGroupEditPresenter.class,
                 FsVolumeGroupEditView.class,
                 FsVolumeGroupEditViewImpl.class);
+
+        bindPresenterWidget(
+                NewFsVolumeGroupPresenter.class,
+                NewFsVolumeGroupView.class,
+                NewFsVolumeGroupViewImpl.class);
     }
 }

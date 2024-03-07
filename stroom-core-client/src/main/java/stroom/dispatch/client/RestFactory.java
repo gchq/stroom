@@ -15,6 +15,7 @@ public interface RestFactory {
      * Equivalent to passing {@code false} to {@link RestFactory#builder(boolean)},
      * i.e. does not fire {@link stroom.task.client.TaskStartEvent}
      * or {@link stroom.task.client.TaskEndEvent} events.
+     *
      * @return An untyped {@link RestBuilder} to set the return type of the REST service.
      */
     RestBuilder builder();
@@ -60,6 +61,16 @@ public interface RestFactory {
         Rest<Boolean> forBoolean();
 
         /**
+         * Create a {@link Rest} for a String return type
+         */
+        Rest<String> forString();
+
+        /**
+         * Create a {@link Rest} for a Long return type
+         */
+        Rest<Long> forLong();
+
+        /**
          * Create a {@link Rest} for a simple return type with no generics,
          * e.g. {@link String}.
          */
@@ -71,6 +82,11 @@ public interface RestFactory {
          * <pre>{@code
          * RestFactory.build()
          *   .forWrappedType(new TypeLiteral<Collection<String>>(){ })}</pre>
+         * <p>
+         * Before you use this look at the other {@code forXXX} methods to see
+         * if there is a pre-canned one for your wrapped type,
+         * e.g. {@link RestBuilder#forResultPageOf(Class)}
+         * </p>
          */
         <R> Rest<R> forWrappedType(final TypeLiteral<R> typeLiteral);
 

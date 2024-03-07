@@ -10,16 +10,19 @@ public interface FsVolumeGroupService {
     String ENTITY_TYPE = "FS_VOLUME_GROUP";
     DocRef EVENT_DOCREF = new DocRef(ENTITY_TYPE, null, null);
 
-    List<String> getNames();
+//    List<String> getNames();
 
     List<FsVolumeGroup> getAll();
 
-    FsVolumeGroup create();
+//    FsVolumeGroup create();
 
-    FsVolumeGroup getOrCreate(String name);
+    FsVolumeGroup create(FsVolumeGroup fsVolumeGroup);
+
+    FsVolumeGroup getOrCreate(DocRef docRef, boolean isDefaultVolumeGroup);
 
     FsVolumeGroup update(FsVolumeGroup indexVolumeGroup);
 
+    @Deprecated
     FsVolumeGroup get(String name);
 
     FsVolumeGroup get(int id);

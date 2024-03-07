@@ -1,5 +1,6 @@
 package stroom.index.impl.selection;
 
+import stroom.index.shared.IndexVolumeGroup;
 import stroom.util.cache.CacheConfig;
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.io.capacity.HasCapacitySelectorFactory;
@@ -30,7 +31,7 @@ public class VolumeConfig extends AbstractConfig implements IsStroomConfig {
     public VolumeConfig() {
         volumeSelector = "RoundRobin";
         createDefaultIndexVolumesOnStart = true;
-        defaultIndexVolumeGroupName = "Default Volume Group";
+        defaultIndexVolumeGroupName = IndexVolumeGroup.DEFAULT_VOLUME_NAME;
         defaultIndexVolumeGroupPaths = List.of("volumes/default_index_volume");
         defaultIndexVolumeFilesystemUtilisation = 0.9;
         // Most volume selectors hold state (e.g. round-robin position) so we need to cache

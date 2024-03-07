@@ -87,10 +87,10 @@ public class FsVolumeGroupPresenter extends ContentTabPresenter<WrapperView> {
 
     private void add() {
         final NewFsVolumeGroupPresenter presenter = newFsVolumeGroupPresenterProvider.get();
-        presenter.show("", name -> {
+        presenter.show(name -> {
             if (name != null) {
-                final Rest<FsVolumeGroup> rest = restFactory.create();
-                rest
+                restFactory.builder()
+                        .forType(FsVolumeGroup.class)
                         .onSuccess(volumeGroup -> {
                             edit(volumeGroup);
                             presenter.hide();

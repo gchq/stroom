@@ -166,7 +166,9 @@ public class FsVolumeGroupEditPresenter
         deleteButton.setEnabled(enabled);
     }
 
-    void show(final FsVolumeGroup volumeGroup, final String title, final Consumer<FsVolumeGroup> consumer) {
+    void show(final FsVolumeGroup volumeGroup,
+              final String title,
+              final Consumer<FsVolumeGroup> consumer) {
         if (!opening) {
             opening = true;
             open(volumeGroup, title, consumer);
@@ -262,11 +264,19 @@ public class FsVolumeGroupEditPresenter
         opening = false;
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface FsVolumeGroupEditView extends View, Focus {
 
         String getName();
 
         void setName(String name);
+
+        boolean isDefault();
+
+        void setDefault(final boolean isDefault);
 
         void setListView(View listView);
     }

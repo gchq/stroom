@@ -40,7 +40,7 @@ public interface FsVolumeGroupResource extends RestResource, DirectRestService,
     @Operation(
             summary = "Creates a data volume group",
             operationId = "createFsVolumeGroup")
-    FsVolumeGroup create(@Parameter(description = "name", required = true) String name);
+    FsVolumeGroup create(@Parameter(description = "volumeGroup", required = true) FsVolumeGroup volumeGroup);
 
     @GET
     @Path("/{id}")

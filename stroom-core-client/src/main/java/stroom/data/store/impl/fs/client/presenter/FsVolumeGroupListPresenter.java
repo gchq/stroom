@@ -16,23 +16,21 @@
 
 package stroom.data.store.impl.fs.client.presenter;
 
+import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.data.store.impl.fs.shared.FsVolumeGroup;
 import stroom.data.store.impl.fs.shared.FsVolumeGroupResource;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.entity.shared.ExpressionCriteria;
+import stroom.util.client.DataGridUtil;
 import stroom.util.shared.ResultPage;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
-import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -69,8 +67,9 @@ public class FsVolumeGroupListPresenter extends MyPresenterWidget<PagerView> {
                                 final Consumer<ResultPage<FsVolumeGroup>> dataConsumer,
                                 final Consumer<Throwable> throwableConsumer) {
                 CriteriaUtil.setRange(criteria, range);
-                final Rest<ResultPage<FsVolumeGroup>> rest = restFactory.create();
-                rest
+
+                restFactory.builder()
+                        .forResultPageOf(FsVolumeGroup.class)
                         .onSuccess(dataConsumer)
                         .onFailure(throwableConsumer)
                         .call(FS_VOLUME_GROUP_RESOURCE)
@@ -85,15 +84,21 @@ public class FsVolumeGroupListPresenter extends MyPresenterWidget<PagerView> {
      */
     private void initTableColumns() {
         // Name.
-        final Column<FsVolumeGroup, String> volumeColumn = new Column<FsVolumeGroup, String>(new TextCell()) {
-            @Override
-            public String getValue(final FsVolumeGroup volume) {
-                return volume.getName();
-            }
-        };
-        dataGrid.addResizableColumn(volumeColumn, "Name", 400);
-
-        dataGrid.addEndColumn(new EndColumn<>());
+        dataGrid.addResizableColumn(
+                DataGridUtil.copyTextColumnBuilder(FsVolumeGroup::getName).build(),
+                "Name",
+                400);
+        // UUID
+        dataGrid.addResizableColumn(
+                DataGridUtil.copyTextColumnBuilder(FsVolumeGroup::getUuid).build(),
+                "UUID",
+                ColumnSizeConstants.UUID_COL);
+        // Is Default
+        dataGrid.addColumn(
+                DataGridUtil.readOnlyTickBoxColumnBuilder(FsVolumeGroup::isDefaultVolume).build(),
+                "Default Group",
+                ColumnSizeConstants.CHECKBOX_COL);
+        DataGridUtil.addEndColumn(dataGrid);
     }
 
     public MultiSelectionModel<FsVolumeGroup> getSelectionModel() {

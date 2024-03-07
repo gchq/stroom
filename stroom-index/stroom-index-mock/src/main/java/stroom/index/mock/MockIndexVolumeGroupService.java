@@ -1,11 +1,13 @@
 package stroom.index.mock;
 
+import stroom.docref.DocRef;
 import stroom.index.impl.IndexVolumeGroupService;
 import stroom.index.shared.IndexVolumeGroup;
 import stroom.util.AuditUtil;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class MockIndexVolumeGroupService implements IndexVolumeGroupService {
@@ -59,6 +61,24 @@ public class MockIndexVolumeGroupService implements IndexVolumeGroupService {
                 .filter(g -> id == g.getId())
                 .findFirst()
                 .orElse(null);
+    }
+
+    @Override
+    public IndexVolumeGroup get(final DocRef docRef) {
+        return groups.stream()
+                .filter(g ->
+                        Objects.equals(g.getUuid(), docRef.getUuid()))
+                .findFirst()
+                .orElse(null);
+    }
+
+    @Override
+    public IndexVolumeGroup getDefaultVolumeGroup() {
+        return IndexVolumeGroup.builder()
+                .withName(IndexVolumeGroup.DEFAULT_VOLUME_NAME)
+                .withUuid(IndexVolumeGroup.DEFAULT_VOLUME_UUID)
+                .withDefaultVolume(true)
+                .build();
     }
 
     @Override

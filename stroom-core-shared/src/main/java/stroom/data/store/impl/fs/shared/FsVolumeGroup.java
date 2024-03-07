@@ -1,5 +1,7 @@
 package stroom.data.store.impl.fs.shared;
 
+import stroom.docref.DocRef;
+import stroom.docref.DocRef.TypedBuilder;
 import stroom.docref.HasDocRef;
 import stroom.docref.HasNameMutable;
 import stroom.util.shared.GwtNullSafe;
@@ -12,6 +14,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Objects;
+import java.util.UUID;
 
 @JsonInclude(Include.NON_NULL)
 public class FsVolumeGroup implements HasAuditInfo, HasIntegerId, HasNameMutable, HasDocRef {
@@ -22,7 +25,8 @@ public class FsVolumeGroup implements HasAuditInfo, HasIntegerId, HasNameMutable
     // It is hard coded so that every stroom env that sets up a default volume
     // will have the same uuid for it, which makes imp/exp between instances easier,
     // similar to how context pack entities have fixed UUIDs.
-    private static final String DEFAULT_VOLUME_UUID = "dcf96afb-78a0-4a54-830f-0e3ae998f4af";
+    public static final String DEFAULT_VOLUME_UUID = "dcf96afb-78a0-4a54-830f-0e3ae998f4af";
+    public static final String DEFAULT_VOLUME_NAME = "Default Volume Group";
 
     @JsonProperty
     private Integer id;
@@ -65,6 +69,18 @@ public class FsVolumeGroup implements HasAuditInfo, HasIntegerId, HasNameMutable
         this.name = name;
         this.uuid = uuid;
         this.defaultVolume = GwtNullSafe.requireNonNullElse(defaultVolume, false);
+    }
+
+    private FsVolumeGroup(final Builder builder) {
+        setId(builder.id);
+        setVersion(builder.version);
+        setCreateTimeMs(builder.createTimeMs);
+        setCreateUser(builder.createUser);
+        setUpdateTimeMs(builder.updateTimeMs);
+        setUpdateUser(builder.updateUser);
+        setName(builder.name);
+        setUuid(builder.uuid);
+        defaultVolume = builder.defaultVolume;
     }
 
     @Override
@@ -151,6 +167,18 @@ public class FsVolumeGroup implements HasAuditInfo, HasIntegerId, HasNameMutable
         this.defaultVolume = GwtNullSafe.requireNonNullElse(defaultVolume, false);
     }
 
+    public static TypedBuilder buildDocRef() {
+        return DocRef.builder(DOCUMENT_TYPE);
+    }
+
+    public static DocRef buildDefaultVolumeGroupDocRef(final String name) {
+        Objects.requireNonNull(name);
+        return buildDocRef()
+                .uuid(DEFAULT_VOLUME_UUID)
+                .name(name)
+                .build();
+    }
+
     @Override
     public String toString() {
         return "IndexVolumeGroup{" +
@@ -181,5 +209,101 @@ public class FsVolumeGroup implements HasAuditInfo, HasIntegerId, HasNameMutable
     @Override
     public int hashCode() {
         return Objects.hash(id);
+    }
+
+    public Builder copy() {
+        Builder builder = new Builder();
+        builder.id = this.getId();
+        builder.version = this.getVersion();
+        builder.createTimeMs = this.getCreateTimeMs();
+        builder.createUser = this.getCreateUser();
+        builder.updateTimeMs = this.getUpdateTimeMs();
+        builder.updateUser = this.getUpdateUser();
+        builder.name = this.getName();
+        builder.uuid = this.getUuid();
+        builder.defaultVolume = this.isDefaultVolume();
+        return builder;
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    public static final class Builder {
+
+        private Integer id;
+        private Integer version;
+        private Long createTimeMs;
+        private String createUser;
+        private Long updateTimeMs;
+        private String updateUser;
+        private String name;
+        private String uuid;
+        private boolean defaultVolume;
+
+        private Builder() {
+        }
+
+        public static Builder builder() {
+            return new Builder();
+        }
+
+        public Builder withId(final Integer val) {
+            id = val;
+            return this;
+        }
+
+        public Builder withVersion(final Integer val) {
+            version = val;
+            return this;
+        }
+
+        public Builder withCreateTimeMs(final Long val) {
+            createTimeMs = val;
+            return this;
+        }
+
+        public Builder withCreateUser(final String val) {
+            createUser = val;
+            return this;
+        }
+
+        public Builder withUpdateTimeMs(final Long val) {
+            updateTimeMs = val;
+            return this;
+        }
+
+        public Builder withUpdateUser(final String val) {
+            updateUser = val;
+            return this;
+        }
+
+        public Builder withName(final String val) {
+            name = val;
+            return this;
+        }
+
+        public Builder withUuid(final String val) {
+            uuid = val;
+            return this;
+        }
+
+        public Builder withRandomUuid() {
+            uuid = UUID.randomUUID().toString();
+            return this;
+        }
+
+        public Builder withDefaultVolume(final boolean val) {
+            defaultVolume = val;
+            return this;
+        }
+
+        public FsVolumeGroup build() {
+            return new FsVolumeGroup(this);
+        }
     }
 }

@@ -4,6 +4,9 @@ import stroom.cell.expander.client.ExpanderCell;
 import stroom.cell.info.client.CommandLink;
 import stroom.cell.info.client.CommandLinkCell;
 import stroom.cell.info.client.SvgCell;
+import stroom.cell.tickbox.client.TickBoxCell;
+import stroom.cell.tickbox.client.TickBoxCell.NoBorderAppearance;
+import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.CopyTextCell;
 import stroom.data.client.presenter.DocRefCell;
@@ -31,7 +34,6 @@ import com.google.gwt.user.cellview.client.Header;
 import com.google.gwt.user.cellview.client.SafeHtmlHeader;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment.HorizontalAlignmentConstant;
-import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.HasVerticalAlignment.VerticalAlignmentConstant;
 import com.google.web.bindery.event.shared.EventBus;
 
@@ -340,11 +342,44 @@ public class DataGridUtil {
         return new ColumnBuilder<>(cellExtractor, Function.identity(), TextCell::new);
     }
 
+    /**
+     * Builds a read only tick box that is either ticked or un-ticked.
+     *
+     * @param cellExtractor Function to extract a boolean from {@code T_ROW}.
+     * @param <T_ROW>       The row type
+     */
+    public static <T_ROW> ColumnBuilder<T_ROW, Boolean, TickBoxState, TickBoxCell> readOnlyTickBoxColumnBuilder(
+            final Function<T_ROW, Boolean> cellExtractor) {
+        return new ColumnBuilder<>(
+                cellExtractor,
+                bool -> GwtNullSafe.isTrue(bool)
+                        ? TickBoxState.TICK
+                        : TickBoxState.UNTICK,
+                () -> TickBoxCell.create(
+                        new NoBorderAppearance(),
+                        false,
+                        false,
+                        false));
+    }
+
+    /**
+     * A builder for creating a text column with a hover icon to copy the text content of the cell
+     *
+     * @param cellExtractor Function to extract a String from the {@code T_ROW}.
+     * @param <T_ROW>       The row type
+     */
     public static <T_ROW> ColumnBuilder<T_ROW, String, String, Cell<String>> copyTextColumnBuilder(
             final Function<T_ROW, String> cellExtractor) {
         return new ColumnBuilder<>(cellExtractor, Function.identity(), CopyTextCell::new);
     }
 
+    /**
+     * A builder for creating a column for a {@link DocRef} with hover icons to copy the name of the doc
+     * and to open the doc.
+     *
+     * @param cellExtractor Function to extract a {@link DocRef} from the {@code T_ROW}.
+     * @param <T_ROW>       The row type
+     */
     public static <T_ROW> ColumnBuilder<T_ROW, DocRef, DocRef, Cell<DocRef>> docRefColumnBuilder(
             final Function<T_ROW, DocRef> cellExtractor,
             final EventBus eventBus,
@@ -393,6 +428,10 @@ public class DataGridUtil {
                 cellExtractor, Function.identity(),
                 () -> new SvgCell(isButton));
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public static class ColumnBuilder<T_ROW, T_RAW_VAL, T_CELL_VAL, T_CELL extends Cell<T_CELL_VAL>> {
 

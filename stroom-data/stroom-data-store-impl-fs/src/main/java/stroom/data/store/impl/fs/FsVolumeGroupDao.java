@@ -13,6 +13,10 @@ public interface FsVolumeGroupDao {
 
     FsVolumeGroup get(int id);
 
+    /**
+     * Should be using {@link FsVolumeGroupDao#get(DocRef)} or {@link FsVolumeGroupDao#get(int)}
+     */
+    @Deprecated
     FsVolumeGroup get(String name);
 
     FsVolumeGroup get(DocRef docRef);
@@ -30,4 +34,6 @@ public interface FsVolumeGroupDao {
     void delete(String name);
 
     void delete(int id);
+
+    FsVolumeGroup create(FsVolumeGroup fsVolumeGroup);
 }

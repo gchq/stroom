@@ -82,11 +82,11 @@ public class FeedDoc extends Doc {
     @JsonProperty
     private FeedStatus status;
     // The volume group used to be referenced by name, which is brittle, but is now done with a DocRef
-    @Deprecated(forRemoval = true) // Use VolumeGroupDocRef
+    @Deprecated // Use VolumeGroupDocRef
     @JsonProperty
     private String volumeGroup;
     @JsonProperty
-    private String volumeGroupDocRef;
+    private DocRef volumeGroupDocRef;
 
     public FeedDoc() {
     }
@@ -112,7 +112,8 @@ public class FeedDoc extends Doc {
                    @JsonProperty("reference") final boolean reference,
                    @JsonProperty("streamType") final String streamType,
                    @JsonProperty("status") final FeedStatus status,
-                   @JsonProperty("volumeGroup") final String volumeGroup) {
+                   @JsonProperty("volumeGroup") final String volumeGroup,
+                   @JsonProperty("volumeGroupDocRef") final DocRef volumeGroupDocRef) {
         super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.classification = classification;
@@ -123,6 +124,7 @@ public class FeedDoc extends Doc {
         this.streamType = streamType;
         this.status = status;
         this.volumeGroup = volumeGroup;
+        this.volumeGroupDocRef = volumeGroupDocRef;
     }
 
     /**
@@ -225,7 +227,7 @@ public class FeedDoc extends Doc {
     /**
      * The volume group used to be referenced by name, which is brittle, but is now done with a DocRef
      */
-    @Deprecated(forRemoval = true)
+    @Deprecated
     public String getVolumeGroup() {
         return volumeGroup;
     }
@@ -233,11 +235,30 @@ public class FeedDoc extends Doc {
     /**
      * The volume group used to be referenced by name, which is brittle, but is now done with a DocRef
      */
-    @Deprecated(forRemoval = true) // Use VolumeGroupDocRef
+    @Deprecated // Use VolumeGroupDocRef
     public void setVolumeGroup(final String volumeGroup) {
         this.volumeGroup = volumeGroup;
     }
 
+    /**
+     * @return The {@link DocRef} of the {@link stroom.data.store.impl.fs.shared.FsVolumeGroup}
+     * to use for this Feed. May be null.
+     */
+    public DocRef getVolumeGroupDocRef() {
+        return volumeGroupDocRef;
+    }
+
+    public void setVolumeGroupDocRef(final DocRef volumeGroupDocRef) {
+        this.volumeGroupDocRef = volumeGroupDocRef;
+    }
+
+    @Override
+    public String toString() {
+        return "FeedDoc{" +
+                "name='" + getName() + '\'' +
+                "uuid='" + getUuid() + '\'' +
+                '}';
+    }
 
     // --------------------------------------------------------------------------------
 

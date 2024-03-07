@@ -2,6 +2,7 @@ package stroom.data.store.impl.fs;
 
 import stroom.data.store.impl.fs.shared.FsVolumeGroup;
 import stroom.data.store.impl.fs.shared.FsVolumeGroupResource;
+import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.util.shared.ResultPage;
@@ -25,8 +26,8 @@ class FsVolumeGroupResourceImpl implements FsVolumeGroupResource {
     }
 
     @Override
-    public FsVolumeGroup create(final String name) {
-        return volumeGroupServiceProvider.get().getOrCreate(name);
+    public FsVolumeGroup create(final FsVolumeGroup volumeGroup) {
+        return volumeGroupServiceProvider.get().create(volumeGroup);
     }
 
     @Override
@@ -34,14 +35,19 @@ class FsVolumeGroupResourceImpl implements FsVolumeGroupResource {
         return volumeGroupServiceProvider.get().get(id);
     }
 
+    public FsVolumeGroup fetchByDocRef(final DocRef docRef) {
+        return volumeGroupServiceProvider.get().get(docRef);
+    }
+
+    @Deprecated
     @Override
     public FsVolumeGroup fetchByName(final String name) {
         return volumeGroupServiceProvider.get().get(name);
     }
 
     @Override
-    public FsVolumeGroup update(final Integer id, final FsVolumeGroup indexVolumeGroup) {
-        return volumeGroupServiceProvider.get().update(indexVolumeGroup);
+    public FsVolumeGroup update(final Integer id, final FsVolumeGroup volumeGroup) {
+        return volumeGroupServiceProvider.get().update(volumeGroup);
     }
 
     @Override

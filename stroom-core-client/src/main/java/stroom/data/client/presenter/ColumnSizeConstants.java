@@ -25,6 +25,7 @@ public final class ColumnSizeConstants {
     public static final int BIG_COL = 400;
     public static final int DATE_COL = 200;
     public static final int DATE_AND_DURATION_COL = 320;
+    public static final int UUID_COL = 200;
 
     private ColumnSizeConstants() {
         // Constants.

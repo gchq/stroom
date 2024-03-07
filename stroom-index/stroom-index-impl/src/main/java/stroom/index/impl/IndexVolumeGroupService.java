@@ -24,6 +24,10 @@ public interface IndexVolumeGroupService {
 
     IndexVolumeGroup get(int id);
 
+    IndexVolumeGroup get(DocRef docRef);
+
+    IndexVolumeGroup getDefaultVolumeGroup();
+
     void delete(int id);
 
     void ensureDefaultVolumes();
