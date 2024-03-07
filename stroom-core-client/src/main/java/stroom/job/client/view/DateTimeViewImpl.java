@@ -98,7 +98,6 @@ public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
     Label midday;
 
     private UTCDate value;
-    private Offset currentOffset;
     private String currentDateString;
 
     @Inject
@@ -143,9 +142,7 @@ public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
 
     @Override
     public void setTime(final long time) {
-        final UTCDate date = UTCDate.create(time);
-        currentOffset = getOffset(date);
-        this.value = date;
+        this.value = UTCDate.create(time);
         update();
     }
 
@@ -161,7 +158,7 @@ public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
 
     private UTCDate getTodayUTC() {
         final DateRecord today = parseDate(UTCDate.create());
-        final UTCDate utc = UTCDate.create(
+        return UTCDate.create(
                 today.getYear(),
                 today.getMonth(),
                 today.getDay(),
@@ -169,7 +166,6 @@ public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
                 0,
                 0,
                 0);
-        return utc;
     }
 
     @SuppressWarnings("unused")
@@ -320,51 +316,6 @@ public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
         }
     }
 
-    private UTCDate resolveDateTimeOld(final UTCDate previousTime, final boolean allowOffsetChange) {
-        final UTCDate datePickerTime = datePicker.getValue();
-        String currentOffset = getOffsetString(previousTime);
-        final String isoDateString =
-                zeroPad(4, datePickerTime.getFullYear()) +
-                        "-" +
-                        zeroPad(2, (datePickerTime.getMonth() + 1)) +
-                        "-" +
-                        zeroPad(2, datePickerTime.getDate()) +
-                        "T" +
-                        zeroPad(2, hour.getIntValue()) +
-                        ":" +
-                        zeroPad(2, minute.getIntValue()) +
-                        ":" +
-                        zeroPad(2, second.getIntValue()) +
-                        "." +
-                        zeroPad(3, millisecond.getIntValue()) +
-                        currentOffset;
-        final UTCDate isoDate = UTCDate.create(isoDateString);
-        final String newOffset = getOffsetString(isoDate);
-        if (allowOffsetChange && !newOffset.equals(currentOffset)) {
-            GWT.log("Offset changed: " + currentOffset + " -> " + newOffset);
-            final String newIsoDateString =
-                    zeroPad(4, datePickerTime.getFullYear()) +
-                            "-" +
-                            zeroPad(2, (datePickerTime.getMonth() + 1)) +
-                            "-" +
-                            zeroPad(2, datePickerTime.getDate()) +
-                            "T" +
-                            zeroPad(2, hour.getIntValue()) +
-                            ":" +
-                            zeroPad(2, minute.getIntValue()) +
-                            ":" +
-                            zeroPad(2, second.getIntValue()) +
-                            "." +
-                            zeroPad(3, millisecond.getIntValue()) +
-                            newOffset;
-            final UTCDate newIsoDate = UTCDate.create(newIsoDateString);
-            return newIsoDate;
-
-        } else {
-            return isoDate;
-        }
-    }
-
     private void update() {
         updateDate();
         updateTime();
@@ -393,16 +344,16 @@ public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
     }
 
     private void updateTime() {
-        currentOffset = getOffset(value);
+        final Offset offset = getOffset(value);
 
-        int hour = value.getHours() + currentOffset.getHours();
+        int hour = value.getHours() + offset.getHours();
         if (hour > 23) {
             hour = hour - 24;
         } else if (hour < 0) {
             hour = hour + 24;
         }
 
-        int minute = value.getMinutes() + currentOffset.getMinutes();
+        int minute = value.getMinutes() + offset.getMinutes();
         if (minute > 59) {
             minute = minute - 60;
         } else if (minute < 0) {
@@ -437,7 +388,7 @@ public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
     }
 
     private String getOffsetString(final UTCDate value) {
-        final String tz = parseTimeZone(value, TimeZoneName.LONG_OFFSET);
+        final String tz = parseTimeZone(value);
         String offset = tz.replaceAll("GMT", "");
         offset = offset.replaceAll(":", "");
         if (offset.length() == 0) {
@@ -468,21 +419,19 @@ public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
         return millis;
     }
 
-    private String parseTimeZone(final UTCDate value, final TimeZoneName timeZoneName) {
+    private String parseTimeZone(final UTCDate value) {
         final FormatOptions.Builder builder = FormatOptions
                 .builder()
                 .hour(Hour.TWO_DIGIT)
                 .minute(Minute.TWO_DIGIT)
                 .second(Second.TWO_DIGIT)
                 .fractionalSecondDigits(3)
-                .timeZoneName(timeZoneName);
+                .timeZoneName(TimeZoneName.LONG_OFFSET);
         setTimeZone(builder);
 
         final String dateTimeString = IntlDateTimeFormat.format(value, EN_LOCALE, builder.build());
         final int index = dateTimeString.indexOf(" ");
-        final String tz = dateTimeString.substring(index + 1);
-
-        return tz;
+        return dateTimeString.substring(index + 1);
     }
 
     private static String zeroPad(final int amount, int value) {
