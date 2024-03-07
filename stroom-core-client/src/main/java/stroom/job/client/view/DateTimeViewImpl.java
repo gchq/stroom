@@ -17,17 +17,7 @@
 package stroom.job.client.view;
 
 import stroom.job.client.presenter.DateTimePopup.DateTimeView;
-import stroom.util.client.ClientStringUtil;
 import stroom.widget.datepicker.client.CustomDatePicker;
-import stroom.widget.datepicker.client.IntlDateTimeFormat;
-import stroom.widget.datepicker.client.IntlDateTimeFormat.FormatOptions;
-import stroom.widget.datepicker.client.IntlDateTimeFormat.FormatOptions.Day;
-import stroom.widget.datepicker.client.IntlDateTimeFormat.FormatOptions.Hour;
-import stroom.widget.datepicker.client.IntlDateTimeFormat.FormatOptions.Minute;
-import stroom.widget.datepicker.client.IntlDateTimeFormat.FormatOptions.Month;
-import stroom.widget.datepicker.client.IntlDateTimeFormat.FormatOptions.Second;
-import stroom.widget.datepicker.client.IntlDateTimeFormat.FormatOptions.TimeZoneName;
-import stroom.widget.datepicker.client.IntlDateTimeFormat.FormatOptions.Year;
 import stroom.widget.datepicker.client.UTCDate;
 import stroom.widget.datepicker.client.ValueChooser;
 
@@ -40,12 +30,9 @@ import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.google.inject.Provider;
 import com.gwtplatform.mvp.client.ViewImpl;
 
 public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
-
-    private static final String[] EN_LOCALE = {"en-GB"};
 
     private final long MILLIS_IN_SECOND = 1000;
     private final long MILLIS_IN_MINUTE = 60 * MILLIS_IN_SECOND;
@@ -115,7 +102,7 @@ public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
     }
 
     private void setDatePickerTime(final UTCDate value) {
-        final DateRecord dateRecord = parseDate(value);
+        final DateRecord dateRecord = dateTimeModel.parseDate(value);
         final UTCDate utc = UTCDate.create(
                 dateRecord.getYear(),
                 dateRecord.getMonth(),
@@ -152,7 +139,7 @@ public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
     }
 
     private UTCDate getTodayUTC() {
-        final DateRecord today = parseDate(UTCDate.create());
+        final DateRecord today = dateTimeModel.parseDate(UTCDate.create());
         return UTCDate.create(
                 today.getYear(),
                 today.getMonth(),
@@ -203,7 +190,7 @@ public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
     @SuppressWarnings("unused")
     @UiHandler("now")
     public void onNow(final ClickEvent event) {
-        final TimeRecord timeRecord = parseTime(UTCDate.create());
+        final TimeRecord timeRecord = dateTimeModel.parseTime(UTCDate.create());
         hour.setValue(timeRecord.getHour());
         minute.setValue(timeRecord.getMinute());
         second.setValue(timeRecord.getSecond());
@@ -237,14 +224,14 @@ public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
     @SuppressWarnings("unused")
     @UiHandler("hour")
     public void onHour(final ValueChangeEvent<Long> event) {
-        final DateRecord dateBefore = parseDate(value);
+        final DateRecord dateBefore = dateTimeModel.parseDate(value);
         final int hour = this.hour.getIntValue();
         value = resolveDateTime(value, false);
         updateTime();
 
         // Deal with daylight savings offset changes that could switch the day.
         if (hour == 0) {
-            final DateRecord dateAfter = parseDate(value);
+            final DateRecord dateAfter = dateTimeModel.parseDate(value);
             if (!dateBefore.equals(dateAfter)) {
                 GWT.log("Fix hour for DST: " + dateBefore + " -> " + dateAfter);
                 value.setTime(value.getTime() + MILLIS_IN_HOUR);
@@ -281,7 +268,7 @@ public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
     private UTCDate resolveDateTime(final UTCDate previousTime, final boolean allowOffsetChange) {
         final UTCDate datePickerTime = datePicker.getValue();
 
-        final long currentOffsetMs = getOffsetMillis(previousTime);
+        final long currentOffsetMs = dateTimeModel.getOffsetMillis(previousTime);
         final UTCDate date = UTCDate.create(
                 datePickerTime.getFullYear(),
                 datePickerTime.getMonth(),
@@ -292,7 +279,7 @@ public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
                 millisecond.getIntValue());
         date.setTime(date.getTime() - currentOffsetMs);
 
-        final long newOffsetMs = getOffsetMillis(date);
+        final long newOffsetMs = dateTimeModel.getOffsetMillis(date);
         if (allowOffsetChange && newOffsetMs != currentOffsetMs) {
             GWT.log("Offset changed: " + currentOffsetMs + " -> " + newOffsetMs);
             final UTCDate newDate = UTCDate.create(
@@ -321,15 +308,7 @@ public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
     }
 
     private void updateDateLabel() {
-        final FormatOptions.Builder builder = FormatOptions
-                .builder()
-                .year(Year.NUMERIC)
-                .month(Month.LONG)
-                .day(Day.NUMERIC);
-        setTimeZone(builder);
-
-        final String dateString =
-                IntlDateTimeFormat.format(value, IntlDateTimeFormat.DEFAULT_LOCALE, builder.build());
+        final String dateString = dateTimeModel.formatDateLabel(value);
         this.date.setText(dateString);
 
         if (currentDateString == null || !currentDateString.equals(dateString)) {
@@ -339,7 +318,7 @@ public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
     }
 
     private void updateTime() {
-        final Offset offset = getOffset(value);
+        final TimeOffset offset = dateTimeModel.getOffset(value);
 
         int hour = value.getHours() + offset.getHours();
         if (hour > 23) {
@@ -365,117 +344,8 @@ public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
     }
 
     private void updateTimeLabel() {
-        final FormatOptions.Builder builder = FormatOptions
-                .builder()
-                .hour(Hour.TWO_DIGIT)
-                .minute(Minute.TWO_DIGIT)
-                .second(Second.TWO_DIGIT)
-                .fractionalSecondDigits(3)
-                .timeZoneName(TimeZoneName.SHORT);
-        setTimeZone(builder);
-        final String timeString =
-                IntlDateTimeFormat.format(value, IntlDateTimeFormat.DEFAULT_LOCALE, builder.build());
-
+        final String timeString = dateTimeModel.formatTimeLabel(value);
         time.setText(timeString);
-    }
-
-    private String getOffsetString(final UTCDate value) {
-        final String tz = parseTimeZone(value);
-        String offset = tz.replaceAll("GMT", "");
-        offset = offset.replaceAll(":", "");
-        if (offset.length() == 0) {
-            offset = "+0000";
-        }
-        return offset;
-    }
-
-    private Offset getOffset(final UTCDate value) {
-        final String offsetString = getOffsetString(value);
-        int hours = ClientStringUtil.getInt(offsetString.substring(1, 3));
-        int minutes = ClientStringUtil.getInt(offsetString.substring(3, 5));
-        if (offsetString.charAt(0) == '-') {
-            hours = hours * -1;
-            minutes = minutes * -1;
-        }
-        return new Offset(hours, minutes);
-    }
-
-    private long getOffsetMillis(final UTCDate value) {
-        final String offsetString = getOffsetString(value);
-        int hours = ClientStringUtil.getInt(offsetString.substring(1, 3));
-        int minutes = ClientStringUtil.getInt(offsetString.substring(3, 5));
-        long millis = (hours * MILLIS_IN_HOUR) + (minutes * MILLIS_IN_MINUTE);
-        if (offsetString.charAt(0) == '-') {
-            millis = millis * -1;
-        }
-        return millis;
-    }
-
-    private String parseTimeZone(final UTCDate value) {
-        final FormatOptions.Builder builder = FormatOptions
-                .builder()
-                .hour(Hour.TWO_DIGIT)
-                .minute(Minute.TWO_DIGIT)
-                .second(Second.TWO_DIGIT)
-                .fractionalSecondDigits(3)
-                .timeZoneName(TimeZoneName.LONG_OFFSET);
-        setTimeZone(builder);
-
-        final String dateTimeString = IntlDateTimeFormat.format(value, EN_LOCALE, builder.build());
-        final int index = dateTimeString.indexOf(" ");
-        return dateTimeString.substring(index + 1);
-    }
-
-    private void setTimeZone(final FormatOptions.Builder builder) {
-        if (dateTimeModel != null) {
-            final String timeZone = dateTimeModel.getTimeZone();
-            if (timeZone != null) {
-                builder.timeZone(timeZone);
-            }
-        }
-    }
-
-    private DateRecord parseDate(final UTCDate value) {
-        final FormatOptions.Builder builder = FormatOptions
-                .builder()
-                .year(Year.NUMERIC)
-                .month(Month.TWO_DIGIT)
-                .day(Day.TWO_DIGIT);
-        setTimeZone(builder);
-
-        final String dateString = IntlDateTimeFormat
-                .format(value, EN_LOCALE, builder.build());
-
-        final String[] dateParts = dateString.split("/");
-        final int day = ClientStringUtil.getInt(dateParts[0]);
-        final int month = ClientStringUtil.getInt(dateParts[1]) - 1;
-        final int year = ClientStringUtil.getInt(dateParts[2]);
-        return new DateRecord(year, month, day);
-    }
-
-    private TimeRecord parseTime(final UTCDate value) {
-        final FormatOptions.Builder builder = FormatOptions
-                .builder()
-                .hour(Hour.TWO_DIGIT)
-                .minute(Minute.TWO_DIGIT)
-                .second(Second.TWO_DIGIT)
-                .fractionalSecondDigits(3)
-                .timeZoneName(TimeZoneName.SHORT);
-        setTimeZone(builder);
-
-        String timeString = IntlDateTimeFormat
-                .format(value, EN_LOCALE, builder.build());
-        final int timeZoneIndex = timeString.indexOf(" ");
-        if (timeZoneIndex != -1) {
-            timeString = timeString.substring(0, timeZoneIndex);
-        }
-        final String[] parts = timeString.split(":");
-        final String[] secondParts = parts[2].split("\\.");
-        final int hour = ClientStringUtil.getInt(parts[0]);
-        final int minute = ClientStringUtil.getInt(parts[1]);
-        final int second = ClientStringUtil.getInt(secondParts[0]);
-        final int millisecond = ClientStringUtil.getInt(secondParts[1]);
-        return new TimeRecord(hour, minute, second, millisecond);
     }
 
     @Override
@@ -485,24 +355,5 @@ public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
 
     public interface Binder extends UiBinder<Widget, DateTimeViewImpl> {
 
-    }
-
-    private static class Offset {
-
-        private final int hours;
-        private final int minutes;
-
-        public Offset(final int hours, final int minutes) {
-            this.hours = hours;
-            this.minutes = minutes;
-        }
-
-        public int getHours() {
-            return hours;
-        }
-
-        public int getMinutes() {
-            return minutes;
-        }
     }
 }

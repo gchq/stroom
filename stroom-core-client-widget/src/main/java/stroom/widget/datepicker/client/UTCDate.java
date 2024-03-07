@@ -112,14 +112,22 @@ public class UTCDate extends JavaScriptObject {
      * Creates a new date from a string to be parsed.
      */
     public static native UTCDate create(String dateString) /*-{
-        return new Date(dateString);
+        var ms = Date.parse(dateString);
+        if (isNaN(ms)) {
+            return null;
+        }
+        return new Date(ms);
     }-*/;
 
     /**
      * Creates a new date from a string to be parsed.
      */
     public static native Double parse(String dateString) /*-{
-        return Date.parse(dateString);
+        var ms = Date.parse(dateString);
+        if (isNaN(ms)) {
+            return null;
+        }
+        return ms;
     }-*/;
 
     /**
