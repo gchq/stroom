@@ -84,9 +84,10 @@ public final class DateCell extends AbstractCell {
 
     public void onSelected(boolean selected) {
         if (selected) {
-            defaultCalendarView.getDatePicker().setValue(value, true);
+            final JsDate selectedValue = CalendarUtil.copyDate(value);
+            defaultCalendarView.getDatePicker().setValue(selectedValue, true);
             if (isFiller()) {
-                defaultCalendarView.getDatePicker().setCurrentMonth(value);
+                defaultCalendarView.getDatePicker().setCurrentMonth(selectedValue);
             }
         }
         updateStyle();

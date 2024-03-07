@@ -308,10 +308,6 @@ public class CustomDatePicker extends Composite implements
         view.setup();
         monthAndYearSelector.setup();
         this.setup();
-
-        final JsDate now = JsDate.create();
-        final JsDate todayUTC = JsDate.utc(now.getUTCFullYear(), now.getUTCMonth(), 1, 0, 0, 0, 0);
-        setCurrentMonth(todayUTC);
     }
 
     public void setToday(final JsDate today) {

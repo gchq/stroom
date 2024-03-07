@@ -114,8 +114,6 @@ public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
         second.setMax(59);
         millisecond.setMin(0);
         millisecond.setMax(999);
-
-        setTime((long) JsDate.create().getTime());
     }
 
     private void setDatePickerTime(final JsDate value) {
