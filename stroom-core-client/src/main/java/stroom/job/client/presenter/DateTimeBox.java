@@ -83,7 +83,11 @@ public class DateTimeBox
     private void showPopup() {
         final DateTimePopup popup = getPopup();
         if (popup != null) {
-            popup.setTime(longValue);
+            if (longValue == null) {
+                popup.setTime(System.currentTimeMillis());
+            } else {
+                popup.setTime(longValue);
+            }
             popup.show(newValue -> {
                 if (!Objects.equals(longValue, newValue)) {
                     setLongValue(newValue, true);

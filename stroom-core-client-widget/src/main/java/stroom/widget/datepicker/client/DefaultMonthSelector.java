@@ -150,8 +150,10 @@ public final class DefaultMonthSelector extends MonthSelector {
     private SelectionBox<IntItem> createYearSelect() {
         final SelectionBox<IntItem> yearListBox = new SelectionBox<>();
         yearListBox.addValueChangeHandler(e -> {
-            int deltaYears = yearListBox.getValue().getValue() - getNoOfYearsToDisplayBefore();
-            addMonths(deltaYears * CalendarModel.MONTHS_IN_YEAR);
+            int previousYear = getModel().getCurrentMonth().getFullYear();
+            int newYear = yearListBox.getValue().getValue();
+            int delta = newYear - previousYear;
+            addMonths(delta * CalendarModel.MONTHS_IN_YEAR);
         });
 
         return yearListBox;

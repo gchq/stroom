@@ -16,10 +16,8 @@
 
 package stroom.job.client.view;
 
-import stroom.expression.api.UserTimeZone;
 import stroom.job.client.presenter.DateTimePopup.DateTimeView;
-import stroom.preferences.client.UserPreferencesManager;
-import stroom.ui.config.shared.UserPreferences;
+import stroom.util.client.ClientStringUtil;
 import stroom.widget.datepicker.client.CustomDatePicker;
 import stroom.widget.datepicker.client.IntlDateTimeFormat;
 import stroom.widget.datepicker.client.IntlDateTimeFormat.FormatOptions;
@@ -42,6 +40,7 @@ import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.gwtplatform.mvp.client.ViewImpl;
 
 public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
@@ -51,8 +50,6 @@ public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
     private final long MILLIS_IN_SECOND = 1000;
     private final long MILLIS_IN_MINUTE = 60 * MILLIS_IN_SECOND;
     private final long MILLIS_IN_HOUR = 60 * MILLIS_IN_MINUTE;
-
-    private final UserPreferencesManager userPreferencesManager;
 
     private final Widget widget;
 
@@ -99,12 +96,10 @@ public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
 
     private UTCDate value;
     private String currentDateString;
+    private Provider<String> timeZoneProvider;
 
     @Inject
-    public DateTimeViewImpl(final Binder binder,
-                            final UserPreferencesManager userPreferencesManager) {
-        this.userPreferencesManager = userPreferencesManager;
-
+    public DateTimeViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
         datePicker.setYearAndMonthDropdownVisible(true);
         datePicker.setYearArrowsVisible(true);
@@ -370,7 +365,6 @@ public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
     }
 
     private void updateTimeLabel() {
-        final String timeZone = getTimeZone();
         final FormatOptions.Builder builder = FormatOptions
                 .builder()
                 .hour(Hour.TWO_DIGIT)
@@ -378,9 +372,7 @@ public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
                 .second(Second.TWO_DIGIT)
                 .fractionalSecondDigits(3)
                 .timeZoneName(TimeZoneName.SHORT);
-        if (timeZone != null) {
-            builder.timeZone(timeZone);
-        }
+        setTimeZone(builder);
         final String timeString =
                 IntlDateTimeFormat.format(value, IntlDateTimeFormat.DEFAULT_LOCALE, builder.build());
 
@@ -399,8 +391,8 @@ public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
 
     private Offset getOffset(final UTCDate value) {
         final String offsetString = getOffsetString(value);
-        int hours = getInt(offsetString.substring(1, 3));
-        int minutes = getInt(offsetString.substring(3, 5));
+        int hours = ClientStringUtil.getInt(offsetString.substring(1, 3));
+        int minutes = ClientStringUtil.getInt(offsetString.substring(3, 5));
         if (offsetString.charAt(0) == '-') {
             hours = hours * -1;
             minutes = minutes * -1;
@@ -410,8 +402,8 @@ public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
 
     private long getOffsetMillis(final UTCDate value) {
         final String offsetString = getOffsetString(value);
-        int hours = getInt(offsetString.substring(1, 3));
-        int minutes = getInt(offsetString.substring(3, 5));
+        int hours = ClientStringUtil.getInt(offsetString.substring(1, 3));
+        int minutes = ClientStringUtil.getInt(offsetString.substring(3, 5));
         long millis = (hours * MILLIS_IN_HOUR) + (minutes * MILLIS_IN_MINUTE);
         if (offsetString.charAt(0) == '-') {
             millis = millis * -1;
@@ -434,75 +426,13 @@ public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
         return dateTimeString.substring(index + 1);
     }
 
-    private static String zeroPad(final int amount, int value) {
-        return zeroPad(amount, "" + value);
-    }
-
-    private static String zeroPad(final int amount, final String in) {
-        final int left = amount - in.length();
-        final StringBuilder out = new StringBuilder();
-        for (int i = 0; i < left; i++) {
-            out.append("0");
-        }
-        out.append(in);
-        return out.toString();
-    }
-
-    private int getInt(final String string) {
-        int index = -1;
-        final char[] chars = string.toCharArray();
-        for (int i = 0; i < chars.length; i++) {
-            if (chars[i] == '0') {
-                index = i;
-            } else {
-                break;
-            }
-        }
-        String trimmed = string;
-        if (index != -1) {
-            trimmed = trimmed.substring(index + 1);
-        }
-        if (trimmed.length() == 0) {
-            return 0;
-        }
-        return Integer.parseInt(trimmed);
-    }
-
     private void setTimeZone(final FormatOptions.Builder builder) {
-        final String timeZone = getTimeZone();
-        if (timeZone != null) {
-            builder.timeZone(timeZone);
-        }
-    }
-
-    private String getTimeZone() {
-        final UserPreferences userPreferences = userPreferencesManager.getCurrentUserPreferences();
-        final UserTimeZone userTimeZone = userPreferences.getTimeZone();
-        String timeZone = null;
-        switch (userTimeZone.getUse()) {
-            case UTC: {
-                timeZone = "GMT";
-                break;
-            }
-            case ID: {
-                timeZone = userTimeZone.getId();
-                break;
-            }
-            case OFFSET: {
-                final String hours = zeroPad(2, userTimeZone.getOffsetHours());
-                final String minutes = zeroPad(2, userTimeZone.getOffsetMinutes());
-                String offset = hours + minutes;
-                if (userTimeZone.getOffsetHours() >= 0 && userTimeZone.getOffsetMinutes() >= 0) {
-                    offset = "+" + offset;
-                } else {
-                    offset = "-" + offset;
-                }
-
-                timeZone = "GMT" + offset;
-                break;
+        if (timeZoneProvider != null) {
+            final String timeZone = timeZoneProvider.get();
+            if (timeZone != null) {
+                builder.timeZone(timeZone);
             }
         }
-        return timeZone;
     }
 
     private DateRecord parseDate(final UTCDate value) {
@@ -517,9 +447,9 @@ public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
                 .format(value, EN_LOCALE, builder.build());
 
         final String[] dateParts = dateString.split("/");
-        final int day = getInt(dateParts[0]);
-        final int month = getInt(dateParts[1]) - 1;
-        final int year = getInt(dateParts[2]);
+        final int day = ClientStringUtil.getInt(dateParts[0]);
+        final int month = ClientStringUtil.getInt(dateParts[1]) - 1;
+        final int year = ClientStringUtil.getInt(dateParts[2]);
         return new DateRecord(year, month, day);
     }
 
@@ -541,11 +471,16 @@ public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
         }
         final String[] parts = timeString.split(":");
         final String[] secondParts = parts[2].split("\\.");
-        final int hour = getInt(parts[0]);
-        final int minute = getInt(parts[1]);
-        final int second = getInt(secondParts[0]);
-        final int millisecond = getInt(secondParts[1]);
+        final int hour = ClientStringUtil.getInt(parts[0]);
+        final int minute = ClientStringUtil.getInt(parts[1]);
+        final int second = ClientStringUtil.getInt(secondParts[0]);
+        final int millisecond = ClientStringUtil.getInt(secondParts[1]);
         return new TimeRecord(hour, minute, second, millisecond);
+    }
+
+    @Override
+    public void setTimeZoneProvider(final Provider<String> timeZoneProvider) {
+        this.timeZoneProvider = timeZoneProvider;
     }
 
     public interface Binder extends UiBinder<Widget, DateTimeViewImpl> {
