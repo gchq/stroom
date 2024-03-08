@@ -36,16 +36,14 @@ public class DateTimeFormatter {
         }
 
         Use use = Use.UTC;
-        String pattern = "YYYY-MM-DDTHH:mm:ss.SSS[Z]";
+        String pattern = "YYYY-MM-DD[T]HH:mm:ss.SSSZ";
         int offsetMinutes = 0;
         String zoneId = "UTC";
 
         final UserPreferences userPreferences = userPreferencesManager.getCurrentUserPreferences();
         if (userPreferences != null) {
-            if (userPreferences.getDateTimePattern() != null
-                    && userPreferences.getDateTimePattern().trim().length() > 0) {
-                pattern = userPreferences.getDateTimePattern();
-                pattern = convertJavaDateTimePattern(pattern);
+            if (userPreferences.getDateTimePattern() != null &&
+                    userPreferences.getDateTimePattern().trim().length() > 0) {
 
                 final TimeZone timeZone = userPreferences.getTimeZone();
                 if (timeZone != null) {
@@ -62,8 +60,19 @@ public class DateTimeFormatter {
 
                     zoneId = timeZone.getId();
                 }
+
+                pattern = userPreferences.getDateTimePattern();
+                pattern = convertJavaDateTimePattern(pattern);
             }
         }
+
+        // If UTC then just display the `Z` suffix.
+        if (Use.UTC.equals(use)) {
+            pattern = pattern.replaceAll("Z", "[Z]");
+        }
+        // Ensure we haven't doubled up square brackets.
+        pattern = pattern.replaceAll("\\[+", "[");
+        pattern = pattern.replaceAll("]+", "]");
 
         return nativeToDateString(ms, use.getDisplayValue(), pattern, zoneId, offsetMinutes);
     }
@@ -73,7 +82,8 @@ public class DateTimeFormatter {
         converted = converted.replace('y', 'Y');
         converted = converted.replace('d', 'D');
         converted = converted.replaceAll("'", "");
-        converted = converted.replaceAll("SSSXX", "SSS[Z]");
+        converted = converted.replaceAll("SSSXX", "SSSZ");
+        converted = converted.replaceAll("T", "[T]");
         converted = converted.replaceAll("xxx", "Z");
         converted = converted.replaceAll("xx", "z");
         converted = converted.replaceAll("VV", "ZZ");
