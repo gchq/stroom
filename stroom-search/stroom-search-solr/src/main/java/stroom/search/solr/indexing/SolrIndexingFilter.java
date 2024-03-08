@@ -16,6 +16,7 @@
 
 package stroom.search.solr.indexing;
 
+import stroom.datasource.api.v2.FieldType;
 import stroom.docref.DocRef;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
@@ -32,7 +33,6 @@ import stroom.search.solr.SolrIndexCache;
 import stroom.search.solr.SolrIndexClientCache;
 import stroom.search.solr.shared.SolrIndexDoc;
 import stroom.search.solr.shared.SolrIndexField;
-import stroom.search.solr.shared.SolrIndexFieldType;
 import stroom.svg.shared.SvgImage;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
@@ -258,10 +258,10 @@ class SolrIndexingFilter extends AbstractXMLFilter {
         try {
             Object val = null;
 
-            if (indexField.getFieldUse().isNumeric()) {
+            if (indexField.getType().isNumeric()) {
                 val = Long.parseLong(value);
 
-            } else if (SolrIndexFieldType.DATE_FIELD.equals(indexField.getFieldUse())) {
+            } else if (FieldType.DATE.equals(indexField.getType())) {
                 try {
                     val = DateUtil.parseUnknownString(value);
                 } catch (final Exception e) {

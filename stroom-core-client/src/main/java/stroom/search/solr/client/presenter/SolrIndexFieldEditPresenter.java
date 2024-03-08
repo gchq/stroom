@@ -17,9 +17,9 @@
 package stroom.search.solr.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
+import stroom.datasource.api.v2.FieldType;
 import stroom.search.solr.client.presenter.SolrIndexFieldEditPresenter.SolrIndexFieldEditView;
 import stroom.search.solr.shared.SolrIndexField;
-import stroom.search.solr.shared.SolrIndexFieldType;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -50,7 +50,7 @@ public class SolrIndexFieldEditPresenter extends MyPresenterWidget<SolrIndexFiel
         getView().setFieldTypes(fieldTypes);
 
         this.otherFieldNames = otherFieldNames;
-        getView().setFieldUse(indexField.getFieldUse());
+        getView().setType(indexField.getType());
         getView().setFieldName(indexField.getFieldName());
         getView().setFieldType(indexField.getFieldType());
         getView().setDefaultValue(indexField.getDefaultValue());
@@ -90,7 +90,7 @@ public class SolrIndexFieldEditPresenter extends MyPresenterWidget<SolrIndexFiel
             return false;
         }
 
-        indexField.setFieldUse(getView().getFieldUse());
+        indexField.setType(getView().getType());
         indexField.setFieldName(name);
         indexField.setFieldType(getView().getFieldType());
         if (getView().getDefaultValue().trim().length() == 0) {
@@ -130,9 +130,9 @@ public class SolrIndexFieldEditPresenter extends MyPresenterWidget<SolrIndexFiel
 
     public interface SolrIndexFieldEditView extends View, Focus {
 
-        SolrIndexFieldType getFieldUse();
+        FieldType getType();
 
-        void setFieldUse(SolrIndexFieldType fieldUse);
+        void setType(FieldType type);
 
         String getFieldName();
 

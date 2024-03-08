@@ -4,7 +4,10 @@ import stroom.docref.HasDisplayValue;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 public enum FieldType implements HasDisplayValue {
     ID(0,
@@ -138,6 +141,14 @@ public enum FieldType implements HasDisplayValue {
 
     public static FieldType get(final int index) {
         return TYPE_ARRAY[index];
+    }
+
+    public static final Map<String, FieldType> TYPE_NAME_MAP = new HashMap<>();
+
+    static {
+        for (final FieldType fieldType : values()) {
+            TYPE_NAME_MAP.put(fieldType.getDisplayValue().toLowerCase(Locale.ROOT), fieldType);
+        }
     }
 
     private final int index;

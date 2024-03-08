@@ -190,7 +190,7 @@ public class IndexFieldListPresenter extends DocumentEditPresenter<PagerView, In
         dataGrid.addResizableColumn(new Column<IndexField, String>(new TextCell()) {
             @Override
             public String getValue(final IndexField row) {
-                return row.getFieldType().getDisplayValue();
+                return row.getType().getDisplayValue();
             }
         }, "Type", 100);
     }

@@ -331,8 +331,10 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
                     }
                 }
 
+                final FieldType type = ElasticNativeTypes.fromNativeType(fieldName, nativeType);
                 fieldsMap.put(fieldName, new ElasticIndexField(
-                        ElasticNativeTypes.fromNativeType(fieldName, nativeType),
+                        type,
+                        null,
                         fieldName,
                         nativeType,
                         indexed));

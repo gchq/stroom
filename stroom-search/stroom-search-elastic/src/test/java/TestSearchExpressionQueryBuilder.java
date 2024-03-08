@@ -43,7 +43,7 @@ public class TestSearchExpressionQueryBuilder {
         ElasticIndexField answerField = new ElasticIndexField();
         answerField.setFieldName("answer");
         answerField.setFieldType("long");
-        answerField.setFieldUse(FieldType.LONG);
+        answerField.setType(FieldType.LONG);
         indexFieldsMap.put(answerField.getFieldName(), answerField);
         final Long answerFieldValue = 42L;
 
@@ -65,7 +65,7 @@ public class TestSearchExpressionQueryBuilder {
         ElasticIndexField nameField = new ElasticIndexField();
         nameField.setFieldName("name");
         nameField.setFieldType("text");
-        nameField.setFieldUse(FieldType.TEXT);
+        nameField.setType(FieldType.TEXT);
         indexFieldsMap.put(nameField.getFieldName(), nameField);
 
         // Add a nested NOT GREATER THAN date condition
@@ -73,7 +73,7 @@ public class TestSearchExpressionQueryBuilder {
         ElasticIndexField dateField = new ElasticIndexField();
         dateField.setFieldName("date");
         dateField.setFieldType("date");
-        dateField.setFieldUse(FieldType.DATE);
+        dateField.setType(FieldType.DATE);
         indexFieldsMap.put(dateField.getFieldName(), dateField);
         final String nowStr = "2021-02-17T01:23:34.000";
         final long expectedParsedDateFieldValue = 1613525014000L;

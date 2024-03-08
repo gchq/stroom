@@ -1,5 +1,6 @@
 package stroom.index.lucene980;
 
+import stroom.datasource.api.v2.FieldType;
 import stroom.docref.DocRef;
 import stroom.index.impl.IndexShardWriter;
 import stroom.index.impl.IndexShardWriterCache;
@@ -8,7 +9,6 @@ import stroom.index.impl.IndexSystemInfoProvider;
 import stroom.index.shared.IndexConstants;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexField;
-import stroom.index.shared.IndexFieldType;
 import stroom.index.shared.IndexShard;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.Meta;
@@ -160,7 +160,7 @@ class Lucene980SystemInfoProvider implements IndexSystemInfoProvider {
                     .findFirst()
                     .orElseThrow(() -> new RuntimeException("Can't find field " + IndexConstants.STREAM_ID));
 
-            if (IndexFieldType.ID.equals(streamIdField.getFieldType())) {
+            if (FieldType.ID.equals(streamIdField.getType())) {
                 return LongField.newExactQuery(IndexConstants.STREAM_ID, streamId);
             } else {
                 return new TermQuery(new Term(IndexConstants.STREAM_ID, streamId.toString()));

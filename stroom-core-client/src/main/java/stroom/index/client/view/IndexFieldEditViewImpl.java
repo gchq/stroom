@@ -16,9 +16,10 @@
 
 package stroom.index.client.view;
 
+import stroom.datasource.api.v2.FieldType;
 import stroom.index.client.presenter.IndexFieldEditPresenter.IndexFieldEditView;
 import stroom.index.shared.AnalyzerType;
-import stroom.index.shared.IndexFieldType;
+import stroom.index.shared.LuceneFieldTypes;
 import stroom.item.client.SelectionBox;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 
@@ -33,7 +34,7 @@ public class IndexFieldEditViewImpl extends ViewImpl implements IndexFieldEditVi
 
     private final Widget widget;
     @UiField
-    SelectionBox<IndexFieldType> type;
+    SelectionBox<FieldType> type;
     @UiField
     TextBox name;
     @UiField
@@ -51,7 +52,7 @@ public class IndexFieldEditViewImpl extends ViewImpl implements IndexFieldEditVi
     public IndexFieldEditViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
 
-        type.addItems(IndexFieldType.values());
+        type.addItems(LuceneFieldTypes.FIELD_TYPES);
         analyser.addItems(AnalyzerType.values());
     }
 
@@ -66,13 +67,13 @@ public class IndexFieldEditViewImpl extends ViewImpl implements IndexFieldEditVi
     }
 
     @Override
-    public IndexFieldType getFieldUse() {
+    public FieldType getType() {
         return type.getValue();
     }
 
     @Override
-    public void setFieldUse(final IndexFieldType fieldUse) {
-        type.setValue(fieldUse);
+    public void setType(final FieldType type) {
+        this.type.setValue(type);
     }
 
     @Override

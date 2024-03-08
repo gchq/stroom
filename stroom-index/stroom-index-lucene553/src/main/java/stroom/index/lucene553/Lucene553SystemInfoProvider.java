@@ -1,5 +1,6 @@
 package stroom.index.lucene553;
 
+import stroom.datasource.api.v2.FieldType;
 import stroom.docref.DocRef;
 import stroom.index.impl.IndexShardWriter;
 import stroom.index.impl.IndexShardWriterCache;
@@ -8,7 +9,6 @@ import stroom.index.impl.IndexSystemInfoProvider;
 import stroom.index.shared.IndexConstants;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexField;
-import stroom.index.shared.IndexFieldType;
 import stroom.index.shared.IndexShard;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.Meta;
@@ -160,7 +160,7 @@ class Lucene553SystemInfoProvider implements IndexSystemInfoProvider {
                     .findFirst()
                     .orElseThrow(() -> new RuntimeException("Can't find field " + IndexConstants.STREAM_ID));
 
-            if (IndexFieldType.ID.equals(streamIdField.getFieldType())) {
+            if (FieldType.ID.equals(streamIdField.getType())) {
                 return NumericRangeQuery.newLongRange(
                         IndexConstants.STREAM_ID,
                         streamId,

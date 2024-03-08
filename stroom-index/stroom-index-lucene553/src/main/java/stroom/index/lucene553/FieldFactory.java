@@ -57,47 +57,47 @@ class FieldFactory {
         final Val value = fieldValue.value();
 
         org.apache.lucene553.document.Field field = null;
-        switch (indexField.getFieldType()) {
-            case LONG_FIELD, NUMERIC_FIELD, ID -> {
+        switch (indexField.getType()) {
+            case LONG, ID -> {
                 try {
                     field = FieldFactory.create(indexField, value.toLong());
                 } catch (final Exception e) {
                     LOGGER.trace(e.getMessage(), e);
                 }
             }
-            case BOOLEAN_FIELD -> {
+            case BOOLEAN -> {
                 // TODo : We are indexing boolean as String, not sure this is right.
                 field = FieldFactory.create(indexField, value.toString());
             }
-            case INTEGER_FIELD -> {
+            case INTEGER -> {
                 try {
                     field = FieldFactory.createInt(indexField, value.toInteger());
                 } catch (final Exception e) {
                     LOGGER.trace(e.getMessage(), e);
                 }
             }
-            case FLOAT_FIELD -> {
+            case FLOAT -> {
                 try {
                     field = FieldFactory.createFloat(indexField, value.toDouble().floatValue());
                 } catch (final Exception e) {
                     LOGGER.trace(e.getMessage(), e);
                 }
             }
-            case DOUBLE_FIELD -> {
+            case DOUBLE -> {
                 try {
                     field = FieldFactory.createDouble(indexField, value.toDouble());
                 } catch (final Exception e) {
                     LOGGER.trace(e.getMessage(), e);
                 }
             }
-            case DATE_FIELD -> {
+            case DATE -> {
                 try {
                     field = FieldFactory.create(indexField, value.toLong());
                 } catch (final RuntimeException e) {
                     LOGGER.trace(e.getMessage(), e);
                 }
             }
-            case FIELD -> {
+            case TEXT -> {
                 field = FieldFactory.create(indexField, value.toString());
             }
         }

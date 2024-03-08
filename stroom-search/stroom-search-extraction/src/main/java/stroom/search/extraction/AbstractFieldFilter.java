@@ -16,9 +16,9 @@
 
 package stroom.search.extraction;
 
+import stroom.datasource.api.v2.FieldType;
 import stroom.index.shared.AnalyzerType;
 import stroom.index.shared.IndexField;
-import stroom.index.shared.IndexFieldType;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.filter.AbstractXMLFilter;
@@ -71,6 +71,7 @@ public abstract class AbstractFieldFilter extends AbstractXMLFilter {
         this.locationFactory = locationFactory;
         this.errorReceiverProxy = errorReceiverProxy;
     }
+
 
     /**
      * Sets the locator to use when reporting errors.
@@ -129,8 +130,8 @@ public abstract class AbstractFieldFilter extends AbstractXMLFilter {
         if (NAME.equals(currentElement)) {
             currentFieldBuilder.fieldName(string);
         } else if (TYPE.equals(currentElement)) {
-            final IndexFieldType indexFieldType = IndexFieldType.TYPE_MAP.get(string.toLowerCase(Locale.ROOT));
-            currentFieldBuilder.fieldType(indexFieldType);
+            final FieldType type = FieldType.TYPE_NAME_MAP.get(string.toLowerCase(Locale.ROOT));
+            currentFieldBuilder.type(type);
         } else if (ANALYSER.equals(currentElement)) {
             final AnalyzerType analyzerType = AnalyzerType.TYPE_MAP.get(string.toLowerCase(Locale.ROOT));
             currentFieldBuilder.analyzerType(analyzerType);
@@ -151,32 +152,32 @@ public abstract class AbstractFieldFilter extends AbstractXMLFilter {
 
     private Val convertValue(final IndexField indexField, final String value) {
         try {
-            switch (indexField.getFieldType()) {
-                case LONG_FIELD, NUMERIC_FIELD, ID -> {
+            switch (indexField.getType()) {
+                case LONG, ID -> {
                     final long val = Long.parseLong(value);
                     return ValLong.create(val);
                 }
-                case BOOLEAN_FIELD -> {
+                case BOOLEAN -> {
                     final boolean val = Boolean.parseBoolean(value);
                     return ValBoolean.create(val);
                 }
-                case INTEGER_FIELD -> {
+                case INTEGER -> {
                     final int val = Integer.parseInt(value);
                     return ValInteger.create(val);
                 }
-                case FLOAT_FIELD -> {
+                case FLOAT -> {
                     final float val = Float.parseFloat(value);
                     return ValFloat.create(val);
                 }
-                case DOUBLE_FIELD -> {
+                case DOUBLE -> {
                     final double val = Double.parseDouble(value);
                     return ValDouble.create(val);
                 }
-                case DATE_FIELD -> {
+                case DATE -> {
                     final long val = DateUtil.parseNormalDateTimeString(value);
                     return ValDate.create(val);
                 }
-                case FIELD -> {
+                case TEXT -> {
                     return ValString.create(value);
                 }
             }

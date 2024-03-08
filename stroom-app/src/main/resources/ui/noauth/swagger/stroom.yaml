@@ -9119,8 +9119,23 @@ components:
           - TEXT
           - KEYWORD
           - IPV4_ADDRESS
+          - DOC_REF
         indexed:
           type: boolean
+        type:
+          type: string
+          enum:
+          - ID
+          - BOOLEAN
+          - INTEGER
+          - LONG
+          - FLOAT
+          - DOUBLE
+          - DATE
+          - TEXT
+          - KEYWORD
+          - IPV4_ADDRESS
+          - DOC_REF
     ElasticIndexTestResponse:
       type: object
       properties:
@@ -11128,6 +11143,20 @@ components:
           type: boolean
         termPositions:
           type: boolean
+        type:
+          type: string
+          enum:
+          - ID
+          - BOOLEAN
+          - INTEGER
+          - LONG
+          - FLOAT
+          - DOUBLE
+          - DATE
+          - TEXT
+          - KEYWORD
+          - IPV4_ADDRESS
+          - DOC_REF
     IndexShard:
       type: object
       properties:
@@ -14316,6 +14345,20 @@ components:
           type: boolean
         termVectors:
           type: boolean
+        type:
+          type: string
+          enum:
+          - ID
+          - BOOLEAN
+          - INTEGER
+          - LONG
+          - FLOAT
+          - DOUBLE
+          - DATE
+          - TEXT
+          - KEYWORD
+          - IPV4_ADDRESS
+          - DOC_REF
         uninvertible:
           type: boolean
     SolrSynchState:

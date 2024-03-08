@@ -16,6 +16,7 @@
 
 package stroom.index.shared;
 
+import stroom.datasource.api.v2.FieldType;
 import stroom.docref.HasDisplayValue;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 
@@ -23,10 +24,6 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
-import jakarta.xml.bind.annotation.XmlElement;
-import jakarta.xml.bind.annotation.XmlType;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -38,55 +35,80 @@ import java.util.Objects;
  * Wrapper for index field info
  * </p>
  */
-@XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "indexField", propOrder = {
-        "analyzerType",
-        "caseSensitive",
-        "fieldName",
-        "fieldType",
-        "indexed",
-        "stored",
-        "termPositions"})
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class IndexField implements HasDisplayValue, Comparable<IndexField>, Serializable {
 
-    @XmlElement(name = "fieldType")
     @JsonProperty
-    private final IndexFieldType fieldType;
-    @XmlElement(name = "fieldName")
+    private final FieldType type;
+    @Deprecated
+    @JsonProperty("fieldType")
+    private OldIndexFieldType fieldType;
     @JsonProperty
     private final String fieldName;
-    @XmlElement(name = "analyzerType")
     @JsonProperty
     private final AnalyzerType analyzerType;
-    @XmlElement(name = "indexed")
     @JsonProperty
     private final boolean indexed;
-    @XmlElement(name = "stored")
     @JsonProperty
     private final boolean stored;
-    @XmlElement(name = "termPositions")
     @JsonProperty
     private final boolean termPositions;
-    @XmlElement(name = "caseSensitive")
     @JsonProperty
     private final boolean caseSensitive;
 
     @JsonCreator
-    public IndexField(@JsonProperty("fieldType") final IndexFieldType fieldType,
+    public IndexField(@JsonProperty("type") final FieldType type,
+                      @Deprecated @JsonProperty("fieldType") final OldIndexFieldType fieldType,
                       @JsonProperty("fieldName") final String fieldName,
                       @JsonProperty("analyzerType") final AnalyzerType analyzerType,
                       @JsonProperty("indexed") final boolean indexed,
                       @JsonProperty("stored") final boolean stored,
                       @JsonProperty("termPositions") final boolean termPositions,
                       @JsonProperty("caseSensitive") final boolean caseSensitive) {
-        this.fieldType = fieldType;
+        if (type == null && fieldType != null) {
+            this.type = convertLegacyType(fieldType);
+        } else {
+            this.type = type;
+        }
         this.fieldName = fieldName;
         this.analyzerType = analyzerType;
         this.stored = stored;
         this.indexed = indexed;
         this.termPositions = termPositions;
         this.caseSensitive = caseSensitive;
+    }
+
+    private FieldType convertLegacyType(final OldIndexFieldType fieldType) {
+        switch (fieldType) {
+            case ID: {
+                return FieldType.ID;
+            }
+            case BOOLEAN_FIELD: {
+                return FieldType.BOOLEAN;
+            }
+            case INTEGER_FIELD: {
+                return FieldType.INTEGER;
+            }
+            case LONG_FIELD: {
+                return FieldType.LONG;
+            }
+            case FLOAT_FIELD: {
+                return FieldType.FLOAT;
+            }
+            case DOUBLE_FIELD: {
+                return FieldType.DOUBLE;
+            }
+            case DATE_FIELD: {
+                return FieldType.DATE;
+            }
+            case FIELD: {
+                return FieldType.TEXT;
+            }
+            case NUMERIC_FIELD: {
+                return FieldType.LONG;
+            }
+        }
+        return FieldType.TEXT;
     }
 
     public static IndexField createField(final String fieldName) {
@@ -130,7 +152,7 @@ public class IndexField implements HasDisplayValue, Comparable<IndexField>, Seri
 
     public static IndexField createNumericField(final String fieldName) {
         return new Builder()
-                .fieldType(IndexFieldType.NUMERIC_FIELD)
+                .type(FieldType.LONG)
                 .fieldName(fieldName)
                 .analyzerType(AnalyzerType.NUMERIC)
                 .build();
@@ -138,7 +160,7 @@ public class IndexField implements HasDisplayValue, Comparable<IndexField>, Seri
 
     public static IndexField createIdField(final String fieldName) {
         return new Builder()
-                .fieldType(IndexFieldType.ID)
+                .type(FieldType.ID)
                 .fieldName(fieldName)
                 .analyzerType(AnalyzerType.KEYWORD)
                 .stored(true)
@@ -147,19 +169,25 @@ public class IndexField implements HasDisplayValue, Comparable<IndexField>, Seri
 
     public static IndexField createDateField(final String fieldName) {
         return new Builder()
-                .fieldType(IndexFieldType.DATE_FIELD)
+                .type(FieldType.DATE)
                 .fieldName(fieldName)
                 .analyzerType(AnalyzerType.ALPHA_NUMERIC)
                 .build();
     }
 
-    public IndexFieldType getFieldType() {
-        if (fieldType == null) {
-            return IndexFieldType.FIELD;
-        }
-
-        return fieldType;
+    public FieldType getType() {
+        return type;
     }
+
+    //    @JsonProperty
+//    @Deprecated
+//    public OldIndexFieldType getFieldType() {
+//        if (fieldType == null) {
+//            return OldIndexFieldType.FIELD;
+//        }
+//
+//        return fieldType;
+//    }
 
     public String getFieldName() {
         return fieldName;
@@ -289,7 +317,7 @@ public class IndexField implements HasDisplayValue, Comparable<IndexField>, Seri
 
     public static final class Builder {
 
-        private IndexFieldType fieldType = IndexFieldType.FIELD;
+        private FieldType type = FieldType.TEXT;
         private String fieldName;
         private AnalyzerType analyzerType = AnalyzerType.KEYWORD;
         private boolean indexed = true;
@@ -301,7 +329,7 @@ public class IndexField implements HasDisplayValue, Comparable<IndexField>, Seri
         }
 
         private Builder(final IndexField indexField) {
-            this.fieldType = indexField.fieldType;
+            this.type = indexField.type;
             this.fieldName = indexField.fieldName;
             this.analyzerType = indexField.analyzerType;
             this.indexed = indexField.indexed;
@@ -310,8 +338,8 @@ public class IndexField implements HasDisplayValue, Comparable<IndexField>, Seri
             this.caseSensitive = indexField.caseSensitive;
         }
 
-        public Builder fieldType(final IndexFieldType fieldType) {
-            this.fieldType = fieldType;
+        public Builder type(final FieldType type) {
+            this.type = type;
             return this;
         }
 
@@ -346,7 +374,15 @@ public class IndexField implements HasDisplayValue, Comparable<IndexField>, Seri
         }
 
         public IndexField build() {
-            return new IndexField(fieldType, fieldName, analyzerType, indexed, stored, termPositions, caseSensitive);
+            return new IndexField(
+                    type,
+                    null,
+                    fieldName,
+                    analyzerType,
+                    indexed,
+                    stored,
+                    termPositions,
+                    caseSensitive);
         }
     }
 }

@@ -18,7 +18,8 @@ package stroom.search.solr.shared;
 
 import stroom.docref.HasDisplayValue;
 
-public enum SolrIndexFieldType implements HasDisplayValue {
+@Deprecated
+public enum OldSolrIndexFieldType implements HasDisplayValue {
     ID("Id", true),
     BOOLEAN_FIELD("Boolean", false),
     INTEGER_FIELD("Integer", true),
@@ -32,7 +33,7 @@ public enum SolrIndexFieldType implements HasDisplayValue {
     private final String displayValue;
     private final boolean numeric;
 
-    SolrIndexFieldType(final String displayValue, final boolean numeric) {
+    OldSolrIndexFieldType(final String displayValue, final boolean numeric) {
         this.displayValue = displayValue;
         this.numeric = numeric;
     }

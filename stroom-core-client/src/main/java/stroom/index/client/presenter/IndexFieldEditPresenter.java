@@ -16,10 +16,10 @@
 
 package stroom.index.client.presenter;
 
+import stroom.datasource.api.v2.FieldType;
 import stroom.index.client.presenter.IndexFieldEditPresenter.IndexFieldEditView;
 import stroom.index.shared.AnalyzerType;
 import stroom.index.shared.IndexField;
-import stroom.index.shared.IndexFieldType;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -45,7 +45,7 @@ public class IndexFieldEditPresenter extends MyPresenterWidget<IndexFieldEditVie
 
     public void read(final IndexField indexField, final Set<String> otherFieldNames) {
         this.otherFieldNames = otherFieldNames;
-        getView().setFieldUse(indexField.getFieldType());
+        getView().setType(indexField.getType());
         getView().setFieldName(indexField.getFieldName());
         getView().setStored(indexField.isStored());
         getView().setIndexed(indexField.isIndexed());
@@ -67,7 +67,7 @@ public class IndexFieldEditPresenter extends MyPresenterWidget<IndexFieldEditVie
 
         return IndexField
                 .builder()
-                .fieldType(getView().getFieldUse())
+                .type(getView().getType())
                 .fieldName(name)
                 .stored(getView().isStored())
                 .indexed(getView().isIndexed())
@@ -90,9 +90,9 @@ public class IndexFieldEditPresenter extends MyPresenterWidget<IndexFieldEditVie
 
     public interface IndexFieldEditView extends View, Focus {
 
-        IndexFieldType getFieldUse();
+        FieldType getType();
 
-        void setFieldUse(IndexFieldType fieldUse);
+        void setType(FieldType type);
 
         String getFieldName();
 

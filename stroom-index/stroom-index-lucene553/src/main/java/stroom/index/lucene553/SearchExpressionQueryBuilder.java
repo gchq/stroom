@@ -17,13 +17,13 @@
 
 package stroom.index.lucene553;
 
+import stroom.datasource.api.v2.FieldType;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
 import stroom.expression.api.DateTimeSettings;
 import stroom.index.lucene553.analyser.AnalyzerFactory;
 import stroom.index.shared.AnalyzerType;
 import stroom.index.shared.IndexField;
-import stroom.index.shared.IndexFieldType;
 import stroom.index.shared.IndexFieldsMap;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
@@ -269,7 +269,7 @@ class SearchExpressionQueryBuilder {
 
 
         // Create a query based on the field type and condition.
-        if (IndexFieldType.INTEGER_FIELD.equals(indexField.getFieldType())) {
+        if (FieldType.INTEGER.equals(indexField.getType())) {
             switch (condition) {
                 case EQUALS -> {
                     final int num1 = getInt(fieldName, value);
@@ -315,9 +315,9 @@ class SearchExpressionQueryBuilder {
                     return getDictionary(fieldName, docRef, indexField, terms);
                 }
                 default -> throw new SearchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
-                        + indexField.getFieldType().getDisplayValue() + " field type");
+                        + indexField.getType().getDisplayValue() + " field type");
             }
-        } else if (IndexFieldType.LONG_FIELD.equals(indexField.getFieldType())) {
+        } else if (FieldType.LONG.equals(indexField.getType())) {
             switch (condition) {
                 case EQUALS -> {
                     final Long num1 = getLong(fieldName, value);
@@ -363,9 +363,9 @@ class SearchExpressionQueryBuilder {
                     return getDictionary(fieldName, docRef, indexField, terms);
                 }
                 default -> throw new SearchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
-                        + indexField.getFieldType().getDisplayValue() + " field type");
+                        + indexField.getType().getDisplayValue() + " field type");
             }
-        } else if (IndexFieldType.FLOAT_FIELD.equals(indexField.getFieldType())) {
+        } else if (FieldType.FLOAT.equals(indexField.getType())) {
             switch (condition) {
                 case EQUALS -> {
                     final Float num1 = getFloat(fieldName, value);
@@ -414,9 +414,9 @@ class SearchExpressionQueryBuilder {
                     return getDictionary(fieldName, docRef, indexField, terms);
                 }
                 default -> throw new SearchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
-                        + indexField.getFieldType().getDisplayValue() + " field type");
+                        + indexField.getType().getDisplayValue() + " field type");
             }
-        } else if (IndexFieldType.DOUBLE_FIELD.equals(indexField.getFieldType())) {
+        } else if (FieldType.DOUBLE.equals(indexField.getType())) {
             switch (condition) {
                 case EQUALS -> {
                     final Double num1 = getDouble(fieldName, value);
@@ -474,9 +474,9 @@ class SearchExpressionQueryBuilder {
                     return getDictionary(fieldName, docRef, indexField, terms);
                 }
                 default -> throw new SearchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
-                        + indexField.getFieldType().getDisplayValue() + " field type");
+                        + indexField.getType().getDisplayValue() + " field type");
             }
-        } else if (IndexFieldType.DATE_FIELD.equals(indexField.getFieldType())) {
+        } else if (FieldType.DATE.equals(indexField.getType())) {
             switch (condition) {
                 case EQUALS -> {
                     final Long date1 = DateExpressionParser.getMs(fieldName, value, dateTimeSettings);
@@ -538,9 +538,9 @@ class SearchExpressionQueryBuilder {
                     return getDictionary(fieldName, docRef, indexField, terms);
                 }
                 default -> throw new SearchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
-                        + indexField.getFieldType().getDisplayValue() + " field type");
+                        + indexField.getType().getDisplayValue() + " field type");
             }
-        } else if (indexField.getFieldType().isNumeric()) {
+        } else if (indexField.getType().isNumeric()) {
             switch (condition) {
                 case EQUALS -> {
                     final Long num1 = getLong(fieldName, value);
@@ -586,7 +586,7 @@ class SearchExpressionQueryBuilder {
                     return getDictionary(fieldName, docRef, indexField, terms);
                 }
                 default -> throw new SearchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
-                        + indexField.getFieldType().getDisplayValue() + " field type");
+                        + indexField.getType().getDisplayValue() + " field type");
             }
         } else {
             return switch (condition) {
@@ -598,7 +598,7 @@ class SearchExpressionQueryBuilder {
                 case IN_DICTIONARY -> getDictionary(fieldName, docRef, indexField, terms);
                 case IS_DOC_REF -> getSubQuery(indexField, docRef.getUuid(), terms, false);
                 default -> throw new SearchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
-                        + indexField.getFieldType().getDisplayValue() + " field type");
+                        + indexField.getType().getDisplayValue() + " field type");
             };
         }
     }
@@ -740,17 +740,17 @@ class SearchExpressionQueryBuilder {
         for (final String val : wordArr) {
             Query query;
 
-            if (IndexFieldType.INTEGER_FIELD.equals(indexField.getFieldType())) {
+            if (FieldType.INTEGER.equals(indexField.getType())) {
                 query = getIntIn(fieldName, val);
-            } else if (IndexFieldType.LONG_FIELD.equals(indexField.getFieldType())) {
+            } else if (FieldType.LONG.equals(indexField.getType())) {
                 query = getLongIn(fieldName, val);
-            } else if (IndexFieldType.FLOAT_FIELD.equals(indexField.getFieldType())) {
+            } else if (FieldType.FLOAT.equals(indexField.getType())) {
                 query = getFloatIn(fieldName, val);
-            } else if (IndexFieldType.DOUBLE_FIELD.equals(indexField.getFieldType())) {
+            } else if (FieldType.DOUBLE.equals(indexField.getType())) {
                 query = getDoubleIn(fieldName, val);
-            } else if (IndexFieldType.DATE_FIELD.equals(indexField.getFieldType())) {
+            } else if (FieldType.DATE.equals(indexField.getType())) {
                 query = getDateIn(fieldName, val);
-            } else if (indexField.getFieldType().isNumeric()) {
+            } else if (indexField.getType().isNumeric()) {
                 query = getLongIn(fieldName, val);
             } else {
                 query = getSubQuery(indexField, val, terms, false);

@@ -16,6 +16,7 @@
 
 package stroom.index;
 
+import stroom.datasource.api.v2.FieldType;
 import stroom.docref.DocRef;
 import stroom.index.impl.IndexDocument;
 import stroom.index.impl.IndexShardKeyUtil;
@@ -26,7 +27,6 @@ import stroom.index.mock.MockIndexShardWriterCache;
 import stroom.index.shared.AnalyzerType;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexField;
-import stroom.index.shared.IndexFieldType;
 import stroom.index.shared.IndexFields;
 import stroom.index.shared.IndexShardKey;
 import stroom.pipeline.PipelineStore;
@@ -93,7 +93,7 @@ class TestIndexingFilter extends AbstractProcessIntegrationTest {
         indexFields.add(IndexField.createField("sid2", AnalyzerType.ALPHA_NUMERIC, false, true, true, false));
         indexFields.add(IndexField
                 .builder()
-                .fieldType(IndexFieldType.NUMERIC_FIELD)
+                .type(FieldType.LONG)
                 .fieldName("size")
                 .analyzerType(AnalyzerType.KEYWORD)
                 .indexed(false)

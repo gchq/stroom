@@ -22,7 +22,8 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
-public enum IndexFieldType implements HasDisplayValue {
+@Deprecated
+public enum OldIndexFieldType implements HasDisplayValue {
     ID("Id", true),
     BOOLEAN_FIELD("Boolean", false),
     INTEGER_FIELD("Integer", true),
@@ -33,7 +34,7 @@ public enum IndexFieldType implements HasDisplayValue {
     FIELD("Text", false),
     NUMERIC_FIELD("Number", true); // Alias for LONG_FIELD.
 
-    public static final Map<String, IndexFieldType> TYPE_MAP = new HashMap<>();
+    public static final Map<String, OldIndexFieldType> TYPE_MAP = new HashMap<>();
 
     static {
         TYPE_MAP.put(ID.displayValue.toLowerCase(Locale.ROOT), ID);
@@ -50,7 +51,7 @@ public enum IndexFieldType implements HasDisplayValue {
     private final String displayValue;
     private final boolean numeric;
 
-    IndexFieldType(final String displayValue, final boolean numeric) {
+    OldIndexFieldType(final String displayValue, final boolean numeric) {
         this.displayValue = displayValue;
         this.numeric = numeric;
     }

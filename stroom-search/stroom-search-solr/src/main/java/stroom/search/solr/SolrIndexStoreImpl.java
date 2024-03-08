@@ -17,6 +17,7 @@
 
 package stroom.search.solr;
 
+import stroom.datasource.api.v2.FieldType;
 import stroom.docref.DocContentHighlights;
 import stroom.docref.DocContentMatch;
 import stroom.docref.DocRef;
@@ -32,7 +33,6 @@ import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.search.solr.shared.SolrIndexDoc;
 import stroom.search.solr.shared.SolrIndexField;
-import stroom.search.solr.shared.SolrIndexFieldType;
 import stroom.search.solr.shared.SolrSynchState;
 import stroom.security.api.SecurityContext;
 import stroom.util.logging.LambdaLogger;
@@ -289,11 +289,11 @@ public class SolrIndexStoreImpl implements SolrIndexStore {
                 .stream()
                 .map(v -> {
                     final SolrIndexField field = fromAttributes(v);
-                    field.setFieldUse(SolrIndexFieldType.FIELD);
+                    field.setType(FieldType.TEXT);
 
                     final SolrIndexField existingField = existingFieldMap.get(field.getFieldName());
                     if (existingField != null) {
-                        field.setFieldUse(existingField.getFieldUse());
+                        field.setType(existingField.getType());
                     }
 
                     return field;

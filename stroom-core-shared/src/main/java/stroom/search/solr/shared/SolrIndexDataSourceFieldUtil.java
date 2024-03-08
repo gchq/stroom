@@ -44,22 +44,22 @@ public final class SolrIndexDataSourceFieldUtil {
     }
 
     private static QueryField convert(final SolrIndexField field) {
-        switch (field.getFieldUse()) {
+        switch (field.getType()) {
             case ID:
                 return new IdField(field.getFieldName(), ConditionSet.SOLR_NUMERIC, null, field.isIndexed());
-            case BOOLEAN_FIELD:
+            case BOOLEAN:
                 return new BooleanField(field.getFieldName(), ConditionSet.SOLR_BOOLEAN, null, field.isIndexed());
-            case INTEGER_FIELD:
+            case INTEGER:
                 return new IntegerField(field.getFieldName(), ConditionSet.SOLR_NUMERIC, null, field.isIndexed());
-            case LONG_FIELD:
+            case LONG:
                 return new LongField(field.getFieldName(), ConditionSet.SOLR_NUMERIC, null, field.isIndexed());
-            case FLOAT_FIELD:
+            case FLOAT:
                 return new FloatField(field.getFieldName(), ConditionSet.SOLR_NUMERIC, null, field.isIndexed());
-            case DOUBLE_FIELD:
+            case DOUBLE:
                 return new DoubleField(field.getFieldName(), ConditionSet.SOLR_NUMERIC, null, field.isIndexed());
-            case DATE_FIELD:
+            case DATE:
                 return new DateField(field.getFieldName(), ConditionSet.SOLR_DATE, null, field.isIndexed());
-            case FIELD:
+            case TEXT:
                 return new TextField(field.getFieldName(), ConditionSet.SOLR_TEXT, null, field.isIndexed());
         }
 

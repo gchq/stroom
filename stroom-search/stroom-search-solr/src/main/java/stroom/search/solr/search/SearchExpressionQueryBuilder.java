@@ -17,6 +17,7 @@
 
 package stroom.search.solr.search;
 
+import stroom.datasource.api.v2.FieldType;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
 import stroom.expression.api.DateTimeSettings;
@@ -26,7 +27,6 @@ import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.common.v2.DateExpressionParser;
 import stroom.search.solr.shared.SolrIndexField;
-import stroom.search.solr.shared.SolrIndexFieldType;
 
 import org.apache.lucene553.index.Term;
 import org.apache.lucene553.search.BooleanClause;
@@ -239,7 +239,7 @@ public class SearchExpressionQueryBuilder {
         }
 
         // Create a query based on the field type and condition.
-        if (indexField.getFieldUse().isNumeric()) {
+        if (indexField.getType().isNumeric()) {
             switch (condition) {
                 case EQUALS -> {
                     final Long num1 = getNumber(fieldName, value);
@@ -292,9 +292,9 @@ public class SearchExpressionQueryBuilder {
                     return getDictionary(fieldName, docRef, indexField, terms);
                 }
                 default -> throw new SearchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
-                        + indexField.getFieldUse().getDisplayValue() + " field type");
+                        + indexField.getType().getDisplayValue() + " field type");
             }
-        } else if (SolrIndexFieldType.DATE_FIELD.equals(indexField.getFieldUse())) {
+        } else if (FieldType.DATE.equals(indexField.getType())) {
             switch (condition) {
                 case EQUALS -> {
                     final Long date1 = DateExpressionParser.getMs(fieldName, value, dateTimeSettings);
@@ -360,7 +360,7 @@ public class SearchExpressionQueryBuilder {
                     return getDictionary(fieldName, docRef, indexField, terms);
                 }
                 default -> throw new SearchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
-                        + indexField.getFieldUse().getDisplayValue() + " field type");
+                        + indexField.getType().getDisplayValue() + " field type");
             }
         } else {
             return switch (condition) {
@@ -372,7 +372,7 @@ public class SearchExpressionQueryBuilder {
                 case IN_DICTIONARY -> getDictionary(fieldName, docRef, indexField, terms);
                 case IS_DOC_REF -> getSubQuery(indexField, docRef.getUuid(), terms, false);
                 default -> throw new SearchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
-                        + indexField.getFieldUse().getDisplayValue() + " field type");
+                        + indexField.getType().getDisplayValue() + " field type");
             };
         }
     }
@@ -457,9 +457,9 @@ public class SearchExpressionQueryBuilder {
         for (final String val : wordArr) {
             Query query;
 
-            if (indexField.getFieldUse().isNumeric()) {
+            if (indexField.getType().isNumeric()) {
                 query = getNumericIn(fieldName, val);
-            } else if (SolrIndexFieldType.DATE_FIELD.equals(indexField.getFieldUse())) {
+            } else if (FieldType.DATE.equals(indexField.getType())) {
                 query = getDateIn(fieldName, val);
             } else {
                 query = getSubQuery(indexField, val, terms, false);

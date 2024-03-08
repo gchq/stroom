@@ -154,8 +154,8 @@ public class SolrIndexFieldListPresenter extends DocumentEditPresenter<SolrIndex
 
     private void addColumns() {
         addStringColumn("Name", 150, SolrIndexField::getFieldName);
-        addStringColumn("Use", row -> row.getFieldUse().getDisplayValue());
-        addStringColumn("Type", SolrIndexField::getFieldType);
+        addStringColumn("Type", row -> row.getType().getDisplayValue());
+        addStringColumn("Field Type", SolrIndexField::getFieldType);
         addStringColumn("Default Value", SolrIndexField::getDefaultValue);
         addBooleanColumn("Stored", SolrIndexField::isStored);
         addBooleanColumn("Indexed", SolrIndexField::isIndexed);

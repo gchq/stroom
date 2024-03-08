@@ -12917,10 +12917,14 @@
           },
           "fieldUse" : {
             "type" : "string",
-            "enum" : [ "ID", "BOOLEAN", "INTEGER", "LONG", "FLOAT", "DOUBLE", "DATE", "TEXT", "KEYWORD", "IPV4_ADDRESS" ]
+            "enum" : [ "ID", "BOOLEAN", "INTEGER", "LONG", "FLOAT", "DOUBLE", "DATE", "TEXT", "KEYWORD", "IPV4_ADDRESS", "DOC_REF" ]
           },
           "indexed" : {
             "type" : "boolean"
+          },
+          "type" : {
+            "type" : "string",
+            "enum" : [ "ID", "BOOLEAN", "INTEGER", "LONG", "FLOAT", "DOUBLE", "DATE", "TEXT", "KEYWORD", "IPV4_ADDRESS", "DOC_REF" ]
           }
         }
       },
@@ -14836,6 +14840,10 @@
           },
           "termPositions" : {
             "type" : "boolean"
+          },
+          "type" : {
+            "type" : "string",
+            "enum" : [ "ID", "BOOLEAN", "INTEGER", "LONG", "FLOAT", "DOUBLE", "DATE", "TEXT", "KEYWORD", "IPV4_ADDRESS", "DOC_REF" ]
           }
         }
       },
@@ -18590,6 +18598,10 @@
           },
           "termVectors" : {
             "type" : "boolean"
+          },
+          "type" : {
+            "type" : "string",
+            "enum" : [ "ID", "BOOLEAN", "INTEGER", "LONG", "FLOAT", "DOUBLE", "DATE", "TEXT", "KEYWORD", "IPV4_ADDRESS", "DOC_REF" ]
           },
           "uninvertible" : {
             "type" : "boolean"

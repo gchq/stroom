@@ -149,7 +149,7 @@ public class SearchExpressionQueryBuilder {
         }
 
         // Create a query based on the field type and condition.
-        final FieldType elasticFieldType = indexField.getFieldUse();
+        final FieldType elasticFieldType = indexField.getType();
         if (elasticFieldType.equals(FieldType.ID) ||
                 elasticFieldType.equals(FieldType.LONG) ||
                 elasticFieldType.equals(FieldType.INTEGER)) {
@@ -204,7 +204,7 @@ public class SearchExpressionQueryBuilder {
                 default -> throw new UnsupportedOperationException("Unsupported condition '" +
                         condition.getDisplayValue() +
                         "' for " +
-                        indexField.getFieldUse().getDisplayValue() +
+                        indexField.getType().getDisplayValue() +
                         " field type");
             }
         } else {
@@ -232,7 +232,7 @@ public class SearchExpressionQueryBuilder {
                     return buildDictionaryQuery(condition, fieldName, docRef, indexField);
                 }
                 default -> throw new UnsupportedOperationException("Unsupported condition '" +
-                        condition.getDisplayValue() + "' for " + indexField.getFieldUse().getDisplayValue() +
+                        condition.getDisplayValue() + "' for " + indexField.getType().getDisplayValue() +
                         " field type");
             }
         }
@@ -330,7 +330,7 @@ public class SearchExpressionQueryBuilder {
                 return buildDictionaryQuery(condition, fieldName, docRef, indexField);
             }
             default -> throw new SearchException("Unexpected condition '" + condition.getDisplayValue() + "' for " +
-                    indexField.getFieldUse().getDisplayValue() + " field type");
+                    indexField.getType().getDisplayValue() + " field type");
         }
     }
 
@@ -437,7 +437,7 @@ public class SearchExpressionQueryBuilder {
 
         for (final String line : lines) {
             final BoolQueryBuilder mustQueries = QueryBuilders.boolQuery();
-            final FieldType elasticFieldType = indexField.getFieldUse();
+            final FieldType elasticFieldType = indexField.getType();
 
             if (elasticFieldType.equals(FieldType.ID) ||
                     elasticFieldType.equals(FieldType.LONG) ||

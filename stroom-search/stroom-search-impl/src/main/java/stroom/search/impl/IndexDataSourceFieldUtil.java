@@ -54,23 +54,22 @@ public final class IndexDataSourceFieldUtil {
     }
 
     private static QueryField convert(final IndexField field) {
-        switch (field.getFieldType()) {
+        switch (field.getType()) {
             case ID:
                 return new IdField(field.getFieldName(), field.isIndexed());
-            case BOOLEAN_FIELD:
+            case BOOLEAN:
                 return new BooleanField(field.getFieldName(), field.isIndexed());
-            case INTEGER_FIELD:
+            case INTEGER:
                 return new IntegerField(field.getFieldName(), field.isIndexed());
-            case NUMERIC_FIELD: // Alias for LONG_FIELD
-            case LONG_FIELD:
+            case LONG:
                 return new LongField(field.getFieldName(), field.isIndexed());
-            case FLOAT_FIELD:
+            case FLOAT:
                 return new FloatField(field.getFieldName(), field.isIndexed());
-            case DOUBLE_FIELD:
+            case DOUBLE:
                 return new DoubleField(field.getFieldName(), field.isIndexed());
-            case DATE_FIELD:
+            case DATE:
                 return new DateField(field.getFieldName(), field.isIndexed());
-            case FIELD:
+            case TEXT:
                 return new TextField(field.getFieldName(), field.isIndexed());
         }
 

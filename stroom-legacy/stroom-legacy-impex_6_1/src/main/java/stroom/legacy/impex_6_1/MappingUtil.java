@@ -2,7 +2,7 @@ package stroom.legacy.impex_6_1;
 
 import stroom.index.shared.AnalyzerType;
 import stroom.index.shared.IndexField;
-import stroom.index.shared.IndexFieldType;
+import stroom.index.shared.OldIndexFieldType;
 import stroom.query.api.v2.Column;
 import stroom.query.api.v2.ConditionalFormattingRule;
 import stroom.util.shared.time.TimeUnit;
@@ -649,9 +649,9 @@ public final class MappingUtil {
             return null;
         }
 
-        IndexFieldType indexFieldType = null;
+        OldIndexFieldType indexFieldType = null;
         if (value.getFieldType() != null) {
-            indexFieldType = IndexFieldType.valueOf(value.getFieldType().name());
+            indexFieldType = OldIndexFieldType.valueOf(value.getFieldType().name());
         }
         final String fieldName = value.getFieldName();
         AnalyzerType analyzerType = null;
@@ -664,6 +664,7 @@ public final class MappingUtil {
         final boolean caseSensitive = value.isCaseSensitive();
 
         return new IndexField(
+                null,
                 indexFieldType,
                 fieldName,
                 analyzerType,

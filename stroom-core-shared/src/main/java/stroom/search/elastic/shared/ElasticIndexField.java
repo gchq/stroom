@@ -35,6 +35,7 @@ import java.util.Objects;
  * </p>
  */
 @JsonPropertyOrder({
+        "type",
         "fieldUse",
         "fieldName",
         "fieldType",
@@ -44,6 +45,10 @@ import java.util.Objects;
 public class ElasticIndexField implements HasDisplayValue, Comparable<ElasticIndexField>, Serializable {
 
     @JsonProperty
+    private FieldType type;
+
+    @Deprecated
+    @JsonProperty("fieldUse")
     private FieldType fieldUse;
 
     @JsonProperty
@@ -60,24 +65,47 @@ public class ElasticIndexField implements HasDisplayValue, Comparable<ElasticInd
 
     @JsonCreator
     public ElasticIndexField(
+            @JsonProperty("type") final FieldType type,
             @JsonProperty("fieldUse") final FieldType fieldUse,
             @JsonProperty("fieldName") final String fieldName,
             @JsonProperty("fieldType") final String fieldType,
-            @JsonProperty("indexed") final boolean indexed
-    ) {
-        setFieldUse(fieldUse);
+            @JsonProperty("indexed") final boolean indexed) {
+
+        // Legacy conversion.
+        if (fieldUse != null) {
+            this.type = fieldUse;
+        }
+
+        if (type != null) {
+            this.type = type;
+        }
+
         setFieldName(fieldName);
         setFieldType(fieldType);
         setIndexed(indexed);
     }
 
-    public FieldType getFieldUse() {
-        return fieldUse;
+    public FieldType getType() {
+        return type;
     }
 
-    public void setFieldUse(final FieldType fieldUse) {
-        this.fieldUse = fieldUse;
+    public void setType(final FieldType type) {
+        this.type = type;
     }
+
+//    @JsonProperty
+//    @Deprecated
+//    public FieldType getFieldUse() {
+//        return type;
+//    }
+//
+//    @JsonProperty
+//    @Deprecated
+//    public void setFieldUse(final FieldType fieldUse) {
+//        if (fieldUse != null) {
+//            this.type = fieldUse;
+//        }
+//    }
 
     public String getFieldName() {
         return fieldName;
@@ -118,15 +146,15 @@ public class ElasticIndexField implements HasDisplayValue, Comparable<ElasticInd
             return false;
         }
         final ElasticIndexField that = (ElasticIndexField) o;
-        return indexed == that.indexed &&
-                fieldUse == that.fieldUse &&
+        return type == that.type &&
+                indexed == that.indexed &&
                 Objects.equals(fieldName, that.fieldName) &&
                 Objects.equals(fieldType, that.fieldType);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(fieldUse, fieldName, fieldType, indexed);
+        return Objects.hash(type, fieldName, fieldType, indexed);
     }
 
     @Override

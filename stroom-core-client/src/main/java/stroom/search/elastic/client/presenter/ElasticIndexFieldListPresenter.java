@@ -70,7 +70,7 @@ public class ElasticIndexFieldListPresenter extends DocumentEditPresenter<Elasti
 
     private void addColumns() {
         addStringColumn("Name", 300, ElasticIndexField::getFieldName);
-        addStringColumn("Field Type", 150, row -> row.getFieldUse().getDisplayValue());
+        addStringColumn("Field Type", 150, row -> row.getType().getDisplayValue());
         addStringColumn("Native Type", 150, ElasticIndexField::getFieldType);
         addBooleanColumn("Indexed", 100, ElasticIndexField::isIndexed);
         dataGrid.addEndColumn(new EndColumn<>());

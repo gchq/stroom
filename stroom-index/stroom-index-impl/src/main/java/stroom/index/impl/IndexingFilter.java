@@ -16,10 +16,10 @@
 
 package stroom.index.impl;
 
+import stroom.datasource.api.v2.FieldType;
 import stroom.docref.DocRef;
 import stroom.index.shared.AllPartition;
 import stroom.index.shared.IndexField;
-import stroom.index.shared.IndexFieldType;
 import stroom.index.shared.IndexFieldsMap;
 import stroom.index.shared.IndexShardKey;
 import stroom.index.shared.Partition;
@@ -248,7 +248,7 @@ class IndexingFilter extends AbstractXMLFilter {
     private void processIndexContent(final IndexField indexField, final String value) {
         try {
             if (currentEventTime == null &&
-                    IndexFieldType.DATE_FIELD.equals(indexField.getFieldType()) &&
+                    FieldType.DATE.equals(indexField.getType()) &&
                     indexField.getFieldName().equals(index.getTimeField())) {
                 try {
                     // Set the current event time if this is a recognised event time field.
