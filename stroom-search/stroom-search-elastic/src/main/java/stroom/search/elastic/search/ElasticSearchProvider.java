@@ -17,10 +17,20 @@
 
 package stroom.search.elastic.search;
 
+import stroom.datasource.api.v2.BooleanField;
+import stroom.datasource.api.v2.ConditionSet;
 import stroom.datasource.api.v2.DateField;
+import stroom.datasource.api.v2.DoubleField;
 import stroom.datasource.api.v2.FieldInfo;
 import stroom.datasource.api.v2.FindFieldInfoCriteria;
+import stroom.datasource.api.v2.FloatField;
+import stroom.datasource.api.v2.IdField;
+import stroom.datasource.api.v2.IntegerField;
+import stroom.datasource.api.v2.IpV4AddressField;
+import stroom.datasource.api.v2.KeywordField;
+import stroom.datasource.api.v2.LongField;
 import stroom.datasource.api.v2.QueryField;
+import stroom.datasource.api.v2.TextField;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.Query;
@@ -224,7 +234,7 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
                         final ElasticIndexFieldType elasticFieldType =
                                 ElasticNativeTypes.fromNativeType(fullName, nativeType);
 
-                        return elasticFieldType.toDataSourceField(fieldName, fieldIsIndexed(field.getValue()));
+                        return toDataSourceField(elasticFieldType, fieldName, fieldIsIndexed(field.getValue()));
                     } catch (IllegalArgumentException e) {
                         LOGGER.warn(e::getMessage);
                         return null;
@@ -232,6 +242,40 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
                 })
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Returns an `AbstractField` instance, based on the field's data type
+     */
+    public QueryField toDataSourceField(final ElasticIndexFieldType elasticIndexFieldType,
+                                        final String fieldName,
+                                        final Boolean isIndexed)
+            throws IllegalArgumentException {
+        final ConditionSet conditionSet = getConditions(elasticIndexFieldType);
+        return switch (elasticIndexFieldType) {
+            case ID -> new IdField(fieldName, conditionSet, null, isIndexed);
+            case BOOLEAN -> new BooleanField(fieldName, conditionSet, null, isIndexed);
+            case INTEGER -> new IntegerField(fieldName, conditionSet, null, isIndexed);
+            case LONG -> new LongField(fieldName, conditionSet, null, isIndexed);
+            case FLOAT -> new FloatField(fieldName, conditionSet, null, isIndexed);
+            case DOUBLE -> new DoubleField(fieldName, conditionSet, null, isIndexed);
+            case DATE -> new DateField(fieldName, conditionSet, null, isIndexed);
+            case TEXT -> new TextField(fieldName, conditionSet, null, isIndexed);
+            case KEYWORD -> new KeywordField(fieldName, conditionSet, null, isIndexed);
+            case IPV4_ADDRESS -> new IpV4AddressField(fieldName, conditionSet, null, isIndexed);
+        };
+    }
+
+    /**
+     * Determine the query expression conditions that apply to this field type
+     */
+    private ConditionSet getConditions(final ElasticIndexFieldType elasticIndexFieldType) {
+        if (ElasticIndexFieldType.DATE.equals(elasticIndexFieldType) ||
+                ElasticIndexFieldType.IPV4_ADDRESS.equals(elasticIndexFieldType) ||
+                elasticIndexFieldType.isNumeric()) {
+            return ConditionSet.ELASTIC_NUMERIC;
+        }
+        return ConditionSet.ELASTIC_TEXT;
     }
 
     private String getFieldPropertyFromMapping(final String fieldName, final FieldMappingMetadata fieldMeta,
