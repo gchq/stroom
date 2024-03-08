@@ -1,0 +1,21 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:item="urn:import:stroom.item.client"
+             xmlns:form="urn:import:stroom.widget.form.client">
+
+    <g:FlowPanel styleName="max form">
+        <!-- Ace editor theme -->
+        <form:FormGroup identity="userPreferencesEditorTheme" label="Editor Theme">
+            <item:SelectionBox ui:field="editorTheme" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <!-- Ace editor key bindings -->
+        <form:FormGroup identity="userPreferencesEditorKeyBindings" label="Editor Key Bindings:">
+            <item:SelectionBox ui:field="editorKeyBindings" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <!-- Ace editor live auto completion -->
+        <form:FormGroup identity="userPreferencesEditorLiveAutoCompletion" label="Editor Live Auto Completion:">
+            <item:SelectionBox ui:field="editorLiveAutoCompletion" addStyleNames="w-100"/>
+        </form:FormGroup>
+    </g:FlowPanel>
+</ui:UiBinder>

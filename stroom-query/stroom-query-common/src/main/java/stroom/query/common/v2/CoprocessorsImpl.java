@@ -1,9 +1,10 @@
 package stroom.query.common.v2;
 
-import stroom.dashboard.expression.v1.FieldIndex;
-import stroom.dashboard.expression.v1.Val;
-import stroom.dashboard.expression.v1.ref.ErrorConsumer;
 import stroom.docref.DocRef;
+import stroom.expression.api.ExpressionContext;
+import stroom.query.language.functions.FieldIndex;
+import stroom.query.language.functions.Val;
+import stroom.query.language.functions.ref.ErrorConsumer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -29,17 +30,20 @@ public final class CoprocessorsImpl implements Coprocessors, HasCompletionState 
     private final FieldIndex fieldIndex;
     private final LongAdder counter = new LongAdder();
     private final ErrorConsumer errorConsumer;
+    private final ExpressionContext expressionContext;
 
     CoprocessorsImpl(final Map<Integer, Coprocessor> coprocessorMap,
                      final Map<String, TableCoprocessor> componentIdCoprocessorMap,
                      final Map<DocRef, Set<Coprocessor>> extractionPipelineCoprocessorMap,
                      final FieldIndex fieldIndex,
-                     final ErrorConsumer errorConsumer) {
+                     final ErrorConsumer errorConsumer,
+                     final ExpressionContext expressionContext) {
         this.coprocessorMap = coprocessorMap;
         this.componentIdCoprocessorMap = componentIdCoprocessorMap;
         this.extractionPipelineCoprocessorMap = extractionPipelineCoprocessorMap;
         this.fieldIndex = fieldIndex;
         this.errorConsumer = errorConsumer;
+        this.expressionContext = expressionContext;
     }
 
     @Override
@@ -66,16 +70,21 @@ public final class CoprocessorsImpl implements Coprocessors, HasCompletionState 
     }
 
     @Override
-    public void add(final Val[] values) {
+    public void accept(final Val[] values) {
         counter.increment();
         LOGGER.trace(() -> String.format("data: [%s]", Arrays.toString(values)));
         // Give the data array to each of our coprocessors
-        coprocessorMap.values().forEach(coprocessor -> coprocessor.add(values));
+        coprocessorMap.values().forEach(coprocessor -> coprocessor.accept(values));
     }
 
     @Override
     public ErrorConsumer getErrorConsumer() {
         return errorConsumer;
+    }
+
+    @Override
+    public ExpressionContext getExpressionContext() {
+        return expressionContext;
     }
 
     @Override

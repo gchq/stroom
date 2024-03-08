@@ -21,12 +21,14 @@ import stroom.pipeline.refdata.ReferenceData;
 import stroom.pipeline.refdata.ReferenceDataResult;
 import stroom.pipeline.refdata.store.RefDataValueProxy;
 import stroom.pipeline.state.MetaHolder;
+import stroom.task.api.TaskContextFactory;
 import stroom.util.date.DateUtil;
 import stroom.util.exception.ThrowingFunction;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Severity;
 
+import jakarta.inject.Inject;
 import net.sf.saxon.expr.XPathContext;
 import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
@@ -38,7 +40,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
-import javax.inject.Inject;
 
 class BitmapLookup extends AbstractLookup {
 
@@ -49,8 +50,9 @@ class BitmapLookup extends AbstractLookup {
     @Inject
     BitmapLookup(final ReferenceData referenceData,
                  final MetaHolder metaHolder,
-                 final SequenceMakerFactory sequenceMakerFactory) {
-        super(referenceData, metaHolder, sequenceMakerFactory);
+                 final SequenceMakerFactory sequenceMakerFactory,
+                 final TaskContextFactory taskContextFactory) {
+        super(referenceData, metaHolder, sequenceMakerFactory, taskContextFactory);
     }
 
     private SequenceMaker getOrCreateSequenceMaker(final AtomicReference<SequenceMaker> sequenceMakerRef,

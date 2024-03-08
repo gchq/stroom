@@ -24,6 +24,8 @@ import stroom.dropwizard.common.ManagedServices;
 import stroom.dropwizard.common.RestResources;
 import stroom.dropwizard.common.Servlets;
 import stroom.proxy.app.guice.ProxyModule;
+import stroom.security.openid.api.AbstractOpenIdConfig;
+import stroom.security.openid.api.IdpType;
 import stroom.util.NullSafe;
 import stroom.util.authentication.DefaultOpenIdCredentials;
 import stroom.util.config.ConfigValidator;
@@ -48,10 +50,14 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import io.dropwizard.Application;
+import io.dropwizard.core.Application;
+import io.dropwizard.core.setup.Bootstrap;
+import io.dropwizard.core.setup.Environment;
 import io.dropwizard.servlets.tasks.LogConfigurationTask;
-import io.dropwizard.setup.Bootstrap;
-import io.dropwizard.setup.Environment;
+import jakarta.inject.Inject;
+import jakarta.servlet.DispatcherType;
+import jakarta.servlet.FilterRegistration;
+import jakarta.validation.ValidatorFactory;
 import org.eclipse.jetty.server.session.SessionHandler;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
 
@@ -59,10 +65,6 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.EnumSet;
 import java.util.Objects;
-import javax.inject.Inject;
-import javax.servlet.DispatcherType;
-import javax.servlet.FilterRegistration;
-import javax.validation.ValidatorFactory;
 
 public class App extends Application<Config> {
 
@@ -93,7 +95,7 @@ public class App extends Application<Config> {
 
     private final Path configFile;
 
-    // This is an additional injector for use only with javax.validation. It means we can do validation
+    // This is an additional injector for use only with jakarta.validation. It means we can do validation
     // of the yaml file before our main injector has been created and also so we can use our custom
     // validation annotations with REST services (see initialize() method). It feels a bit wrong having two
     // injectors running but not sure how else we could do this unless Guice is not used for the validators.
@@ -129,7 +131,7 @@ public class App extends Application<Config> {
         bootstrap.setConfigurationSourceProvider(ProxyYamlUtil.createConfigurationSourceProvider(
                 bootstrap.getConfigurationSourceProvider(), true));
 
-        // If we want to use javax.validation on our rest resources with our own custom validation annotations
+        // If we want to use jakarta.validation on our rest resources with our own custom validation annotations
         // then we need to set the ValidatorFactory. As our main Guice Injector is not available yet we need to
         // create one just for the REST validation
         bootstrap.setValidatorFactory(validationOnlyInjector.getInstance(ValidatorFactory.class));
@@ -192,9 +194,23 @@ public class App extends Application<Config> {
         showInfo();
     }
 
-    private void warnAboutDefaultOpenIdCreds(Config configuration, Injector injector) {
-        if (configuration.getProxyConfig().isUseDefaultOpenIdCredentials()) {
-            DefaultOpenIdCredentials defaultOpenIdCredentials = injector.getInstance(DefaultOpenIdCredentials.class);
+    private void warnAboutDefaultOpenIdCreds(final Config configuration, final Injector injector) {
+
+        final boolean areDefaultOpenIdCredsInUse = NullSafe.test(configuration.getProxyConfig(),
+                ProxyConfig::getProxySecurityConfig,
+                ProxySecurityConfig::getAuthenticationConfig,
+                ProxyAuthenticationConfig::getOpenIdConfig,
+                openIdConfig ->
+                        IdpType.TEST_CREDENTIALS.equals(openIdConfig.getIdentityProviderType()));
+
+        if (areDefaultOpenIdCredsInUse) {
+            final DefaultOpenIdCredentials defaultOpenIdCredentials = injector.getInstance(
+                    DefaultOpenIdCredentials.class);
+            final String propPath = configuration.getProxyConfig()
+                    .getProxySecurityConfig()
+                    .getAuthenticationConfig()
+                    .getOpenIdConfig()
+                    .getFullPathStr(AbstractOpenIdConfig.PROP_NAME_IDP_TYPE);
             LOGGER.warn("" +
                     "\n  ---------------------------------------------------------------------------------------" +
                     "\n  " +
@@ -202,7 +218,7 @@ public class App extends Application<Config> {
                     "\n  " +
                     "\n   Using default and publicly available Open ID authentication credentials. " +
                     "\n   These should only be used in test/demo environments. " +
-                    "\n   Set useDefaultOpenIdCredentials to false for production environments. " +
+                    "\n   Set " + propPath + " to EXTERNAL/NO_IDP for production environments." +
                     "The API key in use is:" +
                     "\n" +
                     "\n   " + defaultOpenIdCredentials.getApiKey() +
@@ -211,7 +227,7 @@ public class App extends Application<Config> {
         }
     }
 
-    private static void configureCors(io.dropwizard.setup.Environment environment) {
+    private static void configureCors(io.dropwizard.core.setup.Environment environment) {
         FilterRegistration.Dynamic cors = environment.servlets().addFilter("CORS", CrossOriginFilter.class);
         cors.addMappingForUrlPatterns(EnumSet.allOf(DispatcherType.class), true, "/*");
         cors.setInitParameter(CrossOriginFilter.ALLOWED_METHODS_PARAM, "GET,PUT,POST,DELETE,OPTIONS,PATCH");

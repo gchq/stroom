@@ -5,8 +5,8 @@ import stroom.util.logging.LogUtil;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import io.dropwizard.Application;
-import io.dropwizard.setup.Environment;
+import io.dropwizard.core.Application;
+import io.dropwizard.core.setup.Environment;
 import io.github.classgraph.ClassGraph;
 import io.github.classgraph.ScanResult;
 import org.assertj.core.api.Assertions;
@@ -29,7 +29,7 @@ public class TestProxyGuiceBindings extends AbstractApplicationTest {
         // Test all the constructors to make sure guice can bind them
         // As proxy shares classes with stroom we have no way of knowing which shared classes are used
         // by proxy, so we have to make do with just checking all the non-shared classes.
-        findConstructors(injector::getProvider, "stroom.proxy", javax.inject.Inject.class);
+        findConstructors(injector::getProvider, "stroom.proxy", jakarta.inject.Inject.class);
         findConstructors(injector::getProvider, "stroom.proxy", com.google.inject.Inject.class);
     }
 
@@ -67,6 +67,10 @@ public class TestProxyGuiceBindings extends AbstractApplicationTest {
     protected Class<? extends Application<Config>> getAppClass() {
         return MyApp.class;
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public static class MyApp extends Application<Config> {
 

@@ -16,37 +16,18 @@
 
 package stroom.dashboard.impl;
 
-import stroom.dashboard.impl.download.TypeConverter;
 import stroom.dashboard.shared.DashboardSearchResponse;
-import stroom.query.api.v2.FlatResult;
-import stroom.query.api.v2.Format.Type;
 import stroom.query.api.v2.Result;
 import stroom.query.api.v2.SearchResponse;
-import stroom.query.api.v2.VisResult;
-import stroom.query.api.v2.VisResult.Store;
-import stroom.util.logging.LambdaLogger;
-import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.string.ExceptionStringUtil;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 public class SearchResponseMapper {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SearchResponseMapper.class);
+//    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SearchResponseMapper.class);
 
     public DashboardSearchResponse mapResponse(final String node,
                                                final stroom.query.api.v2.SearchResponse searchResponse) {
@@ -59,13 +40,15 @@ public class SearchResponseMapper {
             highlights = new HashSet<>(searchResponse.getHighlights());
         }
 
-        List<Result> results = null;
-        if (searchResponse.getResults() != null) {
-            results = new ArrayList<>();
-            for (final Result result : searchResponse.getResults()) {
-                results.add(mapResult(result));
-            }
-        }
+        List<Result> results = searchResponse.getResults();
+
+//        List<Result> results = null;
+//        if (searchResponse.getResults() != null) {
+//            results = new ArrayList<>();
+//            for (final Result result : searchResponse.getResults()) {
+//                results.add(mapResult(result));
+//            }
+//        }
 
         List<String> errors = searchResponse.getErrors();
         if (errors != null) {
@@ -81,34 +64,22 @@ public class SearchResponseMapper {
                 searchResponse.getKey(),
                 highlights,
                 errors,
+                null,
                 searchResponse.complete(),
                 results);
     }
 
-    private Result mapResult(final Result result) {
-        if (result == null) {
-            return null;
-        }
-
-        if (result instanceof stroom.query.api.v2.TableResult) {
-            return result;
-
-//            final stroom.query.api.v2.TableResult tableResult = (stroom.query.api.v2.TableResult) result;
+//    private Result mapResult(final Result result) {
+//        if (result == null) {
+//            return null;
+//        }
 //
-//            final List<Field> fields = tableResult.getFields();
-//            final List<Row> rows = tableResult.getRows();
-//            stroom.query.api.v2.OffsetRange resultRange = tableResult.getResultRange();
+//        if (result instanceof final FlatResult visResult) {
+//            return mapVisResult(visResult);
+//        }
 //
-//            return new TableResult(
-//            tableResult.getComponentId(), fields, rows,
-//            resultRange, tableResult.getTotalResults(), tableResult.getError());
-        } else if (result instanceof FlatResult) {
-            final FlatResult visResult = (FlatResult) result;
-            return mapVisResult(visResult);
-        }
-
-        return null;
-    }
+//        return result;
+//    }
 //
 //    private List<Field> mapFields(final List<stroom.query.api.v2.Field> fields) {
 //        final List<Field> copy = new ArrayList<>();
@@ -139,197 +110,183 @@ public class SearchResponseMapper {
 //        }
 //        return copy;
 //    }
-
-    private VisResult mapVisResult(final FlatResult result) {
-        String json = null;
-        List<String> errors = result.getErrors();
-        if (errors == null || errors.size() == 0) {
-            try {
-                final List<stroom.query.api.v2.Field> fields = result.getStructure();
-                if (fields != null && result.getValues() != null) {
-                    int valueOffset = 0;
-
-                    final Map<Integer, List<String>> typeMap = new HashMap<>();
-                    final Map<Integer, List<String>> sortDirectionMap = new HashMap<>();
-                    int maxDepth = 0;
-                    for (final stroom.query.api.v2.Field field : fields) {
-                        // Ignore key and depth fields.
-                        if (field.getName() != null && field.getName().startsWith(":")) {
-                            valueOffset++;
-
-                        } else {
-                            String type = Type.GENERAL.name();
-                            if (field.getFormat() != null && field.getFormat().getType() != null) {
-                                type = field.getFormat().getType().name();
-                            }
-                            typeMap.computeIfAbsent(field.getGroup(), k -> new ArrayList<>()).add(type);
-
-                            // The vizes need to know what the sort direction is for the various fields/keys
-                            String sortDirection = null;
-                            if (field.getSort() != null && field.getSort().getDirection() != null) {
-                                sortDirection = field.getSort().getDirection().getDisplayValue();
-                            }
-                            sortDirectionMap.computeIfAbsent(field.getGroup(),
-                                    k -> new ArrayList<>()).add(sortDirection);
-
-                            if (field.getGroup() != null) {
-                                maxDepth = Math.max(maxDepth, field.getGroup() + 1);
-                                valueOffset++;
-                            }
-                        }
-                    }
-
-                    // Create an array of types.
-                    String[][] types = new String[maxDepth + 1][];
-                    for (final Entry<Integer, List<String>> entry : typeMap.entrySet()) {
-                        int group = maxDepth;
-                        if (entry.getKey() != null) {
-                            group = entry.getKey();
-                        }
-
-                        String[] row = new String[entry.getValue().size()];
-                        row = entry.getValue().toArray(row);
-                        types[group] = row;
-                    }
-
-                    // Create an array of sortDirections
-                    String[][] sortDirections = new String[maxDepth + 1][];
-                    for (final Entry<Integer, List<String>> entry : sortDirectionMap.entrySet()) {
-                        int group = maxDepth;
-                        if (entry.getKey() != null) {
-                            group = entry.getKey();
-                        }
-
-                        String[] row = new String[entry.getValue().size()];
-                        row = entry.getValue().toArray(row);
-                        sortDirections[group] = row;
-                    }
-
-                    final int valueCount = fields.size() - valueOffset;
-
-                    final Map<Object, List<List<Object>>> map = new HashMap<>();
-                    for (final List<Object> row : result.getValues()) {
-                        map.computeIfAbsent(row.get(0), k -> new ArrayList<>()).add(row);
-                    }
-
-                    final Store store = getStore(null, map, types, sortDirections, valueCount, maxDepth, 0);
-                    json = getMapper(false).writeValueAsString(store);
-                }
-            } catch (final JsonProcessingException | RuntimeException e) {
-                LOGGER.debug(e::getMessage, e);
-                errors = Collections.singletonList(ExceptionStringUtil.getMessage(e));
-            }
-        }
-
-        return new VisResult(result.getComponentId(), json, result.getSize(), errors);
-    }
-
-    private ObjectMapper getMapper(final boolean indent) {
-        final ObjectMapper mapper = new ObjectMapper();
-        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        mapper.configure(SerializationFeature.WRITE_NULL_MAP_VALUES, false);
-        mapper.configure(SerializationFeature.INDENT_OUTPUT, indent);
-        mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-        // Enabling default typing adds type information where it would otherwise be ambiguous,
-        // i.e. for abstract classes
-//        mapper.enableDefaultTyping();
-        return mapper;
-    }
-
-    private Store getStore(final Object key,
-                           final Map<Object, List<List<Object>>> map,
-                           final String[][] types,
-                           final String[][] sortDirections,
-                           final int valueCount,
-                           final int maxDepth,
-                           final int depth) {
-        Store store = null;
-
-        final List<List<Object>> rows = map.get(key);
-        if (rows != null) {
-            final List<Object> values = new ArrayList<>();
-            final Double[] min = new Double[valueCount];
-            final Double[] max = new Double[valueCount];
-            final Double[] sum = new Double[valueCount];
-
-            for (final List<Object> row : rows) {
-                if (depth < maxDepth) {
-                    final Store childStore = getStore(
-                            row.get(1), map, types, sortDirections, valueCount, maxDepth, depth + 1);
-                    if (childStore != null) {
-                        values.add(childStore);
-
-                        for (int i = 0; i < valueCount; i++) {
-                            min[i] = min(min[i], childStore.min[i]);
-                            max[i] = max(max[i], childStore.max[i]);
-                            sum[i] = sum(sum[i], childStore.sum[i]);
-                        }
-                    }
-                } else {
-                    final List<Object> vals = row.subList(row.size() - valueCount, row.size());
-                    values.add(vals);
-                    for (int i = 0; i < valueCount; i++) {
-                        final Double dbl = TypeConverter.getDouble(vals.get(i));
-                        if (dbl != null) {
-                            min[i] = min(min[i], dbl);
-                            max[i] = max(max[i], dbl);
-                            sum[i] = sum(sum[i], dbl);
-                        }
-                    }
-                }
-            }
-
-            store = new Store();
-            if (key instanceof List) {
-                List list = (List) key;
-                store.key = list.get(list.size() - 1);
-            }
-            // The type/sortDirection for all the keys in the level below (i.e in the values[])
-            store.keyType = types[depth][0];
-            store.keySortDirection = sortDirections[depth][0];
-
-            // The child values (that may be branches or leaves)
-            store.values = values.toArray(new Object[0]);
-
-            // The types/sortDirections of the leaf values, where array position == field position
-            store.types = types[types.length - 1];
-            store.sortDirections = sortDirections[sortDirections.length - 1];
-
-            store.min = min;
-            store.max = max;
-            store.sum = sum;
-        }
-
-        return store;
-    }
-
-    private Double min(final Double m1, final Double m2) {
-        if (m1 == null) {
-            return m2;
-        } else if (m2 == null) {
-            return m1;
-        }
-        return Math.min(m1, m2);
-    }
-
-    private Double max(final Double m1, final Double m2) {
-        if (m1 == null) {
-            return m2;
-        } else if (m2 == null) {
-            return m1;
-        }
-        return Math.max(m1, m2);
-    }
-
-    private Double sum(final Double m1, final Double m2) {
-        if (m1 == null) {
-            return m2;
-        } else if (m2 == null) {
-            return m1;
-        }
-        return m1 + m2;
-    }
-
+//
+//    private VisResult mapVisResult(final FlatResult result) {
+//        String json = null;
+//        List<String> errors = result.getErrors();
+//        try {
+//            final List<stroom.query.api.v2.Field> fields = result.getStructure();
+//            if (fields != null && result.getValues() != null) {
+//                int valueOffset = 0;
+//
+//                final Map<Integer, List<String>> typeMap = new HashMap<>();
+//                final Map<Integer, List<String>> sortDirectionMap = new HashMap<>();
+//                int maxDepth = 0;
+//                for (final stroom.query.api.v2.Field field : fields) {
+//                    // Ignore key and depth fields.
+//                    if (field.getName() != null && field.getName().startsWith(":")) {
+//                        valueOffset++;
+//
+//                    } else {
+//                        String type = Type.GENERAL.name();
+//                        if (field.getFormat() != null && field.getFormat().getType() != null) {
+//                            type = field.getFormat().getType().name();
+//                        }
+//                        typeMap.computeIfAbsent(field.getGroup(), k -> new ArrayList<>()).add(type);
+//
+//                        // The vizes need to know what the sort direction is for the various fields/keys
+//                        String sortDirection = null;
+//                        if (field.getSort() != null && field.getSort().getDirection() != null) {
+//                            sortDirection = field.getSort().getDirection().getDisplayValue();
+//                        }
+//                        sortDirectionMap.computeIfAbsent(field.getGroup(),
+//                                k -> new ArrayList<>()).add(sortDirection);
+//
+//                        if (field.getGroup() != null) {
+//                            maxDepth = Math.max(maxDepth, field.getGroup() + 1);
+//                            valueOffset++;
+//                        }
+//                    }
+//                }
+//
+//                // Create an array of types.
+//                String[][] types = new String[maxDepth + 1][];
+//                for (final Entry<Integer, List<String>> entry : typeMap.entrySet()) {
+//                    int group = maxDepth;
+//                    if (entry.getKey() != null) {
+//                        group = entry.getKey();
+//                    }
+//
+//                    String[] row = new String[entry.getValue().size()];
+//                    row = entry.getValue().toArray(row);
+//                    types[group] = row;
+//                }
+//
+//                // Create an array of sortDirections
+//                String[][] sortDirections = new String[maxDepth + 1][];
+//                for (final Entry<Integer, List<String>> entry : sortDirectionMap.entrySet()) {
+//                    int group = maxDepth;
+//                    if (entry.getKey() != null) {
+//                        group = entry.getKey();
+//                    }
+//
+//                    String[] row = new String[entry.getValue().size()];
+//                    row = entry.getValue().toArray(row);
+//                    sortDirections[group] = row;
+//                }
+//
+//                final int valueCount = fields.size() - valueOffset;
+//
+//                final Map<Object, List<List<Object>>> map = new HashMap<>();
+//                for (final List<Object> row : result.getValues()) {
+//                    map.computeIfAbsent(row.get(0), k -> new ArrayList<>()).add(row);
+//                }
+//
+//                final Store store = getStore(null, map, types, sortDirections, valueCount, maxDepth, 0);
+//                json = JsonUtil.writeValueAsString(store, false);
+//            }
+//        } catch (final RuntimeException e) {
+//            LOGGER.debug(e::getMessage, e);
+//            errors = Collections.singletonList(ExceptionStringUtil.getMessage(e));
+//        }
+//
+//        return new VisResult(result.getComponentId(), json, result.getSize(), errors);
+//    }
+//
+//    private Store getStore(final Object key,
+//                           final Map<Object, List<List<Object>>> map,
+//                           final String[][] types,
+//                           final String[][] sortDirections,
+//                           final int valueCount,
+//                           final int maxDepth,
+//                           final int depth) {
+//        Store store = null;
+//
+//        final List<List<Object>> rows = map.get(key);
+//        if (rows != null) {
+//            final List<Object> values = new ArrayList<>();
+//            final Double[] min = new Double[valueCount];
+//            final Double[] max = new Double[valueCount];
+//            final Double[] sum = new Double[valueCount];
+//
+//            for (final List<Object> row : rows) {
+//                if (depth < maxDepth) {
+//                    final Store childStore = getStore(
+//                            row.get(1), map, types, sortDirections, valueCount, maxDepth, depth + 1);
+//                    if (childStore != null) {
+//                        values.add(childStore);
+//
+//                        for (int i = 0; i < valueCount; i++) {
+//                            min[i] = min(min[i], childStore.min[i]);
+//                            max[i] = max(max[i], childStore.max[i]);
+//                            sum[i] = sum(sum[i], childStore.sum[i]);
+//                        }
+//                    }
+//                } else {
+//                    final List<Object> vals = row.subList(row.size() - valueCount, row.size());
+//                    values.add(vals);
+//                    for (int i = 0; i < valueCount; i++) {
+//                        final Double dbl = TypeConverter.getDouble(vals.get(i));
+//                        if (dbl != null) {
+//                            min[i] = min(min[i], dbl);
+//                            max[i] = max(max[i], dbl);
+//                            sum[i] = sum(sum[i], dbl);
+//                        }
+//                    }
+//                }
+//            }
+//
+//            store = new Store();
+//            if (key instanceof List) {
+//                List list = (List) key;
+//                store.key = list.get(list.size() - 1);
+//            }
+//            // The type/sortDirection for all the keys in the level below (i.e in the values[])
+//            store.keyType = types[depth][0];
+//            store.keySortDirection = sortDirections[depth][0];
+//
+//            // The child values (that may be branches or leaves)
+//            store.values = values.toArray(new Object[0]);
+//
+//            // The types/sortDirections of the leaf values, where array position == field position
+//            store.types = types[types.length - 1];
+//            store.sortDirections = sortDirections[sortDirections.length - 1];
+//
+//            store.min = min;
+//            store.max = max;
+//            store.sum = sum;
+//        }
+//
+//        return store;
+//    }
+//
+//    private Double min(final Double m1, final Double m2) {
+//        if (m1 == null) {
+//            return m2;
+//        } else if (m2 == null) {
+//            return m1;
+//        }
+//        return Math.min(m1, m2);
+//    }
+//
+//    private Double max(final Double m1, final Double m2) {
+//        if (m1 == null) {
+//            return m2;
+//        } else if (m2 == null) {
+//            return m1;
+//        }
+//        return Math.max(m1, m2);
+//    }
+//
+//    private Double sum(final Double m1, final Double m2) {
+//        if (m1 == null) {
+//            return m2;
+//        } else if (m2 == null) {
+//            return m1;
+//        }
+//        return m1 + m2;
+//    }
+//
 //    private Map<Object, Store> mapNodes(
 //    final Node[] nodes, final Field[][] structure, final int depth, final String[] types) {
 //        if (nodes == null) {

@@ -19,21 +19,19 @@ package stroom.main.client.presenter;
 import stroom.alert.client.event.AlertEvent;
 import stroom.content.client.event.RefreshCurrentContentTabEvent;
 import stroom.core.client.MenuKeys;
-import stroom.core.client.UrlConstants;
 import stroom.core.client.presenter.CorePresenter;
-import stroom.main.client.event.UrlQueryParameterChangeEvent;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.task.client.TaskEndEvent;
 import stroom.task.client.TaskStartEvent;
 import stroom.task.client.event.OpenTaskManagerEvent;
 import stroom.ui.config.client.UiConfigCache;
-import stroom.ui.config.shared.UiConfig;
+import stroom.ui.config.shared.ExtendedUiConfig;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuItems;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.tab.client.event.MaximiseEvent;
-import stroom.widget.util.client.DoubleSelectTester;
+import stroom.widget.util.client.DoubleClickTester;
 import stroom.widget.util.client.KeyBinding;
 
 import com.google.gwt.dom.client.Element;
@@ -41,6 +39,7 @@ import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.event.dom.client.HasDoubleClickHandlers;
 import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.event.shared.GwtEvent.Type;
 import com.google.gwt.http.client.UrlBuilder;
 import com.google.gwt.user.client.Timer;
@@ -57,9 +56,7 @@ import com.gwtplatform.mvp.client.proxy.Proxy;
 import com.gwtplatform.mvp.client.proxy.RevealContentEvent;
 import com.gwtplatform.mvp.client.proxy.RevealContentHandler;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class MainPresenter
         extends MyPresenter<MainPresenter.MainView, MainPresenter.MainProxy>
@@ -85,7 +82,9 @@ public class MainPresenter
 
         // Handle key presses.
         view.asWidget().addDomHandler(event ->
-                KeyBinding.getAction(event.getNativeEvent()), KeyDownEvent.getType());
+                KeyBinding.test(event.getNativeEvent()), KeyDownEvent.getType());
+        view.asWidget().addDomHandler(event ->
+                KeyBinding.test(event.getNativeEvent()), KeyUpEvent.getType());
 
         addRegisteredHandler(TaskStartEvent.getType(), event -> {
             // DebugPane.debug("taskStart:" + event.getTaskCount());
@@ -108,7 +107,7 @@ public class MainPresenter
         });
         registerHandler(uiConfigCache.addPropertyChangeHandler(
                 event -> {
-                    final UiConfig uiConfig = event.getProperties();
+                    final ExtendedUiConfig uiConfig = event.getProperties();
                     if (uiConfig.getTheme() != null) {
                         getView().setBorderStyle(uiConfig.getTheme().getPageBorder());
                     }
@@ -149,7 +148,7 @@ public class MainPresenter
                     }
                 };
                 click = true;
-                clickTimer.schedule(DoubleSelectTester.DOUBLE_SELECT_DELAY);
+                clickTimer.schedule(DoubleClickTester.DOUBLE_CLICK_PERIOD);
             }
         }));
         addRegisteredHandler(MaximiseEvent.getType(), event -> view.maximise(event.getView()));
@@ -163,22 +162,6 @@ public class MainPresenter
 
         // Start the auto refresh timer.
         startAutoRefresh();
-
-        parseUrlQueryParams();
-    }
-
-    /**
-     * Parse the URL query parameters and fire an event if any exist
-     */
-    private void parseUrlQueryParams() {
-        // Read URL query parameters and fire an event to signal that they've changed
-        final Map<String, String> queryParams = new HashMap<>();
-        Window.Location.getParameterMap().forEach((key, value) -> queryParams.put(key, value.get(value.size() - 1)));
-        final String action = queryParams.get(UrlConstants.ACTION);
-
-        if (queryParams.size() > 0) {
-            UrlQueryParameterChangeEvent.fire(MainPresenter.this, action, queryParams);
-        }
     }
 
     @Override
@@ -230,6 +213,10 @@ public class MainPresenter
 
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface MainView extends View, HasUiHandlers<MainUiHandlers> {
 
         SpinnerDisplay getSpinner();
@@ -240,6 +227,10 @@ public class MainPresenter
 
         void setBanner(String text);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface SpinnerDisplay extends HasClickHandlers, HasDoubleClickHandlers {
 

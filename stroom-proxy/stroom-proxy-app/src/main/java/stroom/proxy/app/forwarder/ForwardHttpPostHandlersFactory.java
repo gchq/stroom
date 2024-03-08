@@ -1,17 +1,18 @@
 package stroom.proxy.app.forwarder;
 
 import stroom.proxy.repo.LogStream;
+import stroom.security.api.UserIdentityFactory;
 import stroom.util.cert.SSLUtil;
 import stroom.util.io.PathCreator;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.BuildInfo;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.inject.Singleton;
 import javax.net.ssl.SSLSocketFactory;
 
 @Singleton
@@ -22,18 +23,18 @@ public class ForwardHttpPostHandlersFactory {
     private static final String USER_AGENT_FORMAT = "stroom-proxy/{} java/{}";
 
     private final LogStream logStream;
-
     private final PathCreator pathCreator;
-
     private final String defaultUserAgent;
-
+    private final UserIdentityFactory userIdentityFactory;
 
     @Inject
     public ForwardHttpPostHandlersFactory(final LogStream logStream,
                                           final PathCreator pathCreator,
-                                          final Provider<BuildInfo> buildInfoProvider) {
+                                          final Provider<BuildInfo> buildInfoProvider,
+                                          final UserIdentityFactory userIdentityFactory) {
         this.logStream = logStream;
         this.pathCreator = pathCreator;
+        this.userIdentityFactory = userIdentityFactory;
 
         // Construct something like
         // stroom-proxy/v6.0-beta.46 java/1.8.0_181
@@ -62,6 +63,11 @@ public class ForwardHttpPostHandlersFactory {
                 "\" ForwardHttpPostHandlers with user agent string [" +
                 userAgentString +
                 "]");
-        return new ForwardHttpPostHandlers(logStream, config, userAgentString, sslSocketFactory);
+        return new ForwardHttpPostHandlers(
+                logStream,
+                config,
+                userAgentString,
+                sslSocketFactory,
+                userIdentityFactory);
     }
 }

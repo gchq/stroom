@@ -7,13 +7,13 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
+import jakarta.inject.Inject;
 import org.jooq.Record;
 
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
 
 import static stroom.meta.impl.db.jooq.tables.MetaRetentionTracker.META_RETENTION_TRACKER;
 

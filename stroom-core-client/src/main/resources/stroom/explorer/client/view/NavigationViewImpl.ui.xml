@@ -7,9 +7,12 @@
             <g:Button ui:field="logo" styleName="navigation-logo"/>
             <g:Button ui:field="mainMenuButton" title="Main Menu" styleName="main-menu focus-without-border"/>
         </g:FlowPanel>
-        <v:QuickFilter ui:field="nameFilter" addStyleNames="dock-min explorerTreeViewImpl-nameFilter"/>
+
+        <g:SimplePanel styleName="dock-min explorerTreeViewImpl-nameFilterPanel">
+            <v:QuickFilter ui:field="nameFilter" addStyleNames="dock-min explorerTreeViewImpl-nameFilter"/>
+        </g:SimplePanel>
         <g:FlowPanel ui:field="buttonContainer" styleName="dock-min navigation-header-buttons"/>
-        <g:SimplePanel styleName="explorerTree-container" ui:field="explorerTreeContainer"/>
+        <g:MaxScrollPanel addStyleNames="dock-max explorerTree-container" ui:field="explorerTreeContainer"/>
         <g:SimplePanel ui:field="activityPanel" styleName="dock-min"/>
     </g:FlowPanel>
-</ui:UiBinder> 
+</ui:UiBinder>

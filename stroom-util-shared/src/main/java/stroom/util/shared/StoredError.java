@@ -42,16 +42,28 @@ public class StoredError implements Marker, Comparable<StoredError> {
     private final String elementId;
     @JsonProperty
     private final String message;
+    @JsonProperty
+    private final ErrorType errorType;
+
+    public StoredError(final Severity severity,
+                       final Location location,
+                       final String elementId,
+                       final String message) {
+        this(severity, location, elementId, message, null);
+
+    }
 
     @JsonCreator
     public StoredError(@JsonProperty("severity") final Severity severity,
                        @JsonProperty("location") final Location location,
                        @JsonProperty("elementId") final String elementId,
-                       @JsonProperty("message") final String message) {
+                       @JsonProperty("message") final String message,
+                       @JsonProperty("errorType") final ErrorType errorType) {
         this.severity = severity;
         this.location = location;
         this.elementId = elementId;
         this.message = message;
+        this.errorType = GwtNullSafe.requireNonNullElse(errorType, ErrorType.UNKNOWN);
     }
 
     @Override
@@ -71,6 +83,13 @@ public class StoredError implements Marker, Comparable<StoredError> {
         return message;
     }
 
+    /**
+     * @return A non-null {@link ErrorType}
+     */
+    public ErrorType getErrorType() {
+        return errorType;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -81,12 +100,13 @@ public class StoredError implements Marker, Comparable<StoredError> {
         }
         final StoredError that = (StoredError) o;
         return Objects.equals(location, that.location) &&
-                Objects.equals(message, that.message);
+                Objects.equals(message, that.message) &&
+                Objects.equals(errorType, that.errorType);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(location, message);
+        return Objects.hash(location, message, errorType);
     }
 
     @Override

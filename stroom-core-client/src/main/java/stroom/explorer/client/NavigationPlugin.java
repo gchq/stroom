@@ -16,13 +16,18 @@
 
 package stroom.explorer.client;
 
+import stroom.content.client.event.ContentTabSelectionChangeEvent;
 import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.Plugin;
+import stroom.docref.DocRef;
+import stroom.document.client.DocumentTabData;
+import stroom.explorer.client.event.LocateDocEvent;
 import stroom.explorer.client.event.ShowFindEvent;
+import stroom.explorer.client.event.ShowFindInContentEvent;
+import stroom.explorer.client.event.ShowRecentItemsEvent;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.menu.client.presenter.IconMenuItem;
-import stroom.widget.menu.client.presenter.KeyedParentMenuItem;
 import stroom.widget.util.client.KeyBinding.Action;
 
 import com.google.inject.Inject;
@@ -33,29 +38,57 @@ import javax.inject.Singleton;
 @Singleton
 public class NavigationPlugin extends Plugin {
 
+    private DocRef selectedDoc;
+
     @Inject
     public NavigationPlugin(final EventBus eventBus) {
         super(eventBus);
+        // track the currently selected doc.
+        registerHandler(getEventBus().addHandler(ContentTabSelectionChangeEvent.getType(), e -> {
+            if (e.getTabData() instanceof DocumentTabData) {
+                final DocumentTabData documentTabData = (DocumentTabData) e.getTabData();
+                selectedDoc = documentTabData.getDocRef();
+            } else {
+                selectedDoc = null;
+            }
+        }));
     }
 
     @Override
     public void onReveal(final BeforeRevealMenubarEvent event) {
-        event.getMenuItems().addMenuItem(
-                MenuKeys.MAIN_MENU,
-                new KeyedParentMenuItem.Builder()
-                        .priority(6)
-                        .text("Navigation")
-                        .menuItems(event.getMenuItems())
-                        .menuKey(MenuKeys.NAVIGATION_MENU)
-                        .build());
-
+        MenuKeys.addNavigationMenu(event.getMenuItems());
         event.getMenuItems().addMenuItem(MenuKeys.NAVIGATION_MENU,
                 new IconMenuItem.Builder()
                         .priority(201)
                         .icon(SvgImage.FIND)
-                        .text("Find Content")
+                        .text("Find")
                         .action(Action.FIND)
                         .command(() -> ShowFindEvent.fire(NavigationPlugin.this))
+                        .build());
+        event.getMenuItems().addMenuItem(MenuKeys.NAVIGATION_MENU,
+                new IconMenuItem.Builder()
+                        .priority(202)
+                        .icon(SvgImage.FIND)
+                        .text("Find In Content")
+                        .action(Action.FIND_IN_CONTENT)
+                        .command(() -> ShowFindInContentEvent.fire(NavigationPlugin.this))
+                        .build());
+        event.getMenuItems().addMenuItem(MenuKeys.NAVIGATION_MENU,
+                new IconMenuItem.Builder()
+                        .priority(203)
+                        .icon(SvgImage.HISTORY)
+                        .text("Recent Items")
+                        .action(Action.RECENT_ITEMS)
+                        .command(() -> ShowRecentItemsEvent.fire(NavigationPlugin.this))
+                        .build());
+        event.getMenuItems().addMenuItem(MenuKeys.NAVIGATION_MENU,
+                new IconMenuItem.Builder()
+                        .priority(204)
+                        .icon(SvgImage.LOCATE)
+                        .text("Locate Current Item")
+                        .action(Action.LOCATE)
+                        .enabled(selectedDoc != null)
+                        .command(() -> LocateDocEvent.fire(NavigationPlugin.this, selectedDoc))
                         .build());
     }
 }

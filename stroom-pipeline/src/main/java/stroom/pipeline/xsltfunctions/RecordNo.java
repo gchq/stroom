@@ -21,7 +21,7 @@ import stroom.pipeline.state.LocationHolder;
 import stroom.pipeline.state.LocationHolder.FunctionType;
 import stroom.util.NullSafe;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 class RecordNo extends AbstractLocationFunction {
 

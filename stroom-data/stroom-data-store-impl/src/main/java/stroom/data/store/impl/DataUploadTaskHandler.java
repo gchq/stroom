@@ -27,10 +27,10 @@ import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskProgressHandler;
 import stroom.util.EntityServiceExceptionUtil;
-import stroom.util.date.DateUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.EntityServiceException;
 
+import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,7 +39,6 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.function.Consumer;
-import javax.inject.Inject;
 
 public class DataUploadTaskHandler {
 
@@ -103,16 +102,14 @@ public class DataUploadTaskHandler {
             }
 
             if (effectiveMs != null) {
-                attributeMap.put(StandardHeaderArguments.EFFECTIVE_TIME,
-                        DateUtil.createNormalDateTimeString(effectiveMs));
+                attributeMap.putDateTime(StandardHeaderArguments.EFFECTIVE_TIME, effectiveMs);
             }
             attributeMap.put(StandardHeaderArguments.REMOTE_FILE, fileName);
             attributeMap.put(StandardHeaderArguments.FEED, feedName);
             attributeMap.put(StandardHeaderArguments.TYPE, typeName);
-            attributeMap.put(StandardHeaderArguments.RECEIVED_TIME,
-                    DateUtil.createNormalDateTimeString(System.currentTimeMillis()));
+            attributeMap.putCurrentDateTime(StandardHeaderArguments.RECEIVED_TIME);
             attributeMap.put(StandardHeaderArguments.USER_AGENT, "STROOM-UI");
-            attributeMap.put("UploadedBy", securityContext.getUserId());
+            attributeMap.put("UploadedBy", securityContext.getUserIdentityForAudit());
 
             final Consumer<Long> progressHandler = new TaskProgressHandler(taskContext, "Uploading");
 

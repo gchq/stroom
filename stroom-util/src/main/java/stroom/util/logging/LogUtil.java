@@ -7,13 +7,18 @@ import stroom.util.shared.ModelStringUtil;
 import com.google.common.base.Strings;
 import org.slf4j.helpers.MessageFormatter;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.math.BigDecimal;
 import java.math.MathContext;
 import java.math.RoundingMode;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.Objects;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -227,14 +232,29 @@ public final class LogUtil {
         }
     }
 
+    public static <T> String toPaddedMultiLine(final String padding,
+                                               final String multiLineMessage) {
+        if (multiLineMessage == null || multiLineMessage.isBlank()) {
+            return "";
+        } else {
+            return multiLineMessage.lines()
+                    .map(line -> Objects.requireNonNullElse(padding, "") + line)
+                    .collect(Collectors.joining("\n"));
+        }
+    }
+
     /**
-     * Returns the simple class name with the message
+     * Returns the simple class name with the message, useful as some exception messages
+     * only make sense if you know the class name, e.g. {@link NullPointerException} and
+     * some {@link java.io.IOException}s.
      */
     public static String exceptionMessage(final Throwable t) {
         if (t == null) {
             return null;
+        } else if (t.getMessage() == null) {
+            return NullSafe.get(t.getClass(), Class::getSimpleName);
         } else {
-            return t.getClass() + " " + t.getMessage();
+            return NullSafe.get(t.getClass(), Class::getSimpleName) + " " + t.getMessage();
         }
     }
 
@@ -304,6 +324,10 @@ public final class LogUtil {
         }
     }
 
+    /**
+     * @return The simple class name followed by value.toString().
+     * If value is null, returns null.
+     */
     public static String typedValue(final Object value) {
         if (value == null) {
             return null;
@@ -327,6 +351,70 @@ public final class LogUtil {
             return str;
         } else {
             return str.substring(0, maxLength) + "...";
+        }
+    }
+
+    /**
+     * @return A string of the form '1 apple' or `2 apples' depending on the count.
+     * User {@link LogUtil#namedCount(String, String, String, int)} for plural names
+     * that don't end with an 's'.
+     */
+    public static String namedCount(final String name, final int count) {
+        final StringBuilder sb = new StringBuilder()
+                .append(count)
+                .append(" ")
+                .append(name);
+        if (count != 1) {
+            sb.append("s");
+        }
+        return sb.toString();
+    }
+
+    /**
+     * @return A string of the form '1 embassy' or `2 embassies' depending on the count
+     */
+    public static String namedCount(final String baseName,
+                                    final String singularSuffix,
+                                    final String pluralSuffix,
+                                    final int count) {
+        final StringBuilder sb = new StringBuilder()
+                .append(count)
+                .append(" ")
+                .append(baseName);
+        if (count == 1) {
+            sb.append(singularSuffix);
+        } else {
+            sb.append(pluralSuffix);
+        }
+        return sb.toString();
+    }
+
+    /**
+     * @return The path as an absolute and normalised path or null if path is null
+     */
+    public static String path(final Path path) {
+        return NullSafe.toString(
+                path,
+                Path::toAbsolutePath,
+                Path::normalize);
+    }
+
+    /**
+     * Log the current thread's stack trace to the logConsumer, prefixed with message and a new line.
+     */
+    public static void logStackTrace(final String message,
+                                     final Consumer<String> logConsumer) {
+        if (logConsumer != null) {
+            try {
+                final Writer writer = new StringWriter();
+                final PrintWriter pw = new PrintWriter(writer);
+                new Exception("Dumping Stack Trace").printStackTrace(pw);
+                logConsumer.accept(
+                        Objects.requireNonNullElse(message, "Dumping stack trace") + "\n" + writer);
+            } catch (Exception e) {
+                logConsumer.accept(
+                        "Error dumping stack trace: " + e.getMessage());
+            }
         }
     }
 }

@@ -17,46 +17,10 @@
 package stroom.job.impl;
 
 import stroom.job.api.DistributedTaskFactory;
-import stroom.job.api.DistributedTaskFactoryDescription;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
-@Singleton
-class DistributedTaskFactoryRegistry {
+public interface DistributedTaskFactoryRegistry {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(DistributedTaskFactoryRegistry.class);
-    private final Map<String, DistributedTaskFactory> factoryMap = new HashMap<>();
-
-    @Inject
-    DistributedTaskFactoryRegistry(final Set<DistributedTaskFactory> distributedTaskFactories) {
-        for (final DistributedTaskFactory distributedTaskFactory : distributedTaskFactories) {
-            DistributedTaskFactoryDescription annotation = distributedTaskFactory.getClass().getAnnotation(
-                    DistributedTaskFactoryDescription.class);
-            final String jobName = annotation.jobName();
-
-            final Object previousFactory = factoryMap.put(jobName, distributedTaskFactory);
-
-            // Check that there isn't a factory already associated with the job.
-            if (previousFactory != null) {
-                throw new RuntimeException(
-                        "TaskFactory \"" + previousFactory + "\" has already been registered for \"" + jobName + "\"");
-            }
-
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("postProcessAfterInitialization() - registering task factory " +
-                        distributedTaskFactory + " for job " + jobName);
-            }
-        }
-    }
-
-    Map<String, DistributedTaskFactory> getFactoryMap() {
-        return factoryMap;
-    }
+    Map<String, DistributedTaskFactory> getFactoryMap();
 }

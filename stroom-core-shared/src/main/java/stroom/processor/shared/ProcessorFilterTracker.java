@@ -227,45 +227,6 @@ public class ProcessorFilterTracker implements HasIntegerId {
      * creation.
      */
     @JsonIgnore
-    public Integer getTrackerStreamCreatePercentage() {
-        return getTrackerStreamCreatePercentage(System.currentTimeMillis());
-    }
-
-    public Integer getTrackerStreamCreatePercentage(final long now) {
-        if (ProcessorFilterTrackerStatus.COMPLETE.equals(status)) {
-            return 100;
-        }
-
-        if (minMetaCreateMs != null && metaCreateMs != null) {
-            long max = now;
-            if (lastPollMs != null) {
-                max = lastPollMs;
-            }
-            if (maxMetaCreateMs != null) {
-                max = maxMetaCreateMs;
-            }
-
-            final long windowSize = max - minMetaCreateMs;
-
-            // If the window size is less than or equal to 0 then we are at 100%
-            // for now.
-            if (windowSize <= 0) {
-                return 100;
-            }
-
-            final long trackerPos = Math.min(max, metaCreateMs);
-            final long windowPos = Math.max(0, max - trackerPos);
-            return ((int) ((100.0 * (windowSize - windowPos)) / windowSize));
-        }
-
-        return null;
-    }
-
-    /**
-     * For UI use only to see current progress. Not used to influence task
-     * creation.
-     */
-    @JsonIgnore
     public String getLastPollAge() {
         if (lastPollMs != null) {
             final long ageMs = System.currentTimeMillis() - lastPollMs;

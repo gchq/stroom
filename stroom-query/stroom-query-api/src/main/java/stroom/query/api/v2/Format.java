@@ -99,24 +99,6 @@ public class Format {
                 '}';
     }
 
-    public enum Type implements HasDisplayValue {
-        GENERAL("General"),
-        NUMBER("Number"),
-        DATE_TIME("Date Time"),
-        TEXT("Text");
-
-        private final String displayValue;
-
-        Type(final String displayValue) {
-            this.displayValue = displayValue;
-        }
-
-        @Override
-        public String getDisplayValue() {
-            return displayValue;
-        }
-    }
-
     public static Builder builder() {
         return new Builder();
     }
@@ -124,6 +106,10 @@ public class Format {
     public Builder copy() {
         return new Builder(this);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     /**
      * Builder for constructing a {@link Format}
@@ -164,6 +150,28 @@ public class Format {
 
         public Format build() {
             return new Format(type, settings, wrap);
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    public enum Type implements HasDisplayValue {
+        GENERAL("General"),
+        NUMBER("Number"),
+        DATE_TIME("Date Time"),
+        TEXT("Text");
+
+        private final String displayValue;
+
+        Type(final String displayValue) {
+            this.displayValue = displayValue;
+        }
+
+        @Override
+        public String getDisplayValue() {
+            return displayValue;
         }
     }
 }

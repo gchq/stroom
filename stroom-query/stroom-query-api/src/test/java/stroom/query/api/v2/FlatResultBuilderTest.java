@@ -26,10 +26,10 @@ class FlatResultBuilderTest {
                 .builder()
                 .componentId(componentId)
                 .errors(errors);
-        final List<Field> fields = new ArrayList<>();
+        final List<Column> columns = new ArrayList<>();
         IntStream.range(0, numberFields).forEach(x ->
-                fields
-                        .add(Field
+                columns
+                        .add(Column
                                 .builder()
                                 .id(String.format("id%d", x))
                                 .name(String.format("field%d", x))
@@ -37,15 +37,13 @@ class FlatResultBuilderTest {
                                 .build())
         );
 
-        final List<List<Object>> list = new ArrayList<>();
         IntStream.range(0, numberResultSets).forEach(x -> {
             final List<Object> values = IntStream.range(0, numberFields).mapToObj(y ->
                     String.format("field%d_value%d", y, x)).collect(Collectors.toList());
-            list.add(values);
+            flatResultBuilder.addValues(values);
         });
 
-        flatResultBuilder.structure(fields);
-        flatResultBuilder.values(list);
+        flatResultBuilder.structure(columns);
         final FlatResult flatResult = flatResultBuilder.build();
 
         // Then

@@ -16,32 +16,67 @@
 
 package stroom.security.api;
 
-import java.util.function.Supplier;
-import javax.ws.rs.client.Invocation;
+import stroom.docref.DocRef;
+import stroom.util.shared.HasAuditableUserIdentity;
+import stroom.util.shared.SimpleUserName;
+import stroom.util.shared.UserName;
 
-public interface SecurityContext {
+import java.util.function.Supplier;
+
+public interface SecurityContext extends HasAuditableUserIdentity {
 
     /**
      * Get the id of the user associated with this security context.
+     * If using an external IDP this may not be a very user-friendly value so for anything
+     * where the user identity is going to be shown in the UI, use {@link SecurityContext#getUserIdentityForAudit()}
      *
      * @return The id of the user associated with this security context.
      */
-    String getUserId();
+    String getSubjectId();
 
     /**
      * Retrieve the user's UUID if supported by the type of user.
+     * This is the Stroom User UUID.
      */
     String getUserUuid();
 
+    /**
+     * @return The user identity in a form suitable for use in audit events, for display
+     * in the UI, or in exception messages. Returns {@link UserIdentity#getDisplayName()} or
+     * if that is not set {@link UserIdentity#getSubjectId()}.
+     */
+    default String getUserIdentityForAudit() {
+        final UserIdentity userIdentity = getUserIdentity();
+        if (userIdentity == null) {
+            return null;
+        }
+        return userIdentity.getUserIdentityForAudit();
+    }
 
-    UserIdentity createIdentity(String userId);
+    UserIdentity createIdentity(String subjectId);
+
+    UserIdentity createIdentityByUserUuid(String userUuid);
 
     /**
-     * Gets teh identity of the current user.
+     * Gets the identity of the current user.
      *
      * @return The identity of the current user.
      */
     UserIdentity getUserIdentity();
+
+    default UserName getUserName() {
+        final UserIdentity userIdentity = getUserIdentity();
+        final String displayName;
+        final String fullName;
+        if (userIdentity != null) {
+            displayName = userIdentity.getDisplayName();
+            fullName = userIdentity.getFullName().orElse(null);
+        } else {
+            displayName = null;
+            fullName = null;
+        }
+        return new SimpleUserName(getSubjectId(), displayName, fullName, getUserUuid());
+    }
 
     /**
      * Check if the user associated with this security context is logged in.
@@ -92,6 +127,28 @@ public interface SecurityContext {
      * requested permission.
      */
     boolean hasDocumentPermission(String documentUuid, String permission);
+
+    /**
+     * Check if the user associated with this security context has the requested
+     * permission on the document specified by the document docRef.
+     *
+     * @param docRef The docRef of the document.
+     * @param permission   The permission we are checking for.
+     * @return True if the user associated with the security context has the
+     * requested permission.
+     */
+    default boolean hasDocumentPermission(DocRef docRef, String permission) {
+        return docRef != null && hasDocumentPermission(docRef.getUuid(), permission);
+    }
+
+    /**
+     * Get the user UUID of the owner of a document. Throws authentication exception if there are multiple users with
+     * ownership or no owners.
+     *
+     * @param docRef The uuid of the document.
+     * @return The UUID of the document owner.
+     */
+    String getDocumentOwnerUuid(DocRef docRef);
 
     /**
      * Run the supplied code as the specified user.
@@ -164,6 +221,4 @@ public interface SecurityContext {
      * insecurely even if it is often secured when executed from other entry points.
      */
     <T> T insecureResult(Supplier<T> supplier);
-
-    void addAuthorisationHeader(final Invocation.Builder builder);
 }

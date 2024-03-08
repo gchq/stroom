@@ -24,7 +24,8 @@ import stroom.pipeline.xmlschema.FindXMLSchemaCriteria;
 import stroom.security.api.SecurityContext;
 import stroom.svg.shared.SvgImage;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
+
 import javax.xml.XMLConstants;
 
 /**
@@ -59,7 +60,7 @@ public class SchemaFilterSplit extends AbstractXMLFilter {
         this.schemaFilter = schemaFilter;
 
         if (securityContext != null) {
-            schemaConstraint.setUser(securityContext.getUserId());
+            schemaConstraint.setUser(securityContext.getSubjectId());
         }
     }
 

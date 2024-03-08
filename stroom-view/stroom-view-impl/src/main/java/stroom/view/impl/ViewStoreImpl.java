@@ -17,10 +17,13 @@
 
 package stroom.view.impl;
 
+import stroom.docref.DocContentHighlights;
 import stroom.docref.DocContentMatch;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
+import stroom.docref.StringMatch;
 import stroom.docstore.api.AuditFieldFilter;
+import stroom.docstore.api.DependencyRemapper;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
@@ -30,17 +33,25 @@ import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.security.api.SecurityContext;
 import stroom.util.shared.Message;
+import stroom.view.api.ViewStore;
 import stroom.view.shared.ViewDoc;
+
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import java.util.function.BiConsumer;
 
 @Singleton
 class ViewStoreImpl implements ViewStore {
 
+    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.SEARCH,
+            ViewDoc.DOCUMENT_TYPE,
+            ViewDoc.DOCUMENT_TYPE,
+            ViewDoc.ICON);
     private final Store<ViewDoc> store;
     private final SecurityContext securityContext;
 
@@ -72,8 +83,11 @@ class ViewStoreImpl implements ViewStore {
     }
 
     @Override
-    public DocRef copyDocument(final DocRef docRef, final Set<String> existingNames) {
-        final String newName = UniqueNameUtil.getCopyName(docRef.getName(), existingNames);
+    public DocRef copyDocument(final DocRef docRef,
+                               final String name,
+                               final boolean makeNameUnique,
+                               final Set<String> existingNames) {
+        final String newName = UniqueNameUtil.getCopyName(name, makeNameUnique, existingNames);
         return store.copyDocument(docRef.getUuid(), newName);
     }
 
@@ -99,11 +113,7 @@ class ViewStoreImpl implements ViewStore {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(
-                DocumentTypeGroup.SEARCH,
-                ViewDoc.DOCUMENT_TYPE,
-                ViewDoc.DOCUMENT_TYPE,
-                ViewDoc.ICON);
+        return DOCUMENT_TYPE;
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -116,18 +126,29 @@ class ViewStoreImpl implements ViewStore {
 
     @Override
     public Map<DocRef, Set<DocRef>> getDependencies() {
-        return store.getDependencies(null);
+        return store.getDependencies(createMapper());
     }
 
     @Override
     public Set<DocRef> getDependencies(final DocRef docRef) {
-        return store.getDependencies(docRef, null);
+        return store.getDependencies(docRef, createMapper());
     }
 
     @Override
     public void remapDependencies(final DocRef docRef,
                                   final Map<DocRef, DocRef> remappings) {
-        store.remapDependencies(docRef, remappings, null);
+        store.remapDependencies(docRef, remappings, createMapper());
+    }
+
+    private BiConsumer<ViewDoc, DependencyRemapper> createMapper() {
+        return (doc, dependencyRemapper) -> {
+            if (doc.getDataSource() != null) {
+                doc.setDataSource(dependencyRemapper.remap(doc.getDataSource()));
+            }
+            if (doc.getPipeline() != null) {
+                doc.setPipeline(dependencyRemapper.remap(doc.getPipeline()));
+            }
+        };
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -204,7 +225,14 @@ class ViewStoreImpl implements ViewStore {
     }
 
     @Override
-    public List<DocContentMatch> findByContent(final String pattern, final boolean regex, final boolean matchCase) {
-        return store.findByContent(pattern, regex, matchCase);
+    public List<DocContentMatch> findByContent(final StringMatch filter) {
+        return store.findByContent(filter);
+    }
+
+    @Override
+    public DocContentHighlights fetchHighlights(final DocRef docRef,
+                                                final String extension,
+                                                final StringMatch filter) {
+        return store.fetchHighlights(docRef, extension, filter);
     }
 }

@@ -31,6 +31,9 @@ import stroom.util.logging.LogUtil;
 import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
 import okhttp3.OkHttpClient;
 import okhttp3.OkHttpClient.Builder;
 import okhttp3.Protocol;
@@ -43,9 +46,6 @@ import java.time.Duration;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.inject.Singleton;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
@@ -59,7 +59,7 @@ public class HttpClientCache {
 
     private static final String CACHE_NAME = "Http Client Cache";
 
-    private final LoadingStroomCache<String, OkHttpClient> cache;
+    private final LoadingStroomCache<String, OkHttpClient> cache; // clientConfig => OkHttpClient
     private final PathCreator pathCreator;
 
     @Inject
@@ -93,10 +93,10 @@ public class HttpClientCache {
                         "Error parsing HTTP client configuration \"{}\". {}", clientConfigStr, e.getMessage()), e);
             }
 
-            addOptionalConfigurationValue(builder::followRedirects, clientConfig.getFollowRedirects());
-            addOptionalConfigurationValue(builder::followSslRedirects, clientConfig.getFollowSslRedirects());
+            addOptionalConfigurationValue(builder::followRedirects, clientConfig.isFollowRedirects());
+            addOptionalConfigurationValue(builder::followSslRedirects, clientConfig.isFollowSslRedirects());
             addOptionalConfigurationValue(builder::retryOnConnectionFailure,
-                    clientConfig.getRetryOnConnectionFailure());
+                    clientConfig.isRetryOnConnectionFailure());
             addOptionalConfigurationDuration(builder::callTimeout, clientConfig.getCallTimeout());
             addOptionalConfigurationDuration(builder::connectTimeout, clientConfig.getConnectionTimeout());
             addOptionalConfigurationDuration(builder::readTimeout, clientConfig.getReadTimeout());

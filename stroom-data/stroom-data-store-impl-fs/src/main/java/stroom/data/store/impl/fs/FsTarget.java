@@ -18,8 +18,7 @@ package stroom.data.store.impl.fs;
 
 import stroom.data.store.api.DataException;
 import stroom.data.store.api.OutputStreamProvider;
-import stroom.data.store.api.Target;
-import stroom.datasource.api.v2.AbstractField;
+import stroom.datasource.api.v2.QueryField;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.MetaService;
@@ -32,7 +31,6 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UncheckedIOException;
 import java.nio.channels.ClosedByInterruptException;
@@ -62,22 +60,19 @@ final class FsTarget implements InternalTarget, SegmentOutputStreamProviderFacto
     private Meta meta;
     private boolean closed;
     private boolean deleted;
-    private final boolean append;
     private long index;
 
     private FsTarget(final MetaService metaService,
                      final FsPathHelper fileSystemStreamPathHelper,
                      final Meta requestMetaData,
                      final Path volumePath,
-                     final String streamType,
-                     final boolean append) {
+                     final String streamType) {
         this.metaService = metaService;
         this.fileSystemStreamPathHelper = fileSystemStreamPathHelper;
         this.meta = requestMetaData;
         this.volumePath = volumePath;
         this.parent = null;
         this.streamType = streamType;
-        this.append = append;
 
         validate();
     }
@@ -92,7 +87,6 @@ final class FsTarget implements InternalTarget, SegmentOutputStreamProviderFacto
         this.meta = parent.meta;
         this.volumePath = parent.volumePath;
         this.parent = parent;
-        this.append = parent.append;
         this.streamType = streamType;
         this.file = file;
         validate();
@@ -107,9 +101,8 @@ final class FsTarget implements InternalTarget, SegmentOutputStreamProviderFacto
                            final FsPathHelper fileSystemStreamPathHelper,
                            final Meta meta,
                            final Path rootPath,
-                           final String streamType,
-                           final boolean append) {
-        return new FsTarget(metaService, fileSystemStreamPathHelper, meta, rootPath, streamType, append);
+                           final String streamType) {
+        return new FsTarget(metaService, fileSystemStreamPathHelper, meta, rootPath, streamType);
     }
 
     private void validate() {
@@ -130,62 +123,30 @@ final class FsTarget implements InternalTarget, SegmentOutputStreamProviderFacto
         }
         if (attributeMap == null) {
             attributeMap = new AttributeMap();
-            if (isAppend()) {
-                readManifest(attributeMap);
-            }
         }
         return attributeMap;
     }
 
-    private void readManifest(final AttributeMap attributeMap) {
-        final Path manifestFile = fileSystemStreamPathHelper.getChildPath(getFile(), InternalStreamTypeNames.MANIFEST);
-        if (Files.isRegularFile(manifestFile)) {
-            try (final InputStream inputStream = Files.newInputStream(manifestFile)) {
-                AttributeMapUtil.read(inputStream, attributeMap);
-            } catch (final IOException e) {
-                LOGGER.error(e::getMessage, e);
-            }
-        }
-    }
-
     private void writeManifest() {
         try {
-            boolean doneManifest = false;
             final Path manifestFile = fileSystemStreamPathHelper.getChildPath(getFile(),
                     InternalStreamTypeNames.MANIFEST);
-
-            // Are we appending?
-            if (isAppend()) {
-                // Does the manifest exist ... overwrite it
-                if (Files.isRegularFile(manifestFile)) {
-                    try (final OutputStream outputStream = fileSystemStreamPathHelper.getOutputStream(
-                            InternalStreamTypeNames.MANIFEST,
-                            manifestFile)) {
-                        AttributeMapUtil.write(getAttributes(), outputStream);
-                    }
-                    doneManifest = true;
+            // No manifest done yet ... output one if the parent dir's exist
+            if (Files.isDirectory(getFile().getParent())) {
+                try (final OutputStream outputStream = fileSystemStreamPathHelper.getOutputStream(
+                        InternalStreamTypeNames.MANIFEST,
+                        manifestFile)) {
+                    AttributeMapUtil.write(getAttributes(), outputStream);
                 }
-            }
-
-            if (!doneManifest) {
-                // No manifest done yet ... output one if the parent dir's exist
-                if (Files.isDirectory(getFile().getParent())) {
-                    try (final OutputStream outputStream = fileSystemStreamPathHelper.getOutputStream(
-                            InternalStreamTypeNames.MANIFEST,
-                            manifestFile)) {
-                        AttributeMapUtil.write(getAttributes(), outputStream);
-                    }
-                } else {
-                    LOGGER.warn(() -> "closeStreamTarget() - Closing target file with no directory present");
-                }
-
+            } else {
+                LOGGER.warn(() -> "closeStreamTarget() - Closing target file with no directory present");
             }
         } catch (final IOException e) {
             LOGGER.error(() -> "closeStreamTarget() - Error on writing Manifest " + this, e);
         }
     }
 
-    private void updateAttribute(final FsTarget target, final AbstractField key, final String value) {
+    private void updateAttribute(final FsTarget target, final QueryField key, final String value) {
         if (!target.getAttributes().containsKey(key.getName())) {
             target.getAttributes().put(key.getName(), value);
         }
@@ -364,14 +325,6 @@ final class FsTarget implements InternalTarget, SegmentOutputStreamProviderFacto
     private FsTarget child(final String streamTypeName) {
         final Path childFile = fileSystemStreamPathHelper.getChildPath(getFile(), streamTypeName);
         return new FsTarget(metaService, fileSystemStreamPathHelper, this, streamTypeName, childFile);
-    }
-
-    Target getParent() {
-        return parent;
-    }
-
-    boolean isAppend() {
-        return append;
     }
 
     @Override

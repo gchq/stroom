@@ -4,8 +4,9 @@ import stroom.node.api.NodeInfo;
 import stroom.query.api.v2.SearchRequestSource;
 import stroom.security.api.SecurityContext;
 
+import jakarta.inject.Inject;
+
 import java.util.Objects;
-import javax.inject.Inject;
 
 public final class ResultStoreFactory {
 
@@ -25,18 +26,17 @@ public final class ResultStoreFactory {
         this.resultStoreSettingsFactory = resultStoreSettingsFactory;
     }
 
-    /**
-     * @param store The underlying store to use for creating the search responses.
-     */
     public ResultStore create(final SearchRequestSource searchRequestSource,
                               final CoprocessorsImpl coprocessors) {
-        final String userId = securityContext.getUserId();
-        Objects.requireNonNull(userId, "No user is logged in");
+        final String userUuid = securityContext.getUserUuid();
+        final String createUser = securityContext.getUserIdentityForAudit();
+        Objects.requireNonNull(userUuid, "No user is logged in");
 
         return new ResultStore(
                 searchRequestSource,
                 sizesProvider,
-                userId,
+                userUuid,
+                createUser,
                 coprocessors,
                 nodeInfo.getThisNodeName(),
                 resultStoreSettingsFactory.get());

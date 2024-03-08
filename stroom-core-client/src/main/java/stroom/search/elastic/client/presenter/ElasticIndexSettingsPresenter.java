@@ -24,18 +24,17 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
-import stroom.explorer.client.presenter.EntityDropDownPresenter;
+import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
+import stroom.query.client.presenter.DynamicFieldSelectionListModel;
 import stroom.search.elastic.client.presenter.ElasticIndexSettingsPresenter.ElasticIndexSettingsView;
 import stroom.search.elastic.shared.ElasticClusterDoc;
-import stroom.search.elastic.shared.ElasticIndexDataSourceFieldUtil;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.search.elastic.shared.ElasticIndexResource;
 import stroom.search.elastic.shared.ElasticIndexTestResponse;
 import stroom.security.shared.DocumentPermissionNames;
-import stroom.util.shared.EqualsUtil;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
@@ -43,34 +42,33 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 
-import java.util.Objects;
-
 public class ElasticIndexSettingsPresenter extends DocumentEditPresenter<ElasticIndexSettingsView, ElasticIndexDoc>
         implements ElasticIndexSettingsUiHandlers {
 
     private static final ElasticIndexResource ELASTIC_INDEX_RESOURCE = GWT.create(ElasticIndexResource.class);
 
-    private final EntityDropDownPresenter clusterPresenter;
+    private final DocSelectionBoxPresenter clusterPresenter;
     private final EditExpressionPresenter editExpressionPresenter;
-    private final EntityDropDownPresenter pipelinePresenter;
+    private final DocSelectionBoxPresenter pipelinePresenter;
     private final RestFactory restFactory;
-
-    private DocRef defaultExtractionPipeline;
+    private final DynamicFieldSelectionListModel fieldSelectionBoxModel;
 
     @Inject
     public ElasticIndexSettingsPresenter(
             final EventBus eventBus,
             final ElasticIndexSettingsView view,
-            final EntityDropDownPresenter clusterPresenter,
+            final DocSelectionBoxPresenter clusterPresenter,
             final EditExpressionPresenter editExpressionPresenter,
-            final EntityDropDownPresenter pipelinePresenter,
-            final RestFactory restFactory) {
+            final DocSelectionBoxPresenter pipelinePresenter,
+            final RestFactory restFactory,
+            final DynamicFieldSelectionListModel fieldSelectionBoxModel) {
         super(eventBus, view);
 
         this.clusterPresenter = clusterPresenter;
         this.editExpressionPresenter = editExpressionPresenter;
         this.pipelinePresenter = pipelinePresenter;
         this.restFactory = restFactory;
+        this.fieldSelectionBoxModel = fieldSelectionBoxModel;
 
         clusterPresenter.setIncludedTypes(ElasticClusterDoc.DOCUMENT_TYPE);
         clusterPresenter.setRequiredPermissions(DocumentPermissionNames.USE);
@@ -87,20 +85,9 @@ public class ElasticIndexSettingsPresenter extends DocumentEditPresenter<Elastic
     @Override
     protected void onBind() {
         // If the selected `ElasticCluster` changes, set the dirty flag to `true`
-        registerHandler(clusterPresenter.addDataSelectionHandler(event -> {
-            if (!EqualsUtil.isEquals(clusterPresenter.getSelectedEntityReference(), getEntity().getClusterRef())) {
-                setDirty(true);
-            }
-        }));
-
+        registerHandler(clusterPresenter.addDataSelectionHandler(event -> setDirty(true)));
         registerHandler(editExpressionPresenter.addDirtyHandler(dirty -> setDirty(true)));
-
-        registerHandler(pipelinePresenter.addDataSelectionHandler(selection -> {
-            if (!Objects.equals(pipelinePresenter.getSelectedEntityReference(), defaultExtractionPipeline)) {
-                setDirty(true);
-                defaultExtractionPipeline = pipelinePresenter.getSelectedEntityReference();
-            }
-        }));
+        registerHandler(pipelinePresenter.addDataSelectionHandler(selection -> setDirty(true)));
     }
 
     @Override
@@ -138,11 +125,10 @@ public class ElasticIndexSettingsPresenter extends DocumentEditPresenter<Elastic
             index.setRetentionExpression(ExpressionOperator.builder().op(Op.AND).build());
         }
 
-        editExpressionPresenter.init(restFactory, docRef, ElasticIndexDataSourceFieldUtil.getDataSourceFields(index));
+        fieldSelectionBoxModel.setDataSourceRef(docRef);
+        editExpressionPresenter.init(restFactory, docRef, fieldSelectionBoxModel);
         editExpressionPresenter.read(index.getRetentionExpression());
-
-        defaultExtractionPipeline = index.getDefaultExtractionPipeline();
-        pipelinePresenter.setSelectedEntityReference(defaultExtractionPipeline);
+        pipelinePresenter.setSelectedEntityReference(index.getDefaultExtractionPipeline());
     }
 
     @Override

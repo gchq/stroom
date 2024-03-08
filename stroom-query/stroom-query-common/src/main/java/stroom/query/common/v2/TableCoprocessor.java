@@ -16,9 +16,9 @@
 
 package stroom.query.common.v2;
 
-import stroom.dashboard.expression.v1.Val;
-import stroom.dashboard.expression.v1.ref.ErrorConsumer;
 import stroom.query.api.v2.TableSettings;
+import stroom.query.language.functions.Val;
+import stroom.query.language.functions.ref.ErrorConsumer;
 
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
@@ -43,8 +43,8 @@ public class TableCoprocessor implements Coprocessor, HasCompletionState {
     }
 
     @Override
-    public void add(final Val[] values) {
-        dataStore.add(values);
+    public void accept(final Val[] values) {
+        dataStore.accept(values);
     }
 
     @Override

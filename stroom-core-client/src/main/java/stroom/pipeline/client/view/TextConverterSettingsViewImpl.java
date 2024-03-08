@@ -17,7 +17,7 @@
 package stroom.pipeline.client.view;
 
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
-import stroom.item.client.ItemListBox;
+import stroom.item.client.SelectionBox;
 import stroom.pipeline.client.presenter.TextConverterSettingsPresenter.TextConverterSettingsView;
 import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
 
@@ -33,7 +33,7 @@ public class TextConverterSettingsViewImpl extends ViewImpl
     private final Widget widget;
 
     @UiField
-    ItemListBox<TextConverterType> converterType;
+    SelectionBox<TextConverterType> converterType;
 
     @Inject
     public TextConverterSettingsViewImpl(final Binder binder) {
@@ -46,7 +46,7 @@ public class TextConverterSettingsViewImpl extends ViewImpl
     }
 
     @Override
-    public ItemListBox<TextConverterType> getConverterType() {
+    public SelectionBox<TextConverterType> getConverterType() {
         return converterType;
     }
 

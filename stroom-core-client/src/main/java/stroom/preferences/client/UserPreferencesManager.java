@@ -3,20 +3,23 @@ package stroom.preferences.client;
 import stroom.config.global.shared.UserPreferencesResource;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
-import stroom.editor.client.presenter.CurrentTheme;
-import stroom.query.api.v2.TimeZone.Use;
+import stroom.editor.client.presenter.CurrentPreferences;
+import stroom.expression.api.TimeZone.Use;
 import stroom.ui.config.shared.Themes;
 import stroom.ui.config.shared.Themes.ThemeType;
 import stroom.ui.config.shared.UserPreferences;
+import stroom.util.shared.GwtNullSafe;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.RootPanel;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorTheme;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.StringJoiner;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
@@ -27,20 +30,19 @@ public class UserPreferencesManager {
 
     private static final UserPreferencesResource PREFERENCES_RESOURCE = GWT.create(UserPreferencesResource.class);
     private final RestFactory restFactory;
-    private final CurrentTheme currentTheme;
+    private final CurrentPreferences currentPreferences;
 
     private static final Map<String, String> densityMap = new HashMap<>();
     private static final Map<String, String> fontMap = new HashMap<>();
     private static final Map<String, String> fontSizeMap = new HashMap<>();
-    private UserPreferences currentPreferences;
+    private UserPreferences currentUserPreferences;
 
     @Inject
     public UserPreferencesManager(final RestFactory restFactory,
-                                  final CurrentTheme currentTheme) {
+                                  final CurrentPreferences currentPreferences) {
         this.restFactory = restFactory;
-        this.currentTheme = currentTheme;
+        this.currentPreferences = currentPreferences;
 
-        densityMap.put("Default", "stroom-density-comfortable");
         densityMap.put("Comfortable", "stroom-density-comfortable");
         densityMap.put("Compact", "stroom-density-compact");
 
@@ -90,18 +92,19 @@ public class UserPreferencesManager {
     }
 
     public void setCurrentPreferences(final UserPreferences userPreferences) {
-        this.currentPreferences = userPreferences;
-
-        currentTheme.setTheme(userPreferences.getTheme());
-        currentTheme.setEditorTheme(userPreferences.getEditorTheme());
-        currentTheme.setEditorKeyBindings(userPreferences.getEditorKeyBindings().name());
+        this.currentUserPreferences = userPreferences;
+        applyUserPreferences(this.currentPreferences, userPreferences);
 
         final com.google.gwt.dom.client.Element element = RootPanel.getBodyElement().getParentElement();
         String className = getCurrentPreferenceClasses();
         element.setClassName(className);
     }
 
-    public UserPreferences getCurrentPreferences() {
+    public UserPreferences getCurrentUserPreferences() {
+        return currentUserPreferences;
+    }
+
+    public CurrentPreferences getCurrentPreferences() {
         return currentPreferences;
     }
 
@@ -113,20 +116,30 @@ public class UserPreferencesManager {
      * @return A space delimited list of css classes for theme, density, font and font size.
      */
     public String getCurrentPreferenceClasses() {
-        String className = "stroom";
-        if (currentTheme.getTheme() != null) {
-            className += " " + Themes.getClassName(currentTheme.getTheme());
+        final StringJoiner classJoiner = new StringJoiner(" ")
+                .add("stroom");
+
+        if (currentUserPreferences != null) {
+            GwtNullSafe.consume(currentUserPreferences.getTheme(), theme ->
+                    classJoiner.add(Themes.getClassName(theme)));
+
+            if (GwtNullSafe.requireNonNullElse(currentUserPreferences.getEnableTransparency(), true)) {
+                classJoiner.add("transparency");
+            }
+
+            Optional.ofNullable(currentUserPreferences.getDensity())
+                    .map(densityMap::get)
+                    .ifPresent(classJoiner::add);
+
+            Optional.ofNullable(currentUserPreferences.getFont())
+                    .map(fontMap::get)
+                    .ifPresent(classJoiner::add);
+
+            Optional.ofNullable(currentUserPreferences.getFontSize())
+                    .map(fontSizeMap::get)
+                    .ifPresent(classJoiner::add);
         }
-        if (currentPreferences != null && currentPreferences.getDensity() != null) {
-            className += " " + densityMap.get(currentPreferences.getDensity());
-        }
-        if (currentPreferences != null && currentPreferences.getFont() != null) {
-            className += " " + fontMap.get(currentPreferences.getFont());
-        }
-        if (currentPreferences != null && currentPreferences.getFontSize() != null) {
-            className += " " + fontSizeMap.get(currentPreferences.getFontSize());
-        }
-        return className;
+        return classJoiner.toString();
     }
 
     public List<String> getThemes() {
@@ -140,19 +153,45 @@ public class UserPreferencesManager {
                 .collect(Collectors.toList());
     }
 
-    public List<String> getEditorThemes() {
-        return Arrays.stream(AceEditorTheme.values())
+    public List<String> getEditorThemes(final ThemeType themeType) {
+
+        final List<AceEditorTheme> themes = Objects.requireNonNull(themeType).equals(ThemeType.LIGHT)
+                ? AceEditorTheme.getLightThemes()
+                : AceEditorTheme.getDarkThemes();
+        return themes.stream()
                 .map(AceEditorTheme::getName)
                 .collect(Collectors.toList());
     }
 
+    public String getDefaultEditorTheme(final ThemeType themeType) {
+        final AceEditorTheme aceEditorTheme = themeType.isLight()
+                ? AceEditorTheme.DEFAULT_LIGHT_THEME
+                : AceEditorTheme.DEFAULT_DARK_THEME;
+        return aceEditorTheme.getName();
+    }
+
     public boolean isUtc() {
-        if (currentPreferences != null &&
-                currentPreferences.getTimeZone() != null &&
-                currentPreferences.getTimeZone().getUse() != null &&
-                currentPreferences.getTimeZone().getUse() != Use.UTC) {
+        if (currentUserPreferences != null &&
+                currentUserPreferences.getTimeZone() != null &&
+                currentUserPreferences.getTimeZone().getUse() != null &&
+                currentUserPreferences.getTimeZone().getUse() != Use.UTC) {
             return false;
         }
         return true;
+    }
+
+    static CurrentPreferences buildCurrentPreferences(final UserPreferences userPreferences) {
+        Objects.requireNonNull(userPreferences);
+        final CurrentPreferences currentPreferences = new CurrentPreferences();
+        applyUserPreferences(currentPreferences, userPreferences);
+        return currentPreferences;
+    }
+
+    static void applyUserPreferences(final CurrentPreferences currentPreferences,
+                                     final UserPreferences userPreferences) {
+        currentPreferences.setTheme(userPreferences.getTheme());
+        currentPreferences.setEditorTheme(userPreferences.getEditorTheme());
+        currentPreferences.setEditorKeyBindings(userPreferences.getEditorKeyBindings().name());
+        currentPreferences.setEditorLiveAutoCompletion(userPreferences.getEditorLiveAutoCompletion());
     }
 }

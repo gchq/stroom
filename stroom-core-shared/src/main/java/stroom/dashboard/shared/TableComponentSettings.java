@@ -17,11 +17,12 @@
 package stroom.dashboard.shared;
 
 import stroom.docref.DocRef;
+import stroom.query.api.v2.Column;
 import stroom.query.api.v2.ConditionalFormattingRule;
-import stroom.query.api.v2.Field;
 import stroom.query.api.v2.TableSettings;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -41,28 +42,32 @@ import java.util.Objects;
         "extractValues",
         "extractionPipeline",
         "maxResults",
+        "pageSize",
         "showDetail",
         "conditionalFormattingRules",
         "modelVersion"})
 @JsonInclude(Include.NON_NULL)
 public class TableComponentSettings implements ComponentSettings {
 
-    public static final int[] DEFAULT_MAX_RESULTS = {1000000};
+    public static final long[] DEFAULT_MAX_RESULTS = {};
 
-    @Schema(description = "TODO", required = true)
+    @Schema(description = "TODO")
     @JsonProperty
     private final String queryId;
 
     @JsonProperty
     private final DocRef dataSourceRef;
 
-    @Schema(required = true)
+    @Schema
     @JsonProperty
-    private final List<Field> fields;
+    private final List<Column> fields;
 
     @Schema(description = "TODO")
     @JsonProperty
     private final Boolean extractValues;
+
+    @JsonProperty
+    private final Boolean useDefaultExtractionPipeline;
 
     @JsonProperty
     private final DocRef extractionPipeline;
@@ -74,7 +79,13 @@ public class TableComponentSettings implements ComponentSettings {
             "'1000,10,1' means 1000 results at group level 0, 10 at level 1 and 1 at level 2. " +
             "In the absence of this field system defaults will apply")
     @JsonProperty
-    private final List<Integer> maxResults;
+    private final List<Long> maxResults;
+
+    @Schema(description = "Defines the maximum number of rows to display in the table at once (default 100).",
+            example = "100")
+    @JsonPropertyDescription("Defines the maximum number of rows to display in the table at once (default 100).")
+    @JsonProperty
+    private final Integer pageSize;
 
     @JsonPropertyDescription("When grouping is used a value of true indicates that the results will include the full " +
             "detail of any results aggregated into a group as well as their aggregates. A value of " +
@@ -93,10 +104,12 @@ public class TableComponentSettings implements ComponentSettings {
     public TableComponentSettings(
             @JsonProperty("queryId") final String queryId,
             @JsonProperty("dataSourceRef") final DocRef dataSourceRef,
-            @JsonProperty("fields") final List<Field> fields,
+            @JsonProperty("fields") final List<Column> fields, // Kept as fields for backward compatibility.
             @JsonProperty("extractValues") final Boolean extractValues,
+            @JsonProperty("useDefaultExtractionPipeline") final Boolean useDefaultExtractionPipeline,
             @JsonProperty("extractionPipeline") final DocRef extractionPipeline,
-            @JsonProperty("maxResults") final List<Integer> maxResults,
+            @JsonProperty("maxResults") final List<Long> maxResults,
+            @JsonProperty("pageSize") final Integer pageSize,
             @JsonProperty("showDetail") final Boolean showDetail,
             @JsonProperty("conditionalFormattingRules") final List<ConditionalFormattingRule>
                     conditionalFormattingRules,
@@ -106,8 +119,10 @@ public class TableComponentSettings implements ComponentSettings {
         this.dataSourceRef = dataSourceRef;
         this.fields = fields;
         this.extractValues = extractValues;
+        this.useDefaultExtractionPipeline = useDefaultExtractionPipeline;
         this.extractionPipeline = extractionPipeline;
         this.maxResults = maxResults;
+        this.pageSize = pageSize;
         this.showDetail = showDetail;
         this.conditionalFormattingRules = conditionalFormattingRules;
         this.modelVersion = modelVersion;
@@ -121,7 +136,13 @@ public class TableComponentSettings implements ComponentSettings {
         return dataSourceRef;
     }
 
-    public List<Field> getFields() {
+    @Deprecated // Kept as fields for backward compatibility.
+    public List<Column> getFields() {
+        return fields;
+    }
+
+    @JsonIgnore // Kept as fields for backward compatibility.
+    public List<Column> getColumns() {
         return fields;
     }
 
@@ -136,12 +157,27 @@ public class TableComponentSettings implements ComponentSettings {
         return extractValues;
     }
 
+    public Boolean getUseDefaultExtractionPipeline() {
+        return useDefaultExtractionPipeline;
+    }
+
+    public boolean useDefaultExtractionPipeline() {
+        if (useDefaultExtractionPipeline == null) {
+            return false;
+        }
+        return useDefaultExtractionPipeline;
+    }
+
     public DocRef getExtractionPipeline() {
         return extractionPipeline;
     }
 
-    public List<Integer> getMaxResults() {
+    public List<Long> getMaxResults() {
         return maxResults;
+    }
+
+    public Integer getPageSize() {
+        return pageSize;
     }
 
     public Boolean getShowDetail() {
@@ -176,8 +212,10 @@ public class TableComponentSettings implements ComponentSettings {
                 Objects.equals(dataSourceRef, that.dataSourceRef) &&
                 Objects.equals(fields, that.fields) &&
                 Objects.equals(extractValues, that.extractValues) &&
+                Objects.equals(useDefaultExtractionPipeline, that.useDefaultExtractionPipeline) &&
                 Objects.equals(extractionPipeline, that.extractionPipeline) &&
                 Objects.equals(maxResults, that.maxResults) &&
+                Objects.equals(pageSize, that.pageSize) &&
                 Objects.equals(showDetail, that.showDetail) &&
                 Objects.equals(conditionalFormattingRules, that.conditionalFormattingRules) &&
                 Objects.equals(modelVersion, that.modelVersion);
@@ -190,8 +228,10 @@ public class TableComponentSettings implements ComponentSettings {
                 dataSourceRef,
                 fields,
                 extractValues,
+                useDefaultExtractionPipeline,
                 extractionPipeline,
                 maxResults,
+                pageSize,
                 showDetail,
                 conditionalFormattingRules,
                 modelVersion);
@@ -202,10 +242,12 @@ public class TableComponentSettings implements ComponentSettings {
         return "TableSettings{" +
                 "queryId='" + queryId + '\'' +
                 ", dataSourceRef=" + dataSourceRef +
-                ", fields=" + fields +
+                ", columns=" + fields +
                 ", extractValues=" + extractValues +
+                ", useDefaultExtractionPipeline=" + useDefaultExtractionPipeline +
                 ", extractionPipeline=" + extractionPipeline +
                 ", maxResults=" + maxResults +
+                ", pageSize=" + pageSize +
                 ", showDetail=" + showDetail +
                 ", conditionalFormattingRules=" + conditionalFormattingRules +
                 ", modelVersion='" + modelVersion + '\'' +
@@ -228,10 +270,12 @@ public class TableComponentSettings implements ComponentSettings {
 
         private String queryId;
         private DocRef dataSourceRef;
-        private List<Field> fields;
+        private List<Column> columns;
         private Boolean extractValues;
+        private Boolean useDefaultExtractionPipeline = Boolean.TRUE;
         private DocRef extractionPipeline;
-        private List<Integer> maxResults;
+        private List<Long> maxResults;
+        private Integer pageSize;
         private Boolean showDetail;
         private List<ConditionalFormattingRule> conditionalFormattingRules;
         private String modelVersion;
@@ -242,14 +286,16 @@ public class TableComponentSettings implements ComponentSettings {
         private Builder(final TableComponentSettings tableSettings) {
             this.queryId = tableSettings.queryId;
             this.dataSourceRef = tableSettings.dataSourceRef;
-            this.fields = tableSettings.fields == null
+            this.columns = tableSettings.fields == null
                     ? null
                     : new ArrayList<>(tableSettings.fields);
             this.extractValues = tableSettings.extractValues;
+            this.useDefaultExtractionPipeline = tableSettings.useDefaultExtractionPipeline;
             this.extractionPipeline = tableSettings.extractionPipeline;
             this.maxResults = tableSettings.maxResults == null
                     ? null
                     : new ArrayList<>(tableSettings.maxResults);
+            this.pageSize = tableSettings.pageSize;
             this.showDetail = tableSettings.showDetail;
             this.conditionalFormattingRules = tableSettings.conditionalFormattingRules == null
                     ? null
@@ -271,30 +317,30 @@ public class TableComponentSettings implements ComponentSettings {
             return this;
         }
 
-        public Builder fields(final List<Field> fields) {
-            this.fields = fields;
+        public Builder columns(final List<Column> columns) {
+            this.columns = columns;
             return this;
         }
 
         /**
-         * @param values Add expected fields to the output table
+         * @param values Add expected columns to the output table
          * @return The {@link TableSettings.Builder}, enabling method chaining
          */
-        public Builder addFields(final Field... values) {
-            return addFields(Arrays.asList(values));
+        public Builder addColumn(final Column... values) {
+            return addColumn(Arrays.asList(values));
         }
 
         /**
          * Convenience function for adding multiple fields that are already in a collection.
          *
-         * @param values The fields to add
-         * @return this builder, with the fields added.
+         * @param values The columns to add
+         * @return this builder, with the columns added.
          */
-        public Builder addFields(final Collection<Field> values) {
-            if (this.fields == null) {
-                this.fields = new ArrayList<>(values);
+        public Builder addColumn(final Collection<Column> values) {
+            if (this.columns == null) {
+                this.columns = new ArrayList<>(values);
             } else {
-                this.fields.addAll(values);
+                this.columns.addAll(values);
             }
             return this;
         }
@@ -311,6 +357,16 @@ public class TableComponentSettings implements ComponentSettings {
             }
             return this;
         }
+
+        public Builder useDefaultExtractionPipeline(final Boolean value) {
+            if (value == null || !value) {
+                this.useDefaultExtractionPipeline = null;
+            } else {
+                this.useDefaultExtractionPipeline = Boolean.TRUE;
+            }
+            return this;
+        }
+
 
         /**
          * @param value The reference to the extraction pipeline that will be used on the results
@@ -335,8 +391,13 @@ public class TableComponentSettings implements ComponentSettings {
             return this.extractionPipeline(DocRef.builder().type(type).uuid(uuid).name(name).build());
         }
 
-        public Builder maxResults(final List<Integer> maxResults) {
+        public Builder maxResults(final List<Long> maxResults) {
             this.maxResults = maxResults;
+            return this;
+        }
+
+        public Builder pageSize(final Integer pageSize) {
+            this.pageSize = pageSize;
             return this;
         }
 
@@ -366,10 +427,12 @@ public class TableComponentSettings implements ComponentSettings {
             return new TableComponentSettings(
                     queryId,
                     dataSourceRef,
-                    fields,
+                    columns,
                     extractValues,
+                    useDefaultExtractionPipeline,
                     extractionPipeline,
                     maxResults,
+                    pageSize,
                     showDetail,
                     conditionalFormattingRules,
                     modelVersion);
@@ -378,7 +441,7 @@ public class TableComponentSettings implements ComponentSettings {
         public TableSettings buildTableSettings() {
             return new TableSettings(
                     queryId,
-                    fields,
+                    columns,
                     null,
                     null,
                     null,
@@ -386,7 +449,8 @@ public class TableComponentSettings implements ComponentSettings {
                     extractionPipeline,
                     maxResults,
                     showDetail,
-                    conditionalFormattingRules);
+                    conditionalFormattingRules,
+                    null);
         }
     }
 }

@@ -47,7 +47,7 @@ class TableSettingsBuilderTest {
                 .extractValues(extractValues)
                 .showDetail(showDetail)
                 .queryId(queryId)
-                .addFields(Field
+                .addColumns(Column
                         .builder()
                         .id(field1Name)
                         .name(field1Name)
@@ -73,7 +73,7 @@ class TableSettingsBuilderTest {
                                         .build())
                                 .build())
                         .build())
-                .addFields(Field
+                .addColumns(Column
                         .builder()
                         .id(field2Name)
                         .name(field2Name)
@@ -111,47 +111,47 @@ class TableSettingsBuilderTest {
         assertThat(tableSettings.getExtractionPipeline().getUuid()).isEqualTo(extractPipelineUuid);
         assertThat(tableSettings.getExtractionPipeline().getType()).isEqualTo(extractPipelineType);
 
-        assertThat(tableSettings.getFields()).hasSize(2);
-        final Field field1 = tableSettings.getFields().get(0);
-        assertThat(field1.getName()).isEqualTo(field1Name);
-        assertThat(field1.getExpression()).isEqualTo(field1Expression);
-        assertThat(field1.getGroup()).isEqualTo(field1Group);
+        assertThat(tableSettings.getColumns()).hasSize(2);
+        final Column column1 = tableSettings.getColumns().get(0);
+        assertThat(column1.getName()).isEqualTo(field1Name);
+        assertThat(column1.getExpression()).isEqualTo(field1Expression);
+        assertThat(column1.getGroup()).isEqualTo(field1Group);
 
-        assertThat(field1.getSort()).isNotNull();
-        assertThat(field1.getSort().getOrder()).isEqualTo(field1SortOrder);
-        assertThat(field1.getSort().getDirection()).isEqualTo(field1SortDirection);
+        assertThat(column1.getSort()).isNotNull();
+        assertThat(column1.getSort().getOrder()).isEqualTo(field1SortOrder);
+        assertThat(column1.getSort().getDirection()).isEqualTo(field1SortDirection);
 
-        assertThat(field1.getFilter()).isNotNull();
-        assertThat(field1.getFilter().getExcludes()).isEqualTo(field1FilterExcludes);
-        assertThat(field1.getFilter().getIncludes()).isEqualTo(field1FilterIncludes);
+        assertThat(column1.getFilter()).isNotNull();
+        assertThat(column1.getFilter().getExcludes()).isEqualTo(field1FilterExcludes);
+        assertThat(column1.getFilter().getIncludes()).isEqualTo(field1FilterIncludes);
 
-        assertThat(field1.getFormat()).isNotNull();
-        assertThat(field1.getFormat().getType()).isEqualTo(Format.Type.NUMBER);
-        assertThat(field1.getFormat().getSettings()).isNotNull();
-        assertThat(((NumberFormatSettings) field1.getFormat().getSettings()).getDecimalPlaces())
+        assertThat(column1.getFormat()).isNotNull();
+        assertThat(column1.getFormat().getType()).isEqualTo(Format.Type.NUMBER);
+        assertThat(column1.getFormat().getSettings()).isNotNull();
+        assertThat(((NumberFormatSettings) column1.getFormat().getSettings()).getDecimalPlaces())
                 .isEqualTo(field1NumberFormatDecimalPlaces);
-        assertThat(((NumberFormatSettings) field1.getFormat().getSettings()).getUseSeparator())
+        assertThat(((NumberFormatSettings) column1.getFormat().getSettings()).getUseSeparator())
                 .isEqualTo(field1NumberFormatUseSeperator);
 
-        final Field field2 = tableSettings.getFields().get(1);
-        assertThat(field2.getName()).isEqualTo(field2Name);
-        assertThat(field2.getExpression()).isEqualTo(field2Expression);
-        assertThat(field2.getGroup()).isEqualTo(field2Group);
+        final Column column2 = tableSettings.getColumns().get(1);
+        assertThat(column2.getName()).isEqualTo(field2Name);
+        assertThat(column2.getExpression()).isEqualTo(field2Expression);
+        assertThat(column2.getGroup()).isEqualTo(field2Group);
 
-        assertThat(field2.getSort()).isNotNull();
-        assertThat(field2.getSort().getOrder()).isEqualTo(field2SortOrder);
-        assertThat(field2.getSort().getDirection()).isEqualTo(field2SortDirection);
+        assertThat(column2.getSort()).isNotNull();
+        assertThat(column2.getSort().getOrder()).isEqualTo(field2SortOrder);
+        assertThat(column2.getSort().getDirection()).isEqualTo(field2SortDirection);
 
-        assertThat(field2.getFilter()).isNotNull();
-        assertThat(field2.getFilter().getExcludes()).isEqualTo(field2FilterExcludes);
-        assertThat(field2.getFilter().getIncludes()).isEqualTo(field2FilterIncludes);
+        assertThat(column2.getFilter()).isNotNull();
+        assertThat(column2.getFilter().getExcludes()).isEqualTo(field2FilterExcludes);
+        assertThat(column2.getFilter().getIncludes()).isEqualTo(field2FilterIncludes);
 
-        assertThat(field2.getFormat()).isNotNull();
-        assertThat(field2.getFormat().getType()).isEqualTo(Format.Type.NUMBER);
-        assertThat(field2.getFormat().getSettings()).isNotNull();
-        assertThat(((NumberFormatSettings) field2.getFormat().getSettings()).getDecimalPlaces())
+        assertThat(column2.getFormat()).isNotNull();
+        assertThat(column2.getFormat().getType()).isEqualTo(Format.Type.NUMBER);
+        assertThat(column2.getFormat().getSettings()).isNotNull();
+        assertThat(((NumberFormatSettings) column2.getFormat().getSettings()).getDecimalPlaces())
                 .isEqualTo(field2NumberFormatDecimalPlaces);
-        assertThat(((NumberFormatSettings) field2.getFormat().getSettings()).getUseSeparator())
+        assertThat(((NumberFormatSettings) column2.getFormat().getSettings()).getUseSeparator())
                 .isEqualTo(field2NumberFormatUseSeperator);
 
     }

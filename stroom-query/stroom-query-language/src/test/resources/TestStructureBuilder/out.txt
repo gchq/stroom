@@ -1,0 +1,391 @@
+before "test of inner \" strings " after
+=====
+<TOKEN_GROUP>
+   <STRING>before</STRING>
+   <DOUBLE_QUOTED_STRING>"test of inner \" strings "</DOUBLE_QUOTED_STRING>
+   <STRING>after</STRING>
+</TOKEN_GROUP>
+-----
+"test of inner \" strings " after
+=====
+<TOKEN_GROUP>
+   <DOUBLE_QUOTED_STRING>"test of inner \" strings "</DOUBLE_QUOTED_STRING>
+   <STRING>after</STRING>
+</TOKEN_GROUP>
+-----
+ "test of inner \" strings " after
+=====
+<TOKEN_GROUP>
+   <DOUBLE_QUOTED_STRING>"test of inner \" strings "</DOUBLE_QUOTED_STRING>
+   <STRING>after</STRING>
+</TOKEN_GROUP>
+-----
+before "test of inner \" strings "
+=====
+<TOKEN_GROUP>
+   <STRING>before</STRING>
+   <DOUBLE_QUOTED_STRING>"test of inner \" strings "</DOUBLE_QUOTED_STRING>
+</TOKEN_GROUP>
+-----
+before "test of inner \" strings "
+=====
+<TOKEN_GROUP>
+   <STRING>before</STRING>
+   <DOUBLE_QUOTED_STRING>"test of inner \" strings "</DOUBLE_QUOTED_STRING>
+</TOKEN_GROUP>
+-----
+before 'test of inner \' strings ' after
+=====
+<TOKEN_GROUP>
+   <STRING>before</STRING>
+   <SINGLE_QUOTED_STRING>'test of inner \' strings '</SINGLE_QUOTED_STRING>
+   <STRING>after</STRING>
+</TOKEN_GROUP>
+-----
+'test of inner \' strings ' after
+=====
+<TOKEN_GROUP>
+   <SINGLE_QUOTED_STRING>'test of inner \' strings '</SINGLE_QUOTED_STRING>
+   <STRING>after</STRING>
+</TOKEN_GROUP>
+-----
+ 'test of inner \' strings ' after
+=====
+<TOKEN_GROUP>
+   <SINGLE_QUOTED_STRING>'test of inner \' strings '</SINGLE_QUOTED_STRING>
+   <STRING>after</STRING>
+</TOKEN_GROUP>
+-----
+before 'test of inner \' strings '
+=====
+<TOKEN_GROUP>
+   <STRING>before</STRING>
+   <SINGLE_QUOTED_STRING>'test of inner \' strings '</SINGLE_QUOTED_STRING>
+</TOKEN_GROUP>
+-----
+before 'test of inner \' strings '
+=====
+<TOKEN_GROUP>
+   <STRING>before</STRING>
+   <SINGLE_QUOTED_STRING>'test of inner \' strings '</SINGLE_QUOTED_STRING>
+</TOKEN_GROUP>
+-----
+from test
+where this = that and foo = 'test of inner \' strings '
+=====
+<TOKEN_GROUP>
+   <FROM>
+      <STRING>test</STRING>
+   </FROM>
+   <WHERE>
+      <STRING>this</STRING>
+      <EQUALS>=</EQUALS>
+      <STRING>that</STRING>
+   </WHERE>
+   <AND>
+      <STRING>foo</STRING>
+      <EQUALS>=</EQUALS>
+      <SINGLE_QUOTED_STRING>'test of inner \' strings '</SINGLE_QUOTED_STRING>
+   </AND>
+</TOKEN_GROUP>
+-----
+from "Test Index"
+where UserId = user5 and Description = e0567
+and EventTime <= 2000-01-01T00:00:00.000Z
+and EventTime >= 2016-01-02T00:00:00.000Z
+=====
+<TOKEN_GROUP>
+   <FROM>
+      <DOUBLE_QUOTED_STRING>"Test Index"</DOUBLE_QUOTED_STRING>
+   </FROM>
+   <WHERE>
+      <STRING>UserId</STRING>
+      <EQUALS>=</EQUALS>
+      <STRING>user5</STRING>
+   </WHERE>
+   <AND>
+      <STRING>Description</STRING>
+      <EQUALS>=</EQUALS>
+      <STRING>e0567</STRING>
+   </AND>
+   <AND>
+      <STRING>EventTime</STRING>
+      <LESS_THAN_OR_EQUAL_TO><=</LESS_THAN_OR_EQUAL_TO>
+      <DATE_TIME>2000-01-01T00:00:00.000Z</DATE_TIME>
+   </AND>
+   <AND>
+      <STRING>EventTime</STRING>
+      <GREATER_THAN_OR_EQUAL_TO>>=</GREATER_THAN_OR_EQUAL_TO>
+      <DATE_TIME>2016-01-02T00:00:00.000Z</DATE_TIME>
+   </AND>
+</TOKEN_GROUP>
+-----
+from "Test Index"
+where UserId = user5 and Description = e0567
+and EventTime <= now()
+=====
+<TOKEN_GROUP>
+   <FROM>
+      <DOUBLE_QUOTED_STRING>"Test Index"</DOUBLE_QUOTED_STRING>
+   </FROM>
+   <WHERE>
+      <STRING>UserId</STRING>
+      <EQUALS>=</EQUALS>
+      <STRING>user5</STRING>
+   </WHERE>
+   <AND>
+      <STRING>Description</STRING>
+      <EQUALS>=</EQUALS>
+      <STRING>e0567</STRING>
+   </AND>
+   <AND>
+      <STRING>EventTime</STRING>
+      <LESS_THAN_OR_EQUAL_TO><=</LESS_THAN_OR_EQUAL_TO>
+      <FUNCTION_GROUP FUNCTION_NAME="now">
+      </FUNCTION_GROUP>
+   </AND>
+</TOKEN_GROUP>
+-----
+from "Test Index"
+where UserId = user5 and Description = e0567
+and EventTime <= now() + 3d
+=====
+<TOKEN_GROUP>
+   <FROM>
+      <DOUBLE_QUOTED_STRING>"Test Index"</DOUBLE_QUOTED_STRING>
+   </FROM>
+   <WHERE>
+      <STRING>UserId</STRING>
+      <EQUALS>=</EQUALS>
+      <STRING>user5</STRING>
+   </WHERE>
+   <AND>
+      <STRING>Description</STRING>
+      <EQUALS>=</EQUALS>
+      <STRING>e0567</STRING>
+   </AND>
+   <AND>
+      <STRING>EventTime</STRING>
+      <LESS_THAN_OR_EQUAL_TO><=</LESS_THAN_OR_EQUAL_TO>
+      <FUNCTION_GROUP FUNCTION_NAME="now">
+      </FUNCTION_GROUP>
+      <PLUS>+</PLUS>
+      <DURATION>3d</DURATION>
+   </AND>
+</TOKEN_GROUP>
+-----
+from "Test Index"
+where UserId = user5 and Description = e0567
+and EventTime <= now() + 3
+=====
+<TOKEN_GROUP>
+   <FROM>
+      <DOUBLE_QUOTED_STRING>"Test Index"</DOUBLE_QUOTED_STRING>
+   </FROM>
+   <WHERE>
+      <STRING>UserId</STRING>
+      <EQUALS>=</EQUALS>
+      <STRING>user5</STRING>
+   </WHERE>
+   <AND>
+      <STRING>Description</STRING>
+      <EQUALS>=</EQUALS>
+      <STRING>e0567</STRING>
+   </AND>
+   <AND>
+      <STRING>EventTime</STRING>
+      <LESS_THAN_OR_EQUAL_TO><=</LESS_THAN_OR_EQUAL_TO>
+      <FUNCTION_GROUP FUNCTION_NAME="now">
+      </FUNCTION_GROUP>
+      <PLUS>+</PLUS>
+      <NUMBER>3</NUMBER>
+   </AND>
+</TOKEN_GROUP>
+-----
+from "Test Index"
+where UserId = user5 and Description = e0567
+and EventTime <= day()-1d-1h
+=====
+<TOKEN_GROUP>
+   <FROM>
+      <DOUBLE_QUOTED_STRING>"Test Index"</DOUBLE_QUOTED_STRING>
+   </FROM>
+   <WHERE>
+      <STRING>UserId</STRING>
+      <EQUALS>=</EQUALS>
+      <STRING>user5</STRING>
+   </WHERE>
+   <AND>
+      <STRING>Description</STRING>
+      <EQUALS>=</EQUALS>
+      <STRING>e0567</STRING>
+   </AND>
+   <AND>
+      <STRING>EventTime</STRING>
+      <LESS_THAN_OR_EQUAL_TO><=</LESS_THAN_OR_EQUAL_TO>
+      <FUNCTION_GROUP FUNCTION_NAME="day">
+      </FUNCTION_GROUP>
+      <MINUS>-</MINUS>
+      <DURATION>1d</DURATION>
+      <MINUS>-</MINUS>
+      <DURATION>1h</DURATION>
+   </AND>
+</TOKEN_GROUP>
+-----
+from Events
+where Name = "Start"
+=====
+<TOKEN_GROUP>
+   <FROM>
+      <STRING>Events</STRING>
+   </FROM>
+   <WHERE>
+      <STRING>Name</STRING>
+      <EQUALS>=</EQUALS>
+      <DOUBLE_QUOTED_STRING>"Start"</DOUBLE_QUOTED_STRING>
+   </WHERE>
+</TOKEN_GROUP>
+-----
+from 'Test Index'
+where EventTime > 2023-05-05T00:00:00.000Z and  (Field = 'blah' or Field = 'blip')
+eval UserId = upperCase(UserId)
+select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time", "Status", UserId as "User Id"
+=====
+<TOKEN_GROUP>
+   <FROM>
+      <SINGLE_QUOTED_STRING>'Test Index'</SINGLE_QUOTED_STRING>
+   </FROM>
+   <WHERE>
+      <STRING>EventTime</STRING>
+      <GREATER_THAN>></GREATER_THAN>
+      <DATE_TIME>2023-05-05T00:00:00.000Z</DATE_TIME>
+   </WHERE>
+   <AND>
+      <TOKEN_GROUP>
+         <STRING>Field</STRING>
+         <EQUALS>=</EQUALS>
+         <SINGLE_QUOTED_STRING>'blah'</SINGLE_QUOTED_STRING>
+         <OR>
+            <STRING>Field</STRING>
+            <EQUALS>=</EQUALS>
+            <SINGLE_QUOTED_STRING>'blip'</SINGLE_QUOTED_STRING>
+         </OR>
+      </TOKEN_GROUP>
+   </AND>
+   <EVAL>
+      <STRING>UserId</STRING>
+      <EQUALS>=</EQUALS>
+      <FUNCTION_GROUP FUNCTION_NAME="upperCase">
+         <STRING>UserId</STRING>
+      </FUNCTION_GROUP>
+   </EVAL>
+   <SELECT>
+      <STRING>StreamId</STRING>
+      <AS>as</AS>
+      <DOUBLE_QUOTED_STRING>"Stream Id"</DOUBLE_QUOTED_STRING>
+      <COMMA>,</COMMA>
+      <STRING>EventId</STRING>
+      <AS>as</AS>
+      <DOUBLE_QUOTED_STRING>"Event Id"</DOUBLE_QUOTED_STRING>
+      <COMMA>,</COMMA>
+      <STRING>EventTime</STRING>
+      <AS>as</AS>
+      <DOUBLE_QUOTED_STRING>"Event Time"</DOUBLE_QUOTED_STRING>
+      <COMMA>,</COMMA>
+      <DOUBLE_QUOTED_STRING>"Status"</DOUBLE_QUOTED_STRING>
+      <COMMA>,</COMMA>
+      <STRING>UserId</STRING>
+      <AS>as</AS>
+      <DOUBLE_QUOTED_STRING>"User Id"</DOUBLE_QUOTED_STRING>
+   </SELECT>
+</TOKEN_GROUP>
+-----
+from "index_view"
+where EventTime between 2022-05-05T00:00:00.000Z and 2023-05-05T00:00:00.000Z
+select StreamId
+=====
+<TOKEN_GROUP>
+   <FROM>
+      <DOUBLE_QUOTED_STRING>"index_view"</DOUBLE_QUOTED_STRING>
+   </FROM>
+   <WHERE>
+      <STRING>EventTime</STRING>
+      <BETWEEN>between</BETWEEN>
+      <DATE_TIME>2022-05-05T00:00:00.000Z</DATE_TIME>
+      <BETWEEN_AND>and</BETWEEN_AND>
+      <DATE_TIME>2023-05-05T00:00:00.000Z</DATE_TIME>
+   </WHERE>
+   <SELECT>
+      <STRING>StreamId</STRING>
+   </SELECT>
+</TOKEN_GROUP>
+-----
+from "index_view"
+where StreamId in (123, 456)
+select StreamId
+=====
+<TOKEN_GROUP>
+   <FROM>
+      <DOUBLE_QUOTED_STRING>"index_view"</DOUBLE_QUOTED_STRING>
+   </FROM>
+   <WHERE>
+      <STRING>StreamId</STRING>
+      <IN>in</IN>
+      <TOKEN_GROUP>
+         <NUMBER>123</NUMBER>
+         <COMMA>,</COMMA>
+         <NUMBER>456</NUMBER>
+      </TOKEN_GROUP>
+   </WHERE>
+   <SELECT>
+      <STRING>StreamId</STRING>
+   </SELECT>
+</TOKEN_GROUP>
+-----
+from "index_view"
+where StreamId in dictionary "my_dictionary"
+select StreamId
+=====
+<TOKEN_GROUP>
+   <FROM>
+      <DOUBLE_QUOTED_STRING>"index_view"</DOUBLE_QUOTED_STRING>
+   </FROM>
+   <WHERE>
+      <STRING>StreamId</STRING>
+      <IN>in</IN>
+      <DICTIONARY>dictionary</DICTIONARY>
+      <DOUBLE_QUOTED_STRING>"my_dictionary"</DOUBLE_QUOTED_STRING>
+   </WHERE>
+   <SELECT>
+      <STRING>StreamId</STRING>
+   </SELECT>
+</TOKEN_GROUP>
+-----
+// From example index
+from View
+// eval MaxD=max(parseDuration('PT10M'))
+where EventTime < now() - 2dx
+select StreamId, EventId, Feed
+=====
+<TOKEN_GROUP>
+   <FROM>
+      <STRING>View</STRING>
+   </FROM>
+   <WHERE>
+      <STRING>EventTime</STRING>
+      <LESS_THAN><</LESS_THAN>
+      <FUNCTION_GROUP FUNCTION_NAME="now">
+      </FUNCTION_GROUP>
+      <MINUS>-</MINUS>
+      <DURATION>2d</DURATION>
+      <STRING>x</STRING>
+   </WHERE>
+   <SELECT>
+      <STRING>StreamId</STRING>
+      <COMMA>,</COMMA>
+      <STRING>EventId</STRING>
+      <COMMA>,</COMMA>
+      <STRING>Feed</STRING>
+   </SELECT>
+</TOKEN_GROUP>
+-----

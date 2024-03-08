@@ -25,10 +25,9 @@ import event.logging.AuthenticateOutcome;
 import event.logging.AuthenticateOutcomeReason;
 import event.logging.Event;
 import event.logging.User;
+import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.inject.Inject;
 
 public class AuthenticationEventLog {
     private static final Logger LOGGER = LoggerFactory.getLogger(AuthenticationEventLog.class);

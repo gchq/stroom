@@ -16,6 +16,7 @@
 
 package stroom.cache.impl;
 
+import stroom.cache.api.CacheExistsException;
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.LoadingStroomCache;
 import stroom.cache.api.StroomCache;
@@ -29,7 +30,7 @@ import stroom.util.logging.LogUtil;
 import stroom.util.sysinfo.HasSystemInfo;
 import stroom.util.sysinfo.SystemInfoResult;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.inject.Singleton;
 
 import java.util.Collections;
 import java.util.List;
@@ -42,7 +43,6 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.inject.Singleton;
 
 @Singleton
 public class CacheManagerImpl implements CacheManager, HasSystemInfo {
@@ -89,14 +89,38 @@ public class CacheManagerImpl implements CacheManager, HasSystemInfo {
         return cache;
     }
 
+
+    @Override
+    public boolean exists(final String name) {
+        return caches.containsKey(name);
+    }
+
     public void registerCache(final String name, final StroomCache<?, ?> cache) {
-        if (caches.containsKey(name)) {
-            throw new RuntimeException("A cache called '" + name + "' already exists");
+        if (exists(name)) {
+            throw new CacheExistsException(name);
         }
 
         final StroomCache<?, ?> existing = caches.put(name, cache);
         if (existing != null) {
             cache.clear();
+        }
+    }
+
+    @Override
+    public <K, V> StroomCache<K, V> getCache(final String name) {
+        try {
+            return (StroomCache<K, V>) caches.get(name);
+        } catch (ClassCastException e) {
+            throw new RuntimeException(LogUtil.message("Cache {} is not of the expected type: {}", e.getMessage(), e));
+        }
+    }
+
+    @Override
+    public <K, V> LoadingStroomCache<K, V> getLoadingCache(final String name) {
+        try {
+            return (LoadingStroomCache<K, V>) caches.get(name);
+        } catch (ClassCastException e) {
+            throw new RuntimeException(LogUtil.message("Cache {} is not of the expected type: {}", e.getMessage(), e));
         }
     }
 
@@ -144,12 +168,11 @@ public class CacheManagerImpl implements CacheManager, HasSystemInfo {
                         stream = stream
                                 .sorted();
                     }
-                    final ObjectMapper objectMapper = JsonUtil.getMapper();
                     keyList = stream
                             .map(key -> {
                                 try {
                                     // Try and serialise it
-                                    objectMapper.writeValueAsString(key);
+                                    JsonUtil.writeValueAsString(key);
                                 } catch (Exception e) {
                                     return "Unable to serialise Key as JSON, dumping as string: "
                                             + key.toString().substring(0, 1_000);

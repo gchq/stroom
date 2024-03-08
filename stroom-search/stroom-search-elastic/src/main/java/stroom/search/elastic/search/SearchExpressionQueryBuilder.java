@@ -19,7 +19,7 @@ package stroom.search.elastic.search;
 
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
-import stroom.query.api.v2.DateTimeSettings;
+import stroom.expression.api.DateTimeSettings;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
@@ -60,17 +60,13 @@ public class SearchExpressionQueryBuilder {
     private final Map<String, ElasticIndexField> indexFieldsMap;
     private final WordListProvider wordListProvider;
     private final DateTimeSettings dateTimeSettings;
-    private final long nowEpochMilli;
 
     public SearchExpressionQueryBuilder(final WordListProvider wordListProvider,
                                         final Map<String, ElasticIndexField> indexFieldsMap,
-                                        final DateTimeSettings dateTimeSettings,
-                                        final long nowEpochMilli
-    ) {
+                                        final DateTimeSettings dateTimeSettings) {
         this.wordListProvider = wordListProvider;
         this.indexFieldsMap = indexFieldsMap;
         this.dateTimeSettings = dateTimeSettings;
-        this.nowEpochMilli = nowEpochMilli;
     }
 
     public QueryBuilder buildQuery(final ExpressionOperator expression) {
@@ -133,9 +129,7 @@ public class SearchExpressionQueryBuilder {
         }
         final ElasticIndexField indexField = indexFieldsMap.get(field);
         if (indexField == null) {
-            // Ignore missing fields.
-            return null;
-//            throw new ResourceNotFoundException("Field not found in index: " + field);
+            throw new SearchException("Field not found in index: " + field);
         }
         final String fieldName = indexField.getFieldName();
 
@@ -187,6 +181,9 @@ public class SearchExpressionQueryBuilder {
                 case EQUALS -> {
                     return buildKeywordQuery(fieldName, expression);
                 }
+                case NOT_EQUALS -> {
+                    return negate(buildKeywordQuery(fieldName, expression));
+                }
                 case MATCHES_REGEX -> {
                     return QueryBuilders.regexpQuery(fieldName, expression);
                 }
@@ -214,6 +211,9 @@ public class SearchExpressionQueryBuilder {
                 case EQUALS -> {
                     return buildTextQuery(fieldName, expression);
                 }
+                case NOT_EQUALS -> {
+                    return negate(buildTextQuery(fieldName, expression));
+                }
                 case MATCHES_REGEX -> {
                     return QueryBuilders.regexpQuery(fieldName, expression);
                 }
@@ -229,8 +229,9 @@ public class SearchExpressionQueryBuilder {
                 case IN_DICTIONARY -> {
                     return buildDictionaryQuery(condition, fieldName, docRef, indexField);
                 }
-                default -> throw new RuntimeException("Unsupported condition '" + condition.getDisplayValue() + "' for "
-                        + indexField.getFieldUse().getDisplayValue() + " field type");
+                default -> throw new UnsupportedOperationException("Unsupported condition '" +
+                        condition.getDisplayValue() + "' for " + indexField.getFieldUse().getDisplayValue() +
+                        " field type");
             }
         }
     }
@@ -273,6 +274,11 @@ public class SearchExpressionQueryBuilder {
                 numericValue = valueParser.apply(condition, fieldName, fieldValue);
                 return QueryBuilders
                         .termQuery(fieldName, numericValue);
+            }
+            case NOT_EQUALS -> {
+                numericValue = valueParser.apply(condition, fieldName, fieldValue);
+                return negate(QueryBuilders
+                        .termQuery(fieldName, numericValue));
             }
             case CONTAINS, IN -> {
                 numericValues = tokenizeExpression(fieldValue)
@@ -321,9 +327,15 @@ public class SearchExpressionQueryBuilder {
             case IN_DICTIONARY -> {
                 return buildDictionaryQuery(condition, fieldName, docRef, indexField);
             }
-            default -> throw new RuntimeException("Unexpected condition '" + condition.getDisplayValue() + "' for " +
+            default -> throw new SearchException("Unexpected condition '" + condition.getDisplayValue() + "' for " +
                     indexField.getFieldUse().getDisplayValue() + " field type");
         }
+    }
+
+    private QueryBuilder negate(final QueryBuilder queryBuilder) {
+        final BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery();
+        boolQueryBuilder.mustNot(queryBuilder);
+        return boolQueryBuilder;
     }
 
     /**
@@ -344,13 +356,7 @@ public class SearchExpressionQueryBuilder {
     }
 
     private Long getDate(final Condition condition, final String fieldName, final String value) {
-        try {
-            // Empty optional will be caught below
-            return DateExpressionParser.parse(value, dateTimeSettings, nowEpochMilli).get().toInstant().toEpochMilli();
-        } catch (final Exception e) {
-            throw new IllegalArgumentException("Expected a standard date value for field \"" + fieldName
-                    + "\" but was given string \"" + value + "\"");
-        }
+        return DateExpressionParser.getMs(fieldName, value, dateTimeSettings);
     }
 
     /**

@@ -1,6 +1,6 @@
 package stroom.query.common.v2;
 
-import stroom.dashboard.expression.v1.Val;
+import stroom.query.language.functions.Val;
 
 import com.esotericsoftware.kryo.io.Output;
 
@@ -8,7 +8,7 @@ import java.util.Objects;
 
 class UngroupedKeyPart implements KeyPart {
 
-    private long sequenceNumber;
+    private final long sequenceNumber;
 
     public UngroupedKeyPart(final long sequenceNumber) {
         this.sequenceNumber = sequenceNumber;

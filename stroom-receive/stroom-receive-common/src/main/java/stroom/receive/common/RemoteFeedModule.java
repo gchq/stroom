@@ -17,7 +17,6 @@
 package stroom.receive.common;
 
 import stroom.util.guice.RestResourcesBinder;
-import stroom.util.guice.ServletBinder;
 
 import com.google.inject.AbstractModule;
 
@@ -25,10 +24,12 @@ public class RemoteFeedModule extends AbstractModule {
 
     @Override
     protected void configure() {
+        bind(RequestAuthenticator.class).to(RequestAuthenticatorImpl.class);
+
         RestResourcesBinder.create(binder())
                 .bind(FeedStatusResourceImpl.class);
 
-        ServletBinder.create(binder())
-                .bind(RemoteFeedServiceRPC.class);
+//        ServletBinder.create(binder())
+//                .bind(RemoteFeedServiceRPC.class);
     }
 }

@@ -5,8 +5,9 @@ import stroom.security.identity.db.jooq.tables.OauthClient;
 import stroom.security.identity.openid.OpenIdClientDao;
 import stroom.security.openid.api.OpenIdClient;
 
+import jakarta.inject.Inject;
+
 import java.util.Optional;
-import javax.inject.Inject;
 
 public class OpenIdClientDaoImpl implements OpenIdClientDao {
 
@@ -18,7 +19,7 @@ public class OpenIdClientDaoImpl implements OpenIdClientDao {
     }
 
     @Override
-    public void create(final OpenIdClient client) {
+    public void createIfNotExists(final OpenIdClient client) {
         JooqUtil.context(identityDbConnProvider, context -> context
                 .insertInto(OauthClient.OAUTH_CLIENT)
                 .set(OauthClient.OAUTH_CLIENT.NAME, client.getName())

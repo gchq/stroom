@@ -10,16 +10,19 @@ import stroom.explorer.shared.PermissionInheritance;
 import stroom.security.api.DocumentPermissionService;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
+import stroom.util.NullSafe;
 
+import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
 
 class ExplorerNodeServiceImpl implements ExplorerNodeService {
 
@@ -68,6 +71,14 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
     public void createNode(final DocRef docRef,
                            final DocRef destinationFolderRef,
                            final PermissionInheritance permissionInheritance) {
+        createNode(docRef, destinationFolderRef, permissionInheritance, null);
+    }
+
+    @Override
+    public void createNode(final DocRef docRef,
+                           final DocRef destinationFolderRef,
+                           final PermissionInheritance permissionInheritance,
+                           final Set<String> tags) {
         // Ensure permission inheritance is set to something.
         PermissionInheritance perms = permissionInheritance;
         if (perms == null) {
@@ -94,7 +105,7 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
             LOGGER.error(e.getMessage(), e);
         }
 
-        addNode(destinationFolderRef, docRef);
+        addNode(destinationFolderRef, docRef, tags);
     }
 
     @Override
@@ -195,6 +206,16 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
     }
 
     @Override
+    public void updateTags(final DocRef docRef, final Set<String> nodeTags) {
+        final ExplorerTreeNode explorerTreeNode = getNodeForDocRef(docRef)
+                .orElse(null);
+        if (explorerTreeNode != null) {
+            explorerTreeNode.setTags(nodeTags);
+            explorerTreeDao.update(explorerTreeNode);
+        }
+    }
+
+    @Override
     public void deleteNode(final DocRef docRef) {
         try {
             getNodeForDocRef(docRef).ifPresent(explorerTreeDao::remove);
@@ -211,19 +232,9 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
     }
 
     @Override
-    public Optional<ExplorerNode> getNodeWithRoot() {
-        final List<ExplorerTreeNode> roots = Optional
-                .ofNullable(explorerTreeDao.getRoots())
-                .filter(r -> r.size() > 0)
-                .orElseGet(() -> {
-                    createRoot();
-                    return explorerTreeDao.getRoots();
-                });
-
-        return Optional.ofNullable(roots)
-                .filter(r -> r.size() > 0)
-                .map(r -> r.get(0))
-                .map(this::createExplorerNode);
+    public ExplorerNode getRoot() {
+        // Assumes ensureRootNodeExists has been called already
+        return ExplorerConstants.SYSTEM_NODE;
     }
 
     @Override
@@ -233,8 +244,7 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
                     final String rootNodeUuid = explorerTreeDao.getRoot(node).getUuid();
 
                     // Set the root node UUID
-                    return ExplorerNode.builder()
-                            .docRef(docRef)
+                    return node.buildExplorerNode()
                             .rootNodeUuid(rootNodeUuid)
                             .build();
                 });
@@ -263,7 +273,9 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
     @Override
     public List<ExplorerNode> getPath(final DocRef docRef) {
         return getNodeForDocRef(docRef)
-                .map(explorerTreeDao::getPath).orElse(Collections.emptyList()).stream()
+                .map(explorerTreeDao::getPath)
+                .orElse(Collections.emptyList())
+                .stream()
                 .map(this::createExplorerNode)
                 .collect(Collectors.toList());
     }
@@ -334,9 +346,13 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
     }
 
     private void addNode(final DocRef parentFolderRef, final DocRef docRef) {
+        addNode(parentFolderRef, docRef, null);
+    }
+
+    private void addNode(final DocRef parentFolderRef, final DocRef docRef, final Set<String> tags) {
         final ExplorerTreeNode folderNode = getNodeForDocRef(parentFolderRef).orElse(null);
         final ExplorerTreeNode docNode = ExplorerTreeNode.create(docRef);
-        setTags(docNode);
+//        setTags(docNode);
         explorerTreeDao.addChild(folderNode, docNode);
     }
 
@@ -356,44 +372,33 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
         }
     }
 
-    private void setTags(final ExplorerTreeNode explorerTreeNode) {
-        if (explorerTreeNode != null) {
-            explorerTreeNode.setTags(ExplorerTags.getTags(explorerTreeNode.getType()));
-        }
-    }
+//    private void setTags(final ExplorerTreeNode explorerTreeNode) {
+//        if (explorerTreeNode != null) {
+//            explorerTreeNode.setTags(ExplorerFlags.getFlag(explorerTreeNode.getType()));
+//        }
+//    }
 
     private void addDocumentPermissions(final DocRef source,
                                         final DocRef dest,
                                         final boolean owner,
                                         final boolean cascade) {
-        String sourceType = null;
-        String sourceUuid = null;
-        String destUuid = null;
-
-        if (source != null) {
-            sourceType = source.getType();
-            sourceUuid = source.getUuid();
-        }
-
-        if (dest != null) {
-            destUuid = dest.getUuid();
-        }
+        final String sourceType = NullSafe.get(source, DocRef::getType);
+        final String sourceUuid = NullSafe.get(source, DocRef::getUuid);
 
         if (cascade
                 && sourceType != null
                 && sourceUuid != null
                 && DocumentTypes.isFolder(sourceType)) {
-            final String cascadeSourceUuid = sourceUuid;
             final List<ExplorerNode> descendants = getDescendants(dest);
             descendants.forEach(descendant ->
                     documentPermissionService.addDocumentPermissions(
-                            cascadeSourceUuid,
-                            descendant.getUuid(),
+                            source,
+                            descendant.getDocRef(),
                             owner)
             );
         }
 
-        documentPermissionService.addDocumentPermissions(sourceUuid, destUuid, owner);
+        documentPermissionService.addDocumentPermissions(source, dest, owner);
     }
 
     private void clearDocumentPermissions(final DocRef docRef) {
@@ -401,11 +406,16 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
     }
 
     private ExplorerNode createExplorerNode(final ExplorerTreeNode explorerTreeNode) {
-        return ExplorerNode.builder()
-                .type(explorerTreeNode.getType())
-                .uuid(explorerTreeNode.getUuid())
-                .name(explorerTreeNode.getName())
-                .tags(explorerTreeNode.getTags())
-                .build();
+        if (Objects.equals(ExplorerConstants.SYSTEM_NODE.getType(), explorerTreeNode.getType())
+                && Objects.equals(ExplorerConstants.SYSTEM_NODE.getUuid(), explorerTreeNode.getUuid())) {
+            return ExplorerConstants.SYSTEM_NODE;
+        } else if (Objects.equals(ExplorerConstants.FAVOURITES_NODE.getType(), explorerTreeNode.getType())
+                && Objects.equals(ExplorerConstants.FAVOURITES_NODE.getUuid(), explorerTreeNode.getUuid())) {
+            return ExplorerConstants.FAVOURITES_NODE;
+        } else {
+            return explorerTreeNode.buildExplorerNode()
+                    .addNodeFlag(ExplorerFlags.getStandardFlagByDocType(explorerTreeNode.getType()).orElse(null))
+                    .build();
+        }
     }
 }

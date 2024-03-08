@@ -20,7 +20,7 @@ import stroom.cell.expander.client.ExpanderCell;
 import stroom.core.client.LocationManager;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestFactory;
-import stroom.explorer.client.presenter.EntityChooser;
+import stroom.explorer.client.presenter.DocSelectionPopup;
 import stroom.meta.shared.DataRetentionFields;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
@@ -64,7 +64,8 @@ public class MetaRelationListPresenter extends AbstractMetaListPresenter {
                                      final DateTimeFormatter dateTimeFormatter,
                                      final Provider<SelectionSummaryPresenter> selectionSummaryPresenterProvider,
                                      final Provider<ProcessChoicePresenter> processChoicePresenterProvider,
-                                     final Provider<EntityChooser> pipelineSelection) {
+                                     final Provider<DocSelectionPopup> pipelineSelection,
+                                     final ExpressionValidator expressionValidator) {
         super(eventBus,
                 view,
                 restFactory,
@@ -73,7 +74,9 @@ public class MetaRelationListPresenter extends AbstractMetaListPresenter {
                 selectionSummaryPresenterProvider,
                 processChoicePresenterProvider,
                 pipelineSelection,
-                false);
+                expressionValidator,
+                false
+        );
     }
 
     public void setSelectedStream(final MetaRow metaRow, final boolean fireEvents,
@@ -130,10 +133,6 @@ public class MetaRelationListPresenter extends AbstractMetaListPresenter {
                 if (meta.getParentMetaId() == null || streamMap.get(meta.getParentMetaId()) == null) {
                     newData.add(row);
                     addChildren(row, data, newData, depth + 1);
-
-                    if (maxDepth < depth) {
-                        maxDepth = depth;
-                    }
                 }
             } else {
                 // Add children.
@@ -143,10 +142,7 @@ public class MetaRelationListPresenter extends AbstractMetaListPresenter {
                         hasChildren.add(meta.getParentMetaId());
                         newData.add(row);
                         addChildren(row, data, newData, depth + 1);
-
-                        if (maxDepth < depth) {
-                            maxDepth = depth;
-                        }
+                        maxDepth = Math.max(maxDepth, depth);
                     }
                 }
             }

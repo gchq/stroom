@@ -17,20 +17,19 @@
 package stroom.proxy.app.handler;
 
 import stroom.docref.DocRef;
-import stroom.proxy.app.ReceiveDataConfig;
 import stroom.receive.common.AttributeMapFilter;
 import stroom.receive.common.DataReceiptPolicyAttributeMapFilterFactory;
 import stroom.receive.common.FeedStatusAttributeMapFilter;
 import stroom.receive.common.PermissiveAttributeMapFilter;
+import stroom.receive.common.ReceiveDataConfig;
 import stroom.receive.rules.shared.ReceiveDataRules;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.inject.Singleton;
 
 @Singleton
 public class AttributeMapFilterFactory {

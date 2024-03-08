@@ -1,8 +1,8 @@
 package stroom.query.common.v2;
 
-import stroom.dashboard.expression.v1.FieldIndex;
-import stroom.dashboard.expression.v1.ref.ErrorConsumer;
 import stroom.docref.DocRef;
+import stroom.expression.api.DateTimeSettings;
+import stroom.expression.api.ExpressionContext;
 import stroom.query.api.v2.Param;
 import stroom.query.api.v2.ParamUtil;
 import stroom.query.api.v2.QueryKey;
@@ -10,6 +10,13 @@ import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchRequestSource;
 import stroom.query.api.v2.TableSettings;
+import stroom.query.language.functions.FieldIndex;
+import stroom.query.language.functions.ref.ErrorConsumer;
+import stroom.util.NullSafe;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+
+import jakarta.inject.Inject;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -19,29 +26,43 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import javax.inject.Inject;
 
 public class CoprocessorsFactory {
 
-    private final SizesProvider sizesProvider;
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(CoprocessorsFactory.class);
+
     private final DataStoreFactory dataStoreFactory;
+    private final ExpressionContextFactory expressionContextFactory;
 
     @Inject
-    public CoprocessorsFactory(final SizesProvider sizesProvider,
-                               final DataStoreFactory dataStoreFactory) {
-        this.sizesProvider = sizesProvider;
+    public CoprocessorsFactory(final DataStoreFactory dataStoreFactory,
+                               final ExpressionContextFactory expressionContextFactory) {
         this.dataStoreFactory = dataStoreFactory;
+        this.expressionContextFactory = expressionContextFactory;
     }
 
     public List<CoprocessorSettings> createSettings(final SearchRequest searchRequest) {
+        return createSettings(searchRequest, null);
+    }
+
+    public List<CoprocessorSettings> createSettings(final SearchRequest searchRequest,
+                                                    final DocRef defaultExtractionPipeline) {
         // Group common settings.
         final Map<TableSettings, Set<String>> groupMap = new HashMap<>();
         for (final ResultRequest resultRequest : searchRequest.getResultRequests()) {
-            if (resultRequest.getMappings() != null && resultRequest.getMappings().size() > 0) {
+            if (!NullSafe.isEmptyCollection(resultRequest.getMappings())) {
                 final String componentId = resultRequest.getComponentId();
-                final TableSettings tableSettings = resultRequest.getMappings().get(0);
+                TableSettings tableSettings = resultRequest.getMappings().get(0);
                 if (tableSettings != null) {
-                    Set<String> set = groupMap.computeIfAbsent(tableSettings, k -> new HashSet<>());
+                    if (tableSettings.getExtractionPipeline() == null
+                            && defaultExtractionPipeline != null) {
+                        LOGGER.debug("Using defaultExtractionPipeline {} on tableSettings {}",
+                                defaultExtractionPipeline, tableSettings);
+                        tableSettings = tableSettings.copy()
+                                .extractionPipeline(defaultExtractionPipeline)
+                                .build();
+                    }
+                    final Set<String> set = groupMap.computeIfAbsent(tableSettings, k -> new HashSet<>());
                     set.add(componentId);
                 }
             }
@@ -64,6 +85,7 @@ public class CoprocessorsFactory {
         final List<CoprocessorSettings> coprocessorSettingsList = createSettings(searchRequest);
         return create(
                 searchRequest.getSearchRequestSource(),
+                searchRequest.getDateTimeSettings(),
                 searchRequest.getKey(),
                 coprocessorSettingsList,
                 searchRequest.getQuery().getParams(),
@@ -71,6 +93,7 @@ public class CoprocessorsFactory {
     }
 
     public CoprocessorsImpl create(final SearchRequestSource searchRequestSource,
+                                   final DateTimeSettings dateTimeSettings,
                                    final QueryKey queryKey,
                                    final List<CoprocessorSettings> coprocessorSettingsList,
                                    final List<Param> params,
@@ -83,12 +106,14 @@ public class CoprocessorsFactory {
 
         // Create error consumer.
         final ErrorConsumer errorConsumer = new ErrorConsumerImpl();
-
+        final ExpressionContext expressionContext = expressionContextFactory
+                .createContext(searchRequestSource, dateTimeSettings);
         final Map<Integer, Coprocessor> coprocessorMap = new HashMap<>();
         final Map<String, TableCoprocessor> componentIdCoprocessorMap = new HashMap<>();
         if (coprocessorSettingsList != null) {
             for (final CoprocessorSettings coprocessorSettings : coprocessorSettingsList) {
                 final Coprocessor coprocessor = create(
+                        expressionContext,
                         searchRequestSource,
                         queryKey,
                         coprocessorSettings,
@@ -131,10 +156,12 @@ public class CoprocessorsFactory {
                 Collections.unmodifiableMap(componentIdCoprocessorMap),
                 Collections.unmodifiableMap(extractionPipelineCoprocessorMap),
                 fieldIndex,
-                errorConsumer);
+                errorConsumer,
+                expressionContext);
     }
 
-    private Coprocessor create(final SearchRequestSource searchRequestSource,
+    private Coprocessor create(final ExpressionContext expressionContext,
+                               final SearchRequestSource searchRequestSource,
                                final QueryKey queryKey,
                                final CoprocessorSettings settings,
                                final FieldIndex fieldIndex,
@@ -144,6 +171,7 @@ public class CoprocessorsFactory {
         if (settings instanceof final TableCoprocessorSettings tableCoprocessorSettings) {
             final TableSettings tableSettings = tableCoprocessorSettings.getTableSettings();
             final DataStore dataStore = create(
+                    expressionContext,
                     searchRequestSource,
                     queryKey,
                     String.valueOf(tableCoprocessorSettings.getCoprocessorId()),
@@ -160,7 +188,8 @@ public class CoprocessorsFactory {
         return null;
     }
 
-    private DataStore create(final SearchRequestSource searchRequestSource,
+    private DataStore create(final ExpressionContext expressionContext,
+                             final SearchRequestSource searchRequestSource,
                              final QueryKey queryKey,
                              final String componentId,
                              final TableSettings tableSettings,
@@ -168,18 +197,17 @@ public class CoprocessorsFactory {
                              final Map<String, String> paramMap,
                              final DataStoreSettings dataStoreSettings,
                              final ErrorConsumer errorConsumer) {
-        final Sizes storeSizes = sizesProvider.getStoreSizes();
 
         // Create a set of sizes that are the minimum values for the combination of user provided sizes for the table
         // and the default maximum sizes.
-        final Sizes defaultMaxResultsSizes = sizesProvider.getDefaultMaxResultsSizes();
-        final Sizes maxResults = Sizes.min(Sizes.create(tableSettings.getMaxResults()), defaultMaxResultsSizes);
+        final Sizes maxResults = Sizes.create(tableSettings.getMaxResults());
         final DataStoreSettings modifiedSettings =
                 dataStoreSettings.copy()
                         .maxResults(maxResults)
-                        .storeSize(storeSizes).build();
+                        .build();
 
         return dataStoreFactory.create(
+                expressionContext,
                 searchRequestSource,
                 queryKey,
                 componentId,

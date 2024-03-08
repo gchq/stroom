@@ -30,10 +30,11 @@ import stroom.task.api.TaskContextFactory;
 import stroom.test.common.StroomPipelineTestFileUtil;
 import stroom.util.pipeline.scope.PipelineScopeRunnable;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+
 import java.io.BufferedInputStream;
 import java.io.InputStream;
-import javax.inject.Inject;
-import javax.inject.Provider;
 
 /**
  * Helper class to validate XML based resources are valid.

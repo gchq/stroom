@@ -20,7 +20,6 @@ import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.SvgButton;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.dom.client.BlurEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.FocusEvent;

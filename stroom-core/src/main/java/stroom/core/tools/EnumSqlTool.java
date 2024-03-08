@@ -52,7 +52,7 @@ public class EnumSqlTool {
 
         process("TaskStatus", TaskStatus.values());
         process("JobType", JobType.values());
-        process("FSVolumeUseStatus", FsVolume.VolumeUseStatus.values());
+        process("FsVolumeUseStatus", FsVolume.VolumeUseStatus.values());
 //        process("StreamStatus", StreamStatus.values());
     }
 }

@@ -1,16 +1,11 @@
 package stroom.pipeline.refdata;
 
 import stroom.bytebuffer.ByteBufferPool;
-import stroom.dashboard.expression.v1.Val;
-import stroom.dashboard.expression.v1.ValInteger;
-import stroom.dashboard.expression.v1.ValLong;
-import stroom.dashboard.expression.v1.ValNull;
-import stroom.dashboard.expression.v1.ValString;
-import stroom.dashboard.expression.v1.ValuesConsumer;
 import stroom.data.shared.StreamTypeNames;
-import stroom.datasource.api.v2.AbstractField;
-import stroom.datasource.api.v2.DataSource;
 import stroom.datasource.api.v2.DateField;
+import stroom.datasource.api.v2.FieldInfo;
+import stroom.datasource.api.v2.FindFieldInfoCriteria;
+import stroom.datasource.api.v2.QueryField;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
 import stroom.docrefinfo.api.DocRefInfoService;
@@ -34,6 +29,14 @@ import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.common.v2.DateExpressionParser;
+import stroom.query.common.v2.FieldInfoResultPageBuilder;
+import stroom.query.language.functions.FieldIndex;
+import stroom.query.language.functions.Val;
+import stroom.query.language.functions.ValInteger;
+import stroom.query.language.functions.ValLong;
+import stroom.query.language.functions.ValNull;
+import stroom.query.language.functions.ValString;
+import stroom.query.language.functions.ValuesConsumer;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.task.api.TaskContext;
@@ -48,9 +51,14 @@ import stroom.util.pipeline.scope.PipelineScopeRunnable;
 import stroom.util.rest.RestUtil;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResourcePaths;
+import stroom.util.shared.ResultPage;
 import stroom.util.time.StroomDuration;
 
 import com.google.common.base.Strings;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.client.SyncInvoker;
 import net.sf.saxon.Configuration;
 import net.sf.saxon.event.PipelineConfiguration;
 import net.sf.saxon.event.Receiver;
@@ -72,22 +80,12 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.ws.rs.NotFoundException;
-import javax.ws.rs.client.SyncInvoker;
 
 public class ReferenceDataServiceImpl implements ReferenceDataService {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ReferenceDataServiceImpl.class);
-
-    private static final DataSource DATA_SOURCE = DataSource
-            .builder()
-            .docRef(ReferenceDataFields.REF_STORE_PSEUDO_DOC_REF)
-            .fields(ReferenceDataFields.FIELDS)
-            .build();
-    private static final Map<String, AbstractField> FIELD_NAME_TO_FIELD_MAP = ReferenceDataFields.FIELDS.stream()
-            .collect(Collectors.toMap(AbstractField::getName, Function.identity()));
+    private static final Map<String, QueryField> FIELD_NAME_TO_FIELD_MAP = ReferenceDataFields.FIELDS.stream()
+            .collect(Collectors.toMap(QueryField::getName, Function.identity()));
 
     private static final Map<String, Function<RefStoreEntry, Object>> FIELD_TO_EXTRACTOR_MAP = Map.ofEntries(
             Map.entry(ReferenceDataFields.FEED_NAME_FIELD.getName(),
@@ -660,7 +658,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
         if (securityContext.isAdmin()) {
             return supplier.get();
         } else {
-            throw new PermissionException(securityContext.getUserId(),
+            throw new PermissionException(securityContext.getUserIdentityForAudit(),
                     "You do not have permission to view reference data");
         }
     }
@@ -671,7 +669,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
         if (securityContext.isAdmin()) {
             runnable.run();
         } else {
-            throw new PermissionException(securityContext.getUserId(),
+            throw new PermissionException(securityContext.getUserIdentityForAudit(),
                     "You do not have permission to view reference data");
         }
     }
@@ -682,8 +680,13 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
     }
 
     @Override
-    public DataSource getDataSource() {
-        return DATA_SOURCE;
+    public ResultPage<FieldInfo> getFieldInfo(final FindFieldInfoCriteria criteria) {
+        return FieldInfoResultPageBuilder.builder(criteria).addAll(ReferenceDataFields.FIELDS).build();
+    }
+
+    @Override
+    public Optional<String> fetchDocumentation(final DocRef docRef) {
+        return Optional.empty();
     }
 
     @Override
@@ -692,19 +695,16 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
     }
 
     @Override
-    public void search(final ExpressionCriteria criteria,
-                       final AbstractField[] fields,
-                       final ValuesConsumer consumer) {
-
+    public void search(final ExpressionCriteria criteria, final FieldIndex fieldIndex, final ValuesConsumer consumer) {
         withPermissionCheck(() -> LOGGER.logDurationIfInfoEnabled(
                 () -> taskContextFactory.context("Querying reference data store", taskContext ->
-                                doSearch(criteria, fields, consumer, taskContext))
+                                doSearch(criteria, fieldIndex, consumer, taskContext))
                         .run(),
                 "Querying ref store"));
     }
 
     private void doSearch(final ExpressionCriteria criteria,
-                          final AbstractField[] fields,
+                          final FieldIndex fieldIndex,
                           final ValuesConsumer consumer,
                           final TaskContext taskContext) {
         // TODO @AT This is a temporary very crude impl to see if it works.
@@ -741,7 +741,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
         final AtomicLong allItemsCounter = new AtomicLong(0);
         final AtomicLong consumedCounter = new AtomicLong(0);
         final Predicate<RefStoreEntry> takeWhilePredicate = refStoreEntry ->
-                        consumedCounter.incrementAndGet() <= limit;
+                consumedCounter.incrementAndGet() <= limit;
         final BooleanSupplier skipTest = skipCount == 0
                 ? () -> true
                 : () -> allItemsCounter.incrementAndGet() > skipCount;
@@ -751,22 +751,23 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                 throw new TaskTerminatedException();
             }
             if (skipTest.getAsBoolean()) {
-
+                final String[] fields = fieldIndex.getFields();
                 final Val[] valArr = new Val[fields.length];
 
                 // Useful for slowing down the search in dev to test termination
                 //ThreadUtil.sleepIgnoringInterrupts(50);
 
                 for (int i = 0; i < fields.length; i++) {
-                    AbstractField field = fields[i];
+                    final String fieldName = fields[i];
+                    final QueryField field = FIELD_NAME_TO_FIELD_MAP.get(fieldName);
                     // May be a custom field that we obvs can't extract
                     if (field != null) {
-                        final Object value = FIELD_TO_EXTRACTOR_MAP.get(fields[i].getName())
+                        final Object value = FIELD_TO_EXTRACTOR_MAP.get(field.getName())
                                 .apply(refStoreEntry);
-                        valArr[i] = convertToVal(value, fields[i]);
+                        valArr[i] = convertToVal(value, field);
                     }
                 }
-                consumer.add(Val.of(valArr));
+                consumer.accept(Val.of(valArr));
             }
         });
     }
@@ -934,7 +935,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
 
         // name => field
         // field => fieldType
-        AbstractField abstractField = FIELD_NAME_TO_FIELD_MAP.get(expressionTerm.getField());
+        QueryField abstractField = FIELD_NAME_TO_FIELD_MAP.get(expressionTerm.getField());
 
         return switch (abstractField.getFieldType()) {
             case TEXT -> buildTextFieldPredicate(expressionTerm, refStoreEntry ->
@@ -966,6 +967,8 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
             final Predicate<String> strPredicate = switch (expressionTerm.getCondition()) {
                 case EQUALS -> PredicateUtil.createWildCardedFilterPredicate(
                         termValue, true, true);
+                case NOT_EQUALS -> PredicateUtil.createWildCardedFilterPredicate(
+                        termValue, true, true).negate();
                 case CONTAINS -> PredicateUtil.createWildCardedFilterPredicate(
                         termValue, false, true);
                 case IN -> PredicateUtil.createWildCardedInPredicate(termValue, true);
@@ -988,6 +991,8 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
         return switch (expressionTerm.getCondition()) {
             case EQUALS -> rec ->
                     Objects.equals(valueExtractor.apply(rec), termValue);
+            case NOT_EQUALS -> rec ->
+                    !Objects.equals(valueExtractor.apply(rec), termValue);
             case GREATER_THAN -> rec ->
                     valueExtractor.apply(rec) > termValue;
             case GREATER_THAN_OR_EQUAL_TO -> rec ->
@@ -1004,12 +1009,12 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                                                              final Function<RefStoreEntry, Long> valueExtractor) {
         // TODO @AT Handle stuff like 'today() -1d'
         // TODO @AT Need to get now() once for the query
-        final Long termValue = getDate(expressionTerm.getField(),
-                expressionTerm.getValue(),
-                Instant.now().toEpochMilli());
+        final Long termValue = DateExpressionParser.getMs(expressionTerm.getField(), expressionTerm.getValue());
         return switch (expressionTerm.getCondition()) {
             case EQUALS -> rec ->
                     Objects.equals(valueExtractor.apply(rec), termValue);
+            case NOT_EQUALS -> rec ->
+                    !Objects.equals(valueExtractor.apply(rec), termValue);
             case GREATER_THAN -> rec ->
                     valueExtractor.apply(rec) > termValue;
             case GREATER_THAN_OR_EQUAL_TO -> rec ->
@@ -1062,7 +1067,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
         }
     }
 
-    private Val convertToVal(final Object object, final AbstractField field) {
+    private Val convertToVal(final Object object, final QueryField field) {
         return switch (field.getFieldType()) {
             case TEXT -> ValString.create((String) object);
             case INTEGER -> ValInteger.create((Integer) object);
@@ -1081,19 +1086,6 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                 val = docRefInfoService.name(docRef).orElse(docRef.getUuid());
             }
             return ValString.create(val);
-        }
-    }
-
-    private long getDate(final String fieldName, final String value, final long nowEpochMs) {
-        try {
-            // TODO @AT Get the timezone from the user's local?
-            return DateExpressionParser.parse(value, nowEpochMs)
-                    .map(dt -> dt.toInstant().toEpochMilli())
-                    .orElseThrow(() -> new RuntimeException("Expected a standard date value for field \"" + fieldName
-                            + "\" but was given string \"" + value + "\""));
-        } catch (final RuntimeException e) {
-            throw new RuntimeException("Expected a standard date value for field \"" + fieldName
-                    + "\" but was given string \"" + value + "\"");
         }
     }
 }

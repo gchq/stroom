@@ -1,7 +1,7 @@
 package stroom.search;
 
-import stroom.dashboard.expression.v1.Val;
-import stroom.dashboard.expression.v1.ValString;
+import stroom.query.language.functions.Val;
+import stroom.query.language.functions.ValString;
 import stroom.search.extraction.Event;
 import stroom.search.extraction.StreamEventMap;
 import stroom.search.extraction.StreamEventMap.EventSet;
@@ -12,6 +12,7 @@ import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.concurrent.CompleteException;
 import stroom.util.concurrent.UncheckedInterruptedException;
 
+import jakarta.inject.Inject;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -21,7 +22,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
-import javax.inject.Inject;
 
 public class TestQueuesWithTaskContext extends AbstractCoreIntegrationTest {
 
@@ -112,8 +112,13 @@ public class TestQueuesWithTaskContext extends AbstractCoreIntegrationTest {
                                             if (id > MAX) {
                                                 run = false;
                                             } else {
-                                                queue.put(new Event(1, id,
-                                                        Val.of(ValString.create("test"), ValString.create("test"))));
+                                                try {
+                                                    queue.put(new Event(1, id, Val.of(
+                                                                    ValString.create("test"),
+                                                                    ValString.create("test"))));
+                                                } catch (CompleteException e) {
+                                                    throw new RuntimeException(e);
+                                                }
                                             }
                                         }
                                     }, executorService);

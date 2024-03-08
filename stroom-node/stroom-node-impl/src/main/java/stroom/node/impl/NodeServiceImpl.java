@@ -38,6 +38,16 @@ import stroom.util.rest.RestUtil;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.client.Invocation;
+import jakarta.ws.rs.client.Invocation.Builder;
+import jakarta.ws.rs.client.WebTarget;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response.Status;
+
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -46,15 +56,6 @@ import java.util.Objects;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
-import javax.inject.Singleton;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.client.Invocation;
-import javax.ws.rs.client.Invocation.Builder;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.Status;
 
 @Singleton
 public class NodeServiceImpl implements NodeService {
@@ -88,9 +89,10 @@ public class NodeServiceImpl implements NodeService {
 
     Node update(final Node node) {
         if (!securityContext.hasAppPermission(PermissionNames.MANAGE_NODES_PERMISSION)) {
-            throw new PermissionException(securityContext.getUserId(), "You are not authorised to update nodes");
+            throw new PermissionException(
+                    securityContext.getUserIdentityForAudit(), "You are not authorised to update nodes");
         }
-        AuditUtil.stamp(securityContext.getUserId(), node);
+        AuditUtil.stamp(securityContext, node);
         final Node updated = nodeDao.update(node);
 
         // Let all nodes know that the node has changed.
@@ -189,12 +191,16 @@ public class NodeServiceImpl implements NodeService {
 
                     LOGGER.debug(() -> "Response status " + response.getStatus());
                     if (response.getStatus() != Status.OK.getStatusCode()) {
-                        throw new WebApplicationException(response);
+                        throw new WebApplicationException(
+                                LogUtil.message("Error calling node: '{}', url: '{}', status code: {}, status: '{}'",
+                                        nodeName, url, response.getStatus(), response.getStatusInfo()),
+                                response);
                     }
                     resp = responseMapper.apply(response);
                 }
 
-                Objects.requireNonNull(resp, "Null response calling url " + url);
+                Objects.requireNonNull(resp, LogUtil.message(
+                        "Null response calling node: '{}', url: '{}'", nodeName, url));
             } catch (final Throwable e) {
                 throw NodeCallUtil.handleExceptionsOnNodeCall(nodeName, url, e);
             }

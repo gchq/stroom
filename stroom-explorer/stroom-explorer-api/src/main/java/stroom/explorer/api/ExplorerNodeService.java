@@ -23,12 +23,20 @@ import stroom.explorer.shared.PermissionInheritance;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 public interface ExplorerNodeService {
 
     void ensureRootNodeExists();
 
-    void createNode(DocRef docRef, DocRef destinationFolderRef, PermissionInheritance permissionInheritance);
+    void createNode(DocRef docRef,
+                    DocRef destinationFolderRef,
+                    PermissionInheritance permissionInheritance);
+
+    void createNode(DocRef docRef,
+                    DocRef destinationFolderRef,
+                    PermissionInheritance permissionInheritance,
+                    Set<String> tags);
 
     void copyNode(DocRef sourceDocRef,
                   DocRef destDocRef,
@@ -39,9 +47,11 @@ public interface ExplorerNodeService {
 
     void renameNode(DocRef docRef);
 
+    void updateTags(DocRef docRef, final Set<String> nodeTags);
+
     void deleteNode(DocRef docRef);
 
-    Optional<ExplorerNode> getNodeWithRoot();
+    ExplorerNode getRoot();
 
     /**
      * Get the root node containing another node

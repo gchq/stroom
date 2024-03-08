@@ -2,16 +2,13 @@ package stroom.util.config;
 
 import stroom.util.config.PropertyUtil.ObjectInfo;
 import stroom.util.config.annotations.ReadOnly;
+import stroom.util.json.JsonUtil;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonCreator.Mode;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -54,7 +51,7 @@ class TestPropertyUtil {
         final ImmutablePojo immutablePojo = new ImmutablePojo();
 
         final ObjectInfo<ImmutablePojo> objectInfo = PropertyUtil.getObjectInfo(
-                createObjectMapper(), "stroom", immutablePojo);
+                JsonUtil.getMapper(), "stroom", immutablePojo);
 
         assertThat(objectInfo.getName())
                 .isEqualTo("stroom");
@@ -219,15 +216,6 @@ class TestPropertyUtil {
                 .isEqualTo(newValue);
         assertThat(booleanProp.getValueClass())
                 .isEqualTo(clazz);
-    }
-
-    private static ObjectMapper createObjectMapper() {
-        final ObjectMapper mapper = new ObjectMapper();
-        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        mapper.configure(SerializationFeature.INDENT_OUTPUT, false);
-        mapper.setSerializationInclusion(Include.NON_NULL);
-
-        return mapper;
     }
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -1,6 +1,8 @@
 package stroom.app.guice;
 
 import stroom.analytics.rule.impl.AnalyticRuleModule;
+import stroom.query.field.impl.QueryFieldModule;
+import stroom.query.field.impl.db.QueryFieldDbModule;
 import stroom.query.impl.datasource.DataSourceModule;
 
 import com.google.inject.AbstractModule;
@@ -11,7 +13,7 @@ public class CoreModule extends AbstractModule {
     protected void configure() {
         install(new stroom.activity.impl.ActivityModule());
         install(new stroom.activity.impl.db.ActivityDaoModule());
-        install(new stroom.analytics.impl.AlertModule());
+//        install(new stroom.analytics.impl.AlertModule());
         install(new stroom.analytics.impl.AnalyticsModule());
         install(new stroom.analytics.impl.db.AnalyticsDaoModule());
         install(new stroom.annotation.impl.AnnotationModule());
@@ -44,6 +46,8 @@ public class CoreModule extends AbstractModule {
         install(new stroom.data.store.impl.fs.db.FsDataStoreDaoModule());
         install(new stroom.dictionary.impl.DictionaryHandlerModule());
         install(new stroom.dictionary.impl.DictionaryModule());
+        install(new stroom.documentation.impl.DocumentationHandlerModule());
+        install(new stroom.documentation.impl.DocumentationModule());
         install(new stroom.docstore.impl.DocStoreModule());
         install(new stroom.docstore.impl.db.DocStoreDbPersistenceModule());
         install(new stroom.dropwizard.common.DropwizardModule());
@@ -60,6 +64,8 @@ public class CoreModule extends AbstractModule {
         install(new stroom.index.impl.IndexElementModule());
         install(new stroom.index.impl.IndexModule());
         install(new stroom.index.impl.db.IndexDaoModule());
+        install(new stroom.index.lucene553.Lucene553Module());
+        install(new stroom.index.lucene980.Lucene980Module());
         install(new stroom.job.impl.JobSystemModule());
         install(new stroom.job.impl.db.JobDaoModule());
         install(new stroom.kafka.impl.KafkaConfigHandlerModule());
@@ -83,12 +89,13 @@ public class CoreModule extends AbstractModule {
         install(new stroom.processor.impl.ProcessorModule());
         install(new stroom.processor.impl.db.ProcessorDaoModule());
         install(new stroom.suggestions.impl.SuggestModule());
+        install(new stroom.query.field.impl.QueryFieldModule());
+        install(new stroom.query.field.impl.db.QueryFieldDaoModule());
         install(new stroom.query.impl.QueryModule());
         install(new stroom.receive.common.RemoteFeedModule());
         install(new stroom.receive.rules.impl.ReceiveDataRuleSetModule());
         install(new stroom.search.extraction.ExtractionModule());
         install(new stroom.search.impl.SearchModule());
-        install(new stroom.search.impl.shard.ShardModule());
         install(new stroom.search.elastic.ElasticSearchModule());
         install(new stroom.search.solr.SolrSearchModule());
         install(new stroom.searchable.impl.SearchableModule());

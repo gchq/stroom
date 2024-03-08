@@ -21,20 +21,22 @@ import stroom.test.common.util.TestClassLogger;
 import stroom.test.common.util.db.DbTestUtil;
 import stroom.test.common.util.test.StroomTest;
 import stroom.util.NullSafe;
+import stroom.util.io.CommonDirSetup;
 import stroom.util.io.FileUtil;
+import stroom.util.io.HomeDirProvider;
 import stroom.util.io.TempDirProvider;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
 import com.google.inject.Injector;
+import jakarta.inject.Inject;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInfo;
 
 import java.nio.file.Path;
-import javax.inject.Inject;
 
 /**
  * This class should be common to all component and integration tests that need a DB.
@@ -65,9 +67,15 @@ public abstract class StroomIntegrationTest implements StroomTest {
     @Inject
     private TempDirProvider tempDirProvider;
     @Inject
+    private HomeDirProvider homeDirProvider;
+    @Inject
     private Injector injector;
 
     private Path testTempDir;
+
+    static {
+        CommonDirSetup.setup();
+    }
 
     /**
      * Initialise required database entities.
@@ -82,14 +90,19 @@ public abstract class StroomIntegrationTest implements StroomTest {
             if (testTempDir == null) {
                 throw new NullPointerException("Temp dir is null");
             }
-            securityContext.asProcessingUser(() -> commonTestControl.setup(testTempDir));
+            securityContext.asProcessingUser(() ->
+                    commonTestControl.setup(testTempDir));
 
             CURRENT_TEST_CLASS_THREAD_LOCAL.set(this);
             LOGGER.debug("Set CURRENT_TEST_CLASS_THREAD_LOCAL to {} ({})",
                     this.getClass().getSimpleName(), System.identityHashCode(this));
         } else {
+            final StroomIntegrationTest current = CURRENT_TEST_CLASS_THREAD_LOCAL.get();
             LOGGER.info("Previous test class on this thread: {}",
-                    CURRENT_TEST_CLASS_THREAD_LOCAL.get().getClass().getSimpleName());
+                    current.getClass().getSimpleName());
+            if (!current.getClass().getName().equals(this.getClass().getName())) {
+                throw new RuntimeException("Unexpected change of test without cleanup");
+            }
         }
 
         // Record the test class and method

@@ -1,5 +1,6 @@
 package stroom.security.impl;
 
+import stroom.security.common.impl.AuthenticationState;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -7,12 +8,12 @@ import stroom.util.servlet.UserAgentSessionUtil;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 
 import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.concurrent.TimeUnit;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
 
 public final class AuthenticationStateSessionUtil {
 
@@ -31,7 +32,9 @@ public final class AuthenticationStateSessionUtil {
      * that Stroom makes to the Authentication Service. When Stroom is subsequently called the state is provided in the
      * URL to allow verification that the return request was expected.
      */
-    public static AuthenticationState create(final HttpServletRequest request, final String url) {
+    public static AuthenticationState create(final HttpServletRequest request,
+                                             final String url,
+                                             final boolean prompt) {
         final String stateId = createRandomString(8);
         final String nonce = createRandomString(20);
 
@@ -45,7 +48,7 @@ public final class AuthenticationStateSessionUtil {
                     request.getRequestURI());
         });
 
-        final AuthenticationState state = new AuthenticationState(stateId, url, nonce);
+        final AuthenticationState state = new AuthenticationState(stateId, url, nonce, prompt);
 
         final Cache<String, AuthenticationState> cache = getOrCreateCache(request);
         cache.put(stateId, state);
@@ -79,7 +82,7 @@ public final class AuthenticationStateSessionUtil {
                     LOGGER.debug("Creating cache for session {}", sessionId);
                     cache = Caffeine.newBuilder()
                             .maximumSize(100)
-                            .expireAfterWrite(1, TimeUnit.MINUTES)
+                            .expireAfterWrite(10, TimeUnit.MINUTES)
                             .removalListener((key, value, cause) ->
                                     LOGGER.debug(() -> LogUtil.message(
                                             "Removing entry: {}, cause: {}, session: {}",

@@ -8,7 +8,6 @@ import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Objects;
 
 public class TestV07_00_21_005 extends AbstractProcessorMigrationTest {
 
@@ -142,40 +141,11 @@ public class TestV07_00_21_005 extends AbstractProcessorMigrationTest {
                         new Row(null, 0)); // changed from null|1
     }
 
-    // TODO: 06/02/2023 convert to java record in j17
-    private static class Row {
 
-        private final Integer nodeId;
-        private final int status;
+    // --------------------------------------------------------------------------------
 
-        private Row(final Integer nodeId, final int status) {
-            this.nodeId = nodeId;
-            this.status = status;
-        }
 
-        @Override
-        public boolean equals(final Object o) {
-            if (this == o) {
-                return true;
-            }
-            if (o == null || getClass() != o.getClass()) {
-                return false;
-            }
-            final Row row = (Row) o;
-            return status == row.status && Objects.equals(nodeId, row.nodeId);
-        }
+    private record Row(Integer nodeId, int status) {
 
-        @Override
-        public int hashCode() {
-            return Objects.hash(nodeId, status);
-        }
-
-        @Override
-        public String toString() {
-            return "Row{" +
-                    "nodeId=" + nodeId +
-                    ", status=" + status +
-                    '}';
-        }
     }
 }

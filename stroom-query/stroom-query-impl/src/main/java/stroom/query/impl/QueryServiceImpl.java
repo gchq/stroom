@@ -20,20 +20,28 @@ import stroom.dashboard.impl.SearchResponseMapper;
 import stroom.dashboard.impl.logging.SearchEventLog;
 import stroom.dashboard.shared.DashboardSearchResponse;
 import stroom.dashboard.shared.ValidateExpressionResult;
-import stroom.datasource.api.v2.DataSource;
+import stroom.datasource.api.v2.FieldInfo;
+import stroom.datasource.api.v2.FindFieldInfoCriteria;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.event.logging.rs.api.AutoLogged;
-import stroom.meta.shared.MetaFields;
+import stroom.expression.api.DateTimeSettings;
+import stroom.expression.api.ExpressionContext;
 import stroom.node.api.NodeInfo;
+import stroom.query.api.v2.Column;
+import stroom.query.api.v2.Param;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
+import stroom.query.api.v2.TableSettings;
+import stroom.query.api.v2.TimeRange;
+import stroom.query.common.v2.DataSourceProviderRegistry;
+import stroom.query.common.v2.ExpressionContextFactory;
 import stroom.query.common.v2.ResultStoreManager;
-import stroom.query.language.DataSourceResolver;
-import stroom.query.language.SearchRequestBuilder;
+import stroom.query.language.SearchRequestFactory;
+import stroom.query.language.token.TokenException;
 import stroom.query.shared.DownloadQueryResultsRequest;
 import stroom.query.shared.QueryContext;
 import stroom.query.shared.QueryDoc;
@@ -46,20 +54,24 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.servlet.HttpServletRequestHolder;
 import stroom.util.shared.ResourceGeneration;
+import stroom.util.shared.ResultPage;
 import stroom.util.string.ExceptionStringUtil;
+import stroom.view.api.ViewStore;
+
+import jakarta.inject.Inject;
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
-import javax.inject.Inject;
-import javax.servlet.http.HttpServletRequest;
 
 @AutoLogged
 class QueryServiceImpl implements QueryService {
@@ -73,9 +85,12 @@ class QueryServiceImpl implements QueryService {
     private final HttpServletRequestHolder httpServletRequestHolder;
     private final ExecutorProvider executorProvider;
     private final TaskContextFactory taskContextFactory;
-    private final DataSourceResolver dataSourceResolver;
+    private final DataSourceProviderRegistry dataSourceProviderRegistry;
+    private final ViewStore viewStore;
     private final ResultStoreManager searchResponseCreatorManager;
     private final NodeInfo nodeInfo;
+    private final SearchRequestFactory searchRequestFactory;
+    private final ExpressionContextFactory expressionContextFactory;
 
     @Inject
     QueryServiceImpl(final QueryStore queryStore,
@@ -85,9 +100,12 @@ class QueryServiceImpl implements QueryService {
                      final HttpServletRequestHolder httpServletRequestHolder,
                      final ExecutorProvider executorProvider,
                      final TaskContextFactory taskContextFactory,
-                     final DataSourceResolver dataSourceResolver,
+                     final DataSourceProviderRegistry dataSourceProviderRegistry,
+                     final ViewStore viewStore,
                      final ResultStoreManager searchResponseCreatorManager,
-                     final NodeInfo nodeInfo) {
+                     final NodeInfo nodeInfo,
+                     final SearchRequestFactory searchRequestFactory,
+                     final ExpressionContextFactory expressionContextFactory) {
         this.queryStore = queryStore;
         this.documentResourceHelper = documentResourceHelper;
         this.searchEventLog = searchEventLog;
@@ -95,9 +113,12 @@ class QueryServiceImpl implements QueryService {
         this.httpServletRequestHolder = httpServletRequestHolder;
         this.executorProvider = executorProvider;
         this.taskContextFactory = taskContextFactory;
-        this.dataSourceResolver = dataSourceResolver;
+        this.dataSourceProviderRegistry = dataSourceProviderRegistry;
+        this.viewStore = viewStore;
         this.searchResponseCreatorManager = searchResponseCreatorManager;
         this.nodeInfo = nodeInfo;
+        this.searchRequestFactory = searchRequestFactory;
+        this.expressionContextFactory = expressionContextFactory;
     }
 
     @Override
@@ -112,19 +133,29 @@ class QueryServiceImpl implements QueryService {
 
     @Override
     public ValidateExpressionResult validateQuery(final String expressionString) {
-        return null;
-//        try {
-//            final FieldIndex fieldIndex = new FieldIndex();
-//            final ExpressionParser expressionParser = new ExpressionParser(new ParamFactory());
-//            final Expression expression = expressionParser.parse(fieldIndex, expressionString);
-//            String correctedExpression = "";
-//            if (expression != null) {
-//                correctedExpression = expression.toString();
-//            }
-//            return new ValidateExpressionResult(true, correctedExpression);
-//        } catch (final ParseException e) {
-//            return new ValidateExpressionResult(false, e.getMessage());
-//        }
+        try {
+            final QuerySearchRequest searchRequest = QuerySearchRequest.builder().query(expressionString).build();
+            final SearchRequest mappedRequest = mapRequest(searchRequest);
+            boolean groupBy = false;
+            int fieldCount = 0;
+            for (final ResultRequest resultRequest : mappedRequest.getResultRequests()) {
+                for (final TableSettings tableSettings : resultRequest.getMappings()) {
+                    for (final Column column : tableSettings.getColumns()) {
+                        fieldCount++;
+                        if (column.getGroup() != null) {
+                            groupBy = true;
+                        }
+                    }
+                }
+            }
+            if (fieldCount == 0) {
+                throw new RuntimeException("No fields found");
+            }
+
+            return new ValidateExpressionResult(true, expressionString, groupBy);
+        } catch (final RuntimeException e) {
+            return new ValidateExpressionResult(false, e.getMessage(), false);
+        }
     }
 
     @Override
@@ -311,23 +342,32 @@ class QueryServiceImpl implements QueryService {
 //    }
 
     private SearchRequest mapRequest(final QuerySearchRequest searchRequest) {
-        QueryKey queryKey = searchRequest.getQueryKey();
+        final QueryKey queryKey = searchRequest.getQueryKey();
         final String query = searchRequest.getQuery();
-        QueryContext queryContext = searchRequest.getQueryContext();
-        Query sampleQuery = Query
+        final QueryContext queryContext = searchRequest.getQueryContext();
+
+        List<Param> params = null;
+        TimeRange timeRange = null;
+        DateTimeSettings dateTimeSettings = null;
+        if (queryContext != null) {
+            params = queryContext.getParams();
+            timeRange = queryContext.getTimeRange();
+            dateTimeSettings = queryContext.getDateTimeSettings();
+        }
+        final Query sampleQuery = Query
                 .builder()
-                .params(queryContext.getParams())
-                .timeRange(queryContext.getTimeRange())
+                .params(params)
+                .timeRange(timeRange)
                 .build();
-        SearchRequest sampleRequest = new SearchRequest(
+        final SearchRequest sampleRequest = new SearchRequest(
                 searchRequest.getSearchRequestSource(),
                 queryKey,
                 sampleQuery,
                 null,
-                queryContext.getDateTimeSettings(),
+                dateTimeSettings,
                 searchRequest.isIncremental());
-        SearchRequest mappedRequest = SearchRequestBuilder.create(query, sampleRequest);
-        mappedRequest = dataSourceResolver.resolveDataSource(mappedRequest);
+        final ExpressionContext expressionContext = expressionContextFactory.createContext(sampleRequest);
+        SearchRequest mappedRequest = searchRequestFactory.create(query, sampleRequest, expressionContext);
 
         // Fix table result requests.
         final List<ResultRequest> resultRequests = mappedRequest.getResultRequests();
@@ -358,6 +398,7 @@ class QueryServiceImpl implements QueryService {
         if (query != null) {
             try {
                 final SearchRequest mappedRequest = mapRequest(searchRequest);
+                LOGGER.debug("searchRequest:\n{}\nmappedRequest:\n{}", searchRequest, mappedRequest);
 
                 // Perform the search or update results.
                 final SearchResponse searchResponse = searchResponseCreatorManager.search(mappedRequest);
@@ -375,8 +416,27 @@ class QueryServiceImpl implements QueryService {
                     searchEventLog.search(
                             mappedRequest.getQuery().getDataSource(),
                             mappedRequest.getQuery().getExpression(),
-                            searchRequest.getQueryContext().getQueryInfo());
+                            searchRequest.getQueryContext().getQueryInfo(),
+                            searchRequest.getQueryContext().getParams());
                 }
+
+            } catch (final TokenException e) {
+                LOGGER.debug(() -> "Error processing search " + searchRequest, e);
+
+                if (queryKey == null) {
+                    // FIXME : FIX
+                    // searchEventLog
+                    // .search(search.getDataSourceRef(), search.getExpression(), search.getQueryInfo(), e);
+                }
+
+                result = new DashboardSearchResponse(
+                        nodeInfo.getThisNodeName(),
+                        queryKey,
+                        null,
+                        Collections.singletonList(ExceptionStringUtil.getMessage(e)),
+                        TokenExceptionUtil.toTokenError(e),
+                        true,
+                        null);
 
             } catch (final RuntimeException e) {
                 LOGGER.debug(() -> "Error processing search " + searchRequest, e);
@@ -392,6 +452,7 @@ class QueryServiceImpl implements QueryService {
                         queryKey,
                         null,
                         Collections.singletonList(ExceptionStringUtil.getMessage(e)),
+                        null,
                         true,
                         null);
             }
@@ -434,21 +495,31 @@ class QueryServiceImpl implements QueryService {
     }
 
     @Override
-    public DataSource getDataSource(final DocRef dataSourceRef) {
-        return dataSourceResolver.resolveDataSource(dataSourceRef);
+    public DocRef fetchDefaultExtractionPipeline(final DocRef dataSourceRef) {
+        return securityContext.useAsReadResult(() ->
+                dataSourceProviderRegistry.fetchDefaultExtractionPipeline(dataSourceRef));
     }
 
     @Override
-    public DataSource getDataSource(final String query) {
-        final AtomicReference<DataSource> ref = new AtomicReference<>();
-        try {
-            SearchRequestBuilder.extractDataSourceNameOnly(query, dataSourceName -> {
-                final DataSource dataSource = dataSourceResolver.resolveDataSource(dataSourceName);
-                ref.set(dataSource);
-            });
-        } catch (final RuntimeException e) {
-            LOGGER.debug(e::getMessage, e);
-        }
-        return ref.get();
+    public Optional<DocRef> getReferencedDataSource(final String query) {
+        return securityContext.useAsReadResult(() -> {
+            final AtomicReference<DocRef> ref = new AtomicReference<>();
+            try {
+                searchRequestFactory.extractDataSourceOnly(query, ref::set);
+            } catch (final RuntimeException e) {
+                LOGGER.debug(e::getMessage, e);
+            }
+            return Optional.ofNullable(ref.get());
+        });
+    }
+
+    @Override
+    public ResultPage<FieldInfo> getFieldInfo(final FindFieldInfoCriteria criteria) {
+        return securityContext.useAsReadResult(() -> dataSourceProviderRegistry.getFieldInfo(criteria));
+    }
+
+    @Override
+    public Optional<String> fetchDocumentation(final DocRef docRef) {
+        return securityContext.useAsReadResult(() -> dataSourceProviderRegistry.fetchDocumentation(docRef));
     }
 }

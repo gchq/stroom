@@ -16,7 +16,7 @@
 
 package stroom.search.impl;
 
-import stroom.query.api.v2.DateTimeSettings;
+import stroom.expression.api.DateTimeSettings;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.SearchRequestSource;
@@ -36,7 +36,6 @@ public class FederatedSearchTask {
     @JsonProperty
     private final List<CoprocessorSettings> settings;
     private final DateTimeSettings dateTimeSettings;
-    private final long now;
 
     private transient volatile ResultStore resultStore;
 
@@ -45,15 +44,13 @@ public class FederatedSearchTask {
                                final String searchName,
                                final Query query,
                                @JsonProperty("settings") final List<CoprocessorSettings> settings,
-                               final DateTimeSettings dateTimeSettings,
-                               final long now) {
+                               final DateTimeSettings dateTimeSettings) {
         this.searchRequestSource = searchRequestSource;
         this.key = key;
         this.searchName = searchName;
         this.query = query;
         this.settings = settings;
         this.dateTimeSettings = dateTimeSettings;
-        this.now = now;
     }
 
     public SearchRequestSource getSearchRequestSource() {
@@ -78,10 +75,6 @@ public class FederatedSearchTask {
 
     public DateTimeSettings getDateTimeSettings() {
         return dateTimeSettings;
-    }
-
-    public long getNow() {
-        return now;
     }
 
     public ResultStore getResultStore() {

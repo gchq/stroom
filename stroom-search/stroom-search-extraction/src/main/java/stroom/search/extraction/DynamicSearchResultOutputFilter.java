@@ -16,60 +16,43 @@
 
 package stroom.search.extraction;
 
-import stroom.dashboard.expression.v1.FieldIndex;
-import stroom.dashboard.expression.v1.Val;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.factory.ConfigurableElement;
-import stroom.pipeline.filter.AbstractFieldFilter;
-import stroom.pipeline.filter.FieldValue;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.svg.shared.SvgImage;
 
+import jakarta.inject.Inject;
+
 import java.util.List;
-import javax.inject.Inject;
 
 @ConfigurableElement(
         type = "DynamicSearchResultOutputFilter",
         category = Category.FILTER,
+        description = """
+                Used in a search extraction pipeline for extracting field values that have \
+                not been stored in the index and where the fields are dynamic and derived from \
+                the data rather than being defined in the Index settings.
+                Consumes XML events in the `index-documents:1` namespace to convert them into a form so \
+                that they can be used in a Dashboard/Query/Analytic.""",
         roles = {
                 PipelineElementType.ROLE_TARGET},
         icon = SvgImage.PIPELINE_SEARCH_OUTPUT)
 public class DynamicSearchResultOutputFilter extends AbstractFieldFilter {
 
-    private final ExtractionStateHolder extractionStateHolder;
-    private FieldIndex fieldIndex;
+    private final FieldListConsumerHolder fieldListConsumerHolder;
 
     @Inject
     public DynamicSearchResultOutputFilter(final LocationFactoryProxy locationFactory,
                                            final ErrorReceiverProxy errorReceiverProxy,
-                                           final ExtractionStateHolder extractionStateHolder) {
+                                           final FieldListConsumerHolder fieldListConsumerHolder) {
         super(locationFactory, errorReceiverProxy);
-        this.extractionStateHolder = extractionStateHolder;
-    }
-
-    @Override
-    public void startProcessing() {
-        super.startProcessing();
-        this.fieldIndex = extractionStateHolder.getFieldIndex();
+        this.fieldListConsumerHolder = fieldListConsumerHolder;
     }
 
     @Override
     protected void processFields(final List<FieldValue> fieldValues) {
-        if (extractionStateHolder.getReceiver() != null) {
-            final Val[] values = new Val[fieldIndex.size()];
-            for (final FieldValue fieldValue : fieldValues) {
-                final Integer pos = fieldIndex.getPos(fieldValue.field().getFieldName());
-                if (pos != null) {
-                    values[pos] = fieldValue.value();
-                }
-            }
-            extractionStateHolder.getReceiver().add(Val.of(values));
-        }
-        if (extractionStateHolder.getFieldListConsumer() != null) {
-            extractionStateHolder.getFieldListConsumer().accept(fieldValues);
-        }
-        extractionStateHolder.incrementCount();
+        fieldListConsumerHolder.acceptFieldValues(fieldValues);
     }
 }

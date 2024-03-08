@@ -35,6 +35,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Severity;
 import stroom.util.xml.XMLUtil;
 
+import jakarta.inject.Inject;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
@@ -54,7 +55,6 @@ import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-import javax.inject.Inject;
 import javax.xml.transform.ErrorListener;
 import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.TransformerException;
@@ -68,7 +68,12 @@ import javax.xml.transform.stream.StreamResult;
 @ConfigurableElement(
         type = "StandardKafkaProducer",
         category = PipelineElementType.Category.DESTINATION,
-        roles = {PipelineElementType.ROLE_TARGET,
+        description = """
+                Consumes XML documents in the `kafka-records:2` namespace.
+                For each `<kafkaRecord>` element converts it into a Kafka message that is passed to the \
+                Kafka producer defined by the `kafkaConfig` property""",
+        roles = {
+                PipelineElementType.ROLE_TARGET,
                 PipelineElementType.ROLE_HAS_TARGETS,
                 PipelineElementType.VISABILITY_SIMPLE},
         icon = SvgImage.PIPELINE_KAFKA)

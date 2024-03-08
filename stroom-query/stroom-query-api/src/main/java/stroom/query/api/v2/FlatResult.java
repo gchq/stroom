@@ -24,6 +24,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -34,7 +35,7 @@ import java.util.Objects;
 public final class FlatResult extends Result {
 
     @JsonProperty
-    private final List<Field> structure;
+    private final List<Column> structure;
 
     @JsonPropertyDescription("The 2 dimensional array containing the result set. The positions in the inner array " +
             "correspond to the positions in the 'structure' property")
@@ -47,7 +48,7 @@ public final class FlatResult extends Result {
 
     @JsonCreator
     public FlatResult(@JsonProperty("componentId") final String componentId,
-                      @JsonProperty("structure") final List<Field> structure,
+                      @JsonProperty("structure") final List<Column> structure,
                       @JsonProperty("values") final List<List<Object>> values,
                       @JsonProperty("size") final Long size,
                       @JsonProperty("errors") final List<String> errors) {
@@ -57,7 +58,7 @@ public final class FlatResult extends Result {
         this.size = size;
     }
 
-    public List<Field> getStructure() {
+    public List<Column> getStructure() {
         return structure;
     }
 
@@ -108,42 +109,60 @@ public final class FlatResult extends Result {
      * Builder for constructing a {@link FlatResult}
      */
     public static final class FlatResultBuilderImpl
-            extends AbstractResultBuilder<FlatResultBuilder>
             implements FlatResultBuilder {
 
-        private List<Field> structure = Collections.emptyList();
-        private List<List<Object>> values = Collections.emptyList();
-        private Long overriddenSize;
+        private String componentId;
+        private List<Column> structure = Collections.emptyList();
+        private final List<List<Object>> values;
+        private List<String> errors;
+        private Long totalResults;
 
         private FlatResultBuilderImpl() {
+            values = new ArrayList<>();
+            errors = Collections.emptyList();
         }
 
         private FlatResultBuilderImpl(final FlatResult flatResult) {
-            this.structure = flatResult.structure;
-            this.values = flatResult.values;
+            componentId = flatResult.getComponentId();
+            structure = flatResult.structure;
+            values = new ArrayList<>(flatResult.values);
+            errors = flatResult.getErrors();
         }
+
+        public FlatResultBuilder componentId(final String componentId) {
+            this.componentId = componentId;
+            return this;
+        }
+
 
         /**
          * Add headings to our data
          *
-         * @param structure the fields which act as headings for our data
+         * @param structure the columns which act as headings for our data
          * @return The {@link FlatResultBuilderImpl}, enabling method chaining
          */
         @Override
-        public FlatResultBuilderImpl structure(List<Field> structure) {
+        public FlatResultBuilderImpl structure(List<Column> structure) {
             this.structure = structure;
             return this;
         }
 
         /**
-         * @param values A collection of 'rows' to add to our values
+         * @param values A 'row' of data points to add to our values
          * @return The {@link FlatResultBuilderImpl}, enabling method chaining
          */
         @Override
-        public FlatResultBuilderImpl values(final List<List<Object>> values) {
-            this.values = values;
+        public FlatResultBuilder addValues(final List<Object> values) {
+            this.values.add(values);
             return this;
         }
+
+        @Override
+        public FlatResultBuilder errors(final List<String> errors) {
+            this.errors = errors;
+            return this;
+        }
+
 
         /**
          * Fix the reported size of the result set.
@@ -152,20 +171,15 @@ public final class FlatResult extends Result {
          * @return The {@link FlatResultBuilderImpl}, enabling method chaining
          */
         @Override
-        public FlatResultBuilderImpl size(final Long value) {
-            this.overriddenSize = value;
-            return this;
-        }
-
-        @Override
-        protected FlatResultBuilderImpl self() {
+        public FlatResultBuilder totalResults(final Long value) {
+            this.totalResults = value;
             return this;
         }
 
         @Override
         public FlatResult build() {
-            if (null != overriddenSize) {
-                return new FlatResult(componentId, structure, values, overriddenSize, errors);
+            if (null != totalResults) {
+                return new FlatResult(componentId, structure, values, totalResults, errors);
             } else {
                 return new FlatResult(componentId, structure, values, (long) values.size(), errors);
             }

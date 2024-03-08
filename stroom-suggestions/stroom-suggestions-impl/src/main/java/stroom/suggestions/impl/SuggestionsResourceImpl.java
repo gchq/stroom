@@ -23,9 +23,8 @@ import stroom.query.shared.Suggestions;
 import stroom.query.shared.SuggestionsResource;
 import stroom.suggestions.api.SuggestionsService;
 
-import java.util.List;
-import javax.inject.Inject;
-import javax.inject.Provider;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 @AutoLogged(OperationType.UNLOGGED)
 class SuggestionsResourceImpl implements SuggestionsResource {

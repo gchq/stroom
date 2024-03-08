@@ -1,14 +1,16 @@
 package stroom.query.common.v2;
 
-import stroom.dashboard.expression.v1.FieldIndex;
-import stroom.dashboard.expression.v1.ref.ErrorConsumer;
+import stroom.expression.api.ExpressionContext;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.SearchRequestSource;
 import stroom.query.api.v2.TableSettings;
+import stroom.query.language.functions.FieldIndex;
+import stroom.query.language.functions.ref.ErrorConsumer;
+
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 import java.util.Map;
-import javax.inject.Inject;
-import javax.inject.Provider;
 
 public class MapDataStoreFactory implements DataStoreFactory {
 
@@ -20,7 +22,8 @@ public class MapDataStoreFactory implements DataStoreFactory {
     }
 
     @Override
-    public DataStore create(final SearchRequestSource searchRequestSource,
+    public DataStore create(final ExpressionContext expressionContext,
+                            final SearchRequestSource searchRequestSource,
                             final QueryKey queryKey,
                             final String componentId,
                             final TableSettings tableSettings,
@@ -34,10 +37,13 @@ public class MapDataStoreFactory implements DataStoreFactory {
 
         return new MapDataStore(
                 serialisersProvider.get(),
+                componentId,
                 tableSettings,
+                expressionContext,
                 fieldIndex,
                 paramMap,
-                dataStoreSettings);
+                dataStoreSettings,
+                errorConsumer);
     }
 
     @Override

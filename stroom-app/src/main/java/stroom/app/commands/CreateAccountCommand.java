@@ -12,7 +12,8 @@ import com.google.inject.Injector;
 import event.logging.CreateEventAction;
 import event.logging.Outcome;
 import event.logging.User;
-import io.dropwizard.setup.Bootstrap;
+import io.dropwizard.core.setup.Bootstrap;
+import jakarta.inject.Inject;
 import net.sourceforge.argparse4j.impl.Arguments;
 import net.sourceforge.argparse4j.inf.Namespace;
 import net.sourceforge.argparse4j.inf.Subparser;
@@ -20,12 +21,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.file.Path;
-import javax.inject.Inject;
+import java.util.Set;
 
 /**
  * Creates an account in the internal identity provider
  */
-public class CreateAccountCommand extends AbstractStroomAccountConfiguredCommand {
+public class CreateAccountCommand extends AbstractStroomAppCommand {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CreateAccountCommand.class);
     private static final String COMMAND_NAME = "create_account";
@@ -39,6 +40,15 @@ public class CreateAccountCommand extends AbstractStroomAccountConfiguredCommand
     private static final String LAST_NAME_ARG_NAME = "lastName";
     private static final String NO_PASSWORD_CHANGE = "noPasswordChange";
     private static final String NEVER_EXPIRES_CHANGE_ARG_NAME = "neverExpires";
+
+    private static final Set<String> ARGUMENT_NAMES = Set.of(
+            USERNAME_ARG_NAME,
+            PASSWORD_ARG_NAME,
+            EMAIL_ARG_NAME,
+            FIRST_NAME_ARG_NAME,
+            LAST_NAME_ARG_NAME,
+            NO_PASSWORD_CHANGE,
+            NEVER_EXPIRES_CHANGE_ARG_NAME);
 
     private final Path configFile;
 
@@ -60,44 +70,44 @@ public class CreateAccountCommand extends AbstractStroomAccountConfiguredCommand
     public void configure(final Subparser subparser) {
         super.configure(subparser);
 
-        subparser.addArgument("-u", "--" + USERNAME_ARG_NAME)
+        subparser.addArgument(asArg('u', USERNAME_ARG_NAME))
                 .dest(USERNAME_ARG_NAME)
                 .type(String.class)
                 .required(true)
                 .help("The user id of the account, e.g. 'admin'");
 
-        subparser.addArgument("-p", "--" + PASSWORD_ARG_NAME)
+        subparser.addArgument(asArg('p', PASSWORD_ARG_NAME))
                 .dest(PASSWORD_ARG_NAME)
                 .type(String.class)
                 .required(false)
                 .help("The password for the account");
 
-        subparser.addArgument("-e", "--" + EMAIL_ARG_NAME)
+        subparser.addArgument(asArg('e', EMAIL_ARG_NAME))
                 .dest(EMAIL_ARG_NAME)
                 .type(String.class)
                 .required(false)
                 .help("The email address for the account");
 
-        subparser.addArgument("-f", "--" + FIRST_NAME_ARG_NAME)
+        subparser.addArgument(asArg('f', FIRST_NAME_ARG_NAME))
                 .dest(FIRST_NAME_ARG_NAME)
                 .type(String.class)
                 .required(false)
                 .help("The user's first name");
 
-        subparser.addArgument("-s", "--" + LAST_NAME_ARG_NAME)
+        subparser.addArgument(asArg('s', LAST_NAME_ARG_NAME))
                 .dest(FIRST_NAME_ARG_NAME)
                 .type(String.class)
                 .required(false)
                 .help("The user's last name");
 
-        subparser.addArgument("--" + NO_PASSWORD_CHANGE)
+        subparser.addArgument(asArg(NO_PASSWORD_CHANGE))
                 .dest(NO_PASSWORD_CHANGE)
                 .action(Arguments.storeTrue())
                 .setDefault(false)
                 .required(false)
                 .help("If set do not require a password change on first login");
 
-        subparser.addArgument("--" + NEVER_EXPIRES_CHANGE_ARG_NAME)
+        subparser.addArgument(asArg(NEVER_EXPIRES_CHANGE_ARG_NAME))
                 .dest(NEVER_EXPIRES_CHANGE_ARG_NAME)
                 .action(Arguments.storeTrue())
                 .required(false)
@@ -105,41 +115,35 @@ public class CreateAccountCommand extends AbstractStroomAccountConfiguredCommand
     }
 
     @Override
-    protected void runCommand(final Bootstrap<Config> bootstrap,
-                              final Namespace namespace,
-                              final Config config,
-                              final Injector injector) {
+    public Set<String> getArgumentNames() {
+        return ARGUMENT_NAMES;
+    }
+
+    @Override
+    protected void runSecuredCommand(final Bootstrap<Config> bootstrap,
+                                     final Namespace namespace,
+                                     final Config config,
+                                     final Injector injector) {
 
         injector.injectMembers(this);
 
         final String username = namespace.getString(USERNAME_ARG_NAME);
 
-        securityContext.asProcessingUser(() -> {
-            try {
-                accountService.read(username)
-                        .ifPresentOrElse(
-                                account -> {
-                                    final String msg = LogUtil.message("An account for user '{}' already exists",
-                                            username);
-                                    LOGGER.error(msg);
-                                    logEvent(username, false, msg);
-                                    System.exit(1);
-                                },
-                                () -> {
-                                    createAccount(namespace, username);
-                                    final String msg = LogUtil.message("Account creation complete for user '{}'",
-                                            username);
-                                    LOGGER.info(msg);
-                                    logEvent(username, true, msg);
-                                    System.exit(0);
-                                });
-                System.exit(0);
-            } catch (Exception e) {
-                LOGGER.error(e.getMessage());
-                logEvent(username, false, e.getMessage());
-                System.exit(1);
-            }
-        });
+        accountService.read(username)
+                .ifPresentOrElse(
+                        account -> {
+                            final String msg = LogUtil.message("An account for user '{}' already exists",
+                                    username);
+                            logEvent(username, false, msg);
+                            throw new RuntimeException(msg);
+                        },
+                        () -> {
+                            createAccount(namespace, username);
+                            final String msg = LogUtil.message("Account creation complete for user '{}'",
+                                    username);
+                            info(LOGGER, msg);
+                            logEvent(username, true, msg);
+                        });
     }
 
     private void createAccount(final Namespace namespace, final String username) {

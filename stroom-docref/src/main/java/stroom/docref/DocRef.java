@@ -22,15 +22,15 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.xml.bind.annotation.XmlAccessType;
+import jakarta.xml.bind.annotation.XmlAccessorType;
+import jakarta.xml.bind.annotation.XmlElement;
+import jakarta.xml.bind.annotation.XmlRootElement;
+import jakarta.xml.bind.annotation.XmlTransient;
+import jakarta.xml.bind.annotation.XmlType;
 
 import java.util.Objects;
 import java.util.UUID;
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlTransient;
-import javax.xml.bind.annotation.XmlType;
 
 /**
  * {@value #CLASS_DESC}
@@ -197,6 +197,7 @@ public class DocRef implements Comparable<DocRef>, HasDisplayValue, HasType, Has
 
     @Override
     public int hashCode() {
+        // In the unlikely event that the hash is actually -1 then it just means we compute every time
         if (hashCode == -1) {
             hashCode = Objects.hash(type, uuid);
         }
@@ -229,6 +230,13 @@ public class DocRef implements Comparable<DocRef>, HasDisplayValue, HasType, Has
 
     public Builder copy() {
         return new Builder(this);
+    }
+
+    /**
+     * @return A copy of this {@link DocRef} with a null name.
+     */
+    public DocRef withoutName() {
+        return new DocRef(type, uuid);
     }
 
 

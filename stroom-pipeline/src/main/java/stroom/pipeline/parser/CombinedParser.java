@@ -18,6 +18,7 @@
 package stroom.pipeline.parser;
 
 import stroom.docref.DocRef;
+import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.SupportsCodeInjection;
 import stroom.pipeline.cache.DSChooser;
@@ -47,11 +48,14 @@ import stroom.pipeline.xml.converter.ParserFactory;
 import stroom.pipeline.xml.converter.json.JSONParserFactory;
 import stroom.pipeline.xml.converter.xmlfragment.XMLFragmentParser;
 import stroom.svg.shared.SvgImage;
+import stroom.util.NullSafe;
 import stroom.util.io.PathCreator;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Severity;
 import stroom.util.xml.SAXParserFactoryFactory;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
@@ -61,18 +65,24 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.function.Consumer;
-import javax.inject.Inject;
-import javax.inject.Provider;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
 @ConfigurableElement(
-        type = "CombinedParser",
+        type = PipelineElementType.TYPE_COMBINED_PARSER,
         category = Category.PARSER,
         description = """
                 The original general-purpose reader/parser that covers all source data types but provides less \
                 flexibility than the source format-specific parsers such as dsParser.
+                It effectively combines a BOMRemovalFilterInput, an InvalidCharFilterReader and Parser (based on \
+                the `type` property.
+
+                {{% warning %}}
+                It is strongly recommended to instead use a combination of Readers and one of the type \
+                specific Parsers.
+                This will make the intent of the pipeline much clearer and allow for much greater control.
+                {{% /warning %}}
                 """,
         roles = {
                 PipelineElementType.ROLE_PARSER,
@@ -115,7 +125,8 @@ public class CombinedParser extends AbstractParser implements SupportsCodeInject
                           final PathCreator pathCreator,
                           final Provider<FeedHolder> feedHolder,
                           final Provider<PipelineHolder> pipelineHolder,
-                          final Provider<LocationHolder> locationHolderProvider) {
+                          final Provider<LocationHolder> locationHolderProvider,
+                          final DocRefInfoService docRefInfoService) {
         super(errorReceiverProxy, locationFactory);
         this.parserFactoryPool = parserFactoryPool;
         this.textConverterStore = textConverterStore;
@@ -123,7 +134,11 @@ public class CombinedParser extends AbstractParser implements SupportsCodeInject
         this.pipelineHolder = pipelineHolder;
         this.locationHolderProvider = locationHolderProvider;
 
-        this.docFinder = new DocFinder<>(TextConverterDoc.DOCUMENT_TYPE, pathCreator, textConverterStore);
+        this.docFinder = new DocFinder<>(
+                TextConverterDoc.DOCUMENT_TYPE,
+                pathCreator,
+                textConverterStore,
+                docRefInfoService);
     }
 
     @Override
@@ -236,10 +251,8 @@ public class CombinedParser extends AbstractParser implements SupportsCodeInject
     @Override
     protected InputSource getInputSource(final InputSource inputSource) throws IOException {
         // Set the character encoding to use.
-        String charsetName = StreamUtil.DEFAULT_CHARSET_NAME;
-        if (inputSource.getEncoding() != null && inputSource.getEncoding().trim().length() > 0) {
-            charsetName = inputSource.getEncoding();
-        }
+        final String charsetName = NullSafe.nonBlankStringElse(
+                inputSource.getEncoding(), StreamUtil.DEFAULT_CHARSET_NAME);
 
         InputSource internalInputSource = inputSource;
         if (inputSource.getByteStream() != null) {
@@ -249,7 +262,7 @@ public class CombinedParser extends AbstractParser implements SupportsCodeInject
 
             Reader inputStreamReader = new InputStreamReader(bris, charsetName);
             if (fixInvalidChars) {
-                inputStreamReader = new InvalidXmlCharFilter(inputStreamReader, new Xml10Chars());
+                inputStreamReader = InvalidXmlCharFilter.createRemoveCharsFilter(inputStreamReader, new Xml10Chars());
             }
 
             final BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
@@ -380,6 +393,10 @@ public class CombinedParser extends AbstractParser implements SupportsCodeInject
                 errorConsumer,
                 suppressDocumentNotFoundWarnings);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public enum Mode {
         UNKNOWN,

@@ -90,6 +90,7 @@ public class ActivityEditPresenter extends MyPresenterWidget<ActivityEditView> {
                     .popupType(PopupType.OK_CANCEL_DIALOG)
                     .popupSize(popupSize)
                     .caption(activityEditorTitle)
+                    .modal(true)
                     .onShow(e -> read())
                     .onHideRequest(e -> {
                         if (e.isOk()) {

@@ -119,7 +119,7 @@ public class ProgressMonitor {
 
     private void addDetail(final StringBuilder sb, final boolean showPhaseDetail) {
         synchronized (filterProgressMonitorList) {
-            if (filterProgressMonitorList.size() > 0) {
+            if (!filterProgressMonitorList.isEmpty()) {
                 sb.append("\n\nDETAIL");
                 for (final FilterProgressMonitor filterProgressMonitor : filterProgressMonitorList) {
                     final ProcessorFilter filter = filterProgressMonitor.filter;
@@ -214,6 +214,7 @@ public class ProgressMonitor {
         }
     }
 
+
     // --------------------------------------------------------------------------------
 
 
@@ -266,6 +267,10 @@ public class ProgressMonitor {
             completeDuration = durationTimer.get();
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class PhaseDetails {
 

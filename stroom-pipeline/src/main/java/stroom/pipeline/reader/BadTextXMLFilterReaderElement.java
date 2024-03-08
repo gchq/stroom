@@ -25,12 +25,18 @@ import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.Severity;
 
+import jakarta.inject.Inject;
+
 import java.io.Reader;
-import javax.inject.Inject;
 
 @ConfigurableElement(
         type = "BadTextXMLFilterReader",
         category = Category.READER,
+        description = """
+                Escapes the content of a configured list of named XML elements that are know to potentially \
+                contain un-escaped XML reserved characters.
+                For example the element `<Expression>$time < now()</Expression>` would be transformed to \
+                `<Expression>$time &lt; now()</Expression>` if property `leafList` is set to `Expression`.""",
         roles = {
                 PipelineElementType.ROLE_HAS_TARGETS,
                 PipelineElementType.ROLE_READER,
@@ -58,14 +64,18 @@ public class BadTextXMLFilterReaderElement extends AbstractReaderElement {
     @Override
     public void endStream() {
         if (badTextXMLFilterReader.hasModifiedContent()) {
-            errorReceiver.log(Severity.WARNING, null, getElementId(), "The content was modified", null);
+            errorReceiver.log(Severity.WARNING,
+                    null,
+                    getElementId(),
+                    "The content was modified",
+                    null);
         }
         super.endStream();
     }
 
     @PipelineProperty(
-            description = "A comma separated list of XML elements between which non-escaped characters " +
-                    "will be escaped.",
+            description = "A comma separated list of XML element names (case sensitive) between which non-escaped " +
+                    "XML characters will be escaped, e.g. '>' => '&gt;'.",
             displayPriority = 1)
     public void setTags(final String leafList) {
         if (leafList != null) {

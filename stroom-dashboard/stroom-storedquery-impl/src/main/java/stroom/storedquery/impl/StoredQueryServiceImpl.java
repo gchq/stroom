@@ -8,8 +8,10 @@ import stroom.util.AuditUtil;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
 
-import javax.inject.Inject;
-import javax.validation.constraints.NotNull;
+import jakarta.inject.Inject;
+import jakarta.validation.constraints.NotNull;
+
+import java.util.UUID;
 
 public class StoredQueryServiceImpl implements StoredQueryService {
 
@@ -17,20 +19,26 @@ public class StoredQueryServiceImpl implements StoredQueryService {
     private final StoredQueryDao dao;
 
     @Inject
-    public StoredQueryServiceImpl(final SecurityContext securityContext, final StoredQueryDao dao) {
+    public StoredQueryServiceImpl(final SecurityContext securityContext,
+                                  final StoredQueryDao dao) {
         this.securityContext = securityContext;
         this.dao = dao;
     }
 
     @Override
     public StoredQuery create(@NotNull final StoredQuery storedQuery) {
-        AuditUtil.stamp(securityContext.getUserId(), storedQuery);
+        AuditUtil.stamp(securityContext, storedQuery);
+        storedQuery.setOwnerUuid(securityContext.getUserUuid());
+        storedQuery.setUuid(UUID.randomUUID().toString());
         return securityContext.secureResult(() -> dao.create(storedQuery));
     }
 
     @Override
     public StoredQuery update(@NotNull final StoredQuery storedQuery) {
-        AuditUtil.stamp(securityContext.getUserId(), storedQuery);
+        AuditUtil.stamp(securityContext, storedQuery);
+        if (storedQuery.getOwnerUuid() == null) {
+            storedQuery.setOwnerUuid(securityContext.getUserUuid());
+        }
         return securityContext.secureResult(() -> dao.update(storedQuery));
     }
 
@@ -45,8 +53,8 @@ public class StoredQueryServiceImpl implements StoredQueryService {
                 dao.fetch(id)).orElse(null);
 
         if (storedQuery != null
-                && !storedQuery.getUpdateUser().equals(securityContext.getUserId())) {
-            throw new PermissionException(securityContext.getUserId(),
+                && !storedQuery.getUpdateUser().equals(securityContext.getSubjectId())) {
+            throw new PermissionException(securityContext.getUserIdentityForAudit(),
                     "This retrieved stored query belongs to another user");
         }
         return storedQuery;
@@ -54,8 +62,8 @@ public class StoredQueryServiceImpl implements StoredQueryService {
 
     @Override
     public ResultPage<StoredQuery> find(FindStoredQueryCriteria criteria) {
-        final String userId = securityContext.getUserId();
-        criteria.setUserId(userId);
+        final String userUuid = securityContext.getUserUuid();
+        criteria.setOwnerUuid(userUuid);
 
         return securityContext.secureResult(() -> dao.find(criteria));
     }

@@ -16,7 +16,7 @@
 
 package stroom.search.extraction;
 
-import stroom.dashboard.expression.v1.Val;
+import stroom.query.language.functions.Val;
 
 import java.util.Objects;
 

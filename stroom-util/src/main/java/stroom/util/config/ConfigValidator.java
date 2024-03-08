@@ -1,11 +1,15 @@
 package stroom.util.config;
 
+import stroom.util.NullSafe;
 import stroom.util.config.PropertyUtil.Prop;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.HasPropertyPath;
 import stroom.util.shared.validation.ValidationSeverity;
+
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validator;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;
@@ -17,8 +21,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
-import javax.validation.ConstraintViolation;
-import javax.validation.Validator;
 
 public class ConfigValidator<T> {
 
@@ -162,7 +164,7 @@ public class ConfigValidator<T> {
         }
 
         String propName = null;
-        for (javax.validation.Path.Node node : constraintViolation.getPropertyPath()) {
+        for (jakarta.validation.Path.Node node : constraintViolation.getPropertyPath()) {
             propName = node.getName();
         }
         final T config = (T) constraintViolation.getLeafBean();
@@ -178,13 +180,25 @@ public class ConfigValidator<T> {
             // No path so make do with the class name
             path = config.getClass().getName();
         }
+        // Value might be a collection so strip the square brackets as
+        final String valueStr = NullSafe.getOrElse(
+                constraintViolation.getInvalidValue(),
+                        Object::toString,
+                        str -> str.startsWith("[") && str.endsWith("]")
+                                ? str
+                                : "[" + str + "]",
+                "[null]");
 
-        logFunc.accept(LogUtil.message("  Validation {} for {} [{}] - {}",
+        logFunc.accept(LogUtil.message("  Validation {} for property {} with value {} - {}",
                 severityStr,
                 path,
-                constraintViolation.getInvalidValue(),
+                valueStr,
                 constraintViolation.getMessage()));
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public static class Result<T> {
 

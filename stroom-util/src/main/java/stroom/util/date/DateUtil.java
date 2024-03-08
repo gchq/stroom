@@ -16,27 +16,52 @@
 
 package stroom.util.date;
 
-import org.assertj.core.internal.bytebuddy.asm.Advice.Local;
+import stroom.util.NullSafe;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.Period;
-import java.time.Year;
 import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoField;
+import java.time.format.DateTimeFormatterBuilder;
+import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
 import java.util.Locale;
 
 public final class DateUtil {
 
-    private static final int DATE_LENGTH = "2000-01-01T00:00:00.000Z".length();
-    private static final String DEFAULT_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSSXX";
-    private static final DateTimeFormatter NORMAL_STROOM_TIME_FORMATTER =
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DateUtil.class);
+
+    public static final ZoneOffset DEFAULT_ZONE_OFFSET = ZoneOffset.UTC;
+    // We always want to output in a fixed format, unlike the DEFAULT_PARSER below
+    public static final String DEFAULT_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSSXX";
+    /**
+     * Use for FORMATTING ONLY, not parsing, as it is too rigid for parsing.
+     */
+    public static final DateTimeFormatter NORMAL_STROOM_TIME_FORMATTER =
             DateTimeFormatter.ofPattern(DEFAULT_PATTERN, Locale.ENGLISH);
     private static final DateTimeFormatter FILE_TIME_STROOM_TIME_FORMATTER =
             DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH'#'mm'#'ss,SSSXX", Locale.ENGLISH);
+
+    private static final String NO_OFFSET_TEXT = "Z";
+    /**
+     * This differs from NORMAL_STROOM_TIME_FORMATTER in that it supports 0-9 milli digits.
+     * Use for PARSING ONLY, not formatting, due to optional elements.
+     * {@link DateTimeFormatter#ISO_OFFSET_DATE_TIME} does not support '+HHMM' (aka 'XX') which
+     * is what our normal formatter outputs so make a more flexible one
+     */
+    public static final DateTimeFormatter DEFAULT_ISO_PARSER = new DateTimeFormatterBuilder()
+            .parseCaseInsensitive()
+            .append(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+            .optionalStart().appendOffset("+HH:MM", NO_OFFSET_TEXT).optionalEnd() // Like 'XXX'
+            .optionalStart().appendOffset("+HHMM", NO_OFFSET_TEXT).optionalEnd() // Like 'XX'
+            .optionalStart().appendOffset("+HH", NO_OFFSET_TEXT).optionalEnd() // Like 'X'
+            .toFormatter();
 
     private DateUtil() {
         // Private constructor.
@@ -51,6 +76,7 @@ public final class DateUtil {
 
     /**
      * Create a 'normal' type date.
+     *
      * @param ms The date to create the string for.
      */
     public static String createNormalDateTimeString(final Long ms) {
@@ -62,6 +88,7 @@ public final class DateUtil {
 
     /**
      * Create a 'normal' type date.
+     *
      * @param instant The date to create the string for.
      */
     public static String createNormalDateTimeString(final Instant instant) {
@@ -102,7 +129,20 @@ public final class DateUtil {
     }
 
     /**
-     * Parse a 'normal' type date.
+     * Parse a 'normal' type date in ISO 8601 format with a zone offset and a variable and optional
+     * number of fractional second digits (0-9).
+     * <p>
+     * For example:
+     * <pre>{@code
+     * "2010-01-01T23:59:59Z" // No millis
+     * "2010-01-01T23:59:59.123Z" // Millis
+     * "2010-01-01T23:59:59.123456Z" // Nanos
+     * "2010-01-01T23:59:59.123+00:00" // Zulu/UTC
+     * "2010-01-01T23:59:59.123+02" // +2hr zone offset
+     * "2010-01-01T23:59:59+02:00" // +2hr zone offset
+     * "2010-01-01T23:59:59+02:30" // +2hr30min zone offset
+     * "2010-01-01T23:59:59.123-03:00" // -3hr zone offset
+     * }</pre>
      *
      * @param date string date
      * @return date as milliseconds since epoch
@@ -113,7 +153,20 @@ public final class DateUtil {
     }
 
     /**
-     * Parse a 'normal' type date.
+     * Parse a 'normal' type date in ISO 8601 format with a zone offset and a variable and optional
+     * number of fractional second digits (0-9).
+     * <p>
+     * For example:
+     * <pre>{@code
+     * "2010-01-01T23:59:59Z" // No millis
+     * "2010-01-01T23:59:59.123Z" // Millis
+     * "2010-01-01T23:59:59.123456Z" // Nanos
+     * "2010-01-01T23:59:59.123+00:00" // Zulu/UTC
+     * "2010-01-01T23:59:59.123+02" // +2hr zone offset
+     * "2010-01-01T23:59:59+02:00" // +2hr zone offset
+     * "2010-01-01T23:59:59+02:30" // +2hr30min zone offset
+     * "2010-01-01T23:59:59.123-03:00" // -3hr zone offset
+     * }</pre>
      *
      * @param date string date
      * @return A UTC {@link Instant}
@@ -124,12 +177,13 @@ public final class DateUtil {
             throw new IllegalArgumentException("Unable to parse null date");
         }
 
-        if (!looksLikeDate(date)) {
-            throw new IllegalArgumentException("Unable to parse date: \"" + date + '"');
+        try {
+            // Our format requires a zone offset, e.g. 'Z', '+02', '+00:00', '-02:00', etc.
+            final ZonedDateTime zonedDateTime = ZonedDateTime.parse(date, DEFAULT_ISO_PARSER);
+            return zonedDateTime.toInstant();
+        } catch (DateTimeParseException e) {
+            throw new IllegalArgumentException("Unable to parse date: \"" + date + "\": " + e.getMessage(), e);
         }
-
-        final LocalDateTime dateTime = LocalDateTime.parse(date, NORMAL_STROOM_TIME_FORMATTER);
-        return dateTime.toInstant(ZoneOffset.UTC);
     }
 
     /**
@@ -144,12 +198,13 @@ public final class DateUtil {
             throw new IllegalArgumentException("Unable to parse null date");
         }
 
-        if (!looksLikeDate(date)) {
-            throw new IllegalArgumentException("Unable to parse date: \"" + date + '"');
+        try {
+            // Our format requires a zone offset, e.g. 'Z', '+02', '+00:00', '-02:00', etc.
+            final ZonedDateTime zonedDateTime = ZonedDateTime.parse(date, FILE_TIME_STROOM_TIME_FORMATTER);
+            return zonedDateTime.toInstant().toEpochMilli();
+        } catch (DateTimeParseException e) {
+            throw new IllegalArgumentException("Unable to parse date: \"" + date + "\": " + e.getMessage(), e);
         }
-
-        final LocalDateTime dateTime = LocalDateTime.parse(date, FILE_TIME_STROOM_TIME_FORMATTER);
-        return dateTime.toInstant(ZoneOffset.UTC).toEpochMilli();
     }
 
     public static long parseUnknownString(final String date) {
@@ -157,24 +212,96 @@ public final class DateUtil {
             throw new IllegalArgumentException("Unable to parse null date");
         }
 
-        if (!looksLikeDate(date)) {
-            Long.parseLong(date);
-        }
-
-        try {
-            // Try and parse the string an a standard ISO8601 date.
-            final LocalDateTime dateTime = LocalDateTime.parse(date, NORMAL_STROOM_TIME_FORMATTER);
-            return dateTime.toInstant(ZoneOffset.UTC).toEpochMilli();
-
-        } catch (final RuntimeException e) {
-            // If we were unable to parse the value as an ISO8601 date then try
-            // and get it as a long.
-            return Long.parseLong(date);
+        if (!looksLikeISODate(date)) {
+            return parseDateAsMillisSinceEpoch(date);
+        } else {
+            try {
+                return parseNormalDateTimeString(date);
+            } catch (final RuntimeException e) {
+                // If we were unable to parse the value as an ISO8601 date then try
+                // and get it as a long.
+                return parseDateAsMillisSinceEpoch(date);
+            }
         }
     }
 
-    public static boolean looksLikeDate(final String date) {
-        return date != null && date.length() == DATE_LENGTH && date.charAt(date.length() - 1) == 'Z';
+    /**
+     * Takes an ISO 8601 date string and converts it into a consistent ISO 8601 format.
+     * This is to deal with the fact that the ISO 8601 format is a bit woolly (e.g. 'Z'
+     * and '+00:00' are both ok). This method will ensure that all dates returned are in a
+     * predictable and consistent format. Only intended for use on dates known to be in
+     * ISO 8601 format.
+     * <p>
+     * Will also normalise an epoch millis number into a date string.
+     *
+     * <pre>{@code
+     * "2010-01-01T23:59:59Z" => "2010-01-01T23:59:59Z" // No millis
+     * "2010-01-01T23:59:59.123Z" => "2010-01-01T23:59:59.123Z" // Millis
+     * "2010-01-01T23:59:59.123456Z" => "2010-01-01T23:59:59.123" // Nanos
+     * "2010-01-01T23:59:59.123+00:00" => "2010-01-01T23:59:59.123Z" // Zulu/UTC
+     * "2010-01-01T23:59:59.123+02" => "2010-01-01T23:59:59.123+0200" // +2hr zone offset
+     * "2010-01-01T23:59:59+02:00" => "2010-01-01T23:59:59.000+0200" // +2hr zone offset
+     * "2010-01-01T23:59:59+02:30" => "2010-01-01T23:59:59.000+0230" // +2hr30min zone offset
+     * "2010-01-01T23:59:59.123-03:00" => "2010-01-01T23:59:59.123-0300" // -3hr zone offset
+     * }</pre>
+     *
+     * @param date         The date string to normalise.
+     * @param ignoreErrors If true, any exception when parsing/converting the date is swallowed
+     *                     and data is returned unchanged.
+     * @return The date normalised to the same output as {@link DateUtil#createNormalDateTimeString(Long)}.
+     * If date is null or blank returns it as is with no exception.
+     */
+    public static String normaliseDate(final String date, final boolean ignoreErrors) {
+        if (NullSafe.isBlankString(date)) {
+            return date;
+        } else {
+            final ZonedDateTime zonedDateTime;
+            try {
+                if (!looksLikeISODate(date)) {
+                    final long epochMs = parseDateAsMillisSinceEpoch(date);
+                    zonedDateTime = Instant.ofEpochMilli(epochMs).atZone(DEFAULT_ZONE_OFFSET);
+                } else {
+                    zonedDateTime = ZonedDateTime.parse(date, DEFAULT_ISO_PARSER);
+                }
+                return NORMAL_STROOM_TIME_FORMATTER.format(zonedDateTime);
+            } catch (Exception e) {
+                LOGGER.debug("Unable to parse date: \"" + date + "\": " + LogUtil.exceptionMessage(e), e);
+                if (ignoreErrors) {
+                    return date;
+                } else {
+                    throw new IllegalArgumentException(
+                            "Unable to parse date: \"" + date + "\": " + LogUtil.exceptionMessage(e), e);
+                }
+            }
+        }
+    }
+
+    private static long parseDateAsMillisSinceEpoch(final String dateStr) {
+        try {
+            return Long.parseLong(dateStr);
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException(LogUtil.message(
+                    "Unable to parse date '{}' as numeric milliseconds since epoch: {}",
+                    dateStr,
+                    e.getMessage()), e);
+        }
+    }
+
+    public static boolean looksLikeISODate(final String date) {
+        // Can't check the length as Instant.parse() accepts strings with variable numbers
+        // of mills
+        return date != null
+                && (date.charAt(date.length() - 1) == 'Z'
+                || date.contains("-")
+                || date.contains(":")
+                || date.contains("+"));
+    }
+
+    public static boolean looksLikeUTCDate(final String date) {
+        // Can't check the length as Instant.parse() accepts strings with variable numbers
+        // of mills
+        return date != null
+                && date.charAt(date.length() - 1) == 'Z';
     }
 
     public static Instant roundDown(final Instant instant, final Duration duration) {

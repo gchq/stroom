@@ -83,7 +83,7 @@ class TestMetaSecurityFilterImpl {
         setupFeedStoreMock();
         Mockito.when(securityContextSpy.isAdmin())
                 .thenReturn(false);
-        Mockito.when(securityContextSpy.hasDocumentPermission(Mockito.any(), Mockito.any()))
+        Mockito.when(securityContextSpy.hasDocumentPermission(Mockito.anyString(), Mockito.anyString()))
                 .thenReturn(false);
 
         final Optional<ExpressionOperator> optExpr = metaSecurityFilter.getExpression(

@@ -18,7 +18,7 @@ package stroom.pipeline.stepping.client.view;
 
 import stroom.pipeline.stepping.client.presenter.ElementPresenter.ElementView;
 
-import com.google.gwt.user.client.ui.MySplitLayoutPanel;
+import com.google.gwt.user.client.ui.ThinSplitLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
@@ -29,7 +29,7 @@ public class ElementViewImpl extends ViewImpl implements ElementView {
     private static final double LOG_PANE_SPLIT = 0.15;
 
     private Widget widget;
-    private MySplitLayoutPanel layout;
+    private ThinSplitLayoutPanel layout;
 
     private View code;
     private View input;
@@ -44,7 +44,7 @@ public class ElementViewImpl extends ViewImpl implements ElementView {
             final Widget logWidget = log.asWidget();
             outputWidget.addStyleName("dashboard-panel overflow-hidden");
             logWidget.addStyleName("dashboard-panel overflow-hidden");
-            layout = new MySplitLayoutPanel();
+            layout = new ThinSplitLayoutPanel();
 
             if (input == null) {
                 layout.setVSplits(LOG_PANE_SPLIT);
@@ -52,7 +52,7 @@ public class ElementViewImpl extends ViewImpl implements ElementView {
             } else {
                 final Widget inputWidget = input.asWidget();
                 inputWidget.addStyleName("dashboard-panel overflow-hidden");
-                layout.setHSplits(MySplitLayoutPanel.HALF_N_HALF_SPLIT);
+                layout.setHSplits(0.5);
                 if (code == null) {
                     layout.setVSplits(LOG_PANE_SPLIT);
                     layout.addSouth(logWidget, LOG_PANE_SIZE);
@@ -61,7 +61,7 @@ public class ElementViewImpl extends ViewImpl implements ElementView {
                     final Widget codeWidget = code.asWidget();
                     codeWidget.addStyleName("dashboard-panel overflow-hidden");
                     layout.addNorth(codeWidget, 200);
-                    layout.setVSplits(MySplitLayoutPanel.HALF_N_HALF_SPLIT, LOG_PANE_SPLIT);
+                    layout.setVSplits(0.5, LOG_PANE_SPLIT);
                     layout.addSouth(logWidget, LOG_PANE_SIZE);
                     layout.addWest(inputWidget, 200);
                 }

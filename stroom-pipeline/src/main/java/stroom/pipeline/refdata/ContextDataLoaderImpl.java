@@ -24,10 +24,11 @@ import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TerminateHandlerFactory;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+
 import java.io.InputStream;
 import java.util.function.Consumer;
-import javax.inject.Inject;
-import javax.inject.Provider;
 
 public class ContextDataLoaderImpl implements ContextDataLoader {
 

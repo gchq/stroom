@@ -1,11 +1,9 @@
 package stroom.proxy.app.event;
 
 import stroom.util.concurrent.ThreadUtil;
+import stroom.util.json.JsonUtil;
 import stroom.util.shared.ModelStringUtil;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import event.logging.CreateEventAction;
 import event.logging.Event;
 import event.logging.EventDetail;
@@ -13,20 +11,20 @@ import event.logging.EventSource;
 import event.logging.EventTime;
 import event.logging.File;
 import event.logging.User;
-import org.apache.http.HttpStatus;
-import org.apache.http.client.HttpClient;
-import org.apache.http.impl.client.HttpClients;
+import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.client.WebTarget;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import org.apache.hc.client5.http.classic.HttpClient;
+import org.apache.hc.client5.http.impl.classic.HttpClients;
+import org.apache.hc.core5.http.HttpStatus;
 
 import java.time.Instant;
 import java.util.Date;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.LongAdder;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 
 public class TestSchemaEventResource {
 
@@ -112,13 +110,8 @@ public class TestSchemaEventResource {
             event.setEventSource(eventSource);
             event.setEventDetail(eventDetail);
 
-            final ObjectMapper mapper = new ObjectMapper();
-            mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-            mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
-            mapper.configure(SerializationFeature.WRITE_NULL_MAP_VALUES, false);
-            final String json = mapper.writeValueAsString(event);
-
-            final Event event2 = mapper.readValue(json, Event.class);
+            final String json = JsonUtil.writeValueAsString(event);
+            final Event event2 = JsonUtil.readValue(json, Event.class);
             System.out.println(event2);
 
             final Client client = ClientBuilder.newClient();

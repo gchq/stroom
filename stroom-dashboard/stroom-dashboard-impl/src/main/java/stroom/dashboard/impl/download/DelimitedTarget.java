@@ -16,7 +16,7 @@
 
 package stroom.dashboard.impl.download;
 
-import stroom.query.api.v2.Field;
+import stroom.query.api.v2.Column;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -49,6 +49,16 @@ public class DelimitedTarget implements SearchResultWriter.Target {
     }
 
     @Override
+    public void startTable(final String tableName) {
+        // Do nothing
+    }
+
+    @Override
+    public void endTable() {
+        // Do nothing
+    }
+
+    @Override
     public void startLine() {
         // Do nothing
     }
@@ -59,12 +69,12 @@ public class DelimitedTarget implements SearchResultWriter.Target {
     }
 
     @Override
-    public void writeHeading(final int fieldIndex, final Field field, final String heading) throws IOException {
+    public void writeHeading(final int fieldIndex, final Column column, final String heading) throws IOException {
         delimitedWriter.writeValue(heading);
     }
 
     @Override
-    public void writeValue(final Field field, final String value) throws IOException {
+    public void writeValue(final Column column, final String value) throws IOException {
         delimitedWriter.writeValue(value);
     }
 }

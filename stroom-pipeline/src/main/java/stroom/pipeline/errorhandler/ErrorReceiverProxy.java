@@ -17,11 +17,14 @@
 package stroom.pipeline.errorhandler;
 
 import stroom.util.pipeline.scope.PipelineScoped;
+import stroom.util.shared.ErrorType;
 import stroom.util.shared.Location;
 import stroom.util.shared.Severity;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Objects;
 
 @PipelineScoped
 public class ErrorReceiverProxy implements ErrorReceiver {
@@ -42,12 +45,22 @@ public class ErrorReceiverProxy implements ErrorReceiver {
                     final Location location,
                     final String elementId,
                     final String message,
+                    final ErrorType errorType,
                     final Throwable e) {
-        if (LOGGER.isTraceEnabled()) {
-            LOGGER.trace(message, e);
-        }
 
-        errorReceiver.log(severity, location, elementId, message, e);
+        // TRACE for full stack traces, DEBUG for message only
+        if (LOGGER.isDebugEnabled()) {
+            if (LOGGER.isTraceEnabled()) {
+                LOGGER.trace(message, e);
+            } else {
+                LOGGER.debug(message
+                        + (e != null && !Objects.equals(e.getMessage(), message)
+                        ? " - " + e.getMessage()
+                        : "")
+                        + " (Enable TRACE for full stack traces)");
+            }
+        }
+        errorReceiver.log(severity, location, elementId, message, errorType, e);
     }
 
     public ErrorReceiver getErrorReceiver() {

@@ -23,6 +23,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.AbstractConfig;
 
+import jakarta.inject.Inject;
 import name.falgout.jeffrey.testing.junit.guice.GuiceExtension;
 import name.falgout.jeffrey.testing.junit.guice.IncludeModule;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -32,7 +33,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.function.UnaryOperator;
-import javax.inject.Inject;
 
 @ExtendWith(GuiceExtension.class)
 @IncludeModule(DbTestModule.class)
@@ -40,6 +40,9 @@ import javax.inject.Inject;
 public abstract class AbstractCoreIntegrationTest extends StroomIntegrationTest {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AbstractCoreIntegrationTest.class);
+
+    @Inject
+    private ConfigMapperSpy configMapperSpy;
 
     // This is all a bit nasty, but we need to be able to set a config mapper before the
     // guice bindings happen as the lmdb lib path is read by eager singletons before we
@@ -57,9 +60,6 @@ public abstract class AbstractCoreIntegrationTest extends StroomIntegrationTest 
         ConfigMapperSpy.setStaticConfigValueMapper(LmdbLibraryConfig.class, lmdbLibraryConfig ->
                 lmdbLibraryConfig.withSystemLibraryExtractDir(libPathStr));
     }
-
-    @Inject
-    private ConfigMapperSpy configMapperSpy;
 
     /**
      * Sets all the config value mappers that allow you to change the config values from their

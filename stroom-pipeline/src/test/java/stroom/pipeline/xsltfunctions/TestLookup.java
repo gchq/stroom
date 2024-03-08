@@ -11,6 +11,8 @@ import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.state.MetaHolder;
 import stroom.pipeline.xsltfunctions.AbstractLookup.SequenceMaker;
 import stroom.pipeline.xsltfunctions.AbstractLookup.SequenceMakerFactory;
+import stroom.task.api.TaskContext;
+import stroom.task.api.TaskContextFactory;
 import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -20,6 +22,7 @@ import stroom.util.shared.Severity;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.trans.XPathException;
 import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -49,9 +52,12 @@ class TestLookup extends AbstractXsltFunctionTest<Lookup> {
     @SuppressWarnings("unused") // Used by @InjectMocks
     @Mock
     private MetaHolder mockMetaHolder;
-
     @Mock
     private SequenceMakerFactory mockSequenceMakerFactory;
+    @Mock
+    private TaskContextFactory mockTaskContextFactory;
+    @Mock
+    private TaskContext mockTaskContext;
 
     @InjectMocks
     private Lookup lookup;
@@ -63,6 +69,14 @@ class TestLookup extends AbstractXsltFunctionTest<Lookup> {
 
     private List<PipelineReference> pipelineReferences;
 
+    @BeforeEach
+    void setUp() {
+        Mockito.when(mockTaskContextFactory.current())
+                .thenReturn(mockTaskContext);
+        Mockito.when(mockTaskContext.isTerminated())
+                .thenReturn(false);
+    }
+
     @Test
     void doLookup_noRefLoaders() throws XPathException {
         pipelineReferences = new ArrayList<>();
@@ -72,7 +86,7 @@ class TestLookup extends AbstractXsltFunctionTest<Lookup> {
         // Should call this once with the combined messages for the lookup
         final LogArgs logArgs = verifySingleLogCall();
         Assertions.assertThat(logArgs.getSeverity())
-                                .isEqualTo(Severity.WARNING);
+                                .isEqualTo(Severity.ERROR);
         Assertions.assertThat(logArgs.getMessage())
                 .containsIgnoringCase("no reference loaders");
 

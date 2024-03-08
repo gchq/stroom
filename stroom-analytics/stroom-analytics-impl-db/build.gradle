@@ -12,7 +12,8 @@ dependencies {
     implementation project(':stroom-analytics:stroom-analytics-api')
     implementation project(':stroom-analytics:stroom-analytics-impl')
     implementation project(':stroom-analytics:stroom-analytics-impl-db-jooq')
-    implementation project(':stroom-query:stroom-expression')
+    implementation project(':stroom-query:stroom-query-language')
+    implementation project(':stroom-query:stroom-query-language-api')
     implementation project(':stroom-query:stroom-query-api')
     implementation project(':stroom-query:stroom-query-common')
     implementation project(':stroom-security:stroom-security-api')
@@ -22,12 +23,12 @@ dependencies {
 
     implementation libs.dropwizard_metrics_healthchecks
     implementation libs.flyway_core
-    implementation libs.guice5
+    implementation libs.guice
     implementation libs.hikari
     implementation libs.jackson_annotations
     implementation libs.jackson_core
     implementation libs.jackson_databind
-    implementation libs.javax_inject
+    implementation libs.jakarta_inject
     implementation libs.jaxb_api
     implementation libs.jooq
     implementation libs.slf4j_api

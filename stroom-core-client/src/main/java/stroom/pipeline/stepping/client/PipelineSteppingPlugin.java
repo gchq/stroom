@@ -22,7 +22,7 @@ import stroom.core.client.presenter.Plugin;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.explorer.client.presenter.EntityChooser;
+import stroom.explorer.client.presenter.DocSelectionPopup;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaResource;
@@ -50,14 +50,16 @@ public class PipelineSteppingPlugin extends Plugin implements BeginPipelineStepp
     private static final MetaResource META_RESOURCE = GWT.create(MetaResource.class);
     private static final SteppingResource STEPPING_RESOURCE = GWT.create(SteppingResource.class);
 
-    private final Provider<EntityChooser> pipelineSelection;
+    private final Provider<DocSelectionPopup> pipelineSelection;
     private final Provider<SteppingContentTabPresenter> editorProvider;
     private final ContentManager contentManager;
     private final RestFactory restFactory;
 
     @Inject
-    public PipelineSteppingPlugin(final EventBus eventBus, final Provider<SteppingContentTabPresenter> editorProvider,
-                                  final Provider<EntityChooser> pipelineSelection, final ContentManager contentManager,
+    public PipelineSteppingPlugin(final EventBus eventBus,
+                                  final Provider<SteppingContentTabPresenter> editorProvider,
+                                  final Provider<DocSelectionPopup> pipelineSelection,
+                                  final ContentManager contentManager,
                                   final RestFactory restFactory) {
         super(eventBus);
         this.pipelineSelection = pipelineSelection;
@@ -97,31 +99,34 @@ public class PipelineSteppingPlugin extends Plugin implements BeginPipelineStepp
                                 final StepType stepType,
                                 final StepLocation stepLocation,
                                 final String childStreamType) {
-        final EntityChooser chooser = pipelineSelection.get();
+        final DocSelectionPopup chooser = pipelineSelection.get();
         chooser.setCaption("Choose Pipeline To Step With");
         chooser.setIncludedTypes(PipelineDoc.DOCUMENT_TYPE);
         chooser.setRequiredPermissions(DocumentPermissionNames.READ);
-        chooser.addDataSelectionHandler(event -> {
-            final DocRef pipeline = chooser.getSelectedEntityReference();
-            if (pipeline != null) {
-                final FindMetaCriteria findMetaCriteria = FindMetaCriteria.createFromId(stepLocation.getMetaId());
-                final Rest<ResultPage<MetaRow>> rest = restFactory.create();
-                rest
-                        .onSuccess(result -> {
-                            if (result != null && result.size() == 1) {
-                                final MetaRow row = result.getFirst();
-                                openEditor(pipeline, stepType, stepLocation, row.getMeta(), childStreamType);
-                            }
-                        })
-                        .call(META_RESOURCE).findMetaRow(findMetaCriteria);
-            }
-        });
 
         if (initialPipelineRef != null) {
             chooser.setSelectedEntityReference(initialPipelineRef);
         }
 
-        chooser.show();
+        chooser.show(pipeline -> {
+            if (pipeline != null) {
+                final FindMetaCriteria findMetaCriteria = FindMetaCriteria.createFromId(
+                        stepLocation.getMetaId());
+                final Rest<ResultPage<MetaRow>> rest = restFactory.create();
+                rest
+                        .onSuccess(result -> {
+                            if (result != null && result.size() == 1) {
+                                final MetaRow row = result.getFirst();
+                                openEditor(pipeline,
+                                        stepType,
+                                        stepLocation,
+                                        row.getMeta(),
+                                        childStreamType);
+                            }
+                        })
+                        .call(META_RESOURCE).findMetaRow(findMetaCriteria);
+            }
+        });
     }
 
     private void openEditor(final DocRef pipeline,

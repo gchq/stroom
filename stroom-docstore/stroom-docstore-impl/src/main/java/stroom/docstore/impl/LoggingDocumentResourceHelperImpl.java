@@ -27,7 +27,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.PermissionException;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 public class LoggingDocumentResourceHelperImpl implements DocumentResourceHelper {
 

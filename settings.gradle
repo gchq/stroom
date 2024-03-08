@@ -42,6 +42,7 @@ include 'stroom-annotation:stroom-annotation-pipeline'
 // App.
 include 'stroom-app'
 include 'stroom-app-gwt'
+include 'stroom-gwt'
 
 // Cache
 include 'stroom-cache:stroom-cache-api'
@@ -109,13 +110,11 @@ include 'stroom-docstore:stroom-docstore-impl-db'
 include 'stroom-docstore:stroom-docstore-impl-fs'
 include 'stroom-docstore:stroom-docstore-impl-memory'
 
+// Documentation
+include 'stroom-documentation:stroom-documentation-impl'
+
 // Common dropwizard supporting code
 include 'stroom-dropwizard-common'
-
-//// Elastic
-//include 'stroom-elastic:stroom-elastic-api'
-//include 'stroom-elastic:stroom-elastic-impl'
-//include 'stroom-elastic:stroom-elastic-impl-http'
 
 // Event logging
 include 'stroom-event-logging:stroom-event-logging-api'
@@ -146,8 +145,11 @@ include 'stroom-importexport:stroom-importexport-api'
 include 'stroom-importexport:stroom-importexport-impl'
 
 // Index
-include 'stroom-index:stroom-index-app'
+include 'stroom-index:lucene553-shaded'
+include 'stroom-index:lucene980-shaded'
 include 'stroom-index:stroom-index-impl'
+include 'stroom-index:stroom-index-lucene553'
+include 'stroom-index:stroom-index-lucene980'
 include 'stroom-index:stroom-index-mock'
 include 'stroom-index:stroom-index-impl-db'
 include 'stroom-index:stroom-index-impl-db-jooq'
@@ -206,11 +208,18 @@ include 'stroom-proxy:stroom-proxy-repo'
 include 'stroom-proxy:stroom-proxy-repo-db-jooq'
 include 'stroom-proxy:stroom-proxy-remote-api'
 
+// Query Field
+include 'stroom-query:stroom-query-field-api'
+include 'stroom-query:stroom-query-field-impl'
+include 'stroom-query:stroom-query-field-impl-db'
+include 'stroom-query:stroom-query-field-impl-db-jooq'
+
 // Query
-include 'stroom-query:stroom-expression'
 include 'stroom-query:stroom-query-api'
 include 'stroom-query:stroom-query-common'
 include 'stroom-query:stroom-query-impl'
+include 'stroom-query:stroom-query-language'
+include 'stroom-query:stroom-query-language-api'
 
 // Suggestions
 include 'stroom-suggestions:stroom-suggestions-api'
@@ -238,18 +247,20 @@ include 'stroom-search:stroom-searchable-api'
 include 'stroom-search:stroom-searchable-impl'
 
 // Security
+include 'stroom-security:stroom-security-api'
+include 'stroom-security:stroom-security-client'
+include 'stroom-security:stroom-security-client-api'
+include 'stroom-security:stroom-security-common-impl'
 include 'stroom-security:stroom-security-identity'
 include 'stroom-security:stroom-security-identity-db'
 include 'stroom-security:stroom-security-identity-db-jooq'
-include 'stroom-security:stroom-security-api'
 include 'stroom-security:stroom-security-impl'
-include 'stroom-security:stroom-security-mock'
-include 'stroom-security:stroom-security-client-api'
-include 'stroom-security:stroom-security-client'
 include 'stroom-security:stroom-security-impl'
 include 'stroom-security:stroom-security-impl-db'
 include 'stroom-security:stroom-security-impl-db-jooq'
+include 'stroom-security:stroom-security-mock'
 include 'stroom-security:stroom-security-openid-api'
+include 'stroom-security:stroom-security-user-api'
 
 // Service discovery
 include 'stroom-servicediscovery:stroom-servicediscovery-api'
@@ -282,3 +293,4 @@ include 'stroom-util-shared'
 include 'stroom-view:stroom-view-impl'
 
 include 'stroom-ssl-test'
+include 'stroom-view:stroom-view-api'

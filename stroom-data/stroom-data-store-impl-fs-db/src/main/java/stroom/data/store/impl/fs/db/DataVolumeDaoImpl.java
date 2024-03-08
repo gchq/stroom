@@ -2,31 +2,32 @@ package stroom.data.store.impl.fs.db;
 
 import stroom.data.store.impl.fs.DataVolumeDao;
 import stroom.data.store.impl.fs.FindDataVolumeCriteria;
+import stroom.data.store.impl.fs.FsVolumeCache;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.db.util.JooqUtil;
 import stroom.util.NullSafe;
-import stroom.util.io.PathCreator;
 import stroom.util.shared.ResultPage;
 
+import jakarta.inject.Inject;
 import org.jooq.Condition;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
-import javax.inject.Inject;
+import java.util.Map;
 
 import static stroom.data.store.impl.fs.db.jooq.tables.FsMetaVolume.FS_META_VOLUME;
-import static stroom.data.store.impl.fs.db.jooq.tables.FsVolume.FS_VOLUME;
 
 public class DataVolumeDaoImpl implements DataVolumeDao {
 
     private final FsDataStoreDbConnProvider fsDataStoreDbConnProvider;
-    private final PathCreator pathCreator;
+    private final FsVolumeCache fsVolumeCache;
 
     @Inject
     DataVolumeDaoImpl(final FsDataStoreDbConnProvider fsDataStoreDbConnProvider,
-                      final PathCreator pathCreator) {
+                      final FsVolumeCache fsVolumeCache) {
         this.fsDataStoreDbConnProvider = fsDataStoreDbConnProvider;
-        this.pathCreator = pathCreator;
+        this.fsVolumeCache = fsVolumeCache;
     }
 
     @Override
@@ -36,14 +37,18 @@ public class DataVolumeDaoImpl implements DataVolumeDao {
                 JooqUtil.getSetCondition(FS_META_VOLUME.META_ID, criteria.getMetaIdSet()));
         final int offset = JooqUtil.getOffset(criteria.getPageRequest());
         final int limit = JooqUtil.getLimit(criteria.getPageRequest(), true);
+        final Map<Integer, FsVolume> volumeCache = new HashMap<>();
         final List<DataVolume> list = JooqUtil.contextResult(fsDataStoreDbConnProvider, context ->
-                        context.select(FS_META_VOLUME.META_ID, FS_VOLUME.PATH)
+                        context.select(FS_META_VOLUME.META_ID, FS_META_VOLUME.FS_VOLUME_ID)
                                 .from(FS_META_VOLUME)
-                                .join(FS_VOLUME).on(FS_VOLUME.ID.eq(FS_META_VOLUME.FS_VOLUME_ID))
                                 .where(conditions)
                                 .limit(offset, limit)
                                 .fetch())
-                .map(r -> createDataVolume(r.get(FS_META_VOLUME.META_ID), r.get(FS_VOLUME.PATH)));
+                .map(r -> {
+                    final Integer volumeId = r.get(FS_META_VOLUME.FS_VOLUME_ID);
+                    final FsVolume volume = volumeCache.computeIfAbsent(volumeId, fsVolumeCache::get);
+                    return new DataVolumeImpl(r.get(FS_META_VOLUME.META_ID), volume);
+                });
         return ResultPage.createCriterialBasedList(list, criteria);
     }
 
@@ -52,13 +57,17 @@ public class DataVolumeDaoImpl implements DataVolumeDao {
      */
     @Override
     public DataVolume findDataVolume(final long metaId) {
+        final Map<Integer, FsVolume> volumeCache = new HashMap<>();
         return JooqUtil.contextResult(fsDataStoreDbConnProvider, context -> context
-                        .select(FS_META_VOLUME.META_ID, FS_VOLUME.PATH)
+                        .select(FS_META_VOLUME.META_ID, FS_META_VOLUME.FS_VOLUME_ID)
                         .from(FS_META_VOLUME)
-                        .join(FS_VOLUME).on(FS_VOLUME.ID.eq(FS_META_VOLUME.FS_VOLUME_ID))
                         .where(FS_META_VOLUME.META_ID.eq(metaId))
                         .fetchOptional())
-                .map(r -> createDataVolume(r.get(FS_META_VOLUME.META_ID), r.get(FS_VOLUME.PATH)))
+                .map(r -> {
+                    final Integer volumeId = r.get(FS_META_VOLUME.FS_VOLUME_ID);
+                    final FsVolume volume = volumeCache.computeIfAbsent(volumeId, fsVolumeCache::get);
+                    return new DataVolumeImpl(r.get(FS_META_VOLUME.META_ID), volume);
+                })
                 .orElse(null);
     }
 
@@ -68,7 +77,7 @@ public class DataVolumeDaoImpl implements DataVolumeDao {
             context.insertInto(FS_META_VOLUME, FS_META_VOLUME.META_ID, FS_META_VOLUME.FS_VOLUME_ID)
                     .values(metaId, volume.getId())
                     .execute();
-            return createDataVolume(metaId, volume.getPath());
+            return new DataVolumeImpl(metaId, volume);
         });
     }
 
@@ -84,12 +93,6 @@ public class DataVolumeDaoImpl implements DataVolumeDao {
         }
     }
 
-    private DataVolume createDataVolume(final long metaId,
-                                        final String volumePath) {
-        final String absoluteVolPath = pathCreator.toAppPath(volumePath).toString();
-        return new DataVolumeImpl(metaId, absoluteVolPath);
-    }
-
 
     // --------------------------------------------------------------------------------
 
@@ -97,12 +100,12 @@ public class DataVolumeDaoImpl implements DataVolumeDao {
     private static class DataVolumeImpl implements DataVolume {
 
         private final long metaId;
-        private final String volumePath;
+        private final FsVolume volume;
 
         DataVolumeImpl(final long metaId,
-                       final String volumePath) {
+                       final FsVolume volume) {
             this.metaId = metaId;
-            this.volumePath = volumePath;
+            this.volume = volume;
         }
 
         @Override
@@ -111,8 +114,8 @@ public class DataVolumeDaoImpl implements DataVolumeDao {
         }
 
         @Override
-        public String getVolumePath() {
-            return volumePath;
+        public FsVolume getVolume() {
+            return volume;
         }
     }
 }

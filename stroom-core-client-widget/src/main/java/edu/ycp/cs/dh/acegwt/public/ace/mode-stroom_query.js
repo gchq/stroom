@@ -15,8 +15,8 @@ var TextHighlightRules = require("./text_highlight_rules").TextHighlightRules;
 var StroomQueryHighlightRules = function() {
 
     var keywords = (
-        "from|select|where|filter|eval|and|or|not|sort|group|by|order|limit|having|as|" +
-        "when|desc|asc|window"
+        "from|select|where|filter|in|eval|and|or|not|sort|group|by|order|limit|having|as|when|desc|asc|window|vis|" +
+        "dictionary"
     );
 
 //    var builtinConstants = (
@@ -77,6 +77,9 @@ var StroomQueryHighlightRules = function() {
             token : "constant.numeric", // Duration
             regex : "[+-]?\\d+[yMwdhms]"
         }, {
+            token : ["variable", "variable", "text", "variable" ], // Functions
+            regex : '(\\$)(\\{)(.*?)(})'
+        },  {
             token : ["support.function", "paren.lparen" ], // Functions
             regex : "(\\w+)(\\s*\\()"
         },  {
@@ -127,7 +130,7 @@ oop.inherits(Mode, TextMode);
 //    this.lineCommentStart = "--";
 
     this.$id = "ace/mode/stroom_query";
-//    this.snippetFileId = "ace/snippets/stroom_query";
+    this.snippetFileId = "ace/snippets/stroom_query";
 }).call(Mode.prototype);
 
 exports.Mode = Mode;

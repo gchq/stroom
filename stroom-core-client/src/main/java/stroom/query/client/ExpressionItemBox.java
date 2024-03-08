@@ -20,7 +20,6 @@ import stroom.pipeline.structure.client.view.Box;
 import stroom.widget.htree.client.treelayout.TreeLayout;
 import stroom.widget.htree.client.treelayout.util.DefaultTreeForTreeLayout;
 
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -30,7 +29,6 @@ public class ExpressionItemBox extends Box<Item> {
     private final TreeLayout<Item> treeLayout;
     private final Item expressionItem;
     private boolean selected;
-    private Widget innerWidget;
 
     public ExpressionItemBox(final TreeLayout<Item> treeLayout, final Item expressionItem,
                              final boolean allowSelection) {
@@ -47,7 +45,6 @@ public class ExpressionItemBox extends Box<Item> {
     }
 
     public void setInnerWidget(final Widget innerWidget) {
-        this.innerWidget = innerWidget;
         background.setWidget(innerWidget);
     }
 
@@ -69,24 +66,16 @@ public class ExpressionItemBox extends Box<Item> {
     private void updateStyle() {
         final boolean enabled = isEnabled();
 
-        if (innerWidget != null && innerWidget instanceof Label) {
-            innerWidget.addStyleName("expressionItemBox-label");
-            if (enabled) {
-                innerWidget.removeStyleName("expressionItemBox-labelDisabled");
-            } else {
-                innerWidget.addStyleName("expressionItemBox-labelDisabled");
-            }
+        if (enabled) {
+            getElement().removeClassName("expressionItemBox-disabled");
+        } else {
+            getElement().addClassName("expressionItemBox-disabled");
         }
 
         if (selected) {
-            if (enabled) {
-                getElement().addClassName("expressionItemBox-backgroundSelected");
-            } else {
-                getElement().addClassName("expressionItemBox-backgroundSelectedDisabled");
-            }
+            getElement().addClassName("expressionItemBox-selected");
         } else {
-            getElement().removeClassName("expressionItemBox-backgroundSelected");
-            getElement().removeClassName("expressionItemBox-backgroundSelectedDisabled");
+            getElement().removeClassName("expressionItemBox-selected");
         }
     }
 

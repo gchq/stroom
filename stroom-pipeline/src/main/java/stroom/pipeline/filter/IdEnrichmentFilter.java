@@ -29,6 +29,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Severity;
 
+import jakarta.inject.Inject;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
@@ -36,7 +37,6 @@ import org.xml.sax.helpers.AttributesImpl;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
-import javax.inject.Inject;
 
 /**
  * A SAX filter used to count the number of first level elements in an XML
@@ -46,6 +46,13 @@ import javax.inject.Inject;
 @ConfigurableElement(
         type = "IdEnrichmentFilter",
         category = Category.FILTER,
+        description = """
+                Adds the attributes 'StreamId' and 'EventId' to the 'event' element to enrich the event \
+                with its ordinal number in the stream and the ID of the stream that it belongs to.
+                ID enrichment is required to be able to index events as it provides them with an ID that is \
+                unique within Stroom.
+                It assumes that an record/event is an XML element at the first level below the root element, i.e. \
+                for 'event-logging:3' XML this means the `<Event>` element.""",
         roles = {
                 PipelineElementType.ROLE_TARGET,
                 PipelineElementType.ROLE_HAS_TARGETS,

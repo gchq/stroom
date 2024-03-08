@@ -4,6 +4,8 @@ import stroom.content.ContentPack;
 import stroom.content.GitRepo;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
+import stroom.util.json.JsonUtil;
+import stroom.util.logging.DurationTimer;
 import stroom.util.logging.LogUtil;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -95,10 +97,11 @@ public class ContentPackZipDownloader {
         }
 
         try {
-            final ObjectMapper mapper = new ObjectMapper();
+            final ObjectMapper mapper = JsonUtil.getMapper();
             final ContentPackZipCollection contentPacks = mapper.readValue(
                     contentPacksDefinition.toFile(),
                     ContentPackZipCollection.class);
+
             contentPacks.getContentPacks().forEach(contentPack ->
                     downloadZip(contentPack, contentPackDownloadDir, contentPackImportDir));
         } catch (final Exception e) {
@@ -113,36 +116,67 @@ public class ContentPackZipDownloader {
 
     public static synchronized Path downloadContentPack(final ContentPack contentPack,
                                                         final Path destDir) {
-        final GitRepo gitRepo  = contentPack.getRepo();
+        final GitRepo gitRepo = contentPack.getRepo();
         final Path dir = destDir
                 .resolve(gitRepo.getName())
                 .resolve(gitRepo.getBranch())
                 .resolve(gitRepo.getCommit());
 
-        if (!Files.exists(dir)) {
-            gitPull(contentPack.getRepo(), dir);
-        }
+        gitPull(contentPack.getRepo(), dir);
 
         return dir;
     }
 
     public static synchronized Path gitPull(final GitRepo gitRepo,
                                             final Path destDir) {
-        if (Files.exists(destDir)) {
-            throw new RuntimeException("Expected new dir");
+        final Path lockFilePath = Path.of(destDir.toAbsolutePath() + ".lock");
+        final Path completedFilePath = Path.of(destDir.toAbsolutePath() + ".complete");
+        final Path parent = lockFilePath.getParent();
+        try {
+            Files.createDirectories(lockFilePath.getParent());
+        } catch (IOException e) {
+            throw new RuntimeException("Error creating lockFilePath parent dir " + parent);
         }
 
-        LOGGER.info("Pulling from Git repo: " + gitRepo);
-        try (final Git git = Git
-                .cloneRepository()
-                .setURI(gitRepo.getUri())
-                .setBranch(gitRepo.getBranch())
-                .setDirectory(destDir.toFile())
-                .call()) {
-            git.checkout().setName(gitRepo.getCommit()).call();
-        } catch (final GitAPIException e) {
-            LOGGER.error(e.getMessage(), e);
-            throw new RuntimeException(e.getMessage(), e);
+        if (Files.exists(completedFilePath) && Files.exists(destDir)) {
+            LOGGER.debug("{} already exists, nothing to do", destDir);
+        } else {
+            // Multiple test JVMs cannot interact with the git repo at once,
+            // else git's locking will be violated, so easier for
+            // all to lock on a single file and do it serially.
+            final DurationTimer timer = DurationTimer.start();
+            FileUtil.doUnderFileLock(lockFilePath, () -> {
+                LOGGER.info("Acquired lock on {} in {}", lockFilePath, timer);
+
+                // Now re-test for existence
+                if (Files.exists(completedFilePath) && Files.exists(destDir)) {
+                    LOGGER.debug("{} already exists, nothing to do", destDir);
+                } else {
+                    if (Files.exists(destDir)) {
+                        LOGGER.info("Found incomplete git clone {}, deleting it", destDir);
+                        FileUtil.deleteDir(destDir);
+                    }
+                    LOGGER.info("Pulling from Git repo: {} into destDir: {}", gitRepo, destDir);
+                    try (final Git git = Git
+                            .cloneRepository()
+                            .setURI(gitRepo.getUri())
+                            .setBranch(gitRepo.getBranch())
+                            .setDirectory(destDir.toFile())
+                            .call()) {
+                        git.checkout().setName(gitRepo.getCommit()).call();
+                    } catch (final GitAPIException e) {
+                        LOGGER.error(e.getMessage(), e);
+                        throw new RuntimeException(e.getMessage(), e);
+                    }
+                    try {
+                        // Create the .complete file so other jvms know the git clone is good to use
+                        FileUtil.touch(completedFilePath);
+                    } catch (IOException e) {
+                        throw new RuntimeException(LogUtil.message(
+                                "Error creating file {} - {}", completedFilePath, LogUtil.exceptionMessage(e), e));
+                    }
+                }
+            });
         }
 
         return destDir;
@@ -150,6 +184,7 @@ public class ContentPackZipDownloader {
 
     /**
      * synchronized to avoid multiple test threads downloading the same pack concurrently
+     * Don't have to worry about other JVM as this method is called under lock on a single common file.
      */
     public static synchronized Path downloadContentPackZip(final ContentPackZip contentPackZip,
                                                            final Path destDir,
@@ -195,7 +230,7 @@ public class ContentPackZipDownloader {
                     final URL fileUrl = getUrl(contentPackZip);
                     LOGGER.info("Downloading contentPack {} from {} to {}",
                             contentPackZip.getName(),
-                            fileUrl.toString(),
+                            fileUrl,
                             FileUtil.getCanonicalPath(destFilePath));
 
                     downloadFile(fileUrl, destFilePath);

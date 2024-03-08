@@ -29,6 +29,7 @@ import stroom.cache.client.gin.CacheGinjector;
 import stroom.cache.client.gin.CacheModule;
 import stroom.content.client.presenter.ContentTabPanePresenter;
 import stroom.core.client.presenter.CorePresenter;
+import stroom.core.client.presenter.FullScreenPresenter;
 import stroom.dashboard.client.gin.DashboardGinjector;
 import stroom.dashboard.client.gin.DashboardModule;
 import stroom.dashboard.client.query.gin.QueryGinjector;
@@ -36,16 +37,21 @@ import stroom.dashboard.client.vis.gin.VisGinjector;
 import stroom.dashboard.client.vis.gin.VisModule;
 import stroom.data.client.gin.StreamStoreGinjector;
 import stroom.data.client.gin.StreamStoreModule;
-import stroom.data.store.impl.fs.client.gin.FSVolumeGinjector;
-import stroom.data.store.impl.fs.client.gin.FSVolumeModule;
+import stroom.data.store.impl.fs.client.gin.FsVolumeGinjector;
+import stroom.data.store.impl.fs.client.gin.FsVolumeModule;
 import stroom.dictionary.client.gin.DictionaryGinjector;
 import stroom.dictionary.client.gin.DictionaryModule;
 import stroom.dispatch.client.RestModule;
+import stroom.documentation.client.gin.DocumentationGinjector;
+import stroom.documentation.client.gin.DocumentationModule;
 import stroom.entity.client.gin.EntityGinjector;
 import stroom.entity.client.gin.EntityModule;
-import stroom.explorer.client.presenter.ExplorerTreePresenter;
+import stroom.explorer.client.presenter.ExplorerNodeEditTagsPresenter;
+import stroom.explorer.client.presenter.ExplorerNodeRemoveTagsPresenter;
+import stroom.explorer.client.presenter.FindInContentPresenter;
 import stroom.explorer.client.presenter.FindPresenter;
 import stroom.explorer.client.presenter.NavigationPresenter;
+import stroom.explorer.client.presenter.RecentItemsPresenter;
 import stroom.feed.client.gin.FeedGinjector;
 import stroom.feed.client.gin.FeedModule;
 import stroom.folder.client.gin.FolderGinjector;
@@ -109,8 +115,9 @@ import com.gwtplatform.mvp.client.proxy.PlaceManager;
         RestModule.class,
         DashboardModule.class,
         DictionaryModule.class,
+        DocumentationModule.class,
         EntityModule.class,
-        FSVolumeModule.class,
+        FsVolumeModule.class,
         FeedModule.class,
         FolderModule.class,
         ImportExportConfigModule.class,
@@ -145,8 +152,9 @@ public interface AppGinjectorUser extends
         CacheGinjector,
         DashboardGinjector,
         DictionaryGinjector,
+        DocumentationGinjector,
         EntityGinjector,
-        FSVolumeGinjector,
+        FsVolumeGinjector,
         FeedGinjector,
         FolderGinjector,
         Ginjector,
@@ -189,7 +197,15 @@ public interface AppGinjectorUser extends
 
     AsyncProvider<ContentTabPanePresenter> getContentTabPanePresenter();
 
-    AsyncProvider<ExplorerTreePresenter> getExplorerTreePresenter();
-
     AsyncProvider<FindPresenter> getFindPresenter();
+
+    AsyncProvider<RecentItemsPresenter> getRecentItemsPresenter();
+
+    AsyncProvider<FindInContentPresenter> getFindInContentPresenter();
+
+    Provider<FullScreenPresenter> getFullScreenPresenter();
+
+    AsyncProvider<ExplorerNodeEditTagsPresenter> getExplorerNodeEditPresenter();
+
+    AsyncProvider<ExplorerNodeRemoveTagsPresenter> getExplorerNodeRemovePresenter();
 }

@@ -21,8 +21,9 @@ import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.security.shared.DocPermissionResource;
 import stroom.security.shared.FilterUsersRequest;
-import stroom.security.shared.SimpleUser;
 import stroom.security.shared.User;
+import stroom.ui.config.client.UiConfigCache;
+import stroom.util.shared.UserName;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
@@ -46,13 +47,15 @@ public class DocumentUserListPresenter extends AbstractUserListPresenter {
 
     private String filter;
     private final RestFactory restFactory;
+    private boolean isGroup = true;
 
     @Inject
     public DocumentUserListPresenter(final EventBus eventBus,
                                      final UserListView userListView,
                                      final PagerView pagerView,
-                                     final RestFactory restFactory) {
-        super(eventBus, userListView, pagerView);
+                                     final RestFactory restFactory,
+                                     final UiConfigCache uiConfigCache) {
+        super(eventBus, userListView, pagerView, uiConfigCache);
         this.restFactory = restFactory;
     }
 
@@ -71,8 +74,15 @@ public class DocumentUserListPresenter extends AbstractUserListPresenter {
         }
     }
 
-    public void setDocumentPermissions(final List<User> userList) {
+    public void setDocumentPermissions(final List<User> userList, final boolean isGroup) {
 
+//        GWT.log("Setting "
+//                + (isGroup
+//                ? "group"
+//                : "user") + " list:"
+//                + userList.stream().map(User::getSubjectId).collect(Collectors.joining(", ")));
+//
+        this.isGroup = isGroup;
         this.uuidToUserMap = userList == null
                 ? Collections.emptyMap()
                 : userList.stream()
@@ -82,12 +92,20 @@ public class DocumentUserListPresenter extends AbstractUserListPresenter {
         refresh();
     }
 
+    @Override
+    public boolean includeAdditionalUserInfo() {
+        return !isGroup;
+    }
+
     public void refresh() {
+        super.refresh();
         if (filter != null && !filter.isEmpty()) {
             filterUsers(userList);
             // async update of the grid
         } else {
-            final List<User> users = new ArrayList<>(userList);
+            final List<User> users = userList != null
+                    ? new ArrayList<>(userList)
+                    : Collections.emptyList();
             updateGrid(users);
         }
     }
@@ -96,7 +114,7 @@ public class DocumentUserListPresenter extends AbstractUserListPresenter {
         final User selected = getSelectionModel().getSelected();
         getSelectionModel().clear();
 
-        users.sort(Comparator.comparing(User::getName));
+        users.sort(Comparator.comparing(User::getSubjectId));
 
         getDataGrid().setRowData(0, users);
         getDataGrid().setRowCount(users.size());
@@ -107,24 +125,29 @@ public class DocumentUserListPresenter extends AbstractUserListPresenter {
     }
 
     private void filterUsers(final List<User> users) {
-        final Rest<List<SimpleUser>> rest = restFactory.create();
+        final Rest<List<UserName>> rest = restFactory.create();
 
         // Convert our users to a simpler object to avoid sending a lot of rich
-        // objects over the network when all we need is to filter on the user name
-        final List<SimpleUser> allSimpleUsers = users.stream()
-                .map(SimpleUser::new)
-                .collect(Collectors.toList());
+        // objects over the network when all we need is to filter on the username
+        final List<UserName> allSimpleUsers = users != null
+                ? users.stream()
+                .map(User::asUserName)
+                .collect(Collectors.toList())
+                : Collections.emptyList();
 
-        rest
-                .onSuccess(filteredSimpleUsers -> {
-                    // Map the users back again
-                    final List<User> filteredUsers = filteredSimpleUsers.stream()
-                            .map(simpleUser -> uuidToUserMap.get(simpleUser.getUuid()))
-                            .collect(Collectors.toList());
-                    updateGrid(filteredUsers);
-                })
-                .call(DOC_PERMISSION_RESOURCE)
-                .filterUsers(new FilterUsersRequest(allSimpleUsers, filter));
+        if (!allSimpleUsers.isEmpty()) {
+            rest
+                    .onSuccess(filteredSimpleUsers -> {
+                        // Map the users back again
+                        final List<User> filteredUsers = filteredSimpleUsers.stream()
+                                .map(simpleUser -> uuidToUserMap.get(simpleUser.getUuid()))
+                                .collect(Collectors.toList());
+                        updateGrid(filteredUsers);
+                    })
+                    .call(DOC_PERMISSION_RESOURCE)
+                    .filterUsers(new FilterUsersRequest(allSimpleUsers, filter));
+        } else {
+            updateGrid(Collections.emptyList());
+        }
     }
-
 }

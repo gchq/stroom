@@ -16,6 +16,7 @@
 
 package stroom.widget.button.client;
 
+import stroom.svg.shared.SvgImage;
 import stroom.widget.util.client.KeyBinding;
 import stroom.widget.util.client.KeyBinding.Action;
 import stroom.widget.util.client.MouseUtil;
@@ -66,8 +67,8 @@ public class FabButton extends ButtonBase {
         }
     }
 
-    public void setIconClassName(final String iconClassName) {
-        face.setInnerHTML("<div class=\"" + iconClassName + "\"></div>");
+    public void setIcon(final SvgImage svgImage) {
+        face.setInnerHTML("<div class=\"svgIcon " + svgImage.getClassName() + "\">" + svgImage.getSvg() + "</div>");
     }
 
     @Override
@@ -150,34 +151,9 @@ public class FabButton extends ButtonBase {
 
         // Synthesize clicks based on keyboard events AFTER the normal key
         // handling.
-        if ((event.getTypeInt() & Event.KEYEVENTS) != 0) {
-            switch (type) {
-                case Event.ONKEYDOWN:
-                    final Action action = KeyBinding.getAction(event);
-                    if (action == Action.SELECT || action == Action.EXECUTE) {
-                        onClick();
-                    }
-                    break;
-
-//                case Event.ONKEYDOWN:
-//                    if (keyCode == ' ') {
-//                        isFocusing = true;
-//                        onClickStart();
-//                    }
-//                    break;
-//                case Event.ONKEYUP:
-//                    if (isFocusing && keyCode == ' ') {
-//                        isFocusing = false;
-//                        onClick();
-//                    }
-//                    break;
-//                case Event.ONKEYPRESS:
-//                    if (keyCode == '\n' || keyCode == '\r') {
-//                        onClickStart();
-//                        onClick();
-//                    }
-//                    break;
-            }
+        final Action action = KeyBinding.test(event);
+        if (action == Action.SELECT || action == Action.EXECUTE) {
+            onClick();
         }
     }
 

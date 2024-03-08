@@ -58,6 +58,7 @@
 
 .icon-button.disabled {
     opacity: .4;
+    cursor: default;
 }
 
 .icon-button.disabled .background {
@@ -100,7 +101,7 @@
 }
 
 .navigation .icon-button .face {
-    color: var(--navigation__text-color);
+    color: var(--navigation-icon-button__color);
 }
 
 .navigation-menu-button.icon-button .face,
@@ -142,6 +143,13 @@
 	-webkit-transition: background-color .5s;
 	-moz-transition: background-color .5s;
 	-o-transition: background-color .5s;
+}
+
+/* Flip the colours when toggled on */
+.inline-svg-button.icon-button.on svg {
+    --icon-colour__black: var(--icon-colour__black__on);
+    --icon-colour__white: var(--icon-colour__white__on);
+    color: var(--app__background-color);
 }
 
 .stroom-button-fab .face--disabled {

@@ -17,10 +17,20 @@
 package stroom.datasource.api.v2;
 
 import stroom.docref.DocRef;
+import stroom.util.shared.ResultPage;
+
+import java.util.List;
+import java.util.Optional;
 
 public interface DataSourceProvider {
 
-    DataSource getDataSource(DocRef docRef);
+    List<DocRef> list();
 
     String getType();
+
+    ResultPage<FieldInfo> getFieldInfo(FindFieldInfoCriteria criteria);
+
+    Optional<String> fetchDocumentation(DocRef dataSourceRef);
+
+    DocRef fetchDefaultExtractionPipeline(DocRef dataSourceRef);
 }

@@ -25,6 +25,7 @@ import stroom.processor.shared.TaskStatus;
 import stroom.security.mock.MockSecurityContextModule;
 import stroom.task.mock.MockTaskModule;
 import stroom.test.common.util.db.DbTestModule;
+import stroom.util.AuditUtil;
 import stroom.util.db.ForceLegacyMigration;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -33,6 +34,7 @@ import stroom.util.shared.Clearable;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import jakarta.inject.Inject;
 import org.jooq.Condition;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -42,7 +44,6 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import javax.inject.Inject;
 
 import static stroom.processor.impl.db.jooq.tables.Processor.PROCESSOR;
 import static stroom.processor.impl.db.jooq.tables.ProcessorFilter.PROCESSOR_FILTER;
@@ -165,6 +166,7 @@ class AbstractProcessorTest {
         processorFilter.setQueryData(QueryData.builder()
                 .build());
         processorFilter.setUuid(UUID.randomUUID().toString());
+        stampProcessorFilter(processorFilter, "jbloggs");
 
         return processorFilterDao.create(processorFilter);
     }
@@ -278,5 +280,10 @@ class AbstractProcessorTest {
                     .orderBy(PROCESSOR_TASK.ID)
                     .fetch(), false));
         });
+    }
+
+    private void stampProcessorFilter(final ProcessorFilter processorFilter,
+                                      final String auditUser) {
+        AuditUtil.stamp(() -> auditUser, processorFilter);
     }
 }

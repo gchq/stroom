@@ -21,12 +21,14 @@ import stroom.docstore.api.DocumentResourceHelper;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.security.api.SecurityContext;
 import stroom.util.shared.EntityServiceException;
+import stroom.view.api.ViewStore;
 import stroom.view.shared.ViewDoc;
 import stroom.view.shared.ViewResource;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+
 import java.util.List;
-import javax.inject.Inject;
-import javax.inject.Provider;
 
 @AutoLogged
 class ViewResourceImpl implements ViewResource {

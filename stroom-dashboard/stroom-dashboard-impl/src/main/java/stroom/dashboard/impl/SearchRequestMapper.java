@@ -29,9 +29,11 @@ import stroom.dashboard.shared.TableResultRequest;
 import stroom.dashboard.shared.VisComponentSettings;
 import stroom.dashboard.shared.VisResultRequest;
 import stroom.docref.DocRef;
+import stroom.query.api.v2.Column;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.Format;
 import stroom.query.api.v2.Param;
+import stroom.query.api.v2.ParamSubstituteUtil;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.ResultRequest.Builder;
@@ -39,12 +41,12 @@ import stroom.query.api.v2.ResultRequest.ResultStyle;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.Sort.SortDirection;
 import stroom.query.api.v2.TableSettings;
+import stroom.util.json.JsonUtil;
 import stroom.visualisation.shared.VisualisationDoc;
 
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.inject.Inject;
 import org.apache.commons.text.StringEscapeUtils;
 
 import java.io.IOException;
@@ -55,7 +57,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import javax.inject.Inject;
 
 public class SearchRequestMapper {
 
@@ -103,13 +104,10 @@ public class SearchRequestMapper {
         }
 
         if (searchExpressionParam != null) {
-            ObjectMapper mapper = new ObjectMapper();
-            mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-            mapper.setSerializationInclusion(Include.NON_NULL);
             String expressionJson = "null";
             try {
                 expressionJson = StringEscapeUtils.unescapeXml(searchExpressionParam.getValue());
-                final ExpressionOperator suppliedExpression = mapper.readValue(expressionJson,
+                final ExpressionOperator suppliedExpression = JsonUtil.readValue(expressionJson,
                         ExpressionOperator.class);
                 final ExpressionOperator expression = ExpressionOperator
                         .builder()
@@ -122,8 +120,8 @@ public class SearchRequestMapper {
                         params,
                         searchRequest.getSearch().getTimeRange());
 
-            } catch (IOException ex) {
-                throw new UncheckedIOException("Invalid JSON for expression.  Got: " + expressionJson, ex);
+            } catch (RuntimeException ex) {
+                throw new RuntimeException("Invalid JSON for expression.  Got: " + expressionJson, ex);
             }
 
         } else {
@@ -142,9 +140,7 @@ public class SearchRequestMapper {
 
         final List<ResultRequest> resultRequests = new ArrayList<>(searchRequest.getComponentResultRequests().size());
         for (final ComponentResultRequest componentResultRequest : searchRequest.getComponentResultRequests()) {
-            if (componentResultRequest instanceof TableResultRequest) {
-                final TableResultRequest tableResultRequest = (TableResultRequest) componentResultRequest;
-
+            if (componentResultRequest instanceof final TableResultRequest tableResultRequest) {
                 final ResultRequest copy = ResultRequest.builder()
                         .componentId(tableResultRequest.getComponentId())
                         .addMappings(tableResultRequest.getTableSettings())
@@ -155,9 +151,7 @@ public class SearchRequestMapper {
                         .build();
                 resultRequests.add(copy);
 
-            } else if (componentResultRequest instanceof VisResultRequest) {
-                final VisResultRequest visResultRequest = (VisResultRequest) componentResultRequest;
-
+            } else if (componentResultRequest instanceof final VisResultRequest visResultRequest) {
                 final TableSettings parentTableSettings = visResultRequest.getVisDashboardSettings().getTableSettings()
                         .copy()
                         .buildTableSettings();
@@ -175,7 +169,7 @@ public class SearchRequestMapper {
 
                 final ResultRequest copy = builder
                         .requestedRange(visResultRequest.getRequestedRange())
-                        .resultStyle(ResultStyle.FLAT)
+                        .resultStyle(ResultStyle.VIS)
                         .fetch(visResultRequest.getFetch())
                         .build();
                 resultRequests.add(copy);
@@ -339,12 +333,12 @@ public class SearchRequestMapper {
 //        dateTimeFormatSettings.getPattern(), mapTimeZone(dateTimeFormatSettings.getTimeZone()));
 //    }
 //
-//    private stroom.query.api.v2.TimeZone mapTimeZone(final TimeZone timeZone) {
+//    private stroom.expression.api.TimeZone mapTimeZone(final TimeZone timeZone) {
 //        if (timeZone == null) {
 //            return null;
 //        }
 //
-//        return new stroom.query.api.v2.TimeZone(
+//        return new stroom.expression.api.TimeZone(
 //        Use.valueOf(timeZone.getUse().name()), timeZone.getId(), timeZone.getOffsetHours(),
 //        timeZone.getOffsetMinutes());
 //    }
@@ -407,9 +401,9 @@ public class SearchRequestMapper {
 //        return tableSettings;
 //    }
 
-    private stroom.query.api.v2.Field.Builder convertField(final VisField visField,
-                                                           final Map<String, stroom.query.api.v2.Format> formatMap) {
-        final stroom.query.api.v2.Field.Builder builder = stroom.query.api.v2.Field.builder();
+    private Column.Builder convertField(final VisField visField,
+                                        final Map<String, stroom.query.api.v2.Format> formatMap) {
+        final Column.Builder builder = Column.builder();
 
         builder.format(Format.GENERAL);
 
@@ -419,7 +413,7 @@ public class SearchRequestMapper {
                 builder.format(format);
             }
 
-            builder.expression("${" + visField.getId() + "}");
+            builder.expression(ParamSubstituteUtil.makeParam(visField.getId()));
         }
         builder.sort(visField.getSort());
 
@@ -434,88 +428,79 @@ public class SearchRequestMapper {
         DocRef docRef = visComponentSettings.getVisualisation();
         TableSettings tableSettings = null;
 
-        try {
-            if (docRef == null) {
-                return null;
-            }
+        if (docRef == null) {
+            return null;
+        }
 
-            final VisualisationDoc visualisation = visualisationStore.readDocument(docRef);
+        final VisualisationDoc visualisation = visualisationStore.readDocument(docRef);
 
-            if (visualisation == null
-                    || visualisation.getSettings() == null
-                    || visualisation.getSettings().length() == 0) {
-                return null;
-            }
+        if (visualisation == null
+                || visualisation.getSettings() == null
+                || visualisation.getSettings().length() == 0) {
+            return null;
+        }
 
-            ObjectMapper mapper = new ObjectMapper();
-            mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-            mapper.setSerializationInclusion(Include.NON_NULL);
+        final VisSettings visSettings = JsonUtil.readValue(visualisation.getSettings(), VisSettings.class);
+        if (visSettings != null && visSettings.getData() != null) {
+            final SettingResolver settingResolver = new SettingResolver(visSettings,
+                    visComponentSettings.getJson());
+            final Structure structure = visSettings.getData().getStructure();
+            if (structure != null) {
 
-            final VisSettings visSettings = mapper.readValue(visualisation.getSettings(), VisSettings.class);
-            if (visSettings != null && visSettings.getData() != null) {
-                final SettingResolver settingResolver = new SettingResolver(visSettings,
-                        visComponentSettings.getJson());
-                final Structure structure = visSettings.getData().getStructure();
-                if (structure != null) {
-
-                    final Map<String, stroom.query.api.v2.Format> formatMap = new HashMap<>();
-                    if (parentTableSettings.getFields() != null) {
-                        for (final stroom.query.api.v2.Field field : parentTableSettings.getFields()) {
-                            if (field != null) {
-                                formatMap.put(field.getName(), field.getFormat());
-                            }
+                final Map<String, stroom.query.api.v2.Format> formatMap = new HashMap<>();
+                if (parentTableSettings.getColumns() != null) {
+                    for (final Column column : parentTableSettings.getColumns()) {
+                        if (column != null) {
+                            formatMap.put(column.getName(), column.getFormat());
                         }
                     }
-
-                    List<stroom.query.api.v2.Field> fields = new ArrayList<>();
-                    List<Integer> limits = new ArrayList<>();
-
-                    VisNest nest = mapNest(structure.getNest(), settingResolver);
-                    VisValues values = mapVisValues(structure.getValues(), settingResolver);
-
-                    int group = 0;
-                    while (nest != null) {
-                        final stroom.query.api.v2.Field.Builder builder = convertField(nest.getKey(), formatMap);
-                        builder.group(group++);
-
-                        fields.add(builder.build());
-
-                        // Get limit from nest.
-                        Integer limit = null;
-                        if (nest.getLimit() != null) {
-                            limit = nest.getLimit().getSize();
-                        }
-                        limits.add(limit);
-
-                        values = nest.getValues();
-                        nest = nest.getNest();
-                    }
-
-                    if (values != null) {
-                        // Get limit from values.
-                        Integer limit = Integer.MAX_VALUE;
-                        if (values.getLimit() != null) {
-                            limit = values.getLimit().getSize();
-                        }
-                        limits.add(limit);
-
-                        if (values.getFields() != null) {
-                            for (final VisField visField : values.getFields()) {
-                                fields.add(convertField(visField, formatMap).build());
-                            }
-                        }
-                    }
-
-                    tableSettings = TableSettings.builder()
-                            .addFields(fields)
-                            .addMaxResults(limits)
-                            .showDetail(true)
-                            .build();
                 }
-            }
 
-        } catch (final IOException e) {
-            throw new UncheckedIOException(e);
+                List<Column> columns = new ArrayList<>();
+                List<Long> limits = new ArrayList<>();
+
+                VisNest nest = mapNest(structure.getNest(), settingResolver);
+                VisValues values = mapVisValues(structure.getValues(), settingResolver);
+
+                int group = 0;
+                while (nest != null) {
+                    final Column.Builder builder = convertField(nest.getKey(), formatMap);
+                    builder.group(group++);
+
+                    columns.add(builder.build());
+
+                    // Get limit from nest.
+                    Long limit = null;
+                    if (nest.getLimit() != null) {
+                        limit = nest.getLimit().getSize();
+                    }
+                    limits.add(limit);
+
+                    values = nest.getValues();
+                    nest = nest.getNest();
+                }
+
+                if (values != null) {
+                    // Get limit from values.
+                    Long limit = Long.MAX_VALUE;
+                    if (values.getLimit() != null) {
+                        limit = values.getLimit().getSize();
+                    }
+                    limits.add(limit);
+
+                    if (values.getFields() != null) {
+                        for (final VisField visField : values.getFields()) {
+                            columns.add(convertField(visField, formatMap).build());
+                        }
+                    }
+                }
+
+                tableSettings = TableSettings.builder()
+                        .addColumns(columns)
+                        .addMaxResults(limits)
+                        .showDetail(true)
+                        .build();
+            }
         }
 
         return tableSettings;
@@ -537,11 +522,6 @@ public class SearchRequestMapper {
 //            || visualisation.getSettings() == null || visualisation.getSettings().length() == 0) {
 //                return null;
 //            }
-//
-//            ObjectMapper mapper = new ObjectMapper();
-//            mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-//            mapper.configure(SerializationFeature.WRITE_NULL_MAP_VALUES, false);
-//            mapper.setSerializationInclusion(Include.NON_NULL);
 //
 //            final VisSettings visSettings = mapper.readValue(visualisation.getSettings(), VisSettings.class);
 //            if (visSettings != null && visSettings.getMeta() != null) {
@@ -637,7 +617,7 @@ public class SearchRequestMapper {
             Boolean enabled = settingResolver.resolveBoolean(limit.getEnabled());
             if (enabled == null || enabled) {
                 final VisLimit copy = new VisLimit();
-                copy.setSize(settingResolver.resolveInteger(limit.getSize()));
+                copy.setSize(settingResolver.resolveLong(limit.getSize()));
                 return copy;
             }
         }
@@ -740,7 +720,7 @@ public class SearchRequestMapper {
 
             try {
                 if (json != null && !json.isEmpty()) {
-                    ObjectMapper objectMapper = new ObjectMapper();
+                    ObjectMapper objectMapper = JsonUtil.getNoIndentMapper();
                     final JsonNode node = objectMapper.readTree(json);
 
                     Iterator<Entry<String, JsonNode>> iterator = node.fields();

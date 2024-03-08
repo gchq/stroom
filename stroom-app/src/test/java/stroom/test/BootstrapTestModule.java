@@ -11,7 +11,7 @@ import stroom.util.io.FileUtil;
 import stroom.util.io.StroomPathConfig;
 
 import com.google.inject.AbstractModule;
-import io.dropwizard.setup.Environment;
+import io.dropwizard.core.setup.Environment;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;

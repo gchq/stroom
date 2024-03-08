@@ -17,17 +17,16 @@
 
 package stroom.search.impl;
 
-import stroom.datasource.api.v2.DataSource;
 import stroom.datasource.api.v2.DateField;
-import stroom.dictionary.api.WordListProvider;
+import stroom.datasource.api.v2.FieldInfo;
+import stroom.datasource.api.v2.FindFieldInfoCriteria;
+import stroom.datasource.api.v2.QueryField;
+import stroom.datasource.api.v2.QueryFieldService;
 import stroom.docref.DocRef;
-import stroom.docstore.shared.DocRefUtil;
 import stroom.index.impl.IndexStore;
-import stroom.index.impl.LuceneVersionUtil;
+import stroom.index.impl.LuceneProviderFactory;
 import stroom.index.shared.IndexDoc;
-import stroom.index.shared.IndexFieldsMap;
-import stroom.query.api.v2.DateTimeSettings;
-import stroom.query.api.v2.ExpressionOperator;
+import stroom.index.shared.LuceneVersionUtil;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.SearchRequest;
@@ -38,83 +37,110 @@ import stroom.query.common.v2.DataStoreSettings;
 import stroom.query.common.v2.ResultStore;
 import stroom.query.common.v2.ResultStoreFactory;
 import stroom.query.common.v2.SearchProvider;
-import stroom.search.impl.SearchExpressionQueryBuilder.SearchExpressionQuery;
 import stroom.security.api.SecurityContext;
-import stroom.task.api.ExecutorProvider;
-import stroom.task.api.TaskContextFactory;
-import stroom.task.api.TerminateHandlerFactory;
-import stroom.util.logging.LambdaLogger;
-import stroom.util.logging.LambdaLoggerFactory;
+import stroom.security.shared.DocumentPermissionNames;
+import stroom.util.shared.ResultPage;
+
+import jakarta.inject.Inject;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
-import java.util.function.Supplier;
-import javax.inject.Inject;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class LuceneSearchProvider implements SearchProvider {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(LuceneSearchProvider.class);
-
     private final IndexStore indexStore;
-    private final WordListProvider wordListProvider;
-    private final int maxBooleanClauseCount;
     private final SecurityContext securityContext;
     private final CoprocessorsFactory coprocessorsFactory;
     private final ResultStoreFactory resultStoreFactory;
-    private final TaskContextFactory taskContextFactory;
-    private final ExecutorProvider executorProvider;
     private final FederatedSearchExecutor federatedSearchExecutor;
-    private final LuceneNodeSearchTaskCreator luceneNodeSearchTaskCreator;
+    private final NodeSearchTaskCreator nodeSearchTaskCreator;
+    private final LuceneProviderFactory luceneProviderFactory;
+    private final QueryFieldService queryFieldService;
+
+    private static final Map<DocRef, Integer> FIELD_SOURCE_MAP = new ConcurrentHashMap<>();
 
     @Inject
     public LuceneSearchProvider(final IndexStore indexStore,
-                                final WordListProvider wordListProvider,
-                                final SearchConfig searchConfig,
                                 final SecurityContext securityContext,
                                 final CoprocessorsFactory coprocessorsFactory,
                                 final ResultStoreFactory resultStoreFactory,
-                                final TaskContextFactory taskContextFactory,
-                                final ExecutorProvider executorProvider,
                                 final FederatedSearchExecutor federatedSearchExecutor,
-                                final LuceneNodeSearchTaskCreator luceneNodeSearchTaskCreator) {
+                                final NodeSearchTaskCreator nodeSearchTaskCreator,
+                                final LuceneProviderFactory luceneProviderFactory,
+                                final QueryFieldService queryFieldService) {
         this.indexStore = indexStore;
-        this.wordListProvider = wordListProvider;
-        this.maxBooleanClauseCount = searchConfig.getMaxBooleanClauseCount();
         this.securityContext = securityContext;
         this.coprocessorsFactory = coprocessorsFactory;
         this.resultStoreFactory = resultStoreFactory;
-        this.taskContextFactory = taskContextFactory;
-        this.executorProvider = executorProvider;
         this.federatedSearchExecutor = federatedSearchExecutor;
-        this.luceneNodeSearchTaskCreator = luceneNodeSearchTaskCreator;
+        this.nodeSearchTaskCreator = nodeSearchTaskCreator;
+        this.luceneProviderFactory = luceneProviderFactory;
+        this.queryFieldService = queryFieldService;
     }
 
     @Override
-    public DataSource getDataSource(final DocRef docRef) {
+    public ResultPage<FieldInfo> getFieldInfo(final FindFieldInfoCriteria criteria) {
         return securityContext.useAsReadResult(() -> {
-            final Supplier<DataSource> supplier = taskContextFactory.contextResult(
-                    "Getting Data Source",
-                    TerminateHandlerFactory.NOOP_FACTORY,
-                    taskContext -> {
-                        final IndexDoc index = indexStore.readDocument(docRef);
-                        return DataSource
-                                .builder()
-                                .docRef(DocRefUtil.create(index))
-                                .fields(IndexDataSourceFieldUtil.getDataSourceFields(index, securityContext))
-                                .defaultExtractionPipeline(index.getDefaultExtractionPipeline())
-                                .build();
-                    });
-            final Executor executor = executorProvider.get();
-            final CompletableFuture<DataSource> completableFuture = CompletableFuture.supplyAsync(supplier, executor);
-            try {
-                return completableFuture.get();
-            } catch (final InterruptedException | ExecutionException e) {
-                throw new RuntimeException(e.getMessage(), e);
+            final DocRef docRef = criteria.getDataSourceRef();
+
+            // Check for read permission.
+            if (!securityContext.hasDocumentPermission(docRef.getUuid(), DocumentPermissionNames.READ)) {
+                // If there is no read permission then return no fields.
+                return ResultPage.createCriterialBasedList(Collections.emptyList(), criteria);
             }
+
+            if (!FIELD_SOURCE_MAP.containsKey(docRef)) {
+                // Load fields.
+                final IndexDoc index = indexStore.readDocument(docRef);
+                if (index == null) {
+                    // We can't read the index so return no fields.
+                    return ResultPage.createCriterialBasedList(Collections.emptyList(), criteria);
+                }
+
+                final List<QueryField> fields = IndexDataSourceFieldUtil.getDataSourceFields(index);
+                final int fieldSourceId = queryFieldService.getOrCreateFieldSource(docRef);
+                final List<FieldInfo> mapped = fields.stream().map(FieldInfo::create).toList();
+                queryFieldService.addFields(fieldSourceId, mapped);
+
+//                // TEST DATA
+//                for (int i = 0; i < 1000; i++) {
+//                    addField(fieldSourceId, new IdField("test" + i));
+//                    for (int j = 0; j < 1000; j++) {
+//                        addField(fieldSourceId, new IdField("test" + i + ".test" + j));
+//                        for (int k = 0; k < 1000; k++) {
+//                            addField(fieldSourceId, new IdField("test" + i + ".test" + j + ".test" + k));
+//                        }
+//                    }
+//                }
+                FIELD_SOURCE_MAP.put(docRef, fieldSourceId);
+            }
+
+            return queryFieldService.findFieldInfo(criteria);
+        });
+    }
+
+    private void addField(final int fieldSourceId, final QueryField field) {
+        queryFieldService.addFields(fieldSourceId,
+                Collections.singletonList(FieldInfo.create(field)));
+    }
+
+    @Override
+    public Optional<String> fetchDocumentation(final DocRef docRef) {
+        return Optional.ofNullable(indexStore.readDocument(docRef)).map(IndexDoc::getDescription);
+    }
+
+    @Override
+    public DocRef fetchDefaultExtractionPipeline(final DocRef dataSourceRef) {
+        return securityContext.useAsReadResult(() -> {
+            final IndexDoc index = indexStore.readDocument(dataSourceRef);
+            if (index != null) {
+                return index.getDefaultExtractionPipeline();
+            }
+            return null;
         });
     }
 
@@ -131,9 +157,6 @@ public class LuceneSearchProvider implements SearchProvider {
     }
 
     public ResultStore createResultStore(final SearchRequest searchRequest) {
-        // Get the current time in millis since epoch.
-        final long nowEpochMilli = System.currentTimeMillis();
-
         // Replace expression parameters.
         final SearchRequest modifiedSearchRequest = ExpressionUtil.replaceExpressionParameters(searchRequest);
 
@@ -145,21 +168,21 @@ public class LuceneSearchProvider implements SearchProvider {
                 indexStore.readDocument(query.getDataSource()));
 
         // Extract highlights.
-        final Set<String> highlights = getHighlights(
-                index,
-                query.getExpression(),
-                modifiedSearchRequest.getDateTimeSettings(),
-                nowEpochMilli);
+        final Set<String> highlights = luceneProviderFactory
+                .get(LuceneVersionUtil.CURRENT_LUCENE_VERSION)
+                .createHighlightProvider()
+                .getHighlights(index, query.getExpression(), modifiedSearchRequest.getDateTimeSettings());
 
         // Create a coprocessor settings list.
         final List<CoprocessorSettings> coprocessorSettingsList = coprocessorsFactory
-                .createSettings(modifiedSearchRequest);
+                .createSettings(modifiedSearchRequest, index.getDefaultExtractionPipeline());
 
         // Create a handler for search results.
         final DataStoreSettings dataStoreSettings = DataStoreSettings
                 .createBasicSearchResultStoreSettings();
         final CoprocessorsImpl coprocessors = coprocessorsFactory.create(
                 modifiedSearchRequest.getSearchRequestSource(),
+                modifiedSearchRequest.getDateTimeSettings(),
                 modifiedSearchRequest.getKey(),
                 coprocessorSettingsList,
                 query.getParams(),
@@ -173,8 +196,7 @@ public class LuceneSearchProvider implements SearchProvider {
                 searchName,
                 query,
                 coprocessorSettingsList,
-                modifiedSearchRequest.getDateTimeSettings(),
-                nowEpochMilli);
+                modifiedSearchRequest.getDateTimeSettings());
 
         // Create the search result collector.
         final ResultStore resultStore = resultStoreFactory.create(
@@ -182,36 +204,14 @@ public class LuceneSearchProvider implements SearchProvider {
                 coprocessors);
         resultStore.addHighlights(highlights);
 
-        federatedSearchExecutor.start(federatedSearchTask, resultStore, luceneNodeSearchTaskCreator);
+        federatedSearchExecutor.start(federatedSearchTask, resultStore, nodeSearchTaskCreator);
 
         return resultStore;
     }
 
-    /**
-     * Compiles the query, extracts terms and then returns them for use in hit
-     * highlighting.
-     */
-    private Set<String> getHighlights(final IndexDoc index,
-                                      final ExpressionOperator expression,
-                                      DateTimeSettings dateTimeSettings,
-                                      final long nowEpochMilli) {
-        Set<String> highlights = Collections.emptySet();
-
-        try {
-            // Create a map of index fields keyed by name.
-            final IndexFieldsMap indexFieldsMap = new IndexFieldsMap(index.getFields());
-            // Parse the query.
-            final SearchExpressionQueryBuilder searchExpressionQueryBuilder = new SearchExpressionQueryBuilder(
-                    wordListProvider, indexFieldsMap, maxBooleanClauseCount, dateTimeSettings, nowEpochMilli);
-            final SearchExpressionQuery query = searchExpressionQueryBuilder
-                    .buildQuery(LuceneVersionUtil.CURRENT_LUCENE_VERSION, expression);
-
-            highlights = query.getTerms();
-        } catch (final RuntimeException e) {
-            LOGGER.debug(e.getMessage(), e);
-        }
-
-        return highlights;
+    @Override
+    public List<DocRef> list() {
+        return indexStore.list();
     }
 
     @Override

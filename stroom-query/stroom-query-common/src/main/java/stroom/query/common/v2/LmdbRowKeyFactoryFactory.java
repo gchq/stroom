@@ -1,10 +1,15 @@
 package stroom.query.common.v2;
 
 import stroom.query.api.v2.TimeFilter;
+import stroom.query.language.functions.Val;
+import stroom.query.language.functions.ref.StoredValues;
 
+import com.esotericsoftware.kryo.io.ByteBufferInput;
+import com.esotericsoftware.kryo.io.Input;
 import org.lmdbjava.KeyRange;
 
 import java.nio.ByteBuffer;
+import java.util.List;
 
 public class LmdbRowKeyFactoryFactory {
 
@@ -35,29 +40,29 @@ public class LmdbRowKeyFactoryFactory {
     public static LmdbRowKeyFactory create(final UniqueIdProvider uniqueIdProvider,
                                            final KeyFactoryConfig keyFactoryConfig,
                                            final CompiledDepths compiledDepths,
-                                           final ValHasher valHasher) {
+                                           final StoredValueKeyFactory storedValueKeyFactory) {
         final boolean flat = compiledDepths.getMaxDepth() == 0 &&
                 compiledDepths.getMaxGroupDepth() <= compiledDepths.getMaxDepth();
         if (flat) {
             if (keyFactoryConfig.addTimeToKey()) {
                 if (compiledDepths.hasGroup()) {
-                    return new FlatTimeGroupedLmdbRowKeyFactory();
+                    return new FlatTimeGroupedLmdbRowKeyFactory(storedValueKeyFactory);
                 } else {
-                    return new FlatTimeUngroupedLmdbRowKeyFactory(uniqueIdProvider);
+                    return new FlatTimeUngroupedLmdbRowKeyFactory(uniqueIdProvider, storedValueKeyFactory);
                 }
             } else {
                 if (compiledDepths.hasGroup()) {
-                    return new FlatGroupedLmdbRowKeyFactory();
+                    return new FlatGroupedLmdbRowKeyFactory(storedValueKeyFactory);
                 } else {
                     return new FlatUngroupedLmdbRowKeyFactory(uniqueIdProvider);
                 }
             }
         } else {
             if (keyFactoryConfig.addTimeToKey()) {
-                return new NestedTimeGroupedLmdbRowKeyFactory(uniqueIdProvider, compiledDepths, valHasher);
+                return new NestedTimeGroupedLmdbRowKeyFactory(uniqueIdProvider, compiledDepths, storedValueKeyFactory);
 
             } else {
-                return new NestedGroupedLmdbRowKeyFactory(uniqueIdProvider, compiledDepths, valHasher);
+                return new NestedGroupedLmdbRowKeyFactory(uniqueIdProvider, compiledDepths, storedValueKeyFactory);
             }
         }
     }
@@ -73,11 +78,15 @@ public class LmdbRowKeyFactoryFactory {
 
         private static final int KEY_LENGTH = Long.BYTES;
 
+        private final StoredValueKeyFactory storedValueKeyFactory;
+
+        public FlatGroupedLmdbRowKeyFactory(final StoredValueKeyFactory storedValueKeyFactory) {
+            this.storedValueKeyFactory = storedValueKeyFactory;
+        }
+
         @Override
-        public ByteBuffer create(final int depth,
-                                 final long parentGroupHash,
-                                 final long groupHash,
-                                 final long timeMs) {
+        public ByteBuffer create(final int depth, final ByteBuffer parentRowKey, final StoredValues storedValues) {
+            final long groupHash = storedValueKeyFactory.getGroupHash(depth, storedValues);
             final ByteBuffer byteBuffer = ByteBuffer.allocateDirect(KEY_LENGTH);
             byteBuffer.putLong(groupHash);
             return byteBuffer.flip();
@@ -110,6 +119,19 @@ public class LmdbRowKeyFactoryFactory {
             }
             return all();
         }
+
+        @Override
+        public Key createKey(final Key parentKey,
+                             final StoredValues storedValues,
+                             final ByteBuffer keyBuffer) {
+            final int parentDepth = parentKey.getDepth();
+            if (parentDepth >= 0) {
+                throw new RuntimeException("Unexpected parent key");
+            }
+
+            final Val[] groupValues = storedValueKeyFactory.getGroupValues(parentDepth + 1, storedValues);
+            return parentKey.resolve(0, groupValues);
+        }
     }
 
     /**
@@ -126,10 +148,7 @@ public class LmdbRowKeyFactoryFactory {
         }
 
         @Override
-        public ByteBuffer create(final int depth,
-                                 final long parentGroupHash,
-                                 final long groupHash,
-                                 final long timeMs) {
+        public ByteBuffer create(final int depth, final ByteBuffer parentRowKey, final StoredValues storedValues) {
             final ByteBuffer byteBuffer = ByteBuffer.allocateDirect(KEY_LENGTH);
             byteBuffer.putLong(uniqueIdProvider.getUniqueId());
             return byteBuffer.flip();
@@ -163,6 +182,19 @@ public class LmdbRowKeyFactoryFactory {
             }
             return all();
         }
+
+        @Override
+        public Key createKey(final Key parentKey,
+                             final StoredValues storedValues,
+                             final ByteBuffer keyBuffer) {
+            if (parentKey.getDepth() > 0) {
+                throw new RuntimeException("Unexpected parent key");
+            }
+            try (final Input input = new ByteBufferInput(keyBuffer.duplicate())) {
+                final long uniqueId = input.readLong();
+                return new Key(0, List.of(new UngroupedKeyPart(uniqueId)));
+            }
+        }
     }
 
     /**
@@ -172,11 +204,17 @@ public class LmdbRowKeyFactoryFactory {
 
         private static final int KEY_LENGTH = Long.BYTES + Long.BYTES;
 
+        private final StoredValueKeyFactory storedValueKeyFactory;
+
+        public FlatTimeGroupedLmdbRowKeyFactory(final StoredValueKeyFactory storedValueKeyFactory) {
+            this.storedValueKeyFactory = storedValueKeyFactory;
+        }
+
         @Override
-        public ByteBuffer create(final int depth,
-                                 final long parentGroupHash,
-                                 final long groupHash,
-                                 final long timeMs) {
+        public ByteBuffer create(final int depth, final ByteBuffer parentRowKey, final StoredValues storedValues) {
+            final long timeMs = storedValueKeyFactory.getTimeMs(storedValues);
+            final long groupHash = storedValueKeyFactory.getGroupHash(depth, storedValues);
+
             final ByteBuffer byteBuffer = ByteBuffer.allocateDirect(KEY_LENGTH);
             byteBuffer.putLong(timeMs);
             byteBuffer.putLong(groupHash);
@@ -217,6 +255,19 @@ public class LmdbRowKeyFactoryFactory {
             stop.flip();
             return KeyRange.closedOpen(start, stop);
         }
+
+        @Override
+        public Key createKey(final Key parentKey,
+                             final StoredValues storedValues,
+                             final ByteBuffer keyBuffer) {
+            final int parentDepth = parentKey.getDepth();
+            if (parentDepth >= 0) {
+                throw new RuntimeException("Unexpected parent key");
+            }
+            final long timeMs = storedValueKeyFactory.getTimeMs(storedValues);
+            final Val[] groupValues = storedValueKeyFactory.getGroupValues(parentDepth + 1, storedValues);
+            return parentKey.resolve(timeMs, groupValues);
+        }
     }
 
     /**
@@ -227,16 +278,17 @@ public class LmdbRowKeyFactoryFactory {
         private static final int KEY_LENGTH = Long.BYTES + Long.BYTES;
 
         private final UniqueIdProvider uniqueIdProvider;
+        private final StoredValueKeyFactory storedValueKeyFactory;
 
-        public FlatTimeUngroupedLmdbRowKeyFactory(final UniqueIdProvider uniqueIdProvider) {
+        public FlatTimeUngroupedLmdbRowKeyFactory(final UniqueIdProvider uniqueIdProvider,
+                                                  final StoredValueKeyFactory storedValueKeyFactory) {
             this.uniqueIdProvider = uniqueIdProvider;
+            this.storedValueKeyFactory = storedValueKeyFactory;
         }
 
         @Override
-        public ByteBuffer create(final int depth,
-                                 final long parentGroupHash,
-                                 final long groupHash,
-                                 final long timeMs) {
+        public ByteBuffer create(final int depth, final ByteBuffer parentRowKey, final StoredValues storedValues) {
+            final long timeMs = storedValueKeyFactory.getTimeMs(storedValues);
             final ByteBuffer byteBuffer = ByteBuffer.allocateDirect(KEY_LENGTH);
             byteBuffer.putLong(timeMs);
             byteBuffer.putLong(uniqueIdProvider.getUniqueId());
@@ -278,17 +330,26 @@ public class LmdbRowKeyFactoryFactory {
             stop.flip();
             return KeyRange.closedOpen(start, stop);
         }
-    }
 
+        @Override
+        public Key createKey(final Key parentKey,
+                             final StoredValues storedValues,
+                             final ByteBuffer keyBuffer) {
+            if (parentKey.getDepth() > 0) {
+                throw new RuntimeException("Unexpected parent key");
+            }
+            final long timeMs = storedValueKeyFactory.getTimeMs(storedValues);
+            try (final Input input = new ByteBufferInput(keyBuffer.duplicate())) {
+                final long uniqueId = input.readLong();
+                return new Key(timeMs, List.of(new UngroupedKeyPart(uniqueId)));
+            }
+        }
+    }
 
     /**
      * Creates a nested group key. <DEPTH><PARENT_GROUP_HASH><GROUP_HASH>
      */
     static class NestedGroupedLmdbRowKeyFactory implements LmdbRowKeyFactory {
-
-        private static final int SHORT_KEY_LENGTH = Byte.BYTES + Long.BYTES;
-        private static final int LONG_KEY_LENGTH = Byte.BYTES + Long.BYTES + Long.BYTES;
-        private static final int PREFIX_LENGTH = Byte.BYTES + Long.BYTES;
 
         private static final KeyRange<ByteBuffer> ZERO_DEPTH_KEY_RANGE;
 
@@ -304,41 +365,46 @@ public class LmdbRowKeyFactoryFactory {
 
         private final UniqueIdProvider uniqueIdProvider;
         private final CompiledDepths compiledDepths;
-        private final ValHasher valHasher;
+        private final StoredValueKeyFactory storedValueKeyFactory;
 
         public NestedGroupedLmdbRowKeyFactory(final UniqueIdProvider uniqueIdProvider,
                                               final CompiledDepths compiledDepths,
-                                              final ValHasher valHasher) {
+                                              final StoredValueKeyFactory storedValueKeyFactory) {
             this.uniqueIdProvider = uniqueIdProvider;
             this.compiledDepths = compiledDepths;
-            this.valHasher = valHasher;
+            this.storedValueKeyFactory = storedValueKeyFactory;
         }
 
         @Override
-        public ByteBuffer create(final int depth,
-                                 final long parentGroupHash,
-                                 final long groupHash,
-                                 final long timeMs) {
+        public ByteBuffer create(final int depth, final ByteBuffer parentRowKey, final StoredValues storedValues) {
+            final long groupHash = storedValueKeyFactory.getGroupHash(depth, storedValues);
+
             ByteBuffer byteBuffer;
 
             // If this is a grouping key then we need to add the depth first.
             if (depth == 0) {
                 // Create a top level group key. <DEPTH><GROUP_HASH>
-                byteBuffer = ByteBuffer.allocateDirect(SHORT_KEY_LENGTH);
+                byteBuffer = ByteBuffer.allocateDirect(Byte.BYTES + Long.BYTES);
                 byteBuffer.put((byte) depth);
                 byteBuffer.putLong(groupHash);
             } else if (isDetailLevel(depth)) {
                 // This is a detail level - non-grouped row.
-                // Create a child unique key. <DEPTH><PARENT_GROUP_HASH><UNIQUE_ID>
-                byteBuffer = ByteBuffer.allocateDirect(LONG_KEY_LENGTH);
+                // Create a child unique key. <DEPTH><PARENT_GROUP_HASHES...><UNIQUE_ID>
+                byteBuffer = ByteBuffer.allocateDirect(parentRowKey.limit() + Long.BYTES);
                 byteBuffer.put((byte) depth);
-                byteBuffer.putLong(parentGroupHash);
+                // Add parent group hashes.
+                for (int index = Byte.BYTES; index < parentRowKey.limit(); index += Long.BYTES) {
+                    byteBuffer.putLong(parentRowKey.getLong(index));
+                }
                 byteBuffer.putLong(uniqueIdProvider.getUniqueId());
             } else {
-                // Create a child group key. <DEPTH><PARENT_GROUP_HASH><GROUP_HASH>
-                byteBuffer = ByteBuffer.allocateDirect(LONG_KEY_LENGTH);
+                // Create a child group key. <DEPTH><PARENT_GROUP_HASHES...><GROUP_HASH>
+                byteBuffer = ByteBuffer.allocateDirect(parentRowKey.limit() + Long.BYTES);
                 byteBuffer.put((byte) depth);
-                byteBuffer.putLong(parentGroupHash);
+                // Add parent group hashes.
+                for (int index = Byte.BYTES; index < parentRowKey.limit(); index += Long.BYTES) {
+                    byteBuffer.putLong(parentRowKey.getLong(index));
+                }
                 byteBuffer.putLong(groupHash);
             }
 
@@ -348,10 +414,11 @@ public class LmdbRowKeyFactoryFactory {
         @Override
         public LmdbKV makeUnique(final LmdbKV lmdbKV) {
             if (isDetailLevel(getDepth(lmdbKV))) {
-                // Create a child unique key. <DEPTH><PARENT_GROUP_HASH><UNIQUE_ID>
-                lmdbKV.getRowKey().putLong(SHORT_KEY_LENGTH, uniqueIdProvider.getUniqueId());
+                // Create a child unique key. <DEPTH><PARENT_GROUP_HASHES...><UNIQUE_ID>
+                lmdbKV
+                        .getRowKey()
+                        .putLong(lmdbKV.getRowKey().limit() - Long.BYTES, uniqueIdProvider.getUniqueId());
             }
-
             return lmdbKV;
         }
 
@@ -378,18 +445,32 @@ public class LmdbRowKeyFactoryFactory {
                 throw new RuntimeException("Invalid parent as detail key");
 
             } else if (depth >= 0) {
-                final KeyPart last = parentKey.getKeyParts().get(parentKey.getKeyParts().size() - 1);
-                final GroupKeyPart groupKeyPart = (GroupKeyPart) last;
+                // Calculate all group hashes.
+                final long[] groupHashes = new long[parentKey.getKeyParts().size()];
+                int i = 0;
+                for (final KeyPart keyPart : parentKey.getKeyParts()) {
+                    final GroupKeyPart groupKeyPart = (GroupKeyPart) keyPart;
+                    final long groupHash = storedValueKeyFactory.hash(groupKeyPart.getGroupValues());
+                    groupHashes[i++] = groupHash;
+                }
 
-                // Create a child group key. <DEPTH><GROUP_HASH>
-                final long groupHash = valHasher.hash(groupKeyPart.getGroupValues());
-                final ByteBuffer start = ByteBuffer.allocateDirect(PREFIX_LENGTH);
+                // Create a child group key. <DEPTH><GROUP_HASHES...>
+                final ByteBuffer start = ByteBuffer.allocateDirect(
+                        Byte.BYTES + (groupHashes.length * Long.BYTES));
                 start.put(childDepth);
-                start.putLong(groupHash);
+                for (final long groupHash : groupHashes) {
+                    start.putLong(groupHash);
+                }
                 start.flip();
-                final ByteBuffer stop = ByteBuffer.allocateDirect(PREFIX_LENGTH);
+                final ByteBuffer stop = ByteBuffer.allocateDirect(start.limit());
                 stop.put(childDepth);
-                stop.putLong(groupHash + 1);
+                if (groupHashes.length > 0) {
+                    for (i = 0; i < groupHashes.length - 1; i++) {
+                        stop.putLong(groupHashes[i]);
+                    }
+                    // Add final long that is one greater than the value we are looking to match.
+                    stop.putLong(groupHashes[groupHashes.length - 1] + 1);
+                }
                 stop.flip();
                 keyRange = KeyRange.closedOpen(start, stop);
             }
@@ -402,7 +483,6 @@ public class LmdbRowKeyFactoryFactory {
             if (timeFilter != null) {
                 throw new RuntimeException("Time filtering is not supported by this key factory");
             }
-
             return createChildKeyRange(parentKey);
         }
 
@@ -410,18 +490,31 @@ public class LmdbRowKeyFactoryFactory {
             return depth == compiledDepths.getMaxDepth() &&
                     compiledDepths.getMaxGroupDepth() < compiledDepths.getMaxDepth();
         }
+
+        @Override
+        public Key createKey(final Key parentKey,
+                             final StoredValues storedValues,
+                             final ByteBuffer keyBuffer) {
+            final int depth = parentKey.getDepth() + 1;
+            final boolean grouped = depth <= compiledDepths.getMaxGroupDepth();
+            if (grouped) {
+                final Val[] groupValues = storedValueKeyFactory.getGroupValues(parentKey.getDepth() + 1, storedValues);
+                return parentKey.resolve(0, groupValues);
+
+            } else {
+                try (final Input input = new ByteBufferInput(keyBuffer.duplicate())) {
+                    input.skip(keyBuffer.limit() - Long.BYTES);
+                    final long uniqueId = input.readLong();
+                    return parentKey.resolve(0, uniqueId);
+                }
+            }
+        }
     }
 
     /**
      * Creates a nested time based group key. <DEPTH><TIME_MS><PARENT_GROUP_HASH><GROUP_HASH>
      */
     static class NestedTimeGroupedLmdbRowKeyFactory implements LmdbRowKeyFactory {
-
-        private static final int SHORT_KEY_LENGTH = Byte.BYTES + Long.BYTES + Long.BYTES;
-        private static final int LONG_KEY_LENGTH = Byte.BYTES + Long.BYTES + Long.BYTES + Long.BYTES;
-
-        private static final int SHORT_PREFIX_LENGTH = Byte.BYTES + Long.BYTES;
-        private static final int LONG_PREFIX_LENGTH = Byte.BYTES + Long.BYTES + Long.BYTES;
 
         private static final KeyRange<ByteBuffer> ZERO_DEPTH_KEY_RANGE;
 
@@ -437,45 +530,50 @@ public class LmdbRowKeyFactoryFactory {
 
         private final UniqueIdProvider uniqueIdProvider;
         private final CompiledDepths compiledDepths;
-        private final ValHasher valHasher;
+        private final StoredValueKeyFactory storedValueKeyFactory;
 
         public NestedTimeGroupedLmdbRowKeyFactory(final UniqueIdProvider uniqueIdProvider,
                                                   final CompiledDepths compiledDepths,
-                                                  final ValHasher valHasher) {
+                                                  final StoredValueKeyFactory storedValueKeyFactory) {
             this.uniqueIdProvider = uniqueIdProvider;
             this.compiledDepths = compiledDepths;
-            this.valHasher = valHasher;
+            this.storedValueKeyFactory = storedValueKeyFactory;
         }
 
         @Override
-        public ByteBuffer create(final int depth,
-                                 final long parentGroupHash,
-                                 final long groupHash,
-                                 final long timeMs) {
+        public ByteBuffer create(final int depth, final ByteBuffer parentRowKey, final StoredValues storedValues) {
+            final long timeMs = storedValueKeyFactory.getTimeMs(storedValues);
+            final long groupHash = storedValueKeyFactory.getGroupHash(depth, storedValues);
+
             ByteBuffer byteBuffer;
 
             // If this is a grouping key then we need to add the depth first.
             if (depth == 0) {
                 // Create a time based top level group key. <DEPTH><TIME_MS><GROUP_HASH>
-                byteBuffer = ByteBuffer.allocateDirect(SHORT_KEY_LENGTH);
+                byteBuffer = ByteBuffer.allocateDirect(Byte.BYTES + Long.BYTES + Long.BYTES);
                 byteBuffer.put((byte) depth);
                 byteBuffer.putLong(timeMs);
                 byteBuffer.putLong(groupHash);
-
             } else if (isDetailLevel(depth)) {
                 // This is a detail level - non-grouped row.
-                // Create a time based child unique key. <DEPTH><TIME_MS><PARENT_GROUP_HASH><UNIQUE_ID>
-                byteBuffer = ByteBuffer.allocateDirect(LONG_KEY_LENGTH);
+                // Create a time based child unique key. <DEPTH><TIME_MS><PARENT_GROUP_HASHES...><UNIQUE_ID>
+                byteBuffer = ByteBuffer.allocateDirect(parentRowKey.limit() + Long.BYTES);
                 byteBuffer.put((byte) depth);
                 byteBuffer.putLong(timeMs);
-                byteBuffer.putLong(parentGroupHash);
+                // Add parent group hashes.
+                for (int index = Byte.BYTES + Long.BYTES; index < parentRowKey.limit(); index += Long.BYTES) {
+                    byteBuffer.putLong(parentRowKey.getLong(index));
+                }
                 byteBuffer.putLong(uniqueIdProvider.getUniqueId());
             } else {
-                // Create a time based child group key. <DEPTH><TIME_MS><PARENT_GROUP_HASH><GROUP_HASH>
-                byteBuffer = ByteBuffer.allocateDirect(LONG_KEY_LENGTH);
+                // Create a time based child group key. <DEPTH><TIME_MS><PARENT_GROUP_HASHES...><GROUP_HASH>
+                byteBuffer = ByteBuffer.allocateDirect(parentRowKey.limit() + Long.BYTES);
                 byteBuffer.put((byte) depth);
                 byteBuffer.putLong(timeMs);
-                byteBuffer.putLong(parentGroupHash);
+                // Add parent group hashes.
+                for (int index = Byte.BYTES + Long.BYTES; index < parentRowKey.limit(); index += Long.BYTES) {
+                    byteBuffer.putLong(parentRowKey.getLong(index));
+                }
                 byteBuffer.putLong(groupHash);
             }
 
@@ -486,7 +584,7 @@ public class LmdbRowKeyFactoryFactory {
         public LmdbKV makeUnique(final LmdbKV lmdbKV) {
             // If this isn't a group key then make it unique.
             if (isDetailLevel(getDepth(lmdbKV))) {
-                lmdbKV.getRowKey().putLong(SHORT_KEY_LENGTH, uniqueIdProvider.getUniqueId());
+                lmdbKV.getRowKey().putLong(lmdbKV.getRowKey().limit() - Long.BYTES, uniqueIdProvider.getUniqueId());
             }
             return lmdbKV;
         }
@@ -515,20 +613,34 @@ public class LmdbRowKeyFactoryFactory {
                 throw new RuntimeException("Invalid parent as detail key");
 
             } else if (depth >= 0) {
-                final KeyPart last = parentKey.getKeyParts().get(parentKey.getKeyParts().size() - 1);
-                final GroupKeyPart groupKeyPart = (GroupKeyPart) last;
+                // Calculate all group hashes.
+                final long[] groupHashes = new long[parentKey.getKeyParts().size()];
+                int i = 0;
+                for (final KeyPart keyPart : parentKey.getKeyParts()) {
+                    final GroupKeyPart groupKeyPart = (GroupKeyPart) keyPart;
+                    final long groupHash = storedValueKeyFactory.hash(groupKeyPart.getGroupValues());
+                    groupHashes[i++] = groupHash;
+                }
 
-                // Create a time based child group key. <DEPTH><TIME_MS><GROUP_HASH>
-                final long groupHash = valHasher.hash(groupKeyPart.getGroupValues());
-                final ByteBuffer start = ByteBuffer.allocateDirect(SHORT_KEY_LENGTH);
+                // Create a time based child group key. <DEPTH><TIME_MS><GROUP_HASHES...>
+                final ByteBuffer start = ByteBuffer.allocateDirect(
+                        Byte.BYTES + Long.BYTES + (groupHashes.length * Long.BYTES));
                 start.put(childDepth);
                 start.putLong(parentKey.getTimeMs());
-                start.putLong(groupHash);
+                for (final long groupHash : groupHashes) {
+                    start.putLong(groupHash);
+                }
                 start.flip();
-                final ByteBuffer stop = ByteBuffer.allocateDirect(SHORT_KEY_LENGTH);
+                final ByteBuffer stop = ByteBuffer.allocateDirect(start.limit());
                 stop.put(childDepth);
                 stop.putLong(parentKey.getTimeMs());
-                stop.putLong(groupHash + 1);
+                if (groupHashes.length > 0) {
+                    for (i = 0; i < groupHashes.length - 1; i++) {
+                        stop.putLong(groupHashes[i]);
+                    }
+                    // Add final long that is one greater than the value we are looking to match.
+                    stop.putLong(groupHashes[groupHashes.length - 1] + 1);
+                }
                 stop.flip();
                 keyRange = KeyRange.closedOpen(start, stop);
             }
@@ -553,30 +665,44 @@ public class LmdbRowKeyFactoryFactory {
                 throw new RuntimeException("Invalid parent as detail key");
 
             } else if (depth == -1) {
-                final ByteBuffer start = ByteBuffer.allocateDirect(SHORT_PREFIX_LENGTH);
+                final ByteBuffer start = ByteBuffer.allocateDirect(Byte.BYTES + Long.BYTES);
                 start.put(childDepth);
                 start.putLong(timeFilter.getFrom());
                 start.flip();
-                final ByteBuffer stop = ByteBuffer.allocateDirect(SHORT_PREFIX_LENGTH);
+                final ByteBuffer stop = ByteBuffer.allocateDirect(start.limit());
                 stop.put(childDepth);
                 stop.putLong(timeFilter.getTo() + 1);
                 stop.flip();
                 keyRange = KeyRange.closedOpen(start, stop);
             } else {
-                final KeyPart last = parentKey.getKeyParts().get(parentKey.getKeyParts().size() - 1);
-                final GroupKeyPart groupKeyPart = (GroupKeyPart) last;
+                // Calculate all group hashes.
+                final long[] groupHashes = new long[parentKey.getKeyParts().size()];
+                int i = 0;
+                for (final KeyPart keyPart : parentKey.getKeyParts()) {
+                    final GroupKeyPart groupKeyPart = (GroupKeyPart) keyPart;
+                    final long groupHash = storedValueKeyFactory.hash(groupKeyPart.getGroupValues());
+                    groupHashes[i++] = groupHash;
+                }
 
-                // Create a time based child group key. <DEPTH><TIME_MS><GROUP_HASH>
-                final long groupHash = valHasher.hash(groupKeyPart.getGroupValues());
-                final ByteBuffer start = ByteBuffer.allocateDirect(LONG_PREFIX_LENGTH);
+                // Create a time based child group key. <DEPTH><TIME_MS><GROUP_HASHES...>
+                final ByteBuffer start = ByteBuffer.allocateDirect(
+                        Byte.BYTES + Long.BYTES + (groupHashes.length * Long.BYTES));
                 start.put(childDepth);
                 start.putLong(timeFilter.getFrom());
-                start.putLong(groupHash);
+                for (final long groupHash : groupHashes) {
+                    start.putLong(groupHash);
+                }
                 start.flip();
-                final ByteBuffer stop = ByteBuffer.allocateDirect(LONG_PREFIX_LENGTH);
+                final ByteBuffer stop = ByteBuffer.allocateDirect(start.limit());
                 stop.put(childDepth);
                 stop.putLong(timeFilter.getTo());
-                stop.putLong(groupHash + 1);
+                if (groupHashes.length > 0) {
+                    for (i = 0; i < groupHashes.length - 1; i++) {
+                        stop.putLong(groupHashes[i]);
+                    }
+                    // Add final long that is one greater than the value we are looking to match.
+                    stop.putLong(groupHashes[groupHashes.length - 1] + 1);
+                }
                 stop.flip();
                 keyRange = KeyRange.closedOpen(start, stop);
             }
@@ -587,6 +713,26 @@ public class LmdbRowKeyFactoryFactory {
         private boolean isDetailLevel(final int depth) {
             return depth == compiledDepths.getMaxDepth() &&
                     compiledDepths.getMaxGroupDepth() < compiledDepths.getMaxDepth();
+        }
+
+        @Override
+        public Key createKey(final Key parentKey,
+                             final StoredValues storedValues,
+                             final ByteBuffer keyBuffer) {
+            final int depth = parentKey.getDepth() + 1;
+            final boolean grouped = depth <= compiledDepths.getMaxGroupDepth();
+            final long timeMs = storedValueKeyFactory.getTimeMs(storedValues);
+            if (grouped) {
+                final Val[] groupValues = storedValueKeyFactory.getGroupValues(parentKey.getDepth() + 1, storedValues);
+                return parentKey.resolve(0, groupValues);
+
+            } else {
+                try (final Input input = new ByteBufferInput(keyBuffer.duplicate())) {
+                    input.skip(keyBuffer.limit() - Long.BYTES);
+                    final long uniqueId = input.readLong();
+                    return parentKey.resolve(timeMs, uniqueId);
+                }
+            }
         }
     }
 }

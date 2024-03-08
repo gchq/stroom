@@ -17,6 +17,8 @@
 package stroom.security.shared;
 
 
+import stroom.util.shared.GwtNullSafe;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -24,15 +26,19 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Stream;
 
 @JsonPropertyOrder({"add", "remove"})
 @JsonInclude(Include.NON_NULL)
 public class Changes {
 
     @JsonProperty
+    // A map of user/group UUID => Set of permission names to add
     private final Map<String, Set<String>> add;
     @JsonProperty
+    // A map of user/group UUID => Set of permission names to remove
     private final Map<String, Set<String>> remove;
 
     @JsonCreator
@@ -43,16 +49,38 @@ public class Changes {
     }
 
     /**
-     * @return A map of user UUID => Set of permission names
+     * @return A map of user/group UUID => Set of permission names
      */
     public Map<String, Set<String>> getAdd() {
         return add;
     }
 
     /**
-     * @return A map of user UUID => Set of permission names
+     * @return A map of user/group UUID => Set of permission names
      */
     public Map<String, Set<String>> getRemove() {
         return remove;
+    }
+
+    public boolean hasChanges() {
+        if (add == null && remove == null) {
+            return false;
+        } else {
+            return Stream.of(
+                            GwtNullSafe.map(add),
+                            GwtNullSafe.map(remove))
+                    .flatMap(map -> map.values().stream())
+                    .filter(Objects::nonNull)
+                    .mapToLong(Set::size)
+                    .sum() > 0;
+        }
+    }
+
+    @Override
+    public String toString() {
+        return "Additions:\n"
+                + DocumentPermissions.permsMapToStr(add)
+                + "\nRemovals:\n"
+                + DocumentPermissions.permsMapToStr(remove);
     }
 }

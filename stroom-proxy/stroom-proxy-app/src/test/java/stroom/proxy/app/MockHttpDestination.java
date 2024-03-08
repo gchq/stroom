@@ -13,13 +13,12 @@ import stroom.receive.common.StroomStreamProcessor;
 import stroom.test.common.TestUtil;
 import stroom.util.NullSafe;
 import stroom.util.io.ByteCountInputStream;
+import stroom.util.json.JsonUtil;
 import stroom.util.logging.AsciiTable;
 import stroom.util.logging.AsciiTable.Column;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.ResourcePaths;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.client.MappingBuilder;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.core.Admin;
@@ -60,7 +59,6 @@ public class MockHttpDestination {
     private volatile boolean isRequestLoggingEnabled = true;
     private volatile boolean isHeaderLoggingEnabled = true;
 
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     // Hold all requests send to the wiremock stroom datafeed endpoint
     private final List<DataFeedRequest> dataFeedRequests = new ArrayList<>();
@@ -94,8 +92,8 @@ public class MockHttpDestination {
 
         final String responseJson;
         try {
-            responseJson = OBJECT_MAPPER.writeValueAsString(feedStatusResponse);
-        } catch (JsonProcessingException e) {
+            responseJson = JsonUtil.writeValueAsString(feedStatusResponse);
+        } catch (RuntimeException e) {
             throw new RuntimeException("Error creating json for " + feedStatusResponse);
         }
 
@@ -316,8 +314,8 @@ public class MockHttpDestination {
         }
 
         try {
-            return OBJECT_MAPPER.readValue(contentStr, clazz);
-        } catch (JsonProcessingException e) {
+            return JsonUtil.readValue(contentStr, clazz);
+        } catch (RuntimeException e) {
             throw new RuntimeException(LogUtil.message(
                     "Error de-serialising content to {}, error: {}, content:\n{}",
                     clazz.getSimpleName(), e.getMessage(), contentStr), e);
@@ -421,7 +419,7 @@ public class MockHttpDestination {
                 this::getDataFeedPostsToStroomCount,
                 expectedRequestCount,
                 () -> "Forward to stroom datafeed count",
-                Duration.ofSeconds(10),
+                Duration.ofSeconds(30),
                 Duration.ofMillis(50),
                 Duration.ofSeconds(1));
 

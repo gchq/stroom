@@ -26,14 +26,15 @@ import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.document.client.DocumentPluginEventManager;
 import stroom.document.client.event.DeleteDocumentEvent;
 import stroom.document.client.event.OpenDocumentEvent;
+import stroom.explorer.client.event.LocateDocEvent;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.ExplorerResource;
 import stroom.importexport.client.event.ShowDependenciesInfoDialogEvent;
 import stroom.importexport.client.event.ShowDocRefDependenciesEvent;
+import stroom.importexport.client.event.ShowDocRefDependenciesEvent.DependencyType;
 import stroom.importexport.shared.ContentResource;
 import stroom.importexport.shared.Dependency;
 import stroom.importexport.shared.DependencyCriteria;
@@ -82,7 +83,6 @@ public class DependenciesPresenter extends MyPresenterWidget<PagerView> {
     private final DependencyCriteria criteria;
     private final RestDataProvider<Dependency, ResultPage<Dependency>> dataProvider;
     private final MyDataGrid<Dependency> dataGrid;
-    private final DocumentPluginEventManager entityPluginEventManager;
     private final MenuPresenter menuPresenter;
 
     // Holds all the doc type icons
@@ -93,7 +93,6 @@ public class DependenciesPresenter extends MyPresenterWidget<PagerView> {
     public DependenciesPresenter(final EventBus eventBus,
                                  final PagerView view,
                                  final RestFactory restFactory,
-                                 final DocumentPluginEventManager entityPluginEventManager,
                                  final MenuPresenter menuPresenter) {
         super(eventBus, view);
 
@@ -120,7 +119,6 @@ public class DependenciesPresenter extends MyPresenterWidget<PagerView> {
             }
         };
         dataProvider.addDataDisplay(dataGrid);
-        this.entityPluginEventManager = entityPluginEventManager;
         this.menuPresenter = menuPresenter;
         initColumns();
     }
@@ -135,7 +133,7 @@ public class DependenciesPresenter extends MyPresenterWidget<PagerView> {
                 ColumnSizeConstants.ICON_COL);
 
         // From (Type)
-        dataGrid.addResizableColumn(DataGridUtil.textColumnBuilder((Dependency row) ->
+        dataGrid.addAutoResizableColumn(DataGridUtil.textColumnBuilder((Dependency row) ->
                                 getValue(row, Dependency::getFrom, DocRef::getType))
                         .withSorting(DependencyCriteria.FIELD_FROM_TYPE, true)
                         .build(),
@@ -148,7 +146,7 @@ public class DependenciesPresenter extends MyPresenterWidget<PagerView> {
                 .withSorting(DependencyCriteria.FIELD_FROM_NAME, true)
                 .build();
         DataGridUtil.addCommandLinkFieldUpdater(fromNameColumn);
-        dataGrid.addResizableColumn(fromNameColumn,
+        dataGrid.addAutoResizableColumn(fromNameColumn,
                 DependencyCriteria.FIELD_FROM_NAME,
                 COL_WIDTH_NAME);
 
@@ -163,7 +161,7 @@ public class DependenciesPresenter extends MyPresenterWidget<PagerView> {
                 ColumnSizeConstants.ICON_COL);
 
         // To (Type)
-        dataGrid.addResizableColumn(DataGridUtil.textColumnBuilder((Dependency row) ->
+        dataGrid.addAutoResizableColumn(DataGridUtil.textColumnBuilder((Dependency row) ->
                                 getValue(row, Dependency::getTo, DocRef::getType))
                         .withSorting(DependencyCriteria.FIELD_TO_TYPE, true)
                         .build(),
@@ -176,7 +174,7 @@ public class DependenciesPresenter extends MyPresenterWidget<PagerView> {
                 .withSorting(DependencyCriteria.FIELD_TO_NAME, true)
                 .build();
         DataGridUtil.addCommandLinkFieldUpdater(toNameColumn);
-        dataGrid.addResizableColumn(toNameColumn,
+        dataGrid.addAutoResizableColumn(toNameColumn,
                 DependencyCriteria.FIELD_TO_NAME,
                 COL_WIDTH_NAME);
 
@@ -229,13 +227,17 @@ public class DependenciesPresenter extends MyPresenterWidget<PagerView> {
                         .text("Delete")
                         .command(() -> onDeleteDoc(docRef)))
                 .withIconMenuItem(itemBuilder -> itemBuilder
-                        .icon(SvgImage.SHOW)
-                        .text("Reveal in Explorer")
-                        .command(() -> onRevealDoc(docRef)))
+                        .icon(SvgImage.LOCATE)
+                        .text("Locate in Explorer")
+                        .command(() -> onLocateDoc(docRef)))
                 .withIconMenuItem(itemBuilder -> itemBuilder
                         .icon(SvgImage.DEPENDENCIES)
                         .text("Show dependencies")
-                        .command(() -> onShowDependencies(docRef)))
+                        .command(() -> onShowDependencies(docRef, DependencyType.DEPENDENCY)))
+                .withIconMenuItem(itemBuilder -> itemBuilder
+                        .icon(SvgImage.DEPENDENCIES)
+                        .text("Show dependants")
+                        .command(() -> onShowDependencies(docRef, DependencyType.DEPENDANT)))
                 .build();
     }
 
@@ -249,8 +251,8 @@ public class DependenciesPresenter extends MyPresenterWidget<PagerView> {
     /**
      * Reveal the doc in the Explorer tree
      */
-    private void onRevealDoc(final DocRef docRef) {
-        entityPluginEventManager.highlight(docRef);
+    private void onLocateDoc(final DocRef docRef) {
+        LocateDocEvent.fire(this, docRef);
     }
 
     private void onDocInfo(final DocRef docRef) {
@@ -265,8 +267,8 @@ public class DependenciesPresenter extends MyPresenterWidget<PagerView> {
                 result -> refresh());
     }
 
-    private void onShowDependencies(final DocRef docRef) {
-        ShowDocRefDependenciesEvent.fire(DependenciesPresenter.this, docRef);
+    private void onShowDependencies(final DocRef docRef, final DependencyType dependencyType) {
+        ShowDocRefDependenciesEvent.fire(DependenciesPresenter.this, docRef, dependencyType);
     }
 
     private void refreshDocTypeIcons() {

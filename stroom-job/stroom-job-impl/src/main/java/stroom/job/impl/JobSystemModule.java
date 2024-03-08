@@ -26,8 +26,7 @@ import stroom.util.RunnableWrapper;
 import stroom.util.guice.RestResourcesBinder;
 
 import com.google.inject.AbstractModule;
-
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 import static stroom.job.api.Schedule.ScheduleType.PERIODIC;
 
@@ -37,6 +36,8 @@ public class JobSystemModule extends AbstractModule {
     protected void configure() {
 
         bind(JobManager.class).to(JobManagerImpl.class);
+        bind(JobNodeTrackerCache.class).to(JobNodeTrackerCacheImpl.class);
+        bind(DistributedTaskFactoryRegistry.class).to(DistributedTaskFactoryRegistryImpl.class);
 
         RestResourcesBinder.create(binder())
                 .bind(JobResourceImpl.class)
@@ -66,6 +67,10 @@ public class JobSystemModule extends AbstractModule {
                 .bindShutdownTaskTo(ScheduledTaskExecutorShutdown.class, 9);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class FetchNewTasks extends RunnableWrapper {
 
         @Inject
@@ -73,6 +78,10 @@ public class JobSystemModule extends AbstractModule {
             super(distributedTaskFetcher::execute);
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class JobBootstrapStartup extends RunnableWrapper {
 
@@ -82,6 +91,10 @@ public class JobSystemModule extends AbstractModule {
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class DistributedTaskFetcherShutdown extends RunnableWrapper {
 
         @Inject
@@ -90,6 +103,10 @@ public class JobSystemModule extends AbstractModule {
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class ScheduledTaskExecutorStartup extends RunnableWrapper {
 
         @Inject
@@ -97,6 +114,10 @@ public class JobSystemModule extends AbstractModule {
             super(scheduledTaskExecutor::startup);
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class ScheduledTaskExecutorShutdown extends RunnableWrapper {
 

@@ -42,6 +42,7 @@ import stroom.processor.shared.ProcessorTaskFields;
 import stroom.processor.shared.ProcessorTaskResource;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.util.shared.ResultPage;
+import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
@@ -109,7 +110,7 @@ public class ProcessorTaskListPresenter
         // Info column.
         dataGrid.addColumn(new InfoColumn<ProcessorTask>() {
             @Override
-            protected void showInfo(final ProcessorTask row, final int x, final int y) {
+            protected void showInfo(final ProcessorTask row, final PopupPosition popupPosition) {
                 FindMetaCriteria findMetaCriteria = new FindMetaCriteria();
                 findMetaCriteria.setExpression(MetaExpressionUtil.createDataIdExpression(row.getMetaId()));
 
@@ -121,7 +122,7 @@ public class ProcessorTaskListPresenter
                                     .map(ResultPage::getFirst)
                                     .map(MetaRow::getMeta)
                                     .orElse(null);
-                            showTooltip(x, y, row, meta);
+                            showTooltip(popupPosition, row, meta);
                         })
                         .call(META_RESOURCE)
                         .findMetaRow(findMetaCriteria);
@@ -163,14 +164,14 @@ public class ProcessorTaskListPresenter
                     }
                 }, "Node", ColumnSizeConstants.MEDIUM_COL);
         dataGrid
-                .addResizableColumn(new OrderByColumn<ProcessorTask, String>(
-                        new TextCell(), ProcessorTaskFields.FIELD_FEED, true) {
+                .addResizableColumn(new OrderByColumn<ProcessorTask, DocRef>(
+                        new DocRefCell(getEventBus(), true), ProcessorTaskFields.FIELD_FEED, true) {
                     @Override
-                    public String getValue(final ProcessorTask row) {
+                    public DocRef getValue(final ProcessorTask row) {
                         if (row.getFeedName() != null) {
-                            return row.getFeedName();
+                            return new DocRef(FeedDoc.DOCUMENT_TYPE, null, row.getFeedName());
                         } else {
-                            return "";
+                            return null;
                         }
                     }
                 }, "Feed", ColumnSizeConstants.BIG_COL);
@@ -186,16 +187,13 @@ public class ProcessorTaskListPresenter
             }
         }, "Priority", 60);
         dataGrid.addResizableColumn(
-                new Column<ProcessorTask, String>(new TextCell()) {
+                new Column<ProcessorTask, DocRef>(new DocRefCell(getEventBus(), false)) {
                     @Override
-                    public String getValue(final ProcessorTask row) {
+                    public DocRef getValue(final ProcessorTask row) {
                         if (row.getProcessorFilter() != null) {
-                            if (row.getProcessorFilter().getPipelineName() != null) {
-                                return row.getProcessorFilter().getPipelineName();
-                            }
+                            return row.getProcessorFilter().getPipeline();
                         }
-                        return "";
-
+                        return null;
                     }
                 }, "Pipeline", ColumnSizeConstants.BIG_COL);
         dataGrid.addResizableColumn(
@@ -226,8 +224,7 @@ public class ProcessorTaskListPresenter
         });
     }
 
-    private void showTooltip(final int x,
-                             final int y,
+    private void showTooltip(final PopupPosition popupPosition,
                              final ProcessorTask processorTask,
                              final Meta meta) {
 
@@ -284,7 +281,7 @@ public class ProcessorTaskListPresenter
 
         final HtmlBuilder htmlBuilder = new HtmlBuilder();
         htmlBuilder.div(tb::write, Attribute.className("infoTable"));
-        tooltipPresenter.show(htmlBuilder.toSafeHtml(), x, y);
+        tooltipPresenter.show(htmlBuilder.toSafeHtml(), popupPosition);
     }
 
     private String toDateString(final Long ms) {

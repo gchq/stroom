@@ -18,6 +18,7 @@ package stroom.explorer.client.presenter;
 
 import stroom.dispatch.client.RestFactory;
 import stroom.explorer.shared.ExplorerNode;
+import stroom.explorer.shared.NodeFlag;
 
 import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.Widget;
@@ -39,7 +40,11 @@ public class EntityTreePresenter extends MyPresenterWidget<EntityTreePresenter.E
         super(eventBus, view);
         view.setUiHandlers(this);
 
-        explorerTree = new ExplorerTree(restFactory, false);
+        // Debatable whether we want to show alerts or not
+        explorerTree = new ExplorerTree(
+                restFactory,
+                false,
+                false);
 
         // Add views.
         view.setCellTree(explorerTree);
@@ -65,6 +70,10 @@ public class EntityTreePresenter extends MyPresenterWidget<EntityTreePresenter.E
 
     public void setTags(final String... tags) {
         explorerTree.getTreeModel().setTags(tags);
+    }
+
+    public void setNodeFlags(final NodeFlag... nodeFlags) {
+        explorerTree.getTreeModel().setNodeFlags(nodeFlags);
     }
 
     public void setRequiredPermissions(final String... requiredPermissions) {

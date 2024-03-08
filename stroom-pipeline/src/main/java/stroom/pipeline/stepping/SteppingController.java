@@ -35,9 +35,10 @@ import stroom.util.shared.DataRange;
 import stroom.util.shared.DefaultLocation;
 import stroom.util.shared.TextRange;
 
+import jakarta.inject.Inject;
+
 import java.util.HashSet;
 import java.util.Set;
-import javax.inject.Inject;
 
 @PipelineScoped
 public class SteppingController {
@@ -261,7 +262,7 @@ public class SteppingController {
     }
 
     /**
-     * This method resets all filters so they are ready for the next record.
+     * This method resets all filters, so they are ready for the next record.
      */
     void clearAllFilters(final TextRange highlight) {
         // Store the current data for each filter.
@@ -270,7 +271,7 @@ public class SteppingController {
         // Clear all indicators.
         final LoggingErrorReceiver loggingErrorReceiver = getErrorReceiver();
         if (loggingErrorReceiver != null) {
-            loggingErrorReceiver.getIndicatorsMap().clear();
+            loggingErrorReceiver.clearIndicators();
         }
     }
 

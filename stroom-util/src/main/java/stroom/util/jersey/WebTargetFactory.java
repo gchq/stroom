@@ -1,6 +1,6 @@
 package stroom.util.jersey;
 
-import javax.ws.rs.client.WebTarget;
+import jakarta.ws.rs.client.WebTarget;
 
 /**
  * A factory for creating {@link WebTarget} instances that add the user token to the Authorization

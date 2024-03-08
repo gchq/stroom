@@ -20,6 +20,7 @@ package stroom.pipeline.refdata.store.offheapstore;
 import stroom.bytebuffer.PooledByteBuffer;
 import stroom.lmdb.LmdbEnv.BatchingWriteTxn;
 import stroom.lmdb.PutOutcome;
+import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.refdata.store.MapDefinition;
 import stroom.pipeline.refdata.store.ProcessingState;
 import stroom.pipeline.refdata.store.RefDataLoader;
@@ -32,7 +33,11 @@ import stroom.pipeline.refdata.store.offheapstore.databases.ProcessingInfoDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.RangeStoreDb;
 import stroom.pipeline.refdata.store.offheapstore.serdes.KeyValueStoreKeySerde;
 import stroom.pipeline.refdata.store.offheapstore.serdes.RangeStoreKeySerde;
+import stroom.task.api.TaskContext;
+import stroom.task.api.TaskContextFactory;
+import stroom.task.api.TaskTerminatedException;
 import stroom.util.NullSafe;
+import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.logging.DurationTimer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -44,6 +49,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.util.concurrent.Striped;
 import com.google.inject.assistedinject.Assisted;
+import jakarta.inject.Inject;
 import org.lmdbjava.Txn;
 
 import java.nio.ByteBuffer;
@@ -56,11 +62,11 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
 
 /**
  * Class for adding multiple items to the {@link RefDataOffHeapStore} within a single
@@ -76,6 +82,7 @@ public class OffHeapRefDataLoader implements RefDataLoader {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(OffHeapRefDataLoader.class);
     protected static final int PAD_LENGTH = 14;
+    public static final String INFO_TEXT_STAGING_ENTRIES = "Staging entries";
 
     private final Lock refStreamDefReentrantLock;
     private final KeyValueStoreDb keyValueStoreDb;
@@ -86,6 +93,8 @@ public class OffHeapRefDataLoader implements RefDataLoader {
     private final RefDataLmdbEnv refStoreLmdbEnv;
     private final OffHeapStagingStoreFactory offHeapStagingStoreFactory;
     private final RefStreamDefinition refStreamDefinition;
+    private final RefDataOffHeapStore refDataOffHeapStore;
+    private final TaskContext taskContext;
     private final long effectiveTimeMs;
 
     private int newEntriesCount = 0;
@@ -95,8 +104,9 @@ public class OffHeapRefDataLoader implements RefDataLoader {
     private int ignoredCount = 0;
     private int ignoredNullsCount = 0;
 
-    private int putsToStagingStoreCounter = 0;
-    private int putsToRefStoreCounter = 0;
+    // Atomic as they will be accessed by the server tasks screen
+    private final AtomicInteger putsToStagingStoreCounter = new AtomicInteger(0);
+    private final AtomicInteger putsToRefStoreCounter = new AtomicInteger(0);
     private boolean overwriteExistingEntries = false;
     private DurationTimer overallTimer = null;
     private DurationTimer transferStagedEntriesTimer = null;
@@ -118,13 +128,15 @@ public class OffHeapRefDataLoader implements RefDataLoader {
     OffHeapRefDataLoader(@Assisted final Striped<Lock> refStreamDefStripedReentrantLock,
                          @Assisted final RefStreamDefinition refStreamDefinition,
                          @Assisted final long effectiveTimeMs,
+                         @Assisted final RefDataOffHeapStore refDataOffHeapStore,
                          @Assisted final RefDataLmdbEnv refStoreLmdbEnv,
                          final KeyValueStoreDb keyValueStoreDb,
                          final RangeStoreDb rangeStoreDb,
                          final ValueStore valueStore,
                          final MapDefinitionUIDStore mapDefinitionUIDStore,
                          final ProcessingInfoDb processingInfoDb,
-                         final OffHeapStagingStoreFactory offHeapStagingStoreFactory) {
+                         final OffHeapStagingStoreFactory offHeapStagingStoreFactory,
+                         final TaskContextFactory taskContextFactory) {
 
         this.keyValueStoreDb = keyValueStoreDb;
         this.rangeStoreDb = rangeStoreDb;
@@ -134,6 +146,7 @@ public class OffHeapRefDataLoader implements RefDataLoader {
         this.mapDefinitionUIDStore = mapDefinitionUIDStore;
         this.refStoreLmdbEnv = refStoreLmdbEnv;
         this.refStreamDefinition = refStreamDefinition;
+        this.refDataOffHeapStore = refDataOffHeapStore;
         this.effectiveTimeMs = effectiveTimeMs;
 
         // get three buffers to (re)use for the life of the loader
@@ -141,6 +154,7 @@ public class OffHeapRefDataLoader implements RefDataLoader {
         this.rangeValuePooledKeyBuffer = getAndRegisterPooledByteBuffer(rangeStoreDb::getPooledKeyBuffer);
         this.valueStorePooledKeyBuffer = getAndRegisterPooledByteBuffer(valueStore::getPooledKeyBuffer);
         this.pooledUidBuffer = getAndRegisterPooledByteBuffer(mapDefinitionUIDStore::getUidPooledByteBuffer);
+        this.taskContext = taskContextFactory.current();
 
         // Get the lock object for this refStreamDefinition
         this.refStreamDefReentrantLock = refStreamDefStripedReentrantLock.get(refStreamDefinition);
@@ -162,10 +176,9 @@ public class OffHeapRefDataLoader implements RefDataLoader {
                         timeToAcquireLock, refStreamDefinition);
             }
         } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new RuntimeException(LogUtil.message(
+            throw ProcessException.wrap(UncheckedInterruptedException.create(LogUtil.message(
                     "Acquisition of lock for {} aborted due to thread interruption",
-                    refStreamDefinition));
+                    refStreamDefinition), e));
         }
     }
 
@@ -234,46 +247,15 @@ public class OffHeapRefDataLoader implements RefDataLoader {
                 LogUtil.message("Load of {} entries into staging store for pipe {}",
                         putsToStagingStoreCounter, refStreamDefinition, getPipelineNameStr()),
                 loadIntoStagingTimer.get(),
-                putsToStagingStoreCounter));
+                putsToStagingStoreCounter.get()));
 
         // Pipe processing successful so transfer our staged data
         currentLoaderState = LoaderState.STAGED;
         // Update the meta data in the store
         updateProcessingState(ProcessingState.STAGED);
-
-        try {
-            // Move all the entries loaded into the staging store into the main ref store
-            transferStagedEntries();
-        } catch (Exception e) {
-            throw new RuntimeException(LogUtil.message("Error transferring entries into the ref store: {}",
-                    e.getMessage()), e);
-        }
+        // Move all the entries loaded into the staging store into the main ref store
+        transferStagedEntries();
     }
-
-//    public void markMigrationPutsComplete() {
-//        LOGGER.debug("markMigrationPutsComplete() called, currentLoaderState: {}", currentLoaderState);
-//
-//        checkCurrentState(LoaderState.INITIALISED);
-////
-////        LOGGER.debug(() -> LogUtil.getDurationMessage(
-////                LogUtil.message("Migration of {} entries into staging store for pipe {}",
-////                        putsToStagingStoreCounter, refStreamDefinition, getPipelineNameStr()),
-////                loadIntoStagingTimer.get(),
-////                putsToStagingStoreCounter));
-//
-//        // Pipe processing successful so transfer our staged data
-//        currentLoaderState = LoaderState.STAGED;
-//        // Update the meta data in the store
-//        updateProcessingState(ProcessingState.STAGED);
-//
-////        try {
-////            // Move all the entries loaded into the staging store into the main ref store
-////            transferStagedEntries();
-////        } catch (Exception e) {
-////            throw new RuntimeException(LogUtil.message("Error transferring entries into the ref store: {}",
-////                    e.getMessage()), e);
-////        }
-//    }
 
     @Override
     public void completeProcessing(final ProcessingState processingState) {
@@ -283,7 +265,7 @@ public class OffHeapRefDataLoader implements RefDataLoader {
         if (LoaderState.INITIALISED.equals(currentLoaderState)
                 && ProcessingState.COMPLETE.equals(processingState)
                 && isRegularLoad()) {
-            // markPutsComplete hasn't been called, so call it now
+
             markPutsComplete();
         }
 
@@ -311,13 +293,23 @@ public class OffHeapRefDataLoader implements RefDataLoader {
     }
 
     private void updateProcessingState(final ProcessingState processingState) {
-        refStoreLmdbEnv.doWithWriteTxn(writeTxn -> {
-            processingInfoDb.updateProcessingState(
-                    writeTxn,
-                    refStreamDefinition,
-                    processingState,
-                    true);
-        });
+        // We must clear the interrupt flag (if set) so that we can update the status in lmdb
+        // which requires a lock and therefore would fail with an interrupted thread.
+        final boolean wasInterrupted = Thread.interrupted();
+        try {
+            refStoreLmdbEnv.doWithWriteTxn(writeTxn -> {
+                processingInfoDb.updateProcessingState(
+                        writeTxn,
+                        refStreamDefinition,
+                        processingState,
+                        true);
+            });
+        } finally {
+            // Now we can reset the flag
+            if (wasInterrupted) {
+                Thread.currentThread().interrupt();
+            }
+        }
     }
 
     private String getMapNamesStr() {
@@ -428,7 +420,8 @@ public class OffHeapRefDataLoader implements RefDataLoader {
         checkCurrentState(LoaderState.INITIALISED);
 
         // Stage the value
-        putsToStagingStoreCounter++;
+        updateTaskContextInfoSupplier(INFO_TEXT_STAGING_ENTRIES);
+        putsToStagingStoreCounter.incrementAndGet();
         offHeapStagingStore.put(mapDefinition, key, refDataValue);
     }
 
@@ -443,7 +436,8 @@ public class OffHeapRefDataLoader implements RefDataLoader {
         checkCurrentState(LoaderState.INITIALISED);
 
         // Stage the value
-        putsToStagingStoreCounter++;
+        updateTaskContextInfoSupplier(INFO_TEXT_STAGING_ENTRIES);
+        putsToStagingStoreCounter.incrementAndGet();
         offHeapStagingStore.put(mapDefinition, keyRange, stagingValue);
     }
 
@@ -464,6 +458,7 @@ public class OffHeapRefDataLoader implements RefDataLoader {
         try (final BatchingWriteTxn destBatchingWriteTxn = refStoreLmdbEnv.openBatchingWriteTxn(maxPutsBeforeCommit)) {
             // We now hold the single write lock for the main ref store
 
+            updateTaskContextInfoSupplier("Loading staged entries");
             transferStagedKeyValueEntries(destBatchingWriteTxn);
             transferStagedRangeValueEntries(destBatchingWriteTxn);
 
@@ -477,7 +472,7 @@ public class OffHeapRefDataLoader implements RefDataLoader {
                         "Transfer of {} entries from staging store to ref data store for pipe",
                         ModelStringUtil.formatCsv(putsToStagingStoreCounter), getPipelineNameStr()),
                 transferStagedEntriesTimer.get(),
-                putsToStagingStoreCounter));
+                putsToStagingStoreCounter.get()));
     }
 
     private <K> boolean isAppendableData(final BatchingWriteTxn batchingWriteTxn,
@@ -539,6 +534,7 @@ public class OffHeapRefDataLoader implements RefDataLoader {
         final boolean isAppendableData = isAppendableData(destBatchingWriteTxn, keyValueStoreDb);
         // NOTE we are looping in key order, not in the order put to this loader
         offHeapStagingStore.forEachKeyValueEntry(entry -> {
+            checkForTermination();
             final KeyValueStoreKey keyValueStoreKey = entry.getKey();
             final PutOutcome putOutcome = transferEntryToRefStore(
                     destBatchingWriteTxn,
@@ -559,6 +555,7 @@ public class OffHeapRefDataLoader implements RefDataLoader {
         final boolean isAppendableData = isAppendableData(batchingWriteTxn, rangeStoreDb);
         // NOTE we are looping in key order, not in the order put to this loader
         offHeapStagingStore.forEachRangeValueEntry(entry -> {
+            checkForTermination();
             final RangeStoreKey rangeStoreKey = entry.getKey();
             final PutOutcome putOutcome = transferEntryToRefStore(
                     batchingWriteTxn,
@@ -575,6 +572,17 @@ public class OffHeapRefDataLoader implements RefDataLoader {
         });
     }
 
+    private void checkForTermination() {
+        if (taskContext.isTerminated() || Thread.currentThread().isInterrupted()) {
+            LOGGER.debug(() ->
+                    LogUtil.message("Task {} is terminated - isTerminated: {}, isInterrupted: {}",
+                            taskContext.getTaskId(),
+                            taskContext.isTerminated(),
+                            Thread.currentThread().isInterrupted()));
+            throw new TaskTerminatedException();
+        }
+    }
+
     <K> PutOutcome transferEntryToRefStore(final BatchingWriteTxn batchingWriteTxn,
                                            final K dbKey,
                                            final StagingValue stagingValue,
@@ -583,7 +591,7 @@ public class OffHeapRefDataLoader implements RefDataLoader {
                                            final boolean isAppendableData) {
 
         LOGGER.trace("transferEntryToRefStore({}, {}", dbKey, stagingValue);
-        putsToRefStoreCounter++;
+        putsToRefStoreCounter.incrementAndGet();
 
         Objects.requireNonNull(dbKey);
         Objects.requireNonNull(stagingValue);
@@ -805,6 +813,21 @@ public class OffHeapRefDataLoader implements RefDataLoader {
         return LoaderMode.MIGRATE.equals(Objects.requireNonNull(loaderMode));
     }
 
+    private void updateTaskContextInfoSupplier(final String extraText) {
+        taskContext.info(() -> {
+            final String extraTextArg = extraText != null
+                    ? " - " + extraText
+                    : "";
+            return LogUtil.message(
+                    "Loading reference data stream {}:{} into store {}{} - entries staged: {}, entries loaded: {}",
+                    refStreamDefinition.getStreamId(),
+                    refStreamDefinition.getPartNumber(),
+                    refDataOffHeapStore.getName(),
+                    extraTextArg,
+                    putsToStagingStoreCounter.get(),
+                    putsToRefStoreCounter.get());
+        });
+    }
 
     // --------------------------------------------------------------------------------
 
@@ -856,6 +879,7 @@ public class OffHeapRefDataLoader implements RefDataLoader {
         OffHeapRefDataLoader create(final Striped<Lock> refStreamDefStripedReentrantLock,
                                     final RefStreamDefinition refStreamDefinition,
                                     final long effectiveTimeMs,
+                                    final RefDataOffHeapStore refDataOffHeapStore,
                                     final RefDataLmdbEnv refDataLmdbEnv);
     }
 }

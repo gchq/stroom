@@ -1,10 +1,9 @@
 package stroom.config.global.shared;
 
+import stroom.util.json.JsonUtil;
 import stroom.util.shared.PropertyPath;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -299,11 +298,7 @@ class TestConfigProperty {
     }
 
     private void doSerdeTest(final ConfigProperty configProperty) throws IOException {
-
-        final ObjectMapper mapper = new ObjectMapper();
-        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
-
+        final ObjectMapper mapper = JsonUtil.getMapper();
         assertThat(mapper.canSerialize(ConfigProperty.class)).isTrue();
         assertThat(mapper.canSerialize(OverrideValue.class)).isTrue();
 

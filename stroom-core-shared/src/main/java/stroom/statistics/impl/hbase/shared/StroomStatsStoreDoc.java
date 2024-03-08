@@ -17,6 +17,7 @@
 package stroom.statistics.impl.hbase.shared;
 
 import stroom.docref.DocRef;
+import stroom.docs.shared.Description;
 import stroom.docstore.shared.Doc;
 import stroom.svg.shared.SvgImage;
 
@@ -32,6 +33,9 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
+@Description(
+        "The Stroom-Stats Store Document is deprecated and should not be used."
+)
 @JsonPropertyOrder({
         "type",
         "uuid",

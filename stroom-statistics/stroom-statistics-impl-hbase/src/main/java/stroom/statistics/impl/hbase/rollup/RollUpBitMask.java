@@ -17,6 +17,7 @@
 package stroom.statistics.impl.hbase.rollup;
 
 import com.google.common.base.Preconditions;
+import jakarta.xml.bind.DatatypeConverter;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import java.util.ArrayList;
@@ -30,7 +31,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
-import javax.xml.bind.DatatypeConverter;
 
 /**
  * This class generates a 2 byte bit mask of length MASK_LENGTH that is used in

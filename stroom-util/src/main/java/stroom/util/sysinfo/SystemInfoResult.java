@@ -7,12 +7,12 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import jakarta.validation.constraints.NotNull;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import javax.validation.constraints.NotNull;
 
 @JsonInclude(Include.NON_DEFAULT)
 @JsonPropertyOrder(alphabetic = true)
@@ -98,7 +98,7 @@ public class SystemInfoResult {
         private String description = null;
         private Map<String, Object> details = new HashMap<>();
 
-        private Builder(final String name) {
+        public Builder(final String name) {
             this.name = name;
         }
 

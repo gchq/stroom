@@ -17,9 +17,11 @@
 
 package stroom.pipeline.xmlschema;
 
+import stroom.docref.DocContentHighlights;
 import stroom.docref.DocContentMatch;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
+import stroom.docref.StringMatch;
 import stroom.docstore.api.AuditFieldFilter;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
@@ -32,6 +34,8 @@ import stroom.util.shared.Message;
 import stroom.util.shared.ResultPage;
 import stroom.xmlschema.shared.XmlSchemaDoc;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,13 +43,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 @Singleton
 public class XmlSchemaStoreImpl implements XmlSchemaStore {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(XmlSchemaStoreImpl.class);
+    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.TRANSFORMATION,
+            XmlSchemaDoc.DOCUMENT_TYPE,
+            "XML Schema",
+            XmlSchemaDoc.ICON);
 
     private final Store<XmlSchemaDoc> store;
 
@@ -65,8 +72,11 @@ public class XmlSchemaStoreImpl implements XmlSchemaStore {
     }
 
     @Override
-    public DocRef copyDocument(final DocRef docRef, final Set<String> existingNames) {
-        final String newName = UniqueNameUtil.getCopyName(docRef.getName(), existingNames);
+    public DocRef copyDocument(final DocRef docRef,
+                               final String name,
+                               final boolean makeNameUnique,
+                               final Set<String> existingNames) {
+        final String newName = UniqueNameUtil.getCopyName(name, makeNameUnique, existingNames);
         return store.copyDocument(docRef.getUuid(), newName);
     }
 
@@ -92,11 +102,7 @@ public class XmlSchemaStoreImpl implements XmlSchemaStore {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(
-                DocumentTypeGroup.TRANSFORMATION,
-                XmlSchemaDoc.DOCUMENT_TYPE,
-                "XML Schema",
-                XmlSchemaDoc.ICON);
+        return DOCUMENT_TYPE;
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -216,7 +222,14 @@ public class XmlSchemaStoreImpl implements XmlSchemaStore {
     }
 
     @Override
-    public List<DocContentMatch> findByContent(final String pattern, final boolean regex, final boolean matchCase) {
-        return store.findByContent(pattern, regex, matchCase);
+    public List<DocContentMatch> findByContent(final StringMatch filter) {
+        return store.findByContent(filter);
+    }
+
+    @Override
+    public DocContentHighlights fetchHighlights(final DocRef docRef,
+                                                final String extension,
+                                                final StringMatch filter) {
+        return store.fetchHighlights(docRef, extension, filter);
     }
 }

@@ -30,11 +30,11 @@ import stroom.svg.shared.SvgImage;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
-import stroom.widget.popup.client.presenter.PopupPosition.HorizontalLocation;
-import stroom.widget.popup.client.presenter.PopupPosition.VerticalLocation;
+import stroom.widget.popup.client.presenter.PopupPosition.PopupLocation;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.util.client.CheckListSelectionEventManager;
 import stroom.widget.util.client.MySingleSelectionModel;
+import stroom.widget.util.client.Rect;
 
 import com.google.gwt.dom.client.BrowserEvents;
 import com.google.gwt.dom.client.Element;
@@ -54,7 +54,9 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class TypeFilterPresenter extends MyPresenterWidget<TypeFilterView>
@@ -65,7 +67,7 @@ public class TypeFilterPresenter extends MyPresenterWidget<TypeFilterView>
     private List<DocumentType> visibleTypes;
 
     private static final String SELECT_ALL_OR_NONE_TEXT = "All / None";
-    private static final DocumentType SELECT_ALL_OR_NONE_DOCUMENT_TYPE = new DocumentType(
+    static final DocumentType SELECT_ALL_OR_NONE_DOCUMENT_TYPE = new DocumentType(
             DocumentTypeGroup.SYSTEM,
             SELECT_ALL_OR_NONE_TEXT,
             SELECT_ALL_OR_NONE_TEXT,
@@ -74,6 +76,7 @@ public class TypeFilterPresenter extends MyPresenterWidget<TypeFilterView>
     private final CellTable<DocumentType> cellTable;
 
     private final TypeFilterSelectionEventManager typeFilterSelectionEventManager;
+    private Consumer<Boolean> filterStateConsumer = null;
 
     @Inject
     public TypeFilterPresenter(final EventBus eventBus, final TypeFilterView view) {
@@ -103,20 +106,23 @@ public class TypeFilterPresenter extends MyPresenterWidget<TypeFilterView>
         hideSelf();
     }
 
-    public void show(final Element element) {
-        final PopupPosition popupPosition = new PopupPosition(
-                element.getAbsoluteRight() + 5,
-                element.getAbsoluteRight() + 5,
-                element.getAbsoluteTop() - 5,
-                element.getAbsoluteTop() - 5,
-                HorizontalLocation.RIGHT,
-                VerticalLocation.BELOW);
+    public void show(final Element element,
+                     final Consumer<Boolean> filterStateConsumer) {
+        this.filterStateConsumer = filterStateConsumer;
+        Rect relativeRect = new Rect(element);
+        relativeRect = relativeRect.grow(3);
+        final PopupPosition popupPosition = new PopupPosition(relativeRect, PopupLocation.RIGHT);
 
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.POPUP)
                 .popupPosition(popupPosition)
                 .addAutoHidePartner(element)
                 .onShow(e -> selectFirstItem())
+                .onHide(event -> {
+                    if (filterStateConsumer != null) {
+                        filterStateConsumer.accept(hasActiveFilter());
+                    }
+                })
                 .fire();
     }
 
@@ -153,8 +159,29 @@ public class TypeFilterPresenter extends MyPresenterWidget<TypeFilterView>
         refreshView();
     }
 
-    public Set<String> getIncludedTypes() {
-        return selected;
+    /**
+     * @return A set of types to include, or empty if the type filter is not active
+     */
+    public Optional<Set<String>> getIncludedTypes() {
+        if (visibleTypes != null) {
+            final Set<String> visibleTypeNames = visibleTypes.stream()
+                    .map(DocumentType::getType)
+                    .collect(Collectors.toSet());
+            if (selected.containsAll(visibleTypeNames)) {
+                // All selected so return null to save the back end pointlessly filtering on them.
+                // The visible types are derived from finding the distinct types of all the entities
+                // that a user has permission to read, so there is no point in filtering on all visible types.
+                return Optional.empty();
+            } else {
+                return Optional.of(selected);
+            }
+        } else {
+            return Optional.of(selected);
+        }
+    }
+
+    public boolean hasActiveFilter() {
+        return getIncludedTypes().isPresent();
     }
 
     @Override
@@ -201,6 +228,10 @@ public class TypeFilterPresenter extends MyPresenterWidget<TypeFilterView>
             }
         }
 
+        if (filterStateConsumer != null) {
+            filterStateConsumer.accept(hasActiveFilter());
+        }
+
         refreshView();
         DataSelectionEvent.fire(
                 TypeFilterPresenter.this,
@@ -233,10 +264,18 @@ public class TypeFilterPresenter extends MyPresenterWidget<TypeFilterView>
         };
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface TypeFilterView extends View {
 
         void setWidget(Widget widget);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private class TypeFilterSelectionEventManager extends CheckListSelectionEventManager<DocumentType> {
 

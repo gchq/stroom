@@ -36,8 +36,10 @@ import stroom.pipeline.filter.XMLFilterForkFactory;
 import stroom.pipeline.reader.ByteStreamDecoder.DecoderException;
 import stroom.task.api.TaskTerminatedException;
 import stroom.util.io.StreamUtil;
+import stroom.util.shared.Location;
 import stroom.util.shared.Severity;
 
+import net.sf.saxon.trans.XPathException;
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -48,6 +50,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.nio.channels.ClosedByInterruptException;
 import java.util.ArrayList;
 import java.util.List;
 import javax.xml.transform.TransformerException;
@@ -138,8 +141,7 @@ public abstract class AbstractParser extends AbstractElement implements TakesInp
         } finally {
             // Make sure the error is added to the error count.
             final ErrorReceiver receiver = errorReceiverProxy.getErrorReceiver();
-            if (receiver instanceof ErrorStatistics) {
-                final ErrorStatistics errorStatistics = (ErrorStatistics) receiver;
+            if (receiver instanceof final ErrorStatistics errorStatistics) {
                 errorStatistics.checkRecord(-1);
             }
         }
@@ -187,6 +189,8 @@ public abstract class AbstractParser extends AbstractElement implements TakesInp
 
             } catch (final TaskTerminatedException | LoggedException e) {
                 throw e;
+            } catch (final ClosedByInterruptException e) {
+                throw new TaskTerminatedException();
             } catch (final IOException | SAXException e) {
                 final ProcessException processException = ProcessException.wrap(e);
                 fatal(e);
@@ -197,19 +201,23 @@ public abstract class AbstractParser extends AbstractElement implements TakesInp
                 while (cause != null) {
                     if (cause instanceof ExitSteppingException) {
                         exception = null;
-                    } else if (cause instanceof TaskTerminatedException) {
-                        throw (TaskTerminatedException) cause;
-                    } else if (cause instanceof LoggedException) {
-                        throw (LoggedException) cause;
+                    } else if (cause instanceof final TaskTerminatedException taskTerminatedException) {
+                        throw taskTerminatedException;
+                    } else if (cause instanceof final LoggedException loggedException) {
+                        throw loggedException;
                     } else if (cause instanceof SAXException) {
                         exception = cause;
                         break;
+                    } else if (cause instanceof final XPathException xPathException) {
+                        cause = xPathException.getException();
                     } else if (cause instanceof TransformerException) {
                         exception = cause;
                         break;
                     } else if (cause instanceof DecoderException) {
                         exception = cause;
                         break;
+                    } else if (cause instanceof final ProcessException processException) {
+                        cause = processException.getXPathException();
                     } else {
                         cause = cause.getCause();
                     }
@@ -258,19 +266,19 @@ public abstract class AbstractParser extends AbstractElement implements TakesInp
     }
 
     protected void info(final String message, final Throwable t) {
-        errorReceiverProxy.log(Severity.INFO, null, getElementId(), message, t);
+        errorReceiverProxy.log(Severity.INFO, getLocation(), getElementId(), message, t);
     }
 
     protected void warning(final String message, final Throwable t) {
-        errorReceiverProxy.log(Severity.WARNING, null, getElementId(), message, t);
+        errorReceiverProxy.log(Severity.WARNING, getLocation(), getElementId(), message, t);
     }
 
     protected void error(final String message, final Throwable t) {
-        errorReceiverProxy.log(Severity.ERROR, null, getElementId(), message, t);
+        errorReceiverProxy.log(Severity.ERROR, getLocation(), getElementId(), message, t);
     }
 
     protected void fatal(final String message, final Throwable t) {
-        errorReceiverProxy.log(Severity.FATAL_ERROR, null, getElementId(), message, t);
+        errorReceiverProxy.log(Severity.FATAL_ERROR, getLocation(), getElementId(), message, t);
     }
 
     protected void info(final Throwable t) {
@@ -287,6 +295,12 @@ public abstract class AbstractParser extends AbstractElement implements TakesInp
 
     protected void fatal(final Throwable t) {
         fatal(t.getMessage(), t);
+    }
+
+    private Location getLocation() {
+        return locationFactory == null
+                ? null
+                : locationFactory.create();
     }
 
     public ErrorReceiverProxy getErrorReceiverProxy() {

@@ -34,6 +34,8 @@ dependencies {
     implementation project(':stroom-pipeline')
     implementation project(':stroom-processor:stroom-processor-impl')
     implementation project(':stroom-query:stroom-query-common')
+    implementation project(':stroom-query:stroom-query-field-impl')
+    implementation project(':stroom-receive:stroom-receive-common')
     implementation project(':stroom-search:stroom-search-elastic')
     implementation project(':stroom-search:stroom-search-extraction')
     implementation project(':stroom-search:stroom-search-impl')
@@ -42,6 +44,7 @@ dependencies {
     implementation project(':stroom-security:stroom-security-api')
     implementation project(':stroom-security:stroom-security-identity')
     implementation project(':stroom-security:stroom-security-impl')
+    implementation project(':stroom-security:stroom-security-openid-api')
     implementation project(':stroom-servicediscovery:stroom-servicediscovery-impl')
     implementation project(':stroom-statistics:stroom-statistics-impl')
     implementation project(':stroom-statistics:stroom-statistics-impl-hbase')
@@ -55,12 +58,12 @@ dependencies {
     implementation libs.dropwizard_metrics_annotation
     implementation libs.eventLogging
     implementation libs.guava
-    implementation libs.guice5
+    implementation libs.guice
     implementation libs.jackson_annotations
     implementation libs.jackson_core
     implementation libs.jackson_databind
     implementation libs.jakarta_validation_api
-    implementation libs.javax_inject
+    implementation libs.jakarta_inject
     implementation libs.jaxb_api
     implementation libs.restygwt
     implementation libs.slf4j_api
@@ -74,6 +77,7 @@ dependencies {
     testImplementation libs.dropwizard_core
     testImplementation libs.dropwizard_jackson
     testImplementation libs.dropwizard_jersey
+    testImplementation libs.dropwizard_validation
     testImplementation libs.junit_jupiter_api
     testImplementation libs.mockito_core
     testImplementation libs.mockito_junit_jupiter

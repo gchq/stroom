@@ -24,6 +24,7 @@ import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Composite;
@@ -142,6 +143,10 @@ public abstract class DraggableTreePanel<E> extends Composite implements HasCont
                     }
                 }
             }
+
+            if (MouseUtil.isSecondary(event)) {
+                onContextMenu(event);
+            }
         }
 
         reset();
@@ -149,10 +154,6 @@ public abstract class DraggableTreePanel<E> extends Composite implements HasCont
         // Release capture in case we were dragging and were capturing all mouse
         // events.
         Event.releaseCapture(getElement());
-
-        if (MouseUtil.isSecondary(event)) {
-            onContextMenu(event);
-        }
     }
 
     private boolean validEvent(final Element element) {
@@ -198,6 +199,7 @@ public abstract class DraggableTreePanel<E> extends Composite implements HasCont
                 treePanel.refresh(() -> updateHotspot(treePanel.getBox(parent)));
                 updateHotspot(treePanel.getTargetBox(event, true));
 
+                subTreePanel.getElement().getStyle().setPosition(Position.ABSOLUTE);
                 subTreePanel.getElement().getStyle().setZIndex(2);
                 subTreePanel.getElement().getStyle().setOpacity(0);
                 subTreePanel.getElement().getStyle().setLeft(0, Unit.PX);

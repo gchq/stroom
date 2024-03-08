@@ -10,6 +10,7 @@ import stroom.task.shared.TaskId;
 import stroom.task.shared.ThreadPool;
 import stroom.test.AbstractCoreIntegrationTest;
 
+import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,7 +19,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
-import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

@@ -17,8 +17,8 @@ public class AnalyticResultStoreConfig extends AbstractResultStoreConfig impleme
                 ByteSize.ofGibibytes(1),
                 1000,
                 10_000,
-                ResultStoreLmdbConfig.builder().localDir("analytic_store").build(),
-                "1000000,100,10,1");
+                500_000,
+                ResultStoreLmdbConfig.builder().localDir("analytic_store").build());
     }
 
     @JsonCreator
@@ -28,15 +28,15 @@ public class AnalyticResultStoreConfig extends AbstractResultStoreConfig impleme
                                      @JsonProperty("maxPayloadSize") final ByteSize maxPayloadSize,
                                      @JsonProperty("maxStringFieldLength") final int maxStringFieldLength,
                                      @JsonProperty("valueQueueSize") final int valueQueueSize,
-                                     @JsonProperty("lmdb") final ResultStoreLmdbConfig lmdbConfig,
-                                     @JsonProperty("storeSize") final String storeSize) {
+                                     @JsonProperty("maxSortedItems") final int maxSortedItems,
+                                     @JsonProperty("lmdb") final ResultStoreLmdbConfig lmdbConfig) {
         super(maxPutsBeforeCommit,
                 offHeapResults,
                 minPayloadSize,
                 maxPayloadSize,
                 maxStringFieldLength,
                 valueQueueSize,
-                lmdbConfig,
-                storeSize);
+                maxSortedItems,
+                lmdbConfig);
     }
 }

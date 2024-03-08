@@ -21,8 +21,7 @@ import stroom.job.api.ScheduledJobsBinder;
 import stroom.util.RunnableWrapper;
 
 import com.google.inject.AbstractModule;
-
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 import static stroom.job.api.Schedule.ScheduleType.CRON;
 

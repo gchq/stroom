@@ -31,11 +31,11 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.util.shared.ResultPage;
 
 import event.logging.SearchEventAction;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 import java.util.List;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
-import javax.inject.Provider;
 
 @AutoLogged
 class MetaResourceImpl implements MetaResource {

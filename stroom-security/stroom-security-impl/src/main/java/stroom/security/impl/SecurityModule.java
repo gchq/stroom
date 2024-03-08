@@ -16,21 +16,42 @@
 
 package stroom.security.impl;
 
+import stroom.event.logging.api.ObjectInfoProviderBinder;
 import stroom.security.api.DocumentPermissionService;
-import stroom.security.api.RequestAuthenticator;
+import stroom.security.api.ServiceUserFactory;
+import stroom.security.api.UserIdentityFactory;
+import stroom.security.common.impl.DelegatingServiceUserFactory;
+import stroom.security.common.impl.ExternalIdpConfigurationProvider;
+import stroom.security.common.impl.ExternalServiceUserFactory;
+import stroom.security.common.impl.HttpClientProvider;
+import stroom.security.common.impl.IdpConfigurationProvider;
+import stroom.security.common.impl.JwtContextFactory;
+import stroom.security.common.impl.RefreshManager;
+import stroom.security.common.impl.TestCredentialsServiceUserFactory;
+import stroom.security.impl.apikey.ApiKeyObjectInfoProvider;
+import stroom.security.impl.apikey.ApiKeyResourceImpl;
+import stroom.security.impl.apikey.CreateHashedApiKeyResponseObjectInfoProvider;
 import stroom.security.impl.event.PermissionChangeEvent;
 import stroom.security.impl.event.PermissionChangeEventLifecycleModule;
 import stroom.security.impl.event.PermissionChangeEventModule;
+import stroom.security.openid.api.IdpType;
+import stroom.security.openid.api.OpenIdConfiguration;
+import stroom.security.shared.CreateHashedApiKeyResponse;
+import stroom.security.shared.HashedApiKey;
+import stroom.security.shared.User;
 import stroom.security.shared.UserNameProvider;
+import stroom.security.user.api.UserNameService;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.guice.FilterBinder;
 import stroom.util.guice.FilterInfo;
 import stroom.util.guice.GuiceUtil;
+import stroom.util.guice.HasHealthCheckBinder;
 import stroom.util.guice.RestResourcesBinder;
 import stroom.util.shared.Clearable;
 
 import com.google.inject.AbstractModule;
-import org.apache.http.impl.client.CloseableHttpClient;
+import io.dropwizard.lifecycle.Managed;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 
 public class SecurityModule extends AbstractModule {
 
@@ -44,9 +65,27 @@ public class SecurityModule extends AbstractModule {
         bind(UserAppPermissionService.class).to(UserAppPermissionServiceImpl.class);
         bind(DocumentPermissionService.class).to(DocumentPermissionServiceImpl.class);
         bind(UserService.class).to(UserServiceImpl.class);
-        bind(UserIdentityFactory.class).to(UserIdentityFactoryImpl.class);
+        bind(UserIdentityFactory.class).to(StroomUserIdentityFactory.class);
         bind(CloseableHttpClient.class).toProvider(HttpClientProvider.class);
-        bind(RequestAuthenticator.class).to(RequestAuthenticatorImpl.class);
+        bind(JwtContextFactory.class).to(DelegatingJwtContextFactory.class);
+        bind(IdpConfigurationProvider.class).to(DelegatingIdpConfigurationProvider.class);
+        // Now bind OpenIdConfiguration to the iface from prev bind
+        bind(OpenIdConfiguration.class).to(IdpConfigurationProvider.class);
+        bind(UserNameService.class).to(UserNameServiceImpl.class);
+        bind(AuthProxyService.class).to(AuthProxyServiceImpl.class);
+
+        HasHealthCheckBinder.create(binder())
+                .bind(ExternalIdpConfigurationProvider.class);
+
+        // TODO: 26/07/2023 Remove these
+//        bind(ProcessingUserIdentityProvider.class).to(DelegatingProcessingUserIdentityProvider.class);
+//        GuiceUtil.buildMapBinder(binder(), IdpType.class, ProcessingUserIdentityProvider.class)
+//                .addBinding(IdpType.EXTERNAL_IDP, ExternalProcessingUserIdentityProvider.class);
+
+        bind(ServiceUserFactory.class).to(DelegatingServiceUserFactory.class);
+        GuiceUtil.buildMapBinder(binder(), IdpType.class, ServiceUserFactory.class)
+                .addBinding(IdpType.EXTERNAL_IDP, ExternalServiceUserFactory.class)
+                .addBinding(IdpType.TEST_CREDENTIALS, TestCredentialsServiceUserFactory.class);
 
         FilterBinder.create(binder())
                 .bind(new FilterInfo(ContentSecurityFilter.class.getSimpleName(), MATCH_ALL_PATHS),
@@ -55,14 +94,18 @@ public class SecurityModule extends AbstractModule {
                         SecurityFilter.class);
 
         GuiceUtil.buildMultiBinder(binder(), UserNameProvider.class)
-                .addBinding(UserServiceImpl.class);
+                .addBinding(StroomUserNameProvider.class);
+
+        GuiceUtil.buildMultiBinder(binder(), Managed.class)
+                .addBinding(RefreshManager.class);
 
         // Provide object info to the logging service.
         GuiceUtil.buildMultiBinder(binder(), Clearable.class)
                 .addBinding(UserDocumentPermissionsCache.class)
                 .addBinding(UserAppPermissionsCache.class)
                 .addBinding(UserGroupsCache.class)
-                .addBinding(UserCache.class);
+                .addBinding(UserCache.class)
+                .addBinding(DocumentOwnerPermissionsCache.class);
 
         GuiceUtil.buildMultiBinder(binder(), EntityEvent.Handler.class)
                 .addBinding(UserCache.class)
@@ -70,13 +113,21 @@ public class SecurityModule extends AbstractModule {
                 .addBinding(UserAppPermissionsCache.class);
 
         GuiceUtil.buildMultiBinder(binder(), PermissionChangeEvent.Handler.class)
-                .addBinding(UserDocumentPermissionsCache.class);
+                .addBinding(UserDocumentPermissionsCache.class)
+                .addBinding(DocumentOwnerPermissionsCache.class);
 
         RestResourcesBinder.create(binder())
+                .bind(ApiKeyResourceImpl.class)
                 .bind(AppPermissionResourceImpl.class)
                 .bind(DocPermissionResourceImpl.class)
                 .bind(SessionResourceImpl.class)
                 .bind(UserResourceImpl.class)
-                .bind(UserNameResourceImpl.class);
+                .bind(UserNameResourceImpl.class)
+                .bind(AuthProxyResourceImpl.class);
+
+        ObjectInfoProviderBinder.create(binder())
+                .bind(User.class, UserObjectInfoProvider.class)
+                .bind(HashedApiKey.class, ApiKeyObjectInfoProvider.class)
+                .bind(CreateHashedApiKeyResponse.class, CreateHashedApiKeyResponseObjectInfoProvider.class);
     }
 }

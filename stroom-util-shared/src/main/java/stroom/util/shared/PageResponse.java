@@ -30,7 +30,7 @@ import java.util.Objects;
 @Schema(description = "Details of the page of results being returned.")
 public class PageResponse implements Serializable {
 
-    private static final long serialVersionUID = -8613411971150227752L;
+    private static final PageResponse EMPTY = new PageResponse(0L, 0, 0L, true);
 
     @JsonProperty
     @JsonPropertyDescription("The offset of the first item in the page relative to the full result set, zero based.")
@@ -102,5 +102,60 @@ public class PageResponse implements Serializable {
                 : total) + " " + (exact
                 ? "exact"
                 : "");
+    }
+
+    public static PageResponse empty() {
+        return EMPTY;
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static class Builder {
+
+        private long offset;
+        private int length;
+        private Long total;
+        private boolean exact;
+
+        public Builder() {
+        }
+
+        public Builder(final PageResponse pageResponse) {
+            this.offset = pageResponse.offset;
+            this.length = pageResponse.length;
+            this.total = pageResponse.total;
+            this.exact = pageResponse.exact;
+        }
+
+        public Builder offset(final long offset) {
+            this.offset = offset;
+            return this;
+        }
+
+        public Builder length(final int length) {
+            this.length = length;
+            return this;
+        }
+
+        public Builder total(final Long total) {
+            this.total = total;
+            return this;
+        }
+
+        public Builder exact(final boolean exact) {
+            this.exact = exact;
+            return this;
+        }
+
+        public PageResponse build() {
+
+            return new PageResponse(offset, length, total, exact);
+        }
     }
 }

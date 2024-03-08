@@ -7,6 +7,7 @@ import stroom.kafka.api.SharedKafkaProducer;
 import stroom.kafka.shared.KafkaConfigDoc;
 import stroom.util.sysinfo.SystemInfoResult;
 
+import jakarta.validation.constraints.NotNull;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -19,7 +20,6 @@ import org.slf4j.LoggerFactory;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import javax.validation.constraints.NotNull;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

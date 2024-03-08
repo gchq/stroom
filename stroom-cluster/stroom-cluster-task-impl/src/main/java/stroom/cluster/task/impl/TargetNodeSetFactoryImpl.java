@@ -24,13 +24,13 @@ import stroom.cluster.task.api.TargetNodeSetFactory;
 import stroom.cluster.task.api.TargetType;
 import stroom.node.api.NodeInfo;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 import java.util.Set;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 @Singleton
 public class TargetNodeSetFactoryImpl implements TargetNodeSetFactory {
@@ -74,7 +74,7 @@ public class TargetNodeSetFactoryImpl implements TargetNodeSetFactory {
     public Set<String> getEnabledActiveTargetNodeSet() throws NullClusterStateException, NodeNotFoundException {
         final ClusterState clusterState = getClusterState();
         final Set<String> nodes = clusterState.getEnabledActiveNodes();
-        if (nodes != null && nodes.size() > 0) {
+        if (nodes != null && !nodes.isEmpty()) {
             return Set.copyOf(nodes);
         } else {
             throw new NodeNotFoundException("No enabled and active nodes can be found");
@@ -85,7 +85,7 @@ public class TargetNodeSetFactoryImpl implements TargetNodeSetFactory {
     public Set<String> getEnabledTargetNodeSet() throws NullClusterStateException, NodeNotFoundException {
         final ClusterState clusterState = getClusterState();
         final Set<String> nodes = clusterState.getEnabledNodes();
-        if (nodes != null && nodes.size() > 0) {
+        if (nodes != null && !nodes.isEmpty()) {
             return Set.copyOf(nodes);
         } else {
             throw new NodeNotFoundException("No enabled nodes can be found");

@@ -4,8 +4,9 @@ import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.ui.config.shared.UserPreferences;
 
+import jakarta.inject.Inject;
+
 import java.util.Optional;
-import javax.inject.Inject;
 
 public class UserPreferencesService {
 
@@ -23,7 +24,7 @@ public class UserPreferencesService {
 
     public UserPreferences fetch() {
         return securityContext.secureResult(() -> {
-            Optional<UserPreferences> optionalUserPreferences = userPreferencesDao.fetch(securityContext.getUserId());
+            Optional<UserPreferences> optionalUserPreferences = userPreferencesDao.fetch(securityContext.getUserUuid());
             if (optionalUserPreferences.isEmpty()) {
                 optionalUserPreferences = userPreferencesDao.fetch(DEFAULT_PREFERENCES);
             }
@@ -33,17 +34,24 @@ public class UserPreferencesService {
 
     public int update(final UserPreferences userPreferences) {
         return securityContext.secureResult(() ->
-                userPreferencesDao.update(securityContext.getUserId(), userPreferences));
+                userPreferencesDao.update(
+                        securityContext.getUserUuid(),
+                        securityContext.getUserIdentityForAudit(),
+                        userPreferences));
     }
 
     public int delete() {
         return securityContext.secureResult(() ->
-                userPreferencesDao.delete(securityContext.getUserId()));
+                userPreferencesDao.delete(securityContext.getUserUuid()));
     }
 
     public UserPreferences setDefaultUserPreferences(final UserPreferences userPreferences) {
         return securityContext.secureResult(PermissionNames.MANAGE_PROPERTIES_PERMISSION, () -> {
-            userPreferencesDao.update(DEFAULT_PREFERENCES, userPreferences);
+            // Special userUuid for the default prefs
+            userPreferencesDao.update(
+                    DEFAULT_PREFERENCES,
+                    securityContext.getUserIdentityForAudit(),
+                    userPreferences);
             delete();
             return userPreferences;
         });

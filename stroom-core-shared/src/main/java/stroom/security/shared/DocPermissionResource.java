@@ -2,20 +2,21 @@ package stroom.security.shared;
 
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
+import stroom.util.shared.UserName;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
 import org.fusesource.restygwt.client.DirectRestService;
 
 import java.util.List;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
 
 @Tag(name = "Doc Permissions")
 @Path("/permission/doc" + ResourcePaths.V1)
@@ -29,6 +30,14 @@ public interface DocPermissionResource extends RestResource, DirectRestService {
             summary = "Change document permissions",
             operationId = "changeDocumentPermissions")
     Boolean changeDocumentPermissions(
+            @Parameter(description = "request", required = true) ChangeDocumentPermissionsRequest request);
+
+    @POST
+    @Path("/fetchPermissionChangeImpact")
+    @Operation(
+            summary = "Fetch impact summary for a change of document permissions",
+            operationId = "fetchPermissionChangeImpact")
+    PermissionChangeImpactSummary fetchPermissionChangeImpact(
             @Parameter(description = "request", required = true) ChangeDocumentPermissionsRequest request);
 
     @POST
@@ -68,6 +77,12 @@ public interface DocPermissionResource extends RestResource, DirectRestService {
     @Operation(
             summary = "Get all permissions for a given document type",
             operationId = "filterUsers")
-    List<SimpleUser> filterUsers(final FilterUsersRequest filterUsersRequest);
+    List<UserName> filterUsers(FilterUsersRequest filterUsersRequest);
 
+    @POST
+    @Path("/getDocumentOwners")
+    @Operation(
+            summary = "Get the owners of the specified document",
+            operationId = "getDocumentOwners")
+    List<UserName> getDocumentOwners(@Parameter(description = "documentUuid", required = true) String documentUuid);
 }

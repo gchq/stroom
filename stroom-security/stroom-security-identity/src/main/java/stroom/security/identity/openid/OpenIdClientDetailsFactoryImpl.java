@@ -1,65 +1,124 @@
 package stroom.security.identity.openid;
 
-import stroom.security.identity.config.IdentityConfig;
+import stroom.security.openid.api.AbstractOpenIdConfig;
+import stroom.security.openid.api.IdpType;
 import stroom.security.openid.api.OpenIdClient;
 import stroom.security.openid.api.OpenIdClientFactory;
+import stroom.security.openid.api.OpenIdConfiguration;
 import stroom.util.authentication.DefaultOpenIdCredentials;
+import stroom.util.logging.DurationTimer;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.string.StringUtil;
 
-import java.security.SecureRandom;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
+
 import java.util.Objects;
-import javax.inject.Inject;
+import java.util.Optional;
 
+@Singleton
 public class OpenIdClientDetailsFactoryImpl implements OpenIdClientFactory {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(OpenIdClientDetailsFactoryImpl.class);
 
     private static final String INTERNAL_STROOM_CLIENT = "Stroom Client Internal";
     private static final String CLIENT_ID_SUFFIX = ".client-id.apps.stroom-idp";
     private static final String CLIENT_SECRET_SUFFIX = ".client-secret.apps.stroom-idp";
     private static final char[] ALLOWED_CHARS = "abcdefghijklmnopqrstuvwxyzABCDEFGJKLMNPRSTUVWXYZ0123456789"
             .toCharArray();
-    private static final int ALLOWED_CHARS_COUNT = ALLOWED_CHARS.length;
 
     private final DefaultOpenIdCredentials defaultOpenIdCredentials;
-    private final OpenIdClient oAuth2Client;
+    // We have to use AbstractOpenIdConfig instead of OpenIdConfiguration, so we get
+    // the one that is backed by stroom's config.yml rather than the one that is derived
+    // from the config.yml + the IDP's config endpoint (i.e. relies on this class).
+    private final Provider<AbstractOpenIdConfig> openIdConfigurationProvider;
+    private final OpenIdClientDao openIdClientDao;
+    private volatile OpenIdClient oAuth2Client = null;
 
     @Inject
-    public OpenIdClientDetailsFactoryImpl(final OpenIdClientDao dao,
-                                          final IdentityConfig authenticationConfig,
-                                          final DefaultOpenIdCredentials defaultOpenIdCredentials) {
+    public OpenIdClientDetailsFactoryImpl(final OpenIdClientDao openIdClientDao,
+                                          final DefaultOpenIdCredentials defaultOpenIdCredentials,
+                                          final Provider<AbstractOpenIdConfig> openIdConfigurationProvider) {
         this.defaultOpenIdCredentials = defaultOpenIdCredentials;
-
-        // TODO The way this is implemented means we are limited to a single client when using our
-        //   internal auth provider.  Not sure this is what we want when we have stroom-stats in the
-        //   mix. However to manage multiple client IDs we would probably need UI pages to do the CRUD on them.
-
-        final OpenIdClient oAuth2Client;
-        if (authenticationConfig.isUseDefaultOpenIdCredentials()) {
-            oAuth2Client = createDefaultOAuthClient();
-        } else {
-            oAuth2Client = dao.getClientByName(INTERNAL_STROOM_CLIENT)
-                    .or(() -> {
-                        // Generate new randomised client details and persist them
-                        final OpenIdClient newOAuth2Client = createRandomisedOAuth2Client(INTERNAL_STROOM_CLIENT);
-                        dao.create(newOAuth2Client);
-                        return dao.getClientByName(INTERNAL_STROOM_CLIENT);
-                    })
-                    .orElseThrow(() ->
-                            new NullPointerException("Unable to get or create internal client details"));
-        }
-        this.oAuth2Client = oAuth2Client;
+        this.openIdConfigurationProvider = openIdConfigurationProvider;
+        this.openIdClientDao = openIdClientDao;
     }
 
     public OpenIdClient getClient() {
+        // Do the init here rather than in the ctor to avoid guice circular dep issues
+        if (oAuth2Client == null) {
+            initOauth2Client(INTERNAL_STROOM_CLIENT);
+        }
         return oAuth2Client;
     }
 
     public OpenIdClient getClient(final String clientId) {
-        // TODO currently only support one client ID so just have to throw if the client id is wrong
-        if (!Objects.requireNonNull(clientId).equals(oAuth2Client.getClientId())) {
+        final OpenIdClient client = getClient();
+        // Internal IDP only supports one client
+        if (!Objects.requireNonNull(clientId).equals(client.getClientId())) {
             throw new RuntimeException(LogUtil.message(
-                    "Unexpected client ID: {}, expecting {}", clientId, oAuth2Client.getClientId()));
+                    "Unexpected client ID: {}, expecting {}", clientId, client.getClientId()));
+        } else {
+            return client;
         }
-        return oAuth2Client;
+    }
+
+    private void initOauth2Client(final String clientName) {
+        OpenIdClient client = null;
+        final DurationTimer timer1 = DurationTimer.start();
+        synchronized (this) {
+            LOGGER.debug("Acquired local lock in {}", timer1);
+            if (oAuth2Client == null) {
+                final OpenIdConfiguration openIdConfiguration = openIdConfigurationProvider.get();
+                final IdpType idpType = openIdConfiguration.getIdentityProviderType();
+
+                if (IdpType.TEST_CREDENTIALS.equals(idpType)) {
+                    client = createDefaultOAuthClient();
+                } else if (IdpType.INTERNAL_IDP.equals(idpType)) {
+                    // We are first thread on this node, but other nodes may beat us to it so,
+                    // check the DB
+                    client = openIdClientDao.getClientByName(clientName)
+                            .orElseGet(() ->
+                                    createOauth2Client(clientName, openIdConfiguration));
+                }
+            } else {
+                LOGGER.debug("Another thread beat us to it");
+            }
+        }
+        oAuth2Client = Objects.requireNonNull(client, "client is still null after init");
+        LOGGER.info("Initialised Stroom's Oauth2 clientId ('{}') and clientSecret",
+                oAuth2Client.getClientId());
+    }
+
+    private OpenIdClient createOauth2Client(final String clientName,
+                                            final OpenIdConfiguration openIdConfiguration) {
+        return openIdClientDao.getClientByName(clientName)
+                .or(() -> {
+                    // Generate new randomised client details and persist them
+                    final OpenIdClient newOAuth2Client = createOAuth2ClientCredentials(
+                            clientName, openIdConfiguration);
+
+                    try {
+                        openIdClientDao.createIfNotExists(newOAuth2Client);
+                    } catch (Exception e) {
+                        LOGGER.error("Error writing new oauth2 client to database: {}",
+                                LogUtil.exceptionMessage(e), e);
+                    }
+                    // Another node may have created it before us as there is no cluster lock
+                    // so re-query to get the actual db one.
+                    final Optional<OpenIdClient> optClient = openIdClientDao.getClientByName(clientName);
+                    if (optClient.filter(client -> Objects.equals(newOAuth2Client, client)).isPresent()) {
+                        LOGGER.info("Persisted Stroom's Oauth2 clientId ('{}') and clientSecret",
+                                newOAuth2Client.getClientId());
+                    }
+
+                    return optClient;
+                })
+                .orElseThrow(() ->
+                        new NullPointerException("Unable to get or create internal client details"));
     }
 
     private OpenIdClient createDefaultOAuthClient() {
@@ -70,21 +129,30 @@ public class OpenIdClientDetailsFactoryImpl implements OpenIdClientFactory {
                 defaultOpenIdCredentials.getOauth2ClientUriPattern());
     }
 
+    private static OpenIdClient createOAuth2ClientCredentials(final String name,
+                                                              final OpenIdConfiguration openIdConfiguration) {
+        // If we have them in config then use them, else fall back to randomised creds
+        final String clientId = Objects.requireNonNullElseGet(
+                openIdConfiguration.getClientId(),
+                () -> createRandomCode(CLIENT_ID_SUFFIX));
+        final String clientSecret = Objects.requireNonNullElseGet(
+                openIdConfiguration.getClientSecret(),
+                () -> createRandomCode(CLIENT_SECRET_SUFFIX));
+
+        LOGGER.debug("");
+        return new OpenIdClient(name, clientId, clientSecret, ".*");
+    }
+
     static OpenIdClient createRandomisedOAuth2Client(final String name) {
         return new OpenIdClient(
                 name,
-                createRandomCode(40) + CLIENT_ID_SUFFIX,
-                createRandomCode(40) + CLIENT_SECRET_SUFFIX,
+                createRandomCode(CLIENT_ID_SUFFIX),
+                createRandomCode(CLIENT_SECRET_SUFFIX),
                 ".*");
     }
 
-    private static String createRandomCode(final int length) {
-        final SecureRandom secureRandom = new SecureRandom();
-        final StringBuilder stringBuilder = new StringBuilder();
-
-        for (int i = 0; i < length; i++) {
-            stringBuilder.append(ALLOWED_CHARS[secureRandom.nextInt(ALLOWED_CHARS_COUNT)]);
-        }
-        return stringBuilder.toString();
+    public static String createRandomCode(final String suffix) {
+        return StringUtil.createRandomCode(40) + suffix;
     }
+
 }

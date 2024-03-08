@@ -8,11 +8,12 @@ dependencies {
     implementation project(':stroom-docstore:stroom-docstore-api')
     implementation project(':stroom-docstore:stroom-docstore-impl')
     implementation project(':stroom-feed:stroom-feed-impl')
-    implementation project(':stroom-index:stroom-index-impl')
     implementation project(':stroom-importexport:stroom-importexport-api')
+    implementation project(':stroom-index:stroom-index-impl')
     implementation project(':stroom-legacy:stroom-legacy-model_6_1')
     implementation project(':stroom-meta:stroom-meta-api')
     implementation project(':stroom-pipeline')
+    implementation project(':stroom-query:stroom-query-language-api')
     implementation project(':stroom-query:stroom-query-api')
     implementation project(':stroom-statistics:stroom-statistics-impl-hbase')
     implementation project(':stroom-statistics:stroom-statistics-impl-sql')
@@ -20,7 +21,7 @@ dependencies {
     implementation project(':stroom-util-shared')
     implementation project(':stroom-util')
 
-    implementation libs.guice5
+    implementation libs.guice
     implementation libs.hibernate_jpa
     implementation libs.jackson_annotations
     implementation libs.jaxb_api

@@ -8,27 +8,29 @@ import stroom.processor.shared.CreateProcessFilterRequest;
 import stroom.processor.shared.FetchProcessorRequest;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
+import stroom.processor.shared.ProcessorFilterRow;
 import stroom.processor.shared.ProcessorListRow;
+import stroom.processor.shared.ProcessorType;
 import stroom.processor.shared.ReprocessDataInfo;
 import stroom.util.shared.ResultPage;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+
 import java.util.List;
 import java.util.Optional;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 @Singleton
 public class MockProcessorFilterService implements ProcessorFilterService {
 
-    private final MockProcessorFilterDao dao = new MockProcessorFilterDao();
-
-//    private Random idRandom = new Random (0);
-
     private final ProcessorService processorService;
+    private final MockProcessorFilterDao dao;
 
     @Inject
-    MockProcessorFilterService(final ProcessorService processorService) {
+    MockProcessorFilterService(final ProcessorService processorService,
+                               final MockProcessorFilterDao dao) {
         this.processorService = processorService;
+        this.dao = dao;
     }
 
     @Override
@@ -37,10 +39,14 @@ public class MockProcessorFilterService implements ProcessorFilterService {
         filter.setPipelineUuid(request.getPipeline().getUuid());
         filter.setQueryData(request.getQueryData());
         filter.setPriority(request.getPriority());
+        filter.setMaxProcessingTasks(request.getMaxProcessingTasks());
         filter.setEnabled(request.isEnabled());
         filter.setMinMetaCreateTimeMs(request.getMinMetaCreateTimeMs());
         filter.setMaxMetaCreateTimeMs(request.getMaxMetaCreateTimeMs());
-        Processor processor = processorService.create(request.getPipeline(), request.isEnabled());
+        Processor processor = processorService.create(
+                request.getProcessorType(),
+                request.getPipeline(),
+                request.isEnabled());
 
         filter.setProcessor(processor);
         return dao.create(filter);
@@ -59,6 +65,7 @@ public class MockProcessorFilterService implements ProcessorFilterService {
         filter.setProcessor(processor);
         filter.setQueryData(request.getQueryData());
         filter.setPriority(request.getPriority());
+        filter.setMaxProcessingTasks(request.getMaxProcessingTasks());
         filter.setEnabled(request.isEnabled());
         filter.setMinMetaCreateTimeMs(request.getMinMetaCreateTimeMs());
         filter.setMaxMetaCreateTimeMs(request.getMaxMetaCreateTimeMs());
@@ -78,6 +85,7 @@ public class MockProcessorFilterService implements ProcessorFilterService {
         filter.setProcessor(processor);
         filter.setQueryData(request.getQueryData());
         filter.setPriority(request.getPriority());
+        filter.setMaxProcessingTasks(request.getMaxProcessingTasks());
         filter.setUuid(processorFilterDocRef.getUuid());
         filter.setEnabled(request.isEnabled());
         filter.setMinMetaCreateTimeMs(request.getMinMetaCreateTimeMs());
@@ -96,12 +104,21 @@ public class MockProcessorFilterService implements ProcessorFilterService {
     }
 
     @Override
+    public ProcessorFilterRow getRow(final ProcessorFilter processorFilter) {
+        return null;
+    }
+
+    @Override
     public ResultPage<ProcessorFilter> find(DocRef pipelineDocRef) {
         return null;
     }
 
     @Override
     public void setPriority(Integer id, Integer priority) {
+    }
+
+    @Override
+    public void setMaxProcessingTasks(Integer id, Integer maxProcessingTasks) {
     }
 
     @Override
@@ -127,5 +144,10 @@ public class MockProcessorFilterService implements ProcessorFilterService {
     @Override
     public boolean delete(int id) {
         return dao.delete(id);
+    }
+
+    @Override
+    public Optional<String> getPipelineName(final ProcessorType processorType, final String uuid) {
+        return Optional.empty();
     }
 }

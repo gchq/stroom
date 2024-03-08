@@ -45,6 +45,7 @@ import stroom.security.shared.User;
 import stroom.test.BootstrapTestModule;
 import stroom.test.StroomIntegrationTest;
 
+import jakarta.inject.Inject;
 import name.falgout.jeffrey.testing.junit.guice.GuiceExtension;
 import name.falgout.jeffrey.testing.junit.guice.IncludeModule;
 import org.junit.jupiter.api.Test;
@@ -52,7 +53,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.util.List;
 import java.util.Optional;
-import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -108,7 +108,7 @@ class TestMetaService extends StroomIntegrationTest {
             documentPermissionService.addPermission(docref2.getUuid(), user.getUuid(), DocumentPermissionNames.USE);
             documentPermissionService.addPermission(docref3.getUuid(), user.getUuid(), DocumentPermissionNames.READ);
 
-            securityContext.asUser(securityContext.createIdentity(user.getName()), () -> {
+            securityContext.asUser(securityContext.createIdentity(user.getSubjectId()), () -> {
                 final Optional<ExpressionOperator> useExpression = metaSecurityFilter.getExpression(
                         DocumentPermissionNames.USE,
                         FEED_FIELDS);
@@ -158,7 +158,7 @@ class TestMetaService extends StroomIntegrationTest {
 //            documentPermissionService.addPermission(docref2.getUuid(), user.getUuid(), DocumentPermissionNames.USE);
 //            documentPermissionService.addPermission(docref3.getUuid(), user.getUuid(), DocumentPermissionNames.READ);
 
-            securityContext.asUser(securityContext.createIdentity(user.getName()), () -> {
+            securityContext.asUser(securityContext.createIdentity(user.getSubjectId()), () -> {
                 final Optional<ExpressionOperator> useExpression = metaSecurityFilter.getExpression(
                         DocumentPermissionNames.USE,
                         FEED_FIELDS);
@@ -194,7 +194,7 @@ class TestMetaService extends StroomIntegrationTest {
             documentPermissionService.addPermission(docref2.getUuid(), user.getUuid(), DocumentPermissionNames.USE);
             documentPermissionService.addPermission(docref3.getUuid(), user.getUuid(), DocumentPermissionNames.READ);
 
-            securityContext.asUser(securityContext.createIdentity(user.getName()), () -> {
+            securityContext.asUser(securityContext.createIdentity(user.getSubjectId()), () -> {
                 final Optional<ExpressionOperator> useExpression = metaSecurityFilter.getExpression(
                         DocumentPermissionNames.USE,
                         FEED_FIELDS);
@@ -249,7 +249,7 @@ class TestMetaService extends StroomIntegrationTest {
                     user.getUuid(),
                     DocumentPermissionNames.READ);
 
-            securityContext.asUser(securityContext.createIdentity(user.getName()), () -> {
+            securityContext.asUser(securityContext.createIdentity(user.getSubjectId()), () -> {
                 final Optional<ExpressionOperator> readExpression = metaSecurityFilter.getExpression(
                         DocumentPermissionNames.READ,
                         FEED_FIELDS);
@@ -295,7 +295,7 @@ class TestMetaService extends StroomIntegrationTest {
                     user.getUuid(),
                     DocumentPermissionNames.READ);
 
-            securityContext.asUser(securityContext.createIdentity(user.getName()), () -> {
+            securityContext.asUser(securityContext.createIdentity(user.getSubjectId()), () -> {
                 final Optional<ExpressionOperator> readExpression = metaSecurityFilter.getExpression(
                         DocumentPermissionNames.READ,
                         FEED_FIELDS);

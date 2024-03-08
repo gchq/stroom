@@ -5,7 +5,11 @@ import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.explorer.client.presenter.TickBoxSelectionModel;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
+import stroom.explorer.shared.ExplorerNode.NodeInfo;
+import stroom.explorer.shared.NodeFlag;
 import stroom.svg.shared.SvgImage;
+import stroom.util.shared.GwtNullSafe;
+import stroom.widget.util.client.SvgImageUtil;
 
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.core.client.GWT;
@@ -17,14 +21,20 @@ import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.view.client.SelectionModel;
 
+import java.util.stream.Collectors;
+
 public class ExplorerCell extends AbstractCell<ExplorerNode> {
+
+    private static final String DESCENDANT_ISSUES_MSG = "Descendants have issues";
 
     private static Template template;
     private final SelectionModel<ExplorerNode> selectionModel;
     private TickBoxCell tickBoxCell;
+    private boolean showAlerts;
 
-    public ExplorerCell(final SelectionModel<ExplorerNode> selectionModel) {
+    public ExplorerCell(final SelectionModel<ExplorerNode> selectionModel, final boolean showAlerts) {
         this.selectionModel = selectionModel;
+        this.showAlerts = showAlerts;
 
         if (selectionModel != null && selectionModel instanceof TickBoxSelectionModel) {
             tickBoxCell = TickBoxCell.create(true, false);
@@ -47,68 +57,120 @@ public class ExplorerCell extends AbstractCell<ExplorerNode> {
         return getCellClassName() + "-tickBox";
     }
 
+    public void setShowAlerts(final boolean showAlerts) {
+        this.showAlerts = showAlerts;
+    }
+
     @Override
-    public void render(final Context context, final ExplorerNode item, final SafeHtmlBuilder sb) {
-        if (item != null) {
+    public void render(final Context context, final ExplorerNode node, final SafeHtmlBuilder sb) {
+        if (node != null) {
             final SafeHtmlBuilder content = new SafeHtmlBuilder();
 
             int expanderPadding = 4;
 
-            SafeHtml expanderIcon = SafeHtmlUtils.EMPTY_SAFE_HTML;
-            if (item.getNodeState() != null) {
-                switch (item.getNodeState()) {
-                    case LEAF:
-                        expanderIcon = SafeHtmlUtils.fromTrustedString("<svg></svg>");
-                        break;
-                    case OPEN:
-                        expanderIcon = SafeHtmlUtils.fromTrustedString(SvgImage.ARROW_DOWN.getSvg());
-                        break;
-                    case CLOSED:
-                        expanderIcon = SafeHtmlUtils.fromTrustedString(SvgImage.ARROW_RIGHT.getSvg());
-                        break;
-                    default:
-                        throw new RuntimeException("Unexpected state " + item.getNodeState());
-                }
+            SvgImage expanderIcon = null;
+            if (node.hasNodeFlag(NodeFlag.OPEN)) {
+                expanderIcon = SvgImage.ARROW_DOWN;
+            } else if (node.hasNodeFlag(NodeFlag.CLOSED)) {
+                expanderIcon = SvgImage.ARROW_RIGHT;
             }
 
-            int indent = item.getDepth();
+            int indent = node.getDepth();
             indent = expanderPadding + (indent * 17);
             final SafeStyles paddingLeft = SafeStylesUtils.fromTrustedString("padding-left:" + indent + "px;");
 
             // Add expander.
-            content.append(template.expander(getCellClassName() + "-expander", paddingLeft, expanderIcon));
+            SafeHtml expanderIconSafeHtml;
+            String className = getCellClassName() + "-expander";
+            if (expanderIcon != null) {
+                expanderIconSafeHtml = SafeHtmlUtils.fromTrustedString(expanderIcon.getSvg());
+                className += " " + expanderIcon.getClassName();
+            } else {
+                expanderIconSafeHtml = SvgImageUtil.emptySvg();
+            }
+
+            content.append(template.expander(
+                    className,
+                    paddingLeft,
+                    expanderIconSafeHtml));
 
             if (tickBoxCell != null) {
                 final SafeHtmlBuilder tb = new SafeHtmlBuilder();
-                tickBoxCell.render(context, getValue(item), tb);
+                tickBoxCell.render(context, getValue(node), tb);
 
                 final SafeHtml tickBoxHtml = template.div(getCellClassName() + "-tickBox", tb.toSafeHtml());
                 // Add tickbox
                 content.append(tickBoxHtml);
             }
 
-            if (item.getIcon() != null) {
+            if (node.getIcon() != null) {
                 // Add icon
-                content.append(template.icon(getCellClassName() + "-icon",
-                        item.getType(),
-                        SafeHtmlUtils.fromSafeConstant(item.getIcon().getSvg())));
+                final SafeHtml iconSafeHtml = SvgImageUtil.toSafeHtml(
+                        node.getType(),
+                        node.getIcon(),
+                        getCellClassName() + "-icon");
+                final SafeHtmlBuilder builder = new SafeHtmlBuilder().append(iconSafeHtml);
+
+                if (showAlerts) {
+                    if (node.hasDescendantNodeInfo()) {
+                        builder.append(SvgImageUtil.toSafeHtml(
+                                buildAlertText(node),
+                                SvgImage.ALERT_SIMPLE,
+                                "svgIcon", "small", getCellClassName() + "-alert-icon"));
+                    }
+                }
+
+                content.append(template.div(
+                        getCellClassName() + "-icon-wrapper",
+                        builder.toSafeHtml()));
             }
 
-            if (item.getDisplayValue() != null) {
+            if (node.getDisplayValue() != null) {
                 // Add text
                 content.append(template.div(getCellClassName() + "-text",
-                        SafeHtmlUtils.fromString(item.getDisplayValue())));
+                        SafeHtmlUtils.fromString(node.getDisplayValue())));
             }
 
             // If the item is a favourite and not part of the Favourites node, display a star next to it
-            if (item.getIsFavourite() && item.getRootNodeUuid() != null &&
-                    !ExplorerConstants.FAVOURITES_DOC_REF.getUuid().equals(item.getRootNodeUuid())) {
-                content.append(template.favIcon("svgIcon small",
+            if (node.hasNodeFlag(NodeFlag.FAVOURITE) && node.getRootNodeUuid() != null &&
+                    !ExplorerConstants.FAVOURITES_DOC_REF.getUuid().equals(node.getRootNodeUuid())) {
+                content.append(SvgImageUtil.toSafeHtml(
                         "Item is a favourite",
-                        SafeHtmlUtils.fromSafeConstant(SvgImage.FAVOURITES.getSvg())));
+                        SvgImage.FAVOURITES,
+                        "svgIcon", "small"));
             }
 
-            sb.append(template.outer(content.toSafeHtml()));
+            // We style the non-matches rather than the matches
+            final String filterMatchClass;
+            if (node.hasNodeFlag(NodeFlag.FILTER_MATCH)) {
+                filterMatchClass = getCellClassName() + "-" + "filter-match";
+            } else if (node.hasNodeFlag(NodeFlag.FILTER_NON_MATCH)) {
+                filterMatchClass = getCellClassName() + "-" + "filter-no-match";
+            } else {
+                filterMatchClass = "";
+            }
+
+            sb.append(template.outer(filterMatchClass, content.toSafeHtml()));
+        }
+    }
+
+    private String buildAlertText(final ExplorerNode explorerNode) {
+        if (explorerNode == null) {
+            return null;
+        } else {
+            if (explorerNode.hasNodeFlag(NodeFlag.DESCENDANT_NODE_INFO)) {
+                return DESCENDANT_ISSUES_MSG;
+            } else if (explorerNode.hasNodeInfo()) {
+                return GwtNullSafe.get(
+                        explorerNode,
+                        ExplorerNode::getNodeInfoList,
+                        nodeInfoList -> GwtNullSafe.stream(nodeInfoList)
+                                .sorted()
+                                .map(NodeInfo::toString)
+                                .collect(Collectors.joining("\n")));
+            } else {
+                return null;
+            }
         }
     }
 
@@ -127,21 +189,19 @@ public class ExplorerCell extends AbstractCell<ExplorerNode> {
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     interface Template extends SafeHtmlTemplates {
 
         @Template("<div class=\"{0}\" style=\"{1}\">{2}</div>")
         SafeHtml expander(String iconClass, SafeStyles styles, SafeHtml icon);
 
-        @Template("<div class=\"{0}\" title=\"{1}\">{2}</div>")
-        SafeHtml icon(String iconClass, String typeName, SafeHtml icon);
-
         @Template("<div class=\"{0}\">{1}</div>")
         SafeHtml div(String className, SafeHtml content);
 
-        @Template("<div class=\"{0}\" title=\"{1}\">{2}</div>")
-        SafeHtml favIcon(String iconClass, String title, SafeHtml icon);
-
-        @Template("<div class=\"explorerCell\">{0}</div>")
-        SafeHtml outer(SafeHtml content);
+        @Template("<div class=\"explorerCell {0}\">{1}</div>")
+        SafeHtml outer(String extraClassName, SafeHtml content);
     }
 }

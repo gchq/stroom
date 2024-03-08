@@ -1,0 +1,55 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:b="urn:import:stroom.widget.button.client"
+             xmlns:form="urn:import:stroom.widget.form.client">
+    <g:FlowPanel styleName="editNodeTags max form flex-column">
+
+        <form:FormGroup identity="editNodeTagsAddTags"
+                        label="Add/Filter Tag(s)"
+                        addStyleNames="editNodeTagsAddTagsFrmGrp dock-min form">
+            <g:FlowPanel styleName="max form dock-min">
+                <g:HTML styleName="editNodeTagsAddTagsLabel example-label">
+                    E.g. One tag '<code>extraction-pipeline</code>' or multiple tags '<code>system-x system-y</code>'.
+                </g:HTML>
+                <g:FlowPanel styleName="editNodeTagsAddTagsInputContainer flex-row dock-min form">
+                    <g:FlowPanel styleName="editNodeTagsAddTagsInputPanel flex-row dock-max form">
+                        <g:TextBox ui:field="textBox"
+                                   addStyleNames="editNodeTagsAddTagsInput form-control lower-case-input dock-max"/>
+                        <b:ButtonPanel ui:field="clearButtonPanel"
+                                       addStyleNames="align-center dock-min"/>
+                    </g:FlowPanel>
+                    <b:ButtonPanel ui:field="inputButtonPanel"
+                                   addStyleNames="align-center dock-min"/>
+                </g:FlowPanel>
+            </g:FlowPanel>
+        </form:FormGroup>
+
+        <g:FlowPanel styleName="editNodeTagsListsContainer form dock-max flex-row">
+            <form:FormGroup identity="editNodeTagsAllTags"
+                            addStyleNames="editNodeTagsAllTagsFrmGrp dock-max max">
+                <g:FlowPanel styleName="max form dock-max">
+                    <g:Label ui:field="editNodeTagsAllTagsLabel"
+                             addStyleNames="form-label dock-min">All known tags
+                    </g:Label>
+                    <g:ListBox ui:field="allTagsListBox"
+                               addStyleNames="form-control dock-max max"/>
+                </g:FlowPanel>
+            </form:FormGroup>
+
+            <b:ButtonPanel ui:field="nodeTagsButtonPanel"
+                           addStyleNames="form dock-min flex-column dock-min justify-content-center"/>
+
+            <form:FormGroup identity="editNodeTagsNodeTags"
+                            addStyleNames="editNodeTagsNodeTagsFrmGrp dock-max">
+                <g:FlowPanel styleName="max form">
+                    <g:Label ui:field="nodeTagsLabel"
+                             addStyleNames="form-label dock-min"/>
+                    <g:ListBox ui:field="nodeTagsListBox"
+                               addStyleNames="form-control dock-max max"/>
+                </g:FlowPanel>
+            </form:FormGroup>
+        </g:FlowPanel>
+
+    </g:FlowPanel>
+</ui:UiBinder>

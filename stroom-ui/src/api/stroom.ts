@@ -25,40 +25,6 @@ export interface AbstractFetchDataResult {
   type: string;
 }
 
-export interface AbstractField {
-  conditions?: (
-    | "CONTAINS"
-    | "EQUALS"
-    | "GREATER_THAN"
-    | "GREATER_THAN_OR_EQUAL_TO"
-    | "LESS_THAN"
-    | "LESS_THAN_OR_EQUAL_TO"
-    | "BETWEEN"
-    | "IN"
-    | "IN_DICTIONARY"
-    | "IN_FOLDER"
-    | "IS_DOC_REF"
-    | "IS_NULL"
-    | "IS_NOT_NULL"
-    | "MATCHES_REGEX"
-  )[];
-  fieldType?:
-    | "ID"
-    | "BOOLEAN"
-    | "INTEGER"
-    | "LONG"
-    | "FLOAT"
-    | "DOUBLE"
-    | "DATE"
-    | "TEXT"
-    | "KEYWORD"
-    | "IPV4_ADDRESS"
-    | "DOC_REF";
-  name?: string;
-  queryable?: boolean;
-  type: string;
-}
-
 export interface Account {
   comments?: string;
 
@@ -153,6 +119,11 @@ export type AddPermissionEvent = PermissionChangeEvent & {
   userUuid?: string;
 };
 
+export interface AddRemoveTagsRequest {
+  docRefs?: DocRef[];
+  tags?: string[];
+}
+
 export interface AnalyticDataShard {
   /** @format int64 */
   createTimeMs?: number;
@@ -163,110 +134,43 @@ export interface AnalyticDataShard {
   size?: number;
 }
 
-export interface AnalyticNotification {
-  analyticUuid?: string;
-  config?: AnalyticNotificationConfig;
-
-  /** @format int64 */
-  createTimeMs?: number;
-  createUser?: string;
-  enabled?: boolean;
-
-  /** @format int64 */
-  updateTimeMs?: number;
-  updateUser?: string;
-  uuid?: string;
+export interface AnalyticNotificationConfig {
+  destination?: AnalyticNotificationDestination;
+  destinationType?: "STREAM" | "EMAIL";
+  limitNotifications?: boolean;
 
   /** @format int32 */
-  version?: number;
+  maxNotifications?: number;
+  resumeAfter?: SimpleDuration;
 }
 
-export interface AnalyticNotificationConfig {
+export interface AnalyticNotificationDestination {
   type: string;
 }
 
-export type AnalyticNotificationEmailConfig = AnalyticNotificationConfig & {
-  emailAddress?: string;
-  timeToWaitForData?: SimpleDuration;
+export type AnalyticNotificationEmailDestination = AnalyticNotificationDestination & {
+  bcc?: string;
+  cc?: string;
+  to?: string;
 };
 
-export interface AnalyticNotificationRow {
-  analyticNotification?: AnalyticNotification;
-  analyticNotificationState?: AnalyticNotificationState;
-}
-
-export interface AnalyticNotificationState {
-  /** @format int64 */
-  lastExecutionTime?: number;
-  message?: string;
-  notificationUuid?: string;
-}
-
-export type AnalyticNotificationStreamConfig = AnalyticNotificationConfig & {
+export type AnalyticNotificationStreamDestination = AnalyticNotificationDestination & {
   destinationFeed?: DocRef;
-  timeToWaitForData?: SimpleDuration;
   useSourceFeedIfPossible?: boolean;
 };
 
-export interface AnalyticProcessorFilter {
-  analyticUuid?: string;
-
-  /** @format int64 */
-  createTimeMs?: number;
-  createUser?: string;
-  enabled?: boolean;
-
-  /** A logical addOperator term in a query expression tree */
-  expression?: ExpressionOperator;
-
-  /** @format int64 */
-  maxMetaCreateTimeMs?: number;
-
-  /** @format int64 */
-  minMetaCreateTimeMs?: number;
-  node?: string;
-
-  /** @format int64 */
-  updateTimeMs?: number;
-  updateUser?: string;
-  uuid?: string;
-
-  /** @format int32 */
-  version?: number;
-}
-
-export interface AnalyticProcessorFilterTracker {
-  /** @format int64 */
-  eventCount?: number;
-  filterUuid?: string;
-
-  /** @format int64 */
-  lastEventId?: number;
-
-  /** @format int64 */
-  lastEventTime?: number;
-
-  /** @format int64 */
-  lastMetaId?: number;
-
-  /** @format int64 */
-  lastPollMs?: number;
-
-  /** @format int32 */
-  lastPollTaskCount?: number;
-  message?: string;
-
-  /** @format int64 */
-  metaCount?: number;
+export interface AnalyticProcessConfig {
+  type: string;
 }
 
 export interface AnalyticRuleDoc {
-  analyticRuleType?: "EVENT" | "AGGREGATE";
+  analyticNotificationConfig?: AnalyticNotificationConfig;
+  analyticProcessConfig?: AnalyticProcessConfig;
+  analyticProcessType?: "STREAMING" | "TABLE_BUILDER" | "SCHEDULED_QUERY";
 
   /** @format int64 */
   createTimeMs?: number;
   createUser?: string;
-  dataRetention?: SimpleDuration;
   description?: string;
   languageVersion?: "STROOM_QL_VERSION_0_1" | "SIGMA";
   name?: string;
@@ -280,8 +184,27 @@ export interface AnalyticRuleDoc {
   version?: string;
 }
 
+export interface AnalyticTracker {
+  analyticTrackerData?: AnalyticTrackerData;
+  analyticUuid?: string;
+}
+
+export interface AnalyticTrackerData {
+  message?: string;
+  type: string;
+}
+
+export interface AnalyticUiDefaultConfig {
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
+  defaultDestinationFeed?: DocRef;
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
+  defaultErrorFeed?: DocRef;
+  defaultNode?: string;
+}
+
 export interface Annotation {
-  assignedTo?: string;
+  assignedTo?: UserName;
   comment?: string;
 
   /** @format int64 */
@@ -312,8 +235,8 @@ export interface AnnotationEntry {
   /** @format int64 */
   createTime?: number;
   createUser?: string;
-  data?: string;
   entryType?: string;
+  entryValue?: EntryValue;
 
   /** @format int64 */
   id?: number;
@@ -356,7 +279,7 @@ export interface ApiKeyResultPage {
   /** Details of the page of results being returned. */
   pageResponse?: PageResponse;
   qualifiedFilterInput?: string;
-  values?: ApiKey[];
+  values?: HashedApiKey[];
 }
 
 export interface Arg {
@@ -376,6 +299,7 @@ export interface AssignTasksRequest {
   /** @format int32 */
   count?: number;
   nodeName?: string;
+  sourceTaskId?: TaskId;
 }
 
 export interface AuthenticationState {
@@ -389,6 +313,47 @@ export interface Automate {
   refreshInterval?: string;
 }
 
+export type AwsBasicCredentials = AwsCredentials & { accessKeyId?: string; secretAccessKey?: string };
+
+export interface AwsCredentials {
+  type: string;
+}
+
+export interface AwsHttpConfig {
+  connectionTimeout?: string;
+  proxyConfiguration?: AwsProxyConfig;
+  trustAllCertificatesEnabled?: boolean;
+}
+
+export type AwsProfileCredentials = AwsCredentials & { profileFilePath?: string; profileName?: string };
+
+export interface AwsProxyConfig {
+  host?: string;
+  password?: string;
+
+  /** @format int32 */
+  port?: number;
+  scheme?: string;
+  useSystemPropertyValues?: boolean;
+  username?: string;
+}
+
+export type AwsSessionCredentials = AwsCredentials & {
+  accessKeyId?: string;
+  secretAccessKey?: string;
+  sessionToken?: string;
+};
+
+export type AwsWebCredentials = AwsCredentials & {
+  asyncCredentialUpdateEnabled?: boolean;
+  prefetchTime?: string;
+  roleArn?: string;
+  roleSessionName?: string;
+  sessionDuration?: string;
+  staleTime?: string;
+  webIdentityTokenFile?: string;
+};
+
 export interface Base64EncodedDocumentData {
   dataMap?: Record<string, string>;
 
@@ -396,7 +361,7 @@ export interface Base64EncodedDocumentData {
   docRef?: DocRef;
 }
 
-export type BooleanField = AbstractField;
+export type BooleanField = QueryField;
 
 export interface BuildInfo {
   /** @format int64 */
@@ -485,6 +450,11 @@ export interface CheckDocumentPermissionRequest {
 
 export type ClearDocumentPermissionsEvent = PermissionChangeEvent & { documentUuid?: string };
 
+export interface ClientCredentials {
+  clientId?: string;
+  clientSecret?: string;
+}
+
 export interface ClusterLockKey {
   /** @format int64 */
   creationTime?: number;
@@ -510,6 +480,58 @@ export interface ClusterNodeInfoItem {
   active?: boolean;
   master?: boolean;
   nodeName?: string;
+}
+
+/**
+ * Describes a field in a result set. The field can have various expressions applied to it, e.g. SUM(), along with sorting, filtering, formatting and grouping
+ */
+export interface Column {
+  /**
+   * The expression to use to generate the value for this field
+   * @example SUM(${count})
+   */
+  expression: string;
+
+  /** A pair of regular expression filters (inclusion and exclusion) to apply to the field.  Either or both can be supplied */
+  filter?: Filter;
+
+  /** Describes the formatting that will be applied to values in a field */
+  format?: Format;
+
+  /** @format int32 */
+  group?: number;
+  id?: string;
+  name?: string;
+
+  /** Describes the sorting applied to a field */
+  sort?: Sort;
+}
+
+export interface CompletionValue {
+  caption?: string;
+  meta?: string;
+
+  /** @format int32 */
+  score?: number;
+  tooltip?: string;
+  value?: string;
+}
+
+export interface CompletionsRequest {
+  /** @format int32 */
+  column?: number;
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
+  dataSourceRef?: DocRef;
+  pageRequest?: PageRequest;
+
+  /** @format int32 */
+  row?: number;
+  showAll?: boolean;
+  sort?: string;
+  sortList?: CriteriaFieldSort[];
+  stringMatch?: StringMatch;
+  text?: string;
 }
 
 export interface ComponentConfig {
@@ -617,9 +639,24 @@ export interface CreateApiKeyRequest {
 
 export interface CreateEntryRequest {
   annotation?: Annotation;
-  data?: string;
+  entryValue?: EntryValue;
   linkedEvents?: EventId[];
   type?: string;
+}
+
+export interface CreateHashedApiKeyRequest {
+  comments?: string;
+  enabled?: boolean;
+
+  /** @format int64 */
+  expireTimeMs?: number;
+  name?: string;
+  owner?: UserName;
+}
+
+export interface CreateHashedApiKeyResponse {
+  apiKey?: string;
+  hashedApiKey?: HashedApiKey;
 }
 
 export interface CreateProcessFilterRequest {
@@ -629,6 +666,9 @@ export interface CreateProcessFilterRequest {
   /** @format int64 */
   maxMetaCreateTimeMs?: number;
 
+  /** @format int32 */
+  maxProcessingTasks?: number;
+
   /** @format int64 */
   minMetaCreateTimeMs?: number;
 
@@ -637,6 +677,7 @@ export interface CreateProcessFilterRequest {
 
   /** @format int32 */
   priority?: number;
+  processorType?: "PIPELINE" | "STREAMING_ANALYTIC";
   queryData?: QueryData;
   reprocess?: boolean;
 }
@@ -681,7 +722,6 @@ export interface DashboardConfig {
   modelVersion?: string;
   parameters?: string;
   preferredSize?: Size;
-  tabVisibility?: "SHOW_ALL" | "HIDE_SINGLE" | "HIDE_ALL";
   timeRange?: TimeRange;
 }
 
@@ -729,6 +769,7 @@ export interface DashboardSearchResponse {
   /** A unique key to identify the instance of the search by. This key is used to identify multiple requests for the same search when running in incremental mode. */
   queryKey?: QueryKey;
   results?: Result[];
+  tokenError?: TokenError;
 }
 
 export interface DataInfoSection {
@@ -812,16 +853,7 @@ export interface DataRetentionRules {
   version?: string;
 }
 
-export interface DataSource {
-  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
-  defaultExtractionPipeline?: DocRef;
-
-  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
-  docRef?: DocRef;
-  fields?: AbstractField[];
-}
-
-export type DateField = AbstractField;
+export type DateField = QueryField;
 
 /**
  * The string formatting to apply to a date value
@@ -842,11 +874,23 @@ export interface DateTimeSettings {
   /** The local zone id to use when formatting date values in the search results. The value is the string form of a java.time.ZoneId */
   localZoneId: string;
 
+  /**
+   * The time in milliseconds since epoch to use as the reference time for relative date functions like `day()`. Typically this is the current time when the query is executed. If null the current time will be assumed.
+   * @format int64
+   */
+  referenceTime: number;
+
   /** The timezone to apply to a date time value */
   timeZone?: TimeZone;
 }
 
-export type DefaultLocation = Location;
+export interface DefaultLocation {
+  /** @format int32 */
+  colNo?: number;
+
+  /** @format int32 */
+  lineNo?: number;
+}
 
 export interface Dependency {
   /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
@@ -888,15 +932,18 @@ export interface DictionaryDoc {
   version?: string;
 }
 
+export interface DocContentHighlights {
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
+  docRef?: DocRef;
+  highlights?: StringMatchLocation[];
+  text?: string;
+}
+
 export interface DocContentMatch {
   /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   docRef?: DocRef;
-
-  /** @format int64 */
-  matchLength?: number;
-
-  /** @format int64 */
-  matchOffset?: number;
+  extension?: string;
+  location?: StringMatchLocation;
   sample?: string;
 }
 
@@ -923,7 +970,7 @@ export interface DocRef {
   uuid: string;
 }
 
-export type DocRefField = AbstractField & { docRefType?: string };
+export type DocRefField = QueryField;
 
 export interface DocRefInfo {
   /** @format int64 */
@@ -957,16 +1004,23 @@ export interface DocumentType {
     | "ADD"
     | "ADD_ABOVE"
     | "ADD_BELOW"
+    | "ADD_MULTIPLE"
     | "ALERT"
+    | "ALERT_SIMPLE"
     | "ARROW_DOWN"
+    | "ARROW_LEFT"
     | "ARROW_RIGHT"
     | "ARROW_UP"
+    | "AUTO_REFRESH"
     | "BACKWARD"
+    | "BORDERED_CIRCLE"
+    | "CANCEL"
     | "CASE_SENSITIVE"
     | "CLEAR"
     | "CLIPBOARD"
     | "CLOSE"
     | "CODE"
+    | "COLLAPSE_ALL"
     | "COLLAPSE_UP"
     | "COPY"
     | "DATABASE"
@@ -978,6 +1032,7 @@ export interface DocumentType {
     | "DOCUMENT_ANNOTATIONS_INDEX"
     | "DOCUMENT_DASHBOARD"
     | "DOCUMENT_DICTIONARY"
+    | "DOCUMENT_DOCUMENTATION"
     | "DOCUMENT_ELASTIC_CLUSTER"
     | "DOCUMENT_ELASTIC_INDEX"
     | "DOCUMENT_FAVOURITES"
@@ -1006,17 +1061,18 @@ export interface DocumentType {
     | "DOWN"
     | "DOWNLOAD"
     | "DROP_DOWN"
-    | "DROP_DOWN_DARK"
     | "EDIT"
     | "ELLIPSES_HORIZONTAL"
     | "ELLIPSES_VERTICAL"
     | "ERROR"
     | "EXCLAMATION"
+    | "EXPAND_ALL"
     | "EXPAND_DOWN"
     | "EXPLORER"
     | "FAST_BACKWARD"
     | "FAST_FORWARD"
     | "FATAL"
+    | "FATAL_DARK"
     | "FAVOURITES"
     | "FAVOURITES_OUTLINE"
     | "FEED"
@@ -1046,6 +1102,7 @@ export interface DocumentType {
     | "INSERT"
     | "JOBS"
     | "KEY"
+    | "LOCATE"
     | "LOCKED"
     | "LOGO"
     | "LOGOUT"
@@ -1053,11 +1110,13 @@ export interface DocumentType {
     | "MONITORING"
     | "MOVE"
     | "NODES"
+    | "OK"
     | "OO"
     | "OPEN"
     | "OPERATOR"
     | "PASSWORD"
     | "PAUSE"
+    | "PEN"
     | "PIPELINE_ELASTIC_INDEX"
     | "PIPELINE_FILE"
     | "PIPELINE_FILES"
@@ -1091,15 +1150,14 @@ export interface DocumentType {
     | "REMOVE"
     | "RESIZE"
     | "RESIZE_HANDLE"
-    | "RULESET"
     | "SAVE"
     | "SAVEAS"
     | "SEARCH"
-    | "SEARCH_DARK"
     | "SETTINGS"
     | "SHARD_CLOSE"
     | "SHARD_FLUSH"
     | "SHARE"
+    | "SHIELD"
     | "SHOW"
     | "SHOW_MENU"
     | "STEP"
@@ -1111,6 +1169,8 @@ export interface DocumentType {
     | "TABLE"
     | "TABLE_NESTED"
     | "TAB_CLOSE"
+    | "TAGS"
+    | "TEXT_WRAP"
     | "TICK"
     | "UNDO"
     | "UNLOCK"
@@ -1124,11 +1184,31 @@ export interface DocumentType {
 }
 
 export interface DocumentTypes {
-  nonSystemTypes?: DocumentType[];
+  types?: DocumentType[];
   visibleTypes?: DocumentType[];
 }
 
-export type DoubleField = AbstractField;
+export interface Documentation {
+  markdown?: string;
+}
+
+export interface DocumentationDoc {
+  /** @format int64 */
+  createTimeMs?: number;
+  createUser?: string;
+  data?: string;
+  documentation?: string;
+  name?: string;
+  type?: string;
+
+  /** @format int64 */
+  updateTimeMs?: number;
+  updateUser?: string;
+  uuid?: string;
+  version?: string;
+}
+
+export type DoubleField = QueryField;
 
 export interface DownloadQueryResultsRequest {
   componentId?: string;
@@ -1142,6 +1222,7 @@ export interface DownloadQueryResultsRequest {
 
 export interface DownloadSearchResultsRequest {
   componentId?: string;
+  downloadAllTables?: boolean;
   fileType?: "EXCEL" | "CSV" | "TSV";
 
   /** @format int32 */
@@ -1229,7 +1310,14 @@ export interface ElasticIndexTestResponse {
 }
 
 export interface EntityEvent {
-  action?: "CREATE" | "UPDATE" | "DELETE" | "CLEAR_CACHE";
+  action?:
+    | "CREATE"
+    | "UPDATE"
+    | "DELETE"
+    | "CLEAR_CACHE"
+    | "CREATE_EXPLORER_NODE"
+    | "UPDATE_EXPLORER_NODE"
+    | "DELETE_EXPLORER_NODE";
 
   /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   docRef?: DocRef;
@@ -1249,6 +1337,10 @@ export interface EntryCounts {
 
   /** @format int64 */
   rangeValueCount?: number;
+}
+
+export interface EntryValue {
+  type: string;
 }
 
 export type EventCoprocessorSettings = CoprocessorSettings & {
@@ -1288,179 +1380,6 @@ export interface Expander {
   leaf?: boolean;
 }
 
-export interface ExplorerDocContentMatch {
-  docContentMatch?: DocContentMatch;
-  icon?:
-    | "ADD"
-    | "ADD_ABOVE"
-    | "ADD_BELOW"
-    | "ALERT"
-    | "ARROW_DOWN"
-    | "ARROW_RIGHT"
-    | "ARROW_UP"
-    | "BACKWARD"
-    | "CASE_SENSITIVE"
-    | "CLEAR"
-    | "CLIPBOARD"
-    | "CLOSE"
-    | "CODE"
-    | "COLLAPSE_UP"
-    | "COPY"
-    | "DATABASE"
-    | "DELETE"
-    | "DEPENDENCIES"
-    | "DISABLE"
-    | "DOCUMENT_ANALYTIC_OUTPUT_STORE"
-    | "DOCUMENT_ANALYTIC_RULE"
-    | "DOCUMENT_ANNOTATIONS_INDEX"
-    | "DOCUMENT_DASHBOARD"
-    | "DOCUMENT_DICTIONARY"
-    | "DOCUMENT_ELASTIC_CLUSTER"
-    | "DOCUMENT_ELASTIC_INDEX"
-    | "DOCUMENT_FAVOURITES"
-    | "DOCUMENT_FEED"
-    | "DOCUMENT_FOLDER"
-    | "DOCUMENT_INDEX"
-    | "DOCUMENT_KAFKA_CONFIG"
-    | "DOCUMENT_PIPELINE"
-    | "DOCUMENT_QUERY"
-    | "DOCUMENT_RECEIVE_DATA_RULE_SET"
-    | "DOCUMENT_SCRIPT"
-    | "DOCUMENT_SEARCHABLE"
-    | "DOCUMENT_SELECT_ALL_OR_NONE"
-    | "DOCUMENT_SIGMA_RULE"
-    | "DOCUMENT_SOLR_INDEX"
-    | "DOCUMENT_STATISTIC_STORE"
-    | "DOCUMENT_STROOM_STATS_STORE"
-    | "DOCUMENT_SYSTEM"
-    | "DOCUMENT_TEXT_CONVERTER"
-    | "DOCUMENT_VIEW"
-    | "DOCUMENT_VISUALISATION"
-    | "DOCUMENT_XMLSCHEMA"
-    | "DOCUMENT_XSLT"
-    | "DOT"
-    | "DOUBLE_ARROW"
-    | "DOWN"
-    | "DOWNLOAD"
-    | "DROP_DOWN"
-    | "DROP_DOWN_DARK"
-    | "EDIT"
-    | "ELLIPSES_HORIZONTAL"
-    | "ELLIPSES_VERTICAL"
-    | "ERROR"
-    | "EXCLAMATION"
-    | "EXPAND_DOWN"
-    | "EXPLORER"
-    | "FAST_BACKWARD"
-    | "FAST_FORWARD"
-    | "FATAL"
-    | "FAVOURITES"
-    | "FAVOURITES_OUTLINE"
-    | "FEED"
-    | "FIELD"
-    | "FIELDS_EXPRESSION"
-    | "FIELDS_FILTER"
-    | "FIELDS_FORMAT"
-    | "FIELDS_GROUP"
-    | "FIELDS_SORTAZ"
-    | "FIELDS_SORTZA"
-    | "FILE"
-    | "FILE_FORMATTED"
-    | "FILE_RAW"
-    | "FILTER"
-    | "FIND"
-    | "FOLDER"
-    | "FOLDER_TREE"
-    | "FORMAT"
-    | "FORWARD"
-    | "FUNCTION"
-    | "GENERATE"
-    | "HELP"
-    | "HIDE"
-    | "HIDE_MENU"
-    | "HISTORY"
-    | "INFO"
-    | "INSERT"
-    | "JOBS"
-    | "KEY"
-    | "LOCKED"
-    | "LOGO"
-    | "LOGOUT"
-    | "MENU"
-    | "MONITORING"
-    | "MOVE"
-    | "NODES"
-    | "OO"
-    | "OPEN"
-    | "OPERATOR"
-    | "PASSWORD"
-    | "PAUSE"
-    | "PIPELINE_ELASTIC_INDEX"
-    | "PIPELINE_FILE"
-    | "PIPELINE_FILES"
-    | "PIPELINE_HADOOP"
-    | "PIPELINE_ID"
-    | "PIPELINE_INDEX"
-    | "PIPELINE_JSON"
-    | "PIPELINE_KAFKA"
-    | "PIPELINE_RECORD_COUNT"
-    | "PIPELINE_RECORD_OUTPUT"
-    | "PIPELINE_REFERENCE_DATA"
-    | "PIPELINE_SEARCH_OUTPUT"
-    | "PIPELINE_SOLR"
-    | "PIPELINE_SPLIT"
-    | "PIPELINE_STATISTICS"
-    | "PIPELINE_STREAM"
-    | "PIPELINE_STROOM_STATS"
-    | "PIPELINE_STROOM_STATS_STORE"
-    | "PIPELINE_TEXT"
-    | "PIPELINE_XML"
-    | "PIPELINE_XML_SEARCH"
-    | "PIPELINE_XSD"
-    | "PIPELINE_XSLT"
-    | "PLAY"
-    | "PROCESS"
-    | "PROPERTIES"
-    | "QUESTION"
-    | "RAW"
-    | "REFRESH"
-    | "REGEX"
-    | "REMOVE"
-    | "RESIZE"
-    | "RESIZE_HANDLE"
-    | "RULESET"
-    | "SAVE"
-    | "SAVEAS"
-    | "SEARCH"
-    | "SEARCH_DARK"
-    | "SETTINGS"
-    | "SHARD_CLOSE"
-    | "SHARD_FLUSH"
-    | "SHARE"
-    | "SHOW"
-    | "SHOW_MENU"
-    | "STEP"
-    | "STEPPING"
-    | "STEPPING_CIRCLE"
-    | "STEP_BACKWARD"
-    | "STEP_FORWARD"
-    | "STOP"
-    | "TABLE"
-    | "TABLE_NESTED"
-    | "TAB_CLOSE"
-    | "TICK"
-    | "UNDO"
-    | "UNLOCK"
-    | "UP"
-    | "UPLOAD"
-    | "USER"
-    | "USERS"
-    | "VOLUMES"
-    | "WARNING";
-  isFavourite?: boolean;
-  path?: string;
-}
-
 export interface ExplorerNode {
   children?: ExplorerNode[];
 
@@ -1470,16 +1389,23 @@ export interface ExplorerNode {
     | "ADD"
     | "ADD_ABOVE"
     | "ADD_BELOW"
+    | "ADD_MULTIPLE"
     | "ALERT"
+    | "ALERT_SIMPLE"
     | "ARROW_DOWN"
+    | "ARROW_LEFT"
     | "ARROW_RIGHT"
     | "ARROW_UP"
+    | "AUTO_REFRESH"
     | "BACKWARD"
+    | "BORDERED_CIRCLE"
+    | "CANCEL"
     | "CASE_SENSITIVE"
     | "CLEAR"
     | "CLIPBOARD"
     | "CLOSE"
     | "CODE"
+    | "COLLAPSE_ALL"
     | "COLLAPSE_UP"
     | "COPY"
     | "DATABASE"
@@ -1491,6 +1417,7 @@ export interface ExplorerNode {
     | "DOCUMENT_ANNOTATIONS_INDEX"
     | "DOCUMENT_DASHBOARD"
     | "DOCUMENT_DICTIONARY"
+    | "DOCUMENT_DOCUMENTATION"
     | "DOCUMENT_ELASTIC_CLUSTER"
     | "DOCUMENT_ELASTIC_INDEX"
     | "DOCUMENT_FAVOURITES"
@@ -1519,17 +1446,18 @@ export interface ExplorerNode {
     | "DOWN"
     | "DOWNLOAD"
     | "DROP_DOWN"
-    | "DROP_DOWN_DARK"
     | "EDIT"
     | "ELLIPSES_HORIZONTAL"
     | "ELLIPSES_VERTICAL"
     | "ERROR"
     | "EXCLAMATION"
+    | "EXPAND_ALL"
     | "EXPAND_DOWN"
     | "EXPLORER"
     | "FAST_BACKWARD"
     | "FAST_FORWARD"
     | "FATAL"
+    | "FATAL_DARK"
     | "FAVOURITES"
     | "FAVOURITES_OUTLINE"
     | "FEED"
@@ -1559,6 +1487,7 @@ export interface ExplorerNode {
     | "INSERT"
     | "JOBS"
     | "KEY"
+    | "LOCATE"
     | "LOCKED"
     | "LOGO"
     | "LOGOUT"
@@ -1566,11 +1495,13 @@ export interface ExplorerNode {
     | "MONITORING"
     | "MOVE"
     | "NODES"
+    | "OK"
     | "OO"
     | "OPEN"
     | "OPERATOR"
     | "PASSWORD"
     | "PAUSE"
+    | "PEN"
     | "PIPELINE_ELASTIC_INDEX"
     | "PIPELINE_FILE"
     | "PIPELINE_FILES"
@@ -1604,15 +1535,14 @@ export interface ExplorerNode {
     | "REMOVE"
     | "RESIZE"
     | "RESIZE_HANDLE"
-    | "RULESET"
     | "SAVE"
     | "SAVEAS"
     | "SEARCH"
-    | "SEARCH_DARK"
     | "SETTINGS"
     | "SHARD_CLOSE"
     | "SHARD_FLUSH"
     | "SHARE"
+    | "SHIELD"
     | "SHOW"
     | "SHOW_MENU"
     | "STEP"
@@ -1624,6 +1554,8 @@ export interface ExplorerNode {
     | "TABLE"
     | "TABLE_NESTED"
     | "TAB_CLOSE"
+    | "TAGS"
+    | "TEXT_WRAP"
     | "TICK"
     | "UNDO"
     | "UNLOCK"
@@ -1633,14 +1565,20 @@ export interface ExplorerNode {
     | "USERS"
     | "VOLUMES"
     | "WARNING";
-  isFavourite?: boolean;
   name?: string;
-  nodeState?: "OPEN" | "CLOSED" | "LEAF";
+  nodeFlags?: ("C" | "D" | "I" | "V" | "FM" | "FN" | "F" | "L" | "O")[];
+  nodeInfoList?: NodeInfo[];
   rootNodeUuid?: string;
-  tags?: string;
+  tags?: string[];
   type?: string;
   uniqueKey?: ExplorerNodeKey;
   uuid?: string;
+}
+
+export interface ExplorerNodeInfo {
+  docRefInfo?: DocRefInfo;
+  explorerNode?: ExplorerNode;
+  owners?: UserName[];
 }
 
 export interface ExplorerNodeKey {
@@ -1657,7 +1595,9 @@ export interface ExplorerNodePermissions {
 }
 
 export interface ExplorerServiceCopyRequest {
+  allowRename?: boolean;
   destinationFolder?: ExplorerNode;
+  docName?: string;
   explorerNodes?: ExplorerNode[];
   permissionInheritance?: "NONE" | "SOURCE" | "DESTINATION" | "COMBINED";
 }
@@ -1689,6 +1629,8 @@ export interface ExplorerTreeFilter {
   includedTypes?: string[];
   nameFilter?: string;
   nameFilterChange?: boolean;
+  nodeFlags?: ("C" | "D" | "I" | "V" | "FM" | "FN" | "F" | "L" | "O")[];
+  recentItems?: DocRef[];
   requiredPermissions?: string[];
   tags?: string[];
 }
@@ -1736,6 +1678,7 @@ export type ExpressionTerm = ExpressionItem & {
   condition?:
     | "CONTAINS"
     | "EQUALS"
+    | "NOT_EQUALS"
     | "GREATER_THAN"
     | "GREATER_THAN_OR_EQUAL_TO"
     | "LESS_THAN"
@@ -1752,6 +1695,15 @@ export type ExpressionTerm = ExpressionItem & {
   field?: string;
   value?: string;
 };
+
+export interface ExtendedUiConfig {
+  dependencyWarningsEnabled?: boolean;
+  externalIdentityProvider?: boolean;
+
+  /** @format int64 */
+  maxApiKeyExpiryAgeMs?: number;
+  uiConfig?: UiConfig;
+}
 
 export interface FeedDoc {
   classification?: string;
@@ -1776,6 +1728,7 @@ export interface FeedDoc {
   updateUser?: string;
   uuid?: string;
   version?: string;
+  volumeGroup?: string;
 }
 
 export interface FetchAllDocumentPermissionsRequest {
@@ -1808,6 +1761,24 @@ export interface FetchExplorerNodeResult {
   qualifiedFilterInput?: string;
   rootNodes?: ExplorerNode[];
   temporaryOpenedItems?: ExplorerNodeKey[];
+}
+
+export interface FetchExplorerNodesRequest {
+  ensureVisible?: ExplorerNodeKey[];
+  filter?: ExplorerTreeFilter;
+
+  /** @format int32 */
+  minDepth?: number;
+  openItems?: ExplorerNodeKey[];
+  showAlerts?: boolean;
+  temporaryOpenedItems?: ExplorerNodeKey[];
+}
+
+export interface FetchHighlightsRequest {
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
+  docRef?: DocRef;
+  extension?: string;
+  filter?: StringMatch;
 }
 
 export interface FetchLinkedScriptRequest {
@@ -1846,33 +1817,39 @@ export interface FetchPropertyTypesResult {
 export interface FetchSuggestionsRequest {
   /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   dataSource: DocRef;
-  field: AbstractField;
+  field: FieldInfo;
   text?: string;
 }
 
-/**
- * Describes a field in a result set. The field can have various expressions applied to it, e.g. SUM(), along with sorting, filtering, formatting and grouping
- */
-export interface Field {
-  /**
-   * The expression to use to generate the value for this field
-   * @example SUM(${count})
-   */
-  expression: string;
-
-  /** A pair of regular expression filters (inclusion and exclusion) to apply to the field.  Either or both can be supplied */
-  filter?: Filter;
-
-  /** Describes the formatting that will be applied to values in a field */
-  format?: Format;
-
-  /** @format int32 */
-  group?: number;
-  id?: string;
-  name?: string;
-
-  /** Describes the sorting applied to a field */
-  sort?: Sort;
+export interface FieldInfo {
+  conditions?:
+    | "'=', '!=', 'between', '>', '>=', '<', '<='"
+    | "'=', '!=', 'in', 'in dictionary', 'between', '>', '>=', '<', '<='"
+    | "'=', '!='"
+    | "'=', '!=', 'in', 'in dictionary'"
+    | "'is', 'in folder'"
+    | "'is', 'in folder', '=', '!=', 'in', 'in dictionary'"
+    | "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'"
+    | "'=', '!=', 'in', 'in dictionary', 'matches regex'"
+    | "'is', '=', '!='"
+    | "'between'"
+    | "'=', '!=', 'in'"
+    | "'=', '!=', 'in', 'in dictionary', 'is'";
+  docRefType?: string;
+  fieldName?: string;
+  fieldType?:
+    | "ID"
+    | "BOOLEAN"
+    | "INTEGER"
+    | "LONG"
+    | "FLOAT"
+    | "DOUBLE"
+    | "DATE"
+    | "TEXT"
+    | "KEYWORD"
+    | "IPV4_ADDRESS"
+    | "DOC_REF";
+  queryable?: boolean;
 }
 
 /**
@@ -1900,7 +1877,7 @@ export interface FilterFieldDefinition {
 
 export interface FilterUsersRequest {
   quickFilterInput?: string;
-  users?: SimpleUser[];
+  users?: UserName[];
 }
 
 export interface FindAnalyticDataShardCriteria {
@@ -1911,16 +1888,8 @@ export interface FindAnalyticDataShardCriteria {
   sortList?: CriteriaFieldSort[];
 }
 
-export interface FindAnalyticNotificationCriteria {
-  analyticDocUuid?: string;
-  pageRequest?: PageRequest;
-  quickFilterInput?: string;
-  sort?: string;
-  sortList?: CriteriaFieldSort[];
-}
-
-export interface FindAnalyticProcessorFilterCriteria {
-  analyticDocUuid?: string;
+export interface FindApiKeyCriteria {
+  owner?: UserName;
   pageRequest?: PageRequest;
   quickFilterInput?: string;
   sort?: string;
@@ -1948,30 +1917,214 @@ export interface FindElementDocRequest {
   properties?: PipelineProperty[];
 }
 
-export interface FindExplorerNodeCriteria {
-  ensureVisible?: ExplorerNodeKey[];
-  filter?: ExplorerTreeFilter;
-
-  /** @format int32 */
-  minDepth?: number;
-  openItems?: ExplorerNodeKey[];
-  temporaryOpenedItems?: ExplorerNodeKey[];
-}
-
-export interface FindExplorerNodeQuery {
-  matchCase?: boolean;
+export interface FindFieldInfoCriteria {
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
+  dataSourceRef?: DocRef;
   pageRequest?: PageRequest;
-  pattern?: string;
-  regex?: boolean;
   sort?: string;
   sortList?: CriteriaFieldSort[];
+  stringMatch?: StringMatch;
 }
 
 export interface FindFsVolumeCriteria {
+  group?: FsVolumeGroup;
   pageRequest?: PageRequest;
   selection?: SelectionVolumeUseStatus;
   sort?: string;
   sortList?: CriteriaFieldSort[];
+}
+
+export interface FindInContentRequest {
+  filter?: StringMatch;
+  pageRequest?: PageRequest;
+  sort?: string;
+  sortList?: CriteriaFieldSort[];
+}
+
+export interface FindInContentResult {
+  docContentMatch?: DocContentMatch;
+  icon?:
+    | "ADD"
+    | "ADD_ABOVE"
+    | "ADD_BELOW"
+    | "ADD_MULTIPLE"
+    | "ALERT"
+    | "ALERT_SIMPLE"
+    | "ARROW_DOWN"
+    | "ARROW_LEFT"
+    | "ARROW_RIGHT"
+    | "ARROW_UP"
+    | "AUTO_REFRESH"
+    | "BACKWARD"
+    | "BORDERED_CIRCLE"
+    | "CANCEL"
+    | "CASE_SENSITIVE"
+    | "CLEAR"
+    | "CLIPBOARD"
+    | "CLOSE"
+    | "CODE"
+    | "COLLAPSE_ALL"
+    | "COLLAPSE_UP"
+    | "COPY"
+    | "DATABASE"
+    | "DELETE"
+    | "DEPENDENCIES"
+    | "DISABLE"
+    | "DOCUMENT_ANALYTIC_OUTPUT_STORE"
+    | "DOCUMENT_ANALYTIC_RULE"
+    | "DOCUMENT_ANNOTATIONS_INDEX"
+    | "DOCUMENT_DASHBOARD"
+    | "DOCUMENT_DICTIONARY"
+    | "DOCUMENT_DOCUMENTATION"
+    | "DOCUMENT_ELASTIC_CLUSTER"
+    | "DOCUMENT_ELASTIC_INDEX"
+    | "DOCUMENT_FAVOURITES"
+    | "DOCUMENT_FEED"
+    | "DOCUMENT_FOLDER"
+    | "DOCUMENT_INDEX"
+    | "DOCUMENT_KAFKA_CONFIG"
+    | "DOCUMENT_PIPELINE"
+    | "DOCUMENT_QUERY"
+    | "DOCUMENT_RECEIVE_DATA_RULE_SET"
+    | "DOCUMENT_SCRIPT"
+    | "DOCUMENT_SEARCHABLE"
+    | "DOCUMENT_SELECT_ALL_OR_NONE"
+    | "DOCUMENT_SIGMA_RULE"
+    | "DOCUMENT_SOLR_INDEX"
+    | "DOCUMENT_STATISTIC_STORE"
+    | "DOCUMENT_STROOM_STATS_STORE"
+    | "DOCUMENT_SYSTEM"
+    | "DOCUMENT_TEXT_CONVERTER"
+    | "DOCUMENT_VIEW"
+    | "DOCUMENT_VISUALISATION"
+    | "DOCUMENT_XMLSCHEMA"
+    | "DOCUMENT_XSLT"
+    | "DOT"
+    | "DOUBLE_ARROW"
+    | "DOWN"
+    | "DOWNLOAD"
+    | "DROP_DOWN"
+    | "EDIT"
+    | "ELLIPSES_HORIZONTAL"
+    | "ELLIPSES_VERTICAL"
+    | "ERROR"
+    | "EXCLAMATION"
+    | "EXPAND_ALL"
+    | "EXPAND_DOWN"
+    | "EXPLORER"
+    | "FAST_BACKWARD"
+    | "FAST_FORWARD"
+    | "FATAL"
+    | "FATAL_DARK"
+    | "FAVOURITES"
+    | "FAVOURITES_OUTLINE"
+    | "FEED"
+    | "FIELD"
+    | "FIELDS_EXPRESSION"
+    | "FIELDS_FILTER"
+    | "FIELDS_FORMAT"
+    | "FIELDS_GROUP"
+    | "FIELDS_SORTAZ"
+    | "FIELDS_SORTZA"
+    | "FILE"
+    | "FILE_FORMATTED"
+    | "FILE_RAW"
+    | "FILTER"
+    | "FIND"
+    | "FOLDER"
+    | "FOLDER_TREE"
+    | "FORMAT"
+    | "FORWARD"
+    | "FUNCTION"
+    | "GENERATE"
+    | "HELP"
+    | "HIDE"
+    | "HIDE_MENU"
+    | "HISTORY"
+    | "INFO"
+    | "INSERT"
+    | "JOBS"
+    | "KEY"
+    | "LOCATE"
+    | "LOCKED"
+    | "LOGO"
+    | "LOGOUT"
+    | "MENU"
+    | "MONITORING"
+    | "MOVE"
+    | "NODES"
+    | "OK"
+    | "OO"
+    | "OPEN"
+    | "OPERATOR"
+    | "PASSWORD"
+    | "PAUSE"
+    | "PEN"
+    | "PIPELINE_ELASTIC_INDEX"
+    | "PIPELINE_FILE"
+    | "PIPELINE_FILES"
+    | "PIPELINE_HADOOP"
+    | "PIPELINE_ID"
+    | "PIPELINE_INDEX"
+    | "PIPELINE_JSON"
+    | "PIPELINE_KAFKA"
+    | "PIPELINE_RECORD_COUNT"
+    | "PIPELINE_RECORD_OUTPUT"
+    | "PIPELINE_REFERENCE_DATA"
+    | "PIPELINE_SEARCH_OUTPUT"
+    | "PIPELINE_SOLR"
+    | "PIPELINE_SPLIT"
+    | "PIPELINE_STATISTICS"
+    | "PIPELINE_STREAM"
+    | "PIPELINE_STROOM_STATS"
+    | "PIPELINE_STROOM_STATS_STORE"
+    | "PIPELINE_TEXT"
+    | "PIPELINE_XML"
+    | "PIPELINE_XML_SEARCH"
+    | "PIPELINE_XSD"
+    | "PIPELINE_XSLT"
+    | "PLAY"
+    | "PROCESS"
+    | "PROPERTIES"
+    | "QUESTION"
+    | "RAW"
+    | "REFRESH"
+    | "REGEX"
+    | "REMOVE"
+    | "RESIZE"
+    | "RESIZE_HANDLE"
+    | "SAVE"
+    | "SAVEAS"
+    | "SEARCH"
+    | "SETTINGS"
+    | "SHARD_CLOSE"
+    | "SHARD_FLUSH"
+    | "SHARE"
+    | "SHIELD"
+    | "SHOW"
+    | "SHOW_MENU"
+    | "STEP"
+    | "STEPPING"
+    | "STEPPING_CIRCLE"
+    | "STEP_BACKWARD"
+    | "STEP_FORWARD"
+    | "STOP"
+    | "TABLE"
+    | "TABLE_NESTED"
+    | "TAB_CLOSE"
+    | "TAGS"
+    | "TEXT_WRAP"
+    | "TICK"
+    | "UNDO"
+    | "UNLOCK"
+    | "UP"
+    | "UPLOAD"
+    | "USER"
+    | "USERS"
+    | "VOLUMES"
+    | "WARNING";
+  isFavourite?: boolean;
+  path?: string;
 }
 
 export interface FindIndexShardCriteria {
@@ -2011,6 +2164,199 @@ export interface FindNodeStatusCriteria {
   sortList?: CriteriaFieldSort[];
 }
 
+export interface FindRequest {
+  filter?: ExplorerTreeFilter;
+  pageRequest?: PageRequest;
+  sort?: string;
+  sortList?: CriteriaFieldSort[];
+}
+
+export interface FindResult {
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
+  docRef?: DocRef;
+  icon?:
+    | "ADD"
+    | "ADD_ABOVE"
+    | "ADD_BELOW"
+    | "ADD_MULTIPLE"
+    | "ALERT"
+    | "ALERT_SIMPLE"
+    | "ARROW_DOWN"
+    | "ARROW_LEFT"
+    | "ARROW_RIGHT"
+    | "ARROW_UP"
+    | "AUTO_REFRESH"
+    | "BACKWARD"
+    | "BORDERED_CIRCLE"
+    | "CANCEL"
+    | "CASE_SENSITIVE"
+    | "CLEAR"
+    | "CLIPBOARD"
+    | "CLOSE"
+    | "CODE"
+    | "COLLAPSE_ALL"
+    | "COLLAPSE_UP"
+    | "COPY"
+    | "DATABASE"
+    | "DELETE"
+    | "DEPENDENCIES"
+    | "DISABLE"
+    | "DOCUMENT_ANALYTIC_OUTPUT_STORE"
+    | "DOCUMENT_ANALYTIC_RULE"
+    | "DOCUMENT_ANNOTATIONS_INDEX"
+    | "DOCUMENT_DASHBOARD"
+    | "DOCUMENT_DICTIONARY"
+    | "DOCUMENT_DOCUMENTATION"
+    | "DOCUMENT_ELASTIC_CLUSTER"
+    | "DOCUMENT_ELASTIC_INDEX"
+    | "DOCUMENT_FAVOURITES"
+    | "DOCUMENT_FEED"
+    | "DOCUMENT_FOLDER"
+    | "DOCUMENT_INDEX"
+    | "DOCUMENT_KAFKA_CONFIG"
+    | "DOCUMENT_PIPELINE"
+    | "DOCUMENT_QUERY"
+    | "DOCUMENT_RECEIVE_DATA_RULE_SET"
+    | "DOCUMENT_SCRIPT"
+    | "DOCUMENT_SEARCHABLE"
+    | "DOCUMENT_SELECT_ALL_OR_NONE"
+    | "DOCUMENT_SIGMA_RULE"
+    | "DOCUMENT_SOLR_INDEX"
+    | "DOCUMENT_STATISTIC_STORE"
+    | "DOCUMENT_STROOM_STATS_STORE"
+    | "DOCUMENT_SYSTEM"
+    | "DOCUMENT_TEXT_CONVERTER"
+    | "DOCUMENT_VIEW"
+    | "DOCUMENT_VISUALISATION"
+    | "DOCUMENT_XMLSCHEMA"
+    | "DOCUMENT_XSLT"
+    | "DOT"
+    | "DOUBLE_ARROW"
+    | "DOWN"
+    | "DOWNLOAD"
+    | "DROP_DOWN"
+    | "EDIT"
+    | "ELLIPSES_HORIZONTAL"
+    | "ELLIPSES_VERTICAL"
+    | "ERROR"
+    | "EXCLAMATION"
+    | "EXPAND_ALL"
+    | "EXPAND_DOWN"
+    | "EXPLORER"
+    | "FAST_BACKWARD"
+    | "FAST_FORWARD"
+    | "FATAL"
+    | "FATAL_DARK"
+    | "FAVOURITES"
+    | "FAVOURITES_OUTLINE"
+    | "FEED"
+    | "FIELD"
+    | "FIELDS_EXPRESSION"
+    | "FIELDS_FILTER"
+    | "FIELDS_FORMAT"
+    | "FIELDS_GROUP"
+    | "FIELDS_SORTAZ"
+    | "FIELDS_SORTZA"
+    | "FILE"
+    | "FILE_FORMATTED"
+    | "FILE_RAW"
+    | "FILTER"
+    | "FIND"
+    | "FOLDER"
+    | "FOLDER_TREE"
+    | "FORMAT"
+    | "FORWARD"
+    | "FUNCTION"
+    | "GENERATE"
+    | "HELP"
+    | "HIDE"
+    | "HIDE_MENU"
+    | "HISTORY"
+    | "INFO"
+    | "INSERT"
+    | "JOBS"
+    | "KEY"
+    | "LOCATE"
+    | "LOCKED"
+    | "LOGO"
+    | "LOGOUT"
+    | "MENU"
+    | "MONITORING"
+    | "MOVE"
+    | "NODES"
+    | "OK"
+    | "OO"
+    | "OPEN"
+    | "OPERATOR"
+    | "PASSWORD"
+    | "PAUSE"
+    | "PEN"
+    | "PIPELINE_ELASTIC_INDEX"
+    | "PIPELINE_FILE"
+    | "PIPELINE_FILES"
+    | "PIPELINE_HADOOP"
+    | "PIPELINE_ID"
+    | "PIPELINE_INDEX"
+    | "PIPELINE_JSON"
+    | "PIPELINE_KAFKA"
+    | "PIPELINE_RECORD_COUNT"
+    | "PIPELINE_RECORD_OUTPUT"
+    | "PIPELINE_REFERENCE_DATA"
+    | "PIPELINE_SEARCH_OUTPUT"
+    | "PIPELINE_SOLR"
+    | "PIPELINE_SPLIT"
+    | "PIPELINE_STATISTICS"
+    | "PIPELINE_STREAM"
+    | "PIPELINE_STROOM_STATS"
+    | "PIPELINE_STROOM_STATS_STORE"
+    | "PIPELINE_TEXT"
+    | "PIPELINE_XML"
+    | "PIPELINE_XML_SEARCH"
+    | "PIPELINE_XSD"
+    | "PIPELINE_XSLT"
+    | "PLAY"
+    | "PROCESS"
+    | "PROPERTIES"
+    | "QUESTION"
+    | "RAW"
+    | "REFRESH"
+    | "REGEX"
+    | "REMOVE"
+    | "RESIZE"
+    | "RESIZE_HANDLE"
+    | "SAVE"
+    | "SAVEAS"
+    | "SEARCH"
+    | "SETTINGS"
+    | "SHARD_CLOSE"
+    | "SHARD_FLUSH"
+    | "SHARE"
+    | "SHIELD"
+    | "SHOW"
+    | "SHOW_MENU"
+    | "STEP"
+    | "STEPPING"
+    | "STEPPING_CIRCLE"
+    | "STEP_BACKWARD"
+    | "STEP_FORWARD"
+    | "STOP"
+    | "TABLE"
+    | "TABLE_NESTED"
+    | "TAB_CLOSE"
+    | "TAGS"
+    | "TEXT_WRAP"
+    | "TICK"
+    | "UNDO"
+    | "UNLOCK"
+    | "UP"
+    | "UPLOAD"
+    | "USER"
+    | "USERS"
+    | "VOLUMES"
+    | "WARNING";
+  path?: string;
+}
+
 export interface FindResultStoreCriteria {
   pageRequest?: PageRequest;
   quickFilterInput?: string;
@@ -2023,11 +2369,11 @@ export interface FindStoredQueryCriteria {
   dashboardUuid?: string;
   favourite?: boolean;
   name?: StringCriteria;
+  ownerUuid?: string;
   pageRequest?: PageRequest;
   requiredPermission?: string;
   sort?: string;
   sortList?: CriteriaFieldSort[];
-  userId?: string;
 }
 
 export interface FindTaskCriteria {
@@ -2068,9 +2414,9 @@ export interface FindUserNameCriteria {
 /**
  * A result structure used primarily for visualisation data
  */
-export type FlatResult = Result & { size?: number; structure?: Field[]; values?: object[][] };
+export type FlatResult = Result & { size?: number; structure?: Column[]; values?: object[][] };
 
-export type FloatField = AbstractField;
+export type FloatField = QueryField;
 
 /**
  * Describes the formatting that will be applied to values in a field
@@ -2102,6 +2448,8 @@ export interface FsVolume {
   /** @format int32 */
   id?: number;
   path?: string;
+  s3ClientConfig?: S3ClientConfig;
+  s3ClientConfigData?: string;
   status?: "ACTIVE" | "INACTIVE" | "CLOSED";
 
   /** @format int64 */
@@ -2110,7 +2458,28 @@ export interface FsVolume {
 
   /** @format int32 */
   version?: number;
+
+  /** @format int32 */
+  volumeGroupId?: number;
   volumeState?: FsVolumeState;
+  volumeType?: "STANDARD" | "S3";
+}
+
+export interface FsVolumeGroup {
+  /** @format int64 */
+  createTimeMs?: number;
+  createUser?: string;
+
+  /** @format int32 */
+  id?: number;
+  name?: string;
+
+  /** @format int64 */
+  updateTimeMs?: number;
+  updateUser?: string;
+
+  /** @format int32 */
+  version?: number;
 }
 
 export interface FsVolumeState {
@@ -2131,18 +2500,6 @@ export interface FsVolumeState {
 
   /** @format int32 */
   version?: number;
-}
-
-export interface FunctionSignature {
-  aliases?: string[];
-  args?: Arg[];
-  categoryPath?: string[];
-  description?: string;
-  helpAnchor?: string;
-  name?: string;
-  overloadType?: "NOT_OVERLOADED" | "OVERLOADED_IN_CATEGORY" | "OVERLOADED_GLOBALLY";
-  returnDescription?: string;
-  returnType?: "UNKNOWN" | "BOOLEAN" | "DOUBLE" | "ERROR" | "INTEGER" | "LONG" | "NULL" | "NUMBER" | "STRING";
 }
 
 export interface GetAnalyticShardDataRequest {
@@ -2175,8 +2532,10 @@ export interface GetFeedStatusResponse {
     | "406 - 200 - Unknown compression"
     | "401 - 300 - Client Certificate Required"
     | "401 - 301 - Client Token Required"
-    | "403 - 310 - Client Certificate not authorised"
-    | "403 - 311 - Client Token not authorised"
+    | "401 - 302 - Client Token or Certificate Required"
+    | "401 - 310 - Client Certificate failed authentication"
+    | "401 - 311 - Client Token failed authentication"
+    | "401 - 312 - Client Token or Certificate failed authentication"
     | "500 - 400 - Compressed stream invalid"
     | "500 - 999 - Unknown error";
 }
@@ -2207,9 +2566,35 @@ export interface GlobalConfigCriteria {
   sortList?: CriteriaFieldSort[];
 }
 
+export interface HashedApiKey {
+  apiKeyHash?: string;
+  apiKeyPrefix?: string;
+  comments?: string;
+
+  /** @format int64 */
+  createTimeMs?: number;
+  createUser?: string;
+  enabled?: boolean;
+
+  /** @format int64 */
+  expireTimeMs?: number;
+
+  /** @format int32 */
+  id?: number;
+  name?: string;
+  owner?: UserName;
+
+  /** @format int64 */
+  updateTimeMs?: number;
+  updateUser?: string;
+
+  /** @format int32 */
+  version?: number;
+}
+
 export type HoppingWindow = Window & { advanceSize?: string; timeField?: string; windowSize?: string };
 
-export type IdField = AbstractField;
+export type IdField = QueryField;
 
 export interface ImportConfigRequest {
   confirmList?: ImportState[];
@@ -2398,9 +2783,9 @@ export interface InfoPopupConfig {
   validationRegex?: string;
 }
 
-export type IntegerField = AbstractField;
+export type IntegerField = QueryField;
 
-export type IpV4AddressField = AbstractField;
+export type IpV4AddressField = QueryField;
 
 export interface Job {
   advanced?: boolean;
@@ -2476,7 +2861,7 @@ export interface KafkaConfigDoc {
 
 export type KeyValueInputComponentSettings = ComponentSettings & { text?: string };
 
-export type KeywordField = AbstractField;
+export type KeywordField = QueryField;
 
 export interface LayoutConfig {
   preferredSize?: Size;
@@ -2546,7 +2931,7 @@ export interface LoginResponse {
   requirePasswordChange?: boolean;
 }
 
-export type LongField = AbstractField;
+export type LongField = QueryField;
 
 export interface MapDefinition {
   mapName?: string;
@@ -2619,15 +3004,31 @@ export interface Node {
   version?: number;
 }
 
+export interface NodeInfo {
+  description?: string;
+  severity?: "INFO" | "WARN" | "ERROR" | "FATAL";
+}
+
+export interface NodeMonitoringConfig {
+  /**
+   * @format int32
+   * @min 1
+   */
+  pingMaxThreshold?: number;
+
+  /**
+   * @format int32
+   * @min 1
+   */
+  pingWarnThreshold?: number;
+}
+
 export interface NodeSearchTask {
   /** The client date/time settings */
   dateTimeSettings?: DateTimeSettings;
 
   /** A unique key to identify the instance of the search by. This key is used to identify multiple requests for the same search when running in incremental mode. */
   key?: QueryKey;
-
-  /** @format int64 */
-  now?: number;
 
   /** The query terms for the search */
   query?: Query;
@@ -2752,6 +3153,11 @@ export interface PermissionChangeEvent {
   type: string;
 }
 
+export interface PermissionChangeImpactSummary {
+  impactDetail?: string;
+  impactSummary?: string;
+}
+
 export interface PermissionChangeRequest {
   event?: PermissionChangeEvent;
 }
@@ -2795,16 +3201,23 @@ export interface PipelineElementType {
     | "ADD"
     | "ADD_ABOVE"
     | "ADD_BELOW"
+    | "ADD_MULTIPLE"
     | "ALERT"
+    | "ALERT_SIMPLE"
     | "ARROW_DOWN"
+    | "ARROW_LEFT"
     | "ARROW_RIGHT"
     | "ARROW_UP"
+    | "AUTO_REFRESH"
     | "BACKWARD"
+    | "BORDERED_CIRCLE"
+    | "CANCEL"
     | "CASE_SENSITIVE"
     | "CLEAR"
     | "CLIPBOARD"
     | "CLOSE"
     | "CODE"
+    | "COLLAPSE_ALL"
     | "COLLAPSE_UP"
     | "COPY"
     | "DATABASE"
@@ -2816,6 +3229,7 @@ export interface PipelineElementType {
     | "DOCUMENT_ANNOTATIONS_INDEX"
     | "DOCUMENT_DASHBOARD"
     | "DOCUMENT_DICTIONARY"
+    | "DOCUMENT_DOCUMENTATION"
     | "DOCUMENT_ELASTIC_CLUSTER"
     | "DOCUMENT_ELASTIC_INDEX"
     | "DOCUMENT_FAVOURITES"
@@ -2844,17 +3258,18 @@ export interface PipelineElementType {
     | "DOWN"
     | "DOWNLOAD"
     | "DROP_DOWN"
-    | "DROP_DOWN_DARK"
     | "EDIT"
     | "ELLIPSES_HORIZONTAL"
     | "ELLIPSES_VERTICAL"
     | "ERROR"
     | "EXCLAMATION"
+    | "EXPAND_ALL"
     | "EXPAND_DOWN"
     | "EXPLORER"
     | "FAST_BACKWARD"
     | "FAST_FORWARD"
     | "FATAL"
+    | "FATAL_DARK"
     | "FAVOURITES"
     | "FAVOURITES_OUTLINE"
     | "FEED"
@@ -2884,6 +3299,7 @@ export interface PipelineElementType {
     | "INSERT"
     | "JOBS"
     | "KEY"
+    | "LOCATE"
     | "LOCKED"
     | "LOGO"
     | "LOGOUT"
@@ -2891,11 +3307,13 @@ export interface PipelineElementType {
     | "MONITORING"
     | "MOVE"
     | "NODES"
+    | "OK"
     | "OO"
     | "OPEN"
     | "OPERATOR"
     | "PASSWORD"
     | "PAUSE"
+    | "PEN"
     | "PIPELINE_ELASTIC_INDEX"
     | "PIPELINE_FILE"
     | "PIPELINE_FILES"
@@ -2929,15 +3347,14 @@ export interface PipelineElementType {
     | "REMOVE"
     | "RESIZE"
     | "RESIZE_HANDLE"
-    | "RULESET"
     | "SAVE"
     | "SAVEAS"
     | "SEARCH"
-    | "SEARCH_DARK"
     | "SETTINGS"
     | "SHARD_CLOSE"
     | "SHARD_FLUSH"
     | "SHARE"
+    | "SHIELD"
     | "SHOW"
     | "SHOW_MENU"
     | "STEP"
@@ -2949,6 +3366,8 @@ export interface PipelineElementType {
     | "TABLE"
     | "TABLE_NESTED"
     | "TAB_CLOSE"
+    | "TAGS"
+    | "TEXT_WRAP"
     | "TICK"
     | "UNDO"
     | "UNLOCK"
@@ -3093,7 +3512,7 @@ export interface Processor {
   id?: number;
   pipelineName?: string;
   pipelineUuid?: string;
-  taskType?: string;
+  processorType?: "PIPELINE" | "STREAMING_ANALYTIC";
 
   /** @format int64 */
   updateTimeMs?: number;
@@ -3118,6 +3537,9 @@ export interface ProcessorFilter {
   /** @format int64 */
   maxMetaCreateTimeMs?: number;
 
+  /** @format int32 */
+  maxProcessingTasks?: number;
+
   /** @format int64 */
   minMetaCreateTimeMs?: number;
   pipelineName?: string;
@@ -3127,6 +3549,7 @@ export interface ProcessorFilter {
   priority?: number;
   processor?: Processor;
   processorFilterTracker?: ProcessorFilterTracker;
+  processorType?: "PIPELINE" | "STREAMING_ANALYTIC";
   processorUuid?: string;
   queryData?: QueryData;
   reprocess?: boolean;
@@ -3140,7 +3563,7 @@ export interface ProcessorFilter {
   version?: number;
 }
 
-export type ProcessorFilterRow = ProcessorListRow & { processorFilter?: ProcessorFilter };
+export type ProcessorFilterRow = ProcessorListRow & { ownerDisplayName?: string; processorFilter?: ProcessorFilter };
 
 export interface ProcessorFilterTracker {
   /** @format int64 */
@@ -3253,6 +3676,15 @@ export interface PropertyPath {
   parentParts?: string[];
 }
 
+export type QLVisResult = Result & { dataPoints?: number; jsonData?: string; visSettings?: QLVisSettings };
+
+export interface QLVisSettings {
+  json?: string;
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
+  visualisation?: DocRef;
+}
+
 /**
  * The query terms for the search
  */
@@ -3276,7 +3708,9 @@ export type QueryComponentSettings = ComponentSettings & {
 };
 
 export interface QueryConfig {
+  dashboardPipelineSelectorIncludedTags?: string[];
   infoPopup?: InfoPopupConfig;
+  viewPipelineSelectorIncludedTags?: string[];
 }
 
 export interface QueryContext {
@@ -3312,6 +3746,264 @@ export interface QueryDoc {
   updateUser?: string;
   uuid?: string;
   version?: string;
+}
+
+export interface QueryField {
+  conditionSet?:
+    | "'=', '!=', 'between', '>', '>=', '<', '<='"
+    | "'=', '!=', 'in', 'in dictionary', 'between', '>', '>=', '<', '<='"
+    | "'=', '!='"
+    | "'=', '!=', 'in', 'in dictionary'"
+    | "'is', 'in folder'"
+    | "'is', 'in folder', '=', '!=', 'in', 'in dictionary'"
+    | "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'"
+    | "'=', '!=', 'in', 'in dictionary', 'matches regex'"
+    | "'is', '=', '!='"
+    | "'between'"
+    | "'=', '!=', 'in'"
+    | "'=', '!=', 'in', 'in dictionary', 'is'";
+  docRefType?: string;
+  fieldType?:
+    | "ID"
+    | "BOOLEAN"
+    | "INTEGER"
+    | "LONG"
+    | "FLOAT"
+    | "DOUBLE"
+    | "DATE"
+    | "TEXT"
+    | "KEYWORD"
+    | "IPV4_ADDRESS"
+    | "DOC_REF";
+  name?: string;
+  queryable?: boolean;
+  type: string;
+}
+
+export interface QueryHelpData {
+  type: string;
+}
+
+export type QueryHelpDataSource = QueryHelpData & { docRef?: DocRef };
+
+export interface QueryHelpDetail {
+  documentation?: string;
+  insertText?: string;
+  insertType?: "PLAIN_TEXT" | "SNIPPET" | "BLANK" | "NOT_INSERTABLE";
+}
+
+export type QueryHelpField = QueryHelpData & { fieldInfo?: FieldInfo };
+
+export type QueryHelpFunctionSignature = QueryHelpData & {
+  aliases?: string[];
+  args?: Arg[];
+  categoryPath?: string[];
+  description?: string;
+  helpAnchor?: string;
+  name?: string;
+  overloadType?: "NOT_OVERLOADED" | "OVERLOADED_IN_CATEGORY" | "OVERLOADED_GLOBALLY";
+  returnDescription?: string;
+  returnType?: "UNKNOWN" | "BOOLEAN" | "DOUBLE" | "ERROR" | "INTEGER" | "LONG" | "NULL" | "NUMBER" | "STRING";
+};
+
+export interface QueryHelpRequest {
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
+  dataSourceRef?: DocRef;
+  pageRequest?: PageRequest;
+  parentPath?: string;
+  query?: string;
+  showAll?: boolean;
+  sort?: string;
+  sortList?: CriteriaFieldSort[];
+  stringMatch?: StringMatch;
+}
+
+export interface QueryHelpRow {
+  data?: QueryHelpData;
+  hasChildren?: boolean;
+  icon?:
+    | "ADD"
+    | "ADD_ABOVE"
+    | "ADD_BELOW"
+    | "ADD_MULTIPLE"
+    | "ALERT"
+    | "ALERT_SIMPLE"
+    | "ARROW_DOWN"
+    | "ARROW_LEFT"
+    | "ARROW_RIGHT"
+    | "ARROW_UP"
+    | "AUTO_REFRESH"
+    | "BACKWARD"
+    | "BORDERED_CIRCLE"
+    | "CANCEL"
+    | "CASE_SENSITIVE"
+    | "CLEAR"
+    | "CLIPBOARD"
+    | "CLOSE"
+    | "CODE"
+    | "COLLAPSE_ALL"
+    | "COLLAPSE_UP"
+    | "COPY"
+    | "DATABASE"
+    | "DELETE"
+    | "DEPENDENCIES"
+    | "DISABLE"
+    | "DOCUMENT_ANALYTIC_OUTPUT_STORE"
+    | "DOCUMENT_ANALYTIC_RULE"
+    | "DOCUMENT_ANNOTATIONS_INDEX"
+    | "DOCUMENT_DASHBOARD"
+    | "DOCUMENT_DICTIONARY"
+    | "DOCUMENT_DOCUMENTATION"
+    | "DOCUMENT_ELASTIC_CLUSTER"
+    | "DOCUMENT_ELASTIC_INDEX"
+    | "DOCUMENT_FAVOURITES"
+    | "DOCUMENT_FEED"
+    | "DOCUMENT_FOLDER"
+    | "DOCUMENT_INDEX"
+    | "DOCUMENT_KAFKA_CONFIG"
+    | "DOCUMENT_PIPELINE"
+    | "DOCUMENT_QUERY"
+    | "DOCUMENT_RECEIVE_DATA_RULE_SET"
+    | "DOCUMENT_SCRIPT"
+    | "DOCUMENT_SEARCHABLE"
+    | "DOCUMENT_SELECT_ALL_OR_NONE"
+    | "DOCUMENT_SIGMA_RULE"
+    | "DOCUMENT_SOLR_INDEX"
+    | "DOCUMENT_STATISTIC_STORE"
+    | "DOCUMENT_STROOM_STATS_STORE"
+    | "DOCUMENT_SYSTEM"
+    | "DOCUMENT_TEXT_CONVERTER"
+    | "DOCUMENT_VIEW"
+    | "DOCUMENT_VISUALISATION"
+    | "DOCUMENT_XMLSCHEMA"
+    | "DOCUMENT_XSLT"
+    | "DOT"
+    | "DOUBLE_ARROW"
+    | "DOWN"
+    | "DOWNLOAD"
+    | "DROP_DOWN"
+    | "EDIT"
+    | "ELLIPSES_HORIZONTAL"
+    | "ELLIPSES_VERTICAL"
+    | "ERROR"
+    | "EXCLAMATION"
+    | "EXPAND_ALL"
+    | "EXPAND_DOWN"
+    | "EXPLORER"
+    | "FAST_BACKWARD"
+    | "FAST_FORWARD"
+    | "FATAL"
+    | "FATAL_DARK"
+    | "FAVOURITES"
+    | "FAVOURITES_OUTLINE"
+    | "FEED"
+    | "FIELD"
+    | "FIELDS_EXPRESSION"
+    | "FIELDS_FILTER"
+    | "FIELDS_FORMAT"
+    | "FIELDS_GROUP"
+    | "FIELDS_SORTAZ"
+    | "FIELDS_SORTZA"
+    | "FILE"
+    | "FILE_FORMATTED"
+    | "FILE_RAW"
+    | "FILTER"
+    | "FIND"
+    | "FOLDER"
+    | "FOLDER_TREE"
+    | "FORMAT"
+    | "FORWARD"
+    | "FUNCTION"
+    | "GENERATE"
+    | "HELP"
+    | "HIDE"
+    | "HIDE_MENU"
+    | "HISTORY"
+    | "INFO"
+    | "INSERT"
+    | "JOBS"
+    | "KEY"
+    | "LOCATE"
+    | "LOCKED"
+    | "LOGO"
+    | "LOGOUT"
+    | "MENU"
+    | "MONITORING"
+    | "MOVE"
+    | "NODES"
+    | "OK"
+    | "OO"
+    | "OPEN"
+    | "OPERATOR"
+    | "PASSWORD"
+    | "PAUSE"
+    | "PEN"
+    | "PIPELINE_ELASTIC_INDEX"
+    | "PIPELINE_FILE"
+    | "PIPELINE_FILES"
+    | "PIPELINE_HADOOP"
+    | "PIPELINE_ID"
+    | "PIPELINE_INDEX"
+    | "PIPELINE_JSON"
+    | "PIPELINE_KAFKA"
+    | "PIPELINE_RECORD_COUNT"
+    | "PIPELINE_RECORD_OUTPUT"
+    | "PIPELINE_REFERENCE_DATA"
+    | "PIPELINE_SEARCH_OUTPUT"
+    | "PIPELINE_SOLR"
+    | "PIPELINE_SPLIT"
+    | "PIPELINE_STATISTICS"
+    | "PIPELINE_STREAM"
+    | "PIPELINE_STROOM_STATS"
+    | "PIPELINE_STROOM_STATS_STORE"
+    | "PIPELINE_TEXT"
+    | "PIPELINE_XML"
+    | "PIPELINE_XML_SEARCH"
+    | "PIPELINE_XSD"
+    | "PIPELINE_XSLT"
+    | "PLAY"
+    | "PROCESS"
+    | "PROPERTIES"
+    | "QUESTION"
+    | "RAW"
+    | "REFRESH"
+    | "REGEX"
+    | "REMOVE"
+    | "RESIZE"
+    | "RESIZE_HANDLE"
+    | "SAVE"
+    | "SAVEAS"
+    | "SEARCH"
+    | "SETTINGS"
+    | "SHARD_CLOSE"
+    | "SHARD_FLUSH"
+    | "SHARE"
+    | "SHIELD"
+    | "SHOW"
+    | "SHOW_MENU"
+    | "STEP"
+    | "STEPPING"
+    | "STEPPING_CIRCLE"
+    | "STEP_BACKWARD"
+    | "STEP_FORWARD"
+    | "STOP"
+    | "TABLE"
+    | "TABLE_NESTED"
+    | "TAB_CLOSE"
+    | "TAGS"
+    | "TEXT_WRAP"
+    | "TICK"
+    | "UNDO"
+    | "UNLOCK"
+    | "UP"
+    | "UPLOAD"
+    | "USER"
+    | "USERS"
+    | "VOLUMES"
+    | "WARNING";
+  id?: string;
+  title?: string;
+  type?: "DATA_SOURCE" | "FIELD" | "FUNCTION" | "TITLE" | "STRUCTURE";
 }
 
 /**
@@ -3389,7 +4081,7 @@ export interface ReceiveDataRules {
   createTimeMs?: number;
   createUser?: string;
   description?: string;
-  fields?: AbstractField[];
+  fields?: QueryField[];
   name?: string;
   rules?: ReceiveDataRule[];
   type?: string;
@@ -3520,19 +4212,10 @@ export interface ResultPageAnalyticDataShard {
 /**
  * A page of results.
  */
-export interface ResultPageAnalyticNotificationRow {
+export interface ResultPageCompletionValue {
   /** Details of the page of results being returned. */
   pageResponse?: PageResponse;
-  values?: AnalyticNotificationRow[];
-}
-
-/**
- * A page of results.
- */
-export interface ResultPageAnalyticProcessorFilter {
-  /** Details of the page of results being returned. */
-  pageResponse?: PageResponse;
-  values?: AnalyticProcessorFilter[];
+  values?: CompletionValue[];
 }
 
 /**
@@ -3574,10 +4257,28 @@ export interface ResultPageDependency {
 /**
  * A page of results.
  */
-export interface ResultPageExplorerDocContentMatch {
+export interface ResultPageFieldInfo {
   /** Details of the page of results being returned. */
   pageResponse?: PageResponse;
-  values?: ExplorerDocContentMatch[];
+  values?: FieldInfo[];
+}
+
+/**
+ * A page of results.
+ */
+export interface ResultPageFindInContentResult {
+  /** Details of the page of results being returned. */
+  pageResponse?: PageResponse;
+  values?: FindInContentResult[];
+}
+
+/**
+ * A page of results.
+ */
+export interface ResultPageFindResult {
+  /** Details of the page of results being returned. */
+  pageResponse?: PageResponse;
+  values?: FindResult[];
 }
 
 /**
@@ -3587,6 +4288,15 @@ export interface ResultPageFsVolume {
   /** Details of the page of results being returned. */
   pageResponse?: PageResponse;
   values?: FsVolume[];
+}
+
+/**
+ * A page of results.
+ */
+export interface ResultPageFsVolumeGroup {
+  /** Details of the page of results being returned. */
+  pageResponse?: PageResponse;
+  values?: FsVolumeGroup[];
 }
 
 /**
@@ -3664,6 +4374,15 @@ export interface ResultPageProcessorTaskSummary {
 /**
  * A page of results.
  */
+export interface ResultPageQueryHelpRow {
+  /** Details of the page of results being returned. */
+  pageResponse?: PageResponse;
+  values?: QueryHelpRow[];
+}
+
+/**
+ * A page of results.
+ */
 export interface ResultPageStoredQuery {
   /** Details of the page of results being returned. */
   pageResponse?: PageResponse;
@@ -3673,19 +4392,19 @@ export interface ResultPageStoredQuery {
 /**
  * A page of results.
  */
-export interface ResultPageString {
+export interface ResultPageUser {
   /** Details of the page of results being returned. */
   pageResponse?: PageResponse;
-  values?: string[];
+  values?: User[];
 }
 
 /**
  * A page of results.
  */
-export interface ResultPageUser {
+export interface ResultPageUserName {
   /** Details of the page of results being returned. */
   pageResponse?: PageResponse;
-  values?: User[];
+  values?: UserName[];
 }
 
 /**
@@ -3704,7 +4423,7 @@ export interface ResultRequest {
   requestedRange: OffsetRange;
 
   /** The style of results required. FLAT will provide a FlatResult object, while TABLE will provide a TableResult object */
-  resultStyle: "FLAT" | "TABLE";
+  resultStyle: "FLAT" | "TABLE" | "VIS" | "QL_VIS";
 
   /** If the data includes time in the key then you can apply a time filter when retrieving rows */
   timeFilter?: TimeFilter;
@@ -3712,6 +4431,7 @@ export interface ResultRequest {
 
 export interface ResultStoreInfo {
   complete?: boolean;
+  createUser?: string;
 
   /** @format int64 */
   creationTime?: number;
@@ -3726,7 +4446,6 @@ export interface ResultStoreInfo {
   /** @format int64 */
   storeSize?: number;
   taskProgress?: SearchTaskProgress;
-  userId?: string;
 }
 
 export interface ResultStoreResponse {
@@ -3758,11 +4477,69 @@ export interface Row {
   values: string[];
 }
 
+export interface S3ClientConfig {
+  accelerate?: boolean;
+  async?: boolean;
+  bucketName?: string;
+  checksumValidationEnabled?: boolean;
+  createBuckets?: boolean;
+  credentials?: AwsCredentials;
+  credentialsProviderType?:
+    | "ANONYMOUS"
+    | "DEFAULT"
+    | "ENVIRONMENT_VARIABLE"
+    | "PROFILE"
+    | "STATIC"
+    | "SYSTEM_PROPERTY"
+    | "WEB";
+  crossRegionAccessEnabled?: boolean;
+  endpointOverride?: string;
+  forcePathStyle?: boolean;
+  httpConfiguration?: AwsHttpConfig;
+  keyPattern?: string;
+
+  /** @format int32 */
+  maxConcurrency?: number;
+
+  /** @format int64 */
+  minimalPartSizeInBytes?: number;
+  multipart?: boolean;
+
+  /** @format int32 */
+  numRetries?: number;
+
+  /** @format int64 */
+  readBufferSizeInBytes?: number;
+  region?: string;
+
+  /** @format double */
+  targetThroughputInGbps?: number;
+
+  /** @format int64 */
+  thresholdInBytes?: number;
+}
+
 export interface SavePipelineXmlRequest {
   /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   pipeline?: DocRef;
   xml?: string;
 }
+
+export type ScheduledQueryAnalyticProcessConfig = AnalyticProcessConfig & {
+  enabled?: boolean;
+  errorFeed?: DocRef;
+  maxEventTimeMs?: number;
+  minEventTimeMs?: number;
+  node?: string;
+  queryFrequency?: SimpleDuration;
+  timeToWaitForData?: SimpleDuration;
+};
+
+export type ScheduledQueryAnalyticTrackerData = AnalyticTrackerData & {
+  lastExecutionTimeMs?: number;
+  lastWindowEndTimeMs?: number;
+  lastWindowStartTimeMs?: number;
+};
 
 export interface ScheduledTimes {
   lastExecutedTime?: string;
@@ -3844,7 +4621,13 @@ export interface SearchRequest {
 export interface SearchRequestSource {
   componentId?: string;
   ownerDocUuid?: string;
-  sourceType?: "ANALYTIC_RULE" | "ANALYTIC_RULE_UI" | "DASHBOARD_UI" | "QUERY_UI" | "API" | "BATCH_SEARCH";
+  sourceType?:
+    | "TABLE_BUILDER_ANALYTIC"
+    | "SCHEDULED_QUERY_ANALYTIC"
+    | "DASHBOARD_UI"
+    | "QUERY_UI"
+    | "API"
+    | "BATCH_SEARCH";
 }
 
 /**
@@ -3931,13 +4714,13 @@ export interface SessionDetails {
   /** @format int64 */
   lastAccessedMs?: number;
   nodeName?: string;
-  userName?: string;
+  userName?: UserName;
 }
 
 export interface SessionInfo {
   buildInfo?: BuildInfo;
   nodeName?: string;
-  userName?: string;
+  userName?: UserName;
 }
 
 export interface SessionListResponse {
@@ -3948,7 +4731,7 @@ export interface SessionListResponse {
 
 export interface SetAssignedToRequest {
   annotationIdList?: number[];
-  assignedTo?: string;
+  assignedTo?: UserName;
 }
 
 export interface SetStatusRequest {
@@ -3974,11 +4757,6 @@ export interface SimpleDuration {
   /** @format int64 */
   time?: number;
   timeUnit?: "NANOSECONDS" | "MILLISECONDS" | "SECONDS" | "MINUTES" | "HOURS" | "DAYS" | "WEEKS" | "MONTHS" | "YEARS";
-}
-
-export interface SimpleUser {
-  name?: string;
-  uuid?: string;
 }
 
 export interface Size {
@@ -4054,22 +4832,6 @@ export interface SolrIndexField {
   sortMissingFirst?: boolean;
   sortMissingLast?: boolean;
   stored?: boolean;
-  supportedConditions?: (
-    | "CONTAINS"
-    | "EQUALS"
-    | "GREATER_THAN"
-    | "GREATER_THAN_OR_EQUAL_TO"
-    | "LESS_THAN"
-    | "LESS_THAN_OR_EQUAL_TO"
-    | "BETWEEN"
-    | "IN"
-    | "IN_DICTIONARY"
-    | "IN_FOLDER"
-    | "IS_DOC_REF"
-    | "IS_NULL"
-    | "IS_NOT_NULL"
-    | "MATCHES_REGEX"
-  )[];
   termOffsets?: boolean;
   termPayloads?: boolean;
   termPositions?: boolean;
@@ -4236,6 +4998,7 @@ export interface StoredQuery {
   /** @format int32 */
   id?: number;
   name?: string;
+  ownerUuid?: string;
 
   /** The query terms for the search */
   query?: Query;
@@ -4243,6 +5006,7 @@ export interface StoredQuery {
   /** @format int64 */
   updateTimeMs?: number;
   updateUser?: string;
+  uuid?: string;
 
   /** @format int32 */
   version?: number;
@@ -4250,12 +5014,51 @@ export interface StoredQuery {
 
 export type StreamLocation = Location & { partIndex?: number };
 
+export type StreamingAnalyticProcessConfig = AnalyticProcessConfig & { errorFeed?: DocRef };
+
+export type StreamingAnalyticTrackerData = AnalyticTrackerData & {
+  lastExecutionTimeMs?: number;
+  lastStreamCount?: number;
+  lastStreamId?: number;
+  totalEventCount?: number;
+  totalStreamCount?: number;
+};
+
 export interface StringCriteria {
   caseInsensitive?: boolean;
   matchNull?: boolean;
   matchStyle?: "Wild" | "WildStart" | "WildEnd" | "WildStartAndEnd";
   string?: string;
   stringUpper?: string;
+}
+
+export type StringEntryValue = EntryValue & { value?: string };
+
+export interface StringMatch {
+  caseSensitive?: boolean;
+  matchType?:
+    | "ANY"
+    | "NULL"
+    | "NON_NULL"
+    | "BLANK"
+    | "EMPTY"
+    | "NULL_OR_BLANK"
+    | "NULL_OR_EMPTY"
+    | "CONTAINS"
+    | "EQUALS"
+    | "NOT_EQUALS"
+    | "STARTS_WITH"
+    | "ENDS_WITH"
+    | "REGEX";
+  pattern?: string;
+}
+
+export interface StringMatchLocation {
+  /** @format int32 */
+  length?: number;
+
+  /** @format int32 */
+  offset?: number;
 }
 
 export interface StroomStatsStoreDoc {
@@ -4289,12 +5092,6 @@ export interface StroomStatsStoreFieldChangeRequest {
   oldEntityData?: StroomStatsStoreEntityData;
 }
 
-export interface StructureElement {
-  description?: string;
-  snippets?: string[];
-  title?: string;
-}
-
 export interface Suggestions {
   cacheable?: boolean;
   list?: string[];
@@ -4319,6 +5116,28 @@ export interface TabConfig {
 
 export type TabLayoutConfig = LayoutConfig & { selected?: number; tabs?: TabConfig[] };
 
+export type TableBuilderAnalyticProcessConfig = AnalyticProcessConfig & {
+  dataRetention?: SimpleDuration;
+  enabled?: boolean;
+  errorFeed?: DocRef;
+  maxMetaCreateTimeMs?: number;
+  minMetaCreateTimeMs?: number;
+  node?: string;
+  timeToWaitForData?: SimpleDuration;
+};
+
+export type TableBuilderAnalyticTrackerData = AnalyticTrackerData & {
+  lastEventId?: number;
+  lastEventTime?: number;
+  lastExecutionTimeMs?: number;
+  lastStreamCount?: number;
+  lastStreamId?: number;
+  lastWindowEndTimeMs?: number;
+  lastWindowStartTimeMs?: number;
+  totalEventCount?: number;
+  totalStreamCount?: number;
+};
+
 export interface TableComponentSettings {
   /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   dataSourceRef?: DocRef;
@@ -4328,7 +5147,7 @@ export interface TableComponentSettings {
 
   /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   extractionPipeline?: DocRef;
-  fields: Field[];
+  fields?: Column[];
 
   /**
    * Defines the maximum number of results to return at each grouping level, e.g. '1000,10,1' means 1000 results at group level 0, 10 at level 1 and 1 at level 2. In the absence of this field system defaults will apply
@@ -4336,9 +5155,17 @@ export interface TableComponentSettings {
    */
   maxResults?: number[];
 
+  /**
+   * Defines the maximum number of rows to display in the table at once (default 100).
+   * @format int32
+   * @example 100
+   */
+  pageSize?: number;
+
   /** TODO */
-  queryId: string;
+  queryId?: string;
   showDetail?: boolean;
+  useDefaultExtractionPipeline?: boolean;
 }
 
 export type TableCoprocessorSettings = CoprocessorSettings & { componentIds?: string[]; tableSettings?: TableSettings };
@@ -4346,11 +5173,17 @@ export type TableCoprocessorSettings = CoprocessorSettings & { componentIds?: st
 /**
  * Object for describing a set of results in a table form that supports grouped data
  */
-export type TableResult = Result & { fields?: Field[]; resultRange?: OffsetRange; rows?: Row[]; totalResults?: number };
+export type TableResult = Result & {
+  fields?: Column[];
+  resultRange?: OffsetRange;
+  rows?: Row[];
+  totalResults?: number;
+};
 
 export type TableResultRequest = ComponentResultRequest & {
   openGroups?: string[];
   requestedRange?: OffsetRange;
+  tableName?: string;
   tableSettings?: TableSettings;
 };
 
@@ -4364,7 +5197,7 @@ export interface TableSettings {
 
   /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   extractionPipeline?: DocRef;
-  fields: Field[];
+  fields?: Column[];
 
   /**
    * Defines the maximum number of results to return at each grouping level, e.g. '1000,10,1' means 1000 results at group level 0, 10 at level 1 and 1 at level 2. In the absence of this field system defaults will apply
@@ -4373,13 +5206,14 @@ export interface TableSettings {
   maxResults?: number[];
 
   /** TODO */
-  queryId: string;
+  queryId?: string;
 
   /** When grouping is used a value of true indicates that the results will include the full detail of any results aggregated into a group as well as their aggregates. A value of false will only include the aggregated values for each group. Defaults to false. */
   showDetail?: boolean;
 
   /** A logical addOperator term in a query expression tree */
   valueFilter?: ExpressionOperator;
+  visSettings?: QLVisSettings;
   window?: Window;
 }
 
@@ -4418,17 +5252,17 @@ export interface TerminateTaskProgressRequest {
 }
 
 export type TextComponentSettings = ComponentSettings & {
-  colFromField?: Field;
-  colToField?: Field;
-  lineFromField?: Field;
-  lineToField?: Field;
+  colFromField?: Column;
+  colToField?: Column;
+  lineFromField?: Column;
+  lineToField?: Column;
   modelVersion?: string;
-  partNoField?: Field;
+  partNoField?: Column;
   pipeline?: DocRef;
-  recordNoField?: Field;
+  recordNoField?: Column;
   showAsHtml?: boolean;
   showStepping?: boolean;
-  streamIdField?: Field;
+  streamIdField?: Column;
   tableId?: string;
 };
 
@@ -4450,7 +5284,7 @@ export interface TextConverterDoc {
   version?: string;
 }
 
-export type TextField = AbstractField;
+export type TextField = QueryField;
 
 export interface ThemeConfig {
   backgroundColour?: string;
@@ -4473,6 +5307,7 @@ export interface TimeRange {
   condition?:
     | "CONTAINS"
     | "EQUALS"
+    | "NOT_EQUALS"
     | "GREATER_THAN"
     | "GREATER_THAN_OR_EQUAL_TO"
     | "LESS_THAN"
@@ -4518,12 +5353,21 @@ export interface TimeZone {
   use: "Local" | "UTC" | "Id" | "Offset";
 }
 
+export interface TokenError {
+  from?: DefaultLocation;
+  text?: string;
+  to?: DefaultLocation;
+}
+
 export interface TokenResponse {
   access_token?: string;
 
   /** @format int64 */
   expires_in?: number;
   id_token?: string;
+
+  /** @format int64 */
+  refresh_expires_in?: number;
   refresh_token?: string;
 
   /** @format int64 */
@@ -4534,6 +5378,7 @@ export interface TokenResponse {
 export interface UiConfig {
   aboutHtml?: string;
   activity?: ActivityConfig;
+  analyticUiDefaultConfig?: AnalyticUiDefaultConfig;
   defaultMaxResults?: string;
   helpSubPathDocumentation?: string;
   helpSubPathExpressions?: string;
@@ -4545,11 +5390,14 @@ export interface UiConfig {
   htmlTitle?: string;
   maintenanceMessage?: string;
   namePattern?: string;
+  nestedIndexFieldsDelimiterPattern?: string;
+  nodeMonitoring?: NodeMonitoringConfig;
 
   /** @pattern ^return (true|false);$ */
   oncontextmenu?: string;
   process?: ProcessConfig;
   query?: QueryConfig;
+  referencePipelineSelectorIncludedTags?: string[];
   requireReactWrapper?: boolean;
   source?: SourceConfig;
   splash?: SplashConfig;
@@ -4594,15 +5442,18 @@ export interface User {
   /** @format int64 */
   createTimeMs?: number;
   createUser?: string;
+  displayName?: string;
+  fullName?: string;
   group?: boolean;
 
   /** @format int32 */
   id?: number;
-  name?: string;
+  subjectId?: string;
 
   /** @format int64 */
   updateTimeMs?: number;
   updateUser?: string;
+  userIdentityForAudit?: string;
   uuid?: string;
 
   /** @format int32 */
@@ -4611,15 +5462,27 @@ export interface User {
 
 export interface UserAndPermissions {
   permissions?: string[];
-  userId?: string;
+  userName?: UserName;
 }
+
+export interface UserName {
+  displayName?: string;
+  fullName?: string;
+  subjectId?: string;
+  userIdentityForAudit?: string;
+  uuid?: string;
+}
+
+export type UserNameEntryValue = EntryValue & { userName?: UserName };
 
 export interface UserPreferences {
   /** A date time formatting pattern string conforming to the specification of java.time.format.DateTimeFormatter */
   dateTimePattern?: string;
   density?: string;
   editorKeyBindings?: "STANDARD" | "VIM";
+  editorLiveAutoCompletion?: "ON" | "OFF";
   editorTheme?: string;
+  enableTransparency?: boolean;
   font?: string;
   fontSize?: string;
   theme?: string;
@@ -4628,7 +5491,17 @@ export interface UserPreferences {
   timeZone?: TimeZone;
 }
 
+export interface ValidateExpressionRequest {
+  /** The client date/time settings */
+  dateTimeSettings?: DateTimeSettings;
+
+  /** Base type for an item in an expression tree */
+  expressionItem?: ExpressionItem;
+  fields?: QueryField[];
+}
+
 export interface ValidateExpressionResult {
+  groupBy?: boolean;
   ok?: boolean;
   string?: string;
 }
@@ -4652,6 +5525,9 @@ export interface ViewDoc {
   /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   dataSource?: DocRef;
   description?: string;
+
+  /** A logical addOperator term in a query expression tree */
+  filter?: ExpressionOperator;
   name?: string;
 
   /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
@@ -4709,7 +5585,7 @@ export interface Window {
 
 export interface XPathFilter {
   ignoreCase?: boolean;
-  matchType?: "EXISTS" | "CONTAINS" | "EQUALS" | "UNIQUE";
+  matchType?: "EXISTS" | "CONTAINS" | "EQUALS" | "NOT_EQUALS" | "UNIQUE";
   path?: string;
   uniqueValues?: Record<string, Rec>;
   value?: string;
@@ -5286,19 +6162,19 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
         ...params,
       }),
   };
-  analyticNotification = {
+  analyticProcess = {
     /**
      * No description
      *
-     * @tags AnalyticNotifications
-     * @name CreateAnalyticNotification
-     * @summary Create an analytic notification
-     * @request POST:/analyticNotification/v1
+     * @tags AnalyticProcess
+     * @name GetDefaultProcessingFilterExpression
+     * @summary Find the default processing filter expression
+     * @request POST:/analyticProcess/v1/getDefaultProcessingFilterExpression
      * @secure
      */
-    createAnalyticNotification: (data: AnalyticNotification, params: RequestParams = {}) =>
-      this.request<any, AnalyticNotification>({
-        path: `/analyticNotification/v1`,
+    getDefaultProcessingFilterExpression: (data: string, params: RequestParams = {}) =>
+      this.request<any, ExpressionOperator>({
+        path: `/analyticProcess/v1/getDefaultProcessingFilterExpression`,
         method: "POST",
         body: data,
         secure: true,
@@ -5309,150 +6185,16 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     /**
      * No description
      *
-     * @tags AnalyticNotifications
-     * @name FindAnalyticNotifications
-     * @summary Find the analytic notifications for the specified analytic
-     * @request POST:/analyticNotification/v1/find
+     * @tags AnalyticProcess
+     * @name FindAnalyticProcessTracker
+     * @summary Find the analytic process tracker for the specified process
+     * @request POST:/analyticProcess/v1/tracker
      * @secure
      */
-    findAnalyticNotifications: (data: FindAnalyticNotificationCriteria, params: RequestParams = {}) =>
-      this.request<any, ResultPageAnalyticNotificationRow>({
-        path: `/analyticNotification/v1/find`,
+    findAnalyticProcessTracker: (data: string, params: RequestParams = {}) =>
+      this.request<any, AnalyticTracker>({
+        path: `/analyticProcess/v1/tracker`,
         method: "POST",
-        body: data,
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags AnalyticNotifications
-     * @name UpdateAnalyticNotification
-     * @summary Delete an analytic notification
-     * @request DELETE:/analyticNotification/v1/{uuid}
-     * @secure
-     */
-    updateAnalyticNotification: (uuid: string, data: AnalyticNotification, params: RequestParams = {}) =>
-      this.request<any, boolean>({
-        path: `/analyticNotification/v1/${uuid}`,
-        method: "DELETE",
-        body: data,
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags AnalyticNotifications
-     * @name UpdateAnalyticNotification1
-     * @summary Update an analytic notification
-     * @request PUT:/analyticNotification/v1/{uuid}
-     * @secure
-     */
-    updateAnalyticNotification1: (uuid: string, data: AnalyticNotification, params: RequestParams = {}) =>
-      this.request<any, AnalyticNotification>({
-        path: `/analyticNotification/v1/${uuid}`,
-        method: "PUT",
-        body: data,
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-  };
-  analyticProcessorFilter = {
-    /**
-     * No description
-     *
-     * @tags AnalyticProcessorFilters
-     * @name CreateAnalyticProcessorFilter
-     * @summary Create an analytic processor filter
-     * @request POST:/analyticProcessorFilter/v1
-     * @secure
-     */
-    createAnalyticProcessorFilter: (data: AnalyticProcessorFilter, params: RequestParams = {}) =>
-      this.request<any, AnalyticProcessorFilter>({
-        path: `/analyticProcessorFilter/v1`,
-        method: "POST",
-        body: data,
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags AnalyticProcessorFilters
-     * @name FindAnalyticProcessorFilters
-     * @summary Find the analytic processor filters for the specified analytic
-     * @request POST:/analyticProcessorFilter/v1/find
-     * @secure
-     */
-    findAnalyticProcessorFilters: (data: FindAnalyticProcessorFilterCriteria, params: RequestParams = {}) =>
-      this.request<any, ResultPageAnalyticProcessorFilter>({
-        path: `/analyticProcessorFilter/v1/find`,
-        method: "POST",
-        body: data,
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags AnalyticProcessorFilters
-     * @name FindAnalyticProcessorFilterTracker
-     * @summary Find the analytic processor filter tracker for the specified filter
-     * @request POST:/analyticProcessorFilter/v1/tracker
-     * @secure
-     */
-    findAnalyticProcessorFilterTracker: (data: string, params: RequestParams = {}) =>
-      this.request<any, AnalyticProcessorFilterTracker>({
-        path: `/analyticProcessorFilter/v1/tracker`,
-        method: "POST",
-        body: data,
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags AnalyticProcessorFilters
-     * @name UpdateAnalyticProcessorFilter
-     * @summary Delete an analytic processor filter
-     * @request DELETE:/analyticProcessorFilter/v1/{uuid}
-     * @secure
-     */
-    updateAnalyticProcessorFilter: (uuid: string, data: AnalyticProcessorFilter, params: RequestParams = {}) =>
-      this.request<any, boolean>({
-        path: `/analyticProcessorFilter/v1/${uuid}`,
-        method: "DELETE",
-        body: data,
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags AnalyticProcessorFilters
-     * @name UpdateAnalyticProcessorFilter1
-     * @summary Update an analytic processor filter
-     * @request PUT:/analyticProcessorFilter/v1/{uuid}
-     * @secure
-     */
-    updateAnalyticProcessorFilter1: (uuid: string, data: AnalyticProcessorFilter, params: RequestParams = {}) =>
-      this.request<any, AnalyticProcessorFilter>({
-        path: `/analyticProcessorFilter/v1/${uuid}`,
-        method: "PUT",
         body: data,
         secure: true,
         type: ContentType.Json,
@@ -5822,6 +6564,116 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
         secure: true,
         ...params,
       }),
+
+    /**
+     * No description
+     *
+     * @tags API Key
+     * @name CreateApiKey1
+     * @summary Creates a new API key
+     * @request POST:/apikey/v2
+     * @secure
+     */
+    createApiKey1: (data: CreateHashedApiKeyRequest, params: RequestParams = {}) =>
+      this.request<any, CreateHashedApiKeyResponse>({
+        path: `/apikey/v2`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags API Key
+     * @name DeleteApiKey2
+     * @summary Delete a batch of API keys by ID.
+     * @request DELETE:/apikey/v2/deleteBatch
+     * @secure
+     */
+    deleteApiKey2: (data: number[], params: RequestParams = {}) =>
+      this.request<any, number>({
+        path: `/apikey/v2/deleteBatch`,
+        method: "DELETE",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags API Key
+     * @name FindApiKeysByCriteria
+     * @summary Find the API keys matching the supplied criteria
+     * @request POST:/apikey/v2/find
+     * @secure
+     */
+    findApiKeysByCriteria: (data: FindApiKeyCriteria, params: RequestParams = {}) =>
+      this.request<any, ApiKeyResultPage>({
+        path: `/apikey/v2/find`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags API Key
+     * @name DeleteApiKey1
+     * @summary Delete an API key by ID.
+     * @request DELETE:/apikey/v2/{id}
+     * @secure
+     */
+    deleteApiKey1: (id: number, params: RequestParams = {}) =>
+      this.request<any, boolean>({
+        path: `/apikey/v2/${id}`,
+        method: "DELETE",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags API Key
+     * @name FetchApiKey1
+     * @summary Fetch a dictionary doc by its UUID
+     * @request GET:/apikey/v2/{id}
+     * @secure
+     */
+    fetchApiKey1: (id: number, params: RequestParams = {}) =>
+      this.request<any, HashedApiKey>({
+        path: `/apikey/v2/${id}`,
+        method: "GET",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags API Key
+     * @name UpdateApiKey
+     * @summary Update a dictionary doc
+     * @request PUT:/apikey/v2/{id}
+     * @secure
+     */
+    updateApiKey: (id: number, data: HashedApiKey, params: RequestParams = {}) =>
+      this.request<any, HashedApiKey>({
+        path: `/apikey/v2/${id}`,
+        method: "PUT",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
   };
   authentication = {
     /**
@@ -5942,7 +6794,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @request GET:/authentication/v1/noauth/logout
      * @secure
      */
-    logout: (query: { redirect_uri: string }, params: RequestParams = {}) =>
+    logout: (query: { post_logout_redirect_uri: string; state: string }, params: RequestParams = {}) =>
       this.request<any, boolean>({
         path: `/authentication/v1/noauth/logout`,
         method: "GET",
@@ -5980,6 +6832,26 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     resetPassword: (data: ResetPasswordRequest, params: RequestParams = {}) =>
       this.request<any, ChangePasswordResponse>({
         path: `/authentication/v1/resetPassword`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+  };
+  authproxy = {
+    /**
+     * No description
+     *
+     * @tags AuthProxy
+     * @name FetchClientCredsToken
+     * @summary Fetch an access token from the configured IDP using the supplied client credentials
+     * @request POST:/authproxy/v1/noauth/fetchClientCredsToken
+     * @secure
+     */
+    fetchClientCredsToken: (data: ClientCredentials, params: RequestParams = {}) =>
+      this.request<any, string>({
+        path: `/authproxy/v1/noauth/fetchClientCredsToken`,
         method: "POST",
         body: data,
         secure: true,
@@ -6160,6 +7032,23 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Global Config
+     * @name FetchExtendedUiConfig
+     * @summary Fetch the extended UI configuration
+     * @request GET:/config/v1/noauth/fetchExtendedUiConfig
+     * @secure
+     */
+    fetchExtendedUiConfig: (params: RequestParams = {}) =>
+      this.request<any, ExtendedUiConfig>({
+        path: `/config/v1/noauth/fetchExtendedUiConfig`,
+        method: "GET",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Global Config
      * @name FetchUiConfig
      * @summary Fetch the UI configuration
      * @request GET:/config/v1/noauth/fetchUiConfig
@@ -6310,12 +7199,31 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Dashboards
-     * @name DownloadDashboardSearchResults
+     * @name DownloadDashboardSearchResultsLocal
+     * @summary Download search results
+     * @request POST:/dashboard/v1/downloadSearchResults
+     * @secure
+     */
+    downloadDashboardSearchResultsLocal: (data: DownloadSearchResultsRequest, params: RequestParams = {}) =>
+      this.request<any, ResourceGeneration>({
+        path: `/dashboard/v1/downloadSearchResults`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Dashboards
+     * @name DownloadDashboardSearchResultsNode
      * @summary Download search results
      * @request POST:/dashboard/v1/downloadSearchResults/{nodeName}
      * @secure
      */
-    downloadDashboardSearchResults: (
+    downloadDashboardSearchResultsNode: (
       nodeName: string,
       data: DownloadSearchResultsRequest,
       params: RequestParams = {},
@@ -6335,10 +7243,29 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @tags Dashboards
      * @name DashboardSearch
      * @summary Perform a new search or get new results
+     * @request POST:/dashboard/v1/search
+     * @secure
+     */
+    dashboardSearch: (data: DashboardSearchRequest, params: RequestParams = {}) =>
+      this.request<any, DashboardSearchResponse>({
+        path: `/dashboard/v1/search`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Dashboards
+     * @name DashboardSearch1
+     * @summary Perform a new search or get new results
      * @request POST:/dashboard/v1/search/{nodeName}
      * @secure
      */
-    dashboardSearch: (nodeName: string, data: DashboardSearchRequest, params: RequestParams = {}) =>
+    dashboardSearch1: (nodeName: string, data: DashboardSearchRequest, params: RequestParams = {}) =>
       this.request<any, DashboardSearchResponse>({
         path: `/dashboard/v1/search/${nodeName}`,
         method: "POST",
@@ -6593,14 +7520,14 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Data Sources
-     * @name FetchDataSourceFields
-     * @summary Fetch data source fields
-     * @request POST:/dataSource/v1/fetchFields
+     * @name FetchDefaultExtractionPipeline
+     * @summary Fetch default extraction pipeline
+     * @request POST:/dataSource/v1/fetchDefaultExtractionPipeline
      * @secure
      */
-    fetchDataSourceFields: (data: DocRef, params: RequestParams = {}) =>
-      this.request<any, DataSource>({
-        path: `/dataSource/v1/fetchFields`,
+    fetchDefaultExtractionPipeline: (data: DocRef, params: RequestParams = {}) =>
+      this.request<any, DocRef>({
+        path: `/dataSource/v1/fetchDefaultExtractionPipeline`,
         method: "POST",
         body: data,
         secure: true,
@@ -6612,14 +7539,33 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Data Sources
-     * @name FetchDataSourceFieldsFromQuery
-     * @summary Fetch data source fields
-     * @request POST:/dataSource/v1/fetchFieldsFromQuery
+     * @name FetchDocumentation
+     * @summary Fetch documentation for a data source
+     * @request POST:/dataSource/v1/fetchDocumentation
      * @secure
      */
-    fetchDataSourceFieldsFromQuery: (data: string, params: RequestParams = {}) =>
-      this.request<any, DataSource>({
-        path: `/dataSource/v1/fetchFieldsFromQuery`,
+    fetchDocumentation: (data: DocRef, params: RequestParams = {}) =>
+      this.request<any, Documentation>({
+        path: `/dataSource/v1/fetchDocumentation`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Data Sources
+     * @name FindDataSourceFields
+     * @summary Find data source fields
+     * @request POST:/dataSource/v1/findFields
+     * @secure
+     */
+    findDataSourceFields: (data: FindFieldInfoCriteria, params: RequestParams = {}) =>
+      this.request<any, ResultPageFieldInfo>({
+        path: `/dataSource/v1/findFields`,
         method: "POST",
         body: data,
         secure: true,
@@ -6713,6 +7659,62 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     updateDictionary: (uuid: string, data: DictionaryDoc, params: RequestParams = {}) =>
       this.request<any, DictionaryDoc>({
         path: `/dictionary/v1/${uuid}`,
+        method: "PUT",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+  };
+  documentation = {
+    /**
+     * No description
+     *
+     * @tags Documentation (v1)
+     * @name DownloadDocumentation
+     * @summary Download a documentation doc
+     * @request POST:/documentation/v1/download
+     * @secure
+     */
+    downloadDocumentation: (data: DocRef, params: RequestParams = {}) =>
+      this.request<any, ResourceGeneration>({
+        path: `/documentation/v1/download`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Documentation (v1)
+     * @name FetchDocumentation1
+     * @summary Fetch a documentation doc by its UUID
+     * @request GET:/documentation/v1/{uuid}
+     * @secure
+     */
+    fetchDocumentation1: (uuid: string, params: RequestParams = {}) =>
+      this.request<any, DocumentationDoc>({
+        path: `/documentation/v1/${uuid}`,
+        method: "GET",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Documentation (v1)
+     * @name UpdateDocumentation
+     * @summary Update a documentation doc
+     * @request PUT:/documentation/v1/{uuid}
+     * @secure
+     */
+    updateDocumentation: (uuid: string, data: DocumentationDoc, params: RequestParams = {}) =>
+      this.request<any, DocumentationDoc>({
+        path: `/documentation/v1/${uuid}`,
         method: "PUT",
         body: data,
         secure: true,
@@ -6857,6 +7859,25 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Explorer (v2)
+     * @name AddTags
+     * @summary Add tags to explorer nodes
+     * @request PUT:/explorer/v2/addTags
+     * @secure
+     */
+    addTags: (data: AddRemoveTagsRequest, params: RequestParams = {}) =>
+      this.request<any, void>({
+        path: `/explorer/v2/addTags`,
+        method: "PUT",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Explorer (v2)
      * @name CopyExplorerItems
      * @summary Copy explorer items
      * @request POST:/explorer/v2/copy
@@ -6884,6 +7905,25 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     createExplorerItem: (data: ExplorerServiceCreateRequest, params: RequestParams = {}) =>
       this.request<any, ExplorerNode>({
         path: `/explorer/v2/create`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Explorer (v2)
+     * @name DecorateDocRef
+     * @summary Decorate the docRef will all values, e.g. add the name
+     * @request POST:/explorer/v2/decorate
+     * @secure
+     */
+    decorateDocRef: (data: DocRef, params: RequestParams = {}) =>
+      this.request<any, DocRef>({
+        path: `/explorer/v2/decorate`,
         method: "POST",
         body: data,
         secure: true,
@@ -6950,12 +7990,48 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Explorer (v2)
+     * @name FetchExplorerNodeTags
+     * @summary Fetch all known explorer node tags
+     * @request GET:/explorer/v2/fetchExplorerNodeTags
+     * @secure
+     */
+    fetchExplorerNodeTags: (params: RequestParams = {}) =>
+      this.request<any, string[]>({
+        path: `/explorer/v2/fetchExplorerNodeTags`,
+        method: "GET",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Explorer (v2)
+     * @name FetchExplorerNodeTagsByDocRefs
+     * @summary Fetch explorer node tags held by at least one of decRefs
+     * @request POST:/explorer/v2/fetchExplorerNodeTagsByDocRefs
+     * @secure
+     */
+    fetchExplorerNodeTagsByDocRefs: (data: DocRef[], params: RequestParams = {}) =>
+      this.request<any, string[]>({
+        path: `/explorer/v2/fetchExplorerNodeTagsByDocRefs`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Explorer (v2)
      * @name FetchExplorerNodes
      * @summary Fetch explorer nodes
      * @request POST:/explorer/v2/fetchExplorerNodes
      * @secure
      */
-    fetchExplorerNodes: (data: FindExplorerNodeCriteria, params: RequestParams = {}) =>
+    fetchExplorerNodes: (data: FetchExplorerNodesRequest, params: RequestParams = {}) =>
       this.request<any, FetchExplorerNodeResult>({
         path: `/explorer/v2/fetchExplorerNodes`,
         method: "POST",
@@ -6988,14 +8064,52 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Explorer (v2)
-     * @name FindExplorerNodes
-     * @summary Find explorer nodes using a query
-     * @request POST:/explorer/v2/findExplorerNodes
+     * @name FetchHighlights
+     * @summary Fetch match highlights on found content
+     * @request POST:/explorer/v2/fetchHighlights
      * @secure
      */
-    findExplorerNodes: (data: FindExplorerNodeQuery, params: RequestParams = {}) =>
-      this.request<any, ResultPageExplorerDocContentMatch>({
-        path: `/explorer/v2/findExplorerNodes`,
+    fetchHighlights: (data: FetchHighlightsRequest, params: RequestParams = {}) =>
+      this.request<any, DocContentHighlights>({
+        path: `/explorer/v2/fetchHighlights`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Explorer (v2)
+     * @name Find
+     * @summary Find documents with names and types matching the supplied request
+     * @request POST:/explorer/v2/find
+     * @secure
+     */
+    find: (data: FindRequest, params: RequestParams = {}) =>
+      this.request<any, ResultPageFindResult>({
+        path: `/explorer/v2/find`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Explorer (v2)
+     * @name FindInContent
+     * @summary Find documents with content matching the supplied request
+     * @request POST:/explorer/v2/findInContent
+     * @secure
+     */
+    findInContent: (data: FindInContentRequest, params: RequestParams = {}) =>
+      this.request<any, ResultPageFindInContentResult>({
+        path: `/explorer/v2/findInContent`,
         method: "POST",
         body: data,
         secure: true,
@@ -7032,7 +8146,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @secure
      */
     fetchExplorerItemInfo: (data: DocRef, params: RequestParams = {}) =>
-      this.request<any, DocRefInfo>({
+      this.request<any, ExplorerNodeInfo>({
         path: `/explorer/v2/info`,
         method: "POST",
         body: data,
@@ -7064,6 +8178,25 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Explorer (v2)
+     * @name RemoveTags
+     * @summary Remove tags from explorer nodes
+     * @request DELETE:/explorer/v2/removeTags
+     * @secure
+     */
+    removeTags: (data: AddRemoveTagsRequest, params: RequestParams = {}) =>
+      this.request<any, void>({
+        path: `/explorer/v2/removeTags`,
+        method: "DELETE",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Explorer (v2)
      * @name RenameExplorerItems
      * @summary Rename explorer items
      * @request PUT:/explorer/v2/rename
@@ -7072,6 +8205,25 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     renameExplorerItems: (data: ExplorerServiceRenameRequest, params: RequestParams = {}) =>
       this.request<any, ExplorerNode>({
         path: `/explorer/v2/rename`,
+        method: "PUT",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Explorer (v2)
+     * @name UpdateExplorerNodeTags
+     * @summary Update explorer node tags
+     * @request PUT:/explorer/v2/tags
+     * @secure
+     */
+    updateExplorerNodeTags: (data: ExplorerNode, params: RequestParams = {}) =>
+      this.request<any, ExplorerNode>({
+        path: `/explorer/v2/tags`,
         method: "PUT",
         body: data,
         secure: true,
@@ -7150,6 +8302,26 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
         path: `/export/v1`,
         method: "GET",
         secure: true,
+        ...params,
+      }),
+  };
+  expression = {
+    /**
+     * No description
+     *
+     * @tags Expressions
+     * @name Validate
+     * @summary Validate an expression
+     * @request POST:/expression/v1/validate
+     * @secure
+     */
+    validate: (data: ValidateExpressionRequest, params: RequestParams = {}) =>
+      this.request<any, ValidateExpressionResult>({
+        path: `/expression/v1/validate`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
         ...params,
       }),
   };
@@ -7348,6 +8520,114 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     updateFsVolume: (id: number, data: FsVolume, params: RequestParams = {}) =>
       this.request<any, FsVolume>({
         path: `/fsVolume/v1/${id}`,
+        method: "PUT",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Data Volume Groups
+     * @name CreateFsVolumeGroup
+     * @summary Creates a data volume group
+     * @request POST:/fsVolume/volumeGroup/v2
+     * @secure
+     */
+    createFsVolumeGroup: (data: string, params: RequestParams = {}) =>
+      this.request<any, FsVolumeGroup>({
+        path: `/fsVolume/volumeGroup/v2`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Data Volume Groups
+     * @name FetchFsVolumeGroupByName
+     * @summary Gets a data volume group by name
+     * @request GET:/fsVolume/volumeGroup/v2/fetchByName/{name}
+     * @secure
+     */
+    fetchFsVolumeGroupByName: (name: string, params: RequestParams = {}) =>
+      this.request<any, FsVolumeGroup>({
+        path: `/fsVolume/volumeGroup/v2/fetchByName/${name}`,
+        method: "GET",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Data Volume Groups
+     * @name FindFsVolumeGroups
+     * @summary Finds data volume groups matching request
+     * @request POST:/fsVolume/volumeGroup/v2/find
+     * @secure
+     */
+    findFsVolumeGroups: (data: ExpressionCriteria, params: RequestParams = {}) =>
+      this.request<any, ResultPageFsVolumeGroup>({
+        path: `/fsVolume/volumeGroup/v2/find`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Data Volume Groups
+     * @name DeleteFsVolumeGroup
+     * @summary Deletes a data volume group
+     * @request DELETE:/fsVolume/volumeGroup/v2/{id}
+     * @secure
+     */
+    deleteFsVolumeGroup: (id: number, params: RequestParams = {}) =>
+      this.request<any, boolean>({
+        path: `/fsVolume/volumeGroup/v2/${id}`,
+        method: "DELETE",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Data Volume Groups
+     * @name FetchFsVolumeGroup
+     * @summary Gets a data volume group
+     * @request GET:/fsVolume/volumeGroup/v2/{id}
+     * @secure
+     */
+    fetchFsVolumeGroup: (id: number, params: RequestParams = {}) =>
+      this.request<any, FsVolumeGroup>({
+        path: `/fsVolume/volumeGroup/v2/${id}`,
+        method: "GET",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Data Volume Groups
+     * @name UpdateFsVolumeGroup
+     * @summary Updates a data volume group
+     * @request PUT:/fsVolume/volumeGroup/v2/{id}
+     * @secure
+     */
+    updateFsVolumeGroup: (id: number, data: FsVolumeGroup, params: RequestParams = {}) =>
+      this.request<any, FsVolumeGroup>({
+        path: `/fsVolume/volumeGroup/v2/${id}`,
         method: "PUT",
         body: data,
         secure: true,
@@ -8402,14 +9682,52 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Doc Permissions
+     * @name FetchPermissionChangeImpact
+     * @summary Fetch impact summary for a change of document permissions
+     * @request POST:/permission/doc/v1/fetchPermissionChangeImpact
+     * @secure
+     */
+    fetchPermissionChangeImpact: (data: ChangeDocumentPermissionsRequest, params: RequestParams = {}) =>
+      this.request<any, PermissionChangeImpactSummary>({
+        path: `/permission/doc/v1/fetchPermissionChangeImpact`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Doc Permissions
      * @name FilterUsers
      * @summary Get all permissions for a given document type
      * @request POST:/permission/doc/v1/filterUsers
      * @secure
      */
     filterUsers: (data: FilterUsersRequest, params: RequestParams = {}) =>
-      this.request<any, SimpleUser[]>({
+      this.request<any, UserName[]>({
         path: `/permission/doc/v1/filterUsers`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Doc Permissions
+     * @name GetDocumentOwners
+     * @summary Get the owners of the specified document
+     * @request POST:/permission/doc/v1/getDocumentOwners
+     * @secure
+     */
+    getDocumentOwners: (data: string, params: RequestParams = {}) =>
+      this.request<any, UserName[]>({
+        path: `/permission/doc/v1/getDocumentOwners`,
         method: "POST",
         body: data,
         secure: true,
@@ -8806,6 +10124,25 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Processor Filters
+     * @name SetProcessorFilterMaxProcessingTasks
+     * @summary Sets the optional cluster-wide limit on the number of tasks that may be processed for this filter, at any one time
+     * @request PUT:/processorFilter/v1/{id}/maxProcessingTasks
+     * @secure
+     */
+    setProcessorFilterMaxProcessingTasks: (id: number, data: number, params: RequestParams = {}) =>
+      this.request<any, boolean>({
+        path: `/processorFilter/v1/${id}/maxProcessingTasks`,
+        method: "PUT",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Processor Filters
      * @name SetProcessorFilterPriority
      * @summary Sets the priority for a filter
      * @request PUT:/processorFilter/v1/{id}/priority
@@ -8903,14 +10240,71 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Queries
-     * @name DownloadQuerySearchResults
+     * @name DownloadQuerySearchResultsLocal
+     * @summary Download search results
+     * @request POST:/query/v1/downloadSearchResults
+     * @secure
+     */
+    downloadQuerySearchResultsLocal: (data: DownloadQueryResultsRequest, params: RequestParams = {}) =>
+      this.request<any, ResourceGeneration>({
+        path: `/query/v1/downloadSearchResults`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Queries
+     * @name DownloadQuerySearchResultsNode
      * @summary Download search results
      * @request POST:/query/v1/downloadSearchResults/{nodeName}
      * @secure
      */
-    downloadQuerySearchResults: (nodeName: string, data: DownloadQueryResultsRequest, params: RequestParams = {}) =>
+    downloadQuerySearchResultsNode: (nodeName: string, data: DownloadQueryResultsRequest, params: RequestParams = {}) =>
       this.request<any, ResourceGeneration>({
         path: `/query/v1/downloadSearchResults/${nodeName}`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Queries
+     * @name FetchCompletions
+     * @summary Fetch completions for the query
+     * @request POST:/query/v1/fetchCompletions
+     * @secure
+     */
+    fetchCompletions: (data: CompletionsRequest, params: RequestParams = {}) =>
+      this.request<any, ResultPageCompletionValue>({
+        path: `/query/v1/fetchCompletions`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Queries
+     * @name FetchDetail
+     * @summary Fetch detail for help item
+     * @request POST:/query/v1/fetchDetail
+     * @secure
+     */
+    fetchDetail: (data: QueryHelpRow, params: RequestParams = {}) =>
+      this.request<any, QueryHelpDetail>({
+        path: `/query/v1/fetchDetail`,
         method: "POST",
         body: data,
         secure: true,
@@ -8939,31 +10333,14 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Queries
-     * @name FetchFunctions
-     * @summary Fetch all expression functions
-     * @request GET:/query/v1/functions
+     * @name FetchHelpItems
+     * @summary Fetch all (optionally filtered) query help items
+     * @request POST:/query/v1/helpItems
      * @secure
      */
-    fetchFunctions: (params: RequestParams = {}) =>
-      this.request<any, FunctionSignature[]>({
-        path: `/query/v1/functions`,
-        method: "GET",
-        secure: true,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags Queries
-     * @name QuerySearch
-     * @summary Perform a new search or get new results
-     * @request POST:/query/v1/search/{nodeName}
-     * @secure
-     */
-    querySearch: (nodeName: string, data: QuerySearchRequest, params: RequestParams = {}) =>
-      this.request<any, DashboardSearchResponse>({
-        path: `/query/v1/search/${nodeName}`,
+    fetchHelpItems: (data: QueryHelpRequest, params: RequestParams = {}) =>
+      this.request<any, ResultPageQueryHelpRow>({
+        path: `/query/v1/helpItems`,
         method: "POST",
         body: data,
         secure: true,
@@ -8975,16 +10352,37 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Queries
-     * @name FetchStructureElements
-     * @summary Fetch all structure element descriptions
-     * @request GET:/query/v1/structure
+     * @name QuerySearchLocal
+     * @summary Perform a new search or get new results
+     * @request POST:/query/v1/search
      * @secure
      */
-    fetchStructureElements: (params: RequestParams = {}) =>
-      this.request<any, StructureElement[]>({
-        path: `/query/v1/structure`,
-        method: "GET",
+    querySearchLocal: (data: QuerySearchRequest, params: RequestParams = {}) =>
+      this.request<any, DashboardSearchResponse>({
+        path: `/query/v1/search`,
+        method: "POST",
+        body: data,
         secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Queries
+     * @name QuerySearchNode
+     * @summary Perform a new search or get new results
+     * @request POST:/query/v1/search/{nodeName}
+     * @secure
+     */
+    querySearchNode: (nodeName: string, data: QuerySearchRequest, params: RequestParams = {}) =>
+      this.request<any, DashboardSearchResponse>({
+        path: `/query/v1/search/${nodeName}`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
         ...params,
       }),
 
@@ -9524,25 +10922,6 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Searchable
-     * @name GetSearchableDataSource
-     * @summary Submit a request for a data source definition, supplying the DocRef for the data source
-     * @request POST:/searchable/v2/dataSource
-     * @secure
-     */
-    getSearchableDataSource: (data: DocRef, params: RequestParams = {}) =>
-      this.request<any, DataSource>({
-        path: `/searchable/v2/dataSource`,
-        method: "POST",
-        body: data,
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags Searchable
      * @name DestroySearchableQuery
      * @summary Destroy a running query
      * @request POST:/searchable/v2/destroy
@@ -9726,25 +11105,6 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
       }),
   };
   sqlstatistics = {
-    /**
-     * No description
-     *
-     * @tags Sql Statistics Query
-     * @name GetSqlStatisticsDataSource
-     * @summary Submit a request for a data source definition, supplying the DocRef for the data source
-     * @request POST:/sqlstatistics/v2/dataSource
-     * @secure
-     */
-    getSqlStatisticsDataSource: (data: DocRef, params: RequestParams = {}) =>
-      this.request<any, DataSource>({
-        path: `/sqlstatistics/v2/dataSource`,
-        method: "POST",
-        body: data,
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
     /**
      * No description
      *
@@ -10130,25 +11490,6 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Elasticsearch Queries
-     * @name GetElasticIndexDataSource
-     * @summary Submit a request for a data source definition, supplying the DocRef for the data source
-     * @request POST:/stroom-elastic-index/v2/dataSource
-     * @secure
-     */
-    getElasticIndexDataSource: (data: DocRef, params: RequestParams = {}) =>
-      this.request<any, DataSource>({
-        path: `/stroom-elastic-index/v2/dataSource`,
-        method: "POST",
-        body: data,
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags Elasticsearch Queries
      * @name DestroyElasticIndexQuery
      * @summary Destroy a running query
      * @request POST:/stroom-elastic-index/v2/destroy
@@ -10188,25 +11529,6 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Stroom-Index Queries
-     * @name GetStroomIndexDataSource
-     * @summary Submit a request for a data source definition, supplying the DocRef for the data source
-     * @request POST:/stroom-index/v2/dataSource
-     * @secure
-     */
-    getStroomIndexDataSource: (data: DocRef, params: RequestParams = {}) =>
-      this.request<any, DataSource>({
-        path: `/stroom-index/v2/dataSource`,
-        method: "POST",
-        body: data,
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags Stroom-Index Queries
      * @name DestroyStroomIndexQuery
      * @summary Destroy a running query
      * @request POST:/stroom-index/v2/destroy
@@ -10242,25 +11564,6 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
       }),
   };
   stroomSolrIndex = {
-    /**
-     * No description
-     *
-     * @tags Solr Queries
-     * @name GetSolrIndexDataSource
-     * @summary Submit a request for a data source definition, supplying the DocRef for the data source
-     * @request POST:/stroom-solr-index/v2/dataSource
-     * @secure
-     */
-    getSolrIndexDataSource: (data: DocRef, params: RequestParams = {}) =>
-      this.request<any, DataSource>({
-        path: `/stroom-solr-index/v2/dataSource`,
-        method: "POST",
-        body: data,
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
     /**
      * No description
      *
@@ -10509,12 +11812,82 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @secure
      */
     findUserNames: (data: FindUserNameCriteria, params: RequestParams = {}) =>
-      this.request<any, ResultPageString>({
+      this.request<any, ResultPageUserName>({
         path: `/userNames/v1/find`,
         method: "POST",
         body: data,
         secure: true,
         type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Authorisation
+     * @name FindAssociateUserNames
+     * @summary Find the user names matching the supplied criteria of users who belong to at least one of the same groups as the current user. If the current user is admin or has Manage Users permission then they can see all users.
+     * @request POST:/userNames/v1/findAssociates
+     * @secure
+     */
+    findAssociateUserNames: (data: FindUserNameCriteria, params: RequestParams = {}) =>
+      this.request<any, ResultPageUserName>({
+        path: `/userNames/v1/findAssociates`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Authorisation
+     * @name GetByDisplayName
+     * @summary Find the user name matching the supplied displayName
+     * @request GET:/userNames/v1/getByDisplayName/{displayName}
+     * @secure
+     */
+    getByDisplayName: (displayName: string, params: RequestParams = {}) =>
+      this.request<any, UserName>({
+        path: `/userNames/v1/getByDisplayName/${displayName}`,
+        method: "GET",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Authorisation
+     * @name GetByUuid
+     * @summary Find the user name matching the supplied unique Stroom user UUID
+     * @request GET:/userNames/v1/getByUuid/{userUuid}
+     * @secure
+     */
+    getByUuid: (userUuid: string, params: RequestParams = {}) =>
+      this.request<any, UserName>({
+        path: `/userNames/v1/getByUuid/${userUuid}`,
+        method: "GET",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Authorisation
+     * @name GetByUserId
+     * @summary Find the user name matching the supplied unique user subject ID
+     * @request GET:/userNames/v1/{subjectId}
+     * @secure
+     */
+    getByUserId: (subjectId: string, params: RequestParams = {}) =>
+      this.request<any, UserName>({
+        path: `/userNames/v1/${subjectId}`,
+        method: "GET",
+        secure: true,
         ...params,
       }),
   };
@@ -10547,7 +11920,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @secure
      */
     getAssociatedUsers: (query?: { filter?: string }, params: RequestParams = {}) =>
-      this.request<any, string[]>({
+      this.request<any, UserName[]>({
         path: `/users/v1/associates`,
         method: "GET",
         query: query,
@@ -10559,16 +11932,56 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Authorisation
-     * @name CreateUser
-     * @summary Creates a user or group with the supplied name
-     * @request POST:/users/v1/create/{name}/{isGroup}
+     * @name CreateGroup
+     * @summary Creates a group with the supplied name
+     * @request POST:/users/v1/createGroup
      * @secure
      */
-    createUser: (name: string, isGroup: boolean, params: RequestParams = {}) =>
+    createGroup: (data: string, params: RequestParams = {}) =>
       this.request<any, User>({
-        path: `/users/v1/create/${name}/${isGroup}`,
+        path: `/users/v1/createGroup`,
         method: "POST",
+        body: data,
         secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Authorisation
+     * @name CreateUser
+     * @summary Creates a user with the supplied name
+     * @request POST:/users/v1/createUser
+     * @secure
+     */
+    createUser: (data: UserName, params: RequestParams = {}) =>
+      this.request<any, User>({
+        path: `/users/v1/createUser`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Authorisation
+     * @name CreateUsers
+     * @summary Creates a batch of users from a list of CSV entries. Each line is of the form 'id,displayName,fullName', where displayName and fullName are optional
+     * @request POST:/users/v1/createUsers
+     * @secure
+     */
+    createUsers: (data: string, params: RequestParams = {}) =>
+      this.request<any, User[]>({
+        path: `/users/v1/createUsers`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
         ...params,
       }),
 

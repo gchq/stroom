@@ -17,11 +17,11 @@
 
 package stroom.search.elastic.search;
 
-import stroom.datasource.api.v2.AbstractField;
-import stroom.datasource.api.v2.DataSource;
 import stroom.datasource.api.v2.DateField;
+import stroom.datasource.api.v2.FieldInfo;
+import stroom.datasource.api.v2.FindFieldInfoCriteria;
+import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
-import stroom.docstore.shared.DocRefUtil;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.SearchRequest;
@@ -29,6 +29,7 @@ import stroom.query.common.v2.CoprocessorSettings;
 import stroom.query.common.v2.CoprocessorsFactory;
 import stroom.query.common.v2.CoprocessorsImpl;
 import stroom.query.common.v2.DataStoreSettings;
+import stroom.query.common.v2.FieldInfoResultPageBuilder;
 import stroom.query.common.v2.ResultStore;
 import stroom.query.common.v2.ResultStoreFactory;
 import stroom.query.common.v2.SearchProvider;
@@ -45,7 +46,10 @@ import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.ResultPage;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import org.elasticsearch.action.support.IndicesOptions;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.indices.GetFieldMappingsRequest;
@@ -64,8 +68,6 @@ import java.util.Optional;
 import java.util.TreeMap;
 import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
-import javax.inject.Provider;
 
 @SuppressWarnings("unused")
 public class ElasticSearchProvider implements SearchProvider, ElasticIndexService {
@@ -107,9 +109,6 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
 
     @Override
     public ResultStore createResultStore(final SearchRequest searchRequest) {
-        // Get the current time in millis since epoch.
-        final long nowEpochMilli = System.currentTimeMillis();
-
         // Replace expression parameters.
         final SearchRequest modifiedSearchRequest = ExpressionUtil.replaceExpressionParameters(searchRequest);
 
@@ -127,6 +126,7 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
         // Create a handler for search results.
         final CoprocessorsImpl coprocessors = coprocessorsFactory.create(
                 modifiedSearchRequest.getSearchRequestSource(),
+                modifiedSearchRequest.getDateTimeSettings(),
                 modifiedSearchRequest.getKey(),
                 coprocessorSettingsList,
                 modifiedSearchRequest.getQuery().getParams(),
@@ -139,8 +139,7 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
                 searchName,
                 query,
                 coprocessorSettingsList,
-                modifiedSearchRequest.getDateTimeSettings(),
-                nowEpochMilli);
+                modifiedSearchRequest.getDateTimeSettings());
 
         // Create the search result collector.
         final ResultStore resultStore = resultStoreFactory.create(
@@ -151,15 +150,32 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
     }
 
     @Override
-    public DataSource getDataSource(final DocRef docRef) {
+    public ResultPage<FieldInfo> getFieldInfo(final FindFieldInfoCriteria criteria) {
         return securityContext.useAsReadResult(() -> {
-            final ElasticIndexDoc index = elasticIndexStore.readDocument(docRef);
-            return DataSource.builder()
-                    .docRef(DocRefUtil.create(index))
-                    .fields(getDataSourceFields(index))
-                    .defaultExtractionPipeline(index.getDefaultExtractionPipeline())
-                    .build();
+            final FieldInfoResultPageBuilder builder = FieldInfoResultPageBuilder.builder(criteria);
+            final ElasticIndexDoc index = elasticIndexStore.readDocument(criteria.getDataSourceRef());
+            if (index != null) {
+                final List<QueryField> fields = getDataSourceFields(index);
+                builder.addAll(fields);
+            }
+            return builder.build();
         });
+    }
+
+    @Override
+    public DocRef fetchDefaultExtractionPipeline(final DocRef dataSourceRef) {
+        return securityContext.useAsReadResult(() -> {
+            final ElasticIndexDoc index = elasticIndexStore.readDocument(dataSourceRef);
+            if (index != null) {
+                return index.getDefaultExtractionPipeline();
+            }
+            return null;
+        });
+    }
+
+    @Override
+    public Optional<String> fetchDocumentation(final DocRef docRef) {
+        return Optional.ofNullable(elasticIndexStore.readDocument(docRef)).map(ElasticIndexDoc::getDescription);
     }
 
     @Override
@@ -177,7 +193,7 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
     }
 
     @Override
-    public List<AbstractField> getDataSourceFields(ElasticIndexDoc index) {
+    public List<QueryField> getDataSourceFields(ElasticIndexDoc index) {
         final Map<String, FieldMappingMetadata> fieldMappings = getFieldMappings(index);
 
         return fieldMappings
@@ -374,6 +390,10 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
         return result;
     }
 
+    @Override
+    public List<DocRef> list() {
+        return elasticClusterStore.list();
+    }
 
     @Override
     public String getType() {

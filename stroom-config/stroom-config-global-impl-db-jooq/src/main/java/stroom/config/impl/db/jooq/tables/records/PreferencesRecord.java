@@ -4,13 +4,13 @@
 package stroom.config.impl.db.jooq.tables.records;
 
 
+import stroom.config.impl.db.jooq.tables.Preferences;
+
 import org.jooq.Field;
 import org.jooq.Record1;
 import org.jooq.Record8;
 import org.jooq.Row8;
 import org.jooq.impl.UpdatableRecordImpl;
-
-import stroom.config.impl.db.jooq.tables.Preferences;
 
 
 /**
@@ -106,16 +106,16 @@ public class PreferencesRecord extends UpdatableRecordImpl<PreferencesRecord> im
     }
 
     /**
-     * Setter for <code>stroom.preferences.user_id</code>.
+     * Setter for <code>stroom.preferences.user_uuid</code>.
      */
-    public void setUserId(String value) {
+    public void setUserUuid(String value) {
         set(6, value);
     }
 
     /**
-     * Getter for <code>stroom.preferences.user_id</code>.
+     * Getter for <code>stroom.preferences.user_uuid</code>.
      */
-    public String getUserId() {
+    public String getUserUuid() {
         return (String) get(6);
     }
 
@@ -188,7 +188,7 @@ public class PreferencesRecord extends UpdatableRecordImpl<PreferencesRecord> im
 
     @Override
     public Field<String> field7() {
-        return Preferences.PREFERENCES.USER_ID;
+        return Preferences.PREFERENCES.USER_UUID;
     }
 
     @Override
@@ -228,7 +228,7 @@ public class PreferencesRecord extends UpdatableRecordImpl<PreferencesRecord> im
 
     @Override
     public String component7() {
-        return getUserId();
+        return getUserUuid();
     }
 
     @Override
@@ -268,7 +268,7 @@ public class PreferencesRecord extends UpdatableRecordImpl<PreferencesRecord> im
 
     @Override
     public String value7() {
-        return getUserId();
+        return getUserUuid();
     }
 
     @Override
@@ -314,7 +314,7 @@ public class PreferencesRecord extends UpdatableRecordImpl<PreferencesRecord> im
 
     @Override
     public PreferencesRecord value7(String value) {
-        setUserId(value);
+        setUserUuid(value);
         return this;
     }
 
@@ -351,7 +351,7 @@ public class PreferencesRecord extends UpdatableRecordImpl<PreferencesRecord> im
     /**
      * Create a detached, initialised PreferencesRecord
      */
-    public PreferencesRecord(Integer id, Integer version, Long createTimeMs, String createUser, Long updateTimeMs, String updateUser, String userId, String dat) {
+    public PreferencesRecord(Integer id, Integer version, Long createTimeMs, String createUser, Long updateTimeMs, String updateUser, String userUuid, String dat) {
         super(Preferences.PREFERENCES);
 
         setId(id);
@@ -360,7 +360,7 @@ public class PreferencesRecord extends UpdatableRecordImpl<PreferencesRecord> im
         setCreateUser(createUser);
         setUpdateTimeMs(updateTimeMs);
         setUpdateUser(updateUser);
-        setUserId(userId);
+        setUserUuid(userUuid);
         setDat(dat);
     }
 }

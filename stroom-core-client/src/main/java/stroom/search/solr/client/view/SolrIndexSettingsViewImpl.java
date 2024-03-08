@@ -17,7 +17,7 @@
 package stroom.search.solr.client.view;
 
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
-import stroom.item.client.ItemListBox;
+import stroom.item.client.SelectionBox;
 import stroom.search.solr.client.presenter.SolrIndexSettingsPresenter.SolrIndexSettingsView;
 import stroom.search.solr.client.presenter.SolrIndexSettingsUiHandlers;
 import stroom.search.solr.shared.SolrConnectionConfig.InstanceType;
@@ -26,6 +26,8 @@ import stroom.widget.button.client.Button;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 
 import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
@@ -49,7 +51,7 @@ public class SolrIndexSettingsViewImpl extends ViewWithUiHandlers<SolrIndexSetti
     @UiField
     TextBox collection;
     @UiField
-    ItemListBox<InstanceType> instanceType;
+    SelectionBox<InstanceType> instanceType;
     @UiField
     TextArea solrUrls;
     @UiField
@@ -74,14 +76,6 @@ public class SolrIndexSettingsViewImpl extends ViewWithUiHandlers<SolrIndexSetti
 
         instanceType.addItem(InstanceType.SINGLE_NOOE);
         instanceType.addItem(InstanceType.SOLR_CLOUD);
-
-        collection.addKeyDownHandler(e -> fireChange());
-        instanceType.addSelectionHandler(e -> fireChange());
-        solrUrls.addKeyDownHandler(e -> fireChange());
-        useZk.addValueChangeHandler(e -> fireChange());
-        zkHosts.addKeyDownHandler(e -> fireChange());
-        zkPath.addKeyDownHandler(e -> fireChange());
-        timeField.addKeyDownHandler(e -> fireChange());
     }
 
     private void fireChange() {
@@ -107,15 +101,15 @@ public class SolrIndexSettingsViewImpl extends ViewWithUiHandlers<SolrIndexSetti
 
     @Override
     public InstanceType getInstanceType() {
-        return instanceType.getSelectedItem();
+        return instanceType.getValue();
     }
 
     @Override
     public void setInstanceType(final InstanceType instanceType) {
         if (instanceType == null) {
-            this.instanceType.setSelectedItem(InstanceType.SINGLE_NOOE);
+            this.instanceType.setValue(InstanceType.SINGLE_NOOE);
         } else {
-            this.instanceType.setSelectedItem(instanceType);
+            this.instanceType.setValue(instanceType);
         }
     }
 
@@ -206,6 +200,41 @@ public class SolrIndexSettingsViewImpl extends ViewWithUiHandlers<SolrIndexSetti
         if (getUiHandlers() != null) {
             getUiHandlers().onTestConnection();
         }
+    }
+
+    @UiHandler("collection")
+    public void onCollectionKeyDown(final KeyDownEvent event) {
+        fireChange();
+    }
+
+    @UiHandler("instanceType")
+    public void onInstanceTypeValueChange(final ValueChangeEvent<InstanceType> event) {
+        fireChange();
+    }
+
+    @UiHandler("solrUrls")
+    public void onSolrUrlsKeyDown(final KeyDownEvent event) {
+        fireChange();
+    }
+
+    @UiHandler("useZk")
+    public void onUseZkValueChange(final ValueChangeEvent<Boolean> event) {
+        fireChange();
+    }
+
+    @UiHandler("zkHosts")
+    public void onZKHostsKeyDown(final KeyDownEvent event) {
+        fireChange();
+    }
+
+    @UiHandler("zkPath")
+    public void onZKPathKeyDown(final KeyDownEvent event) {
+        fireChange();
+    }
+
+    @UiHandler("timeField")
+    public void onTimeFieldKeyDown(final KeyDownEvent event) {
+        fireChange();
     }
 
     public interface Binder extends UiBinder<Widget, SolrIndexSettingsViewImpl> {

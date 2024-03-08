@@ -1,12 +1,10 @@
 package stroom.docstore.impl;
 
 import stroom.docstore.api.Serialiser2;
+import stroom.util.json.JsonUtil;
 import stroom.util.string.EncodingUtil;
 
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -24,7 +22,7 @@ public class JsonSerialiser2<D> implements Serialiser2<D> {
 
     public JsonSerialiser2(final Class<D> clazz) {
         this.clazz = clazz;
-        this.mapper = getMapper(true);
+        this.mapper = JsonUtil.getMapper();
     }
 
     @Override
@@ -50,15 +48,5 @@ public class JsonSerialiser2<D> implements Serialiser2<D> {
     @Override
     public void write(final Writer writer, final D document) throws IOException {
         mapper.writeValue(writer, document);
-    }
-
-    protected ObjectMapper getMapper(final boolean indent) {
-        final ObjectMapper mapper = new ObjectMapper();
-        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        mapper.configure(SerializationFeature.INDENT_OUTPUT, indent);
-        mapper.setSerializationInclusion(Include.NON_NULL);
-        // Enabling default typing adds type information where it would otherwise be ambiguous,
-        // i.e. for abstract classes mapper.enableDefaultTyping();
-        return mapper;
     }
 }

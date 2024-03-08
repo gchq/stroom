@@ -14,7 +14,7 @@ import stroom.statistics.impl.hbase.shared.StroomStatsStoreDoc;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.Severity;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 /**
  * A Kafka appender specifically for sending statistic event messages to kafka.
@@ -24,6 +24,8 @@ import javax.inject.Inject;
 @ConfigurableElement(
         type = "StroomStatsAppender",
         category = PipelineElementType.Category.DESTINATION,
+        description = """
+                This element is deprecated and should not be used.""",
         roles = {
                 PipelineElementType.ROLE_TARGET,
                 PipelineElementType.ROLE_DESTINATION,

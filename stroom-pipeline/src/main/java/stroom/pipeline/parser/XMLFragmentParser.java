@@ -17,6 +17,7 @@
 package stroom.pipeline.parser;
 
 import stroom.docref.DocRef;
+import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.SupportsCodeInjection;
 import stroom.pipeline.cache.ParserFactoryPool;
@@ -44,19 +45,26 @@ import stroom.svg.shared.SvgImage;
 import stroom.util.io.PathCreator;
 import stroom.util.shared.Severity;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
 
 import java.util.function.Consumer;
-import javax.inject.Inject;
-import javax.inject.Provider;
 
 @ConfigurableElement(
-        type = "XMLFragmentParser",
+        type = PipelineElementType.TYPE_XML_FRAGMENT_PARSER,
         category = Category.PARSER,
         description = """
                 A parser to convert multiple XML fragments into an XML document.
-                """,
+                For example the data may contain:
+                ```xml
+                <Event>...</Event>
+                <Event>...</Event>
+                ```
+                i.e. with no root element, so not valid XML.
+                The XMLFragmentParser will wrap the fragments with a root element as defined in the TextConverter \
+                document configured with the `textConverterRef` property.""",
         roles = {
                 PipelineElementType.ROLE_PARSER,
                 PipelineElementType.ROLE_HAS_TARGETS,
@@ -89,7 +97,8 @@ public class XMLFragmentParser extends AbstractParser implements SupportsCodeInj
                              final PathCreator pathCreator,
                              final Provider<FeedHolder> feedHolder,
                              final Provider<PipelineHolder> pipelineHolder,
-                             final Provider<LocationHolder> locationHolderProvider) {
+                             final Provider<LocationHolder> locationHolderProvider,
+                             final DocRefInfoService docRefInfoService) {
         super(errorReceiverProxy, locationFactory);
         this.parserFactoryPool = parserFactoryPool;
         this.textConverterStore = textConverterStore;
@@ -97,7 +106,11 @@ public class XMLFragmentParser extends AbstractParser implements SupportsCodeInj
         this.pipelineHolder = pipelineHolder;
         this.locationHolderProvider = locationHolderProvider;
 
-        this.docFinder = new DocFinder<>(TextConverterDoc.DOCUMENT_TYPE, pathCreator, textConverterStore);
+        this.docFinder = new DocFinder<>(
+                TextConverterDoc.DOCUMENT_TYPE,
+                pathCreator,
+                textConverterStore,
+                docRefInfoService);
     }
 
     @Override
@@ -172,7 +185,9 @@ public class XMLFragmentParser extends AbstractParser implements SupportsCodeInj
         this.textConverterRef = textConverterRef;
     }
 
-    @PipelineProperty(description = "A name pattern to load a text converter dynamically.", displayPriority = 2)
+    @PipelineProperty(
+            description = "A name pattern to load a text converter dynamically.",
+            displayPriority = 2)
     public void setNamePattern(final String namePattern) {
         this.namePattern = namePattern;
     }

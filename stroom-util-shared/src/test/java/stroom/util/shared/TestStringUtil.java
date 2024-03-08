@@ -3,7 +3,6 @@ package stroom.util.shared;
 import stroom.docref.DocRef;
 import stroom.test.common.TestUtil;
 
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
@@ -12,8 +11,13 @@ import org.junit.jupiter.params.provider.CsvSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
 import java.util.UUID;
 import java.util.stream.Stream;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static stroom.util.shared.StringUtil.plural;
+import static stroom.util.shared.StringUtil.pluralSuffix;
 
 class TestStringUtil {
 
@@ -28,7 +32,7 @@ class TestStringUtil {
                 .build();
 
         final String str = StringUtil.toString(docRef);
-        Assertions.assertThat(str)
+        assertThat(str)
                 .isEqualTo(docRef.toString());
     }
 
@@ -37,7 +41,7 @@ class TestStringUtil {
         DocRef docRef = null;
 
         final String str = StringUtil.toString(docRef);
-        Assertions.assertThat(str)
+        assertThat(str)
                 .isEqualTo("");
     }
 
@@ -60,7 +64,7 @@ class TestStringUtil {
         LOGGER.info("input: [{}], expectedOutput: {}, isBlank: {}",
                 input, expectedOutput, isBlank);
 
-        Assertions.assertThat(isBlank)
+        assertThat(isBlank)
                 .isEqualTo(expectedOutput);
     }
 
@@ -76,7 +80,7 @@ class TestStringUtil {
     })
     void testBlankAsNull(final String input, final String expectedOutput) {
         final String output = StringUtil.blankAsNull(input);
-        Assertions.assertThat(output)
+        assertThat(output)
                 .isEqualTo(expectedOutput);
     }
 
@@ -151,7 +155,7 @@ class TestStringUtil {
                 })
                 .withAssertions(testOutcome -> {
                     // Expected output ignored
-                    Assertions.assertThat(testOutcome.getActualOutput())
+                    assertThat(testOutcome.getActualOutput())
                             .isEqualTo(testOutcome.getInput());
                 })
                 .addCase(null, null)
@@ -170,9 +174,93 @@ class TestStringUtil {
                 .addCase(" \" abc \" ", null)
                 .addCase(" \" abc  ", null)
                 .addCase("  a\"bc  ", null)
-                .addCase("  a\"bc  ", null)
                 .addCase("a\"bc", null)
                 .addCase(" my name is \"Bob\". ", null)
                 .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testSingleQuote() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputAndOutputType(String.class)
+                .withTestFunction(testCase -> StringUtil.singleQuote(testCase.getInput()))
+                .withSimpleEqualityAssertion()
+                .addCase(null, "''")
+                .addCase("", "''")
+                .addCase("x", "'x'")
+                .addCase("o'neil", "'o'neil'")
+                .build();
+    }
+
+    @Test
+    void testPlural_1() {
+        assertThat(plural("has", "have", 1))
+                .isEqualTo("has");
+        assertThat(plural("has", "have", 2))
+                .isEqualTo("have");
+    }
+
+    @Test
+    void testPlural_2() {
+        assertThat(plural("has", "have", 1L))
+                .isEqualTo("has");
+        assertThat(plural("has", "have", 2L))
+                .isEqualTo("have");
+    }
+
+    @Test
+    void testPlural_3() {
+        assertThat(plural("has", "have", List.of(1)))
+                .isEqualTo("has");
+        assertThat(plural("has", "have", List.of(1, 2)))
+                .isEqualTo("have");
+    }
+
+    @Test
+    void testPluralSuffix_1() {
+        assertThat(StringUtil.plural("document", 1))
+                .isEqualTo("document");
+        assertThat(StringUtil.plural("document", 2))
+                .isEqualTo("documents");
+    }
+
+    @Test
+    void testPluralSuffix_2() {
+        assertThat(StringUtil.plural("document", 1L))
+                .isEqualTo("document");
+        assertThat(StringUtil.plural("document", 2L))
+                .isEqualTo("documents");
+    }
+
+    @Test
+    void testPluralSuffix_3() {
+        assertThat(StringUtil.plural("document", List.of(1)))
+                .isEqualTo("document");
+        assertThat(StringUtil.plural("document", List.of(1, 2)))
+                .isEqualTo("documents");
+    }
+
+    @Test
+    void testPluralSuffix_1b() {
+        assertThat(pluralSuffix(1))
+                .isEqualTo("");
+        assertThat(pluralSuffix(2))
+                .isEqualTo("s");
+    }
+
+    @Test
+    void testPluralSuffix_2b() {
+        assertThat(pluralSuffix(1L))
+                .isEqualTo("");
+        assertThat(pluralSuffix(2L))
+                .isEqualTo("s");
+    }
+
+    @Test
+    void testPluralSuffix_3b() {
+        assertThat(pluralSuffix(List.of(1)))
+                .isEqualTo("");
+        assertThat(pluralSuffix(List.of(1, 2)))
+                .isEqualTo("s");
     }
 }

@@ -20,6 +20,7 @@ import stroom.annotation.api.AnnotationCreator;
 import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.CreateEntryRequest;
 import stroom.annotation.shared.EventId;
+import stroom.annotation.shared.StringEntryValue;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.factory.ConfigurableElement;
@@ -28,6 +29,7 @@ import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.Severity;
 
+import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.Attributes;
@@ -35,7 +37,6 @@ import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 
 import java.util.ArrayList;
-import javax.inject.Inject;
 
 /**
  * This class processes XML documents that conform to annotation:1 schema, and creates corresponding Stroom annotations.
@@ -67,6 +68,9 @@ import javax.inject.Inject;
 @ConfigurableElement(
         type = "AnnotationWriter",
         category = PipelineElementType.Category.DESTINATION,
+        description = """
+                Consume XML documents in the `annotation:1` namespace and writes them as Stroom Annotations.
+                Allows for the annotating of events that meet some criteria.""",
         roles = {
                 PipelineElementType.ROLE_TARGET,
                 PipelineElementType.ROLE_HAS_TARGETS,
@@ -174,15 +178,17 @@ class AnnotationWriter extends AbstractXMLFilter {
                 }
             }
         } else if (ANNOTATION_TAG.equals(localName) && currentAnnotation != null) {
-            CreateEntryRequest request = new CreateEntryRequest(currentAnnotation,
+            CreateEntryRequest request = new CreateEntryRequest(
+                    currentAnnotation,
                     Annotation.COMMENT,
-                    null,
+                    (StringEntryValue) null,
                     currentEventIds);
 
             try {
-                annotationCreator.createEntry(new CreateEntryRequest(currentAnnotation,
+                annotationCreator.createEntry(new CreateEntryRequest(
+                        currentAnnotation,
                         Annotation.COMMENT,
-                        null,
+                        (StringEntryValue) null,
                         currentEventIds));
 
             } catch (final RuntimeException e) {

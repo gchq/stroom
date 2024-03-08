@@ -3,6 +3,7 @@ package stroom.util.validation;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.validation.AllMatchPatternValidator;
 import stroom.util.shared.validation.IsSubsetOfValidator;
 import stroom.util.shared.validation.IsSupersetOfValidator;
 import stroom.util.shared.validation.ValidDirectoryPathValidator;
@@ -11,14 +12,14 @@ import stroom.util.shared.validation.ValidRegexValidator;
 import stroom.util.shared.validation.ValidSimpleCronValidator;
 
 import com.google.inject.ConfigurationException;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
+import jakarta.validation.ConstraintValidator;
+import jakarta.validation.ConstraintValidatorFactory;
+import jakarta.validation.Validation;
 
 import java.util.Map;
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.inject.Singleton;
-import javax.validation.ConstraintValidator;
-import javax.validation.ConstraintValidatorFactory;
-import javax.validation.Validation;
 
 @Singleton
 public class CustomConstraintValidatorFactory implements ConstraintValidatorFactory {
@@ -42,15 +43,18 @@ public class CustomConstraintValidatorFactory implements ConstraintValidatorFact
             final Provider<ValidDirectoryPathValidator> validDirectoryPathValidatorProvider,
             final Provider<ValidFilePathValidator> validFilePathValidatorProvider,
             final Provider<ValidRegexValidator> validRegexValidatorProvider,
-            final Provider<ValidSimpleCronValidator> validSimpleCronValidatorProvider) {
+            final Provider<ValidSimpleCronValidator> validSimpleCronValidatorProvider,
+            final Provider<AllMatchPatternValidator> allMatchPatternValidatorProvider) {
 
+        // TODO: 28/09/2023 I'm sure we could just use a map binder
         validatorProviderMap = Map.of(
                 IsSubsetOfValidator.class, isSubsetOfValidatorProvider,
                 IsSupersetOfValidator.class, isSupersetOfValidatorProvider,
                 ValidDirectoryPathValidator.class, validDirectoryPathValidatorProvider,
                 ValidFilePathValidator.class, validFilePathValidatorProvider,
                 ValidRegexValidator.class, validRegexValidatorProvider,
-                ValidSimpleCronValidator.class, validSimpleCronValidatorProvider);
+                ValidSimpleCronValidator.class, validSimpleCronValidatorProvider,
+                AllMatchPatternValidator.class, allMatchPatternValidatorProvider);
 
         this.delegate = Validation.byDefaultProvider()
                 .configure()

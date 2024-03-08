@@ -11,24 +11,20 @@ public class DataStoreSettings {
     private final boolean producePayloads;
     private final boolean storeLatestEventReference;
     private final Sizes maxResults;
-    private final Sizes storeSize;
 
     public DataStoreSettings(final boolean producePayloads,
                              final boolean storeLatestEventReference,
-                             final Sizes maxResults,
-                             final Sizes storeSize) {
+                             final Sizes maxResults) {
         this.producePayloads = producePayloads;
         this.storeLatestEventReference = storeLatestEventReference;
         this.maxResults = maxResults;
-        this.storeSize = storeSize;
     }
 
     public static DataStoreSettings createAnalyticStoreSettings() {
         return DataStoreSettings
                 .builder()
                 .storeLatestEventReference(true)
-                .maxResults(Sizes.create(Integer.MAX_VALUE))
-                .storeSize(Sizes.create(Integer.MAX_VALUE))
+                .maxResults(Sizes.unlimited())
                 .build();
     }
 
@@ -52,10 +48,6 @@ public class DataStoreSettings {
         return maxResults;
     }
 
-    public Sizes getStoreSize() {
-        return storeSize;
-    }
-
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -67,13 +59,12 @@ public class DataStoreSettings {
         final DataStoreSettings that = (DataStoreSettings) o;
         return producePayloads == that.producePayloads &&
                 storeLatestEventReference == that.storeLatestEventReference &&
-                Objects.equals(maxResults, that.maxResults) &&
-                Objects.equals(storeSize, that.storeSize);
+                Objects.equals(maxResults, that.maxResults);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(producePayloads, storeLatestEventReference, maxResults, storeSize);
+        return Objects.hash(producePayloads, storeLatestEventReference, maxResults);
     }
 
     @Override
@@ -82,7 +73,6 @@ public class DataStoreSettings {
                 "producePayloads=" + producePayloads +
                 ", storeLatestEventReference=" + storeLatestEventReference +
                 ", maxResults=" + maxResults +
-                ", storeSize=" + storeSize +
                 '}';
     }
 
@@ -98,8 +88,7 @@ public class DataStoreSettings {
 
         private boolean producePayloads;
         private boolean storeLatestEventReference;
-        private Sizes maxResults = Sizes.create(List.of(1000000, 100, 10, 1));
-        private Sizes storeSize = Sizes.create(100);
+        private Sizes maxResults = Sizes.create(List.of(1000000L, 100L, 10L, 1L));
 
         private Builder() {
         }
@@ -108,7 +97,6 @@ public class DataStoreSettings {
             this.producePayloads = dataStoreSettings.producePayloads;
             this.storeLatestEventReference = dataStoreSettings.storeLatestEventReference;
             this.maxResults = dataStoreSettings.maxResults;
-            this.storeSize = dataStoreSettings.storeSize;
         }
 
         public Builder producePayloads(final boolean producePayloads) {
@@ -126,17 +114,11 @@ public class DataStoreSettings {
             return this;
         }
 
-        public Builder storeSize(final Sizes storeSize) {
-            this.storeSize = storeSize;
-            return this;
-        }
-
         public DataStoreSettings build() {
             return new DataStoreSettings(
                     producePayloads,
                     storeLatestEventReference,
-                    maxResults,
-                    storeSize);
+                    maxResults);
         }
     }
 }

@@ -1,14 +1,14 @@
 package stroom.search.solr.search;
 
-import stroom.dashboard.expression.v1.FieldIndex;
-import stroom.dashboard.expression.v1.ref.ErrorConsumer;
 import stroom.dictionary.api.WordListProvider;
-import stroom.query.api.v2.DateTimeSettings;
+import stroom.expression.api.DateTimeSettings;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.common.v2.SearchProgressLog;
 import stroom.query.common.v2.SearchProgressLog.SearchPhase;
+import stroom.query.language.functions.FieldIndex;
+import stroom.query.language.functions.ref.ErrorConsumer;
 import stroom.search.extraction.StoredDataQueue;
 import stroom.search.solr.CachedSolrIndex;
 import stroom.search.solr.SolrIndexCache;
@@ -22,13 +22,13 @@ import stroom.task.shared.ThreadPool;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
+import jakarta.inject.Inject;
 import org.apache.solr.client.solrj.SolrQuery;
 
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.LongAdder;
-import javax.inject.Inject;
 
 public class SolrSearchFactory {
 
@@ -61,7 +61,6 @@ public class SolrSearchFactory {
 
     public CompletableFuture<Void> search(final QueryKey queryKey,
                                           final Query query,
-                                          final long now,
                                           final DateTimeSettings dateTimeSettings,
                                           final ExpressionOperator expression,
                                           final FieldIndex fieldIndex,
@@ -99,7 +98,7 @@ public class SolrSearchFactory {
         }
 
         // Create a map of index fields keyed by name.
-        final SearchExpressionQuery searchExpressionQuery = getQuery(expression, indexFieldsMap, dateTimeSettings, now);
+        final SearchExpressionQuery searchExpressionQuery = getQuery(expression, indexFieldsMap, dateTimeSettings);
         final String queryString = searchExpressionQuery.getQuery().toString();
         final SolrQuery solrQuery = new SolrQuery(queryString);
         solrQuery.setRows(Integer.MAX_VALUE);
@@ -127,14 +126,12 @@ public class SolrSearchFactory {
 
     private SearchExpressionQuery getQuery(final ExpressionOperator expression,
                                            final Map<String, SolrIndexField> indexFieldsMap,
-                                           final DateTimeSettings dateTimeSettings,
-                                           final long nowEpochMilli) {
+                                           final DateTimeSettings dateTimeSettings) {
         final SearchExpressionQueryBuilder builder = new SearchExpressionQueryBuilder(
                 wordListProvider,
                 indexFieldsMap,
                 config.getMaxBooleanClauseCount(),
-                dateTimeSettings,
-                nowEpochMilli);
+                dateTimeSettings);
         final SearchExpressionQuery query = builder.buildQuery(expression);
 
         // Make sure the query was created successfully.

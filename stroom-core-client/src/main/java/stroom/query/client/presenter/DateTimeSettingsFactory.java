@@ -1,7 +1,7 @@
 package stroom.query.client.presenter;
 
+import stroom.expression.api.DateTimeSettings;
 import stroom.preferences.client.UserPreferencesManager;
-import stroom.query.api.v2.DateTimeSettings;
 import stroom.ui.config.shared.UserPreferences;
 
 import javax.inject.Inject;
@@ -19,7 +19,7 @@ public class DateTimeSettingsFactory {
     }
 
     public DateTimeSettings getDateTimeSettings() {
-        final UserPreferences userPreferences = userPreferencesManager.getCurrentPreferences();
+        final UserPreferences userPreferences = userPreferencesManager.getCurrentUserPreferences();
         return DateTimeSettings
                 .builder()
                 .dateTimePattern(userPreferences.getDateTimePattern())

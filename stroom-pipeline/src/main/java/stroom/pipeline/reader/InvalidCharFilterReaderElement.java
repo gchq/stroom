@@ -25,12 +25,17 @@ import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.Severity;
 
+import jakarta.inject.Inject;
+
 import java.io.Reader;
-import javax.inject.Inject;
 
 @ConfigurableElement(
         type = "InvalidCharFilterReader",
         category = Category.READER,
+        description = """
+                Removes any characters that are not in the standard XML character set.
+                The version of XML (e.g. 1.0 or 1.1) can be set using the 'xmlVersion' property.
+                """,
         roles = {
                 PipelineElementType.ROLE_HAS_TARGETS,
                 PipelineElementType.ROLE_READER,
@@ -39,7 +44,6 @@ import javax.inject.Inject;
         icon = SvgImage.PIPELINE_STREAM)
 public class InvalidCharFilterReaderElement extends AbstractReaderElement {
 
-    private static final char REPLACEMENT_CHAR = 0xfffd; // The <?> symbol.
     private static final Xml10Chars XML_10_CHARS = new Xml10Chars();
     private static final Xml11Chars XML_11_CHARS = new Xml11Chars();
 
@@ -47,6 +51,7 @@ public class InvalidCharFilterReaderElement extends AbstractReaderElement {
 
     private InvalidXmlCharFilter invalidXmlCharFilter;
     private XmlChars validChars = XML_11_CHARS;
+    private boolean warnOnRemoval = true;
 
     @Inject
     public InvalidCharFilterReaderElement(final ErrorReceiverProxy errorReceiver) {
@@ -55,26 +60,39 @@ public class InvalidCharFilterReaderElement extends AbstractReaderElement {
 
     @Override
     protected Reader insertFilter(final Reader reader) {
-        invalidXmlCharFilter = new InvalidXmlCharFilter(reader, validChars);
+        invalidXmlCharFilter = InvalidXmlCharFilter.createRemoveCharsFilter(reader, validChars);
         return invalidXmlCharFilter;
     }
 
     @Override
     public void endStream() {
-        if (invalidXmlCharFilter.hasModifiedContent()) {
-            errorReceiver.log(Severity.WARNING, null, getElementId(),
-                    "Some illegal characters were removed from the input stream", null);
+        if (warnOnRemoval && invalidXmlCharFilter.hasModifiedContent()) {
+            errorReceiver.log(
+                    Severity.WARNING,
+                    null,
+                    getElementId(),
+                    "Some characters that are not valid in XML v" + validChars.getXmlVersion()
+                            + " were removed from the input stream",
+                    null);
         }
         super.endStream();
     }
 
     @PipelineProperty(
-            description = "XML version, e.g. 1.0 or 1.1",
+            description = "XML version, e.g. '1.0' or '1.1'",
             defaultValue = "1.1",
             displayPriority = 1)
     public void setXmlVersion(final String xmlMode) {
         if ("1.0".equals(xmlMode)) {
             validChars = XML_10_CHARS;
         }
+    }
+
+    @PipelineProperty(
+            description = "Log a warning if any characters have been removed from the input stream.",
+            defaultValue = "true",
+            displayPriority = 2)
+    public void setWarnOnRemoval(final boolean warnOnRemoval) {
+        this.warnOnRemoval = warnOnRemoval;
     }
 }

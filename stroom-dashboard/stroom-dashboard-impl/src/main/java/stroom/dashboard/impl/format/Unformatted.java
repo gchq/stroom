@@ -16,7 +16,7 @@
 
 package stroom.dashboard.impl.format;
 
-import stroom.dashboard.expression.v1.Val;
+import stroom.query.language.functions.Val;
 
 public class Unformatted implements Formatter {
 

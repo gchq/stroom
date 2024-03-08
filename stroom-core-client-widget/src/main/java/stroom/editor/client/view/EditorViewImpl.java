@@ -44,6 +44,7 @@ import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.ScrollPanel;
@@ -83,10 +84,10 @@ public class EditorViewImpl extends ViewImpl implements EditorView {
     private final Option showInvisiblesOption;
     private final Option basicAutoCompletionOption;
     private final Option snippetsOption;
-    private final Option liveAutoCompletionOption;
     private final Option highlightActiveLineOption;
     private final Option viewAsHexOption;
     private Option useVimBindingsOption;
+    private Option liveAutoCompletionOption;
 
     private final Widget widget;
 
@@ -101,6 +102,7 @@ public class EditorViewImpl extends ViewImpl implements EditorView {
     private int firstLineNumber = 1;
     private Function<String, List<TextRange>> formattedHighlightsFunc;
     private boolean isVimPreferredKeyBinding = false;
+    private boolean liveAutoCompletePreference = false;
 
     @Inject
     public EditorViewImpl(final Binder binder) {
@@ -109,6 +111,11 @@ public class EditorViewImpl extends ViewImpl implements EditorView {
             protected void onAttach() {
                 super.onAttach();
                 GlobalResizeObserver.addListener(getElement(), element -> onResize());
+            }
+
+            @Override
+            public void onBrowserEvent(final Event event) {
+                super.onBrowserEvent(event);
             }
 
             @Override
@@ -141,8 +148,7 @@ public class EditorViewImpl extends ViewImpl implements EditorView {
         useVimBindingsOption = buildVimBindingsOption(false);
         basicAutoCompletionOption = new Option(
                 "Auto Completion", true, true, (on) -> editor.setUseBasicAutoCompletion(on));
-        liveAutoCompletionOption = new Option(
-                "Live Auto Completion", false, true, (on) -> editor.setUseLiveAutoCompletion(on));
+        liveAutoCompletionOption = buildLiveAutoCompleteOption(false);
         snippetsOption = new Option(
                 "Snippets", true, true, (on) -> editor.setUseSnippets(on));
         highlightActiveLineOption = new Option(
@@ -265,6 +271,11 @@ public class EditorViewImpl extends ViewImpl implements EditorView {
                             col = location.getColNo();
                         }
 
+//                            GWT.log("row: " + row
+//                                    + " col: " + col
+//                                    + " severity: " + error.getSeverity()
+//                                    + " msg: " + error.getMessage());
+
                         final Severity severity = error.getSeverity();
                         AceAnnotationType annotationType;
                         switch (severity) {
@@ -313,7 +324,6 @@ public class EditorViewImpl extends ViewImpl implements EditorView {
 
     @Override
     public void setHighlights(final List<TextRange> highlights) {
-
         Scheduler.get().scheduleDeferred(() -> {
             if (highlights != null && highlights.size() > 0) {
                 // Find our first from location
@@ -348,6 +358,11 @@ public class EditorViewImpl extends ViewImpl implements EditorView {
     }
 
     @Override
+    public void setMarkers(final List<Marker> markers) {
+        editor.setMarkers(markers);
+    }
+
+    @Override
     public void setErrorText(final String title, final String errorText) {
 
         final SafeHtmlBuilder safeHtmlBuilder = new SafeHtmlBuilder()
@@ -366,12 +381,13 @@ public class EditorViewImpl extends ViewImpl implements EditorView {
             }
         }
 
-        safeHtmlBuilder
-                .appendHtmlConstant("</div>");
+        safeHtmlBuilder.appendHtmlConstant("</div>");
 
         final ScrollPanel scrollPanel = new ScrollPanel();
-        final HTMLPanel htmlPanel = new HTMLPanel(safeHtmlBuilder.toSafeHtml());
-        scrollPanel.setWidget(htmlPanel.asWidget());
+        scrollPanel.addDomHandler(this::handleMouseDown, MouseDownEvent.getType());
+        scrollPanel.getElement().addClassName("editor-error-container");
+        scrollPanel.getElement().addClassName("max");
+        scrollPanel.setWidget(new HTMLPanel(safeHtmlBuilder.toSafeHtml()).asWidget());
         content.setWidget(scrollPanel.asWidget());
     }
 
@@ -413,12 +429,29 @@ public class EditorViewImpl extends ViewImpl implements EditorView {
         editor.setUseVimBindings(getUseVimBindingsOption().isOn());
     }
 
+    @Override
+    public void setUserLiveAutoCompletePreference(final boolean isOn) {
+        this.liveAutoCompletePreference = isOn;
+        this.liveAutoCompletionOption = buildLiveAutoCompleteOption(isOn);
+        // Option overrides user preference so even if the user prefers vim (why wouldn't he/she?)
+        // they can temporarily disable it
+        editor.setUseLiveAutoCompletion(getLiveAutoCompletionOption().isOn());
+    }
+
     private Option buildVimBindingsOption(final boolean useVimBindings) {
         return new Option(
                 "Vim Key Bindings",
                 useVimBindings,
                 true,
                 (on) -> editor.setUseVimBindings(on));
+    }
+
+    private Option buildLiveAutoCompleteOption(final boolean isOn) {
+        return new Option(
+                "Live Auto Completion",
+                isOn,
+                true,
+                (on) -> editor.setUseLiveAutoCompletion(on));
     }
 
     private String formatAsIfXml(final String text) {
@@ -539,6 +572,24 @@ public class EditorViewImpl extends ViewImpl implements EditorView {
     }
 
     @Override
+    public void setOptionsToDefaultAvailability() {
+        getBasicAutoCompletionOption().setToDefaultAvailability();
+        getFormatAction().setToDefaultAvailability();
+        getHighlightActiveLineOption().setToDefaultAvailability();
+        getHighlightActiveLineOption().setToDefaultState();
+        getLineNumbersOption().setToDefaultAvailability();
+        getLineWrapOption().setToDefaultAvailability();
+        getLiveAutoCompletionOption().setToDefaultAvailability();
+        getShowIndentGuides().setToDefaultAvailability();
+        getShowInvisiblesOption().setToDefaultAvailability();
+        getSnippetsOption().setToDefaultAvailability();
+        getStylesOption().setToDefaultAvailability();
+        getUseVimBindingsOption().setToDefaultAvailability();
+        getViewAsHexOption().setToDefaultAvailability();
+    }
+
+
+    @Override
     public HandlerRegistration addKeyDownHandler(final KeyDownHandler handler) {
         return content.addDomHandler(handler, KeyDownEvent.getType());
     }
@@ -572,6 +623,10 @@ public class EditorViewImpl extends ViewImpl implements EditorView {
     public void onResize() {
         doLayout();
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface Binder extends UiBinder<FlowPanel, EditorViewImpl> {
 

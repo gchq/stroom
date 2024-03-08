@@ -168,14 +168,12 @@ public class TableRow {
             return false;
         }
         final TableRow tableRow = (TableRow) o;
-        return Objects.equals(expander, tableRow.expander) &&
-                Objects.equals(groupKey, tableRow.groupKey) &&
-                Objects.equals(cells, tableRow.cells);
+        return Objects.equals(groupKey, tableRow.groupKey);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(expander, groupKey, cells);
+        return Objects.hash(groupKey);
     }
 
     public static class Cell {

@@ -128,10 +128,6 @@ public class PropertyListPresenter
     private void addColumns() {
         addNameColumn();
         addValueColumn();
-        addSourceColumn();
-        addInheritedValueColumn();
-        addInheritedFromColumn();
-        addDefaultValueColumn();
         addDescriptionColumn();
 
         addEndColumn();
@@ -144,28 +140,18 @@ public class PropertyListPresenter
             public SafeHtml getValue(final PipelineProperty property) {
                 return getSafeHtmlWithState(property, property.getName(), false);
             }
-        }, "Property Name", 150);
+        }, "Property Name", 250);
     }
 
     private void addValueColumn() {
         // Value.
-        dataGrid.addResizableColumn(new Column<PipelineProperty, SafeHtml>(new SafeHtmlCell()) {
+        dataGrid.addAutoResizableColumn(new Column<PipelineProperty, SafeHtml>(new SafeHtmlCell()) {
             @Override
             public SafeHtml getValue(final PipelineProperty property) {
                 final String value = getVal(property);
                 return getSafeHtmlWithState(property, value, true);
             }
-        }, "Value", 200);
-    }
-
-    private void addSourceColumn() {
-        dataGrid.addResizableColumn(new Column<PipelineProperty, SafeHtml>(new SafeHtmlCell()) {
-            @Override
-            public SafeHtml getValue(final PipelineProperty property) {
-                final Source source = getSource(property);
-                return getSafeHtml(source.getDisplayValue());
-            }
-        }, "Source", 100);
+        }, "Value", 30, 200);
     }
 
     private Source getSource(final PipelineProperty property) {
@@ -210,58 +196,14 @@ public class PropertyListPresenter
         return null;
     }
 
-    private void addInheritedValueColumn() {
-        // Default Value.
-        dataGrid.addResizableColumn(new Column<PipelineProperty, SafeHtml>(new SafeHtmlCell()) {
-            @Override
-            public SafeHtml getValue(final PipelineProperty property) {
-                final PipelineProperty inheritedProperty = getInheritedProperty(property);
-                if (inheritedProperty != null) {
-                    final PipelinePropertyValue value = inheritedProperty.getValue();
-                    if (value != null) {
-                        return getSafeHtml(value.toString());
-                    }
-                }
-                return getSafeHtml(property.getPropertyType().getDefaultValue());
-            }
-        }, "Inherited Value", 100);
-    }
-
-    private void addInheritedFromColumn() {
-        // Default Value.
-        dataGrid.addResizableColumn(new Column<PipelineProperty, SafeHtml>(new SafeHtmlCell()) {
-            @Override
-            public SafeHtml getValue(final PipelineProperty property) {
-                final PipelineProperty inheritedProperty = getInheritedProperty(property);
-                if (inheritedProperty != null) {
-                    final PipelinePropertyValue value = inheritedProperty.getValue();
-                    if (value != null) {
-                        return getSafeHtml(inheritedProperty.getSourcePipeline().getName());
-                    }
-                }
-                return null;
-            }
-        }, "Inherited From", 100);
-    }
-
-    private void addDefaultValueColumn() {
-        // Default Value.
-        dataGrid.addResizableColumn(new Column<PipelineProperty, SafeHtml>(new SafeHtmlCell()) {
-            @Override
-            public SafeHtml getValue(final PipelineProperty property) {
-                return getSafeHtml(property.getPropertyType().getDefaultValue());
-            }
-        }, "Default Value", 100);
-    }
-
     private void addDescriptionColumn() {
         // Default Value.
-        dataGrid.addResizableColumn(new Column<PipelineProperty, SafeHtml>(new SafeHtmlCell()) {
+        dataGrid.addAutoResizableColumn(new Column<PipelineProperty, SafeHtml>(new SafeHtmlCell()) {
             @Override
             public SafeHtml getValue(final PipelineProperty property) {
                 return getSafeHtml(property.getPropertyType().getDescription());
             }
-        }, "Description", 600);
+        }, "Description", 70, 200);
     }
 
     private SafeHtml getSafeHtmlWithState(final PipelineProperty property, final String string,
@@ -358,6 +300,14 @@ public class PropertyListPresenter
             PipelineProperty inheritedProperty = getInheritedProperty(property);
             final PipelineProperty defaultProperty = property;
 
+            final String defaultValue = property.getPropertyType().getDefaultValue();
+            final String inheritedValue = inheritedProperty == null || inheritedProperty.getValue() == null
+                    ? null
+                    : inheritedProperty.getValue().toString();
+            final String inheritedFrom = inheritedProperty == null || inheritedProperty.getSourcePipeline() == null
+                    ? null
+                    : inheritedProperty.getSourcePipeline().getName();
+
             if (inheritedProperty == null) {
                 inheritedProperty = defaultProperty;
             }
@@ -373,7 +323,10 @@ public class PropertyListPresenter
             final Source source = getSource(editing);
 
             final NewPropertyPresenter editor = newPropertyPresenter.get();
-            editor.edit(defaultProperty, inheritedProperty, editing, source);
+            editor.edit(defaultProperty, inheritedProperty, editing, source,
+                    defaultValue,
+                    inheritedValue,
+                    inheritedFrom);
 
             final HidePopupRequestEvent.Handler handler = e -> {
                 if (e.isOk()) {
@@ -413,6 +366,7 @@ public class PropertyListPresenter
                     .caption("Edit Property")
                     .onShow(e -> editor.getView().focus())
                     .onHideRequest(handler)
+                    .modal(true)
                     .fire();
         }
     }

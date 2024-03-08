@@ -16,25 +16,23 @@
 
 package stroom.query.common.v2;
 
+import stroom.expression.api.ExpressionContext;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.Result;
-import stroom.query.api.v2.ResultBuilder;
 import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.ResultRequest.Fetch;
 import stroom.query.api.v2.ResultRequest.ResultStyle;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
-import stroom.query.api.v2.TableResult;
-import stroom.query.common.v2.format.FieldFormatter;
+import stroom.query.common.v2.format.ColumnFormatter;
 import stroom.query.common.v2.format.FormatterFactory;
-import stroom.query.util.LambdaLogger;
-import stroom.query.util.LambdaLoggerFactory;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.string.ExceptionStringUtil;
 
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -49,19 +47,19 @@ public class SearchResponseCreator {
 
     private final SizesProvider sizesProvider;
     private final ResultStore store;
+    private final ExpressionContext expressionContext;
 
     private final Map<String, ResultCreator> cachedResultCreators = new HashMap<>();
-
-    // Cache the last results for each component.
-    private final Map<String, Result> resultCache = new HashMap<>();
 
     /**
      * @param store The underlying store to use for creating the search responses.
      */
     public SearchResponseCreator(final SizesProvider sizesProvider,
-                                 final ResultStore store) {
+                                 final ResultStore store,
+                                 final ExpressionContext expressionContext) {
         this.sizesProvider = sizesProvider;
         this.store = Objects.requireNonNull(store);
+        this.expressionContext = expressionContext;
     }
 
     /**
@@ -113,7 +111,8 @@ public class SearchResponseCreator {
      * occurred while assembling the {@link SearchResponse}</li>
      * </ul>
      */
-    public SearchResponse create(final SearchRequest searchRequest) {
+    public SearchResponse create(final SearchRequest searchRequest,
+                                 final Map<String, ResultCreator> resultCreatorMap) {
         final boolean didSearchComplete;
 
         if (!store.isComplete()) {
@@ -157,7 +156,7 @@ public class SearchResponseCreator {
             final boolean complete = store.isComplete();
 
             final List<Result> res = LOGGER.logDurationIfTraceEnabled(() ->
-                    getResults(searchRequest), "Getting results");
+                    getResults(searchRequest, resultCreatorMap), "Getting results");
             LOGGER.debug(() -> "Returning new SearchResponse with results: " +
                     (res.size() == 0
                             ? "null"
@@ -201,54 +200,6 @@ public class SearchResponseCreator {
         }
     }
 
-    public boolean create(final SearchRequest searchRequest,
-                          final Map<String, ResultBuilder<?>> resultBuilderMap) {
-        final boolean didSearchComplete;
-        final boolean complete = store.isComplete();
-        if (!complete) {
-            LOGGER.debug(() -> "Store not complete so will wait for completion or timeout");
-            try {
-                final Duration effectiveTimeout = getEffectiveTimeout(searchRequest);
-
-                // Block and wait for the store to notify us of its completion/termination, or if the wait is too long
-                // we will time out
-                LOGGER.debug(() -> "Waiting: effectiveTimeout=" + effectiveTimeout);
-                didSearchComplete = store.awaitCompletion(effectiveTimeout.toMillis(), TimeUnit.MILLISECONDS);
-                LOGGER.debug(() -> "Finished waiting: effectiveTimeout=" +
-                        effectiveTimeout +
-                        ", didSearchComplete=" +
-                        didSearchComplete);
-
-                if (!didSearchComplete && !searchRequest.incremental()) {
-                    // Search didn't complete non-incremental search in time so return a timed out error response
-                    throw new RuntimeException(SearchResponse.TIMEOUT_MESSAGE + effectiveTimeout);
-                }
-
-            } catch (InterruptedException e) {
-                LOGGER.trace(e::getMessage, e);
-                // Keep interrupting this thread.
-                Thread.currentThread().interrupt();
-
-                throw new RuntimeException("Thread was interrupted before the search could complete");
-            }
-        }
-
-        // We will only get here if the search is complete, or it is an incremental search in which case we don't care
-        // about completion state. Therefore, assemble whatever results we currently have
-        try {
-            LOGGER.logDurationIfTraceEnabled(() ->
-                    getResults(searchRequest, resultBuilderMap), "Getting results");
-
-        } catch (final RuntimeException e) {
-            LOGGER.error(() -> "Error getting search results for query " + searchRequest.getKey().toString(), e);
-            throw new RuntimeException("Error getting search results: [" +
-                    e.getMessage() +
-                    "], see service's logs for details", e);
-        }
-
-        return complete;
-    }
-
     private List<String> buildCompoundErrorList(final ResultStore store, final List<Result> results) {
         final List<String> errors = new ArrayList<>();
 
@@ -284,73 +235,27 @@ public class SearchResponseCreator {
         return FALL_BACK_DEFAULT_TIMEOUT;
     }
 
-    private void getResults(final SearchRequest searchRequest,
-                            final Map<String, ResultBuilder<?>> resultBuilderMap) {
-        // Copy the requested portion of the result cache into the result.
-        for (final ResultRequest resultRequest : searchRequest.getResultRequests()) {
-            final String componentId = resultRequest.getComponentId();
-
-            // Only deliver data to components that actually want it.
-            final Fetch fetch = resultRequest.getFetch();
-            if (!Fetch.NONE.equals(fetch)) {
-                getResult(searchRequest, resultRequest, resultBuilderMap.get(componentId));
-            }
-        }
-    }
-
-    private List<Result> getResults(final SearchRequest searchRequest) {
+    private List<Result> getResults(final SearchRequest searchRequest,
+                                    final Map<String, ResultCreator> resultCreatorMap) {
 
         // Provide results if this search is incremental or the search is complete.
         List<Result> results = new ArrayList<>(searchRequest.getResultRequests().size());
         // Copy the requested portion of the result cache into the result.
         for (final ResultRequest resultRequest : searchRequest.getResultRequests()) {
-            final String componentId = resultRequest.getComponentId();
+            final ResultCreator resultCreator = resultCreatorMap.get(resultRequest.getComponentId());
+            if (resultCreator != null) {
+                final String componentId = resultRequest.getComponentId();
 
-            // Only deliver data to components that actually want it.
-            final Fetch fetch = resultRequest.getFetch();
-            if (!Fetch.NONE.equals(fetch)) {
-                final Result result = getResult(searchRequest, resultRequest);
-
-                if (result != null) {
-                    if (fetch == null || Fetch.ALL.equals(fetch)) {
-                        // If the fetch option has not been set or is set to ALL we deliver the full result.
+                // Only deliver data to components that actually want it.
+                final Fetch fetch = resultRequest.getFetch();
+                if (!Fetch.NONE.equals(fetch)) {
+                    final DataStore dataStore = store.getData(resultRequest.getComponentId());
+                    final Result result = resultCreator.create(dataStore, resultRequest);
+                    if (result != null) {
+                        // Either we haven't returned a result before or this result
+                        // is different from the one delivered previously so deliver it to the client.
                         results.add(result);
                         LOGGER.debug(() -> "Delivering " + result + " for " + componentId);
-
-                    } else if (Fetch.CHANGES.equals(fetch)) {
-                        // Cache the new result and get the previous one.
-                        final Result lastResult = resultCache.put(componentId, result);
-
-                        // See if we have delivered an identical result before, so we
-                        // don't send more data to the client than we need to.
-                        if (!result.equals(lastResult)) {
-                            //
-                            // CODE TO HELP DEBUGGING.
-                            //
-
-                            // try {
-                            // if (lastComponentResult instanceof
-                            // ChartResult) {
-                            // final ChartResult lr = (ChartResult)
-                            // lastComponentResult;
-                            // final ChartResult cr = (ChartResult)
-                            // componentResult;
-                            // final File dir = new
-                            // File(FileUtil.getTempDir());
-                            // StreamUtil.stringToFile(lr.getJSON(), new
-                            // File(dir, "last.json"));
-                            // StreamUtil.stringToFile(cr.getJSON(), new
-                            // File(dir, "current.json"));
-                            // }
-                            // } catch (final RuntimeException e) {
-                            // LOGGER.error(e.getMessage(), e);
-                            // }
-
-                            // Either we haven't returned a result before or this result
-                            // is different from the one delivered previously so deliver it to the client.
-                            results.add(result);
-                            LOGGER.debug(() -> "Delivering " + result + " for " + componentId);
-                        }
                     }
                 }
             }
@@ -358,75 +263,84 @@ public class SearchResponseCreator {
         return results;
     }
 
-    private Result getResult(final SearchRequest searchRequest,
-                             final ResultRequest resultRequest) {
-        final String componentId = resultRequest.getComponentId();
-        Result result = null;
-
-        final DataStore dataStore = store.getData(componentId);
-        if (dataStore != null) {
-            try {
-                final ResultCreator resultCreator = getResultCreator(
-                        dataStore.getSerialisers(),
-                        searchRequest,
-                        componentId,
-                        resultRequest);
-                if (resultCreator != null) {
-                    result = resultCreator.create(dataStore, resultRequest);
+    public Map<String, ResultCreator> makeDefaultResultCreators(final SearchRequest searchRequest) {
+        final Map<String, ResultCreator> map = new HashMap<>();
+        for (final ResultRequest resultRequest : searchRequest.getResultRequests()) {
+            final String componentId = resultRequest.getComponentId();
+            final DataStore dataStore = store.getData(componentId);
+            if (dataStore != null) {
+                try {
+                    final ResultCreator resultCreator = getDefaultResultCreator(
+                            dataStore.getSerialisers(),
+                            searchRequest,
+                            componentId,
+                            expressionContext,
+                            resultRequest,
+                            true);
+                    map.put(componentId, resultCreator);
+                } catch (final RuntimeException e) {
+                    LOGGER.error(e::getMessage, e);
                 }
-            } catch (final RuntimeException e) {
-                result = new TableResult(componentId, null, null, null, 0,
-                        Collections.singletonList(ExceptionStringUtil.getMessage(e)));
             }
         }
-
-        return result;
+        return map;
     }
 
-    private void getResult(final SearchRequest searchRequest,
-                           final ResultRequest resultRequest,
-                           final ResultBuilder<?> resultBuilder) {
-        final String componentId = resultRequest.getComponentId();
-        final DataStore dataStore = store.getData(componentId);
-        if (dataStore != null) {
-            try {
-                final ResultCreator resultCreator = getResultCreator(
-                        dataStore.getSerialisers(),
-                        searchRequest,
-                        componentId,
-                        resultRequest);
-                if (resultCreator != null) {
-                    resultCreator.create(dataStore, resultRequest, resultBuilder);
-                }
-            } catch (final RuntimeException e) {
-                resultBuilder.errors(Collections.singletonList(ExceptionStringUtil.getMessage(e)));
-            }
-        }
-    }
-
-    private ResultCreator getResultCreator(final Serialisers serialisers,
-                                           final SearchRequest searchRequest,
-                                           final String componentId,
-                                           final ResultRequest resultRequest) {
+    private ResultCreator getDefaultResultCreator(final Serialisers serialisers,
+                                                  final SearchRequest searchRequest,
+                                                  final String componentId,
+                                                  final ExpressionContext expressionContext,
+                                                  final ResultRequest resultRequest,
+                                                  final boolean cacheLastResult) {
         return cachedResultCreators.computeIfAbsent(componentId, k -> {
             ResultCreator resultCreator;
             try {
                 if (ResultStyle.TABLE.equals(resultRequest.getResultStyle())) {
-                    final FieldFormatter fieldFormatter =
-                            new FieldFormatter(
+                    final ColumnFormatter columnFormatter =
+                            new ColumnFormatter(
                                     new FormatterFactory(searchRequest.getDateTimeSettings()));
-                    resultCreator = new TableResultCreator(
-                            fieldFormatter,
-                            sizesProvider.getDefaultMaxResultsSizes());
+                    resultCreator = new TableResultCreator(columnFormatter, cacheLastResult);
+
+                } else if (ResultStyle.VIS.equals(resultRequest.getResultStyle())) {
+                    final FlatResultCreator flatResultCreator = new FlatResultCreator(
+                            new MapDataStoreFactory(() -> serialisers),
+                            searchRequest,
+                            componentId,
+                            expressionContext,
+                            resultRequest,
+                            null,
+                            null,
+                            sizesProvider.getDefaultMaxResultsSizes(),
+                            cacheLastResult);
+                    resultCreator = new VisResultCreator(flatResultCreator);
+
+                } else if (ResultStyle.QL_VIS.equals(resultRequest.getResultStyle())) {
+                    final FlatResultCreator flatResultCreator = new FlatResultCreator(
+                            new MapDataStoreFactory(() -> serialisers),
+                            searchRequest,
+                            componentId,
+                            expressionContext,
+                            resultRequest,
+                            null,
+                            null,
+                            sizesProvider.getDefaultMaxResultsSizes(),
+                            cacheLastResult);
+                    resultCreator = new QLVisResultCreator(flatResultCreator, resultRequest
+                            .getMappings()
+                            .get(resultRequest.getMappings().size() - 1)
+                            .getVisSettings());
+
                 } else {
                     resultCreator = new FlatResultCreator(
                             new MapDataStoreFactory(() -> serialisers),
                             searchRequest,
                             componentId,
+                            expressionContext,
                             resultRequest,
                             null,
                             null,
-                            sizesProvider.getDefaultMaxResultsSizes());
+                            sizesProvider.getDefaultMaxResultsSizes(),
+                            cacheLastResult);
                 }
             } catch (final RuntimeException e) {
                 throw new RuntimeException(e.getMessage());

@@ -9,11 +9,12 @@ dependencies {
 
     implementation libs.assertj_core // needed for DiffUtil
     implementation libs.commons_codec
+    implementation libs.commons_csv
     implementation libs.dropwizard_core
     implementation libs.dropwizard_metrics_healthchecks
     implementation libs.dropwizard_validation
     implementation libs.guava
-    implementation libs.guice5
+    implementation libs.guice
     implementation libs.jackson_annotations
     implementation libs.jackson_core
     implementation libs.jackson_databind
@@ -21,7 +22,7 @@ dependencies {
     implementation libs.jakarta_servlet_api
     implementation libs.jakarta_validation_api
     implementation libs.javassist
-    implementation libs.javax_inject
+    implementation libs.jakarta_inject
     implementation libs.jaxb_api
     implementation libs.saxon_he
     implementation libs.slf4j_api
@@ -50,7 +51,7 @@ dependencies {
     testRuntimeOnly libs.logback_core
 }
 
-task writeBuildProperties {
+tasks.register('writeBuildProperties') {
     def propertyFile = file "${project.rootDir}/stroom-util/src/main/resources/META-INF/stroom-util-build.properties"
     def props = new Properties()
 

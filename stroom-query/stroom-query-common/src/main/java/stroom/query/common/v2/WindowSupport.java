@@ -1,13 +1,14 @@
 package stroom.query.common.v2;
 
-import stroom.dashboard.expression.v1.FieldIndex;
-import stroom.dashboard.expression.v1.Val;
-import stroom.dashboard.expression.v1.ValDate;
-import stroom.query.api.v2.Field;
+import stroom.query.api.v2.Column;
 import stroom.query.api.v2.HoppingWindow;
+import stroom.query.api.v2.ParamSubstituteUtil;
 import stroom.query.api.v2.Sort;
 import stroom.query.api.v2.Sort.SortDirection;
 import stroom.query.api.v2.TableSettings;
+import stroom.query.language.functions.FieldIndex;
+import stroom.query.language.functions.Val;
+import stroom.query.language.functions.ValDate;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.time.SimpleDuration;
@@ -61,28 +62,28 @@ public class WindowSupport {
                 }
 
                 // Add all the additional fields we want for time windows.
-                final List<Field> fields = new ArrayList<>();
-                if (tableSettings.getFields() != null) {
-                    fields.addAll(tableSettings.getFields());
+                final List<Column> columns = new ArrayList<>();
+                if (tableSettings.getColumns() != null) {
+                    columns.addAll(tableSettings.getColumns());
                 }
 
-                final Map<String, Field> fieldMap = fields
+                final Map<String, Column> columnMap = columns
                         .stream()
-                        .collect(Collectors.toMap(Field::getId, Function.identity()));
+                        .collect(Collectors.toMap(Column::getId, Function.identity()));
 
-                Field timeField = fieldMap.get(hoppingWindow.getTimeField());
-                if (timeField != null) {
-                    final int index = fields.indexOf(timeField);
-                    fields.set(index, timeField
+                Column timeColumn = columnMap.get(hoppingWindow.getTimeField());
+                if (timeColumn != null) {
+                    final int index = columns.indexOf(timeColumn);
+                    columns.set(index, timeColumn
                             .copy()
-                            .expression("${" + hoppingWindow.getTimeField() + "}")
+                            .expression(ParamSubstituteUtil.makeParam(hoppingWindow.getTimeField()))
                             .group(0)
                             .build());
                 } else {
-                    fields.add(Field.builder()
+                    columns.add(Column.builder()
                             .id(hoppingWindow.getTimeField())
                             .name(hoppingWindow.getTimeField())
-                            .expression("${" + hoppingWindow.getTimeField() + "}")
+                            .expression(ParamSubstituteUtil.makeParam(hoppingWindow.getTimeField()))
                             .group(0)
                             .sort(Sort.builder().order(0).direction(SortDirection.ASCENDING).build())
                             .visible(true)
@@ -91,15 +92,15 @@ public class WindowSupport {
 
                 for (int i = 0; i < offsets.size(); i++) {
                     final String fieldId = "period-" + i;
-                    final Field field = fieldMap.get(fieldId);
-                    if (field != null) {
-                        final int index = fields.indexOf(field);
-                        fields.set(index, field
+                    final Column column = columnMap.get(fieldId);
+                    if (column != null) {
+                        final int index = columns.indexOf(column);
+                        columns.set(index, column
                                 .copy()
                                 .expression("countPrevious(" + i + ")")
                                 .build());
                     } else {
-                        fields.add(Field.builder()
+                        columns.add(Column.builder()
                                 .id(fieldId)
                                 .name(fieldId)
                                 .expression("countPrevious(" + i + ")")
@@ -108,7 +109,7 @@ public class WindowSupport {
                     }
                 }
 
-                this.tableSettings = tableSettings.copy().fields(fields).build();
+                this.tableSettings = tableSettings.copy().columns(columns).build();
             }
         }
     }

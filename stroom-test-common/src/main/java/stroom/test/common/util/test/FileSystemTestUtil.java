@@ -17,7 +17,6 @@
 package stroom.test.common.util.test;
 
 import stroom.util.logging.LogUtil;
-import stroom.util.zip.ZipUtil;
 
 import java.io.IOException;
 import java.nio.file.Files;

@@ -23,7 +23,6 @@ import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.api.event.RequestLogoutEvent;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.menu.client.presenter.IconMenuItem;
-import stroom.widget.menu.client.presenter.KeyedParentMenuItem;
 import stroom.widget.menu.client.presenter.Separator;
 
 import com.google.inject.Inject;
@@ -43,13 +42,7 @@ public class LogoutPlugin extends Plugin {
     public void onReveal(final BeforeRevealMenubarEvent event) {
         super.onReveal(event);
 
-        event.getMenuItems().addMenuItem(MenuKeys.MAIN_MENU,
-                new KeyedParentMenuItem.Builder()
-                        .priority(4)
-                        .text("User")
-                        .menuItems(event.getMenuItems())
-                        .menuKey(MenuKeys.USER_MENU)
-                        .build());
+        MenuKeys.addUserMenu(event.getMenuItems());
         event.getMenuItems().addMenuItem(MenuKeys.USER_MENU, new Separator(2));
         event.getMenuItems().addMenuItem(MenuKeys.USER_MENU,
                 new IconMenuItem.Builder()

@@ -26,15 +26,16 @@ import stroom.util.AuditUtil;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.ResultPage;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
+
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.inject.Singleton;
 
 @Singleton
 class JobService {
@@ -78,7 +79,7 @@ class JobService {
             // We always want to update a job instance even if we have a stale version.
             before.ifPresent(j -> job.setVersion(j.getVersion()));
 
-            AuditUtil.stamp(securityContext.getUserId(), job);
+            AuditUtil.stamp(securityContext, job);
             final Job after = jobDao.update(job);
             return decorate(after);
         });

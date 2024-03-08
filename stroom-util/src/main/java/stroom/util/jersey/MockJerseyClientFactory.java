@@ -1,22 +1,27 @@
 package stroom.util.jersey;
 
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.WebTarget;
+import jakarta.inject.Singleton;
+import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.client.WebTarget;
 
+@Singleton
 public class MockJerseyClientFactory implements JerseyClientFactory {
+
+    private final Client client = ClientBuilder.newClient();
 
     @Override
     public Client getNamedClient(final JerseyClientName jerseyClientName) {
-        return null;
+        return client;
     }
 
     @Override
     public Client getDefaultClient() {
-        return null;
+        return client;
     }
 
     @Override
     public WebTarget createWebTarget(final JerseyClientName jerseyClientName, final String endpoint) {
-        return null;
+        return client.target(endpoint);
     }
 }

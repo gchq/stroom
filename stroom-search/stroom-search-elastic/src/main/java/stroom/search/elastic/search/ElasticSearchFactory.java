@@ -1,7 +1,7 @@
 package stroom.search.elastic.search;
 
 import stroom.dictionary.api.WordListProvider;
-import stroom.query.api.v2.DateTimeSettings;
+import stroom.expression.api.DateTimeSettings;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.QueryKey;
@@ -23,6 +23,7 @@ import stroom.task.shared.ThreadPool;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
+import jakarta.inject.Inject;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
 import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder.BoundaryScannerType;
@@ -31,7 +32,6 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicLong;
-import javax.inject.Inject;
 
 public class ElasticSearchFactory {
 
@@ -62,7 +62,6 @@ public class ElasticSearchFactory {
 
     public CompletableFuture<Void> search(final QueryKey queryKey,
                                           final Query query,
-                                          final long now,
                                           final DateTimeSettings dateTimeSettings,
                                           final ExpressionOperator expression,
                                           final Coprocessors coprocessors,
@@ -89,7 +88,7 @@ public class ElasticSearchFactory {
                 taskContext -> elasticSearchTaskHandler.search(
                         taskContext,
                         index,
-                        getQuery(expression, indexFieldsMap, dateTimeSettings, now),
+                        getQuery(expression, indexFieldsMap, dateTimeSettings),
                         getHighlighter(),
                         coprocessors,
                         resultStore,
@@ -99,6 +98,10 @@ public class ElasticSearchFactory {
 
         return CompletableFuture
                 .runAsync(runnable, executor)
+                .exceptionally(e -> {
+                    resultStore.onFailure(resultStore.getNodeName(), e);
+                    return null;
+                })
                 .whenCompleteAsync((r, t) -> taskContextFactory.childContext(parentContext,
                         "Search Elasticsearch Index",
                         TerminateHandlerFactory.NOOP_FACTORY,
@@ -111,13 +114,11 @@ public class ElasticSearchFactory {
 
     private QueryBuilder getQuery(final ExpressionOperator expression,
                                   final Map<String, ElasticIndexField> indexFieldsMap,
-                                  final DateTimeSettings dateTimeSettings,
-                                  final long nowEpochMilli) {
+                                  final DateTimeSettings dateTimeSettings) {
         final SearchExpressionQueryBuilder builder = new SearchExpressionQueryBuilder(
                 wordListProvider,
                 indexFieldsMap,
-                dateTimeSettings,
-                nowEpochMilli);
+                dateTimeSettings);
         final QueryBuilder query = builder.buildQuery(expression);
 
         // Make sure the query was created successfully.

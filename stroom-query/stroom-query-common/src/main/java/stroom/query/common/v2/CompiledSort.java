@@ -16,9 +16,9 @@
 
 package stroom.query.common.v2;
 
-import stroom.dashboard.expression.v1.Val;
 import stroom.query.api.v2.Sort;
 import stroom.query.api.v2.Sort.SortDirection;
+import stroom.query.language.functions.Val;
 
 import java.io.Serializable;
 import java.util.Comparator;

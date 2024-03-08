@@ -33,15 +33,21 @@ public class CopyDocumentEvent extends GwtEvent<CopyDocumentEvent.Handler> {
     private final PresenterWidget<?> presenter;
     private final List<ExplorerNode> explorerNodes;
     private final ExplorerNode destinationFolder;
+    private final boolean allowRename;
+    private final String docName;
     private final PermissionInheritance permissionInheritance;
 
     private CopyDocumentEvent(final PresenterWidget<?> presenter,
                               final List<ExplorerNode> explorerNodes,
                               final ExplorerNode destinationFolder,
+                              final boolean allowRename,
+                              final String docName,
                               final PermissionInheritance permissionInheritance) {
         this.presenter = presenter;
         this.explorerNodes = explorerNodes;
         this.destinationFolder = destinationFolder;
+        this.allowRename = allowRename;
+        this.docName = docName;
         this.permissionInheritance = permissionInheritance;
     }
 
@@ -49,8 +55,17 @@ public class CopyDocumentEvent extends GwtEvent<CopyDocumentEvent.Handler> {
                             final PresenterWidget<?> presenter,
                             final List<ExplorerNode> explorerNodes,
                             final ExplorerNode destinationFolder,
+                            final boolean allowRename,
+                            final String docName,
                             final PermissionInheritance permissionInheritance) {
-        handlers.fireEvent(new CopyDocumentEvent(presenter, explorerNodes, destinationFolder, permissionInheritance));
+        handlers.fireEvent(
+                new CopyDocumentEvent(
+                        presenter,
+                        explorerNodes,
+                        destinationFolder,
+                        allowRename,
+                        docName,
+                        permissionInheritance));
     }
 
     public static Type<CopyDocumentEvent.Handler> getType() {
@@ -80,6 +95,14 @@ public class CopyDocumentEvent extends GwtEvent<CopyDocumentEvent.Handler> {
 
     public ExplorerNode getDestinationFolder() {
         return destinationFolder;
+    }
+
+    public boolean isAllowRename() {
+        return allowRename;
+    }
+
+    public String getDocName() {
+        return docName;
     }
 
     public PermissionInheritance getPermissionInheritance() {

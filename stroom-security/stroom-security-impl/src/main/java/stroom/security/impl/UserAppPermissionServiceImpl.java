@@ -16,18 +16,17 @@
 
 package stroom.security.impl;
 
-import stroom.docref.DocRef;
 import stroom.security.shared.PermissionNames;
 import stroom.util.entityevent.EntityAction;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEventBus;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Set;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 @Singleton
 class UserAppPermissionServiceImpl implements UserAppPermissionService {
@@ -86,17 +85,14 @@ class UserAppPermissionServiceImpl implements UserAppPermissionService {
 
     private void validatePermissionName(final String permission) {
         if (!ALL_PERMISSIONS.contains(permission)) {
-            throw new RuntimeException(permission + " is not a valid permission name");
+            throw new RuntimeException("'" + permission + "' is not a valid permission name");
         }
     }
 
     private void fireEntityChangeEvent(final String userUuid) {
         EntityEvent.fire(
                 entityEventBus,
-                DocRef.builder()
-                        .uuid(userUuid)
-                        .type(UserDocRefUtil.USER)
-                        .build(),
+                UserDocRefUtil.createDocRef(userUuid),
                 EntityAction.UPDATE);
     }
 }

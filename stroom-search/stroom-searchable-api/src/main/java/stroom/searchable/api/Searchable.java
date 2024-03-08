@@ -1,19 +1,25 @@
 package stroom.searchable.api;
 
-import stroom.dashboard.expression.v1.ValuesConsumer;
-import stroom.datasource.api.v2.AbstractField;
-import stroom.datasource.api.v2.DataSource;
 import stroom.datasource.api.v2.DateField;
+import stroom.datasource.api.v2.FieldInfo;
+import stroom.datasource.api.v2.FindFieldInfoCriteria;
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
+import stroom.query.language.functions.FieldIndex;
+import stroom.query.language.functions.ValuesConsumer;
+import stroom.util.shared.ResultPage;
+
+import java.util.Optional;
 
 public interface Searchable {
 
     DocRef getDocRef();
 
-    DataSource getDataSource();
+    ResultPage<FieldInfo> getFieldInfo(FindFieldInfoCriteria criteria);
+
+    Optional<String> fetchDocumentation(DocRef docRef);
 
     DateField getTimeField();
 
-    void search(ExpressionCriteria criteria, AbstractField[] fields, ValuesConsumer consumer);
+    void search(ExpressionCriteria criteria, FieldIndex fieldIndex, ValuesConsumer consumer);
 }

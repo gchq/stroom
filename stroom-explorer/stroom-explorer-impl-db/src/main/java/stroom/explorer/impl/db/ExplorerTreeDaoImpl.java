@@ -2,14 +2,19 @@ package stroom.explorer.impl.db;
 
 import stroom.db.util.JooqUtil;
 import stroom.db.util.JooqUtil.BooleanOperator;
+import stroom.explorer.impl.ExplorerFlags;
 import stroom.explorer.impl.ExplorerTreeDao;
 import stroom.explorer.impl.ExplorerTreeNode;
 import stroom.explorer.impl.ExplorerTreePath;
+import stroom.explorer.impl.NodeTagSerialiser;
 import stroom.explorer.impl.TreeModel;
 import stroom.explorer.impl.db.jooq.tables.records.ExplorerNodeRecord;
+import stroom.explorer.impl.db.jooq.tables.records.ExplorerPathRecord;
+import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.svg.shared.SvgImage;
 
+import jakarta.inject.Inject;
 import org.jooq.Condition;
 import org.jooq.impl.DSL;
 
@@ -22,7 +27,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
 
 import static stroom.explorer.impl.db.jooq.tables.ExplorerNode.EXPLORER_NODE;
 import static stroom.explorer.impl.db.jooq.tables.ExplorerPath.EXPLORER_PATH;
@@ -66,7 +70,7 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
                         .set(EXPLORER_NODE.TYPE, node.getType())
                         .set(EXPLORER_NODE.UUID, node.getUuid())
                         .set(EXPLORER_NODE.NAME, node.getName())
-                        .set(EXPLORER_NODE.TAGS, node.getTags())
+                        .set(EXPLORER_NODE.TAGS, NodeTagSerialiser.serialise(node.getTags()))
                         .returning(EXPLORER_NODE.ID)
                         .fetchOne()
                         .getId());
@@ -83,7 +87,7 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
                 .set(EXPLORER_NODE.TYPE, node.getType())
                 .set(EXPLORER_NODE.UUID, node.getUuid())
                 .set(EXPLORER_NODE.NAME, node.getName())
-                .set(EXPLORER_NODE.TAGS, node.getTags())
+                .set(EXPLORER_NODE.TAGS, NodeTagSerialiser.serialise(node.getTags()))
                 .where(EXPLORER_NODE.ID.eq(node.getId()))
                 .execute());
     }
@@ -134,7 +138,7 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
                                 .from(p)
                                 .where(p.DESCENDANT.eq(n.ID).and(p.DEPTH.gt(0))))
                         .fetch())
-                .map(r -> new ExplorerTreeNode(r.getId(), r.getType(), r.getUuid(), r.getName(), r.getTags()));
+                .map(this::mapRecord);
     }
 
     /**
@@ -152,7 +156,7 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
                                 r.get(n.TYPE),
                                 r.get(n.UUID),
                                 r.get(n.NAME),
-                                r.get(n.TAGS)))
+                                NodeTagSerialiser.deserialise(r.get(n.TAGS))))
                 .orElse(node));
     }
 
@@ -180,21 +184,31 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
                                     .selectFrom(n)
                                     .fetch())
                     .stream()
-                    .collect(Collectors.toMap(ExplorerNodeRecord::getId, r ->
-                            ExplorerNode
-                                    .builder()
-                                    .type(r.getType())
-                                    .uuid(r.getUuid())
-                                    .name(r.getName())
-                                    .tags(r.getTags())
-                                    .icon(iconProvider.apply(r.getType()))
+                    .collect(Collectors.toMap(ExplorerNodeRecord::getId, rec ->
+                            ExplorerNode.builder()
+                                    .type(rec.getType())
+                                    .uuid(rec.getUuid())
+                                    .name(rec.getName())
+                                    .tags(NodeTagSerialiser.deserialise(rec.getTags()))
+                                    .icon(iconProvider.apply(rec.getType()))
+                                    .addNodeFlag(ExplorerFlags.getStandardFlagByDocType(rec.getType())
+                                            .orElse(null))
                                     .build()));
 
             // Add the roots.
             roots.forEach(rootId -> {
                 final ExplorerNode root = nodeMap.get(rootId);
                 if (root != null) {
-                    treeModel.add(null, root);
+                    // The nodes as pulled from the DB don't have the rootNodeUuid set so any equality
+                    // test on the system or favourite nodes will fail. Thus use the ones from constants
+                    // so, we are comparing like with like.
+                    if (Objects.equals(ExplorerConstants.SYSTEM_NODE.getType(), root.getType())) {
+                        treeModel.add(null, ExplorerConstants.SYSTEM_NODE);
+                    } else if (Objects.equals(ExplorerConstants.FAVOURITES_NODE.getType(), root.getType())) {
+                        treeModel.add(null, ExplorerConstants.FAVOURITES_NODE);
+                    } else {
+                        treeModel.add(null, root);
+                    }
                 }
             });
 
@@ -238,7 +252,7 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
                                 .from(p)
                                 .where(p.ANCESTOR.eq(parent.getId()))))
                         .fetch())
-                .map(r -> new ExplorerTreeNode(r.getId(), r.getType(), r.getUuid(), r.getName(), r.getTags()));
+                .map(this::mapRecord);
     }
 
     @Override
@@ -252,7 +266,7 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
                                 .and(p.DEPTH.eq(1))
                                 .orderBy(p.ORDER_INDEX)))
                         .fetch())
-                .map(r -> new ExplorerTreeNode(r.getId(), r.getType(), r.getUuid(), r.getName(), r.getTags()));
+                .map(this::mapRecord);
     }
 
     @Override
@@ -266,7 +280,7 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
                                         .where(p.DESCENDANT.eq(child.getId()))
                                         .and(p.DEPTH.eq(1))))
                                 .fetch())
-                .map(r -> new ExplorerTreeNode(r.getId(), r.getType(), r.getUuid(), r.getName(), r.getTags()));
+                .map(this::mapRecord);
 
         if (parents.size() == 1) {
             return parents.get(0);
@@ -287,7 +301,11 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
                                 .orderBy(p.DEPTH.desc())
                                 .fetch())
                 .map(r ->
-                        new ExplorerTreeNode(r.get(n.ID), r.get(n.TYPE), r.get(n.UUID), r.get(n.NAME), r.get(n.TAGS)));
+                        new ExplorerTreeNode(r.get(n.ID),
+                                r.get(n.TYPE),
+                                r.get(n.UUID),
+                                r.get(n.NAME),
+                                NodeTagSerialiser.deserialise(r.get(n.TAGS))));
     }
 
     @Override
@@ -378,7 +396,7 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
                                 .from(p1)
                                 .where(p1.ANCESTOR.eq(nodeId))))
                         .fetch())
-                .map(r -> new ExplorerTreePath(r.getAncestor(), r.getDescendant(), r.getDepth(), r.getOrderIndex()));
+                .map(ExplorerTreeDaoImpl::mapExplorerPathRecord);
     }
 
     private ExplorerTreeNode addChild(final ExplorerTreeNode parent,
@@ -447,7 +465,7 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
                                         .from(p2)
                                         .where(p2.ANCESTOR.eq(node.getId()))))
                                 .fetch())
-                .map(r -> new ExplorerTreePath(r.getAncestor(), r.getDescendant(), r.getDepth(), r.getOrderIndex()));
+                .map(ExplorerTreeDaoImpl::mapExplorerPathRecord);
 
         List<ExplorerTreePath> pathSiblings = getAllTreePathSiblings(node.getId());
         int oldPosition = -1;
@@ -467,7 +485,7 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
                         .selectFrom(p)
                         .where(p.ANCESTOR.eq(parent.getId()))
                         .fetch())
-                .map(r -> new ExplorerTreePath(r.getAncestor(), r.getDescendant(), r.getDepth(), r.getOrderIndex()));
+                .map(ExplorerTreeDaoImpl::mapExplorerPathRecord);
     }
 
     private void connectSubTree(final ExplorerTreeNode newParent,
@@ -498,10 +516,7 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
                                     .selectFrom(p)
                                     .where(p.DESCENDANT.eq(parent.getId()))
                                     .fetch())
-                    .map(r -> new ExplorerTreePath(r.getAncestor(),
-                            r.getDescendant(),
-                            r.getDepth(),
-                            r.getOrderIndex())));
+                    .map(ExplorerTreeDaoImpl::mapExplorerPathRecord));
         } else if (sibling != null) {
             pathsToClone.addAll(JooqUtil.contextResult(explorerDbConnProvider, context ->
                             context
@@ -510,10 +525,7 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
                                     .and(p.DEPTH.gt(0))
                                     .orderBy(p.DEPTH)
                                     .fetch())
-                    .map(r -> new ExplorerTreePath(r.getAncestor(),
-                            r.getDescendant(),
-                            r.getDepth(),
-                            r.getOrderIndex())));
+                    .map(ExplorerTreeDaoImpl::mapExplorerPathRecord));
 
             if (pathsToClone.size() <= 0) {
                 throw new IllegalArgumentException("Sibling seems not to be a child but a root: " + sibling);
@@ -541,7 +553,8 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
                     ? pathToClone.getDescendant()
                     : pathToClone.getAncestor(), position)
                     : -1;
-            final ExplorerTreePath newPath = new ExplorerTreePath(pathToClone.getAncestor(),
+            final ExplorerTreePath newPath = new ExplorerTreePath(
+                    pathToClone.getAncestor(),
                     childId,
                     depth,
                     newPosition);
@@ -590,7 +603,7 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
                         .and(p.DEPTH.eq(1))
                         .orderBy(p.ORDER_INDEX)
                         .fetch())
-                .map(r -> new ExplorerTreePath(r.getAncestor(), r.getDescendant(), r.getDepth(), r.getOrderIndex()));
+                .map(ExplorerTreeDaoImpl::mapExplorerPathRecord);
     }
 
     private List<ExplorerTreePath> getAllTreePathSiblings(final Integer nodeId) {
@@ -605,7 +618,15 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
                                 .and(p2.DEPTH.eq(1))))
                         .orderBy(p.ORDER_INDEX)
                         .fetch())
-                .map(r -> new ExplorerTreePath(r.getAncestor(), r.getDescendant(), r.getDepth(), r.getOrderIndex()));
+                .map(ExplorerTreeDaoImpl::mapExplorerPathRecord);
+    }
+
+    private static ExplorerTreePath mapExplorerPathRecord(final ExplorerPathRecord record) {
+        return new ExplorerTreePath(
+                record.getAncestor(),
+                record.getDescendant(),
+                record.getDepth(),
+                record.getOrderIndex());
     }
 
     @Override
@@ -619,8 +640,7 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
                                 .selectFrom(n)
                                 .where(n.UUID.eq(uuid))
                                 .fetch())
-                .map(r -> new ExplorerTreeNode(
-                        r.getId(), r.getType(), r.getUuid(), r.getName(), r.getTags()));
+                .map(this::mapRecord);
 
         if (list.size() == 0) {
             return null;
@@ -644,8 +664,7 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
                                 .selectFrom(n)
                                 .where(nameConditions)
                                 .fetch())
-                .map(r -> new ExplorerTreeNode(
-                        r.getId(), r.getType(), r.getUuid(), r.getName(), r.getTags()));
+                .map(this::mapRecord);
     }
 
     @Override
@@ -656,8 +675,16 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
                                 .selectFrom(n)
                                 .where(n.TYPE.eq(type))
                                 .fetch())
-                .map(r -> new ExplorerTreeNode(
-                        r.getId(), r.getType(), r.getUuid(), r.getName(), r.getTags()));
+                .map(this::mapRecord);
+    }
+
+    private ExplorerTreeNode mapRecord(final ExplorerNodeRecord record) {
+        return new ExplorerTreeNode(
+                record.getId(),
+                record.getType(),
+                record.getUuid(),
+                record.getName(),
+                NodeTagSerialiser.deserialise(record.getTags()));
     }
 
     private void assertInsertParameters(final ExplorerTreeNode parent,

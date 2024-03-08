@@ -32,6 +32,7 @@ import stroom.processor.shared.QueryData;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
+import stroom.task.shared.TaskId;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
 import stroom.test.CommonTestScenarioCreator;
@@ -39,11 +40,11 @@ import stroom.test.common.util.test.FileSystemTestUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
+import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
-import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -209,7 +210,7 @@ class TestProcessorTaskQueueManager extends AbstractCoreIntegrationTest {
                              final int count,
                              final int expected) {
         final ProcessorTaskList tasks = LOGGER.logDurationIfInfoEnabled(() ->
-                        processorTaskQueueManager.assignTasks(nodeName, count),
+                        processorTaskQueueManager.assignTasks(new TaskId(), nodeName, count),
                 "assignTasks - " + callCount);
         assertThat(tasks.getList().size()).isEqualTo(expected);
     }

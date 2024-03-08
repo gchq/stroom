@@ -219,6 +219,7 @@
 .layerContainer-container {
 	width: 100%;
 	height: 100%;
+	overflow: hidden;
 }
 
 .layerContainer-layer {
@@ -265,13 +266,17 @@
 	position: absolute;
 	left: 0;
 	top: 0;
-	cursor: pointer;
     opacity: 0.8;
     transition: opacity 0.5s linear;
     -webkit-transition: opacity 0.5s linear;
     -moz-transition: opacity 0.5s linear;
     -o-transition: opacity 0.5s linear;
     color: var(--link-tab__text-color);
+}
+
+.multiple-tabs .linkTab,
+.dashboard__designMode .linkTab{
+    cursor: pointer;
 }
 
 .linkTab-selected {
@@ -282,13 +287,15 @@
     opacity: 1;
 }
 
-.linkTab-keyboardSelected:focus {
+.multiple-tabs .linkTab-keyboardSelected:focus,
+.dashboard__designMode .linkTab-keyboardSelected:focus {
     opacity: 1;
     color: var(--link-tab__text-color--focussed);
     text-decoration: underline;
 }
 
-.linkTab:hover {
+.multiple-tabs .linkTab:hover,
+.dashboard__designMode .linkTab:hover {
     opacity: 1;
     text-decoration: underline;
 }
@@ -332,7 +339,9 @@
 	-webkit-transition: opacity .2s;
 	-moz-transition: opacity .2s;
 	-o-transition: opacity .2s;
+}
 
+.multiple-tabs .linkTab .linkTab-hotspot {
 	cursor: pointer;
 }
 
@@ -340,13 +349,7 @@
 	opacity: .3 !important;
 }
 
-.tooltip {
-    border: 1px solid var(--dialog__border-color);
-    border-radius: 6px;
-    background-color: var(--tooltip__background-color);
-    box-shadow: var(--dialog__shadow);
-
-	padding: 1px 3px;
+.info-tooltip {
 	-moz-user-focus: initial;
 	-moz-user-input: initial;
 	-webkit-user-focus: initial;
@@ -364,9 +367,13 @@
   	opacity: 1;
 }
 
-.tooltip table {
+.info-tooltip table {
     white-space: pre;
     table-layout: fixed;
+}
+
+.info-tooltip table .wrap {
+    white-space: normal;
 }
 
 .info-layout {
@@ -375,7 +382,20 @@
 	border: 1px solid var(--control__border-color);
 	background: var(--control__background-color);
 	color: var(--control__text-color);
-	white-space: pre;
+	padding: 5px;
+  	-webkit-user-select: text;
+  	-moz-user-select: text;
+  	user-select: text;
+}
+
+.infoLine {
+    display: flex;
+    gap: 5px;
+}
+
+.docRefLinkCopy,
+.docRefLinkOpen {
+    cursor: pointer;
 }
 
 .userTaskView-layout {
@@ -438,10 +458,10 @@
 	display: flex;
 	flex-direction: row;
 	align-items: center;
-	padding: 3px 5px;
+	/*padding: 3px 5px;
 	border-radius: 2px;
 	background-color: var(--control__background-color);
-	color: var(--control__text-color);
+	color: var(--control__text-color);*/
     cursor: pointer;
 }
 
@@ -477,11 +497,12 @@
 
 .curveTabLayoutViewImpl-layerContainerOuter {
     flex-grow: 1;
+    overflow: hidden;
 }
 
 .curveTabLayoutViewImpl-tabBarOuter {
     height: 33px;
-    margin-right: 42px;
+    margin-right: 62px;
     flex-grow: 1;
 }
 
@@ -607,11 +628,10 @@
 
 .pager-textBox {
     display: inline-block;
-    width: 30px;
-    height: 14px;
+    width: 42px;
+    height: 22px;
     padding: 0;
     margin: 0;
-    margin-top: 2px;
     border: none;
 }
 
@@ -675,11 +695,11 @@
     padding-left: 0.25em;
 }
 
-/*
 .dataViewImpl-layerContainer {
-    position: relative;
+    /* To make the info pane fit the remaining space in the parent rather
+    than 100% of the content */
+    height: 0px;
 }
-*/
 
 .dataViewImpl-sourceLinkLabel {
 }
@@ -831,13 +851,12 @@
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    background-color: var(--blue-500);
 }
 
-.aboutViewImpl-logo > svg {
+.aboutViewImpl-logo svg {
     width: 150px;
     height: 40px;
-    color: white;
+    color: var(--logo-color);
 }
 
 .aboutViewImpl-body {
@@ -1019,19 +1038,38 @@
     padding-left: 5px;
 }
 
+.columnFunctionEditorViewImpl {
+
+}
+
 .columnFunctionEditorViewImpl-resizePanel {
     display: block;
 }
 
 .columnFunctionEditorViewImpl-editorContainer {
     border: 1px solid var(--control__border-color);
-    background-color: var(--control__background-color);
+    background-color: var(--dashboard-panel__background-color);
 }
 
 .columnFunctionEditorViewImpl-labelPanel {
     display: flex;
     /* align-items: center; */
     justify-content: flex-end;
+    padding: 5px;
+}
+
+.columnFunctionEditorViewImpl-completionLabel {
+}
+
+.columnFunctionEditorViewImpl .quickFilter-textBox,
+.QueryHelpViewImpl .quickFilter-textBox {
+    border-color: transparent;
+    border-bottom-color: var(--control__border-color);
+    border-radius: 0;
+}
+
+.QueryEditViewImpl {
+    border-top: 1px solid var(--control__border-color);
 }
 
 .characterNavigator {
@@ -1163,10 +1201,10 @@
 
 .mainViewImpl-spinner {
     position: absolute;
-    top: 7px;
-    right: 2px;
-    width: 32px;
-    height: 32px;
+    top: 5px;
+    right: 36px;
+    width: 22px;
+    height: 22px;
     z-index: 1;
 }
 
@@ -1247,9 +1285,19 @@
 }
 
 .welcomeViewImpl-buildInfo {
+    display: flex;
+    justify-content: flex-end;
     position: absolute;
     right: 5px;
     bottom: 5px;
+}
+
+.welcomeViewImpl-buildInfo > tbody > tr > td:first-child {
+    font-weight: bold;
+}
+
+.welcomeViewImpl-buildInfo > tbody > tr > td:last-child {
+    user-select: text;
 }
 
 .splashViewImpl-content {
@@ -1272,15 +1320,16 @@
 
 .chooserViewImpl-top {
     flex-shrink: 0;
-    margin: 5px;
 }
 
 .chooserViewImpl-bottom {
     flex-grow: 1;
     max-height: 400px;
-    max-width: 390px;
+    max-width: 420px;
     overflow-x: hidden;
     overflow-y: auto;
+    padding: 0px 2px;
+    scrollbar-gutter: stable;
 }
 
 .chooserViewImpl-clearSelection {
@@ -1292,8 +1341,10 @@
 }
 
 .steppingFilterViewImpl {
-    min-width: 400px;
-    min-height: 400px;
+}
+
+.steppingFilterViewImpl .pipelineElementChooser-textCell.pipelineElementChooser-filterOff{
+    color: var(--text-color--disabled);
 }
 
 .stepLocationViewImpl-left {
@@ -1427,21 +1478,28 @@
 .navigation-title-bar {
     display: flex;
     justify-content: space-between;
+    background-color: var(--navigation__title__background-color);
+}
+
+.navigation .explorerTreeViewImpl-nameFilterPanel {
+    background-color: var(--navigation__title__background-color);
 }
 
 .navigation-logo {
     flex-grow: 1;
-    padding: 6px 0 2px 0;
+    padding: 6px 0 0 0;
     background-color: transparent;
     color: white;
     border: 0;
     text-align: left;
     width: auto;
+    height: 43px;
 }
 
 .navigation-logo-image svg {
     width: 146px;
     height: 35px;
+    color: var(--logo-color);
 }
 
 .navigation-arrow-image svg {
@@ -1452,7 +1510,9 @@
 
 button.main-menu {
     background-color: transparent;
-    color: white;
+    /*color: var(--navigation-icon-button__color);*/
+    color: var(--text-color);
+    opacity: 0.6;
 }
 
 button.main-menu svg {
@@ -1679,9 +1739,12 @@ button.main-menu svg {
     color: var(--heading-color);
     font-weight: bold;
     font-size: 125%;
-    height: 2.5em;
-    vertical-align: bottom;
     padding-bottom: 0.3em;
+}
+
+/* Make headers after the first add padding before */
+.infoTable tr:not(:first-of-type) th {
+    padding-top: 1rem;
 }
 
 .infoTable th, .infoTable td {
@@ -1696,6 +1759,11 @@ button.main-menu svg {
 
 .queryHelpDetail {
     max-width: 600px;
+    overflow: auto;
+}
+
+.queryHelpDetail .markdown-container {
+    overflow-y: auto;
 }
 
 .queryHelpDetail-description {
@@ -1738,12 +1806,25 @@ button.main-menu svg {
      height: 100%;
 }
 
-.nodePingBar-bar__healthy {
-     background-color: rgba(33, 150, 243, 0.6);
+.nodePingBar-bar.nodePingBar-severity__healthy {
+     background-color: var(--primary);
 }
 
-.nodePingBar-bar__unhealthy {
-     background-color: rgba(255, 111, 0, 0.6);
+.nodePingBar-bar.nodePingBar-severity__warn {
+     background-color: var(--warning);
+}
+
+.nodePingBar-bar.nodePingBar-severity__max {
+     background-color: var(--danger);
+}
+
+.nodePingBar-severity__healthy .nodePingBar-text {
+     color: var(--white);
+}
+
+.nodePingBar-severity__warn .nodePingBar-text,
+.nodePingBar-severity__max .nodePingBar-text {
+     color: var(--black);
 }
 
 .nodePingBar-text {
@@ -1761,8 +1842,8 @@ button.main-menu svg {
 .find-buttons {
     display: flex;
     position: absolute;
-    right: 5px;
-    top: 5px;
+    right: 3px;
+    top: 3px;
 }
 
 .find-buttons .icon-button .face {
@@ -1802,7 +1883,7 @@ button.main-menu svg {
     flex-grow: 0;
     align-items: end;
     white-space: nowrap;
-    opacity: .7;
+    color: var(--navigation__text-color);
 }
 
 .findCell-sub {
@@ -1826,16 +1907,13 @@ button.main-menu svg {
 }
 
 .pipelineElementChooser-iconCell {
-    padding: var(--row__padding--vertical) 0 var(--row__padding--vertical) var(--row__padding--horizontal);
 }
 
 .pipelineElementChooser-textCell {
-    padding: var(--row__padding--vertical) 0 var(--row__padding--vertical) var(--row__padding--horizontal);
     min-width: 200px;
 }
 
 .pipelineElementChooser-filterIconCell {
-    padding: var(--row__padding--vertical) 0 var(--row__padding--vertical) var(--row__padding--horizontal);
 }
 
 .pipelineElementChooser-textCell.pipelineElementChooser-filterOn {
@@ -1848,76 +1926,200 @@ button.main-menu svg {
     visibility: hidden;
 }
 
-
-
-
-.queryHelpItemCell {
-/*
-    padding: 5px;
+.SelectionPopup .listContainer {
     min-width: 200px;
-    */
+    max-width: 300px;
+    max-height: 400px;
 }
 
-.queryHelpItem-heading.queryHelpItem-topLevel {
-    color: var(--heading-color);
+.SelectionPopup .selectionList {
+    width: auto;
+    height: auto;
 }
 
-.queryHelpItem-heading {
-    font-size: var(--font-size-15);
-    font-weight: 500;
-}
-
-.queryHelpItem-heading.queryHelpItem-functionCategory {
-    font-size: var(--font-size-13);
-    font-weight: 500;
-}
-
-.queryHelpItem-functionHeading,
-.queryHelpItem-leaf {
-    font-style: italic;
-    font-size: var(--font-size-13);
-    font-weight: 400;
-}
-
- .queryHelpTree {
+.selectionList {
     width: 100%;
- }
-
-.queryHelpTree-container {
-    overflow: auto;
-    display: flex;
-    flex-grow: 1;
-    height: 0;
+    height: 100%;
 }
 
-.queryHelpItemCell {
+.selectionList-elementChooser {
+    overflow: hidden;
+}
+
+.selectionList .cellTableCell {
+     display: flex;
+     align-items: center;
+     min-height: 20px;
+}
+
+.selectionList .cellTableSelectedRow {
+	background-color: var(--row__background-color--selected);
+	color: var(--row__text-color--selected);
+}
+
+.selectionList .cellTableOddRow:hover,
+.selectionList .cellTableEvenRow:hover {
+    background-color: var(--row__background-color--hovered);
+}
+
+.selectionList .cellTableSelectedRow:hover {
+    background-color: var(--row__background-color--selected--hovered);
+}
+
+.selectionList .cellTableOddRow:focus-within,
+.selectionList .cellTableEvenRow:focus-within {
+    background-color: var(--row__background-color--focussed);
+}
+
+.selectionList .cellTableSelectedRow:focus-within {
+    background-color: var(--row__background-color--selected--focussed);
+}
+
+.selectionList-links {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+    padding: 3px;
+    padding-top: 7px;
+}
+
+.selectionList-links .gwt-Label {
+    opacity: 0.8;
+}
+
+.selectionList-links .gwt-HyperLink:hover {
+    text-decoration: underline;
+}
+
+.selectionItemCell {
     display: flex;
     align-items: center;
     cursor: pointer;
     gap: var(--row__gap--horizontal);
 }
 
-.queryHelpItemCell-expander {
-    color: var(--grey-600);
+.selectionItemCell-expander {
 	display: flex;
 }
 
-.queryHelpItemCell-expander svg {
+.selectionItemCell-expander svg {
     width: .7rem;
     height: .7rem;
 }
 
-.queryHelpItemCell-text {
-	padding: var(--row__padding--vertical) 0 var(--row__padding--vertical) var(--row__padding--horizontal);
+.selectionItemCell-text {
 	white-space: nowrap;
 }
 
- .queryHelpTree .cellTableCell {
-    display: flex;
-    align-items: center;
- }
-
 .queryHelp-details {
-    padding: 5px;
+    overflow: hidden;
 }
 
+.duration-picker {
+    display: flex;
+}
+
+.folderPermissionsUsers {
+    flex-basis: 15rem;
+    flex-shrink: 1;
+}
+
+.folderPermissionsCreatePermissions > div {
+    /* 0 height to prevent the create perms box taking the size of its contents.
+       We want it to take a height based on the flex layout of its parent */
+    height: 0px;
+}
+
+.folderPermissionsPermissionsContainer {
+    gap: var(--control__padding--vertical);
+    flex-basis: 15rem;
+    flex-shrink: 1;
+}
+
+.documentPermissionType-noPermission {
+    color: var(--text-color--disabled);
+}
+
+.documentPermissionType-destructive {
+}
+
+.documentPermissionType-destructive.documentPermissionType-inferred {
+    /* color: hsl(from var(--text-color--red) h s calc(l - 20%)); */
+    opacity: 90%;
+}
+
+.documentPermissionType-destructive.documentPermissionType-direct {
+    font-weight: 500;
+}
+
+.documentPermissionType-nonDestructive {
+}
+
+.documentPermissionType-nonDestructive.documentPermissionType-inferred {
+    /* color: hsl(from var(--text-color--green) h s calc(l - 20%)); */
+    opacity: 90%;
+}
+
+.documentPermissionType-nonDestructive.documentPermissionType-direct {
+    font-weight: 500;
+}
+
+.documentPermissionsUsers {
+    gap: var(--control__padding--vertical);
+    flex-basis: 15rem;
+    flex-shrink: 1;
+}
+
+.documentPermissionsPermissionsFormGrp > div {
+    flex-shrink: 0;
+    flex-grow: 0;
+}
+
+.documentPermissionsPermissions {
+    gap: var(--control__padding--vertical);
+    flex-basis: 11rem;
+    flex-shrink: 0;
+    flex-grow: 0;
+}
+
+.editNodeTagsAllTagsFrmGrp,
+.editNodeTagsNodeTagsFrmGrp {
+    flex-basis: 200px;
+}
+
+.editNodeTagsAddTagsInputPanel .button-container {
+    position: absolute;
+    margin-top: 7px;
+    right: 50px;
+}
+
+.editNodeTagsAddTagsInputPanel .button-container .invisible {
+    visibility: hidden;
+}
+
+.editNodeTagsAddTagsInputContainer .svg-image__clear.face {
+    color: var(--control__text-color);
+}
+
+.editNodeTagsListsContainer .form-group{
+    margin-top: 0px;
+}
+
+.editNodeTags .form-label {
+    margin-bottom: 0px;
+}
+
+.docRefLinkContainer {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.docRefLinkContainer .svg-image {
+    opacity: 0;
+}
+
+.dataGridCell:hover .docRefLinkContainer .svg-image,
+.docRefLinkContainer:hover .svg-image {
+    opacity: .8;
+}

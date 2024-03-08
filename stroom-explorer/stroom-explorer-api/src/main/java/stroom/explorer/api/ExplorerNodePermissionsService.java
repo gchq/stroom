@@ -23,5 +23,6 @@ import java.util.List;
 import java.util.Set;
 
 public interface ExplorerNodePermissionsService {
+
     Set<ExplorerNodePermissions> fetchExplorerPermissions(final List<ExplorerNode> explorerNodes);
 }

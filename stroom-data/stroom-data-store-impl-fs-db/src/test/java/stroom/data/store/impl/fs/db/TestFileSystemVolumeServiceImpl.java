@@ -20,6 +20,9 @@ package stroom.data.store.impl.fs.db;
 import stroom.data.store.impl.fs.DataStoreServiceConfig.DataStoreServiceDbConfig;
 import stroom.data.store.impl.fs.FsVolumeConfig;
 import stroom.data.store.impl.fs.FsVolumeDao;
+import stroom.data.store.impl.fs.FsVolumeGroupDao;
+import stroom.data.store.impl.fs.FsVolumeGroupService;
+import stroom.data.store.impl.fs.FsVolumeGroupServiceImpl;
 import stroom.data.store.impl.fs.FsVolumeService;
 import stroom.data.store.impl.fs.FsVolumeStateDao;
 import stroom.data.store.impl.fs.shared.FindFsVolumeCriteria;
@@ -98,9 +101,17 @@ class TestFileSystemVolumeServiceImpl extends StroomUnitTest {
                 new FsDataStoreDbModule(), new DataStoreServiceDbConfig());
 
         final FsVolumeDao fsVolumeDao = new FsVolumeDaoImpl(fsDataStoreDbConnProvider);
+        final FsVolumeGroupDao fsVolumeGroupDao = new FsVolumeGroupDaoImpl(fsDataStoreDbConnProvider);
+        final FsVolumeGroupService fsVolumeGroupService = new FsVolumeGroupServiceImpl(
+                fsVolumeGroupDao,
+                securityContext,
+                FsVolumeConfig::new,
+                null);
         final FsVolumeStateDao fsVolumeStateDao = new FsVolumeStateDaoImpl(fsDataStoreDbConnProvider);
         final PathCreator pathCreator = new SimplePathCreator(() -> tempDir, () -> tempDir);
-        volumeService = new FsVolumeService(fsVolumeDao,
+        volumeService = new FsVolumeService(
+                fsVolumeDao,
+                fsVolumeGroupService,
                 fsVolumeStateDao,
                 securityContext,
                 FsVolumeConfig::new,

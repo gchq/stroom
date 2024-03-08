@@ -12,7 +12,13 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.ModelStringUtil;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import jakarta.inject.Provider;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DynamicTest;
+import org.mockito.Mockito;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -24,6 +30,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -38,6 +45,13 @@ public class TestUtil {
 
     private TestUtil() {
         // Static Utils only
+    }
+
+    /**
+     * Build a {@link Provider} for a mocked class.
+     */
+    public static <T> Provider<T> mockProvider(final Class<T> type) {
+        return () -> Mockito.mock(type);
     }
 
     /**
@@ -200,22 +214,91 @@ public class TestUtil {
                 Duration.ofSeconds(1));
     }
 
+    /**
+     * See {@link TestUtil#testSerialisation(Object, Class, BiConsumer, ObjectMapper)}
+     */
+    public static <T> T testSerialisation(final T object,
+                                          final Class<T> clazz) {
+        final ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
+        return testSerialisation(object, clazz, null, objectMapper);
+    }
+
+    /**
+     * See {@link TestUtil#testSerialisation(Object, Class, BiConsumer, ObjectMapper)}
+     */
+    public static <T> T testSerialisation(final T object,
+                                          final Class<T> clazz,
+                                          final BiConsumer<ObjectMapper, String> jsonConsumer) {
+        final ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
+        return testSerialisation(object, clazz, jsonConsumer, objectMapper);
+    }
+
+    /**
+     * Does a basic serialise - de-serialise test with an equality check on the initial
+     * and final objects. The optional jsonConsumer allows assertions to be performed
+     * by the caller on the serialised form.
+     *
+     * @return The de-serialised object for further inspection by the caller.
+     */
+    public static <T> T testSerialisation(final T object,
+                                          final Class<T> clazz,
+                                          final BiConsumer<ObjectMapper, String> jsonConsumer,
+                                          final ObjectMapper objectMapper) {
+        Objects.requireNonNull(object);
+        Objects.requireNonNull(clazz);
+        Objects.requireNonNull(objectMapper);
+
+        final String json;
+        try {
+            json = objectMapper.writeValueAsString(object);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(LogUtil.message(
+                    "Error serialising {}: {}", object, e.getMessage()), e);
+        }
+
+        LOGGER.debug(LogUtil.message("json for {}:\n{}", clazz.getSimpleName(), json));
+
+        if (jsonConsumer != null) {
+            jsonConsumer.accept(objectMapper, json);
+        }
+
+        final T object2;
+        try {
+            object2 = objectMapper.readValue(json, clazz);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(LogUtil.message(
+                    "Error deserialising {}: {}", json, e.getMessage()), e);
+        }
+
+        Assertions.assertThat(object2)
+                .isEqualTo(object);
+
+        return object2;
+    }
+
     public static void comparePerformance(final int rounds,
-                                          final int iterations,
+                                          final long iterations,
                                           final Consumer<String> outputConsumer,
                                           final TimedCase... testCases) {
         comparePerformance(rounds, iterations, null, outputConsumer, testCases);
     }
 
     /**
-     * @param rounds
-     * @param iterations
+     * Compares the performance of one or more {@link TimedCase}s, repeating each testCase
+     * over n iterations and repeating all that over x rounds.
+     *
+     * @param rounds         Number of rounds to perform. A round runs n iterations for each testCase.
+     *                       If rounds >1 then the results for the first round are treated as a JVM warm-up
+     *                       and are not counted in the aggregate stats.
+     * @param iterations     Number of times to run each testCase in a round.
      * @param setup          Run before each test case in each round
-     * @param outputConsumer
-     * @param testCases
+     * @param outputConsumer The consumer for the tabular results data
+     * @param testCases      The test cases to run in each round.
      */
     public static void comparePerformance(final int rounds,
-                                          final int iterations,
+                                          final long iterations,
                                           final TestSetup setup,
                                           final Consumer<String> outputConsumer,
                                           final TimedCase... testCases) {
@@ -251,34 +334,58 @@ public class TestUtil {
         final TableBuilder<Entry<String, List<Duration>>> tableBuilder = AsciiTable.builder(summaryData)
                 .withColumn(Column.of("Name", Entry::getKey));
 
-        for (int round = 1; round <= rounds; round++) {
-            final int idx = round - 1;
-            tableBuilder.withColumn(Column.durationNanos("Round " + round, entry ->
-                    entry.getValue().get(idx)));
+        final int warmedUpRounds = rounds > 1
+                ? rounds - 1
+                : rounds;
+        int idx = 0;
+
+        if (rounds > 1) {
+            final int idxCopy = idx++;
+            tableBuilder.withColumn(Column.durationNanos("Warmup Round", entry ->
+                    entry.getValue().get(idxCopy)));
         }
+        // Rest of the rounds
+        for (int round = 1; round <= warmedUpRounds; round++) {
+            final int idxCopy = idx++;
+            tableBuilder.withColumn(Column.durationNanos("Round " + round, entry ->
+                    entry.getValue().get(idxCopy)));
+        }
+        // If we have multiple rounds then ignore first round for jvm warm-up
+        final int skipCount = rounds > 1
+                ? 1
+                : 0;
         final String tableStr = tableBuilder
                 .withColumn(Column.durationNanos("Min", entry ->
-                        entry.getValue().stream().min(Duration::compareTo).get()))
+                        entry.getValue().stream().skip(skipCount).min(Duration::compareTo).get()))
                 .withColumn(Column.durationNanos("Max", entry ->
-                        entry.getValue().stream().max(Duration::compareTo).get()))
+                        entry.getValue().stream().skip(skipCount).max(Duration::compareTo).get()))
                 .withColumn(Column.durationNanos("Avg over rounds", entry ->
                         Duration.ofNanos((long) entry.getValue()
                                 .stream()
+                                .skip(skipCount)
                                 .mapToLong(Duration::toNanos)
                                 .average()
                                 .getAsDouble())))
                 .withColumn(Column.decimal("Per iter (last round)", entry ->
-                        entry.getValue().get(rounds - 1).toNanos() / iterations, 0))
+                        entry.getValue().get(rounds - 1).toNanos() / (double) iterations, 6))
                 .build();
         outputConsumer.accept(LogUtil.message("Summary (iterations: {}, values in nanos):\n{}",
                 ModelStringUtil.formatCsv(iterations),
                 tableStr));
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public static interface TestSetup {
 
-        void run(final int rounds, final int iterations);
+        void run(final int rounds, final long iterations);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public static class TimedCase {
 
@@ -313,6 +420,6 @@ public class TestUtil {
          * @param round      One based
          * @param iterations Number of iterations to perform in the work
          */
-        void run(final int round, final int iterations);
+        void run(final int round, final long iterations);
     }
 }

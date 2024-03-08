@@ -20,6 +20,7 @@ package stroom.search.elastic;
 import stroom.cluster.lock.api.ClusterLockService;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
+import stroom.expression.api.DateTimeSettings;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.search.elastic.search.SearchExpressionQueryBuilder;
 import stroom.search.elastic.shared.ElasticClusterDoc;
@@ -31,6 +32,8 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.core.TimeValue;
 import org.elasticsearch.index.query.QueryBuilder;
@@ -39,8 +42,6 @@ import org.elasticsearch.index.reindex.DeleteByQueryRequest;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 @Singleton
 public class ElasticIndexRetentionExecutor {
@@ -121,8 +122,7 @@ public class ElasticIndexRetentionExecutor {
                     final SearchExpressionQueryBuilder searchExpressionQueryBuilder = new SearchExpressionQueryBuilder(
                             dictionaryStore,
                             indexFieldsMap,
-                            null,
-                            System.currentTimeMillis());
+                            DateTimeSettings.builder().build());
 
                     final QueryBuilder query = searchExpressionQueryBuilder.buildQuery(
                             elasticIndex.getRetentionExpression());

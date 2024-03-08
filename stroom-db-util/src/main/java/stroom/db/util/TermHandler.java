@@ -1,8 +1,8 @@
 package stroom.db.util;
 
 import stroom.collection.api.CollectionService;
-import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.DocRefField;
+import stroom.datasource.api.v2.QueryField;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
 import stroom.docrefinfo.api.DocRefInfoService;
@@ -35,7 +35,7 @@ public final class TermHandler<T> implements Function<ExpressionTerm, Condition>
     private static final String PERCENT = "%";
     private static final Pattern ASTERISK_PATTERN = Pattern.compile("\\*");
 
-    private final AbstractField dataSourceField;
+    private final QueryField dataSourceField;
     private final Field<T> field;
     private final ExpressionMapper.MultiConverter<T> converter;
     private final WordListProvider wordListProvider;
@@ -43,7 +43,7 @@ public final class TermHandler<T> implements Function<ExpressionTerm, Condition>
     private final DocRefInfoService docRefInfoService;
     private final boolean useName;
 
-    TermHandler(final AbstractField dataSourceField,
+    TermHandler(final QueryField dataSourceField,
                 final Field<T> field,
                 final ExpressionMapper.MultiConverter<T> converter,
                 final WordListProvider wordListProvider,
@@ -65,47 +65,50 @@ public final class TermHandler<T> implements Function<ExpressionTerm, Condition>
             case EQUALS, CONTAINS -> {
                 return eq(term);
             }
+            case NOT_EQUALS -> {
+                return neq(term);
+            }
             case BETWEEN -> {
                 final String[] parts = term.getValue().split(LIST_DELIMITER);
                 if (parts.length == 2) {
                     final List<T> value1 = getValues(parts[0]);
                     final List<T> value2 = getValues(parts[1]);
                     if (value1.size() == 1 && value2.size() == 1) {
-                        return field.between(value1.get(0), value2.get(0));
+                        return field.between(value1.getFirst(), value2.getFirst());
                     }
                 }
             }
             case GREATER_THAN -> {
                 final List<T> value = getValues(term.getValue());
                 if (value.size() == 1) {
-                    return field.greaterThan(value.get(0));
+                    return field.greaterThan(value.getFirst());
                 }
             }
             case GREATER_THAN_OR_EQUAL_TO -> {
                 final List<T> value = getValues(term.getValue());
                 if (value.size() == 1) {
-                    return field.greaterOrEqual(value.get(0));
+                    return field.greaterOrEqual(value.getFirst());
                 }
             }
             case LESS_THAN -> {
                 final List<T> value = getValues(term.getValue());
                 if (value.size() == 1) {
-                    return field.lessThan(value.get(0));
+                    return field.lessThan(value.getFirst());
                 }
             }
             case LESS_THAN_OR_EQUAL_TO -> {
                 final List<T> value = getValues(term.getValue());
                 if (value.size() == 1) {
-                    return field.lessOrEqual(value.get(0));
+                    return field.lessOrEqual(value.getFirst());
                 }
             }
             case IN -> {
                 final String value = NullSafe.get(term.getValue(), String::trim);
-                if (value != null && value.length() > 0) {
+                if (value != null && !value.isEmpty()) {
                     final String[] parts = value.split(LIST_DELIMITER);
                     final List<String> partsList = Arrays.stream(parts)
                             .map(String::trim)
-                            .filter(part -> part.length() > 0)
+                            .filter(part -> !part.isEmpty())
                             .collect(Collectors.toList());
                     final List<T> values = getValues(partsList);
                     return field.in(values);
@@ -129,7 +132,7 @@ public final class TermHandler<T> implements Function<ExpressionTerm, Condition>
                     // IS_DOC_REF does not support wild carding so should only get one thing back
                     // else fall through and match nothing
                     if (value.size() == 1) {
-                        return field.equal(value.get(0));
+                        return field.equal(value.getFirst());
                     }
                 }
             }
@@ -178,26 +181,42 @@ public final class TermHandler<T> implements Function<ExpressionTerm, Condition>
 
     private Condition eq(final ExpressionTerm term) {
         final List<T> list = getValues(term.getValue());
-        if (list.size() > 0) {
-            if (list.size() > 1) {
-                return field.in(list);
-            } else {
-                final T t = list.get(0);
-                if (t instanceof String) {
-                    final String string = (String) t;
-                    if (string.contains(ASTERISK)) {
-                        final String like = ASTERISK_PATTERN.matcher(string).replaceAll(PERCENT);
-                        return field.like(like);
-                    }
+        if (NullSafe.isEmptyCollection(list)) {
+            return field.isNull();
+        } else if (list.size() > 1) {
+            return field.in(list);
+        } else {
+            final T t = list.getFirst();
+            if (t instanceof final String string) {
+                if (string.contains(ASTERISK)) {
+                    final String like = ASTERISK_PATTERN.matcher(string).replaceAll(PERCENT);
+                    return field.like(like);
                 }
-                return field.eq(t);
             }
+            return field.equal(t);
         }
-        return field.in(list);
+    }
+
+    private Condition neq(final ExpressionTerm term) {
+        final List<T> list = getValues(term.getValue());
+        if (NullSafe.isEmptyCollection(list)) {
+            return field.isNotNull();
+        } else if (list.size() > 1) {
+            return field.notIn(list);
+        } else {
+            final T t = list.getFirst();
+            if (t instanceof final String string) {
+                if (string.contains(ASTERISK)) {
+                    final String like = ASTERISK_PATTERN.matcher(string).replaceAll(PERCENT);
+                    return field.notLike(like);
+                }
+            }
+            return field.notEqual(t);
+        }
     }
 
     private List<T> getValues(final String value) {
-        return converter.apply(List.of(value));
+        return converter.apply(NullSafe.singletonList(value));
     }
 
     private List<T> getValues(final List<String> values) {
@@ -219,10 +238,10 @@ public final class TermHandler<T> implements Function<ExpressionTerm, Condition>
         Condition condition = field.in(Collections.emptyList());
 
         if (dataSourceField instanceof DocRefField) {
-            final String type = ((DocRefField) dataSourceField).getDocRefType();
+            final String type = dataSourceField.getDocRefType();
             if (type != null && collectionService != null) {
                 final Set<DocRef> descendants = collectionService.getDescendants(docRef, type);
-                if (descendants != null && descendants.size() > 0) {
+                if (descendants != null && !descendants.isEmpty()) {
                     final List<String> values = descendants.stream()
                             .map(descendant ->
                                     getDocValue(term, descendant))

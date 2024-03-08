@@ -18,7 +18,7 @@
 
 package stroom.security.identity.exceptions;
 
-import javax.ws.rs.WebApplicationException;
+import jakarta.ws.rs.WebApplicationException;
 
 public class NoSuchUserException extends WebApplicationException {
 

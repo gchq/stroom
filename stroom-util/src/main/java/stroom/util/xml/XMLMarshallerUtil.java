@@ -18,6 +18,12 @@ package stroom.util.xml;
 
 import stroom.util.io.StreamUtil;
 
+import jakarta.xml.bind.JAXBContext;
+import jakarta.xml.bind.JAXBElement;
+import jakarta.xml.bind.JAXBException;
+import jakarta.xml.bind.Marshaller;
+import jakarta.xml.bind.Unmarshaller;
+import jakarta.xml.bind.annotation.adapters.XmlAdapter;
 import javassist.Modifier;
 
 import java.io.ByteArrayInputStream;
@@ -27,12 +33,6 @@ import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBElement;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Marshaller;
-import javax.xml.bind.Unmarshaller;
-import javax.xml.bind.annotation.adapters.XmlAdapter;
 import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.sax.TransformerHandler;
 import javax.xml.transform.stream.StreamResult;
@@ -58,9 +58,9 @@ public final class XMLMarshallerUtil {
                 try {
                     clone = clazz.getConstructor().newInstance();
                 } catch (final NoSuchMethodException
-                        | InvocationTargetException
-                        | InstantiationException
-                        | IllegalAccessException e) {
+                               | InvocationTargetException
+                               | InstantiationException
+                               | IllegalAccessException e) {
                     return obj;
                 }
 
@@ -80,7 +80,7 @@ public final class XMLMarshallerUtil {
                                         if (Array.getLength(o) == 0) {
                                             o = null;
                                         }
-                                    } else {
+                                    } else if (!field.getType().equals(String.class)) {
                                         o = deepClone(o, depth + 1);
                                     }
                                 }

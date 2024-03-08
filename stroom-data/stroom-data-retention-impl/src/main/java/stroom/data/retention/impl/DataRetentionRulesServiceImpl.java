@@ -19,9 +19,11 @@ package stroom.data.retention.impl;
 
 import stroom.data.retention.shared.DataRetentionRule;
 import stroom.data.retention.shared.DataRetentionRules;
+import stroom.docref.DocContentHighlights;
 import stroom.docref.DocContentMatch;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
+import stroom.docref.StringMatch;
 import stroom.docstore.api.AuditFieldFilter;
 import stroom.docstore.api.DependencyRemapper;
 import stroom.docstore.api.DocumentSerialiser2;
@@ -36,6 +38,8 @@ import stroom.importexport.shared.ImportState;
 import stroom.security.api.SecurityContext;
 import stroom.util.shared.Message;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,8 +48,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 import static stroom.security.shared.PermissionNames.MANAGE_POLICIES_PERMISSION;
 
@@ -54,6 +56,11 @@ class DataRetentionRulesServiceImpl implements DataRetentionRulesService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DataRetentionRulesServiceImpl.class);
     private static final String POLICY_NAME = "Data Retention";
+    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.CONFIGURATION,
+            DataRetentionRules.DOCUMENT_TYPE,
+            "Data Retention Rules",
+            DataRetentionRules.ICON);
 
     private final Store<DataRetentionRules> store;
     private final SecurityContext securityContext;
@@ -78,8 +85,11 @@ class DataRetentionRulesServiceImpl implements DataRetentionRulesService {
     }
 
     @Override
-    public DocRef copyDocument(final DocRef docRef, final Set<String> existingNames) {
-        final String newName = UniqueNameUtil.getCopyName(docRef.getName(), existingNames);
+    public DocRef copyDocument(final DocRef docRef,
+                               final String name,
+                               final boolean makeNameUnique,
+                               final Set<String> existingNames) {
+        final String newName = UniqueNameUtil.getCopyName(name, makeNameUnique, existingNames);
         return store.copyDocument(docRef.getUuid(), newName);
     }
 
@@ -105,11 +115,7 @@ class DataRetentionRulesServiceImpl implements DataRetentionRulesService {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(
-                DocumentTypeGroup.CONFIGURATION,
-                DataRetentionRules.DOCUMENT_TYPE,
-                "Data Retention Rules",
-                DataRetentionRules.ICON);
+        return DOCUMENT_TYPE;
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -257,7 +263,14 @@ class DataRetentionRulesServiceImpl implements DataRetentionRulesService {
     }
 
     @Override
-    public List<DocContentMatch> findByContent(final String pattern, final boolean regex, final boolean matchCase) {
-        return store.findByContent(pattern, regex, matchCase);
+    public List<DocContentMatch> findByContent(final StringMatch filter) {
+        return store.findByContent(filter);
+    }
+
+    @Override
+    public DocContentHighlights fetchHighlights(final DocRef docRef,
+                                                final String extension,
+                                                final StringMatch filter) {
+        return store.fetchHighlights(docRef, extension, filter);
     }
 }

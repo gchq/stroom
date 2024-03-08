@@ -161,6 +161,10 @@
       "maxResults" : [ 20, 20 ],
       "showDetail" : true
     } ],
+    "requestedRange" : {
+      "offset" : 0,
+      "length" : 1000
+    },
     "resultStyle" : "FLAT",
     "fetch" : "CHANGES"
   }, {
@@ -351,6 +355,10 @@
       "maxResults" : [ 20, 10, 500 ],
       "showDetail" : true
     } ],
+    "requestedRange" : {
+      "offset" : 0,
+      "length" : 1000
+    },
     "resultStyle" : "FLAT",
     "fetch" : "CHANGES"
   }, {
@@ -468,6 +476,10 @@
       "maxResults" : [ 20, 100, 1000 ],
       "showDetail" : true
     } ],
+    "requestedRange" : {
+      "offset" : 0,
+      "length" : 1000
+    },
     "resultStyle" : "FLAT",
     "fetch" : "CHANGES"
   } ],
@@ -475,6 +487,7 @@
   "dateTimeSettings" : {
     "dateTimePattern" : "yyyy-MM-dd'T'HH:mm:ss.SSSXX",
     "localZoneId" : "Europe/London",
+    "referenceTime" : 0,
     "timeZone" : {
       "use" : "UTC"
     }

@@ -357,7 +357,6 @@ class TestByteBufferPool {
         final ByteBufferPool byteBufferPool4 = new ByteBufferPoolImpl4(ByteBufferPoolConfig::new);
         final ByteBufferPool byteBufferPool5 = new ByteBufferPoolImpl5();
         final ByteBufferPool jettyByteBufferPool = new JettyByteBufferPool();
-        final ByteBufferPool hbaseByteBufferPool = new HbaseByteBufferPool();
 
         final List<String> results = new ArrayList<>();
 
@@ -372,7 +371,7 @@ class TestByteBufferPool {
                 doPerfTest(results, testRound, iterations, byteBufferPool4, executorService);
 //                doPerfTest(results, testRound, iterations, byteBufferPool5, executorService);
                 doPerfTest(results, testRound, iterations, jettyByteBufferPool, executorService);
-                doPerfTest(results, testRound, iterations, hbaseByteBufferPool, executorService);
+//                doPerfTest(results, testRound, iterations, hbaseByteBufferPool, executorService);
 
                 LOGGER.info("---------------------------------------------------------");
             } catch (ExecutionException | InterruptedException e) {
@@ -583,48 +582,4 @@ class TestByteBufferPool {
             return null;
         }
     }
-
-    // --------------------------------------------------------------------------------
-
-    private static final class HbaseByteBufferPool implements ByteBufferPool {
-
-        private final org.apache.hadoop.hbase.io.ByteBufferPool delegatePool =
-                new org.apache.hadoop.hbase.io.ByteBufferPool(
-                        4096,
-                        50,
-                        true);
-
-        private ByteBuffer getBuffer(final int minCapacity) {
-            final ByteBuffer byteBuffer = delegatePool.getBuffer();
-
-            return byteBuffer;
-        }
-
-        @Override
-        public PooledByteBuffer getPooledByteBuffer(final int minCapacity) {
-            return new PooledByteBuffer(
-                    () ->
-                            getBuffer(minCapacity),
-                    delegatePool::putbackBuffer);
-        }
-
-        @Override
-        public PooledByteBufferPair getPooledBufferPair(final int minKeyCapacity, final int minValueCapacity) {
-            return new PooledByteBufferPair(
-                    delegatePool::putbackBuffer,
-                    getBuffer(minKeyCapacity),
-                    getBuffer(minKeyCapacity));
-        }
-
-        @Override
-        public int getCurrentPoolSize() {
-            return 0;
-        }
-
-        @Override
-        public SystemInfoResult getSystemInfo() {
-            return null;
-        }
-    }
-
 }

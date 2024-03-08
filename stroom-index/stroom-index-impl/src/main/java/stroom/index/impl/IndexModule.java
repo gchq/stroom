@@ -22,6 +22,7 @@ import stroom.importexport.api.ImportExportActionHandler;
 import stroom.index.shared.IndexDoc;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.lifecycle.api.LifecycleBinder;
+import stroom.search.extraction.IndexStructureCache;
 import stroom.searchable.api.Searchable;
 import stroom.util.RunnableWrapper;
 import stroom.util.entityevent.EntityEvent;
@@ -31,8 +32,7 @@ import stroom.util.guice.RestResourcesBinder;
 import stroom.util.shared.Clearable;
 
 import com.google.inject.AbstractModule;
-
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 import static stroom.job.api.Schedule.ScheduleType.CRON;
 import static stroom.job.api.Schedule.ScheduleType.PERIODIC;
@@ -53,7 +53,8 @@ public class IndexModule extends AbstractModule {
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class)
                 .addBinding(IndexStructureCacheImpl.class)
-                .addBinding(IndexVolumeServiceImpl.class);
+                .addBinding(IndexVolumeServiceImpl.class)
+                .addBinding(IndexVolumeGroupServiceImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), EntityEvent.Handler.class)
                 .addBinding(IndexConfigCacheEntityEventHandler.class);
@@ -107,6 +108,7 @@ public class IndexModule extends AbstractModule {
 
         HasSystemInfoBinder.create(binder())
                 .bind(IndexVolumeServiceImpl.class);
+        HasSystemInfoBinder.create(binder()).bind(IndexSystemInfo.class);
     }
 
     private static class IndexShardDelete extends RunnableWrapper {

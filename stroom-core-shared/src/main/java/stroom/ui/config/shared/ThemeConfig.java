@@ -17,15 +17,25 @@ import java.util.Objects;
 public class ThemeConfig extends AbstractConfig implements IsStroomConfig {
 
     @JsonProperty
-    @JsonPropertyDescription("GUI")
+    @JsonPropertyDescription("A valid HTML colour value, e.g. 'olive' or '#BA2727' to use for the background " +
+            "colour on the login page. If Stroom is configured to use an external IDP or authenticates using " +
+            "certificates then users will not see the login page.")
     private final String backgroundColour;
 
     @JsonProperty
-    @JsonPropertyDescription("Provide border for the entire page.")
+    @JsonPropertyDescription("Provide a valid HTML style value to style the main page, i.e. to add an environment " +
+            "specific coloured border to the page to distinguish between environments (dev, test, production, etc.)." +
+            "The value will be set on the elements style property. For example to add a coloured border left and " +
+            "right set it to 'border: solid #BA2727; border-width: 0px 10px'")
     private final String pageBorder;
 
     @JsonProperty
-    @JsonPropertyDescription("A comma separated list of KV pairs to provide colours for labels.")
+    @JsonPropertyDescription("A comma separated list of key/value pairs to provide colours for classification " +
+            "banners. Various screens in Stroom can show a data classification banner, e.g. the data view " +
+            "for a feed. The classification banners can be coloured according to the classification label. " +
+            "For example: 'OFFICIAL SENSITIVE=red,OFFICIAL=#eed202'. The colour values should be valid HTML" +
+            "colour codes or names. Classification labels with no corresponding colour in this property " +
+            "will be given a default grey colour.")
     private final String labelColours;
 
     public ThemeConfig() {

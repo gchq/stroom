@@ -24,6 +24,7 @@ import stroom.importexport.api.ImportExportActionHandler;
 import stroom.query.common.v2.SearchProvider;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.RestResourcesBinder;
+import stroom.view.api.ViewStore;
 import stroom.view.shared.ViewDoc;
 
 import com.google.inject.AbstractModule;

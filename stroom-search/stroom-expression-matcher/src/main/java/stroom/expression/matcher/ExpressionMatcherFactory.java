@@ -1,11 +1,13 @@
 package stroom.expression.matcher;
 
 import stroom.collection.api.CollectionService;
-import stroom.datasource.api.v2.AbstractField;
+import stroom.datasource.api.v2.QueryField;
 import stroom.dictionary.api.WordListProvider;
+import stroom.expression.api.DateTimeSettings;
+
+import jakarta.inject.Inject;
 
 import java.util.Map;
-import javax.inject.Inject;
 
 public class ExpressionMatcherFactory {
 
@@ -18,11 +20,10 @@ public class ExpressionMatcherFactory {
         this.collectionService = collectionService;
     }
 
-    public ExpressionMatcher create(final Map<String, AbstractField> fieldMap) {
+    public ExpressionMatcher create(final Map<String, QueryField> fieldMap) {
         return new ExpressionMatcher(fieldMap,
                 wordListProvider,
                 collectionService,
-                null,
-                System.currentTimeMillis());
+                DateTimeSettings.builder().build());
     }
 }

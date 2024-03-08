@@ -28,6 +28,7 @@ import stroom.svg.shared.SvgImage;
 import stroom.util.io.FileUtil;
 import stroom.util.io.PathCreator;
 
+import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,7 +39,6 @@ import java.nio.file.Paths;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.util.Set;
-import javax.inject.Inject;
 
 /**
  * Joins text instances into a single text instance.
@@ -52,6 +52,7 @@ import javax.inject.Inject;
                 This is distinct from the FileAppender in that when the `rollSize` is reached it will move the \
                 current file to the path specified in `rolledFileName` and resume writing to the original path.
                 This allows other processes to follow the changes to a single file path, e.g. when using `tail`.
+                On system shutdown all active files will be rolled.
                 """,
         category = Category.DESTINATION,
         roles = {

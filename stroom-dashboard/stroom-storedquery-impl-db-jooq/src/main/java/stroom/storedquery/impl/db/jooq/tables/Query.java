@@ -4,6 +4,7 @@
 package stroom.storedquery.impl.db.jooq.tables;
 
 
+import stroom.storedquery.impl.db.jooq.Indexes;
 import stroom.storedquery.impl.db.jooq.Keys;
 import stroom.storedquery.impl.db.jooq.Stroom;
 import stroom.storedquery.impl.db.jooq.tables.records.QueryRecord;
@@ -11,9 +12,10 @@ import stroom.storedquery.impl.db.jooq.tables.records.QueryRecord;
 import org.jooq.Field;
 import org.jooq.ForeignKey;
 import org.jooq.Identity;
+import org.jooq.Index;
 import org.jooq.Name;
 import org.jooq.Record;
-import org.jooq.Row11;
+import org.jooq.Row13;
 import org.jooq.Schema;
 import org.jooq.Table;
 import org.jooq.TableField;
@@ -22,6 +24,9 @@ import org.jooq.UniqueKey;
 import org.jooq.impl.DSL;
 import org.jooq.impl.SQLDataType;
 import org.jooq.impl.TableImpl;
+
+import java.util.Arrays;
+import java.util.List;
 
 
 /**
@@ -100,6 +105,16 @@ public class Query extends TableImpl<QueryRecord> {
      */
     public final TableField<QueryRecord, Boolean> FAVOURITE = createField(DSL.name("favourite"), SQLDataType.BOOLEAN.nullable(false).defaultValue(DSL.inline("0", SQLDataType.BOOLEAN)), this, "");
 
+    /**
+     * The column <code>stroom.query.uuid</code>.
+     */
+    public final TableField<QueryRecord, String> UUID = createField(DSL.name("uuid"), SQLDataType.VARCHAR(255).nullable(false), this, "");
+
+    /**
+     * The column <code>stroom.query.owner_uuid</code>.
+     */
+    public final TableField<QueryRecord, String> OWNER_UUID = createField(DSL.name("owner_uuid"), SQLDataType.VARCHAR(255).nullable(false), this, "");
+
     private Query(Name alias, Table<QueryRecord> aliased) {
         this(alias, aliased, null);
     }
@@ -139,6 +154,11 @@ public class Query extends TableImpl<QueryRecord> {
     }
 
     @Override
+    public List<Index> getIndexes() {
+        return Arrays.asList(Indexes.QUERY_OWNER_UUID);
+    }
+
+    @Override
     public Identity<QueryRecord, Integer> getIdentity() {
         return (Identity<QueryRecord, Integer>) super.getIdentity();
     }
@@ -146,6 +166,11 @@ public class Query extends TableImpl<QueryRecord> {
     @Override
     public UniqueKey<QueryRecord> getPrimaryKey() {
         return Keys.KEY_QUERY_PRIMARY;
+    }
+
+    @Override
+    public List<UniqueKey<QueryRecord>> getUniqueKeys() {
+        return Arrays.asList(Keys.KEY_QUERY_QUERY_UUID);
     }
 
     @Override
@@ -180,11 +205,11 @@ public class Query extends TableImpl<QueryRecord> {
     }
 
     // -------------------------------------------------------------------------
-    // Row11 type methods
+    // Row13 type methods
     // -------------------------------------------------------------------------
 
     @Override
-    public Row11<Integer, Integer, Long, String, Long, String, String, String, String, String, Boolean> fieldsRow() {
-        return (Row11) super.fieldsRow();
+    public Row13<Integer, Integer, Long, String, Long, String, String, String, String, String, Boolean, String, String> fieldsRow() {
+        return (Row13) super.fieldsRow();
     }
 }

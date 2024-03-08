@@ -20,6 +20,7 @@ package stroom.search.solr;
 import stroom.cluster.lock.api.ClusterLockService;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
+import stroom.expression.api.DateTimeSettings;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.search.solr.search.SearchExpressionQueryBuilder;
 import stroom.search.solr.search.SearchExpressionQueryBuilder.SearchExpressionQuery;
@@ -31,16 +32,16 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
 
-import org.apache.lucene.search.Query;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
+import org.apache.lucene553.search.Query;
 import org.apache.solr.client.solrj.SolrServerException;
 
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.inject.Singleton;
 
 @Singleton
 public class SolrIndexRetentionExecutor {
@@ -108,8 +109,7 @@ public class SolrIndexRetentionExecutor {
                                         dictionaryStore,
                                         indexFieldsMap,
                                         searchConfigProvider.get().getMaxBooleanClauseCount(),
-                                        null,
-                                        System.currentTimeMillis());
+                                        DateTimeSettings.builder().build());
                         final SearchExpressionQuery searchExpressionQuery = searchExpressionQueryBuilder
                                 .buildQuery(solrIndexDoc.getRetentionExpression());
                         final Query query = searchExpressionQuery.getQuery();

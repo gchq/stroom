@@ -1,0 +1,48 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:v="urn:import:stroom.widget.tickbox.client.view"
+             xmlns:i="urn:import:stroom.item.client"
+             xmlns:form="urn:import:stroom.widget.form.client">
+    <g:FlowPanel styleName="max form">
+        <form:FormGroup identity="basicTextSettingsId" label="Id">
+            <g:Label ui:field="id" addStyleNames="w-100 stroom-control-label"/>
+        </form:FormGroup>
+        <form:FormGroup identity="basicTextSettingsName" label="Name">
+            <g:TextBox ui:field="name" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup identity="basicTextSettingsTable" label="Table">
+            <i:SelectionBox ui:field="table" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup identity="basicTextSettingsStreamIdColumn" label="Stream Id Column">
+            <i:SelectionBox ui:field="streamIdColumn" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup identity="basicTextSettingsPartNoColumn" label="Part No Column">
+            <i:SelectionBox ui:field="partNoColumn" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup identity="basicTextSettingsRecordNoColumn" label="Record No Column">
+            <i:SelectionBox ui:field="recordNoColumn" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup identity="basicTextSettingsLineFromColumn" label="Line From Column">
+            <i:SelectionBox ui:field="lineFromColumn" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup identity="basicTextSettingsColFromColumn" label="Col From Column">
+            <i:SelectionBox ui:field="colFromColumn" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup identity="basicTextSettingsLineToColumn" label="Line To Column">
+            <i:SelectionBox ui:field="lineToColumn" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup identity="basicTextSettingsColToColumn" label="Col To Column">
+            <i:SelectionBox ui:field="colToColumn" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup identity="basicTextSettingsPipeline" label="Pipeline">
+            <g:SimplePanel ui:field="pipeline" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup>
+            <v:CustomCheckBox ui:field="showAsHtml" identity="basicTextSettingsShowAsHTML" label="Show As HTML"/>
+        </form:FormGroup>
+        <form:FormGroup>
+            <v:CustomCheckBox ui:field="showStepping" identity="basicTextSettingsShowStepping" label="Show Stepping"/>
+        </form:FormGroup>
+    </g:FlowPanel>
+</ui:UiBinder> 

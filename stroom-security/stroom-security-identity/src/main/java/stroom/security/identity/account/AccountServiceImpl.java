@@ -3,43 +3,126 @@ package stroom.security.identity.account;
 import stroom.security.api.SecurityContext;
 import stroom.security.identity.authenticate.PasswordValidator;
 import stroom.security.identity.config.IdentityConfig;
+import stroom.security.openid.api.IdpType;
+import stroom.security.openid.api.OpenIdConfiguration;
 import stroom.security.shared.FindUserNameCriteria;
 import stroom.security.shared.PermissionNames;
 import stroom.security.shared.UserNameProvider;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.SimpleUserName;
+import stroom.util.shared.UserName;
 
 import com.google.common.base.Strings;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
 
 public class AccountServiceImpl implements AccountService, UserNameProvider {
 
     private final AccountDao accountDao;
     private final SecurityContext securityContext;
     private final IdentityConfig config;
+    private final Provider<OpenIdConfiguration> openIdConfigurationProvider;
+
 
     @Inject
     AccountServiceImpl(final AccountDao accountDao,
                        final SecurityContext securityContext,
-                       final IdentityConfig config) {
+                       final IdentityConfig config,
+                       final Provider<OpenIdConfiguration> openIdConfigurationProvider) {
         this.accountDao = accountDao;
         this.securityContext = securityContext;
         this.config = config;
+        this.openIdConfigurationProvider = openIdConfigurationProvider;
     }
 
     @Override
-    public ResultPage<String> findUserNames(final FindUserNameCriteria criteria) {
-        final SearchAccountRequest request = new SearchAccountRequest(
-                criteria.getPageRequest(),
-                criteria.getSortList(),
-                criteria.getQuickFilterInput());
-        final AccountResultPage result = search(request);
-        final List<String> list = result.getValues().stream().map(Account::getUserId).collect(Collectors.toList());
-        return new ResultPage<>(list, result.getPageResponse());
+    public boolean isEnabled() {
+        return shouldProvideNames();
+    }
+
+    @Override
+    public int getPriority() {
+        return 2;
+    }
+
+    @Override
+    public ResultPage<UserName> findUserNames(final FindUserNameCriteria criteria) {
+
+        // Only the internal IDP uses Accounts, so no point hitting it for other IDPs
+        if (shouldProvideNames()) {
+            final SearchAccountRequest request = new SearchAccountRequest(
+                    criteria.getPageRequest(),
+                    criteria.getSortList(),
+                    criteria.getQuickFilterInput());
+
+            final AccountResultPage result = search(request);
+
+            final List<UserName> list = result.getValues()
+                    .stream()
+                    .map(this::mapAccountToUserName)
+                    .collect(Collectors.toList());
+
+            return new ResultPage<>(list, result.getPageResponse());
+        } else {
+            return new ResultPage<>(Collections.emptyList());
+        }
+    }
+
+    @Override
+    public ResultPage<UserName> findAssociates(final FindUserNameCriteria criteria) {
+        if (securityContext.hasAppPermission(PermissionNames.MANAGE_USERS_PERMISSION)) {
+            return findUserNames(criteria);
+        } else {
+            // No perms so can't see any accounts as accounts do not belong to groups
+            return new ResultPage<>(Collections.emptyList());
+        }
+    }
+
+    @Override
+    public Optional<UserName> getBySubjectId(final String subjectId) {
+//        if (shouldProvideNames()) {
+//            return accountDao.get(subjectId)
+//                    .map(this::mapAccountToUserName);
+//        } else {
+//            return Optional.empty();
+//        }
+        // This UserNameProvider is only used for getting lists of names to be
+        // unioned with other providers
+        return Optional.empty();
+    }
+
+    @Override
+    public Optional<UserName> getByDisplayName(final String displayName) {
+        // Accounts have no concept of displayName so just get by userId
+//        return getBySubjectId(displayName);
+
+        // This UserNameProvider is only used for getting lists of names to be
+        // unioned with other providers
+        return Optional.empty();
+    }
+
+    @Override
+    public Optional<UserName> getByUuid(final String userUuid) {
+        // This UserNameProvider is only used for getting lists of names to be
+        // unioned with other providers + accounts don't have stroom UUIDs
+        return Optional.empty();
+    }
+
+    private UserName mapAccountToUserName(final Account account) {
+        return new SimpleUserName(
+                account.getUserId(),
+                account.getUserId(), // use user id for both name and displayName
+                account.getFullName());
+    }
+
+    private boolean shouldProvideNames() {
+        return IdpType.INTERNAL_IDP.equals(openIdConfigurationProvider.get().getIdentityProviderType());
     }
 
     @Override
@@ -60,7 +143,7 @@ public class AccountServiceImpl implements AccountService, UserNameProvider {
         validateCreateRequest(request);
 
         // Validate
-        final String userId = securityContext.getUserId();
+        final String userId = securityContext.getSubjectId();
 
         final long now = System.currentTimeMillis();
 
@@ -85,7 +168,7 @@ public class AccountServiceImpl implements AccountService, UserNameProvider {
 
     @Override
     public Optional<Account> read(final int accountId) {
-        final String loggedInUser = securityContext.getUserId();
+        final String loggedInUser = securityContext.getSubjectId();
 
         Optional<Account> optionalUser = accountDao.get(accountId);
         if (optionalUser.isPresent()) {
@@ -124,7 +207,7 @@ public class AccountServiceImpl implements AccountService, UserNameProvider {
 //        userToUpdate.setEnabled(isEnabled);
 //        securityUserService.update(userToUpdate);
 
-        final String loggedInUser = securityContext.getUserId();
+        final String loggedInUser = securityContext.getSubjectId();
         final Account account = request.getAccount();
         account.setUpdateUser(loggedInUser);
         account.setUpdateTimeMs(System.currentTimeMillis());
@@ -190,7 +273,8 @@ public class AccountServiceImpl implements AccountService, UserNameProvider {
 
     private void checkPermission() {
         if (!securityContext.hasAppPermission(PermissionNames.MANAGE_USERS_PERMISSION)) {
-            throw new PermissionException(securityContext.getUserId(), "You do not have permission to manage users");
+            throw new PermissionException(
+                    securityContext.getUserIdentityForAudit(), "You do not have permission to manage users");
         }
     }
 }

@@ -2,21 +2,19 @@ package stroom.analytics.impl;
 
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.filter.XMLFilter;
-import stroom.util.date.DateUtil;
 import stroom.util.shared.Severity;
 
+import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
 
-import java.time.Instant;
 import java.util.List;
 import java.util.Locale;
-import javax.inject.Inject;
 
-public class DetectionWriter implements DetectionConsumer, ProcessLifecycleAware {
+public class DetectionWriter implements DetectionConsumer {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DetectionWriter.class);
 
@@ -120,19 +118,19 @@ public class DetectionWriter implements DetectionConsumer, ProcessLifecycleAware
             }
 
             writeStartElement(DETECTION);
-            writeOptionalDataElement(DETECT_TIME, detection.detectTime());
-            writeOptionalDataElement(DETECTOR_NAME, detection.detectorName());
-            writeOptionalDataElement(DETECTOR_UUID, detection.detectorUuid());
-            writeOptionalDataElement(DETECTOR_VERSION, detection.detectorVersion());
-            writeOptionalDataElement(DETECTOR_ENVIRONMENT, detection.detectorEnvironment());
-            writeOptionalDataElement(HEADLINE, detection.headline());
-            writeOptionalDataElement(DETAILED_DESCRIPTION, detection.detailedDescription());
-            writeOptionalDataElement(FULL_DESCRIPTION, detection.fullDescription());
-            writeOptionalDataElement(DETECTION_UNIQUE_ID, detection.detectionUniqueId());
-            writeOptionalDataElement(DETECTION_REVISION, detection.detectionRevision());
-            writeOptionalDataElement(DEFUNCT, detection.defunct());
-            writeValues(detection.values());
-            writeLinkedEvents(detection.linedEvents());
+            writeOptionalDataElement(DETECT_TIME, detection.getDetectTime());
+            writeOptionalDataElement(DETECTOR_NAME, detection.getDetectorName());
+            writeOptionalDataElement(DETECTOR_UUID, detection.getDetectorUuid());
+            writeOptionalDataElement(DETECTOR_VERSION, detection.getDetectorVersion());
+            writeOptionalDataElement(DETECTOR_ENVIRONMENT, detection.getDetectorEnvironment());
+            writeOptionalDataElement(HEADLINE, detection.getHeadline());
+            writeOptionalDataElement(DETAILED_DESCRIPTION, detection.getDetailedDescription());
+            writeOptionalDataElement(FULL_DESCRIPTION, detection.getFullDescription());
+            writeOptionalDataElement(DETECTION_UNIQUE_ID, detection.getDetectionUniqueId());
+            writeOptionalDataElement(DETECTION_REVISION, detection.getDetectionRevision());
+            writeOptionalDataElement(DEFUNCT, detection.getDefunct());
+            writeValues(detection.getValues());
+            writeLinkedEvents(detection.getLinkedEvents());
             writeEndElement(DETECTION);
 
         } catch (final SAXException e) {
@@ -140,52 +138,45 @@ public class DetectionWriter implements DetectionConsumer, ProcessLifecycleAware
         }
     }
 
-    private void writeValues(List<Value> values) throws SAXException {
+    private void writeValues(List<DetectionValue> values) throws SAXException {
         if (values != null && values.size() > 0) {
-            for (final Value value : values) {
+            for (final DetectionValue value : values) {
                 writeValue(value);
             }
         }
     }
 
-    private void writeValue(final Value value) throws SAXException {
+    private void writeValue(final DetectionValue value) throws SAXException {
         final AttributesImpl attrs = new AttributesImpl();
-        if (value.name() != null) {
-            attrs.addAttribute(NAMESPACE, NAME, NAME, XML_TYPE_STRING, value.name());
+        if (value.getName() != null) {
+            attrs.addAttribute(NAMESPACE, NAME, NAME, XML_TYPE_STRING, value.getName());
         }
-        writeDataElement(VALUE, attrs, value.value());
+        writeDataElement(VALUE, attrs, value.getValue());
     }
 
 
-    private void writeLinkedEvents(final List<LinkedEvent> linkedEvents) throws SAXException {
+    private void writeLinkedEvents(final List<DetectionLinkedEvent> linkedEvents) throws SAXException {
         if (linkedEvents != null && linkedEvents.size() > 0) {
             writeStartElement(LINKED_EVENTS);
-            for (final LinkedEvent linkedEvent : linkedEvents) {
+            for (final DetectionLinkedEvent linkedEvent : linkedEvents) {
                 writeLinkedEvent(linkedEvent);
             }
             writeEndElement(LINKED_EVENTS);
         }
     }
 
-    private void writeLinkedEvent(final LinkedEvent linkedEvent) throws SAXException {
+    private void writeLinkedEvent(final DetectionLinkedEvent linkedEvent) throws SAXException {
         writeStartElement(LINKED_EVENT);
-        if (linkedEvent.stroom() != null) {
-            writeDataElement(STROOM, linkedEvent.stroom());
+        if (linkedEvent.getStroom() != null) {
+            writeDataElement(STROOM, linkedEvent.getStroom());
         }
-        if (linkedEvent.streamId() != null) {
-            writeDataElement(STREAM_ID, linkedEvent.streamId().toString());
+        if (linkedEvent.getStreamId() != null) {
+            writeDataElement(STREAM_ID, linkedEvent.getStreamId().toString());
         }
-        if (linkedEvent.eventId() != null) {
-            writeDataElement(EVENT_ID, linkedEvent.eventId().toString());
+        if (linkedEvent.getEventId() != null) {
+            writeDataElement(EVENT_ID, linkedEvent.getEventId().toString());
         }
         writeEndElement(LINKED_EVENT);
-    }
-
-    private void writeOptionalDataElement(final String elementName,
-                                          final Instant instant) throws SAXException {
-        if (instant != null) {
-            writeDataElement(elementName, EMPTY_ATTS, DateUtil.createNormalDateTimeString(instant));
-        }
     }
 
     private void writeOptionalDataElement(final String elementName,

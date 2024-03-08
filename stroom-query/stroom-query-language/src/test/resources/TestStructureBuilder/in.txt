@@ -1,0 +1,69 @@
+before "test of inner \" strings " after
+-----
+"test of inner \" strings " after
+-----
+ "test of inner \" strings " after
+-----
+before "test of inner \" strings "
+-----
+before "test of inner \" strings "
+-----
+before 'test of inner \' strings ' after
+-----
+'test of inner \' strings ' after
+-----
+ 'test of inner \' strings ' after
+-----
+before 'test of inner \' strings '
+-----
+before 'test of inner \' strings '
+-----
+from test
+where this = that and foo = 'test of inner \' strings '
+-----
+from "Test Index"
+where UserId = user5 and Description = e0567
+and EventTime <= 2000-01-01T00:00:00.000Z
+and EventTime >= 2016-01-02T00:00:00.000Z
+-----
+from "Test Index"
+where UserId = user5 and Description = e0567
+and EventTime <= now()
+-----
+from "Test Index"
+where UserId = user5 and Description = e0567
+and EventTime <= now() + 3d
+-----
+from "Test Index"
+where UserId = user5 and Description = e0567
+and EventTime <= now() + 3
+-----
+from "Test Index"
+where UserId = user5 and Description = e0567
+and EventTime <= day()-1d-1h
+-----
+from Events
+where Name = "Start"
+-----
+from 'Test Index'
+where EventTime > 2023-05-05T00:00:00.000Z and  (Field = 'blah' or Field = 'blip')
+eval UserId = upperCase(UserId)
+select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time", "Status", UserId as "User Id"
+-----
+from "index_view"
+where EventTime between 2022-05-05T00:00:00.000Z and 2023-05-05T00:00:00.000Z
+select StreamId
+-----
+from "index_view"
+where StreamId in (123, 456)
+select StreamId
+-----
+from "index_view"
+where StreamId in dictionary "my_dictionary"
+select StreamId
+-----
+// From example index
+from View
+// eval MaxD=max(parseDuration('PT10M'))
+where EventTime < now() - 2dx
+select StreamId, EventId, Feed

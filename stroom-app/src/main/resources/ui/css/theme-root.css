@@ -8,7 +8,7 @@
  */
 
 /**************************************************
-*  NOTE: This file gets copied into stroom-docs by 
+*  NOTE: This file gets copied into stroom-docs by
 *  stroom-docs/update_stroom_icons.sh
 *  so any significant changes may break the docs.
 ***************************************************/
@@ -24,7 +24,12 @@
     --focus-shadow--secondary: inset 0 1px 1px rgba(var(--black-rgb), .075), 0 0 8px rgba(var(--pink-500-rgb), .6); /* pink-500*/
 
     --text-color: #151515;
-    --text-color--disabled: #666;
+    --text-color--disabled: #777;
+    --text-color--red: var(--red-600);
+    --text-color--green: var(--green-600);
+    --text-color--red--dark: var(--red-900);
+    --text-color--green--dark: var(--green-900);
+
     /* Headings, e.g. in markdown documentation, info tooltips, meta info */
     --heading-color: var(--blue-700);
     /* <code> blocks, e.g. in markdown */
@@ -66,21 +71,21 @@
     --icon-button__background-color--hover: rgba(0,0,0,.05);
     --icon-button__border-color--hover: transparent;
     --icon-button__color: var(--blue-500);
-    --navigation-icon-button__background-color--on: rgba(10,36,65,.4);
-    --navigation-icon-button__border-color--on: var(--blue-500-rgb);
-    --navigation-icon-button__background-color--hover: rgba(10,36,65,.4);
-    --navigation-icon-button__border-color--hover: transparent;
+    --navigation-icon-button__color: var(--icon-button__color);
+    --navigation-icon-button__background-color--on: var(--icon-button__background-color--on);
+    --navigation-icon-button__border-color--on: var(--icon-button__border-color--on);
+    --navigation-icon-button__background-color--hover: var(--icon-button__background-color--hover);
+    --navigation-icon-button__border-color--hover: var(--icon-button__border-color--hover);
 
-    --expression-item-box__background-color--selected: #bbdefb;
-    --expression-item-box__background-color--hover: #f7fbff;
+    --expression-item-box__background-color--selected: var(--row__background-color--selected);/*#454545;*/
+    --expression-item-box__background-color--hover: var(--row__background-color--hovered);/*#555;*/
     --expression-item-box__background-color--disabled: #ccc;
-    --expression-item-box__background-color--hotspot: rgba(255,0,0,.3);
+    --expression-item-box__background-color--hotspot: var(--row__background-color--selected--hovered);
 
     --pipeline-element-box__background-color: #f5f9fd;
     --pipeline-element-box__background-color--hover: #f7fbff;
-    --pipeline-element-box__background-color--selected: #bbdefb;
-    --pipeline-element-box__background-color--selected--hover: #bbdefb;
-    --pipeline-element-box__background-color--hotspot: rgba(255,0,0,.3);
+    --pipeline-element-box__background-color--selected: var(--row__background-color--selected);
+    --pipeline-element-box__background-color--selected--hover: var(--row__background-color--selected--hovered);
     --pipeline-element-box__text-color: #666;
     --pipeline-element-box__text-color--selected: #000;
     --pipeline-element-box__border-color: #918e8c;
@@ -89,6 +94,7 @@
     --pipeline-element-box__border-color--error: orangered;
     --pipeline-element-box__border-color--fatal-error: red;
     --pipeline-element-box__border-color--fatal-error-dark: #c60000;
+    --pipeline-element-box__border-color--hotspot: var(--pipeline-element-box__border-color--info);
 
     --link__text-color: #0000AA;
 
@@ -129,7 +135,8 @@
      */
 
     /* Page */
-    --app__background-color: #fff;/*#d50101;*/
+    --app__background-color-rgb: 255, 255, 255;
+    --app__background-color: rgb(var(--app__background-color-rgb));
     --page__background-color: var(--app__background-color);
     --page__text-color: rgba(0, 0, 0, 0.8);
 
@@ -156,11 +163,12 @@
     --control__text-color--disabled: #666;
 
     /* Form Group */
-    --form-group__label-color: #000;
+    --form-group__label-color: #444;
 
     /* Dashboard */
     --dashboard-panel__background-color: var(--page__background-color);
-    --dashboard-panel__grid-color: rgba(0, 0, 0, 0.03);
+    --dashboard-panel__grid-color: var(--border-color);
+    --dashboard-panel__grid-background-color: #f9f9f9;
 
     /* ExpanderCell */
     --expander-cell-icon__background-color--hover: rgba(0, 0, 0, 0.2);
@@ -210,15 +218,19 @@
     --menu-item__text-color--selected--hover: #fff; /* #cacbcb; #fff; */
 
     /* Navigation pane */
-    --navigation__splitter__background-color: #002a59;
-    --navigation__background-color: #004c98;
-    --navigation__background-color--hovered: rgba(10,36,65,.4);
-    --navigation__background-color--selected: rgba(10,36,65,.6);
-    --navigation__background-color--selected-hovered: rgba(10,36,65,.8);
-    --navigation__background-color--focussed: rgba(10,36,65,.5);
-    --navigation__background-color--selected--focussed: rgba(10,36,65,.8);
-    --navigation__text-color: #fff;
-    --navigation__text-color--selected: #fff;
+    --navigation__splitter__background-color: var(--border-color);
+    --navigation__background-color: var(--white);
+    --navigation__background-color--hovered: var(--row__background-color--hovered);
+    --navigation__background-color--selected: var(--row__background-color--selected);
+    --navigation__background-color--selected-hovered: var(--row__background-color--selected--hovered);
+    --navigation__background-color--focussed: var(--row__background-color--focussed);
+    --navigation__background-color--selected--focussed: var(--row__background-color--selected--focussed);
+
+    --navigation__title__background-color: var(--white);
+    --navigation__text-color: var(--text-color);
+    --navigation__text-color--selected: var(--row__text-color--selected);
+    --navigation__text-color--no-match: #767676;
+    --logo-color: var(--icon-colour__dirty-amber);
 
     /* Specific */
     --header__icon-color: #2185d0;
@@ -227,10 +239,14 @@
     --table__odd-row__background-color: rgba(var(--black-rgb), .05);
 
     /* Dialog */
-    --dialog__background-color: var(--app__background-color);
-    --dialog__border-color: rgba(var(--black-rgb), .5);
-    --dialog__shadow: 0 0 20px 5px rgba(0, 0, 0, .4);
+    --dialog__background-color-rgb: var(--app__background-color-rgb);
+    --dialog__background-color: rgb(var(--dialog__background-color-rgb));
+    --dialog__border-color: rgba(var(--black-rgb), .3);
+    --dialog__shadow: 0 0 20px 5px rgba(0, 0, 0, .5);
+    --dialog__border-radius: 8px;
     --popup__shadow: 0 0 10px 1px rgba(0, 0, 0, .4);
+    --transparency__background-color: rgba(var(--dialog__background-color-rgb), .8);
+    --transparency__backdrop-filter: saturate(2) blur(20px);
 
     /* Status */
     --ok: var(--blue-500);
@@ -252,7 +268,7 @@
     /* Visualisations */
     --vis__background-color: var(--dashboard-panel__background-color);
     --vis-axis__color: rgba(0,0,0,0.54);
-    --vis-text__color: rgba(0,0,0,0.87);
+    --vis- GwtNullSafe: rgba(0,0,0,0.87);
     --vis-text__color--faint: rgba(0,0,0,0.12);
     --vis-icon__color: rgba(0,0,0,0.6);
     --vis-icon__color--hover: rgba(0,0,0,0.87);

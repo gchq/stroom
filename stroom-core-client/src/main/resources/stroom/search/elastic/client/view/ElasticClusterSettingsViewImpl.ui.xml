@@ -8,20 +8,20 @@
         <form:FormGroup identity="elasticClusterSettingsConnectionURLs" label="Connection URLs">
             <g:TextArea ui:field="connectionUrls" width="400px"/>
         </form:FormGroup>
-        <form:FormGroup identity="elasticClusterSettingsCAcertificate" label="CA certificate">
+        <form:FormGroup identity="elasticClusterSettingsCAcertificate" label="CA certificate (PEM format)">
             <g:TextArea ui:field="caCertificate" width="400px"/>
         </form:FormGroup>
         <form:FormGroup>
             <t:CustomCheckBox ui:field="useAuthentication" identity="elasticClusterSettingsUseauthentication" label="Use authentication"/>
         </form:FormGroup>
-        <form:FormGroup identity="elasticClusterSettingsAPIKeyId" label="API Key Id">
+        <form:FormGroup identity="elasticClusterSettingsAPIKeyId" label="API key ID">
             <g:TextBox ui:field="apiKeyId" width="400px"/>
         </form:FormGroup>
-        <form:FormGroup identity="elasticClusterSettingsAPIKeySecret" label="API Key Secret">
+        <form:FormGroup identity="elasticClusterSettingsAPIKeySecret" label="API key secret">
             <g:PasswordTextBox ui:field="apiKeySecret" width="400px"/>
         </form:FormGroup>
-        <form:FormGroup identity="elasticClusterSettingsSocketTimeout" label="Socket Timeout (ms)">
-            <g:IntegerBox ui:field="socketTimeoutMillis" width="100px"/>
+        <form:FormGroup identity="elasticClusterSettingsSocketTimeout" label="Socket timeout (ms)">
+            <g:IntegerBox ui:field="socketTimeoutMillis" width="50px"/>
         </form:FormGroup>
         <b:Button ui:field="testConnection" text="Test Connection" width="200px" addStyleNames="allow-focus"/>
     </g:FlowPanel>

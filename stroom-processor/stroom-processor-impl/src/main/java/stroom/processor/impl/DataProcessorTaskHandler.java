@@ -23,35 +23,37 @@ import stroom.meta.api.MetaService;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.Status;
 import stroom.node.api.NodeInfo;
-import stroom.processor.api.DataProcessorTaskExecutor;
 import stroom.processor.api.ProcessorResult;
 import stroom.processor.api.ProcessorResultImpl;
-import stroom.processor.api.TaskType;
+import stroom.processor.api.ProcessorTaskExecutor;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorTask;
+import stroom.processor.shared.ProcessorType;
 import stroom.processor.shared.TaskStatus;
 import stroom.security.api.SecurityContext;
+import stroom.security.api.UserIdentity;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TerminateHandlerFactory;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
+
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.ws.rs.ProcessingException;
 
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Map;
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.ws.rs.ProcessingException;
 
 public class DataProcessorTaskHandler {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DataProcessorTaskHandler.class);
 
-    private final Map<TaskType, Provider<DataProcessorTaskExecutor>> executorProviders;
-    private final ProcessorCache processorCache;
+    private final Map<ProcessorType, Provider<ProcessorTaskExecutor>> executorProviders;
     private final ProcessorFilterCache processorFilterCache;
     private final ProcessorTaskDao processorTaskDao;
     private final Store streamStore;
@@ -61,8 +63,7 @@ public class DataProcessorTaskHandler {
     private final TaskContextFactory taskContextFactory;
 
     @Inject
-    DataProcessorTaskHandler(final Map<TaskType, Provider<DataProcessorTaskExecutor>> executorProviders,
-                             final ProcessorCache processorCache,
+    DataProcessorTaskHandler(final Map<ProcessorType, Provider<ProcessorTaskExecutor>> executorProviders,
                              final ProcessorFilterCache processorFilterCache,
                              final ProcessorTaskDao processorTaskDao,
                              final Store streamStore,
@@ -71,7 +72,6 @@ public class DataProcessorTaskHandler {
                              final SecurityContext securityContext,
                              final TaskContextFactory taskContextFactory) {
         this.executorProviders = executorProviders;
-        this.processorCache = processorCache;
         this.processorFilterCache = processorFilterCache;
         this.processorTaskDao = processorTaskDao;
         this.streamStore = streamStore;
@@ -82,14 +82,25 @@ public class DataProcessorTaskHandler {
     }
 
     public ProcessorResult exec(final ProcessorTask task) {
-        // Perform processing as the processing user.
-        return securityContext.asProcessingUserResult(() -> {
+        // Perform processing as the filter owner.
+        final UserIdentity userIdentity = getFilterOwnerIdentity(task.getProcessorFilter());
+        return securityContext.asUserResult(userIdentity, () -> securityContext.useAsReadResult(() -> {
             // Execute with a task context.
             return taskContextFactory.contextResult(
                     "Data Processor",
                     TerminateHandlerFactory.NOOP_FACTORY,
                     taskContext -> exec(taskContext, task)).get();
-        });
+        }));
+    }
+
+    private UserIdentity getFilterOwnerIdentity(final ProcessorFilter filter) {
+        try {
+            return securityContext.createIdentityByUserUuid(securityContext.getDocumentOwnerUuid(
+                    filter.asDocRef()));
+        } catch (final RuntimeException e) {
+            throw new RuntimeException(
+                    LogUtil.message("No owner found for filter uuid: {}", filter.getUuid()));
+        }
     }
 
     private ProcessorResult exec(final TaskContext taskContext, final ProcessorTask task) {
@@ -105,36 +116,35 @@ public class DataProcessorTaskHandler {
         }
 
         // Open the stream source.
-        try (Source source = streamStore.openSource(processorTask.getMetaId())) {
+        try (final Source source = streamStore.openSource(processorTask.getMetaId())) {
             if (source == null) {
                 throw new ProcessingException("Source not found for " + processorTask.getMetaId());
             }
 
             final Meta meta = source.getMeta();
 
-            Processor destStreamProcessor = null;
-            ProcessorFilter destProcessorFilter = null;
+            Processor processor = null;
+            ProcessorFilter processorFilter = null;
             if (processorTask.getProcessorFilter() != null) {
-                destProcessorFilter = processorFilterCache.get(processorTask.getProcessorFilter().getId()).orElse(
+                processorFilter = processorFilterCache.get(processorTask.getProcessorFilter().getId()).orElse(
                         null);
-                if (destProcessorFilter != null) {
-                    destStreamProcessor = processorCache
-                            .get(destProcessorFilter.getProcessor().getId()).orElse(null);
+                if (processorFilter != null) {
+                    processor = processorFilter.getProcessor();
                 }
             }
-            if (destProcessorFilter == null || destStreamProcessor == null) {
+            if (processorFilter == null || processor == null) {
                 throw new ProcessingException("No dest processor has been loaded.");
             }
 
-            log(taskContext, meta, destStreamProcessor);
+            log(taskContext, meta, processor);
 
             // Don't process any streams that we have already created
-            if (meta.getProcessorUuid() != null && meta.getProcessorUuid().equals(destStreamProcessor.getUuid())) {
+            if (meta.getProcessorUuid() != null && meta.getProcessorUuid().equals(processor.getUuid())) {
                 complete = true;
                 // Have to do the if as processorTask is not final so can't use a lambda
                 if (LOGGER.isWarnEnabled()) {
                     LOGGER.warn("Skipping data that we seem to have created (avoid processing forever) {} {}",
-                            meta, destStreamProcessor);
+                            meta, processor);
                 }
 
             } else {
@@ -143,15 +153,15 @@ public class DataProcessorTaskHandler {
                         TaskStatus.PROCESSING, startTime, null);
                 if (processorTask != null) {
                     // Avoid having to do another fetch
-                    processorTask.setProcessorFilter(destProcessorFilter);
+                    processorTask.setProcessorFilter(processorFilter);
 
-                    final Provider<DataProcessorTaskExecutor> executorProvider = executorProviders.get(
-                            new TaskType(destStreamProcessor.getTaskType()));
-                    final DataProcessorTaskExecutor dataProcessorTaskExecutor = executorProvider.get();
+                    final Provider<ProcessorTaskExecutor> executorProvider = executorProviders.get(
+                            processor.getProcessorType());
+                    final ProcessorTaskExecutor processorTaskExecutor = executorProvider.get();
 
                     try {
-                        processorResult = dataProcessorTaskExecutor
-                                .exec(taskContext, destStreamProcessor, destProcessorFilter, processorTask, source);
+                        processorResult = processorTaskExecutor
+                                .exec(taskContext, processor, processorFilter, processorTask, source);
                         // Only record completion for this task if it was not
                         // terminated.
                         if (!taskContext.isTerminated()) {
@@ -159,7 +169,7 @@ public class DataProcessorTaskHandler {
                         }
 
                     } catch (final RuntimeException e) {
-                        throw new ProcessingException("Task failed " + destStreamProcessor + " " + meta, e);
+                        throw new ProcessingException("Task failed " + processor + " " + meta, e);
                     }
                 } else {
                     LOGGER.debug("Null processorTask. " +
@@ -206,7 +216,7 @@ public class DataProcessorTaskHandler {
                     " " +
                     DateUtil.createNormalDateTimeString(meta.getCreateMs()) +
                     " " +
-                    destStreamProcessor.getTaskType() +
+                    destStreamProcessor.getProcessorType() +
                     " " +
                     destStreamProcessor.getPipelineUuid());
         } else {
@@ -215,7 +225,7 @@ public class DataProcessorTaskHandler {
                     " " +
                     DateUtil.createNormalDateTimeString(meta.getCreateMs()) +
                     " " +
-                    destStreamProcessor.getTaskType());
+                    destStreamProcessor.getProcessorType());
         }
     }
 }

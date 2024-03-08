@@ -17,71 +17,103 @@
 package stroom.dashboard.impl.download;
 
 import stroom.dashboard.impl.SampleGenerator;
-import stroom.query.api.v2.Field;
+import stroom.query.api.v2.Column;
+import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.Row;
+import stroom.query.api.v2.TableResult;
+import stroom.query.api.v2.TableResultBuilder;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.List;
 
-public class SearchResultWriter {
+public class SearchResultWriter implements TableResultBuilder {
 
-    private final List<Field> fields;
-    private final List<Row> rows;
     private final SampleGenerator sampleGenerator;
+    private final Target target;
+    private List<Column> columns;
+    private long rowCount;
 
-    public SearchResultWriter(final List<Field> fields,
-                              final List<Row> rows,
-                              final SampleGenerator sampleGenerator) {
-        this.fields = fields;
-        this.rows = rows;
+    public SearchResultWriter(final SampleGenerator sampleGenerator,
+                              final Target target) throws IOException {
         this.sampleGenerator = sampleGenerator;
+        this.target = target;
     }
 
-    public void write(final Target target) throws IOException {
-        // Start writing.
-        target.start();
+    @Override
+    public TableResultBuilder componentId(final String componentId) {
+        return this;
+    }
+
+    @Override
+    public TableResultBuilder columns(final List<Column> columns) {
+        this.columns = columns;
 
         // Write heading.
-        writeHeadings(fields, target);
+        try {
+            target.startLine();
 
-        // Write content.
-        writeContent(rows, fields, sampleGenerator, target);
+            int fieldIndex = 0;
+            for (final Column column : columns) {
+                if (column.isVisible()) {
+                    target.writeHeading(fieldIndex, column, column.getName());
+                }
 
-        // End writing.
-        target.end();
-    }
-
-    private void writeHeadings(final List<Field> fields, final Target target) throws IOException {
-        target.startLine();
-
-        int fieldIndex = 0;
-        for (final Field field : fields) {
-            if (field.isVisible()) {
-                target.writeHeading(fieldIndex, field, field.getName());
+                fieldIndex++;
             }
-
-            fieldIndex++;
+            target.endLine();
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
         }
-        target.endLine();
+
+        return this;
     }
 
-    private void writeContent(final List<Row> rows, final List<Field> fields,
-                              final SampleGenerator sampleGenerator, final Target target) throws IOException {
-        for (final Row row : rows) {
+    @Override
+    public TableResultBuilder addRow(final Row row) {
+        try {
             if (row.getDepth() == 0) {
                 if (sampleGenerator.includeResult()) {
                     target.startLine();
-                    for (int i = 0; i < fields.size(); i++) {
-                        final Field field = fields.get(i);
-                        if (field.isVisible()) {
+                    for (int i = 0; i < columns.size(); i++) {
+                        final Column column = columns.get(i);
+                        if (column.isVisible()) {
                             final String val = row.getValues().get(i);
-                            target.writeValue(field, val);
+                            target.writeValue(column, val);
                         }
                     }
                     target.endLine();
                 }
+                rowCount++;
             }
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
         }
+        return this;
+    }
+
+    @Override
+    public TableResultBuilder errors(final List<String> errors) {
+        return this;
+    }
+
+    @Override
+    public TableResultBuilder resultRange(final OffsetRange resultRange) {
+        return this;
+    }
+
+    @Override
+    public TableResultBuilder totalResults(final Long totalResults) {
+        return this;
+    }
+
+    @Override
+    public TableResult build() {
+        return null;
+    }
+
+    public long getRowCount() {
+        return rowCount;
     }
 
     public interface Target {
@@ -90,12 +122,16 @@ public class SearchResultWriter {
 
         void end() throws IOException;
 
+        void startTable(final String tableName);
+
+        void endTable();
+
         void startLine() throws IOException;
 
         void endLine() throws IOException;
 
-        void writeHeading(int fieldIndex, Field field, String heading) throws IOException;
+        void writeHeading(int fieldIndex, Column column, String heading) throws IOException;
 
-        void writeValue(Field field, String value) throws IOException;
+        void writeValue(Column column, String value) throws IOException;
     }
 }

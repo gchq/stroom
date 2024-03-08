@@ -6,10 +6,11 @@ import stroom.importexport.shared.ImportState;
 import stroom.search.elastic.shared.ElasticClusterDoc;
 import stroom.util.shared.Severity;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+
 import java.io.IOException;
 import java.util.Map;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 @Singleton
 @Deprecated

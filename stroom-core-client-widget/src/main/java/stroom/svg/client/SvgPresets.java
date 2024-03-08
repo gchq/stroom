@@ -23,8 +23,13 @@ public final class SvgPresets {
 
     public static final Preset ADD = enabled(SvgImage.ADD, "Add");
     public static final Preset ADD_ABOVE = enabled(SvgImage.ADD_ABOVE, "Add above");
+    public static final Preset ADD_MULTIPLE = enabled(SvgImage.ADD_MULTIPLE, "Add Multiple");
     public static final Preset ALERT = enabled(SvgImage.ALERT, "Alert");
     public static final Preset ANNOTATE = disabled(SvgImage.EDIT, "Annotate");
+    public static final Preset ARROW_RIGHT = enabled(SvgImage.ARROW_RIGHT, "Move Right");
+    public static final Preset ARROW_LEFT = enabled(SvgImage.ARROW_LEFT, "Move Left");
+    public static final Preset ARROW_UP = enabled(SvgImage.ARROW_UP, "Move Up");
+    public static final Preset ARROW_DOWN = enabled(SvgImage.ARROW_DOWN, "Move Down");
     public static final Preset CLEAR = disabled(SvgImage.CLEAR, "Clear");
     public static final Preset CLIPBOARD = disabled(SvgImage.CLIPBOARD, "Clipboard");
     public static final Preset CLOSE = disabled(SvgImage.CLOSE, "Close");
@@ -91,7 +96,7 @@ public final class SvgPresets {
         return svgPreset.with(title, enabled);
     }
 
-    private static Preset enabled(final SvgImage svgImage, final String title) {
+    public static Preset enabled(final SvgImage svgImage, final String title) {
         return new Preset(svgImage, title, true);
     }
 

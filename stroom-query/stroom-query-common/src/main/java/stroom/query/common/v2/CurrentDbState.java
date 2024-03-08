@@ -1,5 +1,7 @@
 package stroom.query.common.v2;
 
+import stroom.util.shared.GwtNullSafe;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -15,14 +17,14 @@ public class CurrentDbState {
     @JsonProperty
     private final long streamId;
     @JsonProperty
-    private final long eventId;
+    private final Long eventId;
     @JsonProperty
-    private final long lastEventTime;
+    private final Long lastEventTime;
 
     @JsonCreator
     public CurrentDbState(@JsonProperty("streamId") final long streamId,
-                          @JsonProperty("eventId") final long eventId,
-                          @JsonProperty("lastEventTime") final long lastEventTime) {
+                          @JsonProperty("eventId") final Long eventId,
+                          @JsonProperty("lastEventTime") final Long lastEventTime) {
         this.streamId = streamId;
         this.eventId = eventId;
         this.lastEventTime = lastEventTime;
@@ -32,12 +34,20 @@ public class CurrentDbState {
         return streamId;
     }
 
-    public long getEventId() {
+    public Long getEventId() {
         return eventId;
     }
 
-    public long getLastEventTime() {
+    public boolean hasEventId() {
+        return eventId != null;
+    }
+
+    public Long getLastEventTime() {
         return lastEventTime;
+    }
+
+    public boolean hasLastEventTime() {
+        return lastEventTime != null;
     }
 
     @Override
@@ -47,5 +57,19 @@ public class CurrentDbState {
                 ", eventId=" + eventId +
                 ", lastEventTime=" + LocalDateTime.ofInstant(Instant.ofEpochMilli(lastEventTime), ZoneOffset.UTC) +
                 '}';
+    }
+
+    /**
+     * Merges existingCurrentDbState with this to create a new state.
+     */
+    public CurrentDbState mergeExisting(final CurrentDbState existingCurrentDbState) {
+        final Long lastEventTime = GwtNullSafe.requireNonNullElseGet(
+                this.lastEventTime,
+                () -> GwtNullSafe.get(existingCurrentDbState, CurrentDbState::getLastEventTime));
+
+        return new CurrentDbState(
+                streamId,
+                eventId,
+                lastEventTime);
     }
 }

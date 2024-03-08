@@ -1,14 +1,13 @@
 package stroom.util.io;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
+import stroom.util.json.JsonUtil;
+
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.io.StringWriter;
 import java.util.function.Function;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -70,6 +69,8 @@ class TestByteSize {
     void zero() {
         ByteSize byteSize = ByteSize.ZERO;
         assertThat(byteSize.getBytes()).isEqualTo(0);
+        assertThat(byteSize.isZero()).isTrue();
+        assertThat(byteSize.isNonZero()).isFalse();
         assertThat(byteSize.getValueAsStr()).isEqualTo("0B");
     }
 
@@ -77,17 +78,11 @@ class TestByteSize {
     void testSerde() throws IOException {
         final ByteSize byteSize = ByteSize.parse("1234K");
 
-        final ObjectMapper objectMapper = new ObjectMapper();
-
-        final StringWriter stringWriter = new StringWriter();
-        objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
-        objectMapper.writeValue(stringWriter, byteSize);
-
-        final String json = stringWriter.toString();
+        final String json = JsonUtil.writeValueAsString(byteSize);
 
         System.out.println(json);
 
-        final ByteSize byteSize2 = objectMapper.readValue(json, ByteSize.class);
+        final ByteSize byteSize2 = JsonUtil.readValue(json, ByteSize.class);
 
         assertThat(byteSize).isEqualTo(byteSize2);
     }
@@ -99,6 +94,8 @@ class TestByteSize {
             ByteSize byteSize = ByteSize.parse(value);
             assertThat(byteSize.getBytes()).isEqualTo(expectedBytes);
             assertThat(byteSize.getValueAsStr()).isEqualTo(value);
+            assertThat(byteSize.isZero()).isFalse();
+            assertThat(byteSize.isNonZero()).isTrue();
         }
     }
 }

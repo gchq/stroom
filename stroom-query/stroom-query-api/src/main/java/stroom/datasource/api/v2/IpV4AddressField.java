@@ -16,15 +16,11 @@
 
 package stroom.datasource.api.v2;
 
-import stroom.query.api.v2.ExpressionTerm.Condition;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
-
-import java.util.List;
 
 @JsonInclude(Include.NON_NULL)
 public class IpV4AddressField extends AbstractNumericField {
@@ -39,9 +35,10 @@ public class IpV4AddressField extends AbstractNumericField {
 
     @JsonCreator
     public IpV4AddressField(@JsonProperty("name") final String name,
-                            @JsonProperty("queryable") final Boolean queryable,
-                            @JsonProperty("conditions") final List<Condition> conditions) {
-        super(name, queryable, conditions);
+                            @JsonProperty("conditionSet") final ConditionSet conditionSet,
+                            @JsonProperty("docRefType") final String docRefType,
+                            @JsonProperty("queryable") final Boolean queryable) {
+        super(name, conditionSet, docRefType, queryable);
     }
 
     @JsonIgnore

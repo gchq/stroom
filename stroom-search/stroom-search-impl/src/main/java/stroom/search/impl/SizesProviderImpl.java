@@ -1,39 +1,31 @@
 package stroom.search.impl;
 
-import stroom.query.common.v2.SearchResultStoreConfig;
 import stroom.query.common.v2.Sizes;
 import stroom.query.common.v2.SizesProvider;
 import stroom.ui.config.shared.UiConfig;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
 
 public class SizesProviderImpl implements SizesProvider {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SizesProviderImpl.class);
 
-    private final UiConfig uiConfig;
-    private final SearchResultStoreConfig searchConfig;
+    private final Provider<UiConfig> uiConfigProvider;
 
     @Inject
-    public SizesProviderImpl(final UiConfig uiConfig,
-                             final SearchResultStoreConfig searchConfig) {
-        this.uiConfig = uiConfig;
-        this.searchConfig = searchConfig;
+    public SizesProviderImpl(final Provider<UiConfig> uiConfigProvider) {
+        this.uiConfigProvider = uiConfigProvider;
     }
 
     @Override
     public Sizes getDefaultMaxResultsSizes() {
-        return extractValues(uiConfig.getDefaultMaxResults());
-    }
-
-    @Override
-    public Sizes getStoreSizes() {
-        return extractValues(searchConfig.getStoreSize());
+        return extractValues(uiConfigProvider.get().getDefaultMaxResults());
     }
 
     private Sizes extractValues(String value) {
@@ -41,12 +33,12 @@ public class SizesProviderImpl implements SizesProvider {
             try {
                 return Sizes.create(Arrays.stream(value.split(","))
                         .map(String::trim)
-                        .map(Integer::valueOf)
+                        .map(Long::valueOf)
                         .collect(Collectors.toList()));
             } catch (Exception e) {
                 LOGGER.warn(e.getMessage());
             }
         }
-        return Sizes.create(Integer.MAX_VALUE);
+        return Sizes.unlimited();
     }
 }

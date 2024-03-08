@@ -1,35 +1,64 @@
 /**************************************************
-*  NOTE: This file gets copied into stroom-docs by 
+*  NOTE: This file gets copied into stroom-docs by
 *  stroom-docs/update_stroom_icons.sh
 *  so any significant changes may break the docs.
 ***************************************************/
 
 :root {
-    --icon-colour__foreground: var(--black);
+    --icon-colour__black: var(--black);
+    /* For toggle buttons like exclamation.svg on stepper */
+    --icon-colour__black__on: var(--app__background-color);
+    --icon-colour__white: var(--app__background-color);
+    /* For toggle buttons like exclamation.svg on stepper */
+    --icon-colour__white__on: var(--icon-button__background-color--on);
+
     --icon-colour__blue: var(--blue-500);
+    --icon-colour__dark-green: #388e3c;
+    --icon-colour__dirty-amber: #ff6f00;
     --icon-colour__green: #4caf50;
-    --icon-colour__grey: #767e86;
+    --icon-colour__grey: #555555;
+    --icon-colour__info-blue: #1976d2;
+    --icon-colour__off-white: #e6e1dc;
+    --icon-colour__orange: #ff8f00;
+    --icon-colour__pale-yellow: #ffde81;
+    --icon-colour__safety-yellow: #eed202;
+    --icon-colour__purple: #9c27b0;
     --icon-colour__red: #d32f2f;
     --icon-colour__xml-background: #ce93d8;
-    --icon-colour__xsd-background: #2196f3;
+    --icon-colour__xsd-background: #2196f4;
     --icon-colour__xsl-background: #aed581;
+    --icon-colour__yellow: #ffeb3b;
 
     --icon-width: 16px;
     --icon-height: 16px;
 }
 
-
-.navigation,
 .stroom-theme-dark {
-    --icon-colour__foreground: var(--white);
+    --icon-colour__black: var(--white);
+    /* For toggle buttons like exclamation.svg on stepper */
+    --icon-colour__black__on: var(--app__background-color);
+    --icon-colour__white: var(--app__background-color);
+    /* For toggle buttons like exclamation.svg on stepper */
+    --icon-colour__white__on: var(--icon-button__background-color--on);
+
     --icon-colour__blue: var(--blue-300);
+    --icon-colour__dark-green: #388e3c;
+    --icon-colour__dirty-amber: #ff6f00;
     --icon-colour__green: #4caf50;
     --icon-colour__grey: #d4d4d4;
+    --icon-colour__info-blue: #1976d2;
+    --icon-colour__off-white: #e6e1dc;
+    --icon-colour__orange: #ff8f00;
+    --icon-colour__pale-yellow: #ffde81;
+    --icon-colour__purple: #9c27b0;
     --icon-colour__red: #d32f2f;
     --icon-colour__xml-background: #ce93d8;
     --icon-colour__xsd-background: #266fa9;
     --icon-colour__xsl-background: #287f2c;
+    --icon-colour__yellow: #ffeb3b;
 }
+
+/* These are for exploiting 'currentColor' in some of the SVGs */
 
 .icon-colour__blue svg {
     color: var(--icon-colour__blue);

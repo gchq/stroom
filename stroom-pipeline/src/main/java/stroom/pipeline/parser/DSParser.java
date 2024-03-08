@@ -18,6 +18,7 @@
 package stroom.pipeline.parser;
 
 import stroom.docref.DocRef;
+import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.SupportsCodeInjection;
 import stroom.pipeline.cache.ParserFactoryPool;
@@ -43,18 +44,20 @@ import stroom.svg.shared.SvgImage;
 import stroom.util.io.PathCreator;
 import stroom.util.shared.Severity;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
 
 import java.util.function.Consumer;
-import javax.inject.Inject;
-import javax.inject.Provider;
 
 @ConfigurableElement(
-        type = "DSParser",
+        type = PipelineElementType.TYPE_DS_PARSER,
         category = Category.PARSER,
         description = """
-                A parser for data that uses Data Splitter code.
+                A parser for handling structured plain text data (e.g. CSV or fixed width fields) using the \
+                Data Splitter domain specific language.
+                For more details see [Data Splitter]({{< relref "docs/user-guide/data-splitter" >}}).
                 """,
         roles = {
                 PipelineElementType.ROLE_PARSER,
@@ -88,14 +91,19 @@ public class DSParser extends AbstractParser implements SupportsCodeInjection {
                     final TextConverterStore textConverterStore,
                     final PathCreator pathCreator,
                     final Provider<FeedHolder> feedHolder,
-                    final Provider<PipelineHolder> pipelineHolder) {
+                    final Provider<PipelineHolder> pipelineHolder,
+                    final DocRefInfoService docRefInfoService) {
         super(errorReceiverProxy, locationFactory);
         this.parserFactoryPool = parserFactoryPool;
         this.textConverterStore = textConverterStore;
         this.feedHolder = feedHolder;
         this.pipelineHolder = pipelineHolder;
 
-        this.docFinder = new DocFinder<>(TextConverterDoc.DOCUMENT_TYPE, pathCreator, textConverterStore);
+        this.docFinder = new DocFinder<>(
+                TextConverterDoc.DOCUMENT_TYPE,
+                pathCreator,
+                textConverterStore,
+                docRefInfoService);
     }
 
     @Override

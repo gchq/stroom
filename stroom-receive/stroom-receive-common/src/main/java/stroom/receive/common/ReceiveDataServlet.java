@@ -17,22 +17,23 @@
 package stroom.receive.common;
 
 import stroom.meta.api.AttributeMapUtil;
+import stroom.util.cert.CertificateExtractor;
 import stroom.util.shared.IsServlet;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.Unauthenticated;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Enumeration;
 import java.util.Set;
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 /**
  * <p>
@@ -56,10 +57,13 @@ public class ReceiveDataServlet extends HttpServlet implements IsServlet {
             DATA_FEED_PATH_PART + "/*");
 
     private final Provider<RequestHandler> requestHandlerProvider;
+    private final CertificateExtractor certificateExtractor;
 
     @Inject
-    ReceiveDataServlet(final Provider<RequestHandler> requestHandlerProvider) {
+    ReceiveDataServlet(final Provider<RequestHandler> requestHandlerProvider,
+                       final CertificateExtractor certificateExtractor) {
         this.requestHandlerProvider = requestHandlerProvider;
+        this.certificateExtractor = certificateExtractor;
     }
 
     /**
@@ -98,7 +102,7 @@ public class ReceiveDataServlet extends HttpServlet implements IsServlet {
         } catch (final RuntimeException e) {
             final StroomStreamException stroomStreamException =
                     StroomStreamException.create(e,
-                            AttributeMapUtil.create(request));
+                            AttributeMapUtil.create(request, certificateExtractor));
             stroomStreamException.sendErrorResponse(response);
         }
     }

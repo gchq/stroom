@@ -1,5 +1,7 @@
 package stroom.security.shared;
 
+import stroom.util.shared.UserName;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -13,18 +15,18 @@ import java.util.List;
 public class FilterUsersRequest {
 
     @JsonProperty
-    private final List<SimpleUser> users;
+    private final List<UserName> users;
     @JsonProperty
     private final String quickFilterInput;
 
     @JsonCreator
-    public FilterUsersRequest(@JsonProperty("users") final List<SimpleUser> users,
+    public FilterUsersRequest(@JsonProperty("users") final List<UserName> users,
                               @JsonProperty("quickFilterInput") final String quickFilterInput) {
         this.users = users;
         this.quickFilterInput = quickFilterInput;
     }
 
-    public List<SimpleUser> getUsers() {
+    public List<UserName> getUsers() {
         return users;
     }
 

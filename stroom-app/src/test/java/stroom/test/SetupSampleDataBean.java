@@ -39,6 +39,7 @@ import stroom.processor.api.ProcessorService;
 import stroom.processor.shared.CreateProcessFilterRequest;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
+import stroom.processor.shared.ProcessorType;
 import stroom.processor.shared.QueryData;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
@@ -50,6 +51,7 @@ import stroom.test.common.StroomCoreServerTestFileUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 
+import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -71,7 +73,6 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
 
 /**
  * Script to create some base data for testing.
@@ -232,7 +233,7 @@ public final class SetupSampleDataBean {
                                                 .build())
                                         .build())
                                 .build();
-                        final Processor processor = processorService.create(pipeline, true);
+                        final Processor processor = processorService.create(ProcessorType.PIPELINE, pipeline, true);
                         LOGGER.info("Creating processor filter on {} for feed {}", pipeline.getName(), feed.getName());
                         final ProcessorFilter processorFilter = processorFilterService.create(
                                 processor,

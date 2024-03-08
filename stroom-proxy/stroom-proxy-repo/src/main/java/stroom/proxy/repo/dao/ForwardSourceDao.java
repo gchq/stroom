@@ -15,6 +15,8 @@ import stroom.proxy.repo.queue.ReadQueue;
 import stroom.proxy.repo.queue.RecordQueue;
 import stroom.util.shared.Flushable;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import org.jooq.Condition;
 import org.jooq.DSLContext;
 import org.jooq.Field;
@@ -27,8 +29,6 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 import static stroom.proxy.repo.db.jooq.tables.Aggregate.AGGREGATE;
 import static stroom.proxy.repo.db.jooq.tables.ForwardAggregate.FORWARD_AGGREGATE;

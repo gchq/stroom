@@ -1,6 +1,5 @@
 package stroom.widget.tab.client.view;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 
 import java.util.HashMap;

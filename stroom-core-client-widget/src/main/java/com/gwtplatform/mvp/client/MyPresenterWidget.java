@@ -16,9 +16,7 @@
 
 package com.gwtplatform.mvp.client;
 
-import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.user.client.ui.RequiresResize;
-import com.google.web.bindery.event.shared.Event;
 import com.google.web.bindery.event.shared.Event.Type;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;

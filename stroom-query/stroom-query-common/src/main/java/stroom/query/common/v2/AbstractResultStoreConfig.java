@@ -6,8 +6,7 @@ import stroom.util.shared.NotInjectableConfig;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
-
-import javax.validation.constraints.Min;
+import jakarta.validation.constraints.Min;
 
 @NotInjectableConfig
 public abstract class AbstractResultStoreConfig extends AbstractConfig {
@@ -19,9 +18,9 @@ public abstract class AbstractResultStoreConfig extends AbstractConfig {
     private final ByteSize minPayloadSize;
     private final ByteSize maxPayloadSize;
     private final int maxStringFieldLength;
+    private final int maxSortedItems;
 
     private final ResultStoreLmdbConfig lmdbConfig;
-    private final String storeSize;
 
     AbstractResultStoreConfig() {
         this(10_000,
@@ -30,8 +29,8 @@ public abstract class AbstractResultStoreConfig extends AbstractConfig {
                 ByteSize.ofGibibytes(1),
                 1000,
                 10_000,
-                ResultStoreLmdbConfig.builder().localDir("search_results").build(),
-                "1000000,100,10,1");
+                500_000,
+                ResultStoreLmdbConfig.builder().localDir("search_results").build());
     }
 
     AbstractResultStoreConfig(final int maxPutsBeforeCommit,
@@ -40,16 +39,16 @@ public abstract class AbstractResultStoreConfig extends AbstractConfig {
                               final ByteSize maxPayloadSize,
                               final int maxStringFieldLength,
                               final int valueQueueSize,
-                              final ResultStoreLmdbConfig lmdbConfig,
-                              final String storeSize) {
+                              final int maxSortedItems,
+                              final ResultStoreLmdbConfig lmdbConfig) {
         this.maxPutsBeforeCommit = maxPutsBeforeCommit;
         this.offHeapResults = offHeapResults;
         this.minPayloadSize = minPayloadSize;
         this.maxPayloadSize = maxPayloadSize;
         this.maxStringFieldLength = maxStringFieldLength;
         this.valueQueueSize = valueQueueSize;
+        this.maxSortedItems = maxSortedItems;
         this.lmdbConfig = lmdbConfig;
-        this.storeSize = storeSize;
     }
 
 
@@ -90,14 +89,16 @@ public abstract class AbstractResultStoreConfig extends AbstractConfig {
         return valueQueueSize;
     }
 
+    @JsonPropertyDescription("Maximum number of results that can be returned in a single page if the results are " +
+            "sorted. This will affect downloading all search results if results are sorted.")
+    @JsonProperty("maxSortedItems")
+    public int getMaxSortedItems() {
+        return maxSortedItems;
+    }
+
     @JsonProperty("lmdb")
     public ResultStoreLmdbConfig getLmdbConfig() {
         return lmdbConfig;
-    }
-
-    @JsonPropertyDescription("The maximum number of search results to keep in memory at each level.")
-    public String getStoreSize() {
-        return storeSize;
     }
 
     @Override
@@ -109,8 +110,8 @@ public abstract class AbstractResultStoreConfig extends AbstractConfig {
                 ", minPayloadSize=" + minPayloadSize +
                 ", maxPayloadSize=" + maxPayloadSize +
                 ", maxStringFieldLength=" + maxStringFieldLength +
+                ", maxSortedItems=" + maxSortedItems +
                 ", lmdbConfig=" + lmdbConfig +
-                ", storeSize='" + storeSize + '\'' +
                 '}';
     }
 }

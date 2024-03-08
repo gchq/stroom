@@ -1,7 +1,7 @@
 package stroom.query.common.v2;
 
-import stroom.dashboard.expression.v1.Val;
-import stroom.dashboard.expression.v1.ValSerialiser;
+import stroom.query.language.functions.Val;
+import stroom.query.language.functions.ValSerialiser;
 
 import com.esotericsoftware.kryo.io.Output;
 

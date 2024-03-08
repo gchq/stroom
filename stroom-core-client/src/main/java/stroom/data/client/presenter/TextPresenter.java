@@ -113,6 +113,10 @@ public class TextPresenter extends MyPresenterWidget<TextPresenter.TextView> imp
         return editorPresenter.getLineWrapOption();
     }
 
+    public Option getShowIndentGuides() {
+        return editorPresenter.getShowIndentGuides();
+    }
+
     public Option getShowInvisiblesOption() {
         return editorPresenter.getShowInvisiblesOption();
     }
@@ -153,6 +157,10 @@ public class TextPresenter extends MyPresenterWidget<TextPresenter.TextView> imp
         editorPresenter.setTheme(theme);
     }
 
+    public void setOptionsToDefaultAvailability() {
+        editorPresenter.setOptionsToDefaultAvailability();
+    }
+
     public EditorMenuPresenter getContextMenu() {
         return editorPresenter.getContextMenu();
     }
@@ -174,7 +182,7 @@ public class TextPresenter extends MyPresenterWidget<TextPresenter.TextView> imp
     }
 
     public void setControlsVisible(final boolean controlsVisible) {
-        getView().setPlayVisible(controlsVisible);
+        getView().setSteppingVisible(controlsVisible);
         editorPresenter.setControlsVisible(controlsVisible);
     }
 
@@ -186,10 +194,14 @@ public class TextPresenter extends MyPresenterWidget<TextPresenter.TextView> imp
         editorPresenter.setMode(mode);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface TextView extends View, HasUiHandlers<TextUiHandlers> {
 
         void setTextView(View view);
 
-        void setPlayVisible(boolean visible);
+        void setSteppingVisible(boolean visible);
     }
 }

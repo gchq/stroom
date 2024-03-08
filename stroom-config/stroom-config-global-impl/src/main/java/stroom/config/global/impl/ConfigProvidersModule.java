@@ -27,19 +27,19 @@ public class ConfigProvidersModule extends AbstractModule {
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
-    stroom.analytics.impl.AlertConfig getAlertConfig(
+    stroom.analytics.impl.AnalyticsConfig getAnalyticsConfig(
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(
-                stroom.analytics.impl.AlertConfig.class);
+                stroom.analytics.impl.AnalyticsConfig.class);
     }
 
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
-    stroom.analytics.impl.AnalyticsConfig getAnalyticsConfig(
+    stroom.analytics.impl.EmailConfig getEmailConfig(
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(
-                stroom.analytics.impl.AnalyticsConfig.class);
+                stroom.analytics.impl.EmailConfig.class);
     }
 
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
@@ -162,15 +162,6 @@ public class ConfigProvidersModule extends AbstractModule {
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
-    stroom.core.receive.ReceiveDataConfig getReceiveDataConfig(
-            final ConfigMapper configMapper) {
-        return configMapper.getConfigObject(
-                stroom.core.receive.ReceiveDataConfig.class);
-    }
-
-    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
-    @Provides
-    @SuppressWarnings("unused")
     stroom.data.retention.api.DataRetentionConfig getDataRetentionConfig(
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(
@@ -265,6 +256,15 @@ public class ConfigProvidersModule extends AbstractModule {
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(
                 stroom.index.impl.IndexConfig.class);
+    }
+
+    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
+    stroom.index.impl.IndexShardSearchConfig getIndexShardSearchConfig(
+            final ConfigMapper configMapper) {
+        return configMapper.getConfigObject(
+                stroom.index.impl.IndexShardSearchConfig.class);
     }
 
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
@@ -468,6 +468,24 @@ public class ConfigProvidersModule extends AbstractModule {
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
+    stroom.query.field.impl.QueryFieldConfig getQueryFieldConfig(
+            final ConfigMapper configMapper) {
+        return configMapper.getConfigObject(
+                stroom.query.field.impl.QueryFieldConfig.class);
+    }
+
+    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
+    stroom.receive.common.ReceiveDataConfig getReceiveDataConfig(
+            final ConfigMapper configMapper) {
+        return configMapper.getConfigObject(
+                stroom.receive.common.ReceiveDataConfig.class);
+    }
+
+    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
     stroom.search.elastic.CryptoConfig getCryptoConfig(
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(
@@ -540,15 +558,6 @@ public class ConfigProvidersModule extends AbstractModule {
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
-    stroom.search.impl.shard.IndexShardSearchConfig getIndexShardSearchConfig(
-            final ConfigMapper configMapper) {
-        return configMapper.getConfigObject(
-                stroom.search.impl.shard.IndexShardSearchConfig.class);
-    }
-
-    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
-    @Provides
-    @SuppressWarnings("unused")
     stroom.search.solr.SolrConfig getSolrConfig(
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(
@@ -567,7 +576,7 @@ public class ConfigProvidersModule extends AbstractModule {
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
-    stroom.security.identity.config.EmailConfig getEmailConfig(
+    stroom.security.identity.config.EmailConfig getEmailConfig2(
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(
                 stroom.security.identity.config.EmailConfig.class);
@@ -639,10 +648,20 @@ public class ConfigProvidersModule extends AbstractModule {
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
-    stroom.security.impl.OpenIdConfig getOpenIdConfig2(
+    stroom.security.impl.StroomOpenIdConfig getStroomOpenIdConfig(
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(
-                stroom.security.impl.OpenIdConfig.class);
+                stroom.security.impl.StroomOpenIdConfig.class);
+    }
+
+    // Binding StroomOpenIdConfig to additional interface AbstractOpenIdConfig
+    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
+    stroom.security.openid.api.AbstractOpenIdConfig getAbstractOpenIdConfig(
+            final ConfigMapper configMapper) {
+        return configMapper.getConfigObject(
+                stroom.security.impl.StroomOpenIdConfig.class);
     }
 
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
@@ -720,10 +739,28 @@ public class ConfigProvidersModule extends AbstractModule {
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
+    stroom.ui.config.shared.AnalyticUiDefaultConfig getAnalyticUiDefaultConfig(
+            final ConfigMapper configMapper) {
+        return configMapper.getConfigObject(
+                stroom.ui.config.shared.AnalyticUiDefaultConfig.class);
+    }
+
+    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
     stroom.ui.config.shared.InfoPopupConfig getInfoPopupConfig(
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(
                 stroom.ui.config.shared.InfoPopupConfig.class);
+    }
+
+    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
+    stroom.ui.config.shared.NodeMonitoringConfig getNodeMonitoringConfig(
+            final ConfigMapper configMapper) {
+        return configMapper.getConfigObject(
+                stroom.ui.config.shared.NodeMonitoringConfig.class);
     }
 
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
@@ -794,20 +831,20 @@ public class ConfigProvidersModule extends AbstractModule {
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
-    stroom.config.common.AbstractDbConfig getAbstractDbConfigButThrow(
+    stroom.analytics.impl.SmtpConfig getSmtpConfigButThrow(
             final ConfigMapper configMapper) {
         throw new UnsupportedOperationException(
-                "stroom.config.common.AbstractDbConfig cannot be injected directly. "
+                "stroom.analytics.impl.SmtpConfig cannot be injected directly. "
                         + "Inject a config class that uses it or one of its sub-class instead.");
     }
 
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
-    stroom.config.common.ConnectionConfig getConnectionConfigButThrow(
+    stroom.security.identity.config.SmtpConfig getSmtpConfig2ButThrow(
             final ConfigMapper configMapper) {
         throw new UnsupportedOperationException(
-                "stroom.config.common.ConnectionConfig cannot be injected directly. "
+                "stroom.security.identity.config.SmtpConfig cannot be injected directly. "
                         + "Inject a config class that uses it or one of its sub-class instead.");
     }
 
@@ -834,10 +871,20 @@ public class ConfigProvidersModule extends AbstractModule {
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
-    stroom.query.common.v2.AbstractResultStoreConfig getAbstractResultStoreConfigButThrow(
+    stroom.config.common.ConnectionConfig getConnectionConfigButThrow(
             final ConfigMapper configMapper) {
         throw new UnsupportedOperationException(
-                "stroom.query.common.v2.AbstractResultStoreConfig cannot be injected directly. "
+                "stroom.config.common.ConnectionConfig cannot be injected directly. "
+                        + "Inject a config class that uses it or one of its sub-class instead.");
+    }
+
+    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
+    stroom.config.common.AbstractDbConfig getAbstractDbConfigButThrow(
+            final ConfigMapper configMapper) {
+        throw new UnsupportedOperationException(
+                "stroom.config.common.AbstractDbConfig cannot be injected directly. "
                         + "Inject a config class that uses it or one of its sub-class instead.");
     }
 
@@ -854,10 +901,10 @@ public class ConfigProvidersModule extends AbstractModule {
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
-    stroom.security.identity.config.SmtpConfig getSmtpConfigButThrow(
+    stroom.query.common.v2.AbstractResultStoreConfig getAbstractResultStoreConfigButThrow(
             final ConfigMapper configMapper) {
         throw new UnsupportedOperationException(
-                "stroom.security.identity.config.SmtpConfig cannot be injected directly. "
+                "stroom.query.common.v2.AbstractResultStoreConfig cannot be injected directly. "
                         + "Inject a config class that uses it or one of its sub-class instead.");
     }
 

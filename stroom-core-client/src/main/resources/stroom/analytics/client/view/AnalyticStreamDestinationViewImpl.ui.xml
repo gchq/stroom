@@ -1,0 +1,14 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view">
+    <g:FlowPanel styleName="max form">
+        <form:FormGroup identity="analyticStreamDestinationFeed" label="Destination Feed For Detections">
+            <g:SimplePanel ui:field="destinationFeed"/>
+        </form:FormGroup>
+        <form:FormGroup identity="analyticStreamDestinationUseSourceFeedIfPossible" label="Use Source Feed If Possible (Streaming Only)">
+            <tickbox:CustomCheckBox ui:field="useSourceFeedIfPossible"/>
+        </form:FormGroup>
+    </g:FlowPanel>
+</ui:UiBinder> 

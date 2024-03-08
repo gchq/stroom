@@ -148,16 +148,16 @@ public class AnnotationRecord extends UpdatableRecordImpl<AnnotationRecord> impl
     }
 
     /**
-     * Setter for <code>stroom.annotation.assigned_to</code>.
+     * Setter for <code>stroom.annotation.assigned_to_uuid</code>.
      */
-    public void setAssignedTo(String value) {
+    public void setAssignedToUuid(String value) {
         set(9, value);
     }
 
     /**
-     * Getter for <code>stroom.annotation.assigned_to</code>.
+     * Getter for <code>stroom.annotation.assigned_to_uuid</code>.
      */
-    public String getAssignedTo() {
+    public String getAssignedToUuid() {
         return (String) get(9);
     }
 
@@ -259,7 +259,7 @@ public class AnnotationRecord extends UpdatableRecordImpl<AnnotationRecord> impl
 
     @Override
     public Field<String> field10() {
-        return Annotation.ANNOTATION.ASSIGNED_TO;
+        return Annotation.ANNOTATION.ASSIGNED_TO_UUID;
     }
 
     @Override
@@ -319,7 +319,7 @@ public class AnnotationRecord extends UpdatableRecordImpl<AnnotationRecord> impl
 
     @Override
     public String component10() {
-        return getAssignedTo();
+        return getAssignedToUuid();
     }
 
     @Override
@@ -379,7 +379,7 @@ public class AnnotationRecord extends UpdatableRecordImpl<AnnotationRecord> impl
 
     @Override
     public String value10() {
-        return getAssignedTo();
+        return getAssignedToUuid();
     }
 
     @Override
@@ -448,7 +448,7 @@ public class AnnotationRecord extends UpdatableRecordImpl<AnnotationRecord> impl
 
     @Override
     public AnnotationRecord value10(String value) {
-        setAssignedTo(value);
+        setAssignedToUuid(value);
         return this;
     }
 
@@ -495,7 +495,7 @@ public class AnnotationRecord extends UpdatableRecordImpl<AnnotationRecord> impl
     /**
      * Create a detached, initialised AnnotationRecord
      */
-    public AnnotationRecord(Long id, Integer version, Long createTimeMs, String createUser, Long updateTimeMs, String updateUser, String title, String subject, String status, String assignedTo, String comment, String history) {
+    public AnnotationRecord(Long id, Integer version, Long createTimeMs, String createUser, Long updateTimeMs, String updateUser, String title, String subject, String status, String assignedToUuid, String comment, String history) {
         super(Annotation.ANNOTATION);
 
         setId(id);
@@ -507,7 +507,7 @@ public class AnnotationRecord extends UpdatableRecordImpl<AnnotationRecord> impl
         setTitle(title);
         setSubject(subject);
         setStatus(status);
-        setAssignedTo(assignedTo);
+        setAssignedToUuid(assignedToUuid);
         setComment(comment);
         setHistory(history);
     }

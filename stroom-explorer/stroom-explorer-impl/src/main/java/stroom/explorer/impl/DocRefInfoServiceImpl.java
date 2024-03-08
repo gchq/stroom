@@ -5,10 +5,11 @@ import stroom.docref.DocRefInfo;
 import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.explorer.shared.DocumentType;
+import stroom.feed.shared.FeedDoc;
 import stroom.security.api.SecurityContext;
 import stroom.util.NullSafe;
-import stroom.util.logging.LambdaLogger;
-import stroom.util.logging.LambdaLoggerFactory;
+
+import jakarta.inject.Inject;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -16,11 +17,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
 
 class DocRefInfoServiceImpl implements DocRefInfoService {
-
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DocRefInfoServiceImpl.class);
 
     private final DocRefInfoCache docRefInfoCache;
     private final SecurityContext securityContext;
@@ -51,8 +49,20 @@ class DocRefInfoServiceImpl implements DocRefInfoService {
     }
 
     @Override
+    public Optional<DocRefInfo> info(final String uuid) {
+        return docRefInfoCache.get(uuid);
+    }
+
+    @Override
     public Optional<String> name(final DocRef docRef) {
         return info(docRef)
+                .map(DocRefInfo::getDocRef)
+                .map(DocRef::getName);
+    }
+
+    @Override
+    public Optional<String> name(final String uuid) {
+        return info(uuid)
                 .map(DocRefInfo::getDocRef)
                 .map(DocRef::getName);
     }
@@ -107,18 +117,32 @@ class DocRefInfoServiceImpl implements DocRefInfoService {
         } else {
             return docRefs.stream()
                     .filter(Objects::nonNull)
-                    .map(this::decorate)
+                    .map(docRef -> decorate(docRef, false))
                     .collect(Collectors.toList());
         }
     }
 
     @Override
-    public DocRef decorate(final DocRef docRef) {
+    public DocRef decorate(final DocRef docRef, final boolean force) {
         Objects.requireNonNull(docRef);
-        Objects.requireNonNull(docRef.getType(), "DocRef type is not set.");
+
+        // Allow decorate by name alone if feed (special case).
+        if (FeedDoc.DOCUMENT_TYPE.equals(docRef.getType()) && docRef.getUuid() == null) {
+            final List<DocRef> list = findByName(docRef.getType(), docRef.getName(), false);
+            if (!NullSafe.isEmptyCollection(list)) {
+                return list.getFirst();
+            } else {
+                return null;
+            }
+        }
+
         Objects.requireNonNull(docRef.getUuid(), "DocRef UUID is not set.");
 
-        if (NullSafe.isEmptyString(docRef.getName())) {
+        // The passed docRef may have all the parts, but it may be from before a rename, so if force
+        // is set, use the cached copy which should be up-to-date.
+        if (NullSafe.isEmptyString(docRef.getType())
+                || NullSafe.isEmptyString(docRef.getName())
+                || force) {
             return docRefInfoCache.get(docRef)
                     .map(DocRefInfo::getDocRef)
                     .orElseThrow(() -> new RuntimeException("No docRefInfo for docRef: " + docRef));

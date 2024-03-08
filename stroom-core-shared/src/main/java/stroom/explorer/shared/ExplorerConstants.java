@@ -1,6 +1,8 @@
 package stroom.explorer.shared;
 
 import stroom.docref.DocRef;
+import stroom.svg.shared.SvgImage;
+import stroom.util.shared.GwtNullSafe;
 
 import java.util.Objects;
 
@@ -10,22 +12,17 @@ public final class ExplorerConstants {
     public static final String FAVOURITES = "Favourites";
     public static final String FOLDER = "Folder";
 
-    /*
-    URL query parameter constants
-     */
-    public static final String OPEN_DOC_ACTION = "open-doc";
-    public static final String DOC_TYPE_QUERY_PARAM = "docType";
-    public static final String DOC_UUID_QUERY_PARAM = "docUuid";
-
     public static final DocRef SYSTEM_DOC_REF = new DocRef(SYSTEM, "0", SYSTEM);
     public static final ExplorerNode SYSTEM_NODE = ExplorerNode.builder()
             .docRef(SYSTEM_DOC_REF)
             .rootNodeUuid(SYSTEM_DOC_REF.getUuid())
+            .icon(SvgImage.DOCUMENT_SYSTEM)
             .build();
     public static final DocRef FAVOURITES_DOC_REF = new DocRef(FAVOURITES, "1", FAVOURITES);
     public static final ExplorerNode FAVOURITES_NODE = ExplorerNode.builder()
             .docRef(FAVOURITES_DOC_REF)
             .rootNodeUuid(FAVOURITES_DOC_REF.getUuid())
+            .icon(SvgImage.FAVOURITES)
             .build();
 
     private ExplorerConstants() {
@@ -51,5 +48,21 @@ public final class ExplorerConstants {
         } else {
             return Objects.equals(FAVOURITES_NODE, node);
         }
+    }
+
+    /**
+     * Tests whether a node is a folder
+     */
+    public static boolean isFolder(final ExplorerNode node) {
+        return GwtNullSafe.test(node,
+                ExplorerNode::getDocRef,
+                docRef -> FOLDER.equals(docRef.getType()));
+    }
+
+    /**
+     * Tests whether a {@link DocRef} is a folder
+     */
+    public static boolean isFolder(final DocRef docRef) {
+        return docRef != null && FOLDER.equals(docRef.getType());
     }
 }

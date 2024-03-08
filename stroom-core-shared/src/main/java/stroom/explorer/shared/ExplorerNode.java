@@ -19,19 +19,32 @@ package stroom.explorer.shared;
 import stroom.docref.DocRef;
 import stroom.docref.HasDisplayValue;
 import stroom.svg.shared.SvgImage;
+import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.Severity;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 @JsonInclude(Include.NON_NULL)
 public class ExplorerNode implements HasDisplayValue {
+
+    public static final String TAGS_DELIMITER = " ";
+    public static final String TAG_PATTERN_STR = "^[a-z0-9-]+$";
 
     @JsonProperty
     private final String type;
@@ -40,47 +53,54 @@ public class ExplorerNode implements HasDisplayValue {
     @JsonProperty
     private final String name;
     @JsonProperty
-    private final String tags;
+    private final Set<String> tags;
 
     @JsonProperty
     private final int depth;
     @JsonProperty
     private final SvgImage icon;
     @JsonProperty
-    private final NodeState nodeState;
-
-    @JsonProperty
     private final List<ExplorerNode> children;
     @JsonProperty
     private final String rootNodeUuid;
     @JsonProperty
-    private final boolean isFavourite;
-    @JsonProperty
     private final ExplorerNodeKey uniqueKey;
+    @JsonProperty
+    private final List<NodeInfo> nodeInfoList;
+
+    // NOTE GWT is not happy if we hold it as an EnumSet, just means we can't use some of the
+    // EnumSet specific methods
+    @JsonProperty
+    private final Set<NodeFlag> nodeFlags;
+
+    @JsonIgnore
+    private volatile DocRef docRef;
+    @JsonIgnore
+    private volatile int hashcode;
 
     @JsonCreator
     public ExplorerNode(@JsonProperty("type") final String type,
                         @JsonProperty("uuid") final String uuid,
                         @JsonProperty("name") final String name,
-                        @JsonProperty("tags") final String tags,
+                        @JsonProperty("tags") final Set<String> tags,
                         @JsonProperty("depth") final int depth,
                         @JsonProperty("icon") final SvgImage icon,
-                        @JsonProperty("nodeState") final NodeState nodeState,
                         @JsonProperty("children") final List<ExplorerNode> children,
                         @JsonProperty("rootNodeUuid") final String rootNodeUuid,
-                        @JsonProperty("isFavourite") final boolean isFavourite,
-                        @JsonProperty("uniqueKey") final ExplorerNodeKey uniqueKey) {
+                        @JsonProperty("uniqueKey") final ExplorerNodeKey uniqueKey,
+                        @JsonProperty("nodeInfoList") final List<NodeInfo> nodeInfoList,
+                        @JsonProperty("nodeFlags") final Set<NodeFlag> nodeFlags) {
         this.type = type;
         this.uuid = uuid;
         this.name = name;
         this.tags = tags;
         this.depth = depth;
         this.icon = icon;
-        this.nodeState = nodeState;
-        this.children = children;
+        this.children = GwtNullSafe.get(children, Collections::unmodifiableList);
         this.rootNodeUuid = rootNodeUuid;
-        this.isFavourite = isFavourite;
         this.uniqueKey = uniqueKey;
+        this.nodeInfoList = GwtNullSafe.get(nodeInfoList, Collections::unmodifiableList);
+        this.nodeFlags = GwtNullSafe.get(nodeFlags, EnumSet::copyOf);
     }
 
     public String getType() {
@@ -95,8 +115,16 @@ public class ExplorerNode implements HasDisplayValue {
         return name;
     }
 
-    public String getTags() {
+    public Set<String> getTags() {
         return tags;
+    }
+
+    /**
+     * @return True if this node's set of tags contains ALL the passed tags.
+     */
+    public boolean hasTags(final Set<String> tags) {
+        return GwtNullSafe.set(this.tags)
+                .containsAll(tags);
     }
 
     public int getDepth() {
@@ -107,25 +135,25 @@ public class ExplorerNode implements HasDisplayValue {
         return icon;
     }
 
-    public NodeState getNodeState() {
-        return nodeState;
-    }
-
     public List<ExplorerNode> getChildren() {
         return children;
+    }
+
+    public boolean hasChildren() {
+        return children != null && !children.isEmpty();
     }
 
     public String getRootNodeUuid() {
         return rootNodeUuid;
     }
 
-    public boolean getIsFavourite() {
-        return isFavourite;
-    }
-
     @JsonIgnore
     public DocRef getDocRef() {
-        return new DocRef(type, uuid, name);
+        // Cache the docRef
+        if (docRef == null) {
+            docRef = new DocRef(type, uuid, name);
+        }
+        return docRef;
     }
 
     @JsonIgnore
@@ -137,6 +165,95 @@ public class ExplorerNode implements HasDisplayValue {
     public ExplorerNodeKey getUniqueKey() {
         return uniqueKey;
     }
+
+    public List<NodeInfo> getNodeInfoList() {
+        return nodeInfoList;
+    }
+
+    /**
+     * @return True if this node has {@link NodeInfo} items.
+     */
+    public boolean hasNodeInfo() {
+        return GwtNullSafe.hasItems(nodeInfoList);
+    }
+
+    /**
+     * @return True if this node has {@link NodeInfo} items or one of its
+     * descendants does.
+     */
+    public boolean hasDescendantNodeInfo() {
+        return hasNodeFlag(NodeFlag.DESCENDANT_NODE_INFO) || hasNodeInfo();
+    }
+
+    public Set<NodeFlag> getNodeFlags() {
+        return nodeFlags;
+    }
+
+    /**
+     * @return True if this node's set of {@link NodeFlag}s contains nodeFlag.
+     */
+    public boolean hasNodeFlag(final NodeFlag nodeFlag) {
+        if (nodeFlag == null) {
+            return false;
+        } else {
+            return GwtNullSafe.set(nodeFlags).contains(nodeFlag);
+        }
+    }
+
+    /**
+     * @return True if this node's set of {@link NodeFlag} contains at least one flag from nodeFlagGroup.
+     */
+    public boolean hasNodeFlagGroup(final NodeFlagGroup nodeFlagGroup) {
+        if (nodeFlagGroup == null) {
+            return false;
+        } else {
+            return nodeFlagGroup.stream()
+                    .anyMatch(nodeFlags::contains);
+        }
+    }
+
+    /**
+     * @return True if this node's set of {@link NodeFlag}s contains ALL the flags in nodeFlags.
+     */
+    public boolean hasNodeFlags(final NodeFlag... nodeFlags) {
+        return GwtNullSafe.set(this.nodeFlags)
+                .containsAll(Arrays.asList(nodeFlags));
+    }
+
+    /**
+     * @return True if this node's set of {@link NodeFlag}s contains ALL the flags in nodeFlags.
+     */
+    public boolean hasNodeFlags(final Set<NodeFlag> nodeFlags) {
+        return GwtNullSafe.set(this.nodeFlags)
+                .containsAll(nodeFlags);
+    }
+
+    /**
+     * @return True if this node's set of {@link NodeFlag}s is missing nodeFlag.
+     */
+    public boolean isMissingNodeFlag(final NodeFlag nodeFlag) {
+        return !GwtNullSafe.set(nodeFlags).contains(nodeFlag);
+    }
+
+    /**
+     * @return True if this node's set of {@link NodeFlag}s is missing ALL the flags in nodeFlags.
+     */
+    public boolean isMissingNodeFlags(final NodeFlag... nodeFlags) {
+        if (GwtNullSafe.hasItems(this.nodeFlags)) {
+            return GwtNullSafe.stream(nodeFlags)
+                    .noneMatch(this.nodeFlags::contains);
+        } else {
+            return true;
+        }
+    }
+
+//    @JsonIgnore
+//    public Optional<Severity> getMaxSeverity() {
+//        return Optional.ofNullable(nodeInfoList)
+//                .flatMap(nodeInfoList2 -> nodeInfoList2.stream()
+//                        .map(NodeInfo::getSeverity)
+//                        .max(Severity.HIGH_TO_LOW_COMPARATOR));
+//    }
 
     @Override
     public boolean equals(final Object o) {
@@ -152,18 +269,15 @@ public class ExplorerNode implements HasDisplayValue {
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(uniqueKey);
+        if (hashcode == 0) {
+            hashcode = Objects.hashCode(uniqueKey);
+        }
+        return hashcode;
     }
 
     @Override
     public String toString() {
         return getDisplayValue();
-    }
-
-    public enum NodeState {
-        OPEN,
-        CLOSED,
-        LEAF
     }
 
     public static Builder builder() {
@@ -174,33 +288,38 @@ public class ExplorerNode implements HasDisplayValue {
         return new Builder(this);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public static final class Builder {
 
         private String type;
         private String uuid;
         private String name;
-        private String tags;
+        private Set<String> tags;
         private int depth;
         private SvgImage icon;
-        private NodeState nodeState;
         private List<ExplorerNode> children;
         private String rootNodeUuid;
-        private boolean isFavourite;
+        private List<NodeInfo> nodeInfoList;
+        private Set<NodeFlag> nodeFlags;
 
         private Builder() {
         }
 
         private Builder(final ExplorerNode explorerNode) {
+            // Create new collections
             this.type = explorerNode.type;
             this.uuid = explorerNode.uuid;
             this.name = explorerNode.name;
             this.tags = explorerNode.tags;
             this.depth = explorerNode.depth;
             this.icon = explorerNode.icon;
-            this.nodeState = explorerNode.nodeState;
-            this.children = explorerNode.children;
+            this.children = GwtNullSafe.get(explorerNode.children, ArrayList::new);
             this.rootNodeUuid = explorerNode.rootNodeUuid;
-            this.isFavourite = explorerNode.isFavourite;
+            this.nodeInfoList = GwtNullSafe.get(explorerNode.nodeInfoList, ArrayList::new);
+            this.nodeFlags = GwtNullSafe.get(explorerNode.nodeFlags, EnumSet::copyOf);
         }
 
         public Builder docRef(final DocRef docRef) {
@@ -228,8 +347,46 @@ public class ExplorerNode implements HasDisplayValue {
             return this;
         }
 
-        public Builder tags(final String tags) {
-            this.tags = tags;
+        /**
+         * Set the tags on this builder to tags
+         */
+        public Builder tags(final Set<String> tags) {
+            this.tags = GwtNullSafe.hasItems(tags)
+                    ? new HashSet<>(tags)
+                    : null;
+            return this;
+        }
+
+        /**
+         * Add a single tag to the builder
+         */
+        public Builder addTag(final String tag) {
+            if (!GwtNullSafe.isBlankString(tag)) {
+                if (this.tags == null) {
+                    this.tags = new HashSet<>();
+                }
+                this.tags.add(tag);
+            }
+            return this;
+        }
+
+        /**
+         * Add multiple tags to the builder
+         */
+        public Builder addTags(final Set<String> tags) {
+            if (GwtNullSafe.hasItems(tags)) {
+                if (this.tags == null) {
+                    this.tags = new HashSet<>();
+                }
+                this.tags.addAll(tags);
+            }
+            return this;
+        }
+
+        public Builder addTags(final String... tags) {
+            if (GwtNullSafe.hasItems(tags)) {
+                addTags(GwtNullSafe.asSet(tags));
+            }
             return this;
         }
 
@@ -243,11 +400,6 @@ public class ExplorerNode implements HasDisplayValue {
             return this;
         }
 
-        public Builder nodeState(final NodeState nodeState) {
-            this.nodeState = nodeState;
-            return this;
-        }
-
         public Builder children(final List<ExplorerNode> children) {
             this.children = children;
             return this;
@@ -258,8 +410,11 @@ public class ExplorerNode implements HasDisplayValue {
                 children = new ArrayList<>();
             }
             children.add(child);
-            ;
             return this;
+        }
+
+        public boolean hasChildren() {
+            return GwtNullSafe.hasItems(children);
         }
 
         public Builder rootNodeUuid(final String rootNodeUuid) {
@@ -267,15 +422,136 @@ public class ExplorerNode implements HasDisplayValue {
             return this;
         }
 
-        public Builder rootNodeUuid(final ExplorerNode rootNodeUuid) {
-            this.rootNodeUuid = rootNodeUuid != null
-                    ? rootNodeUuid.getUuid()
-                    : null;
+        public Builder rootNodeUuid(final ExplorerNode node) {
+            this.rootNodeUuid = GwtNullSafe.get(node, ExplorerNode::getUuid);
             return this;
         }
 
-        public Builder isFavourite(final boolean isFavourite) {
-            this.isFavourite = isFavourite;
+        public Builder nodeInfoList(final List<NodeInfo> nodeInfoList) {
+            if (GwtNullSafe.hasItems(nodeInfoList)) {
+                this.nodeInfoList = new ArrayList<>(nodeInfoList);
+            } else {
+                this.nodeInfoList = null;
+            }
+            return this;
+        }
+
+        public Builder addNodeInfo(final NodeInfo nodeInfo) {
+            if (nodeInfo != null) {
+                if (this.nodeInfoList == null) {
+                    this.nodeInfoList = new ArrayList<>();
+                }
+                this.nodeInfoList.add(nodeInfo);
+            }
+            return this;
+        }
+
+        public Builder addNodeInfo(final Collection<NodeInfo> nodeInfoList) {
+            if (GwtNullSafe.hasItems(nodeInfoList)) {
+                if (this.nodeInfoList == null) {
+                    this.nodeInfoList = new ArrayList<>();
+                }
+                this.nodeInfoList.addAll(nodeInfoList);
+            }
+            return this;
+        }
+
+        public Builder nodeFlags(final Set<NodeFlag> nodeFlags) {
+            if (GwtNullSafe.hasItems(nodeFlags)) {
+                NodeFlag.validateFlags(nodeFlags);
+                this.nodeFlags = EnumSet.copyOf(nodeFlags);
+            } else {
+                this.nodeFlags = null;
+            }
+            return this;
+        }
+
+        /**
+         * Adds a flag to this node if nodeFlag is not null.
+         */
+        public Builder addNodeFlag(final NodeFlag nodeFlag) {
+            if (nodeFlag != null) {
+                if (this.nodeFlags == null) {
+                    this.nodeFlags = EnumSet.noneOf(NodeFlag.class);
+                }
+                NodeFlag.validateFlag(nodeFlag, this.nodeFlags);
+                this.nodeFlags.add(nodeFlag);
+            }
+            return this;
+        }
+
+        public Builder removeNodeFlag(final NodeFlag nodeFlag) {
+            if (nodeFlag != null && GwtNullSafe.hasItems(this.nodeFlags)) {
+                this.nodeFlags.remove(nodeFlag);
+            }
+            return this;
+        }
+
+        /**
+         * Sets the presence of nodeFlag in this node's set of {@link NodeFlag}s based on the
+         * value of isPresent.
+         */
+        public Builder setNodeFlag(final NodeFlag nodeFlag, final boolean isPresent) {
+            if (nodeFlag != null) {
+                if (this.nodeFlags == null) {
+                    this.nodeFlags = EnumSet.noneOf(NodeFlag.class);
+                }
+                if (isPresent) {
+                    NodeFlag.validateFlag(nodeFlag, this.nodeFlags);
+                    this.nodeFlags.add(nodeFlag);
+                } else {
+                    this.nodeFlags.remove(nodeFlag);
+                }
+            }
+            return this;
+        }
+
+        /**
+         * Sets the presence of nodeFlag in this node's set of {@link NodeFlag}s based on the
+         * value of state.
+         */
+        public Builder setGroupedNodeFlag(final NodeFlagPair nodeFlagPair,
+                                          final boolean isOn) {
+            Objects.requireNonNull(nodeFlagPair);
+            if (nodeFlags == null) {
+                nodeFlags = EnumSet.noneOf(NodeFlag.class);
+            }
+            nodeFlagPair.addFlag(isOn, nodeFlags);
+            return this;
+        }
+
+        /**
+         * Sets the presence of nodeFlag in this node's set of {@link NodeFlag}s and
+         * removes the other members of nodeFlagGroup
+         */
+        public Builder setGroupedNodeFlag(final NodeFlagGroup nodeFlagGroup,
+                                          final NodeFlag nodeFlag) {
+            Objects.requireNonNull(nodeFlagGroup);
+            Objects.requireNonNull(nodeFlag);
+            if (nodeFlags == null) {
+                nodeFlags = EnumSet.noneOf(NodeFlag.class);
+            }
+            nodeFlagGroup.addFlag(nodeFlag, nodeFlags);
+            return this;
+        }
+
+        public Builder addNodeFlags(final NodeFlag... nodeFlags) {
+            if (GwtNullSafe.hasItems(nodeFlags)) {
+                if (this.nodeFlags == null) {
+                    this.nodeFlags = EnumSet.noneOf(NodeFlag.class);
+                }
+                for (final NodeFlag nodeFlag : nodeFlags) {
+                    NodeFlag.validateFlag(nodeFlag, this.nodeFlags);
+                    this.nodeFlags.add(nodeFlag);
+                }
+            }
+            return this;
+        }
+
+        public Builder clearNodeInfo() {
+            if (this.nodeInfoList != null) {
+                this.nodeInfoList.clear();
+            }
             return this;
         }
 
@@ -287,11 +563,73 @@ public class ExplorerNode implements HasDisplayValue {
                     tags,
                     depth,
                     icon,
-                    nodeState,
                     children,
                     rootNodeUuid,
-                    isFavourite,
-                    new ExplorerNodeKey(type, uuid, rootNodeUuid));
+                    new ExplorerNodeKey(type, uuid, rootNodeUuid),
+                    nodeInfoList,
+                    nodeFlags);
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    @JsonInclude(Include.NON_NULL)
+    @JsonPropertyOrder(alphabetic = true)
+    @SuppressWarnings("ClassCanBeRecord") // Cos GWT
+    public static class NodeInfo implements Comparable<NodeInfo> {
+
+        private static final Comparator<NodeInfo> COMPARATOR = Comparator.comparing(
+                NodeInfo::getSeverity,
+                Severity.HIGH_TO_LOW_COMPARATOR);
+
+        @JsonProperty
+        private final Severity severity;
+        @JsonProperty
+        private final String description;
+
+        @JsonCreator
+        public NodeInfo(@JsonProperty("severity") final Severity severity,
+                        @JsonProperty("description") final String description) {
+            this.severity = Objects.requireNonNull(severity);
+            this.description = Objects.requireNonNull(description);
+        }
+
+        public Severity getSeverity() {
+            return severity;
+        }
+
+        public String getDescription() {
+            return description;
+        }
+
+        @Override
+        public String toString() {
+            return severity + ": " + description;
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            final NodeInfo nodeInfo = (NodeInfo) o;
+            return severity == nodeInfo.severity
+                    && Objects.equals(description, nodeInfo.description);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(severity, description);
+        }
+
+        @Override
+        public int compareTo(final NodeInfo other) {
+            return COMPARATOR.compare(this, other);
         }
     }
 }

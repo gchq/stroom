@@ -19,6 +19,10 @@
 
     --text-color: #e6e1dc;
     --text-color--disabled: #666;
+    --text-color--red: var(--red-700);
+    --text-color--green: var(--green-500);
+    --text-color--red--dark: var(--red-900);
+    --text-color--green--dark: var(--green-700);
     --border-color: #353944;
 
     --header__border-color: #333;
@@ -56,23 +60,23 @@
     --icon-button__background-color--hover: rgb(45, 47, 53);
     --icon-button__border-color--hover: rgb(45, 47, 53);
     --icon-button__color: var(--blue-300);
-    --navigation-icon-button__background-color--on: #262a32;
-    --navigation-icon-button__border-color--on: #444;
+    --navigation-icon-button__background-color--on: var(--blue-500);
+    --navigation-icon-button__border-color--on: var(--black);
     --navigation-icon-button__background-color--hover: rgb(45, 47, 53);
     --navigation-icon-button__border-color--hover: rgb(45, 47, 53);
 
-    --expression-item-box__background-color--selected: #454545;
-    --expression-item-box__background-color--hover: #555;
+    --expression-item-box__background-color--selected: var(--row__background-color--selected);/*#454545;*/
+    --expression-item-box__background-color--hover: var(--row__background-color--hovered);/*#555;*/
     --expression-item-box__background-color--disabled: #333;
-    --expression-item-box__background-color--hotspot: rgba(255,0,0,.3);
+    --expression-item-box__background-color--hotspot: var(--row__background-color--selected--hovered);
 
     --pipeline-element-box__background-color: #454545;
     --pipeline-element-box__background-color--hover: #505050;
-    --pipeline-element-box__background-color--selected: #1164a3;
-    --pipeline-element-box__background-color--selected--hover: #1164a3;
-    --pipeline-element-box__background-color--hotspot: rgba(255,0,0,.5);
+    --pipeline-element-box__background-color--selected: var(--row__background-color--selected);
+    --pipeline-element-box__background-color--selected--hover: var(--row__background-color--selected--hovered);
     --pipeline-element-box__text-color: #fff;
     --pipeline-element-box__border-color: #a1a1a1;
+    --pipeline-element-box__border-color--hotspot: var(--pipeline-element-box__border-color--info);
 
     --link__text-color: #3aaaff;
 
@@ -195,6 +199,8 @@
     --navigation__background-color--selected--focussed: rgb(0,120,199);
     --navigation__text-color: #e6e1dc;
     --navigation__text-color--selected: #fff;
+    --navigation__text-color--no-match: #7b7b7b;
+    --logo-color: var(--white);
 
     /* Specific */
     --header__icon-color: #2185d0;

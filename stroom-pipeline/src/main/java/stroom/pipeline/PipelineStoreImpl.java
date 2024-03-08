@@ -17,9 +17,11 @@
 
 package stroom.pipeline;
 
+import stroom.docref.DocContentHighlights;
 import stroom.docref.DocContentMatch;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
+import stroom.docref.StringMatch;
 import stroom.docstore.api.AuditFieldFilter;
 import stroom.docstore.api.DependencyRemapper;
 import stroom.docstore.api.Store;
@@ -40,19 +42,25 @@ import stroom.processor.shared.ProcessorFilter;
 import stroom.util.shared.Message;
 import stroom.util.shared.ResultPage;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
+
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.inject.Singleton;
 
 @Singleton
 public class PipelineStoreImpl implements PipelineStore {
 
+    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.DATA_PROCESSING,
+            PipelineDoc.DOCUMENT_TYPE,
+            PipelineDoc.DOCUMENT_TYPE,
+            PipelineDoc.ICON);
     private final Store<PipelineDoc> store;
     private final Provider<ProcessorFilterService> processorFilterServiceProvider;
     private final Provider<ProcessorService> processorServiceProvider;
@@ -77,8 +85,11 @@ public class PipelineStoreImpl implements PipelineStore {
     }
 
     @Override
-    public DocRef copyDocument(final DocRef docRef, final Set<String> existingNames) {
-        final String newName = UniqueNameUtil.getCopyName(docRef.getName(), existingNames);
+    public DocRef copyDocument(final DocRef docRef,
+                               final String name,
+                               final boolean makeNameUnique,
+                               final Set<String> existingNames) {
+        final String newName = UniqueNameUtil.getCopyName(name, makeNameUnique, existingNames);
         return store.copyDocument(docRef.getUuid(), newName);
     }
 
@@ -108,11 +119,7 @@ public class PipelineStoreImpl implements PipelineStore {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(
-                DocumentTypeGroup.DATA_PROCESSING,
-                PipelineDoc.DOCUMENT_TYPE,
-                PipelineDoc.DOCUMENT_TYPE,
-                PipelineDoc.ICON);
+        return DOCUMENT_TYPE;
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -259,8 +266,15 @@ public class PipelineStoreImpl implements PipelineStore {
     }
 
     @Override
-    public List<DocContentMatch> findByContent(final String pattern, final boolean regex, final boolean matchCase) {
-        return store.findByContent(pattern, regex, matchCase);
+    public List<DocContentMatch> findByContent(final StringMatch filter) {
+        return store.findByContent(filter);
+    }
+
+    @Override
+    public DocContentHighlights fetchHighlights(final DocRef docRef,
+                                                final String extension,
+                                                final StringMatch filter) {
+        return store.fetchHighlights(docRef, extension, filter);
     }
 
     @Override

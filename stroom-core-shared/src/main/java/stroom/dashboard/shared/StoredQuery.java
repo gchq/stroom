@@ -40,11 +40,15 @@ public class StoredQuery implements HasAuditInfo, HasIntegerId {
     @JsonProperty
     private String updateUser;
     @JsonProperty
+    private String uuid;
+    @JsonProperty
     private String dashboardUuid;
     @JsonProperty
     private String componentId;
     @JsonProperty
     private String name;
+    @JsonProperty
+    private String ownerUuid;
     @JsonProperty
     private String data;
     @JsonProperty
@@ -62,9 +66,11 @@ public class StoredQuery implements HasAuditInfo, HasIntegerId {
                        @JsonProperty("createUser") final String createUser,
                        @JsonProperty("updateTimeMs") final Long updateTimeMs,
                        @JsonProperty("updateUser") final String updateUser,
+                       @JsonProperty("uuid") final String uuid,
                        @JsonProperty("dashboardUuid") final String dashboardUuid,
                        @JsonProperty("componentId") final String componentId,
                        @JsonProperty("name") final String name,
+                       @JsonProperty("ownerUuid") final String ownerUuid,
                        @JsonProperty("data") final String data,
                        @JsonProperty("favourite") final boolean favourite,
                        @JsonProperty("query") final Query query) {
@@ -74,9 +80,11 @@ public class StoredQuery implements HasAuditInfo, HasIntegerId {
         this.createUser = createUser;
         this.updateTimeMs = updateTimeMs;
         this.updateUser = updateUser;
+        this.uuid = uuid;
         this.dashboardUuid = dashboardUuid;
         this.componentId = componentId;
         this.name = name;
+        this.ownerUuid = ownerUuid;
         this.data = data;
         this.favourite = favourite;
         this.query = query;
@@ -135,6 +143,14 @@ public class StoredQuery implements HasAuditInfo, HasIntegerId {
         this.updateUser = updateUser;
     }
 
+    public String getUuid() {
+        return uuid;
+    }
+
+    public void setUuid(final String uuid) {
+        this.uuid = uuid;
+    }
+
     public String getDashboardUuid() {
         return dashboardUuid;
     }
@@ -159,6 +175,14 @@ public class StoredQuery implements HasAuditInfo, HasIntegerId {
         this.name = name;
     }
 
+    public String getOwnerUuid() {
+        return ownerUuid;
+    }
+
+    public void setOwnerUuid(final String ownerUuid) {
+        this.ownerUuid = ownerUuid;
+    }
+
     public String getData() {
         return data;
     }
@@ -181,5 +205,25 @@ public class StoredQuery implements HasAuditInfo, HasIntegerId {
 
     public void setQuery(final Query query) {
         this.query = query;
+    }
+
+    @Override
+    public String toString() {
+        return "StoredQuery{" +
+                "id=" + id +
+                ", version=" + version +
+                ", createTimeMs=" + createTimeMs +
+                ", createUser='" + createUser + '\'' +
+                ", updateTimeMs=" + updateTimeMs +
+                ", updateUser='" + updateUser + '\'' +
+                ", uuid='" + uuid + '\'' +
+                ", dashboardUuid='" + dashboardUuid + '\'' +
+                ", componentId='" + componentId + '\'' +
+                ", name='" + name + '\'' +
+                ", ownerUuid='" + ownerUuid + '\'' +
+                ", data='" + data + '\'' +
+                ", favourite=" + favourite +
+                ", query=" + query +
+                '}';
     }
 }

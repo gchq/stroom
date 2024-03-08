@@ -9,11 +9,12 @@ import stroom.util.NullSafe;
 import stroom.util.io.FileUtil;
 import stroom.util.io.PathCreator;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+
 import java.nio.file.Path;
 import java.util.Set;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 @Singleton
 public class FileScanners {

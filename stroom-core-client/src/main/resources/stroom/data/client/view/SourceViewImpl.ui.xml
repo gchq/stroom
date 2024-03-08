@@ -11,10 +11,10 @@
                 <g:Label styleName="sourceViewImpl-titleHeading">ID:</g:Label>
                 <g:Label ui:field="lblId" styleName="sourceViewImpl-titleText"/>
 
-                <g:Label styleName="sourceViewImpl-titleHeading">Part:</g:Label>
+                <g:Label ui:field="lblPartNoHeading" styleName="sourceViewImpl-titleHeading">Part:</g:Label>
                 <g:Label ui:field="lblPartNo" styleName="sourceViewImpl-titleText"/>
 
-                <g:Label styleName="sourceViewImpl-titleHeading">Record:</g:Label>
+                <g:Label ui:field="lblSegmentNoHeading" styleName="sourceViewImpl-titleHeading">Record:</g:Label>
                 <g:Label ui:field="lblSegmentNo" styleName="sourceViewImpl-titleText"/>
 
                 <g:Label styleName="sourceViewImpl-titleHeading">Stream Type:</g:Label>
@@ -29,9 +29,8 @@
                            styleName="dock-min sourceViewImpl-progressBarPanel"/>
             <g:FlowPanel ui:field="container"
                          styleName="dock-max default-min-sizes stepping-button-container">
-                <btn:FabButton ui:field="playButton"
+                <btn:FabButton ui:field="steppingButton"
                                addStyleNames="stepping-button"
-                               iconClassName="stepping-button-icon"
                                title="Enter Stepping Mode"
                                visible="false"/>
             </g:FlowPanel>

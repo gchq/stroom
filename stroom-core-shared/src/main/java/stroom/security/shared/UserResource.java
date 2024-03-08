@@ -4,23 +4,24 @@ import stroom.util.shared.FetchWithUuid;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.UserName;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.core.MediaType;
 import org.fusesource.restygwt.client.DirectRestService;
 
 import java.util.List;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.MediaType;
 
 @Tag(name = "Authorisation")
 @Path("/users" + ResourcePaths.V1)
@@ -51,12 +52,26 @@ public interface UserResource extends RestResource, DirectRestService, FetchWith
     User fetch(@PathParam("userUuid") String userUuid);
 
     @POST
-    @Path("/create/{name}/{isGroup}")
+    @Path("/createGroup")
     @Operation(
-            summary = "Creates a user or group with the supplied name",
+            summary = "Creates a group with the supplied name",
+            operationId = "createGroup")
+    User createGroup(@Parameter(description = "name", required = true) String name);
+
+    @POST
+    @Path("/createUser")
+    @Operation(
+            summary = "Creates a user with the supplied name",
             operationId = "createUser")
-    User create(@PathParam("name") String name,
-                @PathParam("isGroup") Boolean isGroup);
+    User createUser(@Parameter(description = "name", required = true) UserName name);
+
+    @POST
+    @Path("/createUsers")
+    @Operation(
+            summary = "Creates a batch of users from a list of CSV entries. Each line is of the form " +
+                    "'id,displayName,fullName', where displayName and fullName are optional",
+            operationId = "createUsers")
+    List<User> createUsersFromCsv(@Parameter(description = "users", required = true) String usersCsvData);
 
     @DELETE
     @Path("/{uuid}")
@@ -86,5 +101,5 @@ public interface UserResource extends RestResource, DirectRestService, FetchWith
     @Operation(
             summary = "Gets a list of associated users",
             operationId = "getAssociatedUsers")
-    List<String> getAssociates(@QueryParam("filter") String filter);
+    List<UserName> getAssociates(@QueryParam("filter") String filter);
 }

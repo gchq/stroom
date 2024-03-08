@@ -12,6 +12,8 @@ import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.state.MetaHolder;
 import stroom.pipeline.xsltfunctions.AbstractLookup.SequenceMaker;
 import stroom.pipeline.xsltfunctions.AbstractLookup.SequenceMakerFactory;
+import stroom.task.api.TaskContext;
+import stroom.task.api.TaskContextFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -19,6 +21,7 @@ import stroom.util.shared.Severity;
 
 import net.sf.saxon.trans.XPathException;
 import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -49,9 +52,12 @@ class TestBitmapLookup extends AbstractXsltFunctionTest<BitmapLookup> {
     @SuppressWarnings("unused") // Used by @InjectMocks
     @Mock
     private MetaHolder mockMetaHolder;
-
     @Mock
     private SequenceMakerFactory mockSequenceMakerFactory;
+    @Mock
+    private TaskContextFactory mockTaskContextFactory;
+    @Mock
+    private TaskContext mockTaskContext;
 
     @InjectMocks
     private BitmapLookup bitmapLookup;
@@ -64,6 +70,14 @@ class TestBitmapLookup extends AbstractXsltFunctionTest<BitmapLookup> {
     private ArgumentCaptor<LookupIdentifier> lookupIdentifierCaptor;
 
     private List<PipelineReference> pipelineReferences;
+
+    @BeforeEach
+    void setUp() {
+        Mockito.when(mockTaskContextFactory.current())
+                .thenReturn(mockTaskContext);
+        Mockito.when(mockTaskContext.isTerminated())
+                .thenReturn(false);
+    }
 
     @Test
     void doLookup_noRefLoaders() throws XPathException {
@@ -79,7 +93,7 @@ class TestBitmapLookup extends AbstractXsltFunctionTest<BitmapLookup> {
         Mockito.verify(getMockErrorReceiver(), Mockito.never()).logTemplate(
                 Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
 
-        assertLoggedTopLevelSeverity(Severity.WARNING, "no reference loaders");
+        assertLoggedTopLevelSeverity(Severity.ERROR, "no reference loaders");
     }
 
     @Test

@@ -3,6 +3,7 @@ package stroom.analytics.impl;
 import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.api.Store;
 import stroom.data.store.api.Target;
+import stroom.feed.api.VolumeGroupNameProvider;
 import stroom.meta.api.MetaProperties;
 import stroom.pipeline.destination.Destination;
 import stroom.pipeline.destination.DestinationProvider;
@@ -28,26 +29,26 @@ public class AnalyticRuleProcessInfoOutputStreamProvider extends AbstractElement
 
     private final Store streamStore;
     private final String feedName;
-    private final String analyticUuid;
     private final String pipelineUuid;
     private final RecordCount recordCount;
     private final ErrorReceiverProxy errorReceiverProxy;
+    private final VolumeGroupNameProvider volumeGroupNameProvider;
 
     private OutputStream processInfoOutputStream;
     private Target processInfoStreamTarget;
 
     AnalyticRuleProcessInfoOutputStreamProvider(final Store streamStore,
                                                 final String feedName,
-                                                final String analyticUuid,
                                                 final String pipelineUuid,
                                                 final RecordCount recordCount,
-                                                final ErrorReceiverProxy errorReceiverProxy) {
+                                                final ErrorReceiverProxy errorReceiverProxy,
+                                                final VolumeGroupNameProvider volumeGroupNameProvider) {
         this.streamStore = streamStore;
         this.feedName = feedName;
-        this.analyticUuid = analyticUuid;
         this.pipelineUuid = pipelineUuid;
         this.recordCount = recordCount;
         this.errorReceiverProxy = errorReceiverProxy;
+        this.volumeGroupNameProvider = volumeGroupNameProvider;
     }
 
     @Override
@@ -72,11 +73,13 @@ public class AnalyticRuleProcessInfoOutputStreamProvider extends AbstractElement
             final MetaProperties metaProperties = MetaProperties.builder()
                     .feedName(feedName)
                     .typeName(StreamTypeNames.ERROR)
-                    .processorUuid(analyticUuid)
+//                    .processorUuid(analyticUuid)
                     .pipelineUuid(pipelineUuid)
                     .build();
 
-            processInfoStreamTarget = streamStore.openTarget(metaProperties);
+            final String volumeGroupName = volumeGroupNameProvider
+                    .getVolumeGroupName(feedName, StreamTypeNames.ERROR, null);
+            processInfoStreamTarget = streamStore.openTarget(metaProperties, volumeGroupName);
             processInfoOutputStream = new WrappedOutputStream(processInfoStreamTarget.next().get()) {
                 @Override
                 public void close() throws IOException {

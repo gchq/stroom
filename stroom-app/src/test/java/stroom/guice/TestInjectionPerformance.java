@@ -18,7 +18,7 @@ package stroom.guice;
 
 
 import stroom.analytics.AnalyticsDataSetup;
-import stroom.analytics.impl.AnalyticsExecutor;
+import stroom.analytics.impl.TableBuilderAnalyticExecutor;
 import stroom.analytics.rule.impl.AnalyticRuleStore;
 import stroom.app.guice.CoreModule;
 import stroom.app.guice.JerseyModule;
@@ -121,7 +121,7 @@ class TestInjectionPerformance {
                 MetaService.class,
                 Store.class,
                 AnalyticRuleStore.class,
-                AnalyticsExecutor.class,
+                TableBuilderAnalyticExecutor.class,
                 AnalyticsDataSetup.class,
         };
 
@@ -191,7 +191,7 @@ class TestInjectionPerformance {
             if (inject != null) {
                 return constructor;
             }
-            javax.inject.Inject inject2 = constructor.getAnnotation(javax.inject.Inject.class);
+            jakarta.inject.Inject inject2 = constructor.getAnnotation(jakarta.inject.Inject.class);
             if (inject2 != null) {
                 return constructor;
             }

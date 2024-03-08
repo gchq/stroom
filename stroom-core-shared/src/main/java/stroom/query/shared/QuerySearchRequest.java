@@ -189,6 +189,9 @@ public class QuerySearchRequest {
         return new Builder(this);
     }
 
+    // --------------------------------------------------------------------------------
+
+
     public static final class Builder {
 
         private SearchRequestSource searchRequestSource;
@@ -198,7 +201,7 @@ public class QuerySearchRequest {
         private boolean incremental = true;
         private long timeout = 1000L;
         private boolean storeHistory;
-        private OffsetRange requestedRange = new OffsetRange(0, 100);
+        private OffsetRange requestedRange = OffsetRange.ZERO_100;
         private Set<String> openGroups;
 
         private Builder() {

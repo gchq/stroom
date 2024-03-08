@@ -1,0 +1,17 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+  xmlns:g="urn:import:com.google.gwt.user.client.ui">
+
+  <g:FlowPanel styleName="dock-container-vertical h-100">
+    <g:Label text="Users to add (in the form):" styleName="dock-min"/>
+    <g:Label
+            text="Unique User ID,[Optional Display Name],[Optional Full Name]"
+            styleName="dock-min user-batch-example"/>
+    <g:Label text="E.g." styleName="dock-min"/>
+    <g:Label
+            text="a59128fc-c437-41eb-a454-7c8cacb06e5c,jbloggs,Joe Bloggs"
+            styleName="dock-min user-batch-example"/>
+    <g:TextArea ui:field="userBatch" styleName="dock-max user-batch-text"/>
+  </g:FlowPanel>
+
+</ui:UiBinder>

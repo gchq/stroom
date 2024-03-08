@@ -45,19 +45,22 @@ public class InvalidXmlCharFilter extends TransformReader {
     private char readAhead;
     private boolean eof;
 
-    public InvalidXmlCharFilter(final Reader in,
-                                final XmlChars xmlChars) {
-        super(in);
-        this.xmlChars = xmlChars;
-        this.replace = false;
-        this.replacementChar = ' ';
-        buffer = new char[StreamUtil.BUFFER_SIZE];
+    public static InvalidXmlCharFilter createRemoveCharsFilter(final Reader in,
+                                                               final XmlChars xmlChars) {
+        return new InvalidXmlCharFilter(in, xmlChars, false, ' ');
     }
 
-    public InvalidXmlCharFilter(final Reader in,
-                                final XmlChars xmlChars,
-                                final boolean replace,
-                                final char replacementChar) {
+    public static InvalidXmlCharFilter createReplaceCharsFilter(final Reader in,
+                                                                final XmlChars xmlChars,
+                                                                final boolean replace,
+                                                                final char replacementChar) {
+        return new InvalidXmlCharFilter(in, xmlChars, replace, replacementChar);
+    }
+
+    private InvalidXmlCharFilter(final Reader in,
+                                 final XmlChars xmlChars,
+                                 final boolean replace,
+                                 final char replacementChar) {
         super(in);
         this.xmlChars = xmlChars;
         this.replace = replace;

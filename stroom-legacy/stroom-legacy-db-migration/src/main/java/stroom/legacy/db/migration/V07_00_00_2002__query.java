@@ -21,6 +21,7 @@ import stroom.legacy.impex_6_1.MappingUtil;
 import stroom.storedquery.impl.db.StoredQuerySerialiser;
 import stroom.util.xml.XMLMarshallerUtil;
 
+import jakarta.xml.bind.JAXBContext;
 import org.flywaydb.core.api.migration.BaseJavaMigration;
 import org.flywaydb.core.api.migration.Context;
 import org.slf4j.Logger;
@@ -29,7 +30,6 @@ import org.slf4j.LoggerFactory;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import javax.xml.bind.JAXBContext;
 
 @Deprecated
 public class V07_00_00_2002__query extends BaseJavaMigration {

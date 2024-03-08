@@ -16,7 +16,7 @@
 
 package stroom.dashboard.impl.format;
 
-import stroom.query.api.v2.Field;
+import stroom.query.api.v2.Column;
 import stroom.query.api.v2.Format.Type;
 
 public class FormatterFactory {
@@ -27,23 +27,23 @@ public class FormatterFactory {
         this.dateTimeLocale = dateTimeLocale;
     }
 
-    public Formatter create(final Field field) {
-        if (field == null) {
+    public Formatter create(final Column column) {
+        if (column == null) {
             return Unformatted.create();
         }
 
         Type type = Type.GENERAL;
-        if (field.getFormat() != null) {
-            type = field.getFormat().getType();
+        if (column.getFormat() != null) {
+            type = column.getFormat().getType();
         }
 
         switch (type) {
             case TEXT:
                 return StringFormatter.create();
             case NUMBER:
-                return NumberFormatter.create(field.getFormat().getSettings());
+                return NumberFormatter.create(column.getFormat().getSettings());
             case DATE_TIME:
-                return DateFormatter.create(field.getFormat().getSettings(), dateTimeLocale);
+                return DateFormatter.create(column.getFormat().getSettings(), dateTimeLocale);
             default:
                 return Unformatted.create();
         }

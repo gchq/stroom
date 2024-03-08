@@ -42,7 +42,6 @@ import stroom.pipeline.state.RecordCount;
 import stroom.pipeline.textconverter.TextConverterStore;
 import stroom.pipeline.xslt.XsltStore;
 import stroom.task.api.SimpleTaskContext;
-import stroom.task.api.TaskContext;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.common.StroomPipelineTestFileUtil;
 import stroom.util.io.ByteCountInputStream;
@@ -50,6 +49,9 @@ import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.pipeline.scope.PipelineScopeRunnable;
 import stroom.util.shared.Severity;
+
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -62,8 +64,6 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
-import javax.inject.Inject;
-import javax.inject.Provider;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

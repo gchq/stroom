@@ -32,7 +32,8 @@ class TestModule extends AbstractModule {
 
         // Create a test security context
         final SecurityContext securityContext = mock(SecurityContext.class);
-        when(securityContext.getUserId()).thenReturn(TEST_USER);
+        when(securityContext.getUserIdentityForAudit())
+                .thenReturn(TEST_USER);
         bind(SecurityContext.class).toInstance(securityContext);
         bind(ForceLegacyMigration.class).toInstance(new ForceLegacyMigration() {
         });

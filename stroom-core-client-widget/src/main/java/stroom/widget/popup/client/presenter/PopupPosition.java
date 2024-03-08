@@ -16,63 +16,35 @@
 
 package stroom.widget.popup.client.presenter;
 
+import stroom.widget.util.client.Rect;
+
 public class PopupPosition {
 
-    private final int left;
-    private final int right;
-    private final int top;
-    private final int bottom;
-    private final HorizontalLocation horizontalLocation;
-    private final VerticalLocation verticalLocation;
+    private final Rect relativeRect;
+    private final PopupLocation popupLocation;
 
-    public PopupPosition(final int x, final int y) {
-        this(x, x, y, y, null, null);
+    public PopupPosition(final int x,
+                         final int y) {
+        this(new Rect(y, y, x, x), null);
     }
 
-    public PopupPosition(final int left, final int right, final int top, final int bottom) {
-        this(left, right, top, bottom, null, null);
+    public PopupPosition(final Rect relativeRect,
+                         final PopupLocation popupLocation) {
+        this.relativeRect = relativeRect;
+        this.popupLocation = popupLocation;
     }
 
-    public PopupPosition(final int left, final int right, final int top, final int bottom,
-                         final HorizontalLocation horizontalLocation, final VerticalLocation verticalLocation) {
-        this.left = left;
-        this.right = right;
-        this.top = top;
-        this.bottom = bottom;
-        this.horizontalLocation = horizontalLocation;
-        this.verticalLocation = verticalLocation;
+    public Rect getRelativeRect() {
+        return relativeRect;
     }
 
-    public int getLeft() {
-        return left;
+    public PopupLocation getPopupLocation() {
+        return popupLocation;
     }
 
-    public int getRight() {
-        return right;
-    }
-
-    public int getTop() {
-        return top;
-    }
-
-    public int getBottom() {
-        return bottom;
-    }
-
-    public HorizontalLocation getHorizontalLocation() {
-        return horizontalLocation;
-    }
-
-    public VerticalLocation getVerticalLocation() {
-        return verticalLocation;
-    }
-
-    public enum HorizontalLocation {
+    public enum PopupLocation {
         LEFT,
-        RIGHT
-    }
-
-    public enum VerticalLocation {
+        RIGHT,
         ABOVE,
         BELOW
     }

@@ -11,21 +11,23 @@ import stroom.proxy.repo.dao.ForwardAggregateDao;
 import stroom.proxy.repo.dao.ForwardSourceDao;
 import stroom.proxy.repo.dao.SourceDao;
 import stroom.proxy.repo.dao.SourceItemDao;
+import stroom.util.NullSafe;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.io.FileUtil;
+import stroom.util.io.PathCreator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Flushable;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
+import jakarta.inject.Singleton;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
-import javax.inject.Singleton;
 import javax.sql.DataSource;
 
 public class ProxyDbModule extends AbstractModule {
@@ -35,6 +37,7 @@ public class ProxyDbModule extends AbstractModule {
     private static final String FLYWAY_TABLE = "proxy_repo_schema_history";
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AbstractDataSourceProviderModule.class);
+    public static final String SQLITE_TEMPDIR_PROP = "org.sqlite.tmpdir";
 
     @Override
     protected void configure() {
@@ -52,21 +55,35 @@ public class ProxyDbModule extends AbstractModule {
     public ProxyRepoDbConnProvider getConnectionProvider(
             final RepoDbDirProvider repoDbDirProvider,
             final DataSourceFactory dataSourceFactory,
-            final ProxyDbConfig proxyDbConfig) {
+            final ProxyDbConfig proxyDbConfig,
+            final PathCreator pathCreator) {
         LOGGER.debug(() -> "Getting connection provider for " + MODULE);
 
-        final AbstractDbConfig config = getDbConfig(repoDbDirProvider);
+        final AbstractDbConfig config = getDbConfig(repoDbDirProvider, proxyDbConfig, pathCreator);
         final DataSource dataSource = dataSourceFactory.create(config, MODULE, true);
         FlywayUtil.migrate(dataSource, FLYWAY_LOCATIONS, FLYWAY_TABLE, MODULE);
         return new DataSourceImpl(dataSource, proxyDbConfig);
     }
 
-    private AbstractDbConfig getDbConfig(final RepoDbDirProvider repoDbDirProvider) {
+    private AbstractDbConfig getDbConfig(final RepoDbDirProvider repoDbDirProvider,
+                                         final ProxyDbConfig proxyDbConfig,
+                                         final PathCreator pathCreator) {
         final Path dbDir = repoDbDirProvider.get();
 
         FileUtil.mkdirs(dbDir);
         if (!Files.isDirectory(dbDir)) {
             throw new RuntimeException("Unable to find DB dir: " + FileUtil.getCanonicalPath(dbDir));
+        }
+
+        final String libraryDirStr = proxyDbConfig.getLibraryDir();
+        if (!NullSafe.isBlankString(libraryDirStr)) {
+            final Path libraryDir = pathCreator.toAppPath(libraryDirStr);
+            LOGGER.info("Setting {} to '{}'", SQLITE_TEMPDIR_PROP, libraryDir.toString());
+            System.setProperty(SQLITE_TEMPDIR_PROP, libraryDir.toString());
+            if (!Files.exists(libraryDir)) {
+                LOGGER.info("Ensuring '{}' exists", libraryDir);
+                FileUtil.ensureDirExists(libraryDir);
+            }
         }
 
         final Path path = dbDir.resolve("proxy-repo.db");
@@ -83,12 +100,20 @@ public class ProxyDbModule extends AbstractModule {
         return new MyProxyRepoDbConfig(connectionConfig);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class MyProxyRepoDbConfig extends AbstractDbConfig {
 
         public MyProxyRepoDbConfig(final ConnectionConfig connectionConfig) {
             super(connectionConfig, new ConnectionPoolConfig());
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public static class DataSourceImpl extends DataSourceProxy implements ProxyRepoDbConnProvider {
 

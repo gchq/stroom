@@ -1,10 +1,10 @@
 package stroom.processor.shared;
 
-import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.DateField;
 import stroom.datasource.api.v2.DocRefField;
 import stroom.datasource.api.v2.IdField;
 import stroom.datasource.api.v2.LongField;
+import stroom.datasource.api.v2.QueryField;
 import stroom.datasource.api.v2.TextField;
 import stroom.docref.DocRef;
 import stroom.pipeline.shared.PipelineDoc;
@@ -22,8 +22,8 @@ public class ProcessorTaskFields {
             "Processor Tasks",
             "Processor Tasks");
 
-    private static final List<AbstractField> FIELDS = new ArrayList<>();
-    private static final Map<String, AbstractField> FIELD_MAP;
+    private static final List<QueryField> FIELDS = new ArrayList<>();
+    private static final Map<String, QueryField> FIELD_MAP;
 
     public static final String FIELD_ID = "Id";
     public static final String FIELD_CREATE_TIME = "Created";
@@ -78,14 +78,14 @@ public class ProcessorTaskFields {
         FIELDS.add(STATUS);
         FIELDS.add(TASK_ID);
         FIELD_MAP = FIELDS.stream()
-                .collect(Collectors.toMap(AbstractField::getName, Function.identity()));
+                .collect(Collectors.toMap(QueryField::getName, Function.identity()));
     }
 
-    public static List<AbstractField> getFields() {
+    public static List<QueryField> getFields() {
         return new ArrayList<>(FIELDS);
     }
 
-    public static Map<String, AbstractField> getFieldMap() {
+    public static Map<String, QueryField> getFieldMap() {
         return FIELD_MAP;
     }
 }

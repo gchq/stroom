@@ -19,13 +19,16 @@ package stroom.pipeline.structure.client.presenter;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.explorer.client.presenter.EntityDropDownPresenter;
+import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
+import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.feed.shared.FeedDoc;
-import stroom.item.client.StringListBox;
+import stroom.item.client.SelectionBox;
 import stroom.meta.shared.MetaResource;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.security.shared.DocumentPermissionNames;
+import stroom.ui.config.client.UiConfigCache;
+import stroom.util.shared.GwtNullSafe;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Unit;
@@ -44,26 +47,35 @@ public class NewPipelineReferencePresenter
 
     private static final MetaResource META_RESOURCE = GWT.create(MetaResource.class);
 
-    private final EntityDropDownPresenter pipelinePresenter;
-    private final EntityDropDownPresenter feedPresenter;
+    private final DocSelectionBoxPresenter pipelinePresenter;
+    private final DocSelectionBoxPresenter feedPresenter;
     private final RestFactory restFactory;
-    private final StringListBox dataTypeWidget;
+    private final SelectionBox<String> dataTypeWidget;
     private boolean dirty;
     private boolean initialised;
 
     @Inject
     public NewPipelineReferencePresenter(final EventBus eventBus,
                                          final NewPipelineReferenceView view,
-                                         final EntityDropDownPresenter pipelinePresenter,
-                                         final EntityDropDownPresenter feedPresenter,
-                                         final RestFactory restFactory) {
+                                         final DocSelectionBoxPresenter pipelinePresenter,
+                                         final DocSelectionBoxPresenter feedPresenter,
+                                         final RestFactory restFactory,
+                                         final UiConfigCache uiConfigCache) {
         super(eventBus, view);
         this.pipelinePresenter = pipelinePresenter;
         this.feedPresenter = feedPresenter;
         this.restFactory = restFactory;
 
+        // Filter the pipeline picker by tags, if configured
+        uiConfigCache.get().onSuccess(extendedUiConfig ->
+                GwtNullSafe.consume(
+                        extendedUiConfig.getReferencePipelineSelectorIncludedTags(),
+                        ExplorerTreeFilter::createTagQuickFilterInput,
+                        pipelinePresenter::setQuickFilter));
+
         pipelinePresenter.setIncludedTypes(PipelineDoc.DOCUMENT_TYPE);
         pipelinePresenter.setRequiredPermissions(DocumentPermissionNames.USE);
+
         feedPresenter.setIncludedTypes(FeedDoc.DOCUMENT_TYPE);
         feedPresenter.setRequiredPermissions(DocumentPermissionNames.USE);
 
@@ -73,7 +85,7 @@ public class NewPipelineReferencePresenter
         feedPresenter.getWidget().getElement().getStyle().setMarginBottom(0, Unit.PX);
         getView().setFeedView(feedPresenter.getView());
 
-        dataTypeWidget = new StringListBox();
+        dataTypeWidget = new SelectionBox<>();
         dataTypeWidget.getElement().getStyle().setMarginBottom(0, Unit.PX);
         getView().setTypeWidget(dataTypeWidget);
     }
@@ -109,9 +121,9 @@ public class NewPipelineReferencePresenter
                 }
             }
         });
-        dataTypeWidget.addChangeHandler(event -> {
+        dataTypeWidget.addValueChangeHandler(event -> {
             if (initialised) {
-                final String selection = dataTypeWidget.getSelected();
+                final String selection = dataTypeWidget.getValue();
                 if ((pipelineReference.getStreamType() == null && selection != null)
                         || (pipelineReference.getStreamType() != null
                         && !pipelineReference.getStreamType().equals(selection))) {
@@ -124,7 +136,7 @@ public class NewPipelineReferencePresenter
     public void write(final PipelineReference pipelineReference) {
         pipelineReference.setPipeline(pipelinePresenter.getSelectedEntityReference());
         pipelineReference.setFeed(feedPresenter.getSelectedEntityReference());
-        pipelineReference.setStreamType(dataTypeWidget.getSelected());
+        pipelineReference.setStreamType(dataTypeWidget.getValue());
     }
 
     private void updateDataTypes(final String selectedDataType) {
@@ -138,7 +150,7 @@ public class NewPipelineReferencePresenter
                     }
 
                     if (selectedDataType != null) {
-                        dataTypeWidget.setSelected(selectedDataType);
+                        dataTypeWidget.setValue(selectedDataType);
                     }
 
                     initialised = true;

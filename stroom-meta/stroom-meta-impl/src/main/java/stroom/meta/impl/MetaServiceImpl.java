@@ -1,14 +1,13 @@
 package stroom.meta.impl;
 
-import stroom.dashboard.expression.v1.ValuesConsumer;
 import stroom.data.retention.api.DataRetentionRuleAction;
 import stroom.data.retention.api.DataRetentionTracker;
 import stroom.data.retention.shared.DataRetentionDeleteSummary;
 import stroom.data.retention.shared.DataRetentionRules;
 import stroom.data.retention.shared.FindDataRetentionImpactCriteria;
-import stroom.datasource.api.v2.AbstractField;
-import stroom.datasource.api.v2.DataSource;
 import stroom.datasource.api.v2.DateField;
+import stroom.datasource.api.v2.FieldInfo;
+import stroom.datasource.api.v2.FindFieldInfoCriteria;
 import stroom.docref.DocRef;
 import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.entity.shared.ExpressionCriteria;
@@ -29,6 +28,9 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Builder;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.query.common.v2.FieldInfoResultPageBuilder;
+import stroom.query.language.functions.FieldIndex;
+import stroom.query.language.functions.ValuesConsumer;
 import stroom.searchable.api.Searchable;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
@@ -40,6 +42,9 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 import stroom.util.time.TimePeriod;
+
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -58,8 +63,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
-import javax.inject.Provider;
 
 public class MetaServiceImpl implements MetaService, Searchable {
 
@@ -282,12 +285,13 @@ public class MetaServiceImpl implements MetaService, Searchable {
     }
 
     @Override
-    public DataSource getDataSource() {
-        return DataSource
-                .builder()
-                .docRef(META_STORE_PSEUDO_DOC_REF)
-                .fields(MetaFields.getAllFields())
-                .build();
+    public ResultPage<FieldInfo> getFieldInfo(final FindFieldInfoCriteria criteria) {
+        return FieldInfoResultPageBuilder.builder(criteria).addAll(MetaFields.getAllFields()).build();
+    }
+
+    @Override
+    public Optional<String> fetchDocumentation(final DocRef docRef) {
+        return Optional.empty();
     }
 
     @Override
@@ -297,15 +301,14 @@ public class MetaServiceImpl implements MetaService, Searchable {
 
     @Override
     public void search(final ExpressionCriteria criteria,
-                       final AbstractField[] fields,
+                       final FieldIndex fieldIndex,
                        final ValuesConsumer consumer) {
-
         LOGGER.logDurationIfTraceEnabled(() -> {
             final ExpressionOperator expression = addPermissionConstraints(criteria.getExpression(),
                     DocumentPermissionNames.READ,
                     FEED_FIELDS);
             criteria.setExpression(expression);
-            metaDao.search(criteria, fields, consumer);
+            metaDao.search(criteria, fieldIndex, consumer);
         }, "Searching meta");
     }
 
@@ -369,7 +372,8 @@ public class MetaServiceImpl implements MetaService, Searchable {
     }
 
     private ResultPage<Meta> secureFind(final FindMetaCriteria criteria) {
-        final ExpressionOperator expression = addPermissionConstraints(criteria.getExpression(),
+        final ExpressionOperator expression = addPermissionConstraints(
+                criteria.getExpression(),
                 DocumentPermissionNames.READ,
                 FEED_FIELDS);
         criteria.setExpression(expression);
@@ -668,7 +672,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
                                                                       final FindDataRetentionImpactCriteria criteria) {
         return securityContext.secureResult(PermissionNames.MANAGE_POLICIES_PERMISSION, () -> {
 
-            final String userId = securityContext.getUserId();
+            final String userId = securityContext.getSubjectId();
 
             List<DataRetentionDeleteSummary> summaries;
             try {
@@ -719,7 +723,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
     @Override
     public boolean cancelRetentionDeleteSummary(final String queryId) {
         return securityContext.secureResult(PermissionNames.MANAGE_POLICIES_PERMISSION, () ->
-                userQueryRegistry.terminateQuery(securityContext.getUserId(), queryId, taskManager));
+                userQueryRegistry.terminateQuery(securityContext.getSubjectId(), queryId, taskManager));
     }
 
     @Override

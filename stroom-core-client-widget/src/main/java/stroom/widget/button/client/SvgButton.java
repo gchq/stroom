@@ -31,5 +31,4 @@ public class SvgButton extends InlineSvgButton {
         button.setEnabled(preset.isEnabled());
         return button;
     }
-
 }

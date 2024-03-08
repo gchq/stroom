@@ -10,11 +10,12 @@ import stroom.search.impl.NodeSearchTaskType;
 import stroom.search.impl.NodeTaskCreator;
 import stroom.task.api.TaskContext;
 
+import jakarta.inject.Inject;
+
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
 
 public class AnalyticsNodeSearchTaskCreator implements NodeTaskCreator {
 
@@ -39,7 +40,6 @@ public class AnalyticsNodeSearchTaskCreator implements NodeTaskCreator {
                     query,
                     task.getSettings(),
                     task.getDateTimeSettings(),
-                    task.getNow(),
                     null);
 
             // Get the nodes that we are going to send the search request to.

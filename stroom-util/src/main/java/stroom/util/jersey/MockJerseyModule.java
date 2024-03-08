@@ -2,8 +2,7 @@ package stroom.util.jersey;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
-
-import javax.ws.rs.client.WebTarget;
+import jakarta.inject.Singleton;
 
 public class MockJerseyModule extends AbstractModule {
 
@@ -13,7 +12,9 @@ public class MockJerseyModule extends AbstractModule {
     }
 
     @Provides
-    WebTarget getWebTarget() {
-        return null;
+    @Singleton
+    WebTargetFactory provideJerseyRequestBuilder(final JerseyClientFactory jerseyClientFactory) {
+        return url ->
+                jerseyClientFactory.getDefaultClient().target(url);
     }
 }

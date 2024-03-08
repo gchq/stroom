@@ -31,12 +31,13 @@ import stroom.data.grid.client.OrderByColumn;
 import stroom.data.grid.client.PagerView;
 import stroom.data.shared.DataResource;
 import stroom.data.table.client.Refreshable;
-import stroom.datasource.api.v2.AbstractField;
+import stroom.datasource.api.v2.QueryField;
 import stroom.dispatch.client.ExportFileCompleteUtil;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.explorer.client.presenter.EntityChooser;
+import stroom.explorer.client.presenter.DocSelectionPopup;
+import stroom.feed.shared.FeedDoc;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaExpressionUtil;
@@ -55,13 +56,12 @@ import stroom.processor.shared.QueryData;
 import stroom.processor.shared.ReprocessDataInfo;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionUtil;
-import stroom.query.api.v2.ExpressionValidationException;
-import stroom.query.api.v2.ExpressionValidator;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.util.client.DataGridUtil;
 import stroom.util.client.MyDataGridUtil;
+import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Selection;
@@ -104,7 +104,8 @@ public abstract class AbstractMetaListPresenter
     private final RestDataProvider<MetaRow, ResultPage<MetaRow>> dataProvider;
     private final Provider<SelectionSummaryPresenter> selectionSummaryPresenterProvider;
     private final Provider<ProcessChoicePresenter> processChoicePresenterProvider;
-    private final Provider<EntityChooser> pipelineSelection;
+    private final Provider<DocSelectionPopup> pipelineSelection;
+    private final ExpressionValidator expressionValidator;
 
     private ResultPage<MetaRow> resultPage;
     private boolean initialised;
@@ -119,7 +120,8 @@ public abstract class AbstractMetaListPresenter
                               final DateTimeFormatter dateTimeFormatter,
                               final Provider<SelectionSummaryPresenter> selectionSummaryPresenterProvider,
                               final Provider<ProcessChoicePresenter> processChoicePresenterProvider,
-                              final Provider<EntityChooser> pipelineSelection,
+                              final Provider<DocSelectionPopup> pipelineSelection,
+                              final ExpressionValidator expressionValidator,
                               final boolean allowSelectAll) {
         super(eventBus, view);
         this.restFactory = restFactory;
@@ -128,6 +130,7 @@ public abstract class AbstractMetaListPresenter
         this.selectionSummaryPresenterProvider = selectionSummaryPresenterProvider;
         this.processChoicePresenterProvider = processChoicePresenterProvider;
         this.pipelineSelection = pipelineSelection;
+        this.expressionValidator = expressionValidator;
 
         this.dataGrid = new MyDataGrid<>();
         selectionModel = new MultiSelectionModelImpl<>(dataGrid);
@@ -338,9 +341,8 @@ public abstract class AbstractMetaListPresenter
     }
 
     void addCreatedColumn() {
-
         dataGrid.addResizableColumn(
-                DataGridUtil.textColumnBuilder((MetaRow metaRow) ->
+                DataGridUtil.copyTextColumnBuilder((MetaRow metaRow) ->
                                 dateTimeFormatter.format(metaRow.getMeta().getCreateMs()))
                         .withSorting(MetaFields.CREATE_TIME)
                         .build(),
@@ -350,11 +352,11 @@ public abstract class AbstractMetaListPresenter
 
     void addFeedColumn() {
         dataGrid.addResizableColumn(
-                DataGridUtil.textColumnBuilder((MetaRow metaRow) ->
-                                Optional.ofNullable(metaRow)
-                                        .map(MetaRow::getMeta)
-                                        .map(Meta::getFeedName)
-                                        .orElse(""))
+                DataGridUtil.docRefColumnBuilder((MetaRow metaRow) ->
+                                        Optional.ofNullable(metaRow)
+                                                .map(this::getFeed)
+                                                .orElse(null),
+                                getEventBus(), true)
                         .withSorting(MetaFields.FEED)
                         .build(),
                 "Feed",
@@ -374,19 +376,38 @@ public abstract class AbstractMetaListPresenter
                 80);
     }
 
+    private DocRef getFeed(final MetaRow metaRow) {
+        if (metaRow.getMeta() != null && metaRow.getMeta().getFeedName() != null) {
+            return new DocRef(
+                    FeedDoc.DOCUMENT_TYPE,
+                    null,
+                    metaRow.getMeta().getFeedName());
+        }
+        return null;
+    }
+
+    private DocRef getPipeline(final MetaRow metaRow) {
+        if (metaRow.getMeta().getProcessorUuid() != null) {
+            if (metaRow.getPipelineName() != null) {
+                return new DocRef(
+                        PipelineDoc.DOCUMENT_TYPE,
+                        metaRow.getMeta().getPipelineUuid(),
+                        metaRow.getPipelineName());
+            } else {
+                return new DocRef(null, null, null);
+            }
+        }
+        return null;
+    }
+
     void addPipelineColumn() {
         dataGrid.addResizableColumn(
-                DataGridUtil
-                        .textColumnBuilder((MetaRow metaRow) -> {
-                            if (metaRow.getMeta().getProcessorUuid() != null) {
-                                if (metaRow.getPipelineName() != null) {
-                                    return metaRow.getPipelineName();
-                                } else {
-                                    return "Not visible";
-                                }
-                            }
-                            return "";
-                        })
+                DataGridUtil.docRefColumnBuilder((MetaRow metaRow) ->
+                                        Optional.ofNullable(metaRow)
+                                                .map(this::getPipeline)
+                                                .orElse(null),
+                                getEventBus(), false)
+                        .withSorting(MetaFields.PIPELINE_NAME)
                         .build(),
                 "Pipeline",
                 ColumnSizeConstants.BIG_COL);
@@ -416,7 +437,7 @@ public abstract class AbstractMetaListPresenter
     }
 
     void addAttributeColumn(final String name,
-                            final AbstractField attribute,
+                            final QueryField attribute,
                             final Function<String, String> formatter,
                             final int size) {
 
@@ -433,7 +454,7 @@ public abstract class AbstractMetaListPresenter
     }
 
     void addRightAlignedAttributeColumn(final String name,
-                                        final AbstractField attribute,
+                                        final QueryField attribute,
                                         final Function<String, String> formatter,
                                         final int size) {
 
@@ -451,7 +472,7 @@ public abstract class AbstractMetaListPresenter
     }
 
     void addColouredSizeAttributeColumn(final String name,
-                                        final AbstractField attribute,
+                                        final QueryField attribute,
                                         final Function<String, String> formatter,
                                         final int size) {
 
@@ -495,8 +516,15 @@ public abstract class AbstractMetaListPresenter
         dataGrid.addEndColumn(new EndColumn<>());
     }
 
-    public void setExpression(final ExpressionOperator expression) {
-        validateExpression(expression, this.criteria::setExpression);
+    /**
+     * @param onSetExpression Called after the expression has been successfully
+     *                        validated and set on the criteria. Can be null.
+     */
+    public void setExpression(final ExpressionOperator expression, final Runnable onSetExpression) {
+        validateExpression(expression, expression2 -> {
+            this.criteria.setExpression(expression2);
+            GwtNullSafe.run(onSetExpression);
+        });
     }
 
     public void info() {
@@ -588,27 +616,19 @@ public abstract class AbstractMetaListPresenter
 
     private void validateExpression(final ExpressionOperator expression,
                                     final Consumer<ExpressionOperator> consumer) {
-        if (expression != null) {
-            try {
-                final ExpressionValidator expressionValidator = new ExpressionValidator(MetaFields.getAllFields());
-                expressionValidator.validate(expression);
-                consumer.accept(expression);
-            } catch (final ExpressionValidationException e) {
-                AlertEvent.fireError(this, e.getMessage(), null);
-            }
-        }
+        expressionValidator.validateExpression(
+                AbstractMetaListPresenter.this,
+                MetaFields.getAllFields(),
+                expression,
+                consumer);
     }
 
     private void choosePipeline(final Consumer<DocRef> consumer) {
-        final EntityChooser chooser = pipelineSelection.get();
+        final DocSelectionPopup chooser = pipelineSelection.get();
         chooser.setCaption("Choose Pipeline To Process Data With");
         chooser.setIncludedTypes(PipelineDoc.DOCUMENT_TYPE);
         chooser.setRequiredPermissions(DocumentPermissionNames.READ);
-        chooser.addDataSelectionHandler(event -> {
-            final DocRef pipeline = chooser.getSelectedEntityReference();
-            consumer.accept(pipeline);
-        });
-        chooser.show();
+        chooser.show(consumer);
     }
 
     public void delete() {

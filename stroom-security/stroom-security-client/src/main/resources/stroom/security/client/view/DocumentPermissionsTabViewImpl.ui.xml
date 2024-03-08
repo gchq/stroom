@@ -2,22 +2,23 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:form="urn:import:stroom.widget.form.client">
-    <g:MySplitLayoutPanel styleName="max">
-        <g:north size="200">
-            <g:FlowPanel styleName="max form">
-                <form:FormGroup ui:field="documentPermissionsUsers" identity="documentPermissionsUsers" label="Users"
-                                addStyleNames="max">
-                    <g:SimplePanel ui:field="users" addStyleNames="dock-max"/>
-                </form:FormGroup>
-            </g:FlowPanel>
-        </g:north>
-        <g:center>
-            <g:FlowPanel styleName="max form">
-                <form:FormGroup identity="documentPermissionsPermissions" label="Permissions"
-                                addStyleNames="max">
-                    <g:ScrollPanel ui:field="permissions" addStyleNames="dock-max stroom-control"/>
-                </form:FormGroup>
-            </g:FlowPanel>
-        </g:center>
-    </g:MySplitLayoutPanel>
-</ui:UiBinder> 
+    <g:FlowPanel styleName="documentPermissions form max dock-container-vertical">
+        <g:FlowPanel styleName="documentPermissionsUsers form dock-max dock-container-vertical">
+            <form:FormGroup ui:field="documentPermissionsUsers"
+                            identity="documentPermissionsUsers"
+                            label="Users"
+                            addStyleNames="documentPermissionsUsersFormGrp max">
+                <g:SimplePanel ui:field="users"
+                               addStyleNames="documentPermissionsUsers dock-max dock-container-vertical"/>
+            </form:FormGroup>
+        </g:FlowPanel>
+        <g:FlowPanel styleName="documentPermissionsPermissions form dock-max dock-container-vertical">
+            <form:FormGroup identity="documentPermissionsPermissions"
+                            label="Permissions"
+                            addStyleNames="documentPermissionsPermissionFormGrp smax">
+                <g:ScrollPanel ui:field="permissions"
+                               addStyleNames="documentPermissionsPermissions dock-max stroom-control"/>
+            </form:FormGroup>
+        </g:FlowPanel>
+    </g:FlowPanel>
+</ui:UiBinder>

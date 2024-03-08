@@ -49,14 +49,39 @@ send_request() {
   # Convert to uppercase
   local new_log_level="${2^^}"
   local type="$3"
+  local extra_args=()
+  if [[ "${URL}" == https* ]]; then
+    # Use insecure mode if stroom/proxy is running the admin port on https
+    extra_args+=("-k")
+  fi
+  local data="logger=${package_or_class}&level=${new_log_level}"
+  local exit_status=0
 
   echo -e "${GREEN}Setting ${type} ${BLUE}${package_or_class}${NC} to ${YELLOW}${new_log_level}${NC}"
-
   curl \
+    -s \
     -X \
     POST \
-    -d "logger=${package_or_class}&level=${new_log_level}" \
-    "${URL}"
+    -d "${data}" \
+    "${extra_args[@]}" \
+    "${URL}" \
+    || exit_status=$?
+
+  if [[ "${exit_status}" -ne 0 ]]; then
+    echo -e "${RED}ERROR${NC} - Failed to set log level using data ${BLUE}'${data}'${NC}," \
+      "retrying with verbose output." >&2
+    echo
+    curl \
+      -s \
+      -v \
+      -X \
+      POST \
+      -d "${data}" \
+      "${extra_args[@]}" \
+      "${URL}" \
+      || true
+    exit 1
+  fi
 }
 
 is_valid_package() {
@@ -157,7 +182,7 @@ main() {
     source "${scripts_env_file}"
   fi
 
-  readonly URL="http://127.0.0.1:${ADMIN_PORT:-8081}/${ADMIN_PATH:-stroomAdmin}/tasks/log-level"
+  readonly URL="${ADMIN_SCHEME:-http}://127.0.0.1:${ADMIN_PORT:-8081}/${ADMIN_PATH:-stroomAdmin}/tasks/log-level"
 
   echo -e "Using URL ${BLUE}${URL}${NC}"
   echo -e "Using JAR file ${BLUE}${PATH_TO_JAR}${NC}"

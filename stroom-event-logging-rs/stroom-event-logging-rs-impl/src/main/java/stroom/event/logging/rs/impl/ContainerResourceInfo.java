@@ -25,12 +25,13 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
+import jakarta.ws.rs.HttpMethod;
+import jakarta.ws.rs.container.ContainerRequestContext;
+import jakarta.ws.rs.container.ResourceContext;
+import jakarta.ws.rs.container.ResourceInfo;
+
 import java.lang.reflect.Method;
 import java.util.Optional;
-import javax.ws.rs.HttpMethod;
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.container.ResourceContext;
-import javax.ws.rs.container.ResourceInfo;
 
 public class ContainerResourceInfo {
 
@@ -242,5 +243,17 @@ public class ContainerResourceInfo {
             LOGGER.debug("No matches, not logging request");
             return false;
         }
+    }
+
+    @Override
+    public String toString() {
+        return "ContainerResourceInfo{" +
+                "uri=" + requestContext.getUriInfo().getRequestUri() +
+                ", user=" + securityContext.getUserIdentityForAudit() +
+                ", requestContext=" + requestContext +
+                ", operationType=" + operationType +
+                ", eventActionDecoratorClass=" + eventActionDecoratorClass +
+                ", autologgerAnnotationPresent=" + autologgerAnnotationPresent +
+                '}';
     }
 }

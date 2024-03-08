@@ -21,7 +21,7 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
-import stroom.editor.client.presenter.ChangeThemeEvent;
+import stroom.editor.client.presenter.ChangeCurrentPreferencesEvent;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.presenter.MarkdownEditPresenter.MarkdownEditView;
 import stroom.iframe.client.presenter.IFramePresenter;
@@ -43,10 +43,10 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
-import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 public class MarkdownEditPresenter
         extends MyPresenterWidget<MarkdownEditView>
@@ -56,13 +56,12 @@ public class MarkdownEditPresenter
     // selectivity added into to stop it conflicting with the dark theme.
     private static final String MARKDOWN_FRAME_ID = "markdown-frame";
 
-    private final EditorPresenter codePresenter;
+    private final MarkdownPreviewPresenter markdownPreviewPresenter;
     private final IFramePresenter iFramePresenter;
     private final UiConfigCache uiConfigCache;
     private final InlineSvgToggleButton editModeButton;
     private final ButtonView helpButton;
     private final ButtonPanel toolbar;
-    private final UserPreferencesManager userPreferencesManager;
     private final MarkdownConverter markdownConverter;
     private boolean reading;
     private boolean readOnly = true;
@@ -71,21 +70,17 @@ public class MarkdownEditPresenter
     @Inject
     public MarkdownEditPresenter(final EventBus eventBus,
                                  final MarkdownEditView view,
+                                 final MarkdownPreviewPresenter markdownPreviewPresenter,
                                  final EditorPresenter editorPresenter,
                                  final IFramePresenter iFramePresenter,
                                  final UiConfigCache uiConfigCache,
                                  final UserPreferencesManager userPreferencesManager,
                                  final MarkdownConverter markdownConverter) {
         super(eventBus, view);
-        this.codePresenter = editorPresenter;
+        this.markdownPreviewPresenter = markdownPreviewPresenter;
         this.iFramePresenter = iFramePresenter;
         this.uiConfigCache = uiConfigCache;
-        this.userPreferencesManager = userPreferencesManager;
         this.markdownConverter = markdownConverter;
-        codePresenter.setMode(AceEditorMode.MARKDOWN);
-
-        // Markdown is mostly wordy content so wrap long lines to make it easier for the user.
-        codePresenter.getLineWrapOption().setOn();
 
         iFramePresenter.setId(MARKDOWN_FRAME_ID);
         iFramePresenter.setSandboxEnabled(true, SandboxOption.ALLOW_POPUPS);
@@ -100,7 +95,7 @@ public class MarkdownEditPresenter
         toolbar.addButton(editModeButton);
         helpButton = toolbar.addButton(SvgPresets.HELP.title("Documentation help"));
 
-        registerHandler(eventBus.addHandler(ChangeThemeEvent.getType(), event ->
+        registerHandler(eventBus.addHandler(ChangeCurrentPreferencesEvent.getType(), event ->
                 updateMarkdownOnIFramePresenter()));
     }
 
@@ -115,13 +110,14 @@ public class MarkdownEditPresenter
     @Override
     protected void onBind() {
         super.onBind();
-        registerHandler(codePresenter.addValueChangeHandler(event -> setDirty(true)));
-        registerHandler(codePresenter.addFormatHandler(event -> setDirty(true)));
+        registerHandler(markdownPreviewPresenter.addValueChangeHandler(event -> setDirty(true)));
+        registerHandler(markdownPreviewPresenter.addFormatHandler(event -> setDirty(true)));
+
         registerHandler(editModeButton.addClickHandler(e -> {
             if (!readOnly) {
                 this.editMode = !this.editMode;
                 if (editMode) {
-                    getView().setView(codePresenter.getView());
+                    getView().setView(markdownPreviewPresenter.getView());
                 } else {
                     // Raw markdown likely been changed to update the iframe content
                     updateMarkdownOnIFramePresenter();
@@ -148,7 +144,7 @@ public class MarkdownEditPresenter
     }
 
     public String getText() {
-        return codePresenter.getText();
+        return markdownPreviewPresenter.getText();
     }
 
     public void setText(String rawMarkdown) {
@@ -157,8 +153,8 @@ public class MarkdownEditPresenter
         }
 
         reading = true;
-        if (!codePresenter.getText().equals(rawMarkdown)) {
-            codePresenter.setText(rawMarkdown);
+        if (!Objects.equals(markdownPreviewPresenter.getText(), rawMarkdown)) {
+            markdownPreviewPresenter.setText(rawMarkdown);
         }
         reading = false;
         updateMarkdownOnIFramePresenter();
@@ -184,7 +180,8 @@ public class MarkdownEditPresenter
     }
 
     private void updateMarkdownOnIFramePresenter() {
-        final SafeHtml iFrameHtmlContent = markdownConverter.convertMarkdownToHtmlInFrame(codePresenter.getText());
+        final SafeHtml iFrameHtmlContent = markdownConverter.convertMarkdownToHtmlInFrame(
+                markdownPreviewPresenter.getText());
         iFramePresenter.setSrcDoc(iFrameHtmlContent.asString());
     }
 

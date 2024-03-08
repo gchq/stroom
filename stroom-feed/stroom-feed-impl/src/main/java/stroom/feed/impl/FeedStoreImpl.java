@@ -17,9 +17,11 @@
 
 package stroom.feed.impl;
 
+import stroom.docref.DocContentHighlights;
 import stroom.docref.DocContentMatch;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
+import stroom.docref.StringMatch;
 import stroom.docstore.api.AuditFieldFilter;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
@@ -34,16 +36,22 @@ import stroom.security.api.SecurityContext;
 import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.Message;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 @Singleton
 public class FeedStoreImpl implements FeedStore {
 
+    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.DATA_PROCESSING,
+            FeedDoc.DOCUMENT_TYPE,
+            FeedDoc.DOCUMENT_TYPE,
+            FeedDoc.ICON);
     private final Store<FeedDoc> store;
     private final FeedNameValidator feedNameValidator;
     private final SecurityContext securityContext;
@@ -87,8 +95,16 @@ public class FeedStoreImpl implements FeedStore {
     }
 
     @Override
-    public DocRef copyDocument(final DocRef docRef, final Set<String> existingNames) {
-        final String newName = createUniqueName(docRef.getName());
+    public DocRef copyDocument(final DocRef docRef,
+                               final String name,
+                               final boolean makeNameUnique,
+                               final Set<String> existingNames) {
+        // Check a feed doesn't already exist with this name.
+        if (!makeNameUnique && checkDuplicateName(name, null)) {
+            throw new EntityServiceException("A feed named '" + name + "' already exists");
+        }
+
+        final String newName = createUniqueName(name);
         return store.copyDocument(docRef.getUuid(), newName);
     }
 
@@ -121,11 +137,7 @@ public class FeedStoreImpl implements FeedStore {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(
-                DocumentTypeGroup.DATA_PROCESSING,
-                FeedDoc.DOCUMENT_TYPE,
-                FeedDoc.DOCUMENT_TYPE,
-                FeedDoc.ICON);
+        return DOCUMENT_TYPE;
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -228,8 +240,15 @@ public class FeedStoreImpl implements FeedStore {
     }
 
     @Override
-    public List<DocContentMatch> findByContent(final String pattern, final boolean regex, final boolean matchCase) {
-        return store.findByContent(pattern, regex, matchCase);
+    public List<DocContentMatch> findByContent(final StringMatch filter) {
+        return store.findByContent(filter);
+    }
+
+    @Override
+    public DocContentHighlights fetchHighlights(final DocRef docRef,
+                                                final String extension,
+                                                final StringMatch filter) {
+        return store.fetchHighlights(docRef, extension, filter);
     }
 
     @Override

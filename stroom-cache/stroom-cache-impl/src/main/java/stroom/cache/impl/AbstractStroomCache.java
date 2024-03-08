@@ -103,6 +103,10 @@ abstract class AbstractStroomCache<K, V> implements StroomCache<K, V> {
                     newCacheConfig.getExpireAfterWrite(),
                     StroomDuration::getDuration,
                     newCacheBuilder::expireAfterWrite);
+            NullSafe.consume(
+                    newCacheConfig.getRefreshAfterWrite(),
+                    StroomDuration::getDuration,
+                    newCacheBuilder::refreshAfterWrite);
 
             if (removalNotificationConsumer != null) {
                 final RemovalListener<K, V> removalListener = createRemovalListener();
@@ -231,7 +235,11 @@ abstract class AbstractStroomCache<K, V> implements StroomCache<K, V> {
         final List<K> keysToRemove = cacheAsMap.entrySet()
                 .stream()
                 .filter(entry -> {
-                    LOGGER.info("invalidateEntries ID {}", System.identityHashCode(getCache()));
+                    LOGGER.trace(() ->
+                            buildMessage(
+                                    "invalidateEntries",
+                                    entry.getKey(),
+                                    "ID: " + System.identityHashCode(getCache())));
                     return entryPredicate.test(entry.getKey(), entry.getValue());
                 })
                 .map(entry -> {
@@ -341,6 +349,10 @@ abstract class AbstractStroomCache<K, V> implements StroomCache<K, V> {
 
     String buildMessage(final String methodName, final K key) {
         return methodName + "() - cache: '" + name + "', key: " + key;
+    }
+
+    String buildMessage(final String methodName, final K key, final String msg) {
+        return methodName + "() - cache: '" + name + "', key: " + key + " - " + msg;
     }
 
     @Override

@@ -13,7 +13,7 @@ proxyConfig:
     syncFrequency: "PT1M"
     upstreamUrl: null
   db:
-    batchSize: 10000000
+    batchSize: 1000000
     cleanupFrequency: "PT1S"
     connectionPragma:
     - "pragma synchronous = normal;"
@@ -23,6 +23,7 @@ proxyConfig:
     flushFrequency: "PT1S"
     globalPragma:
     - "pragma journal_mode = WAL;"
+    libraryDir: "sqlite_library"
     maintenancePragma:
     - "pragma wal_checkpoint(truncate);"
     - "pragma vacuum;"
@@ -43,10 +44,25 @@ proxyConfig:
       expireAfterAccess: null
       expireAfterWrite: null
       maximumSize: 1000
+      refreshAfterWrite: null
     url: null
-  fileScanners: []
-  forwardFileDestinations: []
-  forwardHttpDestinations: []
+  fileScanners:
+  - path: null
+    scanFrequency: "PT1M"
+  forwardFileDestinations:
+  - enabled: true
+    name: null
+    path: null
+  forwardHttpDestinations:
+  - addOpenIdAccessToken: false
+    enabled: true
+    forwardChunkSize: "1M"
+    forwardDelay: "PT0S"
+    forwardTimeout: "PT30S"
+    forwardUrl: null
+    name: null
+    sslConfig: null
+    userAgent: null
   forwardRetry:
     failedForwardDir: "failures"
     maxRetryDelay: "PT1H"
@@ -67,8 +83,9 @@ proxyConfig:
     home: null
     temp: null
   proxyId: null
-  receiveDataConfig:
-    clientId: null
+  receive:
+    authenticationRequired: true
+    certificateAuthenticationEnabled: true
     metaTypes:
     - "Context"
     - "Raw Reference"
@@ -81,15 +98,42 @@ proxyConfig:
     - "Detections"
     - "Meta Data"
     - "Records"
-    publicKey: null
     receiptPolicyUuid: null
-    requireTokenAuthentication: false
+    tokenAuthenticationEnabled: false
   repository:
     repoDir: "repo"
     storingEnabled: true
-  sqsConnectors: []
+  security:
+    authentication:
+      authenticationRequired: true
+      openId:
+        authEndpoint: null
+        clientCredentialsScopes:
+        - "openid"
+        clientId: null
+        clientSecret: null
+        formTokenRequest: true
+        identityProviderType: "NO_IDP"
+        issuer: null
+        jwksUri: null
+        logoutEndpoint: null
+        logoutRedirectParamName: "post_logout_redirect_uri"
+        openIdConfigurationEndpoint: null
+        requestScopes:
+        - "openid"
+        - "email"
+        tokenEndpoint: null
+        uniqueIdentityClaim: "sub"
+        userDisplayNameClaim: "preferred_username"
+        validIssuers: []
+        validateAudience: true
+  sqsConnectors:
+  - awsProfileName: null
+    awsRegionName: null
+    pollFrequency: "PT10S"
+    queueName: null
+    queueUrl: null
   threads:
     examineSourceThreadCount: 3
     forwardRetryThreadCount: 2
     forwardThreadCount: 10
-  useDefaultOpenIdCredentials: false

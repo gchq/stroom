@@ -19,6 +19,8 @@ package stroom.security.impl;
 
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.User;
+import stroom.util.shared.SimpleUserName;
+import stroom.util.shared.UserName;
 
 import java.util.List;
 import java.util.Optional;
@@ -31,7 +33,15 @@ public interface UserService {
         return getOrCreateUser(name, null);
     }
 
-    User getOrCreateUser(String name, final Consumer<User> onCreateAction);
+    default User getOrCreateUser(UserName name) {
+        return getOrCreateUser(name, null);
+    }
+
+    default User getOrCreateUser(String subjectId, final Consumer<User> onCreateAction) {
+        return getOrCreateUser(SimpleUserName.fromSubjectId(subjectId), onCreateAction);
+    }
+
+    User getOrCreateUser(UserName name, final Consumer<User> onCreateAction);
 
     default User getOrCreateUserGroup(String name) {
         return getOrCreateUserGroup(name, null);
@@ -39,7 +49,9 @@ public interface UserService {
 
     User getOrCreateUserGroup(String name, final Consumer<User> onCreateAction);
 
-    Optional<User> getUserByName(String name);
+    Optional<User> getUserBySubjectId(String name);
+
+    Optional<User> getUserByDisplayName(String displayName);
 
     Optional<User> loadByUuid(String uuid);
 
@@ -69,5 +81,5 @@ public interface UserService {
 
     Boolean removeUserFromGroup(String userUuid, String groupUuid);
 
-    List<String> getAssociates(String filter);
+    List<UserName> getAssociates(String filter);
 }

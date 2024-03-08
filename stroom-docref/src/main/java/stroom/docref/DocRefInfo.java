@@ -135,6 +135,10 @@ public class DocRefInfo {
         return new Builder(this);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public static final class Builder {
 
         private DocRef docRef;

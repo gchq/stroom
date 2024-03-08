@@ -2,12 +2,10 @@ package stroom.index.shared;
 
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.data.store.impl.fs.shared.FsVolumeState;
+import stroom.util.json.JsonUtil;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
-
-import java.io.IOException;
 
 
 class TestIndexVolume {
@@ -35,9 +33,8 @@ class TestIndexVolume {
      * Use this method to diagnose why your JSON-to-POJO bindings are failing.
      */
     @Test
-    public void testJsonBindings() throws IOException {
-        ObjectMapper objectMapper = new ObjectMapper();
-        IndexVolume indexVolume = objectMapper.readValue(TEST_JSON, IndexVolume.class);
+    public void testJsonBindings() {
+        IndexVolume indexVolume = JsonUtil.readValue(TEST_JSON, IndexVolume.class);
         Assertions.assertThat(indexVolume)
                 .isNotNull();
     }

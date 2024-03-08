@@ -22,6 +22,7 @@ import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.menu.client.presenter.ShowMenuEvent.Handler;
 import stroom.widget.popup.client.presenter.PopupPosition;
+import stroom.widget.popup.client.presenter.PopupPosition.PopupLocation;
 import stroom.widget.tab.client.event.RequestCloseTabEvent;
 import stroom.widget.tab.client.event.ShowTabMenuEvent;
 import stroom.widget.tab.client.presenter.TabBar;
@@ -29,6 +30,7 @@ import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.util.client.KeyBinding;
 import stroom.widget.util.client.KeyBinding.Action;
 import stroom.widget.util.client.MouseUtil;
+import stroom.widget.util.client.Rect;
 
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
@@ -98,6 +100,7 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
         tabPriority.add(tabData);
 
         onResize();
+        updateTabCount();
     }
 
     @Override
@@ -117,6 +120,7 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
             } else {
                 selectTab(null);
             }
+            updateTabCount();
         }
     }
 
@@ -128,11 +132,20 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
         tabPriority.clear();
 
         onResize();
+        updateTabCount();
     }
 
     private void keyboardSelectTab(final TabData tabData) {
         keyboardSelectedTab = tabData;
         onResize();
+    }
+
+    private void updateTabCount() {
+        if (tabs.size() > 1) {
+            addStyleName("multiple-tabs");
+        } else {
+            removeStyleName("multiple-tabs");
+        }
     }
 
     @Override
@@ -376,8 +389,8 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
     @Override
     public void onBrowserEvent(final Event event) {
 //        GWT.log("onBrowserEvent " + event.getType());
+        final Action action = KeyBinding.test(event);
         if (Event.ONKEYDOWN == event.getTypeInt()) {
-            final Action action = KeyBinding.getAction(event);
             TabData tabData = null;
             if (action != null) {
                 switch (action) {
@@ -550,11 +563,9 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
     }
 
     private void showTabSelector(final NativeEvent nativeEvent, final Element element) {
-        final int left = element.getAbsoluteLeft() + 5;
-        final int right = left + element.getOffsetWidth();
-        final int top = element.getAbsoluteTop();
-        final int bottom = top + 20;
-        final PopupPosition popupPosition = new PopupPosition(left, right, top, bottom);
+        Rect relativeRect = new Rect(element);
+        relativeRect = relativeRect.grow(3);
+        final PopupPosition popupPosition = new PopupPosition(relativeRect, PopupLocation.BELOW);
 
         final List<TabData> tabsNotShown = new ArrayList<>();
         final List<TabData> tabsShown = new ArrayList<>();

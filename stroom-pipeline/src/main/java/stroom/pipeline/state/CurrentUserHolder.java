@@ -16,17 +16,18 @@
 
 package stroom.pipeline.state;
 
+import stroom.security.api.UserIdentity;
 import stroom.util.pipeline.scope.PipelineScoped;
 
 @PipelineScoped
 public class CurrentUserHolder implements Holder {
-    private String currentUser;
+    private UserIdentity currentUser;
 
-    public String getCurrentUser() {
+    public UserIdentity getCurrentUser() {
         return currentUser;
     }
 
-    public void setCurrentUser(final String currentUser) {
+    public void setCurrentUser(final UserIdentity currentUser) {
         this.currentUser = currentUser;
     }
 }

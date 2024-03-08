@@ -1,7 +1,5 @@
 package stroom.processor.impl;
 
-import stroom.dashboard.expression.v1.ValuesConsumer;
-import stroom.datasource.api.v2.AbstractField;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.meta.shared.Meta;
 import stroom.processor.api.InclusiveRanges;
@@ -13,8 +11,12 @@ import stroom.processor.shared.ProcessorTaskFields;
 import stroom.processor.shared.ProcessorTaskSummary;
 import stroom.processor.shared.TaskStatus;
 import stroom.query.api.v2.ExpressionUtil;
+import stroom.query.language.functions.FieldIndex;
+import stroom.query.language.functions.ValuesConsumer;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.ResultPage;
+
+import jakarta.inject.Singleton;
 
 import java.time.Instant;
 import java.util.Collections;
@@ -22,7 +24,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import javax.inject.Singleton;
 
 @Singleton
 public class MockProcessorTaskDao implements ProcessorTaskDao, Clearable {
@@ -119,13 +120,13 @@ public class MockProcessorTaskDao implements ProcessorTaskDao, Clearable {
     }
 
     @Override
-    public int countCreatedTasksForFilter(final int filterId) {
+    public int countTasksForFilter(final int filterId, final TaskStatus status) {
         return 0;
     }
 
     @Override
-    public List<ProcessorTask> queueExistingTasks(final Set<Long> idSet,
-                                                  final String thisNodeName) {
+    public List<ProcessorTask> queueTasks(final Set<Long> idSet,
+                                          final String thisNodeName) {
         return Collections.emptyList();
     }
 
@@ -167,14 +168,14 @@ public class MockProcessorTaskDao implements ProcessorTaskDao, Clearable {
                 .stream()
                 .filter(task -> {
                     final List<String> pipelineUuids = ExpressionUtil.values(criteria.getExpression(),
-                            ProcessorTaskFields.PIPELINE);
+                            ProcessorTaskFields.PIPELINE.getName());
                     if (pipelineUuids != null) {
                         if (!pipelineUuids.contains(task.getProcessorFilter().getProcessor().getPipelineUuid())) {
                             return false;
                         }
                     }
                     final List<String> taskStatus = ExpressionUtil.values(criteria.getExpression(),
-                            ProcessorTaskFields.STATUS);
+                            ProcessorTaskFields.STATUS.getName());
                     if (taskStatus != null) {
                         return taskStatus.contains(task.getStatus().getDisplayValue());
                     }
@@ -192,8 +193,9 @@ public class MockProcessorTaskDao implements ProcessorTaskDao, Clearable {
 
     @Override
     public void search(final ExpressionCriteria criteria,
-                       final AbstractField[] fields,
+                       final FieldIndex fieldIndex,
                        final ValuesConsumer consumer) {
+
     }
 
     @Override

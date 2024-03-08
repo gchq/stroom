@@ -9,6 +9,7 @@ import stroom.util.io.FileUtil;
 import stroom.util.logging.LogUtil;
 
 import io.vavr.Tuple;
+import jakarta.inject.Inject;
 import org.apache.commons.io.ByteOrderMark;
 import org.apache.commons.io.input.BOMInputStream;
 import org.slf4j.Logger;
@@ -31,7 +32,6 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
-import javax.inject.Inject;
 
 public class SampleDataGenerator {
 
@@ -209,7 +209,8 @@ public class SampleDataGenerator {
                             "emotionalState"))
                     .addFieldDefinition(DataGenerator.fakerField(
                             "address",
-                            faker -> faker.address().fullAddress()))
+                            faker ->
+                                    faker.address().fullAddress()))
                     .addFieldDefinition(DataGenerator.fakerField(
                             "company",
                             faker -> faker.company().name()))

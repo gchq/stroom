@@ -33,12 +33,15 @@ import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.State;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
+import stroom.util.NullSafe;
 import stroom.util.io.AbstractFileVisitor;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.Message;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.Severity;
 
+import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,7 +68,6 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
 
 class ImportExportSerializerImpl implements ImportExportSerializer {
 
@@ -179,7 +181,8 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
             // Get the path.
             final String path = properties.getProperty("path");
             // Get the tags.
-            final String tags = properties.getProperty("tags");
+            final Set<String> tags = explorerService.parseNodeTags(properties.getProperty("tags"));
+
 
             // Create a doc ref.
             final DocRef docRef = new DocRef(type, uuid, name);
@@ -211,7 +214,8 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                 // Find the appropriate handler
                 final ImportExportActionHandler importExportActionHandler = importExportActionHandlers.getHandler(type);
                 if (importExportActionHandler instanceof NonExplorerDocRefProvider) {
-                    imported = importNonExplorerDoc(importExportActionHandler,
+                    imported = importNonExplorerDoc(
+                            importExportActionHandler,
                             nodeFile,
                             docRef,
                             path,
@@ -221,9 +225,11 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                             importSettings);
 
                 } else {
-                    imported = importExplorerDoc(importExportActionHandler,
+                    imported = importExplorerDoc(
+                            importExportActionHandler,
                             nodeFile,
                             docRef,
+                            tags,
                             path,
                             dataMap,
                             importState,
@@ -318,6 +324,7 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
     private DocRef importExplorerDoc(final ImportExportActionHandler importExportActionHandler,
                                      final Path nodeFile,
                                      final DocRef docRef,
+                                     final Set<String> tags,
                                      final String path,
                                      final Map<String, byte[]> dataMap,
                                      final ImportState importState,
@@ -337,8 +344,7 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
             // This is a pre-existing item so make sure we are allowed to update it.
             if (!securityContext.hasDocumentPermission(docRef.getUuid(),
                     DocumentPermissionNames.UPDATE)) {
-                throw new PermissionException(
-                        securityContext.getUserId(),
+                throw new PermissionException(securityContext.getUserIdentityForAudit(),
                         "You do not have permission to update '" + docRef + "'");
             }
 
@@ -365,7 +371,7 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
         ExplorerNode parentNode = null;
         if (importState.getState() == State.NEW || moving) {
             // Create a parent folder for the new node.
-            final ExplorerNode parent = explorerNodeService.getNodeWithRoot().orElse(null);
+            final ExplorerNode parent = explorerNodeService.getRoot();
             parentNode = getOrCreateParentFolder(parent,
                     importPath,
                     ImportSettings.ok(importSettings, importState));
@@ -374,7 +380,7 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
             folderRef = new DocRef(parentNode.getType(), parentNode.getUuid(), parentNode.getName());
             if (!securityContext.hasDocumentPermission(folderRef.getUuid(),
                     DocumentPermissionNames.getDocumentCreatePermission(docRef.getType()))) {
-                throw new PermissionException(securityContext.getUserId(),
+                throw new PermissionException(securityContext.getUserIdentityForAudit(),
                         "You do not have permission to create '" + docRef + "' in '" + folderRef);
             }
         }
@@ -406,7 +412,8 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
 
                     // Create, rename and/or move explorer node.
                     if (existingNode.isEmpty()) {
-                        explorerNodeService.createNode(imported,
+                        explorerNodeService.createNode(
+                                imported,
                                 folderRef,
                                 PermissionInheritance.DESTINATION);
                         explorerService.rebuildTree();
@@ -455,11 +462,11 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                 final List<ExplorerNode> nodes = explorerNodeService.getPath(importSettings.getRootDocRef());
                 nodes.add(rootNode);
                 // Remove root node.
-                explorerNodeService.getNodeWithRoot().ifPresent(root -> {
-                    if (nodes.get(0).equals(root)) {
-                        nodes.remove(0);
-                    }
-                });
+
+                final ExplorerNode root = explorerNodeService.getRoot();
+                if (nodes.get(0).equals(root)) {
+                    nodes.remove(0);
+                }
                 if (nodes.size() > 0) {
                     final String rootPath = getParentPath(nodes);
                     result = createPath(rootPath, path);
@@ -471,6 +478,7 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
 
     /**
      * EXPORT
+     *
      * @return
      */
     @Override
@@ -493,7 +501,8 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                 exportSummary.addSuccess(docRef.getType());
             } catch (final IOException | RuntimeException e) {
                 messageList.add(new Message(Severity.ERROR,
-                        "Error created while exporting (" + docRef.toString() + ") : " + e.getMessage()));
+                        "Error created while exporting (" + docRef.toString() + ") : "
+                                + LogUtil.exceptionMessage(e)));
                 exportSummary.addFailure(docRef.getType());
             }
         }
@@ -517,7 +526,7 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                     final DocRef folderRef = new DocRef(parent.getType(), parent.getUuid(), parent.getName());
                     if (!securityContext.hasDocumentPermission(folderRef.getUuid(),
                             DocumentPermissionNames.getDocumentCreatePermission(FOLDER))) {
-                        throw new PermissionException(securityContext.getUserId(),
+                        throw new PermissionException(securityContext.getUserIdentityForAudit(),
                                 "You do not have permission to create a folder in '" + folderRef);
                     }
 
@@ -666,7 +675,8 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                         } catch (final IOException e) {
                             localMessageList.add(new Message(
                                     Severity.ERROR,
-                                    "Failed to write file '" + fileName + "'"));
+                                    "Failed to write file '" + fileName + "': "
+                                            + LogUtil.exceptionMessage(e)));
                         }
                     });
 
@@ -687,6 +697,11 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                 }
             } catch (Exception e) {
                 importExportDocumentEventLog.exportDocument(docRef, e);
+                localMessageList.add(new Message(
+                        Severity.ERROR,
+                        "Error exporting directory '"
+                                + NullSafe.get(dir, Path::toAbsolutePath, Path::normalize) + "': "
+                                + LogUtil.exceptionMessage(e)));
             } finally {
                 messageList.addAll(localMessageList);
             }
@@ -715,14 +730,17 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
             properties.setProperty("type", explorerNode.getType());
             properties.setProperty("name", explorerNode.getName());
             properties.setProperty("path", String.join("/", pathElements));
-            if (explorerNode.getTags() != null) {
-                properties.setProperty("tags", explorerNode.getTags());
+            final String tagsStr = NullSafe.get(explorerNode.getTags(), explorerService::nodeTagsToString);
+            if (!NullSafe.isBlankString(tagsStr)) {
+                properties.setProperty("tags", tagsStr);
             }
 
             final OutputStream outputStream = Files.newOutputStream(parentDir.resolve(fileName));
             PropertiesSerialiser.write(properties, outputStream);
-        } catch (final IOException e) {
-            messageList.add(new Message(Severity.ERROR, "Failed to write file '" + fileName + "'"));
+        } catch (final Exception e) {
+            messageList.add(new Message(
+                    Severity.ERROR,
+                    "Error writing properties to file '" + fileName + "': " + LogUtil.exceptionMessage(e)));
         }
     }
 

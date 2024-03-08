@@ -18,9 +18,10 @@ package stroom.search;
 
 
 import stroom.docref.DocRef;
+import stroom.expression.api.DateTimeSettings;
+import stroom.expression.api.ExpressionContext;
 import stroom.index.impl.IndexStore;
 import stroom.index.shared.IndexDoc;
-import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.DestroyReason;
 import stroom.query.api.v2.Result;
 import stroom.query.api.v2.ResultRequest;
@@ -29,15 +30,13 @@ import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
 import stroom.query.api.v2.TableResult;
 import stroom.query.api.v2.TableSettings;
+import stroom.query.common.v2.ExpressionContextFactory;
 import stroom.query.common.v2.ResultStoreManager;
-import stroom.query.language.DataSourceResolver;
-import stroom.query.language.SearchRequestBuilder;
+import stroom.query.language.SearchRequestFactory;
 import stroom.test.AbstractCoreIntegrationTest;
+import stroom.util.json.JsonUtil;
 
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
+import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,7 +47,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -61,7 +59,9 @@ public abstract class AbstractSearchTest2 extends AbstractCoreIntegrationTest {
     @Inject
     private ResultStoreManager searchResponseCreatorManager;
     @Inject
-    private DataSourceResolver dataSourceResolver;
+    private SearchRequestFactory searchRequestFactory;
+    @Inject
+    private ExpressionContextFactory expressionContextFactory;
 
     protected static SearchResponse search(final SearchRequest searchRequest,
                                            final ResultStoreManager searchResponseCreatorManager) {
@@ -72,15 +72,6 @@ public abstract class AbstractSearchTest2 extends AbstractCoreIntegrationTest {
         searchResponseCreatorManager.destroy(response.getKey(), DestroyReason.NO_LONGER_NEEDED);
 
         return response;
-    }
-
-    private static ObjectMapper createMapper(final boolean indent) {
-        final ObjectMapper mapper = new ObjectMapper();
-        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        mapper.configure(SerializationFeature.INDENT_OUTPUT, indent);
-        mapper.setSerializationInclusion(Include.NON_NULL);
-
-        return mapper;
     }
 
     public void testInteractive(
@@ -120,8 +111,8 @@ public abstract class AbstractSearchTest2 extends AbstractCoreIntegrationTest {
                 null,
                 DateTimeSettings.builder().build(),
                 false);
-        searchRequest = SearchRequestBuilder.create(queryString, searchRequest);
-        searchRequest = dataSourceResolver.resolveDataSource(searchRequest);
+        final ExpressionContext expressionContext = expressionContextFactory.createContext(searchRequest);
+        searchRequest = searchRequestFactory.create(queryString, searchRequest, expressionContext);
 
         // Add extraction pipeline.
         // TODO : @66 REPLACE WITH VIEW BASED EXTRACTION
@@ -133,8 +124,7 @@ public abstract class AbstractSearchTest2 extends AbstractCoreIntegrationTest {
         searchRequest = searchRequest.copy().resultRequests(Collections.singletonList(resultRequest)).build();
 
         try {
-            final ObjectMapper mapper = createMapper(true);
-            final String json = mapper.writeValueAsString(searchRequest);
+            final String json = JsonUtil.writeValueAsString(searchRequest);
             LOGGER.info(json);
         } catch (final Exception e) {
             LOGGER.error(e.getMessage(), e);
@@ -172,7 +162,7 @@ public abstract class AbstractSearchTest2 extends AbstractCoreIntegrationTest {
             assertThat(rows).hasSize(componentIds.size());
 
             int count = rows.values().iterator().next().size();
-            assertThat(count).as("Correct number of results found").isEqualTo(expectResultCount);
+            assertThat(count).as("Incorrect number of results found").isEqualTo(expectResultCount);
         }
         resultMapConsumer.accept(rows);
     }

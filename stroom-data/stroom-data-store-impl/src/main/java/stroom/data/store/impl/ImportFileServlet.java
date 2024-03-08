@@ -23,11 +23,14 @@ import stroom.util.shared.IsServlet;
 import stroom.util.shared.PropertyMap;
 import stroom.util.shared.ResourceKey;
 
-import org.apache.commons.fileupload.FileItem;
-import org.apache.commons.fileupload.FileItemFactory;
-import org.apache.commons.fileupload.FileUploadException;
-import org.apache.commons.fileupload.disk.DiskFileItemFactory;
-import org.apache.commons.fileupload.servlet.ServletFileUpload;
+import jakarta.inject.Inject;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import org.apache.commons.fileupload2.core.DiskFileItem;
+import org.apache.commons.fileupload2.core.DiskFileItemFactory;
+import org.apache.commons.fileupload2.core.FileUploadException;
+import org.apache.commons.fileupload2.jakarta.JakartaServletFileUpload;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,10 +44,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import javax.inject.Inject;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 /**
  * Generic Import Service
@@ -78,13 +77,13 @@ public final class ImportFileServlet extends HttpServlet implements IsServlet {
 
         try {
             // Parse the request and populate a map of file items.
-            final Map<String, FileItem> items = getFileItems(request);
+            final Map<String, DiskFileItem> items = getFileItems(request);
             if (items.size() == 0) {
                 response.getWriter().write(propertyMap.toArgLine());
                 return;
             }
 
-            final FileItem fileItem = items.get(FILE_UPLOAD_PROP_NAME);
+            final DiskFileItem fileItem = items.get(FILE_UPLOAD_PROP_NAME);
             Objects.requireNonNull(fileItem, "Property '" + FILE_UPLOAD_PROP_NAME + "' not found in request");
             final String fileName = fileItem.getName();
             final ResourceKey resourceKey = resourceStore.createTempFile(fileName);
@@ -111,16 +110,17 @@ public final class ImportFileServlet extends HttpServlet implements IsServlet {
         response.getWriter().write(propertyMap.toArgLine());
     }
 
-    private Map<String, FileItem> getFileItems(final HttpServletRequest request) {
-        final Map<String, FileItem> fields = new HashMap<>();
-        final FileItemFactory factory = new DiskFileItemFactory();
-        final ServletFileUpload upload = new ServletFileUpload(factory);
+    private Map<String, DiskFileItem> getFileItems(final HttpServletRequest request) {
+        final Map<String, DiskFileItem> fields = new HashMap<>();
+        final DiskFileItemFactory factory = DiskFileItemFactory.builder()
+                .get();
+        final JakartaServletFileUpload<DiskFileItem, DiskFileItemFactory> upload =
+                new JakartaServletFileUpload<>(factory);
 
         try {
-            final List<?> items = upload.parseRequest(request);
-            for (final Object o : items) {
-                final FileItem item = (FileItem) o;
-                fields.put(item.getFieldName(), item);
+            final List<DiskFileItem> items = upload.parseRequest(request);
+            for (final DiskFileItem diskFileItem : items) {
+                fields.put(diskFileItem.getFieldName(), diskFileItem);
             }
         } catch (final FileUploadException e) {
             LOGGER.error("Unable to get file items!", e);

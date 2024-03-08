@@ -15,7 +15,7 @@ import stroom.statistics.impl.hbase.shared.StroomStatsStoreDoc;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.Severity;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 @SuppressWarnings("unused")
 @ConfigurableElement(

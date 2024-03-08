@@ -1,7 +1,6 @@
 package stroom.config.global.impl;
 
 import stroom.activity.impl.db.ActivityConfig;
-import stroom.analytics.impl.AlertConfig;
 import stroom.analytics.impl.AnalyticsConfig;
 import stroom.annotation.impl.AnnotationConfig;
 import stroom.bytebuffer.ByteBufferPoolConfig;
@@ -19,7 +18,6 @@ import stroom.config.common.PublicUriConfig;
 import stroom.config.common.UiUriConfig;
 import stroom.config.global.shared.ConfigProperty;
 import stroom.config.global.shared.OverrideValue;
-import stroom.core.receive.ReceiveDataConfig;
 import stroom.docref.DocRef;
 import stroom.docstore.impl.db.DocStoreConfig;
 import stroom.event.logging.impl.LoggingConfig;
@@ -39,6 +37,8 @@ import stroom.node.impl.NodeConfig;
 import stroom.pipeline.PipelineConfig;
 import stroom.pipeline.refdata.ReferenceDataLmdbConfig;
 import stroom.processor.impl.ProcessorConfig;
+import stroom.query.field.impl.QueryFieldConfig;
+import stroom.receive.common.ReceiveDataConfig;
 import stroom.search.elastic.ElasticConfig;
 import stroom.search.impl.SearchConfig;
 import stroom.search.solr.SolrConfig;
@@ -62,8 +62,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.google.common.reflect.TypeToken;
-import io.dropwizard.Configuration;
 import io.dropwizard.configuration.ConfigurationException;
+import io.dropwizard.core.Configuration;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import io.vavr.Tuple8;
@@ -632,9 +632,12 @@ class TestConfigMapper {
 
     @Test
     void testValidateDelimiter_bad() {
-        Assertions.assertThatThrownBy(() -> {
-            ConfigMapper.validateDelimiter("xxxx", 0, "first", "dummy example");
-        })
+        Assertions.assertThatThrownBy(() ->
+                        ConfigMapper.validateDelimiter(
+                                "xxxx",
+                                0,
+                                "first",
+                                "dummy example"))
                 .isInstanceOf(RuntimeException.class);
     }
 
@@ -777,10 +780,9 @@ class TestConfigMapper {
         if (shouldValidate) {
             configMapper.validateValueSerialisation(propertyPath, value);
         } else {
-            Assertions.assertThatThrownBy(() -> {
-                // no leading delimiter
-                configMapper.validateValueSerialisation(propertyPath, value);
-            })
+            // no leading delimiter
+            Assertions.assertThatThrownBy(() ->
+                            configMapper.validateValueSerialisation(propertyPath, value))
                     .isInstanceOf(RuntimeException.class);
         }
     }
@@ -911,7 +913,6 @@ class TestConfigMapper {
         public TestConfig(
                 @JsonProperty(PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE) final boolean haltBootOnConfigValidationFailure,
                 @JsonProperty(PROP_NAME_ACTIVITY) final ActivityConfig activityConfig,
-                @JsonProperty(PROP_NAME_ALERTING) final AlertConfig alertConfig,
                 @JsonProperty(PROP_NAME_ANALYTICS) final AnalyticsConfig analyticsConfig,
                 @JsonProperty(PROP_NAME_ANNOTATION) final AnnotationConfig annotationConfig,
                 @JsonProperty(PROP_NAME_BYTE_BUFFER_POOL) final ByteBufferPoolConfig byteBufferPoolConfig,
@@ -938,6 +939,7 @@ class TestConfigMapper {
                 @JsonProperty(PROP_NAME_PROCESSOR) final ProcessorConfig processorConfig,
                 @JsonProperty(PROP_NAME_PROPERTIES) final PropertyServiceConfig propertyServiceConfig,
                 @JsonProperty(PROP_NAME_PUBLIC_URI) final PublicUriConfig publicUri,
+                @JsonProperty(PROP_NAME_QUERY_DATASOURCE) final QueryFieldConfig queryDataSourceConfig,
                 @JsonProperty(PROP_NAME_RECEIVE) final ReceiveDataConfig receiveDataConfig,
                 @JsonProperty(PROP_NAME_SEARCH) final SearchConfig searchConfig,
                 @JsonProperty(PROP_NAME_SECURITY) final SecurityConfig securityConfig,
@@ -967,7 +969,6 @@ class TestConfigMapper {
 
             super(haltBootOnConfigValidationFailure,
                     activityConfig,
-                    alertConfig,
                     analyticsConfig,
                     annotationConfig,
                     byteBufferPoolConfig,
@@ -994,6 +995,7 @@ class TestConfigMapper {
                     processorConfig,
                     propertyServiceConfig,
                     publicUri,
+                    queryDataSourceConfig,
                     receiveDataConfig,
                     searchConfig,
                     securityConfig,

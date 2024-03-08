@@ -16,8 +16,8 @@
 
 package stroom.explorer.shared;
 
+import stroom.docref.DocContentHighlights;
 import stroom.docref.DocRef;
-import stroom.docref.DocRefInfo;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.ResultPage;
@@ -25,18 +25,18 @@ import stroom.util.shared.ResultPage;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
 import org.fusesource.restygwt.client.DirectRestService;
 
 import java.util.List;
 import java.util.Set;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
 
 @Tag(name = "Explorer (v2)")
 @Path("/explorer" + ResourcePaths.V2)
@@ -79,12 +79,43 @@ public interface ExplorerResource extends RestResource, DirectRestService {
             operationId = "renameExplorerItems")
     ExplorerNode rename(@Parameter(description = "request", required = true) ExplorerServiceRenameRequest request);
 
+    @PUT
+    @Path("/tags")
+    @Operation(
+            summary = "Update explorer node tags",
+            operationId = "updateExplorerNodeTags")
+    ExplorerNode updateNodeTags(
+            @Parameter(description = "request", required = true) ExplorerNode explorerNode);
+
+    @PUT
+    @Path("/addTags")
+    @Operation(
+            summary = "Add tags to explorer nodes",
+            operationId = "addTags")
+    void addTags(
+            @Parameter(description = "request", required = true) AddRemoveTagsRequest request);
+
+    @DELETE
+    @Path("/removeTags")
+    @Operation(
+            summary = "Remove tags from explorer nodes",
+            operationId = "removeTags")
+    void removeTags(
+            @Parameter(description = "request", required = true) AddRemoveTagsRequest request);
+
     @POST
     @Path("/info")
     @Operation(
             summary = "Get document info",
             operationId = "fetchExplorerItemInfo")
-    DocRefInfo info(@Parameter(description = "docRef", required = true) DocRef docRef);
+    ExplorerNodeInfo info(@Parameter(description = "docRef", required = true) DocRef docRef);
+
+    @POST
+    @Path("/decorate")
+    @Operation(
+            summary = "Decorate the docRef will all values, e.g. add the name",
+            operationId = "decorateDocRef")
+    DocRef decorate(@Parameter(description = "docRef", required = true) DocRef docRef);
 
     @POST
     @Path("/getFromDocRef")
@@ -107,6 +138,20 @@ public interface ExplorerResource extends RestResource, DirectRestService {
             operationId = "fetchExplorerDocumentTypes")
     DocumentTypes fetchDocumentTypes();
 
+    @GET
+    @Path("/fetchExplorerNodeTags")
+    @Operation(
+            summary = "Fetch all known explorer node tags",
+            operationId = "fetchExplorerNodeTags")
+    Set<String> fetchExplorerNodeTags();
+
+    @POST
+    @Path("/fetchExplorerNodeTagsByDocRefs")
+    @Operation(
+            summary = "Fetch explorer node tags held by at least one of decRefs",
+            operationId = "fetchExplorerNodeTagsByDocRefs")
+    Set<String> fetchExplorerNodeTags(final List<DocRef> docRefs);
+
     @POST
     @Path("/fetchExplorerPermissions")
     @Operation(
@@ -121,13 +166,44 @@ public interface ExplorerResource extends RestResource, DirectRestService {
             summary = "Fetch explorer nodes",
             operationId = "fetchExplorerNodes")
     FetchExplorerNodeResult fetchExplorerNodes(
-            @Parameter(description = "request", required = true) FindExplorerNodeCriteria request);
+            @Parameter(description = "request", required = true) FetchExplorerNodesRequest request);
 
     @POST
-    @Path("/findExplorerNodes")
+    @Path("/find")
     @Operation(
-            summary = "Find explorer nodes using a query",
-            operationId = "findExplorerNodes")
-    ResultPage<ExplorerDocContentMatch> findContent(
-            @Parameter(description = "request", required = true) FindExplorerNodeQuery request);
+            summary = "Find documents with names and types matching the supplied request",
+            operationId = "find")
+    ResultPage<FindResult> find(
+            @Parameter(description = "request", required = true) FindRequest request);
+
+    @POST
+    @Path("/findInContent")
+    @Operation(
+            summary = "Find documents with content matching the supplied request",
+            operationId = "findInContent")
+    ResultPage<FindInContentResult> findInContent(
+            @Parameter(description = "request", required = true) FindInContentRequest request);
+
+    @POST
+    @Path("/fetchHighlights")
+    @Operation(
+            summary = "Fetch match highlights on found content",
+            operationId = "fetchHighlights")
+    DocContentHighlights fetchHighlights(
+            @Parameter(description = "request", required = true) FetchHighlightsRequest request);
+
+
+    // --------------------------------------------------------------------------------
+
+
+    enum TagFetchMode {
+        /**
+         * Tags held by ALL nodes.
+         */
+        AND,
+        /**
+         * Tags held by at least one node
+         */
+        OR
+    }
 }

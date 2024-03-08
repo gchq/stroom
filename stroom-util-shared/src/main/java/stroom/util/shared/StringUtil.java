@@ -1,5 +1,7 @@
 package stroom.util.shared;
 
+import java.util.Collection;
+
 /**
  * String utilities for client side or shared code
  */
@@ -19,14 +21,39 @@ public class StringUtil {
         return obj.toString();
     }
 
+    public static String prefix(final String string, final char prefixChar, final int count) {
+        final StringBuilder stringBuilder = new StringBuilder();
+
+        //noinspection StringRepeatCanBeUsed
+        for (int i = 0; i < count; i++) {
+            stringBuilder.append(prefixChar);
+        }
+        if (string != null) {
+            stringBuilder.append(string);
+        }
+        return stringBuilder.toString();
+    }
+
+    public static String suffix(final String string, final char prefixChar, final int count) {
+        final StringBuilder stringBuilder = new StringBuilder();
+        if (string != null) {
+            stringBuilder.append(string);
+        }
+        //noinspection StringRepeatCanBeUsed
+        for (int i = 0; i < count; i++) {
+            stringBuilder.append(prefixChar);
+        }
+        return stringBuilder.toString();
+    }
+
     /**
-     * @return params as is, unless it is empty or blank, in which case return null.
+     * @return str as is, unless it is empty or blank, in which case return null.
      */
-    public static String blankAsNull(final String params) {
-        if (params != null && (params.isEmpty() || isBlank(params))) {
+    public static String blankAsNull(final String str) {
+        if (str != null && (str.isEmpty() || isBlank(str))) {
             return null;
         } else {
-            return params;
+            return str;
         }
     }
 
@@ -107,16 +134,103 @@ public class StringUtil {
         return userText;
     }
 
+    /**
+     * @return "s" if count is > 1
+     */
     public static String pluralSuffix(final int count) {
         return count > 1
                 ? "s"
                 : "";
     }
 
+    /**
+     * @return "s" if {@link Collection#size()} is > 1
+     */
+    public static String pluralSuffix(final Collection<?> collection) {
+        return collection != null && collection.size() > 1
+                ? "s"
+                : "";
+    }
+
+    /**
+     * @return "s" if count is > 1
+     */
     public static String pluralSuffix(final long count) {
         return count > 1
                 ? "s"
                 : "";
+    }
+
+    /**
+     * @return singular + "s" if count is > 1, else singular
+     * e.g.
+     * <pre>{@code pluralSuffix("document", count)}</pre>
+     */
+    public static String plural(final String singular, final int count) {
+        return count > 1
+                ? singular + "s"
+                : singular;
+    }
+
+    /**
+     * @return singular + "s" if {@link Collection#size()} is > 1, else singular
+     * e.g.
+     * <pre>{@code pluralSuffix("document", list)}</pre>
+     */
+    public static String plural(final String singular, final Collection<?> collection) {
+        return collection != null && collection.size() > 1
+                ? singular + "s"
+                : singular;
+    }
+
+    /**
+     * @return singular + "s" if count is > 1, else singular
+     * e.g.
+     * <pre>{@code pluralSuffix("document", count)}</pre>
+     */
+    public static String plural(final String singular, final long count) {
+        return count > 1
+                ? singular + "s"
+                : singular;
+    }
+
+    /**
+     * @return plural if count is > 1, else singular.
+     * e.g.
+     * <pre>{@code plural("has", "have", list)}</pre>
+     */
+    public static String plural(final String singular,
+                                final String plural,
+                                final Collection<?> collection) {
+        return collection != null && collection.size() > 1
+                ? plural
+                : singular;
+    }
+
+    /**
+     * @return plural if count is > 1, else singular
+     * e.g.
+     * <pre>{@code plural("has", "have", count)}</pre>
+     */
+    public static String plural(final String singular,
+                                final String plural,
+                                final int count) {
+        return count > 1
+                ? plural
+                : singular;
+    }
+
+    /**
+     * @return plural if count is > 1, else singular
+     * e.g.
+     * <pre>{@code plural("has", "have", list)}</pre>
+     */
+    public static String plural(final String singular,
+                                final String plural,
+                                final long count) {
+        return count > 1
+                ? plural
+                : singular;
     }
 
     /**
@@ -130,4 +244,15 @@ public class StringUtil {
         }
     }
 
+    /**
+     * Surrounds str with single quotes. Does not do any escaping. Intended for display purposes.
+     * if str is null returns {@code ''}.
+     */
+    public static String singleQuote(final String str) {
+        if (str == null) {
+            return "''";
+        } else {
+            return "'" + str + "'";
+        }
+    }
 }

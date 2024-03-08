@@ -27,8 +27,8 @@ dependencies {
     implementation project(':stroom-event-logging:stroom-event-logging-api')
     implementation project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
 //    implementation project(':stroom-lmdb')
-//    implementation project(':stroom-query:stroom-expression')
-
+    implementation project(':stroom-query:stroom-query-language')
+    implementation project(':stroom-query:stroom-query-language-api')
     implementation project(':stroom-query:stroom-query-api')
     implementation project(':stroom-query:stroom-query-common')
     implementation project(':stroom-importexport:stroom-importexport-api')
@@ -39,18 +39,19 @@ dependencies {
     implementation project(':stroom-task:stroom-task-api')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
+    implementation project(':stroom-view:stroom-view-api')
 
     implementation libs.eventLogging
 //
 //    implementation libs.guava
-    implementation libs.guice5
+    implementation libs.guice
 //    implementation libs.jackson_annotations
 //    implementation libs.jackson_core
 //    implementation libs.jackson_databind
 //    implementation libs.jackson_core
     implementation libs.jakarta_servlet_api
 //    implementation libs.jakarta_validation_api
-    implementation libs.javax_inject
+    implementation libs.jakarta_inject
 //    implementation libs.jaxb_api
 //    implementation libs.kryo
 //    implementation libs.lmdbjava

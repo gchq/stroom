@@ -37,6 +37,7 @@ import stroom.entity.client.presenter.TreeRowHandler;
 import stroom.node.client.NodeManager;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.task.shared.FindTaskCriteria;
 import stroom.task.shared.FindTaskProgressCriteria;
 import stroom.task.shared.FindTaskProgressRequest;
@@ -48,12 +49,16 @@ import stroom.task.shared.TerminateTaskProgressRequest;
 import stroom.util.client.DataGridUtil;
 import stroom.util.client.DelayedUpdate;
 import stroom.util.shared.Expander;
+import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultPage;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.InlineSvgToggleButton;
+import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
+import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.TableBuilder;
 import stroom.widget.util.client.TableCell;
 
@@ -101,6 +106,8 @@ public class TaskManagerListPresenter
     private final ButtonView expandAllButton;
     private final ButtonView collapseAllButton;
     private final ButtonView warningsButton;
+    private final InlineSvgToggleButton autoRefreshButton;
+    private final InlineSvgToggleButton wrapToggleButton;
 
     private String currentWarnings;
     private Column<TaskProgress, Expander> expanderColumn;
@@ -110,6 +117,7 @@ public class TaskManagerListPresenter
 
     private Range range;
     private Consumer<TaskProgressResponse> dataConsumer;
+    private boolean autoRefresh = true;
 
     @Inject
     public TaskManagerListPresenter(final EventBus eventBus,
@@ -128,6 +136,12 @@ public class TaskManagerListPresenter
         dataGrid = new MyDataGrid<>(1000);
         view.setDataWidget(dataGrid);
 
+        autoRefreshButton = new InlineSvgToggleButton();
+        autoRefreshButton.setSvg(SvgImage.AUTO_REFRESH);
+        autoRefreshButton.setTitle("Turn Auto Refresh Off");
+        autoRefreshButton.setState(autoRefresh);
+        getView().addButton(autoRefreshButton);
+
         final ButtonView terminateButton = getView().addButton(SvgPresets.DELETE.with("Terminate Task", true));
         terminateButton.addClickHandler(event -> endSelectedTask());
 
@@ -135,6 +149,12 @@ public class TaskManagerListPresenter
         collapseAllButton = getView().addButton(SvgPresets.COLLAPSE_UP.with("Collapse All", false));
         warningsButton = getView().addButton(SvgPresets.ALERT.title("Show Warnings"));
         warningsButton.setVisible(false);
+
+        wrapToggleButton = new InlineSvgToggleButton();
+        wrapToggleButton.setSvg(SvgImage.TEXT_WRAP);
+        wrapToggleButton.setTitle("Toggle wrapping of Info column");
+        wrapToggleButton.setOff();
+        getView().addButton(wrapToggleButton);
 
         updateButtonStates();
 
@@ -189,6 +209,31 @@ public class TaskManagerListPresenter
                 showWarnings();
             }
         }));
+
+        registerHandler(autoRefreshButton.addClickHandler(event -> {
+            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                autoRefresh = !autoRefresh;
+                if (autoRefresh) {
+                    autoRefreshButton.setTitle("Turn Auto Refresh Off");
+                    internalRefresh();
+                } else {
+                    autoRefreshButton.setTitle("Turn Auto Refresh On");
+                }
+            }
+        }));
+
+        registerHandler(wrapToggleButton.addClickHandler(event -> {
+            if (MouseUtil.isPrimary(event)) {
+                if (wrapToggleButton.isOff()) {
+                    wrapToggleButton.setTitle("Turn Cell Line Wrapping On");
+                    dataGrid.setMultiLine(false);
+                } else {
+                    wrapToggleButton.setTitle("Turn Cell Line Wrapping Off");
+                    dataGrid.setMultiLine(true);
+                }
+//                internalRefresh();
+            }
+        }));
     }
 
     private void showWarnings() {
@@ -213,7 +258,7 @@ public class TaskManagerListPresenter
      */
     private void initTableColumns() {
         // Select Column
-        final Column<TaskProgress, TickBoxState> column = new Column<TaskProgress, TickBoxState>(
+        final Column<TaskProgress, TickBoxState> checkBoxColumn = new Column<TaskProgress, TickBoxState>(
                 TickBoxCell.create(false, false)) {
             @Override
             public TickBoxState getValue(final TaskProgress taskProgress) {
@@ -227,7 +272,7 @@ public class TaskManagerListPresenter
             }
         };
 
-        dataGrid.addColumn(column, "", ColumnSizeConstants.CHECKBOX_COL);
+        dataGrid.addColumn(checkBoxColumn, "", ColumnSizeConstants.CHECKBOX_COL);
 
         // Expander column.
         expanderColumn = new Column<TaskProgress, Expander>(new ExpanderCell()) {
@@ -244,20 +289,20 @@ public class TaskManagerListPresenter
             // need to clear the expandAllRequestState prior to fetching
             treeAction.resetExpandAllRequestState();
             updateButtonStates();
-            refresh();
+            internalRefresh();
         });
 
         final InfoColumn<TaskProgress> furtherInfoColumn = new InfoColumn<TaskProgress>() {
             @Override
-            protected void showInfo(final TaskProgress row, final int x, final int y) {
+            protected void showInfo(final TaskProgress row, final PopupPosition popupPosition) {
                 final SafeHtml tooltipHtml = buildTooltipHtml(row);
-                tooltipPresenter.show(tooltipHtml, x, y);
+                tooltipPresenter.show(tooltipHtml, popupPosition);
             }
         };
         dataGrid.addColumn(furtherInfoColumn, "<br/>", ColumnSizeConstants.ICON_COL);
 
         // Add Handlers
-        column.setFieldUpdater((index, object, value) -> {
+        checkBoxColumn.setFieldUpdater((index, object, value) -> {
             if (value.toBoolean()) {
                 selectedTaskProgress.add(object);
             } else {
@@ -280,11 +325,11 @@ public class TaskManagerListPresenter
 
         // Name.
         dataGrid.addResizableColumn(
-                DataGridUtil.htmlColumnBuilder(getColouredCellFunc(TaskProgress::getTaskName))
+                DataGridUtil.htmlColumnBuilder(getWrapableColouredCellFunc(TaskProgress::getTaskName))
                         .withSorting(FindTaskProgressCriteria.FIELD_NAME)
                         .build(),
                 FindTaskProgressCriteria.FIELD_NAME,
-                150);
+                250);
 
         // User.
         dataGrid.addResizableColumn(
@@ -313,36 +358,42 @@ public class TaskManagerListPresenter
                 ColumnSizeConstants.SMALL_COL);
 
         // Info
-        dataGrid.addResizableColumn(
-                DataGridUtil.htmlColumnBuilder(getColouredCellFunc(TaskProgress::getTaskInfo))
+        dataGrid.addAutoResizableColumn(
+                DataGridUtil.htmlColumnBuilder(getWrapableColouredCellFunc(TaskProgress::getTaskInfo))
                         .withSorting(FindTaskProgressCriteria.FIELD_INFO)
                         .build(),
                 FindTaskProgressCriteria.FIELD_INFO,
-                1000);
+                200);
 
         dataGrid.addEndColumn(new EndColumn<>());
     }
 
     private SafeHtml buildTooltipHtml(final TaskProgress row) {
-        final TableBuilder tb = new TableBuilder();
-        tb
+        final TableBuilder tableBuilder = new TableBuilder()
                 .row(TableCell.header("Task", 2))
                 .row("Name", row.getTaskName())
                 .row("User", row.getUserName())
                 .row("Submit Time", dateTimeFormatter.format(row.getSubmitTimeMs()))
                 .row("Age", ModelStringUtil.formatDurationString(row.getAgeMs()))
-                .row()
-                .row("Id", row.getId().toString())
-                .row("Thread Name", row.getThreadName());
+                .row("Id", GwtNullSafe.get(row.getId(), TaskId::getId));
 
-        if (row.getId() != null) {
-            final TaskId parentId = row.getId().getParentId();
-            if (parentId != null) {
-                tb.row("Parent Id", parentId.toString());
-            }
-        }
+        GwtNullSafe.consume(row.getId(), TaskId::getParentId, TaskId::getId, parentId ->
+                tableBuilder.row("Parent Id", parentId));
+
+        tableBuilder.row("Thread Name", row.getThreadName());
+
+        GwtNullSafe.consume(row.getTaskInfo(), info ->
+                tableBuilder.row(
+                        TableCell.builder()
+                                .value("Info")
+                                .build(),
+                        TableCell.builder()
+                                .addClass(TableCell.WRAP_CLASS)
+                                .value(info)
+                                .build()));
+
         final HtmlBuilder htmlBuilder = new HtmlBuilder();
-        htmlBuilder.div(tb::write, Attribute.className("infoTable"));
+        htmlBuilder.div(tableBuilder::write, Attribute.className("taskManager infoTable"));
         return htmlBuilder.toSafeHtml();
     }
 
@@ -352,12 +403,34 @@ public class TaskManagerListPresenter
                 TaskProgress::isMatchedInFilter);
     }
 
+    private Function<TaskProgress, SafeHtml> getWrapableColouredCellFunc(
+            final Function<TaskProgress, String> extractor) {
+        final Function<TaskProgress, SafeHtml> colouredCellFunc = getColouredCellFunc(extractor);
+
+        return (TaskProgress row) -> {
+            final SafeHtml colouredText = colouredCellFunc.apply(row);
+            if (wrapToggleButton.isOn()) {
+                return HtmlBuilder.builder()
+                        .div(htmlBuilder -> htmlBuilder.append(colouredText))
+                        .toSafeHtml();
+            } else {
+                return colouredText;
+            }
+        };
+    }
+
     private Expander buildExpander(final TaskProgress row) {
         return row.getExpander();
     }
 
     @Override
     public void refresh() {
+        if (autoRefresh) {
+            internalRefresh();
+        }
+    }
+
+    private void internalRefresh() {
         treeAction.resetExpandAllRequestState();
         dataProvider.refresh();
     }
@@ -436,7 +509,7 @@ public class TaskManagerListPresenter
         for (final TaskProgress taskProgress : cloneSelectedTaskProgress) {
             doTerminate(taskProgress);
         }
-        refresh();
+        internalRefresh();
     }
 
     private void doTerminate(final TaskProgress taskProgress) {
@@ -452,6 +525,10 @@ public class TaskManagerListPresenter
     public HandlerRegistration addDataSelectionHandler(final DataSelectionHandler<Set<String>> handler) {
         return addHandlerToSource(DataSelectionEvent.getType(), handler);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private class NameFilterTimer extends Timer {
 
@@ -472,7 +549,7 @@ public class TaskManagerListPresenter
                 // This is a new filter so reset all the expander states
                 treeAction.reset();
                 criteria.setNameFilter(filter);
-                refresh();
+                internalRefresh();
             }
         }
 

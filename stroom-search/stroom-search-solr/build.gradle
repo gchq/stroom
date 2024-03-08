@@ -15,7 +15,8 @@ dependencies {
     implementation project(':stroom-importexport:stroom-importexport-api')
     implementation project(':stroom-job:stroom-job-api')
     implementation project(':stroom-pipeline')
-    implementation project(':stroom-query:stroom-expression')
+    implementation project(':stroom-query:stroom-query-language')
+    implementation project(':stroom-query:stroom-query-language-api')
     implementation project(':stroom-query:stroom-query-api')
     implementation project(':stroom-query:stroom-query-common')
     implementation project(':stroom-search:stroom-search-extraction')
@@ -29,17 +30,17 @@ dependencies {
     implementation libs.dropwizard_metrics_healthchecks
     implementation libs.eventLogging
     implementation libs.guava
-    implementation libs.guice5
+    implementation libs.guice
     implementation libs.http_client
-    implementation libs.lucene_core
+    implementation project(path: ":stroom-index:lucene553-shaded", configuration: 'shadow') // Use shadow JAR
     implementation libs.restygwt
     implementation libs.saxon_he
     implementation libs.slf4j_api
     implementation libs.solrj
     implementation libs.swagger_annotations
     implementation libs.jackson_annotations
-    implementation libs.javax_inject
+    implementation libs.jakarta_inject
     implementation libs.jaxb_api
     implementation libs.ws_rs_api
-    implementation libs.xml_apis
+    //implementation libs.xml_apis
 }

@@ -2,11 +2,11 @@ package stroom.pipeline.xsltfunctions;
 
 import stroom.util.pipeline.scope.PipelineScoped;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import net.sf.saxon.ma.arrays.ArrayItemType;
 import net.sf.saxon.type.BuiltInAtomicType;
 import net.sf.saxon.value.SequenceType;
-
-import javax.inject.Inject;
-import javax.inject.Provider;
 
 public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
 
@@ -18,6 +18,7 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
 
     @Override
     protected void configureFunctions() {
+        bindFunction(CidrToNumericIPRangeFunction.class);
         bindFunction(ClassificationFunction.class);
         bindFunction(ColFromFunction.class);
         bindFunction(ColToFunction.class);
@@ -34,6 +35,7 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         bindFunction(HashFunction.class);
         bindFunction(HexToDecFunction.class);
         bindFunction(HexToOctFunction.class);
+        bindFunction(HexToStringFunction.class);
         bindFunction(HostAddressFunction.class);
         bindFunction(HostNameFunction.class);
         bindFunction(HttpCallFunction.class);
@@ -45,6 +47,7 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         bindFunction(MetaFunction.class);
         bindFunction(MetaKeysFunction.class);
         bindFunction(NumericIPFunction.class);
+        bindFunction(IPInCidrFunction.class);
         bindFunction(ParseUriFunction.class);
         bindFunction(PipelineNameFunction.class);
         bindFunction(PointIsInsideXYPolygonFunction.class);
@@ -53,6 +56,20 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         bindFunction(RecordNoFunction.class);
         bindFunction(SearchIdFunction.class);
         bindFunction(SourceFunction.class);
+    }
+
+    private static class CidrToNumericIPRangeFunction extends StroomExtensionFunctionDefinition<CidrToNumericIPRange> {
+
+        @Inject
+        CidrToNumericIPRangeFunction(final Provider<CidrToNumericIPRange> functionCallProvider) {
+            super(
+                    CidrToNumericIPRange.FUNCTION_NAME,
+                    1,
+                    1,
+                    new SequenceType[]{SequenceType.SINGLE_STRING},
+                    ArrayItemType.SINGLE_ARRAY,
+                    functionCallProvider);
+        }
     }
 
     private static class ClassificationFunction extends StroomExtensionFunctionDefinition<Classification> {
@@ -118,8 +135,8 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
             super(
                     CurrentUser.FUNCTION_NAME,
                     0,
-                    0,
-                    new SequenceType[]{},
+                    1,
+                    new SequenceType[]{SequenceType.SINGLE_STRING},
                     SequenceType.OPTIONAL_STRING,
                     functionCallProvider);
         }
@@ -288,6 +305,23 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         }
     }
 
+    private static class HexToStringFunction extends StroomExtensionFunctionDefinition<HexToString> {
+
+        @Inject
+        HexToStringFunction(final Provider<HexToString> functionCallProvider) {
+            super(
+                    HexToString.FUNCTION_NAME,
+                    2,
+                    2,
+                    new SequenceType[]{
+                            SequenceType.SINGLE_STRING,
+                            SequenceType.SINGLE_STRING
+                    },
+                    SequenceType.OPTIONAL_STRING,
+                    functionCallProvider);
+        }
+    }
+
     private static class HostAddressFunction extends StroomExtensionFunctionDefinition<HostAddress> {
 
         @Inject
@@ -433,7 +467,7 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
                     0,
                     0,
                     new SequenceType[]{},
-                    SequenceType.ANY_SEQUENCE,
+                    ArrayItemType.SINGLE_ARRAY,
                     functionCallProvider);
         }
     }
@@ -448,6 +482,23 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
                     1,
                     new SequenceType[]{SequenceType.SINGLE_STRING},
                     SequenceType.OPTIONAL_STRING,
+                    functionCallProvider);
+        }
+    }
+
+    private static class IPInCidrFunction extends StroomExtensionFunctionDefinition<IPInCidr> {
+
+        @Inject
+        IPInCidrFunction(final Provider<IPInCidr> functionCallProvider) {
+            super(
+                    IPInCidr.FUNCTION_NAME,
+                    2,
+                    2,
+                    new SequenceType[]{
+                            SequenceType.SINGLE_STRING,
+                            SequenceType.SINGLE_STRING
+                    },
+                    SequenceType.SINGLE_BOOLEAN,
                     functionCallProvider);
         }
     }

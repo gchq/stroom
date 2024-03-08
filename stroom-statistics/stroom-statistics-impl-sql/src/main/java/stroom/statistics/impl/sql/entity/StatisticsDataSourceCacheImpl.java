@@ -33,6 +33,10 @@ import stroom.util.logging.LogUtil;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.PermissionException;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
+
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -41,9 +45,6 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.inject.Singleton;
 
 @Singleton
 @EntityEventHandler(
@@ -151,7 +152,8 @@ class StatisticsDataSourceCacheImpl implements StatisticStoreCache, EntityEvent.
 
     private boolean permissionFilter(final StatisticStoreDoc entity) {
         if (!securityContext.hasDocumentPermission(entity.getUuid(), DocumentPermissionNames.READ)) {
-            throw new PermissionException(securityContext.getUserId(), "Not permitted to read " + entity.getName());
+            throw new PermissionException(
+                    securityContext.getUserIdentityForAudit(), "Not permitted to read " + entity.getName());
         }
         return true;
     }

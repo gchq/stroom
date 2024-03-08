@@ -16,24 +16,6 @@ appConfig:
         minimumIdle: 10
         prepStmtCacheSize: 25
         prepStmtCacheSqlLimit: 256
-  alerting:
-    additionalFieldsPrefix: "_"
-    reportAllExtractedFieldsEnabled: false
-    resultStore:
-      lmdb:
-        localDir: "analytic_store"
-        maxReaders: 10
-        maxStoreSize: "10G"
-        readAheadEnabled: true
-      maxPayloadSize: "1G"
-      maxPutsBeforeCommit: 10000
-      maxStringFieldLength: 1000
-      minPayloadSize: "1M"
-      offHeapResults: true
-      storeSize: "1000000,100,10,1"
-      valueQueueSize: 10000
-    rulesFolderList: []
-    timezone: "UTC"
   analytics:
     db:
       connection:
@@ -51,6 +33,34 @@ appConfig:
         minimumIdle: 10
         prepStmtCacheSize: 25
         prepStmtCacheSqlLimit: 256
+    emailConfig:
+      fromAddress: "noreply@stroom"
+      fromName: "Stroom Analytics"
+      smtp:
+        host: "localhost"
+        password: null
+        port: 2525
+        transport: "plain"
+        username: null
+    resultStore:
+      lmdb:
+        localDir: "analytic_store"
+        maxReaders: 10
+        maxStoreSize: "10G"
+        readAheadEnabled: true
+      maxPayloadSize: "1G"
+      maxPutsBeforeCommit: 10000
+      maxSortedItems: 500000
+      maxStringFieldLength: 1000
+      minPayloadSize: "1M"
+      offHeapResults: true
+      valueQueueSize: 10000
+    streamingAnalyticCache:
+      expireAfterAccess: "PT10M"
+      expireAfterWrite: null
+      maximumSize: 1000
+      refreshAfterWrite: null
+    timezone: "UTC"
   annotation:
     createText: "Create Annotation"
     db:
@@ -148,12 +158,14 @@ appConfig:
     filesystemVolume:
       createDefaultStreamVolumesOnStart: true
       defaultStreamVolumeFilesystemUtilisation: 0.9
+      defaultStreamVolumeGroupName: "Default Volume Group"
       defaultStreamVolumePaths:
       - "volumes/default_stream_volume"
       feedPathCache:
         expireAfterAccess: "PT10M"
         expireAfterWrite: null
         maximumSize: 1000
+        refreshAfterWrite: null
       findOrphanedMetaBatchSize: 7000
       maxVolumeStateAge: "PT30S"
       metaTypeExtensions:
@@ -170,6 +182,12 @@ appConfig:
         expireAfterAccess: "PT10M"
         expireAfterWrite: null
         maximumSize: 1000
+        refreshAfterWrite: null
+      volumeCache:
+        expireAfterAccess: "PT10M"
+        expireAfterWrite: null
+        maximumSize: 1000
+        refreshAfterWrite: null
       volumeSelector: "RoundRobin"
     meta:
       db:
@@ -192,15 +210,18 @@ appConfig:
         expireAfterAccess: "PT10M"
         expireAfterWrite: null
         maximumSize: 1000
+        refreshAfterWrite: null
       metaProcessorCache:
         expireAfterAccess: "PT10M"
         expireAfterWrite: null
         maximumSize: 1000
+        refreshAfterWrite: null
       metaStatusUpdateBatchSize: 0
       metaTypeCache:
         expireAfterAccess: "PT10M"
         expireAfterWrite: null
         maximumSize: 1000
+        refreshAfterWrite: null
       metaTypes:
       - "Context"
       - "Raw Reference"
@@ -272,10 +293,12 @@ appConfig:
       expireAfterAccess: null
       expireAfterWrite: "PT10M"
       maximumSize: 100
+      refreshAfterWrite: null
     indexClientCache:
       expireAfterAccess: "PT10M"
       expireAfterWrite: null
       maximumSize: 100
+      refreshAfterWrite: null
     indexing:
       initialRetryBackoffPeriodMs: 1000
       maxNestedElementDepth: 10
@@ -303,10 +326,16 @@ appConfig:
         minimumIdle: 10
         prepStmtCacheSize: 25
         prepStmtCacheSqlLimit: 256
+    dependencyWarningsEnabled: false
     docRefInfoCache:
       expireAfterAccess: "PT10M"
       expireAfterWrite: null
       maximumSize: 1000
+      refreshAfterWrite: null
+    suggestedTags:
+    - "reference-loader"
+    - "dynamic"
+    - "extraction"
   export:
     enabled: false
   feed:
@@ -314,6 +343,7 @@ appConfig:
       expireAfterAccess: null
       expireAfterWrite: "PT1M"
       maximumSize: 1000
+      refreshAfterWrite: null
     feedNamePattern: "^[A-Z0-9_-]{3,}$"
     unknownClassification: "UNKNOWN CLASSIFICATION"
   haltBootOnConfigValidationFailure: true
@@ -338,6 +368,7 @@ appConfig:
       expireAfterAccess: null
       expireAfterWrite: "PT10S"
       maximumSize: 100
+      refreshAfterWrite: null
     ramBufferSizeMB: 1024
     writer:
       cache:
@@ -372,6 +403,7 @@ appConfig:
       expireAfterAccess: "PT10S"
       expireAfterWrite: null
       maximumSize: 1000
+      refreshAfterWrite: null
     skeletonConfigContent: "# The following properties are taken from the v2.2 documentation\n\
       # for the Kafka Producer and can be uncommented and set as required.\n# NOTE\
       \ key.serializer and value.serializer should not be set as\n# these are set\
@@ -410,6 +442,7 @@ appConfig:
       expireAfterAccess: null
       expireAfterWrite: "PT1H"
       maximumSize: 1000
+      refreshAfterWrite: null
     logEveryRestCallEnabled: false
     maxDataElementStringLength: 500
     maxListElements: 5
@@ -452,25 +485,30 @@ appConfig:
       expireAfterAccess: null
       expireAfterWrite: "PT30S"
       maximumSize: 1000
+      refreshAfterWrite: null
     httpClientCache:
       expireAfterAccess: "PT10M"
       expireAfterWrite: null
       maximumSize: 1000
+      refreshAfterWrite: null
     parser:
       cache:
         expireAfterAccess: "PT10M"
         expireAfterWrite: null
         maximumSize: 1000
+        refreshAfterWrite: null
       secureProcessing: true
     pipelineDataCache:
       expireAfterAccess: "PT10M"
       expireAfterWrite: null
       maximumSize: 1000
+      refreshAfterWrite: null
     referenceData:
       effectiveStreamCache:
         expireAfterAccess: null
         expireAfterWrite: "PT10M"
         maximumSize: 1000
+        refreshAfterWrite: null
       lmdb:
         localDir: "reference_data"
         maxReaders: 150
@@ -484,6 +522,7 @@ appConfig:
         expireAfterAccess: "PT1H"
         expireAfterWrite: null
         maximumSize: 1000
+        refreshAfterWrite: null
       purgeAge: "P30D"
       stagingLmdb:
         localDir: "reference_staging_data"
@@ -496,11 +535,13 @@ appConfig:
         expireAfterAccess: "PT10M"
         expireAfterWrite: null
         maximumSize: 1000
+        refreshAfterWrite: null
     xslt:
       cache:
         expireAfterAccess: "PT10M"
         expireAfterWrite: null
         maximumSize: 1000
+        refreshAfterWrite: null
       maxElements: 1000000
   processor:
     assignTasks: true
@@ -528,18 +569,22 @@ appConfig:
       expireAfterAccess: "PT10S"
       expireAfterWrite: null
       maximumSize: 1000
+      refreshAfterWrite: null
     processorFeedCache:
       expireAfterAccess: "PT10M"
       expireAfterWrite: null
       maximumSize: 1000
+      refreshAfterWrite: null
     processorFilterCache:
-      expireAfterAccess: "PT10S"
-      expireAfterWrite: null
+      expireAfterAccess: null
+      expireAfterWrite: "PT1H"
       maximumSize: 1000
+      refreshAfterWrite: "PT10S"
     processorNodeCache:
       expireAfterAccess: "PT10M"
       expireAfterWrite: null
       maximumSize: 1000
+      refreshAfterWrite: null
     queueSize: 1000
     skipNonProducingFiltersDuration: "PT10S"
     taskCreationThreadCount: 5
@@ -567,6 +612,23 @@ appConfig:
     pathPrefix: null
     port: null
     scheme: "https"
+  queryDataSource:
+    db:
+      connection:
+        jdbcDriverClassName: null
+        jdbcDriverPassword: null
+        jdbcDriverUrl: null
+        jdbcDriverUsername: null
+      connectionPool:
+        cachePrepStmts: false
+        connectionTimeout: "PT30S"
+        idleTimeout: "PT10M"
+        leakDetectionThreshold: "PT0S"
+        maxLifetime: "PT30M"
+        maxPoolSize: 30
+        minimumIdle: 10
+        prepStmtCacheSize: 25
+        prepStmtCacheSqlLimit: 256
   queryHistory:
     daysRetention: 365
     db:
@@ -587,10 +649,22 @@ appConfig:
         prepStmtCacheSqlLimit: 256
     itemsRetention: 100
   receive:
-    feedNamePattern: "^[A-Z0-9_-]{3,}$"
+    authenticationRequired: true
+    certificateAuthenticationEnabled: true
+    metaTypes:
+    - "Context"
+    - "Raw Reference"
+    - "Events"
+    - "Raw Events"
+    - "Reference"
+    - "Error"
+    - "Test Events"
+    - "Test Reference"
+    - "Detections"
+    - "Meta Data"
+    - "Records"
     receiptPolicyUuid: null
-    requireTokenAuthentication: false
-    unknownClassification: "UNKNOWN CLASSIFICATION"
+    tokenAuthenticationEnabled: false
   search:
     extraction:
       extractionDelayMs: 100
@@ -607,37 +681,54 @@ appConfig:
         readAheadEnabled: true
       maxPayloadSize: "1G"
       maxPutsBeforeCommit: 10000
+      maxSortedItems: 500000
       maxStringFieldLength: 1000
       minPayloadSize: "1M"
       offHeapResults: true
-      storeSize: "1000000,100,10,1"
       valueQueueSize: 10000
     shard:
       indexShardSearcherCache:
         expireAfterAccess: "PT1M"
         expireAfterWrite: null
         maximumSize: 2
+        refreshAfterWrite: null
       maxDocIdQueueSize: 1000000
       maxThreadsPerTask: 5
       remoteSearchResultCache:
         expireAfterAccess: "PT10M"
         expireAfterWrite: null
         maximumSize: 100
+        refreshAfterWrite: null
   security:
     authentication:
+      apiKeyCache:
+        expireAfterAccess: null
+        expireAfterWrite: "PT5S"
+        maximumSize: 1000
+        refreshAfterWrite: null
       authenticationRequired: true
+      maxApiKeyExpiryAge: "P365D"
       openId:
         authEndpoint: null
+        clientCredentialsScopes:
+        - "openid"
         clientId: null
         clientSecret: null
-        formTokenRequest: false
+        formTokenRequest: true
+        identityProviderType: "INTERNAL_IDP"
         issuer: null
         jwksUri: null
         logoutEndpoint: null
+        logoutRedirectParamName: "post_logout_redirect_uri"
         openIdConfigurationEndpoint: null
-        requestScope: null
+        requestScopes:
+        - "openid"
+        - "email"
         tokenEndpoint: null
-        useInternal: true
+        uniqueIdentityClaim: "sub"
+        userDisplayNameClaim: "preferred_username"
+        validIssuers: []
+        validateAudience: true
       preventLogin: false
     authorisation:
       db:
@@ -660,18 +751,32 @@ appConfig:
         expireAfterAccess: "PT30M"
         expireAfterWrite: null
         maximumSize: 1000
+        refreshAfterWrite: null
+      userByDisplayNameCache:
+        expireAfterAccess: "PT30M"
+        expireAfterWrite: null
+        maximumSize: 1000
+        refreshAfterWrite: null
+      userByUuidCache:
+        expireAfterAccess: "PT30M"
+        expireAfterWrite: null
+        maximumSize: 1000
+        refreshAfterWrite: null
       userCache:
         expireAfterAccess: "PT30M"
         expireAfterWrite: null
         maximumSize: 1000
+        refreshAfterWrite: null
       userDocumentPermissionsCache:
         expireAfterAccess: "PT10M"
         expireAfterWrite: null
         maximumSize: 1000
+        refreshAfterWrite: null
       userGroupsCache:
         expireAfterAccess: "PT30M"
         expireAfterWrite: null
         maximumSize: 1000
+        refreshAfterWrite: null
     crypto:
       secretEncryptionKey: ""
     identity:
@@ -714,10 +819,12 @@ appConfig:
           expireAfterAccess: "PT10M"
           expireAfterWrite: null
           maximumSize: 1000
+          refreshAfterWrite: null
         refreshTokenCache:
           expireAfterAccess: "P1D"
           expireAfterWrite: null
           maximumSize: 10000
+          refreshAfterWrite: null
       passwordPolicy:
         allowPasswordResets: true
         forcePasswordChangeOnFirstLogin: true
@@ -738,7 +845,6 @@ appConfig:
         idTokenExpiration: "PT1H"
         jwsIssuer: "stroom"
         refreshTokenExpiration: "P30D"
-      useDefaultOpenIdCredentials: false
     webContent:
       contentSecurityPolicy: "default-src 'self'; script-src 'self' 'unsafe-eval'\
         \ 'unsafe-inline'; img-src 'self' data:; style-src 'self' 'unsafe-inline';\
@@ -764,10 +870,12 @@ appConfig:
       expireAfterAccess: null
       expireAfterWrite: "PT10M"
       maximumSize: 100
+      refreshAfterWrite: null
     indexClientCache:
       expireAfterAccess: "PT10M"
       expireAfterWrite: null
       maximumSize: 100
+      refreshAfterWrite: null
     search:
       maxBooleanClauseCount: 1024
       maxStoredDataQueueSize: 1000
@@ -899,6 +1007,7 @@ appConfig:
         expireAfterAccess: "PT10M"
         expireAfterWrite: null
         maximumSize: 100
+        refreshAfterWrite: null
       db:
         connection:
           jdbcDriverClassName: null
@@ -941,6 +1050,7 @@ appConfig:
       editorTitle: "Edit Activity"
       enabled: false
       managerTitle: "Choose Activity"
+    analyticUiDefaultConfig: {}
     defaultMaxResults: "1000000,100,10,1"
     helpSubPathDocumentation: "/user-guide/content/documentation/"
     helpSubPathExpressions: "/user-guide/dashboards/expressions/"
@@ -951,15 +1061,25 @@ appConfig:
     helpUrl: "https://gchq.github.io/stroom-docs/7.2/docs"
     htmlTitle: "Stroom"
     namePattern: "^[a-zA-Z0-9_\\- \\.\\(\\)]{1,}$"
+    nestedIndexFieldsDelimiterPattern: "[.:]"
+    nodeMonitoring:
+      pingMaxThreshold: 500
+      pingWarnThreshold: 100
     oncontextmenu: "return false;"
     process:
       defaultRecordLimit: 1000000
       defaultTimeLimit: 30
     query:
+      dashboardPipelineSelectorIncludedTags:
+      - "extraction"
       infoPopup:
         enabled: false
         title: "Please Provide Query Info"
         validationRegex: "^[\\s\\S]{3,}$"
+      viewPipelineSelectorIncludedTags:
+      - "extraction"
+    referencePipelineSelectorIncludedTags:
+    - "reference-loader"
     requireReactWrapper: true
     source:
       maxCharactersInPreviewFetch: 30000
@@ -993,3 +1113,4 @@ appConfig:
       expireAfterAccess: "P10D"
       expireAfterWrite: null
       maximumSize: 1000
+      refreshAfterWrite: null

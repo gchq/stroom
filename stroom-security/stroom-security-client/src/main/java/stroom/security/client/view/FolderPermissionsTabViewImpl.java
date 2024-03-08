@@ -72,6 +72,10 @@ public final class FolderPermissionsTabViewImpl extends ViewImpl
         createPermissions.setWidget(view.asWidget());
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface Binder extends UiBinder<Widget, FolderPermissionsTabViewImpl> {
 
     }

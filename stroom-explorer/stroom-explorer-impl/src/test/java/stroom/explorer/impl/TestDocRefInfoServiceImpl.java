@@ -45,7 +45,7 @@ class TestDocRefInfoServiceImpl {
             DOC_REF2,
             DOC_REF3);
 
-    private static final Map<DocRef, DocRefInfo> CACHE_DATA = DOC_REFS.stream()
+    private static final Map<String, DocRefInfo> CACHE_DATA = DOC_REFS.stream()
             .map(docRef -> new DocRefInfo(
                     docRef,
                     System.currentTimeMillis(),
@@ -53,7 +53,9 @@ class TestDocRefInfoServiceImpl {
                     "user1",
                     "user1",
                     null))
-            .collect(Collectors.toMap(DocRefInfo::getDocRef, Function.identity()));
+            .collect(Collectors.toMap(
+                    docRefInfo -> docRefInfo.getDocRef().getUuid(),
+                    Function.identity()));
 
     @Mock
     private DocRefInfoCache mockDocRefInfoCache;
@@ -76,9 +78,9 @@ class TestDocRefInfoServiceImpl {
         Mockito
                 .doAnswer(invocation -> {
                     final DocRef docRef = invocation.getArgument(0);
-                    return Optional.ofNullable(CACHE_DATA.get(docRef));
+                    return Optional.ofNullable(CACHE_DATA.get(docRef.getUuid()));
                 })
-                .when(mockDocRefInfoCache).get(Mockito.any());
+                .when(mockDocRefInfoCache).get(Mockito.any(DocRef.class));
     }
 
     @Test
@@ -117,8 +119,8 @@ class TestDocRefInfoServiceImpl {
         initMockCache();
 
         final List<DocRef> inputDocRefs = List.of(
-                stripName(DOC_REF1),
-                stripName(DOC_REF2),
+                DOC_REF1.withoutName(),
+                DOC_REF2.withoutName(),
                 DOC_REF3);
 
         final List<DocRef> outputDocRefs = docRefInfoService.decorate(inputDocRefs);
@@ -151,7 +153,7 @@ class TestDocRefInfoServiceImpl {
         initMockCache();
 
         final List<DocRef> inputDocRefs = List.of(
-                stripName(DOC_REF1),
+                DOC_REF1.withoutName(),
                 stripUuid(DOC_REF2),
                 DOC_REF3);
 
@@ -169,16 +171,16 @@ class TestDocRefInfoServiceImpl {
         initMockCache();
 
         final List<DocRef> inputDocRefs = List.of(
-                stripName(DOC_REF1),
+                DOC_REF1.withoutName(),
                 stripType(DOC_REF2),
                 DOC_REF3);
 
         Assertions
-                .assertThatThrownBy(() -> {
-                    final List<DocRef> outputDocRefs = docRefInfoService.decorate(inputDocRefs);
-                })
-                .hasMessageContaining("type is not set")
-                .isInstanceOf(RuntimeException.class);
+                .assertThat(docRefInfoService.decorate(inputDocRefs))
+                .containsExactly(
+                        DOC_REF1,
+                        DOC_REF2,
+                        DOC_REF3);
     }
 
     @Test
@@ -204,10 +206,44 @@ class TestDocRefInfoServiceImpl {
     void decorate_changed() {
         initMockCache();
 
-        final DocRef docRef = docRefInfoService.decorate(stripName(DOC_REF3));
+        final DocRef docRef = docRefInfoService.decorate(DOC_REF3.withoutName());
 
         assertThat(docRef)
                 .isEqualTo(DOC_REF3);
+    }
+
+    @Test
+    void decorate_changed_force() {
+        initMockCache();
+
+        final DocRef docRef = docRefInfoService.decorate(DOC_REF3.withoutName(), true);
+
+        assertThat(docRef)
+                .isEqualTo(DOC_REF3);
+    }
+
+    @Test
+    void decorate_outOfDateName_noForce() {
+        final DocRef input = DOC_REF3.copy()
+                .name(DOC_REF3.getName() + "XXX")
+                .build();
+        final DocRef docRef = docRefInfoService.decorate(input);
+
+        assertThat(docRef.getName())
+                .isEqualTo(input.getName());
+    }
+
+    @Test
+    void decorate_outOfDateName_force() {
+        initMockCache();
+
+        final DocRef input = DOC_REF3.copy()
+                .name(DOC_REF3.getName() + "XXX")
+                .build();
+        final DocRef docRef = docRefInfoService.decorate(input, true);
+
+        assertThat(docRef.getName())
+                .isEqualTo(DOC_REF3.getName());
     }
 
     private static DocRef stripName(final DocRef docRef) {

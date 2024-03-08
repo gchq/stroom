@@ -3,6 +3,7 @@ package stroom.legacy.impex_6_1;
 import stroom.index.shared.AnalyzerType;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFieldType;
+import stroom.query.api.v2.Column;
 import stroom.query.api.v2.ConditionalFormattingRule;
 import stroom.util.shared.time.TimeUnit;
 
@@ -184,10 +185,10 @@ public final class MappingUtil {
             return null;
         }
 
-        List<Integer> maxResults = null;
+        List<Long> maxResults = null;
         if (value.getMaxResults() != null) {
             maxResults = new ArrayList<>();
-            for (int results : value.getMaxResults()) {
+            for (long results : value.getMaxResults()) {
                 maxResults.add(results);
             }
         }
@@ -197,8 +198,10 @@ public final class MappingUtil {
                 null,
                 mapList(value.getFields(), MappingUtil::map),
                 value.getExtractValues(),
+                false,
                 map(value.getExtractionPipeline()),
                 maxResults,
+                100,
                 value.getShowDetail(),
                 mapList(value.getConditionalFormattingRules(), MappingUtil::map),
                 value.getModelVersion());
@@ -316,12 +319,12 @@ public final class MappingUtil {
         return new stroom.dashboard.shared.Automate(value.isOpen(), value.isRefresh(), value.getRefreshInterval());
     }
 
-    public static stroom.query.api.v2.Field map(stroom.legacy.model_6_1.Field value) {
+    public static Column map(stroom.legacy.model_6_1.Field value) {
         if (value == null) {
             return null;
         }
 
-        return new stroom.query.api.v2.Field(
+        return new Column(
                 value.getId(),
                 value.getName(),
                 value.getExpression(),
@@ -390,23 +393,23 @@ public final class MappingUtil {
         return stroom.query.api.v2.Format.Type.valueOf(value.name());
     }
 
-    public static stroom.query.api.v2.TimeZone map(stroom.legacy.model_6_1.TimeZone value) {
+    public static stroom.expression.api.TimeZone map(stroom.legacy.model_6_1.TimeZone value) {
         if (value == null) {
             return null;
         }
 
-        return new stroom.query.api.v2.TimeZone(map(value.getUse()),
+        return new stroom.expression.api.TimeZone(map(value.getUse()),
                 value.getId(),
                 value.getOffsetHours(),
                 value.getOffsetMinutes());
     }
 
-    public static stroom.query.api.v2.TimeZone.Use map(stroom.legacy.model_6_1.TimeZone.Use value) {
+    public static stroom.expression.api.TimeZone.Use map(stroom.legacy.model_6_1.TimeZone.Use value) {
         if (value == null) {
             return null;
         }
 
-        return stroom.query.api.v2.TimeZone.Use.valueOf(value.name());
+        return stroom.expression.api.TimeZone.Use.valueOf(value.name());
     }
 
     public static stroom.dashboard.shared.LayoutConfig map(stroom.legacy.model_6_1.LayoutConfig value) {

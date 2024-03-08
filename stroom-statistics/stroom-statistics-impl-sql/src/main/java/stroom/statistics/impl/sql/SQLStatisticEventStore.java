@@ -16,7 +16,7 @@
 
 package stroom.statistics.impl.sql;
 
-import stroom.datasource.api.v2.AbstractField;
+import stroom.datasource.api.v2.QueryField;
 import stroom.security.api.SecurityContext;
 import stroom.statistics.impl.sql.entity.StatisticStoreCache;
 import stroom.statistics.impl.sql.entity.StatisticStoreValidator;
@@ -32,6 +32,9 @@ import stroom.util.sysinfo.HasSystemInfo;
 import stroom.util.sysinfo.SystemInfoResult;
 import stroom.util.time.TimeUtils;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
 import org.apache.commons.pool2.BasePooledObjectFactory;
 import org.apache.commons.pool2.PooledObject;
 import org.apache.commons.pool2.impl.DefaultPooledObject;
@@ -51,9 +54,6 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.inject.Singleton;
 
 @Singleton
 public class SQLStatisticEventStore implements Statistics, HasSystemInfo {
@@ -444,7 +444,7 @@ public class SQLStatisticEventStore implements Statistics, HasSystemInfo {
     }
 
     @Override
-    public List<AbstractField> getSupportedFields(final List<AbstractField> indexFields) {
+    public List<QueryField> getSupportedFields(final List<QueryField> indexFields) {
         final Set<String> blackList = getIndexFieldBlackList();
 
         if (blackList.size() == 0) {
@@ -455,7 +455,7 @@ public class SQLStatisticEventStore implements Statistics, HasSystemInfo {
             // construct an anonymous class instance that will filter out black
             // listed index fields, as supplied by the
             // sub-class
-            final List<AbstractField> supportedIndexFields = new ArrayList<>();
+            final List<QueryField> supportedIndexFields = new ArrayList<>();
             indexFields.stream()
                     .filter(indexField -> !blackList.contains(indexField.getName()))
                     .forEach(supportedIndexFields::add);

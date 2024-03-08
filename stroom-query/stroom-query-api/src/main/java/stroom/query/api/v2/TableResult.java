@@ -17,6 +17,7 @@
 package stroom.query.api.v2;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -25,6 +26,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -35,7 +37,7 @@ public class TableResult extends Result {
 
     @Schema(required = true)
     @JsonProperty
-    private final List<Field> fields;
+    private final List<Column> fields;
 
     @Schema(required = true)
     @JsonProperty
@@ -47,14 +49,14 @@ public class TableResult extends Result {
 
     @JsonPropertyDescription("The total number of results in this result set")
     @JsonProperty
-    private final Integer totalResults;
+    private final Long totalResults;
 
     @JsonCreator
     public TableResult(@JsonProperty("componentId") final String componentId,
-                       @JsonProperty("fields") final List<Field> fields,
+                       @JsonProperty("fields") final List<Column> fields, // Kept as fields for backward compatibility.
                        @JsonProperty("rows") final List<Row> rows,
                        @JsonProperty("resultRange") final OffsetRange resultRange,
-                       @JsonProperty("totalResults") final Integer totalResults,
+                       @JsonProperty("totalResults") final Long totalResults,
                        @JsonProperty("errors") final List<String> errors) {
         super(componentId, errors);
         this.fields = fields;
@@ -63,7 +65,13 @@ public class TableResult extends Result {
         this.totalResults = totalResults;
     }
 
-    public List<Field> getFields() {
+    @Deprecated // Kept as fields for backward compatibility.
+    public List<Column> getFields() {
+        return fields;
+    }
+
+    @JsonIgnore // Kept as fields for backward compatibility.
+    public List<Column> getColumns() {
         return fields;
     }
 
@@ -75,7 +83,7 @@ public class TableResult extends Result {
         return resultRange;
     }
 
-    public Integer getTotalResults() {
+    public Long getTotalResults() {
         return totalResults;
     }
 
@@ -123,29 +131,37 @@ public class TableResult extends Result {
      * Builder for constructing a {@link TableResult tableResult}
      */
     public static final class TableResultBuilderImpl
-            extends AbstractResultBuilder<TableResultBuilder>
             implements TableResultBuilder {
 
-        private List<Field> fields;
-        private List<Row> rows;
+        private String componentId;
+        private List<Column> columns;
+        private final List<Row> rows;
+        private List<String> errors;
         private OffsetRange resultRange;
-        private Integer totalResults;
+        private Long totalResults;
 
         private TableResultBuilderImpl() {
             rows = new ArrayList<>();
+            errors = Collections.emptyList();
         }
 
         private TableResultBuilderImpl(final TableResult tableResult) {
-            super(tableResult);
-            fields = tableResult.fields;
+            componentId = tableResult.getComponentId();
+            columns = tableResult.fields;
             rows = new ArrayList<>(tableResult.rows);
+            errors = tableResult.getErrors();
             resultRange = tableResult.resultRange;
             totalResults = tableResult.totalResults;
         }
 
+        public TableResultBuilderImpl componentId(final String componentId) {
+            this.componentId = componentId;
+            return this;
+        }
+
         @Override
-        public TableResultBuilderImpl fields(final List<Field> fields) {
-            this.fields = fields;
+        public TableResultBuilderImpl columns(final List<Column> columns) {
+            this.columns = columns;
             return this;
         }
 
@@ -156,29 +172,30 @@ public class TableResult extends Result {
         }
 
         @Override
+        public TableResultBuilder errors(final List<String> errors) {
+            this.errors = errors;
+            return this;
+        }
+
+        @Override
         public TableResultBuilder resultRange(final OffsetRange resultRange) {
             this.resultRange = resultRange;
             return this;
         }
 
         @Override
-        public TableResultBuilder totalResults(final Integer totalResults) {
+        public TableResultBuilder totalResults(final Long totalResults) {
             this.totalResults = totalResults;
             return this;
         }
 
         @Override
-        protected TableResultBuilderImpl self() {
-            return this;
-        }
-
-        @Override
         public TableResult build() {
-            Integer totalResults = this.totalResults;
+            Long totalResults = this.totalResults;
             if (totalResults == null && rows != null) {
-                totalResults = rows.size();
+                totalResults = (long) rows.size();
             }
-            return new TableResult(componentId, fields, rows, resultRange, totalResults, errors);
+            return new TableResult(componentId, columns, rows, resultRange, totalResults, errors);
         }
     }
 }

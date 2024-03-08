@@ -20,11 +20,12 @@ package stroom.index;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.index.impl.IndexVolumeGroupService;
 import stroom.index.impl.IndexVolumeService;
-import stroom.index.impl.selection.VolumeConfig;
 import stroom.index.shared.IndexVolume;
 import stroom.index.shared.IndexVolumeGroup;
 import stroom.node.impl.NodeConfig;
+import stroom.test.AppConfigTestModule;
 
+import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,29 +35,25 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
-import javax.inject.Inject;
 
 class VolumeCreatorForTesting implements VolumeCreator {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(VolumeCreatorForTesting.class);
 
-    private static final String NODE1 = "node1a";
+    private static final String NODE1 = AppConfigTestModule.NODE1;
     private static final String NODE2 = "node2a";
 
     private final NodeConfig nodeConfig;
     private final IndexVolumeService volumeService;
     private final IndexVolumeGroupService indexVolumeGroupService;
-    private final VolumeConfig volumeConfig;
 
     @Inject
     VolumeCreatorForTesting(final NodeConfig nodeConfig,
                             final IndexVolumeService volumeService,
-                            final IndexVolumeGroupService indexVolumeGroupService,
-                            final VolumeConfig volumeConfig) {
+                            final IndexVolumeGroupService indexVolumeGroupService) {
         this.nodeConfig = nodeConfig;
         this.volumeService = volumeService;
         this.indexVolumeGroupService = indexVolumeGroupService;
-        this.volumeConfig = volumeConfig;
     }
 
     private List<IndexVolume> getInitialVolumeList(final Path tempDir) {
@@ -102,8 +99,6 @@ class VolumeCreatorForTesting implements VolumeCreator {
                     volumeService.create(indexVolume);
                 }
             }
-
-            nodeConfig.setNodeName(NODE1);
         } catch (final IOException | RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
         }

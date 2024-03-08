@@ -31,6 +31,10 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.ResultPage;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
+
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -38,12 +42,9 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.inject.Singleton;
 
 @Singleton
-class JobBootstrap {
+public class JobBootstrap {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(JobBootstrap.class);
     private static final String LOCK_NAME = "JobNodeService";
@@ -76,7 +77,7 @@ class JobBootstrap {
         this.distributedTaskFactoryRegistry = distributedTaskFactoryRegistry;
     }
 
-    void startup() {
+    public void startup() {
         LOGGER.info(() -> "startup()");
 
         // Lock the cluster so only 1 node at a time can call the following code.
@@ -133,7 +134,7 @@ class JobBootstrap {
                                         ? "ENABLED"
                                         : "DISABLED") + ")");
 
-                        AuditUtil.stamp(securityContext.getUserId(), newJobNode);
+                        AuditUtil.stamp(securityContext, newJobNode);
                         jobNodeDao.create(newJobNode);
                         localJobNodeMap.put(newJobNode.getJob().getName(), newJobNode);
 
@@ -141,7 +142,7 @@ class JobBootstrap {
                         // If the job type has changed then update the job node.
                         jobNode.setJobType(newJobNode.getJobType());
                         jobNode.setSchedule(newJobNode.getSchedule());
-                        AuditUtil.stamp(securityContext.getUserId(), jobNode);
+                        AuditUtil.stamp(securityContext, jobNode);
                         jobNode = jobNodeDao.update(jobNode);
                         localJobNodeMap.put(scheduledJob.getName(), jobNode);
                     }
@@ -179,7 +180,7 @@ class JobBootstrap {
                                     ? "ENABLED"
                                     : "DISABLED") + ")");
 
-                    AuditUtil.stamp(securityContext.getUserId(), newJobNode);
+                    AuditUtil.stamp(securityContext, newJobNode);
                     jobNodeDao.create(newJobNode);
                 }
             });
@@ -215,12 +216,12 @@ class JobBootstrap {
             if (job.getDescription() != null && !job.getDescription().equals(result.getDescription())) {
                 result.setDescription(job.getDescription());
                 LOGGER.info(() -> "Updating Job     '" + job.getName() + "'");
-                AuditUtil.stamp(securityContext.getUserId(), result);
+                AuditUtil.stamp(securityContext, result);
                 result = jobDao.update(result);
             }
         } else {
             LOGGER.info(() -> "Adding Job     '" + job.getName() + "'");
-            AuditUtil.stamp(securityContext.getUserId(), job);
+            AuditUtil.stamp(securityContext, job);
             result = jobDao.create(job);
         }
 

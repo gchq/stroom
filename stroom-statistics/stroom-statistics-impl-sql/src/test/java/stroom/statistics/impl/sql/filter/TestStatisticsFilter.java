@@ -17,8 +17,9 @@
 
 package stroom.statistics.impl.sql.filter;
 
-import stroom.datasource.api.v2.AbstractField;
+import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
+import stroom.docrefinfo.mock.MockDocRefInfoService;
 import stroom.docstore.impl.Persistence;
 import stroom.docstore.impl.Serialiser2FactoryImpl;
 import stroom.docstore.impl.StoreFactoryImpl;
@@ -500,7 +501,7 @@ class TestStatisticsFilter implements Statistics {
     }
 
     @Override
-    public List<AbstractField> getSupportedFields(final List<AbstractField> indexFields) {
+    public List<QueryField> getSupportedFields(final List<QueryField> indexFields) {
         throw new UnsupportedOperationException("Not used in this test class");
     }
 
@@ -514,7 +515,12 @@ class TestStatisticsFilter implements Statistics {
         final SecurityContext securityContext = new MockSecurityContext();
 
         return new StatisticStoreStoreImpl(
-                new StoreFactoryImpl(persistence, null, null, securityContext),
+                new StoreFactoryImpl(
+                        persistence,
+                        null,
+                        null,
+                        securityContext,
+                        MockDocRefInfoService::new),
                 new StatisticStoreSerialiser(new Serialiser2FactoryImpl()));
     }
 }

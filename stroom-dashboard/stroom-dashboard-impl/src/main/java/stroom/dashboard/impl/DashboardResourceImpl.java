@@ -21,7 +21,6 @@ import stroom.dashboard.shared.DashboardResource;
 import stroom.dashboard.shared.DashboardSearchRequest;
 import stroom.dashboard.shared.DashboardSearchResponse;
 import stroom.dashboard.shared.DownloadSearchResultsRequest;
-import stroom.dashboard.shared.FunctionSignature;
 import stroom.dashboard.shared.ValidateExpressionResult;
 import stroom.docref.DocRef;
 import stroom.event.logging.rs.api.AutoLogged;
@@ -33,10 +32,9 @@ import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourcePaths;
 
-import java.util.List;
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.ws.rs.client.Entity;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.ws.rs.client.Entity;
 
 @AutoLogged
 class DashboardResourceImpl implements DashboardResource {
@@ -84,7 +82,13 @@ class DashboardResourceImpl implements DashboardResource {
         return dashboardServiceProvider.get().downloadQuery(request);
     }
 
-    @AutoLogged(OperationType.UNLOGGED)
+    @AutoLogged(OperationType.MANUALLY_LOGGED)
+    @Override
+    public ResourceGeneration downloadSearchResults(final DownloadSearchResultsRequest request) {
+        return dashboardServiceProvider.get().downloadSearchResults(request);
+    }
+
+    @AutoLogged(OperationType.MANUALLY_LOGGED)
     @Override
     public ResourceGeneration downloadSearchResults(final String nodeName,
                                                     final DownloadSearchResultsRequest request) {
@@ -110,7 +114,13 @@ class DashboardResourceImpl implements DashboardResource {
         }
     }
 
-    @AutoLogged(OperationType.UNLOGGED)
+    @AutoLogged(OperationType.MANUALLY_LOGGED)
+    @Override
+    public DashboardSearchResponse search(final DashboardSearchRequest request) {
+        return dashboardServiceProvider.get().search(request);
+    }
+
+    @AutoLogged(OperationType.MANUALLY_LOGGED)
     @Override
     public DashboardSearchResponse search(final String nodeName, final DashboardSearchRequest request) {
         try {

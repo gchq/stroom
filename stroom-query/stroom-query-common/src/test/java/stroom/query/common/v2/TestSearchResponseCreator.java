@@ -1,16 +1,15 @@
 package stroom.query.common.v2;
 
-import stroom.dashboard.expression.v1.Val;
-import stroom.dashboard.expression.v1.ref.StoredValues;
-import stroom.dashboard.expression.v1.ref.ValueReferenceIndex;
-import stroom.query.api.v2.DateTimeSettings;
-import stroom.query.api.v2.Field;
+import stroom.expression.api.DateTimeSettings;
+import stroom.query.api.v2.Column;
 import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
 import stroom.query.api.v2.TableResult;
 import stroom.query.api.v2.TableSettings;
+import stroom.query.api.v2.TimeFilter;
+import stroom.query.language.functions.Val;
 import stroom.query.test.util.MockitoExtension;
 import stroom.util.concurrent.ThreadUtil;
 import stroom.util.logging.DurationTimer;
@@ -30,7 +29,6 @@ import org.mockito.stubbing.Answer;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -54,23 +52,22 @@ class TestSearchResponseCreator {
         Mockito.when(mockStore.getErrors()).thenReturn(Collections.emptyList());
         Mockito.when(mockStore.getHighlights()).thenReturn(Collections.emptyList());
         Mockito.when(mockStore.getData(Mockito.any())).thenReturn(createSingleItemDataObject());
-        Mockito.when(sizesProvider.getDefaultMaxResultsSizes()).thenReturn(Sizes.create(Integer.MAX_VALUE));
-        Mockito.when(sizesProvider.getStoreSizes()).thenReturn(Sizes.create(Integer.MAX_VALUE));
+        Mockito.when(sizesProvider.getDefaultMaxResultsSizes()).thenReturn(Sizes.unlimited());
     }
 
     @Test
     void create_nonIncremental_timesOut() {
         final Duration serverTimeout = Duration.ofMillis(500);
-        SearchResponseCreator searchResponseCreator = createSearchResponseCreator();
 
         //store is never complete
         Mockito.when(mockStore.isComplete()).thenReturn(false);
         makeSearchStateAfter(500, false);
 
-        SearchRequest searchRequest = getSearchRequest(false, null);
-
+        final SearchRequest searchRequest = getSearchRequest(false, null);
+        final SearchResponseCreator searchResponseCreator = createSearchResponseCreator(searchRequest);
         final TimedResult<SearchResponse> timedResult = DurationTimer.measure(() ->
-                searchResponseCreator.create(searchRequest));
+                searchResponseCreator.create(searchRequest,
+                        searchResponseCreator.makeDefaultResultCreators(searchRequest)));
 
         SearchResponse searchResponse = timedResult.getResult();
         Duration actualDuration = timedResult.getDuration();
@@ -87,22 +84,22 @@ class TestSearchResponseCreator {
         assertThat(searchResponse.getErrors().get(0)).containsIgnoringCase("timed out");
     }
 
-    private SearchResponseCreator createSearchResponseCreator() {
-        return new SearchResponseCreator(sizesProvider, mockStore);
+    private SearchResponseCreator createSearchResponseCreator(final SearchRequest searchRequest) {
+        return new SearchResponseCreator(sizesProvider, mockStore, new ExpressionContextFactory()
+                .createContext(searchRequest));
     }
 
     @Test
     void create_nonIncremental_completesImmediately() {
-        SearchResponseCreator searchResponseCreator = createSearchResponseCreator();
-
         //store is immediately complete to replicate a synchronous store
         Mockito.when(mockStore.isComplete()).thenReturn(true);
         makeSearchStateAfter(0, true);
 
-        SearchRequest searchRequest = getSearchRequest(false, null);
-
+        final SearchRequest searchRequest = getSearchRequest(false, null);
+        final SearchResponseCreator searchResponseCreator = createSearchResponseCreator(searchRequest);
         final TimedResult<SearchResponse> timedResult = DurationTimer.measure(() ->
-                searchResponseCreator.create(searchRequest));
+                searchResponseCreator.create(searchRequest,
+                        searchResponseCreator.makeDefaultResultCreators(searchRequest)));
 
         SearchResponse searchResponse = timedResult.getResult();
         Duration actualDuration = timedResult.getDuration();
@@ -119,17 +116,18 @@ class TestSearchResponseCreator {
     @Test
     void create_nonIncremental_completesBeforeTimeout() {
         Duration clientTimeout = Duration.ofMillis(5_000);
-        SearchResponseCreator searchResponseCreator = createSearchResponseCreator();
 
         //store initially not complete
         Mockito.when(mockStore.isComplete()).thenReturn(false);
         long sleepTime = 200L;
         makeSearchStateAfter(sleepTime, true);
 
-        SearchRequest searchRequest = getSearchRequest(false, clientTimeout.toMillis());
+        final SearchRequest searchRequest = getSearchRequest(false, clientTimeout.toMillis());
+        final SearchResponseCreator searchResponseCreator = createSearchResponseCreator(searchRequest);
 
         final TimedResult<SearchResponse> timedResult = DurationTimer.measure(() ->
-                searchResponseCreator.create(searchRequest));
+                searchResponseCreator.create(searchRequest,
+                        searchResponseCreator.makeDefaultResultCreators(searchRequest)));
 
         SearchResponse searchResponse = timedResult.getResult();
         Duration actualDuration = timedResult.getDuration();
@@ -145,7 +143,6 @@ class TestSearchResponseCreator {
     @Test
     void create_incremental_noTimeout() {
         final Duration clientTimeout = Duration.ofMillis(0);
-        final SearchResponseCreator searchResponseCreator = createSearchResponseCreator();
 
         //store is not complete during test
         Mockito.when(mockStore.isComplete()).thenReturn(false);
@@ -155,10 +152,12 @@ class TestSearchResponseCreator {
         Mockito.when(mockStore.getData(Mockito.any())).thenReturn(null);
 
         //zero timeout
-        SearchRequest searchRequest = getSearchRequest(true, clientTimeout.toMillis());
+        final SearchRequest searchRequest = getSearchRequest(true, clientTimeout.toMillis());
+        final SearchResponseCreator searchResponseCreator = createSearchResponseCreator(searchRequest);
 
         final TimedResult<SearchResponse> timedResult = DurationTimer.measure(() ->
-                searchResponseCreator.create(searchRequest));
+                searchResponseCreator.create(searchRequest,
+                        searchResponseCreator.makeDefaultResultCreators(searchRequest)));
 
         SearchResponse searchResponse = timedResult.getResult();
         Duration actualDuration = timedResult.getDuration();
@@ -177,16 +176,17 @@ class TestSearchResponseCreator {
     @Test
     void create_incremental_timesOutWithDataThenCompletes() {
         Duration clientTimeout = Duration.ofMillis(500);
-        SearchResponseCreator searchResponseCreator = createSearchResponseCreator();
 
         //store is immediately complete to replicate a synchronous store
         Mockito.when(mockStore.isComplete()).thenReturn(false);
         makeSearchStateAfter(500, false);
 
-        SearchRequest searchRequest = getSearchRequest(true, clientTimeout.toMillis());
+        final SearchRequest searchRequest = getSearchRequest(true, clientTimeout.toMillis());
+        final SearchResponseCreator searchResponseCreator = createSearchResponseCreator(searchRequest);
 
         TimedResult<SearchResponse> timedResult = DurationTimer.measure(() ->
-                searchResponseCreator.create(searchRequest));
+                searchResponseCreator.create(searchRequest,
+                        searchResponseCreator.makeDefaultResultCreators(searchRequest)));
 
         SearchResponse searchResponse = timedResult.getResult();
         Duration actualDuration = timedResult.getDuration();
@@ -207,7 +207,8 @@ class TestSearchResponseCreator {
         SearchRequest searchRequest2 = getSearchRequest(true, clientTimeout.toMillis());
 
         timedResult = DurationTimer.measure(() ->
-                searchResponseCreator.create(searchRequest2));
+                searchResponseCreator.create(searchRequest2,
+                        searchResponseCreator.makeDefaultResultCreators(searchRequest2)));
 
         SearchResponse searchResponse2 = timedResult.getResult();
         actualDuration = timedResult.getDuration();
@@ -245,24 +246,21 @@ class TestSearchResponseCreator {
                 .addResultRequests(ResultRequest.builder()
                         .componentId(UUID.randomUUID().toString())
                         .resultStyle(ResultRequest.ResultStyle.TABLE)
-                        .requestedRange(OffsetRange.builder()
-                                .offset(0L)
-                                .length(100L)
-                                .build())
+                        .requestedRange(OffsetRange.ZERO_100)
                         .addMappings(TableSettings.builder()
                                 .queryId("someQueryId")
-                                .addFields(
-                                        Field.builder()
+                                .addColumns(
+                                        Column.builder()
                                                 .id("field1")
                                                 .name("field1")
                                                 .expression("expression1")
                                                 .build(),
-                                        Field.builder()
+                                        Column.builder()
                                                 .id("field2")
                                                 .name("field2")
                                                 .expression("expression1")
                                                 .build(),
-                                        Field.builder()
+                                        Column.builder()
                                                 .id("field3")
                                                 .name("field3")
                                                 .expression("expression2")
@@ -279,8 +277,6 @@ class TestSearchResponseCreator {
 
     private DataStore createSingleItemDataObject() {
         final Key rootKey = Key.ROOT_KEY;
-        final ValueReferenceIndex valueReferenceIndex = new ValueReferenceIndex();
-        final StoredValues storedValues = valueReferenceIndex.createStoredValues();
 
         final Item item = new Item() {
             @Override
@@ -298,43 +294,25 @@ class TestSearchResponseCreator {
 
         return new DataStore() {
             @Override
-            public void add(final Val[] values) {
+            public void accept(final Val[] values) {
             }
 
             @Override
-            public List<Field> getFields() {
+            public List<Column> getColumns() {
                 return Collections.emptyList();
             }
 
             @Override
-            public void getData(final Consumer<Data> consumer) {
-                consumer.accept((key, timeFilter) -> {
-                    if (key == Key.ROOT_KEY) {
-                        return Optional.of(new Items() {
-
-                            @Override
-                            public Item get(final int index) {
-                                return item;
-                            }
-
-                            @Override
-                            public int size() {
-                                return 1;
-                            }
-
-                            @Override
-                            public Iterable<StoredValues> getStoredValueIterable() {
-                                return List.of(storedValues);
-                            }
-
-                            @Override
-                            public Iterable<Item> getIterable() {
-                                return List.of(item);
-                            }
-                        });
-                    }
-                    return Optional.empty();
-                });
+            public <R> void fetch(final OffsetRange range,
+                                  final OpenGroups openGroups,
+                                  final TimeFilter timeFilter,
+                                  final ItemMapper<R> mapper,
+                                  final Consumer<R> resultConsumer,
+                                  final Consumer<Long> totalRowCountConsumer) {
+                resultConsumer.accept(mapper.create(getColumns(), item));
+                if (totalRowCountConsumer != null) {
+                    totalRowCountConsumer.accept(1L);
+                }
             }
 
             @Override
@@ -369,6 +347,11 @@ class TestSearchResponseCreator {
                 return KeyFactoryFactory.create(
                         new BasicKeyFactoryConfig(),
                         new CompiledDepths(null, false));
+            }
+
+            @Override
+            public DateTimeSettings getDateTimeSettings() {
+                return null;
             }
         };
     }

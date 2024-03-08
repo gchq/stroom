@@ -14,86 +14,89 @@
  * limitations under the License.
  */
 
-.termEditor-layout {
-	margin: 1px;
-	margin-top: 0px;
-	white-space: nowrap;
+.termEditor-outer {
+	display: flex;
+	gap: 5px;
+}
+
+.termEditor-inner {
 	display: flex;
 	align-items: center;
+	flex-shrink: 0;
+    min-width: 50px;
+    min-height: 23px;
+    height: 23px;
 }
 
 .termEditor-item {
 	display: inline-block;
 	margin: 0px;
 	overflow: hidden;
-	background-color: transparent;
-	border: none;
+	background-color: transparent !important;
+	border: none !important;
 	vertical-align: top;
 	background-position: right;
 	background-origin: border-box;
-	min-width: 50px;
-	max-height: 23px;
+    min-width: 50px;
+    min-height: 23px;
+    height: 23px;
+	flex-shrink: 0;
+}
+
+.termEditor-inner input {
+    border: none !important;
+    border-radius: 0 !important;
+    background: none !important;
+    padding: 3px 5px;
+    min-width: auto;
+}
+
+.termEditor-item .svgIconBox-icon {
+    right: 1px;
 }
 
 .termEditor-item.wide {
 	width: 300px;
+	min-width: 300px;
 }
 
 .termEditor-item.narrow {
 	width: 175px;
+    min-width: 175px;
 }
 
 .termEditor-item.dropdown {
-	text-overflow: ellipsis;
 }
 
 .termEditor-item.field {
-	width: auto;
 }
 
 .termEditor-item.condition {
-	width: auto;
+	width: 140px;
 	padding-right: 25px;
 }
 
 .termEditor-item.docRef {
 	width: 200px;
+	min-width: 200px;
 	margin-top: 1px;
 }
 
 .termEditor-item.textBox {
 	padding-left: 5px;
 	padding-right: 5px;
-	border-radius: 5px;
+	border: none;
 }
 
 .termEditor-label {
-	display: inline-block;
-	margin: 0px;
-	overflow: hidden;
-	padding: 2px 5px;
-	background-color: transparent;
-	border: none;
-	vertical-align: top;
+    display: flex;
+    margin: 0px;
+    padding: 0 5px;
+    height: 23px;
+    align-items: center;
 }
 
 .termEditor-label.fieldType {
-	padding: 2px 8px;
-	position: absolute;
-	top: 1px;
-	right: -5px;
-	transform: translateX(100%);
-	background-color: rgb(32 148 243 / 60%);
-	border-radius: 10px;
-	font-weight: bold;
-	border: solid 1px rgb(33 150 243);
-}
-
-.termEditor-label.fieldType {
-	padding: 2px 8px;
-	position: absolute;
-	right: -5px;
-	transform: translateX(100%);
 	background-color: rgb(32 148 243 / 60%);
 	border-radius: 10px;
 	font-weight: bold;

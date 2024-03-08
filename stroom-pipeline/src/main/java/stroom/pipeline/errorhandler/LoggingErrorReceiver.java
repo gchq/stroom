@@ -16,6 +16,8 @@
 
 package stroom.pipeline.errorhandler;
 
+import stroom.util.NullSafe;
+import stroom.util.shared.ErrorType;
 import stroom.util.shared.Indicators;
 import stroom.util.shared.Location;
 import stroom.util.shared.Severity;
@@ -25,25 +27,33 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 /**
  * Implements a SAX error handler for logging all errors to log4j.
  */
 public class LoggingErrorReceiver implements ErrorReceiver, ErrorStatistics {
-    private final Map<String, Indicators> indicatorsMap;
+    // elementId => Indicators
+//    private final Map<String, Indicators> indicatorsMap = new HashMap<>();
+    private final Map<String, Map<ErrorType, Indicators>> indicatorsMap = new HashMap<>();
     private final Map<Severity, StoredErrorStats> statsMap = new HashMap<>();
 
-    public LoggingErrorReceiver() {
-        this(new HashMap<>());
-    }
-
-    public LoggingErrorReceiver(final Map<String, Indicators> indicatorsMap) {
-        this.indicatorsMap = indicatorsMap;
-    }
+//    public LoggingErrorReceiver() {
+//        this(new HashMap<>());
+//    }
+//
+//    public LoggingErrorReceiver(final Map<String, Indicators> indicatorsMap) {
+//        this.indicatorsMap = indicatorsMap;
+//    }
 
     @Override
-    public void log(final Severity severity, final Location location, final String elementId, final String message,
+    public void log(final Severity severity,
+                    final Location location,
+                    final String elementId,
+                    final String message,
+                    final ErrorType errorType,
                     final Throwable e) {
+
         final String msg = MessageUtil.getMessage(message, e);
 
         // Record the number of errors.
@@ -56,22 +66,35 @@ public class LoggingErrorReceiver implements ErrorReceiver, ErrorStatistics {
 
         // Only store this message for the current record if one hasn't been
         // stored already.
-        final StoredError storedError = new StoredError(severity, location, elementId, msg);
+        final StoredError storedError = new StoredError(severity, location, elementId, msg, errorType);
         if (stats.getCurrentError() == null) {
             stats.setCurrentError(storedError);
         }
 
         // Store an indicator.
-        getIndicators(elementId).add(storedError);
+//        indicatorsMap.computeIfAbsent(elementId, k -> new Indicators())
+//                        .add(storedError);
+        indicatorsMap.computeIfAbsent(elementId, k -> new HashMap<>())
+                .computeIfAbsent(storedError.getErrorType(), k -> new Indicators())
+                .add(storedError);
     }
 
-    private Indicators getIndicators(final String elementId) {
-        Indicators indicators = indicatorsMap.get(elementId);
-        if (indicators == null) {
-            indicators = new Indicators();
-            indicatorsMap.put(elementId, indicators);
-        }
-        return indicators;
+    /**
+     * All indicators for the element
+     */
+    public Indicators getIndicators(final String elementId) {
+        return NullSafe.get(
+                indicatorsMap.get(elementId),
+                subMap -> Indicators.combine(subMap.values()));
+    }
+
+    /**
+     * All indicators for the element of type errorType
+     */
+    public Indicators getIndicators(final String elementId, final ErrorType errorType) {
+        return NullSafe.get(
+                indicatorsMap.get(elementId),
+                subMap -> subMap.get(errorType));
     }
 
     @Override
@@ -147,15 +170,28 @@ public class LoggingErrorReceiver implements ErrorReceiver, ErrorStatistics {
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder();
-        for (final Indicators indicators : indicatorsMap.values()) {
-            indicators.append(sb);
-        }
-
+        indicatorsMap.entrySet()
+                .stream()
+                .flatMap(entry -> entry.getValue().values().stream())
+                .forEach(indicators -> indicators.append(sb));
         return sb.toString();
     }
 
+    /**
+     * @return Map of elementId => {@link Indicators}
+     */
     public Map<String, Indicators> getIndicatorsMap() {
-        return indicatorsMap;
+        return indicatorsMap.entrySet()
+                .stream()
+                .map(entry ->
+                        Map.entry(
+                                entry.getKey(),
+                                Indicators.combine(entry.getValue().values())))
+                .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
+    }
+
+    public void clearIndicators() {
+        indicatorsMap.clear();
     }
 
     @Override

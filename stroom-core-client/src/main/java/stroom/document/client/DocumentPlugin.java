@@ -24,6 +24,7 @@ import stroom.core.client.ContentManager;
 import stroom.core.client.HasSave;
 import stroom.core.client.event.CloseContentEvent;
 import stroom.core.client.event.CloseContentEvent.Callback;
+import stroom.core.client.event.ShowFullScreenEvent;
 import stroom.core.client.presenter.Plugin;
 import stroom.docref.DocRef;
 import stroom.document.client.event.ShowCreateDocumentDialogEvent;
@@ -88,10 +89,10 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
 //    }
 
     /**
-     * 4. This method will open an document and show it in the content pane.
+     * 4. This method will open a document and show it in the content pane.
      */
     @SuppressWarnings("unchecked")
-    public MyPresenterWidget<?> open(final DocRef docRef, final boolean forceOpen) {
+    public MyPresenterWidget<?> open(final DocRef docRef, final boolean forceOpen, final boolean fullScreen) {
         MyPresenterWidget<?> presenter = null;
 
         final DocumentTabData existing = documentToTabDataMap.get(docRef);
@@ -129,7 +130,7 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
 
                 // Load the document and show the tab.
                 final CloseContentEvent.Handler closeHandler = new EntityCloseHandler(tabData);
-                showTab(docRef, documentEditPresenter, closeHandler, tabData);
+                showDocument(docRef, documentEditPresenter, closeHandler, tabData, fullScreen);
 
             } else {
                 // Stop spinning.
@@ -140,10 +141,11 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
         return presenter;
     }
 
-    protected void showTab(final DocRef docRef,
-                           final MyPresenterWidget<?> documentEditPresenter,
-                           final CloseContentEvent.Handler closeHandler,
-                           final DocumentTabData tabData) {
+    protected void showDocument(final DocRef docRef,
+                                final MyPresenterWidget<?> documentEditPresenter,
+                                final CloseContentEvent.Handler closeHandler,
+                                final DocumentTabData tabData,
+                                final boolean fullScreen) {
         final Consumer<Throwable> errorConsumer = caught -> {
             AlertEvent.fireError(DocumentPlugin.this, "Unable to load document " + docRef, caught.getMessage(), null);
             // Stop spinning.
@@ -165,11 +167,19 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
                                             doc,
                                             !allowUpdate);
                                     // Open the tab.
-                                    contentManager.open(closeHandler, tabData, documentEditPresenter);
+                                    if (fullScreen) {
+                                        showFullScreen(documentEditPresenter);
+                                    } else {
+                                        contentManager.open(closeHandler, tabData, documentEditPresenter);
+                                    }
                                 });
                     } else {
                         // Open the tab.
-                        contentManager.open(closeHandler, tabData, documentEditPresenter);
+                        if (fullScreen) {
+                            showFullScreen(documentEditPresenter);
+                        } else {
+                            contentManager.open(closeHandler, tabData, documentEditPresenter);
+                        }
                     }
                 }
             } finally {
@@ -180,6 +190,10 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
 
         // Load the document and show the tab.
         load(docRef, loadConsumer, errorConsumer);
+    }
+
+    private void showFullScreen(final MyPresenterWidget<?> documentEditPresenter) {
+        ShowFullScreenEvent.fire(this, documentEditPresenter);
     }
 
     /**

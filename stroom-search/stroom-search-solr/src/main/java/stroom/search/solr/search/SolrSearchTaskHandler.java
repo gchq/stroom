@@ -16,17 +16,17 @@
 
 package stroom.search.solr.search;
 
-import stroom.dashboard.expression.v1.FieldIndex;
-import stroom.dashboard.expression.v1.Val;
-import stroom.dashboard.expression.v1.ValBoolean;
-import stroom.dashboard.expression.v1.ValDouble;
-import stroom.dashboard.expression.v1.ValErr;
-import stroom.dashboard.expression.v1.ValInteger;
-import stroom.dashboard.expression.v1.ValLong;
-import stroom.dashboard.expression.v1.ValNull;
-import stroom.dashboard.expression.v1.ValString;
-import stroom.dashboard.expression.v1.ValuesConsumer;
-import stroom.dashboard.expression.v1.ref.ErrorConsumer;
+import stroom.query.language.functions.FieldIndex;
+import stroom.query.language.functions.Val;
+import stroom.query.language.functions.ValBoolean;
+import stroom.query.language.functions.ValDouble;
+import stroom.query.language.functions.ValErr;
+import stroom.query.language.functions.ValInteger;
+import stroom.query.language.functions.ValLong;
+import stroom.query.language.functions.ValNull;
+import stroom.query.language.functions.ValString;
+import stroom.query.language.functions.ValuesConsumer;
+import stroom.query.language.functions.ref.ErrorConsumer;
 import stroom.search.solr.CachedSolrIndex;
 import stroom.search.solr.SolrIndexClientCache;
 import stroom.search.solr.shared.SolrConnectionConfig;
@@ -37,6 +37,7 @@ import stroom.task.api.TaskContextFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
+import jakarta.inject.Inject;
 import org.apache.solr.client.solrj.FastStreamingDocsCallback;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.StreamingResponseCallback;
@@ -52,7 +53,6 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.LongAdder;
-import javax.inject.Inject;
 
 public class SolrSearchTaskHandler {
 
@@ -282,7 +282,7 @@ public class SolrSearchTaskHandler {
                 }
 
                 if (values != null) {
-                    valuesConsumer.add(Val.of(values));
+                    valuesConsumer.accept(Val.of(values));
                 }
             } catch (final RuntimeException e) {
                 error(e);
@@ -452,7 +452,7 @@ public class SolrSearchTaskHandler {
                 }
 
                 if (values != null) {
-                    valuesConsumer.add(Val.of(values));
+                    valuesConsumer.accept(Val.of(values));
                 }
             } catch (final RuntimeException e) {
                 error(e);

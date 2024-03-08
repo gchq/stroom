@@ -28,6 +28,7 @@ import stroom.event.logging.api.PurposeUtil;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.event.logging.api.StroomEventLoggingUtil;
 import stroom.security.api.SecurityContext;
+import stroom.security.api.UserIdentity;
 import stroom.util.io.ByteSize;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -61,6 +62,10 @@ import event.logging.SystemDetail;
 import event.logging.User;
 import event.logging.impl.DefaultEventLoggingService;
 import event.logging.util.DeviceUtil;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -80,10 +85,6 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.inject.Singleton;
-import javax.servlet.http.HttpServletRequest;
 
 @Singleton
 public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService implements StroomEventLoggingService {
@@ -323,8 +324,10 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
 
     private User getUser() {
         try {
+            final UserIdentity userIdentity = securityContext.getUserIdentity();
             return User.builder()
-                    .withId(securityContext.getUserIdentity().getId())
+                    .withId(userIdentity.getSubjectId())
+                    .withName(userIdentity.getDisplayName())
                     .build();
         } catch (final RuntimeException e) {
             LOGGER.warn("Problem getting current user", e);
@@ -736,5 +739,4 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
 
         return mapper;
     }
-
 }

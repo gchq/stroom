@@ -20,8 +20,7 @@ import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.feed.client.presenter.FeedSettingsPresenter.FeedSettingsView;
 import stroom.feed.shared.FeedDoc;
 import stroom.feed.shared.FeedDoc.FeedStatus;
-import stroom.item.client.ItemListBox;
-import stroom.item.client.StringListBox;
+import stroom.item.client.SelectionBox;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 
 import com.google.gwt.uibinder.client.UiBinder;
@@ -38,15 +37,17 @@ public class FeedSettingsViewImpl extends ViewImpl implements FeedSettingsView, 
     @UiField
     TextBox classification;
     @UiField
-    StringListBox dataEncoding;
+    SelectionBox<String> dataEncoding;
     @UiField
-    StringListBox contextEncoding;
+    SelectionBox<String> contextEncoding;
     @UiField
-    ItemListBox<FeedDoc.FeedStatus> feedStatus;
+    SelectionBox<FeedDoc.FeedStatus> feedStatus;
     @UiField
-    StringListBox receivedType;
+    SelectionBox<String> receivedType;
     @UiField
     CustomCheckBox reference;
+    @UiField
+    SelectionBox<String> volumeGroup;
 
     @Inject
     public FeedSettingsViewImpl(final Binder binder) {
@@ -69,23 +70,28 @@ public class FeedSettingsViewImpl extends ViewImpl implements FeedSettingsView, 
     }
 
     @Override
-    public StringListBox getDataEncoding() {
+    public SelectionBox<String> getDataEncoding() {
         return dataEncoding;
     }
 
     @Override
-    public StringListBox getContextEncoding() {
+    public SelectionBox<String> getContextEncoding() {
         return contextEncoding;
     }
 
     @Override
-    public StringListBox getReceivedType() {
+    public SelectionBox<String> getReceivedType() {
         return receivedType;
     }
 
     @Override
-    public ItemListBox<FeedStatus> getFeedStatus() {
+    public SelectionBox<FeedStatus> getFeedStatus() {
         return feedStatus;
+    }
+
+    @Override
+    public SelectionBox<String> getVolumeGroup() {
+        return volumeGroup;
     }
 
     @Override
@@ -96,6 +102,7 @@ public class FeedSettingsViewImpl extends ViewImpl implements FeedSettingsView, 
         receivedType.setEnabled(!readOnly);
         feedStatus.setEnabled(!readOnly);
         reference.setEnabled(!readOnly);
+        volumeGroup.setEnabled(!readOnly);
     }
 
     public interface Binder extends UiBinder<Widget, FeedSettingsViewImpl> {

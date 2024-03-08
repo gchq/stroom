@@ -17,19 +17,19 @@
 package stroom.expression.matcher;
 
 import stroom.data.shared.StreamTypeNames;
-import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.DocRefField;
+import stroom.datasource.api.v2.QueryField;
 import stroom.datasource.api.v2.TextField;
 import stroom.dictionary.api.WordListProvider;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docref.DocRef;
-import stroom.query.api.v2.DateTimeSettings;
+import stroom.expression.api.DateTimeSettings;
+import stroom.expression.api.TimeZone;
+import stroom.expression.api.TimeZone.Use;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.query.api.v2.TimeZone;
-import stroom.query.api.v2.TimeZone.Use;
 
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
@@ -39,7 +39,6 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.ZoneOffset;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -60,7 +59,7 @@ class TestExpressionMatcher {
     public static final DocRefField FEED = DocRefField.byUniqueName("Feed", "Feed");
     private static final TextField TYPE = new TextField("Type");
     private static final TextField FRUIT = new TextField("Fruit");
-    private static final Map<String, AbstractField> FIELD_MAP = Map.of(
+    private static final Map<String, QueryField> FIELD_MAP = Map.of(
             FEED.getName(),
             FEED,
             TYPE.getName(),
@@ -178,8 +177,7 @@ class TestExpressionMatcher {
                         .timeZone(TimeZone.builder()
                                 .use(Use.UTC)
                                 .build())
-                        .build(),
-                System.currentTimeMillis());
+                        .build());
 
         Mockito.when(mockWordListProvider.getWords(Mockito.eq(docRef)))
                 .thenReturn(new String[]{
@@ -218,8 +216,7 @@ class TestExpressionMatcher {
                 FIELD_MAP,
                 null,
                 null,
-                null,
-                System.currentTimeMillis());
+                DateTimeSettings.builder().build());
         assertThat(expressionMatcher.match(attributeMap, expression))
                 .isEqualTo(outcome);
     }

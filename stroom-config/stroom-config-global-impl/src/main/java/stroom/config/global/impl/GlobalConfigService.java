@@ -45,6 +45,7 @@ import stroom.util.shared.PageRequest;
 import stroom.util.shared.PropertyPath;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.inject.Inject;
 
 import java.util.Collections;
 import java.util.Comparator;
@@ -52,7 +53,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import javax.inject.Inject;
 
 public class GlobalConfigService {
 
@@ -252,7 +252,7 @@ public class GlobalConfigService {
                 // passes javax validation
                 validateConfigProperty(configProperty);
 
-                AuditUtil.stamp(securityContext.getUserId(), configProperty);
+                AuditUtil.stamp(securityContext, configProperty);
 
                 if (configProperty.getId() == null) {
                     try {

@@ -17,6 +17,7 @@
 package stroom.util.shared;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -57,6 +58,12 @@ public class DefaultLocation implements Location {
     @Override
     public int getColNo() {
         return colNo;
+    }
+
+    @JsonIgnore
+    @Override
+    public boolean isUnknown() {
+        return colNo <= 0 && lineNo <= 0;
     }
 
     @Override

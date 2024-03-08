@@ -29,16 +29,18 @@ import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.editor.client.presenter.EditorPresenter;
-import stroom.editor.client.view.Indicator;
 import stroom.editor.client.view.IndicatorLines;
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.pipeline.shared.stepping.FindElementDocRequest;
+import stroom.pipeline.shared.stepping.StepType;
 import stroom.pipeline.shared.stepping.SteppingResource;
 import stroom.pipeline.stepping.client.presenter.ElementPresenter.ElementView;
+import stroom.util.shared.ErrorType;
 import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.HasData;
+import stroom.util.shared.Indicators;
 import stroom.util.shared.Location;
 import stroom.util.shared.Severity;
 import stroom.util.shared.StoredError;
@@ -47,6 +49,8 @@ import stroom.widget.util.client.FutureImpl;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -55,12 +59,11 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.Objects;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -87,6 +90,7 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements
     private final EnumMap<IndicatorType, IndicatorLines> indicatorsMap = new EnumMap<>(IndicatorType.class);
     private final EnumMap<IndicatorType, EditorPresenter> presenterMap = new EnumMap<>(IndicatorType.class);
 
+    private Indicators indicators;
     private EditorPresenter codePresenter;
     private EditorPresenter inputPresenter;
     private EditorPresenter outputPresenter;
@@ -97,6 +101,7 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements
     private ClassificationWrapperView inputView;
     private ClassificationWrapperView outputView;
     private View logView;
+    private Consumer<StepType> stepRequestHandler = null;
 
     @Inject
     public ElementPresenter(final EventBus eventBus,
@@ -120,7 +125,7 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements
             boolean loading = false;
 
             if (element.getElementType().hasRole(PipelineElementType.ROLE_HAS_CODE)) {
-                getView().setCodeView(getCodePresenter().getView());
+                getView().setCodeView(getCodePresenter(element).getView());
 
                 try {
                     final FindElementDocRequest findElementDocRequest = FindElementDocRequest.builder()
@@ -135,7 +140,8 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements
                             .onSuccess(result -> loadEntityRef(result, future))
                             .onFailure(caught -> {
                                 dirtyCode = false;
-                                setCode(caught.getMessage(), null);
+                                setCode(caught.getMessage());
+                                clearAllIndicators();
                                 future.setResult(false);
                             })
                             .call(STEPPING_RESOURCE)
@@ -182,9 +188,10 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements
     }
 
     private void updateLogView() {
+//        GWT.log("updateLogView");
         getView().setLogView(getLogView());
         if (logPresenter != null) {
-            if (haveIndicators()) {
+            if (indicators != null && !indicators.isEmpty()) {
                 final String content = buildLogContent();
 //                GWT.log("content:\n" + content);
                 if (content != null && !content.isEmpty()) {
@@ -204,84 +211,31 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements
         }
     }
 
+//    private IndicatorType determineIndicatorType()
+
     private String buildLogContent() {
-        final int editorCount = presenterMap.size();
-
-//        if (indicatorsMap.get(IndicatorType.CODE) != null) {
-//            GWT.log("buildLogContent() get(code) indicatorLines.getLocationAgnosticIndicator:\n>> "
-//                    + indicatorsMap.get(IndicatorType.CODE).getLocationAgnosticIndicator());
-//        }
-//        if (indicatorsMap.get(IndicatorType.OUTPUT) != null) {
-//            GWT.log("buildLogContent() get(output) indicatorLines.getLocationAgnosticIndicator:\n>> "
-//                    + indicatorsMap.get(IndicatorType.OUTPUT).getLocationAgnosticIndicator());
-//        }
-
-        final List<LogPaneEntry> logPaneEntries = new ArrayList<>();
-
-        indicatorsMap.entrySet()
+        //noinspection SimplifyStreamApiCallChains // Cos GWT
+        final List<LogPaneEntry> logPaneEntries = indicators.getErrorList()
                 .stream()
-                .filter(entry -> entry.getValue() != null && !entry.getValue().isEmpty())
-                .forEach(entry -> {
-                    final IndicatorType paneType = editorCount > 1
-                            ? entry.getKey()
-                            : null;
-                    final IndicatorLines indicatorLines = entry.getValue();
-                    final Indicator locationAgnosticIndicator = indicatorLines.getLocationAgnosticIndicator();
-                    if (locationAgnosticIndicator != null && !locationAgnosticIndicator.isEmpty()) {
-                        final Map<Severity, Set<StoredError>> errorMap = locationAgnosticIndicator.getErrorMap();
-                        errorMap.forEach((severity, storedErrors) -> {
-                            for (final StoredError storedError : storedErrors) {
-                                logPaneEntries.add(new LogPaneEntry(
-                                        paneType,
-                                        severity,
-                                        null,
-                                        storedError.getLocation(),
-                                        storedError.getMessage()));
-                            }
-                        });
-                    }
+                .filter(Objects::nonNull)
+                .map(storedError -> {
+                    // Don't need to qualify the paneType if there is only one pane in use
+                    final IndicatorType paneType = deriveIndicatorType(storedError);
 
-                    for (final Integer lineNumber : GwtNullSafe.collection(indicatorLines.getLineNumbers())) {
-                        final Indicator lineSpecificIndicator = indicatorLines.getIndicator(lineNumber);
-                        if (lineSpecificIndicator != null && !lineSpecificIndicator.isEmpty()) {
-                            final Map<Severity, Set<StoredError>> errorMap = lineSpecificIndicator.getErrorMap();
-                            errorMap.forEach((severity, storedErrors) -> {
-                                for (final StoredError storedError : storedErrors) {
-                                    logPaneEntries.add(new LogPaneEntry(
-                                            paneType,
-                                            severity,
-                                            lineNumber,
-                                            storedError.getLocation(),
-                                            storedError.getMessage()));
-                                }
-                            });
-                        }
-                    }
-                });
+                    return new LogPaneEntry(
+                            paneType,
+                            storedError.getSeverity(),
+                            GwtNullSafe.get(storedError.getLocation(), Location::getLineNo),
+                            storedError.getLocation(),
+                            storedError.getMessage());
+                })
+                .collect(Collectors.toList());
 
         return logPaneEntries.stream()
                 .sorted()
                 .map(LogPaneEntry::toString)
                 .collect(Collectors.joining("\n"));
     }
-
-    private boolean haveIndicators() {
-        return indicatorsMap.entrySet()
-                .stream()
-                .anyMatch(entry -> entry.getValue() != null && !entry.getValue().isEmpty());
-    }
-
-//    private void updateLogView(final IndicatorLines indicatorLines) {
-////        GWT.log("updateConsoleView " + indicatorLines);
-//        if (indicatorLines != null
-//                && indicatorLines.getLocationAgnosticIndicator() != null
-//                && !indicatorLines.getLocationAgnosticIndicator().isEmpty()) {
-//            getView().setLogVisible(true);
-//        } else {
-//            getView().setLogVisible(false);
-//        }
-//        getView().setLogView(getLogView());
-//    }
 
     private void loadEntityRef(final DocRef entityRef, final FutureImpl<Boolean> future) {
         if (entityRef != null) {
@@ -297,7 +251,8 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements
                     },
                     caught -> {
                         dirtyCode = false;
-                        setCode(caught.getMessage(), null);
+                        setCode(caught.getMessage());
+                        clearAllIndicators();
                         future.setResult(false);
                     });
         } else {
@@ -324,11 +279,10 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements
     }
 
     private void read() {
-        final IndicatorLines codeIndicators = indicatorsMap.get(IndicatorType.CODE);
         if (hasData != null) {
-            setCode(hasData.getData(), codeIndicators);
+            setCode(hasData.getData());
         } else {
-            setCode("", codeIndicators);
+            setCode("");
         }
     }
 
@@ -343,17 +297,11 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements
         return codePresenter.getText();
     }
 
-    public void setCode(final String code,
-                        final IndicatorLines codeIndicators) {
+    public void setCode(final String code) {
         if (codePresenter != null) {
-//            this.codeIndicators = codeIndicators;
-
             if (!codePresenter.getText().equals(code)) {
                 codePresenter.setText(code);
             }
-
-//            codePresenter.setIndicators(codeIndicators);
-            setCodeIndicators(codeIndicators);
 
             // Done here to ensure the editor is attached
             codePresenter.getBasicAutoCompletionOption().setAvailable();
@@ -362,20 +310,40 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements
             codePresenter.getSnippetsOption().setOn();
             codePresenter.getLiveAutoCompletionOption().setAvailable();
             codePresenter.getLiveAutoCompletionOption().setOff();
-            updateLogView();
+
+            codePresenter.setMode(getMode(element));
+
+
+            registerHandler(codePresenter.getView().asWidget().addDomHandler(e -> {
+                if (KeyCodes.KEY_ENTER == e.getNativeKeyCode() &&
+                        (e.isShiftKeyDown() || e.isControlKeyDown())) {
+                    e.preventDefault();
+                    if (stepRequestHandler != null) {
+                        stepRequestHandler.accept(StepType.REFRESH);
+                    }
+                }
+            }, KeyDownEvent.getType()));
         }
     }
 
-    public void setCodeIndicators(final IndicatorLines codeIndicators) {
-//        GWT.log("Setting codeIndicators " + codeIndicators);
-        if (codePresenter != null) {
-            setIndicatorsOnEditor(IndicatorType.CODE, codeIndicators);
+    public void setIndicators(final Indicators indicators) {
+        this.indicators = indicators;
+        if (hasCodePane()) {
+            setIndicatorsOnEditor(IndicatorType.CODE, indicators);
         }
+        setIndicatorsOnEditor(IndicatorType.INPUT, indicators);
+        setIndicatorsOnEditor(IndicatorType.OUTPUT, indicators);
+
         updateLogView();
     }
 
     private void setIndicatorsOnEditor(final IndicatorType indicatorType,
-                                       final IndicatorLines indicatorLines) {
+                                       final Indicators indicators) {
+        final ErrorType[] types = getErrorTypesForPane(indicatorType);
+        final IndicatorLines indicatorLines = GwtNullSafe.get(
+                indicators,
+                indicators2 -> IndicatorLines.filter(indicators2, false, types));
+
         if (indicatorLines == null || indicatorLines.isEmpty()) {
             indicatorsMap.remove(indicatorType);
         } else {
@@ -386,54 +354,87 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements
         if (editorPresenter != null) {
             editorPresenter.setIndicators(indicatorLines);
         }
-        updateLogView();
+    }
+
+    private IndicatorType deriveIndicatorType(final StoredError storedError) {
+        if (storedError == null) {
+            return IndicatorType.GENERIC;
+        } else {
+            final ErrorType errorType = storedError.getErrorType();
+            //noinspection EnhancedSwitchMigration // Cos GWT
+            switch (errorType) {
+                case CODE:
+                    return IndicatorType.CODE;
+                case INPUT:
+                    return IndicatorType.INPUT;
+                case OUTPUT:
+                    return IndicatorType.OUTPUT;
+                case GENERIC:
+                    return IndicatorType.GENERIC;
+                case UNKNOWN:
+                    return hasCodePane()
+                            ? IndicatorType.CODE
+                            : IndicatorType.INPUT;
+                default:
+                    throw new RuntimeException("Unknown type: " + errorType);
+            }
+        }
+    }
+
+    private ErrorType[] getErrorTypesForPane(final IndicatorType indicatorType) {
+
+        // Decide what to do with unknown errors based on whether we have a code pane or not.
+        // If no code pane, we assume unknown errors belong to input pane
+        //noinspection EnhancedSwitchMigration // Not on GWT
+        switch (indicatorType) {
+            case CODE:
+                return hasCodePane()
+                        ? new ErrorType[]{ErrorType.CODE, ErrorType.UNKNOWN}
+                        : new ErrorType[]{ErrorType.CODE};
+            case INPUT:
+                return hasCodePane()
+                        ? new ErrorType[]{ErrorType.INPUT}
+                        : new ErrorType[]{ErrorType.INPUT, ErrorType.UNKNOWN};
+            case OUTPUT:
+                return new ErrorType[]{ErrorType.OUTPUT};
+            case GENERIC:
+                return new ErrorType[]{ErrorType.GENERIC};
+            default:
+                throw new RuntimeException("Unknown type: " + indicatorType);
+        }
     }
 
     public void setInput(final String input,
                          final int inputStartLineNo,
-                         final boolean formatInput,
-                         final IndicatorLines inputIndicators) {
-        if (inputPresenter != null) {
-
-            inputPresenter.getStylesOption().setOn(formatInput);
-
-            if (!inputPresenter.getText().equals(input)) {
-                inputPresenter.setText(input, formatInput);
-            }
-
-            inputPresenter.setFirstLineNumber(inputStartLineNo);
-            inputPresenter.getBasicAutoCompletionOption().setUnavailable();
-            inputPresenter.getBasicAutoCompletionOption().setOff();
-            inputPresenter.getSnippetsOption().setUnavailable();
-            inputPresenter.getSnippetsOption().setOff();
-            inputPresenter.getLiveAutoCompletionOption().setUnavailable();
-            inputPresenter.getLiveAutoCompletionOption().setOff();
-            setIndicatorsOnEditor(IndicatorType.INPUT, inputIndicators);
-            updateLogView();
-        }
+                         final boolean formatInput) {
+        setInputOutput(inputPresenter, input, inputStartLineNo, formatInput);
     }
 
     public void setOutput(final String output,
                           final int outputStartLineNo,
-                          final boolean formatOutput,
-                          final IndicatorLines outputIndicators) {
-        if (outputPresenter != null) {
-            outputPresenter.getStylesOption().setOn(formatOutput);
+                          final boolean formatOutput) {
+        setInputOutput(outputPresenter, output, outputStartLineNo, formatOutput);
+    }
 
-            if (!outputPresenter.getText().equals(output)) {
-                outputPresenter.setText(output, formatOutput);
+    private void setInputOutput(final EditorPresenter editorPresenter,
+                                final String text,
+                                final int outputStartLineNo,
+                                final boolean formatOutput) {
+        if (editorPresenter != null) {
+            editorPresenter.getStylesOption().setOn(formatOutput);
+
+            if (!editorPresenter.getText().equals(text)) {
+                editorPresenter.setText(text, formatOutput);
             }
 
-            outputPresenter.setFirstLineNumber(outputStartLineNo);
+            editorPresenter.setFirstLineNumber(outputStartLineNo);
 
-            outputPresenter.getBasicAutoCompletionOption().setUnavailable();
-            outputPresenter.getBasicAutoCompletionOption().setOff();
-            outputPresenter.getSnippetsOption().setUnavailable();
-            outputPresenter.getSnippetsOption().setOff();
-            outputPresenter.getLiveAutoCompletionOption().setUnavailable();
-            outputPresenter.getLiveAutoCompletionOption().setOff();
-            setIndicatorsOnEditor(IndicatorType.OUTPUT, outputIndicators);
-            updateLogView();
+            editorPresenter.getBasicAutoCompletionOption().setUnavailable();
+            editorPresenter.getBasicAutoCompletionOption().setOff();
+            editorPresenter.getSnippetsOption().setUnavailable();
+            editorPresenter.getSnippetsOption().setOff();
+            editorPresenter.getLiveAutoCompletionOption().setUnavailable();
+            editorPresenter.getLiveAutoCompletionOption().setOff();
         }
     }
 
@@ -444,6 +445,12 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements
 
     public PipelineElement getElement() {
         return element;
+    }
+
+    public boolean hasCodePane() {
+        return GwtNullSafe.test(
+                element,
+                elm -> elm.getElementType().hasRole(PipelineElementType.ROLE_HAS_CODE));
     }
 
     public void setElement(final PipelineElement element) {
@@ -475,18 +482,23 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements
     }
 
     public void clearAllIndicators() {
+        this.indicators = null;
         for (final IndicatorType indicatorType : IndicatorType.values()) {
-            setIndicatorsOnEditor(indicatorType, null);
+            setIndicatorsOnEditor(indicatorType, (Indicators) null);
         }
         updateLogView();
     }
 
-    private EditorPresenter getCodePresenter() {
+    private EditorPresenter getCodePresenter(final PipelineElement element) {
+        GWT.log("id: " + element.getId()
+                + ", type: " + element.getType()
+                + ", typeType: " + GwtNullSafe.get(element.getElementType(), PipelineElementType::getType));
         if (codePresenter == null) {
             codePresenter = editorProvider.get();
             presenterMap.put(IndicatorType.CODE, codePresenter);
             setCommonEditorOptions(codePresenter);
 
+            codePresenter.setMode(getMode(element));
             codePresenter.getFormatAction().setAvailable(true);
 
             registerHandler(codePresenter.addValueChangeHandler(event -> {
@@ -499,6 +511,37 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements
             }));
         }
         return codePresenter;
+    }
+
+    private AceEditorMode getMode(final PipelineElement element) {
+        // The default
+        AceEditorMode mode = AceEditorMode.XML;
+        if (element != null) {
+            final String elementType = element.getType();
+            if (PipelineElementType.TYPE_DS_PARSER.equals(elementType)) {
+                mode = AceEditorMode.STROOM_DATA_SPLITTER;
+            } else if (PipelineElementType.TYPE_XML_FRAGMENT_PARSER.equals(elementType)) {
+                mode = AceEditorMode.STROOM_FRAGMENT_PARSER;
+            } else if (PipelineElementType.TYPE_COMBINED_PARSER.equals(elementType)) {
+                // Bit hacky, but we have no access to the type of the text converter
+                // CombinedParser ought to be deprecated
+                final String code = getCode();
+                if (!GwtNullSafe.isBlankString(code)) {
+                    if (code.contains("dataSplitter")) {
+                        mode = AceEditorMode.STROOM_DATA_SPLITTER;
+                    } else if (code.contains("!ENTITY")) {
+                        mode = AceEditorMode.STROOM_FRAGMENT_PARSER;
+                    }
+                } else {
+                    // Fallback mode that contains snippets for both
+                    mode = AceEditorMode.STROOM_COMBINED_PARSER;
+                }
+            }
+            GWT.log("id: " + element.getId()
+                    + ", type: " + element.getType()
+                    + ", mode: " + mode);
+        }
+        return mode;
     }
 
     @Override
@@ -584,6 +627,10 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements
         editorPresenter.getUseVimBindingsOption().setAvailable();
     }
 
+    public void setStepRequestHandler(final Consumer<StepType> onStepRefreshRequest) {
+        this.stepRequestHandler = onStepRefreshRequest;
+    }
+
 
     // --------------------------------------------------------------------------------
 
@@ -609,6 +656,7 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements
         CODE("Code"),
         INPUT("Input"),
         OUTPUT("Output"),
+        GENERIC("Generic"),
         ;
 
         private static final Comparator<IndicatorType> COMPARATOR = Comparator.nullsFirst(
@@ -625,6 +673,7 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements
     // --------------------------------------------------------------------------------
 
 
+    @SuppressWarnings("ClassCanBeRecord")
     static class LogPaneEntry implements Comparable<LogPaneEntry> {
 
         private final IndicatorType paneType;
@@ -643,10 +692,10 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements
                         Comparator.nullsFirst(Integer::compareTo));
 
         LogPaneEntry(final IndicatorType paneType,
-                             final Severity severity,
-                             final Integer lineNumber,
-                             final Location location,
-                             final String message) {
+                     final Severity severity,
+                     final Integer lineNumber,
+                     final Location location,
+                     final String message) {
             this.paneType = paneType;
             this.severity = severity;
             this.lineNumber = lineNumber;
@@ -678,16 +727,22 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements
         public String toString() {
             // Some msgs have no location or line/col numbers of -1 so replace with '?'
             // to make it clear to user that location is unknown
-            final String locationStr = location != null
-                    ? location.toString().replace("-1", "?")
-                    : "?:?:?";
-            // Some step elements can have msgs from multiple panes so include the pane name
-            final String typeStr = paneType != null
-                    ? "(" + paneType.displayName + " pane) - "
-                    : "";
+            final String locationStr;
+            if (location != null && !location.isUnknown()) {
+                // Some step elements can have msgs from multiple panes so include the pane name
+                // if there is a location, so the user can tell which pane the location relates to
+                final String typeStr = paneType != null && paneType != IndicatorType.GENERIC
+                        ? "(" + paneType.displayName + " pane) - "
+                        : "";
+                locationStr = typeStr
+                        + "["
+                        + location.toString().replace(String.valueOf(Location.UNKNOWN_VALUE), "?")
+                        + "] ";
+            } else {
+                locationStr = "";
+            }
             return severity + ": "
-                    + typeStr + "["
-                    + locationStr + "] "
+                    + locationStr
                     + message;
         }
 

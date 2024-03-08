@@ -25,12 +25,11 @@ import stroom.pipeline.state.RecordCount;
 import stroom.pipeline.state.RecordCountService;
 import stroom.svg.shared.SvgImage;
 
+import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
-
-import javax.inject.Inject;
 
 /**
  * A SAX filter used to count the number of first level elements in an XML
@@ -40,6 +39,10 @@ import javax.inject.Inject;
 @ConfigurableElement(
         type = "RecordCountFilter",
         category = Category.FILTER,
+        description = """
+                Counts events/records in the stream.
+                An event/record is taken to be an XML element that is at the first level below the \
+                root element, i.e. for 'event-logging:3' XML this means the `<Event>` element.""",
         roles = {
                 PipelineElementType.ROLE_TARGET,
                 PipelineElementType.ROLE_HAS_TARGETS},

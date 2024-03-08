@@ -1,14 +1,13 @@
 package stroom.test;
 
 import stroom.activity.mock.MockActivityModule;
-import stroom.analytics.mock.MockAlertModule;
-import stroom.app.guice.JerseyModule;
 import stroom.cache.impl.CacheModule;
 import stroom.core.dataprocess.PipelineStreamTaskModule;
 import stroom.data.store.mock.MockStreamStoreModule;
 import stroom.dictionary.mock.MockWordListProviderModule;
 import stroom.docrefinfo.mock.MockDocRefInfoModule;
 import stroom.explorer.impl.MockExplorerModule;
+import stroom.feed.api.VolumeGroupNameProvider;
 import stroom.feed.impl.MockFeedModule;
 import stroom.importexport.impl.ImportExportModule;
 import stroom.index.mock.MockIndexModule;
@@ -26,6 +25,7 @@ import stroom.task.impl.MockTaskModule;
 import stroom.util.entityevent.EntityEventBus;
 import stroom.util.io.HomeDirProvider;
 import stroom.util.io.TempDirProvider;
+import stroom.util.jersey.MockJerseyModule;
 import stroom.util.pipeline.scope.PipelineScopeModule;
 import stroom.util.servlet.MockServletModule;
 
@@ -48,9 +48,8 @@ public class MockServiceModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        install(new JerseyModule());
+        install(new MockJerseyModule());
         install(new MockActivityModule());
-        install(new MockAlertModule());
         install(new MockDocRefInfoModule());
         install(new CacheModule());
         install(new MockMetaModule());
@@ -98,11 +97,11 @@ public class MockServiceModule extends AbstractModule {
             }
             return null;
         });
-        when(mockUserService.getOrCreateUser(any())).then((Answer<User>) invocation -> {
+        when(mockUserService.getOrCreateUser(any(String.class))).then((Answer<User>) invocation -> {
             final String name = invocation.getArgument(0);
             final User user = User.builder()
                     .uuid(UUID.randomUUID().toString())
-                    .name(name)
+                    .subjectId(name)
                     .build();
             return mockUserService.update(user);
         });
@@ -110,7 +109,7 @@ public class MockServiceModule extends AbstractModule {
             final String name = invocation.getArgument(0);
             final User user = User.builder()
                     .uuid(UUID.randomUUID().toString())
-                    .name(name)
+                    .subjectId(name)
                     .group(true)
                     .build();
             return mockUserService.update(user);
@@ -130,5 +129,10 @@ public class MockServiceModule extends AbstractModule {
     EntityEventBus entityEventBus() {
         return event -> {
         };
+    }
+
+    @Provides
+    VolumeGroupNameProvider volumeGroupNameProvider() {
+        return (feedName, streamType, overrideVolumeGroup) -> null;
     }
 }

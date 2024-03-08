@@ -16,76 +16,79 @@
 
 package stroom.query.common.v2.format;
 
-import stroom.dashboard.expression.v1.Val;
 import stroom.query.api.v2.NumberFormatSettings;
+import stroom.query.language.functions.Val;
+import stroom.query.language.functions.ValDate;
+import stroom.query.language.functions.ValDuration;
+import stroom.util.NullSafe;
+
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
+import java.util.Objects;
 
 public class NumberFormatter implements Formatter {
 
-    private final NumberFormatSettings numberFormat;
+    private final NumberFormatSettings formatSettings;
+    private final NumberFormat numberFormat;
 
-    private NumberFormatter(final NumberFormatSettings numberFormat) {
-        this.numberFormat = numberFormat;
+    private NumberFormatter(final NumberFormatSettings formatSettings) {
+        this.formatSettings = formatSettings;
+        this.numberFormat = NullSafe.get(formatSettings, NumberFormatter::getNumberFormat);
     }
 
-    public static NumberFormatter create(final NumberFormatSettings numberFormat) {
-        return new NumberFormatter(numberFormat);
+    public static NumberFormatter create(final NumberFormatSettings formatSettings) {
+        return new NumberFormatter(formatSettings);
     }
 
     @Override
     public String format(final Val value) {
-        if (value == null) {
-            return null;
-        }
+        final String result;
+        if (value == null || value.type().isNull()) {
+            result = null;
+        } else {
+            final Number number = value.toNumber();
 
-        final Double dbl = value.toDouble();
-        if (dbl != null) {
-            final String string = value.toString();
-
-            if (numberFormat != null) {
-                final int index = string.indexOf(".");
-
-                String p1 = string;
-                String p2 = "";
-                if (index != -1) {
-                    p1 = string.substring(0, index);
-                    p2 = string.substring(index + 1);
+            if (number != null) {
+                if (numberFormat != null) {
+                    return numberFormat.format(number);
+                } else {
+                    return asStringWithNoFormatting(value);
                 }
-
-                // Add separator chars to i part.
-                if (numberFormat.getUseSeparator()) {
-                    final StringBuilder sb = new StringBuilder();
-                    for (int i = 0; i < p1.length(); i++) {
-                        sb.append(p1.charAt(i));
-
-                        final int pos = p1.length() - i - 1;
-                        if (pos > 0 && pos % 3 == 0) {
-                            sb.append(",");
-                        }
-                    }
-                    p1 = sb.toString();
-                }
-
-                // Trim or pad decimal part.
-                if (p2.length() > numberFormat.getDecimalPlaces()) {
-                    p2 = p2.substring(0, numberFormat.getDecimalPlaces());
-                } else if (p2.length() < numberFormat.getDecimalPlaces()) {
-                    final StringBuilder sb = new StringBuilder();
-                    sb.append(p2);
-                    for (int i = 0; i < numberFormat.getDecimalPlaces() - p2.length(); i++) {
-                        sb.append('0');
-                    }
-                    p2 = sb.toString();
-                }
-
-                if (p2.length() == 0) {
-                    return p1;
-                }
-
-                return p1 + "." + p2;
+            } else {
+                result = "";
             }
-
-            return string;
         }
-        return value.toString();
+        return result;
+    }
+
+    private static String asStringWithNoFormatting(final Val val) {
+        Objects.requireNonNull(val);
+        return switch (val) {
+            case ValDuration valDuration -> String.valueOf(valDuration.toLong());
+            case ValDate valDate -> String.valueOf(valDate.toLong());
+            default -> val.toString();
+        };
+    }
+
+    private static NumberFormat getNumberFormat(final NumberFormatSettings formatSettings) {
+        Objects.requireNonNull(formatSettings);
+        NumberFormat numberFormat = null;
+        numberFormat = DecimalFormat.getNumberInstance();
+
+        final boolean useSeparators = NullSafe.isTrue(formatSettings.getUseSeparator());
+        numberFormat.setGroupingUsed(useSeparators);
+        final int groupSize = useSeparators
+                ? 3
+                : 0;
+        if (numberFormat instanceof DecimalFormat decimalFormat) {
+            decimalFormat.setGroupingSize(groupSize);
+        }
+
+        final int decimalPlaces = Objects.requireNonNullElse(formatSettings.getDecimalPlaces(), 0);
+        if (numberFormat instanceof DecimalFormat decimalFormat) {
+            decimalFormat.setMinimumFractionDigits(decimalPlaces);
+            decimalFormat.setMaximumFractionDigits(decimalPlaces);
+        }
+        return numberFormat;
     }
 }

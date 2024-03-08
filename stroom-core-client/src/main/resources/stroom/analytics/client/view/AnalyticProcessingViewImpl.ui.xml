@@ -1,32 +1,19 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
-             xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
              xmlns:form="urn:import:stroom.widget.form.client"
-             xmlns:c="urn:import:stroom.widget.customdatebox.client"
-             xmlns:l="urn:import:stroom.item.client"
-             xmlns:b="urn:import:stroom.widget.button.client">
-    <g:FlowPanel styleName="max form-padding form">
-        <form:FormGroup identity="analyticProcessingEnabled" label="Enabled">
-            <tickbox:CustomCheckBox ui:field="enabled"/>
-        </form:FormGroup>
-        <form:FormGroup identity="analyticProcessingExpression" label="Expression">
-            <g:SimplePanel ui:field="expression" styleName="max default-min-sizes"/>
-        </form:FormGroup>
-        <form:FormGroup identity="analyticProcessingMinMetaCreateTimeMs" label="Min Create Time">
-            <c:MyDateBox ui:field="minMetaCreateTimeMs"/>
-        </form:FormGroup>
-        <form:FormGroup identity="analyticProcessingMaxMetaCreateTimeMs" label="Max Create Time">
-            <c:MyDateBox ui:field="maxMetaCreateTimeMs"/>
-        </form:FormGroup>
-        <form:FormGroup identity="analyticProcessingNode" label="Processing Node">
-            <l:StringListBox ui:field="node"/>
-        </form:FormGroup>
-        <form:FormGroup identity="analyticProcessingInfo" label="Processing Info">
-            <g:FlowPanel styleName="form">
-                <g:SimplePanel ui:field="info" styleName="default-min-sizes dashboard-panel"/>
-                <b:Button ui:field="refresh" text="Refresh"/>
-            </g:FlowPanel>
-        </form:FormGroup>
+             xmlns:l="urn:import:stroom.item.client">
+    <g:FlowPanel styleName="max dock-container-vertical">
+        <g:FlowPanel styleName="dock-min form-padding form">
+            <form:FormGroup identity="analyticProcessingQuery"
+                            label="Query">
+                <g:SimplePanel ui:field="queryEditorContainer"
+                               styleName="stroom-control__no-padding default-min-sizes overflow-hidden"/>
+            </form:FormGroup>
+            <form:FormGroup identity="analyticProcessingType" label="Processing Type">
+                <l:SelectionBox ui:field="processingType"/>
+            </form:FormGroup>
+        </g:FlowPanel>
+        <g:SimplePanel ui:field="processSettings" styleName="dock-max"/>
     </g:FlowPanel>
 </ui:UiBinder> 

@@ -4,7 +4,7 @@ import Loader from "../../Loader";
 import DocRefEditor, { useDocRefEditor } from "../DocRefEditor";
 import { SwitchedDocRefEditorProps } from "../DocRefEditor/types";
 import { useDocumentApi } from "components/DocumentEditors/useDocumentApi";
-import ThemedAceEditor from "components/ThemedAceEditor";
+// import ThemedAceEditor from "components/ThemedAceEditor";
 import { DictionaryDoc } from "components/DocumentEditors/useDocumentApi/types/dictionaryDoc";
 
 const DictionaryEditor: React.FunctionComponent<SwitchedDocRefEditorProps> = ({
@@ -24,19 +24,35 @@ const DictionaryEditor: React.FunctionComponent<SwitchedDocRefEditorProps> = ({
     [onDocumentChange],
   );
 
+  //   return docRefContents ? (
+  //     <DocRefEditor {...editorProps}>
+  //       <ThemedAceEditor
+  //         style={{ width: "100%", height: "100%", minHeight: "25rem" }}
+  //         name={`${docRefUuid}-ace-editor`}
+  //         mode="xml"
+  //         value={docRefContents.data || ""}
+  //         onChange={onDataChange}
+  //       />
+  //     </DocRefEditor>
+  //   ) : (
+  //     <Loader message={`Loading DictionaryDoc ${docRefUuid}`} />
+  //   );
   return docRefContents ? (
     <DocRefEditor {...editorProps}>
-      <ThemedAceEditor
-        style={{ width: "100%", height: "100%", minHeight: "25rem" }}
-        name={`${docRefUuid}-ace-editor`}
-        mode="xml"
-        value={docRefContents.data || ""}
-        onChange={onDataChange}
-      />
+      <pre style={{ width: "100%", height: "100%" }}>
+        {docRefContents.data || ""}
+      </pre>
     </DocRefEditor>
   ) : (
     <Loader message={`Loading DictionaryDoc ${docRefUuid}`} />
   );
+  //   return docRefContents ? (
+  //     <pre style={{ width: "100%", height: "100%" }}>
+  //       {docRefContents.data || ""}
+  //     </pre>
+  //   ) : (
+  //     <Loader message={`Loading DictionaryDoc ${docRefUuid}`} />
+  //   );
 };
 
 export default DictionaryEditor;

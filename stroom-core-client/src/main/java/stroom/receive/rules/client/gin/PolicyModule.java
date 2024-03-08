@@ -22,7 +22,6 @@ import stroom.data.client.presenter.EditExpressionPresenter;
 import stroom.data.client.presenter.EditExpressionPresenter.EditExpressionView;
 import stroom.data.client.view.EditExpressionViewImpl;
 import stroom.receive.rules.client.DataRetentionPlugin;
-import stroom.receive.rules.client.RuleSetPlugin;
 import stroom.receive.rules.client.presenter.DataRetentionPolicyPresenter;
 import stroom.receive.rules.client.presenter.DataRetentionPolicyPresenter.DataRetentionPolicyView;
 import stroom.receive.rules.client.presenter.DataRetentionPresenter;
@@ -46,7 +45,10 @@ public class PolicyModule extends PluginModule {
 
     @Override
     protected void configure() {
-        bindPlugin(RuleSetPlugin.class);
+        // Commented out pending re-visiting receipt rules as the current implementation
+        // was not fully thought through
+        // See https://github.com/gchq/stroom/issues/1125
+//        bindPlugin(RuleSetPlugin.class);
         bindPlugin(DataRetentionPlugin.class);
         bindPresenterWidget(EditExpressionPresenter.class, EditExpressionView.class, EditExpressionViewImpl.class);
         bindPresenterWidget(RulePresenter.class, RuleView.class, RuleViewImpl.class);

@@ -16,20 +16,30 @@
 
 .simplePopup-popup {
 	opacity: 0;
-	transition: opacity 0.3s;
-    -webkit-transition: opacity 0.3s;
     z-index: 100;
 }
 
 .simplePopup-container {
 }
 
-.simplePopup-background {
-	background: var(--dialog__background-color);
+.simplePopup-background-behind {
+	position: absolute;
+	width: 100%;
+	height: 100%;
 	border: thin solid var(--dialog__border-color);
+	border-radius: var(--dialog__border-radius);
 	box-shadow: var(--popup__shadow);
-	border-radius: 0.4rem;
-	z-index: 100;
+	overflow: hidden;
+	background-color: var(--dialog__background-color);
+	z-index: -1;
+}
+
+.transparency .simplePopup-background-behind {
+	background-color: var(--transparency__background-color);
+	backdrop-filter: var(--transparency__backdrop-filter);
+}
+
+.simplePopup-background {
 }
 
 .simplePopup-content {
@@ -37,7 +47,7 @@
 }
 
 .simplePopup-popup .cellTableSelectedRowCell {
-	border-radius: .25rem;
+	border-radius: 5px;
 	background-color: transparent;
 }
 

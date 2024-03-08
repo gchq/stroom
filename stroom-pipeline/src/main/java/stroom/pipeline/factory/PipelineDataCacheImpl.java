@@ -34,13 +34,14 @@ import stroom.util.entityevent.EntityEventHandler;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.PermissionException;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.inject.Singleton;
 
 @Singleton
 @EntityEventHandler(type = PipelineDoc.DOCUMENT_TYPE)
@@ -71,7 +72,7 @@ public class PipelineDataCacheImpl implements PipelineDataCache, Clearable, Enti
     @Override
     public PipelineData get(final PipelineDoc pipelineDoc) {
         if (!documentPermissionCache.canUseDocument(pipelineDoc.getUuid())) {
-            throw new PermissionException(securityContext.getUserId(),
+            throw new PermissionException(securityContext.getUserIdentityForAudit(),
                     "You do not have permission to use " + pipelineDoc);
         }
 

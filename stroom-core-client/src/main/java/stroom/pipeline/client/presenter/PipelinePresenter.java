@@ -49,6 +49,7 @@ public class PipelinePresenter extends DocumentEditTabPresenter<LinkTabPanelView
 
     private final ProcessorPresenter processorPresenter;
 
+    private boolean isAdmin;
     private boolean hasManageProcessorsPermission;
 
     @Inject
@@ -85,9 +86,10 @@ public class PipelinePresenter extends DocumentEditTabPresenter<LinkTabPanelView
 
         addTab(STRUCTURE, new DocumentEditTabProvider<>(structurePresenterProvider::get));
 
-        if (securityContext.hasAppPermission(PermissionNames.MANAGE_PROCESSORS_PERMISSION)) {
-            hasManageProcessorsPermission = true;
+        hasManageProcessorsPermission = securityContext.hasAppPermission(PermissionNames.MANAGE_PROCESSORS_PERMISSION);
+        isAdmin = securityContext.hasAppPermission(PermissionNames.ADMINISTRATOR);
 
+        if (hasManageProcessorsPermission) {
             addTab(PROCESSORS, new AbstractTabProvider<PipelineDoc, ProcessorPresenter>(eventBus) {
                 @Override
                 protected ProcessorPresenter createPresenter() {
@@ -100,6 +102,7 @@ public class PipelinePresenter extends DocumentEditTabPresenter<LinkTabPanelView
                                    final PipelineDoc document,
                                    final boolean readOnly) {
                     presenter.read(docRef, document, readOnly);
+                    presenter.setIsAdmin(isAdmin);
                     presenter.setAllowUpdate(hasManageProcessorsPermission && !isReadOnly());
                 }
             });

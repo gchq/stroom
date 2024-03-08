@@ -17,12 +17,12 @@
 package stroom.query.client;
 
 import stroom.data.grid.client.MouseHelper;
-import stroom.datasource.api.v2.AbstractField;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.explorer.client.presenter.EntityDropDownPresenter;
+import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.pipeline.structure.client.view.Box;
 import stroom.pipeline.structure.client.view.TreePanel;
+import stroom.query.client.presenter.FieldSelectionListModel;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.widget.htree.client.BracketConnectorRenderer;
 import stroom.widget.htree.client.ConnectorRenderer;
@@ -45,7 +45,7 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.view.client.SelectionModel;
 import com.google.inject.Provider;
 
-import java.util.List;
+import java.util.Objects;
 
 public class ExpressionTreePanel extends TreePanel<Item> {
 
@@ -59,9 +59,9 @@ public class ExpressionTreePanel extends TreePanel<Item> {
     private ExpressionItemRenderer cellRenderer;
     private DefaultTreeForTreeLayout<Item> tree;
 
-    public ExpressionTreePanel(final Provider<EntityDropDownPresenter> docRefProvider,
+    public ExpressionTreePanel(final Provider<DocSelectionBoxPresenter> docRefProvider,
                                final boolean utc) {
-        final EntityDropDownPresenter docRefPresenter = docRefProvider.get();
+        final DocSelectionBoxPresenter docRefPresenter = docRefProvider.get();
         docRefPresenter.setRequiredPermissions(DocumentPermissionNames.USE);
         docRefPresenter.getWidget().getElement().getStyle().setMargin(0, Unit.PX);
 
@@ -104,7 +104,7 @@ public class ExpressionTreePanel extends TreePanel<Item> {
     public Box<Item> getBox(final Item item) {
         if (renderer != null) {
             for (final ExpressionItemBox box : cellRenderer.getBoxes()) {
-                if (box.getItem() == item) {
+                if (Objects.equals(box.getItem(), item)) {
                     return box;
                 }
             }
@@ -167,8 +167,10 @@ public class ExpressionTreePanel extends TreePanel<Item> {
         }
     }
 
-    public void init(final RestFactory restFactory, final DocRef dataSource, final List<AbstractField> fields) {
-        termEditor.init(restFactory, dataSource, fields);
+    public void init(final RestFactory restFactory,
+                     final DocRef dataSource,
+                     final FieldSelectionListModel fieldSelectionListModel) {
+        termEditor.init(restFactory, dataSource, fieldSelectionListModel);
     }
 
     public void endEditing() {

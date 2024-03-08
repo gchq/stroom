@@ -16,15 +16,15 @@
 
 package stroom.query.shared;
 
-import stroom.datasource.api.v2.AbstractField;
+import stroom.datasource.api.v2.FieldInfo;
 import stroom.docref.DocRef;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.constraints.NotNull;
 
 import java.util.Objects;
-import javax.validation.constraints.NotNull;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class FetchSuggestionsRequest {
@@ -35,14 +35,14 @@ public class FetchSuggestionsRequest {
 
     @NotNull
     @JsonProperty
-    private final AbstractField field;
+    private final FieldInfo field;
 
     @JsonProperty
     private final String text;
 
     @JsonCreator
     public FetchSuggestionsRequest(@JsonProperty("dataSource") final DocRef dataSource,
-                                   @JsonProperty("field") final AbstractField field,
+                                   @JsonProperty("field") final FieldInfo field,
                                    @JsonProperty("text") final String text) {
         this.dataSource = dataSource;
         this.field = field;
@@ -53,7 +53,7 @@ public class FetchSuggestionsRequest {
         return dataSource;
     }
 
-    public AbstractField getField() {
+    public FieldInfo getField() {
         return field;
     }
 

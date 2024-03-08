@@ -26,7 +26,8 @@ dependencies {
     implementation project(':stroom-importexport:stroom-importexport-api')
     implementation project(':stroom-meta:stroom-meta-api')
     implementation project(':stroom-pipeline')
-    implementation project(':stroom-query:stroom-expression')
+    implementation project(':stroom-query:stroom-query-language')
+    implementation project(':stroom-query:stroom-query-language-api')
     implementation project(':stroom-query:stroom-query-api')
     implementation project(':stroom-query:stroom-query-common')
     implementation project(':stroom-search:stroom-search-api')
@@ -34,14 +35,15 @@ dependencies {
     implementation project(':stroom-task:stroom-task-api')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
+    implementation project(':stroom-view:stroom-view-api')
 
-    implementation libs.guice5
+    implementation libs.guice
     implementation libs.jackson_annotations
-    implementation libs.javax_inject
+    implementation libs.jakarta_inject
     implementation libs.jaxb_api
     implementation libs.saxon_he
     implementation libs.slf4j_api
-    implementation libs.xml_apis
+    //implementation libs.xml_apis
 
     testImplementation libs.assertj_core
     testImplementation libs.junit_jupiter_api

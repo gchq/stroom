@@ -17,9 +17,11 @@
 
 package stroom.dashboard.impl.visualisation;
 
+import stroom.docref.DocContentHighlights;
 import stroom.docref.DocContentMatch;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
+import stroom.docref.StringMatch;
 import stroom.docstore.api.AuditFieldFilter;
 import stroom.docstore.api.DependencyRemapper;
 import stroom.docstore.api.Store;
@@ -32,16 +34,22 @@ import stroom.importexport.shared.ImportState;
 import stroom.util.shared.Message;
 import stroom.visualisation.shared.VisualisationDoc;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.BiConsumer;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 @Singleton
 class VisualisationStoreImpl implements VisualisationStore {
 
+    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.CONFIGURATION,
+            VisualisationDoc.DOCUMENT_TYPE,
+            VisualisationDoc.DOCUMENT_TYPE,
+            VisualisationDoc.ICON);
     private final Store<VisualisationDoc> store;
 
     @Inject
@@ -60,8 +68,11 @@ class VisualisationStoreImpl implements VisualisationStore {
     }
 
     @Override
-    public DocRef copyDocument(final DocRef docRef, final Set<String> existingNames) {
-        final String newName = UniqueNameUtil.getCopyName(docRef.getName(), existingNames);
+    public DocRef copyDocument(final DocRef docRef,
+                               final String name,
+                               final boolean makeNameUnique,
+                               final Set<String> existingNames) {
+        final String newName = UniqueNameUtil.getCopyName(name, makeNameUnique, existingNames);
         return store.copyDocument(docRef.getUuid(), newName);
     }
 
@@ -87,11 +98,7 @@ class VisualisationStoreImpl implements VisualisationStore {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(
-                DocumentTypeGroup.CONFIGURATION,
-                VisualisationDoc.DOCUMENT_TYPE,
-                VisualisationDoc.DOCUMENT_TYPE,
-                VisualisationDoc.ICON);
+        return DOCUMENT_TYPE;
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -197,7 +204,14 @@ class VisualisationStoreImpl implements VisualisationStore {
     }
 
     @Override
-    public List<DocContentMatch> findByContent(final String pattern, final boolean regex, final boolean matchCase) {
-        return store.findByContent(pattern, regex, matchCase);
+    public List<DocContentMatch> findByContent(final StringMatch filter) {
+        return store.findByContent(filter);
+    }
+
+    @Override
+    public DocContentHighlights fetchHighlights(final DocRef docRef,
+                                                final String extension,
+                                                final StringMatch filter) {
+        return store.fetchHighlights(docRef, extension, filter);
     }
 }

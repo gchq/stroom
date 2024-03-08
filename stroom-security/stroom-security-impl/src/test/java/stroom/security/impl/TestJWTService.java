@@ -1,6 +1,11 @@
 package stroom.security.impl;
 
+import stroom.security.common.impl.OpenIdPublicKeysSupplier;
+import stroom.security.common.impl.StandardJwtContextFactory;
+import stroom.security.openid.api.IdpType;
+import stroom.security.openid.api.OpenIdConfiguration;
 import stroom.util.authentication.DefaultOpenIdCredentials;
+import stroom.util.jersey.JerseyClientFactory;
 
 import org.jose4j.base64url.Base64;
 import org.jose4j.jwa.AlgorithmConstraints;
@@ -43,7 +48,11 @@ class TestJWTService {
     @Mock
     private OpenIdPublicKeysSupplier openIdPublicKeysSupplier;
     @Mock
-    private ResolvedOpenIdConfig resolvedOpenIdConfig;
+    private OpenIdConfiguration openIdConfiguration;
+    @Mock
+    private JerseyClientFactory mockJerseyClientFactory;
+
+
     private DefaultOpenIdCredentials defaultOpenIdCredentials = new DefaultOpenIdCredentials();
 
     /**
@@ -53,16 +62,18 @@ class TestJWTService {
     void verifyDefaultApiToken() throws JoseException {
         // Verify the hard coded default token
 
-        final StandardJwtContextFactory jwtService = new StandardJwtContextFactory(resolvedOpenIdConfig,
-                openIdPublicKeysSupplier);
+        final StandardJwtContextFactory jwtService = new StandardJwtContextFactory(
+                () -> openIdConfiguration,
+                openIdPublicKeysSupplier,
+                defaultOpenIdCredentials,
+                mockJerseyClientFactory);
 
         final String apiKey = defaultOpenIdCredentials.getApiKey();
 
         Mockito.when(openIdPublicKeysSupplier.get())
                 .thenReturn(getPublicKeys());
-
-        Mockito.when(resolvedOpenIdConfig.getClientId())
-                .thenReturn(defaultOpenIdCredentials.getOauth2ClientId());
+        Mockito.when(openIdConfiguration.getIdentityProviderType())
+                .thenReturn(IdpType.TEST_CREDENTIALS);
 
         final JwtClaims jwtClaims = jwtService
                 .getJwtContext(apiKey)
@@ -80,7 +91,9 @@ class TestJWTService {
                     ZoneOffset.UTC);
 
             // Can't be sure when the token was created so just ensure there is a year left on it.
-            assertThat(Period.between(LocalDateTime.now().toLocalDate(), expiryTime.toLocalDate()).getYears())
+            assertThat(Period.between(
+                    LocalDateTime.now(ZoneOffset.UTC).toLocalDate(),
+                    expiryTime.toLocalDate()).getYears())
                     .isGreaterThan(1);
         } catch (MalformedClaimException e) {
             e.printStackTrace();

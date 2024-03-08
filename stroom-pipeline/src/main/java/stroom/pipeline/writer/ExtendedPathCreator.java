@@ -25,8 +25,8 @@ import stroom.util.io.HomeDirProvider;
 import stroom.util.io.SimplePathCreator;
 import stroom.util.io.TempDirProvider;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 public class ExtendedPathCreator extends SimplePathCreator {
 

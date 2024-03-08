@@ -16,9 +16,9 @@
 
 package stroom.search.extraction;
 
-import stroom.dashboard.expression.v1.FieldIndex;
-import stroom.dashboard.expression.v1.Val;
 import stroom.index.shared.IndexConstants;
+import stroom.query.language.functions.FieldIndex;
+import stroom.query.language.functions.Val;
 
 class EventFactory {
 

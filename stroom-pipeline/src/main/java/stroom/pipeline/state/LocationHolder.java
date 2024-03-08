@@ -29,11 +29,11 @@ import stroom.util.shared.DefaultLocation;
 import stroom.util.shared.Location;
 import stroom.util.shared.TextRange;
 
+import jakarta.inject.Inject;
 import org.xml.sax.Locator;
 
 import java.util.ArrayList;
 import java.util.List;
-import javax.inject.Inject;
 
 @PipelineScoped
 public class LocationHolder implements Holder {
@@ -56,8 +56,7 @@ public class LocationHolder implements Holder {
     private boolean isFragmentXml = false;
 
     @Inject
-    public LocationHolder(final MetaHolder metaHolder,
-                          final PipelineHolder pipelineHolder) {
+    public LocationHolder(final MetaHolder metaHolder) {
         this.metaHolder = metaHolder;
         reset();
     }

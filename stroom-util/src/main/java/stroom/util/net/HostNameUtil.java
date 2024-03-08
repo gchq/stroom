@@ -10,12 +10,13 @@ public class HostNameUtil {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(HostNameUtil.class);
 
-    private static String cachedHostName;
+    private static volatile String cachedHostName;
 
     private HostNameUtil() {
     }
 
     public static String determineHostName() {
+        // Doesn't really matter if this gets done by multiple threads that all see it as null
         if (cachedHostName == null) {
             // If running in a docker container then these env vars can be set so
             // the container knows who its host is
@@ -40,7 +41,7 @@ public class HostNameUtil {
                 hostName = "Unknown";
             }
 
-            LOGGER.info("Determined hostname to be {}", hostName);
+            LOGGER.info("Determined hostname to be {}. Caching value until app restart.", hostName);
             cachedHostName = hostName;
         }
         return cachedHostName;

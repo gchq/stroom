@@ -1,11 +1,5 @@
 package stroom.meta.impl.db;
 
-import stroom.dashboard.expression.v1.Val;
-import stroom.dashboard.expression.v1.ValInteger;
-import stroom.dashboard.expression.v1.ValLong;
-import stroom.dashboard.expression.v1.ValNull;
-import stroom.dashboard.expression.v1.ValString;
-import stroom.dashboard.expression.v1.ValuesConsumer;
 import stroom.data.retention.api.DataRetentionConfig;
 import stroom.data.retention.api.DataRetentionCreationTimeUtil;
 import stroom.data.retention.api.DataRetentionRuleAction;
@@ -13,8 +7,7 @@ import stroom.data.retention.shared.DataRetentionDeleteSummary;
 import stroom.data.retention.shared.DataRetentionRule;
 import stroom.data.retention.shared.DataRetentionRules;
 import stroom.data.retention.shared.FindDataRetentionImpactCriteria;
-import stroom.datasource.api.v2.AbstractField;
-import stroom.datasource.api.v2.DateField;
+import stroom.datasource.api.v2.QueryField;
 import stroom.db.util.ExpressionMapper;
 import stroom.db.util.ExpressionMapperFactory;
 import stroom.db.util.JooqUtil;
@@ -45,6 +38,13 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.common.v2.DateExpressionParser;
+import stroom.query.language.functions.FieldIndex;
+import stroom.query.language.functions.Val;
+import stroom.query.language.functions.ValInteger;
+import stroom.query.language.functions.ValLong;
+import stroom.query.language.functions.ValNull;
+import stroom.query.language.functions.ValString;
+import stroom.query.language.functions.ValuesConsumer;
 import stroom.util.NullSafe;
 import stroom.util.Period;
 import stroom.util.collections.BatchingIterator;
@@ -60,6 +60,9 @@ import stroom.util.time.TimePeriod;
 
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
 import org.jooq.CaseConditionStep;
 import org.jooq.Condition;
 import org.jooq.Cursor;
@@ -82,7 +85,6 @@ import org.jooq.impl.DSL;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -98,9 +100,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.inject.Singleton;
 
 import static stroom.meta.impl.db.jooq.tables.Meta.META;
 import static stroom.meta.impl.db.jooq.tables.MetaFeed.META_FEED;
@@ -225,23 +224,21 @@ public class MetaDaoImpl implements MetaDao {
         // Get 0-many uuids for a pipe name (partial/wild-carded)
         expressionMapper.multiMap(
                 MetaFields.PIPELINE_NAME, metaProcessor.PIPELINE_UUID, this::getPipelineUuidsByName, true);
-        expressionMapper.map(MetaFields.STATUS,
-                meta.STATUS,
-                value -> MetaStatusId.getPrimitiveValue(Status.valueOf(value.toUpperCase())));
-        expressionMapper.map(MetaFields.STATUS_TIME, meta.STATUS_TIME, value -> getDate(MetaFields.STATUS_TIME, value));
-        expressionMapper.map(MetaFields.CREATE_TIME, meta.CREATE_TIME, value -> getDate(MetaFields.CREATE_TIME, value));
-        expressionMapper.map(MetaFields.EFFECTIVE_TIME,
-                meta.EFFECTIVE_TIME,
-                value -> getDate(MetaFields.EFFECTIVE_TIME, value));
+        expressionMapper.map(MetaFields.STATUS, meta.STATUS, value ->
+                MetaStatusId.getPrimitiveValue(value.toUpperCase()));
+        expressionMapper.map(MetaFields.STATUS_TIME, meta.STATUS_TIME, value ->
+                DateExpressionParser.getMs(MetaFields.STATUS_TIME.getName(), value));
+        expressionMapper.map(MetaFields.CREATE_TIME, meta.CREATE_TIME, value ->
+                DateExpressionParser.getMs(MetaFields.CREATE_TIME.getName(), value));
+        expressionMapper.map(MetaFields.EFFECTIVE_TIME, meta.EFFECTIVE_TIME, value ->
+                DateExpressionParser.getMs(MetaFields.EFFECTIVE_TIME.getName(), value));
 
         // Parent fields.
         expressionMapper.map(MetaFields.PARENT_ID, meta.PARENT_ID, Long::valueOf);
-        expressionMapper.map(MetaFields.PARENT_STATUS,
-                parent.STATUS,
-                value -> MetaStatusId.getPrimitiveValue(Status.valueOf(value.toUpperCase())));
-        expressionMapper.map(MetaFields.PARENT_CREATE_TIME,
-                parent.CREATE_TIME,
-                value -> getDate(MetaFields.PARENT_CREATE_TIME, value));
+        expressionMapper.map(MetaFields.PARENT_STATUS, parent.STATUS, value ->
+                MetaStatusId.getPrimitiveValue(value.toUpperCase()));
+        expressionMapper.map(MetaFields.PARENT_CREATE_TIME, parent.CREATE_TIME, value ->
+                DateExpressionParser.getMs(MetaFields.PARENT_CREATE_TIME.getName(), value));
         expressionMapper.multiMap(MetaFields.PARENT_FEED, parent.FEED_ID, this::getFeedIds);
 
         valueMapper = new ValueMapper();
@@ -260,19 +257,6 @@ public class MetaDaoImpl implements MetaDao {
         valueMapper.map(MetaFields.STATUS_TIME, meta.STATUS_TIME, ValLong::create);
         valueMapper.map(MetaFields.CREATE_TIME, meta.CREATE_TIME, ValLong::create);
         valueMapper.map(MetaFields.EFFECTIVE_TIME, meta.EFFECTIVE_TIME, ValLong::create);
-    }
-
-    private long getDate(final DateField field, final String value) {
-        try {
-            final Optional<ZonedDateTime> optional = DateExpressionParser.parse(value);
-
-            return optional.orElseThrow(() ->
-                    new RuntimeException("Expected a standard date value for field \"" + field.getName()
-                            + "\" but was given string \"" + value + "\"")).toInstant().toEpochMilli();
-        } catch (final Exception e) {
-            throw new RuntimeException("Expected a standard date value for field \"" + field.getName()
-                    + "\" but was given string \"" + value + "\"", e);
-        }
     }
 
     private Val getPipelineName(final String uuid) {
@@ -1224,40 +1208,45 @@ public class MetaDaoImpl implements MetaDao {
         return (Integer) result;
     }
 
-    private boolean isUsed(final Set<AbstractField> fieldSet,
-                           final List<AbstractField> resultFields,
+    private boolean isUsed(final Set<String> fieldSet,
+                           final String[] resultFields,
                            final ExpressionCriteria criteria) {
-        return resultFields.stream().anyMatch(fieldSet::contains) ||
+        return Arrays.stream(resultFields).filter(Objects::nonNull).anyMatch(fieldSet::contains) ||
                 ExpressionUtil.termCount(criteria.getExpression(), fieldSet) > 0;
     }
 
     @Override
     public void search(final ExpressionCriteria criteria,
-                       final AbstractField[] fields,
+                       final FieldIndex fieldIndex,
                        final ValuesConsumer consumer) {
-        final List<AbstractField> fieldList = Arrays.asList(fields);
-        final boolean feedUsed = isUsed(Set.of(MetaFields.FEED), fieldList, criteria);
-        final boolean typeUsed = isUsed(Set.of(MetaFields.TYPE), fieldList, criteria);
-        final boolean pipelineUsed = isUsed(Set.of(MetaFields.PIPELINE), fieldList, criteria);
-        final boolean extendedValuesUsed = isUsed(Set.copyOf(MetaFields.getExtendedFields()), fieldList, criteria);
+        final String[] fieldNames = fieldIndex.getFields();
+        final boolean feedUsed = isUsed(Set.of(MetaFields.FEED.getName()), fieldNames, criteria);
+        final boolean typeUsed = isUsed(Set.of(MetaFields.TYPE.getName()), fieldNames, criteria);
+        final boolean pipelineUsed = isUsed(Set.of(MetaFields.PIPELINE.getName()), fieldNames, criteria);
+        final Set<String> extendedFieldNames = MetaFields
+                .getExtendedFields()
+                .stream()
+                .map(QueryField::getName)
+                .collect(Collectors.toSet());
+        final boolean extendedValuesUsed = isUsed(extendedFieldNames, fieldNames, criteria);
 
         final PageRequest pageRequest = criteria.getPageRequest();
         final Collection<Condition> conditions = createCondition(criteria.getExpression());
         final Collection<OrderField<?>> orderFields = createOrderFields(criteria);
-        final List<Field<?>> dbFields = new ArrayList<>(valueMapper.getFields(fieldList));
-        final Mapper<?>[] mappers = valueMapper.getMappers(fields);
+        final List<Field<?>> dbFields = valueMapper.getDbFieldsByName(fieldNames);
+        final Mapper<?>[] mappers = valueMapper.getMappersForFieldNames(fieldNames);
 
         // Deal with extended fields.
-        final int[] extendedFieldKeys = new int[fields.length];
+        final int[] extendedFieldKeys = new int[fieldNames.length];
         final List<Integer> extendedFieldKeyIdList = new ArrayList<>();
         final Map<Long, Map<Integer, Long>> extendedFieldValueMap = new HashMap<>();
-        for (int i = 0; i < fields.length; i++) {
+        for (int i = 0; i < fieldNames.length; i++) {
             final int index = i;
-            final AbstractField field = fields[i];
+            final String fieldName = fieldNames[i];
             extendedFieldKeys[i] = -1;
 
-            if (MetaFields.getExtendedFields().contains(field)) {
-                final Optional<Integer> keyId = metaKeyDao.getIdForName(field.getName());
+            if (extendedFieldNames.contains(fieldName)) {
+                final Optional<Integer> keyId = metaKeyDao.getIdForName(fieldName);
                 keyId.ifPresent(id -> {
                     extendedFieldKeys[index] = id;
                     extendedFieldKeyIdList.add(id);
@@ -1314,14 +1303,14 @@ public class MetaDaoImpl implements MetaDao {
                     }
 
                     result.forEach(r -> {
-                        final Val[] arr = new Val[fields.length];
+                        final Val[] arr = new Val[fieldNames.length];
 
                         Map<Integer, Long> extendedValues = null;
                         if (extendedValuesUsed) {
                             extendedValues = extendedFieldValueMap.get(r.get(meta.ID));
                         }
 
-                        for (int i = 0; i < fields.length; i++) {
+                        for (int i = 0; i < fieldNames.length; i++) {
                             Val val = ValNull.INSTANCE;
                             final Mapper<?> mapper = mappers[i];
                             if (mapper != null) {
@@ -1335,7 +1324,7 @@ public class MetaDaoImpl implements MetaDao {
                             }
                             arr[i] = val;
                         }
-                        consumer.add(Val.of(arr));
+                        consumer.accept(Val.of(arr));
                     });
                 }
             }
@@ -1399,7 +1388,7 @@ public class MetaDaoImpl implements MetaDao {
     }
 
     private final Collection<String> extendedFieldNames =
-            MetaFields.getExtendedFields().stream().map(AbstractField::getName).collect(Collectors.toList());
+            MetaFields.getExtendedFields().stream().map(QueryField::getName).collect(Collectors.toList());
 
     private Set<Integer> identifyExtendedAttributesFields(final ExpressionOperator expr,
                                                           final Set<Integer> identified) {
@@ -1891,10 +1880,10 @@ public class MetaDaoImpl implements MetaDao {
         if (expressionItem == null) {
             return true;
         } else {
-            final Map<String, AbstractField> fieldMap = MetaFields.getAllFieldMap();
+            final Map<String, QueryField> fieldMap = MetaFields.getAllFieldMap();
 
             return ExpressionUtil.validateExpressionTerms(expressionItem, term -> {
-                final AbstractField field = fieldMap.get(term.getField());
+                final QueryField field = fieldMap.get(term.getField());
                 if (field == null) {
                     throw new RuntimeException(LogUtil.message("Unknown field {} in term {}, in expression {}",
                             term.getField(), term, expressionItem));

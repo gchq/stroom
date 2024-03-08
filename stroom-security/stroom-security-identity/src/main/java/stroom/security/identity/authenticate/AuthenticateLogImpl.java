@@ -11,10 +11,10 @@ import event.logging.MultiObject;
 import event.logging.OtherObject;
 import event.logging.UpdateEventAction;
 import event.logging.User;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 import java.util.Map;
-import javax.inject.Inject;
-import javax.inject.Provider;
 
 public class AuthenticateLogImpl implements AuthenticateLog {
 //    private static final String AUTH_STATE = "AUTH_STATE";
@@ -104,7 +104,7 @@ public class AuthenticateLogImpl implements AuthenticateLog {
                 "The user has logged out.",
                 AuthenticateEventAction.builder()
                         .withUser(User.builder()
-                                .withId(securityContext.getUserId())
+                                .withId(securityContext.getUserIdentityForAudit())
                                 .build())
                         .withAction(AuthenticateAction.LOGOFF)
                         .build());
@@ -130,7 +130,7 @@ public class AuthenticateLogImpl implements AuthenticateLog {
                 "User reset their password",
                 AuthenticateEventAction.builder()
                         .withUser(User.builder()
-                                .withId(securityContext.getUserId())
+                                .withId(securityContext.getUserIdentityForAudit())
                                 .build())
                         .withAction(AuthenticateAction.RESET_PASSWORD)
                         .build());

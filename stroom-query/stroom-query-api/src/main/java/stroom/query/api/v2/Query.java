@@ -144,15 +144,6 @@ public final class Query {
         }
 
         /**
-         * @param dataSourceName A data source name of the query
-         * @return The {@link Builder}, enabling method chaining
-         */
-        public Builder dataSourceName(final String dataSourceName) {
-            this.dataSource = new DocRef(null, null, dataSourceName);
-            return this;
-        }
-
-        /**
          * @param value A DocRef that points to the data source of the query
          * @return The {@link Builder}, enabling method chaining
          */

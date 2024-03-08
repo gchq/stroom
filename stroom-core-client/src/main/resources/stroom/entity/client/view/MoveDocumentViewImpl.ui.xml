@@ -3,13 +3,13 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:l="urn:import:stroom.item.client"
              xmlns:form="urn:import:stroom.widget.form.client">
-    <g:FlowPanel styleName="max form">
+    <g:FlowPanel styleName="max form overflow-hidden">
         <form:FormGroup identity="moveDocumentSelectParentGroup" label="Select the parent group"
-                        addStyleNames="dock-max">
-            <g:SimplePanel ui:field="foldersInner" styleName="dock-max"/>
+                        addStyleNames="dock-max overflow-hidden">
+            <g:SimplePanel ui:field="foldersInner" styleName="dock-max overflow-hidden"/>
         </form:FormGroup>
         <form:FormGroup identity="moveDocumentPermissions" label="Permissions" addStyleNames="dock-min">
-            <l:ItemListBox ui:field="permissionInheritance" addStyleNames="w-100"/>
+            <l:SelectionBox ui:field="permissionInheritance" addStyleNames="w-100"/>
         </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder>

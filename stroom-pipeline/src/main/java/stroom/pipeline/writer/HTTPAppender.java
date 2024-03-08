@@ -19,6 +19,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ModelStringUtil;
 
+import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,7 +36,6 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
-import javax.inject.Inject;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLSocketFactory;
 
@@ -47,7 +47,9 @@ import javax.net.ssl.SSLSocketFactory;
 @ConfigurableElement(
         type = "HTTPAppender",
         description = """
-                A destination used to write an output stream to a remote HTTP(s) server.
+                A destination used to write an output stream to a remote HTTP(S) server.
+
+                This element should be preferred over the deprecated {{< pipe-elm "HttpPostFilter" >}}.
                 """,
         category = Category.DESTINATION,
         roles = {

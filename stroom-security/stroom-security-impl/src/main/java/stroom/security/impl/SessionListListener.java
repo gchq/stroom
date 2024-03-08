@@ -21,6 +21,7 @@ import stroom.node.api.NodeCallUtil;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.security.api.UserIdentity;
+import stroom.security.common.impl.UserIdentitySessionUtil;
 import stroom.security.shared.SessionDetails;
 import stroom.security.shared.SessionListResponse;
 import stroom.security.shared.SessionResource;
@@ -30,24 +31,24 @@ import stroom.util.jersey.WebTargetFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.servlet.UserAgentSessionUtil;
 import stroom.util.shared.ResourcePaths;
+import stroom.util.shared.UserName;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+import jakarta.servlet.http.HttpSession;
+import jakarta.servlet.http.HttpSessionEvent;
+import jakarta.servlet.http.HttpSessionListener;
+import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.client.WebTarget;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Objects;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
-import javax.inject.Inject;
-import javax.inject.Singleton;
-import javax.servlet.http.HttpSession;
-import javax.servlet.http.HttpSessionEvent;
-import javax.servlet.http.HttpSessionListener;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 
 @Singleton
 class SessionListListener implements HttpSessionListener, SessionListService {
@@ -148,9 +149,12 @@ class SessionListListener implements HttpSessionListener, SessionListService {
     private SessionListResponse listSessionsOnThisNode() {
         return sessionMap.values().stream()
                 .map(httpSession -> {
-                    final Optional<UserIdentity> userIdentity = UserIdentitySessionUtil.get(httpSession);
+                    // Don't really care about userUuids for this
+                    final UserName userName = UserIdentitySessionUtil.get(httpSession)
+                            .map(UserIdentity::asUserName)
+                            .orElse(null);
                     return new SessionDetails(
-                            userIdentity.map(UserIdentity::getId).orElse(null),
+                            userName,
                             httpSession.getCreationTime(),
                             httpSession.getLastAccessedTime(),
                             UserAgentSessionUtil.get(httpSession),

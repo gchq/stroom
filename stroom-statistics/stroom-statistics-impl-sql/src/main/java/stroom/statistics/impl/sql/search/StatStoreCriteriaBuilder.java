@@ -1,6 +1,6 @@
 package stroom.statistics.impl.sql.search;
 
-import stroom.query.api.v2.DateTimeSettings;
+import stroom.expression.api.DateTimeSettings;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
@@ -17,7 +17,6 @@ import stroom.util.shared.Range;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -33,9 +32,6 @@ public class StatStoreCriteriaBuilder {
                                                   final DateTimeSettings dateTimeSettings) {
 
         LOGGER.trace(String.format("buildCriteria called for statistic %s", dataSource.getName()));
-
-        // Get the current time in millis since epoch.
-        final long nowEpochMilli = System.currentTimeMillis();
 
         // object looks a bit like this
         // AND
@@ -66,7 +62,7 @@ public class StatStoreCriteriaBuilder {
 
         // if we have got here then we have a single BETWEEN date term, so parse
         // it.
-        final Range<Long> range = extractRange(dateTerms, dateTimeSettings, nowEpochMilli);
+        final Range<Long> range = extractRange(dateTerms, dateTimeSettings);
 
         final List<ExpressionTerm> termNodesInFilter = new ArrayList<>();
         findAllTermNodes(expression, termNodesInFilter);
@@ -183,8 +179,7 @@ public class StatStoreCriteriaBuilder {
     }
 
     private static Range<Long> extractRange(final List<ExpressionTerm> dateTerms,
-                                            final DateTimeSettings dateTimeSettings,
-                                            final long nowEpochMilli) {
+                                            final DateTimeSettings dateTimeSettings) {
         long maxRangeFrom = 0;
         long minRangeTo = Long.MAX_VALUE;
 
@@ -199,20 +194,20 @@ public class StatStoreCriteriaBuilder {
                     throw RestUtil.badRequest("DateTime term is not a valid format, term: " + term);
                 }
 
-                rangeFrom = parseDateTime("from", dateArr[0], dateTimeSettings, nowEpochMilli);
+                rangeFrom = parseDateTime("from", dateArr[0], dateTimeSettings);
                 // add one to make it exclusive
-                rangeTo = parseDateTime("to", dateArr[1], dateTimeSettings, nowEpochMilli) + 1;
+                rangeTo = parseDateTime("to", dateArr[1], dateTimeSettings) + 1;
             } else if (Condition.EQUALS.equals(term.getCondition())) {
-                rangeFrom = parseDateTime("from", term.getValue(), dateTimeSettings, nowEpochMilli);
+                rangeFrom = parseDateTime("from", term.getValue(), dateTimeSettings);
                 rangeTo = rangeFrom;
             } else if (Condition.GREATER_THAN.equals(term.getCondition())) {
-                rangeFrom = parseDateTime("from", term.getValue(), dateTimeSettings, nowEpochMilli) + 1;
+                rangeFrom = parseDateTime("from", term.getValue(), dateTimeSettings) + 1;
             } else if (Condition.GREATER_THAN_OR_EQUAL_TO.equals(term.getCondition())) {
-                rangeFrom = parseDateTime("from", term.getValue(), dateTimeSettings, nowEpochMilli);
+                rangeFrom = parseDateTime("from", term.getValue(), dateTimeSettings);
             } else if (Condition.LESS_THAN.equals(term.getCondition())) {
-                rangeTo = parseDateTime("to", term.getValue(), dateTimeSettings, nowEpochMilli) - 1;
+                rangeTo = parseDateTime("to", term.getValue(), dateTimeSettings) - 1;
             } else if (Condition.LESS_THAN_OR_EQUAL_TO.equals(term.getCondition())) {
-                rangeTo = parseDateTime("to", term.getValue(), dateTimeSettings, nowEpochMilli);
+                rangeTo = parseDateTime("to", term.getValue(), dateTimeSettings);
             } else {
                 throw RestUtil.badRequest("Unsupported condition for DateTime term: " + term);
             }
@@ -226,17 +221,11 @@ public class StatStoreCriteriaBuilder {
 
     private static long parseDateTime(final String type,
                                       final String value,
-                                      final DateTimeSettings dateTimeSettings,
-                                      final long nowEpochMilli) {
-        final ZonedDateTime dateTime;
+                                      final DateTimeSettings dateTimeSettings) {
         try {
-            dateTime = DateExpressionParser.parse(value, dateTimeSettings, nowEpochMilli)
-                    .orElseThrow(() -> RestUtil.badRequest(
-                            "DateTime term has an invalid '" + type + "' value of '" + value + "'"));
+            return DateExpressionParser.getMs(type, value, dateTimeSettings);
         } catch (final Exception e) {
             throw RestUtil.badRequest("DateTime term has an invalid '" + type + "' value of '" + value + "'");
         }
-
-        return dateTime.toInstant().toEpochMilli();
     }
 }

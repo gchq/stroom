@@ -16,8 +16,8 @@
 
 package stroom.util.web;
 
-import javax.servlet.ServletConfig;
-import javax.servlet.ServletContext;
+import jakarta.servlet.ServletConfig;
+import jakarta.servlet.ServletContext;
 
 public class ServletContextUtil {
 

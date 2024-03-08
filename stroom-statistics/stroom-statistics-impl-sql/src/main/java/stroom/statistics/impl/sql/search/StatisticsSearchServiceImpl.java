@@ -1,13 +1,13 @@
 package stroom.statistics.impl.sql.search;
 
-import stroom.dashboard.expression.v1.FieldIndex;
-import stroom.dashboard.expression.v1.Val;
-import stroom.dashboard.expression.v1.ValDouble;
-import stroom.dashboard.expression.v1.ValLong;
-import stroom.dashboard.expression.v1.ValNull;
-import stroom.dashboard.expression.v1.ValString;
-import stroom.dashboard.expression.v1.ValuesConsumer;
-import stroom.dashboard.expression.v1.ref.ErrorConsumer;
+import stroom.query.language.functions.FieldIndex;
+import stroom.query.language.functions.Val;
+import stroom.query.language.functions.ValDouble;
+import stroom.query.language.functions.ValLong;
+import stroom.query.language.functions.ValNull;
+import stroom.query.language.functions.ValString;
+import stroom.query.language.functions.ValuesConsumer;
+import stroom.query.language.functions.ref.ErrorConsumer;
 import stroom.statistics.impl.sql.PreparedStatementUtil;
 import stroom.statistics.impl.sql.SQLStatisticConstants;
 import stroom.statistics.impl.sql.SQLStatisticNames;
@@ -21,6 +21,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import com.google.common.base.Preconditions;
+import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,7 +39,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
 
 @SuppressWarnings("unused")
         //called by DI
@@ -273,7 +273,8 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
                         // We only want to do this extraction once so we cache the values
                         extractor = buildTagFieldValueExtractor(fieldName, idx);
                     } else {
-                        throw new RuntimeException(String.format("Unexpected fieldName %s", fieldName));
+                        extractor = null;
+//                        throw new RuntimeException(String.format("Unexpected fieldName %s", fieldName));
                     }
                     LAMBDA_LOGGER.debug(() ->
                             String.format("Adding extraction function for field %s, idx %s", fieldName, idx));
@@ -300,8 +301,11 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
             final Map<String, Val> fieldValueCache = new HashMap<>();
 
             //run each of our field value extractors against the resultSet to fill up the data arr
-            valueExtractors.forEach(valueExtractor ->
-                    valueExtractor.extract(rs, data, fieldValueCache));
+            valueExtractors.forEach(valueExtractor -> {
+                if (valueExtractor != null) {
+                    valueExtractor.extract(rs, data, fieldValueCache);
+                }
+            });
 
             LAMBDA_LOGGER.trace(() -> {
                 try {
@@ -424,7 +428,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
                             !Thread.currentThread().isInterrupted()) {
                         LOGGER.trace("Adding result");
                         final Val[] values = resultSetMapper.apply(resultSet);
-                        valuesConsumer.add(values);
+                        valuesConsumer.accept(values);
                         count++;
                     }
 

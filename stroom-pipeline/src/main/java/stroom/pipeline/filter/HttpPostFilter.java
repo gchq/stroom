@@ -29,19 +29,23 @@ import stroom.util.jersey.JerseyClientName;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.Severity;
 
+import jakarta.inject.Inject;
+import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
 
-import javax.inject.Inject;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-
 @Deprecated // This is pretty limited in what it can do. HttpAppender is much better and more configurable
 @ConfigurableElement(type = "HttpPostFilter",
         category = PipelineElementType.Category.FILTER,
+        description = """
+                This element is deprecated, you should instead use the much more flexible \
+                {{< pipe-elm "HTTPAppender" >}}.
+                This element will simply POST the output of the XML events to the configured URL.
+                """,
         roles = {
                 PipelineElementType.ROLE_TARGET,
                 PipelineElementType.ROLE_HAS_TARGETS,

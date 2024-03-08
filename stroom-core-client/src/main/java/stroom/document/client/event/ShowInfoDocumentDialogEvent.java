@@ -17,24 +17,31 @@
 
 package stroom.document.client.event;
 
+import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
+import stroom.explorer.shared.ExplorerNode;
+import stroom.explorer.shared.ExplorerNodeInfo;
+import stroom.util.shared.GwtNullSafe;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 
+import java.util.Objects;
+
 public class ShowInfoDocumentDialogEvent extends GwtEvent<ShowInfoDocumentDialogEvent.Handler> {
 
     private static Type<Handler> TYPE;
-    private final DocRefInfo info;
+    private final ExplorerNodeInfo explorerNodeInfo;
 
-    private ShowInfoDocumentDialogEvent(final DocRefInfo info) {
-        this.info = info;
+    private ShowInfoDocumentDialogEvent(final ExplorerNodeInfo explorerNodeInfo) {
+        this.explorerNodeInfo = Objects.requireNonNull(explorerNodeInfo);
     }
 
-    public static void fire(final HasHandlers handlers, final DocRefInfo info) {
+    public static void fire(final HasHandlers handlers,
+                            final ExplorerNodeInfo explorerNodeInfo) {
         handlers.fireEvent(
-                new ShowInfoDocumentDialogEvent(info));
+                new ShowInfoDocumentDialogEvent(explorerNodeInfo));
     }
 
     public static Type<Handler> getType() {
@@ -54,9 +61,25 @@ public class ShowInfoDocumentDialogEvent extends GwtEvent<ShowInfoDocumentDialog
         handler.onCreate(this);
     }
 
-    public DocRefInfo getInfo() {
-        return info;
+    public DocRef getDocRef() {
+        return GwtNullSafe.get(explorerNodeInfo, ExplorerNodeInfo::getExplorerNode, ExplorerNode::getDocRef);
     }
+
+    public DocRefInfo getDocRefInfo() {
+        return explorerNodeInfo.getDocRefInfo();
+    }
+
+    public ExplorerNode getExplorerNode() {
+        return explorerNodeInfo.getExplorerNode();
+    }
+
+    public ExplorerNodeInfo getExplorerNodeInfo() {
+        return explorerNodeInfo;
+    }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface Handler extends EventHandler {
 

@@ -21,14 +21,14 @@ import stroom.meta.impl.MetaKeyDao;
 import stroom.meta.shared.MetaFields;
 import stroom.util.shared.Clearable;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import org.jooq.Record1;
 import org.jooq.impl.DSL;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 import static stroom.meta.impl.db.jooq.tables.MetaKey.META_KEY;
 

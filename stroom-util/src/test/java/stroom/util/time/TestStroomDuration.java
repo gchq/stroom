@@ -1,12 +1,10 @@
 package stroom.util.time;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
+import stroom.util.json.JsonUtil;
+
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
-import java.io.StringWriter;
 import java.time.Duration;
 import java.time.Instant;
 
@@ -65,21 +63,11 @@ class TestStroomDuration {
     }
 
     @Test
-    void testSerde() throws IOException {
+    void testSerde() {
         final StroomDuration stroomDuration = StroomDuration.parse("30d");
-
-        final ObjectMapper objectMapper = new ObjectMapper();
-
-        final StringWriter stringWriter = new StringWriter();
-        objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
-        objectMapper.writeValue(stringWriter, stroomDuration);
-
-        final String json = stringWriter.toString();
-
+        final String json = JsonUtil.writeValueAsString(stroomDuration);
         System.out.println(json);
-
-        final StroomDuration stroomDuration2 = objectMapper.readValue(json, StroomDuration.class);
-
+        final StroomDuration stroomDuration2 = JsonUtil.readValue(json, StroomDuration.class);
         assertThat(stroomDuration)
                 .isEqualTo(stroomDuration2);
     }

@@ -80,6 +80,11 @@ logging:
       timeZone: UTC
       logFormat: "%-6level [%d{\"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'\",UTC}] [%t] %logger - %X{code} %msg %n"
 
+jerseyClients:
+  OPEN_ID:
+    # KeyCloak and Azure AD don't like gzip encoded requests
+    gzipEnabledForRequests: false
+
 appConfig:
   commonDbDetails:
     connection:
@@ -111,10 +116,12 @@ appConfig:
     port: ${API_GATEWAY_PORT:-}
   security:
     identity:
-      useDefaultOpenIdCredentials: ${USE_DEFAULT_OPEN_ID_CREDENTIALS:-true}
       passwordPolicy:
         minimumPasswordStrength: 1
         minimumPasswordLength: 1
+    authentication:
+      openId:
+        identityProviderType: ${IDP_TYPE:-TEST_CREDENTIALS}
 
   #   Uncomment the following to develop React code with `yarn start`
   #      webContent:

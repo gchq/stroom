@@ -1,18 +1,26 @@
 package stroom.security.shared;
 
+import stroom.util.shared.GwtNullSafe;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.AbstractMap;
+import java.util.AbstractMap.SimpleEntry;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @JsonPropertyOrder({"docUuid", "users", "groups", "permissions"})
 @JsonInclude(Include.NON_NULL)
@@ -20,10 +28,14 @@ public class DocumentPermissions {
 
     @JsonProperty
     private final String docUuid;
+    // TODO: 27/07/2023 We could change both of these to hold UserName instead of User as
+    //  we only need the the userUuid/displayName/subjectId
     @JsonProperty
     private final List<User> users;
     @JsonProperty
     private final List<User> groups;
+
+    // userOrGroupUuid => permissionNames
     @JsonProperty
     private final Map<String, Set<String>> permissions;
 
@@ -38,6 +50,14 @@ public class DocumentPermissions {
         this.permissions = permissions;
     }
 
+    public static DocumentPermissions empty(final String docUuid) {
+        return new DocumentPermissions(
+                docUuid,
+                Collections.emptyList(),
+                Collections.emptyList(),
+                Collections.emptyMap());
+    }
+
     public String getDocUuid() {
         return docUuid;
     }
@@ -50,6 +70,9 @@ public class DocumentPermissions {
         return groups;
     }
 
+    /**
+     * @return Map of user/group stroom user uuid to a set of held permissions
+     */
     public Map<String, Set<String>> getPermissions() {
         return new HashMap<>(permissions);
     }
@@ -63,6 +86,24 @@ public class DocumentPermissions {
         if (perms != null) {
             perms.remove(permission);
         }
+    }
+
+    /**
+     * @return The set of users with Owner permission
+     */
+    @JsonIgnore
+    public Set<User> getOwners() {
+        return permissions.entrySet()
+                .stream()
+                .filter(entry -> GwtNullSafe.set(entry.getValue()).contains(DocumentPermissionNames.OWNER))
+                .map(Entry::getKey)
+                .map(userUuid ->
+                        Stream.concat(users.stream(), groups.stream())
+                                .filter(user -> userUuid.equals(user.getUuid()))
+                                .findFirst()
+                                .orElseThrow(() ->
+                                        new RuntimeException("User with uuid " + userUuid + " not in lists")))
+                .collect(Collectors.toSet());
     }
 
     public boolean containsUserOrGroup(final String uuid, final boolean isGroup) {
@@ -130,7 +171,7 @@ public class DocumentPermissions {
                 "docUuid='" + docUuid + '\'' +
                 ", users=" + users +
                 ", groups=" + groups +
-                ", permissions=" + permissions +
+                ", permissions=\n" + permsMapToStr(permissions) +
                 '}';
     }
 
@@ -141,6 +182,71 @@ public class DocumentPermissions {
     public Builder copy() {
         return new Builder(this);
     }
+
+    public static String permsMapToStr(final Map<String, Set<String>> perms) {
+        return GwtNullSafe.map(perms)
+                .entrySet()
+                .stream()
+                .map(entry -> {
+                    final String userUuid = entry.getKey();
+                    final String permStr = entry.getValue()
+                            .stream()
+                            .sorted()
+                            .collect(Collectors.joining(", "));
+                    return userUuid + " => [" + permStr + "]";
+                })
+                .collect(Collectors.joining("\n"));
+    }
+
+    /**
+     * @return A non-null mutable deep copy of the supplied perms map
+     */
+    public static Map<String, Set<String>> copyPermsMap(final Map<String, Set<String>> perms) {
+        return GwtNullSafe.map(perms)
+                .entrySet()
+                .stream()
+                .map(entry -> new AbstractMap.SimpleEntry<>(
+                        entry.getKey(),
+                        new HashSet<>(GwtNullSafe.set(entry.getValue()))))
+                .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
+    }
+
+    /**
+     * @return A new map containing all permissions found in permissions excluding those
+     * found in permissionsToExclude
+     */
+    public static Map<String, Set<String>> excludePermissions(final Map<String, Set<String>> permissions,
+                                                               final Map<String, Set<String>> permissionsToExclude) {
+        if (GwtNullSafe.hasEntries(permissionsToExclude)) {
+            return GwtNullSafe.map(permissions)
+                    .entrySet()
+                    .stream()
+                    .map(entry -> {
+                        final Set<String> excludeSet = permissionsToExclude.get(entry.getKey());
+                        if (GwtNullSafe.hasItems(excludeSet)) {
+                            final Set<String> newPermSet = GwtNullSafe.stream(entry.getValue())
+                                    .filter(perm -> !excludeSet.contains(perm))
+                                    .collect(Collectors.toSet());
+                            if (newPermSet.isEmpty()) {
+                                return null;
+                            } else {
+                                return new SimpleEntry<>(entry.getKey(), newPermSet);
+                            }
+                        } else {
+                            // Nothing to exclude so return as is
+                            return entry;
+                        }
+                    })
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
+        } else {
+            return permissions;
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public static final class Builder {
 
@@ -176,6 +282,11 @@ public class DocumentPermissions {
 
         public Builder permission(final String userUuid, final String permission) {
             permissions.computeIfAbsent(userUuid, k -> new HashSet<>()).add(permission);
+            return this;
+        }
+
+        public Builder permissions(final Map<String, Set<String>> permissions) {
+            this.permissions = permissions;
             return this;
         }
 

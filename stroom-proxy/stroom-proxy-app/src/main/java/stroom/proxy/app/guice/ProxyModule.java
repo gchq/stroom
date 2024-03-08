@@ -4,6 +4,7 @@ import stroom.collection.mock.MockCollectionModule;
 import stroom.db.util.DbModule;
 import stroom.dictionary.impl.DictionaryModule;
 import stroom.dictionary.impl.DictionaryStore;
+import stroom.docrefinfo.api.DocRefDecorator;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.docstore.api.Serialiser2Factory;
 import stroom.docstore.api.StoreFactory;
@@ -24,7 +25,6 @@ import stroom.proxy.app.ContentSyncService;
 import stroom.proxy.app.ProxyConfigHealthCheck;
 import stroom.proxy.app.ProxyConfigHolder;
 import stroom.proxy.app.ProxyLifecycle;
-import stroom.proxy.app.RequestAuthenticatorImpl;
 import stroom.proxy.app.event.EventResourceImpl;
 import stroom.proxy.app.forwarder.FailureDestinationsImpl;
 import stroom.proxy.app.forwarder.ForwarderDestinationsImpl;
@@ -32,6 +32,7 @@ import stroom.proxy.app.handler.ProxyId;
 import stroom.proxy.app.handler.ProxyRequestHandler;
 import stroom.proxy.app.handler.RemoteFeedStatusService;
 import stroom.proxy.app.jersey.ProxyJerseyModule;
+import stroom.proxy.app.security.ProxySecurityModule;
 import stroom.proxy.app.servlet.ProxyQueueMonitoringServlet;
 import stroom.proxy.app.servlet.ProxySecurityFilter;
 import stroom.proxy.app.servlet.ProxyStatusServlet;
@@ -60,8 +61,8 @@ import stroom.receive.rules.impl.DataReceiptPolicyAttributeMapFilterFactoryImpl;
 import stroom.receive.rules.impl.ReceiveDataRuleSetResourceImpl;
 import stroom.receive.rules.impl.ReceiveDataRuleSetService;
 import stroom.receive.rules.impl.ReceiveDataRuleSetServiceImpl;
-import stroom.security.api.RequestAuthenticator;
 import stroom.security.api.SecurityContext;
+import stroom.security.common.impl.RefreshManager;
 import stroom.security.mock.MockSecurityContext;
 import stroom.task.impl.TaskContextModule;
 import stroom.util.BuildInfoProvider;
@@ -80,13 +81,13 @@ import com.codahale.metrics.health.HealthCheckRegistry;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
+import io.dropwizard.core.setup.Environment;
 import io.dropwizard.lifecycle.Managed;
-import io.dropwizard.setup.Environment;
+import jakarta.ws.rs.ext.ExceptionMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.file.Path;
-import javax.ws.rs.ext.ExceptionMapper;
 
 public class ProxyModule extends AbstractModule {
 
@@ -127,6 +128,7 @@ public class ProxyModule extends AbstractModule {
 
         install(new TaskContextModule());
         install(new ProxyJerseyModule());
+        install(new ProxySecurityModule());
 
         bind(BuildInfo.class).toProvider(BuildInfoProvider.class);
 //        bind(BufferFactory.class).to(BufferFactoryImpl.class);
@@ -134,12 +136,13 @@ public class ProxyModule extends AbstractModule {
         bind(DocumentResourceHelper.class).to(DocumentResourceHelperImpl.class);
         bind(ErrorReceiver.class).to(ErrorReceiverImpl.class);
         bind(FeedStatusService.class).to(RemoteFeedStatusService.class);
-        bind(RequestAuthenticator.class).to(RequestAuthenticatorImpl.class).asEagerSingleton();
+//        bind(RequestAuthenticator.class).to(RequestAuthenticatorImpl.class).asEagerSingleton();
         bind(ReceiveDataRuleSetService.class).to(ReceiveDataRuleSetServiceImpl.class);
         bind(RequestHandler.class).to(ProxyRequestHandler.class);
         bind(SecurityContext.class).to(MockSecurityContext.class);
         bind(Serialiser2Factory.class).to(Serialiser2FactoryImpl.class);
         bind(StoreFactory.class).to(StoreFactoryImpl.class);
+        bind(DocRefDecorator.class).to(NoDecorationDocRefDecorator.class);
         bind(ForwarderDestinations.class).to(ForwarderDestinationsImpl.class);
         bind(FailureDestinations.class).to(FailureDestinationsImpl.class);
         bind(Sender.class).to(SenderImpl.class);
@@ -180,7 +183,8 @@ public class ProxyModule extends AbstractModule {
         GuiceUtil.buildMultiBinder(binder(), Managed.class)
                 .addBinding(ContentSyncService.class)
                 .addBinding(ProxyLifecycle.class)
-                .addBinding(RemoteFeedStatusService.class);
+                .addBinding(RemoteFeedStatusService.class)
+                .addBinding(RefreshManager.class);
 
         GuiceUtil.buildMultiBinder(binder(), ExceptionMapper.class)
                 .addBinding(PermissionExceptionMapper.class)
@@ -199,9 +203,11 @@ public class ProxyModule extends AbstractModule {
         return new FSPersistence(pathCreator.toAppPath(path));
     }
 
+    @SuppressWarnings("unused")
     @Provides
     EntityEventBus entityEventBus() {
         return event -> {
         };
     }
+
 }

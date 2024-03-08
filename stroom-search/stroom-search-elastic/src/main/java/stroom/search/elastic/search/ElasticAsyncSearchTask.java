@@ -16,7 +16,7 @@
 
 package stroom.search.elastic.search;
 
-import stroom.query.api.v2.DateTimeSettings;
+import stroom.expression.api.DateTimeSettings;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.common.v2.CoprocessorSettings;
@@ -26,27 +26,24 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 
 public class ElasticAsyncSearchTask {
+
     private final QueryKey key;
     private final String searchName;
     private final Query query;
     @JsonProperty
     private final List<CoprocessorSettings> settings;
     private final DateTimeSettings dateTimeSettings;
-    private final long now;
 
     public ElasticAsyncSearchTask(final QueryKey key,
                                   final String searchName,
                                   final Query query,
                                   @JsonProperty("settings") final List<CoprocessorSettings> settings,
-                                  final DateTimeSettings dateTimeSettings,
-                                  final long now
-    ) {
+                                  final DateTimeSettings dateTimeSettings) {
         this.key = key;
         this.searchName = searchName;
         this.query = query;
         this.settings = settings;
         this.dateTimeSettings = dateTimeSettings;
-        this.now = now;
     }
 
     public QueryKey getKey() {
@@ -67,9 +64,5 @@ public class ElasticAsyncSearchTask {
 
     public DateTimeSettings getDateTimeSettings() {
         return dateTimeSettings;
-    }
-
-    public long getNow() {
-        return now;
     }
 }

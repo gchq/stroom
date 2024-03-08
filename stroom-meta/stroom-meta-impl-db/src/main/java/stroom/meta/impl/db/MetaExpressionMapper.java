@@ -1,6 +1,6 @@
 package stroom.meta.impl.db;
 
-import stroom.datasource.api.v2.AbstractField;
+import stroom.datasource.api.v2.QueryField;
 import stroom.db.util.CommonExpressionMapper;
 import stroom.db.util.TermHandler;
 import stroom.db.util.TermHandlerFactory;
@@ -8,6 +8,7 @@ import stroom.meta.impl.MetaKeyDao;
 import stroom.meta.impl.db.jooq.tables.MetaVal;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionTerm;
+import stroom.util.NullSafe;
 
 import org.jooq.Condition;
 import org.jooq.Field;
@@ -34,7 +35,7 @@ class MetaExpressionMapper implements Function<ExpressionItem, Condition> {
         this.termHandlerFactory = termHandlerFactory;
     }
 
-    public void map(final AbstractField dataSourceField) {
+    public void map(final QueryField dataSourceField) {
         Optional<Integer> idOptional = metaKeyDao.getIdForName(dataSourceField.getName());
 
         if (idOptional.isPresent()) {
@@ -47,6 +48,7 @@ class MetaExpressionMapper implements Function<ExpressionItem, Condition> {
                     values -> {
                         try {
                             return values.stream()
+                                    .filter(str -> !NullSafe.isBlankString(str))
                                     .map(Long::valueOf)
                                     .collect(Collectors.toList());
                         } catch (final NumberFormatException e) {

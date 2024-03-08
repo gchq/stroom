@@ -30,6 +30,7 @@ import stroom.meta.shared.Meta;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.StreamLocationFactory;
+import stroom.pipeline.errorhandler.ErrorReceiver;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.LoggedException;
 import stroom.pipeline.errorhandler.LoggingErrorReceiver;
@@ -55,17 +56,21 @@ import stroom.security.shared.PermissionNames;
 import stroom.task.api.TaskContext;
 import stroom.util.NullSafe;
 import stroom.util.date.DateUtil;
+import stroom.util.shared.Indicators;
 
+import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
-import javax.inject.Inject;
 
 class SteppingRequestHandler {
 
@@ -101,6 +106,8 @@ class SteppingRequestHandler {
     private LoggingErrorReceiver loggingErrorReceiver;
     private Set<String> generalErrors;
     private boolean isSegmentedData;
+    // elementId => Indicators
+    private Map<String, Indicators> startProcessIndicatorMap = Collections.emptyMap();
 
     @Inject
     SteppingRequestHandler(final Store streamStore,
@@ -149,7 +156,7 @@ class SteppingRequestHandler {
             // on can be read.
             return securityContext.useAsReadResult(() -> {
                 // Set the current user so they are visible during translation.
-                currentUserHolder.setCurrentUser(securityContext.getUserId());
+                currentUserHolder.setCurrentUser(securityContext.getUserIdentity());
 
                 StepData stepData;
                 generalErrors = new HashSet<>();
@@ -204,6 +211,9 @@ class SteppingRequestHandler {
                     // that caused the system not to step.
                     stepData = controller.createStepData(null);
                 }
+                // Indicators get cleared at the start of each call to process so merge in any indicators
+                // we found when calling startProcessing
+                mergeStartProcessingIndicators(stepData);
 
                 taskContext.info(() -> "Finished stepping");
 
@@ -221,6 +231,22 @@ class SteppingRequestHandler {
                         isSegmentedData);
             });
         });
+    }
+
+    private void mergeStartProcessingIndicators(final StepData stepData) {
+        if (stepData != null) {
+            final Map<String, ElementData> elementIdToDataMap = NullSafe.map(stepData.getElementMap());
+
+            startProcessIndicatorMap.forEach((elementId, startProcessingIndicators) -> {
+                final ElementData elementData = elementIdToDataMap.get(elementId);
+                Objects.requireNonNull(elementData, () -> "No elementData for elementId " + elementId);
+
+                final Indicators combinedIndicators = Indicators.combine(
+                        startProcessingIndicators,
+                        elementData.getIndicators());
+                elementData.setIndicators(combinedIndicators);
+            });
+        }
     }
 
     private void initialise(final PipelineStepRequest request) {
@@ -469,6 +495,7 @@ class SteppingRequestHandler {
             lastFeedName = null;
         }
 
+        startProcessIndicatorMap.clear();
         if (!taskContext.isTerminated()) {
             // Create a new pipeline for a new feed or if the feed has changed.
             if (lastFeedName == null) {
@@ -480,6 +507,10 @@ class SteppingRequestHandler {
                 if (pipeline != null) {
                     try {
                         pipeline.startProcessing();
+
+                        // Capture and hold any errors seen during init of the pipe as the error receiver
+                        // will get cleared on each step.
+                        startProcessIndicatorMap = getErrorReceiverIndicatorsMap();
                     } catch (final LoggedException e) {
                         // Do nothing as we will have recorded this error in the
                         // logging error receiver.
@@ -537,8 +568,7 @@ class SteppingRequestHandler {
             final String encoding = feedProperties.getEncoding(
                     feedName, meta.getTypeName(), childDataType);
 
-            // Loop over the stream boundaries and process each
-            // sequentially. Loop over the stream boundaries and process
+            // Loop over the stream boundaries and process
             // each sequentially until we find a record.
             boolean done = controller.isFound();
             while (!done
@@ -658,6 +688,15 @@ class SteppingRequestHandler {
             generalErrors.add(e.toString());
         } else {
             generalErrors.add(e.getMessage());
+        }
+    }
+
+    private Map<String, Indicators> getErrorReceiverIndicatorsMap() {
+        final ErrorReceiver errorReceiver = errorReceiverProxy.getErrorReceiver();
+        if (errorReceiver instanceof final LoggingErrorReceiver loggingErrorReceiver2) {
+            return new HashMap<>(NullSafe.map(loggingErrorReceiver2.getIndicatorsMap()));
+        } else {
+            return Collections.emptyMap();
         }
     }
 }

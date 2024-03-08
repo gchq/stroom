@@ -8,20 +8,23 @@
         <form:FormGroup identity="feedSettingsClassification" label="Classification">
             <g:TextBox ui:field="classification" width="400px"/>
         </form:FormGroup>
-        <form:FormGroup>
-            <tickbox:CustomCheckBox ui:field="reference" identity="feedSettingsReferenceFeed" label="Reference Feed"/>
+        <form:FormGroup identity="feedSettingsReferenceFeed" label="Reference Feed">
+            <tickbox:CustomCheckBox ui:field="reference"/>
         </form:FormGroup>
         <form:FormGroup identity="feedSettingsFeedStatus" label="Feed Status">
-            <l:ItemListBox ui:field="feedStatus"/>
+            <l:SelectionBox ui:field="feedStatus"/>
         </form:FormGroup>
         <form:FormGroup identity="feedSettingsReceivedType" label="Received Type">
-            <l:StringListBox ui:field="receivedType"/>
+            <l:SelectionBox ui:field="receivedType"/>
         </form:FormGroup>
         <form:FormGroup identity="feedSettingsDataEncoding" label="Data Encoding">
-            <l:StringListBox ui:field="dataEncoding"/>
+            <l:SelectionBox ui:field="dataEncoding"/>
         </form:FormGroup>
         <form:FormGroup identity="feedSettingsContextEncoding" label="Context Encoding">
-            <l:StringListBox ui:field="contextEncoding"/>
+            <l:SelectionBox ui:field="contextEncoding"/>
+        </form:FormGroup>
+        <form:FormGroup identity="feedVolumeGroup" label="Volume Group">
+            <l:SelectionBox ui:field="volumeGroup"/>
         </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder> 

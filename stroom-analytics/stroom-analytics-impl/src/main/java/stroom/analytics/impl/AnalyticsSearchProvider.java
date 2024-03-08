@@ -17,12 +17,12 @@
 
 package stroom.analytics.impl;
 
-import stroom.datasource.api.v2.DataSource;
 import stroom.datasource.api.v2.DateField;
+import stroom.datasource.api.v2.FieldInfo;
+import stroom.datasource.api.v2.FindFieldInfoCriteria;
 import stroom.docref.DocRef;
-import stroom.docstore.shared.DocRefUtil;
 import stroom.explorer.api.HasDataSourceDocRefs;
-import stroom.query.api.v2.DateTimeSettings;
+import stroom.expression.api.DateTimeSettings;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.Query;
@@ -31,33 +31,34 @@ import stroom.query.common.v2.CoprocessorSettings;
 import stroom.query.common.v2.CoprocessorsFactory;
 import stroom.query.common.v2.CoprocessorsImpl;
 import stroom.query.common.v2.DataStoreSettings;
+import stroom.query.common.v2.FieldInfoResultPageBuilder;
 import stroom.query.common.v2.ResultStore;
 import stroom.query.common.v2.ResultStoreFactory;
 import stroom.query.common.v2.SearchProvider;
 import stroom.search.impl.FederatedSearchExecutor;
 import stroom.search.impl.FederatedSearchTask;
 import stroom.security.api.SecurityContext;
+import stroom.util.shared.ResultPage;
+
+import jakarta.inject.Inject;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
-import javax.inject.Inject;
 
 public class AnalyticsSearchProvider implements SearchProvider, HasDataSourceDocRefs {
 
-    private final SecurityContext securityContext;
     private final CoprocessorsFactory coprocessorsFactory;
     private final ResultStoreFactory resultStoreFactory;
     private final FederatedSearchExecutor federatedSearchExecutor;
     private final AnalyticsNodeSearchTaskCreator nodeSearchTaskCreator;
 
     @Inject
-    public AnalyticsSearchProvider(final SecurityContext securityContext,
-                                   final CoprocessorsFactory coprocessorsFactory,
+    public AnalyticsSearchProvider(final CoprocessorsFactory coprocessorsFactory,
                                    final ResultStoreFactory resultStoreFactory,
                                    final FederatedSearchExecutor federatedSearchExecutor,
                                    final AnalyticsNodeSearchTaskCreator nodeSearchTaskCreator) {
-        this.securityContext = securityContext;
         this.coprocessorsFactory = coprocessorsFactory;
         this.resultStoreFactory = resultStoreFactory;
         this.federatedSearchExecutor = federatedSearchExecutor;
@@ -65,12 +66,18 @@ public class AnalyticsSearchProvider implements SearchProvider, HasDataSourceDoc
     }
 
     @Override
-    public DataSource getDataSource(final DocRef docRef) {
-        return securityContext.useAsReadResult(() -> DataSource
-                .builder()
-                .docRef(docRef)
-                .fields(AnalyticFields.getFields())
-                .build());
+    public ResultPage<FieldInfo> getFieldInfo(final FindFieldInfoCriteria criteria) {
+        return FieldInfoResultPageBuilder.builder(criteria).addAll(AnalyticFields.getFields()).build();
+    }
+
+    @Override
+    public Optional<String> fetchDocumentation(final DocRef docRef) {
+        return Optional.empty();
+    }
+
+    @Override
+    public DocRef fetchDefaultExtractionPipeline(final DocRef dataSourceRef) {
+        return null;
     }
 
     @Override
@@ -79,9 +86,6 @@ public class AnalyticsSearchProvider implements SearchProvider, HasDataSourceDoc
     }
 
     public ResultStore createResultStore(final SearchRequest searchRequest) {
-        // Get the current time in millis since epoch.
-        final long nowEpochMilli = System.currentTimeMillis();
-
         // Replace expression parameters.
         final SearchRequest modifiedSearchRequest = ExpressionUtil.replaceExpressionParameters(searchRequest);
 
@@ -91,8 +95,7 @@ public class AnalyticsSearchProvider implements SearchProvider, HasDataSourceDoc
         // Extract highlights.
         final Set<String> highlights = getHighlights(
                 query.getExpression(),
-                modifiedSearchRequest.getDateTimeSettings(),
-                nowEpochMilli);
+                modifiedSearchRequest.getDateTimeSettings());
 
         // Create a coprocessor settings list.
         final List<CoprocessorSettings> coprocessorSettingsList = coprocessorsFactory
@@ -103,6 +106,7 @@ public class AnalyticsSearchProvider implements SearchProvider, HasDataSourceDoc
                 .createBasicSearchResultStoreSettings();
         final CoprocessorsImpl coprocessors = coprocessorsFactory.create(
                 modifiedSearchRequest.getSearchRequestSource(),
+                modifiedSearchRequest.getDateTimeSettings(),
                 modifiedSearchRequest.getKey(),
                 coprocessorSettingsList,
                 query.getParams(),
@@ -116,8 +120,7 @@ public class AnalyticsSearchProvider implements SearchProvider, HasDataSourceDoc
                 searchName,
                 query,
                 coprocessorSettingsList,
-                modifiedSearchRequest.getDateTimeSettings(),
-                nowEpochMilli);
+                modifiedSearchRequest.getDateTimeSettings());
 
         // Create the search result collector.
         final ResultStore resultStore = resultStoreFactory.create(
@@ -135,8 +138,7 @@ public class AnalyticsSearchProvider implements SearchProvider, HasDataSourceDoc
      * highlighting.
      */
     private Set<String> getHighlights(final ExpressionOperator expression,
-                                      DateTimeSettings dateTimeSettings,
-                                      final long nowEpochMilli) {
+                                      DateTimeSettings dateTimeSettings) {
         Set<String> highlights = Collections.emptySet();
 
 //        try {
@@ -154,6 +156,11 @@ public class AnalyticsSearchProvider implements SearchProvider, HasDataSourceDoc
 //        }
 
         return highlights;
+    }
+
+    @Override
+    public List<DocRef> list() {
+        return List.of(AnalyticFields.ANALYTICS_DOC_REF);
     }
 
     @Override

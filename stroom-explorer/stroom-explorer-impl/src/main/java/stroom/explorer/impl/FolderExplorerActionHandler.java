@@ -1,8 +1,10 @@
 package stroom.explorer.impl;
 
+import stroom.docref.DocContentHighlights;
 import stroom.docref.DocContentMatch;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
+import stroom.docref.StringMatch;
 import stroom.docstore.api.UniqueNameUtil;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.explorer.shared.DocumentType;
@@ -13,17 +15,23 @@ import stroom.security.shared.DocumentPermissionNames;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.PermissionException;
 
+import jakarta.inject.Inject;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
 
 class FolderExplorerActionHandler implements ExplorerActionHandler {
 
     private static final String FOLDER = ExplorerConstants.FOLDER;
+    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.STRUCTURE,
+            FolderExplorerActionHandler.FOLDER,
+            FolderExplorerActionHandler.FOLDER,
+            SvgImage.FOLDER);
     private static final String NAME_PATTERN_VALUE = "^[a-zA-Z0-9_\\- \\.\\(\\)]{1,}$";
     private final SecurityContext securityContext;
     private final ExplorerTreeDao explorerTreeDao;
@@ -42,18 +50,26 @@ class FolderExplorerActionHandler implements ExplorerActionHandler {
     }
 
     @Override
-    public DocRef copyDocument(final DocRef docRef, final Set<String> existingNames) {
+    public DocRef copyDocument(final DocRef docRef,
+                               final String name,
+                               final boolean makeNameUnique,
+                               final Set<String> existingNames) {
         final ExplorerTreeNode explorerTreeNode = explorerTreeDao.findByUUID(docRef.getUuid());
         if (explorerTreeNode == null) {
             throw new RuntimeException("Unable to find tree node to copy");
         }
 
         if (!securityContext.hasDocumentPermission(docRef.getUuid(), DocumentPermissionNames.READ)) {
-            throw new PermissionException(securityContext.getUserId(),
+            throw new PermissionException(securityContext.getUserIdentityForAudit(),
                     "You do not have permission to read (" + FOLDER + ")");
         }
 
-        final String newName = UniqueNameUtil.getCopyName(explorerTreeNode.getName(), existingNames);
+        String folderName = name;
+        if (folderName == null || folderName.trim().length() == 0) {
+            folderName = explorerTreeNode.getName();
+        }
+
+        final String newName = UniqueNameUtil.getCopyName(folderName, makeNameUnique, existingNames);
         return new DocRef(FOLDER, UUID.randomUUID().toString(), newName);
     }
 
@@ -65,7 +81,7 @@ class FolderExplorerActionHandler implements ExplorerActionHandler {
         }
 
         if (!securityContext.hasDocumentPermission(uuid, DocumentPermissionNames.READ)) {
-            throw new PermissionException(securityContext.getUserId(),
+            throw new PermissionException(securityContext.getUserIdentityForAudit(),
                     "You do not have permission to read (" + FOLDER + ")");
         }
         return explorerTreeNode.getDocRef();
@@ -78,7 +94,7 @@ class FolderExplorerActionHandler implements ExplorerActionHandler {
             throw new RuntimeException("Unable to find tree node to rename");
         }
         if (!securityContext.hasDocumentPermission(uuid, DocumentPermissionNames.UPDATE)) {
-            throw new PermissionException(securityContext.getUserId(),
+            throw new PermissionException(securityContext.getUserIdentityForAudit(),
                     "You do not have permission to update (" + FOLDER + ")");
         }
         NameValidationUtil.validate(NAME_PATTERN_VALUE, name);
@@ -93,7 +109,7 @@ class FolderExplorerActionHandler implements ExplorerActionHandler {
             throw new RuntimeException("Unable to find tree node to delete");
         }
         if (!securityContext.hasDocumentPermission(uuid, DocumentPermissionNames.DELETE)) {
-            throw new PermissionException(securityContext.getUserId(),
+            throw new PermissionException(securityContext.getUserIdentityForAudit(),
                     "You do not have permission to delete (" + FOLDER + ")");
         }
     }
@@ -106,7 +122,7 @@ class FolderExplorerActionHandler implements ExplorerActionHandler {
         }
 
         if (!securityContext.hasDocumentPermission(uuid, DocumentPermissionNames.READ)) {
-            throw new PermissionException(securityContext.getUserId(),
+            throw new PermissionException(securityContext.getUserIdentityForAudit(),
                     "You do not have permission to read (" + FOLDER + ")");
         }
 
@@ -123,11 +139,7 @@ class FolderExplorerActionHandler implements ExplorerActionHandler {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(
-                DocumentTypeGroup.STRUCTURE,
-                FolderExplorerActionHandler.FOLDER,
-                FolderExplorerActionHandler.FOLDER,
-                SvgImage.FOLDER);
+        return DOCUMENT_TYPE;
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -162,8 +174,13 @@ class FolderExplorerActionHandler implements ExplorerActionHandler {
     }
 
     @Override
-    public List<DocContentMatch> findByContent(final String pattern, final boolean regex, final boolean matchCase) {
+    public List<DocContentMatch> findByContent(final StringMatch filter) {
         return Collections.emptyList();
+    }
+
+    @Override
+    public DocContentHighlights fetchHighlights(final DocRef docRef, final String extension, final StringMatch filter) {
+        return null;
     }
 
     @Override

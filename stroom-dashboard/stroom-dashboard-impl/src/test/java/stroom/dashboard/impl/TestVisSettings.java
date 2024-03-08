@@ -18,10 +18,8 @@ package stroom.dashboard.impl;
 
 import stroom.dashboard.impl.vis.VisSettings;
 import stroom.util.io.StreamUtil;
+import stroom.util.json.JsonUtil;
 
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 
 import java.nio.file.Files;
@@ -40,12 +38,8 @@ class TestVisSettings {
                 .isTrue();
         final String json = StreamUtil.fileToString(jsonFile);
 
-        final ObjectMapper mapper = new ObjectMapper();
-        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        mapper.setSerializationInclusion(Include.NON_NULL);
-        final VisSettings visSettings = mapper.readValue(json, VisSettings.class);
-
-        final String output = mapper.writeValueAsString(visSettings);
+        final VisSettings visSettings = JsonUtil.readValue(json, VisSettings.class);
+        final String output = JsonUtil.writeValueAsString(visSettings);
 
         String in = json.replaceAll("\\s*", "");
         String out = output.replaceAll("\\s*", "");

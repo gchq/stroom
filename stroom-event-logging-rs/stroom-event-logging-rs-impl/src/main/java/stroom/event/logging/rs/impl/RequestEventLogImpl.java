@@ -21,23 +21,22 @@ import stroom.event.logging.api.EventActionDecorator;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.event.logging.impl.LoggingConfig;
 import stroom.security.api.SecurityContext;
+import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.PageResponse;
 import stroom.util.shared.ResultPage;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Injector;
 import event.logging.EventAction;
 import event.logging.ProcessEventAction;
 import event.logging.Query;
 import event.logging.SearchEventAction;
+import jakarta.inject.Inject;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.util.Optional;
-import javax.inject.Inject;
 
 class RequestEventLogImpl implements RequestEventLog {
 
@@ -161,10 +160,9 @@ class RequestEventLogImpl implements RequestEventLog {
 
         if (requestEntity != null) {
             String queryJson;
-            ObjectMapper mapper = new ObjectMapper();
             try {
-                queryJson = mapper.writeValueAsString(requestEntity);
-            } catch (JsonProcessingException ex) {
+                queryJson = JsonUtil.writeValueAsString(requestEntity, false);
+            } catch (RuntimeException ex) {
                 queryJson = "Invalid";
             }
 

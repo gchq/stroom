@@ -4,6 +4,7 @@
 package stroom.security.impl.db.jooq;
 
 
+import stroom.security.impl.db.jooq.tables.ApiKey;
 import stroom.security.impl.db.jooq.tables.AppPermission;
 import stroom.security.impl.db.jooq.tables.DocPermission;
 import stroom.security.impl.db.jooq.tables.StroomUser;
@@ -15,6 +16,11 @@ import stroom.security.impl.db.jooq.tables.StroomUserGroup;
  */
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class Tables {
+
+    /**
+     * The table <code>stroom.api_key</code>.
+     */
+    public static final ApiKey API_KEY = ApiKey.API_KEY;
 
     /**
      * The table <code>stroom.app_permission</code>.

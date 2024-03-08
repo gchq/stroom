@@ -19,6 +19,7 @@ package stroom.feed.shared;
 import stroom.data.shared.StreamTypeNames;
 import stroom.docref.DocRef;
 import stroom.docref.HasDisplayValue;
+import stroom.docs.shared.Description;
 import stroom.docstore.shared.Doc;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.HasPrimitiveValue;
@@ -31,6 +32,15 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+@Description(
+        "The {{< glossary \"Feed\" >}} is Stroom's way of compartmentalising data that has been ingested or " +
+                "created by a [Pipeline]({{< relref \"#pipeline\" >}}).\n" +
+                "Ingested data must specify the Feed that is it destined for.\n\n" +
+                "The Feed Document defines the character encoding for the data in the Feed, the type of data that " +
+                "will be received into it (e.g. `Raw Events`) and optionally a Volume Group to use for " +
+                "data storage.\n" +
+                "The Feed Document can also control the ingest of data using its `Feed Status` property and " +
+                "be used for viewing data that belonging to that feed.")
 @JsonPropertyOrder({
         "type",
         "uuid",
@@ -47,7 +57,8 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
         "retentionDayAge",
         "reference",
         "streamType",
-        "status"})
+        "status",
+        "volumeGroup"})
 @JsonInclude(Include.NON_NULL)
 public class FeedDoc extends Doc {
 
@@ -70,6 +81,8 @@ public class FeedDoc extends Doc {
     private String streamType;
     @JsonProperty
     private FeedStatus status;
+    @JsonProperty
+    private String volumeGroup;
 
     public FeedDoc() {
     }
@@ -94,7 +107,8 @@ public class FeedDoc extends Doc {
                    @JsonProperty("retentionDayAge") final Integer retentionDayAge,
                    @JsonProperty("reference") final boolean reference,
                    @JsonProperty("streamType") final String streamType,
-                   @JsonProperty("status") final FeedStatus status) {
+                   @JsonProperty("status") final FeedStatus status,
+                   @JsonProperty("volumeGroup") final String volumeGroup) {
         super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.classification = classification;
@@ -104,6 +118,7 @@ public class FeedDoc extends Doc {
         this.reference = reference;
         this.streamType = streamType;
         this.status = status;
+        this.volumeGroup = volumeGroup;
     }
 
     /**
@@ -201,6 +216,14 @@ public class FeedDoc extends Doc {
 
     public void setReference(final boolean reference) {
         this.reference = reference;
+    }
+
+    public String getVolumeGroup() {
+        return volumeGroup;
+    }
+
+    public void setVolumeGroup(final String volumeGroup) {
+        this.volumeGroup = volumeGroup;
     }
 
     public enum FeedStatus implements HasDisplayValue, HasPrimitiveValue {

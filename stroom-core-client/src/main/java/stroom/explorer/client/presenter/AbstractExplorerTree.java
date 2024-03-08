@@ -21,8 +21,8 @@ import stroom.dispatch.client.RestFactory;
 import stroom.explorer.client.event.ShowExplorerMenuEvent;
 import stroom.explorer.client.view.ExplorerCell;
 import stroom.explorer.shared.ExplorerNode;
-import stroom.explorer.shared.ExplorerNode.NodeState;
 import stroom.explorer.shared.FetchExplorerNodeResult;
+import stroom.explorer.shared.NodeFlag;
 import stroom.util.shared.EqualsUtil;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.spinner.client.SpinnerSmall;
@@ -53,6 +53,7 @@ import com.google.gwt.view.client.CellPreviewEvent;
 
 import java.util.List;
 import java.util.Set;
+import java.util.function.Consumer;
 
 public abstract class AbstractExplorerTree extends Composite implements Focus {
 
@@ -63,20 +64,26 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
     private final DoubleSelectTester doubleClickTest = new DoubleSelectTester();
     private final boolean allowMultiSelect;
     private final String expanderClassName;
+    private final ExplorerCell explorerCell;
 
     // Required for multiple selection using shift and control key modifiers.
     private ExplorerNode multiSelectStart;
     private List<ExplorerNode> rows;
+    private boolean showAlerts;
+    private Consumer<FetchExplorerNodeResult> changeHandler = null;
 
-    AbstractExplorerTree(final RestFactory restFactory, final boolean allowMultiSelect) {
+    AbstractExplorerTree(final RestFactory restFactory,
+                         final boolean allowMultiSelect,
+                         final boolean showAlerts) {
         this.allowMultiSelect = allowMultiSelect;
+        this.showAlerts = showAlerts;
 
         final SpinnerSmall spinnerSmall = new SpinnerSmall();
         spinnerSmall.getElement().getStyle().setPosition(Style.Position.ABSOLUTE);
         spinnerSmall.getElement().getStyle().setRight(5, Style.Unit.PX);
         spinnerSmall.getElement().getStyle().setTop(5, Style.Unit.PX);
 
-        final ExplorerCell explorerCell = new ExplorerCell(getTickBoxSelectionModel());
+        explorerCell = new ExplorerCell(getTickBoxSelectionModel(), showAlerts);
         expanderClassName = explorerCell.getExpanderClassName();
 
         cellTable = new MyCellTable<>(Integer.MAX_VALUE);
@@ -97,8 +104,13 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
             protected void onDataChanged(final FetchExplorerNodeResult result) {
                 onData(result);
                 super.onDataChanged(result);
+
+                if (changeHandler != null) {
+                    changeHandler.accept(result);
+                }
             }
         };
+        treeModel.setShowAlerts(showAlerts);
 
         scrollPanel = new MaxScrollPanel();
         scrollPanel.setWidget(cellTable);
@@ -135,6 +147,10 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
     void onData(final FetchExplorerNodeResult result) {
     }
 
+    void addChangeHandler(final Consumer<FetchExplorerNodeResult> changeHandler) {
+        this.changeHandler = changeHandler;
+    }
+
     void setData(final List<ExplorerNode> rows) {
         this.rows = rows;
         cellTable.setRowData(0, rows);
@@ -148,6 +164,13 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
 
     public void changeNameFilter(final String name) {
         treeModel.changeNameFilter(name);
+    }
+
+    public void setShowAlerts(final boolean showAlerts) {
+        this.showAlerts = showAlerts;
+        treeModel.setShowAlerts(showAlerts);
+        explorerCell.setShowAlerts(showAlerts);
+        treeModel.refresh();
     }
 
     public void refresh() {
@@ -182,8 +205,9 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
                 final int index = getItemIndex(selected);
                 if (index > 0) {
                     final TableRowElement tableRowElement = cellTable.getRowElement(index);
-                    tableRowElement.scrollIntoView();
-                    scrollPanel.scrollToLeft();
+                    ElementUtil.scrollIntoViewNearest(tableRowElement);
+//                    tableRowElement.scrollIntoView();
+//                    scrollPanel.scrollToLeft();
                 }
             }
         }
@@ -194,7 +218,7 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
             selection = ExplorerTreeModel.NULL_SELECTION;
         }
 
-        doSelect(selection, new SelectionType(false, false));
+        doSelect(selection, new SelectionType());
     }
 
     void doSelect(final ExplorerNode row, final SelectionType selectionType) {
@@ -309,6 +333,10 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
     void selectAll() {
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private class ExplorerTreeSelectionEventManager extends AbstractSelectionEventManager<ExplorerNode> {
 
         public ExplorerTreeSelectionEventManager(final AbstractHasData<ExplorerNode> cellTable) {
@@ -317,7 +345,11 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
 
         @Override
         protected void onMoveRight(final CellPreviewEvent<ExplorerNode> e) {
-            treeModel.setItemOpen(e.getValue(), true);
+            if (e.getValue().hasNodeFlags(NodeFlag.LEAF)) {
+                showMenu(e);
+            } else {
+                treeModel.setItemOpen(e.getValue(), true);
+            }
         }
 
         @Override
@@ -381,7 +413,7 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
             final NativeEvent nativeEvent = e.getNativeEvent();
             final ExplorerNode selectedItem = e.getValue();
             if (selectedItem != null && MouseUtil.isPrimary(nativeEvent)) {
-                if (NodeState.LEAF.equals(selectedItem.getNodeState())) {
+                if (selectedItem.hasNodeFlag(NodeFlag.LEAF)) {
                     final boolean doubleClick = doubleClickTest.test(selectedItem);
                     doSelect(selectedItem,
                             new SelectionType(doubleClick,

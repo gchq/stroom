@@ -5,8 +5,12 @@ import java.util.Set;
 public final class UniqueNameUtil {
 
     public static String getCopyName(final String name,
+                                     final boolean makeUnique,
                                      final Set<String> existingNames) {
-        return getCopyName(name, existingNames, "- Copy", " ");
+        if (makeUnique) {
+            return getCopyName(name, existingNames, "- Copy", " ");
+        }
+        return name;
     }
 
     public static String getCopyName(final String name,

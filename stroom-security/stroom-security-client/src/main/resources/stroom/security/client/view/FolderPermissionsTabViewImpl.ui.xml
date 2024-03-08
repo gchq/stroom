@@ -2,34 +2,33 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:form="urn:import:stroom.widget.form.client">
-    <g:MySplitLayoutPanel styleName="max">
-        <g:north size="200">
-            <g:FlowPanel styleName="max form">
-                <form:FormGroup ui:field="folderPermissionsUsers" identity="folderPermissionsUsers" label="Users"
-                                addStyleNames="max">
-                    <g:SimplePanel ui:field="users" addStyleNames="dock-max"/>
+    <g:FlowPanel styleName="folderPermissions form max dock-container-vertical">
+        <g:FlowPanel styleName="folderPermissionsUsers form dock-max dock-container-vertical">
+            <form:FormGroup ui:field="folderPermissionsUsers"
+                            identity="folderPermissionsUsers"
+                            label="Users"
+                            styleName="dock-container-vertical dock-max">
+                <g:SimplePanel ui:field="users"
+                               addStyleNames="folderPermissionsUsers dock-max dock-container-vertical"/>
+            </form:FormGroup>
+        </g:FlowPanel>
+        <g:FlowPanel styleName="folderPermissionsPermissionsContainer dock-container-horizontal dock-max">
+            <g:FlowPanel styleName="folderPermissionsPermissions form dock-container-vertical dock-max">
+                <form:FormGroup identity="folderPermissionsPermissions"
+                                label="Permissions"
+                                styleName="dock-container-vertical dock-max">
+                    <g:ScrollPanel ui:field="permissions"
+                                   addStyleNames="folderPermissions dock-max dock-container-vertical stroom-control"/>
                 </form:FormGroup>
             </g:FlowPanel>
-        </g:north>
-        <g:center>
-            <g:MySplitLayoutPanel styleName="max">
-                <g:north size="110">
-                    <g:FlowPanel styleName="max form">
-                        <form:FormGroup identity="folderPermissionsCreatePermissions" label="Permissions"
-                                        addStyleNames="max">
-                            <g:ScrollPanel ui:field="permissions" addStyleNames="dock-max stroom-control"/>
-                        </form:FormGroup>
-                    </g:FlowPanel>
-                </g:north>
-                <g:center>
-                    <g:FlowPanel styleName="max form">
-                        <form:FormGroup identity="folderPermissionsPermissions" label="Create Permissions"
-                                        addStyleNames="max">
-                            <g:ScrollPanel ui:field="createPermissions" addStyleNames="dock-max stroom-control"/>
-                        </form:FormGroup>
-                    </g:FlowPanel>
-                </g:center>
-            </g:MySplitLayoutPanel>
-        </g:center>
-    </g:MySplitLayoutPanel>
-</ui:UiBinder> 
+            <g:FlowPanel styleName="folderPermissionsCreatePermissions form dock-container-vertical dock-max">
+                <form:FormGroup identity="folderPermissionsCreatePermissions"
+                                label="Create Permissions"
+                                styleName="folderPermissions dock-container-vertical dock-max">
+                    <g:ScrollPanel ui:field="createPermissions"
+                                   addStyleNames="folderPermissions dock-max stroom-control"/>
+                </form:FormGroup>
+            </g:FlowPanel>
+        </g:FlowPanel>
+    </g:FlowPanel>
+</ui:UiBinder>

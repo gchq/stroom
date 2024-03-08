@@ -19,6 +19,7 @@ package stroom.pipeline.factory;
 import stroom.docref.DocRef;
 import stroom.pipeline.SupportsCodeInjection;
 import stroom.pipeline.destination.DestinationProvider;
+import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.filter.SAXEventRecorder;
 import stroom.pipeline.filter.SAXRecordDetector;
 import stroom.pipeline.filter.SplitFilter;
@@ -47,6 +48,7 @@ import stroom.pipeline.writer.OutputRecorder;
 import stroom.task.api.Terminator;
 import stroom.util.pipeline.scope.PipelineScoped;
 
+import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,7 +61,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import javax.inject.Inject;
 
 @PipelineScoped
 public class PipelineFactory {
@@ -68,14 +69,17 @@ public class PipelineFactory {
     private final ElementRegistryFactory pipelineElementRegistryFactory;
     private final ElementFactory elementFactory;
     private final ProcessorFactory processorFactory;
+    private final ErrorReceiverProxy errorReceiverProxy;
 
     @Inject
     public PipelineFactory(final ElementRegistryFactory pipelineElementRegistryFactory,
                            final ElementFactory elementFactory,
-                           final ProcessorFactory processorFactory) {
+                           final ProcessorFactory processorFactory,
+                           final ErrorReceiverProxy errorReceiverProxy) {
         this.pipelineElementRegistryFactory = pipelineElementRegistryFactory;
         this.elementFactory = elementFactory;
         this.processorFactory = processorFactory;
+        this.errorReceiverProxy = errorReceiverProxy;
 
         if (processorFactory == null) {
             throw new NullPointerException("processorFactory is null");
@@ -456,21 +460,21 @@ public class PipelineFactory {
 
             } else if (in instanceof AbstractInputElement) {
                 final AbstractInputElement filter = (AbstractInputElement) in;
-                final ReaderRecorder recorder = new ReaderRecorder();
+                final ReaderRecorder recorder = new ReaderRecorder(errorReceiverProxy);
                 recorder.setElementId(elementId);
                 recorder.setTarget(filter);
                 result = new Fragment(recorder, fragment.getOut());
 
             } else if (in instanceof AbstractReaderElement) {
                 final AbstractReaderElement filter = (AbstractReaderElement) in;
-                final ReaderRecorder recorder = new ReaderRecorder();
+                final ReaderRecorder recorder = new ReaderRecorder(errorReceiverProxy);
                 recorder.setElementId(elementId);
                 recorder.setTarget(filter);
                 result = new Fragment(recorder, fragment.getOut());
 
             } else if (in instanceof AbstractParser) {
                 final AbstractParser parser = (AbstractParser) in;
-                final ReaderRecorder recorder = new ReaderRecorder();
+                final ReaderRecorder recorder = new ReaderRecorder(errorReceiverProxy);
                 recorder.setElementId(elementId);
                 recorder.setTarget(parser);
                 result = new Fragment(recorder, fragment.getOut());
@@ -500,14 +504,14 @@ public class PipelineFactory {
 
             } else if (out instanceof AbstractInputElement) {
                 final AbstractInputElement filter = (AbstractInputElement) out;
-                final ReaderRecorder recorder = new ReaderRecorder();
+                final ReaderRecorder recorder = new ReaderRecorder(errorReceiverProxy);
                 recorder.setElementId(elementId);
                 filter.setTarget(recorder);
                 result = new Fragment(fragment.getIn(), recorder);
 
             } else if (out instanceof AbstractReaderElement) {
                 final AbstractReaderElement filter = (AbstractReaderElement) out;
-                final ReaderRecorder recorder = new ReaderRecorder();
+                final ReaderRecorder recorder = new ReaderRecorder(errorReceiverProxy);
                 recorder.setElementId(elementId);
                 filter.setTarget(recorder);
                 result = new Fragment(fragment.getIn(), recorder);

@@ -37,7 +37,7 @@ public class QueryEditViewImpl
     @UiField
     SimplePanel queryEditorContainer;
     @UiField
-    SimplePanel tableContainer;
+    SimplePanel resultContainer;
 
     @Inject
     public QueryEditViewImpl(final Binder binder) {
@@ -61,14 +61,9 @@ public class QueryEditViewImpl
     }
 
     @Override
-    public void setTable(final View view) {
-        view.asWidget().addStyleName("dashboard-panel overflow-hidden");
-        tableContainer.setWidget(view.asWidget());
+    public void setResultView(final View view) {
+        resultContainer.setWidget(view.asWidget());
     }
-
-
-    // --------------------------------------------------------------------------------
-
 
     public interface Binder extends UiBinder<Widget, QueryEditViewImpl> {
 

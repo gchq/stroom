@@ -16,6 +16,7 @@
 
 package stroom.importexport.impl;
 
+import stroom.docref.DocRef;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.importexport.api.ContentService;
 import stroom.importexport.api.ExportSummary;
@@ -41,16 +42,17 @@ import stroom.util.shared.ResourceKey;
 
 import io.vavr.Tuple;
 import io.vavr.Tuple3;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
 
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.inject.Singleton;
 
 @Singleton
 class ContentServiceImpl implements ContentService {
@@ -148,17 +150,22 @@ class ContentServiceImpl implements ContentService {
     }
 
     @Override
+    public Map<DocRef, Set<DocRef>> fetchBrokenDependencies() {
+        return dependencyService.getBrokenDependencies();
+    }
+
+    @Override
     public ResourceKey exportAll() {
         if (!securityContext.hasAppPermission(PermissionNames.EXPORT_CONFIGURATION)) {
-            throw new PermissionException(securityContext.getUserId(),
+            throw new PermissionException(securityContext.getUserIdentityForAudit(),
                     "You do not have permission to export all config");
         }
         final ExportConfig exportConfig = exportConfigProvider.get();
         if (!exportConfig.isEnabled()) {
             LOGGER.warn("Attempt by user '{}' to export all data when {} is not enabled.",
-                    securityContext.getUserId(),
+                    securityContext.getSubjectId(),
                     exportConfig.getFullPathStr(ExportConfig.ENABLED_PROP_NAME));
-            throw new PermissionException(securityContext.getUserId(), "Export is not enabled");
+            throw new PermissionException(securityContext.getUserIdentityForAudit(), "Export is not enabled");
         }
 
         final ResourceKey tempResourceKey = resourceStore.createTempFile("StroomConfig.zip");

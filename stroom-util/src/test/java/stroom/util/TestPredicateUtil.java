@@ -15,8 +15,8 @@ import java.util.stream.Stream;
 
 class TestPredicateUtil {
 
-    private static final Predicate<String> APPLE = "apple"::equalsIgnoreCase;
-    private static final Predicate<String> ORANGE = "orange"::equalsIgnoreCase;
+    private static final Predicate<String> APPLE_PREDICATE = "apple"::equalsIgnoreCase;
+    private static final Predicate<String> ORANGE_PREDICATE = "orange"::equalsIgnoreCase;
     private static final Predicate<String> PEAR = "pear"::equalsIgnoreCase;
 
     private static final List<String> ALL_FRUITS = List.of(
@@ -44,8 +44,8 @@ class TestPredicateUtil {
                 .withSimpleEqualityAssertion()
                 .addCase(null, ALL_FRUITS)
                 .addCase(Collections.emptyList(), ALL_FRUITS)
-                .addNamedCase("apple", List.of(APPLE), List.of("apple"))
-                .addNamedCase("apple+orange", List.of(APPLE, ORANGE), Collections.emptyList())
+                .addNamedCase("apple", List.of(APPLE_PREDICATE), List.of("apple"))
+                .addNamedCase("apple+orange", List.of(APPLE_PREDICATE, ORANGE_PREDICATE), Collections.emptyList())
                 .addNamedCase(
                         "2 predicates",
                         List.of(v -> v.endsWith("e"),
@@ -79,9 +79,8 @@ class TestPredicateUtil {
                 .withSimpleEqualityAssertion()
                 .addCase(null, ALL_FRUITS)
                 .addCase(Collections.emptyList(), ALL_FRUITS)
-                .addCase(Collections.emptyList(), ALL_FRUITS)
-                .addCase(List.of(APPLE), List.of("apple"))
-                .addCase(List.of(APPLE, ORANGE), List.of("apple", "orange"))
+                .addCase(List.of(APPLE_PREDICATE), List.of("apple"))
+                .addCase(List.of(APPLE_PREDICATE, ORANGE_PREDICATE), List.of("apple", "orange"))
                 .addCase(
                         List.of(v -> v.endsWith("e"),
                                 v -> v.contains("k")

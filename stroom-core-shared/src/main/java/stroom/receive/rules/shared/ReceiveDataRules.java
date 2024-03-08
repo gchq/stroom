@@ -17,7 +17,7 @@
 
 package stroom.receive.rules.shared;
 
-import stroom.datasource.api.v2.AbstractField;
+import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.Doc;
 import stroom.svg.shared.SvgImage;
@@ -52,7 +52,7 @@ public class ReceiveDataRules extends Doc {
     @JsonProperty
     private String description;
     @JsonProperty
-    private List<AbstractField> fields;
+    private List<QueryField> fields;
     @JsonProperty
     private List<ReceiveDataRule> rules;
 
@@ -69,7 +69,7 @@ public class ReceiveDataRules extends Doc {
                             @JsonProperty("createUser") final String createUser,
                             @JsonProperty("updateUser") final String updateUser,
                             @JsonProperty("description") final String description,
-                            @JsonProperty("fields") final List<AbstractField> fields,
+                            @JsonProperty("fields") final List<QueryField> fields,
                             @JsonProperty("rules") final List<ReceiveDataRule> rules) {
         super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
@@ -101,11 +101,11 @@ public class ReceiveDataRules extends Doc {
         this.description = description;
     }
 
-    public List<AbstractField> getFields() {
+    public List<QueryField> getFields() {
         return fields;
     }
 
-    public void setFields(final List<AbstractField> fields) {
+    public void setFields(final List<QueryField> fields) {
         this.fields = fields;
     }
 

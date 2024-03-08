@@ -10,26 +10,32 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import jakarta.validation.constraints.NotNull;
 
 import java.util.Objects;
-import javax.validation.constraints.NotNull;
 
 @JsonPropertyOrder(alphabetic = true)
 public class FeedStatusConfig extends AbstractConfig implements IsProxyConfig {
 
+    public static final String PROP_NAME_API_KEY = "apiKey";
+
     @JsonProperty
     @JsonPropertyDescription("Turn feed status checking on/off.")
     private final Boolean enabled;
+
     @JsonProperty
     @JsonPropertyDescription("How should proxy treat incoming data if feed status checking is turned off or we are" +
             " unable to fetch the status.")
     private final FeedStatus defaultStatus;
+
     @JsonProperty("url")
     @JsonPropertyDescription("The remote URL to fetch feed status from if enabled.")
     private final String feedStatusUrl;
-    @JsonProperty("apiKey")
+
+    @JsonProperty(PROP_NAME_API_KEY)
     @JsonPropertyDescription("The api key to use to authenticate with the feed status service.")
     private final String apiKey;
+
     @RequiresProxyRestart
     @NotNull
     @JsonProperty("feedStatusCache")
@@ -49,7 +55,7 @@ public class FeedStatusConfig extends AbstractConfig implements IsProxyConfig {
     public FeedStatusConfig(@JsonProperty("enabled") Boolean enabled,
                             @JsonProperty("defaultStatus") final FeedStatus defaultStatus,
                             @JsonProperty("url") final String feedStatusUrl,
-                            @JsonProperty("apiKey") final String apiKey,
+                            @JsonProperty(PROP_NAME_API_KEY) final String apiKey,
                             @JsonProperty("feedStatusCache") final CacheConfig feedStatusCache) {
         this.enabled = enabled;
         this.defaultStatus = defaultStatus;

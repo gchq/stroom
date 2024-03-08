@@ -18,11 +18,12 @@ package stroom.statistics.impl.sql;
 
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
+import stroom.expression.api.DateTimeSettings;
+import stroom.query.api.v2.Column;
 import stroom.query.api.v2.DestroyReason;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
-import stroom.query.api.v2.Field;
 import stroom.query.api.v2.ParamSubstituteUtil;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.QueryKey;
@@ -51,6 +52,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
+import jakarta.inject.Inject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -70,7 +72,6 @@ import java.util.OptionalLong;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -390,7 +391,8 @@ class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest {
                 .query(Query.builder()
                         .expression(operatorBuilder.build())
                         .dataSource(DocRefUtil.create(statisticStoreDoc))
-                        .build());
+                        .build())
+                .dateTimeSettings(DateTimeSettings.builder().build());
 
         optTimeout.ifPresent(searchBuilder::timeout);
 
@@ -422,17 +424,17 @@ class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest {
 
         List<String> fields = COMPONENT_ID_TO_FIELDS_MAP.get(componentId);
         Preconditions.checkNotNull(fields);
-        fields.forEach(field -> addField(field, tableSettingsBuilder));
+        fields.forEach(field -> addColumn(field, tableSettingsBuilder));
 
         return tableSettingsBuilder.build();
     }
 
-    private void addField(String name, final TableSettings.Builder tableSettingsBuilder) {
-        final Field field = Field.builder()
+    private void addColumn(String name, final TableSettings.Builder tableSettingsBuilder) {
+        final Column column = Column.builder()
                 .name(name)
                 .expression(ParamSubstituteUtil.makeParam(name))
                 .build();
-        tableSettingsBuilder.addFields(field);
+        tableSettingsBuilder.addColumns(column);
     }
 
     private RolledUpStatisticEvent buildStatisticEvent(final List<StatisticTag> tags) {

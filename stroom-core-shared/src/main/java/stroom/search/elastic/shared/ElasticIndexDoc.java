@@ -17,6 +17,7 @@
 package stroom.search.elastic.shared;
 
 import stroom.docref.DocRef;
+import stroom.docs.shared.Description;
 import stroom.docstore.shared.Doc;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.svg.shared.SvgImage;
@@ -32,6 +33,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+@Description(
+        "Defines an index that exists within an Elasticsearch cluster.\n" +
+                "This Document is used in the configuration of the {{< pipe-elm \"ElasticIndexingFilter\" >}} " +
+                "pipeline element.\n" +
+                "\n" +
+                "{{% see-also %}}" +
+                "[Elasticsearch]({{< relref \"docs/user-guide/indexing/elasticsearch\" >}})" +
+                "{{% /see-also %}}")
 @JsonPropertyOrder({
         "type",
         "uuid",
@@ -58,7 +67,7 @@ public class ElasticIndexDoc extends Doc {
     public static final int DEFAULT_SEARCH_SCROLL_SIZE = 1000;
     public static final String DOCUMENT_TYPE = "ElasticIndex";
     public static final SvgImage ICON = SvgImage.DOCUMENT_ELASTIC_INDEX;
-    private static final String DEFAULT_TIME_FIELD = "EventTime";
+    private static final String DEFAULT_TIME_FIELD = "@timestamp";
 
     /**
      * Reference to the `ElasticCluster` containing common Elasticsearch cluster connection properties
@@ -146,6 +155,9 @@ public class ElasticIndexDoc extends Doc {
         }
         if (this.searchScrollSize == null) {
             this.searchScrollSize = DEFAULT_SEARCH_SCROLL_SIZE;
+        }
+        if (this.timeField == null || this.timeField.isEmpty()) {
+            this.timeField = DEFAULT_TIME_FIELD;
         }
     }
 

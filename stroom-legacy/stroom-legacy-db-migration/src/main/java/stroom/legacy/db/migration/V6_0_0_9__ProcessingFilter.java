@@ -15,6 +15,8 @@ import stroom.legacy.model_6_1.SQLNameConstants;
 import stroom.legacy.model_6_1.StreamDataSource;
 import stroom.legacy.model_6_1.XMLMarshallerUtil;
 
+import jakarta.xml.bind.JAXBContext;
+import jakarta.xml.bind.JAXBException;
 import org.flywaydb.core.api.migration.BaseJavaMigration;
 import org.flywaydb.core.api.migration.Context;
 import org.slf4j.Logger;
@@ -30,8 +32,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
 
 import static stroom.legacy.model_6_1.ExpressionTerm.Condition.IN_CONDITION_DELIMITER;
 

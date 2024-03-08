@@ -20,34 +20,32 @@ import stroom.dropwizard.common.DelegatingExceptionMapper;
 import stroom.event.logging.impl.LoggingConfig;
 import stroom.event.logging.rs.api.RestResourceAutoLogger;
 import stroom.security.api.SecurityContext;
+import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.container.ContainerRequestContext;
+import jakarta.ws.rs.container.ResourceContext;
+import jakarta.ws.rs.container.ResourceInfo;
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.ext.WriterInterceptorContext;
 import org.glassfish.jersey.message.MessageUtils;
 
 import java.io.IOException;
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.inject.Singleton;
-import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.container.ResourceContext;
-import javax.ws.rs.container.ResourceInfo;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.ext.WriterInterceptorContext;
 
 @Singleton
 public class RestResourceAutoLoggerImpl implements RestResourceAutoLogger {
 
     static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(RestResourceAutoLoggerImpl.class);
 
-    private static final ObjectMapper OBJECT_MAPPER = createObjectMapper();
+    private static final ObjectMapper OBJECT_MAPPER = JsonUtil.getMapper();
 
     private static final String REQUEST_LOG_INFO_PROPERTY = "stroom.rs.logging.request";
 
@@ -91,15 +89,6 @@ public class RestResourceAutoLoggerImpl implements RestResourceAutoLogger {
         this.resourceInfo = resourceInfo;
         this.request = request;
         this.delegatingExceptionMapperProvider = delegatingExceptionMapperProvider;
-    }
-
-    private static ObjectMapper createObjectMapper() {
-        final ObjectMapper mapper = new ObjectMapper();
-        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        mapper.configure(SerializationFeature.INDENT_OUTPUT, false);
-        mapper.setSerializationInclusion(Include.NON_NULL);
-
-        return mapper;
     }
 
     @Override

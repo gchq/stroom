@@ -17,40 +17,48 @@
 package stroom.pipeline.structure.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
+import stroom.data.store.impl.fs.shared.FsVolumeGroup;
+import stroom.data.store.impl.fs.shared.FsVolumeGroupResource;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.explorer.client.presenter.EntityDropDownPresenter;
-import stroom.item.client.ItemListBox;
-import stroom.item.client.StringListBox;
+import stroom.entity.shared.ExpressionCriteria;
+import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
+import stroom.item.client.SelectionBox;
 import stroom.meta.shared.MetaResource;
 import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.pipeline.shared.data.PipelinePropertyType;
 import stroom.pipeline.shared.data.PipelinePropertyValue;
 import stroom.pipeline.structure.client.presenter.PropertyListPresenter.Source;
+import stroom.pipeline.structure.client.view.NewPropertyUiHandlers;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.shared.EqualsUtil;
+import stroom.util.shared.ResultPage;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.ui.Focus;
-import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
-public class NewPropertyPresenter extends MyPresenterWidget<NewPropertyPresenter.NewPropertyView> {
+public class NewPropertyPresenter
+        extends MyPresenterWidget<NewPropertyPresenter.NewPropertyView>
+        implements NewPropertyUiHandlers {
 
     private static final MetaResource META_RESOURCE = GWT.create(MetaResource.class);
+    private static final FsVolumeGroupResource VOLUME_GROUP_RESOURCE = GWT.create(FsVolumeGroupResource.class);
 
     private final RestFactory restFactory;
-    private final EntityDropDownPresenter entityDropDownPresenter;
+    private final DocSelectionBoxPresenter entityDropDownPresenter;
     private boolean dirty;
 
     private PipelineProperty defaultProperty;
@@ -60,7 +68,7 @@ public class NewPropertyPresenter extends MyPresenterWidget<NewPropertyPresenter
 
     private Boolean currentBoolean;
     private boolean booleanListInitialised;
-    private ListBox listBox;
+    private SelectionBox<String> listBox;
 
     private Long currentNumber;
     private boolean spinnerInitialised;
@@ -71,36 +79,39 @@ public class NewPropertyPresenter extends MyPresenterWidget<NewPropertyPresenter
     private TextBox textBox;
 
     private String currentDataType;
+    private String currentVolumeGroup;
     private boolean dataTypePresenterInitialised;
-    private StringListBox dataTypeWidget;
+    private SelectionBox<String> dataTypeWidget;
     private boolean entityPresenterInitialised;
     private DocRef currentEntity;
 
     @Inject
     public NewPropertyPresenter(final EventBus eventBus,
                                 final NewPropertyView view,
-                                final EntityDropDownPresenter entityDropDownPresenter,
+                                final DocSelectionBoxPresenter entityDropDownPresenter,
                                 final RestFactory restFactory) {
         super(eventBus, view);
         this.entityDropDownPresenter = entityDropDownPresenter;
         this.restFactory = restFactory;
+        view.setUiHandlers(this);
     }
 
     @Override
-    protected void onBind() {
-        registerHandler(getView().getSource().addSelectionHandler(event -> {
-            final Source selected = event.getSelectedItem();
-            if (!source.equals(selected)) {
-                NewPropertyPresenter.this.source = selected;
-                setDirty(true, false);
-                startEdit(selected);
-            }
-        }));
-
+    public void onSourceChange(final Source source) {
+        if (!this.source.equals(source)) {
+            NewPropertyPresenter.this.source = source;
+            setDirty(true, false);
+            startEdit(source);
+        }
     }
 
-    public void edit(final PipelineProperty defaultProperty, final PipelineProperty inheritedProperty,
-                     final PipelineProperty localProperty, final Source source) {
+    public void edit(final PipelineProperty defaultProperty,
+                     final PipelineProperty inheritedProperty,
+                     final PipelineProperty localProperty,
+                     final Source source,
+                     final String defaultValue,
+                     final String inheritedValue,
+                     final String inheritedFrom) {
         this.defaultProperty = defaultProperty;
         this.inheritedProperty = inheritedProperty;
         this.localProperty = localProperty;
@@ -108,7 +119,10 @@ public class NewPropertyPresenter extends MyPresenterWidget<NewPropertyPresenter
 
         getView().setElement(defaultProperty.getElement());
         getView().setName(defaultProperty.getName());
-        getView().getSource().setSelectedItem(source);
+        getView().setDescription(defaultProperty.getPropertyType().getDescription());
+        getView().setDefaultValue(defaultValue);
+        getView().setInherited(inheritedFrom, inheritedValue);
+        getView().setSource(source);
 
         startEdit(source);
     }
@@ -132,6 +146,8 @@ public class NewPropertyPresenter extends MyPresenterWidget<NewPropertyPresenter
 
         if ("streamType".equals(propertyType.getName())) {
             enterDataTypeMode(property);
+        } else if ("volumeGroup".equals(propertyType.getName())) {
+            enterVolumeGroupMode(property);
         } else if ("boolean".equals(propertyType.getType())) {
             enterBooleanMode(property);
         } else if ("int".equals(propertyType.getType())) {
@@ -148,16 +164,18 @@ public class NewPropertyPresenter extends MyPresenterWidget<NewPropertyPresenter
     }
 
     public Source getSource() {
-        return getView().getSource().getSelectedItem();
+        return getView().getSource();
     }
 
     public void write(final PipelineProperty property) {
         final PipelinePropertyType propertyType = property.getPropertyType();
 
         if ("streamType".equals(propertyType.getName())) {
-            property.setValue(new PipelinePropertyValue(dataTypeWidget.getSelected()));
+            property.setValue(new PipelinePropertyValue(dataTypeWidget.getValue()));
+        } else if ("volumeGroup".equals(propertyType.getName())) {
+            property.setValue(new PipelinePropertyValue(dataTypeWidget.getValue()));
         } else if ("boolean".equals(propertyType.getType())) {
-            final String value = listBox.getItemText(listBox.getSelectedIndex());
+            final String value = listBox.getValue();
             property.setValue(new PipelinePropertyValue(Boolean.valueOf(value)));
         } else if ("int".equals(propertyType.getType())) {
             final Integer value = valueSpinner.getIntValue();
@@ -181,12 +199,12 @@ public class NewPropertyPresenter extends MyPresenterWidget<NewPropertyPresenter
 
     private void enterBooleanMode(final PipelineProperty property) {
         if (!booleanListInitialised) {
-            listBox = new ListBox();
+            listBox = new SelectionBox<>();
             listBox.addItem("true");
             listBox.addItem("false");
 
-            listBox.addChangeHandler(event -> {
-                final Boolean selected = getBoolean(listBox.getSelectedIndex());
+            listBox.addValueChangeHandler(event -> {
+                final Boolean selected = Boolean.valueOf(listBox.getValue());
                 if (!EqualsUtil.isEquals(selected, currentBoolean)) {
                     setDirty(true);
                 }
@@ -204,23 +222,8 @@ public class NewPropertyPresenter extends MyPresenterWidget<NewPropertyPresenter
             currentBoolean = property.getValue().getBoolean();
         }
 
-        setBoolean(currentBoolean);
-    }
-
-    private Boolean getBoolean(final int pos) {
-        if (pos == 0) {
-            return Boolean.TRUE;
-        }
-
-        return Boolean.FALSE;
-    }
-
-    private void setBoolean(final Boolean bool) {
-        if (bool) {
-            listBox.setSelectedIndex(0);
-        } else {
-            listBox.setSelectedIndex(1);
-        }
+        listBox.setEnabled(Source.LOCAL.equals(source));
+        listBox.setValue(currentBoolean.toString().toLowerCase());
     }
 
     private void enterIntegerMode(final PipelineProperty property) {
@@ -247,8 +250,7 @@ public class NewPropertyPresenter extends MyPresenterWidget<NewPropertyPresenter
             valueSpinner.setMin(0);
             valueSpinner.setMax(10000000);
 
-            registerHandler(valueSpinner.getTextBox().addKeyDownHandler(event -> setDirty(true)));
-            registerHandler(valueSpinner.getSpinner().addSpinnerHandler(event -> setDirty(true)));
+            registerHandler(valueSpinner.addValueChangeHandler(event -> setDirty(true)));
 
             valueSpinner.getElement().getStyle().setWidth(100, Unit.PCT);
             valueSpinner.getElement().getStyle().setMarginBottom(0, Unit.PX);
@@ -258,6 +260,7 @@ public class NewPropertyPresenter extends MyPresenterWidget<NewPropertyPresenter
         }
 
         currentNumber = number;
+        valueSpinner.setEnabled(Source.LOCAL.equals(source));
         valueSpinner.setValue(currentNumber);
     }
 
@@ -283,12 +286,13 @@ public class NewPropertyPresenter extends MyPresenterWidget<NewPropertyPresenter
             currentText = property.getValue().getString();
         }
 
+        textBox.setEnabled(Source.LOCAL.equals(source));
         textBox.setText(currentText);
     }
 
     private void enterDataTypeMode(final PipelineProperty property) {
         if (!dataTypePresenterInitialised) {
-            dataTypeWidget = new StringListBox();
+            dataTypeWidget = new SelectionBox<>();
 
             // Load data types.
             final Rest<List<String>> rest = restFactory.create();
@@ -299,7 +303,7 @@ public class NewPropertyPresenter extends MyPresenterWidget<NewPropertyPresenter
                         }
 
                         if (currentDataType != null) {
-                            dataTypeWidget.setSelected(currentDataType);
+                            dataTypeWidget.setValue(currentDataType);
                         }
 
                         dataTypePresenterInitialised = true;
@@ -307,8 +311,8 @@ public class NewPropertyPresenter extends MyPresenterWidget<NewPropertyPresenter
                     .call(META_RESOURCE)
                     .getTypes();
 
-            dataTypeWidget.addChangeHandler(event -> {
-                final String streamType = dataTypeWidget.getSelected();
+            dataTypeWidget.addValueChangeHandler(event -> {
+                final String streamType = dataTypeWidget.getValue();
                 if (!EqualsUtil.isEquals(currentDataType, streamType)) {
                     setDirty(true);
                 }
@@ -327,7 +331,60 @@ public class NewPropertyPresenter extends MyPresenterWidget<NewPropertyPresenter
             currentDataType = property.getValue().toString();
         }
 
-        dataTypeWidget.setSelected(currentDataType);
+        dataTypeWidget.setEnabled(Source.LOCAL.equals(source));
+        dataTypeWidget.setValue(currentDataType);
+    }
+
+    private void enterVolumeGroupMode(final PipelineProperty property) {
+        if (!dataTypePresenterInitialised) {
+            dataTypeWidget = new SelectionBox<>();
+
+            // Load data types.
+            final Rest<ResultPage<FsVolumeGroup>> rest = restFactory.create();
+            rest
+                    .onSuccess(result -> {
+                        dataTypeWidget.clear();
+                        dataTypeWidget.setNonSelectString("");
+                        if (result != null && result.getValues() != null) {
+                            dataTypeWidget.addItems(
+                                    result
+                                            .getValues()
+                                            .stream()
+                                            .map(FsVolumeGroup::getName)
+                                            .collect(Collectors.toList()));
+                        }
+
+                        if (currentVolumeGroup != null) {
+                            dataTypeWidget.setValue(currentVolumeGroup);
+                        }
+
+                        dataTypePresenterInitialised = true;
+                    })
+                    .call(VOLUME_GROUP_RESOURCE)
+                    .find(new ExpressionCriteria());
+
+            dataTypeWidget.addValueChangeHandler(event -> {
+                final String volumeGroup = dataTypeWidget.getValue();
+                if (!EqualsUtil.isEquals(currentVolumeGroup, volumeGroup)) {
+                    setDirty(true);
+                }
+            });
+
+            final Widget widget = dataTypeWidget;
+            widget.getElement().getStyle().setWidth(100, Unit.PCT);
+            widget.getElement().getStyle().setMarginBottom(0, Unit.PX);
+            getView().setValueWidget(widget);
+
+            dataTypePresenterInitialised = true;
+        }
+
+        currentVolumeGroup = null;
+        if (property.getValue() != null && property.getValue().getString() != null) {
+            currentVolumeGroup = property.getValue().toString();
+        }
+
+        dataTypeWidget.setEnabled(Source.LOCAL.equals(source));
+        dataTypeWidget.setValue(currentVolumeGroup);
     }
 
     private void enterEntityMode(final PipelineProperty property) {
@@ -352,6 +409,7 @@ public class NewPropertyPresenter extends MyPresenterWidget<NewPropertyPresenter
             currentEntity = property.getValue().getEntity();
         }
 
+        entityDropDownPresenter.setEnabled(Source.LOCAL.equals(source));
         entityDropDownPresenter.setIncludedTypes(property.getPropertyType().getDocRefTypes());
         entityDropDownPresenter.setRequiredPermissions(DocumentPermissionNames.USE);
         try {
@@ -365,7 +423,7 @@ public class NewPropertyPresenter extends MyPresenterWidget<NewPropertyPresenter
     private void setDirty(final boolean dirty, final boolean changeSource) {
         this.dirty = dirty;
         if (changeSource) {
-            getView().getSource().setSelectedItem(Source.LOCAL);
+            getView().setSource(Source.LOCAL);
         }
     }
 
@@ -377,13 +435,21 @@ public class NewPropertyPresenter extends MyPresenterWidget<NewPropertyPresenter
         setDirty(dirty, true);
     }
 
-    public interface NewPropertyView extends View, Focus {
+    public interface NewPropertyView extends View, Focus, HasUiHandlers<NewPropertyUiHandlers> {
 
         void setElement(String element);
 
         void setName(String name);
 
-        ItemListBox<Source> getSource();
+        void setDescription(String description);
+
+        void setDefaultValue(String defaultValue);
+
+        void setInherited(String inheritedFrom, String inheritedValue);
+
+        Source getSource();
+
+        void setSource(Source source);
 
         void setValueWidget(Widget widget);
     }

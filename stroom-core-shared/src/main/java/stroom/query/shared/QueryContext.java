@@ -9,7 +9,7 @@
 
 package stroom.query.shared;
 
-import stroom.query.api.v2.DateTimeSettings;
+import stroom.expression.api.DateTimeSettings;
 import stroom.query.api.v2.Param;
 import stroom.query.api.v2.TimeRange;
 

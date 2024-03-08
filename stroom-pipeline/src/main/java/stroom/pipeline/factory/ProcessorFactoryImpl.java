@@ -26,6 +26,7 @@ import stroom.task.api.TerminateHandlerFactory;
 import stroom.util.pipeline.scope.PipelineScoped;
 import stroom.util.shared.Severity;
 
+import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
@@ -36,7 +37,6 @@ import java.util.concurrent.CompletionException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
-import javax.inject.Inject;
 
 @PipelineScoped
 class ProcessorFactoryImpl implements ProcessorFactory {

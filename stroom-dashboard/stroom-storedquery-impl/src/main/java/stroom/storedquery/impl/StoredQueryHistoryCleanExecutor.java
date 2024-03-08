@@ -17,15 +17,18 @@
 
 package stroom.storedquery.impl;
 
+import stroom.security.user.api.UserNameService;
 import stroom.task.api.TaskContextFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.UserName;
+
+import jakarta.inject.Inject;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.function.Supplier;
-import javax.inject.Inject;
 
 /**
  * Task to clean out old query history items.
@@ -37,14 +40,17 @@ public class StoredQueryHistoryCleanExecutor {
     private final StoredQueryDao storedQueryDao;
     private final StoredQueryConfig storedQueryConfig;
     private final TaskContextFactory taskContextFactory;
+    private final UserNameService userNameService;
 
     @Inject
     public StoredQueryHistoryCleanExecutor(final StoredQueryDao storedQueryDao,
                                            final StoredQueryConfig storedQueryConfig,
-                                           final TaskContextFactory taskContextFactory) {
+                                           final TaskContextFactory taskContextFactory,
+                                           final UserNameService userNameService) {
         this.storedQueryDao = storedQueryDao;
         this.storedQueryConfig = storedQueryConfig;
         this.taskContextFactory = taskContextFactory;
+        this.userNameService = userNameService;
     }
 
     public void exec() {
@@ -62,11 +68,16 @@ public class StoredQueryHistoryCleanExecutor {
                 .toEpochMilli();
 
         final List<String> users = storedQueryDao.getUsers(favourite);
-        users.forEach(user -> {
-            info(() -> "Cleaning query history for '" + user + "'");
+        users.forEach(ownerUuid -> {
+            final String userDisplayName = userNameService.getByUuid(ownerUuid)
+                    .map(UserName::getUserIdentityForAudit)
+                    .orElse("?");
+            info(() -> "Cleaning query history for user '" + userDisplayName
+                    + "' with ownerUuid '" + ownerUuid + "'");
 
-            final Integer oldestId = storedQueryDao.getOldestId(user, favourite, historyItemsRetention);
-            storedQueryDao.clean(user, favourite, oldestId, oldestCrtMs);
+            final Integer oldestId = storedQueryDao.getOldestId(
+                    ownerUuid, favourite, historyItemsRetention);
+            storedQueryDao.clean(ownerUuid, favourite, oldestId, oldestCrtMs);
         });
 
         info(() -> "Finished history clean task");

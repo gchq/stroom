@@ -17,7 +17,6 @@
 
 package stroom.data.client.presenter;
 
-import stroom.datasource.api.v2.AbstractField;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
@@ -26,6 +25,7 @@ import stroom.document.client.event.HasDirtyHandlers;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.client.ExpressionTreePresenter;
 import stroom.query.client.ExpressionUiHandlers;
+import stroom.query.client.presenter.FieldSelectionListModel;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
@@ -53,6 +53,7 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
 
     private final ButtonView addOperatorButton;
     private final ButtonView addTermButton;
+    private final ButtonView copyButton;
     private final ButtonView disableItemButton;
     private final ButtonView deleteItemButton;
 
@@ -80,6 +81,7 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
         addTermButton = view.addButton(SvgPresets.ADD);
         addTermButton.setTitle("Add Term");
         addOperatorButton = view.addButton(SvgPresets.OPERATOR);
+        copyButton = view.addButton(SvgPresets.COPY.enabled(false));
         disableItemButton = view.addButton(SvgPresets.DISABLE);
         deleteItemButton = view.addButton(SvgPresets.DELETE);
     }
@@ -100,6 +102,11 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
                 addOperator();
             }
         }));
+        registerHandler(copyButton.addClickHandler(event -> {
+            if (MouseUtil.isPrimary(event)) {
+                copy();
+            }
+        }));
         registerHandler(addTermButton.addClickHandler(event -> {
             if (MouseUtil.isPrimary(event)) {
                 addTerm();
@@ -117,30 +124,34 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
         }));
     }
 
+    private void copy() {
+        expressionPresenter.copy();
+    }
+
     @Override
     public void focus() {
         addTermButton.focus();
     }
 
-    public void init(final RestFactory restFactory, final DocRef dataSource, final List<AbstractField> fields) {
-        expressionPresenter.init(restFactory, dataSource, fields);
+    public void init(final RestFactory restFactory,
+                     final DocRef dataSource,
+                     final FieldSelectionListModel fieldSelectionListModel) {
+        expressionPresenter.init(restFactory, dataSource, fieldSelectionListModel);
     }
 
     private void setButtonsEnabled() {
         final stroom.query.client.Item selectedItem = getSelectedItem();
 
         if (selectedItem == null) {
+            copyButton.setEnabled(false);
             disableItemButton.setEnabled(false);
             disableItemButton.setTitle("");
-        } else {
-            disableItemButton.setEnabled(true);
-            disableItemButton.setTitle(getEnableDisableText());
-        }
-
-        if (selectedItem == null) {
             deleteItemButton.setEnabled(false);
             deleteItemButton.setTitle("");
         } else {
+            copyButton.setEnabled(true);
+            disableItemButton.setEnabled(true);
+            disableItemButton.setTitle(getEnableDisableText());
             deleteItemButton.setEnabled(true);
             deleteItemButton.setTitle("Delete");
         }

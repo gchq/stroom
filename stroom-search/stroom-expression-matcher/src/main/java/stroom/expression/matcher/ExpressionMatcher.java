@@ -18,19 +18,18 @@
 package stroom.expression.matcher;
 
 import stroom.collection.api.CollectionService;
-import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.DocRefField;
 import stroom.datasource.api.v2.FieldType;
+import stroom.datasource.api.v2.QueryField;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
-import stroom.query.api.v2.DateTimeSettings;
+import stroom.expression.api.DateTimeSettings;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.common.v2.DateExpressionParser;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -42,32 +41,28 @@ public class ExpressionMatcher {
 
     private static final String DELIMITER = ",";
 
-    private final Map<String, AbstractField> fieldMap;
+    private final Map<String, QueryField> fieldMap;
     private final WordListProvider wordListProvider;
     private final CollectionService collectionService;
     private final Map<DocRef, String[]> wordMap = new ConcurrentHashMap<>();
     private final Map<String, Pattern> patternMap = new ConcurrentHashMap<>();
     private final DateTimeSettings dateTimeSettings;
-    private final long nowEpochMilli;
 
-    public ExpressionMatcher(final Map<String, AbstractField> fieldMap) {
+    public ExpressionMatcher(final Map<String, QueryField> fieldMap) {
         this.fieldMap = fieldMap;
         this.wordListProvider = null;
         this.collectionService = null;
-        this.dateTimeSettings = null;
-        this.nowEpochMilli = System.currentTimeMillis();
+        this.dateTimeSettings = DateTimeSettings.builder().build();
     }
 
-    public ExpressionMatcher(final Map<String, AbstractField> fieldMap,
+    public ExpressionMatcher(final Map<String, QueryField> fieldMap,
                              final WordListProvider wordListProvider,
                              final CollectionService collectionService,
-                             final DateTimeSettings dateTimeSettings,
-                             final long nowEpochMilli) {
+                             final DateTimeSettings dateTimeSettings) {
         this.fieldMap = fieldMap;
         this.wordListProvider = wordListProvider;
         this.collectionService = collectionService;
         this.dateTimeSettings = dateTimeSettings;
-        this.nowEpochMilli = nowEpochMilli;
     }
 
     public boolean match(final Map<String, Object> attributeMap, final ExpressionItem item) {
@@ -142,7 +137,7 @@ public class ExpressionMatcher {
         if (termField == null || termField.length() == 0) {
             throw new MatchException("Field not set");
         }
-        final AbstractField field = fieldMap.get(termField);
+        final QueryField field = fieldMap.get(termField);
         if (field == null) {
             throw new MatchException("Field not found in index: " + termField);
         }
@@ -177,15 +172,15 @@ public class ExpressionMatcher {
         // Create a query based on the field type and condition.
         if (field.isNumeric()) {
             switch (condition) {
-                case EQUALS: {
+                case EQUALS, CONTAINS: {
                     final long num1 = getNumber(fieldName, attribute);
                     final long num2 = getNumber(fieldName, termValue);
                     return num1 == num2;
                 }
-                case CONTAINS: {
+                case NOT_EQUALS: {
                     final long num1 = getNumber(fieldName, attribute);
                     final long num2 = getNumber(fieldName, termValue);
-                    return num1 == num2;
+                    return num1 != num2;
                 }
                 case GREATER_THAN: {
                     final long num1 = getNumber(fieldName, attribute);
@@ -230,15 +225,15 @@ public class ExpressionMatcher {
             }
         } else if (FieldType.DATE.equals(field.getFieldType())) {
             switch (condition) {
-                case EQUALS: {
+                case EQUALS, CONTAINS: {
                     final long date1 = getDate(fieldName, attribute);
                     final long date2 = getDate(fieldName, termValue);
                     return date1 == date2;
                 }
-                case CONTAINS: {
+                case NOT_EQUALS: {
                     final long date1 = getDate(fieldName, attribute);
                     final long date2 = getDate(fieldName, termValue);
-                    return date1 == date2;
+                    return date1 != date2;
                 }
                 case GREATER_THAN: {
                     final long date1 = getDate(fieldName, attribute);
@@ -283,10 +278,10 @@ public class ExpressionMatcher {
             }
         } else {
             switch (condition) {
-                case EQUALS:
+                case EQUALS, CONTAINS:
                     return isStringMatch(termValue, attribute);
-                case CONTAINS:
-                    return isStringMatch(termValue, attribute);
+                case NOT_EQUALS:
+                    return !isStringMatch(termValue, attribute);
                 case IN:
                     return isIn(fieldName, termValue, attribute);
                 case IN_DICTIONARY:
@@ -356,7 +351,7 @@ public class ExpressionMatcher {
     }
 
     private boolean isInDictionary(final String fieldName, final DocRef docRef,
-                                   final AbstractField field, final Object attribute) {
+                                   final QueryField field, final Object attribute) {
         final String[] lines = loadWords(docRef);
         if (lines != null) {
             for (final String line : lines) {
@@ -380,9 +375,9 @@ public class ExpressionMatcher {
     }
 
     private boolean isInFolder(final String fieldName, final DocRef docRef,
-                               final AbstractField field, final Object attribute) {
+                               final QueryField field, final Object attribute) {
         if (field instanceof DocRefField) {
-            final String type = ((DocRefField) field).getDocRefType();
+            final String type = field.getDocRefType();
             if (type != null && collectionService != null) {
                 final Set<DocRef> descendants = collectionService.getDescendants(docRef, type);
                 if (descendants != null && descendants.size() > 0) {
@@ -404,7 +399,7 @@ public class ExpressionMatcher {
     }
 
     private boolean isDocRef(final String fieldName, final DocRef docRef,
-                             final AbstractField field, final Object attribute) {
+                             final QueryField field, final Object attribute) {
         if (attribute instanceof DocRef) {
             final String uuid = ((DocRef) attribute).getUuid();
             return (null != uuid && uuid.equals(docRef.getUuid()));
@@ -436,13 +431,12 @@ public class ExpressionMatcher {
             }
 
             //empty optional will be caught below
-            return DateExpressionParser.parse(
+            return DateExpressionParser.getMs(
+                    fieldName,
                     value.toString(),
-                    dateTimeSettings,
-                    nowEpochMilli).get().toInstant().toEpochMilli();
+                    dateTimeSettings);
         } catch (final Exception e) {
-            throw new MatchException("Expected a standard date value for field \"" + fieldName
-                    + "\" but was given string \"" + value + "\"");
+            throw new MatchException(e.getMessage());
         }
     }
 

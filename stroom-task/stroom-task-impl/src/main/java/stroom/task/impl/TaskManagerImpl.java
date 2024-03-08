@@ -36,17 +36,18 @@ import stroom.util.servlet.SessionIdProvider;
 import stroom.util.shared.ResultPage;
 
 import io.vavr.Tuple;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 @Singleton
 class TaskManagerImpl implements TaskManager {
@@ -91,7 +92,6 @@ class TaskManagerImpl implements TaskManager {
     @Override
     public synchronized void startup() {
         LOGGER.info("startup()");
-        taskContextFactory.setStop(false);
         executorProvider.setStop(false);
     }
 
@@ -102,7 +102,6 @@ class TaskManagerImpl implements TaskManager {
     @Override
     public synchronized void shutdown() {
         LOGGER.info("shutdown()");
-        taskContextFactory.setStop(true);
         executorProvider.setStop(true);
 
         try {
@@ -138,7 +137,6 @@ class TaskManagerImpl implements TaskManager {
         }
 
         executorProvider.setStop(false);
-        taskContextFactory.setStop(false);
         LOGGER.info("shutdown() - Complete");
     }
 
@@ -257,7 +255,7 @@ class TaskManagerImpl implements TaskManager {
         final TaskProgress taskProgress = new TaskProgress();
         taskProgress.setId(taskContext.getTaskId());
         taskProgress.setTaskName(taskContext.getName());
-        taskProgress.setUserName(taskContext.getUserId());
+        taskProgress.setUserName(taskContext.getUserIdentityForAudit());
         taskProgress.setThreadName(taskContext.getThreadName());
         taskProgress.setTaskInfo(taskContext.getInfo());
         taskProgress.setSubmitTimeMs(taskContext.getSubmitTimeMs());
@@ -323,7 +321,8 @@ class TaskManagerImpl implements TaskManager {
     @SuppressWarnings("unused") // Used in commented out debugging code
     private List<TaskProgress> buildDummyTaskDataForTesting(final Predicate<TaskProgress> fuzzyMatchPredicate) {
 
-        final AtomicInteger id = new AtomicInteger(0);
+        final AtomicInteger id = new AtomicInteger(10_000);
+        final AtomicInteger timeDelta = new AtomicInteger(0);
         final List<String> taskNames = List.of(
                 "Red",
                 "Blue",
@@ -337,7 +336,6 @@ class TaskManagerImpl implements TaskManager {
                 "joebloggs",
                 "johndoe");
 
-        final Instant startTime = Instant.EPOCH;
         final Instant now = Instant.now();
         final String nodeName = nodeInfo.getThisNodeName();
 
@@ -357,13 +355,18 @@ class TaskManagerImpl implements TaskManager {
                 .map(tuple2 -> {
                     String taskName = tuple2._1();
                     TaskId taskId = tuple2._2();
+                    String taskInfo = "taskInfo-" + taskName;
+                    // Make a long taskInfo so we can test cell wrapping
+                    for (int i = 0; i < 3; i++) {
+                        taskInfo = taskInfo + " " + taskInfo;
+                    }
                     final TaskProgress taskProgress = new TaskProgress();
                     taskProgress.setId(taskId);
                     taskProgress.setTaskName(taskName);
                     taskProgress.setUserName(users.get(id.get() % 2));
-                    taskProgress.setThreadName("threadX");
-                    taskProgress.setTaskInfo("taskInfo-" + taskName);
-                    taskProgress.setSubmitTimeMs(startTime.plus(id.get() * 100, ChronoUnit.DAYS)
+                    taskProgress.setThreadName("thread-" + (ThreadLocalRandom.current().nextInt(20) + 1));
+                    taskProgress.setTaskInfo(taskInfo);
+                    taskProgress.setSubmitTimeMs(now.minus(timeDelta.incrementAndGet(), ChronoUnit.DAYS)
                             .toEpochMilli());
                     taskProgress.setTimeNowMs(now.toEpochMilli());
                     taskProgress.setNodeName(nodeInfo.getThisNodeName());
@@ -373,19 +376,19 @@ class TaskManagerImpl implements TaskManager {
                     return taskProgress;
 
                 })
-                .collect(Collectors.toList());
+                .toList();
 
         // If a parent task has died for some reason that leaves an orphaned task so the UI
         // needs to be able to cope with those too.
-        final TaskId missingParentTask = new TaskId(Long.toString(Long.MAX_VALUE), null);
+        final TaskId missingParentTask = new TaskId(nodeName + "-" + id.incrementAndGet(), null);
         final TaskProgress orphanedTask = new TaskProgress(
-                new TaskId(Long.toString(id.incrementAndGet()), missingParentTask),
+                new TaskId(nodeName + "-" + id.incrementAndGet(), missingParentTask),
                 "Orphaned-task",
                 "taskInfo-Orphaned-task",
                 "janedoe",
                 "threadY",
                 nodeInfo.getThisNodeName(),
-                startTime.plus(id.get() * 100, ChronoUnit.DAYS).toEpochMilli(),
+                now.minus(timeDelta.get(), ChronoUnit.DAYS).toEpochMilli(),
                 now.toEpochMilli(),
                 null,
                 null);

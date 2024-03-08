@@ -18,7 +18,7 @@
 # It also contains plantuml for plant uml image generation
 # Using 'openjdk' on Alpine is not fully supported so using Eclipse Temurin JDK to ensure we have a known jdk version
 # See https://github.com/docker-library/docs/blob/master/openjdk/README.md#openjdkversion-alpine
-FROM eclipse-temurin:17.0.1_12-jdk-alpine
+FROM eclipse-temurin:21_35-jdk-alpine
 
 # Work from the shared git repo dir
 WORKDIR /builder/shared
@@ -41,7 +41,7 @@ ARG HOST_REPO_DIR
 # The name DOCKER_HOST is used by docker so don't use that.
 ARG DOCKER_HOST_IP
 
-ARG PLANTUML_VERSION=1.2021.5
+ARG PLANTUML_VERSION=1.2023.10
 
 # Set the user ID into an env var so the entrypoint can see it
 ENV CONTAINER_USER_ID=$USER_ID \
@@ -55,6 +55,7 @@ ENV CONTAINER_USER_ID=$USER_ID \
 CMD id
 
 # graphviz, ttf-* for plantuml
+# rsync for gradle task :stroom-app:gwt:jakarta
 # As this container will be trying to use the docker cli to run/interact with other
 # containers we need to add our non-root user to the docker group i.e. the same gid as
 # on the host, but may have a different name or that gid in the container or none at all.
@@ -67,13 +68,14 @@ RUN apk add --no-cache \
       docker-cli \
       git \
       graphviz \
+      rsync \
       su-exec \
       tini \
-      ttf-droid \
-      ttf-droid-nonlatin \
+      font-droid \
+      font-droid-nonlatin \
     && curl \
       -Ls \
-      https://sourceforge.net/projects/plantuml/files/plantuml.$PLANTUML_VERSION.jar/download \
+      https://github.com/plantuml/plantuml/releases/download/v$PLANTUML_VERSION/plantuml-$PLANTUML_VERSION.jar \
       -o /builder/plantuml.jar \
     && alias ll='ls -l' \
     && apk del curl \

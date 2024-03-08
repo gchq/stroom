@@ -28,9 +28,8 @@ import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.explorer.client.event.RefreshExplorerTreeEvent;
-import stroom.explorer.client.presenter.EntityDropDownPresenter;
+import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.explorer.shared.ExplorerConstants;
-import stroom.explorer.shared.ExplorerNode;
 import stroom.importexport.client.event.ImportConfigConfirmEvent;
 import stroom.importexport.shared.ContentResource;
 import stroom.importexport.shared.ImportConfigRequest;
@@ -49,6 +48,7 @@ import stroom.widget.popup.client.event.EnablePopupEvent;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
@@ -89,7 +89,7 @@ public class ImportConfigConfirmPresenter extends
     private final RestFactory restFactory;
     private ResourceKey resourceKey;
     private List<ImportState> confirmList = new ArrayList<>();
-    private final EntityDropDownPresenter rootFolderPresenter;
+    private final DocSelectionBoxPresenter rootFolderPresenter;
 
     private final ImportSettings.Builder importSettingsBuilder = ImportSettings.builder();
 
@@ -98,7 +98,7 @@ public class ImportConfigConfirmPresenter extends
                                         final ImportConfigConfirmView view,
                                         final ImportConfirmProxy proxy,
                                         final TooltipPresenter tooltipPresenter,
-                                        final EntityDropDownPresenter rootFolderPresenter,
+                                        final DocSelectionBoxPresenter rootFolderPresenter,
                                         final RestFactory restFactory) {
         super(eventBus, view, proxy);
         this.rootFolderPresenter = rootFolderPresenter;
@@ -144,10 +144,9 @@ public class ImportConfigConfirmPresenter extends
 
         registerHandler(rootFolderPresenter.addDataSelectionHandler(event -> {
             if (event.getSelectedItem() != null &&
-                    event.getSelectedItem().getDocRef().compareTo(ExplorerConstants.SYSTEM_DOC_REF) != 0 &&
-                    event.getSelectedItem().getDocRef().getUuid().length() > 1) {
-                final ExplorerNode entityData = event.getSelectedItem();
-                setRootDocRef(entityData.getDocRef());
+                    event.getSelectedItem().compareTo(ExplorerConstants.SYSTEM_DOC_REF) != 0 &&
+                    event.getSelectedItem().getUuid().length() > 1) {
+                setRootDocRef(event.getSelectedItem());
             } else {
                 setRootDocRef(null);
             }
@@ -165,7 +164,7 @@ public class ImportConfigConfirmPresenter extends
 
     @Override
     protected void revealInParent() {
-        final PopupSize popupSize = PopupSize.resizable(800, 800);
+        final PopupSize popupSize = PopupSize.resizable(800, 800, 380, 480);
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(popupSize)
@@ -370,7 +369,7 @@ public class ImportConfigConfirmPresenter extends
             }
 
             @Override
-            protected void showInfo(final ImportState action, final int x, final int y) {
+            protected void showInfo(final ImportState action, final PopupPosition popupPosition) {
                 final HtmlBuilder htmlBuilder = new HtmlBuilder();
                 if (action.getMessageList().size() > 0) {
 
@@ -392,10 +391,10 @@ public class ImportConfigConfirmPresenter extends
                     action.getUpdatedFieldList().forEach(tb::row);
                     htmlBuilder.div(tb::write, Attribute.className("infoTable"));
                 }
-                tooltipPresenter.show(htmlBuilder.toSafeHtml(), x, y);
+                tooltipPresenter.show(htmlBuilder.toSafeHtml(), popupPosition);
             }
         };
-        dataGrid.addColumn(infoColumn, "<br/>", 20);
+        dataGrid.addColumn(infoColumn, "<br/>", ColumnSizeConstants.ICON_COL);
     }
 
     private void addActionColumn() {

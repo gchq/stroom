@@ -19,17 +19,21 @@ package stroom.index.mock;
 
 import stroom.index.impl.IndexShardService;
 import stroom.index.impl.IndexShardUtil;
-import stroom.index.impl.LuceneVersionUtil;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
 import stroom.index.shared.IndexVolume;
+import stroom.index.shared.LuceneVersion;
+import stroom.index.shared.LuceneVersionUtil;
 import stroom.index.shared.Partition;
 import stroom.util.io.FileUtil;
 import stroom.util.io.PathCreator;
 import stroom.util.io.SimplePathCreator;
 import stroom.util.io.TempDirProvider;
 import stroom.util.shared.ResultPage;
+
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -39,8 +43,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 @Singleton
 public class MockIndexShardService implements IndexShardService {
@@ -159,6 +161,11 @@ public class MockIndexShardService implements IndexShardService {
                        final Long commitDurationMs,
                        final Long commitMs,
                        final Long fileSize) {
+
+    }
+
+    @Override
+    public void setIndexVersion(final LuceneVersion indexVersion) {
 
     }
 }

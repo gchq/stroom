@@ -11,13 +11,9 @@ import stroom.security.identity.openid.OpenIdService.AuthResult;
 import stroom.security.openid.api.OpenIdConfigurationResponse;
 import stroom.security.openid.api.PublicJsonWebKeyProvider;
 import stroom.security.openid.api.TokenResponse;
+import stroom.util.json.JsonUtil;
 
 import com.codahale.metrics.annotation.Timed;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import event.logging.AuthenticateAction;
 import event.logging.AuthenticateEventAction;
 import event.logging.AuthenticateLogonType;
@@ -26,6 +22,13 @@ import event.logging.AuthenticateOutcomeReason;
 import event.logging.Data;
 import event.logging.OtherObject;
 import event.logging.ViewEventAction;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.ws.rs.RedirectionException;
+import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.core.MultivaluedMap;
+import jakarta.ws.rs.core.Response.Status;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.jose4j.jwk.JsonWebKey;
 import org.jose4j.jwk.PublicJsonWebKey;
@@ -36,13 +39,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.RedirectionException;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.core.Response.Status;
 
 @AutoLogged
 class OpenIdResourceImpl implements OpenIdResource {
@@ -124,7 +120,7 @@ class OpenIdResourceImpl implements OpenIdResource {
                     eventBuilder.build());
         }
 
-        throw new RedirectionException(Status.SEE_OTHER, result.getUri());
+        throw new RedirectionException(Status.TEMPORARY_REDIRECT, result.getUri());
     }
 
     @Timed
@@ -222,12 +218,8 @@ class OpenIdResourceImpl implements OpenIdResource {
                     .subjectTypesSupported(new String[]{"public"})
                     .tokenEndpoint(uriFactoryProvider.get().publicUri("/oauth2/v1/noauth/token").toString())
                     .build();
-            final ObjectMapper mapper = new ObjectMapper();
-            mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-            mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
-            mapper.setSerializationInclusion(Include.NON_NULL);
-            return mapper.writeValueAsString(response);
-        } catch (final JsonProcessingException e) {
+            return JsonUtil.writeValueAsString(response);
+        } catch (final RuntimeException e) {
             throw new WebApplicationException(e.getMessage(), e);
         }
     }

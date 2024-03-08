@@ -22,12 +22,11 @@ import stroom.alert.client.event.ConfirmEvent;
 import stroom.content.client.event.ContentTabSelectionChangeEvent;
 import stroom.core.client.HasSave;
 import stroom.core.client.HasSaveRegistry;
-import stroom.core.client.UrlConstants;
+import stroom.core.client.UrlParameters;
 import stroom.core.client.presenter.Plugin;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.docref.DocRefInfo;
 import stroom.docref.HasDisplayValue;
 import stroom.document.client.event.CopyDocumentEvent;
 import stroom.document.client.event.CreateDocumentEvent;
@@ -49,10 +48,15 @@ import stroom.document.client.event.WriteDocumentEvent;
 import stroom.explorer.client.event.ExplorerTreeDeleteEvent;
 import stroom.explorer.client.event.ExplorerTreeSelectEvent;
 import stroom.explorer.client.event.HighlightExplorerNodeEvent;
+import stroom.explorer.client.event.LocateDocEvent;
 import stroom.explorer.client.event.RefreshExplorerTreeEvent;
+import stroom.explorer.client.event.ShowEditNodeTagsDialogEvent;
 import stroom.explorer.client.event.ShowExplorerMenuEvent;
 import stroom.explorer.client.event.ShowFindEvent;
+import stroom.explorer.client.event.ShowFindInContentEvent;
 import stroom.explorer.client.event.ShowNewMenuEvent;
+import stroom.explorer.client.event.ShowRecentItemsEvent;
+import stroom.explorer.client.event.ShowRemoveNodeTagsDialogEvent;
 import stroom.explorer.client.presenter.DocumentTypeCache;
 import stroom.explorer.shared.BulkActionResult;
 import stroom.explorer.shared.DocumentType;
@@ -61,6 +65,7 @@ import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerFavouriteResource;
 import stroom.explorer.shared.ExplorerNode;
+import stroom.explorer.shared.ExplorerNodeInfo;
 import stroom.explorer.shared.ExplorerNodePermissions;
 import stroom.explorer.shared.ExplorerResource;
 import stroom.explorer.shared.ExplorerServiceCopyRequest;
@@ -68,11 +73,13 @@ import stroom.explorer.shared.ExplorerServiceCreateRequest;
 import stroom.explorer.shared.ExplorerServiceDeleteRequest;
 import stroom.explorer.shared.ExplorerServiceMoveRequest;
 import stroom.explorer.shared.ExplorerServiceRenameRequest;
+import stroom.explorer.shared.NodeFlag;
 import stroom.explorer.shared.PermissionInheritance;
 import stroom.feed.shared.FeedDoc;
 import stroom.importexport.client.event.ExportConfigEvent;
 import stroom.importexport.client.event.ImportConfigEvent;
 import stroom.importexport.client.event.ShowDocRefDependenciesEvent;
+import stroom.importexport.client.event.ShowDocRefDependenciesEvent.DependencyType;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
@@ -80,6 +87,7 @@ import stroom.security.shared.PermissionNames;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
 import stroom.util.client.ClipboardUtil;
+import stroom.util.shared.GwtNullSafe;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.IconParentMenuItem;
 import stroom.widget.menu.client.presenter.Item;
@@ -158,8 +166,15 @@ public class DocumentPluginEventManager extends Plugin {
             }
         });
         KeyBinding.addCommand(Action.ITEM_SAVE_ALL, hasSaveRegistry::save);
-
         KeyBinding.addCommand(Action.FIND, () -> ShowFindEvent.fire(this));
+        KeyBinding.addCommand(Action.FIND_IN_CONTENT, () -> ShowFindInContentEvent.fire(this));
+        KeyBinding.addCommand(Action.RECENT_ITEMS, () -> ShowRecentItemsEvent.fire(this));
+        KeyBinding.addCommand(Action.LOCATE, () -> {
+            final DocRef selectedDoc = getSelectedDoc(selectedTab);
+            if (selectedDoc != null) {
+                LocateDocEvent.fire(this, selectedDoc);
+            }
+        });
     }
 
     @Override
@@ -167,8 +182,16 @@ public class DocumentPluginEventManager extends Plugin {
         super.onBind();
 
         // track the currently selected content tab.
-        registerHandler(getEventBus().addHandler(ContentTabSelectionChangeEvent.getType(),
-                e -> selectedTab = e.getTabData()));
+        registerHandler(getEventBus().addHandler(ContentTabSelectionChangeEvent.getType(), e ->
+                selectedTab = e.getTabData()));
+
+        // Add support to locate items in the explorer tree.
+        registerHandler(getEventBus().addHandler(LocateDocEvent.getType(), e -> {
+            if (e.getDocRef() != null) {
+                highlight(e.getDocRef());
+            }
+        }));
+
 
         // // 2. Handle requests to close tabs.
         // registerHandler(getEventBus().addHandler(
@@ -212,7 +235,7 @@ public class DocumentPluginEventManager extends Plugin {
                         if (explorerNode != null) {
                             final DocumentPlugin<?> plugin = documentPluginRegistry.get(explorerNode.getType());
                             if (plugin != null) {
-                                plugin.open(explorerNode.getDocRef(), event.getSelectionType().isDoubleSelect());
+                                plugin.open(explorerNode.getDocRef(), event.getSelectionType().isDoubleSelect(), false);
                             }
                         }
                     }
@@ -238,6 +261,7 @@ public class DocumentPluginEventManager extends Plugin {
         registerHandler(getEventBus().addHandler(RefreshDocumentEvent.getType(), event -> {
             final DocumentPlugin<?> plugin = documentPluginRegistry.get(event.getDocRef().getType());
             if (plugin != null) {
+//                GWT.log("reloading " + event.getDocRef().getName());
                 plugin.reload(event.getDocRef());
             }
         }));
@@ -256,8 +280,8 @@ public class DocumentPluginEventManager extends Plugin {
         // 6. Handle save as events.
         registerHandler(getEventBus().addHandler(SaveAsDocumentEvent.getType(), event -> {
             // First get the explorer node for the docref.
-            final Rest<ExplorerNode> rest = restFactory.create();
-            rest
+            restFactory.builder()
+                    .forType(ExplorerNode.class)
                     .onSuccess(explorerNode -> {
                         // Now we have the explorer node proceed with the save as.
                         final DocumentPlugin<?> plugin = documentPluginRegistry.get(explorerNode.getType());
@@ -291,11 +315,15 @@ public class DocumentPluginEventManager extends Plugin {
 
         // 8.1. Handle entity open events.
         registerHandler(getEventBus().addHandler(OpenDocumentEvent.getType(), event ->
-                open(event.getDocRef(), event.getForceOpen())));
+                open(event.getDocRef(), event.isForceOpen(), event.isFullScreen())));
 
         // 8.2. Handle entity copy events.
         registerHandler(getEventBus().addHandler(CopyDocumentEvent.getType(), event -> copy(
-                event.getExplorerNodes(), event.getDestinationFolder(), event.getPermissionInheritance(), result -> {
+                event.getExplorerNodes(),
+                event.getDestinationFolder(),
+                event.isAllowRename(),
+                event.getDocName(),
+                event.getPermissionInheritance(), result -> {
                     // Hide the copy document presenter.
                     HidePopupEvent.builder(event.getPresenter()).fire();
 
@@ -331,17 +359,20 @@ public class DocumentPluginEventManager extends Plugin {
 
         // 8.4. Handle entity delete events.
         registerHandler(getEventBus().addHandler(DeleteDocumentEvent.getType(), event -> {
+            final Runnable action = () ->
+                    delete(event.getDocRefs(), result -> handleDeleteResult(result, event.getCallback()));
+
             if (event.getConfirm()) {
                 ConfirmEvent.fire(
                         DocumentPluginEventManager.this,
                         "Are you sure you want to delete this item?",
                         ok -> {
                             if (ok) {
-                                delete(event.getDocRefs(), result -> handleDeleteResult(result, event.getCallback()));
+                                action.run();
                             }
                         });
             } else {
-                delete(event.getDocRefs(), result -> handleDeleteResult(result, event.getCallback()));
+                action.run();
             }
         }));
 
@@ -418,6 +449,8 @@ public class DocumentPluginEventManager extends Plugin {
             menuItems.add(new Separator(5));
             menuItems.add(createSaveMenuItem(6, event.getTabData()));
             menuItems.add(createSaveAllMenuItem(8));
+            menuItems.add(new Separator(9));
+            menuItems.add(createLocateMenuItem(10, event.getTabData()));
 
             ShowMenuEvent
                     .builder()
@@ -448,6 +481,7 @@ public class DocumentPluginEventManager extends Plugin {
                             .builder()
                             .items(menuItems)
                             .popupPosition(event.getPopupPosition())
+                            .allowCloseOnMoveLeft() // Right arrow opens menu, left closes it
                             .fire(this);
                 })
         );
@@ -501,6 +535,8 @@ public class DocumentPluginEventManager extends Plugin {
             success = false;
         }
 
+        RequestCloseTabEvent.fire(DocumentPluginEventManager.this, selectedTab);
+
         // Refresh the tree
         RefreshExplorerTreeEvent.fire(DocumentPluginEventManager.this);
 
@@ -546,7 +582,8 @@ public class DocumentPluginEventManager extends Plugin {
         rest
                 .onSuccess(consumer)
                 .call(EXPLORER_RESOURCE)
-                .create(new ExplorerServiceCreateRequest(docType,
+                .create(new ExplorerServiceCreateRequest(
+                        docType,
                         docName,
                         destinationFolder,
                         permissionInheritance));
@@ -554,13 +591,20 @@ public class DocumentPluginEventManager extends Plugin {
 
     private void copy(final List<ExplorerNode> explorerNodes,
                       final ExplorerNode destinationFolder,
+                      final boolean allowRename,
+                      final String newName,
                       final PermissionInheritance permissionInheritance,
                       final Consumer<BulkActionResult> consumer) {
         final Rest<BulkActionResult> rest = restFactory.create();
         rest
                 .onSuccess(consumer)
                 .call(EXPLORER_RESOURCE)
-                .copy(new ExplorerServiceCopyRequest(explorerNodes, destinationFolder, permissionInheritance));
+                .copy(new ExplorerServiceCopyRequest(
+                        explorerNodes,
+                        destinationFolder,
+                        allowRename,
+                        newName,
+                        permissionInheritance));
     }
 
     private void move(final List<ExplorerNode> explorerNodes,
@@ -591,7 +635,8 @@ public class DocumentPluginEventManager extends Plugin {
     }
 
     private void setAsFavourite(final DocRef docRef, final boolean setFavourite) {
-        final Rest<Void> rest = restFactory.create();
+        final Rest<Void> rest = restFactory.builder()
+                .forVoid();
         rest.onSuccess(result -> RefreshExplorerTreeEvent.fire(DocumentPluginEventManager.this));
         if (setFavourite) {
             rest.call(EXPLORER_FAV_RESOURCE).createUserFavourite(docRef);
@@ -600,22 +645,20 @@ public class DocumentPluginEventManager extends Plugin {
         }
     }
 
-    public void open(final DocRef docRef, final boolean forceOpen) {
+    public void open(final DocRef docRef, final boolean forceOpen, final boolean fullScreen) {
         final DocumentPlugin<?> documentPlugin = documentPluginRegistry.get(docRef.getType());
         if (documentPlugin != null) {
             // Decorate the DocRef with its name from the info service (required by the doc presenter)
-            restFactory.create()
-                    .onSuccess(result -> {
-                        if (result != null) {
-                            final DocRefInfo docRefInfo = (DocRefInfo) result;
-                            if (docRefInfo.getDocRef() != null) {
-                                docRef.setName(docRefInfo.getDocRef().getName());
-                            }
+            restFactory.builder()
+                    .forType(DocRef.class)
+                    .onSuccess(decoratedDocRef -> {
+                        if (decoratedDocRef != null) {
+                            documentPlugin.open(decoratedDocRef, forceOpen, fullScreen);
+                            highlight(decoratedDocRef);
                         }
                     })
                     .call(EXPLORER_RESOURCE)
-                    .info(docRef);
-            documentPlugin.open(docRef, forceOpen);
+                    .decorate(docRef);
         } else {
             throw new IllegalArgumentException("Document type '" + docRef.getType() + "' not registered");
         }
@@ -726,22 +769,13 @@ public class DocumentPluginEventManager extends Plugin {
                 .fetchExplorerPermissions(explorerNodes);
     }
 
-//    private DocRef getDocRef(final ExplorerNode explorerNode) {
-//        DocRef docRef = null;
-//        if (explorerNode != null && explorerNode instanceof EntityData) {
-//            final EntityData entityData = (EntityData) explorerNode;
-//            docRef = entityData.getDocRef();
-//        }
-//        return docRef;
-//    }
-
     private void addFavouritesMenuItem(final List<Item> menuItems, final boolean singleSelection, final int priority) {
         final ExplorerNode primarySelection = getPrimarySelection();
 
         // Add the favourites menu item if an item is selected, and it's not a root-level node or a favourite folder
         // item
         if (singleSelection && primarySelection != null && primarySelection.getDepth() > 0) {
-            final boolean isFavourite = primarySelection.getIsFavourite();
+            final boolean isFavourite = primarySelection.hasNodeFlag(NodeFlag.FAVOURITE);
             menuItems.add(new IconMenuItem.Builder()
                     .priority(priority)
                     .icon(isFavourite
@@ -825,7 +859,7 @@ public class DocumentPluginEventManager extends Plugin {
 
                         // Add the group level item with its children
                         children.add(new IconParentMenuItem.Builder()
-                                .text(group.getName())
+                                .text(group.getDisplayName())
                                 .children(grandChildren)
                                 .build());
                     }
@@ -842,7 +876,7 @@ public class DocumentPluginEventManager extends Plugin {
             // Open the document in the content pane.
             final DocumentPlugin<?> plugin = documentPluginRegistry.get(docRef.getType());
             if (plugin != null) {
-                plugin.open(docRef, true);
+                plugin.open(docRef, true, false);
             }
         };
 
@@ -868,6 +902,9 @@ public class DocumentPluginEventManager extends Plugin {
         final List<ExplorerNode> readableItems = getExplorerNodeListWithPermission(documentPermissionMap,
                 DocumentPermissionNames.READ,
                 false);
+        final ExplorerNode singleReadableItem = readableItems.stream()
+                .findFirst()
+                .orElse(null);
         final List<ExplorerNode> updatableItems = getExplorerNodeListWithPermission(documentPermissionMap,
                 DocumentPermissionNames.UPDATE,
                 false);
@@ -880,16 +917,19 @@ public class DocumentPluginEventManager extends Plugin {
         final boolean allowUpdate = updatableItems.size() > 0;
         final boolean allowDelete = deletableItems.size() > 0;
         final boolean isInfoEnabled = singleSelection & allowRead;
+        final boolean isRemoveTagsEnabled = updatableItems.size() > 1;
+
+        // Feeds are a special case so can't be copied or renamed, see https://github.com/gchq/stroom/issues/3048
+        final boolean hasFeed = readableItems.stream()
+                .anyMatch(item -> FeedDoc.DOCUMENT_TYPE.equals(item.getType()));
 
         // Feeds are a special case so can't be renamed, see https://github.com/gchq/stroom/issues/2912
         final boolean isRenameEnabled = singleSelection
                 && allowUpdate
-                && !FeedDoc.DOCUMENT_TYPE.equals(updatableItems.get(0).getType());
+                && !hasFeed;
 
         // Feeds are a special case so can't be copied, see https://github.com/gchq/stroom/issues/3048
-        final boolean isCopyEnabled = singleSelection
-                && allowRead
-                && !FeedDoc.DOCUMENT_TYPE.equals(readableItems.get(0).getType());
+        final boolean isCopyEnabled = allowRead && !hasFeed;
 
         addFavouritesMenuItem(menuItems, singleSelection, 10);
         if (singleSelection && getPrimarySelection() != null &&
@@ -898,17 +938,21 @@ public class DocumentPluginEventManager extends Plugin {
             menuItems.add(new Separator(12));
         }
 
-        menuItems.add(createInfoMenuItem(readableItems, 20, isInfoEnabled));
-        menuItems.add(createCopyMenuItem(readableItems, 21, isCopyEnabled));
-        menuItems.add(createMoveMenuItem(updatableItems, 22, allowUpdate));
-        menuItems.add(createRenameMenuItem(updatableItems, 23, isRenameEnabled));
-        menuItems.add(createDeleteMenuItem(deletableItems, 24, allowDelete));
+        menuItems.add(createInfoMenuItem(singleReadableItem, 20, isInfoEnabled));
+        menuItems.add(createEditOrAddTagsMenuItem(updatableItems, 21, allowUpdate));
+        if (updatableItems.size() > 1) {
+            menuItems.add(createRemoveTagsMenuItem(updatableItems, 22, isRemoveTagsEnabled));
+        }
+        menuItems.add(createCopyMenuItem(readableItems, 23, isCopyEnabled));
+        menuItems.add(createMoveMenuItem(updatableItems, 24, allowUpdate));
+        menuItems.add(createRenameMenuItem(updatableItems, 25, isRenameEnabled));
+        menuItems.add(createDeleteMenuItem(deletableItems, 26, allowDelete));
 
         if (securityContext.hasAppPermission(PermissionNames.IMPORT_CONFIGURATION)) {
-            menuItems.add(createImportMenuItem(25));
+            menuItems.add(createImportMenuItem(27));
         }
         if (securityContext.hasAppPermission(PermissionNames.EXPORT_CONFIGURATION)) {
-            menuItems.add(createExportMenuItem(26, readableItems));
+            menuItems.add(createExportMenuItem(28, readableItems));
         }
 
         // Only allow users to change permissions if they have a single item selected.
@@ -918,9 +962,10 @@ public class DocumentPluginEventManager extends Plugin {
                     true);
             if (ownedItems.size() == 1) {
                 menuItems.add(new Separator(30));
-                menuItems.add(createShowDependenciesMenuItem(ownedItems.get(0), 31));
-                menuItems.add(new Separator(32));
-                menuItems.add(createPermissionsMenuItem(ownedItems.get(0), 33, true));
+                menuItems.add(createShowDependenciesFromMenuItem(ownedItems.get(0), 31));
+                menuItems.add(createShowDependantsMenuItem(ownedItems.get(0), 32));
+                menuItems.add(new Separator(33));
+                menuItems.add(createPermissionsMenuItem(ownedItems.get(0), 34, true));
             }
         }
     }
@@ -998,29 +1043,101 @@ public class DocumentPluginEventManager extends Plugin {
                 .build();
     }
 
-    private MenuItem createInfoMenuItem(final List<ExplorerNode> explorerNodeList,
+    private MenuItem createLocateMenuItem(final int priority, final TabData selectedTab) {
+        final DocRef selectedDoc = getSelectedDoc(selectedTab);
+        return new IconMenuItem.Builder()
+                .priority(priority)
+                .icon(SvgImage.LOCATE)
+                .text("Locate In Explorer")
+                .action(Action.LOCATE)
+                .enabled(selectedDoc != null)
+                .command(() -> {
+                    if (selectedDoc != null) {
+                        LocateDocEvent.fire(DocumentPluginEventManager.this, selectedDoc);
+                    }
+                })
+                .build();
+    }
+
+    private DocRef getSelectedDoc(final TabData selectedTab) {
+        if (selectedTab instanceof DocumentTabData) {
+            final DocumentTabData documentTabData = (DocumentTabData) selectedTab;
+            return documentTabData.getDocRef();
+        }
+        return null;
+    }
+
+    private MenuItem createInfoMenuItem(final ExplorerNode explorerNode,
                                         final int priority,
                                         final boolean enabled) {
-        final Command command = () ->
-                explorerNodeList.forEach(explorerNode -> {
-                    final Rest<DocRefInfo> rest = restFactory.create();
-                    rest
-                            .onSuccess(s ->
-                                    ShowInfoDocumentDialogEvent.fire(DocumentPluginEventManager.this, s))
-                            .onFailure(t ->
-                                    AlertEvent.fireError(
-                                            DocumentPluginEventManager.this,
-                                            t.getMessage(),
-                                            null))
-                            .call(EXPLORER_RESOURCE)
-                            .info(explorerNode.getDocRef());
-                });
+        final Command command;
+        if (enabled && explorerNode != null) {
+            command = () -> {
+                // Should only be one item as info is not supported for multi selection
+                // in the tree
+                final Rest<ExplorerNodeInfo> rest = restFactory.create();
+                rest
+                        .onSuccess(explorerNodeInfo -> {
+                            ShowInfoDocumentDialogEvent.fire(
+                                    DocumentPluginEventManager.this,
+                                    explorerNodeInfo);
+                        })
+                        .onFailure(this::handleFailure)
+                        .call(EXPLORER_RESOURCE)
+                        .info(explorerNode.getDocRef());
+            };
+        } else {
+            command = null;
+        }
 
         return new IconMenuItem.Builder()
                 .priority(priority)
                 .icon(SvgImage.INFO)
                 .text("Info")
-                .enabled(enabled)
+                .enabled(enabled && explorerNode != null)
+                .command(command)
+                .build();
+    }
+
+    private void handleFailure(final Throwable t) {
+        AlertEvent.fireError(
+                DocumentPluginEventManager.this,
+                t.getMessage(),
+                null);
+    }
+
+    private MenuItem createEditOrAddTagsMenuItem(final List<ExplorerNode> explorerNodes,
+                                                 final int priority,
+                                                 final boolean enabled) {
+        final Command command = enabled && explorerNodes != null
+                ? () -> ShowEditNodeTagsDialogEvent.fire(DocumentPluginEventManager.this, explorerNodes)
+                : null;
+
+        final String text = GwtNullSafe.size(explorerNodes) > 1
+                ? "Add Tags"
+                : "Edit Tags";
+
+        return new IconMenuItem.Builder()
+                .priority(priority)
+                .icon(SvgImage.TAGS)
+                .text(text)
+                .enabled(enabled && explorerNodes != null)
+                .command(command)
+                .build();
+    }
+
+    private MenuItem createRemoveTagsMenuItem(final List<ExplorerNode> explorerNodes,
+                                              final int priority,
+                                              final boolean enabled) {
+        final Command command = enabled && explorerNodes != null
+                ? () -> ShowRemoveNodeTagsDialogEvent.fire(DocumentPluginEventManager.this, explorerNodes)
+                : null;
+
+        return new IconMenuItem.Builder()
+                .priority(priority)
+                .icon(SvgImage.TAGS)
+                .text("Remove Tags")
+                .enabled(enabled && explorerNodes != null)
                 .command(command)
                 .build();
     }
@@ -1029,9 +1146,9 @@ public class DocumentPluginEventManager extends Plugin {
         // Generate a URL that can be used to open a new Stroom window with the target document loaded
         final String docUrl = Window.Location.createUrlBuilder()
                 .setPath("/")
-                .setParameter(UrlConstants.ACTION, ExplorerConstants.OPEN_DOC_ACTION)
-                .setParameter(ExplorerConstants.DOC_TYPE_QUERY_PARAM, explorerNode.getType())
-                .setParameter(ExplorerConstants.DOC_UUID_QUERY_PARAM, explorerNode.getUuid())
+                .setParameter(UrlParameters.ACTION, UrlParameters.OPEN_DOC_ACTION)
+                .setParameter(UrlParameters.DOC_TYPE_QUERY_PARAM, explorerNode.getType())
+                .setParameter(UrlParameters.DOC_UUID_QUERY_PARAM, explorerNode.getUuid())
                 .buildString();
 
         return new IconMenuItem.Builder()
@@ -1139,13 +1256,27 @@ public class DocumentPluginEventManager extends Plugin {
                 .build();
     }
 
-    private MenuItem createShowDependenciesMenuItem(final ExplorerNode explorerNode, final int priority) {
+    private MenuItem createShowDependantsMenuItem(final ExplorerNode explorerNode, final int priority) {
+        return new IconMenuItem.Builder()
+                .priority(priority)
+                .icon(SvgImage.DEPENDENCIES)
+                .text("Dependants")
+                .command(() -> ShowDocRefDependenciesEvent.fire(
+                        DocumentPluginEventManager.this,
+                        explorerNode.getDocRef(),
+                        DependencyType.DEPENDANT))
+                .build();
+    }
+
+    private MenuItem createShowDependenciesFromMenuItem(final ExplorerNode explorerNode, final int priority) {
         return new IconMenuItem.Builder()
                 .priority(priority)
                 .icon(SvgImage.DEPENDENCIES)
                 .text("Dependencies")
-                .command(() -> ShowDocRefDependenciesEvent.fire(DocumentPluginEventManager.this,
-                        explorerNode.getDocRef()))
+                .command(() -> ShowDocRefDependenciesEvent.fire(
+                        DocumentPluginEventManager.this,
+                        explorerNode.getDocRef(),
+                        DependencyType.DEPENDENCY))
                 .build();
     }
 
@@ -1156,10 +1287,6 @@ public class DocumentPluginEventManager extends Plugin {
 
     private boolean isTabItemSelected(final TabData tabData) {
         return tabData != null;
-    }
-
-    public boolean isTabSelected() {
-        return selectedTab != null;
     }
 
     private boolean isDirty(final TabData tabData) {

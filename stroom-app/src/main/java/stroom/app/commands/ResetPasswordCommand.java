@@ -12,19 +12,20 @@ import event.logging.AuthenticateEventAction;
 import event.logging.AuthenticateOutcome;
 import event.logging.User;
 import event.logging.util.EventLoggingUtil;
-import io.dropwizard.setup.Bootstrap;
+import io.dropwizard.core.setup.Bootstrap;
+import jakarta.inject.Inject;
 import net.sourceforge.argparse4j.inf.Namespace;
 import net.sourceforge.argparse4j.inf.Subparser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.file.Path;
-import javax.inject.Inject;
+import java.util.Set;
 
 /**
  * Resets the password of an account in the internal identity provider
  */
-public class ResetPasswordCommand extends AbstractStroomAccountConfiguredCommand {
+public class ResetPasswordCommand extends AbstractStroomAppCommand {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ResetPasswordCommand.class);
 
@@ -34,6 +35,10 @@ public class ResetPasswordCommand extends AbstractStroomAccountConfiguredCommand
 
     private static final String USERNAME_ARG_NAME = "user";
     private static final String PASSWORD_ARG_NAME = "password";
+
+    private static final Set<String> ARGUMENT_NAMES = Set.of(
+            USERNAME_ARG_NAME,
+            PASSWORD_ARG_NAME);
 
     private final Path configFile;
 
@@ -53,13 +58,13 @@ public class ResetPasswordCommand extends AbstractStroomAccountConfiguredCommand
     public void configure(final Subparser subparser) {
         super.configure(subparser);
 
-        subparser.addArgument("-u", "--" + USERNAME_ARG_NAME)
+        subparser.addArgument(asArg('u', USERNAME_ARG_NAME))
                 .dest(USERNAME_ARG_NAME)
                 .type(String.class)
                 .required(true)
                 .help("The user id of the account, e.g. 'admin'");
 
-        subparser.addArgument("-p", "--" + PASSWORD_ARG_NAME)
+        subparser.addArgument(asArg('p', PASSWORD_ARG_NAME))
                 .dest(PASSWORD_ARG_NAME)
                 .type(String.class)
                 .required(true)
@@ -67,10 +72,15 @@ public class ResetPasswordCommand extends AbstractStroomAccountConfiguredCommand
     }
 
     @Override
-    protected void runCommand(final Bootstrap<Config> bootstrap,
-                              final Namespace namespace,
-                              final Config config,
-                              final Injector injector) {
+    public Set<String> getArgumentNames() {
+        return ARGUMENT_NAMES;
+    }
+
+    @Override
+    protected void runSecuredCommand(final Bootstrap<Config> bootstrap,
+                                     final Namespace namespace,
+                                     final Config config,
+                                     final Injector injector) {
 
         final String username = namespace.getString(USERNAME_ARG_NAME);
         final String newPassword = namespace.getString(PASSWORD_ARG_NAME);
@@ -79,22 +89,11 @@ public class ResetPasswordCommand extends AbstractStroomAccountConfiguredCommand
 
         injector.injectMembers(this);
 
+        accountDao.resetPassword(username, newPassword);
 
-        securityContext.asProcessingUser(() -> {
-            try {
-                accountDao.resetPassword(username, newPassword);
-
-                String msg = LogUtil.message("Password reset complete for user {}", username);
-                LOGGER.info(msg);
-                logEvent(username, true, msg);
-                System.exit(0);
-
-            } catch (final RuntimeException e) {
-                LOGGER.error(e.getMessage());
-                logEvent(username, false, e.getMessage());
-                System.exit(1);
-            }
-        });
+        String msg = LogUtil.message("Password reset complete for user {}", username);
+        LOGGER.info(msg);
+        logEvent(username, true, msg);
     }
 
     private void logEvent(final String username,

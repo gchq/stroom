@@ -1,7 +1,9 @@
 package stroom.util.validation;
 
+import stroom.test.common.AbstractValidatorTest;
 import stroom.util.shared.validation.IsSubsetOf;
 
+import jakarta.validation.ConstraintViolation;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,7 +11,6 @@ import org.slf4j.LoggerFactory;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
-import javax.validation.ConstraintViolation;
 
 class TestIsSubsetOfValidatorImpl extends AbstractValidatorTest {
 
@@ -53,6 +54,10 @@ class TestIsSubsetOfValidatorImpl extends AbstractValidatorTest {
         violations.forEach(violation ->
                 LOGGER.info(violation.getMessage()));
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class PoJo {
 

@@ -360,208 +360,46 @@ paths:
       summary: Get the data for the shard
       tags:
       - AnalyticNotifications
-  /analyticNotification/v1:
+  /analyticProcess/v1/getDefaultProcessingFilterExpression:
     post:
-      operationId: createAnalyticNotification
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AnalyticNotification'
-        description: notification
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AnalyticNotification'
-          description: default response
-      summary: Create an analytic notification
-      tags:
-      - AnalyticNotifications
-  /analyticNotification/v1/find:
-    post:
-      operationId: findAnalyticNotifications
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/FindAnalyticNotificationCriteria'
-        description: criteria
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ResultPageAnalyticNotificationRow'
-          description: default response
-      summary: Find the analytic notifications for the specified analytic
-      tags:
-      - AnalyticNotifications
-  /analyticNotification/v1/{uuid}:
-    delete:
-      operationId: updateAnalyticNotification
-      parameters:
-      - in: path
-        name: uuid
-        required: true
-        schema:
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AnalyticNotification'
-        description: notification
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                type: boolean
-          description: default response
-      summary: Delete an analytic notification
-      tags:
-      - AnalyticNotifications
-    put:
-      operationId: updateAnalyticNotification_1
-      parameters:
-      - in: path
-        name: uuid
-        required: true
-        schema:
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AnalyticNotification'
-        description: notification
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AnalyticNotification'
-          description: default response
-      summary: Update an analytic notification
-      tags:
-      - AnalyticNotifications
-  /analyticProcessorFilter/v1:
-    post:
-      operationId: createAnalyticProcessorFilter
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AnalyticProcessorFilter'
-        description: processor filter
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AnalyticProcessorFilter'
-          description: default response
-      summary: Create an analytic processor filter
-      tags:
-      - AnalyticProcessorFilters
-  /analyticProcessorFilter/v1/find:
-    post:
-      operationId: findAnalyticProcessorFilters
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/FindAnalyticProcessorFilterCriteria'
-        description: criteria
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ResultPageAnalyticProcessorFilter'
-          description: default response
-      summary: Find the analytic processor filters for the specified analytic
-      tags:
-      - AnalyticProcessorFilters
-  /analyticProcessorFilter/v1/tracker:
-    post:
-      operationId: findAnalyticProcessorFilterTracker
+      operationId: getDefaultProcessingFilterExpression
       requestBody:
         content:
           application/json:
             schema:
               type: string
-        description: filterUuid
+        description: query
         required: true
       responses:
         default:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AnalyticProcessorFilterTracker'
+                $ref: '#/components/schemas/ExpressionOperator'
           description: default response
-      summary: Find the analytic processor filter tracker for the specified filter
+      summary: Find the default processing filter expression
       tags:
-      - AnalyticProcessorFilters
-  /analyticProcessorFilter/v1/{uuid}:
-    delete:
-      operationId: updateAnalyticProcessorFilter
-      parameters:
-      - in: path
-        name: uuid
-        required: true
-        schema:
-          type: string
+      - AnalyticProcess
+  /analyticProcess/v1/tracker:
+    post:
+      operationId: findAnalyticProcessTracker
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/AnalyticProcessorFilter'
-        description: processor filter
+              type: string
+        description: analyticUuid
         required: true
       responses:
         default:
           content:
             application/json:
               schema:
-                type: boolean
+                $ref: '#/components/schemas/AnalyticTracker'
           description: default response
-      summary: Delete an analytic processor filter
+      summary: Find the analytic process tracker for the specified process
       tags:
-      - AnalyticProcessorFilters
-    put:
-      operationId: updateAnalyticProcessorFilter_1
-      parameters:
-      - in: path
-        name: uuid
-        required: true
-        schema:
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AnalyticProcessorFilter'
-        description: processor filter
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AnalyticProcessorFilter'
-          description: default response
-      summary: Update an analytic processor filter
-      tags:
-      - AnalyticProcessorFilters
+      - AnalyticProcess
   /analyticRule/v1/{uuid}:
     get:
       operationId: fetchAnalyticRule
@@ -793,6 +631,7 @@ paths:
       - Annotations
   /apikey/v1:
     delete:
+      deprecated: true
       operationId: deleteAllApiKeys
       responses:
         default:
@@ -806,6 +645,7 @@ paths:
       tags:
       - Api Keys
     post:
+      deprecated: true
       operationId: createApiKey
       requestBody:
         content:
@@ -826,6 +666,7 @@ paths:
       - Api Keys
   /apikey/v1/byData/{data}:
     delete:
+      deprecated: true
       operationId: deleteApiKeyByData
       parameters:
       - in: path
@@ -845,6 +686,7 @@ paths:
       tags:
       - Api Keys
     get:
+      deprecated: true
       operationId: fetchApiKeyByData
       parameters:
       - in: path
@@ -864,6 +706,7 @@ paths:
       - Api Keys
   /apikey/v1/noauth/getDefaultApiKeyExpirySeconds:
     get:
+      deprecated: true
       operationId: getDefaultApiKeyExpirySeconds
       responses:
         default:
@@ -878,6 +721,7 @@ paths:
       - Api Keys
   /apikey/v1/search:
     post:
+      deprecated: true
       operationId: searchApiKeys
       requestBody:
         content:
@@ -898,6 +742,7 @@ paths:
       - Api Keys
   /apikey/v1/{id}:
     delete:
+      deprecated: true
       operationId: deleteApiKey
       parameters:
       - in: path
@@ -918,6 +763,7 @@ paths:
       tags:
       - Api Keys
     get:
+      deprecated: true
       operationId: fetchApiKey
       parameters:
       - in: path
@@ -938,6 +784,7 @@ paths:
       - Api Keys
   /apikey/v1/{id}/enabled:
     get:
+      deprecated: true
       operationId: toggleApiKeyEnabled
       parameters:
       - in: path
@@ -962,6 +809,135 @@ paths:
       summary: Enable or disable the state of an API key.
       tags:
       - Api Keys
+  /apikey/v2:
+    post:
+      operationId: createApiKey_1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateHashedApiKeyRequest'
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateHashedApiKeyResponse'
+          description: default response
+      summary: Creates a new API key
+      tags:
+      - API Key
+  /apikey/v2/deleteBatch:
+    delete:
+      operationId: deleteApiKey_2
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: integer
+                format: int32
+        description: ids
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: integer
+                format: int32
+          description: default response
+      summary: Delete a batch of API keys by ID.
+      tags:
+      - API Key
+  /apikey/v2/find:
+    post:
+      operationId: findApiKeysByCriteria
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FindApiKeyCriteria'
+        description: criteria
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiKeyResultPage'
+          description: default response
+      summary: Find the API keys matching the supplied criteria
+      tags:
+      - API Key
+  /apikey/v2/{id}:
+    delete:
+      operationId: deleteApiKey_1
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+          format: int32
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: Delete an API key by ID.
+      tags:
+      - API Key
+    get:
+      operationId: fetchApiKey_1
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+          format: int32
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HashedApiKey'
+          description: default response
+      summary: Fetch a dictionary doc by its UUID
+      tags:
+      - API Key
+    put:
+      operationId: updateApiKey
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+          format: int32
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HashedApiKey'
+        description: apiKey
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HashedApiKey'
+          description: default response
+      summary: Update a dictionary doc
+      tags:
+      - API Key
   /authentication/v1/needsPasswordChange:
     get:
       operationId: needsPasswordChange
@@ -1071,7 +1047,12 @@ paths:
       operationId: logout
       parameters:
       - in: query
-        name: redirect_uri
+        name: post_logout_redirect_uri
+        required: true
+        schema:
+          type: string
+      - in: query
+        name: state
         required: true
         schema:
           type: string
@@ -1124,6 +1105,27 @@ paths:
       summary: Reset an authenticated user's password.
       tags:
       - Authentication
+  /authproxy/v1/noauth/fetchClientCredsToken:
+    post:
+      operationId: fetchClientCredsToken
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClientCredentials'
+        description: clientCredentials
+        required: true
+      responses:
+        default:
+          content:
+            text/plain:
+              schema:
+                type: string
+          description: default response
+      summary: Fetch an access token from the configured IDP using the supplied client
+        credentials
+      tags:
+      - AuthProxy
   /cache/v1:
     delete:
       operationId: clearCache
@@ -1336,6 +1338,19 @@ paths:
         node.
       tags:
       - Global Config
+  /config/v1/noauth/fetchExtendedUiConfig:
+    get:
+      operationId: fetchExtendedUiConfig
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExtendedUiConfig'
+          description: default response
+      summary: Fetch the extended UI configuration
+      tags:
+      - Global Config
   /config/v1/noauth/fetchUiConfig:
     get:
       operationId: fetchUiConfig
@@ -1411,7 +1426,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ConfigProperty'
           description: default response
-      summary: Fetch a property by its name, e.g. 'stroom.path.home'
+      summary: "Fetch a property by its name, e.g. 'stroom.path.home'"
       tags:
       - Global Config
   /content/v1/export:
@@ -1494,9 +1509,29 @@ paths:
       summary: Download a query
       tags:
       - Dashboards
+  /dashboard/v1/downloadSearchResults:
+    post:
+      operationId: downloadDashboardSearchResultsLocal
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DownloadSearchResultsRequest'
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceGeneration'
+          description: default response
+      summary: Download search results
+      tags:
+      - Dashboards
   /dashboard/v1/downloadSearchResults/{nodeName}:
     post:
-      operationId: downloadDashboardSearchResults
+      operationId: downloadDashboardSearchResultsNode
       parameters:
       - in: path
         name: nodeName
@@ -1520,9 +1555,29 @@ paths:
       summary: Download search results
       tags:
       - Dashboards
-  /dashboard/v1/search/{nodeName}:
+  /dashboard/v1/search:
     post:
       operationId: dashboardSearch
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DashboardSearchRequest'
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardSearchResponse'
+          description: default response
+      summary: Perform a new search or get new results
+      tags:
+      - Dashboards
+  /dashboard/v1/search/{nodeName}:
+    post:
+      operationId: dashboardSearch_1
       parameters:
       - in: path
         name: nodeName
@@ -1808,9 +1863,9 @@ paths:
       summary: Stop a running query
       tags:
       - Data Retention Rules
-  /dataSource/v1/fetchFields:
+  /dataSource/v1/fetchDefaultExtractionPipeline:
     post:
-      operationId: fetchDataSourceFields
+      operationId: fetchDefaultExtractionPipeline
       requestBody:
         content:
           application/json:
@@ -1823,29 +1878,49 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DataSource'
+                $ref: '#/components/schemas/DocRef'
           description: default response
-      summary: Fetch data source fields
+      summary: Fetch default extraction pipeline
       tags:
       - Data Sources
-  /dataSource/v1/fetchFieldsFromQuery:
+  /dataSource/v1/fetchDocumentation:
     post:
-      operationId: fetchDataSourceFieldsFromQuery
+      operationId: fetchDocumentation
       requestBody:
         content:
           application/json:
             schema:
-              type: string
-        description: query
+              $ref: '#/components/schemas/DocRef'
+        description: dataSourceRef
         required: true
       responses:
         default:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DataSource'
+                $ref: '#/components/schemas/Documentation'
           description: default response
-      summary: Fetch data source fields
+      summary: Fetch documentation for a data source
+      tags:
+      - Data Sources
+  /dataSource/v1/findFields:
+    post:
+      operationId: findDataSourceFields
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FindFieldInfoCriteria'
+        description: criteria
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultPageFieldInfo'
+          description: default response
+      summary: Find data source fields
       tags:
       - Data Sources
   /dbStatus/v1:
@@ -1942,6 +2017,68 @@ paths:
       summary: Update a dictionary doc
       tags:
       - Dictionaries (v1)
+  /documentation/v1/download:
+    post:
+      operationId: downloadDocumentation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DocRef'
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceGeneration'
+          description: default response
+      summary: Download a documentation doc
+      tags:
+      - Documentation (v1)
+  /documentation/v1/{uuid}:
+    get:
+      operationId: fetchDocumentation_1
+      parameters:
+      - in: path
+        name: uuid
+        required: true
+        schema:
+          type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentationDoc'
+          description: default response
+      summary: Fetch a documentation doc by its UUID
+      tags:
+      - Documentation (v1)
+    put:
+      operationId: updateDocumentation
+      parameters:
+      - in: path
+        name: uuid
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DocumentationDoc'
+        description: doc
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentationDoc'
+          description: default response
+      summary: Update a documentation doc
+      tags:
+      - Documentation (v1)
   /elasticCluster/v1/testCluster:
     post:
       operationId: testElasticCluster
@@ -2096,6 +2233,24 @@ paths:
       summary: Sends an entity event
       tags:
       - Entity Events
+  /explorer/v2/addTags:
+    put:
+      operationId: addTags
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddRemoveTagsRequest'
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json: {}
+          description: default response
+      summary: Add tags to explorer nodes
+      tags:
+      - Explorer (v2)
   /explorer/v2/copy:
     post:
       operationId: copyExplorerItems
@@ -2134,6 +2289,26 @@ paths:
                 $ref: '#/components/schemas/ExplorerNode'
           description: default response
       summary: Create explorer item
+      tags:
+      - Explorer (v2)
+  /explorer/v2/decorate:
+    post:
+      operationId: decorateDocRef
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DocRef'
+        description: docRef
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocRef'
+          description: default response
+      summary: "Decorate the docRef will all values, e.g. add the name"
       tags:
       - Explorer (v2)
   /explorer/v2/delete:
@@ -2195,6 +2370,45 @@ paths:
       summary: Fetch document types
       tags:
       - Explorer (v2)
+  /explorer/v2/fetchExplorerNodeTags:
+    get:
+      operationId: fetchExplorerNodeTags
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+                uniqueItems: true
+          description: default response
+      summary: Fetch all known explorer node tags
+      tags:
+      - Explorer (v2)
+  /explorer/v2/fetchExplorerNodeTagsByDocRefs:
+    post:
+      operationId: fetchExplorerNodeTagsByDocRefs
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/DocRef'
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+                uniqueItems: true
+          description: default response
+      summary: Fetch explorer node tags held by at least one of decRefs
+      tags:
+      - Explorer (v2)
   /explorer/v2/fetchExplorerNodes:
     post:
       operationId: fetchExplorerNodes
@@ -2202,7 +2416,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/FindExplorerNodeCriteria'
+              $ref: '#/components/schemas/FetchExplorerNodesRequest'
         description: request
         required: true
       responses:
@@ -2240,14 +2454,14 @@ paths:
       summary: Fetch permissions for explorer items
       tags:
       - Explorer (v2)
-  /explorer/v2/findExplorerNodes:
+  /explorer/v2/fetchHighlights:
     post:
-      operationId: findExplorerNodes
+      operationId: fetchHighlights
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/FindExplorerNodeQuery'
+              $ref: '#/components/schemas/FetchHighlightsRequest'
         description: request
         required: true
       responses:
@@ -2255,9 +2469,49 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ResultPageExplorerDocContentMatch'
+                $ref: '#/components/schemas/DocContentHighlights'
           description: default response
-      summary: Find explorer nodes using a query
+      summary: Fetch match highlights on found content
+      tags:
+      - Explorer (v2)
+  /explorer/v2/find:
+    post:
+      operationId: find
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FindRequest'
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultPageFindResult'
+          description: default response
+      summary: Find documents with names and types matching the supplied request
+      tags:
+      - Explorer (v2)
+  /explorer/v2/findInContent:
+    post:
+      operationId: findInContent
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FindInContentRequest'
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultPageFindInContentResult'
+          description: default response
+      summary: Find documents with content matching the supplied request
       tags:
       - Explorer (v2)
   /explorer/v2/getFromDocRef:
@@ -2277,8 +2531,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/ExplorerNode'
           description: default response
-      summary: Get a node from a document reference, decorated with its root node
-        UUID
+      summary: "Get a node from a document reference, decorated with its root node\
+        \ UUID"
       tags:
       - Explorer (v2)
   /explorer/v2/info:
@@ -2296,7 +2550,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DocRefInfo'
+                $ref: '#/components/schemas/ExplorerNodeInfo'
           description: default response
       summary: Get document info
       tags:
@@ -2321,6 +2575,24 @@ paths:
       summary: Move explorer items
       tags:
       - Explorer (v2)
+  /explorer/v2/removeTags:
+    delete:
+      operationId: removeTags
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddRemoveTagsRequest'
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json: {}
+          description: default response
+      summary: Remove tags from explorer nodes
+      tags:
+      - Explorer (v2)
   /explorer/v2/rename:
     put:
       operationId: renameExplorerItems
@@ -2339,6 +2611,26 @@ paths:
                 $ref: '#/components/schemas/ExplorerNode'
           description: default response
       summary: Rename explorer items
+      tags:
+      - Explorer (v2)
+  /explorer/v2/tags:
+    put:
+      operationId: updateExplorerNodeTags
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExplorerNode'
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExplorerNode'
+          description: default response
+      summary: Update explorer node tags
       tags:
       - Explorer (v2)
   /explorerFavourite/v1/createUserFavourite:
@@ -2401,6 +2693,26 @@ paths:
       summary: Exports all configuration to a file.
       tags:
       - Export
+  /expression/v1/validate:
+    post:
+      operationId: validate
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValidateExpressionRequest'
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidateExpressionResult'
+          description: default response
+      summary: Validate an expression
+      tags:
+      - Expressions
   /feed/v1/fetchSupportedEncodings:
     get:
       operationId: fetchSupportedEncodings
@@ -2616,6 +2928,128 @@ paths:
       summary: Update a volume
       tags:
       - Filesystem Volumes
+  /fsVolume/volumeGroup/v2:
+    post:
+      operationId: createFsVolumeGroup
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: string
+        description: name
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FsVolumeGroup'
+          description: default response
+      summary: Creates a data volume group
+      tags:
+      - Data Volume Groups
+  /fsVolume/volumeGroup/v2/fetchByName/{name}:
+    get:
+      operationId: fetchFsVolumeGroupByName
+      parameters:
+      - in: path
+        name: name
+        required: true
+        schema:
+          type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FsVolumeGroup'
+          description: default response
+      summary: Gets a data volume group by name
+      tags:
+      - Data Volume Groups
+  /fsVolume/volumeGroup/v2/find:
+    post:
+      operationId: findFsVolumeGroups
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExpressionCriteria'
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultPageFsVolumeGroup'
+          description: default response
+      summary: Finds data volume groups matching request
+      tags:
+      - Data Volume Groups
+  /fsVolume/volumeGroup/v2/{id}:
+    delete:
+      operationId: deleteFsVolumeGroup
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+          format: int32
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: Deletes a data volume group
+      tags:
+      - Data Volume Groups
+    get:
+      operationId: fetchFsVolumeGroup
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+          format: int32
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FsVolumeGroup'
+          description: default response
+      summary: Gets a data volume group
+      tags:
+      - Data Volume Groups
+    put:
+      operationId: updateFsVolumeGroup
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+          format: int32
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FsVolumeGroup'
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FsVolumeGroup'
+          description: default response
+      summary: Updates a data volume group
+      tags:
+      - Data Volume Groups
   /index/v2/shard/delete:
     post:
       operationId: deleteIndexShards
@@ -3033,9 +3467,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/NodeSetJobsEnabledResponse'
           description: default response
-      summary: Sets the enabled state of jobs for the selected node. If both `includeJobs`
-        and `excludeJobs` are unspecified or empty, this action will apply to ALL
-        jobs.
+      summary: "Sets the enabled state of jobs for the selected node. If both `includeJobs`\
+        \ and `excludeJobs` are unspecified or empty, this action will apply to ALL\
+        \ jobs."
       tags:
       - Jobs
   /job/v1/{id}/enabled:
@@ -3378,7 +3812,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Meta'
           description: default response
-      summary: Get a meta record for a given id, if permitted.
+      summary: "Get a meta record for a given id, if permitted."
       tags:
       - Meta
   /node/v1/all:
@@ -3789,6 +4223,26 @@ paths:
       summary: Fetch document permissions
       tags:
       - Doc Permissions
+  /permission/doc/v1/fetchPermissionChangeImpact:
+    post:
+      operationId: fetchPermissionChangeImpact
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangeDocumentPermissionsRequest'
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PermissionChangeImpactSummary'
+          description: default response
+      summary: Fetch impact summary for a change of document permissions
+      tags:
+      - Doc Permissions
   /permission/doc/v1/filterUsers:
     post:
       operationId: filterUsers
@@ -3804,9 +4258,31 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/SimpleUser'
+                  $ref: '#/components/schemas/UserName'
           description: default response
       summary: Get all permissions for a given document type
+      tags:
+      - Doc Permissions
+  /permission/doc/v1/getDocumentOwners:
+    post:
+      operationId: getDocumentOwners
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: string
+        description: documentUuid
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserName'
+          description: default response
+      summary: Get the owners of the specified document
       tags:
       - Doc Permissions
   /permission/doc/v1/getPermissionForDocType/${docType}:
@@ -4228,6 +4704,33 @@ paths:
       summary: Sets the enabled/disabled state for a filter
       tags:
       - Processor Filters
+  /processorFilter/v1/{id}/maxProcessingTasks:
+    put:
+      operationId: setProcessorFilterMaxProcessingTasks
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+          format: int32
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: integer
+              format: int32
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: "Sets the optional cluster-wide limit on the number of tasks that may\
+        \ be processed for this filter, at any one time"
+      tags:
+      - Processor Filters
   /processorFilter/v1/{id}/priority:
     put:
       operationId: setProcessorFilterPriority
@@ -4346,9 +4849,29 @@ paths:
       summary: Finds processor task summaries
       tags:
       - Processor Tasks
+  /query/v1/downloadSearchResults:
+    post:
+      operationId: downloadQuerySearchResultsLocal
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DownloadQueryResultsRequest'
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceGeneration'
+          description: default response
+      summary: Download search results
+      tags:
+      - Queries
   /query/v1/downloadSearchResults/{nodeName}:
     post:
-      operationId: downloadQuerySearchResults
+      operationId: downloadQuerySearchResultsNode
       parameters:
       - in: path
         name: nodeName
@@ -4372,6 +4895,42 @@ paths:
       summary: Download search results
       tags:
       - Queries
+  /query/v1/fetchCompletions:
+    post:
+      operationId: fetchCompletions
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompletionsRequest'
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultPageCompletionValue'
+          description: default response
+      summary: Fetch completions for the query
+      tags:
+      - Queries
+  /query/v1/fetchDetail:
+    post:
+      operationId: fetchDetail
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueryHelpRow'
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryHelpDetail'
+          description: default response
+      summary: Fetch detail for help item
+      tags:
+      - Queries
   /query/v1/fetchTimeZones:
     get:
       operationId: fetchTimeZones
@@ -4387,24 +4946,49 @@ paths:
       summary: Fetch time zone data from the server
       tags:
       - Queries
-  /query/v1/functions:
-    get:
-      operationId: fetchFunctions
+  /query/v1/helpItems:
+    post:
+      operationId: fetchHelpItems
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueryHelpRequest'
+        description: request
+        required: true
       responses:
         default:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/FunctionSignature'
+                $ref: '#/components/schemas/ResultPageQueryHelpRow'
           description: default response
-      summary: Fetch all expression functions
+      summary: Fetch all (optionally filtered) query help items
+      tags:
+      - Queries
+  /query/v1/search:
+    post:
+      operationId: querySearchLocal
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QuerySearchRequest'
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardSearchResponse'
+          description: default response
+      summary: Perform a new search or get new results
       tags:
       - Queries
   /query/v1/search/{nodeName}:
     post:
-      operationId: querySearch
+      operationId: querySearchNode
       parameters:
       - in: path
         name: nodeName
@@ -4426,21 +5010,6 @@ paths:
                 $ref: '#/components/schemas/DashboardSearchResponse'
           description: default response
       summary: Perform a new search or get new results
-      tags:
-      - Queries
-  /query/v1/structure:
-    get:
-      operationId: fetchStructureElements
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/StructureElement'
-          description: default response
-      summary: Fetch all structure element descriptions
       tags:
       - Queries
   /query/v1/validateQuery:
@@ -4598,8 +5167,8 @@ paths:
               schema:
                 type: boolean
           description: default response
-      summary: Explicitly delete all entries that are older than purgeAge. Performed
-        on the named node, or all nodes if null.
+      summary: "Explicitly delete all entries that are older than purgeAge. Performed\
+        \ on the named node, or all nodes if null."
       tags:
       - Reference Data
   /refData/v1/purgeByFeedByAge/{feedName}/{purgeAge}:
@@ -4627,8 +5196,8 @@ paths:
               schema:
                 type: boolean
           description: default response
-      summary: Explicitly delete all entries belonging to a feed that are older than
-        purgeAge.Performed on the named node, or all nodes if null.
+      summary: "Explicitly delete all entries belonging to a feed that are older than\
+        \ purgeAge.Performed on the named node, or all nodes if null."
       tags:
       - Reference Data
   /refData/v1/purgeByStream/{refStreamId}:
@@ -5077,27 +5646,6 @@ paths:
       summary: Update a script doc
       tags:
       - Scripts
-  /searchable/v2/dataSource:
-    post:
-      operationId: getSearchableDataSource
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/DocRef'
-        description: DocRef
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DataSource'
-          description: default response
-      summary: Submit a request for a data source definition, supplying the DocRef
-        for the data source
-      tags:
-      - Searchable
   /searchable/v2/destroy:
     post:
       operationId: destroySearchableQuery
@@ -5153,8 +5701,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/SessionListResponse'
           description: default response
-      summary: Lists user sessions for a node, or all nodes in the cluster if nodeName
-        is null
+      summary: "Lists user sessions for a node, or all nodes in the cluster if nodeName\
+        \ is null"
       tags:
       - Sessions
   /session/v1/logout:
@@ -5192,7 +5740,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ValidateSessionResponse'
           description: default response
-      summary: Validate the current session, return a redirect Uri if invalid.
+      summary: "Validate the current session, return a redirect Uri if invalid."
       tags:
       - Sessions
   /sessionInfo/v1:
@@ -5294,27 +5842,6 @@ paths:
       summary: Update a solr index doc
       tags:
       - Solr Indices
-  /sqlstatistics/v2/dataSource:
-    post:
-      operationId: getSqlStatisticsDataSource
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/DocRef'
-        description: DocRef
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DataSource'
-          description: default response
-      summary: Submit a request for a data source definition, supplying the DocRef
-        for the data source
-      tags:
-      - Sql Statistics Query
   /sqlstatistics/v2/destroy:
     post:
       operationId: destroySqlStatisticsQuery
@@ -5729,27 +6256,6 @@ paths:
       summary: Update a stored query
       tags:
       - Stored Queries
-  /stroom-elastic-index/v2/dataSource:
-    post:
-      operationId: getElasticIndexDataSource
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/DocRef'
-        description: DocRef
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DataSource'
-          description: default response
-      summary: Submit a request for a data source definition, supplying the DocRef
-        for the data source
-      tags:
-      - Elasticsearch Queries
   /stroom-elastic-index/v2/destroy:
     post:
       operationId: destroyElasticIndexQuery
@@ -5790,27 +6296,6 @@ paths:
       summary: Submit a search request
       tags:
       - Elasticsearch Queries
-  /stroom-index/v2/dataSource:
-    post:
-      operationId: getStroomIndexDataSource
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/DocRef'
-        description: DocRef
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DataSource'
-          description: default response
-      summary: Submit a request for a data source definition, supplying the DocRef
-        for the data source
-      tags:
-      - Stroom-Index Queries
   /stroom-index/v2/destroy:
     post:
       operationId: destroyStroomIndexQuery
@@ -5851,27 +6336,6 @@ paths:
       summary: Submit a search request
       tags:
       - Stroom-Index Queries
-  /stroom-solr-index/v2/dataSource:
-    post:
-      operationId: getSolrIndexDataSource
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/DocRef'
-        description: DocRef
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DataSource'
-          description: default response
-      summary: Submit a request for a data source definition, supplying the DocRef
-        for the data source
-      tags:
-      - Solr Queries
   /stroom-solr-index/v2/destroy:
     post:
       operationId: destroySolrIndexQuery
@@ -6149,9 +6613,88 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ResultPageString'
+                $ref: '#/components/schemas/ResultPageUserName'
           description: default response
       summary: Find the user names matching the supplied criteria
+      tags:
+      - Authorisation
+  /userNames/v1/findAssociates:
+    post:
+      operationId: findAssociateUserNames
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FindUserNameCriteria'
+        description: criteria
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultPageUserName'
+          description: default response
+      summary: Find the user names matching the supplied criteria of users who belong
+        to at least one of the same groups as the current user. If the current user
+        is admin or has Manage Users permission then they can see all users.
+      tags:
+      - Authorisation
+  /userNames/v1/getByDisplayName/{displayName}:
+    get:
+      operationId: getByDisplayName
+      parameters:
+      - in: path
+        name: displayName
+        required: true
+        schema:
+          type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserName'
+          description: default response
+      summary: Find the user name matching the supplied displayName
+      tags:
+      - Authorisation
+  /userNames/v1/getByUuid/{userUuid}:
+    get:
+      operationId: getByUuid
+      parameters:
+      - in: path
+        name: userUuid
+        required: true
+        schema:
+          type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserName'
+          description: default response
+      summary: Find the user name matching the supplied unique Stroom user UUID
+      tags:
+      - Authorisation
+  /userNames/v1/{subjectId}:
+    get:
+      operationId: getByUserId
+      parameters:
+      - in: path
+        name: subjectId
+        required: true
+        schema:
+          type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserName'
+          description: default response
+      summary: Find the user name matching the supplied unique user subject ID
       tags:
       - Authorisation
   /users/v1:
@@ -6197,25 +6740,21 @@ paths:
               schema:
                 type: array
                 items:
-                  type: string
+                  $ref: '#/components/schemas/UserName'
           description: default response
       summary: Gets a list of associated users
       tags:
       - Authorisation
-  /users/v1/create/{name}/{isGroup}:
+  /users/v1/createGroup:
     post:
-      operationId: createUser
-      parameters:
-      - in: path
-        name: name
+      operationId: createGroup
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: string
+        description: name
         required: true
-        schema:
-          type: string
-      - in: path
-        name: isGroup
-        required: true
-        schema:
-          type: boolean
       responses:
         default:
           content:
@@ -6223,7 +6762,51 @@ paths:
               schema:
                 $ref: '#/components/schemas/User'
           description: default response
-      summary: Creates a user or group with the supplied name
+      summary: Creates a group with the supplied name
+      tags:
+      - Authorisation
+  /users/v1/createUser:
+    post:
+      operationId: createUser
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserName'
+        description: name
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: default response
+      summary: Creates a user with the supplied name
+      tags:
+      - Authorisation
+  /users/v1/createUsers:
+    post:
+      operationId: createUsers
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: string
+        description: users
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+          description: default response
+      summary: "Creates a batch of users from a list of CSV entries. Each line is\
+        \ of the form 'id,displayName,fullName', where displayName and fullName are\
+        \ optional"
       tags:
       - Authorisation
   /users/v1/find:
@@ -6596,52 +7179,6 @@ components:
           type: string
       required:
       - type
-    AbstractField:
-      type: object
-      discriminator:
-        propertyName: type
-      properties:
-        conditions:
-          type: array
-          items:
-            type: string
-            enum:
-            - CONTAINS
-            - EQUALS
-            - GREATER_THAN
-            - GREATER_THAN_OR_EQUAL_TO
-            - LESS_THAN
-            - LESS_THAN_OR_EQUAL_TO
-            - BETWEEN
-            - IN
-            - IN_DICTIONARY
-            - IN_FOLDER
-            - IS_DOC_REF
-            - IS_NULL
-            - IS_NOT_NULL
-            - MATCHES_REGEX
-        fieldType:
-          type: string
-          enum:
-          - ID
-          - BOOLEAN
-          - INTEGER
-          - LONG
-          - FLOAT
-          - DOUBLE
-          - DATE
-          - TEXT
-          - KEYWORD
-          - IPV4_ADDRESS
-          - DOC_REF
-        name:
-          type: string
-        queryable:
-          type: boolean
-        type:
-          type: string
-      required:
-      - type
     Account:
       type: object
       properties:
@@ -6777,6 +7314,18 @@ components:
             type: string
           userUuid:
             type: string
+    AddRemoveTagsRequest:
+      type: object
+      properties:
+        docRefs:
+          type: array
+          items:
+            $ref: '#/components/schemas/DocRef'
+        tags:
+          type: array
+          items:
+            type: string
+          uniqueItems: true
     AnalyticDataShard:
       type: object
       properties:
@@ -6790,31 +7339,24 @@ components:
         size:
           type: integer
           format: int64
-    AnalyticNotification:
+    AnalyticNotificationConfig:
       type: object
       properties:
-        analyticUuid:
+        destination:
+          $ref: '#/components/schemas/AnalyticNotificationDestination'
+        destinationType:
           type: string
-        config:
-          $ref: '#/components/schemas/AnalyticNotificationConfig'
-        createTimeMs:
-          type: integer
-          format: int64
-        createUser:
-          type: string
-        enabled:
+          enum:
+          - STREAM
+          - EMAIL
+        limitNotifications:
           type: boolean
-        updateTimeMs:
-          type: integer
-          format: int64
-        updateUser:
-          type: string
-        uuid:
-          type: string
-        version:
+        maxNotifications:
           type: integer
           format: int32
-    AnalyticNotificationConfig:
+        resumeAfter:
+          $ref: '#/components/schemas/SimpleDuration'
+    AnalyticNotificationDestination:
       type: object
       discriminator:
         propertyName: type
@@ -6823,120 +7365,55 @@ components:
           type: string
       required:
       - type
-    AnalyticNotificationEmailConfig:
+    AnalyticNotificationEmailDestination:
       type: object
       allOf:
-      - $ref: '#/components/schemas/AnalyticNotificationConfig'
+      - $ref: '#/components/schemas/AnalyticNotificationDestination'
       - type: object
         properties:
-          emailAddress:
+          bcc:
             type: string
-          timeToWaitForData:
-            $ref: '#/components/schemas/SimpleDuration'
-    AnalyticNotificationRow:
-      type: object
-      properties:
-        analyticNotification:
-          $ref: '#/components/schemas/AnalyticNotification'
-        analyticNotificationState:
-          $ref: '#/components/schemas/AnalyticNotificationState'
-    AnalyticNotificationState:
-      type: object
-      properties:
-        lastExecutionTime:
-          type: integer
-          format: int64
-        message:
-          type: string
-        notificationUuid:
-          type: string
-    AnalyticNotificationStreamConfig:
+          cc:
+            type: string
+          to:
+            type: string
+    AnalyticNotificationStreamDestination:
       type: object
       allOf:
-      - $ref: '#/components/schemas/AnalyticNotificationConfig'
+      - $ref: '#/components/schemas/AnalyticNotificationDestination'
       - type: object
         properties:
           destinationFeed:
             $ref: '#/components/schemas/DocRef'
-          timeToWaitForData:
-            $ref: '#/components/schemas/SimpleDuration'
           useSourceFeedIfPossible:
             type: boolean
-    AnalyticProcessorFilter:
+    AnalyticProcessConfig:
       type: object
+      discriminator:
+        propertyName: type
       properties:
-        analyticUuid:
+        type:
           type: string
-        createTimeMs:
-          type: integer
-          format: int64
-        createUser:
-          type: string
-        enabled:
-          type: boolean
-        expression:
-          $ref: '#/components/schemas/ExpressionOperator'
-        maxMetaCreateTimeMs:
-          type: integer
-          format: int64
-        minMetaCreateTimeMs:
-          type: integer
-          format: int64
-        node:
-          type: string
-        updateTimeMs:
-          type: integer
-          format: int64
-        updateUser:
-          type: string
-        uuid:
-          type: string
-        version:
-          type: integer
-          format: int32
-    AnalyticProcessorFilterTracker:
-      type: object
-      properties:
-        eventCount:
-          type: integer
-          format: int64
-        filterUuid:
-          type: string
-        lastEventId:
-          type: integer
-          format: int64
-        lastEventTime:
-          type: integer
-          format: int64
-        lastMetaId:
-          type: integer
-          format: int64
-        lastPollMs:
-          type: integer
-          format: int64
-        lastPollTaskCount:
-          type: integer
-          format: int32
-        message:
-          type: string
-        metaCount:
-          type: integer
-          format: int64
+      required:
+      - type
     AnalyticRuleDoc:
       type: object
       properties:
-        analyticRuleType:
+        analyticNotificationConfig:
+          $ref: '#/components/schemas/AnalyticNotificationConfig'
+        analyticProcessConfig:
+          $ref: '#/components/schemas/AnalyticProcessConfig'
+        analyticProcessType:
           type: string
           enum:
-          - EVENT
-          - AGGREGATE
+          - STREAMING
+          - TABLE_BUILDER
+          - SCHEDULED_QUERY
         createTimeMs:
           type: integer
           format: int64
         createUser:
           type: string
-        dataRetention:
-          $ref: '#/components/schemas/SimpleDuration'
         description:
           type: string
         languageVersion:
@@ -6959,11 +7436,38 @@ components:
           type: string
         version:
           type: string
+    AnalyticTracker:
+      type: object
+      properties:
+        analyticTrackerData:
+          $ref: '#/components/schemas/AnalyticTrackerData'
+        analyticUuid:
+          type: string
+    AnalyticTrackerData:
+      type: object
+      discriminator:
+        propertyName: type
+      properties:
+        message:
+          type: string
+        type:
+          type: string
+      required:
+      - type
+    AnalyticUiDefaultConfig:
+      type: object
+      properties:
+        defaultDestinationFeed:
+          $ref: '#/components/schemas/DocRef'
+        defaultErrorFeed:
+          $ref: '#/components/schemas/DocRef'
+        defaultNode:
+          type: string
     Annotation:
       type: object
       properties:
         assignedTo:
-          type: string
+          $ref: '#/components/schemas/UserName'
         comment:
           type: string
         createTime:
@@ -7007,10 +7511,10 @@ components:
           format: int64
         createUser:
           type: string
-        data:
-          type: string
         entryType:
           type: string
+        entryValue:
+          $ref: '#/components/schemas/EntryValue'
         id:
           type: integer
           format: int64
@@ -7066,7 +7570,7 @@ components:
         values:
           type: array
           items:
-            $ref: '#/components/schemas/ApiKey'
+            $ref: '#/components/schemas/HashedApiKey'
     Arg:
       type: object
       properties:
@@ -7107,6 +7611,8 @@ components:
           format: int32
         nodeName:
           type: string
+        sourceTaskId:
+          $ref: '#/components/schemas/TaskId'
     AuthenticationState:
       type: object
       properties:
@@ -7123,6 +7629,92 @@ components:
           type: boolean
         refreshInterval:
           type: string
+    AwsBasicCredentials:
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/AwsCredentials'
+      - type: object
+        properties:
+          accessKeyId:
+            type: string
+          secretAccessKey:
+            type: string
+    AwsCredentials:
+      type: object
+      discriminator:
+        propertyName: type
+      properties:
+        type:
+          type: string
+      required:
+      - type
+    AwsHttpConfig:
+      type: object
+      properties:
+        connectionTimeout:
+          type: string
+        proxyConfiguration:
+          $ref: '#/components/schemas/AwsProxyConfig'
+        trustAllCertificatesEnabled:
+          type: boolean
+    AwsProfileCredentials:
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/AwsCredentials'
+      - type: object
+        properties:
+          profileFilePath:
+            type: string
+          profileName:
+            type: string
+    AwsProxyConfig:
+      type: object
+      properties:
+        host:
+          type: string
+        password:
+          type: string
+        port:
+          type: integer
+          format: int32
+        scheme:
+          type: string
+        useSystemPropertyValues:
+          type: boolean
+        username:
+          type: string
+    AwsSessionCredentials:
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/AwsCredentials'
+      - type: object
+        properties:
+          accessKeyId:
+            type: string
+          secretAccessKey:
+            type: string
+          sessionToken:
+            type: string
+    AwsWebCredentials:
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/AwsCredentials'
+      - type: object
+        properties:
+          asyncCredentialUpdateEnabled:
+            type: boolean
+          prefetchTime:
+            type: string
+          roleArn:
+            type: string
+          roleSessionName:
+            type: string
+          sessionDuration:
+            type: string
+          staleTime:
+            type: string
+          webIdentityTokenFile:
+            type: string
     Base64EncodedDocumentData:
       type: object
       properties:
@@ -7135,7 +7727,7 @@ components:
     BooleanField:
       type: object
       allOf:
-      - $ref: '#/components/schemas/AbstractField'
+      - $ref: '#/components/schemas/QueryField'
     BuildInfo:
       type: object
       properties:
@@ -7294,6 +7886,13 @@ components:
         properties:
           documentUuid:
             type: string
+    ClientCredentials:
+      type: object
+      properties:
+        clientId:
+          type: string
+        clientSecret:
+          type: string
     ClusterLockKey:
       type: object
       properties:
@@ -7333,6 +7932,71 @@ components:
         master:
           type: boolean
         nodeName:
+          type: string
+    Column:
+      type: object
+      description: "Describes a field in a result set. The field can have various\
+        \ expressions applied to it, e.g. SUM(), along with sorting, filtering, formatting\
+        \ and grouping"
+      properties:
+        expression:
+          type: string
+          description: The expression to use to generate the value for this field
+          example: "SUM(${count})"
+        filter:
+          $ref: '#/components/schemas/Filter'
+        format:
+          $ref: '#/components/schemas/Format'
+        group:
+          type: integer
+          format: int32
+        id:
+          type: string
+        name:
+          type: string
+        sort:
+          $ref: '#/components/schemas/Sort'
+      required:
+      - expression
+    CompletionValue:
+      type: object
+      properties:
+        caption:
+          type: string
+        meta:
+          type: string
+        score:
+          type: integer
+          format: int32
+        tooltip:
+          type: string
+        value:
+          type: string
+    CompletionsRequest:
+      type: object
+      properties:
+        column:
+          type: integer
+          format: int32
+        dataSourceRef:
+          $ref: '#/components/schemas/DocRef'
+        pageRequest:
+          $ref: '#/components/schemas/PageRequest'
+        row:
+          type: integer
+          format: int32
+        showAll:
+          type: boolean
+        sort:
+          type: string
+          writeOnly: true
+        sortList:
+          type: array
+          items:
+            $ref: '#/components/schemas/CriteriaFieldSort'
+        stringMatch:
+          $ref: '#/components/schemas/StringMatch'
+        text:
           type: string
     ComponentConfig:
       type: object
@@ -7505,14 +8169,35 @@ components:
       properties:
         annotation:
           $ref: '#/components/schemas/Annotation'
-        data:
-          type: string
+        entryValue:
+          $ref: '#/components/schemas/EntryValue'
         linkedEvents:
           type: array
           items:
             $ref: '#/components/schemas/EventId'
         type:
           type: string
+    CreateHashedApiKeyRequest:
+      type: object
+      properties:
+        comments:
+          type: string
+        enabled:
+          type: boolean
+        expireTimeMs:
+          type: integer
+          format: int64
+        name:
+          type: string
+        owner:
+          $ref: '#/components/schemas/UserName'
+    CreateHashedApiKeyResponse:
+      type: object
+      properties:
+        apiKey:
+          type: string
+        hashedApiKey:
+          $ref: '#/components/schemas/HashedApiKey'
     CreateProcessFilterRequest:
       type: object
       properties:
@@ -7523,6 +8208,9 @@ components:
         maxMetaCreateTimeMs:
           type: integer
           format: int64
+        maxProcessingTasks:
+          type: integer
+          format: int32
         minMetaCreateTimeMs:
           type: integer
           format: int64
@@ -7531,6 +8219,11 @@ components:
         priority:
           type: integer
           format: int32
+        processorType:
+          type: string
+          enum:
+          - PIPELINE
+          - STREAMING_ANALYTIC
         queryData:
           $ref: '#/components/schemas/QueryData'
         reprocess:
@@ -7653,17 +8346,18 @@ components:
         timeout:
           type: integer
           format: int64
-          description: Set the maximum time (in ms) for the server to wait for a complete
-            result set. The timeout applies to both incremental and non incremental
-            queries, though the behaviour is slightly different. The timeout will
-            make the server wait for which ever comes first out of the query completing
-            or the timeout period being reached. If no value is supplied then for
-            an incremental query a default value of 0 will be used (i.e. returning
-            immediately) and for a non-incremental query the server's default timeout
-            period will be used. For an incremental query, if the query has not completed
-            by the end of the timeout period, it will return the currently know results
-            with complete=false, however for a non-incremental query it will return
-            no results, complete=false and details of the timeout in the error field
+          description: "Set the maximum time (in ms) for the server to wait for a\
+            \ complete result set. The timeout applies to both incremental and non\
+            \ incremental queries, though the behaviour is slightly different. The\
+            \ timeout will make the server wait for which ever comes first out of\
+            \ the query completing or the timeout period being reached. If no value\
+            \ is supplied then for an incremental query a default value of 0 will\
+            \ be used (i.e. returning immediately) and for a non-incremental query\
+            \ the server's default timeout period will be used. For an incremental\
+            \ query, if the query has not completed by the end of the timeout period,\
+            \ it will return the currently know results with complete=false, however\
+            \ for a non-incremental query it will return no results, complete=false\
+            \ and details of the timeout in the error field"
     DashboardSearchResponse:
       type: object
       properties:
@@ -7686,6 +8380,8 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Result'
+        tokenError:
+          $ref: '#/components/schemas/TokenError'
     DataInfoSection:
       type: object
       properties:
@@ -7813,21 +8509,10 @@ components:
           type: string
       xml:
         name: dataRetentionPolicy
-    DataSource:
-      type: object
-      properties:
-        defaultExtractionPipeline:
-          $ref: '#/components/schemas/DocRef'
-        docRef:
-          $ref: '#/components/schemas/DocRef'
-        fields:
-          type: array
-          items:
-            $ref: '#/components/schemas/AbstractField'
     DateField:
       type: object
       allOf:
-      - $ref: '#/components/schemas/AbstractField'
+      - $ref: '#/components/schemas/QueryField'
     DateTimeFormatSettings:
       type: object
       allOf:
@@ -7861,14 +8546,26 @@ components:
           type: string
           description: The local zone id to use when formatting date values in the
             search results. The value is the string form of a java.time.ZoneId
+        referenceTime:
+          type: integer
+          format: int64
+          description: The time in milliseconds since epoch to use as the reference
+            time for relative date functions like `day()`. Typically this is the current
+            time when the query is executed. If null the current time will be assumed.
         timeZone:
           $ref: '#/components/schemas/TimeZone'
       required:
       - localZoneId
+      - referenceTime
     DefaultLocation:
       type: object
-      allOf:
-      - $ref: '#/components/schemas/Location'
+      properties:
+        colNo:
+          type: integer
+          format: int32
+        lineNo:
+          type: integer
+          format: int32
     Dependency:
       type: object
       properties:
@@ -7933,17 +8630,26 @@ components:
           type: string
         version:
           type: string
+    DocContentHighlights:
+      type: object
+      properties:
+        docRef:
+          $ref: '#/components/schemas/DocRef'
+        highlights:
+          type: array
+          items:
+            $ref: '#/components/schemas/StringMatchLocation'
+        text:
+          type: string
     DocContentMatch:
       type: object
       properties:
         docRef:
           $ref: '#/components/schemas/DocRef'
-        matchLength:
-          type: integer
-          format: int64
-        matchOffset:
-          type: integer
-          format: int64
+        extension:
+          type: string
+        location:
+          $ref: '#/components/schemas/StringMatchLocation'
         sample:
           type: string
     DocRef:
@@ -7972,11 +8678,7 @@ components:
     DocRefField:
       type: object
       allOf:
-      - $ref: '#/components/schemas/AbstractField'
-      - type: object
-        properties:
-          docRefType:
-            type: string
+      - $ref: '#/components/schemas/QueryField'
     DocRefInfo:
       type: object
       properties:
@@ -8043,17 +8745,23 @@ components:
           - ADD
           - ADD_ABOVE
           - ADD_BELOW
+          - ADD_MULTIPLE
           - ALERT
+          - ALERT_SIMPLE
           - ARROW_DOWN
+          - ARROW_LEFT
           - ARROW_RIGHT
           - ARROW_UP
+          - AUTO_REFRESH
           - BACKWARD
+          - BORDERED_CIRCLE
           - CANCEL
           - CASE_SENSITIVE
           - CLEAR
           - CLIPBOARD
           - CLOSE
           - CODE
+          - COLLAPSE_ALL
           - COLLAPSE_UP
           - COPY
           - DATABASE
@@ -8065,6 +8773,7 @@ components:
           - DOCUMENT_ANNOTATIONS_INDEX
           - DOCUMENT_DASHBOARD
           - DOCUMENT_DICTIONARY
+          - DOCUMENT_DOCUMENTATION
           - DOCUMENT_ELASTIC_CLUSTER
           - DOCUMENT_ELASTIC_INDEX
           - DOCUMENT_FAVOURITES
@@ -8093,12 +8802,12 @@ components:
           - DOWN
           - DOWNLOAD
           - DROP_DOWN
-          - DROP_DOWN_DARK
           - EDIT
           - ELLIPSES_HORIZONTAL
           - ELLIPSES_VERTICAL
           - ERROR
           - EXCLAMATION
+          - EXPAND_ALL
           - EXPAND_DOWN
           - EXPLORER
           - FAST_BACKWARD
@@ -8134,6 +8843,7 @@ components:
           - INSERT
           - JOBS
           - KEY
+          - LOCATE
           - LOCKED
           - LOGO
           - LOGOUT
@@ -8147,6 +8857,7 @@ components:
           - OPERATOR
           - PASSWORD
           - PAUSE
+          - PEN
           - PIPELINE_ELASTIC_INDEX
           - PIPELINE_FILE
           - PIPELINE_FILES
@@ -8180,15 +8891,14 @@ components:
           - REMOVE
           - RESIZE
           - RESIZE_HANDLE
-          - RULESET
           - SAVE
           - SAVEAS
           - SEARCH
-          - SEARCH_DARK
           - SETTINGS
           - SHARD_CLOSE
           - SHARD_FLUSH
           - SHARE
+          - SHIELD
           - SHOW
           - SHOW_MENU
           - STEP
@@ -8200,6 +8910,8 @@ components:
           - TABLE
           - TABLE_NESTED
           - TAB_CLOSE
+          - TAGS
+          - TEXT_WRAP
           - TICK
           - UNDO
           - UNLOCK
@@ -8222,10 +8934,40 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/DocumentType'
+    Documentation:
+      type: object
+      properties:
+        markdown:
+          type: string
+    DocumentationDoc:
+      type: object
+      properties:
+        createTimeMs:
+          type: integer
+          format: int64
+        createUser:
+          type: string
+        data:
+          type: string
+        documentation:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+        updateTimeMs:
+          type: integer
+          format: int64
+        updateUser:
+          type: string
+        uuid:
+          type: string
+        version:
+          type: string
     DoubleField:
       type: object
       allOf:
-      - $ref: '#/components/schemas/AbstractField'
+      - $ref: '#/components/schemas/QueryField'
     DownloadQueryResultsRequest:
       type: object
       properties:
@@ -8249,6 +8991,8 @@ components:
       properties:
         componentId:
           type: string
+        downloadAllTables:
+          type: boolean
         fileType:
           type: string
           enum:
@@ -8394,6 +9138,9 @@ components:
           - UPDATE
           - DELETE
           - CLEAR_CACHE
+          - CREATE_EXPLORER_NODE
+          - UPDATE_EXPLORER_NODE
+          - DELETE_EXPLORER_NODE
         docRef:
           $ref: '#/components/schemas/DocRef'
         oldDocRef:
@@ -8414,6 +9161,15 @@ components:
         rangeValueCount:
           type: integer
           format: int64
+    EntryValue:
+      type: object
+      discriminator:
+        propertyName: type
+      properties:
+        type:
+          type: string
+      required:
+      - type
     EventCoprocessorSettings:
       type: object
       allOf:
@@ -8469,187 +9225,6 @@ components:
           type: boolean
         leaf:
           type: boolean
-    ExplorerDocContentMatch:
-      type: object
-      properties:
-        docContentMatch:
-          $ref: '#/components/schemas/DocContentMatch'
-        icon:
-          type: string
-          enum:
-          - ADD
-          - ADD_ABOVE
-          - ADD_BELOW
-          - ALERT
-          - ARROW_DOWN
-          - ARROW_RIGHT
-          - ARROW_UP
-          - BACKWARD
-          - CANCEL
-          - CASE_SENSITIVE
-          - CLEAR
-          - CLIPBOARD
-          - CLOSE
-          - CODE
-          - COLLAPSE_UP
-          - COPY
-          - DATABASE
-          - DELETE
-          - DEPENDENCIES
-          - DISABLE
-          - DOCUMENT_ANALYTIC_OUTPUT_STORE
-          - DOCUMENT_ANALYTIC_RULE
-          - DOCUMENT_ANNOTATIONS_INDEX
-          - DOCUMENT_DASHBOARD
-          - DOCUMENT_DICTIONARY
-          - DOCUMENT_ELASTIC_CLUSTER
-          - DOCUMENT_ELASTIC_INDEX
-          - DOCUMENT_FAVOURITES
-          - DOCUMENT_FEED
-          - DOCUMENT_FOLDER
-          - DOCUMENT_INDEX
-          - DOCUMENT_KAFKA_CONFIG
-          - DOCUMENT_PIPELINE
-          - DOCUMENT_QUERY
-          - DOCUMENT_RECEIVE_DATA_RULE_SET
-          - DOCUMENT_SCRIPT
-          - DOCUMENT_SEARCHABLE
-          - DOCUMENT_SELECT_ALL_OR_NONE
-          - DOCUMENT_SIGMA_RULE
-          - DOCUMENT_SOLR_INDEX
-          - DOCUMENT_STATISTIC_STORE
-          - DOCUMENT_STROOM_STATS_STORE
-          - DOCUMENT_SYSTEM
-          - DOCUMENT_TEXT_CONVERTER
-          - DOCUMENT_VIEW
-          - DOCUMENT_VISUALISATION
-          - DOCUMENT_XMLSCHEMA
-          - DOCUMENT_XSLT
-          - DOT
-          - DOUBLE_ARROW
-          - DOWN
-          - DOWNLOAD
-          - DROP_DOWN
-          - DROP_DOWN_DARK
-          - EDIT
-          - ELLIPSES_HORIZONTAL
-          - ELLIPSES_VERTICAL
-          - ERROR
-          - EXCLAMATION
-          - EXPAND_DOWN
-          - EXPLORER
-          - FAST_BACKWARD
-          - FAST_FORWARD
-          - FATAL
-          - FATAL_DARK
-          - FAVOURITES
-          - FAVOURITES_OUTLINE
-          - FEED
-          - FIELD
-          - FIELDS_EXPRESSION
-          - FIELDS_FILTER
-          - FIELDS_FORMAT
-          - FIELDS_GROUP
-          - FIELDS_SORTAZ
-          - FIELDS_SORTZA
-          - FILE
-          - FILE_FORMATTED
-          - FILE_RAW
-          - FILTER
-          - FIND
-          - FOLDER
-          - FOLDER_TREE
-          - FORMAT
-          - FORWARD
-          - FUNCTION
-          - GENERATE
-          - HELP
-          - HIDE
-          - HIDE_MENU
-          - HISTORY
-          - INFO
-          - INSERT
-          - JOBS
-          - KEY
-          - LOCKED
-          - LOGO
-          - LOGOUT
-          - MENU
-          - MONITORING
-          - MOVE
-          - NODES
-          - OK
-          - OO
-          - OPEN
-          - OPERATOR
-          - PASSWORD
-          - PAUSE
-          - PIPELINE_ELASTIC_INDEX
-          - PIPELINE_FILE
-          - PIPELINE_FILES
-          - PIPELINE_HADOOP
-          - PIPELINE_ID
-          - PIPELINE_INDEX
-          - PIPELINE_JSON
-          - PIPELINE_KAFKA
-          - PIPELINE_RECORD_COUNT
-          - PIPELINE_RECORD_OUTPUT
-          - PIPELINE_REFERENCE_DATA
-          - PIPELINE_SEARCH_OUTPUT
-          - PIPELINE_SOLR
-          - PIPELINE_SPLIT
-          - PIPELINE_STATISTICS
-          - PIPELINE_STREAM
-          - PIPELINE_STROOM_STATS
-          - PIPELINE_STROOM_STATS_STORE
-          - PIPELINE_TEXT
-          - PIPELINE_XML
-          - PIPELINE_XML_SEARCH
-          - PIPELINE_XSD
-          - PIPELINE_XSLT
-          - PLAY
-          - PROCESS
-          - PROPERTIES
-          - QUESTION
-          - RAW
-          - REFRESH
-          - REGEX
-          - REMOVE
-          - RESIZE
-          - RESIZE_HANDLE
-          - RULESET
-          - SAVE
-          - SAVEAS
-          - SEARCH
-          - SEARCH_DARK
-          - SETTINGS
-          - SHARD_CLOSE
-          - SHARD_FLUSH
-          - SHARE
-          - SHOW
-          - SHOW_MENU
-          - STEP
-          - STEPPING
-          - STEPPING_CIRCLE
-          - STEP_BACKWARD
-          - STEP_FORWARD
-          - STOP
-          - TABLE
-          - TABLE_NESTED
-          - TAB_CLOSE
-          - TICK
-          - UNDO
-          - UNLOCK
-          - UP
-          - UPLOAD
-          - USER
-          - USERS
-          - VOLUMES
-          - WARNING
-        isFavourite:
-          type: boolean
-        path:
-          type: string
     ExplorerNode:
       type: object
       properties:
@@ -8666,17 +9241,23 @@ components:
           - ADD
           - ADD_ABOVE
           - ADD_BELOW
+          - ADD_MULTIPLE
           - ALERT
+          - ALERT_SIMPLE
           - ARROW_DOWN
+          - ARROW_LEFT
           - ARROW_RIGHT
           - ARROW_UP
+          - AUTO_REFRESH
           - BACKWARD
+          - BORDERED_CIRCLE
           - CANCEL
           - CASE_SENSITIVE
           - CLEAR
           - CLIPBOARD
           - CLOSE
           - CODE
+          - COLLAPSE_ALL
           - COLLAPSE_UP
           - COPY
           - DATABASE
@@ -8688,6 +9269,7 @@ components:
           - DOCUMENT_ANNOTATIONS_INDEX
           - DOCUMENT_DASHBOARD
           - DOCUMENT_DICTIONARY
+          - DOCUMENT_DOCUMENTATION
           - DOCUMENT_ELASTIC_CLUSTER
           - DOCUMENT_ELASTIC_INDEX
           - DOCUMENT_FAVOURITES
@@ -8716,12 +9298,12 @@ components:
           - DOWN
           - DOWNLOAD
           - DROP_DOWN
-          - DROP_DOWN_DARK
           - EDIT
           - ELLIPSES_HORIZONTAL
           - ELLIPSES_VERTICAL
           - ERROR
           - EXCLAMATION
+          - EXPAND_ALL
           - EXPAND_DOWN
           - EXPLORER
           - FAST_BACKWARD
@@ -8757,6 +9339,7 @@ components:
           - INSERT
           - JOBS
           - KEY
+          - LOCATE
           - LOCKED
           - LOGO
           - LOGOUT
@@ -8770,6 +9353,7 @@ components:
           - OPERATOR
           - PASSWORD
           - PAUSE
+          - PEN
           - PIPELINE_ELASTIC_INDEX
           - PIPELINE_FILE
           - PIPELINE_FILES
@@ -8803,15 +9387,14 @@ components:
           - REMOVE
           - RESIZE
           - RESIZE_HANDLE
-          - RULESET
           - SAVE
           - SAVEAS
           - SEARCH
-          - SEARCH_DARK
           - SETTINGS
           - SHARD_CLOSE
           - SHARD_FLUSH
           - SHARE
+          - SHIELD
           - SHOW
           - SHOW_MENU
           - STEP
@@ -8823,6 +9406,8 @@ components:
           - TABLE
           - TABLE_NESTED
           - TAB_CLOSE
+          - TAGS
+          - TEXT_WRAP
           - TICK
           - UNDO
           - UNLOCK
@@ -8832,26 +9417,52 @@ components:
           - USERS
           - VOLUMES
           - WARNING
-        isFavourite:
-          type: boolean
         name:
           type: string
-        nodeState:
-          type: string
-          enum:
-          - OPEN
-          - CLOSED
-          - LEAF
+        nodeFlags:
+          type: array
+          items:
+            type: string
+            enum:
+            - C
+            - D
+            - I
+            - V
+            - FM
+            - FN
+            - F
+            - L
+            - O
+          uniqueItems: true
+        nodeInfoList:
+          type: array
+          items:
+            $ref: '#/components/schemas/NodeInfo'
         rootNodeUuid:
           type: string
         tags:
-          type: string
+          type: array
+          items:
+            type: string
+          uniqueItems: true
         type:
           type: string
         uniqueKey:
           $ref: '#/components/schemas/ExplorerNodeKey'
         uuid:
           type: string
+    ExplorerNodeInfo:
+      type: object
+      properties:
+        docRefInfo:
+          $ref: '#/components/schemas/DocRefInfo'
+        explorerNode:
+          $ref: '#/components/schemas/ExplorerNode'
+        owners:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserName'
+          uniqueItems: true
     ExplorerNodeKey:
       type: object
       properties:
@@ -8881,8 +9492,12 @@ components:
     ExplorerServiceCopyRequest:
       type: object
       properties:
+        allowRename:
+          type: boolean
         destinationFolder:
           $ref: '#/components/schemas/ExplorerNode'
+        docName:
+          type: string
         explorerNodes:
           type: array
           items:
@@ -8957,6 +9572,25 @@ components:
           type: string
         nameFilterChange:
           type: boolean
+        nodeFlags:
+          type: array
+          items:
+            type: string
+            enum:
+            - C
+            - D
+            - I
+            - V
+            - FM
+            - FN
+            - F
+            - L
+            - O
+          uniqueItems: true
+        recentItems:
+          type: array
+          items:
+            $ref: '#/components/schemas/DocRef'
         requiredPermissions:
           type: array
           items:
@@ -9030,6 +9664,7 @@ components:
             enum:
             - CONTAINS
             - EQUALS
+            - NOT_EQUALS
             - GREATER_THAN
             - GREATER_THAN_OR_EQUAL_TO
             - LESS_THAN
@@ -9056,6 +9691,18 @@ components:
       required:
       - condition
       - field
+    ExtendedUiConfig:
+      type: object
+      properties:
+        dependencyWarningsEnabled:
+          type: boolean
+        externalIdentityProvider:
+          type: boolean
+        maxApiKeyExpiryAgeMs:
+          type: integer
+          format: int64
+        uiConfig:
+          $ref: '#/components/schemas/UiConfig'
     FeedDoc:
       type: object
       properties:
@@ -9097,6 +9744,8 @@ components:
         uuid:
           type: string
         version:
+          type: string
+        volumeGroup:
           type: string
     FetchAllDocumentPermissionsRequest:
       type: object
@@ -9167,6 +9816,40 @@ components:
           items:
             $ref: '#/components/schemas/ExplorerNodeKey'
           uniqueItems: true
+    FetchExplorerNodesRequest:
+      type: object
+      properties:
+        ensureVisible:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExplorerNodeKey'
+          uniqueItems: true
+        filter:
+          $ref: '#/components/schemas/ExplorerTreeFilter'
+        minDepth:
+          type: integer
+          format: int32
+        openItems:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExplorerNodeKey'
+          uniqueItems: true
+        showAlerts:
+          type: boolean
+        temporaryOpenedItems:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExplorerNodeKey'
+          uniqueItems: true
+    FetchHighlightsRequest:
+      type: object
+      properties:
+        docRef:
+          $ref: '#/components/schemas/DocRef'
+        extension:
+          type: string
+        filter:
+          $ref: '#/components/schemas/StringMatch'
     FetchLinkedScriptRequest:
       type: object
       properties:
@@ -9228,36 +9911,63 @@ components:
         dataSource:
           $ref: '#/components/schemas/DocRef'
         field:
-          $ref: '#/components/schemas/AbstractField'
+          $ref: '#/components/schemas/FieldInfo'
         text:
           type: string
       required:
       - dataSource
       - field
-    Field:
+    FieldInfo:
       type: object
-      description: Describes a field in a result set. The field can have various expressions
-        applied to it, e.g. SUM(), along with sorting, filtering, formatting and grouping
       properties:
-        expression:
+        conditions:
           type: string
-          description: The expression to use to generate the value for this field
-          example: SUM(${count})
-        filter:
-          $ref: '#/components/schemas/Filter'
-        format:
-          $ref: '#/components/schemas/Format'
-        group:
-          type: integer
-          format: int32
-        id:
+          enum:
+          - "'=', '!=', 'between', '>', '>=', '<', '<='"
+          - "'=', '!=', 'in', 'in dictionary', 'between', '>', '>=', '<', '<='"
+          - "'=', '!='"
+          - "'=', '!=', 'between', '>', '>=', '<', '<='"
+          - "'=', '!=', 'in', 'in dictionary'"
+          - "'is', 'in folder'"
+          - "'=', '!=', 'in', 'in dictionary'"
+          - "'is', 'in folder', '=', '!=', 'in', 'in dictionary'"
+          - "'=', '!=', 'in', 'in dictionary'"
+          - "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'"
+          - "'=', '!=', 'in', 'in dictionary', 'matches regex'"
+          - "'=', '!=', 'in', 'in dictionary'"
+          - "'=', '!=', 'in', 'in dictionary'"
+          - "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'"
+          - "'=', '!='"
+          - "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'"
+          - "'=', '!=', 'in', 'in dictionary'"
+          - "'is', '=', '!='"
+          - '''between'''
+          - "'=', '!=', 'in'"
+          - "'=', '!=', 'in'"
+          - "'=', '!=', 'in', 'in dictionary'"
+          - "'=', '!=', 'in', 'in dictionary', 'is'"
+          - "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'"
+          - "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'"
+        docRefType:
           type: string
-        name:
+        fieldName:
           type: string
-        sort:
-          $ref: '#/components/schemas/Sort'
-      required:
-      - expression
+        fieldType:
+          type: string
+          enum:
+          - ID
+          - BOOLEAN
+          - INTEGER
+          - LONG
+          - FLOAT
+          - DOUBLE
+          - DATE
+          - TEXT
+          - KEYWORD
+          - IPV4_ADDRESS
+          - DOC_REF
+        queryable:
+          type: boolean
     Filter:
       type: object
       description: A pair of regular expression filters (inclusion and exclusion)
@@ -9266,11 +9976,11 @@ components:
         excludes:
           type: string
           description: Only results NOT matching this filter will be included
-          example: ^[0-9]{3}$
+          example: "^[0-9]{3}$"
         includes:
           type: string
           description: Only results matching this filter will be included
-          example: ^[0-9]{3}$
+          example: "^[0-9]{3}$"
     FilterFieldDefinition:
       type: object
       properties:
@@ -9288,7 +9998,7 @@ components:
         users:
           type: array
           items:
-            $ref: '#/components/schemas/SimpleUser'
+            $ref: '#/components/schemas/UserName'
     FindAnalyticDataShardCriteria:
       type: object
       properties:
@@ -9305,27 +10015,11 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CriteriaFieldSort'
-    FindAnalyticNotificationCriteria:
+    FindApiKeyCriteria:
       type: object
       properties:
-        analyticDocUuid:
-          type: string
-        pageRequest:
-          $ref: '#/components/schemas/PageRequest'
-        quickFilterInput:
-          type: string
-        sort:
-          type: string
-          writeOnly: true
-        sortList:
-          type: array
-          items:
-            $ref: '#/components/schemas/CriteriaFieldSort'
-    FindAnalyticProcessorFilterCriteria:
-      type: object
-      properties:
-        analyticDocUuid:
-          type: string
+        owner:
+          $ref: '#/components/schemas/UserName'
         pageRequest:
           $ref: '#/components/schemas/PageRequest'
         quickFilterInput:
@@ -9376,40 +10070,13 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/PipelineProperty'
-    FindExplorerNodeCriteria:
+    FindFieldInfoCriteria:
       type: object
       properties:
-        ensureVisible:
-          type: array
-          items:
-            $ref: '#/components/schemas/ExplorerNodeKey'
-          uniqueItems: true
-        filter:
-          $ref: '#/components/schemas/ExplorerTreeFilter'
-        minDepth:
-          type: integer
-          format: int32
-        openItems:
-          type: array
-          items:
-            $ref: '#/components/schemas/ExplorerNodeKey'
-          uniqueItems: true
-        temporaryOpenedItems:
-          type: array
-          items:
-            $ref: '#/components/schemas/ExplorerNodeKey'
-          uniqueItems: true
-    FindExplorerNodeQuery:
-      type: object
-      properties:
-        matchCase:
-          type: boolean
+        dataSourceRef:
+          $ref: '#/components/schemas/DocRef'
         pageRequest:
           $ref: '#/components/schemas/PageRequest'
-        pattern:
-          type: string
-        regex:
-          type: boolean
         sort:
           type: string
           writeOnly: true
@@ -9417,9 +10084,13 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CriteriaFieldSort'
+        stringMatch:
+          $ref: '#/components/schemas/StringMatch'
     FindFsVolumeCriteria:
       type: object
       properties:
+        group:
+          $ref: '#/components/schemas/FsVolumeGroup'
         pageRequest:
           $ref: '#/components/schemas/PageRequest'
         selection:
@@ -9431,6 +10102,211 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CriteriaFieldSort'
+    FindInContentRequest:
+      type: object
+      properties:
+        filter:
+          $ref: '#/components/schemas/StringMatch'
+        pageRequest:
+          $ref: '#/components/schemas/PageRequest'
+        sort:
+          type: string
+          writeOnly: true
+        sortList:
+          type: array
+          items:
+            $ref: '#/components/schemas/CriteriaFieldSort'
+    FindInContentResult:
+      type: object
+      properties:
+        docContentMatch:
+          $ref: '#/components/schemas/DocContentMatch'
+        icon:
+          type: string
+          enum:
+          - ADD
+          - ADD_ABOVE
+          - ADD_BELOW
+          - ADD_MULTIPLE
+          - ALERT
+          - ALERT_SIMPLE
+          - ARROW_DOWN
+          - ARROW_LEFT
+          - ARROW_RIGHT
+          - ARROW_UP
+          - AUTO_REFRESH
+          - BACKWARD
+          - BORDERED_CIRCLE
+          - CANCEL
+          - CASE_SENSITIVE
+          - CLEAR
+          - CLIPBOARD
+          - CLOSE
+          - CODE
+          - COLLAPSE_ALL
+          - COLLAPSE_UP
+          - COPY
+          - DATABASE
+          - DELETE
+          - DEPENDENCIES
+          - DISABLE
+          - DOCUMENT_ANALYTIC_OUTPUT_STORE
+          - DOCUMENT_ANALYTIC_RULE
+          - DOCUMENT_ANNOTATIONS_INDEX
+          - DOCUMENT_DASHBOARD
+          - DOCUMENT_DICTIONARY
+          - DOCUMENT_DOCUMENTATION
+          - DOCUMENT_ELASTIC_CLUSTER
+          - DOCUMENT_ELASTIC_INDEX
+          - DOCUMENT_FAVOURITES
+          - DOCUMENT_FEED
+          - DOCUMENT_FOLDER
+          - DOCUMENT_INDEX
+          - DOCUMENT_KAFKA_CONFIG
+          - DOCUMENT_PIPELINE
+          - DOCUMENT_QUERY
+          - DOCUMENT_RECEIVE_DATA_RULE_SET
+          - DOCUMENT_SCRIPT
+          - DOCUMENT_SEARCHABLE
+          - DOCUMENT_SELECT_ALL_OR_NONE
+          - DOCUMENT_SIGMA_RULE
+          - DOCUMENT_SOLR_INDEX
+          - DOCUMENT_STATISTIC_STORE
+          - DOCUMENT_STROOM_STATS_STORE
+          - DOCUMENT_SYSTEM
+          - DOCUMENT_TEXT_CONVERTER
+          - DOCUMENT_VIEW
+          - DOCUMENT_VISUALISATION
+          - DOCUMENT_XMLSCHEMA
+          - DOCUMENT_XSLT
+          - DOT
+          - DOUBLE_ARROW
+          - DOWN
+          - DOWNLOAD
+          - DROP_DOWN
+          - EDIT
+          - ELLIPSES_HORIZONTAL
+          - ELLIPSES_VERTICAL
+          - ERROR
+          - EXCLAMATION
+          - EXPAND_ALL
+          - EXPAND_DOWN
+          - EXPLORER
+          - FAST_BACKWARD
+          - FAST_FORWARD
+          - FATAL
+          - FATAL_DARK
+          - FAVOURITES
+          - FAVOURITES_OUTLINE
+          - FEED
+          - FIELD
+          - FIELDS_EXPRESSION
+          - FIELDS_FILTER
+          - FIELDS_FORMAT
+          - FIELDS_GROUP
+          - FIELDS_SORTAZ
+          - FIELDS_SORTZA
+          - FILE
+          - FILE_FORMATTED
+          - FILE_RAW
+          - FILTER
+          - FIND
+          - FOLDER
+          - FOLDER_TREE
+          - FORMAT
+          - FORWARD
+          - FUNCTION
+          - GENERATE
+          - HELP
+          - HIDE
+          - HIDE_MENU
+          - HISTORY
+          - INFO
+          - INSERT
+          - JOBS
+          - KEY
+          - LOCATE
+          - LOCKED
+          - LOGO
+          - LOGOUT
+          - MENU
+          - MONITORING
+          - MOVE
+          - NODES
+          - OK
+          - OO
+          - OPEN
+          - OPERATOR
+          - PASSWORD
+          - PAUSE
+          - PEN
+          - PIPELINE_ELASTIC_INDEX
+          - PIPELINE_FILE
+          - PIPELINE_FILES
+          - PIPELINE_HADOOP
+          - PIPELINE_ID
+          - PIPELINE_INDEX
+          - PIPELINE_JSON
+          - PIPELINE_KAFKA
+          - PIPELINE_RECORD_COUNT
+          - PIPELINE_RECORD_OUTPUT
+          - PIPELINE_REFERENCE_DATA
+          - PIPELINE_SEARCH_OUTPUT
+          - PIPELINE_SOLR
+          - PIPELINE_SPLIT
+          - PIPELINE_STATISTICS
+          - PIPELINE_STREAM
+          - PIPELINE_STROOM_STATS
+          - PIPELINE_STROOM_STATS_STORE
+          - PIPELINE_TEXT
+          - PIPELINE_XML
+          - PIPELINE_XML_SEARCH
+          - PIPELINE_XSD
+          - PIPELINE_XSLT
+          - PLAY
+          - PROCESS
+          - PROPERTIES
+          - QUESTION
+          - RAW
+          - REFRESH
+          - REGEX
+          - REMOVE
+          - RESIZE
+          - RESIZE_HANDLE
+          - SAVE
+          - SAVEAS
+          - SEARCH
+          - SETTINGS
+          - SHARD_CLOSE
+          - SHARD_FLUSH
+          - SHARE
+          - SHIELD
+          - SHOW
+          - SHOW_MENU
+          - STEP
+          - STEPPING
+          - STEPPING_CIRCLE
+          - STEP_BACKWARD
+          - STEP_FORWARD
+          - STOP
+          - TABLE
+          - TABLE_NESTED
+          - TAB_CLOSE
+          - TAGS
+          - TEXT_WRAP
+          - TICK
+          - UNDO
+          - UNLOCK
+          - UP
+          - UPLOAD
+          - USER
+          - USERS
+          - VOLUMES
+          - WARNING
+        isFavourite:
+          type: boolean
+        path:
+          type: string
     FindIndexShardCriteria:
       type: object
       properties:
@@ -9503,6 +10379,209 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CriteriaFieldSort'
+    FindRequest:
+      type: object
+      properties:
+        filter:
+          $ref: '#/components/schemas/ExplorerTreeFilter'
+        pageRequest:
+          $ref: '#/components/schemas/PageRequest'
+        sort:
+          type: string
+          writeOnly: true
+        sortList:
+          type: array
+          items:
+            $ref: '#/components/schemas/CriteriaFieldSort'
+    FindResult:
+      type: object
+      properties:
+        docRef:
+          $ref: '#/components/schemas/DocRef'
+        icon:
+          type: string
+          enum:
+          - ADD
+          - ADD_ABOVE
+          - ADD_BELOW
+          - ADD_MULTIPLE
+          - ALERT
+          - ALERT_SIMPLE
+          - ARROW_DOWN
+          - ARROW_LEFT
+          - ARROW_RIGHT
+          - ARROW_UP
+          - AUTO_REFRESH
+          - BACKWARD
+          - BORDERED_CIRCLE
+          - CANCEL
+          - CASE_SENSITIVE
+          - CLEAR
+          - CLIPBOARD
+          - CLOSE
+          - CODE
+          - COLLAPSE_ALL
+          - COLLAPSE_UP
+          - COPY
+          - DATABASE
+          - DELETE
+          - DEPENDENCIES
+          - DISABLE
+          - DOCUMENT_ANALYTIC_OUTPUT_STORE
+          - DOCUMENT_ANALYTIC_RULE
+          - DOCUMENT_ANNOTATIONS_INDEX
+          - DOCUMENT_DASHBOARD
+          - DOCUMENT_DICTIONARY
+          - DOCUMENT_DOCUMENTATION
+          - DOCUMENT_ELASTIC_CLUSTER
+          - DOCUMENT_ELASTIC_INDEX
+          - DOCUMENT_FAVOURITES
+          - DOCUMENT_FEED
+          - DOCUMENT_FOLDER
+          - DOCUMENT_INDEX
+          - DOCUMENT_KAFKA_CONFIG
+          - DOCUMENT_PIPELINE
+          - DOCUMENT_QUERY
+          - DOCUMENT_RECEIVE_DATA_RULE_SET
+          - DOCUMENT_SCRIPT
+          - DOCUMENT_SEARCHABLE
+          - DOCUMENT_SELECT_ALL_OR_NONE
+          - DOCUMENT_SIGMA_RULE
+          - DOCUMENT_SOLR_INDEX
+          - DOCUMENT_STATISTIC_STORE
+          - DOCUMENT_STROOM_STATS_STORE
+          - DOCUMENT_SYSTEM
+          - DOCUMENT_TEXT_CONVERTER
+          - DOCUMENT_VIEW
+          - DOCUMENT_VISUALISATION
+          - DOCUMENT_XMLSCHEMA
+          - DOCUMENT_XSLT
+          - DOT
+          - DOUBLE_ARROW
+          - DOWN
+          - DOWNLOAD
+          - DROP_DOWN
+          - EDIT
+          - ELLIPSES_HORIZONTAL
+          - ELLIPSES_VERTICAL
+          - ERROR
+          - EXCLAMATION
+          - EXPAND_ALL
+          - EXPAND_DOWN
+          - EXPLORER
+          - FAST_BACKWARD
+          - FAST_FORWARD
+          - FATAL
+          - FATAL_DARK
+          - FAVOURITES
+          - FAVOURITES_OUTLINE
+          - FEED
+          - FIELD
+          - FIELDS_EXPRESSION
+          - FIELDS_FILTER
+          - FIELDS_FORMAT
+          - FIELDS_GROUP
+          - FIELDS_SORTAZ
+          - FIELDS_SORTZA
+          - FILE
+          - FILE_FORMATTED
+          - FILE_RAW
+          - FILTER
+          - FIND
+          - FOLDER
+          - FOLDER_TREE
+          - FORMAT
+          - FORWARD
+          - FUNCTION
+          - GENERATE
+          - HELP
+          - HIDE
+          - HIDE_MENU
+          - HISTORY
+          - INFO
+          - INSERT
+          - JOBS
+          - KEY
+          - LOCATE
+          - LOCKED
+          - LOGO
+          - LOGOUT
+          - MENU
+          - MONITORING
+          - MOVE
+          - NODES
+          - OK
+          - OO
+          - OPEN
+          - OPERATOR
+          - PASSWORD
+          - PAUSE
+          - PEN
+          - PIPELINE_ELASTIC_INDEX
+          - PIPELINE_FILE
+          - PIPELINE_FILES
+          - PIPELINE_HADOOP
+          - PIPELINE_ID
+          - PIPELINE_INDEX
+          - PIPELINE_JSON
+          - PIPELINE_KAFKA
+          - PIPELINE_RECORD_COUNT
+          - PIPELINE_RECORD_OUTPUT
+          - PIPELINE_REFERENCE_DATA
+          - PIPELINE_SEARCH_OUTPUT
+          - PIPELINE_SOLR
+          - PIPELINE_SPLIT
+          - PIPELINE_STATISTICS
+          - PIPELINE_STREAM
+          - PIPELINE_STROOM_STATS
+          - PIPELINE_STROOM_STATS_STORE
+          - PIPELINE_TEXT
+          - PIPELINE_XML
+          - PIPELINE_XML_SEARCH
+          - PIPELINE_XSD
+          - PIPELINE_XSLT
+          - PLAY
+          - PROCESS
+          - PROPERTIES
+          - QUESTION
+          - RAW
+          - REFRESH
+          - REGEX
+          - REMOVE
+          - RESIZE
+          - RESIZE_HANDLE
+          - SAVE
+          - SAVEAS
+          - SEARCH
+          - SETTINGS
+          - SHARD_CLOSE
+          - SHARD_FLUSH
+          - SHARE
+          - SHIELD
+          - SHOW
+          - SHOW_MENU
+          - STEP
+          - STEPPING
+          - STEPPING_CIRCLE
+          - STEP_BACKWARD
+          - STEP_FORWARD
+          - STOP
+          - TABLE
+          - TABLE_NESTED
+          - TAB_CLOSE
+          - TAGS
+          - TEXT_WRAP
+          - TICK
+          - UNDO
+          - UNLOCK
+          - UP
+          - UPLOAD
+          - USER
+          - USERS
+          - VOLUMES
+          - WARNING
+        path:
+          type: string
     FindResultStoreCriteria:
       type: object
       properties:
@@ -9528,6 +10607,8 @@ components:
           type: boolean
         name:
           $ref: '#/components/schemas/StringCriteria'
+        ownerUuid:
+          type: string
         pageRequest:
           $ref: '#/components/schemas/PageRequest'
         requiredPermission:
@@ -9539,8 +10620,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CriteriaFieldSort'
-        userId:
-          type: string
     FindTaskCriteria:
       type: object
       properties:
@@ -9626,7 +10705,7 @@ components:
           structure:
             type: array
             items:
-              $ref: '#/components/schemas/Field'
+              $ref: '#/components/schemas/Column'
           values:
             type: array
             items:
@@ -9639,7 +10718,7 @@ components:
     FloatField:
       type: object
       allOf:
-      - $ref: '#/components/schemas/AbstractField'
+      - $ref: '#/components/schemas/QueryField'
     Format:
       type: object
       description: Describes the formatting that will be applied to values in a field
@@ -9686,6 +10765,10 @@ components:
           format: int32
         path:
           type: string
+        s3ClientConfig:
+          $ref: '#/components/schemas/S3ClientConfig'
+        s3ClientConfigData:
+          type: string
         status:
           type: string
           enum:
@@ -9700,8 +10783,37 @@ components:
         version:
           type: integer
           format: int32
+        volumeGroupId:
+          type: integer
+          format: int32
         volumeState:
           $ref: '#/components/schemas/FsVolumeState'
+        volumeType:
+          type: string
+          enum:
+          - STANDARD
+          - S3
+    FsVolumeGroup:
+      type: object
+      properties:
+        createTimeMs:
+          type: integer
+          format: int64
+        createUser:
+          type: string
+        id:
+          type: integer
+          format: int32
+        name:
+          type: string
+        updateTimeMs:
+          type: integer
+          format: int64
+        updateUser:
+          type: string
+        version:
+          type: integer
+          format: int32
     FsVolumeState:
       type: object
       properties:
@@ -9723,47 +10835,6 @@ components:
         version:
           type: integer
           format: int32
-    FunctionSignature:
-      type: object
-      properties:
-        aliases:
-          type: array
-          items:
-            type: string
-        args:
-          type: array
-          items:
-            $ref: '#/components/schemas/Arg'
-        categoryPath:
-          type: array
-          items:
-            type: string
-        description:
-          type: string
-        helpAnchor:
-          type: string
-        name:
-          type: string
-        overloadType:
-          type: string
-          enum:
-          - NOT_OVERLOADED
-          - OVERLOADED_IN_CATEGORY
-          - OVERLOADED_GLOBALLY
-        returnDescription:
-          type: string
-        returnType:
-          type: string
-          enum:
-          - UNKNOWN
-          - BOOLEAN
-          - DOUBLE
-          - ERROR
-          - INTEGER
-          - LONG
-          - "NULL"
-          - NUMBER
-          - STRING
     GetAnalyticShardDataRequest:
       type: object
       properties:
@@ -9807,8 +10878,10 @@ components:
           - 406 - 200 - Unknown compression
           - 401 - 300 - Client Certificate Required
           - 401 - 301 - Client Token Required
-          - 403 - 310 - Client Certificate not authorised
-          - 403 - 311 - Client Token not authorised
+          - 401 - 302 - Client Token or Certificate Required
+          - 401 - 310 - Client Certificate failed authentication
+          - 401 - 311 - Client Token failed authentication
+          - 401 - 312 - Client Token or Certificate failed authentication
           - 500 - 400 - Compressed stream invalid
           - 500 - 999 - Unknown error
     GetPipelineForMetaRequest:
@@ -9852,6 +10925,40 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CriteriaFieldSort'
+    HashedApiKey:
+      type: object
+      properties:
+        apiKeyHash:
+          type: string
+        apiKeyPrefix:
+          type: string
+        comments:
+          type: string
+        createTimeMs:
+          type: integer
+          format: int64
+        createUser:
+          type: string
+        enabled:
+          type: boolean
+        expireTimeMs:
+          type: integer
+          format: int64
+        id:
+          type: integer
+          format: int32
+        name:
+          type: string
+        owner:
+          $ref: '#/components/schemas/UserName'
+        updateTimeMs:
+          type: integer
+          format: int64
+        updateUser:
+          type: string
+        version:
+          type: integer
+          format: int32
     HoppingWindow:
       type: object
       allOf:
@@ -9867,7 +10974,7 @@ components:
     IdField:
       type: object
       allOf:
-      - $ref: '#/components/schemas/AbstractField'
+      - $ref: '#/components/schemas/QueryField'
     ImportConfigRequest:
       type: object
       properties:
@@ -10165,11 +11272,11 @@ components:
     IntegerField:
       type: object
       allOf:
-      - $ref: '#/components/schemas/AbstractField'
+      - $ref: '#/components/schemas/QueryField'
     IpV4AddressField:
       type: object
       allOf:
-      - $ref: '#/components/schemas/AbstractField'
+      - $ref: '#/components/schemas/QueryField'
     Job:
       type: object
       properties:
@@ -10282,7 +11389,7 @@ components:
     KeywordField:
       type: object
       allOf:
-      - $ref: '#/components/schemas/AbstractField'
+      - $ref: '#/components/schemas/QueryField'
     LayoutConfig:
       type: object
       discriminator:
@@ -10371,6 +11478,8 @@ components:
           format: int32
         type:
           type: string
+        unknown:
+          type: boolean
       required:
       - type
     LoginRequest:
@@ -10392,7 +11501,7 @@ components:
     LongField:
       type: object
       allOf:
-      - $ref: '#/components/schemas/AbstractField'
+      - $ref: '#/components/schemas/QueryField'
     MapDefinition:
       type: object
       properties:
@@ -10505,6 +11614,29 @@ components:
         version:
           type: integer
           format: int32
+    NodeInfo:
+      type: object
+      properties:
+        description:
+          type: string
+        severity:
+          type: string
+          enum:
+          - INFO
+          - WARN
+          - ERROR
+          - FATAL
+    NodeMonitoringConfig:
+      type: object
+      properties:
+        pingMaxThreshold:
+          type: integer
+          format: int32
+          minimum: 1
+        pingWarnThreshold:
+          type: integer
+          format: int32
+          minimum: 1
     NodeSearchTask:
       type: object
       properties:
@@ -10512,9 +11644,6 @@ components:
           $ref: '#/components/schemas/DateTimeSettings'
         key:
           $ref: '#/components/schemas/QueryKey'
-        now:
-          type: integer
-          format: int64
         query:
           $ref: '#/components/schemas/Query'
         searchRequestSource:
@@ -10597,8 +11726,8 @@ components:
         offset:
           type: integer
           format: int64
-          description: The start offset for this sub-set of data, where zero is the
-            offset of the first record in the full result set
+          description: "The start offset for this sub-set of data, where zero is the\
+            \ offset of the first record in the full result set"
           example: 0
       required:
       - length
@@ -10700,6 +11829,13 @@ components:
           type: string
       required:
       - type
+    PermissionChangeImpactSummary:
+      type: object
+      properties:
+        impactDetail:
+          type: string
+        impactSummary:
+          type: string
     PermissionChangeRequest:
       type: object
       properties:
@@ -10779,17 +11915,23 @@ components:
           - ADD
           - ADD_ABOVE
           - ADD_BELOW
+          - ADD_MULTIPLE
           - ALERT
+          - ALERT_SIMPLE
           - ARROW_DOWN
+          - ARROW_LEFT
           - ARROW_RIGHT
           - ARROW_UP
+          - AUTO_REFRESH
           - BACKWARD
+          - BORDERED_CIRCLE
           - CANCEL
           - CASE_SENSITIVE
           - CLEAR
           - CLIPBOARD
           - CLOSE
           - CODE
+          - COLLAPSE_ALL
           - COLLAPSE_UP
           - COPY
           - DATABASE
@@ -10801,6 +11943,7 @@ components:
           - DOCUMENT_ANNOTATIONS_INDEX
           - DOCUMENT_DASHBOARD
           - DOCUMENT_DICTIONARY
+          - DOCUMENT_DOCUMENTATION
           - DOCUMENT_ELASTIC_CLUSTER
           - DOCUMENT_ELASTIC_INDEX
           - DOCUMENT_FAVOURITES
@@ -10829,12 +11972,12 @@ components:
           - DOWN
           - DOWNLOAD
           - DROP_DOWN
-          - DROP_DOWN_DARK
           - EDIT
           - ELLIPSES_HORIZONTAL
           - ELLIPSES_VERTICAL
           - ERROR
           - EXCLAMATION
+          - EXPAND_ALL
           - EXPAND_DOWN
           - EXPLORER
           - FAST_BACKWARD
@@ -10870,6 +12013,7 @@ components:
           - INSERT
           - JOBS
           - KEY
+          - LOCATE
           - LOCKED
           - LOGO
           - LOGOUT
@@ -10883,6 +12027,7 @@ components:
           - OPERATOR
           - PASSWORD
           - PAUSE
+          - PEN
           - PIPELINE_ELASTIC_INDEX
           - PIPELINE_FILE
           - PIPELINE_FILES
@@ -10916,15 +12061,14 @@ components:
           - REMOVE
           - RESIZE
           - RESIZE_HANDLE
-          - RULESET
           - SAVE
           - SAVEAS
           - SEARCH
-          - SEARCH_DARK
           - SETTINGS
           - SHARD_CLOSE
           - SHARD_FLUSH
           - SHARE
+          - SHIELD
           - SHOW
           - SHOW_MENU
           - STEP
@@ -10936,6 +12080,8 @@ components:
           - TABLE
           - TABLE_NESTED
           - TAB_CLOSE
+          - TAGS
+          - TEXT_WRAP
           - TICK
           - UNDO
           - UNLOCK
@@ -11181,8 +12327,11 @@ components:
           type: string
         pipelineUuid:
           type: string
-        taskType:
+        processorType:
           type: string
+          enum:
+          - PIPELINE
+          - STREAMING_ANALYTIC
         updateTimeMs:
           type: integer
           format: int64
@@ -11215,6 +12364,9 @@ components:
         maxMetaCreateTimeMs:
           type: integer
           format: int64
+        maxProcessingTasks:
+          type: integer
+          format: int32
         minMetaCreateTimeMs:
           type: integer
           format: int64
@@ -11229,6 +12381,11 @@ components:
           $ref: '#/components/schemas/Processor'
         processorFilterTracker:
           $ref: '#/components/schemas/ProcessorFilterTracker'
+        processorType:
+          type: string
+          enum:
+          - PIPELINE
+          - STREAMING_ANALYTIC
         processorUuid:
           type: string
         queryData:
@@ -11251,6 +12408,8 @@ components:
       - $ref: '#/components/schemas/ProcessorListRow'
       - type: object
         properties:
+          ownerDisplayName:
+            type: string
           processorFilter:
             $ref: '#/components/schemas/ProcessorFilter'
     ProcessorFilterTracker:
@@ -11425,6 +12584,28 @@ components:
           type: array
           items:
             type: string
+    QLVisResult:
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/Result'
+      - type: object
+        properties:
+          dataPoints:
+            type: integer
+            format: int64
+          jsonData:
+            type: string
+          visSettings:
+            $ref: '#/components/schemas/QLVisSettings'
+      required:
+      - componentId
+    QLVisSettings:
+      type: object
+      properties:
+        json:
+          type: string
+        visualisation:
+          $ref: '#/components/schemas/DocRef'
     Query:
       type: object
       description: The query terms for the search
@@ -11465,8 +12646,18 @@ components:
     QueryConfig:
       type: object
       properties:
+        dashboardPipelineSelectorIncludedTags:
+          type: array
+          items:
+            type: string
+          uniqueItems: true
         infoPopup:
           $ref: '#/components/schemas/InfoPopupConfig'
+        viewPipelineSelectorIncludedTags:
+          type: array
+          items:
+            type: string
+          uniqueItems: true
     QueryContext:
       type: object
       properties:
@@ -11522,6 +12713,369 @@ components:
           type: string
         version:
           type: string
+    QueryField:
+      type: object
+      discriminator:
+        propertyName: type
+      properties:
+        conditionSet:
+          type: string
+          enum:
+          - "'=', '!=', 'between', '>', '>=', '<', '<='"
+          - "'=', '!=', 'in', 'in dictionary', 'between', '>', '>=', '<', '<='"
+          - "'=', '!='"
+          - "'=', '!=', 'between', '>', '>=', '<', '<='"
+          - "'=', '!=', 'in', 'in dictionary'"
+          - "'is', 'in folder'"
+          - "'=', '!=', 'in', 'in dictionary'"
+          - "'is', 'in folder', '=', '!=', 'in', 'in dictionary'"
+          - "'=', '!=', 'in', 'in dictionary'"
+          - "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'"
+          - "'=', '!=', 'in', 'in dictionary', 'matches regex'"
+          - "'=', '!=', 'in', 'in dictionary'"
+          - "'=', '!=', 'in', 'in dictionary'"
+          - "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'"
+          - "'=', '!='"
+          - "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'"
+          - "'=', '!=', 'in', 'in dictionary'"
+          - "'is', '=', '!='"
+          - '''between'''
+          - "'=', '!=', 'in'"
+          - "'=', '!=', 'in'"
+          - "'=', '!=', 'in', 'in dictionary'"
+          - "'=', '!=', 'in', 'in dictionary', 'is'"
+          - "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'"
+          - "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'"
+        docRefType:
+          type: string
+        fieldType:
+          type: string
+          enum:
+          - ID
+          - BOOLEAN
+          - INTEGER
+          - LONG
+          - FLOAT
+          - DOUBLE
+          - DATE
+          - TEXT
+          - KEYWORD
+          - IPV4_ADDRESS
+          - DOC_REF
+        name:
+          type: string
+        queryable:
+          type: boolean
+        type:
+          type: string
+      required:
+      - type
+    QueryHelpData:
+      type: object
+      discriminator:
+        propertyName: type
+      properties:
+        type:
+          type: string
+      required:
+      - type
+    QueryHelpDataSource:
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/QueryHelpData'
+      - type: object
+        properties:
+          docRef:
+            $ref: '#/components/schemas/DocRef'
+    QueryHelpDetail:
+      type: object
+      properties:
+        documentation:
+          type: string
+        insertText:
+          type: string
+        insertType:
+          type: string
+          enum:
+          - PLAIN_TEXT
+          - SNIPPET
+          - BLANK
+          - NOT_INSERTABLE
+    QueryHelpField:
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/QueryHelpData'
+      - type: object
+        properties:
+          fieldInfo:
+            $ref: '#/components/schemas/FieldInfo'
+    QueryHelpFunctionSignature:
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/QueryHelpData'
+      - type: object
+        properties:
+          aliases:
+            type: array
+            items:
+              type: string
+          args:
+            type: array
+            items:
+              $ref: '#/components/schemas/Arg'
+          categoryPath:
+            type: array
+            items:
+              type: string
+          description:
+            type: string
+          helpAnchor:
+            type: string
+          name:
+            type: string
+          overloadType:
+            type: string
+            enum:
+            - NOT_OVERLOADED
+            - OVERLOADED_IN_CATEGORY
+            - OVERLOADED_GLOBALLY
+          returnDescription:
+            type: string
+          returnType:
+            type: string
+            enum:
+            - UNKNOWN
+            - BOOLEAN
+            - DOUBLE
+            - ERROR
+            - INTEGER
+            - LONG
+            - "NULL"
+            - NUMBER
+            - STRING
+    QueryHelpRequest:
+      type: object
+      properties:
+        dataSourceRef:
+          $ref: '#/components/schemas/DocRef'
+        pageRequest:
+          $ref: '#/components/schemas/PageRequest'
+        parentPath:
+          type: string
+        query:
+          type: string
+        showAll:
+          type: boolean
+        sort:
+          type: string
+          writeOnly: true
+        sortList:
+          type: array
+          items:
+            $ref: '#/components/schemas/CriteriaFieldSort'
+        stringMatch:
+          $ref: '#/components/schemas/StringMatch'
+    QueryHelpRow:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/QueryHelpData'
+        hasChildren:
+          type: boolean
+        icon:
+          type: string
+          enum:
+          - ADD
+          - ADD_ABOVE
+          - ADD_BELOW
+          - ADD_MULTIPLE
+          - ALERT
+          - ALERT_SIMPLE
+          - ARROW_DOWN
+          - ARROW_LEFT
+          - ARROW_RIGHT
+          - ARROW_UP
+          - AUTO_REFRESH
+          - BACKWARD
+          - BORDERED_CIRCLE
+          - CANCEL
+          - CASE_SENSITIVE
+          - CLEAR
+          - CLIPBOARD
+          - CLOSE
+          - CODE
+          - COLLAPSE_ALL
+          - COLLAPSE_UP
+          - COPY
+          - DATABASE
+          - DELETE
+          - DEPENDENCIES
+          - DISABLE
+          - DOCUMENT_ANALYTIC_OUTPUT_STORE
+          - DOCUMENT_ANALYTIC_RULE
+          - DOCUMENT_ANNOTATIONS_INDEX
+          - DOCUMENT_DASHBOARD
+          - DOCUMENT_DICTIONARY
+          - DOCUMENT_DOCUMENTATION
+          - DOCUMENT_ELASTIC_CLUSTER
+          - DOCUMENT_ELASTIC_INDEX
+          - DOCUMENT_FAVOURITES
+          - DOCUMENT_FEED
+          - DOCUMENT_FOLDER
+          - DOCUMENT_INDEX
+          - DOCUMENT_KAFKA_CONFIG
+          - DOCUMENT_PIPELINE
+          - DOCUMENT_QUERY
+          - DOCUMENT_RECEIVE_DATA_RULE_SET
+          - DOCUMENT_SCRIPT
+          - DOCUMENT_SEARCHABLE
+          - DOCUMENT_SELECT_ALL_OR_NONE
+          - DOCUMENT_SIGMA_RULE
+          - DOCUMENT_SOLR_INDEX
+          - DOCUMENT_STATISTIC_STORE
+          - DOCUMENT_STROOM_STATS_STORE
+          - DOCUMENT_SYSTEM
+          - DOCUMENT_TEXT_CONVERTER
+          - DOCUMENT_VIEW
+          - DOCUMENT_VISUALISATION
+          - DOCUMENT_XMLSCHEMA
+          - DOCUMENT_XSLT
+          - DOT
+          - DOUBLE_ARROW
+          - DOWN
+          - DOWNLOAD
+          - DROP_DOWN
+          - EDIT
+          - ELLIPSES_HORIZONTAL
+          - ELLIPSES_VERTICAL
+          - ERROR
+          - EXCLAMATION
+          - EXPAND_ALL
+          - EXPAND_DOWN
+          - EXPLORER
+          - FAST_BACKWARD
+          - FAST_FORWARD
+          - FATAL
+          - FATAL_DARK
+          - FAVOURITES
+          - FAVOURITES_OUTLINE
+          - FEED
+          - FIELD
+          - FIELDS_EXPRESSION
+          - FIELDS_FILTER
+          - FIELDS_FORMAT
+          - FIELDS_GROUP
+          - FIELDS_SORTAZ
+          - FIELDS_SORTZA
+          - FILE
+          - FILE_FORMATTED
+          - FILE_RAW
+          - FILTER
+          - FIND
+          - FOLDER
+          - FOLDER_TREE
+          - FORMAT
+          - FORWARD
+          - FUNCTION
+          - GENERATE
+          - HELP
+          - HIDE
+          - HIDE_MENU
+          - HISTORY
+          - INFO
+          - INSERT
+          - JOBS
+          - KEY
+          - LOCATE
+          - LOCKED
+          - LOGO
+          - LOGOUT
+          - MENU
+          - MONITORING
+          - MOVE
+          - NODES
+          - OK
+          - OO
+          - OPEN
+          - OPERATOR
+          - PASSWORD
+          - PAUSE
+          - PEN
+          - PIPELINE_ELASTIC_INDEX
+          - PIPELINE_FILE
+          - PIPELINE_FILES
+          - PIPELINE_HADOOP
+          - PIPELINE_ID
+          - PIPELINE_INDEX
+          - PIPELINE_JSON
+          - PIPELINE_KAFKA
+          - PIPELINE_RECORD_COUNT
+          - PIPELINE_RECORD_OUTPUT
+          - PIPELINE_REFERENCE_DATA
+          - PIPELINE_SEARCH_OUTPUT
+          - PIPELINE_SOLR
+          - PIPELINE_SPLIT
+          - PIPELINE_STATISTICS
+          - PIPELINE_STREAM
+          - PIPELINE_STROOM_STATS
+          - PIPELINE_STROOM_STATS_STORE
+          - PIPELINE_TEXT
+          - PIPELINE_XML
+          - PIPELINE_XML_SEARCH
+          - PIPELINE_XSD
+          - PIPELINE_XSLT
+          - PLAY
+          - PROCESS
+          - PROPERTIES
+          - QUESTION
+          - RAW
+          - REFRESH
+          - REGEX
+          - REMOVE
+          - RESIZE
+          - RESIZE_HANDLE
+          - SAVE
+          - SAVEAS
+          - SEARCH
+          - SETTINGS
+          - SHARD_CLOSE
+          - SHARD_FLUSH
+          - SHARE
+          - SHIELD
+          - SHOW
+          - SHOW_MENU
+          - STEP
+          - STEPPING
+          - STEPPING_CIRCLE
+          - STEP_BACKWARD
+          - STEP_FORWARD
+          - STOP
+          - TABLE
+          - TABLE_NESTED
+          - TAB_CLOSE
+          - TAGS
+          - TEXT_WRAP
+          - TICK
+          - UNDO
+          - UNLOCK
+          - UP
+          - UPLOAD
+          - USER
+          - USERS
+          - VOLUMES
+          - WARNING
+        id:
+          type: string
+        title:
+          type: string
+        type:
+          type: string
+          enum:
+          - DATA_SOURCE
+          - FIELD
+          - FUNCTION
+          - TITLE
+          - STRUCTURE
     QueryKey:
       type: object
       description: A unique key to identify the instance of the search by. This key
@@ -11626,7 +13180,7 @@ components:
         fields:
           type: array
           items:
-            $ref: '#/components/schemas/AbstractField'
+            $ref: '#/components/schemas/QueryField'
         name:
           type: string
         rules:
@@ -11817,7 +13371,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/AnalyticDataShard'
-    ResultPageAnalyticNotificationRow:
+    ResultPageCompletionValue:
       type: object
       description: A page of results.
       properties:
@@ -11826,17 +13380,7 @@ components:
         values:
           type: array
           items:
-            $ref: '#/components/schemas/AnalyticNotificationRow'
-    ResultPageAnalyticProcessorFilter:
-      type: object
-      description: A page of results.
-      properties:
-        pageResponse:
-          $ref: '#/components/schemas/PageResponse'
-        values:
-          type: array
-          items:
-            $ref: '#/components/schemas/AnalyticProcessorFilter'
+            $ref: '#/components/schemas/CompletionValue'
     ResultPageCustomRollUpMask:
       type: object
       description: A page of results.
@@ -11877,7 +13421,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Dependency'
-    ResultPageExplorerDocContentMatch:
+    ResultPageFieldInfo:
       type: object
       description: A page of results.
       properties:
@@ -11886,7 +13430,27 @@ components:
         values:
           type: array
           items:
-            $ref: '#/components/schemas/ExplorerDocContentMatch'
+            $ref: '#/components/schemas/FieldInfo'
+    ResultPageFindInContentResult:
+      type: object
+      description: A page of results.
+      properties:
+        pageResponse:
+          $ref: '#/components/schemas/PageResponse'
+        values:
+          type: array
+          items:
+            $ref: '#/components/schemas/FindInContentResult'
+    ResultPageFindResult:
+      type: object
+      description: A page of results.
+      properties:
+        pageResponse:
+          $ref: '#/components/schemas/PageResponse'
+        values:
+          type: array
+          items:
+            $ref: '#/components/schemas/FindResult'
     ResultPageFsVolume:
       type: object
       description: A page of results.
@@ -11897,6 +13461,16 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/FsVolume'
+    ResultPageFsVolumeGroup:
+      type: object
+      description: A page of results.
+      properties:
+        pageResponse:
+          $ref: '#/components/schemas/PageResponse'
+        values:
+          type: array
+          items:
+            $ref: '#/components/schemas/FsVolumeGroup'
     ResultPageIndexShard:
       type: object
       description: A page of results.
@@ -11977,6 +13551,16 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ProcessorTaskSummary'
+    ResultPageQueryHelpRow:
+      type: object
+      description: A page of results.
+      properties:
+        pageResponse:
+          $ref: '#/components/schemas/PageResponse'
+        values:
+          type: array
+          items:
+            $ref: '#/components/schemas/QueryHelpRow'
     ResultPageStoredQuery:
       type: object
       description: A page of results.
@@ -11987,16 +13571,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/StoredQuery'
-    ResultPageString:
-      type: object
-      description: A page of results.
-      properties:
-        pageResponse:
-          $ref: '#/components/schemas/PageResponse'
-        values:
-          type: array
-          items:
-            type: string
     ResultPageUser:
       type: object
       description: A page of results.
@@ -12007,10 +13581,20 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/User'
+    ResultPageUserName:
+      type: object
+      description: A page of results.
+      properties:
+        pageResponse:
+          $ref: '#/components/schemas/PageResponse'
+        values:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserName'
     ResultRequest:
       type: object
-      description: A definition for how to return the raw results of the query in
-        the SearchResponse, e.g. sorted, grouped, limited, etc.
+      description: "A definition for how to return the raw results of the query in\
+        \ the SearchResponse, e.g. sorted, grouped, limited, etc."
       properties:
         componentId:
           type: string
@@ -12039,11 +13623,13 @@ components:
           $ref: '#/components/schemas/OffsetRange'
         resultStyle:
           type: string
-          description: The style of results required. FLAT will provide a FlatResult
-            object, while TABLE will provide a TableResult object
+          description: "The style of results required. FLAT will provide a FlatResult\
+            \ object, while TABLE will provide a TableResult object"
           enum:
           - FLAT
           - TABLE
+          - VIS
+          - QL_VIS
         timeFilter:
           $ref: '#/components/schemas/TimeFilter'
       required:
@@ -12057,6 +13643,8 @@ components:
       properties:
         complete:
           type: boolean
+        createUser:
+          type: string
         creationTime:
           type: integer
           format: int64
@@ -12075,8 +13663,6 @@ components:
           format: int64
         taskProgress:
           $ref: '#/components/schemas/SearchTaskProgress'
-        userId:
-          type: string
     ResultStoreResponse:
       type: object
       properties:
@@ -12099,8 +13685,8 @@ components:
         depth:
           type: integer
           format: int32
-          description: The grouping depth, where 0 is the top level of grouping, or
-            where there is no grouping
+          description: "The grouping depth, where 0 is the top level of grouping,\
+            \ or where there is no grouping"
           example: 0
         groupKey:
           type: string
@@ -12119,6 +13705,63 @@ components:
       - depth
       - groupKey
       - values
+    S3ClientConfig:
+      type: object
+      properties:
+        accelerate:
+          type: boolean
+        async:
+          type: boolean
+        bucketName:
+          type: string
+        checksumValidationEnabled:
+          type: boolean
+        createBuckets:
+          type: boolean
+        credentials:
+          $ref: '#/components/schemas/AwsCredentials'
+        credentialsProviderType:
+          type: string
+          enum:
+          - ANONYMOUS
+          - DEFAULT
+          - ENVIRONMENT_VARIABLE
+          - PROFILE
+          - STATIC
+          - SYSTEM_PROPERTY
+          - WEB
+        crossRegionAccessEnabled:
+          type: boolean
+        endpointOverride:
+          type: string
+        forcePathStyle:
+          type: boolean
+        httpConfiguration:
+          $ref: '#/components/schemas/AwsHttpConfig'
+        keyPattern:
+          type: string
+        maxConcurrency:
+          type: integer
+          format: int32
+        minimalPartSizeInBytes:
+          type: integer
+          format: int64
+        multipart:
+          type: boolean
+        numRetries:
+          type: integer
+          format: int32
+        readBufferSizeInBytes:
+          type: integer
+          format: int64
+        region:
+          type: string
+        targetThroughputInGbps:
+          type: number
+          format: double
+        thresholdInBytes:
+          type: integer
+          format: int64
     SavePipelineXmlRequest:
       type: object
       properties:
@@ -12126,6 +13769,43 @@ components:
           $ref: '#/components/schemas/DocRef'
         xml:
           type: string
+    ScheduledQueryAnalyticProcessConfig:
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/AnalyticProcessConfig'
+      - type: object
+        properties:
+          enabled:
+            type: boolean
+          errorFeed:
+            $ref: '#/components/schemas/DocRef'
+          maxEventTimeMs:
+            type: integer
+            format: int64
+          minEventTimeMs:
+            type: integer
+            format: int64
+          node:
+            type: string
+          queryFrequency:
+            $ref: '#/components/schemas/SimpleDuration'
+          timeToWaitForData:
+            $ref: '#/components/schemas/SimpleDuration'
+    ScheduledQueryAnalyticTrackerData:
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/AnalyticTrackerData'
+      - type: object
+        properties:
+          lastExecutionTimeMs:
+            type: integer
+            format: int64
+          lastWindowEndTimeMs:
+            type: integer
+            format: int64
+          lastWindowStartTimeMs:
+            type: integer
+            format: int64
     ScheduledTimes:
       type: object
       properties:
@@ -12222,11 +13902,11 @@ components:
           $ref: '#/components/schemas/DateTimeSettings'
         incremental:
           type: boolean
-          description: If true the response will contain all results found so far,
-            typically no results on the first request. Future requests for the same
-            query key may return more results. Intended for use on longer running
-            searches to allow partial result sets to be returned as soon as they are
-            available rather than waiting for the full result set.
+          description: "If true the response will contain all results found so far,\
+            \ typically no results on the first request. Future requests for the same\
+            \ query key may return more results. Intended for use on longer running\
+            \ searches to allow partial result sets to be returned as soon as they\
+            \ are available rather than waiting for the full result set."
         key:
           $ref: '#/components/schemas/QueryKey'
         query:
@@ -12242,17 +13922,18 @@ components:
         timeout:
           type: integer
           format: int64
-          description: Set the maximum time (in ms) for the server to wait for a complete
-            result set. The timeout applies to both incremental and non incremental
-            queries, though the behaviour is slightly different. The timeout will
-            make the server wait for which ever comes first out of the query completing
-            or the timeout period being reached. If no value is supplied then for
-            an incremental query a default value of 0 will be used (i.e. returning
-            immediately) and for a non-incremental query the server's default timeout
-            period will be used. For an incremental query, if the query has not completed
-            by the end of the timeout period, it will return the currently know results
-            with complete=false, however for a non-incremental query it will return
-            no results, complete=false and details of the timeout in the error field
+          description: "Set the maximum time (in ms) for the server to wait for a\
+            \ complete result set. The timeout applies to both incremental and non\
+            \ incremental queries, though the behaviour is slightly different. The\
+            \ timeout will make the server wait for which ever comes first out of\
+            \ the query completing or the timeout period being reached. If no value\
+            \ is supplied then for an incremental query a default value of 0 will\
+            \ be used (i.e. returning immediately) and for a non-incremental query\
+            \ the server's default timeout period will be used. For an incremental\
+            \ query, if the query has not completed by the end of the timeout period,\
+            \ it will return the currently know results with complete=false, however\
+            \ for a non-incremental query it will return no results, complete=false\
+            \ and details of the timeout in the error field"
       required:
       - incremental
       - query
@@ -12269,16 +13950,17 @@ components:
         sourceType:
           type: string
           enum:
-          - ANALYTIC_RULE
-          - ANALYTIC_RULE_UI
+          - TABLE_BUILDER_ANALYTIC
+          - SCHEDULED_QUERY_ANALYTIC
           - DASHBOARD_UI
           - QUERY_UI
           - API
           - BATCH_SEARCH
     SearchResponse:
       type: object
-      description: The response to a search request, that may or may not contain results.
-        The results may only be a partial set if an iterative screech was requested
+      description: "The response to a search request, that may or may not contain\
+        \ results. The results may only be a partial set if an iterative screech was\
+        \ requested"
       properties:
         complete:
           type: boolean
@@ -12423,7 +14105,7 @@ components:
         nodeName:
           type: string
         userName:
-          type: string
+          $ref: '#/components/schemas/UserName'
     SessionInfo:
       type: object
       properties:
@@ -12432,7 +14114,7 @@ components:
         nodeName:
           type: string
         userName:
-          type: string
+          $ref: '#/components/schemas/UserName'
     SessionListResponse:
       type: object
       properties:
@@ -12451,7 +14133,7 @@ components:
             type: integer
             format: int64
         assignedTo:
-          type: string
+          $ref: '#/components/schemas/UserName'
     SetStatusRequest:
       type: object
       properties:
@@ -12465,18 +14147,16 @@ components:
     SharedElementData:
       type: object
       properties:
-        codeIndicators:
-          $ref: '#/components/schemas/Indicators'
         formatInput:
           type: boolean
         formatOutput:
           type: boolean
+        indicators:
+          $ref: '#/components/schemas/Indicators'
         input:
           type: string
         output:
           type: string
-        outputIndicators:
-          $ref: '#/components/schemas/Indicators'
     SharedStepData:
       type: object
       properties:
@@ -12504,13 +14184,6 @@ components:
           - WEEKS
           - MONTHS
           - YEARS
-    SimpleUser:
-      type: object
-      properties:
-        name:
-          type: string
-        uuid:
-          type: string
     Size:
       type: object
       properties:
@@ -12635,25 +14308,6 @@ components:
           type: boolean
         stored:
           type: boolean
-        supportedConditions:
-          type: array
-          items:
-            type: string
-            enum:
-            - CONTAINS
-            - EQUALS
-            - GREATER_THAN
-            - GREATER_THAN_OR_EQUAL_TO
-            - LESS_THAN
-            - LESS_THAN_OR_EQUAL_TO
-            - BETWEEN
-            - IN
-            - IN_DICTIONARY
-            - IN_FOLDER
-            - IS_DOC_REF
-            - IS_NULL
-            - IS_NOT_NULL
-            - MATCHES_REGEX
         termOffsets:
           type: boolean
         termPayloads:
@@ -12680,7 +14334,7 @@ components:
       properties:
         direction:
           type: string
-          description: The direction to sort in, ASCENDING or DESCENDING
+          description: "The direction to sort in, ASCENDING or DESCENDING"
           enum:
           - ASCENDING
           - DESCENDING
@@ -12688,8 +14342,8 @@ components:
         order:
           type: integer
           format: int32
-          description: Where multiple fields are sorted this value describes the sort
-            order, with 0 being the first field to sort on
+          description: "Where multiple fields are sorted this value describes the\
+            \ sort order, with 0 being the first field to sort on"
           example: 0
       required:
       - direction
@@ -12885,6 +14539,14 @@ components:
       properties:
         elementId:
           type: string
+        errorType:
+          type: string
+          enum:
+          - CODE
+          - GENERIC
+          - INPUT
+          - OUTPUT
+          - UNKNOWN
         location:
           $ref: '#/components/schemas/Location'
         message:
@@ -12917,12 +14579,16 @@ components:
           format: int32
         name:
           type: string
+        ownerUuid:
+          type: string
         query:
           $ref: '#/components/schemas/Query'
         updateTimeMs:
           type: integer
           format: int64
         updateUser:
+          type: string
+        uuid:
           type: string
         version:
           type: integer
@@ -12934,6 +14600,35 @@ components:
       - type: object
         properties:
           partIndex:
+            type: integer
+            format: int64
+    StreamingAnalyticProcessConfig:
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/AnalyticProcessConfig'
+      - type: object
+        properties:
+          errorFeed:
+            $ref: '#/components/schemas/DocRef'
+    StreamingAnalyticTrackerData:
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/AnalyticTrackerData'
+      - type: object
+        properties:
+          lastExecutionTimeMs:
+            type: integer
+            format: int64
+          lastStreamCount:
+            type: integer
+            format: int32
+          lastStreamId:
+            type: integer
+            format: int64
+          totalEventCount:
+            type: integer
+            format: int64
+          totalStreamCount:
             type: integer
             format: int64
     StringCriteria:
@@ -12954,6 +14649,46 @@ components:
           type: string
         stringUpper:
           type: string
+    StringEntryValue:
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/EntryValue'
+      - type: object
+        properties:
+          value:
+            type: string
+    StringMatch:
+      type: object
+      properties:
+        caseSensitive:
+          type: boolean
+        matchType:
+          type: string
+          enum:
+          - ANY
+          - "NULL"
+          - NON_NULL
+          - BLANK
+          - EMPTY
+          - NULL_OR_BLANK
+          - NULL_OR_EMPTY
+          - CONTAINS
+          - EQUALS
+          - NOT_EQUALS
+          - STARTS_WITH
+          - ENDS_WITH
+          - REGEX
+        pattern:
+          type: string
+    StringMatchLocation:
+      type: object
+      properties:
+        length:
+          type: integer
+          format: int32
+        offset:
+          type: integer
+          format: int32
     StroomStatsStoreDoc:
       type: object
       properties:
@@ -13019,17 +14754,6 @@ components:
           $ref: '#/components/schemas/StroomStatsStoreEntityData'
         oldEntityData:
           $ref: '#/components/schemas/StroomStatsStoreEntityData'
-    StructureElement:
-      type: object
-      properties:
-        description:
-          type: string
-        snippets:
-          type: array
-          items:
-            type: string
-        title:
-          type: string
     Suggestions:
       type: object
       properties:
@@ -13099,6 +14823,61 @@ components:
               wrapped: true
       xml:
         name: tabLayout
+    TableBuilderAnalyticProcessConfig:
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/AnalyticProcessConfig'
+      - type: object
+        properties:
+          dataRetention:
+            $ref: '#/components/schemas/SimpleDuration'
+          enabled:
+            type: boolean
+          errorFeed:
+            $ref: '#/components/schemas/DocRef'
+          maxMetaCreateTimeMs:
+            type: integer
+            format: int64
+          minMetaCreateTimeMs:
+            type: integer
+            format: int64
+          node:
+            type: string
+          timeToWaitForData:
+            $ref: '#/components/schemas/SimpleDuration'
+    TableBuilderAnalyticTrackerData:
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/AnalyticTrackerData'
+      - type: object
+        properties:
+          lastEventId:
+            type: integer
+            format: int64
+          lastEventTime:
+            type: integer
+            format: int64
+          lastExecutionTimeMs:
+            type: integer
+            format: int64
+          lastStreamCount:
+            type: integer
+            format: int32
+          lastStreamId:
+            type: integer
+            format: int64
+          lastWindowEndTimeMs:
+            type: integer
+            format: int64
+          lastWindowStartTimeMs:
+            type: integer
+            format: int64
+          totalEventCount:
+            type: integer
+            format: int64
+          totalStreamCount:
+            type: integer
+            format: int64
     TableComponentSettings:
       type: object
       properties:
@@ -13112,29 +14891,34 @@ components:
         fields:
           type: array
           items:
-            $ref: '#/components/schemas/Field'
+            $ref: '#/components/schemas/Column'
         maxResults:
           type: array
-          description: Defines the maximum number of results to return at each grouping
-            level, e.g. '1000,10,1' means 1000 results at group level 0, 10 at level
-            1 and 1 at level 2. In the absence of this field system defaults will
-            apply
-          example: 1000,10,1
+          description: "Defines the maximum number of results to return at each grouping\
+            \ level, e.g. '1000,10,1' means 1000 results at group level 0, 10 at level\
+            \ 1 and 1 at level 2. In the absence of this field system defaults will\
+            \ apply"
+          example: "1000,10,1"
           items:
             type: integer
-            format: int32
-            description: Defines the maximum number of results to return at each grouping
-              level, e.g. '1000,10,1' means 1000 results at group level 0, 10 at level
-              1 and 1 at level 2. In the absence of this field system defaults will
-              apply
+            format: int64
+            description: "Defines the maximum number of results to return at each\
+              \ grouping level, e.g. '1000,10,1' means 1000 results at group level\
+              \ 0, 10 at level 1 and 1 at level 2. In the absence of this field system\
+              \ defaults will apply"
+        pageSize:
+          type: integer
+          format: int32
+          description: Defines the maximum number of rows to display in the table
+            at once (default 100).
+          example: 100
         queryId:
           type: string
           description: TODO
         showDetail:
           type: boolean
-      required:
-      - fields
-      - queryId
+        useDefaultExtractionPipeline:
+          type: boolean
     TableCoprocessorSettings:
       type: object
       allOf:
@@ -13156,7 +14940,7 @@ components:
           fields:
             type: array
             items:
-              $ref: '#/components/schemas/Field'
+              $ref: '#/components/schemas/Column'
           resultRange:
             $ref: '#/components/schemas/OffsetRange'
           rows:
@@ -13165,7 +14949,7 @@ components:
               $ref: '#/components/schemas/Row'
           totalResults:
             type: integer
-            format: int32
+            format: int64
       description: Object for describing a set of results in a table form that supports
         grouped data
       required:
@@ -13186,15 +14970,17 @@ components:
             uniqueItems: true
           requestedRange:
             $ref: '#/components/schemas/OffsetRange'
+          tableName:
+            type: string
           tableSettings:
             $ref: '#/components/schemas/TableSettings'
       required:
       - componentId
     TableSettings:
       type: object
-      description: An object to describe how the query results should be returned,
-        including which fields should be included and what sorting, grouping, filtering,
-        limiting, etc. should be applied
+      description: "An object to describe how the query results should be returned,\
+        \ including which fields should be included and what sorting, grouping, filtering,\
+        \ limiting, etc. should be applied"
       properties:
         aggregateFilter:
           $ref: '#/components/schemas/ExpressionOperator'
@@ -13205,21 +14991,21 @@ components:
         fields:
           type: array
           items:
-            $ref: '#/components/schemas/Field'
+            $ref: '#/components/schemas/Column'
         maxResults:
           type: array
-          description: Defines the maximum number of results to return at each grouping
-            level, e.g. '1000,10,1' means 1000 results at group level 0, 10 at level
-            1 and 1 at level 2. In the absence of this field system defaults will
-            apply
-          example: 1000,10,1
+          description: "Defines the maximum number of results to return at each grouping\
+            \ level, e.g. '1000,10,1' means 1000 results at group level 0, 10 at level\
+            \ 1 and 1 at level 2. In the absence of this field system defaults will\
+            \ apply"
+          example: "1000,10,1"
           items:
             type: integer
-            format: int32
-            description: Defines the maximum number of results to return at each grouping
-              level, e.g. '1000,10,1' means 1000 results at group level 0, 10 at level
-              1 and 1 at level 2. In the absence of this field system defaults will
-              apply
+            format: int64
+            description: "Defines the maximum number of results to return at each\
+              \ grouping level, e.g. '1000,10,1' means 1000 results at group level\
+              \ 0, 10 at level 1 and 1 at level 2. In the absence of this field system\
+              \ defaults will apply"
         queryId:
           type: string
           description: TODO
@@ -13231,11 +15017,10 @@ components:
             values for each group. Defaults to false.
         valueFilter:
           $ref: '#/components/schemas/ExpressionOperator'
+        visSettings:
+          $ref: '#/components/schemas/QLVisSettings'
         window:
           $ref: '#/components/schemas/Window'
-      required:
-      - fields
-      - queryId
     TaskId:
       type: object
       properties:
@@ -13296,27 +15081,27 @@ components:
       - type: object
         properties:
           colFromField:
-            $ref: '#/components/schemas/Field'
+            $ref: '#/components/schemas/Column'
           colToField:
-            $ref: '#/components/schemas/Field'
+            $ref: '#/components/schemas/Column'
           lineFromField:
-            $ref: '#/components/schemas/Field'
+            $ref: '#/components/schemas/Column'
           lineToField:
-            $ref: '#/components/schemas/Field'
+            $ref: '#/components/schemas/Column'
           modelVersion:
             type: string
           partNoField:
-            $ref: '#/components/schemas/Field'
+            $ref: '#/components/schemas/Column'
           pipeline:
             $ref: '#/components/schemas/DocRef'
           recordNoField:
-            $ref: '#/components/schemas/Field'
+            $ref: '#/components/schemas/Column'
           showAsHtml:
             type: boolean
           showStepping:
             type: boolean
           streamIdField:
-            $ref: '#/components/schemas/Field'
+            $ref: '#/components/schemas/Column'
           tableId:
             type: string
     TextConverterDoc:
@@ -13353,7 +15138,7 @@ components:
     TextField:
       type: object
       allOf:
-      - $ref: '#/components/schemas/AbstractField'
+      - $ref: '#/components/schemas/QueryField'
     ThemeConfig:
       type: object
       properties:
@@ -13382,6 +15167,7 @@ components:
           enum:
           - CONTAINS
           - EQUALS
+          - NOT_EQUALS
           - GREATER_THAN
           - GREATER_THAN_OR_EQUAL_TO
           - LESS_THAN
@@ -13406,7 +15192,7 @@ components:
       properties:
         id:
           type: string
-          description: The id of the time zone, conforming to java.time.ZoneId
+          description: "The id of the time zone, conforming to java.time.ZoneId"
           example: GMT
         offsetHours:
           type: integer
@@ -13420,9 +15206,9 @@ components:
           example: -30
         use:
           type: string
-          description: How the time zone will be specified, e.g. from provided client
-            'Local' time, 'UTC', a recognised timezone 'Id' or an 'Offset' from UTC
-            in hours and minutes.
+          description: "How the time zone will be specified, e.g. from provided client\
+            \ 'Local' time, 'UTC', a recognised timezone 'Id' or an 'Offset' from\
+            \ UTC in hours and minutes."
           enum:
           - Local
           - UTC
@@ -13430,6 +15216,15 @@ components:
           - Offset
       required:
       - use
+    TokenError:
+      type: object
+      properties:
+        from:
+          $ref: '#/components/schemas/DefaultLocation'
+        text:
+          type: string
+        to:
+          $ref: '#/components/schemas/DefaultLocation'
     TokenResponse:
       type: object
       properties:
@@ -13440,6 +15235,9 @@ components:
           format: int64
         id_token:
           type: string
+        refresh_expires_in:
+          type: integer
+          format: int64
         refresh_token:
           type: string
         refresh_token_expires_in:
@@ -13454,6 +15252,8 @@ components:
           type: string
         activity:
           $ref: '#/components/schemas/ActivityConfig'
+        analyticUiDefaultConfig:
+          $ref: '#/components/schemas/AnalyticUiDefaultConfig'
         defaultMaxResults:
           type: string
         helpSubPathDocumentation:
@@ -13476,6 +15276,10 @@ components:
           type: string
         namePattern:
           type: string
+        nestedIndexFieldsDelimiterPattern:
+          type: string
+        nodeMonitoring:
+          $ref: '#/components/schemas/NodeMonitoringConfig'
         oncontextmenu:
           type: string
           pattern: ^return (true|false);$
@@ -13483,6 +15287,11 @@ components:
           $ref: '#/components/schemas/ProcessConfig'
         query:
           $ref: '#/components/schemas/QueryConfig'
+        referencePipelineSelectorIncludedTags:
+          type: array
+          items:
+            type: string
+          uniqueItems: true
         requireReactWrapper:
           type: boolean
         source:
@@ -13557,17 +15366,23 @@ components:
           format: int64
         createUser:
           type: string
+        displayName:
+          type: string
+        fullName:
+          type: string
         group:
           type: boolean
         id:
           type: integer
           format: int32
-        name:
+        subjectId:
           type: string
         updateTimeMs:
           type: integer
           format: int64
         updateUser:
+          type: string
+        userIdentityForAudit:
           type: string
         uuid:
           type: string
@@ -13582,8 +15397,29 @@ components:
           items:
             type: string
           uniqueItems: true
-        userId:
+        userName:
+          $ref: '#/components/schemas/UserName'
+    UserName:
+      type: object
+      properties:
+        displayName:
           type: string
+        fullName:
+          type: string
+        subjectId:
+          type: string
+        userIdentityForAudit:
+          type: string
+        uuid:
+          type: string
+    UserNameEntryValue:
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/EntryValue'
+      - type: object
+        properties:
+          userName:
+            $ref: '#/components/schemas/UserName'
     UserPreferences:
       type: object
       properties:
@@ -13598,8 +15434,15 @@ components:
           enum:
           - STANDARD
           - VIM
+        editorLiveAutoCompletion:
+          type: string
+          enum:
+          - "ON"
+          - "OFF"
         editorTheme:
           type: string
+        enableTransparency:
+          type: boolean
         font:
           type: string
         fontSize:
@@ -13608,9 +15451,22 @@ components:
           type: string
         timeZone:
           $ref: '#/components/schemas/TimeZone'
+    ValidateExpressionRequest:
+      type: object
+      properties:
+        dateTimeSettings:
+          $ref: '#/components/schemas/DateTimeSettings'
+        expressionItem:
+          $ref: '#/components/schemas/ExpressionItem'
+        fields:
+          type: array
+          items:
+            $ref: '#/components/schemas/QueryField'
     ValidateExpressionResult:
       type: object
       properties:
+        groupBy:
+          type: boolean
         ok:
           type: boolean
         string:
@@ -13648,6 +15504,8 @@ components:
           $ref: '#/components/schemas/DocRef'
         description:
           type: string
+        filter:
+          $ref: '#/components/schemas/ExpressionOperator'
         name:
           type: string
         pipeline:
@@ -13756,6 +15614,7 @@ components:
           - EXISTS
           - CONTAINS
           - EQUALS
+          - NOT_EQUALS
           - UNIQUE
         path:
           type: string

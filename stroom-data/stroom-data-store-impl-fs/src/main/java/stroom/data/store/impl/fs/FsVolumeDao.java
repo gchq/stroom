@@ -2,6 +2,7 @@ package stroom.data.store.impl.fs;
 
 import stroom.data.store.impl.fs.shared.FindFsVolumeCriteria;
 import stroom.data.store.impl.fs.shared.FsVolume;
+import stroom.index.shared.IndexVolume;
 import stroom.util.shared.ResultPage;
 
 import java.util.List;
@@ -22,4 +23,8 @@ public interface FsVolumeDao {
     Set<FsVolume> get(final String path);
 
     List<FsVolume> getAll();
+
+    List<FsVolume> getVolumesInGroup(String groupName);
+
+    List<FsVolume> getVolumesInGroup(final int groupid);
 }

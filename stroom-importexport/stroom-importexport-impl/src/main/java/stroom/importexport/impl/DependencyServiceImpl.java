@@ -8,33 +8,36 @@ import stroom.importexport.shared.Dependency;
 import stroom.importexport.shared.DependencyCriteria;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
+import stroom.util.NullSafe;
 import stroom.util.filter.FilterFieldMapper;
 import stroom.util.filter.FilterFieldMappers;
 import stroom.util.filter.QuickFilterPredicateFactory;
+import stroom.util.logging.DurationTimer;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.CompareUtil;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.QuickFilterResultPage;
 import stroom.util.shared.ResultPage;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import jakarta.inject.Inject;
 
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.inject.Inject;
 
 public class DependencyServiceImpl implements DependencyService {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(DependencyServiceImpl.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DependencyServiceImpl.class);
 
     private final ImportExportActionHandlers importExportActionHandlers;
     private final DocRefInfoService docRefInfoService;
@@ -104,6 +107,21 @@ public class DependencyServiceImpl implements DependencyService {
                 .get();
     }
 
+    @Override
+    public Map<DocRef, Set<DocRef>> getBrokenDependencies() {
+        return taskContextFactory.contextResult(
+                        "Get Broken Dependencies",
+                        taskContext -> {
+                            try {
+                                return buildMissingDependencies(taskContext);
+                            } catch (Exception e) {
+                                LOGGER.error("Error getting broken dependencies", e);
+                                throw e;
+                            }
+                        })
+                .get();
+    }
+
     private QuickFilterResultPage<Dependency> getDependencies(final DependencyCriteria criteria,
                                                               final TaskContext parentTaskContext) {
         // Build a map of deps (parent to children)
@@ -134,6 +152,32 @@ public class DependencyServiceImpl implements DependencyService {
                 QuickFilterPredicateFactory.fullyQualifyInput(criteria.getPartialName(), FIELD_MAPPERS));
     }
 
+    private Map<DocRef, Set<DocRef>> buildMissingDependencies(final TaskContext parentTaskContext) {
+
+        // Parent => children
+        final Map<DocRef, Set<DocRef>> allDependencies = buildDependencyMap(parentTaskContext);
+        // Get the additional types that we use to decorate the explorer tree.
+        final Set<DocRef> additionalRefs = new HashSet<>(explorerDecorator.list());
+
+        return allDependencies.entrySet()
+                .stream()
+                .filter(entry -> NullSafe.hasItems(entry.getValue()))
+                .flatMap(entry -> {
+                    final DocRef parentDocRef = entry.getKey();
+                    final Set<DocRef> childDocRefs = entry.getValue();
+                    return childDocRefs.stream()
+                            .map(childDocRef -> Map.entry(parentDocRef, childDocRef));
+                })
+                .filter(entry -> {
+                    // Find ones where the child does not exist, i.e. broken dep
+                    final DocRef childDocRef = entry.getValue();
+                    return !allDependencies.containsKey(childDocRef)
+                            && !additionalRefs.contains(childDocRef);
+                })
+                .collect(Collectors.groupingBy(
+                        Entry::getKey,
+                        Collectors.mapping(Entry::getValue, Collectors.toSet())));
+    }
 
     private List<Dependency> buildFlatDependencies(final DependencyCriteria criteria,
                                                    final Map<DocRef, Set<DocRef>> allDependencies,
@@ -165,7 +209,6 @@ public class DependencyServiceImpl implements DependencyService {
                         }),
                 optSortListComparator.orElse(null));
 
-
         if (optSortListComparator.isPresent()) {
             filteredStream = filteredStream.sorted(optSortListComparator.get());
         }
@@ -185,7 +228,14 @@ public class DependencyServiceImpl implements DependencyService {
                                 taskContext -> {
                                     Map<DocRef, Set<DocRef>> deps = null;
                                     try {
+                                        final DurationTimer timer = DurationTimer.start();
                                         deps = handler.getDependencies();
+                                        if (LOGGER.isDebugEnabled() && !NullSafe.isEmptyMap(deps)) {
+                                            LOGGER.debug("Handler {} returned dependencies for {} docs in {}",
+                                                    handler.getClass().getSimpleName(),
+                                                    deps.size(),
+                                                    timer);
+                                        }
                                     } catch (final RuntimeException e) {
                                         LOGGER.error(e.getMessage(), e);
                                     }

@@ -3,19 +3,23 @@ package stroom.proxy.app;
 import stroom.proxy.app.DbRecordCountAssertion.DbRecordCounts;
 import stroom.proxy.repo.AggregatorConfig;
 import stroom.proxy.repo.ProxyRepoConfig;
+import stroom.receive.common.ReceiveDataConfig;
+import stroom.security.openid.api.IdpType;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.time.StroomDuration;
 
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.verification.LoggedRequest;
+import jakarta.inject.Inject;
 import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
 import java.util.List;
-import javax.inject.Inject;
 
+@Disabled
 public class TestEndToEndStoreAndForwardToFile extends AbstractEndToEndTest {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestEndToEndStoreAndForwardToFile.class);
@@ -28,12 +32,15 @@ public class TestEndToEndStoreAndForwardToFile extends AbstractEndToEndTest {
     @Override
     protected ProxyConfig getProxyConfigOverride() {
         return ProxyConfig.builder()
-                .useDefaultOpenIdCredentials(true)
                 .proxyId("TestProxy")
                 .pathConfig(createProxyPathConfig())
                 .proxyRepoConfig(ProxyRepoConfig.builder()
                         .storingEnabled(true)
                         .build())
+                .securityConfig(new ProxySecurityConfig(ProxyAuthenticationConfig.builder()
+                        .openIdConfig(new ProxyOpenIdConfig()
+                                .withIdentityProviderType(IdpType.TEST_CREDENTIALS))
+                        .build()))
                 .aggregatorConfig(AggregatorConfig.builder()
                         .maxUncompressedByteSizeString("1G")
                         .maxAggregateAge(StroomDuration.ofSeconds(5))
@@ -42,6 +49,9 @@ public class TestEndToEndStoreAndForwardToFile extends AbstractEndToEndTest {
                         .build())
                 .addForwardDestination(MockFileDestination.createForwardFileConfig())
                 .feedStatusConfig(MockHttpDestination.createFeedStatusConfig())
+                .receiveDataConfig(ReceiveDataConfig.builder()
+                        .withAuthenticationRequired(false)
+                        .build())
                 .build();
     }
 

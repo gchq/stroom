@@ -20,9 +20,8 @@ package stroom.job.impl;
 
 import stroom.test.AbstractCoreIntegrationTest;
 
+import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
-
-import javax.inject.Inject;
 
 class TestJobBootstrap extends AbstractCoreIntegrationTest {
 

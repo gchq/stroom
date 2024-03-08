@@ -21,7 +21,6 @@ import stroom.core.client.presenter.Plugin;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.menu.client.presenter.IconMenuItem;
-import stroom.widget.menu.client.presenter.KeyedParentMenuItem;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -45,13 +44,7 @@ public class UserPreferencesPlugin extends Plugin {
     public void onReveal(final BeforeRevealMenubarEvent event) {
         super.onReveal(event);
 
-        event.getMenuItems().addMenuItem(MenuKeys.MAIN_MENU,
-                new KeyedParentMenuItem.Builder()
-                        .priority(4)
-                        .text("User")
-                        .menuItems(event.getMenuItems())
-                        .menuKey(MenuKeys.USER_MENU)
-                        .build());
+        MenuKeys.addUserMenu(event.getMenuItems());
         event.getMenuItems().addMenuItem(MenuKeys.USER_MENU,
                 new IconMenuItem.Builder()
                         .priority(1)

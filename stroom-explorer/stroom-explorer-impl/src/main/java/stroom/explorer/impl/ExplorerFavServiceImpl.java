@@ -8,10 +8,11 @@ import stroom.security.api.SecurityContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+
 import java.util.List;
 import java.util.Objects;
-import javax.inject.Inject;
-import javax.inject.Provider;
 
 public class ExplorerFavServiceImpl implements ExplorerFavService {
 
@@ -35,25 +36,22 @@ public class ExplorerFavServiceImpl implements ExplorerFavService {
 
     @Override
     public void create(final DocRef docRef) {
-        final String userId = securityContext.getUserUuid();
-        Objects.requireNonNull(userId);
-        explorerFavDao.createFavouriteForUser(docRef, userId);
+        final String userUuid = getCurrentUserUuid();
+        explorerFavDao.createFavouriteForUser(docRef, userUuid);
         explorerService.get().rebuildTree();
     }
 
     @Override
     public void delete(final DocRef docRef) {
-        final String userId = securityContext.getUserUuid();
-        Objects.requireNonNull(userId);
-        explorerFavDao.deleteFavouriteForUser(docRef, userId);
+        final String userUuid = getCurrentUserUuid();
+        explorerFavDao.deleteFavouriteForUser(docRef, userUuid);
         explorerService.get().rebuildTree();
     }
 
     @Override
     public List<DocRef> getUserFavourites() {
-        final String userId = securityContext.getUserUuid();
-        Objects.requireNonNull(userId);
-        return explorerFavDao.getUserFavourites(userId)
+        final String userUuid = getCurrentUserUuid();
+        return explorerFavDao.getUserFavourites(getCurrentUserUuid())
                 .stream()
                 .map(docRef -> {
                     try {
@@ -61,7 +59,7 @@ public class ExplorerFavServiceImpl implements ExplorerFavService {
                     } catch (RuntimeException e) {
                         // Doc info couldn't be found, probably due to a document that exists in the `explorer_node`
                         // table, but not `doc`.
-                        LOGGER.error("Missing doc referenced by favourite: {}, user: {}", docRef, userId);
+                        LOGGER.error("Missing doc referenced by favourite: {}, user: {}", docRef, userUuid);
                         return null;
                     }
                 })
@@ -71,8 +69,12 @@ public class ExplorerFavServiceImpl implements ExplorerFavService {
 
     @Override
     public boolean isFavourite(final DocRef docRef) {
-        final String userId = securityContext.getUserUuid();
-        Objects.requireNonNull(userId);
-        return explorerFavDao.isFavourite(docRef, userId);
+        return explorerFavDao.isFavourite(docRef, getCurrentUserUuid());
+    }
+
+    private String getCurrentUserUuid() {
+        final String userUuid = securityContext.getUserUuid();
+        Objects.requireNonNull(userUuid, "No logged in user");
+        return userUuid;
     }
 }

@@ -48,6 +48,7 @@ import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.state.FeedHolder;
 import stroom.security.api.SecurityContext;
 import stroom.security.mock.MockSecurityContext;
+import stroom.task.api.TaskContextFactory;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.date.DateUtil;
 import stroom.util.io.ByteSize;
@@ -58,6 +59,8 @@ import stroom.util.shared.Range;
 
 import io.vavr.Tuple;
 import io.vavr.Tuple3;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -82,8 +85,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.TreeSet;
-import javax.inject.Inject;
-import javax.inject.Provider;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -146,6 +147,8 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
     private SecurityContext securityContext;
     @Inject
     private MetaService metaService;
+    @Inject
+    private TaskContextFactory taskContextFactory;
 
     @BeforeEach
     void setup() throws IOException {
@@ -228,7 +231,7 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
                         refDataStoreHolderProvider.get(),
                         new RefDataLoaderHolder(),
                         pipelineStore,
-                        new MockSecurityContext());
+                        new MockSecurityContext(), taskContextFactory);
 
                 Map<RefStreamDefinition, Runnable> mockLoaderActionsMap = new HashMap<>();
 
@@ -319,7 +322,7 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
                         refDataStoreHolderProvider.get(),
                         new RefDataLoaderHolder(),
                         pipelineStore,
-                        new MockSecurityContext());
+                        new MockSecurityContext(), taskContextFactory);
 
                 Map<RefStreamDefinition, Runnable> mockLoaderActionsMap = new HashMap<>();
 
@@ -556,7 +559,7 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
                         refDataStoreHolderProvider.get(),
                         new RefDataLoaderHolder(),
                         pipelineStore,
-                        new MockSecurityContext());
+                        new MockSecurityContext(), taskContextFactory);
 
                 Map<RefStreamDefinition, Runnable> mockLoaderActionsMap = new HashMap<>();
 
@@ -635,7 +638,7 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
                         refDataStoreHolderProvider.get(),
                         new RefDataLoaderHolder(),
                         pipelineStore,
-                        new MockSecurityContext());
+                        new MockSecurityContext(), taskContextFactory);
 
                 Map<RefStreamDefinition, Runnable> mockLoaderActionsMap = new HashMap<>();
 

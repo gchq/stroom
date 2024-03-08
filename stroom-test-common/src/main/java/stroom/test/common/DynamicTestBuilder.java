@@ -17,8 +17,10 @@ import org.junit.jupiter.api.DynamicTest;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -77,6 +79,28 @@ class DynamicTestBuilder {
         @SuppressWarnings("unused")
         public <I> InputBuilder<I> withWrappedInputType(final TypeLiteral<I> inputType) {
             return new InputBuilder<>(inputType);
+        }
+
+        /**
+         * Define the item type for a {@link List} input type, e.g. for an input of a list of strings:
+         * <pre>{@code withListItemInputType(String.class)}</pre>
+         */
+        @SuppressWarnings("unused")
+        public <I> InputBuilder<List<I>> withListInputItemType(final Class<I> inputItemType) {
+            final TypeLiteral<List<I>> typeLiteral = new TypeLiteral<>() {
+            };
+            return new InputBuilder<>(typeLiteral);
+        }
+
+        /**
+         * Define the item type for a {@link Set} input type, e.g. for an input of a set of strings:
+         * <pre>{@code withSetItemInputType(String.class)}</pre>
+         */
+        @SuppressWarnings("unused")
+        public <I> InputBuilder<Set<I>> withSetInputItemType(final Class<I> inputItemType) {
+            final TypeLiteral<Set<I>> typeLiteral = new TypeLiteral<>() {
+            };
+            return new InputBuilder<>(typeLiteral);
         }
 
         /**
@@ -164,6 +188,28 @@ class DynamicTestBuilder {
         @SuppressWarnings("unused")
         public <O> OutputBuilder<I, O> withWrappedOutputType(final TypeLiteral<O> outputType) {
             return new OutputBuilder<>(this, outputType);
+        }
+
+        /**
+         * Define the item type for a {@link List} output type, e.g. for an output of a list of strings:
+         * <pre>{@code withListItemOutputType(String.class)}</pre>
+         */
+        @SuppressWarnings("unused")
+        public <O> OutputBuilder<I, List<O>> withListOutputItemType(final Class<O> outputItemType) {
+            final TypeLiteral<List<O>> typeLiteral = new TypeLiteral<List<O>>() {
+            };
+            return new OutputBuilder<>(this, typeLiteral);
+        }
+
+        /**
+         * Define the item type for a {@link Set} output type, e.g. for an output of a set of strings:
+         * <pre>{@code withSetItemOutputType(String.class)}</pre>
+         */
+        @SuppressWarnings("unused")
+        public <O> OutputBuilder<I, Set<O>> withSetOutputItemType(final Class<O> outputItemType) {
+            final TypeLiteral<Set<O>> typeLiteral = new TypeLiteral<>() {
+            };
+            return new OutputBuilder<>(this, typeLiteral);
         }
 
         /**
@@ -270,15 +316,21 @@ class DynamicTestBuilder {
          */
         public CasesBuilder<I, O> withSimpleEqualityAssertion() {
             final Consumer<TestOutcome<I, O>> wrappedConsumer = wrapTestOutcomeConsumer(testOutcome -> {
-                if (testOutcome.getExpectedOutput() instanceof Collection
-                    && testOutcome.getActualOutput() instanceof Collection) {
+                final O expectedOutput = testOutcome.getExpectedOutput();
+                final O actualOutput = testOutcome.getActualOutput();
+                if (expectedOutput instanceof Set<?>
+                        && actualOutput instanceof Set<?>) {
+                    Assertions.assertThat((Set<O>) actualOutput)
+                            .containsExactlyInAnyOrderElementsOf((Set<O>) expectedOutput);
+                } else if (expectedOutput instanceof Collection<?>
+                        && actualOutput instanceof Collection<?>) {
                     // Using contains will give a better error message
-                    Assertions.assertThat((Collection<O>) testOutcome.getActualOutput())
-                            .containsExactlyElementsOf((Collection<O>) testOutcome.getExpectedOutput());
+                    Assertions.assertThat((Collection<O>) actualOutput)
+                            .containsExactlyElementsOf((Collection<O>) expectedOutput);
                 } else {
-                    Assertions.assertThat(testOutcome.getActualOutput())
+                    Assertions.assertThat(actualOutput)
                             .withFailMessage(testOutcome::buildFailMessage)
-                            .isEqualTo(testOutcome.getExpectedOutput());
+                            .isEqualTo(expectedOutput);
                 }
             });
             return new CasesBuilder<>(testAction, wrappedConsumer);
@@ -302,8 +354,10 @@ class DynamicTestBuilder {
                         Assertions.assertThat(actualThrowable)
                                 .isInstanceOf(expectedThrowableType);
                     } else {
-                        LOGGER.debug("Test did not throw an exception but we were expecting it to throw: {}",
-                                expectedThrowableType.getSimpleName());
+                        LOGGER.debug("Test did not throw an exception but we were expecting it to throw: {}. " +
+                                        "Actual output: '{}'",
+                                expectedThrowableType.getSimpleName(),
+                                testOutcome.getActualOutput());
                         Assertions.fail("Expecting test to throw "
                                 + expectedThrowableType.getSimpleName());
                     }
@@ -374,7 +428,10 @@ class DynamicTestBuilder {
          * Add a test case to the {@link DynamicTest} {@link Stream} by specifying the input
          * and expected output of the test.
          *
-         * @param name           The name of the test case.
+         * @param name           The name of the test case. This name overrides any name provided by
+         *                       {@link CasesBuilder#withNameFunction(Function)}. The name is appended
+         *                       to the case number, e.g. if name is "{@code foo}" then the test name will be
+         *                       something like "{@code 03 foo}".
          * @param input          The input to the test case.
          * @param expectedOutput The expected output of the test case.
          */
@@ -427,6 +484,8 @@ class DynamicTestBuilder {
          * that generates a name from a {@link TestCase}. The default name function basically
          * does a toString() on {@link TestCase#getInput()}.
          * A name explicitly set on {@link TestCase} will override any name function.
+         * The name is appended to the case number, e.g. if name is 'foo' then the test name will be
+         * something like "{@code 03 foo}".
          */
         @SuppressWarnings("unused")
         public CasesBuilder<I, O> withNameFunction(final Function<TestCase<I, O>, String> nameFunction) {
@@ -464,6 +523,16 @@ class DynamicTestBuilder {
             if (NullSafe.isEmptyCollection(testCases)) {
                 Assertions.fail("No test cases provided");
             }
+            final Set<I> inputs = new HashSet<>();
+            for (int i = 0; i < testCases.size(); i++) {
+                final TestCase<I, O> testCase = testCases.get(i);
+                final I input = testCase.getInput();
+                if (inputs.contains(input)) {
+                    Assertions.fail(LogUtil.message("Test case {} has the same input has another case: {}",
+                            (i + 1), valueToStr(input)));
+                }
+                inputs.add(input);
+            }
             return createDynamicTestStream();
         }
 
@@ -479,24 +548,22 @@ class DynamicTestBuilder {
 
             if (value == null) {
                 stringBuilder.append("null");
-            } else if (value instanceof Double) {
-                stringBuilder.append(ModelStringUtil.formatCsv(
-                                (Double) value, 5, true))
+            } else if (value instanceof final Double valDbl) {
+                stringBuilder.append(ModelStringUtil.formatCsv(valDbl, 5, true))
                         .append("D");
-            } else if (value instanceof Integer) {
-                stringBuilder.append(ModelStringUtil.formatCsv(((Integer) value).longValue()));
-            } else if (value instanceof Long) {
-                stringBuilder.append(ModelStringUtil.formatCsv((Long) value))
+            } else if (value instanceof final Integer valInt) {
+                stringBuilder.append(ModelStringUtil.formatCsv(valInt.longValue()));
+            } else if (value instanceof final Long valLong) {
+                stringBuilder.append(ModelStringUtil.formatCsv(valLong))
                         .append("L");
-            } else if (value instanceof Tuple) {
-                final Tuple tuple = (Tuple) value;
-                final String tupleStr = tuple.toSeq()
+            } else if (value instanceof final Tuple valTuple) {
+                final String tupleContentsStr = valTuple.toSeq()
                         .toStream()
                         .map(this::valueToStr)
                         .collect(Collectors.joining(", "));
 
                 stringBuilder.append("(")
-                        .append(tupleStr)
+                        .append(tupleContentsStr)
                         .append(")");
             } else if (value instanceof final Object[] arr) {
                 stringBuilder.append("[")
@@ -504,12 +571,11 @@ class DynamicTestBuilder {
                                 .map(this::valueToStr)
                                 .collect(Collectors.joining(", ")))
                         .append("]");
+            } else if (NullSafe.test(value.toString(), str -> str.contains("$$Lambda"))) {
+                // Not sure if there is anything useful we can show for the lambda so just do this
+                stringBuilder.append("lambda");
             } else {
                 String valStr = value.toString();
-                // No point outputting the lambda reference as it doesn't help
-                if (valStr.contains("$$Lambda")) {
-                    valStr = "lambda";
-                }
 
                 stringBuilder.append("'")
                         .append(valStr)
@@ -535,6 +601,7 @@ class DynamicTestBuilder {
             return testCases.stream()
                     .sequential()
                     .map(testCase -> {
+
                         // Name defined in the testCase overrides the name function
                         final String testName = buildTestName(
                                 testCase,
@@ -576,19 +643,20 @@ class DynamicTestBuilder {
                                      final int caseNo,
                                      final int casesCount) {
 
+            // No name or namefunc provided so build a name from the case number and the input
+            // Case number may help in linking a failed test to the source
+            final int padLen = Integer.toString(casesCount).length();
+            final String paddedCaseNo = Strings.padStart(Integer.toString(caseNo), padLen, '0');
+
             final Function<TestCase<I, O>, String> nameFunc;
             if (!NullSafe.isBlankString(testCase.getName())) {
                 nameFunc = TestCase::getName;
-            } else if (nameFunction != null) {
-                nameFunc = nameFunction;
             } else {
-                // No name or namefunc provided so build a name from the case number and the input
-                // Case number may help in linking a failed test to the source
-                final int padLen = Integer.toString(casesCount).length();
-                final String paddedCaseNo = Strings.padStart(Integer.toString(caseNo), padLen, '0');
-                nameFunc = testCase2 -> paddedCaseNo + " " + buildTestNameFromInput(testCase2);
+                nameFunc = Objects.requireNonNullElseGet(
+                        nameFunction,
+                        () -> this::buildTestNameFromInput);
             }
-            return nameFunc.apply(testCase);
+            return paddedCaseNo + " " + nameFunc.apply(testCase);
         }
 
         private void logCaseToDebug(final TestCase<I, O> testCase) {

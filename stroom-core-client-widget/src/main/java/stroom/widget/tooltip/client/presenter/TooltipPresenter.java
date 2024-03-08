@@ -34,24 +34,27 @@ public class TooltipPresenter extends MyPresenterWidget<TooltipPresenter.Tooltip
         super(eventBus, view);
     }
 
-    public void show(final String text, final int x, final int y) {
+    public void show(final String text, final PopupPosition popupPosition) {
         getView().setText(text);
-        show(x, y);
+        show(popupPosition);
     }
 
-    public void show(final SafeHtml html, final int x, final int y) {
+    public void show(final SafeHtml html, final PopupPosition popupPosition) {
         getView().setHTML(html);
-        show(x, y);
+        show(popupPosition);
     }
 
-    private void show(final int x, final int y) {
-        final PopupPosition popupPosition = new PopupPosition(x, y);
+    private void show(final PopupPosition popupPosition) {
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.POPUP)
                 .popupPosition(popupPosition)
                 .onShow(e -> getView().focus())
                 .fire();
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface TooltipView extends View, Focus {
 

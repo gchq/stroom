@@ -16,8 +16,6 @@
 
 package stroom.datasource.api.v2;
 
-import stroom.query.api.v2.ExpressionTerm.Condition;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -25,49 +23,21 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import java.util.ArrayList;
-import java.util.List;
-
-@JsonPropertyOrder({"type", "docRefType", "name", "queryable", "conditions"})
+@JsonPropertyOrder({"type", "docRefType", "name", "queryable", "conditionSet"})
 @JsonInclude(Include.NON_NULL)
-public class DocRefField extends AbstractField {
-
-    // Conditions suitable for use when referencing the DocRef by UUID
-    private static final List<Condition> DEFAULT_CONDITIONS_UUID = new ArrayList<>();
-    // Conditions suitable for use when referencing the DocRef by name
-    private static final List<Condition> DEFAULT_CONDITIONS_NAME = new ArrayList<>();
-    // Conditions suitable for use when referencing the DocRef by name only IF the name is unique
-    private static final List<Condition> DEFAULT_CONDITIONS_ALL = new ArrayList<>();
-
-    static {
-        DEFAULT_CONDITIONS_UUID.add(Condition.IS_DOC_REF);
-        DEFAULT_CONDITIONS_UUID.add(Condition.IN_FOLDER);
-
-        DEFAULT_CONDITIONS_NAME.add(Condition.CONTAINS);
-        DEFAULT_CONDITIONS_NAME.add(Condition.EQUALS);
-        DEFAULT_CONDITIONS_NAME.add(Condition.IN);
-        DEFAULT_CONDITIONS_NAME.add(Condition.IN_DICTIONARY);
-
-        DEFAULT_CONDITIONS_ALL.addAll(DEFAULT_CONDITIONS_UUID);
-        DEFAULT_CONDITIONS_ALL.addAll(DEFAULT_CONDITIONS_NAME);
-    }
-
-    @JsonProperty
-    private String docRefType;
+public class DocRefField extends QueryField {
 
     public DocRefField(final String docRefType,
                        final String name) {
-        super(name, Boolean.TRUE, DEFAULT_CONDITIONS_UUID);
-        this.docRefType = docRefType;
+        super(name, ConditionSet.DOC_REF_UUID, docRefType, Boolean.TRUE);
     }
 
     @JsonCreator
-    public DocRefField(@JsonProperty("docRefType") final String docRefType,
-                       @JsonProperty("name") final String name,
-                       @JsonProperty("queryable") final Boolean queryable,
-                       @JsonProperty("conditions") final List<Condition> conditions) {
-        super(name, queryable, conditions);
-        this.docRefType = docRefType;
+    public DocRefField(@JsonProperty("name") final String name,
+                       @JsonProperty("conditionSet") final ConditionSet conditionSet,
+                       @JsonProperty("docRefType") final String docRefType,
+                       @JsonProperty("queryable") final Boolean queryable) {
+        super(name, conditionSet, docRefType, queryable);
     }
 
     /**
@@ -76,7 +46,7 @@ public class DocRefField extends AbstractField {
      */
     public static DocRefField byUniqueName(final String docRefType,
                                            final String name) {
-        return new DocRefField(docRefType, name, Boolean.TRUE, DEFAULT_CONDITIONS_ALL);
+        return new DocRefField(name, ConditionSet.DOC_REF_ALL, docRefType, Boolean.TRUE);
     }
 
     /**
@@ -86,7 +56,7 @@ public class DocRefField extends AbstractField {
      */
     public static DocRefField byNonUniqueName(final String docRefType,
                                               final String name) {
-        return new DocRefField(docRefType, name, Boolean.TRUE, DEFAULT_CONDITIONS_NAME);
+        return new DocRefField(name, ConditionSet.DOC_REF_NAME, docRefType, Boolean.TRUE);
     }
 
     /**
@@ -97,11 +67,7 @@ public class DocRefField extends AbstractField {
      */
     public static DocRefField byUuid(final String docRefType,
                                      final String name) {
-        return new DocRefField(docRefType, name, Boolean.TRUE, DEFAULT_CONDITIONS_UUID);
-    }
-
-    public String getDocRefType() {
-        return docRefType;
+        return new DocRefField(name, ConditionSet.DOC_REF_UUID, docRefType, Boolean.TRUE);
     }
 
     @JsonIgnore

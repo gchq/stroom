@@ -20,6 +20,7 @@ import stroom.svg.client.Preset;
 import stroom.widget.util.client.KeyBinding;
 import stroom.widget.util.client.KeyBinding.Action;
 import stroom.widget.util.client.MouseUtil;
+import stroom.widget.util.client.SvgImageUtil;
 
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
@@ -71,14 +72,14 @@ abstract class BaseSvgButton extends ButtonBase implements ButtonView {
     }
 
     void setSvgPreset(final Preset svgPreset) {
-        face.setInnerHTML(svgPreset.getSvgImage().getSvg());
+        SvgImageUtil.setSvgAsInnerHtml(face, svgPreset);
 
         // Add the button tool-tip
-        if (svgPreset.hasTitle()) {
-            setTitle(svgPreset.getTitle());
-        } else {
-            setTitle("");
-        }
+//        if (svgPreset.hasTitle()) {
+//            setTitle(svgPreset.getTitle());
+//        } else {
+//            setTitle("");
+//        }
     }
 
     @Override
@@ -173,36 +174,9 @@ abstract class BaseSvgButton extends ButtonBase implements ButtonView {
 
         // Synthesize clicks based on keyboard events AFTER the normal key
         // handling.
-        if ((event.getTypeInt() & Event.KEYEVENTS) != 0) {
-            switch (type) {
-                case Event.ONKEYDOWN:
-                    final Action action = KeyBinding.getAction(event);
-                    if (action == Action.SELECT || action == Action.EXECUTE) {
-                        onClick();
-                    }
-                    break;
-
-//                case Event.ONKEYDOWN:
-//                    if (keyCode == ' ') {
-//                        isFocusing = true;
-//                        onClickStart();
-//                    }
-//                    break;
-//                case Event.ONKEYUP:
-//                    if (isFocusing && keyCode == ' ') {
-//                        isFocusing = false;
-//                        onClick();
-//                    }
-//                    break;
-//                case Event.ONKEYPRESS:
-//                    if (keyCode == '\n' || keyCode == '\r') {
-//                        onClickStart();
-//                        onClick();
-//                    }
-//                    break;
-//                default:
-//                    // Ignore events we don't care about
-            }
+        final Action action = KeyBinding.test(event);
+        if (action == Action.SELECT || action == Action.EXECUTE) {
+            onClick();
         }
     }
 

@@ -25,6 +25,7 @@ import stroom.widget.button.client.ToggleButtonView;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.cellview.client.AbstractHasData;
+import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.gwtplatform.mvp.client.ViewImpl;
@@ -36,6 +37,8 @@ public class PagerViewImpl extends ViewImpl implements PagerView {
     /**
      * The pager used to change the range of data.
      */
+    @UiField
+    FlowPanel pagerContainer;
     @UiField
     Pager pager;
     @UiField
@@ -69,6 +72,11 @@ public class PagerViewImpl extends ViewImpl implements PagerView {
     }
 
     @Override
+    public void addButton(final ButtonView buttonView) {
+        buttonPanel.addButton(buttonView);
+    }
+
+    @Override
     public ToggleButtonView addToggleButton(final Preset primaryPreset,
                                             final Preset secondaryPreset) {
         return buttonPanel.addToggleButton(primaryPreset, secondaryPreset);
@@ -79,6 +87,11 @@ public class PagerViewImpl extends ViewImpl implements PagerView {
         if (pager != null) {
             pager.setRefreshing(refreshing);
         }
+    }
+
+    @Override
+    public void setPagerVisible(final boolean visible) {
+        pagerContainer.setVisible(visible);
     }
 
     public interface Binder extends UiBinder<Widget, PagerViewImpl> {

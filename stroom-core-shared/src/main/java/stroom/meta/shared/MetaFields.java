@@ -1,10 +1,10 @@
 package stroom.meta.shared;
 
-import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.DateField;
 import stroom.datasource.api.v2.DocRefField;
 import stroom.datasource.api.v2.IdField;
 import stroom.datasource.api.v2.LongField;
+import stroom.datasource.api.v2.QueryField;
 import stroom.datasource.api.v2.TextField;
 import stroom.docref.DocRef;
 import stroom.pipeline.shared.PipelineDoc;
@@ -29,11 +29,11 @@ public class MetaFields {
     public static final String FIELD_TYPE = "Type";
     public static final String FIELD_PARENT_FEED = "Parent Feed";
 
-    private static final List<AbstractField> FIELDS = new ArrayList<>();
-    private static final Map<String, AbstractField> FIELD_MAP;
-    private static final List<AbstractField> EXTENDED_FIELDS = new ArrayList<>();
-    private static final List<AbstractField> ALL_FIELDS = new ArrayList<>();
-    private static final Map<String, AbstractField> ALL_FIELD_MAP;
+    private static final List<QueryField> FIELDS = new ArrayList<>();
+    private static final Map<String, QueryField> FIELD_MAP;
+    private static final List<QueryField> EXTENDED_FIELDS = new ArrayList<>();
+    private static final List<QueryField> ALL_FIELDS = new ArrayList<>();
+    private static final Map<String, QueryField> ALL_FIELD_MAP;
 
     // Non grouped fields
     // Maps to the docref name (which is unique)
@@ -101,7 +101,7 @@ public class MetaFields {
         FIELDS.add(EFFECTIVE_TIME);
         FIELDS.add(STATUS_TIME);
 
-        FIELD_MAP = FIELDS.stream().collect(Collectors.toMap(AbstractField::getName, Function.identity()));
+        FIELD_MAP = FIELDS.stream().collect(Collectors.toMap(QueryField::getName, Function.identity()));
 
         // Single Items
         EXTENDED_FIELDS.add(DURATION);
@@ -120,26 +120,26 @@ public class MetaFields {
 
         ALL_FIELDS.addAll(FIELDS);
         ALL_FIELDS.addAll(EXTENDED_FIELDS);
-        ALL_FIELD_MAP = ALL_FIELDS.stream().collect(Collectors.toMap(AbstractField::getName, Function.identity()));
+        ALL_FIELD_MAP = ALL_FIELDS.stream().collect(Collectors.toMap(QueryField::getName, Function.identity()));
     }
 
-    public static List<AbstractField> getFields() {
+    public static List<QueryField> getFields() {
         return new ArrayList<>(FIELDS);
     }
 
-    public static Map<String, AbstractField> getFieldMap() {
+    public static Map<String, QueryField> getFieldMap() {
         return FIELD_MAP;
     }
 
-    public static List<AbstractField> getAllFields() {
+    public static List<QueryField> getAllFields() {
         return ALL_FIELDS;
     }
 
-    public static Map<String, AbstractField> getAllFieldMap() {
+    public static Map<String, QueryField> getAllFieldMap() {
         return ALL_FIELD_MAP;
     }
 
-    public static List<AbstractField> getExtendedFields() {
+    public static List<QueryField> getExtendedFields() {
         return EXTENDED_FIELDS;
     }
 }

@@ -38,13 +38,13 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.view.client.SelectionModel;
 
 import java.util.Map;
+import java.util.Objects;
 
 public class PipelineTreePanel extends TreePanel<PipelineElement> {
 
     private static final double HORIZONTAL_SEPARATION = 20;
     private static final double VERTICAL_SEPARATION = 10;
     private final LayeredCanvas canvas;
-    private final FlowPanel panel;
     private final FlowPanel boxPanel;
     private final PendingOperation pendingOperation = new PendingOperation();
     private TreeRenderer2<PipelineElement> renderer;
@@ -53,7 +53,7 @@ public class PipelineTreePanel extends TreePanel<PipelineElement> {
     private DefaultTreeForTreeLayout<PipelineElement> tree;
 
     public PipelineTreePanel(final PipelineElementBoxFactory pipelineElementBoxFactory) {
-        panel = new FlowPanel();
+        final FlowPanel panel = new FlowPanel();
         panel.setStyleName("treePanel-panel");
         boxPanel = new FlowPanel();
         boxPanel.setStyleName("treePanel-boxPanel");
@@ -89,7 +89,7 @@ public class PipelineTreePanel extends TreePanel<PipelineElement> {
     public Box<PipelineElement> getBox(final PipelineElement item) {
         if (renderer != null) {
             for (final PipelineElementBox box : cellRenderer.getBoxes()) {
-                if (box.getItem() == item) {
+                if (Objects.equals(box.getItem(), item)) {
                     return box;
                 }
             }

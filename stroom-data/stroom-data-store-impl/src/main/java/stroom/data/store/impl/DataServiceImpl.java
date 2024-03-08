@@ -25,6 +25,7 @@ import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.feed.api.FeedProperties;
 import stroom.feed.api.FeedStore;
+import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.DataRetentionFields;
 import stroom.meta.shared.FindMetaCriteria;
@@ -64,6 +65,9 @@ import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
 import stroom.util.shared.ResultPage;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+
 import java.nio.file.Path;
 import java.text.NumberFormat;
 import java.util.ArrayList;
@@ -72,8 +76,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
-import javax.inject.Provider;
 
 class DataServiceImpl implements DataService {
 
@@ -181,7 +183,7 @@ class DataServiceImpl implements DataService {
                         new RuntimeException("Unable to find feed document with name " + request.getFeedName()));
 
         if (!securityContext.hasDocumentPermission(feedDocRef.getUuid(), DocumentPermissionNames.UPDATE)) {
-            throw new PermissionException(securityContext.getUserId(),
+            throw new PermissionException(securityContext.getUserIdentityForAudit(),
                     "You do not have permission to update feed " + request.getFeedName());
         }
 
@@ -232,7 +234,7 @@ class DataServiceImpl implements DataService {
                     .keySet()
                     .stream()
                     .sorted()
-                    .collect(Collectors.toList());
+                    .toList();
             sortedKeys.forEach(key -> {
                 final String value = attributeMap.get(key);
                 if (value != null &&
@@ -259,7 +261,10 @@ class DataServiceImpl implements DataService {
             // Add additional data retention information.
             sections.add(new DataInfoSection("Retention", getDataRententionEntries(attributeMap)));
 
-            sections.add(new DataInfoSection("Files", Collections.singletonList(new Entry("", files))));
+            // Files are often very long so change the delimiter to \n
+            final String filesStr = String.join("\n", AttributeMapUtil.valueAsList(files));
+
+            sections.add(new DataInfoSection("Files", Collections.singletonList(new Entry("", filesStr))));
         }
         return sections;
     }

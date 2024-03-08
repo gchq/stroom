@@ -1,0 +1,18 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:form="urn:import:stroom.widget.form.client">
+    <g:FlowPanel styleName="max form-padding form">
+        <form:FormGroup identity="visualisationSettingsFunctionName" label="Function Name">
+            <g:TextBox ui:field="functionName"/>
+        </form:FormGroup>
+        <form:FormGroup identity="visualisationSettingsScript" label="Script">
+            <g:SimplePanel ui:field="script"/>
+        </form:FormGroup>
+        <form:FormGroup identity="visualisationSettingsSettings"
+                        label="Settings"
+                        addStyleNames="default-min-sizes flex-grow-1">
+            <g:SimplePanel ui:field="settings" addStyleNames="dock-max stroom-control__no-padding"/>
+        </form:FormGroup>
+    </g:FlowPanel>
+</ui:UiBinder>

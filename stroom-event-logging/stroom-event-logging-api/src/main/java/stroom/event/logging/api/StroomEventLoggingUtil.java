@@ -10,11 +10,14 @@ import stroom.util.shared.PageResponse;
 import stroom.util.shared.QuickFilterResultPage;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.Selection;
+import stroom.util.shared.UserName;
 
 import event.logging.AdvancedQuery;
 import event.logging.AdvancedQueryItem;
 import event.logging.And;
 import event.logging.CopyMoveOutcome;
+import event.logging.Data;
+import event.logging.Group;
 import event.logging.MultiObject;
 import event.logging.Not;
 import event.logging.Or;
@@ -26,6 +29,7 @@ import event.logging.SearchEventAction;
 import event.logging.SimpleQuery;
 import event.logging.Term;
 import event.logging.TermCondition;
+import event.logging.User;
 import event.logging.util.EventLoggingUtil;
 
 import java.math.BigInteger;
@@ -66,6 +70,45 @@ public class StroomEventLoggingUtil {
                 .withType(type)
                 .withId(uuid)
                 .withName(name)
+                .build();
+    }
+
+    public static User createUser(final stroom.security.shared.User user) {
+        Objects.requireNonNull(user);
+        if (user.isGroup()) {
+            throw new RuntimeException("User " + user + " is a group not a user");
+        }
+        return User.builder()
+                .withId(user.getSubjectId())
+                .withName(user.getDisplayName())
+                .build();
+    }
+
+    public static User createUser(final UserName userName) {
+        Objects.requireNonNull(userName);
+        final User.Builder<Void> builder = User.builder()
+                .withId(userName.getSubjectId())
+                .withName(userName.getDisplayName());
+
+        if (userName.getSubjectId() == null
+                && userName.getDisplayName() == null
+                && userName.getUuid() != null) {
+            builder.addData(Data.builder()
+                    .withName("uuid")
+                    .withValue(userName.getUuid())
+                    .build());
+        }
+        return builder.build();
+    }
+
+    public static Group createGroup(final stroom.security.shared.User group) {
+        Objects.requireNonNull(group);
+        if (!group.isGroup()) {
+            throw new RuntimeException(("Group '" + group.getUserIdentityForAudit() + "' is a user not a group"));
+        }
+        return Group.builder()
+                .withId(group.getSubjectId())
+                .withName(group.getDisplayName())
                 .build();
     }
 
@@ -286,6 +329,9 @@ public class StroomEventLoggingUtil {
             case IN_FOLDER:
             case IS_DOC_REF:
                 termCondition = TermCondition.EQUALS;
+                break;
+            case NOT_EQUALS:
+                termCondition = TermCondition.NOT_EQUALS;
                 break;
             case GREATER_THAN:
                 termCondition = TermCondition.GREATER_THAN;

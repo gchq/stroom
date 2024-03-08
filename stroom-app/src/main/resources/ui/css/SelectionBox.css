@@ -1,0 +1,86 @@
+.SelectionBox {
+	width: 200px;
+}
+
+.SelectionBox-textBox {
+    cursor: pointer;
+}
+
+.SelectionPopup {
+    z-index: 100;
+}
+
+.SelectionPopup .quickFilter {
+    margin-bottom: 4px;
+}
+
+.SelectionPopup-layout .svgIconBox {
+    padding: .2rem;
+}
+
+.SelectionPopup-layout {
+    display : flex;
+    flex-direction: column;
+}
+
+.svgIconBox {
+    position: relative;
+}
+
+.svgIconBox input {
+    height: 100%;
+    width: 100%;
+    padding-right: 22px;
+    min-width: 200px;
+}
+
+.svgIconBox-icon {
+    position: absolute;
+    top: 50%;
+    right: 6px;
+    height: 16px;
+    width: 16px;
+}
+
+.svgIconBox-icon svg {
+    position: absolute;
+    top: -50%;
+}
+
+.SelectionPopup .gwt-ListBox {
+    background-image: none;
+    padding: 0;
+    border: none;
+    background: none;
+    flex-grow: 1;
+    width: auto;
+    height: auto;
+    min-width: 200px;
+    min-height: 50px;
+    max-height: 400px;
+
+    border-radius: 0;
+    padding: .2rem;
+}
+
+.SelectionPopup .gwt-ListBox option {
+    background-color: transparent;
+    padding:  .3rem;
+    min-height: 22px;
+}
+
+.SelectionPopup .gwt-ListBox option:checked {
+    background-color: var(--row__background-color--selected);
+    color:  var(--row__text-color--selected);
+}
+
+.SelectionPopup .gwt-ListBox option:hover {
+    background: var(--row__background-color--hovered);
+}
+
+.SelectionPopup .gwt-ListBox option:checked:hover {
+    background-color: var(--row__background-color--selected--hovered);
+    color:  var(--row__text-color--selected);
+}
+
+

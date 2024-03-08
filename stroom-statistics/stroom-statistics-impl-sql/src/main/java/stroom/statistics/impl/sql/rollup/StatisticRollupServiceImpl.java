@@ -20,7 +20,8 @@ import stroom.statistics.impl.sql.shared.CustomRollUpMask;
 import stroom.statistics.impl.sql.shared.CustomRollUpMaskFields;
 import stroom.statistics.impl.sql.shared.StatisticField;
 import stroom.statistics.impl.sql.shared.StatisticsDataSourceData;
-import stroom.statistics.impl.sql.shared.StatisticsDataSourceFieldChangeRequest;
+
+import jakarta.inject.Singleton;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -28,7 +29,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import javax.inject.Singleton;
 
 @Singleton
 public class StatisticRollupServiceImpl implements StatisticRollupService {

@@ -14,6 +14,7 @@ import stroom.util.io.FileName;
 import stroom.util.io.PathCreator;
 import stroom.util.logging.LogUtil;
 
+import jakarta.inject.Inject;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.assertj.core.api.Assertions;
@@ -31,7 +32,6 @@ import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.stream.Stream;
-import javax.inject.Inject;
 
 public class MockFileDestination {
 

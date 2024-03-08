@@ -13,14 +13,14 @@ import stroom.proxy.repo.queue.RecordQueue;
 import stroom.proxy.repo.queue.WriteQueue;
 import stroom.util.shared.Flushable;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import org.jooq.DSLContext;
 import org.jooq.Field;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 import static stroom.proxy.repo.db.jooq.tables.Source.SOURCE;
 

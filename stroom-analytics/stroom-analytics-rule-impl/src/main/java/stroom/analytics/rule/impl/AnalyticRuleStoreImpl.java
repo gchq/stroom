@@ -17,40 +17,72 @@
 
 package stroom.analytics.rule.impl;
 
+import stroom.analytics.shared.AnalyticProcessConfig;
 import stroom.analytics.shared.AnalyticRuleDoc;
+import stroom.analytics.shared.AnalyticRuleDoc.Builder;
+import stroom.analytics.shared.ScheduledQueryAnalyticProcessConfig;
+import stroom.analytics.shared.StreamingAnalyticProcessConfig;
+import stroom.analytics.shared.TableBuilderAnalyticProcessConfig;
+import stroom.docref.DocContentHighlights;
 import stroom.docref.DocContentMatch;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
+import stroom.docref.StringMatch;
 import stroom.docstore.api.AuditFieldFilter;
+import stroom.docstore.api.DependencyRemapper;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
-import stroom.explorer.shared.DocumentIcon;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
+import stroom.query.common.v2.DataSourceProviderRegistry;
+import stroom.query.language.SearchRequestFactory;
 import stroom.security.api.SecurityContext;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Message;
+
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import java.util.function.BiConsumer;
 
 @Singleton
 class AnalyticRuleStoreImpl implements AnalyticRuleStore {
 
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AnalyticRuleStoreImpl.class);
+    public static final DocumentType DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.SEARCH,
+            AnalyticRuleDoc.DOCUMENT_TYPE,
+            "Analytic Rule",
+            AnalyticRuleDoc.ICON);
+
     private final Store<AnalyticRuleDoc> store;
     private final SecurityContext securityContext;
+    private final Provider<DataSourceProviderRegistry> dataSourceProviderRegistryProvider;
+    private final SearchRequestFactory searchRequestFactory;
+    private final Provider<AnalyticRuleProcessors> analyticRuleProcessorsProvider;
 
     @Inject
     AnalyticRuleStoreImpl(final StoreFactory storeFactory,
                           final AnalyticRuleSerialiser serialiser,
-                          final SecurityContext securityContext) {
+                          final SecurityContext securityContext,
+                          final Provider<AnalyticRuleProcessors> analyticRuleProcessorsProvider,
+                          final Provider<DataSourceProviderRegistry> dataSourceProviderRegistryProvider,
+                          final SearchRequestFactory searchRequestFactory) {
         this.store = storeFactory.createStore(serialiser, AnalyticRuleDoc.DOCUMENT_TYPE, AnalyticRuleDoc.class);
         this.securityContext = securityContext;
+        this.dataSourceProviderRegistryProvider = dataSourceProviderRegistryProvider;
+        this.searchRequestFactory = searchRequestFactory;
+        this.analyticRuleProcessorsProvider = analyticRuleProcessorsProvider;
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -60,8 +92,6 @@ class AnalyticRuleStoreImpl implements AnalyticRuleStore {
     @Override
     public DocRef createDocument(final String name) {
         final DocRef docRef = store.createDocument(name);
-
-        // Create an alert rule from a template.
 
         // Read and write as a processing user to ensure we are allowed as documents do not have permissions added to
         // them until after they are created in the store.
@@ -73,9 +103,46 @@ class AnalyticRuleStoreImpl implements AnalyticRuleStore {
     }
 
     @Override
-    public DocRef copyDocument(final DocRef docRef, final Set<String> existingNames) {
-        final String newName = UniqueNameUtil.getCopyName(docRef.getName(), existingNames);
-        return store.copyDocument(docRef.getUuid(), newName);
+    public DocRef copyDocument(final DocRef docRef,
+                               final String name,
+                               final boolean makeNameUnique,
+                               final Set<String> existingNames) {
+        final String newName = UniqueNameUtil.getCopyName(name, makeNameUnique, existingNames);
+        final AnalyticRuleDoc document = store.readDocument(docRef);
+        return store.createDocument(newName,
+                (type, uuid, docName, version, createTime, updateTime, createUser, updateUser) -> {
+                    final Builder builder = document
+                            .copy()
+                            .type(type)
+                            .uuid(uuid)
+                            .name(docName)
+                            .version(version)
+                            .createTimeMs(createTime)
+                            .updateTimeMs(updateTime)
+                            .createUser(createUser)
+                            .updateUser(updateUser);
+
+                    final AnalyticProcessConfig analyticProcessConfig = document.getAnalyticProcessConfig();
+                    if (analyticProcessConfig != null) {
+                        if (analyticProcessConfig instanceof
+                                final ScheduledQueryAnalyticProcessConfig scheduledQueryAnalyticProcessConfig) {
+                            builder.analyticProcessConfig(
+                                    scheduledQueryAnalyticProcessConfig.copy().enabled(false).build());
+                        } else if (analyticProcessConfig instanceof
+                                final TableBuilderAnalyticProcessConfig tableBuilderAnalyticProcessConfig) {
+                            builder.analyticProcessConfig(
+                                    tableBuilderAnalyticProcessConfig.copy().enabled(false).build());
+                        } else if (analyticProcessConfig instanceof
+                                final StreamingAnalyticProcessConfig streamingAnalyticProcessConfig) {
+//                            builder.analyticProcessConfig(
+//                                    streamingAnalyticProcessConfig.copy().enabled(false).build());
+                        }
+
+                        builder.analyticProcessConfig(analyticProcessConfig);
+                    }
+
+                    return builder.build();
+                });
     }
 
     @Override
@@ -90,6 +157,7 @@ class AnalyticRuleStoreImpl implements AnalyticRuleStore {
 
     @Override
     public void deleteDocument(final String uuid) {
+        deleteProcessorFilter(DocRef.builder().type(getType()).uuid(uuid).build());
         store.deleteDocument(uuid);
     }
 
@@ -100,11 +168,7 @@ class AnalyticRuleStoreImpl implements AnalyticRuleStore {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(
-                DocumentTypeGroup.SEARCH,
-                AnalyticRuleDoc.DOCUMENT_TYPE,
-                "Analytic Rule",
-                AnalyticRuleDoc.ICON);
+        return DOCUMENT_TYPE;
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -117,18 +181,61 @@ class AnalyticRuleStoreImpl implements AnalyticRuleStore {
 
     @Override
     public Map<DocRef, Set<DocRef>> getDependencies() {
-        return store.getDependencies(null);
+        return store.getDependencies(createMapper());
     }
 
     @Override
     public Set<DocRef> getDependencies(final DocRef docRef) {
-        return store.getDependencies(docRef, null);
+        return store.getDependencies(docRef, createMapper());
     }
 
     @Override
     public void remapDependencies(final DocRef docRef,
                                   final Map<DocRef, DocRef> remappings) {
-        store.remapDependencies(docRef, remappings, null);
+        store.remapDependencies(docRef, remappings, createMapper());
+    }
+
+    private BiConsumer<AnalyticRuleDoc, DependencyRemapper> createMapper() {
+        return (doc, dependencyRemapper) -> {
+            try {
+                if (doc.getQuery() != null) {
+                    searchRequestFactory.extractDataSourceOnly(doc.getQuery(), docRef -> {
+                        try {
+                            if (docRef != null) {
+                                final DataSourceProviderRegistry dataSourceProviderRegistry =
+                                        dataSourceProviderRegistryProvider.get();
+                                final Optional<DocRef> optional = dataSourceProviderRegistry
+                                        .list()
+                                        .stream()
+                                        .filter(dr -> dr.equals(docRef))
+                                        .findAny();
+                                optional.ifPresent(dataSourceRef -> {
+                                    final DocRef remapped = dependencyRemapper.remap(dataSourceRef);
+                                    if (remapped != null) {
+                                        String query = doc.getQuery();
+                                        if (remapped.getName() != null &&
+                                                !remapped.getName().isBlank() &&
+                                                !Objects.equals(remapped.getName(), docRef.getName())) {
+                                            query = query.replaceFirst(docRef.getName(), remapped.getName());
+                                        }
+                                        if (remapped.getUuid() != null &&
+                                                !remapped.getUuid().isBlank() &&
+                                                !Objects.equals(remapped.getUuid(), docRef.getUuid())) {
+                                            query = query.replaceFirst(docRef.getUuid(), remapped.getUuid());
+                                        }
+                                        doc.setQuery(query);
+                                    }
+                                });
+                            }
+                        } catch (final RuntimeException e) {
+                            LOGGER.debug(e::getMessage, e);
+                        }
+                    });
+                }
+            } catch (final RuntimeException e) {
+                LOGGER.debug(e::getMessage, e);
+            }
+        };
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -205,7 +312,23 @@ class AnalyticRuleStoreImpl implements AnalyticRuleStore {
     }
 
     @Override
-    public List<DocContentMatch> findByContent(final String pattern, final boolean regex, final boolean matchCase) {
-        return store.findByContent(pattern, regex, matchCase);
+    public List<DocContentMatch> findByContent(final StringMatch filter) {
+        return store.findByContent(filter);
+    }
+
+    @Override
+    public DocContentHighlights fetchHighlights(final DocRef docRef,
+                                                final String extension,
+                                                final StringMatch filter) {
+        return store.fetchHighlights(docRef, extension, filter);
+    }
+
+    private void deleteProcessorFilter(final DocRef docRef) {
+        try {
+            final AnalyticRuleDoc analyticRuleDoc = readDocument(docRef);
+            analyticRuleProcessorsProvider.get().deleteProcessorFilters(analyticRuleDoc);
+        } catch (final RuntimeException e) {
+            LOGGER.debug(e::getMessage, e);
+        }
     }
 }

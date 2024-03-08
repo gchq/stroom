@@ -79,6 +79,10 @@ public class TaskManagerViewImpl extends ViewWithUiHandlers<TaskManagerUiHandler
         listContainer.setWidget(list);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface Binder extends UiBinder<Widget, TaskManagerViewImpl> {
 
     }

@@ -11,8 +11,13 @@ import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.event.logging.api.StroomEventLoggingUtil;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
+import stroom.explorer.impl.ExplorerConfig;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
+import stroom.security.impl.AuthenticationConfig;
+import stroom.security.openid.api.IdpType;
+import stroom.security.openid.api.OpenIdConfiguration;
+import stroom.ui.config.shared.ExtendedUiConfig;
 import stroom.ui.config.shared.UiConfig;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -27,18 +32,18 @@ import event.logging.ComplexLoggedOutcome;
 import event.logging.Query;
 import event.logging.SearchEventAction;
 import event.logging.UpdateEventAction;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.client.SyncInvoker;
+import jakarta.ws.rs.core.GenericType;
 
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.ws.rs.NotFoundException;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.client.SyncInvoker;
-import javax.ws.rs.core.GenericType;
 
 @AutoLogged
 public class GlobalConfigResourceImpl implements GlobalConfigResource {
@@ -51,6 +56,9 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
     private final Provider<UiConfig> uiConfig;
     private final Provider<UriFactory> uriFactory;
     private final Provider<NodeInfo> nodeInfoProvider;
+    private final Provider<OpenIdConfiguration> openIdConfigProvider;
+    private final Provider<ExplorerConfig> explorerConfigProvider;
+    private final Provider<AuthenticationConfig> authenticationConfigProvider;
 
     @Inject
     GlobalConfigResourceImpl(final Provider<StroomEventLoggingService> stroomEventLoggingServiceProvider,
@@ -58,7 +66,10 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
                              final Provider<NodeService> nodeServiceProvider,
                              final Provider<UiConfig> uiConfig,
                              final Provider<UriFactory> uriFactory,
-                             final Provider<NodeInfo> nodeInfoProvider) {
+                             final Provider<NodeInfo> nodeInfoProvider,
+                             final Provider<OpenIdConfiguration> openIdConfigProvider,
+                             final Provider<ExplorerConfig> explorerConfigProvider,
+                             final Provider<AuthenticationConfig> authenticationConfigProvider) {
 
         this.stroomEventLoggingServiceProvider = stroomEventLoggingServiceProvider;
         this.globalConfigServiceProvider = Objects.requireNonNull(globalConfigServiceProvider);
@@ -66,6 +77,9 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
         this.uiConfig = uiConfig;
         this.uriFactory = uriFactory;
         this.nodeInfoProvider = nodeInfoProvider;
+        this.openIdConfigProvider = openIdConfigProvider;
+        this.explorerConfigProvider = explorerConfigProvider;
+        this.authenticationConfigProvider = authenticationConfigProvider;
     }
 
 
@@ -258,11 +272,29 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
         }
     }
 
+    // This one gets called by the React UI
     @AutoLogged(OperationType.UNLOGGED) // Called constantly by UI code not user. No need to log.
     @Timed
     @Override
     public UiConfig fetchUiConfig() {
         return uiConfig.get();
+    }
+
+    // This one gets called by the GWT UI
+    @AutoLogged(OperationType.UNLOGGED) // Called constantly by UI code not user. No need to log.
+    @Timed
+    @Override
+    public ExtendedUiConfig fetchExtendedUiConfig() {
+        final IdpType idpType = openIdConfigProvider.get().getIdentityProviderType();
+        final boolean isExternalIdp = idpType != null && idpType.isExternal();
+
+        // Add additional back-end config that is also need in the UI without having to expose
+        // the back-end config classes.
+        return new ExtendedUiConfig(
+                uiConfig.get(),
+                isExternalIdp,
+                explorerConfigProvider.get().getDependencyWarningsEnabled(),
+                authenticationConfigProvider.get().getMaxApiKeyExpiryAge().toMillis());
     }
 
     private Query buildRawQuery(final String userInput) {

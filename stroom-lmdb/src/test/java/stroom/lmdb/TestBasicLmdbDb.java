@@ -63,7 +63,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -76,6 +75,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -122,7 +122,7 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
         basicLmdbDb4 = new BasicLmdbDb<>(
                 lmdbEnv,
                 byteBufferPool,
-                new IntegerSerde(),
+                Serde.usingNativeOrder(new IntegerSerde()), // MDB_INTEGERKEY needs native byte order
                 new StringSerde(),
                 "MyBasicLmdb4",
                 DbiFlags.MDB_CREATE,
@@ -671,10 +671,10 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
         return TimedCase.of(testName, (round, iterations) -> {
             final int roundIdx = round - 1;
             try (final PooledByteBufferPair pooledBufferPair = basicLmdbDb.getPooledBufferPair()) {
-                final int fromInc = iterations * roundIdx;
-                final int toExc = iterations * (roundIdx + 1);
+                final long fromInc = iterations * roundIdx;
+                final long toExc = iterations * (roundIdx + 1);
                 lmdbEnv.doWithWriteTxn(writeTxn -> {
-                    IntStream.range(fromInc, toExc)
+                    LongStream.range(fromInc, toExc)
                             .forEach(i -> {
                                 final ByteBuffer keyBuff = pooledBufferPair.getKeyBuffer();
                                 keyBuff.clear();
@@ -683,11 +683,11 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
                                 basicLmdbDb.serializeKey(
                                         keyBuff,
                                         "key-" + Strings.padStart(
-                                                Integer.toString(i), 10, '0'));
+                                                Long.toString(i), 10, '0'));
                                 basicLmdbDb.serializeValue(
                                         valBuff,
                                         "val-" + Strings.padStart(
-                                                Integer.toString(i), 10, '0'));
+                                                Long.toString(i), 10, '0'));
                                 // Do the put
                                 putFunc.accept(writeTxn, keyBuff, valBuff);
                             });
@@ -756,6 +756,77 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
                 case6);
 
         LOGGER.debug("basicLmdbDb count:  {}", ModelStringUtil.formatCsv(basicLmdbDb.getEntryCount()));
+    }
+
+    /**
+     * Comparing overwriting the same key N times vs putting N entries each with a different key
+     */
+    @Disabled
+    @Test
+    void testPutVsAppend_perf() {
+        final TimedCase dbWarmUp = TimedCase.of("DB warm up", (round, iterations) -> {
+            final int roundIdx = round - 1;
+            final long fromInc = iterations * roundIdx;
+            final long toExc = iterations * (roundIdx + 1);
+            lmdbEnv.doWithWriteTxn(writeTxn -> {
+                LongStream.range(fromInc, toExc)
+                        .forEach(i -> {
+                            basicLmdbDb.put(writeTxn,
+                                    "key-" + Strings.padStart(
+                                            Long.toString(i), 10, '0'),
+                                    "val-" + Strings.padStart(
+                                            Long.toString(i), 10, '0'),
+                                    false,
+                                    false);
+                        });
+            });
+        });
+
+        final TimedCase putToSameKey = TimedCase.of("Put to same key", (round, iterations) -> {
+            final int roundIdx = round - 1;
+            final long fromInc = iterations * roundIdx;
+            final long toExc = iterations * (roundIdx + 1);
+            lmdbEnv.doWithWriteTxn(writeTxn -> {
+                LongStream.range(fromInc, toExc)
+                        .forEach(i -> {
+                            // Same key every time, diff val
+                            basicLmdbDb.put(writeTxn,
+                                    "key-" + Strings.padStart(
+                                            Long.toString(fromInc), 10, '0'),
+                                    "val-" + Strings.padStart(
+                                            Long.toString(i), 10, '0'),
+                                    true,
+                                    false);
+                        });
+            });
+        });
+
+        final TimedCase putNewKeys = TimedCase.of("Put new keys", (round, iterations) -> {
+            final int roundIdx = round - 1;
+            final long fromInc = iterations * roundIdx;
+            final long toExc = iterations * (roundIdx + 1);
+            lmdbEnv.doWithWriteTxn(writeTxn -> {
+                LongStream.range(fromInc, toExc)
+                        .forEach(i -> {
+                            // Same key every time, diff val
+                            basicLmdbDb.put(writeTxn,
+                                    "key-" + Strings.padStart(
+                                            Long.toString(i), 10, '0'),
+                                    "val-" + Strings.padStart(
+                                            Long.toString(i), 10, '0'),
+                                    false,
+                                    true);
+                        });
+            });
+        });
+
+        TestUtil.comparePerformance(
+                3,
+                1_000_000,
+                LOGGER::info,
+                dbWarmUp,
+                putToSameKey,
+                putNewKeys);
     }
 
     @Test
@@ -1068,10 +1139,7 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
     @Test
     void testLoadOrderAndIntKeyPerformance() {
 
-        // TODO: 18/04/2023 I think this test is wrong, see https://github.com/lmdbjava/lmdbjava/wiki/Keys#numeric-keys
-        //  Think it needs to be long not integer and ensure the correct endianness.
-
-//        final int iterations = 10_000_000;
+//        final int iterations = 1_000_000;
         final int iterations = 10;
 
         LOGGER.info("info {}", basicLmdbDb3.getDbInfo());
@@ -1086,13 +1154,12 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
         assertThat(ascendingData)
                 .hasSize(iterations);
 
-        Random random = new Random();
         final List<Tuple2<Integer, String>> randomData = IntStream
                 .range(Integer.MAX_VALUE - iterations, Integer.MAX_VALUE)
                 .boxed()
-                .sorted(Comparator.comparingInt(i -> random.nextInt(iterations)))
                 .map(i -> Tuple.of(i, String.format("Val %010d", i)))
-                .collect(Collectors.toList());
+                .collect(Collectors.toCollection(ArrayList::new));
+        Collections.shuffle(randomData);
 
         assertThat(ascendingData)
                 .hasSize(iterations);
@@ -1113,6 +1180,8 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
             });
         }, "Random");
 
+        // If you want to use MDB_INTEGERKEY then you MUST set the byte buffer to nativeOrder before
+        // writing/reading. See https://github.com/lmdbjava/lmdbjava/issues/51
         LOGGER.logDurationIfInfoEnabled(() -> {
             lmdbEnv.doWithWriteTxn(writeTxn -> {
                 ascendingData.forEach(tuple -> {

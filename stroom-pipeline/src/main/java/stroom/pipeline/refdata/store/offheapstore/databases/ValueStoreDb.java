@@ -38,6 +38,7 @@ import stroom.util.logging.LogUtil;
 
 import com.google.common.base.Preconditions;
 import com.google.inject.assistedinject.Assisted;
+import jakarta.inject.Inject;
 import org.lmdbjava.Cursor;
 import org.lmdbjava.GetOp;
 import org.lmdbjava.Txn;
@@ -48,7 +49,6 @@ import java.nio.ByteBuffer;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import javax.inject.Inject;
 
 
 /**

@@ -27,24 +27,24 @@ import stroom.search.extraction.ExpressionFilter;
 import stroom.search.extraction.ExtractionDecorator;
 import stroom.search.extraction.ExtractionDecoratorFactory;
 import stroom.search.extraction.StoredDataQueue;
-import stroom.search.impl.shard.IndexShardSearchFactory;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
+import jakarta.inject.Inject;
+
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
-import javax.inject.Inject;
 
 class LuceneNodeSearchTaskHandler implements NodeSearchTaskHandler {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(LuceneNodeSearchTaskHandler.class);
 
-    private final IndexShardSearchFactory indexShardSearchFactory;
+    private final LuceneSearcher luceneSearcher;
     private final ExtractionDecoratorFactory extractionDecoratorFactory;
     private final SecurityContext securityContext;
     private final ExecutorProvider executorProvider;
@@ -55,11 +55,11 @@ class LuceneNodeSearchTaskHandler implements NodeSearchTaskHandler {
     private TaskContext taskContext;
 
     @Inject
-    LuceneNodeSearchTaskHandler(final IndexShardSearchFactory indexShardSearchFactory,
+    LuceneNodeSearchTaskHandler(final LuceneSearcher luceneSearcher,
                                 final ExtractionDecoratorFactory extractionDecoratorFactory,
                                 final SecurityContext securityContext,
                                 final ExecutorProvider executorProvider) {
-        this.indexShardSearchFactory = indexShardSearchFactory;
+        this.luceneSearcher = luceneSearcher;
         this.extractionDecoratorFactory = extractionDecoratorFactory;
         this.securityContext = securityContext;
         this.executorProvider = executorProvider;
@@ -100,7 +100,7 @@ class LuceneNodeSearchTaskHandler implements NodeSearchTaskHandler {
                     .addPrefixExcludeFilter(AnnotationFields.ANNOTATION_FIELD_PREFIX)
                     .build();
             final ExpressionOperator expression = expressionFilter.copy(query.getExpression());
-            final CompletableFuture<Void> indexShardSearchFuture = indexShardSearchFactory.search(
+            final CompletableFuture<Void> indexShardSearchFuture = luceneSearcher.search(
                     task,
                     expression,
                     coprocessors.getFieldIndex(),
@@ -140,10 +140,50 @@ class LuceneNodeSearchTaskHandler implements NodeSearchTaskHandler {
         }
     }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     @Override
     public void updateInfo() {
-        taskContext.info(() -> "" +
-                "Searching... " +
+        taskContext.info(() -> "Searching... " +
                 "found "
                 + hitCount.sum() +
                 " documents" +

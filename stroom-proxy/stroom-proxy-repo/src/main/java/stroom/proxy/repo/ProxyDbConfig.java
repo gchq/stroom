@@ -9,10 +9,10 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import jakarta.validation.constraints.Min;
 
 import java.util.List;
 import java.util.Objects;
-import javax.validation.constraints.Min;
 
 @JsonPropertyOrder(alphabetic = true)
 public class ProxyDbConfig extends AbstractConfig implements IsProxyConfig {
@@ -35,12 +35,12 @@ public class ProxyDbConfig extends AbstractConfig implements IsProxyConfig {
 //    "pragma incremental_vacuum;""
 
     private static final StroomDuration DEFAULT_MAINTENANCE_PRAGMA_FREQUENCY = StroomDuration.ofMinutes(1);
-    // TODO: 08/11/2022 Is this meant to be 1mil or 10mil
-    private static final int DEFAULT_BATCH_SIZE = 1_0000_000;
+    private static final int DEFAULT_BATCH_SIZE = 1_000_000;
     protected static final StroomDuration DEFAULT_FLUSH_FREQUENCY = StroomDuration.ofSeconds(1);
     protected static final StroomDuration DEFAULT_CLEANUP_FREQUENCY = StroomDuration.ofSeconds(1);
 
     private final String dbDir;
+    private final String libraryDir;
     private final List<String> globalPragma;
     private final List<String> connectionPragma;
     private final List<String> maintenancePragma;
@@ -52,6 +52,7 @@ public class ProxyDbConfig extends AbstractConfig implements IsProxyConfig {
 
     public ProxyDbConfig() {
         dbDir = "db";
+        libraryDir = "sqlite_library";
         globalPragma = DEFAULT_GLOBAL_PRAGMA;
         connectionPragma = DEFAULT_CONNECTION_PRAGMA;
         maintenancePragma = DEFAULT_MAINTENANCE_PRAGMA;
@@ -64,6 +65,7 @@ public class ProxyDbConfig extends AbstractConfig implements IsProxyConfig {
     @JsonCreator
     public ProxyDbConfig(
             @JsonProperty("dbDir") final String dbDir,
+            @JsonProperty("libraryDir") final String libraryDir,
             @JsonProperty("globalPragma") final List<String> globalPragma,
             @JsonProperty("connectionPragma") final List<String> connectionPragma,
             @JsonProperty("maintenancePragma") final List<String> maintenancePragma,
@@ -72,6 +74,7 @@ public class ProxyDbConfig extends AbstractConfig implements IsProxyConfig {
             @JsonProperty("flushFrequency") final StroomDuration flushFrequency,
             @JsonProperty("cleanupFrequency") final StroomDuration cleanupFrequency) {
         this.dbDir = dbDir;
+        this.libraryDir = libraryDir;
         this.globalPragma = List.copyOf(globalPragma);
         this.connectionPragma = List.copyOf(connectionPragma);
         this.maintenancePragma = maintenancePragma;
@@ -86,6 +89,13 @@ public class ProxyDbConfig extends AbstractConfig implements IsProxyConfig {
     @JsonPropertyDescription("The directory to use for the proxy repository DB")
     public String getDbDir() {
         return dbDir;
+    }
+
+    @RequiresProxyRestart
+    @JsonProperty
+    @JsonPropertyDescription("The directory to use for the proxy repository DB Sqlite library files")
+    public String getLibraryDir() {
+        return libraryDir;
     }
 
     @RequiresProxyRestart
@@ -146,18 +156,22 @@ public class ProxyDbConfig extends AbstractConfig implements IsProxyConfig {
             return false;
         }
         final ProxyDbConfig that = (ProxyDbConfig) o;
-        return batchSize == that.batchSize && Objects.equals(dbDir, that.dbDir) && Objects.equals(
-                globalPragma,
-                that.globalPragma) && Objects.equals(connectionPragma,
-                that.connectionPragma) && Objects.equals(maintenancePragma,
-                that.maintenancePragma) && Objects.equals(maintenancePragmaFrequency,
-                that.maintenancePragmaFrequency) && Objects.equals(flushFrequency,
-                that.flushFrequency) && Objects.equals(cleanupFrequency, that.cleanupFrequency);
+        return batchSize == that.batchSize
+                && Objects.equals(dbDir, that.dbDir)
+                && Objects.equals(libraryDir, that.libraryDir)
+                && Objects.equals(globalPragma, that.globalPragma)
+                && Objects.equals(connectionPragma, that.connectionPragma)
+                && Objects.equals(maintenancePragma, that.maintenancePragma)
+                && Objects.equals(maintenancePragmaFrequency, that.maintenancePragmaFrequency)
+                && Objects.equals(flushFrequency, that.flushFrequency)
+                && Objects.equals(cleanupFrequency, that.cleanupFrequency);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(dbDir,
+        return Objects.hash(
+                dbDir,
+                libraryDir,
                 globalPragma,
                 connectionPragma,
                 maintenancePragma,
@@ -171,6 +185,7 @@ public class ProxyDbConfig extends AbstractConfig implements IsProxyConfig {
     public String toString() {
         return "ProxyDbConfig{" +
                 "dbDir='" + dbDir + '\'' +
+                ", libraryDir=" + libraryDir +
                 ", globalPragma=" + globalPragma +
                 ", connectionPragma=" + connectionPragma +
                 ", maintenancePragma=" + maintenancePragma +

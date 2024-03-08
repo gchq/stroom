@@ -1,0 +1,1595 @@
+from 'Test Index'
+where UserId = user5 and Description = e0567
+and EventTime <= 2000-01-01T00:00:00.000Z
+and EventTime >= 2016-01-02T00:00:00.000Z
+select StreamId, EventId, EventTime, Status
+=====
+{
+  "key" : {
+    "uuid" : "test"
+  },
+  "query" : {
+    "dataSource" : {
+      "name" : "Test Index"
+    },
+    "expression" : {
+      "type" : "operator",
+      "children" : [ {
+        "type" : "operator",
+        "children" : [ {
+          "type" : "operator",
+          "children" : [ {
+            "type" : "operator",
+            "children" : [ {
+              "type" : "operator",
+              "children" : [ {
+                "type" : "term",
+                "field" : "UserId",
+                "condition" : "EQUALS",
+                "value" : "user5"
+              } ]
+            } ]
+          }, {
+            "type" : "operator",
+            "children" : [ {
+              "type" : "term",
+              "field" : "Description",
+              "condition" : "EQUALS",
+              "value" : "e0567"
+            } ]
+          } ]
+        }, {
+          "type" : "operator",
+          "children" : [ {
+            "type" : "term",
+            "field" : "EventTime",
+            "condition" : "LESS_THAN_OR_EQUAL_TO",
+            "value" : "2000-01-01T00:00:00.000Z"
+          } ]
+        } ]
+      }, {
+        "type" : "operator",
+        "children" : [ {
+          "type" : "term",
+          "field" : "EventTime",
+          "condition" : "GREATER_THAN_OR_EQUAL_TO",
+          "value" : "2016-01-02T00:00:00.000Z"
+        } ]
+      } ]
+    }
+  },
+  "resultRequests" : [ {
+    "componentId" : "table",
+    "mappings" : [ {
+      "fields" : [ {
+        "id" : "StreamId",
+        "name" : "StreamId",
+        "expression" : "${StreamId}",
+        "format" : {
+          "type" : "GENERAL"
+        },
+        "width" : 200,
+        "visible" : true,
+        "special" : false
+      }, {
+        "id" : "EventId",
+        "name" : "EventId",
+        "expression" : "${EventId}",
+        "format" : {
+          "type" : "GENERAL"
+        },
+        "width" : 200,
+        "visible" : true,
+        "special" : false
+      }, {
+        "id" : "EventTime",
+        "name" : "EventTime",
+        "expression" : "${EventTime}",
+        "format" : {
+          "type" : "GENERAL"
+        },
+        "width" : 200,
+        "visible" : true,
+        "special" : false
+      }, {
+        "id" : "Status",
+        "name" : "Status",
+        "expression" : "${Status}",
+        "format" : {
+          "type" : "GENERAL"
+        },
+        "width" : 200,
+        "visible" : true,
+        "special" : false
+      } ]
+    } ],
+    "resultStyle" : "TABLE",
+    "fetch" : "ALL"
+  } ],
+  "incremental" : false,
+  "dateTimeSettings" : {
+    "dateTimePattern" : "yyyy-MM-dd'T'HH:mm:ss.SSSXX",
+    "localZoneId" : "Z",
+    "referenceTime" : 0,
+    "timeZone" : {
+      "use" : "UTC"
+    }
+  }
+}
+-----
+from 'Test Index'
+where UserId = user5 and Description = e0567
+and EventTime <= 2000-01-01T00:00:00.000Z
+and EventTime >= 2016-01-02T00:00:00.000Z
+select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time", Status
+=====
+{
+  "key" : {
+    "uuid" : "test"
+  },
+  "query" : {
+    "dataSource" : {
+      "name" : "Test Index"
+    },
+    "expression" : {
+      "type" : "operator",
+      "children" : [ {
+        "type" : "operator",
+        "children" : [ {
+          "type" : "operator",
+          "children" : [ {
+            "type" : "operator",
+            "children" : [ {
+              "type" : "operator",
+              "children" : [ {
+                "type" : "term",
+                "field" : "UserId",
+                "condition" : "EQUALS",
+                "value" : "user5"
+              } ]
+            } ]
+          }, {
+            "type" : "operator",
+            "children" : [ {
+              "type" : "term",
+              "field" : "Description",
+              "condition" : "EQUALS",
+              "value" : "e0567"
+            } ]
+          } ]
+        }, {
+          "type" : "operator",
+          "children" : [ {
+            "type" : "term",
+            "field" : "EventTime",
+            "condition" : "LESS_THAN_OR_EQUAL_TO",
+            "value" : "2000-01-01T00:00:00.000Z"
+          } ]
+        } ]
+      }, {
+        "type" : "operator",
+        "children" : [ {
+          "type" : "term",
+          "field" : "EventTime",
+          "condition" : "GREATER_THAN_OR_EQUAL_TO",
+          "value" : "2016-01-02T00:00:00.000Z"
+        } ]
+      } ]
+    }
+  },
+  "resultRequests" : [ {
+    "componentId" : "table",
+    "mappings" : [ {
+      "fields" : [ {
+        "id" : "StreamId",
+        "name" : "Stream Id",
+        "expression" : "${StreamId}",
+        "format" : {
+          "type" : "GENERAL"
+        },
+        "width" : 200,
+        "visible" : true,
+        "special" : false
+      }, {
+        "id" : "EventId",
+        "name" : "Event Id",
+        "expression" : "${EventId}",
+        "format" : {
+          "type" : "GENERAL"
+        },
+        "width" : 200,
+        "visible" : true,
+        "special" : false
+      }, {
+        "id" : "EventTime",
+        "name" : "Event Time",
+        "expression" : "${EventTime}",
+        "format" : {
+          "type" : "GENERAL"
+        },
+        "width" : 200,
+        "visible" : true,
+        "special" : false
+      }, {
+        "id" : "Status",
+        "name" : "Status",
+        "expression" : "${Status}",
+        "format" : {
+          "type" : "GENERAL"
+        },
+        "width" : 200,
+        "visible" : true,
+        "special" : false
+      } ]
+    } ],
+    "resultStyle" : "TABLE",
+    "fetch" : "ALL"
+  } ],
+  "incremental" : false,
+  "dateTimeSettings" : {
+    "dateTimePattern" : "yyyy-MM-dd'T'HH:mm:ss.SSSXX",
+    "localZoneId" : "Z",
+    "referenceTime" : 0,
+    "timeZone" : {
+      "use" : "UTC"
+    }
+  }
+}
+-----
+from 'Test Index'
+where UserId = user5 and Description = e0567
+and EventTime <= 2000-01-01T00:00:00.000Z
+and EventTime >= 2016-01-02T00:00:00.000Z
+eval UserId = upperCase(UserId)
+select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time", Status, UserId as "User Id"
+=====
+{
+  "key" : {
+    "uuid" : "test"
+  },
+  "query" : {
+    "dataSource" : {
+      "name" : "Test Index"
+    },
+    "expression" : {
+      "type" : "operator",
+      "children" : [ {
+        "type" : "operator",
+        "children" : [ {
+          "type" : "operator",
+          "children" : [ {
+            "type" : "operator",
+            "children" : [ {
+              "type" : "operator",
+              "children" : [ {
+                "type" : "term",
+                "field" : "UserId",
+                "condition" : "EQUALS",
+                "value" : "user5"
+              } ]
+            } ]
+          }, {
+            "type" : "operator",
+            "children" : [ {
+              "type" : "term",
+              "field" : "Description",
+              "condition" : "EQUALS",
+              "value" : "e0567"
+            } ]
+          } ]
+        }, {
+          "type" : "operator",
+          "children" : [ {
+            "type" : "term",
+            "field" : "EventTime",
+            "condition" : "LESS_THAN_OR_EQUAL_TO",
+            "value" : "2000-01-01T00:00:00.000Z"
+          } ]
+        } ]
+      }, {
+        "type" : "operator",
+        "children" : [ {
+          "type" : "term",
+          "field" : "EventTime",
+          "condition" : "GREATER_THAN_OR_EQUAL_TO",
+          "value" : "2016-01-02T00:00:00.000Z"
+        } ]
+      } ]
+    }
+  },
+  "resultRequests" : [ {
+    "componentId" : "table",
+    "mappings" : [ {
+      "fields" : [ {
+        "id" : "StreamId",
+        "name" : "Stream Id",
+        "expression" : "${StreamId}",
+        "format" : {
+          "type" : "GENERAL"
+        },
+        "width" : 200,
+        "visible" : true,
+        "special" : false
+      }, {
+        "id" : "EventId",
+        "name" : "Event Id",
+        "expression" : "${EventId}",
+        "format" : {
+          "type" : "GENERAL"
+        },
+        "width" : 200,
+        "visible" : true,
+        "special" : false
+      }, {
+        "id" : "EventTime",
+        "name" : "Event Time",
+        "expression" : "${EventTime}",
+        "format" : {
+          "type" : "GENERAL"
+        },
+        "width" : 200,
+        "visible" : true,
+        "special" : false
+      }, {
+        "id" : "Status",
+        "name" : "Status",
+        "expression" : "${Status}",
+        "format" : {
+          "type" : "GENERAL"
+        },
+        "width" : 200,
+        "visible" : true,
+        "special" : false
+      }, {
+        "id" : "UserId",
+        "name" : "User Id",
+        "expression" : "upperCase(${UserId})",
+        "format" : {
+          "type" : "GENERAL"
+        },
+        "width" : 200,
+        "visible" : true,
+        "special" : false
+      } ]
+    } ],
+    "resultStyle" : "TABLE",
+    "fetch" : "ALL"
+  } ],
+  "incremental" : false,
+  "dateTimeSettings" : {
+    "dateTimePattern" : "yyyy-MM-dd'T'HH:mm:ss.SSSXX",
+    "localZoneId" : "Z",
+    "referenceTime" : 0,
+    "timeZone" : {
+      "use" : "UTC"
+    }
+  }
+}
+-----
+from 'Test Index'
+where EventTime > 2023-05-05T00:00:00.000Z and  (Field = 'blah' or Field = 'blip')
+eval UserId = upperCase(UserId)
+select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time", Status, UserId as "User Id"
+=====
+{
+  "key" : {
+    "uuid" : "test"
+  },
+  "query" : {
+    "dataSource" : {
+      "name" : "Test Index"
+    },
+    "expression" : {
+      "type" : "operator",
+      "children" : [ {
+        "type" : "operator",
+        "children" : [ {
+          "type" : "operator",
+          "children" : [ {
+            "type" : "term",
+            "field" : "EventTime",
+            "condition" : "GREATER_THAN",
+            "value" : "2023-05-05T00:00:00.000Z"
+          } ]
+        } ]
+      }, {
+        "type" : "operator",
+        "children" : [ {
+          "type" : "operator",
+          "op" : "OR",
+          "children" : [ {
+            "type" : "operator",
+            "children" : [ {
+              "type" : "term",
+              "field" : "Field",
+              "condition" : "EQUALS",
+              "value" : "blah"
+            } ]
+          }, {
+            "type" : "operator",
+            "children" : [ {
+              "type" : "term",
+              "field" : "Field",
+              "condition" : "EQUALS",
+              "value" : "blip"
+            } ]
+          } ]
+        } ]
+      } ]
+    }
+  },
+  "resultRequests" : [ {
+    "componentId" : "table",
+    "mappings" : [ {
+      "fields" : [ {
+        "id" : "StreamId",
+        "name" : "Stream Id",
+        "expression" : "${StreamId}",
+        "format" : {
+          "type" : "GENERAL"
+        },
+        "width" : 200,
+        "visible" : true,
+        "special" : false
+      }, {
+        "id" : "EventId",
+        "name" : "Event Id",
+        "expression" : "${EventId}",
+        "format" : {
+          "type" : "GENERAL"
+        },
+        "width" : 200,
+        "visible" : true,
+        "special" : false
+      }, {
+        "id" : "EventTime",
+        "name" : "Event Time",
+        "expression" : "${EventTime}",
+        "format" : {
+          "type" : "GENERAL"
+        },
+        "width" : 200,
+        "visible" : true,
+        "special" : false
+      }, {
+        "id" : "Status",
+        "name" : "Status",
+        "expression" : "${Status}",
+        "format" : {
+          "type" : "GENERAL"
+        },
+        "width" : 200,
+        "visible" : true,
+        "special" : false
+      }, {
+        "id" : "UserId",
+        "name" : "User Id",
+        "expression" : "upperCase(${UserId})",
+        "format" : {
+          "type" : "GENERAL"
+        },
+        "width" : 200,
+        "visible" : true,
+        "special" : false
+      } ]
+    } ],
+    "resultStyle" : "TABLE",
+    "fetch" : "ALL"
+  } ],
+  "incremental" : false,
+  "dateTimeSettings" : {
+    "dateTimePattern" : "yyyy-MM-dd'T'HH:mm:ss.SSSXX",
+    "localZoneId" : "Z",
+    "referenceTime" : 0,
+    "timeZone" : {
+      "use" : "UTC"
+    }
+  }
+}
+-----
+from 'Test Index'
+where EventTime > 2023-05-05T00:00:00.000Z and  (Field = 'blah' or Field = 'blip')
+eval UserId = upperCase(UserId)
+select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time", Status, UserId as "User Id"
+=====
+{
+  "key" : {
+    "uuid" : "test"
+  },
+  "query" : {
+    "dataSource" : {
+      "name" : "Test Index"
+    },
+    "expression" : {
+      "type" : "operator",
+      "children" : [ {
+        "type" : "operator",
+        "children" : [ {
+          "type" : "operator",
+          "children" : [ {
+            "type" : "term",
+            "field" : "EventTime",
+            "condition" : "GREATER_THAN",
+            "value" : "2023-05-05T00:00:00.000Z"
+          } ]
+        } ]
+      }, {
+        "type" : "operator",
+        "children" : [ {
+          "type" : "operator",
+          "op" : "OR",
+          "children" : [ {
+            "type" : "operator",
+            "children" : [ {
+              "type" : "term",
+              "field" : "Field",
+              "condition" : "EQUALS",
+              "value" : "blah"
+            } ]
+          }, {
+            "type" : "operator",
+            "children" : [ {
+              "type" : "term",
+              "field" : "Field",
+              "condition" : "EQUALS",
+              "value" : "blip"
+            } ]
+          } ]
+        } ]
+      } ]
+    }
+  },
+  "resultRequests" : [ {
+    "componentId" : "table",
+    "mappings" : [ {
+      "fields" : [ {
+        "id" : "StreamId",
+        "name" : "Stream Id",
+        "expression" : "${StreamId}",
+        "format" : {
+          "type" : "GENERAL"
+        },
+        "width" : 200,
+        "visible" : true,
+        "special" : false
+      }, {
+        "id" : "EventId",
+        "name" : "Event Id",
+        "expression" : "${EventId}",
+        "format" : {
+          "type" : "GENERAL"
+        },
+        "width" : 200,
+        "visible" : true,
+        "special" : false
+      }, {
+        "id" : "EventTime",
+        "name" : "Event Time",
+        "expression" : "${EventTime}",
+        "format" : {
+          "type" : "GENERAL"
+        },
+        "width" : 200,
+        "visible" : true,
+        "special" : false
+      }, {
+        "id" : "Status",
+        "name" : "Status",
+        "expression" : "${Status}",
+        "format" : {
+          "type" : "GENERAL"
+        },
+        "width" : 200,
+        "visible" : true,
+        "special" : false
+      }, {
+        "id" : "UserId",
+        "name" : "User Id",
+        "expression" : "upperCase(${UserId})",
+        "format" : {
+          "type" : "GENERAL"
+        },
+        "width" : 200,
+        "visible" : true,
+        "special" : false
+      } ]
+    } ],
+    "resultStyle" : "TABLE",
+    "fetch" : "ALL"
+  } ],
+  "incremental" : false,
+  "dateTimeSettings" : {
+    "dateTimePattern" : "yyyy-MM-dd'T'HH:mm:ss.SSSXX",
+    "localZoneId" : "Z",
+    "referenceTime" : 0,
+    "timeZone" : {
+      "use" : "UTC"
+    }
+  }
+}
+-----
+from 'Test Index'
+where EventTime <= day()-1d-1h
+eval UserId = upperCase(UserId)
+select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time", Status, UserId as "User Id"
+=====
+{
+  "key" : {
+    "uuid" : "test"
+  },
+  "query" : {
+    "dataSource" : {
+      "name" : "Test Index"
+    },
+    "expression" : {
+      "type" : "operator",
+      "children" : [ {
+        "type" : "operator",
+        "children" : [ {
+          "type" : "term",
+          "field" : "EventTime",
+          "condition" : "LESS_THAN_OR_EQUAL_TO",
+          "value" : "day()-1d-1h"
+        } ]
+      } ]
+    }
+  },
+  "resultRequests" : [ {
+    "componentId" : "table",
+    "mappings" : [ {
+      "fields" : [ {
+        "id" : "StreamId",
+        "name" : "Stream Id",
+        "expression" : "${StreamId}",
+        "format" : {
+          "type" : "GENERAL"
+        },
+        "width" : 200,
+        "visible" : true,
+        "special" : false
+      }, {
+        "id" : "EventId",
+        "name" : "Event Id",
+        "expression" : "${EventId}",
+        "format" : {
+          "type" : "GENERAL"
+        },
+        "width" : 200,
+        "visible" : true,
+        "special" : false
+      }, {
+        "id" : "EventTime",
+        "name" : "Event Time",
+        "expression" : "${EventTime}",
+        "format" : {
+          "type" : "GENERAL"
+        },
+        "width" : 200,
+        "visible" : true,
+        "special" : false
+      }, {
+        "id" : "Status",
+        "name" : "Status",
+        "expression" : "${Status}",
+        "format" : {
+          "type" : "GENERAL"
+        },
+        "width" : 200,
+        "visible" : true,
+        "special" : false
+      }, {
+        "id" : "UserId",
+        "name" : "User Id",
+        "expression" : "upperCase(${UserId})",
+        "format" : {
+          "type" : "GENERAL"
+        },
+        "width" : 200,
+        "visible" : true,
+        "special" : false
+      } ]
+    } ],
+    "resultStyle" : "TABLE",
+    "fetch" : "ALL"
+  } ],
+  "incremental" : false,
+  "dateTimeSettings" : {
+    "dateTimePattern" : "yyyy-MM-dd'T'HH:mm:ss.SSSXX",
+    "localZoneId" : "Z",
+    "referenceTime" : 0,
+    "timeZone" : {
+      "use" : "UTC"
+    }
+  }
+}
+-----
+from "index_view"
+where EventTime between 2022-05-05T00:00:00.000Z and 2023-05-05T00:00:00.000Z
+select StreamId
+=====
+{
+  "key" : {
+    "uuid" : "test"
+  },
+  "query" : {
+    "dataSource" : {
+      "name" : "index_view"
+    },
+    "expression" : {
+      "type" : "operator",
+      "children" : [ {
+        "type" : "operator",
+        "children" : [ {
+          "type" : "term",
+          "field" : "EventTime",
+          "condition" : "BETWEEN",
+          "value" : "2022-05-05T00:00:00.000Z, 2023-05-05T00:00:00.000Z"
+        } ]
+      } ]
+    }
+  },
+  "resultRequests" : [ {
+    "componentId" : "table",
+    "mappings" : [ {
+      "fields" : [ {
+        "id" : "StreamId",
+        "name" : "StreamId",
+        "expression" : "${StreamId}",
+        "format" : {
+          "type" : "GENERAL"
+        },
+        "width" : 200,
+        "visible" : true,
+        "special" : false
+      }, {
+        "id" : "EventId",
+        "name" : "EventId",
+        "expression" : "${EventId}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
+      } ]
+    } ],
+    "resultStyle" : "TABLE",
+    "fetch" : "ALL"
+  } ],
+  "incremental" : false,
+  "dateTimeSettings" : {
+    "dateTimePattern" : "yyyy-MM-dd'T'HH:mm:ss.SSSXX",
+    "localZoneId" : "Z",
+    "referenceTime" : 0,
+    "timeZone" : {
+      "use" : "UTC"
+    }
+  }
+}
+-----
+from 'Test Index'
+where "my.name" = "foo bar"
+eval UserId = upperCase(UserId)
+select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time", Status, UserId as "User Id"
+=====
+{
+  "key" : {
+    "uuid" : "test"
+  },
+  "query" : {
+    "dataSource" : {
+      "name" : "Test Index"
+    },
+    "expression" : {
+      "type" : "operator",
+      "children" : [ {
+        "type" : "operator",
+        "children" : [ {
+          "type" : "term",
+          "field" : "my.name",
+          "condition" : "EQUALS",
+          "value" : "foo bar"
+        } ]
+      } ]
+    }
+  },
+  "resultRequests" : [ {
+    "componentId" : "table",
+    "mappings" : [ {
+      "fields" : [ {
+        "id" : "StreamId",
+        "name" : "Stream Id",
+        "expression" : "${StreamId}",
+        "format" : {
+          "type" : "GENERAL"
+        },
+        "width" : 200,
+        "visible" : true,
+        "special" : false
+      }, {
+        "id" : "EventId",
+        "name" : "Event Id",
+        "expression" : "${EventId}",
+        "format" : {
+          "type" : "GENERAL"
+        },
+        "width" : 200,
+        "visible" : true,
+        "special" : false
+      }, {
+        "id" : "EventTime",
+        "name" : "Event Time",
+        "expression" : "${EventTime}",
+        "format" : {
+          "type" : "GENERAL"
+        },
+        "width" : 200,
+        "visible" : true,
+        "special" : false
+      }, {
+        "id" : "Status",
+        "name" : "Status",
+        "expression" : "${Status}",
+        "format" : {
+          "type" : "GENERAL"
+        },
+        "width" : 200,
+        "visible" : true,
+        "special" : false
+      }, {
+        "id" : "UserId",
+        "name" : "User Id",
+        "expression" : "upperCase(${UserId})",
+        "format" : {
+          "type" : "GENERAL"
+        },
+        "width" : 200,
+        "visible" : true,
+        "special" : false
+      } ]
+    } ],
+    "resultStyle" : "TABLE",
+    "fetch" : "ALL"
+  } ],
+  "incremental" : false,
+  "dateTimeSettings" : {
+    "dateTimePattern" : "yyyy-MM-dd'T'HH:mm:ss.SSSXX",
+    "localZoneId" : "Z",
+    "referenceTime" : 0,
+    "timeZone" : {
+      "use" : "UTC"
+    }
+  }
+}
+-----
+from 'Test Index'
+where 'my.name' = 'foo bar'
+eval UserId = upperCase(UserId)
+select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time", Status, UserId as "User Id"
+=====
+{
+  "key" : {
+    "uuid" : "test"
+  },
+  "query" : {
+    "dataSource" : {
+      "name" : "Test Index"
+    },
+    "expression" : {
+      "type" : "operator",
+      "children" : [ {
+        "type" : "operator",
+        "children" : [ {
+          "type" : "term",
+          "field" : "my.name",
+          "condition" : "EQUALS",
+          "value" : "foo bar"
+        } ]
+      } ]
+    }
+  },
+  "resultRequests" : [ {
+    "componentId" : "table",
+    "mappings" : [ {
+      "fields" : [ {
+        "id" : "StreamId",
+        "name" : "Stream Id",
+        "expression" : "${StreamId}",
+        "format" : {
+          "type" : "GENERAL"
+        },
+        "width" : 200,
+        "visible" : true,
+        "special" : false
+      }, {
+        "id" : "EventId",
+        "name" : "Event Id",
+        "expression" : "${EventId}",
+        "format" : {
+          "type" : "GENERAL"
+        },
+        "width" : 200,
+        "visible" : true,
+        "special" : false
+      }, {
+        "id" : "EventTime",
+        "name" : "Event Time",
+        "expression" : "${EventTime}",
+        "format" : {
+          "type" : "GENERAL"
+        },
+        "width" : 200,
+        "visible" : true,
+        "special" : false
+      }, {
+        "id" : "Status",
+        "name" : "Status",
+        "expression" : "${Status}",
+        "format" : {
+          "type" : "GENERAL"
+        },
+        "width" : 200,
+        "visible" : true,
+        "special" : false
+      }, {
+        "id" : "UserId",
+        "name" : "User Id",
+        "expression" : "upperCase(${UserId})",
+        "format" : {
+          "type" : "GENERAL"
+        },
+        "width" : 200,
+        "visible" : true,
+        "special" : false
+      } ]
+    } ],
+    "resultStyle" : "TABLE",
+    "fetch" : "ALL"
+  } ],
+  "incremental" : false,
+  "dateTimeSettings" : {
+    "dateTimePattern" : "yyyy-MM-dd'T'HH:mm:ss.SSSXX",
+    "localZoneId" : "Z",
+    "referenceTime" : 0,
+    "timeZone" : {
+      "use" : "UTC"
+    }
+  }
+}
+-----
+from 'Test Index'
+where 'my.name' = '"foo bar"'
+eval UserId = upperCase(UserId)
+select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time", Status, UserId as "User Id"
+=====
+{
+  "key" : {
+    "uuid" : "test"
+  },
+  "query" : {
+    "dataSource" : {
+      "name" : "Test Index"
+    },
+    "expression" : {
+      "type" : "operator",
+      "children" : [ {
+        "type" : "operator",
+        "children" : [ {
+          "type" : "term",
+          "field" : "my.name",
+          "condition" : "EQUALS",
+          "value" : "\"foo bar\""
+        } ]
+      } ]
+    }
+  },
+  "resultRequests" : [ {
+    "componentId" : "table",
+    "mappings" : [ {
+      "fields" : [ {
+        "id" : "StreamId",
+        "name" : "Stream Id",
+        "expression" : "${StreamId}",
+        "format" : {
+          "type" : "GENERAL"
+        },
+        "width" : 200,
+        "visible" : true,
+        "special" : false
+      }, {
+        "id" : "EventId",
+        "name" : "Event Id",
+        "expression" : "${EventId}",
+        "format" : {
+          "type" : "GENERAL"
+        },
+        "width" : 200,
+        "visible" : true,
+        "special" : false
+      }, {
+        "id" : "EventTime",
+        "name" : "Event Time",
+        "expression" : "${EventTime}",
+        "format" : {
+          "type" : "GENERAL"
+        },
+        "width" : 200,
+        "visible" : true,
+        "special" : false
+      }, {
+        "id" : "Status",
+        "name" : "Status",
+        "expression" : "${Status}",
+        "format" : {
+          "type" : "GENERAL"
+        },
+        "width" : 200,
+        "visible" : true,
+        "special" : false
+      }, {
+        "id" : "UserId",
+        "name" : "User Id",
+        "expression" : "upperCase(${UserId})",
+        "format" : {
+          "type" : "GENERAL"
+        },
+        "width" : 200,
+        "visible" : true,
+        "special" : false
+      } ]
+    } ],
+    "resultStyle" : "TABLE",
+    "fetch" : "ALL"
+  } ],
+  "incremental" : false,
+  "dateTimeSettings" : {
+    "dateTimePattern" : "yyyy-MM-dd'T'HH:mm:ss.SSSXX",
+    "localZoneId" : "Z",
+    "referenceTime" : 0,
+    "timeZone" : {
+      "use" : "UTC"
+    }
+  }
+}
+-----
+from 'Test Index'
+eval count = count()
+group by StreamId
+select StreamId as "Stream Id", count as Count
+=====
+{
+  "key" : {
+    "uuid" : "test"
+  },
+  "query" : {
+    "dataSource" : {
+      "name" : "Test Index"
+    },
+    "expression" : {
+      "type" : "operator"
+    }
+  },
+  "resultRequests" : [ {
+    "componentId" : "table",
+    "mappings" : [ {
+      "fields" : [ {
+        "id" : "StreamId",
+        "name" : "Stream Id",
+        "expression" : "${StreamId}",
+        "format" : {
+          "type" : "GENERAL"
+        },
+        "group" : 0,
+        "width" : 200,
+        "visible" : true,
+        "special" : false
+      }, {
+        "id" : "count",
+        "name" : "Count",
+        "expression" : "count()",
+        "format" : {
+          "type" : "NUMBER"
+        },
+        "width" : 200,
+        "visible" : true,
+        "special" : false
+      } ]
+    } ],
+    "resultStyle" : "TABLE",
+    "fetch" : "ALL"
+  } ],
+  "incremental" : false,
+  "dateTimeSettings" : {
+    "dateTimePattern" : "yyyy-MM-dd'T'HH:mm:ss.SSSXX",
+    "localZoneId" : "Z",
+    "referenceTime" : 0,
+    "timeZone" : {
+      "use" : "UTC"
+    }
+  }
+}
+-----
+from datasource
+where field = * ans field != 'fred'
+=====
+TokenException{tokenType=STRING, start=32, end=34, text=ans, message=Unexpected token}
+-----
+from datasource
+where field=* and field='fred''
+=====
+TokenException{tokenType=STRING, start=46, end=46, text=', message=Unexpected token}
+-----
+from 'Test Index'
+where 'my.name' = '"foo bar"'
+eval
+select UserId
+=====
+TokenException{tokenType=EVAL, start=48, end=51, text=eval, message=Expected variable name following eval}
+-----
+from 'Test Index'
+where 'my.name' = '"foo bar"'
+eval UserId
+select UserId
+=====
+TokenException{tokenType=STRING, start=53, end=58, text=UserId, message=Expected equals}
+-----
+from 'Test Index'
+where 'my.name' = '"foo bar"'
+eval UserId =
+select UserId
+=====
+TokenException{tokenType=EQUALS, start=60, end=60, text==, message=Expected eval expression}
+-----
+from 'Test Index'
+where 'my.name' = '"foo bar"'
+eval UserId = uCase(UserId)
+select UserId
+=====
+TokenException{tokenType=FUNCTION_GROUP, start=62, end=74, text=uCase(UserId), message=Unknown function 'uCase'}
+-----
+from 'Test Index'
+eval comp = max(toFloat(day()-10d))
+select comp
+=====
+{
+  "key" : {
+    "uuid" : "test"
+  },
+  "query" : {
+    "dataSource" : {
+      "name" : "Test Index"
+    },
+    "expression" : {
+      "type" : "operator"
+    }
+  },
+  "resultRequests" : [ {
+    "componentId" : "table",
+    "mappings" : [ {
+      "fields" : [ {
+        "id" : "comp",
+        "name" : "comp",
+        "expression" : "max(toFloat(day()-10d))",
+        "format" : {
+          "type" : "NUMBER"
+        },
+        "width" : 200,
+        "visible" : true,
+        "special" : false
+      }, {
+        "id" : "StreamId",
+        "name" : "StreamId",
+        "expression" : "${StreamId}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
+      }, {
+        "id" : "EventId",
+        "name" : "EventId",
+        "expression" : "${EventId}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
+      } ]
+    } ],
+    "resultStyle" : "TABLE",
+    "fetch" : "ALL"
+  } ],
+  "incremental" : false,
+  "dateTimeSettings" : {
+    "dateTimePattern" : "yyyy-MM-dd'T'HH:mm:ss.SSSXX",
+    "localZoneId" : "Z",
+    "referenceTime" : 0,
+    "timeZone" : {
+      "use" : "UTC"
+    }
+  }
+}
+-----
+from 'Test Index'
+group by StreamId
+group by EventTime
+select StreamId, EventTime
+=====
+{
+  "key" : {
+    "uuid" : "test"
+  },
+  "query" : {
+    "dataSource" : {
+      "name" : "Test Index"
+    },
+    "expression" : {
+      "type" : "operator"
+    }
+  },
+  "resultRequests" : [ {
+    "componentId" : "table",
+    "mappings" : [ {
+      "fields" : [ {
+        "id" : "StreamId",
+        "name" : "StreamId",
+        "expression" : "${StreamId}",
+        "format" : {
+          "type" : "GENERAL"
+        },
+        "group" : 0,
+        "width" : 200,
+        "visible" : true,
+        "special" : false
+      }, {
+        "id" : "EventTime",
+        "name" : "EventTime",
+        "expression" : "${EventTime}",
+        "format" : {
+          "type" : "GENERAL"
+        },
+        "group" : 1,
+        "width" : 200,
+        "visible" : true,
+        "special" : false
+      } ]
+    } ],
+    "resultStyle" : "TABLE",
+    "fetch" : "ALL"
+  } ],
+  "incremental" : false,
+  "dateTimeSettings" : {
+    "dateTimePattern" : "yyyy-MM-dd'T'HH:mm:ss.SSSXX",
+    "localZoneId" : "Z",
+    "referenceTime" : 0,
+    "timeZone" : {
+      "use" : "UTC"
+    }
+  }
+}
+-----
+from 'Test Index'
+group by ${Stream Id}
+group by ${Event Time}
+select ${Stream Id}, ${Event Time}
+=====
+{
+  "key" : {
+    "uuid" : "test"
+  },
+  "query" : {
+    "dataSource" : {
+      "name" : "Test Index"
+    },
+    "expression" : {
+      "type" : "operator"
+    }
+  },
+  "resultRequests" : [ {
+    "componentId" : "table",
+    "mappings" : [ {
+      "fields" : [ {
+        "id" : "Stream Id",
+        "name" : "Stream Id",
+        "expression" : "${Stream Id}",
+        "format" : {
+          "type" : "GENERAL"
+        },
+        "group" : 0,
+        "width" : 200,
+        "visible" : true,
+        "special" : false
+      }, {
+        "id" : "Event Time",
+        "name" : "Event Time",
+        "expression" : "${Event Time}",
+        "format" : {
+          "type" : "GENERAL"
+        },
+        "group" : 1,
+        "width" : 200,
+        "visible" : true,
+        "special" : false
+      } ]
+    } ],
+    "resultStyle" : "TABLE",
+    "fetch" : "ALL"
+  } ],
+  "incremental" : false,
+  "dateTimeSettings" : {
+    "dateTimePattern" : "yyyy-MM-dd'T'HH:mm:ss.SSSXX",
+    "localZoneId" : "Z",
+    "referenceTime" : 0,
+    "timeZone" : {
+      "use" : "UTC"
+    }
+  }
+}
+-----
+from 'Test Index'
+group by ${Stream Id}
+group by ${Event Time}
+having ${Stream Id} > -2
+select ${Stream Id}, ${Event Time}
+=====
+{
+  "key" : {
+    "uuid" : "test"
+  },
+  "query" : {
+    "dataSource" : {
+      "name" : "Test Index"
+    },
+    "expression" : {
+      "type" : "operator"
+    }
+  },
+  "resultRequests" : [ {
+    "componentId" : "table",
+    "mappings" : [ {
+      "fields" : [ {
+        "id" : "Stream Id",
+        "name" : "Stream Id",
+        "expression" : "${Stream Id}",
+        "format" : {
+          "type" : "GENERAL"
+        },
+        "group" : 0,
+        "width" : 200,
+        "visible" : true,
+        "special" : false
+      }, {
+        "id" : "Event Time",
+        "name" : "Event Time",
+        "expression" : "${Event Time}",
+        "format" : {
+          "type" : "GENERAL"
+        },
+        "group" : 1,
+        "width" : 200,
+        "visible" : true,
+        "special" : false
+      } ],
+      "aggregateFilter" : {
+        "type" : "operator",
+        "children" : [ {
+          "type" : "operator",
+          "children" : [ {
+            "type" : "term",
+            "field" : "Stream Id",
+            "condition" : "GREATER_THAN",
+            "value" : "-2"
+          } ]
+        } ]
+      }
+    } ],
+    "resultStyle" : "TABLE",
+    "fetch" : "ALL"
+  } ],
+  "incremental" : false,
+  "dateTimeSettings" : {
+    "dateTimePattern" : "yyyy-MM-dd'T'HH:mm:ss.SSSXX",
+    "localZoneId" : "Z",
+    "referenceTime" : 0,
+    "timeZone" : {
+      "use" : "UTC"
+    }
+  }
+}
+-----
+from 'Test Index'
+group by ${Stream Id}
+group by ${Event Time}
+having ${Stream Id} > -2
+select ${Event Time}
+=====
+{
+  "key" : {
+    "uuid" : "test"
+  },
+  "query" : {
+    "dataSource" : {
+      "name" : "Test Index"
+    },
+    "expression" : {
+      "type" : "operator"
+    }
+  },
+  "resultRequests" : [ {
+    "componentId" : "table",
+    "mappings" : [ {
+      "fields" : [ {
+        "id" : "Event Time",
+        "name" : "Event Time",
+        "expression" : "${Event Time}",
+        "format" : {
+          "type" : "GENERAL"
+        },
+        "group" : 1,
+        "width" : 200,
+        "visible" : true,
+        "special" : false
+      }, {
+        "id" : "__Stream_Id__",
+        "name" : "Stream Id",
+        "expression" : "${Stream Id}",
+        "format" : {
+          "type" : "GENERAL"
+        },
+        "group" : 0,
+        "width" : 200,
+        "visible" : false,
+        "special" : true
+      } ],
+      "aggregateFilter" : {
+        "type" : "operator",
+        "children" : [ {
+          "type" : "operator",
+          "children" : [ {
+            "type" : "term",
+            "field" : "Stream Id",
+            "condition" : "GREATER_THAN",
+            "value" : "-2"
+          } ]
+        } ]
+      }
+    } ],
+    "resultStyle" : "TABLE",
+    "fetch" : "ALL"
+  } ],
+  "incremental" : false,
+  "dateTimeSettings" : {
+    "dateTimePattern" : "yyyy-MM-dd'T'HH:mm:ss.SSSXX",
+    "localZoneId" : "Z",
+    "referenceTime" : 0,
+    "timeZone" : {
+      "use" : "UTC"
+    }
+  }
+}
+-----
+from "index_view"
+where StreamId in dictionary "my_dictionary"
+select StreamId
+=====
+{
+  "key" : {
+    "uuid" : "test"
+  },
+  "query" : {
+    "dataSource" : {
+      "name" : "index_view"
+    },
+    "expression" : {
+      "type" : "operator",
+      "children" : [ {
+        "type" : "operator",
+        "children" : [ {
+          "type" : "term",
+          "field" : "StreamId",
+          "condition" : "IN_DICTIONARY",
+          "docRef" : {
+            "name" : "my_dictionary"
+          }
+        } ]
+      } ]
+    }
+  },
+  "resultRequests" : [ {
+    "componentId" : "table",
+    "mappings" : [ {
+      "fields" : [ {
+        "id" : "StreamId",
+        "name" : "StreamId",
+        "expression" : "${StreamId}",
+        "format" : {
+          "type" : "GENERAL"
+        },
+        "width" : 200,
+        "visible" : true,
+        "special" : false
+      }, {
+        "id" : "EventId",
+        "name" : "EventId",
+        "expression" : "${EventId}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
+      } ]
+    } ],
+    "resultStyle" : "TABLE",
+    "fetch" : "ALL"
+  } ],
+  "incremental" : false,
+  "dateTimeSettings" : {
+    "dateTimePattern" : "yyyy-MM-dd'T'HH:mm:ss.SSSXX",
+    "localZoneId" : "Z",
+    "referenceTime" : 0,
+    "timeZone" : {
+      "use" : "UTC"
+    }
+  }
+}
+-----
+from "index_view"
+where StreamId in (123, 456)
+select StreamId
+=====
+{
+  "key" : {
+    "uuid" : "test"
+  },
+  "query" : {
+    "dataSource" : {
+      "name" : "index_view"
+    },
+    "expression" : {
+      "type" : "operator",
+      "children" : [ {
+        "type" : "operator",
+        "children" : [ {
+          "type" : "term",
+          "field" : "StreamId",
+          "condition" : "IN",
+          "value" : "123, 456"
+        } ]
+      } ]
+    }
+  },
+  "resultRequests" : [ {
+    "componentId" : "table",
+    "mappings" : [ {
+      "fields" : [ {
+        "id" : "StreamId",
+        "name" : "StreamId",
+        "expression" : "${StreamId}",
+        "format" : {
+          "type" : "GENERAL"
+        },
+        "width" : 200,
+        "visible" : true,
+        "special" : false
+      }, {
+        "id" : "EventId",
+        "name" : "EventId",
+        "expression" : "${EventId}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
+      } ]
+    } ],
+    "resultStyle" : "TABLE",
+    "fetch" : "ALL"
+  } ],
+  "incremental" : false,
+  "dateTimeSettings" : {
+    "dateTimePattern" : "yyyy-MM-dd'T'HH:mm:ss.SSSXX",
+    "localZoneId" : "Z",
+    "referenceTime" : 0,
+    "timeZone" : {
+      "use" : "UTC"
+    }
+  }
+}
+-----
+// From example index
+from View
+// eval MaxD=max(parseDuration('PT10M'))
+where EventTime < now() - 2dx
+select StreamId, EventId, Feed
+=====
+TokenException{tokenType=STRING, start=101, end=101, text=x, message=Unexpected token}
+-----

@@ -17,6 +17,8 @@
 package stroom.security.impl;
 
 import stroom.event.logging.api.StroomEventLoggingService;
+import stroom.event.logging.api.StroomEventLoggingUtil;
+import stroom.util.shared.UserName;
 
 import event.logging.AddGroups;
 import event.logging.AuthorisationActionType;
@@ -25,13 +27,12 @@ import event.logging.Event;
 import event.logging.Group;
 import event.logging.Outcome;
 import event.logging.RemoveGroups;
-import event.logging.User;
+import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
-
 public class AuthorisationEventLog {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(AuthorisationEventLog.class);
 
     private final StroomEventLoggingService eventLoggingService;
@@ -41,7 +42,7 @@ public class AuthorisationEventLog {
         this.eventLoggingService = eventLoggingService;
     }
 
-    public void addUserToGroup(final String userName,
+    public void addUserToGroup(final UserName userName,
                                final String groupName,
                                final boolean success,
                                final String outcomeDescription) {
@@ -61,7 +62,7 @@ public class AuthorisationEventLog {
                 outcomeDescription);
     }
 
-    public void removeUserFromGroup(final String userName,
+    public void removeUserFromGroup(final UserName userName,
                                     final String groupName,
                                     final boolean success,
                                     final String outcomeDescription) {
@@ -83,7 +84,7 @@ public class AuthorisationEventLog {
 
     private void authorisationEvent(final String typeId,
                                     final String description,
-                                    final String userName,
+                                    final UserName userName,
                                     final AddGroups addGroups,
                                     final RemoveGroups removeGroups,
                                     final boolean success,
@@ -92,17 +93,15 @@ public class AuthorisationEventLog {
             final Outcome outcome = success
                     ? null
                     : Outcome.builder()
-                    .withSuccess(success)
-                    .withDescription(outcomeDescription)
-                    .build();
+                            .withSuccess(success)
+                            .withDescription(outcomeDescription)
+                            .build();
 
             final Event event = eventLoggingService.createEvent(
                     typeId,
                     description,
                     AuthoriseEventAction.builder()
-                            .addUser(User.builder()
-                                    .withName(userName)
-                                    .build())
+                            .addUser(StroomEventLoggingUtil.createUser(userName))
                             .withAction(AuthorisationActionType.MODIFY)
                             .withAddGroups(addGroups)
                             .withRemoveGroups(removeGroups)

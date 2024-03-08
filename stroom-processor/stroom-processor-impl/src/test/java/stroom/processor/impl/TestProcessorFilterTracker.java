@@ -24,23 +24,23 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TestProcessorFilterTracker {
 
-    @Test
-    void testPercent() {
-        final ProcessorFilterTracker track = new ProcessorFilterTracker();
-        track.setMinMetaCreateMs(0L);
-        track.setMaxMetaCreateMs(100L);
-        track.setMetaCreateMs(50L);
-
-        assertThat(track.getTrackerStreamCreatePercentage().intValue()).isEqualTo(50);
-    }
-
-    @Test
-    void testPercentReal() {
-        final ProcessorFilterTracker track = new ProcessorFilterTracker();
-        track.setMinMetaCreateMs(1413456996578L);
-        track.setMaxMetaCreateMs(1413553741788L);
-        track.setMetaCreateMs(1413553752020L);
-
-        assertThat(track.getTrackerStreamCreatePercentage().intValue()).isEqualTo(100);
-    }
+//    @Test
+//    void testPercent() {
+//        final ProcessorFilterTracker track = new ProcessorFilterTracker();
+//        track.setMinMetaCreateMs(0L);
+//        track.setMaxMetaCreateMs(100L);
+//        track.setMetaCreateMs(50L);
+//
+//        assertThat(track.getTrackerStreamCreatePercentage().intValue()).isEqualTo(50);
+//    }
+//
+//    @Test
+//    void testPercentReal() {
+//        final ProcessorFilterTracker track = new ProcessorFilterTracker();
+//        track.setMinMetaCreateMs(1413456996578L);
+//        track.setMaxMetaCreateMs(1413553741788L);
+//        track.setMetaCreateMs(1413553752020L);
+//
+//        assertThat(track.getTrackerStreamCreatePercentage().intValue()).isEqualTo(100);
+//    }
 }

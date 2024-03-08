@@ -16,12 +16,11 @@
 
 package stroom.query.common.v2;
 
-import stroom.dashboard.expression.v1.ref.ErrorConsumer;
-import stroom.query.api.v2.ResultBuilder;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchRequestSource;
 import stroom.query.api.v2.SearchResponse;
 import stroom.query.api.v2.SearchTaskProgress;
+import stroom.query.language.functions.ref.ErrorConsumer;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -50,7 +49,8 @@ public class ResultStore {
     private final SearchRequestSource searchRequestSource;
     private final Set<String> highlights = Collections.newSetFromMap(new ConcurrentHashMap<>());
     private final CoprocessorsImpl coprocessors;
-    private final String userId;
+    private final String userUuid;
+    private final String createUser;
     private final Instant creationTime;
     private volatile Instant lastAccessTime;
     private final String nodeName;
@@ -62,18 +62,24 @@ public class ResultStore {
 
     public ResultStore(final SearchRequestSource searchRequestSource,
                        final SizesProvider sizesProvider,
-                       final String userId,
+                       final String userUuid,
+                       final String createUser,
                        final CoprocessorsImpl coprocessors,
                        final String nodeName,
                        final ResultStoreSettings resultStoreSettings) {
         this.searchRequestSource = searchRequestSource;
         this.coprocessors = coprocessors;
-        this.userId = userId;
+        this.userUuid = userUuid;
+        this.createUser = createUser;
         this.creationTime = Instant.now();
         lastAccessTime = creationTime;
         this.nodeName = nodeName;
         this.resultStoreSettings = resultStoreSettings;
-        searchResponseCreator = new SearchResponseCreator(sizesProvider, this);
+        searchResponseCreator = new SearchResponseCreator(sizesProvider, this, coprocessors.getExpressionContext());
+    }
+
+    public Map<String, ResultCreator> makeDefaultResultCreators(final SearchRequest searchRequest) {
+        return searchResponseCreator.makeDefaultResultCreators(searchRequest);
     }
 
     public SearchRequestSource getSearchRequestSource() {
@@ -207,8 +213,12 @@ public class ResultStore {
         return coprocessors.getData(componentId);
     }
 
-    public String getUserId() {
-        return userId;
+    public String getUserUuid() {
+        return userUuid;
+    }
+
+    public String getCreateUser() {
+        return createUser;
     }
 
     public Instant getCreationTime() {
@@ -235,17 +245,11 @@ public class ResultStore {
         return null;
     }
 
-    public SearchResponse search(final SearchRequest request) {
-        final SearchResponse response = searchResponseCreator.create(request);
+    public SearchResponse search(final SearchRequest request,
+                                 final Map<String, ResultCreator> resultCreatorMap) {
+        final SearchResponse response = searchResponseCreator.create(request, resultCreatorMap);
         lastAccessTime = Instant.now();
         return response;
-    }
-
-    public boolean search(final SearchRequest request,
-                          final Map<String, ResultBuilder<?>> resultBuilderMap) {
-        final boolean complete = searchResponseCreator.create(request, resultBuilderMap);
-        lastAccessTime = Instant.now();
-        return complete;
     }
 
     public void setResultStoreSettings(final ResultStoreSettings resultStoreSettings) {

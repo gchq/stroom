@@ -79,6 +79,8 @@ import stroom.util.shared.string.HexDump;
 import stroom.util.shared.string.HexDumpLine;
 import stroom.util.string.HexDumpUtil;
 
+import jakarta.inject.Provider;
+import jakarta.validation.constraints.NotNull;
 import org.apache.commons.io.ByteOrderMark;
 
 import java.io.BufferedOutputStream;
@@ -97,8 +99,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-import javax.inject.Provider;
-import javax.validation.constraints.NotNull;
 import javax.xml.transform.TransformerException;
 
 public class DataFetcher {
@@ -185,21 +185,15 @@ public class DataFetcher {
     }
 
     public Set<String> getAvailableChildStreamTypes(final long id, final long partNo) {
-
         return securityContext.useAsReadResult(() -> {
-            final Source source = streamStore.openSource(id, true);
+            try (final Source source = streamStore.openSource(id, true)) {
+                if (source == null) {
+                    throw new RuntimeException(LogUtil.message("Error opening stream {} - meta not found.", id));
+                }
 
-            if (source == null) {
-                throw new RuntimeException(LogUtil.message("Error opening stream {} - meta not found.", id));
-            }
-
-            try {
-                final InputStreamProvider inputStreamProvider = source.get(partNo);
-
-                final Set<String> childTypes = inputStreamProvider.getChildTypes();
-
-                return childTypes;
-
+                try (final InputStreamProvider inputStreamProvider = source.get(partNo)) {
+                    return inputStreamProvider.getChildTypes();
+                }
             } catch (IOException e) {
                 throw new RuntimeException(LogUtil.message("Error opening stream {}, part {}", id, partNo), e);
             }
@@ -1138,7 +1132,7 @@ public class DataFetcher {
                 final PipelineFactory pipelineFactory = pipelineFactoryProvider.get();
                 final ErrorReceiverProxy errorReceiverProxy = errorReceiverProxyProvider.get();
                 currentUserHolderProvider.get()
-                        .setCurrentUser(securityContext.getUserId());
+                        .setCurrentUser(securityContext.getUserIdentity());
 
                 final LoggingErrorReceiver errorReceiver = new LoggingErrorReceiver();
                 errorReceiverProxy.setErrorReceiver(errorReceiver);

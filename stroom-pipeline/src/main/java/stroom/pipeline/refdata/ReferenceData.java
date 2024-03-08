@@ -37,11 +37,15 @@ import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.MetaHolder;
 import stroom.security.api.SecurityContext;
+import stroom.task.api.TaskContext;
+import stroom.task.api.TaskContextFactory;
 import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.Severity;
+
+import jakarta.inject.Inject;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -52,7 +56,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
 
 public class ReferenceData {
 
@@ -75,6 +78,7 @@ public class ReferenceData {
     private final RefDataLoaderHolder refDataLoaderHolder;
     private final PipelineStore pipelineStore;
     private final SecurityContext securityContext;
+    private final TaskContextFactory taskContextFactory;
 
     @Inject
     ReferenceData(final EffectiveStreamService effectiveStreamService,
@@ -86,7 +90,8 @@ public class ReferenceData {
                   final RefDataStoreHolder refDataStoreHolder,
                   final RefDataLoaderHolder refDataLoaderHolder,
                   final PipelineStore pipelineStore,
-                  final SecurityContext securityContext) {
+                  final SecurityContext securityContext,
+                  final TaskContextFactory taskContextFactory) {
         this.effectiveStreamService = effectiveStreamService;
         this.feedHolder = feedHolder;
         this.metaHolder = metaHolder;
@@ -97,6 +102,7 @@ public class ReferenceData {
         this.refDataLoaderHolder = refDataLoaderHolder;
         this.pipelineStore = pipelineStore;
         this.securityContext = securityContext;
+        this.taskContextFactory = taskContextFactory;
     }
 
     /**
@@ -249,6 +255,10 @@ public class ReferenceData {
             // If a lookup is viable a RefDataValueProxy will have been added to the result
             LOGGER.trace(() -> LogUtil.message("refDataValueProxy: {}",
                     referenceDataResult.getRefDataValueProxy().orElse(null)));
+
+            if (isTerminated()) {
+                break;
+            }
         }
     }
 
@@ -600,8 +610,10 @@ public class ReferenceData {
                     LOGGER.debug(() -> LogUtil.message(
                             "Loaded {} refStreamDefinition", refStreamDefinition));
 
-                    if (storedErrorReceiver == null
-                            || storedErrorReceiver.getCount(Severity.FATAL_ERROR) == 0) {
+                    // No point in continuing if the load was interrupted
+                    if (!isTerminated()
+                            && (storedErrorReceiver == null
+                            || storedErrorReceiver.getCount(Severity.FATAL_ERROR) == 0)) {
                         // mark this ref stream defs as available for future lookups within this
                         // pipeline process
                         refDataLoaderHolder.markRefStreamAsAvailable(refStreamDefinition);
@@ -625,6 +637,21 @@ public class ReferenceData {
             }
         }
         return isAvailableForLookups;
+    }
+
+    private boolean isTerminated() {
+        if (Thread.currentThread().isInterrupted()) {
+            LOGGER.debug("Thread is interrupted");
+            return true;
+        } else {
+            final TaskContext taskContext = taskContextFactory.current();
+            if (taskContext != null && taskContext.isTerminated()) {
+                LOGGER.debug("Task is terminated");
+                return true;
+            } else {
+                return false;
+            }
+        }
     }
 
     /**

@@ -34,6 +34,18 @@
 }
 
 .DashboardViewImpl .linkTab {
+    opacity: 0.8 !important;
+    color: var(--link-tab__text-color) !important;
+    transition: none;
+    -webkit-transition: none;
+}
+
+.DashboardViewImpl .explorerTreeViewImpl-nameFilter {
+    margin: 0 0 var(--control__padding--vertical) 0;
+}
+
+/*
+.DashboardViewImpl .linkTab {
     cursor: default;
     text-decoration: none;
 }
@@ -49,6 +61,7 @@
 .DashboardViewImpl.dashboard__designMode .linkTab:hover {
     text-decoration: underline;
 }
+*/
 
 .QueryToolbarViewImpl-outer {
     display: flex;
@@ -76,7 +89,7 @@
 	background-color: var(--control__background-color);
 }
 
-.dashboardMainViewImpl-root {
+.fullScreenViewImpl-root {
     position: absolute;
     left: 0;
     top: 0;
@@ -85,12 +98,12 @@
     overflow: hidden;
 }
 
-.dashboardMainViewImpl-contentPanel {
+.fullScreenViewImpl-contentPanel {
     width: 100%;
     height: 100%;
     overflow: hidden;
-    background-image: linear-gradient(rgb(244, 248, 253) 0, rgb(222, 234, 248) 36px);
-    background-color: rgb(223, 234, 248);
+    /*background-image: linear-gradient(rgb(244, 248, 253) 0, rgb(222, 234, 248) 36px);
+    background-color: rgb(223, 234, 248);*/
 }
 
 .dashboard-outerPanel {
@@ -101,13 +114,32 @@
 	-moz-user-select: none;
 }
 
+.QueryEditViewImpl.dashboard-scrollPanel {
+    background-color: var(--dashboard-panel__background-color);
+}
+
 .dashboard-scrollPanel {
     display: flex;
     flex-grow: 1;
-    overflow: auto;
+    overflow: hidden;
 	user-select: none;
 	-webkit-user-select: none;
 	-moz-user-select: none;
+	background-color: var(--dashboard-panel__grid-background-color);
+}
+
+.dashboard-scrollPanel--horizontal-scroll {
+    overflow-x: auto;
+}
+
+.dashboard-scrollPanel--vertical-scroll {
+    overflow-y: auto;
+}
+
+.TableViewImpl .pager,
+.QueryViewImpl--buttons,
+.QueryToolbarViewImpl-outer {
+    padding: 0 5px;
 }
 
 .dashboard-layout {
@@ -121,12 +153,14 @@
     overflow: hidden;
     min-width: 100%;
     min-height: 100%;
+    background: var(--dashboard-panel__grid-background-color);
 }
 
 .dashboard__designMode .dashboard-designSurface {
-	background-image:
-	repeating-linear-gradient(to bottom, transparent, transparent 29px, var(--dashboard-panel__grid-color) 1px,var(--dashboard-panel__grid-color) 30px),
-	repeating-linear-gradient(to right, transparent, transparent 29px, var(--dashboard-panel__grid-color) 30px, var(--dashboard-panel__grid-color) 1px);
+    background-image:
+        linear-gradient(var(--dashboard-panel__grid-color) 1px, transparent 1px),
+        linear-gradient(90deg, var(--dashboard-panel__grid-color) 1px, transparent 1px);
+    background-size: 2rem 2rem;
 }
 
 .dashboard-panel {
@@ -204,13 +238,15 @@
 }
 
 .flexLayout-splitter-dragger {
-	display: none;
+	/*display: none;*/
     position: absolute;
 }
 
+/*
 .dashboard__designMode .flexLayout-splitter-dragger {
 	display: block;
 }
+*/
 /*
 .dashboard__designMode .flexLayout-splitter-dragger:hover, .flexLayout-splitterVisible .flexLayout-splitter-dragger {
 	opacity: 1;
@@ -284,7 +320,7 @@
     flex-grow: 0;
     flex-shrink: 0;
     gap: 5px;
-    padding: 5px 0 0 5px;
+    padding: 5px 5px 0 5px;
     cursor: default;
     z-index: 5;
     min-height: 31px;
@@ -305,21 +341,22 @@
 .tabLayout .tabLayout-content {
     display: flex;
     flex-grow: 1;
-    overflow: auto;
+    overflow: hidden;
 }
 
 .tabLayout .tabLayout-buttons {
 	z-index: 5;
-    display: none;
+	opacity: 0;
+	transition: opacity 0.3s;
+    -webkit-transition: opacity 0.3s;
 }
 
+.tabLayout:hover .tabLayout-buttons {
+	opacity: 0.6;
+}
 
 .tabLayout-buttons button {
     color: var(--button__image-color);
-}
-
-.dashboard__designMode .tabLayout .tabLayout-buttons {
-    display: flex;
 }
 
 .tabLayout .tabLayout-button svg {
@@ -510,7 +547,6 @@
     left: 0;
     width: 100%;
     height: 100%;
-    border: solid var(--split__size) transparent;
 }
 
 .dashboardVis-innerLayout {
@@ -607,9 +643,7 @@
 }
 
 .KeyValueInputView {
-    padding-left: 0.4rem;
-    padding-right: 0.4rem;
-    height: auto;
+    padding: 0 0.4rem 0.4rem 0.4rem;
 }
 
 .ListInputView {
@@ -652,3 +686,27 @@
     background: green;
 }
 */
+
+
+
+
+.QueryResultTabsViewImpl-outer {
+    padding: 5px 5px 0 5px;
+    z-index: 5;
+}
+
+.queryVis-outerLayout {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+ }
+
+ .queryVis-innerLayout {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+ }

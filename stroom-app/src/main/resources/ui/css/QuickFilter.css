@@ -21,19 +21,13 @@
 }
 
 .quickFilter-container {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    flex-grow: 1;
-    flex-shrink: 1;
     gap: var(--control__padding--vertical);
 }
 
 .quickFilter-textBox {
     width: 100%; /* To allow for info and clear btns */
 	margin: 0;
-	padding: 0 22px 0 8px;
+	padding: var(--input__padding--vertical) 22px var(--input__padding--vertical) var(--input__padding--horizontal);
 	cursor: text;
 }
 

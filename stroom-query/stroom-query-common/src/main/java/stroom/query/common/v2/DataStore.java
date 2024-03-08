@@ -1,7 +1,10 @@
 package stroom.query.common.v2;
 
-import stroom.dashboard.expression.v1.ValuesConsumer;
-import stroom.query.api.v2.Field;
+import stroom.expression.api.DateTimeSettings;
+import stroom.query.api.v2.Column;
+import stroom.query.api.v2.OffsetRange;
+import stroom.query.api.v2.TimeFilter;
+import stroom.query.language.functions.ValuesConsumer;
 
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
@@ -12,16 +15,23 @@ import java.util.function.Consumer;
 public interface DataStore extends ValuesConsumer {
 
     /**
-     * Get the fields that this data store knows about.
+     * Get the columns that this data store knows about.
      */
-    List<Field> getFields();
+    List<Column> getColumns();
 
     /**
-     * Get data from the store
+     * Get child items from the data for the provided parent key and time filter.
      *
-     * @param consumer Consumer for the data.
+     * @param key        The parent key to get child items for.
+     * @param timeFilter The time filter to use to limit the data returned.
+     * @return The filtered child items for the parent key.
      */
-    void getData(Consumer<Data> consumer);
+    <R> void fetch(OffsetRange range,
+                   OpenGroups openGroups,
+                   TimeFilter timeFilter,
+                   ItemMapper<R> mapper,
+                   Consumer<R> resultConsumer,
+                   Consumer<Long> totalRowCountConsumer);
 
     /**
      * Clear the data store.
@@ -57,4 +67,6 @@ public interface DataStore extends ValuesConsumer {
     Serialisers getSerialisers();
 
     KeyFactory getKeyFactory();
+
+    DateTimeSettings getDateTimeSettings();
 }

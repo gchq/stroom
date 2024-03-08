@@ -27,23 +27,26 @@ import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.security.api.SecurityContext;
 import stroom.security.mock.MockSecurityContext;
+import stroom.util.json.JsonUtil;
 import stroom.util.shared.FetchWithIntegerId;
 import stroom.util.shared.HasId;
 import stroom.util.shared.HasIntegerId;
 import stroom.util.shared.PageResponse;
 import stroom.util.shared.ResultPage;
 
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import event.logging.ProcessAction;
 import event.logging.ProcessEventAction;
 import event.logging.Query;
 import event.logging.SearchEventAction;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.container.ResourceContext;
+import jakarta.ws.rs.container.ResourceInfo;
+import jakarta.ws.rs.ext.WriterInterceptorContext;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -60,11 +63,6 @@ import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Random;
-import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.container.ResourceContext;
-import javax.ws.rs.container.ResourceInfo;
-import javax.ws.rs.ext.WriterInterceptorContext;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -505,7 +503,7 @@ public class TestRestResourceAutoLogger {
 
     @BeforeEach
     void setup() {
-        objectMapper = createObjectMapper();
+        objectMapper = JsonUtil.getMapper();
         closeable = MockitoAnnotations.openMocks(this);
         requestEventLog = new RequestEventLogImpl(injector,
                 config,
@@ -533,16 +531,6 @@ public class TestRestResourceAutoLogger {
         if (closeable != null) {
             closeable.close();
         }
-    }
-
-
-    private static ObjectMapper createObjectMapper() {
-        final ObjectMapper mapper = new ObjectMapper();
-        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        mapper.configure(SerializationFeature.INDENT_OUTPUT, false);
-        mapper.setSerializationInclusion(Include.NON_NULL);
-
-        return mapper;
     }
 
     public static class TestObj implements Serializable, HasIntegerId {

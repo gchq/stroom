@@ -24,12 +24,11 @@ import stroom.security.identity.authenticate.api.AuthenticationService;
 import stroom.security.identity.config.IdentityConfig;
 import stroom.security.identity.exceptions.NoCertificateException;
 
+import jakarta.inject.Inject;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.ext.ExceptionMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.inject.Inject;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.ext.ExceptionMapper;
 
 @SuppressWarnings("unused")
 class NoCertificateExceptionMapper implements ExceptionMapper<NoCertificateException> {
@@ -50,6 +49,6 @@ class NoCertificateExceptionMapper implements ExceptionMapper<NoCertificateExcep
     @Override
     public Response toResponse(NoCertificateException exception) {
         LOGGER.debug("Unable to create a token for this user. Redirecting to login as a backup method.", exception);
-        return Response.seeOther(uriFactory.uiUri(AuthenticationService.SIGN_IN_URL_PATH)).build();
+        return Response.temporaryRedirect(uriFactory.uiUri(AuthenticationService.SIGN_IN_URL_PATH)).build();
     }
 }

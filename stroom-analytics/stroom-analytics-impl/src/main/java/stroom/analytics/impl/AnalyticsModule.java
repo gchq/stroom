@@ -16,10 +16,11 @@
 
 package stroom.analytics.impl;
 
-import stroom.analytics.api.AlertManager;
 import stroom.datasource.api.v2.DataSourceProvider;
 import stroom.explorer.api.HasDataSourceDocRefs;
 import stroom.job.api.ScheduledJobsBinder;
+import stroom.processor.api.ProcessorTaskExecutorBinder;
+import stroom.processor.shared.ProcessorType;
 import stroom.query.common.v2.HasResultStoreInfo;
 import stroom.query.common.v2.SearchProvider;
 import stroom.search.impl.NodeSearchTaskHandlerProvider;
@@ -28,8 +29,7 @@ import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.RestResourcesBinder;
 
 import com.google.inject.AbstractModule;
-
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 import static stroom.job.api.Schedule.ScheduleType.PERIODIC;
 
@@ -37,19 +37,29 @@ public class AnalyticsModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        bind(AlertManager.class).to(AlertManagerImpl.class);
         ScheduledJobsBinder.create(binder())
-                .bindJobTo(AnalyticsExecutorRunnable.class, builder -> builder
-                        .name("Analytics Executor")
-                        .description("Run analytics periodically")
+                .bindJobTo(TableBuilderAnalyticExecutorRunnable.class, builder -> builder
+                        .name("Analytic Executor: Table Builder")
+                        .description("Run table building analytics periodically")
+                        .schedule(PERIODIC, "10m")
+                        .enabled(false)
+                        .advanced(true))
+//                .bindJobTo(StreamingAnalyticExecutorRunnable.class, builder -> builder
+//                        .name("Analytic Executor: Streaming")
+//                        .description("Run streaming analytics periodically")
+//                        .schedule(PERIODIC, "1m")
+//                        .enabled(false)
+//                        .advanced(true))
+                .bindJobTo(ScheduledAnalyticExecutorRunnable.class, builder -> builder
+                        .name("Analytic Executor: Scheduled Query")
+                        .description("Run scheduled index query analytics periodically")
                         .schedule(PERIODIC, "10m")
                         .enabled(false)
                         .advanced(true));
         GuiceUtil.buildMultiBinder(binder(), HasResultStoreInfo.class).addBinding(AnalyticDataStores.class);
 
         RestResourcesBinder.create(binder())
-                .bind(AnalyticNotificationResourceImpl.class)
-                .bind(AnalyticProcessorFilterResourceImpl.class)
+                .bind(AnalyticProcessResourceImpl.class)
                 .bind(AnalyticDataShardResourceImpl.class);
 
         // Live federated search provision.
@@ -61,12 +71,31 @@ public class AnalyticsModule extends AbstractModule {
                 .addBinding(AnalyticsSearchProvider.class);
         GuiceUtil.buildMultiBinder(binder(), NodeSearchTaskHandlerProvider.class)
                 .addBinding(AnalyticsNodeSearchTaskHandlerProvider.class);
+
+        ProcessorTaskExecutorBinder.create(binder())
+                .bind(ProcessorType.STREAMING_ANALYTIC, StreamingAnalyticProcessorExecutor.class);
     }
 
-    private static class AnalyticsExecutorRunnable extends RunnableWrapper {
+    private static class TableBuilderAnalyticExecutorRunnable extends RunnableWrapper {
 
         @Inject
-        AnalyticsExecutorRunnable(final AnalyticsExecutor executor) {
+        TableBuilderAnalyticExecutorRunnable(final TableBuilderAnalyticExecutor executor) {
+            super(executor::exec);
+        }
+    }
+
+//    private static class StreamingAnalyticExecutorRunnable extends RunnableWrapper {
+//
+//        @Inject
+//        StreamingAnalyticExecutorRunnable(final StreamingAnalyticExecutor executor) {
+//            super(executor::exec);
+//        }
+//    }
+
+    private static class ScheduledAnalyticExecutorRunnable extends RunnableWrapper {
+
+        @Inject
+        ScheduledAnalyticExecutorRunnable(final ScheduledQueryAnalyticExecutor executor) {
             super(executor::exec);
         }
     }

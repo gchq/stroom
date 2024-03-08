@@ -13,16 +13,21 @@ dependencies {
     implementation project(':stroom-explorer:stroom-explorer-impl-db-jooq')
     implementation project(':stroom-event-logging:stroom-event-logging-api')
     implementation project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
+    implementation project(':stroom-importexport:stroom-importexport-api')
+    implementation project(':stroom-query:stroom-query-api')
     implementation project(':stroom-security:stroom-security-api')
+    implementation project(':stroom-security:stroom-security-user-api')
+    implementation project(':stroom-suggestions:stroom-suggestions-api')
     implementation project(':stroom-task:stroom-task-api')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 
+    implementation libs.dropwizard_validation
     implementation libs.eventLogging
-    implementation libs.guice5
+    implementation libs.guice
     implementation libs.jackson_annotations
     implementation libs.jakarta_servlet_api
-    implementation libs.javax_inject
+    implementation libs.jakarta_inject
     implementation libs.jersey_common
     implementation libs.jaxb_api
     implementation libs.restygwt
@@ -30,7 +35,9 @@ dependencies {
     implementation libs.swagger_annotations
     implementation libs.ws_rs_api
 
+    testImplementation project(':stroom-cache:stroom-cache-impl')
     testImplementation project(':stroom-security:stroom-security-mock')
+    testImplementation project(':stroom-test-common')
 
     testImplementation libs.assertj_core
     testImplementation libs.junit_jupiter_api

@@ -34,12 +34,13 @@ import java.util.Objects;
 @JsonSubTypes({
         @JsonSubTypes.Type(value = TableResult.class, name = "table"),
         @JsonSubTypes.Type(value = FlatResult.class, name = "flat"),
-        @JsonSubTypes.Type(value = VisResult.class, name = "vis")
+        @JsonSubTypes.Type(value = VisResult.class, name = "vis"),
+        @JsonSubTypes.Type(value = QLVisResult.class, name = "ql_vis"),
 })
 @JsonInclude(Include.NON_NULL)
 @Schema(
         description = "Base object for describing a set of result data",
-        subTypes = {TableResult.class, FlatResult.class, VisResult.class})
+        subTypes = {TableResult.class, FlatResult.class, VisResult.class, QLVisResult.class})
 public abstract class Result {
 
     //TODO add an example value
@@ -93,51 +94,5 @@ public abstract class Result {
                 "componentId='" + componentId + '\'' +
                 ", errors='" + errors + '\'' +
                 '}';
-    }
-
-    /**
-     * Builder for constructing a {@link Result}. This class is abstract and must be overridden for
-     * each known Result implementation class.
-     *
-     * @param <T>             The result class type, either Flat or Table
-     * @param <T_CHILD_CLASS> The subclass, allowing us to template OwnedBuilder correctly
-     */
-    public abstract static class AbstractResultBuilder<T_CHILD_CLASS
-            extends ResultBuilder<?>>
-            implements ResultBuilder<T_CHILD_CLASS> {
-
-        String componentId;
-        List<String> errors;
-
-        AbstractResultBuilder() {
-        }
-
-        AbstractResultBuilder(final Result result) {
-            this.componentId = result.componentId;
-            this.errors = result.errors;
-        }
-
-        /**
-         * @param componentId The ID of the component that this result set was requested for. See ResultRequest in
-         *                    SearchRequest
-         * @return The {@link Builder}, enabling method chaining
-         */
-        @Override
-        public T_CHILD_CLASS componentId(final String componentId) {
-            this.componentId = componentId;
-            return self();
-        }
-
-        /**
-         * @param errors If an error has occurred producing this result set then this will have details
-         * @return The {@link Builder}, enabling method chaining
-         */
-        @Override
-        public T_CHILD_CLASS errors(final List<String> errors) {
-            this.errors = errors;
-            return self();
-        }
-
-        abstract T_CHILD_CLASS self();
     }
 }

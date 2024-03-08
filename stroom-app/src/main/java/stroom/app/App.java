@@ -24,6 +24,7 @@ import stroom.app.commands.ResetPasswordCommand;
 import stroom.app.guice.AppModule;
 import stroom.config.app.AppConfig;
 import stroom.config.app.Config;
+import stroom.config.app.SecurityConfig;
 import stroom.config.app.StroomYamlUtil;
 import stroom.config.global.impl.ConfigMapper;
 import stroom.dropwizard.common.AdminServlets;
@@ -33,8 +34,12 @@ import stroom.dropwizard.common.ManagedServices;
 import stroom.dropwizard.common.RestResources;
 import stroom.dropwizard.common.Servlets;
 import stroom.dropwizard.common.SessionListeners;
-import stroom.dropwizard.common.WebSockets;
 import stroom.event.logging.rs.api.RestResourceAutoLogger;
+import stroom.security.impl.AuthenticationConfig;
+import stroom.security.openid.api.AbstractOpenIdConfig;
+import stroom.security.openid.api.IdpType;
+import stroom.util.NullSafe;
+import stroom.util.authentication.DefaultOpenIdCredentials;
 import stroom.util.config.AppConfigValidator;
 import stroom.util.config.ConfigValidator;
 import stroom.util.config.PropertyPathDecorator;
@@ -57,11 +62,16 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import io.dropwizard.Application;
+import io.dropwizard.core.Application;
+import io.dropwizard.core.setup.Bootstrap;
+import io.dropwizard.core.setup.Environment;
 import io.dropwizard.jersey.sessions.SessionFactoryProvider;
 import io.dropwizard.servlets.tasks.LogConfigurationTask;
-import io.dropwizard.setup.Bootstrap;
-import io.dropwizard.setup.Environment;
+import jakarta.inject.Inject;
+import jakarta.servlet.DispatcherType;
+import jakarta.servlet.FilterRegistration;
+import jakarta.servlet.SessionCookieConfig;
+import jakarta.validation.ValidatorFactory;
 import org.eclipse.jetty.server.session.SessionHandler;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
 
@@ -70,11 +80,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.EnumSet;
 import java.util.Objects;
-import javax.inject.Inject;
-import javax.servlet.DispatcherType;
-import javax.servlet.FilterRegistration;
-import javax.servlet.SessionCookieConfig;
-import javax.validation.ValidatorFactory;
 
 public class App extends Application<Config> {
 
@@ -93,8 +98,6 @@ public class App extends Application<Config> {
     @Inject
     private AdminServlets adminServlets;
     @Inject
-    private WebSockets webSockets;
-    @Inject
     private SessionListeners sessionListeners;
     @Inject
     private RestResources restResources;
@@ -109,7 +112,7 @@ public class App extends Application<Config> {
 
     private final Path configFile;
 
-    // This is an additional injector for use only with javax.validation. It means we can do validation
+    // This is an additional injector for use only with jakarta.validation. It means we can do validation
     // of the yaml file before our main injector has been created and also so we can use our custom
     // validation annotations with REST services (see initialize() method). It feels a bit wrong having two
     // injectors running but not sure how else we could do this unless Guice is not used for the validators.
@@ -171,7 +174,7 @@ public class App extends Application<Config> {
 
         addCliCommands(bootstrap);
 
-        // If we want to use javax.validation on our rest resources with our own custom validation annotations
+        // If we want to use jakarta.validation on our rest resources with our own custom validation annotations
         // then we need to set the ValidatorFactory. As our main Guice Injector is not available yet we need to
         // create one just for the REST validation
         bootstrap.setValidatorFactory(validationOnlyInjector.getInstance(ValidatorFactory.class));
@@ -265,9 +268,6 @@ public class App extends Application<Config> {
         // Add admin port/path servlets. Needs to be called after healthChecks.register()
         adminServlets.register();
 
-        // Add web sockets
-        webSockets.register();
-
         // Add session listeners.
         sessionListeners.register();
 
@@ -277,7 +277,7 @@ public class App extends Application<Config> {
         // Listen to the lifecycle of the Dropwizard app.
         managedServices.register();
 
-        warnAboutDefaultOpenIdCreds(configuration);
+        warnAboutDefaultOpenIdCreds(configuration, appInjector);
 
         showNodeInfo(configuration);
     }
@@ -291,10 +291,24 @@ public class App extends Application<Config> {
                 + "\n********************************************************************************");
     }
 
-    private void warnAboutDefaultOpenIdCreds(Config configuration) {
-        if (configuration.getYamlAppConfig().getSecurityConfig().getIdentityConfig().isUseDefaultOpenIdCredentials()) {
-            String propPath = configuration.getYamlAppConfig().getSecurityConfig().getIdentityConfig().getFullPathStr(
-                    "useDefaultOpenIdCredentials");
+    private void warnAboutDefaultOpenIdCreds(final Config configuration, final Injector injector) {
+
+        final boolean areDefaultOpenIdCredsInUse = NullSafe.test(configuration.getYamlAppConfig(),
+                AppConfig::getSecurityConfig,
+                SecurityConfig::getAuthenticationConfig,
+                AuthenticationConfig::getOpenIdConfig,
+                openIdConfig ->
+                        IdpType.TEST_CREDENTIALS.equals(openIdConfig.getIdentityProviderType()));
+
+        if (areDefaultOpenIdCredsInUse) {
+            final DefaultOpenIdCredentials defaultOpenIdCredentials = injector.getInstance(
+                    DefaultOpenIdCredentials.class);
+            final String propPath = configuration.getYamlAppConfig()
+                    .getSecurityConfig()
+                    .getAuthenticationConfig()
+                    .getOpenIdConfig()
+                    .getFullPathStr(AbstractOpenIdConfig.PROP_NAME_IDP_TYPE);
+
             LOGGER.warn("\n" +
                     "\n  -----------------------------------------------------------------------------" +
                     "\n  " +
@@ -302,8 +316,9 @@ public class App extends Application<Config> {
                     "\n  " +
                     "\n   Using default and publicly available Open ID authentication credentials. " +
                     "\n   This is insecure! These should only be used in test/demo environments. " +
-                    "\n   Set " + propPath + " to false for production environments." +
+                    "\n   Set " + propPath + " to INTERNAL_IDP/EXTERNAL_IDP for production environments." +
                     "\n" +
+                    "\n   " + defaultOpenIdCredentials.getApiKey() +
                     "\n  -----------------------------------------------------------------------------" +
                     "\n");
         }
@@ -367,7 +382,7 @@ public class App extends Application<Config> {
         // TODO : Add `SameSite=Strict` when supported by JEE
     }
 
-    private static void configureCors(io.dropwizard.setup.Environment environment) {
+    private static void configureCors(io.dropwizard.core.setup.Environment environment) {
         FilterRegistration.Dynamic cors = environment.servlets().addFilter("CORS", CrossOriginFilter.class);
         cors.addMappingForUrlPatterns(EnumSet.allOf(DispatcherType.class), true, "/*");
         cors.setInitParameter(CrossOriginFilter.ALLOWED_METHODS_PARAM, "GET,PUT,POST,DELETE,OPTIONS,PATCH");

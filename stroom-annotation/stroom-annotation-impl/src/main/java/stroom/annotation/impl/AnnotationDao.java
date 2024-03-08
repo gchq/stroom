@@ -23,9 +23,10 @@ import stroom.annotation.shared.EventId;
 import stroom.annotation.shared.EventLink;
 import stroom.annotation.shared.SetAssignedToRequest;
 import stroom.annotation.shared.SetStatusRequest;
-import stroom.dashboard.expression.v1.ValuesConsumer;
-import stroom.datasource.api.v2.AbstractField;
 import stroom.entity.shared.ExpressionCriteria;
+import stroom.query.language.functions.FieldIndex;
+import stroom.query.language.functions.ValuesConsumer;
+import stroom.util.shared.UserName;
 
 import java.util.List;
 
@@ -39,17 +40,17 @@ public interface AnnotationDao {
 
     List<AnnotationDetail> getAnnotationDetailsForEvents(long streamId, long eventId);
 
-    AnnotationDetail createEntry(CreateEntryRequest request, String user);
+    AnnotationDetail createEntry(CreateEntryRequest request, UserName currentUser);
 
     List<EventId> getLinkedEvents(Long annotationId);
 
-    List<EventId> link(EventLink eventLink, String user);
+    List<EventId> link(EventLink eventLink, UserName currentUser);
 
-    List<EventId> unlink(EventLink eventLink, String user);
+    List<EventId> unlink(EventLink eventLink, UserName currentUser);
 
-    Integer setStatus(SetStatusRequest request, String user);
+    Integer setStatus(SetStatusRequest request, UserName currentUser);
 
-    Integer setAssignedTo(SetAssignedToRequest request, String user);
+    Integer setAssignedTo(SetAssignedToRequest request, UserName currentUser);
 
-    void search(ExpressionCriteria criteria, AbstractField[] fields, ValuesConsumer consumer);
+    void search(ExpressionCriteria criteria, FieldIndex fieldIndex, ValuesConsumer consumer);
 }

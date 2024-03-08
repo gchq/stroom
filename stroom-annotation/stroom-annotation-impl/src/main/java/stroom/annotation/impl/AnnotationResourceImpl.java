@@ -30,10 +30,11 @@ import stroom.util.filter.QuickFilterPredicateFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+
 import java.util.List;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
-import javax.inject.Provider;
 
 @AutoLogged(OperationType.MANUALLY_LOGGED)
 class AnnotationResourceImpl implements AnnotationResource {
@@ -66,6 +67,7 @@ class AnnotationResourceImpl implements AnnotationResource {
             }
         } catch (final RuntimeException e) {
             documentEventLog.get().view("Annotation " + annotationId, e);
+            throw e;
         }
 //        } else {
 //            LOGGER.info(() -> "Getting annotation " + streamId + ":" + eventId);
@@ -92,6 +94,7 @@ class AnnotationResourceImpl implements AnnotationResource {
             documentEventLog.get().create(annotationDetail, null);
         } catch (final RuntimeException e) {
             documentEventLog.get().create("Annotation entry " + request.getAnnotation(), e);
+            throw e;
         }
 
         return annotationDetail;

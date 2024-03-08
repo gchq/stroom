@@ -25,23 +25,20 @@ import stroom.data.store.api.Target;
 import stroom.data.store.impl.AttributeMapFactory;
 import stroom.data.store.impl.fs.DataVolumeDao.DataVolume;
 import stroom.data.store.impl.fs.shared.FsVolume;
-import stroom.datasource.api.v2.AbstractField;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaFields;
-import stroom.meta.shared.Status;
+import stroom.util.io.PathCreator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+
 import java.io.IOException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.Map;
-import java.util.Objects;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 /**
  * A file system stream store.
@@ -56,23 +53,34 @@ class FsStore implements Store, AttributeMapFactory {
     private final MetaService metaService;
     private final FsVolumeService volumeService;
     private final DataVolumeService dataVolumeService;
+    private final PathCreator pathCreator;
+    private final S3Store s3Store;
 
     @Inject
     FsStore(final FsPathHelper fileSystemStreamPathHelper,
             final MetaService metaService,
             final FsVolumeService volumeService,
-            final DataVolumeService dataVolumeService) {
+            final DataVolumeService dataVolumeService,
+            final PathCreator pathCreator,
+            final S3Store s3Store) {
         this.fileSystemStreamPathHelper = fileSystemStreamPathHelper;
         this.metaService = metaService;
         this.volumeService = volumeService;
         this.dataVolumeService = dataVolumeService;
+        this.pathCreator = pathCreator;
+        this.s3Store = s3Store;
     }
 
     @Override
-    public Target openTarget(final MetaProperties metaProperties) {
+    public Target openTarget(final MetaProperties metaProperties) throws DataException {
+        return openTarget(metaProperties, null);
+    }
+
+    @Override
+    public Target openTarget(final MetaProperties metaProperties, final String volumeGroup) {
         LOGGER.debug(() -> "openTarget() " + metaProperties);
 
-        final FsVolume volume = volumeService.getVolume();
+        final FsVolume volume = volumeService.getVolume(volumeGroup);
         if (volume == null) {
             throw new DataException("""
                     Failed to get lock as no writable volumes. This may be because there are no active \
@@ -84,54 +92,40 @@ class FsStore implements Store, AttributeMapFactory {
         final Meta meta = metaService.create(metaProperties);
 
         final DataVolume dataVolume = dataVolumeService.createDataVolume(meta.getId(), volume);
-        final Path volumePath = Paths.get(dataVolume.getVolumePath());
-        final String streamType = meta.getTypeName();
-        final FsTarget target = FsTarget.create(metaService,
-                fileSystemStreamPathHelper,
-                meta,
-                volumePath,
-                streamType,
-                false);
-
-        // Force Creation of the files
-        target.getOutputStream();
-
-        syncAttributes(meta, target);
-
-        return target;
-    }
-
-    @Override
-    public Target openExistingTarget(final Meta meta) throws DataException {
-        Objects.requireNonNull(meta, "Null meta");
-        LOGGER.debug(() -> "openExistingTarget() " + meta);
-
-        // Lock the object
-        final DataVolume dataVolume = dataVolumeService.findDataVolume(meta.getId());
-        if (dataVolume == null) {
-            throw new DataException("Not all volumes are unlocked");
+        Target target = null;
+        switch (dataVolume.getVolume().getVolumeType()) {
+            case STANDARD -> {
+                final Path volumePath = pathCreator.toAppPath(dataVolume.getVolume().getPath());
+                final String streamType = meta.getTypeName();
+                final FsTarget fsTarget = FsTarget.create(metaService,
+                        fileSystemStreamPathHelper,
+                        meta,
+                        volumePath,
+                        streamType);
+                // Force Creation of the files
+                fsTarget.getOutputStream();
+                target = fsTarget;
+            }
+            case S3 -> {
+                return s3Store.getTarget(dataVolume, meta);
+            }
         }
-        final Meta lockedMeta = metaService.updateStatus(meta, Status.UNLOCKED, Status.LOCKED);
-        final Path volumePath = Paths.get(dataVolume.getVolumePath());
-
-        final String streamType = lockedMeta.getTypeName();
-        final FsTarget target = FsTarget.create(metaService, fileSystemStreamPathHelper, lockedMeta, volumePath,
-                streamType, true);
-
-        syncAttributes(lockedMeta, target);
 
         return target;
     }
 
     @Override
-    public Target deleteTarget(final Target target) {
+    public void deleteTarget(final Target target) {
         // Make sure the stream is closed.
         try {
-            ((FsTarget) target).delete();
+            if (target instanceof final FsTarget fsTarget) {
+                fsTarget.delete();
+            } else if (target instanceof S3Target s3Target) {
+                s3Target.delete();
+            }
         } catch (final RuntimeException e) {
             LOGGER.error(() -> "Unable to delete stream target! " + e.getMessage(), e);
         }
-        return target;
     }
 
     /**
@@ -182,33 +176,19 @@ class FsStore implements Store, AttributeMapFactory {
                 throw new DataException("Unable to find any volume for " + meta);
             }
 
-            final Path volumePath = Paths.get(dataVolume.getVolumePath());
-            return FsSource.create(fileSystemStreamPathHelper, meta, volumePath, meta.getTypeName());
+            Source source = null;
+            switch (dataVolume.getVolume().getVolumeType()) {
+                case STANDARD -> {
+                    final Path volumePath = pathCreator.toAppPath(dataVolume.getVolume().getPath());
+                    source = FsSource.create(fileSystemStreamPathHelper, meta, volumePath, meta.getTypeName());
+                }
+                case S3 -> source = s3Store.getSource(dataVolume, meta);
+            }
+
+            return source;
         } catch (final DataException e) {
             LOGGER.debug(e::getMessage, e);
             throw e;
-        }
-    }
-
-    private void syncAttributes(final Meta meta, final FsTarget target) {
-        updateAttribute(target, MetaFields.ID, String.valueOf(meta.getId()));
-
-        if (meta.getParentMetaId() != null) {
-            updateAttribute(target, MetaFields.PARENT_ID,
-                    String.valueOf(meta.getParentMetaId()));
-        }
-
-        updateAttribute(target, MetaFields.FEED, meta.getFeedName());
-        updateAttribute(target, MetaFields.TYPE, meta.getTypeName());
-        updateAttribute(target, MetaFields.CREATE_TIME, String.valueOf(meta.getCreateMs()));
-        if (meta.getEffectiveMs() != null) {
-            updateAttribute(target, MetaFields.EFFECTIVE_TIME, String.valueOf(meta.getEffectiveMs()));
-        }
-    }
-
-    private void updateAttribute(final FsTarget target, final AbstractField key, final String value) {
-        if (!target.getAttributes().containsKey(key.getName())) {
-            target.getAttributes().put(key.getName(), value);
         }
     }
 

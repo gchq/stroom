@@ -19,9 +19,12 @@ package stroom.receive.common;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.StroomStatusCode;
+import stroom.security.api.exception.AuthenticationException;
 import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+
+import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -30,7 +33,6 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.util.zip.DataFormatException;
 import java.util.zip.ZipException;
-import javax.servlet.http.HttpServletResponse;
 
 public class StroomStreamException extends RuntimeException {
 
@@ -77,6 +79,9 @@ public class StroomStreamException extends RuntimeException {
             return new StroomStreamException(StroomStatusCode.COMPRESSED_STREAM_INVALID, attributeMap, ex.getMessage());
         } else if (ex instanceof DataFormatException) {
             return new StroomStreamException(StroomStatusCode.COMPRESSED_STREAM_INVALID, attributeMap, ex.getMessage());
+        } else if (ex instanceof AuthenticationException) {
+            return new StroomStreamException(
+                    StroomStatusCode.CLIENT_TOKEN_OR_CERT_NOT_AUTHENTICATED, attributeMap, ex.getMessage());
         } else if (ex instanceof StroomStreamException) {
             return (StroomStreamException) ex;
         } else if (ex.getCause() != null) {

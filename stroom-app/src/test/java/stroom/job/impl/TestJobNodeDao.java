@@ -24,11 +24,10 @@ import stroom.node.api.NodeInfo;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
 import stroom.util.AuditUtil;
+import stroom.util.exception.DataChangedException;
 
-import org.jooq.exception.DataChangedException;
+import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
-
-import javax.inject.Inject;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -52,7 +51,7 @@ class TestJobNodeDao extends AbstractCoreIntegrationTest {
         Job job = new Job();
         job.setName("Test Job" + System.currentTimeMillis());
         job.setEnabled(true);
-        AuditUtil.stamp("test", job);
+        AuditUtil.stamp(() -> "test", job);
         job = jobDao.create(job);
 
         // Test update
@@ -76,7 +75,7 @@ class TestJobNodeDao extends AbstractCoreIntegrationTest {
         jobNode.setJob(job);
         jobNode.setNodeName(nodeInfo.getThisNodeName());
 
-        AuditUtil.stamp("test", jobNode);
+        AuditUtil.stamp(() -> "test", jobNode);
         jobNode = jobNodeDao.create(jobNode);
         jobNode.setEnabled(true);
 

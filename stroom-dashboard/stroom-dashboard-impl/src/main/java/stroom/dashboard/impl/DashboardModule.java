@@ -16,14 +16,13 @@
 
 package stroom.dashboard.impl;
 
-import stroom.dashboard.expression.v1.FunctionFactory;
 import stroom.dashboard.shared.DashboardDoc;
 import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
+import stroom.query.language.functions.FunctionFactory;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.RestResourcesBinder;
-import stroom.util.guice.WebSocketBinder;
 
 import com.google.inject.AbstractModule;
 
@@ -34,8 +33,6 @@ public class DashboardModule extends AbstractModule {
         bind(DashboardStore.class).to(DashboardStoreImpl.class);
         bind(DashboardService.class).to(DashboardServiceImpl.class);
         bind(FunctionFactory.class).asEagerSingleton();
-        bind(FunctionService.class).to(FunctionServiceImpl.class).asEagerSingleton();
-        bind(StructureElementService.class).to(StructureElementServiceImpl.class).asEagerSingleton();
 
         GuiceUtil.buildMultiBinder(binder(), ExplorerActionHandler.class)
                 .addBinding(DashboardStoreImpl.class);
@@ -48,7 +45,5 @@ public class DashboardModule extends AbstractModule {
 
         RestResourcesBinder.create(binder())
                 .bind(DashboardResourceImpl.class);
-
-        WebSocketBinder.create(binder());
     }
 }

@@ -27,12 +27,15 @@ import stroom.processor.impl.ProcessorTaskTestHelper;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.ProcessorTaskList;
+import stroom.task.shared.TaskId;
 import stroom.test.common.StroomPipelineTestFileUtil;
 import stroom.util.NullSafe;
 import stroom.util.io.FileUtil;
 import stroom.util.shared.Severity;
 
 import io.vavr.Tuple;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,8 +49,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
-import javax.inject.Provider;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -119,12 +120,13 @@ public class CommonTranslationTestHelper {
 
         // We have to process 1 task at a time to ensure the ref data gets processed first.
         final List<ProcessorResult> results = new ArrayList<>();
-        ProcessorTaskList processorTasks = processorTaskQueueManager.assignTasks(nodeInfo.getThisNodeName(), 1);
+        ProcessorTaskList processorTasks = processorTaskQueueManager
+                .assignTasks(new TaskId(), nodeInfo.getThisNodeName(), 1);
         while (processorTasks.getList().size() > 0) {
             for (final ProcessorTask processorTask : processorTasks.getList()) {
                 results.add(process(processorTask));
             }
-            processorTasks = processorTaskQueueManager.assignTasks(nodeInfo.getThisNodeName(), 1);
+            processorTasks = processorTaskQueueManager.assignTasks(new TaskId(), nodeInfo.getThisNodeName(), 1);
         }
 
         return results;

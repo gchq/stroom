@@ -27,9 +27,9 @@ import stroom.activity.shared.ActivityValidationResult;
 import stroom.security.api.SecurityContext;
 import stroom.security.mock.MockSecurityContext;
 import stroom.test.common.util.db.DbTestUtil;
+import stroom.util.exception.DataChangedException;
 import stroom.util.shared.ResultPage;
 
-import org.jooq.exception.DataChangedException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

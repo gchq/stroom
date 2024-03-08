@@ -1,18 +1,18 @@
 package stroom.explorer.impl;
 
 import stroom.explorer.shared.ExplorerNode;
-import stroom.explorer.shared.ExplorerNode.NodeState;
 import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.explorer.shared.FetchExplorerNodeResult;
-import stroom.explorer.shared.FindExplorerNodeCriteria;
+import stroom.explorer.shared.FetchExplorerNodesRequest;
+import stroom.explorer.shared.NodeFlag;
 import stroom.util.json.JsonUtil;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.ws.rs.core.Response;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Set;
-import javax.ws.rs.core.Response;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -25,29 +25,32 @@ public class TestSerialisation {
                 .type("test")
                 .uuid("test")
                 .name("test")
-                .tags("test")
+                .tags(Set.of("test"))
                 .build();
 
         final ExplorerTreeFilter explorerTreeFilter = new ExplorerTreeFilter(
                 Set.of("t1", "t2"),
                 Set.of("t1", "t2"),
                 Set.of("t1", "t2"),
+                Set.of(NodeFlag.OPEN, NodeFlag.FAVOURITE),
                 Set.of("p1", "p2"),
                 "blah",
-                true);
+                true,
+                null);
 
-        final FindExplorerNodeCriteria criteria1 = new FindExplorerNodeCriteria(
+        final FetchExplorerNodesRequest criteria1 = new FetchExplorerNodesRequest(
                 Set.of(explorerNode.getUniqueKey()),
                 Set.of(explorerNode.getUniqueKey()),
                 explorerTreeFilter,
                 2,
-                Set.of(explorerNode.getUniqueKey()));
+                Set.of(explorerNode.getUniqueKey()),
+                true);
 
         final ObjectMapper objectMapper = JsonUtil.getMapper();
         final String result1 = objectMapper.writeValueAsString(criteria1);
         System.out.println(result1);
-        final FindExplorerNodeCriteria criteria2 = objectMapper.readValue(result1, FindExplorerNodeCriteria.class);
-        final String result2 = objectMapper.writerFor(FindExplorerNodeCriteria.class).writeValueAsString(criteria2);
+        final FetchExplorerNodesRequest criteria2 = objectMapper.readValue(result1, FetchExplorerNodesRequest.class);
+        final String result2 = objectMapper.writerFor(FetchExplorerNodesRequest.class).writeValueAsString(criteria2);
         System.out.println(result2);
 
 //        assertThat(result1).isEqualTo(result2);
@@ -61,8 +64,8 @@ public class TestSerialisation {
                 .type("test-type")
                 .uuid("child-uuid")
                 .name("child-name")
-                .tags("test-tags")
-                .nodeState(NodeState.LEAF)
+                .addTag("test-tags")
+                .addNodeFlag(NodeFlag.LEAF)
                 .build();
 
         final ExplorerNode parent = ExplorerNode
@@ -70,8 +73,8 @@ public class TestSerialisation {
                 .type("test-type")
                 .uuid("parent-uuid")
                 .name("parent-name")
-                .tags("test-tags")
-                .nodeState(NodeState.OPEN)
+                .addTag("test-tags")
+                .addNodeFlag(NodeFlag.OPEN)
                 .children(List.of(child))
                 .build();
 

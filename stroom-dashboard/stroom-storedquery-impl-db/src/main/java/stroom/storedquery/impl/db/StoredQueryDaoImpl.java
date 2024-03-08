@@ -8,6 +8,8 @@ import stroom.storedquery.impl.StoredQueryDao;
 import stroom.storedquery.impl.db.jooq.tables.records.QueryRecord;
 import stroom.util.shared.ResultPage;
 
+import jakarta.inject.Inject;
+import jakarta.validation.constraints.NotNull;
 import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.OrderField;
@@ -18,9 +20,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
-import javax.validation.constraints.NotNull;
 
 import static stroom.storedquery.impl.db.jooq.Tables.QUERY;
 
@@ -44,6 +45,7 @@ class StoredQueryDaoImpl implements StoredQueryDao {
 
     @Override
     public StoredQuery create(@NotNull final StoredQuery storedQuery) {
+        storedQuery.setUuid(UUID.randomUUID().toString());
         StoredQuerySerialiser.serialise(storedQuery);
         StoredQuery result = genericDao.create(storedQuery);
         StoredQuerySerialiser.deserialise(result);
@@ -69,10 +71,10 @@ class StoredQueryDaoImpl implements StoredQueryDao {
     }
 
     @Override
-    public ResultPage<StoredQuery> find(FindStoredQueryCriteria criteria) {
+    public ResultPage<StoredQuery> find(final FindStoredQueryCriteria criteria) {
         List<StoredQuery> list = JooqUtil.contextResult(storedQueryDbConnProvider, context -> {
             final Collection<Condition> conditions = JooqUtil.conditions(
-                    Optional.ofNullable(criteria.getUserId()).map(QUERY.CREATE_USER::eq),
+                    Optional.ofNullable(criteria.getOwnerUuid()).map(QUERY.OWNER_UUID::eq),
                     JooqUtil.getStringCondition(QUERY.NAME, criteria.getName()),
                     Optional.ofNullable(criteria.getDashboardUuid()).map(QUERY.DASHBOARD_UUID::eq),
                     Optional.ofNullable(criteria.getComponentId()).map(QUERY.COMPONENT_ID::eq),
@@ -91,17 +93,19 @@ class StoredQueryDaoImpl implements StoredQueryDao {
                     .into(StoredQuery.class);
         });
 
-        list = list.stream().map(StoredQuerySerialiser::deserialise).collect(Collectors.toList());
+        list = list.stream()
+                .map(StoredQuerySerialiser::deserialise)
+                .collect(Collectors.toList());
         return ResultPage.createCriterialBasedList(list, criteria);
     }
 
     @Override
-    public void clean(final String user, final boolean favourite, final Integer oldestId, final long oldestCrtMs) {
+    public void clean(final String ownerUuid, final boolean favourite, final Integer oldestId, final long oldestCrtMs) {
         try {
             LOGGER.debug("Deleting old rows");
 
             final Collection<Condition> conditions = JooqUtil.conditions(
-                    Optional.ofNullable(user).map(QUERY.CREATE_USER::eq),
+                    Optional.ofNullable(ownerUuid).map(QUERY.OWNER_UUID::eq),
                     Optional.of(QUERY.FAVOURITE.eq(favourite)),
                     Optional.ofNullable(oldestId)
                             .map(id -> QUERY.ID.le(id).or(QUERY.CREATE_TIME_MS.lt(oldestCrtMs)))
@@ -112,7 +116,7 @@ class StoredQueryDaoImpl implements StoredQueryDao {
                     .where(conditions)
                     .execute());
 
-            LOGGER.debug("Deleted " + rows + " rows");
+            LOGGER.debug("Deleted {} rows for ownerUuid: {}", rows, ownerUuid);
 
         } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
@@ -122,21 +126,21 @@ class StoredQueryDaoImpl implements StoredQueryDao {
     @Override
     public List<String> getUsers(final boolean favourite) {
         return JooqUtil.contextResult(storedQueryDbConnProvider, context -> context
-                .select(QUERY.CREATE_USER)
+                .select(QUERY.OWNER_UUID)
                 .from(QUERY)
                 .where(QUERY.FAVOURITE.eq(favourite))
-                .groupBy(QUERY.CREATE_USER)
-                .orderBy(QUERY.CREATE_USER)
-                .fetch(QUERY.CREATE_USER));
+                .groupBy(QUERY.OWNER_UUID)
+                .orderBy(QUERY.OWNER_UUID)
+                .fetch(QUERY.OWNER_UUID));
     }
 
     @Override
-    public Integer getOldestId(final String user, final boolean favourite, final int retain) {
+    public Integer getOldestId(final String ownerUuid, final boolean favourite, final int retain) {
         final Optional<Integer> optional = JooqUtil.contextResult(storedQueryDbConnProvider, context -> context
                 .select(QUERY.ID)
                 .from(QUERY)
-                .where(QUERY.CREATE_USER.eq(user)
-                        .and(QUERY.FAVOURITE.eq(favourite)))
+                .where(QUERY.OWNER_UUID.eq(ownerUuid))
+                .and(QUERY.FAVOURITE.eq(favourite))
                 .orderBy(QUERY.ID.desc())
                 .limit(retain, 1)
                 .fetchOptional(QUERY.ID));

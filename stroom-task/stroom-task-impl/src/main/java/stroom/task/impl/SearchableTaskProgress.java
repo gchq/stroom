@@ -3,19 +3,21 @@ package stroom.task.impl;
 import stroom.cluster.task.api.NodeNotFoundException;
 import stroom.cluster.task.api.NullClusterStateException;
 import stroom.cluster.task.api.TargetNodeSetFactory;
-import stroom.dashboard.expression.v1.Val;
-import stroom.dashboard.expression.v1.ValInteger;
-import stroom.dashboard.expression.v1.ValLong;
-import stroom.dashboard.expression.v1.ValNull;
-import stroom.dashboard.expression.v1.ValString;
-import stroom.dashboard.expression.v1.ValuesConsumer;
-import stroom.datasource.api.v2.AbstractField;
-import stroom.datasource.api.v2.DataSource;
 import stroom.datasource.api.v2.DateField;
+import stroom.datasource.api.v2.FieldInfo;
+import stroom.datasource.api.v2.FindFieldInfoCriteria;
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.expression.matcher.ExpressionMatcher;
 import stroom.expression.matcher.ExpressionMatcherFactory;
+import stroom.query.common.v2.FieldInfoResultPageBuilder;
+import stroom.query.language.functions.FieldIndex;
+import stroom.query.language.functions.Val;
+import stroom.query.language.functions.ValInteger;
+import stroom.query.language.functions.ValLong;
+import stroom.query.language.functions.ValNull;
+import stroom.query.language.functions.ValString;
+import stroom.query.language.functions.ValuesConsumer;
 import stroom.searchable.api.Searchable;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
@@ -25,12 +27,14 @@ import stroom.task.shared.TaskProgressResponse;
 import stroom.task.shared.TaskResource;
 import stroom.util.shared.ResultPage;
 
+import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -38,7 +42,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import javax.inject.Inject;
 
 class SearchableTaskProgress implements Searchable {
 
@@ -76,12 +79,13 @@ class SearchableTaskProgress implements Searchable {
     }
 
     @Override
-    public DataSource getDataSource() {
-        return DataSource
-                .builder()
-                .docRef(TASK_MANAGER_PSEUDO_DOC_REF)
-                .fields(TaskManagerFields.getFields())
-                .build();
+    public ResultPage<FieldInfo> getFieldInfo(final FindFieldInfoCriteria criteria) {
+        return FieldInfoResultPageBuilder.builder(criteria).addAll(TaskManagerFields.getFields()).build();
+    }
+
+    @Override
+    public Optional<String> fetchDocumentation(final DocRef docRef) {
+        return Optional.empty();
     }
 
     @Override
@@ -91,7 +95,7 @@ class SearchableTaskProgress implements Searchable {
 
     @Override
     public void search(final ExpressionCriteria criteria,
-                       final AbstractField[] fields,
+                       final FieldIndex fieldIndex,
                        final ValuesConsumer consumer) {
         securityContext.secure(PermissionNames.MANAGE_TASKS_PERMISSION, () -> {
             final Map<String, TaskProgressResponse> nodeResponses = searchAllNodes();
@@ -115,12 +119,13 @@ class SearchableTaskProgress implements Searchable {
                     })
                     .filter(attributeMap -> expressionMatcher.match(attributeMap, criteria.getExpression()))
                     .forEach(attributeMap -> {
+                        final String[] fields = fieldIndex.getFields();
                         final Val[] arr = new Val[fields.length];
                         for (int i = 0; i < fields.length; i++) {
-                            final AbstractField field = fields[i];
+                            final String fieldName = fields[i];
                             Val val = ValNull.INSTANCE;
-                            if (field != null) {
-                                final Object o = attributeMap.get(field.getName());
+                            if (fieldName != null) {
+                                final Object o = attributeMap.get(fieldName);
                                 if (o != null) {
                                     if (o instanceof String) {
                                         val = ValString.create((String) o);
@@ -133,7 +138,7 @@ class SearchableTaskProgress implements Searchable {
                             }
                             arr[i] = val;
                         }
-                        consumer.add(Val.of(arr));
+                        consumer.accept(Val.of(arr));
                     });
         });
     }

@@ -83,7 +83,9 @@ public class FolderPresenter extends LinkTabPanelPresenter implements DocumentTa
                 @Override
                 protected ProcessorPresenter createPresenter() {
                     final ProcessorPresenter processorPresenter = processorPresenterProvider.get();
-                    processorPresenter.setAllowUpdate(securityContext.hasAppPermission(PermissionNames.ADMINISTRATOR));
+                    final boolean isAdmin = securityContext.hasAppPermission(PermissionNames.ADMINISTRATOR);
+                    processorPresenter.setIsAdmin(isAdmin);
+                    processorPresenter.setAllowUpdate(isAdmin);
                     return processorPresenter;
                 }
 
@@ -147,5 +149,10 @@ public class FolderPresenter extends LinkTabPanelPresenter implements DocumentTa
     @Override
     public SvgImage getIcon() {
         return SvgImage.FOLDER;
+    }
+
+    @Override
+    public DocRef getDocRef() {
+        return docRef;
     }
 }

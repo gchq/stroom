@@ -16,24 +16,50 @@
 
 package stroom.security.mock;
 
+import stroom.docref.DocRef;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
+import stroom.security.impl.AuthenticationService;
+import stroom.security.shared.User;
+import stroom.util.shared.UserName;
 
+import com.google.inject.Inject;
+import jakarta.inject.Provider;
+
+import java.util.Optional;
 import java.util.function.Supplier;
-import javax.ws.rs.client.Invocation.Builder;
 
 public class MockSecurityContext implements SecurityContext {
 
     private static final MockAdminUserIdentity ADMIN_USER_IDENTITY = new MockAdminUserIdentity();
 
+    // Non integration tests likely don't care about the admin user uuid and won't have
+    // AuthenticationService bound, so make it optional. Most users of SecurityContext
+    // are just after the secureXXX methods.
+    @Inject(optional = true)
+    private Provider<AuthenticationService> authenticationServiceProvider;
+
     @Override
-    public String getUserId() {
-        return getUserIdentity().getId();
+    public String getSubjectId() {
+        return getUserIdentity().getSubjectId();
     }
 
     @Override
     public String getUserUuid() {
-        return null;
+        // This gets set when the admin user is first created.
+        if (authenticationServiceProvider != null) {
+            final String subjectId = User.ADMIN_SUBJECT_ID;
+            // This method ensures the internal admin user exists
+            return authenticationServiceProvider.get().getUser(subjectId)
+                    .map(UserName::getUuid)
+                    .orElseThrow(() ->
+                            new RuntimeException("Internal admin user '"
+                                    + subjectId + "' not found"));
+        } else {
+            throw new RuntimeException(AuthenticationService.class.getSimpleName()
+                    + "not injected so user UUID not available. " +
+                    "Bind it if you want this error to go away.");
+        }
     }
 
     @Override
@@ -42,7 +68,12 @@ public class MockSecurityContext implements SecurityContext {
     }
 
     @Override
-    public UserIdentity createIdentity(final String userId) {
+    public UserIdentity createIdentity(final String subjectId) {
+        return ADMIN_USER_IDENTITY;
+    }
+
+    @Override
+    public UserIdentity createIdentityByUserUuid(final String userUuid) {
         return ADMIN_USER_IDENTITY;
     }
 
@@ -74,6 +105,11 @@ public class MockSecurityContext implements SecurityContext {
     @Override
     public boolean hasDocumentPermission(final String documentUuid, final String permission) {
         return true;
+    }
+
+    @Override
+    public String getDocumentOwnerUuid(final DocRef docRef) {
+        return null;
     }
 
     @Override
@@ -145,15 +181,25 @@ public class MockSecurityContext implements SecurityContext {
         return supplier.get();
     }
 
-    @Override
-    public void addAuthorisationHeader(final Builder builder) {
-    }
+
+    // --------------------------------------------------------------------------------
+
 
     private static class MockAdminUserIdentity implements UserIdentity {
 
         @Override
-        public String getId() {
-            return "admin";
+        public String getSubjectId() {
+            return User.ADMIN_SUBJECT_ID;
+        }
+
+        @Override
+        public String getDisplayName() {
+            return User.ADMIN_SUBJECT_ID;
+        }
+
+        @Override
+        public Optional<String> getFullName() {
+            return Optional.of("Ad Min");
         }
     }
 }

@@ -19,10 +19,11 @@ package stroom.dashboard.impl;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import jakarta.xml.bind.annotation.XmlElement;
+import jakarta.xml.bind.annotation.XmlType;
 
 import java.io.Serializable;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlType;
+import java.util.Objects;
 
 @JsonPropertyOrder({"size"})
 @JsonInclude(Include.NON_NULL)
@@ -31,21 +32,21 @@ public class VisLimit implements Serializable {
 
     private static final long serialVersionUID = 1272545271946712570L;
 
-    private Integer size;
+    private Long size;
 
     public VisLimit() {
     }
 
-    public VisLimit(final Integer size) {
+    public VisLimit(final Long size) {
         this.size = size;
     }
 
     @XmlElement
-    public Integer getSize() {
+    public Long getSize() {
         return size;
     }
 
-    public void setSize(final Integer size) {
+    public void setSize(final Long size) {
         this.size = size;
     }
 
@@ -57,19 +58,13 @@ public class VisLimit implements Serializable {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-
         final VisLimit visLimit = (VisLimit) o;
-
-        return size != null
-                ? size.equals(visLimit.size)
-                : visLimit.size == null;
+        return Objects.equals(size, visLimit.size);
     }
 
     @Override
     public int hashCode() {
-        return size != null
-                ? size.hashCode()
-                : 0;
+        return Objects.hash(size);
     }
 
     @Override

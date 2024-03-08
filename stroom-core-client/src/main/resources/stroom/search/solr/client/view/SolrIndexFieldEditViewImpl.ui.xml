@@ -6,13 +6,13 @@
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form">
         <form:FormGroup identity="solrIndexFieldUse" label="Field Use">
-            <l:ItemListBox ui:field="fieldUse" addStyleNames="w-100"/>
+            <l:SelectionBox ui:field="fieldUse" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup identity="solrIndexFieldName" label="Field Name">
             <g:TextBox ui:field="fieldName" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup identity="solrIndexFieldType" label="Field Type">
-            <l:StringListBox ui:field="fieldType" addStyleNames="w-100"/>
+            <l:SelectionBox ui:field="fieldType" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup identity="solrIndexDefaultValue" label="Default Value">
             <g:TextBox ui:field="defaultValue" addStyleNames="w-100"/>

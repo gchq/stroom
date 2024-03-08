@@ -2,19 +2,25 @@ package stroom.query.api.v2;
 
 import java.util.List;
 
-public interface TableResultBuilder extends ResultBuilder<TableResultBuilder> {
+public interface TableResultBuilder {
 
     TableResultBuilder componentId(String componentId);
 
-    TableResultBuilder errors(List<String> errors);
-
-    TableResultBuilder fields(List<Field> fields);
+    TableResultBuilder columns(List<Column> columns);
 
     TableResultBuilder addRow(Row row);
 
+    /**
+     * Add an error to the result.
+     *
+     * @param error The Error to add.
+     * @return The {@link FlatResultBuilder}, enabling method chaining
+     */
+    TableResultBuilder errors(List<String> errors);
+
     TableResultBuilder resultRange(OffsetRange resultRange);
 
-    TableResultBuilder totalResults(Integer totalResults);
+    TableResultBuilder totalResults(Long totalResults);
 
     TableResult build();
 }

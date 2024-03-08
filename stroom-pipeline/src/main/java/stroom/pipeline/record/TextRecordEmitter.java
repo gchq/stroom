@@ -24,13 +24,13 @@ import stroom.util.io.ByteSlice;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Severity;
 
+import jakarta.inject.Inject;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.List;
-import javax.inject.Inject;
 
 public class TextRecordEmitter extends XMLFilterAdaptor {
 

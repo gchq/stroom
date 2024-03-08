@@ -54,7 +54,9 @@
 }
 
 .pipelineElementBox-hotspot {
-	background-color: var(--pipeline-element-box__background-color--hotspot);
+    /* Negative margin is to account for the increased border width which is bigger by 1px */
+    margin: -1px;
+    border: 2px solid var(--pipeline-element-box__border-color--hotspot);
 }
 
 .pipelineElementBox-severityInfo {
@@ -115,15 +117,16 @@
 	color: var(--pipeline-element-box__text-color);
 }
 
-.pipelineElementBox-backgroundSelected .pipelineElementBox-label  {
+.pipelineElementBox-backgroundSelected .pipelineElementBox-label,
+.pipelineElementBox-hotspot .pipelineElementBox-label {
 	color: var(--pipeline-element-box__text-color--selected);
 }
 
-.pipelineElementBox-filterImage.pipelineElementBox-filterOff.svgIcon {
+.pipelineElementBox-filterOff .pipelineElementBox-filterImage.svgIcon {
     visibility: hidden;
     display: none;
 }
 
-.pipelineElementBox-filterImage.pipelineElementBox-filterOn.svgIcon {
+.pipelineElementBox-filterOn .pipelineElementBox-filterImage.svgIcon {
 
 }

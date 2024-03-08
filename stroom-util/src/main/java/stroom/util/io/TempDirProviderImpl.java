@@ -4,13 +4,14 @@ import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Objects;
 import java.util.Optional;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 @Singleton
 public class TempDirProviderImpl implements TempDirProvider {
@@ -20,7 +21,7 @@ public class TempDirProviderImpl implements TempDirProvider {
     private final PathConfig pathConfig;
     private final HomeDirProvider homeDirProvider;
 
-    private volatile Path tempDir;
+    private Path tempDir;
 
     @Inject
     public TempDirProviderImpl(final PathConfig pathConfig,
@@ -109,9 +110,5 @@ public class TempDirProviderImpl implements TempDirProvider {
                 return Optional.empty();
             }
         }
-    }
-
-    public void setTempDir(final Path tempDir) {
-        this.tempDir = tempDir;
     }
 }

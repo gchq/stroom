@@ -17,7 +17,6 @@
 package stroom.security.impl;
 
 import stroom.docref.DocRef;
-import stroom.security.shared.User;
 
 final class UserDocRefUtil {
     public static final String USER = "User";

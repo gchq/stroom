@@ -25,6 +25,7 @@ import stroom.legacy.impex_6_1.MappingUtil;
 import stroom.legacy.model_6_1.DataRetentionPolicy;
 import stroom.legacy.model_6_1.XMLMarshallerUtil;
 
+import jakarta.xml.bind.JAXBContext;
 import org.flywaydb.core.api.migration.BaseJavaMigration;
 import org.flywaydb.core.api.migration.Context;
 
@@ -34,7 +35,6 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import javax.xml.bind.JAXBContext;
 
 @SuppressWarnings("unused")
 @Deprecated

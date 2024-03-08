@@ -18,16 +18,14 @@ package stroom.importexport.client.view;
 
 import stroom.importexport.client.presenter.ExportConfigPresenter.ExportConfigView;
 import stroom.importexport.client.presenter.ExportConfigUiHandlers;
-import stroom.svg.client.SvgPresets;
-import stroom.widget.button.client.SvgButton;
 import stroom.widget.dropdowntree.client.view.QuickFilter;
 
-import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
-import com.google.gwt.user.client.ui.SimplePanel;
+import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.MaxScrollPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
@@ -41,13 +39,14 @@ public class ExportConfigViewImpl
     @UiField
     QuickFilter nameFilter;
     @UiField
-    SimplePanel tree;
-    @UiField(provided = true)
-    SvgButton typeFilter;
+    MaxScrollPanel tree;
+    @UiField
+    FlowPanel buttonContainer;
+
+    private boolean hasActiveFilter = false;
 
     @Inject
     public ExportConfigViewImpl(final Binder binder) {
-        typeFilter = SvgButton.create(SvgPresets.FILTER);
         widget = binder.createAndBindUi(this);
     }
 
@@ -58,14 +57,17 @@ public class ExportConfigViewImpl
 
     @Override
     public void focus() {
-        nameFilter.focus();
+        nameFilter.forceFocus();
     }
 
     @Override
     public void setTreeView(final View view) {
-        view.asWidget().setWidth("100%");
-        view.asWidget().setHeight("100%");
         tree.setWidget(view.asWidget());
+    }
+
+    @Override
+    public FlowPanel getButtonContainer() {
+        return buttonContainer;
     }
 
     @UiHandler("nameFilter")
@@ -73,10 +75,9 @@ public class ExportConfigViewImpl
         getUiHandlers().changeQuickFilter(nameFilter.getText());
     }
 
-    @UiHandler("typeFilter")
-    void onFilterClick(final MouseDownEvent event) {
-        getUiHandlers().showTypeFilter(event);
-    }
+
+    // --------------------------------------------------------------------------------
+
 
     public interface Binder extends UiBinder<Widget, ExportConfigViewImpl> {
 

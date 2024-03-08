@@ -18,27 +18,18 @@ package stroom.analytics.client.view;
 
 import stroom.analytics.client.presenter.AnalyticProcessingPresenter.AnalyticProcessingView;
 import stroom.analytics.client.presenter.AnalyticProcessingUiHandlers;
-import stroom.item.client.StringListBox;
-import stroom.svg.shared.SvgImage;
-import stroom.widget.button.client.Button;
-import stroom.widget.customdatebox.client.MyDateBox;
-import stroom.widget.tickbox.client.view.CustomCheckBox;
-import stroom.widget.util.client.MouseUtil;
+import stroom.analytics.shared.AnalyticProcessType;
+import stroom.item.client.SelectionBox;
 
-import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
-import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
-import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
-
-import java.util.List;
 
 public class AnalyticProcessingViewImpl
         extends ViewWithUiHandlers<AnalyticProcessingUiHandlers>
@@ -47,26 +38,18 @@ public class AnalyticProcessingViewImpl
     private final Widget widget;
 
     @UiField
-    CustomCheckBox enabled;
+    SimplePanel queryEditorContainer;
     @UiField
-    SimplePanel expression;
+    SelectionBox<AnalyticProcessType> processingType;
     @UiField
-    MyDateBox minMetaCreateTimeMs;
-    @UiField
-    MyDateBox maxMetaCreateTimeMs;
-    @UiField
-    StringListBox node;
-    @UiField
-    SimplePanel info;
-    @UiField
-    Button refresh;
-
-    private String selectedNode;
+    SimplePanel processSettings;
 
     @Inject
     public AnalyticProcessingViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
-        refresh.setIcon(SvgImage.REFRESH);
+        processingType.addItem(AnalyticProcessType.STREAMING);
+        processingType.addItem(AnalyticProcessType.TABLE_BUILDER);
+        processingType.addItem(AnalyticProcessType.SCHEDULED_QUERY);
     }
 
     @Override
@@ -75,99 +58,29 @@ public class AnalyticProcessingViewImpl
     }
 
     @Override
-    public boolean isEnabled() {
-        return this.enabled.getValue();
+    public void setQueryEditorView(final View view) {
+        queryEditorContainer.setWidget(view.asWidget());
+    }
+
+
+    @Override
+    public AnalyticProcessType getProcessingType() {
+        return this.processingType.getValue();
     }
 
     @Override
-    public void setEnabled(final boolean enabled) {
-        this.enabled.setValue(enabled);
+    public void setProcessingType(final AnalyticProcessType analyticProcessType) {
+        this.processingType.setValue(analyticProcessType);
     }
 
     @Override
-    public void setExpressionView(final View view) {
-        expression.setWidget(view.asWidget());
+    public void setProcessSettings(final View view) {
+        this.processSettings.setWidget(view.asWidget());
     }
 
-    @Override
-    public Long getMinMetaCreateTimeMs() {
-        return minMetaCreateTimeMs.getMilliseconds();
-    }
-
-    @Override
-    public void setMinMetaCreateTimeMs(final Long minMetaCreateTimeMs) {
-        this.minMetaCreateTimeMs.setMilliseconds(minMetaCreateTimeMs);
-    }
-
-    @Override
-    public Long getMaxMetaCreateTimeMs() {
-        return maxMetaCreateTimeMs.getMilliseconds();
-    }
-
-    @Override
-    public void setMaxMetaCreateTimeMs(final Long maxMetaCreateTimeMs) {
-        this.maxMetaCreateTimeMs.setMilliseconds(maxMetaCreateTimeMs);
-    }
-
-    @Override
-    public void setNodes(final List<String> nodes) {
-        this.node.clear();
-        this.node.addItems(nodes);
-        if (selectedNode == null) {
-            if (nodes.size() > 0) {
-                this.node.setSelected(nodes.get(0));
-            }
-        } else {
-            this.node.setSelected(selectedNode);
-            selectedNode = null;
-        }
-    }
-
-    @Override
-    public String getNode() {
-        return this.node.getSelected();
-    }
-
-    @Override
-    public void setNode(final String node) {
-        if (node != null) {
-            selectedNode = node;
-            this.node.setSelected(node);
-        }
-    }
-
-    @Override
-    public void setInfo(final SafeHtml info) {
-        this.info.setWidget(new HTML(info));
-    }
-
-    @UiHandler("enabled")
-    public void onEnabled(final ValueChangeEvent<Boolean> event) {
-        getUiHandlers().onDirty();
-    }
-
-    @UiHandler("minMetaCreateTimeMs")
-    public void onMinMetaCreateTimeMs(final ValueChangeEvent<String> event) {
-        getUiHandlers().onDirty();
-    }
-
-    @UiHandler("maxMetaCreateTimeMs")
-    public void onMaxMetaCreateTimeMs(final ValueChangeEvent<String> event) {
-        getUiHandlers().onDirty();
-    }
-
-    @UiHandler("node")
-    public void onNode(final ValueChangeEvent<String> event) {
-        getUiHandlers().onDirty();
-    }
-
-    @UiHandler("refresh")
-    public void onRefreshButtonClick(final ClickEvent event) {
-        if (MouseUtil.isPrimary(event)) {
-            if (getUiHandlers() != null) {
-                getUiHandlers().onRefreshProcessingStatus();
-            }
-        }
+    @UiHandler("processingType")
+    public void onProcessingType(final ValueChangeEvent<AnalyticProcessType> event) {
+        getUiHandlers().onProcessingTypeChange();
     }
 
     public interface Binder extends UiBinder<Widget, AnalyticProcessingViewImpl> {

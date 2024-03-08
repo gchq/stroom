@@ -7,9 +7,13 @@ import stroom.config.global.shared.ListConfigResponse;
 import stroom.config.global.shared.OverrideValue;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.event.logging.mock.MockStroomEventLoggingService;
+import stroom.explorer.impl.ExplorerConfig;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
+import stroom.security.impl.AuthenticationConfig;
+import stroom.security.impl.StroomOpenIdConfig;
 import stroom.test.common.util.test.AbstractMultiNodeResourceTest;
+import stroom.ui.config.shared.ExtendedUiConfig;
 import stroom.ui.config.shared.UiConfig;
 import stroom.util.filter.FilterFieldMapper;
 import stroom.util.filter.FilterFieldMappers;
@@ -282,16 +286,30 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
     }
 
     @Test
+    void fetchExtendedUiConfig() {
+        initNodes();
+
+        String subPath = GlobalConfigResource.FETCH_EXTENDED_UI_CONFIG_SUB_PATH;
+        ExtendedUiConfig expectedResponse = new ExtendedUiConfig();
+
+        final ExtendedUiConfig response = doGetTest(
+                subPath,
+                ExtendedUiConfig.class,
+                expectedResponse);
+
+    }
+
+    @Test
     void fetchUiConfig() {
         initNodes();
 
         String subPath = GlobalConfigResource.FETCH_UI_CONFIG_SUB_PATH;
-        UiConfig expectedResponse = new UiConfig();
+        UiConfig uiConfig = new UiConfig();
 
-        final UiConfig listConfigResponse = doGetTest(
+        final UiConfig response = doGetTest(
                 subPath,
                 UiConfig.class,
-                expectedResponse);
+                uiConfig);
 
     }
 
@@ -402,6 +420,9 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
                 () -> nodeService,
                 UiConfig::new,
                 null,
-                () -> nodeInfo);
+                () -> nodeInfo,
+                StroomOpenIdConfig::new,
+                ExplorerConfig::new,
+                AuthenticationConfig::new);
     }
 }

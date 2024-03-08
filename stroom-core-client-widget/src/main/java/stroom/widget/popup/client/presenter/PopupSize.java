@@ -42,6 +42,16 @@ public class PopupSize {
                 .build();
     }
 
+    public static PopupSize resizable(final int initialWidth,
+                                      final int initialHeight,
+                                      final int minWidth,
+                                      final int minHeight) {
+        return PopupSize.builder()
+                .width(Size.builder().initial(initialWidth).min(minWidth).resizable(true).build())
+                .height(Size.builder().initial(initialHeight).min(minHeight).resizable(true).build())
+                .build();
+    }
+
     public static PopupSize resizable() {
         return PopupSize.builder()
                 .width(Size.builder().resizable(true).build())

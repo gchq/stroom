@@ -16,6 +16,7 @@
 
 package stroom.search.impl;
 
+import stroom.expression.api.DateTimeSettings;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.Query;
 import stroom.query.common.v2.CoprocessorsFactory;
@@ -31,9 +32,10 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
+import jakarta.inject.Inject;
+
 import java.util.Collections;
 import java.util.function.BiConsumer;
-import javax.inject.Inject;
 
 
 public class EventSearchTaskHandler {
@@ -44,19 +46,19 @@ public class EventSearchTaskHandler {
     private final CoprocessorsFactory coprocessorsFactory;
     private final ResultStoreFactory resultStoreFactory;
     private final FederatedSearchExecutor federatedSearchExecutor;
-    private final LuceneNodeSearchTaskCreator luceneNodeSearchTaskCreator;
+    private final NodeSearchTaskCreator nodeSearchTaskCreator;
 
     @Inject
     EventSearchTaskHandler(final SecurityContext securityContext,
                            final CoprocessorsFactory coprocessorsFactory,
                            final ResultStoreFactory resultStoreFactory,
                            final FederatedSearchExecutor federatedSearchExecutor,
-                           final LuceneNodeSearchTaskCreator luceneNodeSearchTaskCreator) {
+                           final NodeSearchTaskCreator nodeSearchTaskCreator) {
         this.securityContext = securityContext;
         this.coprocessorsFactory = coprocessorsFactory;
         this.resultStoreFactory = resultStoreFactory;
         this.federatedSearchExecutor = federatedSearchExecutor;
-        this.luceneNodeSearchTaskCreator = luceneNodeSearchTaskCreator;
+        this.nodeSearchTaskCreator = nodeSearchTaskCreator;
     }
 
     public void exec(final EventSearchTask task,
@@ -67,7 +69,7 @@ public class EventSearchTaskHandler {
 
             try {
                 // Get the current time in millis since epoch.
-                final long nowEpochMilli = System.currentTimeMillis();
+                final DateTimeSettings dateTimeSettings = DateTimeSettings.builder().build();
 
                 // Get the search.
                 final Query query = task.getQuery();
@@ -92,11 +94,11 @@ public class EventSearchTaskHandler {
                         searchName,
                         modifiedQuery,
                         Collections.singletonList(settings),
-                        null,
-                        nowEpochMilli);
+                        dateTimeSettings);
 
                 final CoprocessorsImpl coprocessors = coprocessorsFactory.create(
                         task.getSearchRequestSource(),
+                        dateTimeSettings,
                         task.getKey(),
                         Collections.singletonList(settings),
                         modifiedQuery.getParams(),
@@ -108,7 +110,7 @@ public class EventSearchTaskHandler {
                         null,
                         coprocessors);
                 try {
-                    federatedSearchExecutor.start(federatedSearchTask, resultStore, luceneNodeSearchTaskCreator);
+                    federatedSearchExecutor.start(federatedSearchTask, resultStore, nodeSearchTaskCreator);
 
                     LOGGER.debug(() -> "Started searchResultCollector " + resultStore);
 

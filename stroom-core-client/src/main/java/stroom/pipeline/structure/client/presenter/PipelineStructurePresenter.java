@@ -26,8 +26,7 @@ import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.RefreshDocumentEvent;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.presenter.DocumentEditPresenter;
-import stroom.explorer.client.presenter.EntityDropDownPresenter;
-import stroom.explorer.shared.ExplorerNode;
+import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.pipeline.shared.FetchPipelineXmlResponse;
 import stroom.pipeline.shared.FetchPropertyTypesResult;
 import stroom.pipeline.shared.PipelineDoc;
@@ -43,6 +42,7 @@ import stroom.pipeline.structure.client.presenter.PipelineStructurePresenter.Pip
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.EqualsUtil;
+import stroom.util.shared.ModelStringUtil;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.IconParentMenuItem;
 import stroom.widget.menu.client.presenter.Item;
@@ -52,9 +52,10 @@ import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
-import stroom.widget.popup.client.presenter.PopupPosition.VerticalLocation;
+import stroom.widget.popup.client.presenter.PopupPosition.PopupLocation;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
+import stroom.widget.util.client.Rect;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -71,6 +72,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineStructureView, PipelineDoc>
@@ -79,7 +81,7 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
     private static final PipelineResource PIPELINE_RESOURCE = GWT.create(PipelineResource.class);
     private static final DocRef NULL_SELECTION = DocRef.builder().uuid("").name("None").type("").build();
 
-    private final EntityDropDownPresenter pipelinePresenter;
+    private final DocSelectionBoxPresenter pipelinePresenter;
     private final RestFactory restFactory;
     private final NewElementPresenter newElementPresenter;
     private final PropertyListPresenter propertyListPresenter;
@@ -101,7 +103,7 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
     public PipelineStructurePresenter(final EventBus eventBus,
                                       final PipelineStructureView view,
                                       final PipelineTreePresenter pipelineTreePresenter,
-                                      final EntityDropDownPresenter pipelinePresenter,
+                                      final DocSelectionBoxPresenter pipelinePresenter,
                                       final RestFactory restFactory,
                                       final NewElementPresenter newElementPresenter,
                                       final PropertyListPresenter propertyListPresenter,
@@ -168,16 +170,16 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
         registerHandler(propertyListPresenter.addDirtyHandler(dirtyHandler));
         registerHandler(pipelineReferenceListPresenter.addDirtyHandler(dirtyHandler));
         registerHandler(pipelinePresenter.addDataSelectionHandler(event -> {
-            if (event.getSelectedItem() != null && event.getSelectedItem().getDocRef().compareTo(NULL_SELECTION) != 0) {
-                final ExplorerNode entityData = event.getSelectedItem();
-                if (EqualsUtil.isEquals(entityData.getDocRef().getUuid(), pipelineDoc.getUuid())) {
+            if (event.getSelectedItem() != null && event.getSelectedItem().compareTo(NULL_SELECTION) != 0) {
+                final DocRef docRef = event.getSelectedItem();
+                if (EqualsUtil.isEquals(docRef.getUuid(), pipelineDoc.getUuid())) {
                     AlertEvent.fireWarn(PipelineStructurePresenter.this, "A pipeline cannot inherit from itself",
                             () -> {
                                 // Reset selection.
                                 pipelinePresenter.setSelectedEntityReference(getParentPipeline());
                             });
                 } else {
-                    changeParentPipeline(entityData.getDocRef());
+                    changeParentPipeline(docRef);
                 }
             } else {
                 changeParentPipeline(null);
@@ -449,8 +451,9 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
 
     private void showMenu(final ClickEvent event, final List<Item> menuItems) {
         final com.google.gwt.dom.client.Element target = event.getNativeEvent().getEventTarget().cast();
-        final PopupPosition popupPosition = new PopupPosition(target.getAbsoluteLeft() - 3, target.getAbsoluteRight(),
-                target.getAbsoluteTop(), target.getAbsoluteBottom() + 3, null, VerticalLocation.BELOW);
+        Rect relativeRect = new Rect(target);
+        relativeRect = relativeRect.grow(3);
+        final PopupPosition popupPosition = new PopupPosition(relativeRect, PopupLocation.BELOW);
         showMenu(menuItems, popupPosition);
     }
 
@@ -672,7 +675,20 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
                     event.hide();
                 };
 
-                newElementPresenter.show(elementType, handler);
+                // We need to suggest a unique id for the element, else the user will get an
+                // error if they click ok with a dup id.
+                final Set<String> existingIds = pipelineTreePresenter.getIds();
+                final String suggestedIdBase = ModelStringUtil.toCamelCase(elementType.getType());
+                String suggestedId = suggestedIdBase;
+
+                int suffix = 2;
+                if (existingIds.contains(suggestedId)) {
+                    do {
+                        suggestedId = suggestedIdBase + suffix++;
+                    } while (existingIds.contains(suggestedId));
+                }
+
+                newElementPresenter.show(elementType, handler, suggestedId);
             }
         }
     }

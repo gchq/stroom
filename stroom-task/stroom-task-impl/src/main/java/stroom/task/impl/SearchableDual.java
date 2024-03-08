@@ -1,18 +1,23 @@
 package stroom.task.impl;
 
-import stroom.dashboard.expression.v1.Val;
-import stroom.dashboard.expression.v1.ValString;
-import stroom.dashboard.expression.v1.ValuesConsumer;
-import stroom.datasource.api.v2.AbstractField;
-import stroom.datasource.api.v2.DataSource;
 import stroom.datasource.api.v2.DateField;
+import stroom.datasource.api.v2.FieldInfo;
+import stroom.datasource.api.v2.FindFieldInfoCriteria;
+import stroom.datasource.api.v2.QueryField;
 import stroom.datasource.api.v2.TextField;
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
+import stroom.query.common.v2.FieldInfoResultPageBuilder;
+import stroom.query.language.functions.FieldIndex;
+import stroom.query.language.functions.Val;
+import stroom.query.language.functions.ValString;
+import stroom.query.language.functions.ValuesConsumer;
 import stroom.searchable.api.Searchable;
+import stroom.util.shared.ResultPage;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 public class SearchableDual implements Searchable {
 
@@ -21,12 +26,10 @@ public class SearchableDual implements Searchable {
             "Dual",
             "Dual");
 
-    private static final AbstractField DUMMY_FIELD = new TextField(
+    private static final QueryField DUMMY_FIELD = new TextField(
             "Dummy", true);
 
-    private static final List<AbstractField> FIELDS = Collections.singletonList(DUMMY_FIELD);
-
-    private static final DataSource DATA_SOURCE = DataSource.builder().docRef(DOC_REF).fields(FIELDS).build();
+    private static final List<QueryField> FIELDS = Collections.singletonList(DUMMY_FIELD);
 
     @Override
     public DocRef getDocRef() {
@@ -34,8 +37,13 @@ public class SearchableDual implements Searchable {
     }
 
     @Override
-    public DataSource getDataSource() {
-        return DATA_SOURCE;
+    public ResultPage<FieldInfo> getFieldInfo(final FindFieldInfoCriteria criteria) {
+        return FieldInfoResultPageBuilder.builder(criteria).addAll(FIELDS).build();
+    }
+
+    @Override
+    public Optional<String> fetchDocumentation(final DocRef docRef) {
+        return Optional.empty();
     }
 
     @Override
@@ -45,12 +53,13 @@ public class SearchableDual implements Searchable {
 
     @Override
     public void search(final ExpressionCriteria criteria,
-                       final AbstractField[] fields,
+                       final FieldIndex fieldIndex,
                        final ValuesConsumer consumer) {
+        final String[] fields = fieldIndex.getFields();
         final Val[] valArr = new Val[fields.length];
         for (int i = 0; i < fields.length; i++) {
             valArr[i] = ValString.create("X");
         }
-        consumer.add(Val.of(valArr));
+        consumer.accept(Val.of(valArr));
     }
 }

@@ -16,11 +16,12 @@
 
 package stroom.query.common.v2.format;
 
-import stroom.dashboard.expression.v1.DateUtil;
-import stroom.dashboard.expression.v1.Val;
+import stroom.expression.api.DateTimeSettings;
+import stroom.expression.api.TimeZone;
 import stroom.query.api.v2.DateTimeFormatSettings;
-import stroom.query.api.v2.DateTimeSettings;
-import stroom.query.api.v2.TimeZone;
+import stroom.query.language.functions.DateUtil;
+import stroom.query.language.functions.Val;
+import stroom.util.NullSafe;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -34,7 +35,8 @@ public class DateTimeFormatter implements Formatter {
     private final java.time.format.DateTimeFormatter format;
     private final ZoneId zone;
 
-    private DateTimeFormatter(final java.time.format.DateTimeFormatter format, final ZoneId zone) {
+    private DateTimeFormatter(final java.time.format.DateTimeFormatter format,
+                              final ZoneId zone) {
         this.format = format;
         this.zone = zone;
     }
@@ -54,7 +56,7 @@ public class DateTimeFormatter implements Formatter {
             timeZone = defaultDateTimeSettings.getTimeZone();
         }
 
-        if (pattern != null && pattern.trim().length() > 0) {
+        if (!NullSafe.isBlankString(pattern)) {
             if (timeZone != null) {
                 if (TimeZone.Use.UTC.equals(timeZone.getUse())) {
                     zone = ZoneOffset.UTC;
@@ -73,8 +75,9 @@ public class DateTimeFormatter implements Formatter {
                 } else if (TimeZone.Use.ID.equals(timeZone.getUse())) {
                     zone = ZoneId.of(timeZone.getId());
                 } else if (TimeZone.Use.OFFSET.equals(timeZone.getUse())) {
-                    zone = ZoneOffset.ofHoursMinutes(getInt(timeZone.getOffsetHours()),
-                            getInt(timeZone.getOffsetMinutes()));
+                    zone = ZoneOffset.ofHoursMinutes(
+                            NullSafe.getInt(timeZone.getOffsetHours()),
+                            NullSafe.getInt(timeZone.getOffsetMinutes()));
                 }
             }
 
@@ -84,35 +87,27 @@ public class DateTimeFormatter implements Formatter {
         return new DateTimeFormatter(format, zone);
     }
 
-    private static int getInt(final Integer i) {
-        if (i == null) {
-            return 0;
-        }
-        return i;
-    }
-
     public LocalDateTime parse(final String value) throws DateTimeParseException {
-        if (value == null) {
-            return null;
-        }
-
-        return DateUtil.parseLocal(value, format, zone);
+        return NullSafe.get(
+                value,
+                val -> DateUtil.parseLocal(val, format, zone));
     }
 
     @Override
     public String format(final Val value) {
         if (value == null) {
             return null;
-        }
-
-        final Long millis = value.toLong();
-        if (millis != null) {
-            if (format == null) {
-                return DateUtil.createNormalDateTimeString(millis);
+        } else {
+            final Long millis = value.toLong();
+            if (millis != null) {
+                if (format == null) {
+                    return DateUtil.createNormalDateTimeString(millis);
+                } else {
+                    return format.format(Instant.ofEpochMilli(millis).atZone(zone));
+                }
+            } else {
+                return value.toString();
             }
-
-            return format.format(Instant.ofEpochMilli(millis).atZone(zone));
         }
-        return value.toString();
     }
 }

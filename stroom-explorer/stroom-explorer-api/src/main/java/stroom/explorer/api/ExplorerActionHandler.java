@@ -43,11 +43,15 @@ public interface ExplorerActionHandler
     /**
      * Copy an existing document identified by uuid, to the specified location.
      *
-     * @param docRef        The docref of the document you want to copy.
-     * @param existingNames Names of documents that already exist in the destination folder.
+     * @param docRef         The docref of the document you want to copy.
+     * @param name        The suggested name of the copied document.
+     * @param makeNameUnique Determine if the copied document should be forced to have a unique name.
+     * @param existingNames  Names of documents that already exist in the destination folder.
      * @return A doc ref for the new document copy.
      */
     DocRef copyDocument(DocRef docRef,
+                        String name,
+                        boolean makeNameUnique,
                         Set<String> existingNames);
 
     /**

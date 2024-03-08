@@ -17,14 +17,22 @@
 
 package stroom.entity.client.presenter;
 
+import stroom.data.client.presenter.CopyTextUtil;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.document.client.event.ShowInfoDocumentDialogEvent;
+import stroom.explorer.shared.ExplorerNode;
+import stroom.explorer.shared.ExplorerNodeInfo;
 import stroom.preferences.client.DateTimeFormatter;
+import stroom.util.shared.GwtNullSafe;
+import stroom.util.shared.UserName;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 
+import com.google.gwt.event.dom.client.MouseDownEvent;
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -33,6 +41,9 @@ import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
 import com.gwtplatform.mvp.client.annotations.ProxyEvent;
 import com.gwtplatform.mvp.client.proxy.Proxy;
+
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class InfoDocumentPresenter
         extends MyPresenter<InfoDocumentPresenter.InfoDocumentView, InfoDocumentPresenter.InfoDocumentProxy>
@@ -50,8 +61,14 @@ public class InfoDocumentPresenter
     }
 
     @Override
+    protected void onBind() {
+        registerHandler(getView().asWidget().addDomHandler(e ->
+                CopyTextUtil.onClick(e.getNativeEvent()), MouseDownEvent.getType()));
+    }
+
+    @Override
     protected void revealInParent() {
-        final PopupSize popupSize = PopupSize.resizable(450, 300);
+        final PopupSize popupSize = PopupSize.resizable(500, 500);
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.CLOSE_DIALOG)
                 .popupSize(popupSize)
@@ -63,46 +80,93 @@ public class InfoDocumentPresenter
     @ProxyEvent
     @Override
     public void onCreate(final ShowInfoDocumentDialogEvent event) {
-        final DocRefInfo info = event.getInfo();
+        final ExplorerNodeInfo explorerNodeInfo = event.getExplorerNodeInfo();
+        final DocRefInfo info = event.getDocRefInfo();
         final DocRef docRef = info.getDocRef();
+        final ExplorerNode explorerNode = event.getExplorerNode();
 
-        final StringBuilder sb = new StringBuilder();
+        final SafeHtmlBuilder sb = new SafeHtmlBuilder();
         if (info.getOtherInfo() != null) {
-            sb.append(info.getOtherInfo());
-            sb.append("\n");
+            final int index = info.getOtherInfo().indexOf(":");
+            if (index != -1) {
+                appendLine(info.getOtherInfo().substring(0, index),
+                        info.getOtherInfo().substring(index + 1),
+                        sb);
+            }
         }
 
-        sb.append("UUID: ");
-        sb.append(docRef.getUuid());
-        sb.append("\nType: ");
-        sb.append(docRef.getType());
-        sb.append("\nName: ");
-        sb.append(docRef.getName());
+        appendLine("UUID", docRef.getUuid(), sb);
+        appendLine("Type", docRef.getType(), sb);
+        appendLine("Name", docRef.getName(), sb);
+
+        if (GwtNullSafe.hasItems(explorerNodeInfo.getOwners())) {
+            final Set<UserName> owners = explorerNodeInfo.getOwners();
+            if (owners.size() > 1) {
+                appendLine("Owners", explorerNodeInfo.getOwners()
+                        .stream()
+                        .map(UserName::getUserIdentityForAudit)
+                        .collect(Collectors.joining(", ")), sb);
+            } else {
+                appendLine("Owner", explorerNodeInfo.getOwners()
+                        .stream()
+                        .map(UserName::getUserIdentityForAudit)
+                        .collect(Collectors.joining(", ")), sb);
+            }
+        }
         if (info.getCreateUser() != null) {
-            sb.append("\nCreated By: ");
-            sb.append(info.getCreateUser());
+            appendLine("Created By", info.getCreateUser(), sb);
         }
         if (info.getCreateTime() != null) {
-            sb.append("\nCreated On: ");
-            sb.append(dateTimeFormatter.format(info.getCreateTime()));
+            appendLine("Created On", dateTimeFormatter.format(info.getCreateTime()), sb);
         }
         if (info.getUpdateUser() != null) {
-            sb.append("\nUpdated By: ");
-            sb.append(info.getUpdateUser());
+            appendLine("Updated By", info.getUpdateUser(), sb);
         }
         if (info.getUpdateTime() != null) {
-            sb.append("\nUpdated On: ");
-            sb.append(dateTimeFormatter.format(info.getUpdateTime()));
+            appendLine("Updated On", dateTimeFormatter.format(info.getUpdateTime()), sb);
+        }
+        if (GwtNullSafe.hasItems(explorerNode.getTags())) {
+//            final SafeHtmlBuilder sbInner = new SafeHtmlBuilder();
+            appendLine("Tags", "", sb);
+//            appendKey("Tags", sbInner);
+
+            final Set<String> tags = explorerNode.getTags();
+            tags.stream()
+                    .sorted()
+                    .forEach(tag ->
+                            appendLine("\t", tag, sb));
+
+
+//            sb.append(CopyTextUtil.div("infoLine", sbInner.toSafeHtml()));
         }
 
-        getView().setInfo(sb.toString());
+        getView().setInfo(sb.toSafeHtml());
 
         forceReveal();
     }
 
+    private void appendLine(final String key, final String value, final SafeHtmlBuilder sb) {
+        final SafeHtmlBuilder sbInner = new SafeHtmlBuilder();
+        appendKey(key, sbInner);
+        sbInner.append(CopyTextUtil.render(value));
+        sb.append(CopyTextUtil.div("infoLine", sbInner.toSafeHtml()));
+    }
+
+    private void appendKey(final String key, final SafeHtmlBuilder sb) {
+        sb.appendHtmlConstant("<b>");
+        sb.appendEscaped(key);
+        sb.appendHtmlConstant("</b>");
+        if (key.trim().length() > 0) {
+            sb.appendEscaped(": ");
+        }
+    }
+
+    // --------------------------------------------------------------------------------
+
+
     public interface InfoDocumentView extends View, Focus {
 
-        void setInfo(String info);
+        void setInfo(SafeHtml info);
     }
 
     @ProxyCodeSplit

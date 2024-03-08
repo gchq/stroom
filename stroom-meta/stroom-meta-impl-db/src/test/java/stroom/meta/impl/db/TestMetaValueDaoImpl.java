@@ -41,11 +41,10 @@ import stroom.util.date.DateUtil;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
+import jakarta.inject.Inject;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

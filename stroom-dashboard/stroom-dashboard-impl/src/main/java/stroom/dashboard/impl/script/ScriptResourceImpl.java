@@ -24,9 +24,10 @@ import stroom.script.shared.ScriptDoc;
 import stroom.script.shared.ScriptResource;
 import stroom.util.shared.EntityServiceException;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+
 import java.util.List;
-import javax.inject.Inject;
-import javax.inject.Provider;
 
 @AutoLogged
 class ScriptResourceImpl implements ScriptResource {

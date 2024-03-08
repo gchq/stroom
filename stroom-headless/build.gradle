@@ -42,15 +42,14 @@ dependencies {
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 
-    implementation libs.guice5
+    implementation libs.guice
     implementation libs.jackson_annotations
     implementation libs.jakarta_el
-    implementation libs.javax_inject
+    implementation libs.jakarta_inject
     implementation libs.jaxb_api
     implementation libs.saxon_he
     implementation libs.slf4j_api
-    implementation libs.xml_apis
-    
+
     runtimeOnly libs.logback_classic
 }
 
@@ -95,7 +94,7 @@ distTar.enabled = false
 shadowDistZip.enabled = false
 shadowDistTar.enabled = false
 
-task copyJar(type: Copy) {
+tasks.register('copyJar', Copy) {
     dependsOn shadowJar
     from shadowJar.outputs.files
     into "${releaseBuildDir}/bin"
@@ -122,7 +121,7 @@ task copyJar(type: Copy) {
 //}
 
 // Build the release distribution zip for stroom cli
-task buildDistribution(type: Zip) {
+tasks.register('buildDistribution', Zip) {
 
     // run all the tasks that produce content for the zip
     dependsOn copyJar

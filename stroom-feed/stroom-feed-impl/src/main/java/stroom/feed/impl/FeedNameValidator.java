@@ -2,11 +2,12 @@ package stroom.feed.impl;
 
 import stroom.util.shared.EntityServiceException;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
+
 import java.util.Objects;
 import java.util.regex.Pattern;
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.inject.Singleton;
 
 @Singleton
 public class FeedNameValidator {

@@ -1,7 +1,9 @@
 package stroom.query.common.v2;
 
-import stroom.dashboard.expression.v1.ValSerialiser;
-import stroom.dashboard.expression.v1.ref.ErrorConsumer;
+import stroom.query.language.functions.ValSerialiser;
+import stroom.query.language.functions.ref.ErrorConsumer;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.Metrics;
 
 import com.esotericsoftware.kryo.io.ByteBufferInput;
@@ -18,6 +20,8 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class KeyFactoryFactory {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(KeyFactoryFactory.class);
 
     private KeyFactoryFactory() {
         // Non instantiable.
@@ -63,9 +67,13 @@ public class KeyFactoryFactory {
                 if (openGroups != null) {
                     keys = new HashSet<>();
                     for (final String encodedGroup : openGroups) {
-                        final ByteBuffer buffer = ByteBuffer.wrap(Base64.getDecoder().decode(encodedGroup));
-                        try (final ByteBufferInput input = new ByteBufferInput(buffer)) {
-                            keys.add(read(input));
+                        try {
+                            final ByteBuffer buffer = ByteBuffer.wrap(Base64.getDecoder().decode(encodedGroup));
+                            try (final ByteBufferInput input = new ByteBufferInput(buffer)) {
+                                keys.add(read(input));
+                            }
+                        } catch (final RuntimeException e) {
+                            LOGGER.debug(e::getMessage, e);
                         }
                     }
                 }

@@ -19,6 +19,7 @@ package stroom.query.api.v2;
 import stroom.docref.DocRef;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -40,20 +41,20 @@ import java.util.Objects;
         "maxResults",
         "showDetail",
         "conditionalFormattingRules",
-        "modelVersion"})
+        "modelVersion",
+        "visSettings"})
 @JsonInclude(Include.NON_NULL)
 @Schema(description = "An object to describe how the query results should be returned, including which fields " +
         "should be included and what sorting, grouping, filtering, limiting, etc. should be applied")
 public final class TableSettings {
 
-    @Schema(description = "TODO",
-            required = true)
+    @Schema(description = "TODO")
     @JsonProperty
     private final String queryId;
 
-    @Schema(required = true)
+    @Schema
     @JsonProperty
-    private final List<Field> fields;
+    private final List<Column> fields;
 
     @JsonProperty
     private final Window window;
@@ -84,7 +85,7 @@ public final class TableSettings {
             "system defaults will apply",
             example = "1000,10,1")
     @JsonProperty
-    private final List<Integer> maxResults;
+    private final List<Long> maxResults;
 
     @Schema(description = "When grouping is used a value of true indicates that the results will include the full " +
             "detail of any results aggregated into a group as well as their aggregates. A value of false " +
@@ -103,19 +104,23 @@ public final class TableSettings {
     @Deprecated
     private String modelVersion;
 
+    @JsonProperty("visSettings")
+    private final QLVisSettings visSettings;
+
     public TableSettings(
             final String queryId,
-            final List<Field> fields,
+            final List<Column> columns,
             final Window window,
             final ExpressionOperator valueFilter,
             final ExpressionOperator aggregateFilter,
             final Boolean extractValues,
             final DocRef extractionPipeline,
-            final List<Integer> maxResults,
+            final List<Long> maxResults,
             final Boolean showDetail,
-            final List<ConditionalFormattingRule> conditionalFormattingRules) {
+            final List<ConditionalFormattingRule> conditionalFormattingRules,
+            final QLVisSettings visSettings) {
         this.queryId = queryId;
-        this.fields = fields;
+        this.fields = columns;
         this.window = window;
         this.valueFilter = valueFilter;
         this.aggregateFilter = aggregateFilter;
@@ -124,22 +129,25 @@ public final class TableSettings {
         this.maxResults = maxResults;
         this.showDetail = showDetail;
         this.conditionalFormattingRules = conditionalFormattingRules;
+        this.visSettings = visSettings;
     }
 
     @SuppressWarnings("checkstyle:LineLength")
     @JsonCreator
     public TableSettings(
             @JsonProperty("queryId") final String queryId,
-            @JsonProperty("fields") final List<Field> fields,
+            @JsonProperty("fields") final List<Column> fields, // Kept as fields for backward compatibility.
             @JsonProperty("window") final Window window,
             @JsonProperty("valueFilter") final ExpressionOperator valueFilter,
             @JsonProperty("aggregateFilter") final ExpressionOperator aggregateFilter,
             @JsonProperty("extractValues") final Boolean extractValues,
             @JsonProperty("extractionPipeline") final DocRef extractionPipeline,
-            @JsonProperty("maxResults") final List<Integer> maxResults,
+            @JsonProperty("maxResults") final List<Long> maxResults,
             @JsonProperty("showDetail") final Boolean showDetail,
-            @JsonProperty("conditionalFormattingRules") final List<ConditionalFormattingRule> conditionalFormattingRules,
-            @JsonProperty("modelVersion") final String modelVersion) { // deprecated modelVersion.
+            @JsonProperty("conditionalFormattingRules")
+            final List<ConditionalFormattingRule> conditionalFormattingRules,
+            @JsonProperty("modelVersion") final String modelVersion, // deprecated modelVersion.
+            @JsonProperty("visSettings") final QLVisSettings visSettings) {
         this.queryId = queryId;
         this.fields = fields;
         this.window = window;
@@ -151,13 +159,20 @@ public final class TableSettings {
         this.showDetail = showDetail;
         this.conditionalFormattingRules = conditionalFormattingRules;
         this.modelVersion = modelVersion;
+        this.visSettings = visSettings;
     }
 
     public String getQueryId() {
         return queryId;
     }
 
-    public List<Field> getFields() {
+    @Deprecated // Kept as fields for backward compatibility.
+    public List<Column> getFields() {
+        return fields;
+    }
+
+    @JsonIgnore // Kept as fields for backward compatibility.
+    public List<Column> getColumns() {
         return fields;
     }
 
@@ -188,7 +203,7 @@ public final class TableSettings {
         return extractionPipeline;
     }
 
-    public List<Integer> getMaxResults() {
+    public List<Long> getMaxResults() {
         return maxResults;
     }
 
@@ -205,6 +220,10 @@ public final class TableSettings {
 
     public List<ConditionalFormattingRule> getConditionalFormattingRules() {
         return conditionalFormattingRules;
+    }
+
+    public QLVisSettings getVisSettings() {
+        return visSettings;
     }
 
     @Override
@@ -224,7 +243,8 @@ public final class TableSettings {
                 Objects.equals(extractionPipeline, that.extractionPipeline) &&
                 Objects.equals(maxResults, that.maxResults) &&
                 Objects.equals(showDetail, that.showDetail) &&
-                Objects.equals(conditionalFormattingRules, that.conditionalFormattingRules);
+                Objects.equals(conditionalFormattingRules, that.conditionalFormattingRules) &&
+                Objects.equals(visSettings, that.visSettings);
     }
 
     @Override
@@ -237,14 +257,15 @@ public final class TableSettings {
                 extractionPipeline,
                 maxResults,
                 showDetail,
-                conditionalFormattingRules);
+                conditionalFormattingRules,
+                visSettings);
     }
 
     @Override
     public String toString() {
         return "TableSettings{" +
                 "queryId='" + queryId + '\'' +
-                ", fields=" + fields +
+                ", columns=" + fields +
                 ", window=" + window +
                 ", filter=" + aggregateFilter +
                 ", extractValues=" + extractValues +
@@ -252,6 +273,7 @@ public final class TableSettings {
                 ", maxResults=" + maxResults +
                 ", showDetail=" + showDetail +
                 ", conditionalFormattingRules=" + conditionalFormattingRules +
+                ", visSettings=" + visSettings +
                 '}';
     }
 
@@ -269,24 +291,25 @@ public final class TableSettings {
     public static final class Builder {
 
         private String queryId;
-        private List<Field> fields;
+        private List<Column> columns;
         private Window window;
         private ExpressionOperator valueFilter;
         private ExpressionOperator aggregateFilter;
         private Boolean extractValues;
         private DocRef extractionPipeline;
-        private List<Integer> maxResults;
+        private List<Long> maxResults;
         private Boolean showDetail;
         private List<ConditionalFormattingRule> conditionalFormattingRules;
+        private QLVisSettings visSettings;
 
         private Builder() {
         }
 
         private Builder(final TableSettings tableSettings) {
             this.queryId = tableSettings.getQueryId();
-            this.fields = tableSettings.getFields() == null
+            this.columns = tableSettings.getColumns() == null
                     ? null
-                    : new ArrayList<>(tableSettings.getFields());
+                    : new ArrayList<>(tableSettings.getColumns());
             this.window = tableSettings.window;
             this.valueFilter = tableSettings.valueFilter;
             this.aggregateFilter = tableSettings.aggregateFilter;
@@ -299,6 +322,7 @@ public final class TableSettings {
             this.conditionalFormattingRules = tableSettings.getConditionalFormattingRules() == null
                     ? null
                     : new ArrayList<>(tableSettings.getConditionalFormattingRules());
+            this.visSettings = tableSettings.visSettings;
         }
 
         /**
@@ -315,8 +339,8 @@ public final class TableSettings {
             return this;
         }
 
-        public Builder fields(final List<Field> fields) {
-            this.fields = fields;
+        public Builder columns(final List<Column> columns) {
+            this.columns = columns;
             return this;
         }
 
@@ -331,24 +355,24 @@ public final class TableSettings {
         }
 
         /**
-         * @param values Add expected fields to the output table
+         * @param values Add expected columns to the output table
          * @return The {@link TableSettings.Builder}, enabling method chaining
          */
-        public Builder addFields(final Field... values) {
-            return addFields(Arrays.asList(values));
+        public Builder addColumns(final Column... values) {
+            return addColumns(Arrays.asList(values));
         }
 
         /**
-         * Convenience function for adding multiple fields that are already in a collection.
+         * Convenience function for adding multiple columns that are already in a collection.
          *
-         * @param values The fields to add
-         * @return this builder, with the fields added.
+         * @param values The columns to add
+         * @return this builder, with the columns added.
          */
-        public Builder addFields(final Collection<Field> values) {
-            if (this.fields == null) {
-                this.fields = new ArrayList<>(values);
+        public Builder addColumns(final Collection<Column> values) {
+            if (this.columns == null) {
+                this.columns = new ArrayList<>(values);
             } else {
-                this.fields.addAll(values);
+                this.columns.addAll(values);
             }
             return this;
         }
@@ -389,7 +413,7 @@ public final class TableSettings {
             return this.extractionPipeline(DocRef.builder().type(type).uuid(uuid).name(name).build());
         }
 
-        public Builder maxResults(final List<Integer> maxResults) {
+        public Builder maxResults(final List<Long> maxResults) {
             this.maxResults = maxResults;
             return this;
         }
@@ -398,7 +422,7 @@ public final class TableSettings {
          * @param values The max result value
          * @return The {@link TableSettings.Builder}, enabling method chaining
          */
-        public Builder addMaxResults(final Integer... values) {
+        public Builder addMaxResults(final Long... values) {
             return addMaxResults(Arrays.asList(values));
         }
 
@@ -408,7 +432,7 @@ public final class TableSettings {
          * @param values The list of max result values
          * @return this builder
          */
-        public Builder addMaxResults(final Collection<Integer> values) {
+        public Builder addMaxResults(final Collection<Long> values) {
             if (this.maxResults == null) {
                 this.maxResults = new ArrayList<>(values);
             } else {
@@ -433,10 +457,15 @@ public final class TableSettings {
             return this;
         }
 
+        public Builder visSettings(final QLVisSettings visSettings) {
+            this.visSettings = visSettings;
+            return this;
+        }
+
         public TableSettings build() {
             return new TableSettings(
                     queryId,
-                    fields,
+                    columns,
                     window,
                     valueFilter,
                     aggregateFilter,
@@ -444,7 +473,8 @@ public final class TableSettings {
                     extractionPipeline,
                     maxResults,
                     showDetail,
-                    conditionalFormattingRules);
+                    conditionalFormattingRules,
+                    visSettings);
         }
     }
 }

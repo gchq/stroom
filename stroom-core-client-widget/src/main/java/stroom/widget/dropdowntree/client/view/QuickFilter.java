@@ -22,16 +22,17 @@ import stroom.widget.util.client.HtmlBuilder;
 
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
-import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.event.shared.SimpleEventBus;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.FocusUtil;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.HasText;
 import com.google.gwt.user.client.ui.PopupPanel;
@@ -55,7 +56,7 @@ public class QuickFilter extends FlowPanel
     private final TextBox textBox = new TextBox();
     private final SvgButton clearButton;
     private final SvgButton helpButton;
-    private EventBus eventBus;
+    private final HandlerManager handlerManager = new HandlerManager(this);
     private Supplier<SafeHtml> popupTextSupplier;
     private String lastInput = "";
 
@@ -116,7 +117,7 @@ public class QuickFilter extends FlowPanel
 
         if (!Objects.equals(text, lastInput)) {
             lastInput = text;
-            if (eventBus != null) {
+            if (handlerManager != null) {
                 // Add in a slight delay to give the user a chance to type a few chars before we fire off
                 // a rest call. This helps to reduce the logging too
                 if (!filterRefreshTimer.isRunning()) {
@@ -126,11 +127,15 @@ public class QuickFilter extends FlowPanel
         }
     }
 
-    private void onKeyDown(final KeyDownEvent event) {
+    protected void onKeyDown(final KeyDownEvent event) {
         // Clear the text box if ESC is pressed
         if (event.getNativeKeyCode() == KeyCodes.KEY_ESCAPE) {
             textBox.setText("");
         }
+    }
+
+    public void reset() {
+        textBox.setText("");
     }
 
     @Override
@@ -160,24 +165,30 @@ public class QuickFilter extends FlowPanel
 
     @Override
     public HandlerRegistration addValueChangeHandler(final ValueChangeHandler<String> handler) {
-        return getEventBus().addHandler(ValueChangeEvent.getType(), handler);
+        return handlerManager.addHandler(ValueChangeEvent.getType(), handler);
     }
 
-    private EventBus getEventBus() {
-        if (eventBus == null) {
-            eventBus = new SimpleEventBus();
-        }
-        return eventBus;
+    public HandlerRegistration addKeyDownHandler(final KeyDownHandler handler) {
+        return textBox.addDomHandler(handler, KeyDownEvent.getType());
+    }
+
+    public void forceFocus() {
+        FocusUtil.forceFocus(this::focus);
     }
 
     public void focus() {
+        textBox.selectAll();
         textBox.setFocus(true);
     }
 
     @Override
     public void fireEvent(final GwtEvent<?> event) {
-        eventBus.fireEvent(event);
+        handlerManager.fireEvent(event);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class HelpPopup extends PopupPanel {
 

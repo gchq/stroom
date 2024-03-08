@@ -16,13 +16,14 @@
 
 package stroom.task.impl;
 
-import stroom.security.api.HasSessionId;
+import stroom.security.api.HasSession;
 import stroom.security.api.UserIdentity;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskTerminatedException;
 import stroom.task.api.TerminateHandler;
 import stroom.task.shared.TaskId;
 import stroom.util.NullSafe;
+import stroom.util.shared.HasAuditableUserIdentity;
 
 import org.slf4j.Logger;
 
@@ -32,16 +33,14 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
-public class TaskContextImpl implements TaskContext {
+public class TaskContextImpl implements TaskContext, HasAuditableUserIdentity {
 
     private final TaskId taskId;
     private final String name;
     private final UserIdentity userIdentity;
     private final boolean useAsRead;
-    private final AtomicBoolean stop;
     private final Set<TaskContextImpl> children = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
     private volatile boolean terminate;
@@ -53,8 +52,7 @@ public class TaskContextImpl implements TaskContext {
     public TaskContextImpl(final TaskId taskId,
                            final String name,
                            final UserIdentity userIdentity,
-                           final boolean useAsRead,
-                           final AtomicBoolean stop) {
+                           final boolean useAsRead) {
         Objects.requireNonNull(taskId, "Task has null id");
         Objects.requireNonNull(name, "Task has null name");
         Objects.requireNonNull(userIdentity, "Task has null user identity: " + name);
@@ -63,7 +61,6 @@ public class TaskContextImpl implements TaskContext {
         this.userIdentity = userIdentity;
         this.useAsRead = useAsRead;
         this.name = name;
-        this.stop = stop;
 
         reset();
     }
@@ -80,7 +77,7 @@ public class TaskContextImpl implements TaskContext {
         if (logger != null && logger.isDebugEnabled() && messageSupplier != null) {
             logger.debug("Task stack: {}, user: {}, task: {}, info: {}",
                     getTaskHierarchy(),
-                    NullSafe.get(userIdentity, UserIdentity::getId),
+                    NullSafe.get(userIdentity, UserIdentity::getSubjectId),
                     name,
                     messageSupplier.get());
         }
@@ -123,7 +120,7 @@ public class TaskContextImpl implements TaskContext {
     @Override
     public void checkTermination() throws TaskTerminatedException {
         if (isTerminated()) {
-            throw new TaskTerminatedException(stop.get());
+            throw new TaskTerminatedException();
         }
     }
 
@@ -144,13 +141,14 @@ public class TaskContextImpl implements TaskContext {
         return useAsRead;
     }
 
-    String getUserId() {
-        return userIdentity.getId();
+    @Override
+    public String getUserIdentityForAudit() {
+        return NullSafe.get(userIdentity, UserIdentity::getUserIdentityForAudit);
     }
 
     String getSessionId() {
-        if (userIdentity instanceof HasSessionId) {
-            return ((HasSessionId) userIdentity).getSessionId();
+        if (userIdentity instanceof HasSession) {
+            return ((HasSession) userIdentity).getSessionId();
         }
         return null;
     }

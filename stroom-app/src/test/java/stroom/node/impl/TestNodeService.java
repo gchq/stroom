@@ -23,9 +23,8 @@ import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.test.AbstractCoreIntegrationTest;
 
+import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
-
-import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

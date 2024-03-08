@@ -5,9 +5,8 @@ import stroom.analytics.shared.AnalyticDataShard;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.FindAnalyticDataShardCriteria;
 import stroom.analytics.shared.GetAnalyticShardDataRequest;
-import stroom.dashboard.expression.v1.FieldIndex;
-import stroom.dashboard.expression.v1.ref.ErrorConsumer;
 import stroom.docref.DocRef;
+import stroom.expression.api.ExpressionContext;
 import stroom.lmdb.LmdbConfig;
 import stroom.lmdb.LmdbEnvFactory;
 import stroom.lmdb.LmdbEnvFactory.SimpleEnvBuilder;
@@ -30,14 +29,17 @@ import stroom.query.common.v2.AnalyticResultStoreConfig;
 import stroom.query.common.v2.DataStoreSettings;
 import stroom.query.common.v2.DateExpressionParser;
 import stroom.query.common.v2.ErrorConsumerImpl;
+import stroom.query.common.v2.ExpressionContextFactory;
 import stroom.query.common.v2.HasResultStoreInfo;
 import stroom.query.common.v2.LmdbDataStore;
 import stroom.query.common.v2.Serialisers;
-import stroom.query.common.v2.SizesProvider;
 import stroom.query.common.v2.TableResultCreator;
-import stroom.query.common.v2.format.FieldFormatter;
+import stroom.query.common.v2.format.ColumnFormatter;
 import stroom.query.common.v2.format.FormatterFactory;
+import stroom.query.language.functions.FieldIndex;
+import stroom.query.language.functions.ref.ErrorConsumer;
 import stroom.security.api.SecurityContext;
+import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.NullSafe;
 import stroom.util.io.FileUtil;
 import stroom.util.io.PathCreator;
@@ -45,6 +47,10 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ResultPage;
 import stroom.view.shared.ViewDoc;
+
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -62,9 +68,6 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.inject.Singleton;
 
 @Singleton
 public class AnalyticDataStores implements HasResultStoreInfo {
@@ -76,11 +79,11 @@ public class AnalyticDataStores implements HasResultStoreInfo {
     private final AnalyticRuleStore analyticRuleStore;
     private final AnalyticRuleSearchRequestHelper analyticRuleSearchRequestHelper;
     private final Provider<Executor> executorProvider;
+    private final ExpressionContextFactory expressionContextFactory;
     private final Path analyticResultStoreDir;
     private final Map<AnalyticRuleDoc, AnalyticDataStore> dataStoreCache;
     private final NodeInfo nodeInfo;
     private final SecurityContext securityContext;
-    private final SizesProvider sizesProvider;
 
     @Inject
     public AnalyticDataStores(final LmdbEnvFactory lmdbEnvFactory,
@@ -89,17 +92,17 @@ public class AnalyticDataStores implements HasResultStoreInfo {
                               final AnalyticRuleSearchRequestHelper analyticRuleSearchRequestHelper,
                               final Provider<AnalyticResultStoreConfig> analyticStoreConfigProvider,
                               final Provider<Executor> executorProvider,
+                              final ExpressionContextFactory expressionContextFactory,
                               final NodeInfo nodeInfo,
-                              final SecurityContext securityContext,
-                              final SizesProvider sizesProvider) {
+                              final SecurityContext securityContext) {
         this.lmdbEnvFactory = lmdbEnvFactory;
         this.analyticRuleStore = analyticRuleStore;
         this.analyticStoreConfigProvider = analyticStoreConfigProvider;
         this.analyticRuleSearchRequestHelper = analyticRuleSearchRequestHelper;
         this.executorProvider = executorProvider;
+        this.expressionContextFactory = expressionContextFactory;
         this.nodeInfo = nodeInfo;
         this.securityContext = securityContext;
-        this.sizesProvider = sizesProvider;
 
         this.analyticResultStoreDir = getLocalDir(analyticStoreConfigProvider.get(), pathCreator);
 
@@ -249,10 +252,13 @@ public class AnalyticDataStores implements HasResultStoreInfo {
         final String componentId = getComponentId(searchRequest);
         final TableSettings tableSettings = getTableSettings(searchRequest);
         final DataStoreSettings dataStoreSettings = DataStoreSettings.createAnalyticStoreSettings();
+        final ExpressionContext expressionContext = expressionContextFactory
+                .createContext(searchRequest);
         return createAnalyticLmdbDataStore(
                 searchRequest.getKey(),
                 componentId,
                 tableSettings,
+                expressionContext,
                 fieldIndex,
                 paramMap,
                 dataStoreSettings,
@@ -262,6 +268,7 @@ public class AnalyticDataStores implements HasResultStoreInfo {
     private LmdbDataStore createAnalyticLmdbDataStore(final QueryKey queryKey,
                                                       final String componentId,
                                                       final TableSettings tableSettings,
+                                                      final ExpressionContext expressionContext,
                                                       final FieldIndex fieldIndex,
                                                       final Map<String, String> paramMap,
                                                       final DataStoreSettings dataStoreSettings,
@@ -274,10 +281,9 @@ public class AnalyticDataStores implements HasResultStoreInfo {
                 .withSubDirectory(subDirectory);
         final SearchRequestSource searchRequestSource = SearchRequestSource
                 .builder()
-                .sourceType(SourceType.ANALYTIC_RULE)
+                .sourceType(SourceType.TABLE_BUILDER_ANALYTIC)
                 .componentId(componentId)
                 .build();
-
         return new LmdbDataStore(
                 searchRequestSource,
                 new Serialisers(storeConfig),
@@ -286,6 +292,7 @@ public class AnalyticDataStores implements HasResultStoreInfo {
                 queryKey,
                 componentId,
                 tableSettings,
+                expressionContext,
                 fieldIndex,
                 paramMap,
                 dataStoreSettings,
@@ -304,10 +311,11 @@ public class AnalyticDataStores implements HasResultStoreInfo {
                 final String dir = getAnalyticStoreDir(searchRequest.getKey(), componentId);
                 final Path path = analyticResultStoreDir.resolve(dir);
                 if (Files.isDirectory(path)) {
-                    if (securityContext.isAdmin() ||
-                            analyticRuleDoc.getCreateUser().equals(securityContext.getUserId())) {
+                    if (securityContext.hasDocumentPermission(
+                            analyticRuleDoc.getUuid(), DocumentPermissionNames.READ)) {
+
                         list.add(new ResultStoreInfo(
-                                new SearchRequestSource(SourceType.ANALYTIC_RULE,
+                                new SearchRequestSource(SourceType.TABLE_BUILDER_ANALYTIC,
                                         analyticRuleDoc.getUuid(),
                                         null),
                                 searchRequest.getKey(),
@@ -322,7 +330,8 @@ public class AnalyticDataStores implements HasResultStoreInfo {
                     }
                 }
             } catch (final RuntimeException e) {
-                LOGGER.debug(e::getMessage, e);
+                LOGGER.debug("Error getting result store info for analytic rule {}",
+                        analyticRuleDoc, e);
             }
         });
 
@@ -356,14 +365,14 @@ public class AnalyticDataStores implements HasResultStoreInfo {
                 .uuid(criteria.getAnalyticDocUuid())
                 .build();
         try {
-            final AnalyticRuleDoc doc = analyticRuleStore.readDocument(docRef);
-            final SearchRequest searchRequest = analyticRuleSearchRequestHelper.create(doc);
+            final AnalyticRuleDoc analyticRuleDoc = analyticRuleStore.readDocument(docRef);
+            final SearchRequest searchRequest = analyticRuleSearchRequestHelper.create(analyticRuleDoc);
             final String componentId = getComponentId(searchRequest);
             final String dir = getAnalyticStoreDir(searchRequest.getKey(), componentId);
             final Path path = analyticResultStoreDir.resolve(dir);
             if (Files.isDirectory(path)) {
-                if (securityContext.isAdmin() ||
-                        doc.getCreateUser().equals(securityContext.getUserId())) {
+                if (securityContext.hasDocumentPermission(
+                        analyticRuleDoc.getUuid(), DocumentPermissionNames.READ)) {
 
                     long createTime = 0;
                     try {
@@ -400,25 +409,22 @@ public class AnalyticDataStores implements HasResultStoreInfo {
                 final SearchRequest searchRequest = analyticDataStore.searchRequest;
                 final LmdbDataStore lmdbDataStore = analyticDataStore.lmdbDataStore;
 
-                final FieldFormatter fieldFormatter =
-                        new FieldFormatter(
+                final ColumnFormatter fieldFormatter =
+                        new ColumnFormatter(
                                 new FormatterFactory(searchRequest.getDateTimeSettings()));
-                final TableResultCreator resultCreator = new TableResultCreator(
-                        fieldFormatter,
-                        sizesProvider.getDefaultMaxResultsSizes());
+                final TableResultCreator resultCreator = new TableResultCreator(fieldFormatter);
                 ResultRequest resultRequest = searchRequest.getResultRequests().get(0);
                 TableSettings tableSettings = resultRequest.getMappings().get(0);
                 tableSettings = tableSettings
                         .copy()
                         .aggregateFilter(null)
-                        .maxResults(List.of(1000000))
+                        .maxResults(List.of(1000000L))
                         .build();
                 final List<TableSettings> mappings = List.of(tableSettings);
                 final TimeFilter timeFilter = DateExpressionParser
                         .getTimeFilter(
                                 request.getTimeRange(),
-                                request.getDateTimeSettings(),
-                                System.currentTimeMillis());
+                                request.getDateTimeSettings());
                 resultRequest = resultRequest
                         .copy()
                         .mappings(mappings)
@@ -457,6 +463,7 @@ public class AnalyticDataStores implements HasResultStoreInfo {
     }
 
     public record AnalyticDataStore(SearchRequest searchRequest, LmdbDataStore lmdbDataStore) {
+
         public SearchRequest getSearchRequest() {
             return searchRequest;
         }

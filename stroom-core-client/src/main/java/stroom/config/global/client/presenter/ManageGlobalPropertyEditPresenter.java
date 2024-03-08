@@ -44,6 +44,7 @@ import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.HasText;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
+import com.google.inject.TypeLiteral;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
@@ -303,8 +304,8 @@ public final class ManageGlobalPropertyEditPresenter
 
         // Now add our new value into the map
         this.effectiveValueToNodeSourcesMap.computeIfAbsent(
-                effectiveValueFromNode,
-                k -> new HashSet<>())
+                        effectiveValueFromNode,
+                        k -> new HashSet<>())
                 .add(newNodeSource);
     }
 
@@ -313,8 +314,9 @@ public final class ManageGlobalPropertyEditPresenter
     }
 
     private void refreshYamlOverrideForNode(final String nodeName) {
-        final Rest<OverrideValue<String>> rest = restFactory.create();
-        rest
+        restFactory.builder()
+                .forWrappedType(new TypeLiteral<OverrideValue<String>>() {
+                })
                 .onSuccess(yamlOverride -> {
                     // Add the node's result to our maps
                     refreshYamlOverrideForNode(nodeName, yamlOverride);

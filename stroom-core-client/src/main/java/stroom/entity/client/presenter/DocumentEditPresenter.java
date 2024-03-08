@@ -21,8 +21,6 @@ import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
-import stroom.widget.tickbox.client.view.TickBox;
-import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
@@ -102,14 +100,6 @@ public abstract class DocumentEditPresenter<V extends View, D> extends MyPresent
     protected abstract void onRead(DocRef docRef, D document, boolean readOnly);
 
     protected abstract D onWrite(D document);
-
-    protected HandlerRegistration addDirtyHandler(final TickBox tickBox) {
-        return tickBox.addValueChangeHandler(event -> setDirty(true));
-    }
-
-    protected HandlerRegistration addDirtyHandler(final ValueSpinner spinner) {
-        return spinner.getSpinner().addSpinnerHandler(event -> setDirty(true));
-    }
 
     @Override
     public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {

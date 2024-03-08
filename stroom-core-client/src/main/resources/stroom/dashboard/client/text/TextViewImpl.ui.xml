@@ -1,0 +1,15 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:l="urn:import:stroom.data.client.view"
+             xmlns:button="urn:import:stroom.widget.button.client">
+    <g:FlowPanel styleName="TextView max dock-container-vertical stroom-dashboard-text">
+        <g:FlowPanel styleName="dock-max stepping-button-container">
+            <g:SimplePanel ui:field="content" styleName="max"/>
+            <button:FabButton ui:field="steppingButton"
+                              addStyleNames="stepping-button"
+                              title="Enter Stepping Mode" visible="false"/>
+        </g:FlowPanel>
+        <l:ClassificationLabel ui:field="classification" styleName="dock-min classificationLabel"/>
+    </g:FlowPanel>
+</ui:UiBinder>

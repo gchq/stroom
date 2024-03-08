@@ -18,6 +18,7 @@
 package stroom.pipeline.filter;
 
 import stroom.docref.DocRef;
+import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.SupportsCodeInjection;
 import stroom.pipeline.cache.PoolItem;
@@ -43,13 +44,22 @@ import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.xslt.XsltStore;
 import stroom.svg.shared.SvgImage;
 import stroom.util.CharBuffer;
+import stroom.util.NullSafe;
 import stroom.util.io.PathCreator;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.ErrorType;
 import stroom.util.shared.Location;
 import stroom.util.shared.Severity;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import net.sf.saxon.Configuration;
 import net.sf.saxon.jaxp.TemplatesImpl;
 import net.sf.saxon.jaxp.TransformerImpl;
+import net.sf.saxon.s9api.QName;
+import net.sf.saxon.s9api.XdmNode;
+import net.sf.saxon.s9api.XdmNodeKind;
 import net.sf.saxon.s9api.XsltExecutable;
 import org.xml.sax.Attributes;
 import org.xml.sax.Locator;
@@ -58,9 +68,8 @@ import org.xml.sax.SAXException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
-import javax.inject.Inject;
-import javax.inject.Provider;
 import javax.xml.transform.ErrorListener;
+import javax.xml.transform.SourceLocator;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.sax.SAXResult;
 import javax.xml.transform.sax.TransformerHandler;
@@ -85,6 +94,8 @@ import javax.xml.transform.sax.TransformerHandler;
                 PipelineElementType.ROLE_HAS_CODE},
         icon = SvgImage.PIPELINE_XSLT)
 public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjection {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(XsltFilter.class);
 
     private final XsltPool xsltPool;
     private final ErrorReceiverProxy errorReceiverProxy;
@@ -128,7 +139,8 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
                       final PipelineContext pipelineContext,
                       final PathCreator pathCreator,
                       final Provider<FeedHolder> feedHolder,
-                      final Provider<PipelineHolder> pipelineHolder) {
+                      final Provider<PipelineHolder> pipelineHolder,
+                      final DocRefInfoService docRefInfoService) {
         this.xsltPool = xsltPool;
         this.errorReceiverProxy = errorReceiverProxy;
         this.xsltStore = xsltStore;
@@ -138,7 +150,7 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
         this.feedHolder = feedHolder;
         this.pipelineHolder = pipelineHolder;
 
-        this.docFinder = new DocFinder<>(XsltDoc.DOCUMENT_TYPE, pathCreator, xsltStore);
+        this.docFinder = new DocFinder<>(XsltDoc.DOCUMENT_TYPE, pathCreator, xsltStore, docRefInfoService);
     }
 
     @Override
@@ -253,6 +265,7 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
                 final TemplatesImpl templates = new TemplatesImpl(xsltExecutable);
                 final TransformerImpl transformer = (TransformerImpl) templates.newTransformer();
                 transformer.setErrorListener(errorListener);
+                configureMessageListener(transformer);
 
                 handler = transformer.newTransformerHandler();
                 handler.setResult(new SAXResult(getFilter()));
@@ -315,6 +328,92 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
             }
         } else if (passThrough) {
             super.endDocument();
+        }
+    }
+
+    private void configureMessageListener(final TransformerImpl transformer) {
+        try {
+            NullSafe.consume(
+                    transformer,
+                    TransformerImpl::getUnderlyingXsltTransformer,
+                    xsltTransformer ->
+                            xsltTransformer.setMessageListener(this::onXsltMessage));
+        } catch (Exception e) {
+            // Just log and swallow as the message listener is not critical
+            LOGGER.error("Error configuring XSLT message listener: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * This is called when <pre>{@code <xsl:message>my message</xsl:message>}</pre>
+     * is used in the XSLT.
+     * It will log a message to the errorReceiver as ERROR.
+     * If the {@code terminate} attribute is used like so:
+     * <pre>{@code <xsl:message terminate="yes">my message</xsl:message>}</pre>
+     * then it will log it as FATAL and throw an exception which will immediately terminate processing
+     * of the current stream part. Subsequent parts will still be processed.
+     * You can do this to set the severity (namespace of the inner element does not matter):
+     * <pre>{@code <xsl:message><info>my message</info></xsl:message>}</pre>
+     * Setting {@code terminate} trumps any severity set.
+     */
+    private void onXsltMessage(XdmNode content, boolean terminate, SourceLocator locator) {
+
+        boolean foundMsg = false;
+        String msg = "";
+        Severity severity = Severity.ERROR;
+
+        if (terminate) {
+            // terminate trumps any severity element name (see below)
+            severity = Severity.FATAL_ERROR;
+        } else {
+            // We may have elements (or any valid xml) inside <xsl:message></xsl:message>
+            if (content != null && content.children() != null) {
+                for (final XdmNode child : content.children()) {
+                    if (child != null) {
+                        final XdmNodeKind nodeKind = child.getNodeKind();
+                        if (nodeKind == XdmNodeKind.TEXT) {
+                            // Just text inside the msg
+                            // <xsl:message>my message</xsl:message>
+                            msg = child.getStringValue();
+                            break;
+                        } else if (nodeKind == XdmNodeKind.ELEMENT) {
+                            // Found an element so try to use the elm name to set the severity, e.g.
+                            // <xsl:message><error>my message</error></xsl:message>
+                            // We don't care about the namespace
+                            final String localElmName = NullSafe.get(child.getNodeName(), QName::getLocalName);
+                            final Severity elmSeverity = Severity.getSeverity(localElmName);
+                            if (elmSeverity != null) {
+                                severity = elmSeverity;
+                                msg = child.getStringValue();
+                                foundMsg = true;
+                                break;
+                            }
+                        }
+                    }
+                    // Not found on first child so just break out and use getStringValue
+                    break;
+                }
+            }
+        }
+        if (!foundMsg) {
+            msg = NullSafe.getOrElse(content, XdmNode::getStringValue, "");
+        }
+
+        if (NullSafe.isEmptyString(msg)) {
+            msg = "NO MESSAGE";
+        }
+
+        errorReceiverProxy.log(
+                severity,
+                locationFactory.create(locator),
+                getElementId(),
+                msg,
+                ErrorType.CODE,
+                null);
+
+        if (terminate) {
+            throw ProcessException.create(
+                    "Processing terminated due to <xsl:message terminate=\"yes\"> with message: " + msg);
         }
     }
 

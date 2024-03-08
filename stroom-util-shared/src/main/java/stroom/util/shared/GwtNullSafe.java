@@ -5,6 +5,7 @@ import stroom.util.shared.time.SimpleDuration;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -31,6 +32,7 @@ public class GwtNullSafe {
 
     /**
      * Allows you to safely compare a child property of val1 to other.
+     *
      * @return False if val1 is null else whether the child property of val1 is equal to other
      */
     public static <T1, T2> boolean equals(final T1 val1,
@@ -46,6 +48,7 @@ public class GwtNullSafe {
 
     /**
      * Allows you to safely compare a grandchild property of val1 to other.
+     *
      * @return False if val1 is null or if val1's child property is null,
      * else whether the grandchild property of val1 is equal to other
      */
@@ -63,6 +66,42 @@ public class GwtNullSafe {
                 final T3 val3 = getter2.apply(val2);
                 return Objects.equals(val3, other);
             }
+        }
+    }
+
+    /**
+     * @return True if all values in the array are null or the array itself is null
+     */
+    public static <T> boolean allNull(final T... vals) {
+        if (vals == null) {
+            return true;
+        } else {
+            boolean allNull = true;
+            for (final T val : vals) {
+                if (val != null) {
+                    allNull = false;
+                    break;
+                }
+            }
+            return allNull;
+        }
+    }
+
+    /**
+     * @return True if the array itself is non-null and all values in the array are non-null
+     */
+    public static <T> boolean allNonNull(final T... vals) {
+        if (vals == null) {
+            return false;
+        } else {
+            boolean allNonNull = true;
+            for (final T val : vals) {
+                if (val == null) {
+                    allNonNull = false;
+                    break;
+                }
+            }
+            return allNonNull;
         }
     }
 
@@ -125,10 +164,54 @@ public class GwtNullSafe {
     }
 
     /**
+     * @return str if it is not null/empty/blank, else other.
+     */
+    public static String nonBlankStringElse(final String str, final String other) {
+        return isBlankString(str)
+                ? Objects.requireNonNull(other)
+                : str;
+    }
+
+    /**
+     * @return str if it is not null/empty/blank, else result of calling otherSupplier.
+     */
+    public static String nonBlankStringElseGet(final String str, final Supplier<String> otherSupplier) {
+        return isBlankString(str)
+                ? Objects.requireNonNull(Objects.requireNonNull(otherSupplier).get())
+                : str;
+    }
+
+    /**
+     * If str is not null/empty/blank then pass it to consumer (if that is not null).
+     */
+    public static void consumeNonBlankString(final String str, final Consumer<String> consumer) {
+        // GWT doesn't emulate String::isBlank
+        if (!isBlankString(str) && consumer != null) {
+            consumer.accept(str);
+        }
+    }
+
+    /**
      * @return True if str is null or empty
      */
     public static boolean isEmptyString(final String str) {
         return str == null || str.isEmpty();
+    }
+
+    public static Optional<String> nonBlank(final String str) {
+        if (isBlankString(str)) {
+            return Optional.empty();
+        } else {
+            return Optional.of(str);
+        }
+    }
+
+    public static String join(final CharSequence delimiter, final CharSequence... elements) {
+        if (elements == null || elements.length == 0) {
+            return "";
+        } else {
+            return String.join(delimiter, elements);
+        }
     }
 
     /**
@@ -175,7 +258,7 @@ public class GwtNullSafe {
     }
 
     /**
-     * @return True if value is null or the string property is null or empty
+     * @return True if value is null or the string property is null/empty/blank
      */
     public static <T> boolean isBlankString(final T value,
                                             final Function<T, String> stringGetter) {
@@ -184,6 +267,22 @@ public class GwtNullSafe {
         } else {
             final String str = Objects.requireNonNull(stringGetter).apply(value);
             return str == null || isBlankString(str);
+        }
+    }
+
+    /**
+     * If str is not null/empty/blank then pass it to consumer (if that is not null).
+     */
+    public static <T> void consumeNonBlankString(final T value,
+                                                 final Function<T, String> stringGetter,
+                                                 final Consumer<String> consumer) {
+        // GWT doesn't emulate String::isBlank
+        if (value != null && stringGetter != null && consumer != null) {
+            final String str = stringGetter.apply(value);
+
+            if (!isBlankString(str)) {
+                Objects.requireNonNull(consumer).accept(str);
+            }
         }
     }
 
@@ -223,6 +322,13 @@ public class GwtNullSafe {
     }
 
     /**
+     * @return True if the collection is non-null and not empty
+     */
+    public static <T> boolean hasItems(final T[] items) {
+        return items != null && items.length > 0;
+    }
+
+    /**
      * @return True if the map is non-null and not empty
      */
     public static <T1, T2> boolean hasEntries(final Map<T1, T2> map) {
@@ -235,6 +341,15 @@ public class GwtNullSafe {
     public static <T> int size(final Collection<T> collection) {
         return collection != null
                 ? collection.size()
+                : 0;
+    }
+
+    /**
+     * @return The size of the collection or zero if null.
+     */
+    public static <T> int size(final T[] items) {
+        return items != null
+                ? items.length
                 : 0;
     }
 
@@ -299,6 +414,31 @@ public class GwtNullSafe {
         } else {
             return Arrays.stream(items);
         }
+    }
+
+    /**
+     * Returns the passed array of items or varargs items as a non-null list.
+     * Does not support null items in the list.
+     *
+     * @return A non-null list of items. List should be assumed to be immutable.
+     */
+    public static <T> List<T> asList(final T... items) {
+        return items == null || items.length == 0
+                ? Collections.emptyList()
+                : Arrays.asList(items);
+    }
+
+    /**
+     * Returns the passed array of items or varargs items as a non-null set.
+     * Does not support null items in the array.
+     *
+     * @return A non-null unmodifiable set of items.
+     */
+    public static <T> Set<T> asSet(final T... items) {
+        //noinspection Java9CollectionFactory
+        return items == null || items.length == 0
+                ? Collections.emptySet()
+                : Collections.unmodifiableSet(new HashSet<>(Arrays.asList(items)));
     }
 
     /**
@@ -879,7 +1019,9 @@ public class GwtNullSafe {
      * GWT currently doesn't emulate requireNonNullElse
      */
     public static <T> T requireNonNullElse(T obj, T other) {
-        return (obj != null) ? obj : Objects.requireNonNull(other, "other");
+        return (obj != null)
+                ? obj
+                : Objects.requireNonNull(other, "other");
     }
 
     /**

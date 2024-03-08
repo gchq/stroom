@@ -44,11 +44,12 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
+import jakarta.inject.Inject;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.nio.channels.ClosedByInterruptException;
-import javax.inject.Inject;
 
 public class AnalyticsStreamProcessor {
 
@@ -100,7 +101,7 @@ public class AnalyticsStreamProcessor {
                 meta = source.getMeta();
 
                 // Set the current user.
-                currentUserHolder.setCurrentUser(securityContext.getUserId());
+                currentUserHolder.setCurrentUser(securityContext.getUserIdentity());
 
                 // Create the parser.
                 final Pipeline pipeline = pipelineFactory.create(pipelineData, taskContext);

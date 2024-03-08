@@ -1,6 +1,7 @@
 package stroom.analytics.impl;
 
 import stroom.data.store.api.Store;
+import stroom.feed.api.VolumeGroupNameProvider;
 import stroom.pipeline.DefaultErrorWriter;
 import stroom.pipeline.ErrorWriterProxy;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
@@ -8,17 +9,15 @@ import stroom.pipeline.errorhandler.ErrorStatistics;
 import stroom.pipeline.errorhandler.LoggedException;
 import stroom.pipeline.errorhandler.RecordErrorReceiver;
 import stroom.pipeline.state.RecordCount;
-import stroom.task.api.TaskContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.pipeline.scope.PipelineScoped;
 import stroom.util.shared.Severity;
 
+import jakarta.inject.Inject;
 import org.slf4j.MarkerFactory;
 
 import java.io.IOException;
-import java.util.function.Consumer;
-import javax.inject.Inject;
 
 @PipelineScoped
 public class AnalyticErrorWriter {
@@ -30,22 +29,24 @@ public class AnalyticErrorWriter {
     private final ErrorWriterProxy errorWriterProxy;
     private final RecordCount recordCount;
     private final Store store;
+    private final VolumeGroupNameProvider volumeGroupNameProvider;
 
     @Inject
     public AnalyticErrorWriter(final RecordErrorReceiver recordErrorReceiver,
                                final ErrorReceiverProxy errorReceiverProxy,
                                final ErrorWriterProxy errorWriterProxy,
                                final RecordCount recordCount,
-                               final Store store) {
+                               final Store store,
+                               final VolumeGroupNameProvider volumeGroupNameProvider) {
         this.recordErrorReceiver = recordErrorReceiver;
         this.errorReceiverProxy = errorReceiverProxy;
         this.errorWriterProxy = errorWriterProxy;
         this.recordCount = recordCount;
         this.store = store;
+        this.volumeGroupNameProvider = volumeGroupNameProvider;
     }
 
     void exec(final String errorFeedName,
-              final String analyticUuid,
               final String pipelineUuid,
               final Runnable runnable) {
         // Setup the error handler and receiver.
@@ -55,10 +56,10 @@ public class AnalyticErrorWriter {
                 new AnalyticRuleProcessInfoOutputStreamProvider(
                         store,
                         errorFeedName,
-                        analyticUuid,
                         pipelineUuid,
                         recordCount,
-                        errorReceiverProxy)) {
+                        errorReceiverProxy,
+                        volumeGroupNameProvider)) {
 
             try {
                 final DefaultErrorWriter errorWriter = new DefaultErrorWriter();

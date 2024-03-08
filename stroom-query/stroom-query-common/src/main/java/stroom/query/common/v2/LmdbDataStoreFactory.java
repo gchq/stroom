@@ -1,7 +1,6 @@
 package stroom.query.common.v2;
 
-import stroom.dashboard.expression.v1.FieldIndex;
-import stroom.dashboard.expression.v1.ref.ErrorConsumer;
+import stroom.expression.api.ExpressionContext;
 import stroom.lmdb.LmdbConfig;
 import stroom.lmdb.LmdbEnv;
 import stroom.lmdb.LmdbEnvFactory;
@@ -9,12 +8,18 @@ import stroom.lmdb.LmdbEnvFactory.SimpleEnvBuilder;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.SearchRequestSource;
 import stroom.query.api.v2.TableSettings;
+import stroom.query.language.functions.FieldIndex;
+import stroom.query.language.functions.ref.ErrorConsumer;
 import stroom.util.NullSafe;
 import stroom.util.io.FileUtil;
 import stroom.util.io.PathCreator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
 
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
@@ -27,9 +32,6 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.LongAdder;
-import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.inject.Singleton;
 
 @Singleton // To ensure the localDir delete is done only once and before store creation
 public class LmdbDataStoreFactory implements DataStoreFactory {
@@ -59,7 +61,8 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
     }
 
     @Override
-    public DataStore create(final SearchRequestSource searchRequestSource,
+    public DataStore create(final ExpressionContext expressionContext,
+                            final SearchRequestSource searchRequestSource,
                             final QueryKey queryKey,
                             final String componentId,
                             final TableSettings tableSettings,
@@ -76,10 +79,13 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
 
             return new MapDataStore(
                     new Serialisers(resultStoreConfig),
+                    componentId,
                     tableSettings,
+                    expressionContext,
                     fieldIndex,
                     paramMap,
-                    dataStoreSettings);
+                    dataStoreSettings,
+                    errorConsumer);
         } else {
             final String subDirectory = queryKey + "_" + componentId + "_" + UUID.randomUUID();
             final SimpleEnvBuilder lmdbEnvBuilder = lmdbEnvFactory
@@ -94,6 +100,7 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
                     queryKey,
                     componentId,
                     tableSettings,
+                    expressionContext,
                     fieldIndex,
                     paramMap,
                     dataStoreSettings,

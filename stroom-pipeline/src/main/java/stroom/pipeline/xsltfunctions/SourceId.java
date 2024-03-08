@@ -20,12 +20,11 @@ import stroom.meta.shared.Meta;
 import stroom.pipeline.state.MetaHolder;
 import stroom.util.shared.Severity;
 
+import jakarta.inject.Inject;
 import net.sf.saxon.expr.XPathContext;
 import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.value.StringValue;
-
-import javax.inject.Inject;
 
 class SourceId extends StroomExtensionFunctionCall {
 

@@ -1,16 +1,18 @@
 package stroom.query.common.v2;
 
-import stroom.dashboard.expression.v1.FieldIndex;
-import stroom.dashboard.expression.v1.ref.ErrorConsumer;
+import stroom.expression.api.ExpressionContext;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.SearchRequestSource;
 import stroom.query.api.v2.TableSettings;
+import stroom.query.language.functions.FieldIndex;
+import stroom.query.language.functions.ref.ErrorConsumer;
 
 import java.util.Map;
 
 public interface DataStoreFactory {
 
     DataStore create(
+            ExpressionContext expressionContext,
             SearchRequestSource searchRequestSource,
             QueryKey queryKey,
             String componentId,

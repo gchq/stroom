@@ -17,6 +17,12 @@
 package stroom.meta.impl.db;
 
 import stroom.meta.shared.Status;
+import stroom.util.NullSafe;
+import stroom.util.logging.LogUtil;
+
+import java.util.Arrays;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -31,29 +37,36 @@ class MetaStatusId {
     public static final byte DELETED = 99;
 
     static byte getPrimitiveValue(final Status status) {
-        switch (status) {
-            case UNLOCKED:
-                return 0;
-            case LOCKED:
-                return 1;
-            case DELETED:
-                return 99;
-            default:
-                throw new RuntimeException("Unknown status " + status);
+        return switch (status) {
+            case UNLOCKED -> 0;
+            case LOCKED -> 1;
+            case DELETED -> 99;
+        };
+    }
+
+    static byte getPrimitiveValue(final String statusName) {
+        if (NullSafe.isBlankString(statusName)) {
+            throw new IllegalArgumentException("No status name supplied");
+        }
+        try {
+            final Status status = Status.valueOf(statusName.toUpperCase());
+            return getPrimitiveValue(status);
+        } catch (IllegalArgumentException e) {
+            throw new RuntimeException(LogUtil.message("'{}' is not a valid status value. Valid values are: '{}'",
+                    statusName,
+                    Arrays.stream(Status.values())
+                            .map(Objects::toString)
+                            .collect(Collectors.joining(", "))), e);
         }
     }
 
     static Status getStatus(byte primitiveValue) {
-        switch (primitiveValue) {
-            case 0:
-                return Status.UNLOCKED;
-            case 1:
-                return Status.LOCKED;
-            case 99:
-                return Status.DELETED;
-            default:
-                throw new RuntimeException("Unknown status " + primitiveValue);
-        }
+        return switch (primitiveValue) {
+            case 0 -> Status.UNLOCKED;
+            case 1 -> Status.LOCKED;
+            case 99 -> Status.DELETED;
+            default -> throw new RuntimeException("Unknown status primitiveValue " + primitiveValue);
+        };
     }
 
 //    public static CriteriaSet<HasPrimitiveValue> convertStatusSet(final CriteriaSet<StreamStatus> statuses) {

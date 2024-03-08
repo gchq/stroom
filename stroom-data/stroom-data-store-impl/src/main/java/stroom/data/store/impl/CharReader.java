@@ -2,7 +2,9 @@ package stroom.data.store.impl;
 
 import stroom.pipeline.reader.ByteStreamDecoder;
 import stroom.pipeline.reader.ByteStreamDecoder.DecodedChar;
+import stroom.pipeline.reader.ByteStreamDecoder.Mode;
 
+import jakarta.validation.constraints.NotNull;
 import org.apache.commons.io.ByteOrderMark;
 import org.apache.commons.io.input.BOMInputStream;
 import org.slf4j.Logger;
@@ -15,7 +17,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Supplier;
-import javax.validation.constraints.NotNull;
 
 /**
  * Reads the bytes in an {@link InputStream} and decodes them into {@link DecodedChar} instances
@@ -58,7 +59,6 @@ public class CharReader {
         // This will read a few bytes from the delegate input stream and hold onto them
         // to be passed on to the consumer, unless they are BOM bytes that are being skipped
         this.charset = determineCharset(encoding, bomInputStream);
-        this.byteStreamDecoder = new ByteStreamDecoder(charset);
 
         final byte[] arr = new byte[1];
 //        final AtomicInteger counter = new AtomicInteger(0);
@@ -83,6 +83,8 @@ public class CharReader {
                 throw new RuntimeException(e);
             }
         };
+        // Consider using LENIENT mode, see https://github.com/gchq/stroom/issues/4080
+        this.byteStreamDecoder = new ByteStreamDecoder(charset, Mode.STRICT, byteSupplier);
     }
 
     @NotNull
@@ -131,7 +133,7 @@ public class CharReader {
 
     public Optional<DecodedChar> read() throws IOException {
 
-        final DecodedChar decodedChar = byteStreamDecoder.decodeNextChar(byteSupplier);
+        final DecodedChar decodedChar = byteStreamDecoder.decodeNextChar();
 
         if (decodedChar == null) {
             return Optional.empty();

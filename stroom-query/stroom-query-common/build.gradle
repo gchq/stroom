@@ -24,9 +24,11 @@ dependencies {
     implementation project(':stroom-explorer:stroom-docrefinfo-api')
     implementation project(':stroom-lmdb')
     implementation project(':stroom-node:stroom-node-api')
-    implementation project(':stroom-query:stroom-expression')
+    implementation project(':stroom-query:stroom-query-language')
+    implementation project(':stroom-query:stroom-query-language-api')
     implementation project(':stroom-query:stroom-query-api')
     implementation project(':stroom-security:stroom-security-api')
+    implementation project(':stroom-security:stroom-security-user-api')
     implementation project(':stroom-task:stroom-task-api')
     implementation project(':stroom-util-shared')
     implementation project(':stroom-util')
@@ -39,7 +41,7 @@ dependencies {
     implementation libs.jackson_databind
     implementation libs.jackson_core
     implementation libs.jakarta_validation_api
-    implementation libs.javax_inject
+    implementation libs.jakarta_inject
     implementation libs.jaxb_api
     implementation libs.kryo
     implementation libs.lmdbjava
@@ -51,6 +53,8 @@ dependencies {
     testCompileOnly libs.junit_jupiter_api
     testImplementation libs.jaxb_api
     testImplementation libs.mockito_core
+    testImplementation project(':stroom-query:stroom-query-language').sourceSets.test.output
+    testImplementation project(':stroom-test-common')
 
     testRuntimeOnly libs.junit_jupiter_engine
     testRuntimeOnly libs.logback_classic

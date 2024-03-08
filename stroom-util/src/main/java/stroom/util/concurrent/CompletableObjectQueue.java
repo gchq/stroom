@@ -3,17 +3,13 @@ package stroom.util.concurrent;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
-import java.util.concurrent.ArrayBlockingQueue;
-
 public class CompletableObjectQueue<T> {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(CompletableObjectQueue.class);
-    private static final CompleteException COMPLETE = new CompleteException();
-
-    private final ArrayBlockingQueue<Object> queue;
+    private final CompletableQueue<T> queue;
 
     public CompletableObjectQueue(final int capacity) {
-        queue = new ArrayBlockingQueue<>(capacity);
+        queue = new CompletableQueue<>(capacity);
     }
 
     public void put(final T value) {
@@ -21,35 +17,30 @@ public class CompletableObjectQueue<T> {
             queue.put(value);
         } catch (final InterruptedException e) {
             LOGGER.debug(e::getMessage, e);
+            Thread.currentThread().interrupt();
             throw new UncheckedInterruptedException(e);
         }
     }
 
-    @SuppressWarnings("unchecked")
     public T take() {
         try {
-            final Object object = queue.take();
-            if (COMPLETE != object) {
-                return (T) object;
-            }
+            return queue.take();
         } catch (final InterruptedException e) {
             LOGGER.debug(e::getMessage, e);
+            Thread.currentThread().interrupt();
             throw new UncheckedInterruptedException(e);
+        } catch (final CompleteException e) {
+            LOGGER.trace("Complete");
         }
         return null;
     }
 
     public void complete() {
-        try {
-            queue.put(COMPLETE);
-        } catch (final InterruptedException e) {
-            LOGGER.debug(e::getMessage, e);
-            throw new UncheckedInterruptedException(e);
-        }
+        queue.complete();
     }
 
-    public void clear() {
-        queue.clear();
+    public void terminate() {
+        queue.terminate();
     }
 
     public int size() {

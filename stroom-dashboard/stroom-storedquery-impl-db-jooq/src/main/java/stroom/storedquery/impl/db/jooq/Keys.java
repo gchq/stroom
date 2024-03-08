@@ -25,4 +25,5 @@ public class Keys {
     // -------------------------------------------------------------------------
 
     public static final UniqueKey<QueryRecord> KEY_QUERY_PRIMARY = Internal.createUniqueKey(Query.QUERY, DSL.name("KEY_query_PRIMARY"), new TableField[] { Query.QUERY.ID }, true);
+    public static final UniqueKey<QueryRecord> KEY_QUERY_QUERY_UUID = Internal.createUniqueKey(Query.QUERY, DSL.name("KEY_query_query_uuid"), new TableField[] { Query.QUERY.UUID }, true);
 }

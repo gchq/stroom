@@ -26,12 +26,14 @@ import stroom.meta.api.MetaProperties;
 import stroom.test.common.util.db.DbTestModule;
 import stroom.test.common.util.db.DbTestUtil;
 import stroom.test.common.util.test.FileSystemTestUtil;
+import stroom.util.io.CommonDirSetup;
 import stroom.util.io.HomeDirProviderImpl;
 import stroom.util.io.TempDirProviderImpl;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import jakarta.inject.Inject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -44,7 +46,6 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.util.List;
-import javax.inject.Inject;
 
 @ExtendWith(MockitoExtension.class)
 class TestStreamGrepTool {
@@ -66,6 +67,10 @@ class TestStreamGrepTool {
     @TempDir
     static Path tempDir;
 
+    static {
+        CommonDirSetup.setup();
+    }
+
     @BeforeEach
     void setup() {
         final Injector injector = Guice.createInjector(
@@ -81,8 +86,8 @@ class TestStreamGrepTool {
                 });
         injector.injectMembers(this);
 
-        homeDirProvider.setHomeDir(tempDir);
-        tempDirProvider.setTempDir(tempDir);
+//        homeDirProvider.setHomeDir(tempDir);
+//        tempDirProvider.setTempDir(tempDir);
 
         Mockito.when(toolInjector.getInjector())
                 .thenReturn(injector);

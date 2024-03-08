@@ -13,7 +13,8 @@ dependencies {
     implementation project(':stroom-job:stroom-job-api')
     implementation project(':stroom-lifecycle:stroom-lifecycle-api')
     implementation project(':stroom-meta:stroom-meta-api')
-    implementation project(':stroom-query:stroom-expression')
+    implementation project(':stroom-query:stroom-query-language')
+    implementation project(':stroom-query:stroom-query-language-api')
     implementation project(':stroom-query:stroom-query-api')
     implementation project(':stroom-query:stroom-query-common')
     implementation project(':stroom-search:stroom-expression-matcher')
@@ -25,10 +26,10 @@ dependencies {
 
     implementation libs.dropwizard_validation
     implementation libs.eventLogging
-    implementation libs.guice5
+    implementation libs.guice
     implementation libs.jackson_annotations
     implementation libs.jakarta_validation_api
-    implementation libs.javax_inject
+    implementation libs.jakarta_inject
     implementation libs.jaxb_api
     implementation libs.restygwt
     implementation libs.slf4j_api
@@ -36,12 +37,12 @@ dependencies {
     implementation libs.ws_rs_api
 
     runtimeOnly libs.mysql_connector_java
-    
+
     testImplementation project(':stroom-security:stroom-security-mock')
-    
+
     testImplementation libs.assertj_core
     testImplementation libs.junit_jupiter_api
-    
+
     // the following logging libs are needed when running junits outside dropwizard
     testRuntimeOnly libs.jakarta_activation
     testRuntimeOnly libs.jaxb_impl

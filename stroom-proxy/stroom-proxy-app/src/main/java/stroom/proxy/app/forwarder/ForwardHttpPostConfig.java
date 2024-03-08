@@ -1,6 +1,8 @@
 package stroom.proxy.app.forwarder;
 
+import stroom.util.NullSafe;
 import stroom.util.cert.SSLConfig;
+import stroom.util.io.ByteSize;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsProxyConfig;
 import stroom.util.shared.NotInjectableConfig;
@@ -9,14 +11,15 @@ import stroom.util.time.StroomDuration;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import jakarta.validation.constraints.NotNull;
 
 import java.util.Objects;
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotNull;
 
 @NotInjectableConfig // Used in lists so not a unique thing
 @JsonPropertyOrder(alphabetic = true)
 public class ForwardHttpPostConfig extends AbstractConfig implements ForwardConfig, IsProxyConfig {
+
+    private static final ByteSize DEFAULT_CHUNK_SIZE_BYTES = ByteSize.ofMebibytes(1);
 
     private final boolean enabled;
     private final String name;
@@ -24,8 +27,9 @@ public class ForwardHttpPostConfig extends AbstractConfig implements ForwardConf
     private final String forwardUrl;
     private final StroomDuration forwardTimeout;
     private final StroomDuration forwardDelay;
-    private final Integer forwardChunkSize;
+    private final ByteSize forwardChunkSize;
     private final SSLConfig sslConfig;
+    private final boolean addOpenIdAccessToken;
 
     public ForwardHttpPostConfig() {
         enabled = true;
@@ -34,8 +38,9 @@ public class ForwardHttpPostConfig extends AbstractConfig implements ForwardConf
         forwardUrl = null;
         forwardTimeout = StroomDuration.ofSeconds(30);
         forwardDelay = StroomDuration.ZERO;
-        forwardChunkSize = null;
+        forwardChunkSize = DEFAULT_CHUNK_SIZE_BYTES;
         sslConfig = null;
+        addOpenIdAccessToken = false;
     }
 
     @SuppressWarnings("unused")
@@ -46,16 +51,18 @@ public class ForwardHttpPostConfig extends AbstractConfig implements ForwardConf
                                  @JsonProperty("forwardUrl") final String forwardUrl,
                                  @JsonProperty("forwardTimeout") final StroomDuration forwardTimeout,
                                  @JsonProperty("forwardDelay") final StroomDuration forwardDelay,
-                                 @JsonProperty("forwardChunkSize") final Integer forwardChunkSize,
-                                 @JsonProperty("sslConfig") final SSLConfig sslConfig) {
+                                 @JsonProperty("forwardChunkSize") final ByteSize forwardChunkSize,
+                                 @JsonProperty("sslConfig") final SSLConfig sslConfig,
+                                 @JsonProperty("addOpenIdAccessToken") final boolean addOpenIdAccessToken) {
         this.enabled = enabled;
         this.name = name;
         this.userAgent = userAgent;
         this.forwardUrl = forwardUrl;
         this.forwardTimeout = forwardTimeout;
         this.forwardDelay = forwardDelay;
-        this.forwardChunkSize = forwardChunkSize;
+        this.forwardChunkSize = NullSafe.byteSize(forwardChunkSize);
         this.sslConfig = sslConfig;
+        this.addOpenIdAccessToken = addOpenIdAccessToken;
     }
 
     /**
@@ -110,11 +117,14 @@ public class ForwardHttpPostConfig extends AbstractConfig implements ForwardConf
     }
 
     /**
-     * Chunk size to use over http(s) if not set requires buffer to be fully loaded into memory
+     * Chunk size in bytes to use over http(s).
+     * If set to zero, no chunking is used, so requires buffer to be fully loaded into memory,
+     * risking out of memory errors for large POSTs.
+     * Default is {@link ForwardHttpPostConfig#DEFAULT_CHUNK_SIZE_BYTES}.
+     * It can be parsed from IEC byte units, e.g. 5Kib, 10MiB, etc.
      */
-    @Min(0)
     @JsonProperty
-    public Integer getForwardChunkSize() {
+    public ByteSize getForwardChunkSize() {
         return forwardChunkSize;
     }
 
@@ -123,22 +133,35 @@ public class ForwardHttpPostConfig extends AbstractConfig implements ForwardConf
         return sslConfig;
     }
 
+    /**
+     * If true, add Open ID authentication headers to the request. Only works if the identityProviderType
+     * is EXTERNAL_IDP and the destination is in the same Open ID Connect realm as the OIDC client that this
+     * proxy instance is using.
+     */
+    @JsonProperty
+    public boolean isAddOpenIdAccessToken() {
+        return addOpenIdAccessToken;
+    }
+
     public ForwardHttpPostConfig withSslConfig(final SSLConfig sslConfig) {
         return new ForwardHttpPostConfig(
-                enabled, name, userAgent, forwardUrl, forwardTimeout, forwardDelay, forwardChunkSize, sslConfig);
+                enabled,
+                name,
+                userAgent,
+                forwardUrl,
+                forwardTimeout,
+                forwardDelay,
+                forwardChunkSize,
+                sslConfig,
+                addOpenIdAccessToken);
     }
 
     public static ForwardHttpPostConfig withForwardUrl(final String name,
                                                        final String forwardUrl) {
-        return new ForwardHttpPostConfig(
-                true,
-                name,
-                null,
-                forwardUrl,
-                StroomDuration.ofSeconds(30),
-                null,
-                null,
-                null);
+        return ForwardHttpPostConfig.builder()
+                .name(name)
+                .forwardUrl(forwardUrl)
+                .build();
     }
 
     public static Builder builder() {
@@ -185,8 +208,13 @@ public class ForwardHttpPostConfig extends AbstractConfig implements ForwardConf
                 ", forwardDelay=" + forwardDelay +
                 ", forwardChunkSize=" + forwardChunkSize +
                 ", sslConfig=" + sslConfig +
+                ", addOpenIdAccessToken=" + addOpenIdAccessToken +
                 '}';
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public static class Builder {
 
@@ -196,8 +224,9 @@ public class ForwardHttpPostConfig extends AbstractConfig implements ForwardConf
         private String forwardUrl;
         private StroomDuration forwardTimeout;
         private StroomDuration forwardDelay;
-        private Integer forwardChunkSize;
+        private ByteSize forwardChunkSize;
         private SSLConfig sslConfig;
+        private boolean addOpenIdAccessToken;
 
         public Builder() {
             final ForwardHttpPostConfig forwardHttpPostConfig = new ForwardHttpPostConfig();
@@ -210,6 +239,7 @@ public class ForwardHttpPostConfig extends AbstractConfig implements ForwardConf
             this.forwardDelay = forwardHttpPostConfig.forwardDelay;
             this.forwardChunkSize = forwardHttpPostConfig.forwardChunkSize;
             this.sslConfig = forwardHttpPostConfig.sslConfig;
+            this.addOpenIdAccessToken = forwardHttpPostConfig.addOpenIdAccessToken;
         }
 
         public Builder enabled(final boolean enabled) {
@@ -242,13 +272,18 @@ public class ForwardHttpPostConfig extends AbstractConfig implements ForwardConf
             return this;
         }
 
-        public Builder forwardChunkSize(final Integer forwardChunkSize) {
+        public Builder forwardChunkSize(final ByteSize forwardChunkSize) {
             this.forwardChunkSize = forwardChunkSize;
             return this;
         }
 
         public Builder sslConfig(final SSLConfig sslConfig) {
             this.sslConfig = sslConfig;
+            return this;
+        }
+
+        public Builder addOpenIdAccessToken(final boolean addOpenIdAccessToken) {
+            this.addOpenIdAccessToken = addOpenIdAccessToken;
             return this;
         }
 
@@ -261,7 +296,8 @@ public class ForwardHttpPostConfig extends AbstractConfig implements ForwardConf
                     forwardTimeout,
                     forwardDelay,
                     forwardChunkSize,
-                    sslConfig);
+                    sslConfig,
+                    addOpenIdAccessToken);
         }
     }
 }

@@ -36,7 +36,7 @@ jobs:
       with:
         distribution: 'temurin' # See 'Supported distributions' for available options
         #distribution: 'zulu' # See 'Supported distributions' for available options
-        java-version: '17'
+        java-version: '21'
 
     - name: Checkout repository
       uses: actions/checkout@v2

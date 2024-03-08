@@ -26,14 +26,12 @@ import stroom.pipeline.shared.stepping.PipelineStepRequest;
 import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.shared.stepping.SteppingResource;
 import stroom.pipeline.shared.stepping.SteppingResult;
-import stroom.util.NullSafe;
 import stroom.util.logging.LogUtil;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.inject.Inject;
-import javax.inject.Provider;
 
 @AutoLogged
 class SteppingResourceImpl implements SteppingResource {
@@ -95,10 +93,6 @@ class SteppingResourceImpl implements SteppingResource {
                         e);
             }
             throw e;
-        }
-
-        if (false && NullSafe.test(result.getStepLocation(), StepLocation::getRecordIndex, idx -> idx == 3)) {
-            throw new RuntimeException(LogUtil.message("Bad Stuff"));
         }
 
         return result;

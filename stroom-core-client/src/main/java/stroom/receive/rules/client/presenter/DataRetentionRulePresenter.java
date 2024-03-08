@@ -19,16 +19,13 @@ package stroom.receive.rules.client.presenter;
 
 import stroom.data.client.presenter.EditExpressionPresenter;
 import stroom.data.retention.shared.DataRetentionRule;
-import stroom.datasource.api.v2.DataSource;
-import stroom.datasource.shared.DataSourceResource;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.meta.shared.MetaFields;
 import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.client.presenter.DynamicFieldSelectionListModel;
 import stroom.receive.rules.client.presenter.DataRetentionRulePresenter.DataRetentionRuleView;
 import stroom.util.shared.time.TimeUnit;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -36,8 +33,6 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 public class DataRetentionRulePresenter extends MyPresenterWidget<DataRetentionRuleView> implements Focus {
-
-    private static final DataSourceResource DATA_SOURCE_RESOURCE = GWT.create(DataSourceResource.class);
     private final EditExpressionPresenter editExpressionPresenter;
     private DataRetentionRule originalRule;
 
@@ -45,20 +40,14 @@ public class DataRetentionRulePresenter extends MyPresenterWidget<DataRetentionR
     public DataRetentionRulePresenter(final EventBus eventBus,
                                       final DataRetentionRuleView view,
                                       final EditExpressionPresenter editExpressionPresenter,
-                                      final RestFactory restFactory) {
+                                      final RestFactory restFactory,
+                                      final DynamicFieldSelectionListModel fieldSelectionBoxModel) {
         super(eventBus, view);
         this.editExpressionPresenter = editExpressionPresenter;
         view.setExpressionView(editExpressionPresenter.getView());
 
-        final Rest<DataSource> rest = restFactory.create();
-        rest
-                .onSuccess(result ->
-                        editExpressionPresenter.init(
-                                restFactory,
-                                MetaFields.STREAM_STORE_DOC_REF,
-                                result.getFields()))
-                .call(DATA_SOURCE_RESOURCE)
-                .fetch(MetaFields.STREAM_STORE_DOC_REF);
+        fieldSelectionBoxModel.setDataSourceRef(MetaFields.STREAM_STORE_DOC_REF);
+        editExpressionPresenter.init(restFactory, MetaFields.STREAM_STORE_DOC_REF, fieldSelectionBoxModel);
     }
 
     @Override

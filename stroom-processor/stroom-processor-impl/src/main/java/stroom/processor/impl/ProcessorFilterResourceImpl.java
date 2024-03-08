@@ -28,9 +28,10 @@ import stroom.processor.shared.ProcessorListRowResultPage;
 import stroom.processor.shared.ReprocessDataInfo;
 import stroom.util.shared.ResultPage;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+
 import java.util.List;
-import javax.inject.Inject;
-import javax.inject.Provider;
 
 @AutoLogged
 class ProcessorFilterResourceImpl implements ProcessorFilterResource {
@@ -72,6 +73,12 @@ class ProcessorFilterResourceImpl implements ProcessorFilterResource {
     @Override
     public boolean setPriority(final Integer id, final Integer priority) {
         processorFilterServiceProvider.get().setPriority(id, priority);
+        return true;
+    }
+
+    @Override
+    public boolean setMaxProcessingTasks(final Integer id, final Integer maxProcessingTasks) {
+        processorFilterServiceProvider.get().setMaxProcessingTasks(id, maxProcessingTasks);
         return true;
     }
 

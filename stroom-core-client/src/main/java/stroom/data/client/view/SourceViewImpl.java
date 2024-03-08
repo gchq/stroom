@@ -1,6 +1,8 @@
 package stroom.data.client.view;
 
 import stroom.data.client.presenter.SourcePresenter.SourceView;
+import stroom.svg.shared.SvgImage;
+import stroom.widget.button.client.FabButton;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -21,7 +23,11 @@ public class SourceViewImpl extends ViewImpl implements SourceView {
     @UiField
     Label lblId;
     @UiField
+    Label lblPartNoHeading;
+    @UiField
     Label lblPartNo;
+    @UiField
+    Label lblSegmentNoHeading;
     @UiField
     Label lblSegmentNo;
     @UiField
@@ -32,10 +38,14 @@ public class SourceViewImpl extends ViewImpl implements SourceView {
     SimplePanel navigatorContainer;
     @UiField
     SimplePanel progressBarPanel;
+    @UiField
+    FabButton steppingButton;
+
 
     @Inject
     public SourceViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
+        steppingButton.setIcon(SvgImage.STEPPING);
     }
 
     @Override
@@ -43,16 +53,34 @@ public class SourceViewImpl extends ViewImpl implements SourceView {
         return widget;
     }
 
+
     @Override
-    public void setTitle(final String feedName,
-                         final long id,
-                         final long partNo,
-                         final long segmentNo,
-                         final String type) {
+    public void setNonSegmentedTitle(final String feedName,
+                                     final long id,
+                                     final long partNo,
+                                     final String type) {
         lblFeed.setText(feedName);
         lblId.setText(Long.toString(id));
-        lblPartNo.setText(Long.toString(partNo + 1));
-        lblSegmentNo.setText(Long.toString(segmentNo + 1));
+        lblPartNoHeading.setVisible(true);
+        lblPartNo.setVisible(true);
+        lblPartNo.setText(Long.toString(partNo));
+        lblSegmentNoHeading.setVisible(false);
+        lblSegmentNo.setVisible(false);
+        lblType.setText(type);
+    }
+
+    @Override
+    public void setSegmentedTitle(final String feedName,
+                                  final long id,
+                                  final long segmentNo,
+                                  final String type) {
+        lblFeed.setText(feedName);
+        lblId.setText(Long.toString(id));
+        lblPartNoHeading.setVisible(false);
+        lblPartNo.setVisible(false);
+        lblSegmentNoHeading.setVisible(true);
+        lblSegmentNo.setVisible(true);
+        lblSegmentNo.setText(Long.toString(segmentNo));
         lblType.setText(type);
     }
 

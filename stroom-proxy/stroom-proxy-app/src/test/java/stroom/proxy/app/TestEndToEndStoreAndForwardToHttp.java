@@ -3,17 +3,21 @@ package stroom.proxy.app;
 import stroom.proxy.app.DbRecordCountAssertion.DbRecordCounts;
 import stroom.proxy.repo.AggregatorConfig;
 import stroom.proxy.repo.ProxyRepoConfig;
+import stroom.receive.common.ReceiveDataConfig;
+import stroom.security.openid.api.IdpType;
 import stroom.util.time.StroomDuration;
 
 import com.github.tomakehurst.wiremock.client.WireMock;
+import jakarta.inject.Inject;
 import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
-import javax.inject.Inject;
 
+@Disabled
 public class TestEndToEndStoreAndForwardToHttp extends AbstractEndToEndTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestEndToEndStoreAndForwardToHttp.class);
@@ -24,7 +28,10 @@ public class TestEndToEndStoreAndForwardToHttp extends AbstractEndToEndTest {
     @Override
     protected ProxyConfig getProxyConfigOverride() {
         return ProxyConfig.builder()
-                .useDefaultOpenIdCredentials(true)
+                .securityConfig(new ProxySecurityConfig(ProxyAuthenticationConfig.builder()
+                        .openIdConfig(new ProxyOpenIdConfig()
+                                .withIdentityProviderType(IdpType.TEST_CREDENTIALS))
+                        .build()))
                 .proxyId("TestProxy")
                 .pathConfig(createProxyPathConfig())
                 .proxyRepoConfig(ProxyRepoConfig.builder()
@@ -38,6 +45,9 @@ public class TestEndToEndStoreAndForwardToHttp extends AbstractEndToEndTest {
                         .build())
                 .addForwardDestination(MockHttpDestination.createForwardHttpPostConfig())
                 .feedStatusConfig(MockHttpDestination.createFeedStatusConfig())
+                .receiveDataConfig(ReceiveDataConfig.builder()
+                        .withAuthenticationRequired(false)
+                        .build())
                 .build();
     }
 

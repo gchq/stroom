@@ -79,9 +79,9 @@ public class Preferences extends TableImpl<PreferencesRecord> {
     public final TableField<PreferencesRecord, String> UPDATE_USER = createField(DSL.name("update_user"), SQLDataType.VARCHAR(255).nullable(false), this, "");
 
     /**
-     * The column <code>stroom.preferences.user_id</code>.
+     * The column <code>stroom.preferences.user_uuid</code>.
      */
-    public final TableField<PreferencesRecord, String> USER_ID = createField(DSL.name("user_id"), SQLDataType.VARCHAR(255).nullable(false), this, "");
+    public final TableField<PreferencesRecord, String> USER_UUID = createField(DSL.name("user_uuid"), SQLDataType.VARCHAR(255).nullable(false), this, "");
 
     /**
      * The column <code>stroom.preferences.dat</code>.
@@ -138,7 +138,7 @@ public class Preferences extends TableImpl<PreferencesRecord> {
 
     @Override
     public List<UniqueKey<PreferencesRecord>> getUniqueKeys() {
-        return Arrays.asList(Keys.KEY_PREFERENCES_USER_ID);
+        return Arrays.asList(Keys.KEY_PREFERENCES_USER_UUID);
     }
 
     @Override

@@ -29,14 +29,19 @@ import java.util.stream.Collectors;
  */
 public class Sizes {
 
-    static final int FALLBACK = Integer.MAX_VALUE;
+    public static final long MAX_SIZE = Long.MAX_VALUE;
+    private static final Sizes UNLIMITED = create(MAX_SIZE);
 
-    private final int[] sizes;
-    private final int defaultSize;
+    private final long[] sizes;
+    private final long defaultSize;
 
-    private Sizes(final int[] sizes, final int defaultSize) {
+    private Sizes(final long[] sizes, final long defaultSize) {
         this.sizes = sizes;
         this.defaultSize = defaultSize;
+    }
+
+    public static Sizes unlimited() {
+        return UNLIMITED;
     }
 
     /**
@@ -45,37 +50,37 @@ public class Sizes {
      * @param defaultSize The default size to return if needed.
      * @return A new set of sizes.
      */
-    public static Sizes create(final int defaultSize) {
-        return new Sizes(new int[0], defaultSize);
+    public static Sizes create(final long defaultSize) {
+        return new Sizes(new long[0], defaultSize);
     }
 
     /**
-     * Create a set of sizes based on a list of integers. The default size will be derived from the last item in
+     * Create a set of sizes based on a list of longs. The default size will be derived from the last item in
      * the list or will default to 1.
      *
      * @param list The list of sizes to use.
      * @return A new set of sizes.
      */
-    public static Sizes create(final List<Integer> list) {
+    public static Sizes create(final List<Long> list) {
         if (list != null && list.size() > 0) {
             // If the list has some values the set the default size to the last value in the list.
             return create(list, list.get(list.size() - 1));
         }
-        return create(FALLBACK);
+        return unlimited();
     }
 
     /**
-     * Create a set of sizes based on a list of integers. Where a size is not provided for a requested depth the
+     * Create a set of sizes based on a list of longs. Where a size is not provided for a requested depth the
      * supplied default size will be used.
      *
      * @param list        The list of sizes to use.
      * @param defaultSize The default size to return if needed.
      * @return A new set of sizes.
      */
-    public static Sizes create(final List<Integer> list, final int defaultSize) {
-        int[] sizes = new int[0];
+    public static Sizes create(final List<Long> list, final long defaultSize) {
+        long[] sizes = new long[0];
         if (list != null) {
-            sizes = list.stream().mapToInt(i -> {
+            sizes = list.stream().mapToLong(i -> {
                 if (i != null) {
                     return i;
                 }
@@ -91,13 +96,13 @@ public class Sizes {
             try {
                 return Sizes.create(Arrays.stream(value.split(","))
                         .map(String::trim)
-                        .map(Integer::valueOf)
+                        .map(Long::valueOf)
                         .collect(Collectors.toList()));
             } catch (RuntimeException e) {
                 throw new ParseException(e.getMessage(), 0);
             }
         }
-        return Sizes.create(Integer.MAX_VALUE);
+        return Sizes.create(Long.MAX_VALUE);
     }
 
     public static Sizes max(final Sizes s1, final Sizes s2) {
@@ -111,7 +116,7 @@ public class Sizes {
     private static Sizes combine(
             final Sizes s1,
             final Sizes s2,
-            final BiFunction<Integer, Integer, Integer> function) {
+            final BiFunction<Long, Long, Long> function) {
 
         if (s1 == null) {
             return s2;
@@ -120,17 +125,17 @@ public class Sizes {
         }
 
         final int length = Math.max(s1.sizes.length, s2.sizes.length);
-        final int[] combinedSizes = new int[length];
+        final long[] combinedSizes = new long[length];
         for (int i = 0; i < combinedSizes.length; i++) {
-            final int v1 = s1.size(i);
-            final int v2 = s2.size(i);
+            final long v1 = s1.size(i);
+            final long v2 = s2.size(i);
             combinedSizes[i] = function.apply(v1, v2);
         }
-        final int combinedDefaultSize = function.apply(s1.defaultSize, s2.defaultSize);
+        final long combinedDefaultSize = function.apply(s1.defaultSize, s2.defaultSize);
         return new Sizes(combinedSizes, combinedDefaultSize);
     }
 
-    public int size(final int depth) {
+    public long size(final int depth) {
         if (depth < sizes.length) {
             return sizes[depth];
         }

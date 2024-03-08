@@ -19,7 +19,7 @@ package stroom.search.solr.search;
 
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
-import stroom.query.api.v2.DateTimeSettings;
+import stroom.expression.api.DateTimeSettings;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
@@ -28,16 +28,16 @@ import stroom.query.common.v2.DateExpressionParser;
 import stroom.search.solr.shared.SolrIndexField;
 import stroom.search.solr.shared.SolrIndexFieldType;
 
-import org.apache.lucene.index.Term;
-import org.apache.lucene.search.BooleanClause;
-import org.apache.lucene.search.BooleanClause.Occur;
-import org.apache.lucene.search.BooleanQuery;
-import org.apache.lucene.search.BooleanQuery.Builder;
-import org.apache.lucene.search.MatchAllDocsQuery;
-import org.apache.lucene.search.NumericRangeQuery;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.TermQuery;
-import org.apache.lucene.search.WildcardQuery;
+import org.apache.lucene553.index.Term;
+import org.apache.lucene553.search.BooleanClause;
+import org.apache.lucene553.search.BooleanClause.Occur;
+import org.apache.lucene553.search.BooleanQuery;
+import org.apache.lucene553.search.BooleanQuery.Builder;
+import org.apache.lucene553.search.MatchAllDocsQuery;
+import org.apache.lucene553.search.NumericRangeQuery;
+import org.apache.lucene553.search.Query;
+import org.apache.lucene553.search.TermQuery;
+import org.apache.lucene553.search.WildcardQuery;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -61,18 +61,15 @@ public class SearchExpressionQueryBuilder {
     private final WordListProvider wordListProvider;
     private final int maxBooleanClauseCount;
     private final DateTimeSettings dateTimeSettings;
-    private final long nowEpochMilli;
 
     public SearchExpressionQueryBuilder(final WordListProvider wordListProvider,
                                         final Map<String, SolrIndexField> indexFieldsMap,
                                         final int maxBooleanClauseCount,
-                                        final DateTimeSettings dateTimeSettings,
-                                        final long nowEpochMilli) {
+                                        final DateTimeSettings dateTimeSettings) {
         this.wordListProvider = wordListProvider;
         this.indexFieldsMap = indexFieldsMap;
         this.maxBooleanClauseCount = maxBooleanClauseCount;
         this.dateTimeSettings = dateTimeSettings;
-        this.nowEpochMilli = nowEpochMilli;
     }
 
     public SearchExpressionQuery buildQuery(final ExpressionOperator expression) {
@@ -111,11 +108,11 @@ public class SearchExpressionQueryBuilder {
                         }
                     }
 
-                    if (innerChildQueries.size() > 0) {
+                    if (!innerChildQueries.isEmpty()) {
                         final Occur occur = getOccur(operator);
 
                         if (innerChildQueries.size() == 1) {
-                            final Query child = innerChildQueries.get(0);
+                            final Query child = innerChildQueries.getFirst();
 
                             // Add negation to single items if required.
                             if (Occur.MUST_NOT.equals(occur)) {
@@ -145,10 +142,10 @@ public class SearchExpressionQueryBuilder {
                                         }
 
                                         final BooleanQuery orTerms = orTermsBuilder.build();
-                                        if (orTerms.clauses().size() > 0) {
+                                        if (!orTerms.clauses().isEmpty()) {
                                             if (orTerms.clauses().size() == 1) {
                                                 // Collapse single term.
-                                                builder.add(orTerms.clauses().get(0).getQuery(), occur);
+                                                builder.add(orTerms.clauses().getFirst().getQuery(), occur);
                                             } else {
                                                 builder.add(orTerms, occur);
                                             }
@@ -172,10 +169,10 @@ public class SearchExpressionQueryBuilder {
                                         }
 
                                         final BooleanQuery orTerms = orTermsBuilder.build();
-                                        if (orTerms.clauses().size() > 0) {
+                                        if (!orTerms.clauses().isEmpty()) {
                                             if (orTerms.clauses().size() == 1) {
                                                 // Collapse single term.
-                                                builder.add(orTerms.clauses().get(0).getQuery(), occur);
+                                                builder.add(orTerms.clauses().getFirst().getQuery(), occur);
                                             } else {
                                                 builder.add(orTerms, occur);
                                             }
@@ -215,7 +212,7 @@ public class SearchExpressionQueryBuilder {
         }
 
         // Try and find the referenced field.
-        if (field == null || field.length() == 0) {
+        if (field == null || field.isEmpty()) {
             throw new SearchException("Field not set");
         }
         final SolrIndexField indexField = indexFieldsMap.get(field);
@@ -236,7 +233,7 @@ public class SearchExpressionQueryBuilder {
                 throw new SearchException("Doc Ref not set for field: " + field);
             }
         } else {
-            if (value == null || value.length() == 0) {
+            if (value == null || value.isEmpty()) {
                 return null;
             }
         }
@@ -248,6 +245,11 @@ public class SearchExpressionQueryBuilder {
                     final Long num1 = getNumber(fieldName, value);
                     return NumericRangeQuery.newLongRange(
                             fieldName, num1, num1, true, true);
+                }
+                case NOT_EQUALS -> {
+                    final Long num1 = getNumber(fieldName, value);
+                    return negate(NumericRangeQuery.newLongRange(
+                            fieldName, num1, num1, true, true));
                 }
                 case CONTAINS -> {
                     return getContains(fieldName, value, indexField, terms);
@@ -295,8 +297,12 @@ public class SearchExpressionQueryBuilder {
         } else if (SolrIndexFieldType.DATE_FIELD.equals(indexField.getFieldUse())) {
             switch (condition) {
                 case EQUALS -> {
-                    final Long date1 = getDate(fieldName, value);
+                    final Long date1 = DateExpressionParser.getMs(fieldName, value, dateTimeSettings);
                     return NumericRangeQuery.newLongRange(fieldName, date1, date1, true, true);
+                }
+                case NOT_EQUALS -> {
+                    final Long date1 = DateExpressionParser.getMs(fieldName, value, dateTimeSettings);
+                    return negate(NumericRangeQuery.newLongRange(fieldName, date1, date1, true, true));
                 }
                 case CONTAINS -> {
                     return getContains(fieldName, value, indexField, terms);
@@ -304,24 +310,36 @@ public class SearchExpressionQueryBuilder {
                 case GREATER_THAN -> {
                     return NumericRangeQuery.newLongRange(fieldName,
                             8,
-                            getDate(fieldName, value),
+                            DateExpressionParser.getMs(fieldName, value, dateTimeSettings),
                             Long.MAX_VALUE,
                             false,
                             true);
                 }
                 case GREATER_THAN_OR_EQUAL_TO -> {
                     return NumericRangeQuery.newLongRange(
-                            fieldName, 8, getDate(fieldName, value), Long.MAX_VALUE, true,
+                            fieldName,
+                            8,
+                            DateExpressionParser.getMs(fieldName, value, dateTimeSettings),
+                            Long.MAX_VALUE,
+                            true,
                             true);
                 }
                 case LESS_THAN -> {
                     return NumericRangeQuery.newLongRange(
-                            fieldName, 8, Long.MIN_VALUE, getDate(fieldName, value), true,
+                            fieldName,
+                            8,
+                            Long.MIN_VALUE,
+                            DateExpressionParser.getMs(fieldName, value, dateTimeSettings),
+                            true,
                             false);
                 }
                 case LESS_THAN_OR_EQUAL_TO -> {
                     return NumericRangeQuery.newLongRange(
-                            fieldName, 8, Long.MIN_VALUE, getDate(fieldName, value), true,
+                            fieldName,
+                            8,
+                            Long.MIN_VALUE,
+                            DateExpressionParser.getMs(fieldName, value, dateTimeSettings),
+                            true,
                             true);
                 }
                 case BETWEEN -> {
@@ -347,6 +365,7 @@ public class SearchExpressionQueryBuilder {
         } else {
             return switch (condition) {
                 case EQUALS -> getContains(fieldName, value, indexField, terms);
+                case NOT_EQUALS -> negate(getContains(fieldName, value, indexField, terms));
 //                    return getSubQuery(matchVersion, indexField, value, terms, false);
                 case CONTAINS -> getContains(fieldName, value, indexField, terms);
                 case IN -> getIn(fieldName, value, indexField, terms);
@@ -356,6 +375,10 @@ public class SearchExpressionQueryBuilder {
                         + indexField.getFieldUse().getDisplayValue() + " field type");
             };
         }
+    }
+
+    private Query negate(final Query query) {
+        return new BooleanQuery.Builder().add(query, Occur.MUST_NOT).build();
     }
 
     private Query getNumericIn(final String fieldName, final String value) {
@@ -512,7 +535,7 @@ public class SearchExpressionQueryBuilder {
 //            }
 //
 //        } else {
-        if (val.length() > 0) {
+        if (!val.isEmpty()) {
             // As this is just indexed as a keyword we only want to search
             // for the term.
 //                if (!field.isCaseSensitive()) {
@@ -550,23 +573,11 @@ public class SearchExpressionQueryBuilder {
         return false;
     }
 
-    private long getDate(final String fieldName, final String value) {
-        try {
-            return DateExpressionParser.parse(value, dateTimeSettings, nowEpochMilli)
-                    .map(dt -> dt.toInstant().toEpochMilli())
-                    .orElseThrow(() -> new SearchException("Expected a standard date value for field \"" + fieldName
-                            + "\" but was given string \"" + value + "\""));
-        } catch (final RuntimeException e) {
-            throw new SearchException("Expected a standard date value for field \"" + fieldName
-                    + "\" but was given string \"" + value + "\"");
-        }
-    }
-
     private long[] getDates(final String fieldName, final String value) {
         final String[] values = value.split(DELIMITER);
         final long[] dates = new long[values.length];
         for (int i = 0; i < values.length; i++) {
-            dates[i] = getDate(fieldName, values[i].trim());
+            dates[i] = DateExpressionParser.getMs(fieldName, values[i].trim(), dateTimeSettings);
         }
 
         return dates;

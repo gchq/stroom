@@ -3,13 +3,13 @@ package stroom.dropwizard.common;
 import stroom.util.HasHealthCheck;
 
 import com.codahale.metrics.health.HealthCheckRegistry;
-import io.dropwizard.setup.Environment;
+import io.dropwizard.core.setup.Environment;
+import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Comparator;
 import java.util.Set;
-import javax.inject.Inject;
 
 public class HealthChecks {
 

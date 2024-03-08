@@ -17,13 +17,11 @@
 package stroom.analytics.shared;
 
 import stroom.docref.DocRef;
+import stroom.docs.shared.Description;
 import stroom.docstore.shared.Doc;
-import stroom.query.api.v2.QueryKey;
 import stroom.svg.shared.SvgImage;
-import stroom.util.shared.time.SimpleDuration;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -31,6 +29,13 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Objects;
 
+@Description(
+        "Defines an analytic rule which can be run to alert on events meeting a criteria.\n" +
+                "The criteria is defined using a StroomQL query.\n" +
+                "The analytic can be processed in different ways:\n\n" +
+                "* Streaming\n" +
+                "* Table Builder\n" +
+                "* Scheduled Query")
 @JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
 public class AnalyticRuleDoc extends Doc {
@@ -43,40 +48,47 @@ public class AnalyticRuleDoc extends Doc {
     @JsonProperty
     private final QueryLanguageVersion languageVersion;
     @JsonProperty
-    private final String query;
+    private String query;
     @JsonProperty
-    private final AnalyticRuleType analyticRuleType;
+    private final AnalyticProcessType analyticProcessType;
     @JsonProperty
-    private final SimpleDuration dataRetention;
+    private final AnalyticProcessConfig analyticProcessConfig;
+    @JsonProperty
+    private final AnalyticNotificationConfig analyticNotificationConfig;
 
     public AnalyticRuleDoc() {
         description = null;
         languageVersion = null;
         query = null;
-        analyticRuleType = null;
-        dataRetention = null;
+        analyticProcessType = null;
+        analyticProcessConfig = null;
+        analyticNotificationConfig = null;
     }
 
     @JsonCreator
-    public AnalyticRuleDoc(@JsonProperty("type") final String type,
-                           @JsonProperty("uuid") final String uuid,
-                           @JsonProperty("name") final String name,
-                           @JsonProperty("version") final String version,
-                           @JsonProperty("createTimeMs") final Long createTimeMs,
-                           @JsonProperty("updateTimeMs") final Long updateTimeMs,
-                           @JsonProperty("createUser") final String createUser,
-                           @JsonProperty("updateUser") final String updateUser,
-                           @JsonProperty("description") final String description,
-                           @JsonProperty("languageVersion") final QueryLanguageVersion languageVersion,
-                           @JsonProperty("query") final String query,
-                           @JsonProperty("analyticRuleType") AnalyticRuleType analyticRuleType,
-                           @JsonProperty("dataRetention") SimpleDuration dataRetention) {
+    public AnalyticRuleDoc(
+            @JsonProperty("type") final String type,
+            @JsonProperty("uuid") final String uuid,
+            @JsonProperty("name") final String name,
+            @JsonProperty("version") final String version,
+            @JsonProperty("createTimeMs") final Long createTimeMs,
+            @JsonProperty("updateTimeMs") final Long updateTimeMs,
+            @JsonProperty("createUser") final String createUser,
+            @JsonProperty("updateUser") final String updateUser,
+            @JsonProperty("description") final String description,
+            @JsonProperty("languageVersion") final QueryLanguageVersion languageVersion,
+            @JsonProperty("query") final String query,
+            @JsonProperty("analyticProcessType") AnalyticProcessType analyticProcessType,
+            @JsonProperty("analyticProcessConfig") final AnalyticProcessConfig analyticProcessConfig,
+            @JsonProperty("analyticNotificationConfig") final AnalyticNotificationConfig analyticNotificationConfig) {
+
         super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.languageVersion = languageVersion;
         this.query = query;
-        this.analyticRuleType = analyticRuleType;
-        this.dataRetention = dataRetention;
+        this.analyticProcessType = analyticProcessType;
+        this.analyticProcessConfig = analyticProcessConfig;
+        this.analyticNotificationConfig = analyticNotificationConfig;
     }
 
     /**
@@ -107,17 +119,20 @@ public class AnalyticRuleDoc extends Doc {
         return query;
     }
 
-    public AnalyticRuleType getAnalyticRuleType() {
-        return analyticRuleType;
+    public void setQuery(final String query) {
+        this.query = query;
     }
 
-    @JsonIgnore
-    public QueryKey getQueryKey() {
-        return new QueryKey(getUuid() + " - " + getName());
+    public AnalyticProcessType getAnalyticProcessType() {
+        return analyticProcessType;
     }
 
-    public SimpleDuration getDataRetention() {
-        return dataRetention;
+    public AnalyticProcessConfig getAnalyticProcessConfig() {
+        return analyticProcessConfig;
+    }
+
+    public AnalyticNotificationConfig getAnalyticNotificationConfig() {
+        return analyticNotificationConfig;
     }
 
     @Override
@@ -135,8 +150,9 @@ public class AnalyticRuleDoc extends Doc {
         return Objects.equals(description, that.description) &&
                 languageVersion == that.languageVersion &&
                 Objects.equals(query, that.query) &&
-                analyticRuleType == that.analyticRuleType &&
-                Objects.equals(dataRetention, that.dataRetention);
+                analyticProcessType == that.analyticProcessType &&
+                Objects.equals(analyticProcessConfig, that.analyticProcessConfig) &&
+                Objects.equals(analyticNotificationConfig, that.analyticNotificationConfig);
     }
 
     @Override
@@ -145,8 +161,9 @@ public class AnalyticRuleDoc extends Doc {
                 description,
                 languageVersion,
                 query,
-                analyticRuleType,
-                dataRetention);
+                analyticProcessType,
+                analyticProcessConfig,
+                analyticNotificationConfig);
     }
 
     @Override
@@ -155,8 +172,9 @@ public class AnalyticRuleDoc extends Doc {
                 "description='" + description + '\'' +
                 ", languageVersion=" + languageVersion +
                 ", query='" + query + '\'' +
-                ", analyticRuleType=" + analyticRuleType +
-                ", dataRetention=" + dataRetention +
+                ", analyticRuleType=" + analyticProcessType +
+                ", analyticConfig=" + analyticProcessConfig +
+                ", analyticNotificationConfig=" + analyticNotificationConfig +
                 '}';
     }
 
@@ -173,8 +191,9 @@ public class AnalyticRuleDoc extends Doc {
         private String description;
         private QueryLanguageVersion languageVersion;
         private String query;
-        private AnalyticRuleType analyticRuleType;
-        private SimpleDuration dataRetention;
+        private AnalyticProcessType analyticProcessType;
+        private AnalyticProcessConfig analyticProcessConfig;
+        private AnalyticNotificationConfig analyticNotificationConfig;
 
         public Builder() {
         }
@@ -184,8 +203,9 @@ public class AnalyticRuleDoc extends Doc {
             this.description = doc.description;
             this.languageVersion = doc.languageVersion;
             this.query = doc.query;
-            this.analyticRuleType = doc.analyticRuleType;
-            this.dataRetention = doc.dataRetention;
+            this.analyticProcessType = doc.analyticProcessType;
+            this.analyticProcessConfig = doc.analyticProcessConfig;
+            this.analyticNotificationConfig = doc.analyticNotificationConfig;
         }
 
         public Builder description(final String description) {
@@ -203,13 +223,18 @@ public class AnalyticRuleDoc extends Doc {
             return self();
         }
 
-        public Builder analyticRuleType(final AnalyticRuleType analyticRuleType) {
-            this.analyticRuleType = analyticRuleType;
+        public Builder analyticProcessType(final AnalyticProcessType analyticProcessType) {
+            this.analyticProcessType = analyticProcessType;
             return self();
         }
 
-        public Builder dataRetention(final SimpleDuration dataRetention) {
-            this.dataRetention = dataRetention;
+        public Builder analyticProcessConfig(final AnalyticProcessConfig analyticProcessConfig) {
+            this.analyticProcessConfig = analyticProcessConfig;
+            return self();
+        }
+
+        public Builder analyticNotificationConfig(final AnalyticNotificationConfig analyticNotificationConfig) {
+            this.analyticNotificationConfig = analyticNotificationConfig;
             return self();
         }
 
@@ -232,8 +257,9 @@ public class AnalyticRuleDoc extends Doc {
                     description,
                     languageVersion,
                     query,
-                    analyticRuleType,
-                    dataRetention);
+                    analyticProcessType,
+                    analyticProcessConfig,
+                    analyticNotificationConfig);
         }
     }
 }

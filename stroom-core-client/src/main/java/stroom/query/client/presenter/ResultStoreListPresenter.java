@@ -84,9 +84,9 @@ public class ResultStoreListPresenter extends MyPresenterWidget<PagerView> {
         dataGrid.addResizableColumn(new Column<ResultStoreInfo, String>(new TextCell()) {
             @Override
             public String getValue(final ResultStoreInfo resultStoreInfo) {
-                return resultStoreInfo.getUserId();
+                return resultStoreInfo.getCreateUser();
             }
-        }, "User Id", ColumnSizeConstants.MEDIUM_COL);
+        }, "User Display Name", 300);
 
         // Store size
         dataGrid.addResizableColumn(new Column<ResultStoreInfo, String>(new TextCell()) {
@@ -194,7 +194,7 @@ public class ResultStoreListPresenter extends MyPresenterWidget<PagerView> {
         registerHandler(getSelectionModel().addSelectionHandler(event -> {
             final ResultStoreInfo selected = getSelectionModel().getSelected();
             if (selected == null ||
-                    SourceType.ANALYTIC_RULE.equals(selected.getSearchRequestSource().getSourceType())) {
+                    SourceType.TABLE_BUILDER_ANALYTIC.equals(selected.getSearchRequestSource().getSourceType())) {
                 terminateButton.setEnabled(false);
                 deleteButton.setEnabled(false);
                 settingsButton.setEnabled(false);

@@ -33,8 +33,7 @@ import stroom.util.guice.RestResourcesBinder;
 import stroom.util.shared.Clearable;
 
 import com.google.inject.AbstractModule;
-
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 import static stroom.job.api.Schedule.ScheduleType.PERIODIC;
 
@@ -61,8 +60,8 @@ public class ProcessorModule extends AbstractModule {
                 .addBinding(DataProcessorTaskFactory.class);
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class)
-                .addBinding(ProcessorCache.class)
-                .addBinding(ProcessorFilterCache.class);
+                .addBinding(ProcessorFilterCache.class)
+                .addBinding(PrioritisedFilters.class);
 
         GuiceUtil.buildMultiBinder(binder(), Searchable.class)
                 .addBinding(ProcessorTaskServiceImpl.class);
@@ -105,6 +104,10 @@ public class ProcessorModule extends AbstractModule {
                 .bindShutdownTaskTo(ProcessorTaskManagerShutdown.class);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class ProcessorTaskQueueStatistics extends RunnableWrapper {
 
         @Inject
@@ -112,6 +115,10 @@ public class ProcessorModule extends AbstractModule {
             super(processorTaskQueueManager::writeQueueStatistics);
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class ProcessorTaskRetention extends RunnableWrapper {
 
@@ -121,6 +128,10 @@ public class ProcessorModule extends AbstractModule {
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class ProcessorTaskManagerStartup extends RunnableWrapper {
 
         @Inject
@@ -128,6 +139,10 @@ public class ProcessorModule extends AbstractModule {
             super(processorTaskManager::startup);
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class ProcessorTaskManagerShutdown extends RunnableWrapper {
 
@@ -137,6 +152,10 @@ public class ProcessorModule extends AbstractModule {
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class ProcessorTaskManagerDisownDeadTasks extends RunnableWrapper {
 
         @Inject
@@ -145,6 +164,10 @@ public class ProcessorModule extends AbstractModule {
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class ProcessorTaskManagerReleaseOldQueuedTasks extends RunnableWrapper {
 
         @Inject
@@ -152,6 +175,10 @@ public class ProcessorModule extends AbstractModule {
             super(processorTaskQueueManager::releaseOldQueuedTasks);
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class ProcessorTaskCreatorJob extends RunnableWrapper {
 

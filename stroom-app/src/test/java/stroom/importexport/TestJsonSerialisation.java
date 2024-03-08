@@ -340,7 +340,7 @@ class TestJsonSerialisation {
 
                 SoftAssertions.assertSoftly(softly -> {
                     softly.assertThat(constructorPropNames)
-                            .describedAs("%s - JsonProperties defined in the constructor must have a" +
+                            .describedAs("%s - JsonProperties defined in the constructor must have a " +
                                     "corresponding JsonProperty on the field.", clazz.getName())
                             .containsExactlyInAnyOrderElementsOf(fieldPropNames);
 

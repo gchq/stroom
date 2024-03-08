@@ -12,6 +12,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 
 @JsonInclude(Include.NON_NULL)
+@Deprecated // Keeping it else it breaks the React code
 public class SearchApiKeyRequest extends BaseCriteria {
 
     @JsonProperty

@@ -26,15 +26,16 @@ import stroom.pipeline.xml.converter.json.JSONFactoryConfig;
 import stroom.pipeline.xml.converter.json.JSONParserFactory;
 import stroom.svg.shared.SvgImage;
 
+import jakarta.inject.Inject;
 import org.xml.sax.XMLReader;
-
-import javax.inject.Inject;
 
 @ConfigurableElement(
         type = "JSONParser",
         category = Category.PARSER,
         description = """
-                A built-in parser for JSON source data in JSON fragment format into an XML document.
+                A built-in parser for parsing JSON source data (in JSON fragment format) into an XML representation \
+                of the JSON.
+                The Resulting XML will conform to the http://www.w3.org/2013/XSL/json namespace.
                 """,
         roles = {
                 PipelineElementType.ROLE_PARSER,

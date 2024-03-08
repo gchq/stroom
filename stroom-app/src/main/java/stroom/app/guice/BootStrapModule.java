@@ -12,7 +12,7 @@ import stroom.util.io.DirProvidersModule;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.health.HealthCheckRegistry;
 import com.google.inject.AbstractModule;
-import io.dropwizard.setup.Environment;
+import io.dropwizard.core.setup.Environment;
 
 import java.nio.file.Path;
 import java.util.function.Function;

@@ -2,14 +2,17 @@ package stroom.query.impl;
 
 import stroom.dashboard.shared.DashboardSearchResponse;
 import stroom.dashboard.shared.ValidateExpressionResult;
-import stroom.datasource.api.v2.DataSource;
+import stroom.datasource.api.v2.FieldInfo;
+import stroom.datasource.api.v2.FindFieldInfoCriteria;
 import stroom.docref.DocRef;
 import stroom.query.shared.DownloadQueryResultsRequest;
 import stroom.query.shared.QueryDoc;
 import stroom.query.shared.QuerySearchRequest;
 import stroom.util.shared.ResourceGeneration;
+import stroom.util.shared.ResultPage;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface QueryService {
 
@@ -23,11 +26,13 @@ public interface QueryService {
 
     DashboardSearchResponse search(QuerySearchRequest request);
 
-//    Boolean destroy(DestroyQueryRequest request);
-
     List<String> fetchTimeZones();
 
-    DataSource getDataSource(DocRef docRef);
+    DocRef fetchDefaultExtractionPipeline(DocRef dataSourceRef);
 
-    DataSource getDataSource(String query);
+    Optional<DocRef> getReferencedDataSource(String query);
+
+    ResultPage<FieldInfo> getFieldInfo(FindFieldInfoCriteria criteria);
+
+    Optional<String> fetchDocumentation(DocRef dataSourceRef);
 }

@@ -1,19 +1,21 @@
 package stroom.processor.impl.db;
 
-import stroom.docref.DocRef;
+import stroom.index.shared.IndexDoc;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.QueryData;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.query.api.v2.Param;
+import stroom.query.api.v2.TimeRange;
 
+import jakarta.xml.bind.JAXBException;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.UUID;
-import javax.xml.bind.JAXBException;
+import java.util.List;
 
 class TestProcessorFilterMarshaller {
 
@@ -22,11 +24,12 @@ class TestProcessorFilterMarshaller {
     @Test
     void testMarshall() throws JAXBException {
         final QueryData queryData = new QueryData();
-        queryData.setDataSource(DocRef.builder()
-                .uuid(UUID.randomUUID().toString())
-                .type("Index")
+        queryData.setDataSource(IndexDoc.buildDocRef()
+                .randomUuid()
                 .name("Some idx")
                 .build());
+        queryData.setParams(List.of(new Param("key1", "val1")));
+        queryData.setTimeRange(new TimeRange("MyName", Condition.BETWEEN, "week() -1w", "week()"));
         queryData.setExpression(
                 ExpressionOperator.builder()
                         .addTerm(ExpressionTerm.builder()
@@ -35,9 +38,7 @@ class TestProcessorFilterMarshaller {
                                 .value("xxxx")
                                 .build())
                         .build()
-
         );
-        queryData.setParams(null);
 
         final ProcessorFilter processorFilter = new ProcessorFilter();
         // Blank tracker
@@ -50,10 +51,27 @@ class TestProcessorFilterMarshaller {
         processorFilter.setMaxMetaCreateTimeMs(System.currentTimeMillis());
 
         final ProcessorFilterMarshaller processorFilterMarshaller = new ProcessorFilterMarshaller();
-        final ProcessorFilter marshalled = processorFilterMarshaller.marshal(processorFilter);
+        final ProcessorFilter marshalled1 = processorFilterMarshaller.marshal(processorFilter);
 
-        Assertions.assertThat(marshalled.getData())
+        final String xml1 = marshalled1.getData();
+        Assertions.assertThat(xml1)
                 .isNotBlank();
-        LOGGER.debug("marshalled:\n{}", marshalled.getData());
+        LOGGER.debug("marshalled:\n{}", xml1);
+
+        // Now un-marshall
+
+        final ProcessorFilter processorFilter2 = new ProcessorFilter();
+        processorFilter2.setData(marshalled1.getData());
+        processorFilterMarshaller.unmarshal(processorFilter2);
+
+        Assertions.assertThat(processorFilter2)
+                .isEqualTo(processorFilter);
+
+        // Now re-marshall and compare
+
+        final ProcessorFilter marshalled2 = processorFilterMarshaller.marshal(processorFilter2);
+        final String xml2 = marshalled2.getData();
+        Assertions.assertThat(xml2)
+                .isEqualTo(xml1);
     }
 }

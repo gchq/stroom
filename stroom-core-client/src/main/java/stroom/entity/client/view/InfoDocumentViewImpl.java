@@ -18,6 +18,9 @@ package stroom.entity.client.view;
 
 import stroom.entity.client.presenter.InfoDocumentPresenter;
 
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
@@ -26,13 +29,12 @@ import com.gwtplatform.mvp.client.ViewImpl;
 
 public class InfoDocumentViewImpl extends ViewImpl implements InfoDocumentPresenter.InfoDocumentView {
 
-    private final TextArea textArea;
+    private final HTML textArea;
     private final SimplePanel layout;
 
     @Inject
     public InfoDocumentViewImpl() {
-        textArea = new TextArea();
-        textArea.setReadOnly(true);
+        textArea = new HTML();
         textArea.setStyleName("info-layout");
 
         layout = new SimplePanel();
@@ -47,11 +49,11 @@ public class InfoDocumentViewImpl extends ViewImpl implements InfoDocumentPresen
 
     @Override
     public void focus() {
-        textArea.setFocus(true);
+//        textArea.setFocus(true);
     }
 
     @Override
-    public void setInfo(final String string) {
-        textArea.setText(string);
+    public void setInfo(final SafeHtml html) {
+        textArea.setHTML(html);
     }
 }

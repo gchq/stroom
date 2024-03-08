@@ -26,15 +26,12 @@ public final class ProcessorFilterExpressionUtil {
         final ExpressionOperator.Builder builder = ExpressionOperator.builder();
 
         if (folders != null) {
-            if (folders.length == 1) {
-                builder.addTerm(ProcessorFields.PIPELINE, Condition.IN_FOLDER, folders[0]);
-            } else if (folders.length > 0) {
-                final ExpressionOperator.Builder or = ExpressionOperator.builder().op(Op.OR);
-                for (final DocRef folder : folders) {
-                    or.addTerm(ProcessorFields.PIPELINE, Condition.IN_FOLDER, folder);
-                }
-                builder.addOperator(or.build());
+            final ExpressionOperator.Builder or = ExpressionOperator.builder().op(Op.OR);
+            for (final DocRef folder : folders) {
+                or.addTerm(ProcessorFields.PIPELINE, Condition.IN_FOLDER, folder);
+                or.addTerm(ProcessorFields.ANALYTIC_RULE, Condition.IN_FOLDER, folder);
             }
+            builder.addOperator(or.build());
         }
 
         return builder.addTerm(ProcessorFields.DELETED, Condition.EQUALS, false)
@@ -44,7 +41,23 @@ public final class ProcessorFilterExpressionUtil {
 
     public static ExpressionOperator createPipelineExpression(final DocRef pipelineRef) {
         return ExpressionOperator.builder()
+//                .addTerm(
+//                        ProcessorFields.PROCESSOR_TYPE,
+//                        Condition.EQUALS,
+//                        ProcessorType.PIPELINE.getDisplayValue())
                 .addTerm(ProcessorFields.PIPELINE, Condition.IS_DOC_REF, pipelineRef)
+                .addTerm(ProcessorFields.DELETED, Condition.EQUALS, false)
+                .addTerm(ProcessorFilterFields.DELETED, Condition.EQUALS, false)
+                .build();
+    }
+
+    public static ExpressionOperator createAnalyticRuleExpression(final DocRef analyticRuleRef) {
+        return ExpressionOperator.builder()
+//                .addTerm(
+//                        ProcessorFields.PROCESSOR_TYPE,
+//                        Condition.EQUALS,
+//                        ProcessorType.STREAMING_ANALYTIC.getDisplayValue())
+                .addTerm(ProcessorFields.ANALYTIC_RULE, Condition.IS_DOC_REF, analyticRuleRef)
                 .addTerm(ProcessorFields.DELETED, Condition.EQUALS, false)
                 .addTerm(ProcessorFilterFields.DELETED, Condition.EQUALS, false)
                 .build();

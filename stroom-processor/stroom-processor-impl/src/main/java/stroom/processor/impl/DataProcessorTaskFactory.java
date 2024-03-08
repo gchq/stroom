@@ -28,21 +28,25 @@ import stroom.processor.shared.AssignTasksRequest;
 import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.ProcessorTaskList;
 import stroom.processor.shared.ProcessorTaskResource;
+import stroom.task.api.TaskContext;
+import stroom.task.api.TaskContextFactory;
 import stroom.task.api.ThreadPoolImpl;
 import stroom.task.shared.ThreadPool;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
-import javax.inject.Provider;
 
 @DistributedTaskFactoryDescription(
         jobName = JobNames.DATA_PROCESSOR,
         description = "Job to process data matching processor filters with their associated pipelines")
+@Singleton
 public class DataProcessorTaskFactory implements DistributedTaskFactory {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DataProcessorTaskFactory.class);
@@ -50,18 +54,21 @@ public class DataProcessorTaskFactory implements DistributedTaskFactory {
 
     private final TargetNodeSetFactory targetNodeSetFactory;
     private final ProcessorTaskResource processorTaskResource;
-    private final Provider<DataProcessorTaskHandler> dataProcessorTaskHandlerProvider;
     private final NodeInfo nodeInfo;
+    private final TaskContextFactory taskContextFactory;
+    private RunnableFactory runnableFactory;
 
     @Inject
     DataProcessorTaskFactory(final TargetNodeSetFactory targetNodeSetFactory,
                              final ProcessorTaskResource processorTaskResource,
                              final Provider<DataProcessorTaskHandler> dataProcessorTaskHandlerProvider,
-                             final NodeInfo nodeInfo) {
+                             final NodeInfo nodeInfo,
+                             final TaskContextFactory taskContextFactory) {
         this.targetNodeSetFactory = targetNodeSetFactory;
         this.processorTaskResource = processorTaskResource;
-        this.dataProcessorTaskHandlerProvider = dataProcessorTaskHandlerProvider;
         this.nodeInfo = nodeInfo;
+        this.runnableFactory = new RunnableFactoryImpl(dataProcessorTaskHandlerProvider);
+        this.taskContextFactory = taskContextFactory;
     }
 
     @Override
@@ -70,18 +77,20 @@ public class DataProcessorTaskFactory implements DistributedTaskFactory {
             if (targetNodeSetFactory.isClusterStateInitialised()) {
                 final String masterNode = targetNodeSetFactory.getMasterNode();
                 LOGGER.debug("masterNode: {}", masterNode);
+                final TaskContext taskContext = taskContextFactory.current();
+                taskContext.info(() -> "Processor task resource assign tasks");
                 final ProcessorTaskList processorTaskList = processorTaskResource
-                        .assignTasks(masterNode, new AssignTasksRequest(nodeName, count));
+                        .assignTasks(masterNode, new AssignTasksRequest(taskContext.getTaskId(), nodeName, count));
 
+                taskContext.info(() ->
+                        "Received " +
+                                processorTaskList.getList().size() +
+                                " new tasks");
                 return processorTaskList
                         .getList()
                         .stream()
                         .map(processorTask -> {
-                            final Runnable runnable = () -> {
-                                final DataProcessorTaskHandler dataProcessorTaskHandler =
-                                        dataProcessorTaskHandlerProvider.get();
-                                dataProcessorTaskHandler.exec(processorTask);
-                            };
+                            final Runnable runnable = runnableFactory.create(processorTask);
                             return new DistributedDataProcessorTask(JobNames.DATA_PROCESSOR,
                                     runnable,
                                     THREAD_POOL,
@@ -136,5 +145,31 @@ public class DataProcessorTaskFactory implements DistributedTaskFactory {
         public ProcessorTask getProcessorTask() {
             return processorTask;
         }
+    }
+
+    public void setRunnableFactory(final RunnableFactory runnableFactory) {
+        this.runnableFactory = runnableFactory;
+    }
+
+    public static class RunnableFactoryImpl implements RunnableFactory {
+
+        private final Provider<DataProcessorTaskHandler> dataProcessorTaskHandlerProvider;
+
+        public RunnableFactoryImpl(final Provider<DataProcessorTaskHandler> dataProcessorTaskHandlerProvider) {
+            this.dataProcessorTaskHandlerProvider = dataProcessorTaskHandlerProvider;
+        }
+
+        @Override
+        public Runnable create(final ProcessorTask processorTask) {
+            return () -> {
+                final DataProcessorTaskHandler dataProcessorTaskHandler = dataProcessorTaskHandlerProvider.get();
+                dataProcessorTaskHandler.exec(processorTask);
+            };
+        }
+    }
+
+    public interface RunnableFactory {
+
+        Runnable create(ProcessorTask processorTask);
     }
 }

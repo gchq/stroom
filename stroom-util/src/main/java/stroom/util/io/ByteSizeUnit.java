@@ -32,12 +32,14 @@ public enum ByteSizeUnit {
     GIBIBYTE("GiB", "Gibibytes", 1024L * 1024 * 1024),
     TEBIBYTE("TiB", "Tebibytes", 1024L * 1024 * 1024 * 1024),
     PEBIBYTE("PiB", "Pebibytes", 1024L * 1024 * 1024 * 1024 * 1024),
+    EXBIBYTE("EiB", "Exbibytes", 1024L * 1024 * 1024 * 1024 * 1024 * 1024),
 
     KILOBYTE("kB", "Kilobytes", 1000L),
     MEGABYTE("MB", "Megabytes", 1000L * 1000),
     GIGABYTE("GB", "Gigabytes", 1000L * 1000 * 1000),
     TERABYTE("TB", "Terabytes", 1000L * 1000 * 1000 * 1000),
-    PETABYTE("PB", "Petabytes", 1000L * 1000 * 1000 * 1000 * 1000);
+    PETABYTE("PB", "Petabytes", 1000L * 1000 * 1000 * 1000 * 1000),
+    EXABYTE("EB", "Exabytes", 1000L * 1000 * 1000 * 1000 * 1000 * 1000);
 
     private static final Map<CaseInsensitiveString, ByteSizeUnit> shortNameToEnumMap = new HashMap<>();
     private static final Map<Long, ByteSizeUnit> intToEnumMap = new HashMap<>();
@@ -96,6 +98,13 @@ public enum ByteSizeUnit {
      */
     public long longBytes(long fromValue) {
         return this.bytes * fromValue;
+    }
+
+    /**
+     * Converts the value from the units of this into bytes
+     */
+    public int intBytes(int fromValue) {
+        return (int) (this.bytes * fromValue);
     }
 
     /**

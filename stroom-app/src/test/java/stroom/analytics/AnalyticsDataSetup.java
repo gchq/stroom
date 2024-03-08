@@ -6,14 +6,24 @@ import stroom.data.store.api.SegmentOutputStream;
 import stroom.data.store.api.Store;
 import stroom.data.store.api.Target;
 import stroom.docref.DocRef;
+import stroom.entity.shared.ExpressionCriteria;
 import stroom.feed.api.FeedStore;
+import stroom.index.impl.IndexShardManager;
+import stroom.index.impl.IndexShardManager.IndexShardAction;
+import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexDoc;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
+import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorResult;
+import stroom.processor.api.ProcessorService;
+import stroom.processor.shared.CreateProcessFilterRequest;
+import stroom.processor.shared.Processor;
+import stroom.processor.shared.ProcessorExpressionUtil;
+import stroom.processor.shared.QueryData;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.test.CommonTestScenarioCreator;
@@ -24,9 +34,11 @@ import stroom.test.common.ProjectPathUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Severity;
-import stroom.view.impl.ViewStore;
+import stroom.view.api.ViewStore;
 import stroom.view.shared.ViewDoc;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import org.assertj.core.api.Assertions;
 
 import java.io.ByteArrayInputStream;
@@ -40,10 +52,10 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.regex.Pattern;
-import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@Singleton
 public class AnalyticsDataSetup {
 
     private final ContentImportService contentImportService;
@@ -54,6 +66,9 @@ public class AnalyticsDataSetup {
     private final FeedStore feedStore;
     private final CommonTestScenarioCreator commonTestScenarioCreator;
     private final Store store;
+    private final ProcessorService processorService;
+    private final ProcessorFilterService processorFilterService;
+    private final IndexShardManager indexShardManager;
 
     private DocRef detections;
 
@@ -65,7 +80,10 @@ public class AnalyticsDataSetup {
                               final MetaService metaService,
                               final FeedStore feedStore,
                               final CommonTestScenarioCreator commonTestScenarioCreator,
-                              final Store store) {
+                              final Store store,
+                              final ProcessorService processorService,
+                              final ProcessorFilterService processorFilterService,
+                              final IndexShardManager indexShardManager) {
         this.contentImportService = contentImportService;
         this.commonTranslationTestHelper = commonTranslationTestHelper;
         this.storeCreationTool = storeCreationTool;
@@ -74,6 +92,9 @@ public class AnalyticsDataSetup {
         this.feedStore = feedStore;
         this.commonTestScenarioCreator = commonTestScenarioCreator;
         this.store = store;
+        this.processorService = processorService;
+        this.processorFilterService = processorFilterService;
+        this.indexShardManager = indexShardManager;
     }
 
     final void setup() {
@@ -90,17 +111,8 @@ public class AnalyticsDataSetup {
         checkStreamCount(8);
 
         // Add the index.
-        final DocRef indexDocRef = commonTestScenarioCreator.createIndex(
-                "Test index",
-                List.of(),
-                IndexDoc.DEFAULT_MAX_DOCS_PER_SHARD);
-
-        // Create index pipeline.
-        final DocRef indexPipeline = storeCreationTool.getIndexPipeline(
-                "Dynamic Index",
-                resourcePath.resolve("indexing-pipeline.xml"),
-                resourcePath.resolve("dynamic-index.xsl"),
-                indexDocRef);
+        final DocRef indexDocRef = addIndex(resourcePath);
+        checkStreamCount(8);
 
         // Add extraction pipeline.
         final DocRef searchResultPipeline = storeCreationTool.getSearchResultPipeline(
@@ -113,9 +125,9 @@ public class AnalyticsDataSetup {
         ViewDoc viewDoc = viewStore.readDocument(viewDocRef);
         viewDoc.setDataSource(indexDocRef);
         viewDoc.setPipeline(searchResultPipeline);
-//        viewDoc.setFilter(ExpressionOperator.builder()
-//                .addTerm(MetaFields.TYPE, ExpressionTerm.Condition.EQUALS, StreamTypeNames.EVENTS)
-//                .build());
+        viewDoc.setFilter(ExpressionOperator.builder()
+                .addTerm(MetaFields.TYPE, ExpressionTerm.Condition.EQUALS, StreamTypeNames.EVENTS)
+                .build());
         viewStore.writeDocument(viewDoc);
 
         // Create somewhere to put the alerts.
@@ -134,6 +146,52 @@ public class AnalyticsDataSetup {
         assertThat(results.size())
                 .isEqualTo(expectedTaskCount);
         results.forEach(this::assertProcessorResult);
+    }
+
+    public DocRef addIndex(final Path resourcePath) {
+        // Add the index.
+        final DocRef indexDocRef = commonTestScenarioCreator.createIndex(
+                "Test index",
+                List.of(),
+                IndexDoc.DEFAULT_MAX_DOCS_PER_SHARD);
+
+        // Create index pipeline.
+        final DocRef indexPipeline = storeCreationTool.getIndexPipeline(
+                "Dynamic Index",
+                resourcePath.resolve("indexing-pipeline.xml"),
+                resourcePath.resolve("dynamic-index.xsl"),
+                indexDocRef);
+
+        final Processor streamProcessor = processorService.find(new ExpressionCriteria(
+                        ProcessorExpressionUtil.createPipelineExpression(indexPipeline)))
+                .getFirst();
+        if (streamProcessor == null) {
+            // Setup the stream processor filter.
+            final QueryData findStreamQueryData = QueryData.builder()
+                    .dataSource(MetaFields.STREAM_STORE_DOC_REF)
+                    .expression(ExpressionOperator.builder()
+                            .addTerm(MetaFields.TYPE, ExpressionTerm.Condition.EQUALS, StreamTypeNames.EVENTS)
+                            .build())
+                    .build();
+            processorFilterService.create(
+                    CreateProcessFilterRequest
+                            .builder()
+                            .pipeline(indexPipeline)
+                            .queryData(findStreamQueryData)
+                            .priority(1)
+                            .build());
+        }
+
+        // Translate data.
+        List<ProcessorResult> results = commonTranslationTestHelper.processAll();
+        assertThat(results.size()).isEqualTo(1);
+
+        results.forEach(this::assertProcessorResult);
+
+        // Flush all newly created index shards.
+        indexShardManager.performAction(FindIndexShardCriteria.matchAll(), IndexShardAction.FLUSH);
+
+        return indexDocRef;
     }
 
     public void addNewData(final LocalDateTime localDateTime) {
@@ -174,7 +232,11 @@ public class AnalyticsDataSetup {
 
     public void checkStreamCount(final int expectedStreamCount) {
         // Check we have the expected number of streams.
-        assertThat(metaService.find(FindMetaCriteria.unlocked()).size()).isEqualTo(expectedStreamCount);
+        assertThat(getStreamCount()).isEqualTo(expectedStreamCount);
+    }
+
+    public int getStreamCount() {
+        return metaService.find(FindMetaCriteria.unlocked()).size();
     }
 
     public Meta getNewestMeta() {

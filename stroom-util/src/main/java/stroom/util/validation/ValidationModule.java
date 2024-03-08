@@ -6,6 +6,7 @@ import stroom.util.io.TempDirProvider;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.validation.AllMatchPatternValidator;
 import stroom.util.shared.validation.IsSubsetOfValidator;
 import stroom.util.shared.validation.IsSupersetOfValidator;
 import stroom.util.shared.validation.ValidDirectoryPathValidator;
@@ -15,11 +16,10 @@ import stroom.util.shared.validation.ValidSimpleCronValidator;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
-
-import javax.inject.Singleton;
-import javax.validation.Validation;
-import javax.validation.Validator;
-import javax.validation.ValidatorFactory;
+import jakarta.inject.Singleton;
+import jakarta.validation.Validation;
+import jakarta.validation.Validator;
+import jakarta.validation.ValidatorFactory;
 
 public class ValidationModule extends AbstractModule {
 
@@ -47,6 +47,7 @@ public class ValidationModule extends AbstractModule {
         bind(ValidFilePathValidator.class).to(ValidFilePathValidatorImpl.class);
         bind(ValidRegexValidator.class).to(ValidRegexValidatorImpl.class);
         bind(ValidSimpleCronValidator.class).to(ValidSimpleSimpleCronValidatorImpl.class);
+        bind(AllMatchPatternValidator.class).to(AllMatchPatternValidatorImpl.class);
     }
 
     @SuppressWarnings("unused")

@@ -2,6 +2,8 @@ package stroom.db.util;
 
 import stroom.util.NullSafe;
 import stroom.util.db.DbMigrationState;
+import stroom.util.logging.AsciiTable;
+import stroom.util.logging.AsciiTable.Column;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -130,10 +132,18 @@ public final class FlywayUtil {
                 final MigrateResult migrateResult = flyway.migrate();
 
                 if (migrateResult.migrationsExecuted > 0) {
-                    LOGGER.info("{} - Successfully applied {} Flyway DB migrations using history table '{}'",
+                    final String migrationListStr = AsciiTable.builder(NullSafe.list(migrateResult.migrations))
+                            .withColumn(Column.of("Category", output -> output.category))
+                            .withColumn(Column.of("Version", output -> output.version))
+                            .withColumn(Column.of("Description", output -> output.description))
+                            .withColumn(Column.of("path", output -> output.filepath))
+                            .build();
+
+                    LOGGER.info("{} - Successfully applied {} Flyway DB migrations using history table '{}'\n{}",
                             moduleName,
                             migrateResult.migrationsExecuted,
-                            flywayTableName);
+                            flywayTableName,
+                            migrationListStr);
                 } else {
                     LOGGER.info("{} - No Flyway DB migration(s) applied in path {}",
                             moduleName,

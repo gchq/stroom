@@ -16,6 +16,8 @@
 
 package stroom.dashboard.shared;
 
+import stroom.util.shared.GwtNullSafe;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -28,12 +30,38 @@ public class ValidateExpressionResult {
     private final boolean ok;
     @JsonProperty
     private final String string;
+    @JsonProperty
+    private final boolean groupBy;
 
     @JsonCreator
     public ValidateExpressionResult(@JsonProperty("ok") final boolean ok,
-                                    @JsonProperty("string") final String string) {
+                                    @JsonProperty("string") final String string,
+                                    @JsonProperty("groupBy") final boolean groupBy) {
         this.ok = ok;
         this.string = string;
+        this.groupBy = groupBy;
+    }
+
+    public static ValidateExpressionResult ok() {
+        return new ValidateExpressionResult(true, null, false);
+    }
+
+    public static ValidateExpressionResult ok(final boolean isGroup) {
+        return new ValidateExpressionResult(true, null, isGroup);
+    }
+
+    public static ValidateExpressionResult failed(final Throwable throwable) {
+        return new ValidateExpressionResult(
+                false,
+                GwtNullSafe.get(throwable, Throwable::getMessage),
+                false);
+    }
+
+    public static ValidateExpressionResult failed(final Throwable throwable, final boolean isGroup) {
+        return new ValidateExpressionResult(
+                false,
+                GwtNullSafe.get(throwable, Throwable::getMessage),
+                isGroup);
     }
 
     public boolean isOk() {
@@ -42,5 +70,18 @@ public class ValidateExpressionResult {
 
     public String getString() {
         return string;
+    }
+
+    public boolean isGroupBy() {
+        return groupBy;
+    }
+
+    @Override
+    public String toString() {
+        return "ValidateExpressionResult{" +
+                "ok=" + ok +
+                ", string='" + string + '\'' +
+                ", groupBy=" + groupBy +
+                '}';
     }
 }

@@ -1,32 +1,40 @@
 package stroom.query.api.v2;
 
-import stroom.query.api.v2.FlatResult.FlatResultBuilderImpl;
-
 import java.util.List;
 
-public interface FlatResultBuilder extends ResultBuilder<FlatResultBuilder> {
+public interface FlatResultBuilder {
+
+    FlatResultBuilder componentId(String componentId);
 
     /**
      * Add headings to our data
      *
-     * @param structure the fields which act as headings for our data
-     * @return The {@link FlatResultBuilderImpl}, enabling method chaining
+     * @param structure the columns which act as headings for our data
+     * @return The {@link FlatResultBuilder}, enabling method chaining
      */
-    FlatResultBuilder structure(List<Field> structure);
+    FlatResultBuilder structure(List<Column> structure);
 
     /**
-     * @param values A collection of 'rows' to add to our values
-     * @return The {@link FlatResultBuilderImpl}, enabling method chaining
+     * @param values A 'row' of data points to add to our values
+     * @return The {@link FlatResultBuilder}, enabling method chaining
      */
-    FlatResultBuilder values(List<List<Object>> values);
+    FlatResultBuilder addValues(List<Object> values);
+
+    /**
+     * Add an error to the result.
+     *
+     * @param error The Error to add.
+     * @return The {@link FlatResultBuilder}, enabling method chaining
+     */
+    FlatResultBuilder errors(List<String> errors);
 
     /**
      * Fix the reported size of the result set.
      *
      * @param value The size to use
-     * @return The {@link FlatResultBuilderImpl}, enabling method chaining
+     * @return The {@link FlatResultBuilder}, enabling method chaining
      */
-    FlatResultBuilder size(Long value);
+    FlatResultBuilder totalResults(Long totalResults);
 
     FlatResult build();
 }

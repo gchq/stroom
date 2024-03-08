@@ -27,7 +27,10 @@ public class Themes {
     }
 
     public static List<String> getThemeNames() {
-        return THEME_TO_CLASS_MAP.keySet().stream().sorted().collect(Collectors.toList());
+        return THEME_TO_CLASS_MAP.keySet()
+                .stream()
+                .sorted()
+                .collect(Collectors.toList());
     }
 
     public static ThemeType getThemeType(final String themeName) {
@@ -51,6 +54,14 @@ public class Themes {
 
     public enum ThemeType {
         DARK,
-        LIGHT
+        LIGHT;
+
+        public boolean isDark() {
+            return DARK.equals(this);
+        }
+
+        public boolean isLight() {
+            return LIGHT.equals(this);
+        }
     }
 }
