@@ -149,7 +149,10 @@ public class FormatPresenter extends MyPresenterWidget<FormatPresenter.FormatVie
     }
 
     private UserTimeZone getTimeZone() {
-        return new UserTimeZone(getView().getTimeZoneUse(), getView().getTimeZoneId(), getView().getTimeZoneOffsetHours(),
+        return new UserTimeZone(
+                getView().getTimeZoneUse(),
+                getView().getTimeZoneId(),
+                getView().getTimeZoneOffsetHours(),
                 getView().getTimeZoneOffsetMinutes());
     }
 

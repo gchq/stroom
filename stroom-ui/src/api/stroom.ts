@@ -865,7 +865,7 @@ export type DateField = QueryField;
  */
 export type DateTimeFormatSettings = FormatSettings & {
   pattern?: string;
-  timeZone?: TimeZone;
+  timeZone?: UserTimeZone;
   usePreferences?: boolean;
 };
 
@@ -886,7 +886,7 @@ export interface DateTimeSettings {
   referenceTime: number;
 
   /** The timezone to apply to a date time value */
-  timeZone?: TimeZone;
+  timeZone?: UserTimeZone;
 }
 
 export interface DefaultLocation {
@@ -5432,34 +5432,6 @@ export interface TimeRange {
   to?: string;
 }
 
-/**
- * The timezone to apply to a date time value
- */
-export interface TimeZone {
-  /**
-   * The id of the time zone, conforming to java.time.ZoneId
-   * @example GMT
-   */
-  id?: string;
-
-  /**
-   * The number of hours this timezone is offset from UTC
-   * @format int32
-   * @example -1
-   */
-  offsetHours?: number;
-
-  /**
-   * The number of minutes this timezone is offset from UTC
-   * @format int32
-   * @example -30
-   */
-  offsetMinutes?: number;
-
-  /** How the time zone will be specified, e.g. from provided client 'Local' time, 'UTC', a recognised timezone 'Id' or an 'Offset' from UTC in hours and minutes. */
-  use: "Local" | "UTC" | "Id" | "Offset";
-}
-
 export interface TokenError {
   from?: DefaultLocation;
   text?: string;
@@ -5595,7 +5567,35 @@ export interface UserPreferences {
   theme?: string;
 
   /** The timezone to apply to a date time value */
-  timeZone?: TimeZone;
+  timeZone?: UserTimeZone;
+}
+
+/**
+ * The timezone to apply to a date time value
+ */
+export interface UserTimeZone {
+  /**
+   * The id of the time zone, conforming to java.time.ZoneId
+   * @example GMT
+   */
+  id?: string;
+
+  /**
+   * The number of hours this timezone is offset from UTC
+   * @format int32
+   * @example -1
+   */
+  offsetHours?: number;
+
+  /**
+   * The number of minutes this timezone is offset from UTC
+   * @format int32
+   * @example -30
+   */
+  offsetMinutes?: number;
+
+  /** How the time zone will be specified, e.g. from provided client 'Local' time, 'UTC', a recognised timezone 'Id' or an 'Offset' from UTC in hours and minutes. */
+  use: "Local" | "UTC" | "Id" | "Offset";
 }
 
 export interface ValidateExpressionRequest {

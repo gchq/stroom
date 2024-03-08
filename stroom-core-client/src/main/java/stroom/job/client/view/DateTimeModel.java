@@ -21,9 +21,9 @@ public class DateTimeModel {
 
     private static final String[] EN_LOCALE = {"en-GB"};
 
-    private final long MILLIS_IN_SECOND = 1000;
-    private final long MILLIS_IN_MINUTE = 60 * MILLIS_IN_SECOND;
-    private final long MILLIS_IN_HOUR = 60 * MILLIS_IN_MINUTE;
+    public static final long MILLIS_IN_SECOND = 1000;
+    public static final long MILLIS_IN_MINUTE = 60 * MILLIS_IN_SECOND;
+    public static final long MILLIS_IN_HOUR = 60 * MILLIS_IN_MINUTE;
 
     private final UserPreferencesManager userPreferencesManager;
 

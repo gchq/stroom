@@ -12557,7 +12557,7 @@
               "description" : "A date time formatting pattern string conforming to the specification of java.time.format.DateTimeFormatter"
             },
             "timeZone" : {
-              "$ref" : "#/components/schemas/TimeZone"
+              "$ref" : "#/components/schemas/UserTimeZone"
             },
             "usePreferences" : {
               "type" : "boolean",
@@ -12586,7 +12586,7 @@
             "description" : "The time in milliseconds since epoch to use as the reference time for relative date functions like `day()`. Typically this is the current time when the query is executed. If null the current time will be assumed."
           },
           "timeZone" : {
-            "$ref" : "#/components/schemas/TimeZone"
+            "$ref" : "#/components/schemas/UserTimeZone"
           }
         },
         "required" : [ "localZoneId", "referenceTime" ]
@@ -20111,35 +20111,6 @@
           }
         }
       },
-      "TimeZone" : {
-        "type" : "object",
-        "description" : "The timezone to apply to a date time value",
-        "properties" : {
-          "id" : {
-            "type" : "string",
-            "description" : "The id of the time zone, conforming to java.time.ZoneId",
-            "example" : "GMT"
-          },
-          "offsetHours" : {
-            "type" : "integer",
-            "format" : "int32",
-            "description" : "The number of hours this timezone is offset from UTC",
-            "example" : -1
-          },
-          "offsetMinutes" : {
-            "type" : "integer",
-            "format" : "int32",
-            "description" : "The number of minutes this timezone is offset from UTC",
-            "example" : -30
-          },
-          "use" : {
-            "type" : "string",
-            "description" : "How the time zone will be specified, e.g. from provided client 'Local' time, 'UTC', a recognised timezone 'Id' or an 'Offset' from UTC in hours and minutes.",
-            "enum" : [ "Local", "UTC", "Id", "Offset" ]
-          }
-        },
-        "required" : [ "use" ]
-      },
       "TokenError" : {
         "type" : "object",
         "properties" : {
@@ -20471,9 +20442,38 @@
             "type" : "string"
           },
           "timeZone" : {
-            "$ref" : "#/components/schemas/TimeZone"
+            "$ref" : "#/components/schemas/UserTimeZone"
           }
         }
+      },
+      "UserTimeZone" : {
+        "type" : "object",
+        "description" : "The timezone to apply to a date time value",
+        "properties" : {
+          "id" : {
+            "type" : "string",
+            "description" : "The id of the time zone, conforming to java.time.ZoneId",
+            "example" : "GMT"
+          },
+          "offsetHours" : {
+            "type" : "integer",
+            "format" : "int32",
+            "description" : "The number of hours this timezone is offset from UTC",
+            "example" : -1
+          },
+          "offsetMinutes" : {
+            "type" : "integer",
+            "format" : "int32",
+            "description" : "The number of minutes this timezone is offset from UTC",
+            "example" : -30
+          },
+          "use" : {
+            "type" : "string",
+            "description" : "How the time zone will be specified, e.g. from provided client 'Local' time, 'UTC', a recognised timezone 'Id' or an 'Offset' from UTC in hours and minutes.",
+            "enum" : [ "Local", "UTC", "Id", "Offset" ]
+          }
+        },
+        "required" : [ "use" ]
       },
       "ValidateExpressionRequest" : {
         "type" : "object",

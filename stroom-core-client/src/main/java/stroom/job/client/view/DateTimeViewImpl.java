@@ -34,10 +34,6 @@ import com.gwtplatform.mvp.client.ViewImpl;
 
 public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
 
-    private final long MILLIS_IN_SECOND = 1000;
-    private final long MILLIS_IN_MINUTE = 60 * MILLIS_IN_SECOND;
-    private final long MILLIS_IN_HOUR = 60 * MILLIS_IN_MINUTE;
-
     private final Widget widget;
 
     @SuppressWarnings("unused")
@@ -234,7 +230,7 @@ public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
             final DateRecord dateAfter = dateTimeModel.parseDate(value);
             if (!dateBefore.equals(dateAfter)) {
                 GWT.log("Fix hour for DST: " + dateBefore + " -> " + dateAfter);
-                value.setTime(value.getTime() + MILLIS_IN_HOUR);
+                value.setTime(value.getTime() + DateTimeModel.MILLIS_IN_HOUR);
                 updateTime();
             }
         }
