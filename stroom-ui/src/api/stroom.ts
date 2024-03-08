@@ -2918,6 +2918,7 @@ export interface Location {
   /** @format int32 */
   lineNo?: number;
   type: string;
+  unknown?: boolean;
 }
 
 export interface LoginRequest {
@@ -4740,12 +4741,11 @@ export interface SetStatusRequest {
 }
 
 export interface SharedElementData {
-  codeIndicators?: Indicators;
   formatInput?: boolean;
   formatOutput?: boolean;
+  indicators?: Indicators;
   input?: string;
   output?: string;
-  outputIndicators?: Indicators;
 }
 
 export interface SharedStepData {
@@ -4980,6 +4980,7 @@ export interface SteppingResult {
 
 export interface StoredError {
   elementId?: string;
+  errorType?: "CODE" | "GENERIC" | "INPUT" | "OUTPUT" | "UNKNOWN";
   location?: Location;
   message?: string;
   severity?: "INFO" | "WARN" | "ERROR" | "FATAL";
