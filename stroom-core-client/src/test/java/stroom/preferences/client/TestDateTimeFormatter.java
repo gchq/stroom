@@ -10,10 +10,10 @@ public class TestDateTimeFormatter {
         final DateTimeFormatter dateTimeFormatter = new DateTimeFormatter(null);
         assertThat(dateTimeFormatter
                 .convertJavaDateTimePattern("yyyy-MM-dd'T'HH:mm:ss.SSSXX"))
-                .isEqualTo("YYYY-MM-DDTHH:mm:ss.SSS[Z]");
+                .isEqualTo("YYYY-MM-DD[T]HH:mm:ss.SSSZ");
         assertThat(dateTimeFormatter
                 .convertJavaDateTimePattern("yyyy-MM-dd'T'HH'#'mm'#'ss,SSSXX"))
-                .isEqualTo("YYYY-MM-DDTHH#mm#ss,SSS[Z]");
+                .isEqualTo("YYYY-MM-DD[T]HH#mm#ss,SSSZ");
         assertThat(dateTimeFormatter
                 .convertJavaDateTimePattern("E, dd MMM yyyy HH:mm:ss Z"))
                 .isEqualTo("ddd, DD MMM YYYY HH:mm:ss Z");
