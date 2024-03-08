@@ -16,6 +16,7 @@
 
 package stroom.search.elastic.shared;
 
+import stroom.datasource.api.v2.FieldType;
 import stroom.docref.HasDisplayValue;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -41,8 +42,9 @@ import java.util.Objects;
 })
 @JsonInclude(Include.NON_NULL)
 public class ElasticIndexField implements HasDisplayValue, Comparable<ElasticIndexField>, Serializable {
+
     @JsonProperty
-    private ElasticIndexFieldType fieldUse;
+    private FieldType fieldUse;
 
     @JsonProperty
     private String fieldName;
@@ -53,11 +55,12 @@ public class ElasticIndexField implements HasDisplayValue, Comparable<ElasticInd
     @JsonProperty
     private boolean indexed;
 
-    public ElasticIndexField() { }
+    public ElasticIndexField() {
+    }
 
     @JsonCreator
     public ElasticIndexField(
-            @JsonProperty("fieldUse") final ElasticIndexFieldType fieldUse,
+            @JsonProperty("fieldUse") final FieldType fieldUse,
             @JsonProperty("fieldName") final String fieldName,
             @JsonProperty("fieldType") final String fieldType,
             @JsonProperty("indexed") final boolean indexed
@@ -68,11 +71,11 @@ public class ElasticIndexField implements HasDisplayValue, Comparable<ElasticInd
         setIndexed(indexed);
     }
 
-    public ElasticIndexFieldType getFieldUse() {
+    public FieldType getFieldUse() {
         return fieldUse;
     }
 
-    public void setFieldUse(final ElasticIndexFieldType fieldUse) {
+    public void setFieldUse(final FieldType fieldUse) {
         this.fieldUse = fieldUse;
     }
 

@@ -17,6 +17,7 @@
 
 package stroom.search.elastic.search;
 
+import stroom.datasource.api.v2.FieldType;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
 import stroom.expression.api.DateTimeSettings;
@@ -27,7 +28,6 @@ import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.common.v2.DateExpressionParser;
 import stroom.search.elastic.shared.ElasticIndexField;
-import stroom.search.elastic.shared.ElasticIndexFieldType;
 import stroom.util.functions.TriFunction;
 
 import org.elasticsearch.index.query.BoolQueryBuilder;
@@ -149,18 +149,18 @@ public class SearchExpressionQueryBuilder {
         }
 
         // Create a query based on the field type and condition.
-        final ElasticIndexFieldType elasticFieldType = indexField.getFieldUse();
-        if (elasticFieldType.equals(ElasticIndexFieldType.ID) ||
-                elasticFieldType.equals(ElasticIndexFieldType.LONG) ||
-                elasticFieldType.equals(ElasticIndexFieldType.INTEGER)) {
+        final FieldType elasticFieldType = indexField.getFieldUse();
+        if (elasticFieldType.equals(FieldType.ID) ||
+                elasticFieldType.equals(FieldType.LONG) ||
+                elasticFieldType.equals(FieldType.INTEGER)) {
             return buildScalarQuery(condition, indexField, fieldName, value, this::getNumber, docRef);
-        } else if (elasticFieldType.equals(ElasticIndexFieldType.FLOAT)) {
+        } else if (elasticFieldType.equals(FieldType.FLOAT)) {
             return buildScalarQuery(condition, indexField, fieldName, value, this::getFloat, docRef);
-        } else if (elasticFieldType.equals(ElasticIndexFieldType.DOUBLE)) {
+        } else if (elasticFieldType.equals(FieldType.DOUBLE)) {
             return buildScalarQuery(condition, indexField, fieldName, value, this::getDouble, docRef);
-        } else if (elasticFieldType.equals(ElasticIndexFieldType.DATE)) {
+        } else if (elasticFieldType.equals(FieldType.DATE)) {
             return buildScalarQuery(condition, indexField, fieldName, value, this::getDate, docRef);
-        } else if (elasticFieldType.equals(ElasticIndexFieldType.IPV4_ADDRESS)) {
+        } else if (elasticFieldType.equals(FieldType.IPV4_ADDRESS)) {
             return buildScalarQuery(condition, indexField, fieldName, value, this::getIpV4Address, docRef);
         } else {
             return buildStringQuery(condition, value, docRef, indexField, fieldName);
@@ -437,19 +437,19 @@ public class SearchExpressionQueryBuilder {
 
         for (final String line : lines) {
             final BoolQueryBuilder mustQueries = QueryBuilders.boolQuery();
-            final ElasticIndexFieldType elasticFieldType = indexField.getFieldUse();
+            final FieldType elasticFieldType = indexField.getFieldUse();
 
-            if (elasticFieldType.equals(ElasticIndexFieldType.ID) ||
-                    elasticFieldType.equals(ElasticIndexFieldType.LONG) ||
-                    elasticFieldType.equals(ElasticIndexFieldType.INTEGER)) {
+            if (elasticFieldType.equals(FieldType.ID) ||
+                    elasticFieldType.equals(FieldType.LONG) ||
+                    elasticFieldType.equals(FieldType.INTEGER)) {
                 mustQueries.must(QueryBuilders.termQuery(fieldName, getNumber(condition, fieldName, line)));
-            } else if (elasticFieldType.equals(ElasticIndexFieldType.FLOAT)) {
+            } else if (elasticFieldType.equals(FieldType.FLOAT)) {
                 mustQueries.must(QueryBuilders.termQuery(fieldName, getFloat(condition, fieldName, line)));
-            } else if (elasticFieldType.equals(ElasticIndexFieldType.DOUBLE)) {
+            } else if (elasticFieldType.equals(FieldType.DOUBLE)) {
                 mustQueries.must(QueryBuilders.termQuery(fieldName, getDouble(condition, fieldName, line)));
-            } else if (elasticFieldType.equals(ElasticIndexFieldType.DATE)) {
+            } else if (elasticFieldType.equals(FieldType.DATE)) {
                 mustQueries.must(QueryBuilders.termQuery(fieldName, getDate(condition, fieldName, line)));
-            } else if (elasticFieldType.equals(ElasticIndexFieldType.IPV4_ADDRESS)) {
+            } else if (elasticFieldType.equals(FieldType.IPV4_ADDRESS)) {
                 mustQueries.must(QueryBuilders.termQuery(fieldName, getIpV4Address(condition, fieldName, line)));
             } else if (indexField.getFieldType().equals("keyword")) {
                 mustQueries.must(buildKeywordQuery(fieldName, line));
