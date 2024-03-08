@@ -41,49 +41,28 @@ import java.util.Set;
  * @see "https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-types.html"
  */
 public enum ElasticIndexFieldType implements HasDisplayValue {
-    ID(FieldType.ID, "Id", true, null),
-    BOOLEAN(FieldType.BOOLEAN, "Boolean", false, new String[]{"boolean"}),
-    INTEGER(FieldType.INTEGER, "Integer", true,
-            new String[]{"integer", "short", "byte", "version"}),
-    LONG(FieldType.LONG, "Long", true, new String[]{"long", "unsigned_long"}),
-    FLOAT(FieldType.FLOAT, "Float", false, new String[]{"float", "half_float", "scaled_float"}),
-    DOUBLE(FieldType.DOUBLE, "Double", false, new String[]{"double"}),
-    DATE(FieldType.DATE, "Date", false, new String[]{"date"}),
-    TEXT(FieldType.TEXT, "Text", false, new String[]{"text"}),
-    KEYWORD(FieldType.KEYWORD, "Keyword", false,
-            new String[]{"keyword", "constant_keyword", "wildcard"}),
-    IPV4_ADDRESS(FieldType.IPV4_ADDRESS, "IpV4Address", false, new String[]{"ip"});
-
-    private static Map<String, ElasticIndexFieldType> nativeTypeRegistry = new HashMap<>();
-
-    static {
-        final Map<String, ElasticIndexFieldType> nativeTypeRegistry = new HashMap<>();
-        for (ElasticIndexFieldType fieldType : values()) {
-            // Register this field type's native types for easy retrieval
-            if (fieldType.nativeTypes != null) {
-                fieldType.nativeTypes.forEach(nativeType -> nativeTypeRegistry.putIfAbsent(nativeType, fieldType));
-            }
-        }
-
-        ElasticIndexFieldType.nativeTypeRegistry = nativeTypeRegistry;
-    }
+    ID(FieldType.ID, "Id", true),
+    BOOLEAN(FieldType.BOOLEAN, "Boolean", false),
+    INTEGER(FieldType.INTEGER, "Integer", true),
+    LONG(FieldType.LONG, "Long", true),
+    FLOAT(FieldType.FLOAT, "Float", false),
+    DOUBLE(FieldType.DOUBLE, "Double", false),
+    DATE(FieldType.DATE, "Date", false),
+    TEXT(FieldType.TEXT, "Text", false),
+    KEYWORD(FieldType.KEYWORD, "Keyword", false),
+    IPV4_ADDRESS(FieldType.IPV4_ADDRESS, "IpV4Address", false);
 
     private final FieldType dataSourceFieldType;
     private final String displayValue;
     private final boolean numeric;
-    private final Set<String> nativeTypes;
     private final ConditionSet supportedConditions;
 
     ElasticIndexFieldType(final FieldType dataSourceFieldType,
                           final String displayValue,
-                          final boolean numeric,
-                          final String[] nativeTypes) {
+                          final boolean numeric) {
         this.dataSourceFieldType = dataSourceFieldType;
         this.displayValue = displayValue;
         this.numeric = numeric;
-        this.nativeTypes = nativeTypes != null
-                ? new HashSet<>(Arrays.asList(nativeTypes))
-                : null;
         this.supportedConditions = getConditions();
     }
 
@@ -110,18 +89,6 @@ public enum ElasticIndexFieldType implements HasDisplayValue {
             return ConditionSet.ELASTIC_NUMERIC;
         }
         return ConditionSet.ELASTIC_TEXT;
-    }
-
-    /**
-     * Given a native Elasticsearch data type, return an equivalent Stroom field type
-     */
-    public static ElasticIndexFieldType fromNativeType(final String fieldName, final String nativeType) {
-        if (nativeTypeRegistry.containsKey(nativeType)) {
-            return nativeTypeRegistry.get(nativeType);
-        }
-
-        throw new IllegalArgumentException("Field '" + fieldName + "' has an unsupported mapping type '" +
-                nativeType + "'");
     }
 
     /**

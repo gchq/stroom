@@ -1,4 +1,5 @@
 import stroom.search.elastic.shared.ElasticIndexFieldType;
+import stroom.search.elastic.shared.ElasticNativeTypes;
 
 import org.junit.jupiter.api.Test;
 
@@ -11,19 +12,19 @@ public class TestElasticIndexFieldType {
     @Test
     public void testFromNativeType() {
         assertSame(ElasticIndexFieldType.BOOLEAN,
-                ElasticIndexFieldType.fromNativeType("name", "boolean"));
+                ElasticNativeTypes.fromNativeType("name", "boolean"));
         assertSame(ElasticIndexFieldType.INTEGER,
-                ElasticIndexFieldType.fromNativeType("name", "integer"));
+                ElasticNativeTypes.fromNativeType("name", "integer"));
         assertSame(ElasticIndexFieldType.LONG,
-                ElasticIndexFieldType.fromNativeType("name", "long"));
+                ElasticNativeTypes.fromNativeType("name", "long"));
         assertSame(ElasticIndexFieldType.FLOAT,
-                ElasticIndexFieldType.fromNativeType("name", "float"));
+                ElasticNativeTypes.fromNativeType("name", "float"));
         assertSame(ElasticIndexFieldType.DOUBLE,
-                ElasticIndexFieldType.fromNativeType("name", "double"));
+                ElasticNativeTypes.fromNativeType("name", "double"));
         assertSame(ElasticIndexFieldType.DATE,
-                ElasticIndexFieldType.fromNativeType("name", "date"));
+                ElasticNativeTypes.fromNativeType("name", "date"));
         assertSame(ElasticIndexFieldType.TEXT,
-                ElasticIndexFieldType.fromNativeType("name", "text"));
+                ElasticNativeTypes.fromNativeType("name", "text"));
     }
 
     @Test

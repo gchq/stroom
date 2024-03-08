@@ -42,6 +42,7 @@ import stroom.search.elastic.shared.ElasticClusterDoc;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.search.elastic.shared.ElasticIndexField;
 import stroom.search.elastic.shared.ElasticIndexFieldType;
+import stroom.search.elastic.shared.ElasticNativeTypes;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.util.logging.LambdaLogger;
@@ -221,7 +222,7 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
                     try {
                         final String fullName = fieldMeta.fullName();
                         final ElasticIndexFieldType elasticFieldType =
-                                ElasticIndexFieldType.fromNativeType(fullName, nativeType);
+                                ElasticNativeTypes.fromNativeType(fullName, nativeType);
 
                         return elasticFieldType.toDataSourceField(fieldName, fieldIsIndexed(field.getValue()));
                     } catch (IllegalArgumentException e) {
@@ -284,7 +285,7 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
                 }
 
                 fieldsMap.put(fieldName, new ElasticIndexField(
-                        ElasticIndexFieldType.fromNativeType(fieldName, nativeType),
+                        ElasticNativeTypes.fromNativeType(fieldName, nativeType),
                         fieldName,
                         nativeType,
                         indexed));
