@@ -272,7 +272,9 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
     private ConditionSet getConditions(final ElasticIndexFieldType elasticIndexFieldType) {
         if (ElasticIndexFieldType.DATE.equals(elasticIndexFieldType) ||
                 ElasticIndexFieldType.IPV4_ADDRESS.equals(elasticIndexFieldType) ||
-                elasticIndexFieldType.isNumeric()) {
+                ElasticIndexFieldType.ID.equals(elasticIndexFieldType) ||
+                ElasticIndexFieldType.LONG.equals(elasticIndexFieldType) ||
+                ElasticIndexFieldType.INTEGER.equals(elasticIndexFieldType)) {
             return ConditionSet.ELASTIC_NUMERIC;
         }
         return ConditionSet.ELASTIC_TEXT;

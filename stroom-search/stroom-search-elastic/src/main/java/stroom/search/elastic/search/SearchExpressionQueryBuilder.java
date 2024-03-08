@@ -150,7 +150,9 @@ public class SearchExpressionQueryBuilder {
 
         // Create a query based on the field type and condition.
         final ElasticIndexFieldType elasticFieldType = indexField.getFieldUse();
-        if (indexField.getFieldUse().isNumeric()) {
+        if (elasticFieldType.equals(ElasticIndexFieldType.ID) ||
+                elasticFieldType.equals(ElasticIndexFieldType.LONG) ||
+                elasticFieldType.equals(ElasticIndexFieldType.INTEGER)) {
             return buildScalarQuery(condition, indexField, fieldName, value, this::getNumber, docRef);
         } else if (elasticFieldType.equals(ElasticIndexFieldType.FLOAT)) {
             return buildScalarQuery(condition, indexField, fieldName, value, this::getFloat, docRef);
@@ -437,7 +439,9 @@ public class SearchExpressionQueryBuilder {
             final BoolQueryBuilder mustQueries = QueryBuilders.boolQuery();
             final ElasticIndexFieldType elasticFieldType = indexField.getFieldUse();
 
-            if (elasticFieldType.isNumeric()) {
+            if (elasticFieldType.equals(ElasticIndexFieldType.ID) ||
+                    elasticFieldType.equals(ElasticIndexFieldType.LONG) ||
+                    elasticFieldType.equals(ElasticIndexFieldType.INTEGER)) {
                 mustQueries.must(QueryBuilders.termQuery(fieldName, getNumber(condition, fieldName, line)));
             } else if (elasticFieldType.equals(ElasticIndexFieldType.FLOAT)) {
                 mustQueries.must(QueryBuilders.termQuery(fieldName, getFloat(condition, fieldName, line)));
