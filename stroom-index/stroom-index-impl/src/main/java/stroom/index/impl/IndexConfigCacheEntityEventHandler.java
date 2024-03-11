@@ -19,7 +19,7 @@ package stroom.index.impl;
 
 import stroom.docref.DocRef;
 import stroom.index.shared.FindIndexShardCriteria;
-import stroom.index.shared.IndexDoc;
+import stroom.index.shared.LuceneIndexDoc;
 import stroom.index.shared.IndexShard;
 import stroom.node.api.NodeInfo;
 import stroom.search.extraction.IndexStructure;
@@ -29,7 +29,7 @@ import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
 
-@EntityEventHandler(type = IndexDoc.DOCUMENT_TYPE)
+@EntityEventHandler(type = LuceneIndexDoc.DOCUMENT_TYPE)
 class IndexConfigCacheEntityEventHandler implements EntityEvent.Handler {
     private final NodeInfo nodeInfo;
     private final IndexStructureCacheImpl indexStructureCache;
@@ -49,7 +49,7 @@ class IndexConfigCacheEntityEventHandler implements EntityEvent.Handler {
 
     @Override
     public void onChange(final EntityEvent event) {
-        if (IndexDoc.DOCUMENT_TYPE.equals(event.getDocRef().getType())) {
+        if (LuceneIndexDoc.DOCUMENT_TYPE.equals(event.getDocRef().getType())) {
             indexStructureCache.remove(event.getDocRef());
             updateIndex(event.getDocRef());
         }

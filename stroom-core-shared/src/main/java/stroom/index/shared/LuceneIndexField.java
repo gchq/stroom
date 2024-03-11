@@ -36,7 +36,7 @@ import java.util.Objects;
  * </p>
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class IndexField implements HasDisplayValue, Comparable<IndexField>, Serializable {
+public class LuceneIndexField implements HasDisplayValue, Comparable<LuceneIndexField>, Serializable {
 
     @JsonProperty
     private final FieldType type;
@@ -57,14 +57,14 @@ public class IndexField implements HasDisplayValue, Comparable<IndexField>, Seri
     private final boolean caseSensitive;
 
     @JsonCreator
-    public IndexField(@JsonProperty("type") final FieldType type,
-                      @Deprecated @JsonProperty("fieldType") final OldIndexFieldType fieldType,
-                      @JsonProperty("fieldName") final String fieldName,
-                      @JsonProperty("analyzerType") final AnalyzerType analyzerType,
-                      @JsonProperty("indexed") final boolean indexed,
-                      @JsonProperty("stored") final boolean stored,
-                      @JsonProperty("termPositions") final boolean termPositions,
-                      @JsonProperty("caseSensitive") final boolean caseSensitive) {
+    public LuceneIndexField(@JsonProperty("type") final FieldType type,
+                            @Deprecated @JsonProperty("fieldType") final OldIndexFieldType fieldType,
+                            @JsonProperty("fieldName") final String fieldName,
+                            @JsonProperty("analyzerType") final AnalyzerType analyzerType,
+                            @JsonProperty("indexed") final boolean indexed,
+                            @JsonProperty("stored") final boolean stored,
+                            @JsonProperty("termPositions") final boolean termPositions,
+                            @JsonProperty("caseSensitive") final boolean caseSensitive) {
         if (type == null && fieldType != null) {
             this.type = convertLegacyType(fieldType);
         } else {
@@ -111,22 +111,22 @@ public class IndexField implements HasDisplayValue, Comparable<IndexField>, Seri
         return FieldType.TEXT;
     }
 
-    public static IndexField createField(final String fieldName) {
+    public static LuceneIndexField createField(final String fieldName) {
         return new Builder()
                 .fieldName(fieldName)
                 .analyzerType(AnalyzerType.ALPHA_NUMERIC)
                 .build();
     }
 
-    public static IndexField createField(final String fieldName, final AnalyzerType analyzerType) {
+    public static LuceneIndexField createField(final String fieldName, final AnalyzerType analyzerType) {
         return new Builder()
                 .fieldName(fieldName)
                 .analyzerType(analyzerType)
                 .build();
     }
 
-    public static IndexField createField(final String fieldName, final AnalyzerType analyzerType,
-                                         final boolean caseSensitive) {
+    public static LuceneIndexField createField(final String fieldName, final AnalyzerType analyzerType,
+                                               final boolean caseSensitive) {
         return new Builder()
                 .fieldName(fieldName)
                 .analyzerType(analyzerType)
@@ -134,12 +134,12 @@ public class IndexField implements HasDisplayValue, Comparable<IndexField>, Seri
                 .build();
     }
 
-    public static IndexField createField(final String fieldName,
-                                         final AnalyzerType analyzerType,
-                                         final boolean caseSensitive,
-                                         final boolean stored,
-                                         final boolean indexed,
-                                         final boolean termPositions) {
+    public static LuceneIndexField createField(final String fieldName,
+                                               final AnalyzerType analyzerType,
+                                               final boolean caseSensitive,
+                                               final boolean stored,
+                                               final boolean indexed,
+                                               final boolean termPositions) {
         return new Builder()
                 .fieldName(fieldName)
                 .analyzerType(analyzerType)
@@ -150,7 +150,7 @@ public class IndexField implements HasDisplayValue, Comparable<IndexField>, Seri
                 .build();
     }
 
-    public static IndexField createNumericField(final String fieldName) {
+    public static LuceneIndexField createNumericField(final String fieldName) {
         return new Builder()
                 .type(FieldType.LONG)
                 .fieldName(fieldName)
@@ -158,7 +158,7 @@ public class IndexField implements HasDisplayValue, Comparable<IndexField>, Seri
                 .build();
     }
 
-    public static IndexField createIdField(final String fieldName) {
+    public static LuceneIndexField createIdField(final String fieldName) {
         return new Builder()
                 .type(FieldType.ID)
                 .fieldName(fieldName)
@@ -167,7 +167,7 @@ public class IndexField implements HasDisplayValue, Comparable<IndexField>, Seri
                 .build();
     }
 
-    public static IndexField createDateField(final String fieldName) {
+    public static LuceneIndexField createDateField(final String fieldName) {
         return new Builder()
                 .type(FieldType.DATE)
                 .fieldName(fieldName)
@@ -235,7 +235,7 @@ public class IndexField implements HasDisplayValue, Comparable<IndexField>, Seri
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        final IndexField that = (IndexField) o;
+        final LuceneIndexField that = (LuceneIndexField) o;
         return stored == that.stored &&
                 indexed == that.indexed &&
                 termPositions == that.termPositions &&
@@ -256,7 +256,7 @@ public class IndexField implements HasDisplayValue, Comparable<IndexField>, Seri
     }
 
     @Override
-    public int compareTo(final IndexField o) {
+    public int compareTo(final LuceneIndexField o) {
         return fieldName.compareToIgnoreCase(o.fieldName);
     }
 
@@ -328,7 +328,7 @@ public class IndexField implements HasDisplayValue, Comparable<IndexField>, Seri
         private Builder() {
         }
 
-        private Builder(final IndexField indexField) {
+        private Builder(final LuceneIndexField indexField) {
             this.type = indexField.type;
             this.fieldName = indexField.fieldName;
             this.analyzerType = indexField.analyzerType;
@@ -373,8 +373,8 @@ public class IndexField implements HasDisplayValue, Comparable<IndexField>, Seri
             return this;
         }
 
-        public IndexField build() {
-            return new IndexField(
+        public LuceneIndexField build() {
+            return new LuceneIndexField(
                     type,
                     null,
                     fieldName,

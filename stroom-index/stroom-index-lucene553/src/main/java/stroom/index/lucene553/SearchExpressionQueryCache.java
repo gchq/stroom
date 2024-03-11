@@ -2,7 +2,7 @@ package stroom.index.lucene553;
 
 import stroom.index.lucene553.SearchExpressionQueryBuilder.SearchExpressionQuery;
 import stroom.index.lucene553.analyser.AnalyzerFactory;
-import stroom.index.shared.IndexField;
+import stroom.index.shared.LuceneIndexField;
 import stroom.index.shared.IndexFieldsMap;
 import stroom.query.api.v2.SearchRequest;
 import stroom.util.logging.LambdaLogger;
@@ -45,7 +45,7 @@ class SearchExpressionQueryCache {
         }
     }
 
-    Analyzer getAnalyser(final IndexField indexField) {
+    Analyzer getAnalyser(final LuceneIndexField indexField) {
         try {
             Analyzer fieldAnalyzer = analyzerMap.get(indexField.getFieldName());
             if (fieldAnalyzer == null) {
@@ -61,7 +61,7 @@ class SearchExpressionQueryCache {
         }
     }
 
-    void addIndexField(final IndexField indexField) {
+    void addIndexField(final LuceneIndexField indexField) {
         if (indexFieldsMap.putIfAbsent(indexField) == null) {
             // We didn't already have this field so make sure the query is rebuilt.
             luceneQuery = null;

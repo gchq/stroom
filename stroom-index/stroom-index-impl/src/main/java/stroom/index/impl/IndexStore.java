@@ -19,11 +19,11 @@ package stroom.index.impl;
 
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentStore;
-import stroom.index.shared.IndexDoc;
+import stroom.index.shared.LuceneIndexDoc;
 
 import java.util.List;
 
-public interface IndexStore extends DocumentStore<IndexDoc> {
+public interface IndexStore extends DocumentStore<LuceneIndexDoc> {
 
     List<DocRef> list();
 }

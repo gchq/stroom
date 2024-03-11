@@ -33,48 +33,48 @@ public class IndexFields implements Serializable {
 
     private static final long serialVersionUID = 4457718308915039068L;
 
-    private final List<IndexField> indexFields;
+    private final List<LuceneIndexField> indexFields;
 
     public IndexFields() {
         this.indexFields = new ArrayList<>();
     }
 
-    public IndexFields(final List<IndexField> indexFields) {
+    public IndexFields(final List<LuceneIndexField> indexFields) {
         this.indexFields = indexFields;
     }
 
-    public static List<IndexField> createStreamIndexFields() {
-        final List<IndexField> indexFields = new ArrayList<>();
+    public static List<LuceneIndexField> createStreamIndexFields() {
+        final List<LuceneIndexField> indexFields = new ArrayList<>();
         // Always add standard id fields for now.
-        indexFields.add(IndexField.createIdField(IndexConstants.STREAM_ID));
-        indexFields.add(IndexField.createIdField(IndexConstants.EVENT_ID));
+        indexFields.add(LuceneIndexField.createIdField(IndexConstants.STREAM_ID));
+        indexFields.add(LuceneIndexField.createIdField(IndexConstants.EVENT_ID));
         return indexFields;
     }
 
-    @XmlElements({@XmlElement(name = "field", type = IndexField.class)})
-    public List<IndexField> getIndexFields() {
+    @XmlElements({@XmlElement(name = "field", type = LuceneIndexField.class)})
+    public List<LuceneIndexField> getIndexFields() {
         return indexFields;
     }
 
     @JsonIgnore
-    public void add(final IndexField indexField) {
+    public void add(final LuceneIndexField indexField) {
         indexFields.add(indexField);
     }
 
     @JsonIgnore
-    public void remove(final IndexField indexField) {
+    public void remove(final LuceneIndexField indexField) {
         indexFields.remove(indexField);
     }
 
     @JsonIgnore
-    public boolean contains(final IndexField indexField) {
+    public boolean contains(final LuceneIndexField indexField) {
         return indexFields != null && indexFields.contains(indexField);
     }
 
     @JsonIgnore
     public Set<String> getFieldNames() {
         final Set<String> set = new HashSet<>();
-        for (final IndexField field : indexFields) {
+        for (final LuceneIndexField field : indexFields) {
             set.add(field.getFieldName());
         }
         return set;

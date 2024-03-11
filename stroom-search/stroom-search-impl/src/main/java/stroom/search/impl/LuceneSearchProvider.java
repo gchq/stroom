@@ -25,7 +25,7 @@ import stroom.datasource.api.v2.QueryFieldService;
 import stroom.docref.DocRef;
 import stroom.index.impl.IndexStore;
 import stroom.index.impl.LuceneProviderFactory;
-import stroom.index.shared.IndexDoc;
+import stroom.index.shared.LuceneIndexDoc;
 import stroom.index.shared.LuceneVersionUtil;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.Query;
@@ -95,7 +95,7 @@ public class LuceneSearchProvider implements SearchProvider {
 
             if (!FIELD_SOURCE_MAP.containsKey(docRef)) {
                 // Load fields.
-                final IndexDoc index = indexStore.readDocument(docRef);
+                final LuceneIndexDoc index = indexStore.readDocument(docRef);
                 if (index == null) {
                     // We can't read the index so return no fields.
                     return ResultPage.createCriterialBasedList(Collections.emptyList(), criteria);
@@ -130,13 +130,13 @@ public class LuceneSearchProvider implements SearchProvider {
 
     @Override
     public Optional<String> fetchDocumentation(final DocRef docRef) {
-        return Optional.ofNullable(indexStore.readDocument(docRef)).map(IndexDoc::getDescription);
+        return Optional.ofNullable(indexStore.readDocument(docRef)).map(LuceneIndexDoc::getDescription);
     }
 
     @Override
     public DocRef fetchDefaultExtractionPipeline(final DocRef dataSourceRef) {
         return securityContext.useAsReadResult(() -> {
-            final IndexDoc index = indexStore.readDocument(dataSourceRef);
+            final LuceneIndexDoc index = indexStore.readDocument(dataSourceRef);
             if (index != null) {
                 return index.getDefaultExtractionPipeline();
             }
@@ -147,7 +147,7 @@ public class LuceneSearchProvider implements SearchProvider {
     @Override
     public DateField getTimeField(final DocRef docRef) {
         return securityContext.useAsReadResult(() -> {
-            final IndexDoc index = indexStore.readDocument(docRef);
+            final LuceneIndexDoc index = indexStore.readDocument(docRef);
             DateField timeField = null;
             if (index.getTimeField() != null && !index.getTimeField().isBlank()) {
                 timeField = new DateField(index.getTimeField());
@@ -164,7 +164,7 @@ public class LuceneSearchProvider implements SearchProvider {
         final Query query = modifiedSearchRequest.getQuery();
 
         // Load the index.
-        final IndexDoc index = securityContext.useAsReadResult(() ->
+        final LuceneIndexDoc index = securityContext.useAsReadResult(() ->
                 indexStore.readDocument(query.getDataSource()));
 
         // Extract highlights.
@@ -216,6 +216,6 @@ public class LuceneSearchProvider implements SearchProvider {
 
     @Override
     public String getType() {
-        return IndexDoc.DOCUMENT_TYPE;
+        return LuceneIndexDoc.DOCUMENT_TYPE;
     }
 }

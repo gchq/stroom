@@ -21,8 +21,8 @@ package stroom.index;
 import stroom.docref.DocRef;
 import stroom.index.impl.IndexSerialiser;
 import stroom.index.impl.IndexStore;
-import stroom.index.shared.IndexDoc;
-import stroom.index.shared.IndexField;
+import stroom.index.shared.LuceneIndexDoc;
+import stroom.index.shared.LuceneIndexField;
 import stroom.index.shared.IndexFields;
 import stroom.legacy.impex_6_1.LegacyIndexDeserialiser;
 import stroom.legacy.impex_6_1.LegacyXmlSerialiser;
@@ -54,11 +54,11 @@ class TestIndexStoreImpl extends AbstractCoreIntegrationTest {
         refIndex = indexStore.createDocument("Ref index");
         testIndex = indexStore.createDocument("Test index");
 
-        final List<IndexField> indexFields = IndexFields.createStreamIndexFields();
-        indexFields.add(IndexField.createDateField("TimeCreated"));
-        indexFields.add(IndexField.createField("User"));
+        final List<LuceneIndexField> indexFields = IndexFields.createStreamIndexFields();
+        indexFields.add(LuceneIndexField.createDateField("TimeCreated"));
+        indexFields.add(LuceneIndexField.createField("User"));
 
-        final IndexDoc index = indexStore.readDocument(testIndex);
+        final LuceneIndexDoc index = indexStore.readDocument(testIndex);
         index.setFields(indexFields);
         indexStore.writeDocument(index);
     }
@@ -79,7 +79,7 @@ class TestIndexStoreImpl extends AbstractCoreIntegrationTest {
                 .count())
                 .isEqualTo(1);
 
-        final IndexDoc index = indexStore.readDocument(list.stream()
+        final LuceneIndexDoc index = indexStore.readDocument(list.stream()
                 .filter(docRef ->
                         docRef.getName().equals("Test index"))
                 .findFirst()
@@ -128,27 +128,27 @@ class TestIndexStoreImpl extends AbstractCoreIntegrationTest {
                 "      <termPositions>false</termPositions>\n" +
                 "   </field>\n" +
                 "</fields>\n";
-        final List<IndexField> indexFields = MappingUtil.map(LegacyXmlSerialiser.getIndexFieldsFromLegacyXml(xml));
+        final List<LuceneIndexField> indexFields = MappingUtil.map(LegacyXmlSerialiser.getIndexFieldsFromLegacyXml(xml));
         assertThat(index.getFields()).isEqualTo(indexFields);
     }
 
     @Test
     void testLoad() {
-        IndexDoc index = indexStore.readDocument(testIndex);
+        LuceneIndexDoc index = indexStore.readDocument(testIndex);
         assertThat(index).isNotNull();
         assertThat(index.getName()).isEqualTo("Test index");
     }
 
     @Test
     void testClientSideStuff1() {
-        IndexDoc index = indexStore.readDocument(refIndex);
+        LuceneIndexDoc index = indexStore.readDocument(refIndex);
         indexStore.writeDocument(index);
 
     }
 
     @Test
     void testClientSideStuff2() {
-        IndexDoc index = indexStore.readDocument(testIndex);
+        LuceneIndexDoc index = indexStore.readDocument(testIndex);
         indexStore.writeDocument(index);
     }
 }

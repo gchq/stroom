@@ -19,7 +19,7 @@ package stroom.index.impl;
 import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
-import stroom.index.shared.IndexDoc;
+import stroom.index.shared.LuceneIndexDoc;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.lifecycle.api.LifecycleBinder;
 import stroom.search.extraction.IndexStructureCache;
@@ -74,7 +74,7 @@ public class IndexModule extends AbstractModule {
                 .bind(IndexVolumeResourceImpl.class);
 
         DocumentActionHandlerBinder.create(binder())
-                .bind(IndexDoc.DOCUMENT_TYPE, IndexStoreImpl.class);
+                .bind(LuceneIndexDoc.DOCUMENT_TYPE, IndexStoreImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), EntityEvent.Handler.class)
                 .addBinding(IndexVolumeServiceImpl.class);

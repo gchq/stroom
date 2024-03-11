@@ -16,7 +16,7 @@ import stroom.index.impl.IndexShardDao;
 import stroom.index.impl.IndexStore;
 import stroom.index.impl.db.jooq.tables.records.IndexShardRecord;
 import stroom.index.shared.FindIndexShardCriteria;
-import stroom.index.shared.IndexDoc;
+import stroom.index.shared.LuceneIndexDoc;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.index.shared.IndexShardFields;
@@ -360,7 +360,7 @@ class IndexShardDaoImpl implements IndexShardDao {
         private Val getDocRefName(final String uuid) {
             String val = uuid;
             if (docRefInfoService != null) {
-                val = docRefInfoService.name(new DocRef(IndexDoc.DOCUMENT_TYPE, uuid))
+                val = docRefInfoService.name(new DocRef(LuceneIndexDoc.DOCUMENT_TYPE, uuid))
                         .orElse(uuid);
             }
             return ValString.create(val);

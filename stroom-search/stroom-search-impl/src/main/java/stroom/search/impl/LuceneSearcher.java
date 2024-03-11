@@ -5,8 +5,8 @@ import stroom.index.impl.IndexShardService;
 import stroom.index.impl.IndexStore;
 import stroom.index.impl.LuceneProviderFactory;
 import stroom.index.impl.LuceneShardSearcher;
-import stroom.index.shared.IndexDoc;
-import stroom.index.shared.IndexField;
+import stroom.index.shared.LuceneIndexDoc;
+import stroom.index.shared.LuceneIndexField;
 import stroom.index.shared.IndexFieldsMap;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.LuceneVersion;
@@ -77,7 +77,7 @@ public class LuceneSearcher {
         SearchProgressLog.increment(task.getKey(), SearchPhase.INDEX_SHARD_SEARCH_FACTORY_SEARCH);
 
         // Reload the index.
-        final IndexDoc index = indexStore.readDocument(task.getQuery().getDataSource());
+        final LuceneIndexDoc index = indexStore.readDocument(task.getQuery().getDataSource());
 
         // Make sure we have a search index.
         if (index == null) {
@@ -91,7 +91,7 @@ public class LuceneSearcher {
         for (int i = 0; i < storedFieldNames.length; i++) {
             final String fieldName = fieldIndex.getField(i);
             if (fieldName != null) {
-                final IndexField indexField = indexFieldsMap.get(fieldName);
+                final LuceneIndexField indexField = indexFieldsMap.get(fieldName);
                 if (indexField != null && indexField.isStored()) {
                     storedFieldNames[i] = fieldName;
                 }

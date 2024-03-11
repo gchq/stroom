@@ -1,7 +1,7 @@
 package stroom.index.lucene553;
 
 import stroom.index.lucene553.SearchExpressionQueryBuilder.SearchExpressionQuery;
-import stroom.index.shared.IndexField;
+import stroom.index.shared.LuceneIndexField;
 import stroom.query.api.v2.SearchRequest;
 import stroom.search.extraction.FieldValue;
 import stroom.search.impl.SearchException;
@@ -34,7 +34,7 @@ class MemoryIndexImpl implements stroom.search.extraction.MemoryIndex {
     public boolean match(final SearchRequest searchRequest, final List<FieldValue> fieldValues) {
         final MemoryIndex memoryIndex = new MemoryIndex();
         for (final FieldValue fieldValue : fieldValues) {
-            final IndexField indexField = fieldValue.field();
+            final LuceneIndexField indexField = fieldValue.field();
             if (indexField.isIndexed()) {
                 final Analyzer fieldAnalyzer = searchExpressionQueryCache.getAnalyser(indexField);
                 final IndexableField field = FieldFactory.create(fieldValue);

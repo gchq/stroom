@@ -7,8 +7,8 @@ import stroom.index.impl.IndexShardWriterCache;
 import stroom.index.impl.IndexStore;
 import stroom.index.impl.IndexSystemInfoProvider;
 import stroom.index.shared.IndexConstants;
-import stroom.index.shared.IndexDoc;
-import stroom.index.shared.IndexField;
+import stroom.index.shared.LuceneIndexDoc;
+import stroom.index.shared.LuceneIndexField;
 import stroom.index.shared.IndexShard;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.Meta;
@@ -149,13 +149,13 @@ class Lucene553SystemInfoProvider implements IndexSystemInfoProvider {
         if (streamId == null) {
             return new MatchAllDocsQuery();
         } else {
-            final IndexDoc indexDoc = indexStore.readDocument(DocRef.builder()
+            final LuceneIndexDoc indexDoc = indexStore.readDocument(DocRef.builder()
                     .uuid(indexShard.getIndexUuid())
-                    .type(IndexDoc.DOCUMENT_TYPE)
+                    .type(LuceneIndexDoc.DOCUMENT_TYPE)
                     .build());
             Objects.requireNonNull(indexDoc);
 
-            IndexField streamIdField = indexDoc.getFields().stream()
+            LuceneIndexField streamIdField = indexDoc.getFields().stream()
                     .filter(indexField -> indexField.getFieldName().equals(IndexConstants.STREAM_ID))
                     .findFirst()
                     .orElseThrow(() -> new RuntimeException("Can't find field " + IndexConstants.STREAM_ID));

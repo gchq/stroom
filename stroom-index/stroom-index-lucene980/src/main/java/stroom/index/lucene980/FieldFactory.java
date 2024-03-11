@@ -16,7 +16,7 @@
 
 package stroom.index.lucene980;
 
-import stroom.index.shared.IndexField;
+import stroom.index.shared.LuceneIndexField;
 import stroom.query.language.functions.Val;
 import stroom.search.extraction.FieldValue;
 
@@ -33,28 +33,28 @@ class FieldFactory {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(FieldFactory.class);
 
-    public static LongField create(final IndexField indexField, final long initialValue) {
+    public static LongField create(final LuceneIndexField indexField, final long initialValue) {
         return new LongField(indexField.getFieldName(), initialValue, indexField.isStored() ? Store.YES : Store.NO);
     }
 
-    public static DoubleField createDouble(final IndexField indexField, final double initialValue) {
+    public static DoubleField createDouble(final LuceneIndexField indexField, final double initialValue) {
         return new DoubleField(indexField.getFieldName(), initialValue, indexField.isStored() ? Store.YES : Store.NO);
     }
 
-    public static IntField createInt(final IndexField indexField, final int initialValue) {
+    public static IntField createInt(final LuceneIndexField indexField, final int initialValue) {
         return new IntField(indexField.getFieldName(), initialValue, indexField.isStored() ? Store.YES : Store.NO);
     }
 
-    public static FloatField createFloat(final IndexField indexField, final float initialValue) {
+    public static FloatField createFloat(final LuceneIndexField indexField, final float initialValue) {
         return new FloatField(indexField.getFieldName(), initialValue, indexField.isStored() ? Store.YES : Store.NO);
     }
 
-    public static Field create(final IndexField indexField, final String initialValue) {
+    public static Field create(final LuceneIndexField indexField, final String initialValue) {
         return new Field(indexField.getFieldName(), initialValue, FieldTypeFactory.create(indexField));
     }
 
     public static Field create(final FieldValue fieldValue) {
-        final IndexField indexField = fieldValue.field();
+        final LuceneIndexField indexField = fieldValue.field();
         final Val value = fieldValue.value();
 
         org.apache.lucene980.document.Field field = null;

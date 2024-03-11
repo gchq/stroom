@@ -37,8 +37,8 @@ import stroom.feed.shared.FeedDoc;
 import stroom.feed.shared.FeedDoc.FeedStatus;
 import stroom.index.impl.IndexStore;
 import stroom.index.shared.AnalyzerType;
-import stroom.index.shared.IndexDoc;
-import stroom.index.shared.IndexField;
+import stroom.index.shared.LuceneIndexDoc;
+import stroom.index.shared.LuceneIndexField;
 import stroom.index.shared.IndexFields;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.shared.Meta;
@@ -838,7 +838,7 @@ public final class StoreCreationTool {
         final DocRef indexRef = commonTestScenarioCreator.createIndex(
                 name,
                 createIndexFields(),
-                maxDocsPerShard.orElse(IndexDoc.DEFAULT_MAX_DOCS_PER_SHARD));
+                maxDocsPerShard.orElse(LuceneIndexDoc.DEFAULT_MAX_DOCS_PER_SHARD));
 
         // Create the indexing pipeline.
         final DocRef pipelineRef = getIndexingPipeline(indexRef, translationXsltLocation);
@@ -866,26 +866,26 @@ public final class StoreCreationTool {
         return indexRef;
     }
 
-    private List<IndexField> createIndexFields() {
-        final List<IndexField> indexFields = IndexFields.createStreamIndexFields();
-        indexFields.add(IndexField.createField("Feed"));
-        indexFields.add(IndexField.createField("Feed (Keyword)", AnalyzerType.KEYWORD));
-        indexFields.add(IndexField.createField("Action"));
-        indexFields.add(IndexField.createDateField("EventTime"));
-        indexFields.add(IndexField.createField("UserId", AnalyzerType.KEYWORD));
-        indexFields.add(IndexField.createField("System"));
-        indexFields.add(IndexField.createField("Environment"));
-        indexFields.add(IndexField.createField("IPAddress", AnalyzerType.KEYWORD));
-        indexFields.add(IndexField.createField("HostName", AnalyzerType.KEYWORD));
-        indexFields.add(IndexField.createField("Generator"));
-        indexFields.add(IndexField.createField("Command"));
-        indexFields.add(IndexField.createField("Command (Keyword)", AnalyzerType.KEYWORD, true));
-        indexFields.add(IndexField.createField("Description"));
-        indexFields.add(IndexField.createField(
+    private List<LuceneIndexField> createIndexFields() {
+        final List<LuceneIndexField> indexFields = IndexFields.createStreamIndexFields();
+        indexFields.add(LuceneIndexField.createField("Feed"));
+        indexFields.add(LuceneIndexField.createField("Feed (Keyword)", AnalyzerType.KEYWORD));
+        indexFields.add(LuceneIndexField.createField("Action"));
+        indexFields.add(LuceneIndexField.createDateField("EventTime"));
+        indexFields.add(LuceneIndexField.createField("UserId", AnalyzerType.KEYWORD));
+        indexFields.add(LuceneIndexField.createField("System"));
+        indexFields.add(LuceneIndexField.createField("Environment"));
+        indexFields.add(LuceneIndexField.createField("IPAddress", AnalyzerType.KEYWORD));
+        indexFields.add(LuceneIndexField.createField("HostName", AnalyzerType.KEYWORD));
+        indexFields.add(LuceneIndexField.createField("Generator"));
+        indexFields.add(LuceneIndexField.createField("Command"));
+        indexFields.add(LuceneIndexField.createField("Command (Keyword)", AnalyzerType.KEYWORD, true));
+        indexFields.add(LuceneIndexField.createField("Description"));
+        indexFields.add(LuceneIndexField.createField(
                 "Description (Case Sensitive)",
                 AnalyzerType.ALPHA_NUMERIC,
                 true));
-        indexFields.add(IndexField.createField("Text", AnalyzerType.ALPHA_NUMERIC));
+        indexFields.add(LuceneIndexField.createField("Text", AnalyzerType.ALPHA_NUMERIC));
         return indexFields;
     }
 

@@ -19,7 +19,7 @@ package stroom.index.client.presenter;
 import stroom.datasource.api.v2.FieldType;
 import stroom.index.client.presenter.IndexFieldEditPresenter.IndexFieldEditView;
 import stroom.index.shared.AnalyzerType;
-import stroom.index.shared.IndexField;
+import stroom.index.shared.LuceneIndexField;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -43,7 +43,7 @@ public class IndexFieldEditPresenter extends MyPresenterWidget<IndexFieldEditVie
         super(eventBus, view);
     }
 
-    public void read(final IndexField indexField, final Set<String> otherFieldNames) {
+    public void read(final LuceneIndexField indexField, final Set<String> otherFieldNames) {
         this.otherFieldNames = otherFieldNames;
         getView().setType(indexField.getType());
         getView().setFieldName(indexField.getFieldName());
@@ -54,7 +54,7 @@ public class IndexFieldEditPresenter extends MyPresenterWidget<IndexFieldEditVie
         getView().setCaseSensitive(indexField.isCaseSensitive());
     }
 
-    public IndexField write() {
+    public LuceneIndexField write() {
         String name = getView().getFieldName();
         name = name.trim();
 
@@ -65,7 +65,7 @@ public class IndexFieldEditPresenter extends MyPresenterWidget<IndexFieldEditVie
             throw new ValidationException("An index field with this name already exists");
         }
 
-        return IndexField
+        return LuceneIndexField
                 .builder()
                 .type(getView().getType())
                 .fieldName(name)

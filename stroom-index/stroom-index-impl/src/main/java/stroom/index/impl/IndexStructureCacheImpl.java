@@ -20,8 +20,8 @@ package stroom.index.impl;
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.LoadingStroomCache;
 import stroom.docref.DocRef;
-import stroom.index.shared.IndexDoc;
-import stroom.index.shared.IndexField;
+import stroom.index.shared.LuceneIndexDoc;
+import stroom.index.shared.LuceneIndexField;
 import stroom.index.shared.IndexFieldsMap;
 import stroom.search.extraction.IndexStructure;
 import stroom.search.extraction.IndexStructureCache;
@@ -58,13 +58,13 @@ public class IndexStructureCacheImpl implements IndexStructureCache, Clearable {
             throw new NullPointerException("Null key supplied");
         }
 
-        final IndexDoc loaded = indexStore.readDocument(docRef);
+        final LuceneIndexDoc loaded = indexStore.readDocument(docRef);
         if (loaded == null) {
             throw new NullPointerException("No index can be found for: " + docRef);
         }
 
         // Create a map of index fields keyed by name.
-        List<IndexField> indexFields = loaded.getFields();
+        List<LuceneIndexField> indexFields = loaded.getFields();
         if (indexFields == null) {
             indexFields = new ArrayList<>();
         }

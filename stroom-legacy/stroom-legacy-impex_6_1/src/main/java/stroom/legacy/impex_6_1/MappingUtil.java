@@ -1,7 +1,7 @@
 package stroom.legacy.impex_6_1;
 
 import stroom.index.shared.AnalyzerType;
-import stroom.index.shared.IndexField;
+import stroom.index.shared.LuceneIndexField;
 import stroom.index.shared.OldIndexFieldType;
 import stroom.query.api.v2.Column;
 import stroom.query.api.v2.ConditionalFormattingRule;
@@ -636,7 +636,7 @@ public final class MappingUtil {
                 value.getTo());
     }
 
-    public static List<stroom.index.shared.IndexField> map(stroom.legacy.model_6_1.IndexFields value) {
+    public static List<LuceneIndexField> map(stroom.legacy.model_6_1.IndexFields value) {
         if (value == null) {
             return null;
         }
@@ -644,7 +644,7 @@ public final class MappingUtil {
         return mapList(value.getIndexFields(), MappingUtil::map);
     }
 
-    public static stroom.index.shared.IndexField map(stroom.legacy.model_6_1.IndexField value) {
+    public static LuceneIndexField map(stroom.legacy.model_6_1.IndexField value) {
         if (value == null) {
             return null;
         }
@@ -663,7 +663,7 @@ public final class MappingUtil {
         final boolean termPositions = value.isTermPositions();
         final boolean caseSensitive = value.isCaseSensitive();
 
-        return new IndexField(
+        return new LuceneIndexField(
                 null,
                 indexFieldType,
                 fieldName,

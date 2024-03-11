@@ -11,7 +11,7 @@ import stroom.feed.api.FeedStore;
 import stroom.index.impl.IndexShardManager;
 import stroom.index.impl.IndexShardManager.IndexShardAction;
 import stroom.index.shared.FindIndexShardCriteria;
-import stroom.index.shared.IndexDoc;
+import stroom.index.shared.LuceneIndexDoc;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.FindMetaCriteria;
@@ -153,7 +153,7 @@ public class AnalyticsDataSetup {
         final DocRef indexDocRef = commonTestScenarioCreator.createIndex(
                 "Test index",
                 List.of(),
-                IndexDoc.DEFAULT_MAX_DOCS_PER_SHARD);
+                LuceneIndexDoc.DEFAULT_MAX_DOCS_PER_SHARD);
 
         // Create index pipeline.
         final DocRef indexPipeline = storeCreationTool.getIndexPipeline(

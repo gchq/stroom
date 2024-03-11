@@ -3,7 +3,7 @@ package stroom.core.meta;
 import stroom.docref.DocRef;
 import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.feed.api.FeedStore;
-import stroom.index.shared.IndexDoc;
+import stroom.index.shared.LuceneIndexDoc;
 import stroom.index.shared.IndexShardFields;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.MetaFields;
@@ -61,7 +61,7 @@ public class MetaSuggestionsQueryHandlerImpl implements MetaSuggestionsQueryHand
 
     private final Map<String, Function<String, List<String>>> indexShardsFieldNameToFunctionMap = Map.of(
             IndexShardFields.FIELD_INDEX.getName(), filter ->
-                    getNonUniqueDocRefNames(IndexDoc.DOCUMENT_TYPE, filter));
+                    getNonUniqueDocRefNames(LuceneIndexDoc.DOCUMENT_TYPE, filter));
 
     private final Map<String, Function<String, List<String>>> processorTaskFieldNameToFunctionMap = Map.of(
             ProcessorTaskFields.PIPELINE_NAME.getName(), filter ->

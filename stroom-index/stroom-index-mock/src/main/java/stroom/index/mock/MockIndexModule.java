@@ -27,7 +27,7 @@ import stroom.index.impl.IndexStructureCacheImpl;
 import stroom.index.impl.IndexVolumeGroupService;
 import stroom.index.impl.IndexVolumeService;
 import stroom.index.impl.Indexer;
-import stroom.index.shared.IndexDoc;
+import stroom.index.shared.LuceneIndexDoc;
 import stroom.search.extraction.IndexStructureCache;
 import stroom.util.guice.GuiceUtil;
 
@@ -51,6 +51,6 @@ public class MockIndexModule extends AbstractModule {
                 .addBinding(IndexStoreImpl.class);
 
         DocumentActionHandlerBinder.create(binder())
-                .bind(IndexDoc.DOCUMENT_TYPE, IndexStoreImpl.class);
+                .bind(LuceneIndexDoc.DOCUMENT_TYPE, IndexStoreImpl.class);
     }
 }

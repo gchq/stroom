@@ -5,7 +5,7 @@ import stroom.index.impl.IndexShardDao;
 import stroom.index.impl.IndexVolumeDao;
 import stroom.index.impl.IndexVolumeGroupDao;
 import stroom.index.shared.AllPartition;
-import stroom.index.shared.IndexDoc;
+import stroom.index.shared.LuceneIndexDoc;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
 import stroom.index.shared.IndexVolume;
@@ -88,7 +88,7 @@ class TestIndexShardDaoImpl {
         final DocRef index = DocRef.builder()
                 .uuid(UUID.randomUUID().toString())
                 .name(TestData.createIndexName())
-                .type(IndexDoc.DOCUMENT_TYPE)
+                .type(LuceneIndexDoc.DOCUMENT_TYPE)
                 .build();
         final String nodeName = TestData.createNodeName();
 

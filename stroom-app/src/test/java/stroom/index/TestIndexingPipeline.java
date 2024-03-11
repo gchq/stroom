@@ -24,8 +24,8 @@ import stroom.index.impl.IndexStore;
 import stroom.index.mock.MockIndexShardWriter;
 import stroom.index.mock.MockIndexShardWriterCache;
 import stroom.index.shared.AnalyzerType;
-import stroom.index.shared.IndexDoc;
-import stroom.index.shared.IndexField;
+import stroom.index.shared.LuceneIndexDoc;
+import stroom.index.shared.LuceneIndexField;
 import stroom.index.shared.IndexFields;
 import stroom.index.shared.IndexShardKey;
 import stroom.meta.shared.Meta;
@@ -105,20 +105,20 @@ class TestIndexingPipeline extends AbstractProcessIntegrationTest {
             xsltDoc.setData(StreamUtil.streamToString(StroomPipelineTestFileUtil.getInputStream(SAMPLE_INDEX_XSLT)));
             xsltStore.writeDocument(xsltDoc);
 
-            final List<IndexField> indexFields = IndexFields.createStreamIndexFields();
+            final List<LuceneIndexField> indexFields = IndexFields.createStreamIndexFields();
             // indexFields.add(IndexField.createIdField(IndexConstants.ID));
             // indexFields.add(IndexField.createIdField(IndexConstants.EVENT_ID));
-            indexFields.add(IndexField.createDateField("EventTime"));
-            indexFields.add(IndexField.createField("UserId", AnalyzerType.KEYWORD));
-            indexFields.add(IndexField.createField("Action"));
-            indexFields.add(IndexField.createField("Generator"));
-            indexFields.add(IndexField.createNumericField("DeviceLocationFloor"));
-            indexFields.add(IndexField.createField("DeviceHostName"));
-            indexFields.add(IndexField.createField("ProcessCommand"));
+            indexFields.add(LuceneIndexField.createDateField("EventTime"));
+            indexFields.add(LuceneIndexField.createField("UserId", AnalyzerType.KEYWORD));
+            indexFields.add(LuceneIndexField.createField("Action"));
+            indexFields.add(LuceneIndexField.createField("Generator"));
+            indexFields.add(LuceneIndexField.createNumericField("DeviceLocationFloor"));
+            indexFields.add(LuceneIndexField.createField("DeviceHostName"));
+            indexFields.add(LuceneIndexField.createField("ProcessCommand"));
 
             // Setup the target index
             final DocRef indexRef = indexStore.createDocument("Test index");
-            IndexDoc index = indexStore.readDocument(indexRef);
+            LuceneIndexDoc index = indexStore.readDocument(indexRef);
             index.setFields(indexFields);
             index = indexStore.writeDocument(index);
 

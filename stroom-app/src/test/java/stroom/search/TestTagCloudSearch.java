@@ -21,7 +21,7 @@ package stroom.search;
 import stroom.docref.DocRef;
 import stroom.expression.api.DateTimeSettings;
 import stroom.index.impl.IndexStore;
-import stroom.index.shared.IndexDoc;
+import stroom.index.shared.LuceneIndexDoc;
 import stroom.query.api.v2.Column;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm.Condition;
@@ -73,7 +73,7 @@ class TestTagCloudSearch extends AbstractSearchTest {
         final String componentId = "table-1";
 
         final DocRef indexRef = indexStore.list().get(0);
-        final IndexDoc index = indexStore.readDocument(indexRef);
+        final LuceneIndexDoc index = indexStore.readDocument(indexRef);
         assertThat(index).as("Index is null").isNotNull();
 
         // Create text column.

@@ -4,7 +4,7 @@ import stroom.dictionary.api.WordListProvider;
 import stroom.expression.api.DateTimeSettings;
 import stroom.index.impl.HighlightProvider;
 import stroom.index.lucene553.SearchExpressionQueryBuilder.SearchExpressionQuery;
-import stroom.index.shared.IndexDoc;
+import stroom.index.shared.LuceneIndexDoc;
 import stroom.index.shared.IndexFieldsMap;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.search.impl.SearchConfig;
@@ -36,7 +36,7 @@ class Lucene553HighlightProvider implements HighlightProvider {
      * highlighting.
      */
     @Override
-    public Set<String> getHighlights(final IndexDoc index,
+    public Set<String> getHighlights(final LuceneIndexDoc index,
                                      final ExpressionOperator expression,
                                      final DateTimeSettings dateTimeSettings) {
         Set<String> highlights = Collections.emptySet();

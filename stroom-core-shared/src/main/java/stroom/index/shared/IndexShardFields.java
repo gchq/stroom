@@ -32,9 +32,9 @@ public class IndexShardFields {
     public static final String FIELD_NAME_LAST_COMMIT = "Last Commit";
 
     public static final TextField FIELD_NODE = new TextField(FIELD_NAME_NODE);
-    public static final DocRefField FIELD_INDEX = DocRefField.byUuid(IndexDoc.DOCUMENT_TYPE, FIELD_NAME_INDEX);
+    public static final DocRefField FIELD_INDEX = DocRefField.byUuid(LuceneIndexDoc.DOCUMENT_TYPE, FIELD_NAME_INDEX);
     public static final DocRefField FIELD_INDEX_NAME = DocRefField.byNonUniqueName(
-            IndexDoc.DOCUMENT_TYPE, FIELD_NAME_INDEX_NAME);
+            LuceneIndexDoc.DOCUMENT_TYPE, FIELD_NAME_INDEX_NAME);
     public static final TextField FIELD_VOLUME_PATH = new TextField(FIELD_NAME_VOLUME_PATH);
     public static final TextField FIELD_VOLUME_GROUP = new TextField(FIELD_NAME_VOLUME_GROUP);
     public static final TextField FIELD_PARTITION = new TextField(FIELD_NAME_PARTITION);

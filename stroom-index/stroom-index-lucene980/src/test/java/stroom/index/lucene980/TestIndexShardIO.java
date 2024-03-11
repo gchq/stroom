@@ -21,8 +21,8 @@ import stroom.index.impl.IndexDocument;
 import stroom.index.impl.IndexShardKeyUtil;
 import stroom.index.impl.IndexShardUtil;
 import stroom.index.impl.IndexShardWriter;
-import stroom.index.shared.IndexDoc;
-import stroom.index.shared.IndexField;
+import stroom.index.shared.LuceneIndexDoc;
+import stroom.index.shared.LuceneIndexField;
 import stroom.index.shared.IndexFields;
 import stroom.index.shared.IndexFieldsMap;
 import stroom.index.shared.IndexShard;
@@ -56,17 +56,17 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TestIndexShardIO extends StroomUnitTest {
 
     //    private static final IndexShardService INDEX_SHARD_SERVICE = new MockIndexShardService();
-    private static final List<IndexField> INDEX_FIELDS = IndexFields.createStreamIndexFields();
+    private static final List<LuceneIndexField> INDEX_FIELDS = IndexFields.createStreamIndexFields();
     //    private static final IndexShardWriterCache INDEX_SHARD_WRITER_CACHE = new MockIndexShardWriterCache();
 //    private static final IndexShardManager INDEX_SHARD_MANAGER = new MockIndexShardManager();
     private static final IndexStructure INDEX_CONFIG;
 
     static {
-        INDEX_FIELDS.add(IndexField.createField("Id"));
-        INDEX_FIELDS.add(IndexField.createField("Test"));
-        INDEX_FIELDS.add(IndexField.createField("Id2"));
+        INDEX_FIELDS.add(LuceneIndexField.createField("Id"));
+        INDEX_FIELDS.add(LuceneIndexField.createField("Test"));
+        INDEX_FIELDS.add(LuceneIndexField.createField("Id2"));
 
-        final IndexDoc index = new IndexDoc();
+        final LuceneIndexDoc index = new LuceneIndexDoc();
         index.setName("Test");
         INDEX_CONFIG = new IndexStructure(index, INDEX_FIELDS, new IndexFieldsMap(INDEX_FIELDS));
     }
@@ -81,9 +81,9 @@ class TestIndexShardIO extends StroomUnitTest {
 
     private IndexDocument buildDocument(final int id) {
         final IndexDocument d = new IndexDocument();
-        d.add(new FieldValue(IndexField.createIdField("Id"), ValInteger.create(id)));
-        d.add(new FieldValue(IndexField.createField("Test"), ValString.create("Test")));
-        d.add(new FieldValue(IndexField.createIdField("Id2"), ValInteger.create(id)));
+        d.add(new FieldValue(LuceneIndexField.createIdField("Id"), ValInteger.create(id)));
+        d.add(new FieldValue(LuceneIndexField.createField("Test"), ValString.create("Test")));
+        d.add(new FieldValue(LuceneIndexField.createIdField("Id2"), ValInteger.create(id)));
 
         return d;
     }
@@ -99,7 +99,7 @@ class TestIndexShardIO extends StroomUnitTest {
     void testOpenCloseManyWrite() throws IOException {
         final IndexVolume volume = new IndexVolume();
         volume.setPath(FileUtil.getCanonicalPath(Files.createTempDirectory("stroom")));
-        final IndexDoc index = new IndexDoc();
+        final LuceneIndexDoc index = new LuceneIndexDoc();
         index.setUuid(UUID.randomUUID().toString());
         index.setName("Test");
 
@@ -129,7 +129,7 @@ class TestIndexShardIO extends StroomUnitTest {
 
     @Test
     void testOpenCloseManyReadWrite() throws IOException {
-        final IndexDoc index = new IndexDoc();
+        final LuceneIndexDoc index = new LuceneIndexDoc();
         index.setUuid(UUID.randomUUID().toString());
         index.setName("Test");
 
@@ -309,7 +309,7 @@ class TestIndexShardIO extends StroomUnitTest {
 
     @Test
     void testFailToCloseAndReopen() throws IOException {
-        final IndexDoc index = new IndexDoc();
+        final LuceneIndexDoc index = new LuceneIndexDoc();
         index.setUuid(UUID.randomUUID().toString());
         index.setName("Test");
 
@@ -342,7 +342,7 @@ class TestIndexShardIO extends StroomUnitTest {
 
     @Test
     void testFailToCloseFlushAndReopen() throws IOException {
-        final IndexDoc index = new IndexDoc();
+        final LuceneIndexDoc index = new LuceneIndexDoc();
         index.setUuid(UUID.randomUUID().toString());
         index.setName("Test");
 
@@ -375,7 +375,7 @@ class TestIndexShardIO extends StroomUnitTest {
 
     @Test
     void testWriteLoadsNoFlush() throws IOException {
-        final IndexDoc index = new IndexDoc();
+        final LuceneIndexDoc index = new LuceneIndexDoc();
         index.setUuid(UUID.randomUUID().toString());
         index.setName("Test");
 

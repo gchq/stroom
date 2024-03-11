@@ -23,7 +23,7 @@ import stroom.datasource.api.v2.FindFieldInfoCriteria;
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.index.shared.FindIndexShardCriteria;
-import stroom.index.shared.IndexDoc;
+import stroom.index.shared.LuceneIndexDoc;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardFields;
 import stroom.index.shared.IndexShardKey;
@@ -91,8 +91,8 @@ public class IndexShardServiceImpl implements IndexShardService, Searchable {
                                        final String ownerNodeName) {
         return securityContext.secureResult(PermissionNames.MANAGE_INDEX_SHARDS_PERMISSION, () -> {
             final IndexStructure indexStructure = indexStructureCache.get(
-                    new DocRef(IndexDoc.DOCUMENT_TYPE, indexShardKey.getIndexUuid()));
-            final IndexDoc index = indexStructure.getIndex();
+                    new DocRef(LuceneIndexDoc.DOCUMENT_TYPE, indexShardKey.getIndexUuid()));
+            final LuceneIndexDoc index = indexStructure.getIndex();
             final IndexVolume indexVolume = indexVolumeService.selectVolume(index.getVolumeGroupName(), ownerNodeName);
 
             return indexShardDao.create(

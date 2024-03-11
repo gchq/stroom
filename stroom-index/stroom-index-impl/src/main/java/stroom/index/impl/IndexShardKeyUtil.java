@@ -18,7 +18,7 @@ package stroom.index.impl;
 
 
 import stroom.index.shared.AllPartition;
-import stroom.index.shared.IndexDoc;
+import stroom.index.shared.LuceneIndexDoc;
 import stroom.index.shared.IndexShardKey;
 import stroom.index.shared.Partition;
 import stroom.util.concurrent.AtomicSequence;
@@ -31,7 +31,7 @@ public final class IndexShardKeyUtil {
         // Utility class
     }
 
-    public static IndexShardKey createTestKey(final IndexDoc index) {
+    public static IndexShardKey createTestKey(final LuceneIndexDoc index) {
         final int shardNo = SEQUENCE.next(index.getShardsPerPartition());
 
         return IndexShardKey
@@ -42,7 +42,7 @@ public final class IndexShardKeyUtil {
                 .build();
     }
 
-    public static IndexShardKey createKey(final IndexDoc index,
+    public static IndexShardKey createKey(final LuceneIndexDoc index,
                                           final Partition partition) {
         final int shardNo = SEQUENCE.next(index.getShardsPerPartition());
         return IndexShardKey

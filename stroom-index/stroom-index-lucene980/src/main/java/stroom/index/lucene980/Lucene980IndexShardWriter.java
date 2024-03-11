@@ -26,7 +26,7 @@ import stroom.index.impl.UncheckedLockObtainException;
 import stroom.index.lucene980.analyser.AnalyzerFactory;
 import stroom.index.shared.AnalyzerType;
 import stroom.index.shared.IndexException;
-import stroom.index.shared.IndexField;
+import stroom.index.shared.LuceneIndexField;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
 import stroom.search.extraction.FieldValue;
@@ -310,7 +310,7 @@ class Lucene980IndexShardWriter implements IndexShardWriter {
     public void updateIndexStructure(final IndexStructure indexStructure) {
         this.maxDocumentCount = indexStructure.getIndex().getMaxDocsPerShard();
         if (indexStructure.getIndexFields() != null) {
-            for (final IndexField indexField : indexStructure.getIndexFields()) {
+            for (final LuceneIndexField indexField : indexStructure.getIndexFields()) {
                 // Add the field analyser.
                 final Analyzer analyzer = AnalyzerFactory.create(indexField.getAnalyzerType(),
                         indexField.isCaseSensitive());

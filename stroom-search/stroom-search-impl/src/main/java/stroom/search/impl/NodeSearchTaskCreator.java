@@ -4,7 +4,7 @@ import stroom.index.impl.IndexShardService;
 import stroom.index.impl.IndexStore;
 import stroom.index.impl.TimePartitionFactory;
 import stroom.index.shared.FindIndexShardCriteria;
-import stroom.index.shared.IndexDoc;
+import stroom.index.shared.LuceneIndexDoc;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.index.shared.TimePartition;
@@ -90,7 +90,7 @@ public class NodeSearchTaskCreator implements NodeTaskCreator {
                                        final FederatedSearchTask task,
                                        final Query query) {
         // Get the index doc.
-        final IndexDoc indexDoc = indexStore.readDocument(query.getDataSource());
+        final LuceneIndexDoc indexDoc = indexStore.readDocument(query.getDataSource());
         if (indexDoc == null) {
             throw new SearchException("Index not found");
         }

@@ -18,8 +18,8 @@ package stroom.index.impl;
 
 import stroom.docref.DocRef;
 import stroom.index.shared.AllPartition;
-import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexShardKey;
+import stroom.index.shared.LuceneIndexField;
 import stroom.index.shared.Partition;
 import stroom.index.shared.TimePartition;
 import stroom.pipeline.LocationFactoryProxy;
@@ -79,7 +79,7 @@ class DynamicIndexingFilter extends AbstractFieldFilter {
     private final IndexStructureCache indexStructureCache;
     private final CharBuffer debugBuffer = new CharBuffer(10);
     private DocRef indexRef;
-    private stroom.index.shared.IndexDoc index;
+    private stroom.index.shared.LuceneIndexDoc index;
     private final TimePartitionFactory timePartitionFactory = new TimePartitionFactory();
     private final TreeMap<Long, TimePartition> timePartitionTreeMap = new TreeMap<>();
     private final Map<Partition, IndexShardKey> indexShardKeyMap = new HashMap<>();
@@ -89,7 +89,7 @@ class DynamicIndexingFilter extends AbstractFieldFilter {
     private Long currentEventTime;
     private Partition defaultPartition;
 
-    private final Set<IndexField> foundFields = new HashSet<>();
+    private final Set<LuceneIndexField> foundFields = new HashSet<>();
 
     @Inject
     DynamicIndexingFilter(final MetaHolder metaHolder,
@@ -161,13 +161,13 @@ class DynamicIndexingFilter extends AbstractFieldFilter {
             indexStructure.getIndexFields().forEach(foundFields::remove);
             if (!foundFields.isEmpty()) {
                 LOGGER.info("Updating fields for: " + indexRef);
-                final stroom.index.shared.IndexDoc indexDoc = indexStore.readDocument(indexRef);
+                final stroom.index.shared.LuceneIndexDoc indexDoc = indexStore.readDocument(indexRef);
                 if (indexDoc.getFields() != null) {
                     foundFields.addAll(indexDoc.getFields());
                 }
                 indexDoc.setFields(foundFields
                         .stream()
-                        .sorted(Comparator.comparing(IndexField::getFieldName))
+                        .sorted(Comparator.comparing(LuceneIndexField::getFieldName))
                         .toList());
                 indexStore.writeDocument(indexDoc);
                 foundFields.clear();
@@ -192,7 +192,7 @@ class DynamicIndexingFilter extends AbstractFieldFilter {
     protected void processFields(final List<FieldValue> fieldValues) {
         final IndexDocument document = new IndexDocument();
         for (final FieldValue fieldValue : fieldValues) {
-            final IndexField indexField = fieldValue.field();
+            final LuceneIndexField indexField = fieldValue.field();
             foundFields.add(indexField);
             if (foundFields.size() > 10_000) {
                 flushFields();
@@ -253,7 +253,7 @@ class DynamicIndexingFilter extends AbstractFieldFilter {
     }
 
     @PipelineProperty(description = "The index to send records to.", displayPriority = 1)
-    @PipelinePropertyDocRef(types = stroom.index.shared.IndexDoc.DOCUMENT_TYPE)
+    @PipelinePropertyDocRef(types = stroom.index.shared.LuceneIndexDoc.DOCUMENT_TYPE)
     public void setIndex(final DocRef indexRef) {
         this.indexRef = indexRef;
     }

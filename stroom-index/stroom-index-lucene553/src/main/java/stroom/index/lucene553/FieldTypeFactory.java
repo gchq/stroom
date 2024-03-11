@@ -16,7 +16,7 @@
 
 package stroom.index.lucene553;
 
-import stroom.index.shared.IndexField;
+import stroom.index.shared.LuceneIndexField;
 
 import org.apache.lucene553.document.FieldType;
 import org.apache.lucene553.document.FieldType.NumericType;
@@ -43,7 +43,7 @@ final class FieldTypeFactory {
         return fieldType;
     }
 
-    static FieldType create(final IndexField indexField) {
+    static FieldType create(final LuceneIndexField indexField) {
         final FieldType fieldType = new FieldType();
 
         // Set the index options.

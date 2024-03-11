@@ -23,7 +23,7 @@ import stroom.docref.DocRef;
 import stroom.expression.api.DateTimeSettings;
 import stroom.index.lucene553.analyser.AnalyzerFactory;
 import stroom.index.shared.AnalyzerType;
-import stroom.index.shared.IndexField;
+import stroom.index.shared.LuceneIndexField;
 import stroom.index.shared.IndexFieldsMap;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
@@ -246,7 +246,7 @@ class SearchExpressionQueryBuilder {
         if (field == null || field.isEmpty()) {
             throw new SearchException("Field not set");
         }
-        final IndexField indexField = indexFieldsMap.get(field);
+        final LuceneIndexField indexField = indexFieldsMap.get(field);
         if (indexField == null) {
             return new MatchNoDocsQuery();
         }
@@ -704,7 +704,7 @@ class SearchExpressionQueryBuilder {
 
     private Query getContains(final String fieldName,
                               final String value,
-                              final IndexField indexField,
+                              final LuceneIndexField indexField,
                               final Set<String> terms) {
         final Query query = getSubQuery(indexField, value, terms, false);
         return modifyOccurrence(query, Occur.MUST);
@@ -712,7 +712,7 @@ class SearchExpressionQueryBuilder {
 
     private Query getIn(final String fieldName,
                         final String value,
-                        final IndexField indexField,
+                        final LuceneIndexField indexField,
                         final Set<String> terms) {
         final Query query = getSubQuery(indexField, value, terms, true);
         return modifyOccurrence(query, Occur.SHOULD);
@@ -733,7 +733,7 @@ class SearchExpressionQueryBuilder {
 
     private Query getDictionary(final String fieldName,
                                 final DocRef docRef,
-                                final IndexField indexField,
+                                final LuceneIndexField indexField,
                                 final Set<String> terms) {
         final String[] wordArr = loadWords(docRef);
         final Builder builder = new Builder();
@@ -783,7 +783,7 @@ class SearchExpressionQueryBuilder {
         };
     }
 
-    private Query getSubQuery(final IndexField field, final String value,
+    private Query getSubQuery(final LuceneIndexField field, final String value,
                               final Set<String> terms, final boolean in) {
         Query query = null;
 

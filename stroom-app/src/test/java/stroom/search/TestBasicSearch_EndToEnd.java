@@ -25,7 +25,7 @@ import stroom.index.impl.IndexShardService;
 import stroom.index.impl.IndexShardUtil;
 import stroom.index.impl.IndexStore;
 import stroom.index.shared.FindIndexShardCriteria;
-import stroom.index.shared.IndexDoc;
+import stroom.index.shared.LuceneIndexDoc;
 import stroom.index.shared.IndexShard;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
@@ -69,7 +69,7 @@ class TestBasicSearch_EndToEnd extends AbstractCoreIntegrationTest {
     @Test
     void testFindIndexedFields() {
         final DocRef indexRef = indexStore.list().get(0);
-        final IndexDoc index = indexStore.readDocument(indexRef);
+        final LuceneIndexDoc index = indexStore.readDocument(indexRef);
 
         // Create a map of index fields keyed by name.
         final Map<String, QueryField> dataSourceFieldsMap = IndexDataSourceFieldUtil.getDataSourceFields(index)

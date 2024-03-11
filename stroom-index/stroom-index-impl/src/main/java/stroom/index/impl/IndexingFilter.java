@@ -19,7 +19,8 @@ package stroom.index.impl;
 import stroom.datasource.api.v2.FieldType;
 import stroom.docref.DocRef;
 import stroom.index.shared.AllPartition;
-import stroom.index.shared.IndexField;
+import stroom.index.shared.LuceneIndexDoc;
+import stroom.index.shared.LuceneIndexField;
 import stroom.index.shared.IndexFieldsMap;
 import stroom.index.shared.IndexShardKey;
 import stroom.index.shared.Partition;
@@ -88,7 +89,7 @@ class IndexingFilter extends AbstractXMLFilter {
     private final CharBuffer debugBuffer = new CharBuffer(10);
     private IndexFieldsMap indexFieldsMap;
     private DocRef indexRef;
-    private stroom.index.shared.IndexDoc index;
+    private LuceneIndexDoc index;
     private final TimePartitionFactory timePartitionFactory = new TimePartitionFactory();
     private final TreeMap<Long, TimePartition> timePartitionTreeMap = new TreeMap<>();
     private final Map<Partition, IndexShardKey> indexShardKeyMap = new HashMap<>();
@@ -177,7 +178,7 @@ class IndexingFilter extends AbstractXMLFilter {
 
                 if (!name.isEmpty() && !value.isEmpty()) {
                     // See if we can get this field.
-                    final IndexField indexField = indexFieldsMap.get(name);
+                    final LuceneIndexField indexField = indexFieldsMap.get(name);
                     if (indexField != null) {
                         // Index the current content if we are to store or index
                         // this field.
@@ -245,7 +246,7 @@ class IndexingFilter extends AbstractXMLFilter {
         }
     }
 
-    private void processIndexContent(final IndexField indexField, final String value) {
+    private void processIndexContent(final LuceneIndexField indexField, final String value) {
         try {
             if (currentEventTime == null &&
                     FieldType.DATE.equals(indexField.getType()) &&
@@ -341,7 +342,7 @@ class IndexingFilter extends AbstractXMLFilter {
     }
 
     @PipelineProperty(description = "The index to send records to.", displayPriority = 1)
-    @PipelinePropertyDocRef(types = stroom.index.shared.IndexDoc.DOCUMENT_TYPE)
+    @PipelinePropertyDocRef(types = LuceneIndexDoc.DOCUMENT_TYPE)
     public void setIndex(final DocRef indexRef) {
         this.indexRef = indexRef;
     }

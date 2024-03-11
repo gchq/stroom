@@ -71,7 +71,7 @@ import java.util.Objects;
         "volumeGroupName",
         "defaultExtractionPipeline"})
 @JsonInclude(Include.NON_NULL)
-public class IndexDoc extends Doc {
+public class LuceneIndexDoc extends Doc {
 
     public static final int DEFAULT_MAX_DOCS_PER_SHARD = 1000000000;
     private static final int DEFAULT_SHARDS_PER_PARTITION = 1;
@@ -95,7 +95,7 @@ public class IndexDoc extends Doc {
     @JsonProperty
     private Integer retentionDayAge;
     @JsonProperty
-    private List<IndexField> fields;
+    private List<LuceneIndexField> fields;
     @JsonProperty
     private String timeField;
     @JsonProperty
@@ -103,7 +103,7 @@ public class IndexDoc extends Doc {
     @JsonProperty
     private DocRef defaultExtractionPipeline;
 
-    public IndexDoc() {
+    public LuceneIndexDoc() {
         maxDocsPerShard = DEFAULT_MAX_DOCS_PER_SHARD;
         partitionBy = DEFAULT_PARTITION_BY;
         partitionSize = DEFAULT_PARTITION_SIZE;
@@ -112,24 +112,24 @@ public class IndexDoc extends Doc {
     }
 
     @JsonCreator
-    public IndexDoc(@JsonProperty("type") final String type,
-                    @JsonProperty("uuid") final String uuid,
-                    @JsonProperty("name") final String name,
-                    @JsonProperty("version") final String version,
-                    @JsonProperty("createTimeMs") final Long createTimeMs,
-                    @JsonProperty("updateTimeMs") final Long updateTimeMs,
-                    @JsonProperty("createUser") final String createUser,
-                    @JsonProperty("updateUser") final String updateUser,
-                    @JsonProperty("description") final String description,
-                    @JsonProperty("maxDocsPerShard") final Integer maxDocsPerShard,
-                    @JsonProperty("partitionBy") final PartitionBy partitionBy,
-                    @JsonProperty("partitionSize") final Integer partitionSize,
-                    @JsonProperty("shardsPerPartition") final Integer shardsPerPartition,
-                    @JsonProperty("retentionDayAge") final Integer retentionDayAge,
-                    @JsonProperty("fields") final List<IndexField> fields,
-                    @JsonProperty("timeField") final String timeField,
-                    @JsonProperty("volumeGroupName") final String volumeGroupName,
-                    @JsonProperty("defaultExtractionPipeline") final DocRef defaultExtractionPipeline) {
+    public LuceneIndexDoc(@JsonProperty("type") final String type,
+                          @JsonProperty("uuid") final String uuid,
+                          @JsonProperty("name") final String name,
+                          @JsonProperty("version") final String version,
+                          @JsonProperty("createTimeMs") final Long createTimeMs,
+                          @JsonProperty("updateTimeMs") final Long updateTimeMs,
+                          @JsonProperty("createUser") final String createUser,
+                          @JsonProperty("updateUser") final String updateUser,
+                          @JsonProperty("description") final String description,
+                          @JsonProperty("maxDocsPerShard") final Integer maxDocsPerShard,
+                          @JsonProperty("partitionBy") final PartitionBy partitionBy,
+                          @JsonProperty("partitionSize") final Integer partitionSize,
+                          @JsonProperty("shardsPerPartition") final Integer shardsPerPartition,
+                          @JsonProperty("retentionDayAge") final Integer retentionDayAge,
+                          @JsonProperty("fields") final List<LuceneIndexField> fields,
+                          @JsonProperty("timeField") final String timeField,
+                          @JsonProperty("volumeGroupName") final String volumeGroupName,
+                          @JsonProperty("defaultExtractionPipeline") final DocRef defaultExtractionPipeline) {
         super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.maxDocsPerShard = maxDocsPerShard;
@@ -220,14 +220,14 @@ public class IndexDoc extends Doc {
         this.retentionDayAge = retentionDayAge;
     }
 
-    public List<IndexField> getFields() {
+    public List<LuceneIndexField> getFields() {
         if (fields == null) {
             fields = new ArrayList<>();
         }
         return fields;
     }
 
-    public void setFields(final List<IndexField> fields) {
+    public void setFields(final List<LuceneIndexField> fields) {
         this.fields = fields;
     }
 
@@ -266,10 +266,10 @@ public class IndexDoc extends Doc {
         if (!super.equals(o)) {
             return false;
         }
-        final IndexDoc indexDoc = (IndexDoc) o;
-        return maxDocsPerShard == indexDoc.maxDocsPerShard &&
-                partitionSize == indexDoc.partitionSize &&
-                shardsPerPartition == indexDoc.shardsPerPartition &&
+        final LuceneIndexDoc indexDoc = (LuceneIndexDoc) o;
+        return Objects.equals(maxDocsPerShard, indexDoc.maxDocsPerShard) &&
+                Objects.equals(partitionSize, indexDoc.partitionSize) &&
+                Objects.equals(shardsPerPartition, indexDoc.shardsPerPartition) &&
                 Objects.equals(description, indexDoc.description) &&
                 partitionBy == indexDoc.partitionBy &&
                 Objects.equals(timeField, indexDoc.timeField) &&
