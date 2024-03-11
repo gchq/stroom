@@ -35,7 +35,6 @@ def workDir = "${gwtBuildDir}/work"
 def deployDir = "${gwtBuildDir}/deploy"
 def extraDir = "${gwtBuildDir}/extra"
 
-
 def allSourceDir = "${gwtBuildDir}/all-source"
 def transformedSourceDir = "${gwtBuildDir}/transformed-source"
 def transformedBuildDir = "${gwtBuildDir}/transformed-build"
@@ -212,6 +211,7 @@ tasks.register('makeGwtSourceDirs') {
     doLast {
         def rsyncInputDir = "${gwtBuildDir}/rsync-input"
         delete rsyncInputDir
+        new File(rsyncInputDir).mkdirs()
 
         def start = Instant.now()
 
@@ -273,7 +273,6 @@ tasks.register('makeGwtSourceDirs') {
 tasks.register('gwtCompile', JavaExec) {
     dependsOn classes
     group "gwt"
-    dependsOn 'gwtClean'
     dependsOn 'makeGwtSourceDirs'
 
     def module = 'stroom.app.App'
@@ -483,3 +482,6 @@ tasks.register('gwtClean') {
         new File(gwtTmpDir).mkdirs()
     }
 }
+
+tasks.clean.dependsOn(tasks.gwtClean)
+
