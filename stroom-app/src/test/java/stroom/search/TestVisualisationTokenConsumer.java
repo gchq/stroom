@@ -61,7 +61,7 @@ public class TestVisualisationTokenConsumer extends AbstractCoreIntegrationTest 
                 eval count = count()
                 group by EventTime
                 select EventTime, count
-                vis as LineChart (x = EventTime, y = count)
+                show LineChart (x = EventTime, y = count)
                 """;
 
 
