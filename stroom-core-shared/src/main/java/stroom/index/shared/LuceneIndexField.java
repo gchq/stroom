@@ -17,18 +17,10 @@
 package stroom.index.shared;
 
 import stroom.datasource.api.v2.FieldType;
-import stroom.docref.HasDisplayValue;
-import stroom.query.api.v2.ExpressionTerm.Condition;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
 
 /**
  * <p>
@@ -36,91 +28,89 @@ import java.util.Objects;
  * </p>
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class LuceneIndexField implements HasDisplayValue, Comparable<LuceneIndexField>, Serializable {
+public class LuceneIndexField extends IndexField {
 
-    @JsonProperty
-    private final FieldType type;
     @Deprecated
     @JsonProperty("fieldType")
     private OldIndexFieldType fieldType;
-    @JsonProperty
-    private final String fieldName;
-    @JsonProperty
-    private final AnalyzerType analyzerType;
-    @JsonProperty
-    private final boolean indexed;
-    @JsonProperty
-    private final boolean stored;
-    @JsonProperty
-    private final boolean termPositions;
-    @JsonProperty
-    private final boolean caseSensitive;
+    @Deprecated
+    @JsonProperty("fieldName")
+    private String fieldName;
 
     @JsonCreator
-    public LuceneIndexField(@JsonProperty("type") final FieldType type,
+    public LuceneIndexField(@JsonProperty("name") final String name,
+                            @JsonProperty("type") final FieldType type,
+                            @Deprecated @JsonProperty("fieldName") final String fieldName,
                             @Deprecated @JsonProperty("fieldType") final OldIndexFieldType fieldType,
-                            @JsonProperty("fieldName") final String fieldName,
                             @JsonProperty("analyzerType") final AnalyzerType analyzerType,
                             @JsonProperty("indexed") final boolean indexed,
                             @JsonProperty("stored") final boolean stored,
                             @JsonProperty("termPositions") final boolean termPositions,
                             @JsonProperty("caseSensitive") final boolean caseSensitive) {
-        if (type == null && fieldType != null) {
-            this.type = convertLegacyType(fieldType);
-        } else {
-            this.type = type;
-        }
-        this.fieldName = fieldName;
-        this.analyzerType = analyzerType;
-        this.stored = stored;
-        this.indexed = indexed;
-        this.termPositions = termPositions;
-        this.caseSensitive = caseSensitive;
+        super(convertLegacyName(name, fieldName),
+                convertLegacyType(type, fieldType),
+                analyzerType,
+                indexed,
+                stored,
+                termPositions,
+                caseSensitive);
     }
 
-    private FieldType convertLegacyType(final OldIndexFieldType fieldType) {
-        switch (fieldType) {
-            case ID: {
-                return FieldType.ID;
-            }
-            case BOOLEAN_FIELD: {
-                return FieldType.BOOLEAN;
-            }
-            case INTEGER_FIELD: {
-                return FieldType.INTEGER;
-            }
-            case LONG_FIELD: {
-                return FieldType.LONG;
-            }
-            case FLOAT_FIELD: {
-                return FieldType.FLOAT;
-            }
-            case DOUBLE_FIELD: {
-                return FieldType.DOUBLE;
-            }
-            case DATE_FIELD: {
-                return FieldType.DATE;
-            }
-            case FIELD: {
-                return FieldType.TEXT;
-            }
-            case NUMERIC_FIELD: {
-                return FieldType.LONG;
-            }
+    private static String convertLegacyName(final String name, final String fieldName) {
+        if (name == null) {
+            return fieldName;
         }
-        return FieldType.TEXT;
+        return name;
+    }
+
+    private static FieldType convertLegacyType(final FieldType type, final OldIndexFieldType fieldType) {
+        if (type == null) {
+            if (fieldType != null) {
+                switch (fieldType) {
+                    case ID: {
+                        return FieldType.ID;
+                    }
+                    case BOOLEAN_FIELD: {
+                        return FieldType.BOOLEAN;
+                    }
+                    case INTEGER_FIELD: {
+                        return FieldType.INTEGER;
+                    }
+                    case LONG_FIELD: {
+                        return FieldType.LONG;
+                    }
+                    case FLOAT_FIELD: {
+                        return FieldType.FLOAT;
+                    }
+                    case DOUBLE_FIELD: {
+                        return FieldType.DOUBLE;
+                    }
+                    case DATE_FIELD: {
+                        return FieldType.DATE;
+                    }
+                    case FIELD: {
+                        return FieldType.TEXT;
+                    }
+                    case NUMERIC_FIELD: {
+                        return FieldType.LONG;
+                    }
+                }
+            }
+            return FieldType.TEXT;
+        }
+        return type;
     }
 
     public static LuceneIndexField createField(final String fieldName) {
         return new Builder()
-                .fieldName(fieldName)
+                .name(fieldName)
                 .analyzerType(AnalyzerType.ALPHA_NUMERIC)
                 .build();
     }
 
     public static LuceneIndexField createField(final String fieldName, final AnalyzerType analyzerType) {
         return new Builder()
-                .fieldName(fieldName)
+                .name(fieldName)
                 .analyzerType(analyzerType)
                 .build();
     }
@@ -128,7 +118,7 @@ public class LuceneIndexField implements HasDisplayValue, Comparable<LuceneIndex
     public static LuceneIndexField createField(final String fieldName, final AnalyzerType analyzerType,
                                                final boolean caseSensitive) {
         return new Builder()
-                .fieldName(fieldName)
+                .name(fieldName)
                 .analyzerType(analyzerType)
                 .caseSensitive(caseSensitive)
                 .build();
@@ -141,7 +131,7 @@ public class LuceneIndexField implements HasDisplayValue, Comparable<LuceneIndex
                                                final boolean indexed,
                                                final boolean termPositions) {
         return new Builder()
-                .fieldName(fieldName)
+                .name(fieldName)
                 .analyzerType(analyzerType)
                 .caseSensitive(caseSensitive)
                 .stored(stored)
@@ -153,7 +143,7 @@ public class LuceneIndexField implements HasDisplayValue, Comparable<LuceneIndex
     public static LuceneIndexField createNumericField(final String fieldName) {
         return new Builder()
                 .type(FieldType.LONG)
-                .fieldName(fieldName)
+                .name(fieldName)
                 .analyzerType(AnalyzerType.NUMERIC)
                 .build();
     }
@@ -161,7 +151,7 @@ public class LuceneIndexField implements HasDisplayValue, Comparable<LuceneIndex
     public static LuceneIndexField createIdField(final String fieldName) {
         return new Builder()
                 .type(FieldType.ID)
-                .fieldName(fieldName)
+                .name(fieldName)
                 .analyzerType(AnalyzerType.KEYWORD)
                 .stored(true)
                 .build();
@@ -170,141 +160,9 @@ public class LuceneIndexField implements HasDisplayValue, Comparable<LuceneIndex
     public static LuceneIndexField createDateField(final String fieldName) {
         return new Builder()
                 .type(FieldType.DATE)
-                .fieldName(fieldName)
+                .name(fieldName)
                 .analyzerType(AnalyzerType.ALPHA_NUMERIC)
                 .build();
-    }
-
-    public FieldType getType() {
-        return type;
-    }
-
-    //    @JsonProperty
-//    @Deprecated
-//    public OldIndexFieldType getFieldType() {
-//        if (fieldType == null) {
-//            return OldIndexFieldType.FIELD;
-//        }
-//
-//        return fieldType;
-//    }
-
-    public String getFieldName() {
-        return fieldName;
-    }
-
-    public AnalyzerType getAnalyzerType() {
-        if (analyzerType == null) {
-            return AnalyzerType.KEYWORD;
-        }
-        return analyzerType;
-    }
-
-    public boolean isCaseSensitive() {
-        return caseSensitive;
-    }
-
-    public boolean isStored() {
-        return stored;
-    }
-
-    public boolean isIndexed() {
-        return indexed;
-    }
-
-    public boolean isTermPositions() {
-        return termPositions;
-    }
-
-    @JsonIgnore
-    public List<Condition> getSupportedConditions() {
-        return getDefaultConditions();
-    }
-
-    @Override
-    @JsonIgnore
-    public String getDisplayValue() {
-        return fieldName;
-    }
-
-    @Override
-    public boolean equals(final Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        final LuceneIndexField that = (LuceneIndexField) o;
-        return stored == that.stored &&
-                indexed == that.indexed &&
-                termPositions == that.termPositions &&
-                caseSensitive == that.caseSensitive &&
-                fieldType == that.fieldType &&
-                Objects.equals(fieldName, that.fieldName) &&
-                analyzerType == that.analyzerType;
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(fieldType, fieldName, stored, indexed, termPositions, analyzerType, caseSensitive);
-    }
-
-    @Override
-    public String toString() {
-        return fieldName;
-    }
-
-    @Override
-    public int compareTo(final LuceneIndexField o) {
-        return fieldName.compareToIgnoreCase(o.fieldName);
-    }
-
-    private List<Condition> getDefaultConditions() {
-        final List<Condition> conditions = new ArrayList<>();
-
-        if (fieldType != null) {
-            // First make sure the operator is set.
-            switch (fieldType) {
-                case ID:
-                    conditions.add(Condition.EQUALS);
-                    conditions.add(Condition.IN);
-                    conditions.add(Condition.IN_DICTIONARY);
-                    break;
-
-                case FIELD:
-                    conditions.add(Condition.EQUALS);
-                    conditions.add(Condition.IN);
-                    conditions.add(Condition.IN_DICTIONARY);
-                    break;
-
-                case DATE_FIELD:
-                    conditions.add(Condition.EQUALS);
-                    conditions.add(Condition.GREATER_THAN);
-                    conditions.add(Condition.GREATER_THAN_OR_EQUAL_TO);
-                    conditions.add(Condition.LESS_THAN);
-                    conditions.add(Condition.LESS_THAN_OR_EQUAL_TO);
-                    conditions.add(Condition.BETWEEN);
-                    conditions.add(Condition.IN);
-                    conditions.add(Condition.IN_DICTIONARY);
-                    break;
-
-                default:
-                    if (fieldType.isNumeric()) {
-                        conditions.add(Condition.EQUALS);
-                        conditions.add(Condition.GREATER_THAN);
-                        conditions.add(Condition.GREATER_THAN_OR_EQUAL_TO);
-                        conditions.add(Condition.LESS_THAN);
-                        conditions.add(Condition.LESS_THAN_OR_EQUAL_TO);
-                        conditions.add(Condition.BETWEEN);
-                        conditions.add(Condition.IN);
-                        conditions.add(Condition.IN_DICTIONARY);
-                    }
-                    break;
-            }
-        }
-
-        return conditions;
     }
 
     public static Builder builder() {
@@ -317,8 +175,8 @@ public class LuceneIndexField implements HasDisplayValue, Comparable<LuceneIndex
 
     public static final class Builder {
 
+        private String name;
         private FieldType type = FieldType.TEXT;
-        private String fieldName;
         private AnalyzerType analyzerType = AnalyzerType.KEYWORD;
         private boolean indexed = true;
         private boolean stored;
@@ -329,8 +187,8 @@ public class LuceneIndexField implements HasDisplayValue, Comparable<LuceneIndex
         }
 
         private Builder(final LuceneIndexField indexField) {
+            this.name = indexField.name;
             this.type = indexField.type;
-            this.fieldName = indexField.fieldName;
             this.analyzerType = indexField.analyzerType;
             this.indexed = indexField.indexed;
             this.stored = indexField.stored;
@@ -338,13 +196,13 @@ public class LuceneIndexField implements HasDisplayValue, Comparable<LuceneIndex
             this.caseSensitive = indexField.caseSensitive;
         }
 
-        public Builder type(final FieldType type) {
-            this.type = type;
+        public Builder name(final String name) {
+            this.name = name;
             return this;
         }
 
-        public Builder fieldName(final String fieldName) {
-            this.fieldName = fieldName;
+        public Builder type(final FieldType type) {
+            this.type = type;
             return this;
         }
 
@@ -375,9 +233,10 @@ public class LuceneIndexField implements HasDisplayValue, Comparable<LuceneIndex
 
         public LuceneIndexField build() {
             return new LuceneIndexField(
+                    name,
                     type,
                     null,
-                    fieldName,
+                    null,
                     analyzerType,
                     indexed,
                     stored,

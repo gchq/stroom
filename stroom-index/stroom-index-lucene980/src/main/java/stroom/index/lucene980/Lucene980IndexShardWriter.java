@@ -315,8 +315,8 @@ class Lucene980IndexShardWriter implements IndexShardWriter {
                 final Analyzer analyzer = AnalyzerFactory.create(indexField.getAnalyzerType(),
                         indexField.isCaseSensitive());
                 LOGGER.debug(() ->
-                        "Adding field analyser for: " + indexField.getFieldName() + " " + this);
-                fieldAnalyzers.put(indexField.getFieldName(), analyzer);
+                        "Adding field analyser for: " + indexField.getName() + " " + this);
+                fieldAnalyzers.put(indexField.getName(), analyzer);
             }
         }
     }

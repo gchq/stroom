@@ -250,7 +250,7 @@ class SearchExpressionQueryBuilder {
         if (indexField == null) {
             return new MatchNoDocsQuery();
         }
-        final String fieldName = indexField.getFieldName();
+        final String fieldName = indexField.getName();
 
         // Ensure an appropriate value has been provided for the condition type.
         if (Condition.IN_DICTIONARY.equals(condition)) {
@@ -819,7 +819,7 @@ class SearchExpressionQueryBuilder {
                 queryParser.setLowercaseExpandedTerms(!field.isCaseSensitive());
 
                 try {
-                    query = queryParser.parse(val, field.getFieldName());
+                    query = queryParser.parse(val, field.getName());
                 } catch (final QueryNodeException e) {
                     throw new SearchException("Unable to parse query term '" + val + "'", e);
                 }
@@ -833,10 +833,10 @@ class SearchExpressionQueryBuilder {
                     val = val.toLowerCase();
                 }
 
-                final Term term = new Term(field.getFieldName(), val);
+                final Term term = new Term(field.getName(), val);
                 final boolean termContainsWildcard = (val.indexOf('*') != -1) || (val.indexOf('?') != -1);
                 if (termContainsWildcard) {
-                    query = new WildcardQuery(new Term(field.getFieldName(), val));
+                    query = new WildcardQuery(new Term(field.getName(), val));
                 } else {
                     query = new TermQuery(term);
                 }

@@ -27,7 +27,7 @@ import stroom.index.mock.MockIndexShardWriterCache;
 import stroom.index.shared.AnalyzerType;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.index.shared.LuceneIndexField;
-import stroom.index.shared.IndexFields;
+import stroom.index.impl.IndexFields;
 import stroom.index.shared.IndexShardKey;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.PipelineTestUtil;
@@ -94,7 +94,7 @@ class TestIndexingFilter extends AbstractProcessIntegrationTest {
         indexFields.add(LuceneIndexField
                 .builder()
                 .type(FieldType.LONG)
-                .fieldName("size")
+                .name("size")
                 .analyzerType(AnalyzerType.KEYWORD)
                 .indexed(false)
                 .build());
@@ -129,7 +129,7 @@ class TestIndexingFilter extends AbstractProcessIntegrationTest {
         return document
                 .getValues()
                 .stream()
-                .filter(fv -> fv.field().getFieldName().equals(fieldName))
+                .filter(fv -> fv.field().getName().equals(fieldName))
                 .collect(Collectors.toList());
     }
 

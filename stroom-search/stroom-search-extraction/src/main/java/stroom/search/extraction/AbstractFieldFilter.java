@@ -128,7 +128,7 @@ public abstract class AbstractFieldFilter extends AbstractXMLFilter {
     public void characters(final char[] ch, final int start, final int length) throws SAXException {
         final String string = new String(ch, start, length);
         if (NAME.equals(currentElement)) {
-            currentFieldBuilder.fieldName(string);
+            currentFieldBuilder.name(string);
         } else if (TYPE.equals(currentElement)) {
             final FieldType type = FieldType.TYPE_NAME_MAP.get(string.toLowerCase(Locale.ROOT));
             currentFieldBuilder.type(type);

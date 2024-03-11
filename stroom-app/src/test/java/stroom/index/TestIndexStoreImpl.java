@@ -23,7 +23,7 @@ import stroom.index.impl.IndexSerialiser;
 import stroom.index.impl.IndexStore;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.index.shared.LuceneIndexField;
-import stroom.index.shared.IndexFields;
+import stroom.index.impl.IndexFields;
 import stroom.legacy.impex_6_1.LegacyIndexDeserialiser;
 import stroom.legacy.impex_6_1.LegacyXmlSerialiser;
 import stroom.legacy.impex_6_1.MappingUtil;

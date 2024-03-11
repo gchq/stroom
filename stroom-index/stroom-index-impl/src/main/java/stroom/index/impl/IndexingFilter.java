@@ -250,7 +250,7 @@ class IndexingFilter extends AbstractXMLFilter {
         try {
             if (currentEventTime == null &&
                     FieldType.DATE.equals(indexField.getType()) &&
-                    indexField.getFieldName().equals(index.getTimeField())) {
+                    indexField.getName().equals(index.getTimeField())) {
                 try {
                     // Set the current event time if this is a recognised event time field.
                     currentEventTime = DateUtil.parseUnknownString(value);
@@ -324,7 +324,7 @@ class IndexingFilter extends AbstractXMLFilter {
                 debugBuffer.append("processIndexContent() - Adding to index indexName=");
                 debugBuffer.append(indexRef.getName());
                 debugBuffer.append(" name=");
-                debugBuffer.append(indexField.getFieldName());
+                debugBuffer.append(indexField.getName());
                 debugBuffer.append(" value=");
                 debugBuffer.append(value);
 

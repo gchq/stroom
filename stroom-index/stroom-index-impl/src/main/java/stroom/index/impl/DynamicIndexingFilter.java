@@ -167,7 +167,7 @@ class DynamicIndexingFilter extends AbstractFieldFilter {
                 }
                 indexDoc.setFields(foundFields
                         .stream()
-                        .sorted(Comparator.comparing(LuceneIndexField::getFieldName))
+                        .sorted(Comparator.comparing(LuceneIndexField::getName))
                         .toList());
                 indexStore.writeDocument(indexDoc);
                 foundFields.clear();
@@ -200,7 +200,7 @@ class DynamicIndexingFilter extends AbstractFieldFilter {
 
             if (indexField.isIndexed() || indexField.isStored()) {
                 // Set the current event time if this is a recognised event time field.
-                if (currentEventTime == null && indexField.getFieldName().equals(index.getTimeField())) {
+                if (currentEventTime == null && indexField.getName().equals(index.getTimeField())) {
                     currentEventTime = fieldValue.value().toLong();
                 }
 
@@ -209,7 +209,7 @@ class DynamicIndexingFilter extends AbstractFieldFilter {
                     debugBuffer.append("processIndexContent() - Adding to index indexName=");
                     debugBuffer.append(indexRef.getName());
                     debugBuffer.append(" name=");
-                    debugBuffer.append(fieldValue.field().getFieldName());
+                    debugBuffer.append(fieldValue.field().getName());
                     debugBuffer.append(" value=");
                     debugBuffer.append(fieldValue.value());
 

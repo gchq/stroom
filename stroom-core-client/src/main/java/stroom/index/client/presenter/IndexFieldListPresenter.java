@@ -181,7 +181,7 @@ public class IndexFieldListPresenter extends DocumentEditPresenter<PagerView, Lu
         dataGrid.addResizableColumn(new Column<LuceneIndexField, String>(new TextCell()) {
             @Override
             public String getValue(final LuceneIndexField row) {
-                return row.getFieldName();
+                return row.getName();
             }
         }, "Name", 150);
     }
@@ -248,7 +248,7 @@ public class IndexFieldListPresenter extends DocumentEditPresenter<PagerView, Lu
     }
 
     private Set<String> getFieldNames() {
-        return indexFields.stream().map(LuceneIndexField::getFieldName).collect(Collectors.toSet());
+        return indexFields.stream().map(LuceneIndexField::getName).collect(Collectors.toSet());
     }
 
     private void onAdd() {
@@ -279,7 +279,7 @@ public class IndexFieldListPresenter extends DocumentEditPresenter<PagerView, Lu
         final LuceneIndexField existingField = selectionModel.getSelected();
         if (existingField != null) {
             final Set<String> otherNames = getFieldNames();
-            otherNames.remove(existingField.getFieldName());
+            otherNames.remove(existingField.getName());
 
             indexFieldEditPresenter.read(existingField, otherNames);
             indexFieldEditPresenter.show("Edit Field", event -> {

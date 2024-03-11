@@ -18,7 +18,6 @@ package stroom.index.impl;
 
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.index.shared.LuceneIndexField;
-import stroom.index.shared.IndexFields;
 import stroom.index.shared.IndexShardKey;
 import stroom.node.shared.Node;
 import stroom.query.language.functions.ValString;

@@ -50,21 +50,21 @@ public final class IndexDataSourceFieldUtil {
     private static QueryField convert(final LuceneIndexField field) {
         switch (field.getType()) {
             case ID:
-                return new IdField(field.getFieldName(), field.isIndexed());
+                return new IdField(field.getName(), field.isIndexed());
             case BOOLEAN:
-                return new BooleanField(field.getFieldName(), field.isIndexed());
+                return new BooleanField(field.getName(), field.isIndexed());
             case INTEGER:
-                return new IntegerField(field.getFieldName(), field.isIndexed());
+                return new IntegerField(field.getName(), field.isIndexed());
             case LONG:
-                return new LongField(field.getFieldName(), field.isIndexed());
+                return new LongField(field.getName(), field.isIndexed());
             case FLOAT:
-                return new FloatField(field.getFieldName(), field.isIndexed());
+                return new FloatField(field.getName(), field.isIndexed());
             case DOUBLE:
-                return new DoubleField(field.getFieldName(), field.isIndexed());
+                return new DoubleField(field.getName(), field.isIndexed());
             case DATE:
-                return new DateField(field.getFieldName(), field.isIndexed());
+                return new DateField(field.getName(), field.isIndexed());
             case TEXT:
-                return new TextField(field.getFieldName(), field.isIndexed());
+                return new TextField(field.getName(), field.isIndexed());
         }
 
         return null;

@@ -21,7 +21,7 @@ import stroom.index.impl.IndexDocument;
 import stroom.index.impl.IndexShardKeyUtil;
 import stroom.index.impl.IndexShardUtil;
 import stroom.index.impl.IndexShardWriter;
-import stroom.index.shared.IndexFields;
+import stroom.index.impl.IndexFields;
 import stroom.index.shared.IndexFieldsMap;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;

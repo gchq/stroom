@@ -46,7 +46,7 @@ public class IndexFieldEditPresenter extends MyPresenterWidget<IndexFieldEditVie
     public void read(final LuceneIndexField indexField, final Set<String> otherFieldNames) {
         this.otherFieldNames = otherFieldNames;
         getView().setType(indexField.getType());
-        getView().setFieldName(indexField.getFieldName());
+        getView().setFieldName(indexField.getName());
         getView().setStored(indexField.isStored());
         getView().setIndexed(indexField.isIndexed());
         getView().setTermPositions(indexField.isTermPositions());
@@ -68,7 +68,7 @@ public class IndexFieldEditPresenter extends MyPresenterWidget<IndexFieldEditVie
         return LuceneIndexField
                 .builder()
                 .type(getView().getType())
-                .fieldName(name)
+                .name(name)
                 .stored(getView().isStored())
                 .indexed(getView().isIndexed())
                 .termPositions(getView().isTermPositions())

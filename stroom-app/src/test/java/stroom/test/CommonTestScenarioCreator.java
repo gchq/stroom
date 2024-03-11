@@ -25,7 +25,7 @@ import stroom.data.store.api.TargetUtil;
 import stroom.docref.DocRef;
 import stroom.index.VolumeCreator;
 import stroom.index.impl.IndexStore;
-import stroom.index.shared.IndexFields;
+import stroom.index.impl.IndexFields;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.index.shared.LuceneIndexField;
 import stroom.meta.api.MetaProperties;

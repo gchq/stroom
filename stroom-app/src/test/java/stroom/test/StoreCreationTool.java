@@ -39,7 +39,7 @@ import stroom.index.impl.IndexStore;
 import stroom.index.shared.AnalyzerType;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.index.shared.LuceneIndexField;
-import stroom.index.shared.IndexFields;
+import stroom.index.impl.IndexFields;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;

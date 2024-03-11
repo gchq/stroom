@@ -26,7 +26,7 @@ import stroom.index.mock.MockIndexShardWriterCache;
 import stroom.index.shared.AnalyzerType;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.index.shared.LuceneIndexField;
-import stroom.index.shared.IndexFields;
+import stroom.index.impl.IndexFields;
 import stroom.index.shared.IndexShardKey;
 import stroom.meta.shared.Meta;
 import stroom.pipeline.PipelineStore;
@@ -183,7 +183,7 @@ class TestIndexingPipeline extends AbstractProcessIntegrationTest {
         final Optional<FieldValue> opt = document
                 .getValues()
                 .stream()
-                .filter(fv -> fv.field().getFieldName().equals(fieldName))
+                .filter(fv -> fv.field().getName().equals(fieldName))
                 .findFirst();
         assertThat(opt).isPresent();
         return opt.get().value().toString();

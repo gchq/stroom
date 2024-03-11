@@ -43,7 +43,7 @@ public class FieldValueExtractor {
             if (indexField == null) {
                 indexField = LuceneIndexField
                         .builder()
-                        .fieldName(fieldName)
+                        .name(fieldName)
                         .indexed(false)
                         .build();
             }

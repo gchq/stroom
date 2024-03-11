@@ -664,9 +664,10 @@ public final class MappingUtil {
         final boolean caseSensitive = value.isCaseSensitive();
 
         return new LuceneIndexField(
-                null,
-                indexFieldType,
                 fieldName,
+                null,
+                fieldName,
+                indexFieldType,
                 analyzerType,
                 indexed,
                 stored,

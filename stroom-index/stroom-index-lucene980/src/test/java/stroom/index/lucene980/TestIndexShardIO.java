@@ -23,7 +23,7 @@ import stroom.index.impl.IndexShardUtil;
 import stroom.index.impl.IndexShardWriter;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.index.shared.LuceneIndexField;
-import stroom.index.shared.IndexFields;
+import stroom.index.impl.IndexFields;
 import stroom.index.shared.IndexFieldsMap;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;

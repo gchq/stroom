@@ -18,7 +18,6 @@ package stroom.index.impl;
 
 import stroom.index.mock.MockIndexShardService;
 import stroom.index.mock.MockIndexShardWriterCache;
-import stroom.index.shared.IndexFields;
 import stroom.index.shared.IndexShardKey;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.index.shared.LuceneIndexField;
