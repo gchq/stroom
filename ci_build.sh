@@ -488,7 +488,7 @@ echo -e "BUILD_VERSION:                 [${GREEN}${BUILD_VERSION}${NC}]"
 echo -e "STROOM_RESOURCES_GIT_TAG:      [${GREEN}${STROOM_RESOURCES_GIT_TAG}${NC}]"
 echo -e "LOCAL_BUILD:                   [${GREEN}${LOCAL_BUILD}${NC}]"
 echo -e "docker version:                [${GREEN}$(docker --version)${NC}]"
-echo -e "docker-compose version:        [${GREEN}$(docker-compose --version)${NC}]"
+echo -e "docker-compose version:        [${GREEN}$(docker compose version)${NC}]"
 echo -e "git version:                   [${GREEN}$(git --version)${NC}]"
 
 # Normal commit/PR/tag build
