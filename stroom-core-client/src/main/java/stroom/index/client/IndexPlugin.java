@@ -9,8 +9,8 @@ import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.index.client.presenter.IndexPresenter;
-import stroom.index.shared.LuceneIndexDoc;
 import stroom.index.shared.IndexResource;
+import stroom.index.shared.LuceneIndexDoc;
 import stroom.security.client.api.ClientSecurityContext;
 
 import com.google.gwt.core.client.GWT;

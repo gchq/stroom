@@ -19,11 +19,11 @@ package stroom.index;
 
 
 import stroom.docref.DocRef;
+import stroom.index.impl.IndexFields;
 import stroom.index.impl.IndexSerialiser;
 import stroom.index.impl.IndexStore;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.index.shared.LuceneIndexField;
-import stroom.index.impl.IndexFields;
 import stroom.legacy.impex_6_1.LegacyIndexDeserialiser;
 import stroom.legacy.impex_6_1.LegacyXmlSerialiser;
 import stroom.legacy.impex_6_1.MappingUtil;
@@ -128,7 +128,8 @@ class TestIndexStoreImpl extends AbstractCoreIntegrationTest {
                 "      <termPositions>false</termPositions>\n" +
                 "   </field>\n" +
                 "</fields>\n";
-        final List<LuceneIndexField> indexFields = MappingUtil.map(LegacyXmlSerialiser.getIndexFieldsFromLegacyXml(xml));
+        final List<LuceneIndexField> indexFields = MappingUtil.map(
+                LegacyXmlSerialiser.getIndexFieldsFromLegacyXml(xml));
         assertThat(index.getFields()).isEqualTo(indexFields);
     }
 

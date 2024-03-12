@@ -19,8 +19,8 @@ package stroom.index.impl;
 
 import stroom.docref.DocRef;
 import stroom.index.shared.FindIndexShardCriteria;
-import stroom.index.shared.LuceneIndexDoc;
 import stroom.index.shared.IndexShard;
+import stroom.index.shared.LuceneIndexDoc;
 import stroom.node.api.NodeInfo;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEventHandler;

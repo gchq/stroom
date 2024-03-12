@@ -18,8 +18,8 @@ package stroom.index.impl;
 
 
 import stroom.index.shared.AllPartition;
-import stroom.index.shared.LuceneIndexDoc;
 import stroom.index.shared.IndexShardKey;
+import stroom.index.shared.LuceneIndexDoc;
 import stroom.index.shared.Partition;
 import stroom.util.concurrent.AtomicSequence;
 

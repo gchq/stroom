@@ -19,15 +19,15 @@ package stroom.index;
 
 import stroom.docref.DocRef;
 import stroom.index.impl.IndexDocument;
+import stroom.index.impl.IndexFields;
 import stroom.index.impl.IndexShardWriter;
 import stroom.index.impl.IndexStore;
 import stroom.index.mock.MockIndexShardWriter;
 import stroom.index.mock.MockIndexShardWriterCache;
 import stroom.index.shared.AnalyzerType;
+import stroom.index.shared.IndexShardKey;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.index.shared.LuceneIndexField;
-import stroom.index.impl.IndexFields;
-import stroom.index.shared.IndexShardKey;
 import stroom.meta.shared.Meta;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.PipelineTestUtil;

@@ -17,8 +17,8 @@
 package stroom.index.impl;
 
 
-import stroom.index.shared.LuceneIndexDoc;
 import stroom.index.shared.IndexShardKey;
+import stroom.index.shared.LuceneIndexDoc;
 
 import org.junit.jupiter.api.Test;
 

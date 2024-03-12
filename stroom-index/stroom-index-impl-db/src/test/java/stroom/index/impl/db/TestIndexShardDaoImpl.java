@@ -5,11 +5,11 @@ import stroom.index.impl.IndexShardDao;
 import stroom.index.impl.IndexVolumeDao;
 import stroom.index.impl.IndexVolumeGroupDao;
 import stroom.index.shared.AllPartition;
-import stroom.index.shared.LuceneIndexDoc;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
 import stroom.index.shared.IndexVolume;
 import stroom.index.shared.IndexVolumeGroup;
+import stroom.index.shared.LuceneIndexDoc;
 import stroom.util.AuditUtil;
 import stroom.util.io.ByteSizeUnit;
 

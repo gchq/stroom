@@ -3,9 +3,9 @@ package stroom.index.lucene553;
 import stroom.index.impl.IndexConfig;
 import stroom.index.impl.IndexShardManager;
 import stroom.index.impl.IndexShardWriter;
+import stroom.index.impl.LuceneIndexStructure;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
-import stroom.index.impl.LuceneIndexStructure;
 import stroom.util.io.PathCreator;
 
 import jakarta.inject.Inject;

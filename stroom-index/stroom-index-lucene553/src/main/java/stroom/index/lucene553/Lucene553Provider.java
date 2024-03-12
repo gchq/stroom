@@ -4,15 +4,15 @@ import stroom.expression.api.DateTimeSettings;
 import stroom.index.impl.HighlightProvider;
 import stroom.index.impl.IndexShardWriter;
 import stroom.index.impl.IndexSystemInfoProvider;
+import stroom.index.impl.LuceneIndexStructure;
 import stroom.index.impl.LuceneProvider;
 import stroom.index.impl.LuceneShardSearcher;
-import stroom.index.shared.LuceneIndexFieldsMap;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
+import stroom.index.shared.LuceneIndexFieldsMap;
 import stroom.index.shared.LuceneVersion;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.QueryKey;
-import stroom.index.impl.LuceneIndexStructure;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;

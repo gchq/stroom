@@ -4569,7 +4569,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/IndexDoc"
+                  "$ref" : "#/components/schemas/LuceneIndexDoc"
                 }
               }
             },
@@ -4593,7 +4593,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/IndexDoc"
+                "$ref" : "#/components/schemas/LuceneIndexDoc"
               }
             }
           },
@@ -4605,7 +4605,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/IndexDoc"
+                  "$ref" : "#/components/schemas/LuceneIndexDoc"
                 }
               }
             },
@@ -11233,12 +11233,6 @@
           }
         }
       },
-      "BooleanField" : {
-        "type" : "object",
-        "allOf" : [ {
-          "$ref" : "#/components/schemas/QueryField"
-        } ]
-      },
       "BuildInfo" : {
         "type" : "object",
         "properties" : {
@@ -12347,12 +12341,6 @@
           "name" : "dataRetentionPolicy"
         }
       },
-      "DateField" : {
-        "type" : "object",
-        "allOf" : [ {
-          "$ref" : "#/components/schemas/QueryField"
-        } ]
-      },
       "DateTimeFormatSettings" : {
         "type" : "object",
         "allOf" : [ {
@@ -12561,12 +12549,6 @@
           "name" : "doc"
         }
       },
-      "DocRefField" : {
-        "type" : "object",
-        "allOf" : [ {
-          "$ref" : "#/components/schemas/QueryField"
-        } ]
-      },
       "DocRefInfo" : {
         "type" : "object",
         "properties" : {
@@ -12714,12 +12696,6 @@
             "type" : "string"
           }
         }
-      },
-      "DoubleField" : {
-        "type" : "object",
-        "allOf" : [ {
-          "$ref" : "#/components/schemas/QueryField"
-        } ]
       },
       "DownloadQueryResultsRequest" : {
         "type" : "object",
@@ -12909,6 +12885,13 @@
       "ElasticIndexField" : {
         "type" : "object",
         "properties" : {
+          "analyzerType" : {
+            "type" : "string",
+            "enum" : [ "KEYWORD", "ALPHA", "NUMERIC", "ALPHA_NUMERIC", "WHITESPACE", "STOP", "STANDARD" ]
+          },
+          "caseSensitive" : {
+            "type" : "boolean"
+          },
           "fieldName" : {
             "type" : "string"
           },
@@ -12920,6 +12903,18 @@
             "enum" : [ "ID", "BOOLEAN", "INTEGER", "LONG", "FLOAT", "DOUBLE", "DATE", "TEXT", "KEYWORD", "IPV4_ADDRESS", "DOC_REF" ]
           },
           "indexed" : {
+            "type" : "boolean"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "nativeType" : {
+            "type" : "string"
+          },
+          "stored" : {
+            "type" : "boolean"
+          },
+          "termPositions" : {
             "type" : "boolean"
           },
           "type" : {
@@ -13738,11 +13733,15 @@
             "type" : "string"
           },
           "fieldName" : {
-            "type" : "string"
+            "type" : "string",
+            "writeOnly" : true
           },
           "fieldType" : {
             "type" : "string",
             "enum" : [ "ID", "BOOLEAN", "INTEGER", "LONG", "FLOAT", "DOUBLE", "DATE", "TEXT", "KEYWORD", "IPV4_ADDRESS", "DOC_REF" ]
+          },
+          "name" : {
+            "type" : "string"
           },
           "queryable" : {
             "type" : "boolean"
@@ -14328,12 +14327,6 @@
         "description" : "A result structure used primarily for visualisation data",
         "required" : [ "componentId" ]
       },
-      "FloatField" : {
-        "type" : "object",
-        "allOf" : [ {
-          "$ref" : "#/components/schemas/QueryField"
-        } ]
-      },
       "Format" : {
         "type" : "object",
         "description" : "Describes the formatting that will be applied to values in a field",
@@ -14651,12 +14644,6 @@
           }
         } ]
       },
-      "IdField" : {
-        "type" : "object",
-        "allOf" : [ {
-          "$ref" : "#/components/schemas/QueryField"
-        } ]
-      },
       "ImportConfigRequest" : {
         "type" : "object",
         "properties" : {
@@ -14743,107 +14730,6 @@
             "items" : {
               "type" : "string"
             }
-          }
-        }
-      },
-      "IndexDoc" : {
-        "type" : "object",
-        "properties" : {
-          "createTimeMs" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "createUser" : {
-            "type" : "string"
-          },
-          "defaultExtractionPipeline" : {
-            "$ref" : "#/components/schemas/DocRef"
-          },
-          "description" : {
-            "type" : "string"
-          },
-          "fields" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/IndexField"
-            }
-          },
-          "maxDocsPerShard" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "name" : {
-            "type" : "string"
-          },
-          "partitionBy" : {
-            "type" : "string",
-            "enum" : [ "DAY", "WEEK", "MONTH", "YEAR" ]
-          },
-          "partitionSize" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "retentionDayAge" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "shardsPerPartition" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "timeField" : {
-            "type" : "string"
-          },
-          "type" : {
-            "type" : "string"
-          },
-          "updateTimeMs" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "updateUser" : {
-            "type" : "string"
-          },
-          "uuid" : {
-            "type" : "string"
-          },
-          "version" : {
-            "type" : "string"
-          },
-          "volumeGroupName" : {
-            "type" : "string"
-          }
-        }
-      },
-      "IndexField" : {
-        "type" : "object",
-        "properties" : {
-          "analyzerType" : {
-            "type" : "string",
-            "enum" : [ "KEYWORD", "ALPHA", "NUMERIC", "ALPHA_NUMERIC", "WHITESPACE", "STOP", "STANDARD" ]
-          },
-          "caseSensitive" : {
-            "type" : "boolean"
-          },
-          "fieldName" : {
-            "type" : "string"
-          },
-          "fieldType" : {
-            "type" : "string",
-            "enum" : [ "ID", "BOOLEAN_FIELD", "INTEGER_FIELD", "LONG_FIELD", "FLOAT_FIELD", "DOUBLE_FIELD", "DATE_FIELD", "FIELD", "NUMERIC_FIELD" ]
-          },
-          "indexed" : {
-            "type" : "boolean"
-          },
-          "stored" : {
-            "type" : "boolean"
-          },
-          "termPositions" : {
-            "type" : "boolean"
-          },
-          "type" : {
-            "type" : "string",
-            "enum" : [ "ID", "BOOLEAN", "INTEGER", "LONG", "FLOAT", "DOUBLE", "DATE", "TEXT", "KEYWORD", "IPV4_ADDRESS", "DOC_REF" ]
           }
         }
       },
@@ -15033,18 +14919,6 @@
           }
         }
       },
-      "IntegerField" : {
-        "type" : "object",
-        "allOf" : [ {
-          "$ref" : "#/components/schemas/QueryField"
-        } ]
-      },
-      "IpV4AddressField" : {
-        "type" : "object",
-        "allOf" : [ {
-          "$ref" : "#/components/schemas/QueryField"
-        } ]
-      },
       "Job" : {
         "type" : "object",
         "properties" : {
@@ -15196,12 +15070,6 @@
               "type" : "string"
             }
           }
-        } ]
-      },
-      "KeywordField" : {
-        "type" : "object",
-        "allOf" : [ {
-          "$ref" : "#/components/schemas/QueryField"
         } ]
       },
       "LayoutConfig" : {
@@ -15364,11 +15232,109 @@
           }
         }
       },
-      "LongField" : {
+      "LuceneIndexDoc" : {
         "type" : "object",
-        "allOf" : [ {
-          "$ref" : "#/components/schemas/QueryField"
-        } ]
+        "properties" : {
+          "createTimeMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "createUser" : {
+            "type" : "string"
+          },
+          "defaultExtractionPipeline" : {
+            "$ref" : "#/components/schemas/DocRef"
+          },
+          "description" : {
+            "type" : "string"
+          },
+          "fields" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/LuceneIndexField"
+            }
+          },
+          "maxDocsPerShard" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "partitionBy" : {
+            "type" : "string",
+            "enum" : [ "DAY", "WEEK", "MONTH", "YEAR" ]
+          },
+          "partitionSize" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "retentionDayAge" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "shardsPerPartition" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "timeField" : {
+            "type" : "string"
+          },
+          "type" : {
+            "type" : "string"
+          },
+          "updateTimeMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "updateUser" : {
+            "type" : "string"
+          },
+          "uuid" : {
+            "type" : "string"
+          },
+          "version" : {
+            "type" : "string"
+          },
+          "volumeGroupName" : {
+            "type" : "string"
+          }
+        }
+      },
+      "LuceneIndexField" : {
+        "type" : "object",
+        "properties" : {
+          "analyzerType" : {
+            "type" : "string",
+            "enum" : [ "KEYWORD", "ALPHA", "NUMERIC", "ALPHA_NUMERIC", "WHITESPACE", "STOP", "STANDARD" ]
+          },
+          "caseSensitive" : {
+            "type" : "boolean"
+          },
+          "fieldName" : {
+            "type" : "string"
+          },
+          "fieldType" : {
+            "type" : "string",
+            "enum" : [ "ID", "BOOLEAN_FIELD", "INTEGER_FIELD", "LONG_FIELD", "FLOAT_FIELD", "DOUBLE_FIELD", "DATE_FIELD", "FIELD", "NUMERIC_FIELD" ]
+          },
+          "indexed" : {
+            "type" : "boolean"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "stored" : {
+            "type" : "boolean"
+          },
+          "termPositions" : {
+            "type" : "boolean"
+          },
+          "type" : {
+            "type" : "string",
+            "enum" : [ "ID", "BOOLEAN", "INTEGER", "LONG", "FLOAT", "DOUBLE", "DATE", "TEXT", "KEYWORD", "IPV4_ADDRESS", "DOC_REF" ]
+          }
+        }
       },
       "MapDefinition" : {
         "type" : "object",
@@ -16758,9 +16724,6 @@
       },
       "QueryField" : {
         "type" : "object",
-        "discriminator" : {
-          "propertyName" : "type"
-        },
         "properties" : {
           "conditionSet" : {
             "type" : "string",
@@ -16782,8 +16745,7 @@
           "type" : {
             "type" : "string"
           }
-        },
-        "required" : [ "type" ]
+        }
       },
       "QueryHelpData" : {
         "type" : "object",
@@ -18544,6 +18506,13 @@
       "SolrIndexField" : {
         "type" : "object",
         "properties" : {
+          "analyzerType" : {
+            "type" : "string",
+            "enum" : [ "KEYWORD", "ALPHA", "NUMERIC", "ALPHA_NUMERIC", "WHITESPACE", "STOP", "STANDARD" ]
+          },
+          "caseSensitive" : {
+            "type" : "boolean"
+          },
           "defaultValue" : {
             "type" : "string"
           },
@@ -18565,6 +18534,12 @@
           },
           "multiValued" : {
             "type" : "boolean"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "nativeType" : {
+            "type" : "string"
           },
           "omitNorms" : {
             "type" : "boolean"
@@ -19689,12 +19664,6 @@
             "type" : "string"
           }
         }
-      },
-      "TextField" : {
-        "type" : "object",
-        "allOf" : [ {
-          "$ref" : "#/components/schemas/QueryField"
-        } ]
       },
       "ThemeConfig" : {
         "type" : "object",

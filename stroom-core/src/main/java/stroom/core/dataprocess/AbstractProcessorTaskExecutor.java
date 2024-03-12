@@ -560,7 +560,8 @@ public abstract class AbstractProcessorTaskExecutor implements ProcessorTaskExec
                             if (taskMap == null) {
                                 final ExpressionOperator findTaskExpression = ExpressionOperator.builder()
                                         .addIdTerm(ProcessorTaskFields.META_ID, Condition.EQUALS, meta.getId())
-                                        .addIdTerm(ProcessorTaskFields.PROCESSOR_ID, Condition.EQUALS, processor.getId())
+                                        .addIdTerm(
+                                                ProcessorTaskFields.PROCESSOR_ID, Condition.EQUALS, processor.getId())
                                         .build();
                                 final ResultPage<ProcessorTask> tasks = processorTaskService.find(
                                         new ExpressionCriteria(findTaskExpression));

@@ -18,11 +18,11 @@ package stroom.index.impl;
 
 import stroom.docref.DocRef;
 import stroom.index.shared.FindIndexShardCriteria;
-import stroom.index.shared.LuceneIndexDoc;
 import stroom.index.shared.IndexException;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.index.shared.IndexShardKey;
+import stroom.index.shared.LuceneIndexDoc;
 import stroom.index.shared.LuceneVersion;
 import stroom.index.shared.LuceneVersionUtil;
 import stroom.node.api.NodeInfo;
@@ -158,8 +158,8 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
                 // Look for non deleted, non full, non corrupt index shards.
                 if (IndexShardStatus.CLOSED.equals(indexShard.getStatus())) {
                     // Get the index fields.
-                    final LuceneIndexStructure indexStructure = indexStructureCache.get(new DocRef(LuceneIndexDoc.DOCUMENT_TYPE,
-                            indexShardKey.getIndexUuid()));
+                    final LuceneIndexStructure indexStructure = indexStructureCache.get(
+                            new DocRef(LuceneIndexDoc.DOCUMENT_TYPE, indexShardKey.getIndexUuid()));
                     if (indexStructure != null
                             && indexShard.getDocumentCount() < indexStructure.getIndex().getMaxDocsPerShard()) {
                         final IndexShardWriter indexShardWriter = openWriter(indexShardKey, indexShard);
