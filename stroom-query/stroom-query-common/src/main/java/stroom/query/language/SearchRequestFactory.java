@@ -710,7 +710,7 @@ public class SearchRequestFactory {
                                             TokenType.LIMIT,
                                             TokenType.SELECT,
                                             TokenType.HAVING,
-                                            TokenType.VIS)));
+                                            TokenType.SHOW)));
                             processSortBy(
                                     keywordGroup,
                                     sortMap);
@@ -724,7 +724,7 @@ public class SearchRequestFactory {
                                             TokenType.LIMIT,
                                             TokenType.SELECT,
                                             TokenType.HAVING,
-                                            TokenType.VIS)));
+                                            TokenType.SHOW)));
                             processGroupBy(
                                     keywordGroup,
                                     groupMap,
@@ -737,11 +737,11 @@ public class SearchRequestFactory {
                             checkTokenOrder(token,
                                     consumedTokens,
                                     Set.of(TokenType.FROM),
-                                    inverse(Set.of(TokenType.LIMIT, TokenType.SELECT, TokenType.VIS)));
+                                    inverse(Set.of(TokenType.LIMIT, TokenType.SELECT, TokenType.SHOW)));
                             remaining =
                                     addExpression(remaining,
                                             consumedTokens,
-                                            inverse(Set.of(TokenType.LIMIT, TokenType.SELECT, TokenType.VIS)),
+                                            inverse(Set.of(TokenType.LIMIT, TokenType.SELECT, TokenType.SHOW)),
                                             TokenType.HAVING,
                                             tableSettingsBuilder::aggregateFilter);
                             inHaving = false;
@@ -750,7 +750,7 @@ public class SearchRequestFactory {
                             checkTokenOrder(token,
                                     consumedTokens,
                                     Set.of(TokenType.FROM),
-                                    inverse(Set.of(TokenType.SELECT, TokenType.VIS)));
+                                    inverse(Set.of(TokenType.SELECT, TokenType.SHOW)));
                             processSelect(
                                     keywordGroup,
                                     sortMap,
@@ -763,17 +763,17 @@ public class SearchRequestFactory {
                             checkTokenOrder(token,
                                     consumedTokens,
                                     Set.of(TokenType.FROM),
-                                    inverse(Set.of(TokenType.SELECT, TokenType.VIS)));
+                                    inverse(Set.of(TokenType.SELECT, TokenType.SHOW)));
                             processLimit(
                                     keywordGroup,
                                     tableSettingsBuilder);
                             remaining.remove(0);
                         }
-                        case VIS -> {
+                        case SHOW -> {
                             checkTokenOrder(token,
                                     consumedTokens,
                                     Set.of(TokenType.FROM),
-                                    inverse(Set.of(TokenType.VIS)));
+                                    inverse(Set.of(TokenType.SHOW)));
                             final TableSettings parentTableSettings = tableSettingsBuilder.build();
                             visTableSettings = visualisationTokenConsumer
                                     .processVis(keywordGroup, parentTableSettings);

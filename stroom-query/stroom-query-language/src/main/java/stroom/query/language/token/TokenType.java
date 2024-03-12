@@ -64,7 +64,7 @@ public enum TokenType {
     WINDOW,
     LIMIT,
     HAVING,
-    VIS,
+    SHOW,
 
     // Additional tokens
     BY,
@@ -91,7 +91,7 @@ public enum TokenType {
             WINDOW,
             LIMIT,
             HAVING,
-            VIS);
+            SHOW);
 
     public static final Set<TokenType> CONDITIONS = Set.of(
             EQUALS,
