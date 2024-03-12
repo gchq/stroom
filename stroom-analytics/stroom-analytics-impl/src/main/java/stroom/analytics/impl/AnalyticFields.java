@@ -38,7 +38,7 @@ public class AnalyticFields {
         FIELDS.add(UUID_FIELD);
         FIELDS.add(VALUE_FIELD);
 
-        FIELD_MAP = FIELDS.stream().collect(Collectors.toMap(QueryField::getName, Function.identity()));
+        FIELD_MAP = FIELDS.stream().collect(Collectors.toMap(QueryField::getFldName, Function.identity()));
     }
 
     public static List<QueryField> getFields() {

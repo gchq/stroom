@@ -30,7 +30,7 @@ public final class MetaExpressionUtil {
                     .map(String::valueOf)
                     .collect(Collectors.joining(","));
             return ExpressionOperator.builder().op(Op.AND)
-                    .addTerm(MetaFields.ID.getName(), Condition.IN, delimitedList)
+                    .addTerm(MetaFields.ID.getFldName(), Condition.IN, delimitedList)
                     .build();
         }
     }

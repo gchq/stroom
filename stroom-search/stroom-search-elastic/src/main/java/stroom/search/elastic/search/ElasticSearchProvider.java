@@ -258,8 +258,8 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
         final ConditionSet conditionSet = ConditionSet.getElastic(elasticIndexFieldType);
         return QueryField
                 .builder()
-                .name(fieldName)
-                .type(elasticIndexFieldType)
+                .fldName(fieldName)
+                .fldType(elasticIndexFieldType)
                 .conditionSet(conditionSet)
                 .queryable(isIndexed)
                 .build();

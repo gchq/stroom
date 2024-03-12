@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS `index_field` (
     `case_sensitive`            tinyint NOT NULL DEFAULT '0',
     PRIMARY KEY                 (`id`),
     UNIQUE KEY                  `field_source_id_name` (`fk_field_source_id`, `name`),
-    CONSTRAINT `field_fk_field_source_id` FOREIGN KEY (`fk_field_source_id`) REFERENCES `field_source` (`id`)
+    CONSTRAINT `index_field_fk_field_source_id` FOREIGN KEY (`fk_field_source_id`) REFERENCES `field_source` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 
 SET SQL_NOTES=@OLD_SQL_NOTES;

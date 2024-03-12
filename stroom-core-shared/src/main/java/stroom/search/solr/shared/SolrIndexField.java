@@ -18,6 +18,7 @@ package stroom.search.solr.shared;
 
 import stroom.datasource.api.v2.Field;
 import stroom.datasource.api.v2.FieldType;
+import stroom.index.shared.AnalyzerType;
 import stroom.index.shared.IndexField;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -39,8 +40,8 @@ import java.util.Objects;
         "fieldName", // deprecated
         "fieldType", // deprecated
 
-        "name",
-        "type",
+        "fldName",
+        "fldType",
         "nativeType",
         "indexed",
         "stored",
@@ -76,9 +77,9 @@ public class SolrIndexField implements IndexField {
     private String fieldType;
 
     @JsonProperty
-    private String name;
+    private String fldName;
     @JsonProperty
-    private FieldType type;
+    private FieldType fldType = FieldType.TEXT;
     @JsonProperty
     private String nativeType;
 
@@ -124,8 +125,8 @@ public class SolrIndexField implements IndexField {
             @Deprecated @JsonProperty("fieldName") final String fieldName,
             @Deprecated @JsonProperty("fieldType") final String fieldType,
 
-            @JsonProperty("name") final String name,
-            @JsonProperty("type") final FieldType type,
+            @JsonProperty("fldName") final String fldName,
+            @JsonProperty("fldType") final FieldType fldType,
             @JsonProperty("nativeType") final String nativeType,
             @JsonProperty("defaultValue") final String defaultValue,
             @JsonProperty("indexed") final boolean indexed,
@@ -145,8 +146,8 @@ public class SolrIndexField implements IndexField {
             @JsonProperty("sortMissingLast") final boolean sortMissingLast) {
 
 
-        this.name = convertLegacyName(name, fieldName);
-        this.type = convertLegacyType(type, fieldUse);
+        this.fldName = convertLegacyName(fldName, fieldName);
+        this.fldType = convertLegacyType(fldType, fieldUse);
         this.nativeType = convertLegacyNativeType(nativeType, fieldType);
         this.stored = stored;
         this.indexed = indexed;
@@ -220,28 +221,28 @@ public class SolrIndexField implements IndexField {
 
     public static SolrIndexField createIdField(final String fieldName) {
         return builder()
-                .type(FieldType.ID)
-                .name(fieldName)
+                .fldType(FieldType.ID)
+                .fldName(fieldName)
                 .stored(true)
                 .build();
     }
 
     @Override
-    public String getName() {
-        return name;
+    public String getFldName() {
+        return fldName;
     }
 
-    public void setName(final String name) {
-        this.name = name;
+    public void setFldName(final String fldName) {
+        this.fldName = fldName;
     }
 
     @Override
-    public FieldType getType() {
-        return type;
+    public FieldType getFldType() {
+        return fldType;
     }
 
-    public void setType(final FieldType type) {
-        this.type = type;
+    public void setFldType(final FieldType fldType) {
+        this.fldType = fldType;
     }
 
     public String getNativeType() {
@@ -382,8 +383,20 @@ public class SolrIndexField implements IndexField {
 
     @JsonIgnore
     @Override
+    public AnalyzerType getAnalyzerType() {
+        return IndexField.super.getAnalyzerType();
+    }
+
+    @JsonIgnore
+    @Override
+    public boolean isCaseSensitive() {
+        return IndexField.super.isCaseSensitive();
+    }
+
+    @JsonIgnore
+    @Override
     public String getDisplayValue() {
-        return name;
+        return fldName;
     }
 
     @Override
@@ -410,8 +423,8 @@ public class SolrIndexField implements IndexField {
                 termPayloads == that.termPayloads &&
                 sortMissingFirst == that.sortMissingFirst &&
                 sortMissingLast == that.sortMissingLast &&
-                Objects.equals(name, that.name) &&
-                type == that.type &&
+                Objects.equals(fldName, that.fldName) &&
+                fldType == that.fldType &&
                 Objects.equals(nativeType, that.nativeType) &&
                 Objects.equals(defaultValue, that.defaultValue);
     }
@@ -419,8 +432,8 @@ public class SolrIndexField implements IndexField {
     @Override
     public int hashCode() {
         return Objects.hash(
-                name,
-                type,
+                fldName,
+                fldType,
                 nativeType,
                 defaultValue,
                 stored,
@@ -442,12 +455,12 @@ public class SolrIndexField implements IndexField {
 
     @Override
     public String toString() {
-        return name;
+        return fldName;
     }
 
     @Override
     public int compareTo(final Field o) {
-        return name.compareToIgnoreCase(o.getName());
+        return fldName.compareToIgnoreCase(o.getFldName());
     }
 
     public static Builder builder() {
@@ -460,8 +473,8 @@ public class SolrIndexField implements IndexField {
 
     public static final class Builder {
 
-        private FieldType type = FieldType.TEXT;
-        private String name;
+        private FieldType fldType = FieldType.TEXT;
+        private String fldName;
         private String nativeType;
         private String defaultValue;
         private boolean stored;
@@ -484,8 +497,8 @@ public class SolrIndexField implements IndexField {
         }
 
         private Builder(final SolrIndexField solrIndexField) {
-            this.type = solrIndexField.type;
-            this.name = solrIndexField.name;
+            this.fldType = solrIndexField.fldType;
+            this.fldName = solrIndexField.fldName;
             this.nativeType = solrIndexField.nativeType;
             this.defaultValue = solrIndexField.defaultValue;
             this.stored = solrIndexField.stored;
@@ -505,13 +518,13 @@ public class SolrIndexField implements IndexField {
             this.sortMissingLast = solrIndexField.sortMissingLast;
         }
 
-        public Builder type(final FieldType type) {
-            this.type = type;
+        public Builder fldType(final FieldType fldType) {
+            this.fldType = fldType;
             return this;
         }
 
-        public Builder name(final String name) {
-            this.name = name;
+        public Builder fldName(final String fldName) {
+            this.fldName = fldName;
             return this;
         }
 
@@ -606,8 +619,8 @@ public class SolrIndexField implements IndexField {
                     null,
                     null,
                     null,
-                    name,
-                    type,
+                    fldName,
+                    fldType,
                     nativeType,
                     defaultValue,
                     indexed,

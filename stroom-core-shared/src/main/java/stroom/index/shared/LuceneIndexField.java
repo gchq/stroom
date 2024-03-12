@@ -36,8 +36,8 @@ import java.util.Objects;
         "fieldName", // deprecated
         "fieldType", // deprecated
 
-        "name",
-        "type",
+        "fldName",
+        "fldType",
         "nativeType",
         "analyzerType",
         "indexed",
@@ -56,9 +56,9 @@ public class LuceneIndexField implements IndexField {
     private String fieldName;
 
     @JsonProperty
-    private final String name;
+    private final String fldName;
     @JsonProperty
-    private final FieldType type;
+    private final FieldType fldType;
     @JsonProperty
     private final AnalyzerType analyzerType;
     @JsonProperty
@@ -71,22 +71,35 @@ public class LuceneIndexField implements IndexField {
     private final boolean caseSensitive;
 
     @JsonCreator
-    public LuceneIndexField(@JsonProperty("name") final String name,
-                            @JsonProperty("type") final FieldType type,
-                            @Deprecated @JsonProperty("fieldName") final String fieldName,
+    public LuceneIndexField(@Deprecated @JsonProperty("fieldName") final String fieldName,
                             @Deprecated @JsonProperty("fieldType") final OldIndexFieldType fieldType,
+
+                            @JsonProperty("fldName") final String fldName,
+                            @JsonProperty("fldType") final FieldType fldType,
                             @JsonProperty("analyzerType") final AnalyzerType analyzerType,
                             @JsonProperty("indexed") final boolean indexed,
                             @JsonProperty("stored") final boolean stored,
                             @JsonProperty("termPositions") final boolean termPositions,
                             @JsonProperty("caseSensitive") final boolean caseSensitive) {
-        this.name = convertLegacyName(name, fieldName);
-        this.type = convertLegacyType(type, fieldType);
+        this.fldName = convertLegacyName(fldName, fieldName);
+        this.fldType = convertLegacyType(fldType, fieldType);
         this.analyzerType = analyzerType;
         this.stored = stored;
         this.indexed = indexed;
         this.termPositions = termPositions;
         this.caseSensitive = caseSensitive;
+    }
+
+    public static LuceneIndexField fromIndexField(final IndexField indexField) {
+        return LuceneIndexField
+                .builder()
+                .fldName(indexField.getFldName())
+                .fldType(indexField.getFldType())
+                .analyzerType(indexField.getAnalyzerType())
+                .indexed(indexField.isIndexed())
+                .stored(indexField.isStored())
+                .caseSensitive(indexField.isCaseSensitive())
+                .build();
     }
 
     private static String convertLegacyName(final String name, final String fieldName) {
@@ -136,14 +149,14 @@ public class LuceneIndexField implements IndexField {
 
     public static LuceneIndexField createField(final String fieldName) {
         return new Builder()
-                .name(fieldName)
+                .fldName(fieldName)
                 .analyzerType(AnalyzerType.ALPHA_NUMERIC)
                 .build();
     }
 
     public static LuceneIndexField createField(final String fieldName, final AnalyzerType analyzerType) {
         return new Builder()
-                .name(fieldName)
+                .fldName(fieldName)
                 .analyzerType(analyzerType)
                 .build();
     }
@@ -151,7 +164,7 @@ public class LuceneIndexField implements IndexField {
     public static LuceneIndexField createField(final String fieldName, final AnalyzerType analyzerType,
                                                final boolean caseSensitive) {
         return new Builder()
-                .name(fieldName)
+                .fldName(fieldName)
                 .analyzerType(analyzerType)
                 .caseSensitive(caseSensitive)
                 .build();
@@ -164,27 +177,27 @@ public class LuceneIndexField implements IndexField {
                                                final boolean indexed,
                                                final boolean termPositions) {
         return new Builder()
-                .name(fieldName)
+                .fldName(fieldName)
                 .analyzerType(analyzerType)
                 .caseSensitive(caseSensitive)
-                .stored(stored)
                 .indexed(indexed)
+                .stored(stored)
                 .termPositions(termPositions)
                 .build();
     }
 
     public static LuceneIndexField createNumericField(final String fieldName) {
         return new Builder()
-                .type(FieldType.LONG)
-                .name(fieldName)
+                .fldType(FieldType.LONG)
+                .fldName(fieldName)
                 .analyzerType(AnalyzerType.NUMERIC)
                 .build();
     }
 
     public static LuceneIndexField createIdField(final String fieldName) {
         return new Builder()
-                .type(FieldType.ID)
-                .name(fieldName)
+                .fldType(FieldType.ID)
+                .fldName(fieldName)
                 .analyzerType(AnalyzerType.KEYWORD)
                 .stored(true)
                 .build();
@@ -192,20 +205,20 @@ public class LuceneIndexField implements IndexField {
 
     public static LuceneIndexField createDateField(final String fieldName) {
         return new Builder()
-                .type(FieldType.DATE)
-                .name(fieldName)
+                .fldType(FieldType.DATE)
+                .fldName(fieldName)
                 .analyzerType(AnalyzerType.ALPHA_NUMERIC)
                 .build();
     }
 
     @Override
-    public String getName() {
-        return name;
+    public String getFldName() {
+        return fldName;
     }
 
     @Override
-    public FieldType getType() {
-        return type;
+    public FieldType getFldType() {
+        return fldType;
     }
 
     public AnalyzerType getAnalyzerType() {
@@ -231,10 +244,11 @@ public class LuceneIndexField implements IndexField {
         return termPositions;
     }
 
+
     @Override
     @JsonIgnore
     public String getDisplayValue() {
-        return name;
+        return fldName;
     }
 
     @Override
@@ -250,19 +264,24 @@ public class LuceneIndexField implements IndexField {
                 stored == that.stored &&
                 termPositions == that.termPositions &&
                 caseSensitive == that.caseSensitive &&
-                Objects.equals(name, that.name) &&
-                type == that.type &&
+                Objects.equals(fldName, that.fldName) &&
+                fldType == that.fldType &&
                 analyzerType == that.analyzerType;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(name, type, analyzerType, indexed, stored, termPositions, caseSensitive);
+        return Objects.hash(fldName, fldType, analyzerType, indexed, stored, termPositions, caseSensitive);
+    }
+
+    @Override
+    public String toString() {
+        return fldName;
     }
 
     @Override
     public int compareTo(final Field o) {
-        return name.compareToIgnoreCase(o.getName());
+        return fldName.compareToIgnoreCase(o.getFldName());
     }
 
     public static Builder builder() {
@@ -275,8 +294,8 @@ public class LuceneIndexField implements IndexField {
 
     public static final class Builder {
 
-        private String name;
-        private FieldType type = FieldType.TEXT;
+        private String fldName;
+        private FieldType fldType = FieldType.TEXT;
         private AnalyzerType analyzerType = AnalyzerType.KEYWORD;
         private boolean indexed = true;
         private boolean stored;
@@ -287,8 +306,8 @@ public class LuceneIndexField implements IndexField {
         }
 
         private Builder(final LuceneIndexField indexField) {
-            this.name = indexField.name;
-            this.type = indexField.type;
+            this.fldName = indexField.fldName;
+            this.fldType = indexField.fldType;
             this.analyzerType = indexField.analyzerType;
             this.indexed = indexField.indexed;
             this.stored = indexField.stored;
@@ -296,13 +315,13 @@ public class LuceneIndexField implements IndexField {
             this.caseSensitive = indexField.caseSensitive;
         }
 
-        public Builder name(final String name) {
-            this.name = name;
+        public Builder fldName(final String fldName) {
+            this.fldName = fldName;
             return this;
         }
 
-        public Builder type(final FieldType type) {
-            this.type = type;
+        public Builder fldType(final FieldType fldType) {
+            this.fldType = fldType;
             return this;
         }
 
@@ -333,10 +352,10 @@ public class LuceneIndexField implements IndexField {
 
         public LuceneIndexField build() {
             return new LuceneIndexField(
-                    name,
-                    type,
                     null,
                     null,
+                    fldName,
+                    fldType,
                     analyzerType,
                     indexed,
                     stored,

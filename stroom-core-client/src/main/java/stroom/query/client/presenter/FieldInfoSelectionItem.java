@@ -19,7 +19,7 @@ public class FieldInfoSelectionItem implements SelectionItem {
         if (fieldInfo == null) {
             return "[ none ]";
         }
-        return fieldInfo.getName();
+        return fieldInfo.getFldName();
     }
 
     @Override

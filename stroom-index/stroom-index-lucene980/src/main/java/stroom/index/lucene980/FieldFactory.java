@@ -35,40 +35,50 @@ class FieldFactory {
     private static final Logger LOGGER = LoggerFactory.getLogger(FieldFactory.class);
 
     public static LongField create(final LuceneIndexField indexField, final long initialValue) {
-        return new LongField(indexField.getName(), initialValue, indexField.isStored() ? Store.YES : Store.NO);
+        return new LongField(indexField.getFldName(),
+                initialValue,
+                indexField.isStored()
+                        ? Store.YES
+                        : Store.NO);
     }
 
     public static DoubleField createDouble(final LuceneIndexField indexField, final double initialValue) {
-        return new DoubleField(indexField.getName(), initialValue, indexField.isStored() ? Store.YES : Store.NO);
+        return new DoubleField(indexField.getFldName(),
+                initialValue,
+                indexField.isStored()
+                        ? Store.YES
+                        : Store.NO);
     }
 
     public static IntField createInt(final LuceneIndexField indexField, final int initialValue) {
-        return new IntField(indexField.getName(), initialValue, indexField.isStored() ? Store.YES : Store.NO);
+        return new IntField(indexField.getFldName(),
+                initialValue,
+                indexField.isStored()
+                        ? Store.YES
+                        : Store.NO);
     }
 
     public static FloatField createFloat(final LuceneIndexField indexField, final float initialValue) {
-        return new FloatField(indexField.getName(), initialValue, indexField.isStored() ? Store.YES : Store.NO);
+        return new FloatField(indexField.getFldName(),
+                initialValue,
+                indexField.isStored()
+                        ? Store.YES
+                        : Store.NO);
     }
 
     public static Field create(final LuceneIndexField indexField, final String initialValue) {
-        return new Field(indexField.getName(), initialValue, FieldTypeFactory.create(indexField));
+        return new Field(indexField.getFldName(), initialValue, FieldTypeFactory.create(indexField));
     }
 
     public static Field create(final FieldValue fieldValue) {
         final IndexField indexField = fieldValue.field();
         final LuceneIndexField luceneIndexField = LuceneIndexField
-                .builder()
-                .name(indexField.getName())
-                .type(indexField.getType())
-                .analyzerType(indexField.getAnalyzerType())
-                .indexed(indexField.isIndexed())
-                .caseSensitive(indexField.isCaseSensitive())
-                .build();
+                .fromIndexField(indexField);
 
         final Val value = fieldValue.value();
 
         org.apache.lucene980.document.Field field = null;
-        switch (indexField.getType()) {
+        switch (indexField.getFldType()) {
             case LONG, ID -> {
                 try {
                     field = FieldFactory.create(luceneIndexField, value.toLong());

@@ -165,7 +165,7 @@ public class FieldListPresenter extends DocumentEditPresenter<PagerView, Receive
         dataGrid.addResizableColumn(new Column<QueryField, String>(new TextCell()) {
             @Override
             public String getValue(final QueryField row) {
-                return row.getName();
+                return row.getFldName();
             }
         }, "Name", 150);
     }
@@ -174,13 +174,13 @@ public class FieldListPresenter extends DocumentEditPresenter<PagerView, Receive
         dataGrid.addResizableColumn(new Column<QueryField, String>(new TextCell()) {
             @Override
             public String getValue(final QueryField row) {
-                return row.getType().getTypeName();
+                return row.getFldType().getTypeName();
             }
         }, "Type", 100);
     }
 
     private void onAdd() {
-        final Set<String> otherNames = fields.stream().map(QueryField::getName).collect(Collectors.toSet());
+        final Set<String> otherNames = fields.stream().map(QueryField::getFldName).collect(Collectors.toSet());
 
         fieldEditPresenter.read(QueryField.createText(""), otherNames);
         fieldEditPresenter.show("New Field", e -> {
@@ -201,8 +201,8 @@ public class FieldListPresenter extends DocumentEditPresenter<PagerView, Receive
     private void onEdit() {
         final QueryField field = selectionModel.getSelected();
         if (field != null) {
-            final Set<String> otherNames = fields.stream().map(QueryField::getName).collect(Collectors.toSet());
-            otherNames.remove(field.getName());
+            final Set<String> otherNames = fields.stream().map(QueryField::getFldName).collect(Collectors.toSet());
+            otherNames.remove(field.getFldName());
 
             fieldEditPresenter.read(field, otherNames);
             fieldEditPresenter.show("Edit Field", e -> {

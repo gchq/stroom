@@ -183,8 +183,8 @@ class TestMetaDaoImpl {
             final Meta myMeta = metaDao.create(createProcessedProperties(parent, TEST1_FEED_NAME));
 
             final AttributeMap attributeMap = new AttributeMap();
-            attributeMap.put(MetaFields.REC_READ.getName(), "" + 100 * i);
-            attributeMap.put(MetaFields.REC_WRITE.getName(), "" + 10 * i);
+            attributeMap.put(MetaFields.REC_READ.getFldName(), "" + 100 * i);
+            attributeMap.put(MetaFields.REC_WRITE.getFldName(), "" + 10 * i);
             metaValueDao.addAttributes(myMeta, attributeMap);
             totalMetaCount += 2; // parent + myMeta
             test1FeedCount += 2; // parent + myMeta
@@ -193,8 +193,8 @@ class TestMetaDaoImpl {
             final Meta parent = metaDao.create(createRawProperties(TEST2_FEED_NAME));
             final Meta myMeta = metaDao.create(createProcessedProperties(parent, TEST2_FEED_NAME));
             final AttributeMap attributeMap = new AttributeMap();
-            attributeMap.put(MetaFields.REC_READ.getName(), "" + 1000 * i);
-            attributeMap.put(MetaFields.REC_WRITE.getName(), "" + 100 * i);
+            attributeMap.put(MetaFields.REC_READ.getFldName(), "" + 1000 * i);
+            attributeMap.put(MetaFields.REC_WRITE.getFldName(), "" + 100 * i);
             metaValueDao.addAttributes(myMeta, attributeMap);
             totalMetaCount += 2; // parent + myMeta
             test2FeedCount += 2; // parent + myMeta
@@ -233,8 +233,8 @@ class TestMetaDaoImpl {
             effectiveMetaList.add(effectiveMeta);
 
             final AttributeMap attributeMap = new AttributeMap();
-            attributeMap.put(MetaFields.REC_READ.getName(), "" + 100 * i);
-            attributeMap.put(MetaFields.REC_WRITE.getName(), "" + 10 * i);
+            attributeMap.put(MetaFields.REC_READ.getFldName(), "" + 100 * i);
+            attributeMap.put(MetaFields.REC_WRITE.getFldName(), "" + 10 * i);
             metaValueDao.addAttributes(myMeta, attributeMap);
             totalMetaCount += 2; // parent + myMeta
             test1FeedCount += 2; // parent + myMeta
@@ -506,10 +506,10 @@ class TestMetaDaoImpl {
     @Test
     void testComplexQuery() {
         final AttributeMap attributeMap = new AttributeMap();
-        attributeMap.put(MetaFields.REC_READ.getName(), "" + 100);
-        attributeMap.put(MetaFields.REC_WRITE.getName(), "" + 10);
-        attributeMap.put(MetaFields.REC_ERROR.getName(), "" + 100);
-        attributeMap.put(MetaFields.REC_FATAL.getName(), "" + 10);
+        attributeMap.put(MetaFields.REC_READ.getFldName(), "" + 100);
+        attributeMap.put(MetaFields.REC_WRITE.getFldName(), "" + 10);
+        attributeMap.put(MetaFields.REC_ERROR.getFldName(), "" + 100);
+        attributeMap.put(MetaFields.REC_FATAL.getFldName(), "" + 10);
 
         final Meta parent = metaDao.create(createRawProperties(TEST1_FEED_NAME));
         final Meta myMeta = metaDao.create(createErrorProperties(parent, TEST1_FEED_NAME));
@@ -560,7 +560,7 @@ class TestMetaDaoImpl {
     private ExpressionTerm createFeedTerm(final DocRef feed, boolean enabled) {
         return ExpressionTerm
                 .builder()
-                .field(MetaFields.FEED.getName())
+                .field(MetaFields.FEED.getFldName())
                 .condition(Condition.IS_DOC_REF)
                 .docRef(feed)
                 .enabled(enabled)
@@ -570,7 +570,7 @@ class TestMetaDaoImpl {
     private ExpressionTerm createPipelineTerm(final String pipelineUuid, boolean enabled) {
         return ExpressionTerm
                 .builder()
-                .field(MetaFields.PIPELINE.getName())
+                .field(MetaFields.PIPELINE.getFldName())
                 .condition(Condition.IS_DOC_REF)
                 .docRef(PipelineDoc.buildDocRef().uuid(pipelineUuid).build())
                 .enabled(enabled)
@@ -603,8 +603,8 @@ class TestMetaDaoImpl {
                         .addDateTerm(MetaFields.FEED, Condition.EQUALS, TEST2_FEED_NAME)
                         .build())
                 .addDateTerm(MetaFields.TYPE, Condition.EQUALS, PROCESSED_STREAM_TYPE_NAME)
-                .addTerm(MetaFields.REC_WRITE.getName(), Condition.EQUALS, "0")
-                .addTerm(MetaFields.REC_READ.getName(), Condition.GREATER_THAN_OR_EQUAL_TO, "0")
+                .addTerm(MetaFields.REC_WRITE.getFldName(), Condition.EQUALS, "0")
+                .addTerm(MetaFields.REC_READ.getFldName(), Condition.GREATER_THAN_OR_EQUAL_TO, "0")
                 .build();
 
         System.err.println("About to find...");

@@ -15,6 +15,6 @@ class DataSourceFieldBuilderTest {
         final QueryField field = QueryField.createId(name);
 
         // Then
-        assertThat(field.getName()).isEqualTo(name);
+        assertThat(field.getFldName()).isEqualTo(name);
     }
 }

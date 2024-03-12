@@ -209,11 +209,12 @@ class IndexShardDaoImpl implements IndexShardDao {
         final Condition condition = indexShardExpressionMapper.apply(criteria.getExpression());
 
         final boolean volumeUsed = isUsed(
-                Set.of(IndexShardFields.FIELD_VOLUME_PATH.getName(), IndexShardFields.FIELD_VOLUME_GROUP.getName()),
+                Set.of(IndexShardFields.FIELD_VOLUME_PATH.getFldName(),
+                        IndexShardFields.FIELD_VOLUME_GROUP.getFldName()),
                 fieldNames,
                 criteria);
         final boolean volumeGroupUsed = isUsed(
-                Set.of(IndexShardFields.FIELD_VOLUME_GROUP.getName()),
+                Set.of(IndexShardFields.FIELD_VOLUME_GROUP.getFldName()),
                 fieldNames,
                 criteria);
 
@@ -410,7 +411,7 @@ class IndexShardDaoImpl implements IndexShardDao {
             expressionMapper.map(IndexShardFields.FIELD_STATUS, INDEX_SHARD.STATUS, value ->
                     IndexShardStatus.fromDisplayValue(value).getPrimitiveValue());
             expressionMapper.map(IndexShardFields.FIELD_LAST_COMMIT, INDEX_SHARD.COMMIT_MS, value ->
-                    DateExpressionParser.getMs(IndexShardFields.FIELD_LAST_COMMIT.getName(), value));
+                    DateExpressionParser.getMs(IndexShardFields.FIELD_LAST_COMMIT.getFldName(), value));
             expressionMapper.map(IndexShardFields.FIELD_VOLUME_PATH, INDEX_VOLUME.PATH, value -> value);
             expressionMapper.map(IndexShardFields.FIELD_VOLUME_GROUP, INDEX_VOLUME_GROUP.NAME, value -> value);
         }

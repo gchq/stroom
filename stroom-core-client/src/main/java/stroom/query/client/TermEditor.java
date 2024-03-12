@@ -192,7 +192,7 @@ public class TermEditor extends Composite {
         if (selectedField != null && conditionListBox.getValue() != null) {
             DocRef docRef = null;
 
-            term.setField(selectedField.getName());
+            term.setField(selectedField.getFldName());
             term.setCondition(conditionListBox.getValue());
 
             final StringBuilder sb = new StringBuilder();
@@ -246,9 +246,9 @@ public class TermEditor extends Composite {
         conditionListBox.setValue(selected);
         changeCondition(field, selected);
 
-        if (field != null && field.getType() != null) {
-            fieldTypeLabel.setText(field.getType().getShortTypeName());
-            fieldTypeLabel.setTitle(field.getType().getDescription());
+        if (field != null && field.getFldType() != null) {
+            fieldTypeLabel.setText(field.getFldType().getShortTypeName());
+            fieldTypeLabel.setTitle(field.getFldType().getDescription());
             fieldTypeLabel.setVisible(true);
         } else {
             fieldTypeLabel.setVisible(false);
@@ -263,7 +263,7 @@ public class TermEditor extends Composite {
         } else {
             FieldType fieldType = null;
             if (field != null) {
-                fieldType = field.getType();
+                fieldType = field.getFldType();
             }
             conditions = ConditionSet.getUiDefaultConditions(fieldType);
         }
@@ -275,8 +275,8 @@ public class TermEditor extends Composite {
                                  final Condition condition) {
         final FieldInfo selectedField = fieldListBox.getValue();
         FieldType indexFieldType = null;
-        if (selectedField != null && selectedField.getType() != null) {
-            indexFieldType = selectedField.getType();
+        if (selectedField != null && selectedField.getFldType() != null) {
+            indexFieldType = selectedField.getFldType();
         }
 
         if (indexFieldType == null) {
@@ -351,7 +351,7 @@ public class TermEditor extends Composite {
             } else if (Condition.IN_FOLDER.equals(condition)) {
                 docSelectionBoxPresenter.setIncludedTypes("Folder");
                 docSelectionBoxPresenter.setAllowFolderSelection(true);
-            } else if (FieldType.DOC_REF.equals(field.getType())) {
+            } else if (FieldType.DOC_REF.equals(field.getFldType())) {
                 docSelectionBoxPresenter.setIncludedTypes(field.getDocRefType());
             }
             docSelectionBoxPresenter.setSelectedEntityReference(term.getDocRef());

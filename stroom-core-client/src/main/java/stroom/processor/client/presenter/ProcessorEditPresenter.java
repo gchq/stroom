@@ -258,7 +258,7 @@ public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView>
         if (queryData == null || queryData.getExpression() == null) {
             return 0;
         }
-        return ExpressionUtil.termCount(queryData.getExpression(), field.getName());
+        return ExpressionUtil.termCount(queryData.getExpression(), field.getFldName());
     }
 
     private void createOrUpdateProcessor(final ProcessorFilter filter,

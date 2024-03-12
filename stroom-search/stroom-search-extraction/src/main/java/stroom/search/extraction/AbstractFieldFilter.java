@@ -128,10 +128,10 @@ public abstract class AbstractFieldFilter extends AbstractXMLFilter {
     public void characters(final char[] ch, final int start, final int length) throws SAXException {
         final String string = new String(ch, start, length);
         if (NAME.equals(currentElement)) {
-            currentFieldBuilder.name(string);
+            currentFieldBuilder.fldName(string);
         } else if (TYPE.equals(currentElement)) {
             final FieldType type = FieldType.TYPE_NAME_MAP.get(string.toLowerCase(Locale.ROOT));
-            currentFieldBuilder.type(type);
+            currentFieldBuilder.fldType(type);
         } else if (ANALYSER.equals(currentElement)) {
             final AnalyzerType analyzerType = AnalyzerType.TYPE_MAP.get(string.toLowerCase(Locale.ROOT));
             currentFieldBuilder.analyzerType(analyzerType);
@@ -152,7 +152,7 @@ public abstract class AbstractFieldFilter extends AbstractXMLFilter {
 
     private Val convertValue(final IndexFieldImpl indexField, final String value) {
         try {
-            switch (indexField.getType()) {
+            switch (indexField.getFldType()) {
                 case LONG, ID -> {
                     final long val = Long.parseLong(value);
                     return ValLong.create(val);

@@ -12885,13 +12885,6 @@
       "ElasticIndexField" : {
         "type" : "object",
         "properties" : {
-          "analyzerType" : {
-            "type" : "string",
-            "enum" : [ "KEYWORD", "ALPHA", "NUMERIC", "ALPHA_NUMERIC", "WHITESPACE", "STOP", "STANDARD" ]
-          },
-          "caseSensitive" : {
-            "type" : "boolean"
-          },
           "fieldName" : {
             "type" : "string"
           },
@@ -12902,24 +12895,18 @@
             "type" : "string",
             "enum" : [ "ID", "BOOLEAN", "INTEGER", "LONG", "FLOAT", "DOUBLE", "DATE", "TEXT", "KEYWORD", "IPV4_ADDRESS", "DOC_REF" ]
           },
+          "fldName" : {
+            "type" : "string"
+          },
+          "fldType" : {
+            "type" : "string",
+            "enum" : [ "ID", "BOOLEAN", "INTEGER", "LONG", "FLOAT", "DOUBLE", "DATE", "TEXT", "KEYWORD", "IPV4_ADDRESS", "DOC_REF" ]
+          },
           "indexed" : {
             "type" : "boolean"
           },
-          "name" : {
-            "type" : "string"
-          },
           "nativeType" : {
             "type" : "string"
-          },
-          "stored" : {
-            "type" : "boolean"
-          },
-          "termPositions" : {
-            "type" : "boolean"
-          },
-          "type" : {
-            "type" : "string",
-            "enum" : [ "ID", "BOOLEAN", "INTEGER", "LONG", "FLOAT", "DOUBLE", "DATE", "TEXT", "KEYWORD", "IPV4_ADDRESS", "DOC_REF" ]
           }
         }
       },
@@ -13732,16 +13719,12 @@
           "docRefType" : {
             "type" : "string"
           },
-          "fieldName" : {
-            "type" : "string",
-            "writeOnly" : true
+          "fldName" : {
+            "type" : "string"
           },
-          "fieldType" : {
+          "fldType" : {
             "type" : "string",
             "enum" : [ "ID", "BOOLEAN", "INTEGER", "LONG", "FLOAT", "DOUBLE", "DATE", "TEXT", "KEYWORD", "IPV4_ADDRESS", "DOC_REF" ]
-          },
-          "name" : {
-            "type" : "string"
           },
           "queryable" : {
             "type" : "boolean"
@@ -15318,21 +15301,21 @@
             "type" : "string",
             "enum" : [ "ID", "BOOLEAN_FIELD", "INTEGER_FIELD", "LONG_FIELD", "FLOAT_FIELD", "DOUBLE_FIELD", "DATE_FIELD", "FIELD", "NUMERIC_FIELD" ]
           },
+          "fldName" : {
+            "type" : "string"
+          },
+          "fldType" : {
+            "type" : "string",
+            "enum" : [ "ID", "BOOLEAN", "INTEGER", "LONG", "FLOAT", "DOUBLE", "DATE", "TEXT", "KEYWORD", "IPV4_ADDRESS", "DOC_REF" ]
+          },
           "indexed" : {
             "type" : "boolean"
-          },
-          "name" : {
-            "type" : "string"
           },
           "stored" : {
             "type" : "boolean"
           },
           "termPositions" : {
             "type" : "boolean"
-          },
-          "type" : {
-            "type" : "string",
-            "enum" : [ "ID", "BOOLEAN", "INTEGER", "LONG", "FLOAT", "DOUBLE", "DATE", "TEXT", "KEYWORD", "IPV4_ADDRESS", "DOC_REF" ]
           }
         }
       },
@@ -16732,7 +16715,10 @@
           "docRefType" : {
             "type" : "string"
           },
-          "fieldType" : {
+          "fldName" : {
+            "type" : "string"
+          },
+          "fldType" : {
             "type" : "string",
             "enum" : [ "ID", "BOOLEAN", "INTEGER", "LONG", "FLOAT", "DOUBLE", "DATE", "TEXT", "KEYWORD", "IPV4_ADDRESS", "DOC_REF" ]
           },
@@ -18506,13 +18492,6 @@
       "SolrIndexField" : {
         "type" : "object",
         "properties" : {
-          "analyzerType" : {
-            "type" : "string",
-            "enum" : [ "KEYWORD", "ALPHA", "NUMERIC", "ALPHA_NUMERIC", "WHITESPACE", "STOP", "STANDARD" ]
-          },
-          "caseSensitive" : {
-            "type" : "boolean"
-          },
           "defaultValue" : {
             "type" : "string"
           },
@@ -18529,14 +18508,18 @@
             "type" : "string",
             "enum" : [ "ID", "BOOLEAN_FIELD", "INTEGER_FIELD", "LONG_FIELD", "FLOAT_FIELD", "DOUBLE_FIELD", "DATE_FIELD", "FIELD", "NUMERIC_FIELD" ]
           },
+          "fldName" : {
+            "type" : "string"
+          },
+          "fldType" : {
+            "type" : "string",
+            "enum" : [ "ID", "BOOLEAN", "INTEGER", "LONG", "FLOAT", "DOUBLE", "DATE", "TEXT", "KEYWORD", "IPV4_ADDRESS", "DOC_REF" ]
+          },
           "indexed" : {
             "type" : "boolean"
           },
           "multiValued" : {
             "type" : "boolean"
-          },
-          "name" : {
-            "type" : "string"
           },
           "nativeType" : {
             "type" : "string"
@@ -18573,10 +18556,6 @@
           },
           "termVectors" : {
             "type" : "boolean"
-          },
-          "type" : {
-            "type" : "string",
-            "enum" : [ "ID", "BOOLEAN", "INTEGER", "LONG", "FLOAT", "DOUBLE", "DATE", "TEXT", "KEYWORD", "IPV4_ADDRESS", "DOC_REF" ]
           },
           "uninvertible" : {
             "type" : "boolean"

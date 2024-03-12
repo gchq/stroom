@@ -34,40 +34,34 @@ class FieldFactory {
     private static final Logger LOGGER = LoggerFactory.getLogger(FieldFactory.class);
 
     public static LongField create(final LuceneIndexField indexField, final long initialValue) {
-        return new LongField(indexField.getName(), initialValue, FieldTypeFactory.create(indexField));
+        return new LongField(indexField.getFldName(), initialValue, FieldTypeFactory.create(indexField));
     }
 
     public static DoubleField createDouble(final LuceneIndexField indexField, final double initialValue) {
-        return new DoubleField(indexField.getName(), initialValue, FieldTypeFactory.create(indexField));
+        return new DoubleField(indexField.getFldName(), initialValue, FieldTypeFactory.create(indexField));
     }
 
     public static IntField createInt(final LuceneIndexField indexField, final int initialValue) {
-        return new IntField(indexField.getName(), initialValue, FieldTypeFactory.create(indexField));
+        return new IntField(indexField.getFldName(), initialValue, FieldTypeFactory.create(indexField));
     }
 
     public static FloatField createFloat(final LuceneIndexField indexField, final float initialValue) {
-        return new FloatField(indexField.getName(), initialValue, FieldTypeFactory.create(indexField));
+        return new FloatField(indexField.getFldName(), initialValue, FieldTypeFactory.create(indexField));
     }
 
     public static Field create(final LuceneIndexField indexField, final String initialValue) {
-        return new Field(indexField.getName(), initialValue, FieldTypeFactory.create(indexField));
+        return new Field(indexField.getFldName(), initialValue, FieldTypeFactory.create(indexField));
     }
 
     public static Field create(final FieldValue fieldValue) {
         final IndexField indexField = fieldValue.field();
         final LuceneIndexField luceneIndexField = LuceneIndexField
-                .builder()
-                .name(indexField.getName())
-                .type(indexField.getType())
-                .analyzerType(indexField.getAnalyzerType())
-                .indexed(indexField.isIndexed())
-                .caseSensitive(indexField.isCaseSensitive())
-                .build();
+                .fromIndexField(indexField);
 
         final Val value = fieldValue.value();
 
         org.apache.lucene553.document.Field field = null;
-        switch (indexField.getType()) {
+        switch (indexField.getFldType()) {
             case LONG, ID -> {
                 try {
                     field = FieldFactory.create(luceneIndexField, value.toLong());

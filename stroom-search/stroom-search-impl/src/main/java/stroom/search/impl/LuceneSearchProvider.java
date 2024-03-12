@@ -27,6 +27,7 @@ import stroom.index.impl.LuceneProviderFactory;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFieldProvider;
 import stroom.index.shared.LuceneIndexDoc;
+import stroom.index.shared.LuceneIndexField;
 import stroom.index.shared.LuceneVersionUtil;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.Query;
@@ -40,6 +41,7 @@ import stroom.query.common.v2.ResultStoreFactory;
 import stroom.query.common.v2.SearchProvider;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
+import stroom.util.NullSafe;
 import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
@@ -47,6 +49,7 @@ import jakarta.inject.Inject;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -126,13 +129,29 @@ public class LuceneSearchProvider implements SearchProvider, IndexFieldProvider 
 
     @Override
     public IndexField getIndexField(final DocRef docRef, final String fieldName) {
-        // TODO : GET FIELD
-//        final ElasticIndexDoc index = elasticIndexStore.readDocument(docRef);
-//        if (index != null) {
-//            final Map<String, ElasticIndexField> indexFieldMap = getFieldsMap(index);
-//            return indexFieldMap.get(fieldName);
-//        }
-        return null;
+        return securityContext.useAsReadResult(() -> {
+
+            // Check for read permission.
+            if (!securityContext.hasDocumentPermission(docRef.getUuid(), DocumentPermissionNames.READ)) {
+                // If there is no read permission then return no fields.
+                return null;
+            }
+
+            if (!FIELD_SOURCE_MAP.containsKey(docRef)) {
+                // Load fields.
+                final LuceneIndexDoc index = indexStore.readDocument(docRef);
+                if (index != null) {
+                    final List<LuceneIndexField> fields = NullSafe.list(index.getFields());
+                    return fields
+                            .stream()
+                            .filter(field -> Objects.equals(field.getFldName(), fieldName))
+                            .findFirst()
+                            .orElse(null);
+                }
+            }
+
+            return null;
+        });
     }
 
     private void addField(final int fieldSourceId, final QueryField field) {

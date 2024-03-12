@@ -36,17 +36,17 @@ import static stroom.meta.impl.db.jooq.tables.MetaKey.META_KEY;
 class MetaKeyDaoImpl implements MetaKeyDao, Clearable {
 //    private static final Map<String, MetaFieldUse> SYSTEM_ATTRIBUTE_FIELD_TYPE_MAP;
 
-    private static final String REC_READ = MetaFields.REC_READ.getName();
-    private static final String REC_WRITE = MetaFields.REC_WRITE.getName();
-    private static final String REC_INFO = MetaFields.REC_INFO.getName();
-    private static final String REC_WARN = MetaFields.REC_WARN.getName();
-    private static final String REC_ERROR = MetaFields.REC_ERROR.getName();
-    private static final String REC_FATAL = MetaFields.REC_FATAL.getName();
-    private static final String DURATION = MetaFields.DURATION.getName();
+    private static final String REC_READ = MetaFields.REC_READ.getFldName();
+    private static final String REC_WRITE = MetaFields.REC_WRITE.getFldName();
+    private static final String REC_INFO = MetaFields.REC_INFO.getFldName();
+    private static final String REC_WARN = MetaFields.REC_WARN.getFldName();
+    private static final String REC_ERROR = MetaFields.REC_ERROR.getFldName();
+    private static final String REC_FATAL = MetaFields.REC_FATAL.getFldName();
+    private static final String DURATION = MetaFields.DURATION.getFldName();
     //    private static final String NODE = StreamDataSource.NODE;
 //    private static final String FEED = StreamDataSource.FEED;
-    private static final String FILE_SIZE = MetaFields.FILE_SIZE.getName();
-    private static final String STREAM_SIZE = MetaFields.RAW_SIZE.getName();
+    private static final String FILE_SIZE = MetaFields.FILE_SIZE.getFldName();
+    private static final String STREAM_SIZE = MetaFields.RAW_SIZE.getFldName();
 
 //    static {
 //        final HashMap<String, MetaFieldUse> map = new HashMap<>();

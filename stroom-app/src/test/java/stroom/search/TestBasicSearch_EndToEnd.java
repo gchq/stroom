@@ -74,12 +74,12 @@ class TestBasicSearch_EndToEnd extends AbstractCoreIntegrationTest {
         // Create a map of index fields keyed by name.
         final Map<String, QueryField> dataSourceFieldsMap = IndexDataSourceFieldUtil.getDataSourceFields(index)
                 .stream()
-                .collect(Collectors.toMap(QueryField::getName, Function.identity()));
+                .collect(Collectors.toMap(QueryField::getFldName, Function.identity()));
         final QueryField actual = dataSourceFieldsMap.get("Action");
         final QueryField expected = QueryField
                 .builder()
-                .name("Action")
-                .type(FieldType.TEXT)
+                .fldName("Action")
+                .fldType(FieldType.TEXT)
                 .conditionSet(actual.getConditionSet())
                 .queryable(true)
                 .build();

@@ -2,6 +2,7 @@ package stroom.search.extraction;
 
 import stroom.docref.DocRef;
 import stroom.index.shared.IndexField;
+import stroom.index.shared.IndexFieldCache;
 import stroom.index.shared.LuceneIndexField;
 import stroom.query.language.functions.FieldIndex;
 
@@ -32,7 +33,7 @@ public class FieldValueExtractorFactory {
             if (indexField == null) {
                 indexField = LuceneIndexField
                         .builder()
-                        .name(fieldName)
+                        .fldName(fieldName)
                         .indexed(false)
                         .build();
             }

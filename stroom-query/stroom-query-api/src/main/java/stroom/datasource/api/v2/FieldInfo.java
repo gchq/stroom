@@ -14,9 +14,9 @@ import java.util.Objects;
 public class FieldInfo implements Field {
 
     @JsonProperty
-    private final String name;
+    private final String fldName;
     @JsonProperty
-    private final FieldType type;
+    private final FieldType fldType;
     @JsonProperty
     private final ConditionSet conditions;
     @JsonProperty
@@ -25,13 +25,13 @@ public class FieldInfo implements Field {
     private final Boolean queryable;
 
     @JsonCreator
-    public FieldInfo(@JsonProperty("name") final String name,
-                     @JsonProperty("type") final FieldType type,
+    public FieldInfo(@JsonProperty("fldName") final String fldName,
+                     @JsonProperty("fldType") final FieldType fldType,
                      @JsonProperty("conditions") final ConditionSet conditions,
                      @JsonProperty("docRefType") final String docRefType,
                      @JsonProperty("queryable") final Boolean queryable) {
-        this.name = name;
-        this.type = type;
+        this.fldName = fldName;
+        this.fldType = fldType;
         this.conditions = conditions;
         this.docRefType = docRefType;
         this.queryable = queryable;
@@ -39,21 +39,21 @@ public class FieldInfo implements Field {
 
     public static FieldInfo create(final QueryField field) {
         return builder()
-                .name(field.getName())
-                .type(field.getType())
+                .fldName(field.getFldName())
+                .fldType(field.getFldType())
                 .conditions(field.getConditionSet())
                 .docRefType(field.getDocRefType())
                 .build();
     }
 
     @Override
-    public String getName() {
-        return name;
+    public String getFldName() {
+        return fldName;
     }
 
     @Override
-    public FieldType getType() {
-        return type;
+    public FieldType getFldType() {
+        return fldType;
     }
 
     public ConditionSet getConditions() {
@@ -75,12 +75,12 @@ public class FieldInfo implements Field {
     @JsonIgnore
     @Override
     public String getDisplayValue() {
-        return name;
+        return fldName;
     }
 
     @Override
     public int compareTo(final Field field) {
-        return name.compareTo(field.getName());
+        return fldName.compareTo(field.getFldName());
     }
 
     @Override
@@ -92,12 +92,12 @@ public class FieldInfo implements Field {
             return false;
         }
         final FieldInfo that = (FieldInfo) o;
-        return Objects.equals(name, that.name) && type == that.type;
+        return Objects.equals(fldName, that.fldName) && fldType == that.fldType;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(name, type);
+        return Objects.hash(fldName, fldType);
     }
 
     public Builder copy() {
@@ -110,8 +110,8 @@ public class FieldInfo implements Field {
 
     public static class Builder {
 
-        private String name;
-        private FieldType type;
+        private String fldName;
+        private FieldType fldType;
         private ConditionSet conditions;
         private String docRefType;
         private Boolean queryable;
@@ -120,20 +120,20 @@ public class FieldInfo implements Field {
         }
 
         public Builder(final FieldInfo fieldInfo) {
-            this.name = fieldInfo.name;
-            this.type = fieldInfo.type;
+            this.fldName = fieldInfo.fldName;
+            this.fldType = fieldInfo.fldType;
             this.conditions = fieldInfo.conditions;
             this.docRefType = fieldInfo.docRefType;
             this.queryable = fieldInfo.queryable;
         }
 
-        public Builder name(final String name) {
-            this.name = name;
+        public Builder fldName(final String fldName) {
+            this.fldName = fldName;
             return this;
         }
 
-        public Builder type(final FieldType type) {
-            this.type = type;
+        public Builder fldType(final FieldType fldType) {
+            this.fldType = fldType;
             return this;
         }
 
@@ -154,8 +154,8 @@ public class FieldInfo implements Field {
 
         public FieldInfo build() {
             return new FieldInfo(
-                    name,
-                    type,
+                    fldName,
+                    fldType,
                     conditions,
                     docRefType,
                     queryable);

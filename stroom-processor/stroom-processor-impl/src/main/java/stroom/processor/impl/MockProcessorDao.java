@@ -86,7 +86,7 @@ public class MockProcessorDao implements ProcessorDao, Clearable {
                 .stream()
                 .filter(pf -> {
                     final List<String> pipelineUuids = ExpressionUtil.values(criteria.getExpression(),
-                            ProcessorFields.PIPELINE.getName());
+                            ProcessorFields.PIPELINE.getFldName());
                     return pipelineUuids == null || pipelineUuids.contains(pf.getPipelineUuid());
                 })
                 .collect(Collectors.toList());

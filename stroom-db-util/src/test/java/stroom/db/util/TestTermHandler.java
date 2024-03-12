@@ -34,9 +34,9 @@ class TestTermHandler {
     private static final QueryField TEXT_FIELD = MetaFields.TYPE;
     private static final QueryField ID_FIELD = MetaFields.ID;
 
-    private static final Field<String> DOC_REF_DB_FIELD = DSL.field(DOC_REF_FIELD.getName(), String.class);
-    private static final Field<String> TEXT_DB_FIELD = DSL.field(TEXT_FIELD.getName(), String.class);
-    private static final Field<Long> ID_DB_FIELD = DSL.field(ID_FIELD.getName(), Long.class);
+    private static final Field<String> DOC_REF_DB_FIELD = DSL.field(DOC_REF_FIELD.getFldName(), String.class);
+    private static final Field<String> TEXT_DB_FIELD = DSL.field(TEXT_FIELD.getFldName(), String.class);
+    private static final Field<Long> ID_DB_FIELD = DSL.field(ID_FIELD.getFldName(), Long.class);
     private static final DocRef A_DOC_REF = DocRef.builder()
             .type(DOC_REF_FIELD.getDocRefType())
             .uuid("MyUUID")
@@ -76,101 +76,101 @@ class TestTermHandler {
                 .withSimpleEqualityAssertion()
 
                 .addCase(ExpressionTerm.builder()
-                                .field(ID_FIELD.getName())
+                                .field(ID_FIELD.getFldName())
                                 .condition(ExpressionTerm.Condition.EQUALS)
                                 .value("123")
                                 .build(),
                         ID_DB_FIELD.eq(123L))
 
                 .addCase(ExpressionTerm.builder()
-                                .field(ID_FIELD.getName())
+                                .field(ID_FIELD.getFldName())
                                 .condition(ExpressionTerm.Condition.EQUALS)
                                 .value("")
                                 .build(),
                         ID_DB_FIELD.isNull()) // Empty value
 
                 .addCase(ExpressionTerm.builder()
-                                .field(ID_FIELD.getName())
+                                .field(ID_FIELD.getFldName())
                                 .condition(ExpressionTerm.Condition.EQUALS)
                                 .build(),
                         ID_DB_FIELD.isNull()) // Empty value
 
                 .addCase(ExpressionTerm.builder()
-                                .field(ID_FIELD.getName())
+                                .field(ID_FIELD.getFldName())
                                 .condition(ExpressionTerm.Condition.BETWEEN)
                                 .value("1,3")
                                 .build(),
                         ID_DB_FIELD.between(1L, 3L))
 
                 .addCase(ExpressionTerm.builder()
-                                .field(ID_FIELD.getName())
+                                .field(ID_FIELD.getFldName())
                                 .condition(ExpressionTerm.Condition.IS_NULL)
                                 .build(),
                         ID_DB_FIELD.isNull())
 
                 .addCase(ExpressionTerm.builder()
-                                .field(ID_FIELD.getName())
+                                .field(ID_FIELD.getFldName())
                                 .condition(ExpressionTerm.Condition.IS_NOT_NULL)
                                 .build(),
                         ID_DB_FIELD.isNotNull())
 
                 .addCase(ExpressionTerm.builder()
-                                .field(ID_FIELD.getName())
+                                .field(ID_FIELD.getFldName())
                                 .condition(ExpressionTerm.Condition.LESS_THAN)
                                 .value("123")
                                 .build(),
                         ID_DB_FIELD.lessThan(123L))
 
                 .addCase(ExpressionTerm.builder()
-                                .field(ID_FIELD.getName())
+                                .field(ID_FIELD.getFldName())
                                 .condition(ExpressionTerm.Condition.LESS_THAN_OR_EQUAL_TO)
                                 .value("123")
                                 .build(),
                         ID_DB_FIELD.lessOrEqual(123L))
 
                 .addCase(ExpressionTerm.builder()
-                                .field(ID_FIELD.getName())
+                                .field(ID_FIELD.getFldName())
                                 .condition(ExpressionTerm.Condition.GREATER_THAN)
                                 .value("123")
                                 .build(),
                         ID_DB_FIELD.greaterThan(123L))
 
                 .addCase(ExpressionTerm.builder()
-                                .field(ID_FIELD.getName())
+                                .field(ID_FIELD.getFldName())
                                 .condition(ExpressionTerm.Condition.GREATER_THAN_OR_EQUAL_TO)
                                 .value("123")
                                 .build(),
                         ID_DB_FIELD.greaterOrEqual(123L))
 
                 .addCase(ExpressionTerm.builder()
-                                .field(ID_FIELD.getName())
+                                .field(ID_FIELD.getFldName())
                                 .condition(ExpressionTerm.Condition.IN)
                                 .value("1,2,3,4")
                                 .build(),
                         ID_DB_FIELD.in(1L, 2L, 3L, 4L))
 
                 .addCase(ExpressionTerm.builder()
-                                .field(ID_FIELD.getName())
+                                .field(ID_FIELD.getFldName())
                                 .condition(ExpressionTerm.Condition.IN)
                                 .value("1")
                                 .build(),
                         ID_DB_FIELD.in(1L))
 
                 .addCase(ExpressionTerm.builder()
-                                .field(ID_FIELD.getName())
+                                .field(ID_FIELD.getFldName())
                                 .condition(ExpressionTerm.Condition.IN)
                                 .value("")
                                 .build(),
                         DSL.falseCondition()) // Empty in list, so always false
 
                 .addCase(ExpressionTerm.builder()
-                                .field(ID_FIELD.getName())
+                                .field(ID_FIELD.getFldName())
                                 .condition(ExpressionTerm.Condition.IN)
                                 .build(),
                         DSL.falseCondition())
 
                 .addCase(ExpressionTerm.builder()
-                                .field(ID_FIELD.getName())
+                                .field(ID_FIELD.getFldName())
                                 .condition(ExpressionTerm.Condition.IN_DICTIONARY)
                                 .value("1,2,3,4")
                                 .docRef(A_DOC_REF)
@@ -180,7 +180,7 @@ class TestTermHandler {
                 // An un-supported field, so ought to return DSL.falseCondition
                 // though that is the same as 'in ()'
                 .addCase(ExpressionTerm.builder()
-                                .field(ID_FIELD.getName())
+                                .field(ID_FIELD.getFldName())
                                 .condition(ExpressionTerm.Condition.IN_FOLDER)
                                 .value("1")
                                 .build(),
@@ -212,7 +212,7 @@ class TestTermHandler {
 
                 .addCase(Tuple.of(
                                 ExpressionTerm.builder()
-                                        .field(DOC_REF_FIELD.getName())
+                                        .field(DOC_REF_FIELD.getFldName())
                                         .condition(ExpressionTerm.Condition.EQUALS)
                                         .value(A_DOC_REF.getUuid())
                                         .build(),
@@ -221,7 +221,7 @@ class TestTermHandler {
 
                 .addCase(Tuple.of(
                                 ExpressionTerm.builder()
-                                        .field(DOC_REF_FIELD.getName())
+                                        .field(DOC_REF_FIELD.getFldName())
                                         .condition(ExpressionTerm.Condition.IS_DOC_REF)
                                         .docRef(A_DOC_REF)
                                         .build(),
@@ -230,7 +230,7 @@ class TestTermHandler {
 
                 .addCase(Tuple.of(
                                 ExpressionTerm.builder()
-                                        .field(DOC_REF_FIELD.getName())
+                                        .field(DOC_REF_FIELD.getFldName())
                                         .condition(ExpressionTerm.Condition.IS_DOC_REF)
                                         .docRef(A_DOC_REF)
                                         .build(),
@@ -239,7 +239,7 @@ class TestTermHandler {
 
                 .addCase(Tuple.of(
                                 ExpressionTerm.builder()
-                                        .field(DOC_REF_FIELD.getName())
+                                        .field(DOC_REF_FIELD.getFldName())
                                         .condition(ExpressionTerm.Condition.IN_FOLDER)
                                         .docRef(A_FOLDER_DOC_REF)
                                         .build(),
@@ -252,7 +252,7 @@ class TestTermHandler {
     TermHandler<String> getDocRefTermHandler(final boolean useName) {
         return new TermHandler<>(
                 DOC_REF_FIELD,
-                DSL.field(DOC_REF_FIELD.getName(), String.class),
+                DSL.field(DOC_REF_FIELD.getFldName(), String.class),
                 values -> values,
                 wordListProviderMock,
                 collectionServiceMock,
@@ -263,7 +263,7 @@ class TestTermHandler {
     TermHandler<Long> getIdTermHandler(final boolean useName) {
         return new TermHandler<>(
                 ID_FIELD,
-                DSL.field(ID_FIELD.getName(), Long.class),
+                DSL.field(ID_FIELD.getFldName(), Long.class),
                 MultiConverter.wrapConverter(Long::parseLong),
                 wordListProviderMock,
                 collectionServiceMock,

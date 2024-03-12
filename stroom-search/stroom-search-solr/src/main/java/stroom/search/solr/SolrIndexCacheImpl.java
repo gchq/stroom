@@ -76,7 +76,7 @@ class SolrIndexCacheImpl implements SolrIndexCache, EntityEvent.Handler, Clearab
         }
 
         final Map<String, SolrIndexField> fieldMap = fields.stream()
-                .collect(Collectors.toMap(SolrIndexField::getName, Function.identity()));
+                .collect(Collectors.toMap(SolrIndexField::getFldName, Function.identity()));
         return new CachedSolrIndex(loaded, fields, fieldMap);
     }
 

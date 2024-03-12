@@ -58,9 +58,9 @@ class TestExpressionMatcher {
     private static final QueryField TYPE = QueryField.createText("Type");
     private static final QueryField FRUIT = QueryField.createText("Fruit");
     private static final Map<String, QueryField> FIELD_MAP = Map.of(
-            FEED.getName(),
+            FEED.getFldName(),
             FEED,
-            TYPE.getName(),
+            TYPE.getFldName(),
             TYPE);
 
     @Test
@@ -79,7 +79,7 @@ class TestExpressionMatcher {
         final ExpressionOperator.Builder builder = ExpressionOperator.builder().op(Op.OR);
         builder.addDateTerm(FEED, Condition.EQUALS, "FOO");
         final ExpressionTerm disabledTerm = ExpressionTerm.builder()
-                .field(FEED.getName())
+                .field(FEED.getFldName())
                 .condition(Condition.EQUALS)
                 .value("TEST_FEED")
                 .enabled(false)
@@ -168,7 +168,7 @@ class TestExpressionMatcher {
                 .build();
 
         final ExpressionMatcher expressionMatcher = new ExpressionMatcher(
-                Map.of(FRUIT.getName(), FRUIT),
+                Map.of(FRUIT.getFldName(), FRUIT),
                 mockWordListProvider,
                 null,
                 DateTimeSettings.builder()
@@ -186,14 +186,14 @@ class TestExpressionMatcher {
 
         final ExpressionOperator expression = ExpressionOperator.builder()
                 .addTerm(ExpressionTerm.builder()
-                        .field(FRUIT.getName())
+                        .field(FRUIT.getFldName())
                         .condition(Condition.IN_DICTIONARY)
                         .docRef(docRef)
                         .build())
                 .build();
 
         boolean match = expressionMatcher.match(
-                Map.of(FRUIT.getName(), "orange"),
+                Map.of(FRUIT.getFldName(), "orange"),
                 expression);
         assertThat(match)
                 .isTrue();
@@ -227,8 +227,8 @@ class TestExpressionMatcher {
 
     private Map<String, Object> createAttributeMap() {
         final Map<String, Object> attributeMap = new HashMap<>();
-        attributeMap.put(FEED.getName(), "TEST_FEED");
-        attributeMap.put(TYPE.getName(), StreamTypeNames.RAW_EVENTS);
+        attributeMap.put(FEED.getFldName(), "TEST_FEED");
+        attributeMap.put(TYPE.getFldName(), StreamTypeNames.RAW_EVENTS);
         return attributeMap;
     }
 }

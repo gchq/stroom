@@ -43,9 +43,9 @@ public final class IndexDataSourceFieldUtil {
     private static QueryField convert(final LuceneIndexField field) {
         return QueryField
                 .builder()
-                .name(field.getName())
-                .type(field.getType())
-                .conditionSet(ConditionSet.getDefault(field.getType()))
+                .fldName(field.getFldName())
+                .fldType(field.getFldType())
+                .conditionSet(ConditionSet.getDefault(field.getFldType()))
                 .queryable(true)
                 .build();
     }

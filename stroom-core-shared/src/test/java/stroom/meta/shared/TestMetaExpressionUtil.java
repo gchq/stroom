@@ -29,7 +29,7 @@ class TestMetaExpressionUtil {
         final ExpressionTerm term = (ExpressionTerm) expressionItem;
         assertThat(term)
                 .extracting(ExpressionTerm::getField)
-                .isEqualTo(MetaFields.ID.getName());
+                .isEqualTo(MetaFields.ID.getFldName());
         assertThat(term)
                 .extracting(ExpressionTerm::getCondition)
                 .isEqualTo(Condition.IN);
@@ -56,7 +56,7 @@ class TestMetaExpressionUtil {
         final ExpressionTerm term = (ExpressionTerm) expressionItem;
         assertThat(term)
                 .extracting(ExpressionTerm::getField)
-                .isEqualTo(MetaFields.ID.getName());
+                .isEqualTo(MetaFields.ID.getFldName());
         assertThat(term)
                 .extracting(ExpressionTerm::getCondition)
                 .isEqualTo(Condition.EQUALS);

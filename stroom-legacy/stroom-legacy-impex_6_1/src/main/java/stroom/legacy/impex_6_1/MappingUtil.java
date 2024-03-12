@@ -665,9 +665,9 @@ public final class MappingUtil {
 
         return new LuceneIndexField(
                 fieldName,
-                null,
-                fieldName,
                 indexFieldType,
+                null,
+                null,
                 analyzerType,
                 indexed,
                 stored,

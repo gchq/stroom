@@ -34,7 +34,7 @@ public class ProcessorFilterFields {
         FIELDS.add(DELETED);
         FIELDS.add(PROCESSOR_ID);
         FIELDS.add(UUID);
-        FIELD_MAP = FIELDS.stream().collect(Collectors.toMap(QueryField::getName, Function.identity()));
+        FIELD_MAP = FIELDS.stream().collect(Collectors.toMap(QueryField::getFldName, Function.identity()));
     }
 
     public static List<QueryField> getFields() {

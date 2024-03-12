@@ -198,7 +198,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
             ExpressionOperator expression = criteria.getExpression();
 
             final Predicate<ExpressionTerm> termPredicate = term ->
-                    MetaFields.ID.getName().equals(term.getField())
+                    MetaFields.ID.getFldName().equals(term.getField())
                             && term.hasCondition(Condition.EQUALS, Condition.IN);
 
             // The UI may give us one of:
@@ -381,13 +381,13 @@ public class MetaServiceImpl implements MetaService, Searchable {
     }
 
     private ResultPage<Meta> findChildren(final FindMetaCriteria parentCriteria, final List<Meta> streamList) {
-        final Set<String> excludedFields = Set.of(MetaFields.ID.getName(), MetaFields.PARENT_ID.getName());
+        final Set<String> excludedFields = Set.of(MetaFields.ID.getFldName(), MetaFields.PARENT_ID.getFldName());
         final Builder builder = copyExpression(parentCriteria.getExpression(), excludedFields);
 
         final String parentIds = streamList.stream()
                 .map(meta -> String.valueOf(meta.getId()))
                 .collect(Collectors.joining(","));
-        builder.addTerm(MetaFields.PARENT_ID.getName(), ExpressionTerm.Condition.IN, parentIds);
+        builder.addTerm(MetaFields.PARENT_ID.getFldName(), ExpressionTerm.Condition.IN, parentIds);
 
         return simpleFind(builder.build());
     }

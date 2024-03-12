@@ -37,13 +37,7 @@ class MemoryIndexImpl implements stroom.search.extraction.MemoryIndex {
         for (final FieldValue fieldValue : fieldValues) {
             final IndexField indexField = fieldValue.field();
             final LuceneIndexField luceneIndexField = LuceneIndexField
-                    .builder()
-                    .name(indexField.getName())
-                    .type(indexField.getType())
-                    .analyzerType(indexField.getAnalyzerType())
-                    .indexed(indexField.isIndexed())
-                    .caseSensitive(indexField.isCaseSensitive())
-                    .build();
+                    .fromIndexField(indexField);
 
             if (luceneIndexField.isIndexed()) {
                 final Analyzer fieldAnalyzer = searchExpressionQueryCache.getAnalyser(luceneIndexField);

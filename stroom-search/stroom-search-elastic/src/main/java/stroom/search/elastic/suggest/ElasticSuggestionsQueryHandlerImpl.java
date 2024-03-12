@@ -93,20 +93,20 @@ public class ElasticSuggestionsQueryHandlerImpl implements ElasticSuggestionsQue
             if (!elasticSuggestConfigProvider.get().getEnabled() || query == null || query.length() == 0) {
                 return Suggestions.EMPTY;
             }
-            if (!(FieldType.TEXT.equals(field.getType()) || FieldType.KEYWORD.equals(field.getType()))) {
+            if (!(FieldType.TEXT.equals(field.getFldType()) || FieldType.KEYWORD.equals(field.getFldType()))) {
                 // Only generate suggestions for text and keyword fields
                 return Suggestions.EMPTY;
             }
 
             final SuggestionBuilder<TermSuggestionBuilder> termSuggestionBuilder = SuggestBuilders
-                    .termSuggestion(field.getName())
+                    .termSuggestion(field.getFldName())
                     .suggestMode(SuggestMode.ALWAYS)
                     .minWordLength(3)
                     .text(query);
             final SuggestBuilder suggestBuilder = new SuggestBuilder()
                     .addSuggestion("suggest", termSuggestionBuilder);
             final SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder()
-                    .fetchField(field.getName())
+                    .fetchField(field.getFldName())
                     .suggest(suggestBuilder);
             final SearchRequest searchRequest = new SearchRequest(elasticIndex.getIndexName())
                     .source(searchSourceBuilder);
@@ -121,7 +121,7 @@ public class ElasticSuggestionsQueryHandlerImpl implements ElasticSuggestionsQue
                     .map(option -> option.getText().string())
                     .collect(Collectors.toList()));
         } catch (IOException | RuntimeException e) {
-            LOGGER.error(() -> "Failed to retrieve search suggestions for field: " + field.getName() +
+            LOGGER.error(() -> "Failed to retrieve search suggestions for field: " + field.getFldName() +
                     ". " + e.getMessage(), e);
             return Suggestions.EMPTY;
         }

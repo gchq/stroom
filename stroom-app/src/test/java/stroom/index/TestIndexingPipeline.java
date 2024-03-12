@@ -183,7 +183,7 @@ class TestIndexingPipeline extends AbstractProcessIntegrationTest {
         final Optional<FieldValue> opt = document
                 .getValues()
                 .stream()
-                .filter(fv -> fv.field().getName().equals(fieldName))
+                .filter(fv -> fv.field().getFldName().equals(fieldName))
                 .findFirst();
         assertThat(opt).isPresent();
         return opt.get().value().toString();

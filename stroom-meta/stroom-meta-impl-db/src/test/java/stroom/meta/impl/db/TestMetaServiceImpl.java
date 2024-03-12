@@ -195,7 +195,7 @@ class TestMetaServiceImpl {
 
         final ExpressionOperator expression = ExpressionOperator.builder()
                 .op(Op.OR)
-                .addTerm(MetaFields.ID.getName(), Condition.EQUALS, Long.toString(meta1.getId()))
+                .addTerm(MetaFields.ID.getFldName(), Condition.EQUALS, Long.toString(meta1.getId()))
                 .addTerm(
                         MetaFields.FIELD_FEED,
                         Condition.IN,

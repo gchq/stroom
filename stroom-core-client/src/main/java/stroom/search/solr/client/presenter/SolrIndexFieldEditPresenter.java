@@ -50,8 +50,8 @@ public class SolrIndexFieldEditPresenter extends MyPresenterWidget<SolrIndexFiel
         getView().setFieldTypes(fieldTypes);
 
         this.otherFieldNames = otherFieldNames;
-        getView().setType(indexField.getType());
-        getView().setFieldName(indexField.getName());
+        getView().setType(indexField.getFldType());
+        getView().setFieldName(indexField.getFldName());
         getView().setFieldType(indexField.getNativeType());
         getView().setDefaultValue(indexField.getDefaultValue());
         getView().setStored(indexField.isStored());
@@ -97,8 +97,8 @@ public class SolrIndexFieldEditPresenter extends MyPresenterWidget<SolrIndexFiel
 
         return SolrIndexField
                 .builder()
-                .type(getView().getType())
-                .name(name)
+                .fldType(getView().getType())
+                .fldName(name)
                 .nativeType(getView().getFieldType())
                 .defaultValue(defaultValue)
                 .stored(getView().isStored())

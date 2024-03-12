@@ -85,10 +85,10 @@ public class Fields {
                 resultPage.getValues().forEach(fieldInfo -> {
                     final QueryHelpRow row = new QueryHelpRow(
                             QueryHelpType.FIELD,
-                            "fields." + fieldInfo.getName(),
+                            "fields." + fieldInfo.getFldName(),
                             false,
                             null,
-                            fieldInfo.getName(),
+                            fieldInfo.getFldName(),
                             new QueryHelpField(fieldInfo));
                     resultConsumer.add(row);
                 });
@@ -115,10 +115,10 @@ public class Fields {
     }
 
     private CompletionValue createCompletionValue(final FieldInfo fieldInfo) {
-        final String insertText = getInsertText(fieldInfo.getName());
+        final String insertText = getInsertText(fieldInfo.getFldName());
         final String tooltip = getDetail(fieldInfo);
         return new CompletionValue(
-                fieldInfo.getName(),
+                fieldInfo.getFldName(),
                 insertText,
                 300,
                 "Field",
@@ -127,7 +127,7 @@ public class Fields {
 
     private String getDetail(final FieldInfo fieldInfo) {
         final DetailBuilder detail = new DetailBuilder();
-        detail.title(fieldInfo.getName());
+        detail.title(fieldInfo.getFldName());
         detail.description(description -> addFieldDetails(description, fieldInfo));
         return detail.build();
     }
@@ -139,15 +139,15 @@ public class Fields {
     }
 
     private void addFieldDetails(final DetailBuilder detail, final FieldInfo field) {
-        final String fieldName = field.getName();
-        final String fieldType = field.getType().getDisplayValue();
+        final String fieldName = field.getFldName();
+        final String fieldType = field.getFldType().getDisplayValue();
         final String supportedConditions = field.getConditions().toString();
 
         detail.table(table -> table.appendKVRow("Name:", fieldName)
                 .appendKVRow("Type:", fieldType)
                 .appendKVRow("Supported Conditions:", supportedConditions)
                 .appendKVRow("Is queryable:", asDisplayValue(field.queryable()))
-                .appendKVRow("Is numeric:", asDisplayValue(field.getType().isNumeric())));
+                .appendKVRow("Is numeric:", asDisplayValue(field.getFldType().isNumeric())));
     }
 
     private String asDisplayValue(final boolean bool) {

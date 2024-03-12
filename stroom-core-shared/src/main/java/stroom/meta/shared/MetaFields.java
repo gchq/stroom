@@ -96,7 +96,7 @@ public class MetaFields {
         FIELDS.add(EFFECTIVE_TIME);
         FIELDS.add(STATUS_TIME);
 
-        FIELD_MAP = FIELDS.stream().collect(Collectors.toMap(QueryField::getName, Function.identity()));
+        FIELD_MAP = FIELDS.stream().collect(Collectors.toMap(QueryField::getFldName, Function.identity()));
 
         // Single Items
         EXTENDED_FIELDS.add(DURATION);
@@ -115,7 +115,7 @@ public class MetaFields {
 
         ALL_FIELDS.addAll(FIELDS);
         ALL_FIELDS.addAll(EXTENDED_FIELDS);
-        ALL_FIELD_MAP = ALL_FIELDS.stream().collect(Collectors.toMap(QueryField::getName, Function.identity()));
+        ALL_FIELD_MAP = ALL_FIELDS.stream().collect(Collectors.toMap(QueryField::getFldName, Function.identity()));
     }
 
     public static List<QueryField> getFields() {

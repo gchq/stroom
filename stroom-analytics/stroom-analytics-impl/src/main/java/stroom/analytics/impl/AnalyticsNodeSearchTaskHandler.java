@@ -358,10 +358,10 @@ class AnalyticsNodeSearchTaskHandler implements NodeSearchTaskHandler {
                 final String value = sb.toString();
 
                 final Map<String, Object> attributeMap = new HashMap<>();
-                attributeMap.put(AnalyticFields.NAME_FIELD.getName(), analyticRuleDoc.getName());
-                attributeMap.put(AnalyticFields.UUID_FIELD.getName(), analyticRuleDoc.getUuid());
-                attributeMap.put(AnalyticFields.TIME_FIELD.getName(), time);
-                attributeMap.put(AnalyticFields.VALUE_FIELD.getName(), value);
+                attributeMap.put(AnalyticFields.NAME_FIELD.getFldName(), analyticRuleDoc.getName());
+                attributeMap.put(AnalyticFields.UUID_FIELD.getFldName(), analyticRuleDoc.getUuid());
+                attributeMap.put(AnalyticFields.TIME_FIELD.getFldName(), time);
+                attributeMap.put(AnalyticFields.VALUE_FIELD.getFldName(), value);
 
                 if (expressionMatcher.match(attributeMap, expression)) {
                     hitCount.increment();

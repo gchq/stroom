@@ -126,7 +126,7 @@ class TestMetaValueDaoImpl {
 
         expression = ExpressionOperator.builder()
                 .addIdTerm(MetaFields.ID, Condition.EQUALS, meta.getId())
-                .addTerm(MetaFields.FILE_SIZE.getName(), Condition.BETWEEN, "0,1000000")
+                .addTerm(MetaFields.FILE_SIZE.getFldName(), Condition.BETWEEN, "0,1000000")
                 .build();
         criteria = new FindMetaCriteria(expression);
         assertThat(metaService.find(criteria).size()).isEqualTo(1);
@@ -163,7 +163,7 @@ class TestMetaValueDaoImpl {
 
         expression = ExpressionOperator.builder()
                 .addIdTerm(MetaFields.ID, Condition.EQUALS, meta.getId())
-                .addTerm(MetaFields.FILE_SIZE.getName(), Condition.BETWEEN, "0,1000000")
+                .addTerm(MetaFields.FILE_SIZE.getFldName(), Condition.BETWEEN, "0,1000000")
                 .build();
         criteria = new FindMetaCriteria(expression);
         assertThat(metaService.find(criteria).size()).isEqualTo(1);
@@ -172,7 +172,7 @@ class TestMetaValueDaoImpl {
 
         expression = ExpressionOperator.builder()
                 .addIdTerm(MetaFields.ID, Condition.EQUALS, meta.getId())
-                .addTerm(MetaFields.FILE_SIZE.getName(), Condition.BETWEEN, "0,1000000")
+                .addTerm(MetaFields.FILE_SIZE.getFldName(), Condition.BETWEEN, "0,1000000")
                 .build();
         criteria = new FindMetaCriteria(expression);
         assertThat(metaService.find(criteria).size()).isEqualTo(0);
@@ -190,7 +190,7 @@ class TestMetaValueDaoImpl {
 
     private AttributeMap createAttributes() {
         final AttributeMap attributeMap = new AttributeMap();
-        attributeMap.put(MetaFields.FILE_SIZE.getName(), "100");
+        attributeMap.put(MetaFields.FILE_SIZE.getFldName(), "100");
         return attributeMap;
     }
 

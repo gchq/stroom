@@ -361,7 +361,7 @@ public final class ExpressionOperator extends ExpressionItem {
                                       final ExpressionTerm.Condition condition,
                                       final boolean value) {
             return addTerm(ExpressionTerm.builder()
-                    .field(field.getName())
+                    .field(field.getFldName())
                     .condition(condition)
                     .value(String.valueOf(value))
                     .build());
@@ -371,7 +371,7 @@ public final class ExpressionOperator extends ExpressionItem {
                                    final ExpressionTerm.Condition condition,
                                    final String value) {
             return addTerm(ExpressionTerm.builder()
-                    .field(field.getName())
+                    .field(field.getFldName())
                     .condition(condition)
                     .value(value)
                     .build());
@@ -381,7 +381,7 @@ public final class ExpressionOperator extends ExpressionItem {
                                      final ExpressionTerm.Condition condition,
                                      final String value) {
             return addTerm(ExpressionTerm.builder()
-                    .field(field.getName())
+                    .field(field.getFldName())
                     .condition(condition)
                     .value(value)
                     .build());
@@ -396,7 +396,7 @@ public final class ExpressionOperator extends ExpressionItem {
             }
 
             return addTerm(ExpressionTerm.builder()
-                    .field(field.getName())
+                    .field(field.getFldName())
                     .condition(condition)
                     .docRef(docRef)
                     .build());
@@ -406,7 +406,7 @@ public final class ExpressionOperator extends ExpressionItem {
                                  final ExpressionTerm.Condition condition,
                                  final long value) {
             return addTerm(ExpressionTerm.builder()
-                    .field(field.getName())
+                    .field(field.getFldName())
                     .condition(condition)
                     .value(String.valueOf(value))
                     .build());
@@ -416,7 +416,7 @@ public final class ExpressionOperator extends ExpressionItem {
                                       final ExpressionTerm.Condition condition,
                                       final int value) {
             return addTerm(ExpressionTerm.builder()
-                    .field(field.getName())
+                    .field(field.getFldName())
                     .condition(condition)
                     .value(String.valueOf(value))
                     .build());
@@ -426,7 +426,7 @@ public final class ExpressionOperator extends ExpressionItem {
                                    final ExpressionTerm.Condition condition,
                                    final long value) {
             return addTerm(ExpressionTerm.builder()
-                    .field(field.getName())
+                    .field(field.getFldName())
                     .condition(condition)
                     .value(String.valueOf(value))
                     .build());
@@ -436,7 +436,7 @@ public final class ExpressionOperator extends ExpressionItem {
                                     final ExpressionTerm.Condition condition,
                                     final float value) {
             return addTerm(ExpressionTerm.builder()
-                    .field(field.getName())
+                    .field(field.getFldName())
                     .condition(condition)
                     .value(String.valueOf(value))
                     .build());
@@ -446,7 +446,7 @@ public final class ExpressionOperator extends ExpressionItem {
                                      final ExpressionTerm.Condition condition,
                                      final double value) {
             return addTerm(ExpressionTerm.builder()
-                    .field(field.getName())
+                    .field(field.getFldName())
                     .condition(condition)
                     .value(String.valueOf(value))
                     .build());
@@ -456,7 +456,7 @@ public final class ExpressionOperator extends ExpressionItem {
                                    final ExpressionTerm.Condition condition,
                                    final String value) {
             return addTerm(ExpressionTerm.builder()
-                    .field(field.getName())
+                    .field(field.getFldName())
                     .condition(condition)
                     .value(value)
                     .build());

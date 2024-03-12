@@ -37,7 +37,7 @@ public class FieldInfoResultPageBuilder {
     }
 
     public boolean add(final QueryField field) {
-        if (stringMatcher.match(field.getName()).isPresent()) {
+        if (stringMatcher.match(field.getFldName()).isPresent()) {
             addMore = resultPageBuilder.add(FieldInfo.create(field));
         }
         return addMore;

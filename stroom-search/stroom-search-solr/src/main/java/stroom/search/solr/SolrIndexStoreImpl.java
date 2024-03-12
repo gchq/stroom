@@ -179,10 +179,10 @@ public class SolrIndexStoreImpl implements SolrIndexStore {
         // Test for invalid field names.
         if (document.getFields() != null) {
             document.getFields().forEach(solrIndexField -> {
-                if (solrIndexField.getName() == null) {
+                if (solrIndexField.getFldName() == null) {
                     throw new RuntimeException("Null field name");
-                } else if (!VALID_FIELD_NAME_PATTERN.matcher(solrIndexField.getName()).matches()) {
-                    throw new RuntimeException("Invalid field name " + solrIndexField.getName());
+                } else if (!VALID_FIELD_NAME_PATTERN.matcher(solrIndexField.getFldName()).matches()) {
+                    throw new RuntimeException("Invalid field name " + solrIndexField.getFldName());
                 }
             });
         }
@@ -195,7 +195,7 @@ public class SolrIndexStoreImpl implements SolrIndexStore {
                         existingFieldMap = document
                                 .getFields()
                                 .stream()
-                                .collect(Collectors.toMap(SolrIndexField::getName, Function.identity()));
+                                .collect(Collectors.toMap(SolrIndexField::getFldName, Function.identity()));
                     }
 
                     List<SolrIndexField> solrFields = fetchSolrFields(solrClient,
@@ -204,7 +204,7 @@ public class SolrIndexStoreImpl implements SolrIndexStore {
 
                     // Which fields are missing from Solr?
                     final Map<String, SolrIndexField> solrFieldMap = solrFields.stream().collect(Collectors.toMap(
-                            SolrIndexField::getName,
+                            SolrIndexField::getFldName,
                             Function.identity()));
                     existingFieldMap.forEach((k, v) -> {
                         if (solrFieldMap.containsKey(k)) {
@@ -239,12 +239,12 @@ public class SolrIndexStoreImpl implements SolrIndexStore {
                     // Delete fields.
                     if (document.getDeletedFields() != null) {
                         document.getDeletedFields().forEach(field -> {
-                            if (solrFieldMap.containsKey(field.getName())) {
+                            if (solrFieldMap.containsKey(field.getFldName())) {
                                 try {
-                                    new DeleteField(field.getName()).process(solrClient, document.getCollection());
+                                    new DeleteField(field.getFldName()).process(solrClient, document.getCollection());
                                     deleteCount.incrementAndGet();
                                 } catch (final RuntimeException | SolrServerException | IOException e) {
-                                    final String message = "Failed to delete field '" + field.getName() +
+                                    final String message = "Failed to delete field '" + field.getFldName() +
                                             "' - " + e.getMessage();
                                     messages.add(message);
                                     LOGGER.error(() -> message, e);
@@ -256,7 +256,7 @@ public class SolrIndexStoreImpl implements SolrIndexStore {
 
                     // Now pull all fields back from Solr and refresh our doc.
                     solrFields = fetchSolrFields(solrClient, document.getCollection(), existingFieldMap);
-                    solrFields.sort(Comparator.comparing(SolrIndexField::getName, String.CASE_INSENSITIVE_ORDER));
+                    solrFields.sort(Comparator.comparing(SolrIndexField::getFldName, String.CASE_INSENSITIVE_ORDER));
                     document.setFields(solrFields);
 
                     messages.add("Replaced " + replaceCount.get() + " fields");
@@ -289,11 +289,11 @@ public class SolrIndexStoreImpl implements SolrIndexStore {
                 .stream()
                 .map(v -> {
                     final SolrIndexField field = fromAttributes(v);
-                    field.setType(FieldType.TEXT);
+                    field.setFldType(FieldType.TEXT);
 
-                    final SolrIndexField existingField = existingFieldMap.get(field.getName());
+                    final SolrIndexField existingField = existingFieldMap.get(field.getFldName());
                     if (existingField != null) {
-                        field.setType(existingField.getType());
+                        field.setFldType(existingField.getFldType());
                     }
 
                     return field;
@@ -303,7 +303,7 @@ public class SolrIndexStoreImpl implements SolrIndexStore {
 
     private SolrIndexField fromAttributes(final Map<String, Object> attributes) {
         final SolrIndexField field = new SolrIndexField();
-        setString(attributes, "name", field::setName);
+        setString(attributes, "name", field::setFldName);
         setString(attributes, "type", field::setNativeType);
         setString(attributes, "default", field::setDefaultValue);
         setBoolean(attributes, "stored", field::setStored);
@@ -326,7 +326,7 @@ public class SolrIndexStoreImpl implements SolrIndexStore {
 
     private Map<String, Object> toAttributes(final SolrIndexField field) {
         final Map<String, Object> attributes = new HashMap<>();
-        putString(attributes, "name", field.getName());
+        putString(attributes, "name", field.getFldName());
         putString(attributes, "type", field.getNativeType());
         putString(attributes, "default", field.getDefaultValue());
         putBoolean(attributes, "stored", field.isStored());

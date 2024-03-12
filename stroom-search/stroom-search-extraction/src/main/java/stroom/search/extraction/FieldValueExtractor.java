@@ -52,7 +52,7 @@ public class FieldValueExtractor {
 
     private Val convertValue(final IndexField indexField, final String value) {
         try {
-            switch (indexField.getType()) {
+            switch (indexField.getFldType()) {
                 case LONG, ID -> {
                     final long val = Long.parseLong(value);
                     return ValLong.create(val);

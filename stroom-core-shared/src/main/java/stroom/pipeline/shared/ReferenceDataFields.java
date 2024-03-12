@@ -16,22 +16,22 @@ public class ReferenceDataFields {
             "Reference Data Store (This Node Only)");
     public static final QueryField FEED_NAME_FIELD = QueryField
             .builder()
-            .name("Feed Name")
-            .type(FieldType.TEXT)
+            .fldName("Feed Name")
+            .fldType(FieldType.TEXT)
             .conditionSet(ConditionSet.REF_DATA_TEXT)
             .queryable(true)
             .build();
     public static final QueryField KEY_FIELD = QueryField
             .builder()
-            .name("Key")
-            .type(FieldType.TEXT)
+            .fldName("Key")
+            .fldType(FieldType.TEXT)
             .conditionSet(ConditionSet.REF_DATA_TEXT)
             .queryable(true)
             .build();
     public static final QueryField VALUE_FIELD = QueryField
             .builder()
-            .name("Value")
-            .type(FieldType.TEXT)
+            .fldName("Value")
+            .fldType(FieldType.TEXT)
             .conditionSet(ConditionSet.REF_DATA_TEXT)
             .queryable(true)
             .build();
@@ -39,8 +39,8 @@ public class ReferenceDataFields {
             "Value Reference Count", false);
     public static final QueryField MAP_NAME_FIELD = QueryField
             .builder()
-            .name("Map Name")
-            .type(FieldType.TEXT)
+            .fldName("Map Name")
+            .fldType(FieldType.TEXT)
             .conditionSet(ConditionSet.REF_DATA_TEXT)
             .queryable(true)
             .build();
@@ -52,8 +52,8 @@ public class ReferenceDataFields {
             .createDate("Last Accessed Time", true);
     public static final QueryField PIPELINE_FIELD = QueryField
             .builder()
-            .name("Reference Loader Pipeline")
-            .type(FieldType.DOC_REF)
+            .fldName("Reference Loader Pipeline")
+            .fldType(FieldType.DOC_REF)
             .conditionSet(ConditionSet.REF_DATA_DOC_REF)
             .docRefType(PipelineDoc.DOCUMENT_TYPE)
             .queryable(true)

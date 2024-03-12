@@ -42,16 +42,16 @@ public class TestSearchExpressionQueryBuilder {
     public void testBuildQuery() {
         final ElasticIndexField answerField = ElasticIndexField
                 .builder()
-                .name("answer")
+                .fldName("answer")
                 .nativeType("long")
-                .type(FieldType.LONG)
+                .fldType(FieldType.LONG)
                 .build();
-        indexFieldsMap.put(answerField.getName(), answerField);
+        indexFieldsMap.put(answerField.getFldName(), answerField);
         final Long answerFieldValue = 42L;
 
         // Single numeric EQUALS condition contained within the default AND clause
 
-        expressionBuilder.addTerm(answerField.getName(), Condition.EQUALS, answerFieldValue.toString());
+        expressionBuilder.addTerm(answerField.getFldName(), Condition.EQUALS, answerFieldValue.toString());
         QueryBuilder queryBuilder = builder.buildQuery(expressionBuilder.build());
 
         Assertions.assertTrue(queryBuilder instanceof BoolQueryBuilder, "Is a `bool` query");
@@ -59,26 +59,26 @@ public class TestSearchExpressionQueryBuilder {
         Assertions.assertEquals(1, boolQuery.must().size(), "Bool query contains exactly one item");
 
         TermQueryBuilder termQuery = (TermQueryBuilder) boolQuery.must().get(0);
-        Assertions.assertEquals(answerField.getName(), termQuery.fieldName(), "Field name is correct");
+        Assertions.assertEquals(answerField.getFldName(), termQuery.fieldName(), "Field name is correct");
         Assertions.assertEquals(answerFieldValue, termQuery.value(), "Query value is correct");
 
         // Add a second text EQUALS condition
         final ElasticIndexField nameField = ElasticIndexField
                 .builder()
-                .name("name")
+                .fldName("name")
                 .nativeType("text")
-                .type(FieldType.TEXT)
+                .fldType(FieldType.TEXT)
                 .build();
-        indexFieldsMap.put(nameField.getName(), nameField);
+        indexFieldsMap.put(nameField.getFldName(), nameField);
 
         // Add a nested NOT GREATER THAN date condition
         final ElasticIndexField dateField = ElasticIndexField
                 .builder()
-                .name("date")
+                .fldName("date")
                 .nativeType("date")
-                .type(FieldType.DATE)
+                .fldType(FieldType.DATE)
                 .build();
-        indexFieldsMap.put(dateField.getName(), dateField);
+        indexFieldsMap.put(dateField.getFldName(), dateField);
         final String nowStr = "2021-02-17T01:23:34.000";
         final long expectedParsedDateFieldValue = 1613525014000L;
 
@@ -90,7 +90,7 @@ public class TestSearchExpressionQueryBuilder {
 
         ExpressionOperator notOperator = ExpressionOperator.builder()
                 .op(Op.NOT)
-                .addTerm(dateField.getName(), Condition.GREATER_THAN, nowStr)
+                .addTerm(dateField.getFldName(), Condition.GREATER_THAN, nowStr)
                 .build();
 
         expressionBuilder.addOperator(notOperator);
@@ -103,7 +103,7 @@ public class TestSearchExpressionQueryBuilder {
                 "Inner bool query contains one item");
 
         RangeQueryBuilder firstRangeQuery = (RangeQueryBuilder) innerBoolQuery.mustNot().get(0);
-        Assertions.assertEquals(dateField.getName(), firstRangeQuery.fieldName(),
+        Assertions.assertEquals(dateField.getFldName(), firstRangeQuery.fieldName(),
                 "Field name of first range query is correct");
         Assertions.assertEquals(expectedParsedDateFieldValue, firstRangeQuery.from(),
                 "Field value of first range query is correct");

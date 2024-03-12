@@ -285,7 +285,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
 
             if (!processorIds.isBlank()) {
                 final ExpressionOperator processorExpression = ExpressionOperator.builder()
-                        .addTerm(ProcessorFields.ID.getName(), Condition.IN, processorIds)
+                        .addTerm(ProcessorFields.ID.getFldName(), Condition.IN, processorIds)
                         .build();
                 final ResultPage<Processor> streamProcessors = processorService.find(new ExpressionCriteria(
                         processorExpression));

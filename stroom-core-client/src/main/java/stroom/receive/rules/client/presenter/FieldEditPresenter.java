@@ -44,8 +44,8 @@ public class FieldEditPresenter extends MyPresenterWidget<FieldEditPresenter.Fie
 
     public void read(final QueryField field, final Set<String> otherFieldNames) {
         this.otherFieldNames = otherFieldNames;
-        getView().setFieldType(field.getType());
-        getView().setName(field.getName());
+        getView().setFieldType(field.getFldType());
+        getView().setName(field.getFldName());
     }
 
     public QueryField write() {
@@ -89,8 +89,8 @@ public class FieldEditPresenter extends MyPresenterWidget<FieldEditPresenter.Fie
     private QueryField create(final FieldType type, final String name) {
         return QueryField
                 .builder()
-                .name(name)
-                .type(type)
+                .fldName(name)
+                .fldType(type)
                 .queryable(true)
                 .build();
     }

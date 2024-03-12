@@ -48,12 +48,12 @@ class SearchExpressionQueryCache {
 
     Analyzer getAnalyser(final LuceneIndexField indexField) {
         try {
-            Analyzer fieldAnalyzer = analyzerMap.get(indexField.getName());
+            Analyzer fieldAnalyzer = analyzerMap.get(indexField.getFldName());
             if (fieldAnalyzer == null) {
                 // Add the field analyser.
                 fieldAnalyzer = AnalyzerFactory.create(indexField.getAnalyzerType(),
                         indexField.isCaseSensitive());
-                analyzerMap.put(indexField.getName(), fieldAnalyzer);
+                analyzerMap.put(indexField.getFldName(), fieldAnalyzer);
             }
             return fieldAnalyzer;
         } catch (final RuntimeException e) {

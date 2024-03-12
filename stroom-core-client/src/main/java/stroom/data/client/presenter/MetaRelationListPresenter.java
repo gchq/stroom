@@ -83,7 +83,7 @@ public class MetaRelationListPresenter extends AbstractMetaListPresenter {
                                   final boolean showSystemFiles) {
         if (metaRow == null) {
             getCriteria().setExpression(null);
-            getCriteria().setSort(MetaFields.CREATE_TIME.getName(), false, false);
+            getCriteria().setSort(MetaFields.CREATE_TIME.getFldName(), false, false);
             refresh();
 
         } else {
@@ -94,7 +94,7 @@ public class MetaRelationListPresenter extends AbstractMetaListPresenter {
             builder.addIdTerm(MetaFields.ID, Condition.EQUALS, metaRow.getMeta().getId());
 
             getCriteria().setExpression(builder.build());
-            getCriteria().setSort(MetaFields.CREATE_TIME.getName(), false, false);
+            getCriteria().setSort(MetaFields.CREATE_TIME.getFldName(), false, false);
             getCriteria().setFetchRelationships(true);
             refresh();
         }

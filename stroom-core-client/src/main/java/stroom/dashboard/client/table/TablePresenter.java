@@ -530,8 +530,8 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                     // CONTAINS only supported for legacy content, not for use in UI
                     return QueryField
                             .builder()
-                            .name(column.getName())
-                            .type(FieldType.TEXT)
+                            .fldName(column.getName())
+                            .fldType(FieldType.TEXT)
                             .conditionSet(ConditionSet.BASIC_TEXT)
                             .queryable(true)
                             .build();

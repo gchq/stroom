@@ -28,15 +28,30 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Objects;
 
-@JsonPropertyOrder({"name", "type", "docRefType", "queryable", "conditionSet"})
+@JsonPropertyOrder({
+        "type", // deprecated
+        "name", // deprecated
+
+        "fldName",
+        "fldType",
+        "docRefType",
+        "queryable",
+        "conditionSet"
+})
 @JsonInclude(Include.NON_NULL)
 public class QueryField implements Field, HasDisplayValue {
 
+    @Deprecated
+    @JsonProperty("type")
+    private String type;
+    @Deprecated
+    @JsonProperty("name")
+    private String name;
 
     @JsonProperty
-    private final String name;
+    private final String fldName;
     @JsonProperty
-    private final FieldType type;
+    private final FieldType fldType;
     @JsonProperty
     private final ConditionSet conditionSet;
     @JsonProperty
@@ -45,16 +60,54 @@ public class QueryField implements Field, HasDisplayValue {
     private final Boolean queryable;
 
     @JsonCreator
-    public QueryField(@JsonProperty("name") final String name,
-                      @JsonProperty("type") final FieldType type,
+    public QueryField(@Deprecated @JsonProperty("type") final String type,
+                      @Deprecated @JsonProperty("name") final String name,
+
+                      @JsonProperty("fldName") final String fldName,
+                      @JsonProperty("fldType") final FieldType fldType,
                       @JsonProperty("conditionSet") final ConditionSet conditionSet,
                       @JsonProperty("docRefType") final String docRefType,
                       @JsonProperty("queryable") final Boolean queryable) {
-        this.name = name;
-        this.type = type;
+        this.fldName = fldName != null
+                ? fldName
+                : name;
+        this.fldType = convertLegacyType(fldType, type);
         this.conditionSet = conditionSet;
         this.docRefType = docRefType;
         this.queryable = queryable;
+    }
+
+    private FieldType convertLegacyType(final FieldType fieldType, final String type) {
+        if (fieldType == null) {
+            if (type != null) {
+                switch (type) {
+                    case "Id":
+                        return FieldType.ID;
+                    case "Boolean":
+                        return FieldType.BOOLEAN;
+                    case "Integer":
+                        return FieldType.INTEGER;
+                    case "Long":
+                        return FieldType.LONG;
+                    case "Float":
+                        return FieldType.FLOAT;
+                    case "Double":
+                        return FieldType.DOUBLE;
+                    case "Date":
+                        return FieldType.DATE;
+                    case "Text":
+                        return FieldType.TEXT;
+                    case "Keyword":
+                        return FieldType.KEYWORD;
+                    case "IpV4Address":
+                        return FieldType.IPV4_ADDRESS;
+                    case "DocRef":
+                        return FieldType.DOC_REF;
+                }
+            }
+            return FieldType.TEXT;
+        }
+        return fieldType;
     }
 
     public static QueryField createId(final String name) {
@@ -64,8 +117,8 @@ public class QueryField implements Field, HasDisplayValue {
     public static QueryField createId(final String name,
                                       final Boolean queryable) {
         return builder()
-                .name(name)
-                .type(FieldType.ID)
+                .fldName(name)
+                .fldType(FieldType.ID)
                 .conditionSet(ConditionSet.DEFAULT_ID)
                 .queryable(queryable)
                 .build();
@@ -78,8 +131,8 @@ public class QueryField implements Field, HasDisplayValue {
     public static QueryField createKeyword(final String name,
                                            final Boolean queryable) {
         return builder()
-                .name(name)
-                .type(FieldType.KEYWORD)
+                .fldName(name)
+                .fldType(FieldType.KEYWORD)
                 .conditionSet(ConditionSet.DEFAULT_KEYWORD)
                 .queryable(queryable)
                 .build();
@@ -92,8 +145,8 @@ public class QueryField implements Field, HasDisplayValue {
     public static QueryField createInteger(final String name,
                                            final Boolean queryable) {
         return builder()
-                .name(name)
-                .type(FieldType.INTEGER)
+                .fldName(name)
+                .fldType(FieldType.INTEGER)
                 .conditionSet(ConditionSet.DEFAULT_NUMERIC)
                 .queryable(queryable)
                 .build();
@@ -106,8 +159,8 @@ public class QueryField implements Field, HasDisplayValue {
     public static QueryField createLong(final String name,
                                         final Boolean queryable) {
         return builder()
-                .name(name)
-                .type(FieldType.LONG)
+                .fldName(name)
+                .fldType(FieldType.LONG)
                 .conditionSet(ConditionSet.DEFAULT_NUMERIC)
                 .queryable(queryable)
                 .build();
@@ -120,8 +173,8 @@ public class QueryField implements Field, HasDisplayValue {
     public static QueryField createFloat(final String name,
                                          final Boolean queryable) {
         return builder()
-                .name(name)
-                .type(FieldType.FLOAT)
+                .fldName(name)
+                .fldType(FieldType.FLOAT)
                 .conditionSet(ConditionSet.DEFAULT_NUMERIC)
                 .queryable(queryable)
                 .build();
@@ -134,8 +187,8 @@ public class QueryField implements Field, HasDisplayValue {
     public static QueryField createDouble(final String name,
                                           final Boolean queryable) {
         return builder()
-                .name(name)
-                .type(FieldType.DOUBLE)
+                .fldName(name)
+                .fldType(FieldType.DOUBLE)
                 .conditionSet(ConditionSet.DEFAULT_NUMERIC)
                 .queryable(queryable)
                 .build();
@@ -148,8 +201,8 @@ public class QueryField implements Field, HasDisplayValue {
     public static QueryField createIpV4Address(final String name,
                                                final Boolean queryable) {
         return builder()
-                .name(name)
-                .type(FieldType.IPV4_ADDRESS)
+                .fldName(name)
+                .fldType(FieldType.IPV4_ADDRESS)
                 .conditionSet(ConditionSet.DEFAULT_NUMERIC)
                 .queryable(queryable)
                 .build();
@@ -162,8 +215,8 @@ public class QueryField implements Field, HasDisplayValue {
     public static QueryField createBoolean(final String name,
                                            final Boolean queryable) {
         return builder()
-                .name(name)
-                .type(FieldType.BOOLEAN)
+                .fldName(name)
+                .fldType(FieldType.BOOLEAN)
                 .conditionSet(ConditionSet.DEFAULT_BOOLEAN)
                 .queryable(queryable)
                 .build();
@@ -176,8 +229,8 @@ public class QueryField implements Field, HasDisplayValue {
     public static QueryField createDate(final String name,
                                         final Boolean queryable) {
         return builder()
-                .name(name)
-                .type(FieldType.DATE)
+                .fldName(name)
+                .fldType(FieldType.DATE)
                 .conditionSet(ConditionSet.DEFAULT_DATE)
                 .queryable(queryable)
                 .build();
@@ -190,8 +243,8 @@ public class QueryField implements Field, HasDisplayValue {
     public static QueryField createText(final String name,
                                         final Boolean queryable) {
         return builder()
-                .name(name)
-                .type(FieldType.TEXT)
+                .fldName(name)
+                .fldType(FieldType.TEXT)
                 .conditionSet(ConditionSet.DEFAULT_TEXT)
                 .queryable(queryable)
                 .build();
@@ -205,8 +258,8 @@ public class QueryField implements Field, HasDisplayValue {
     public static QueryField createDocRefByUniqueName(final String docRefType,
                                                       final String name) {
         return builder()
-                .name(name)
-                .type(FieldType.DOC_REF)
+                .fldName(name)
+                .fldType(FieldType.DOC_REF)
                 .conditionSet(ConditionSet.DOC_REF_ALL)
                 .docRefType(docRefType)
                 .queryable(Boolean.TRUE)
@@ -221,8 +274,8 @@ public class QueryField implements Field, HasDisplayValue {
     public static QueryField createDocRefByNonUniqueName(final String docRefType,
                                                          final String name) {
         return builder()
-                .name(name)
-                .type(FieldType.DOC_REF)
+                .fldName(name)
+                .fldType(FieldType.DOC_REF)
                 .conditionSet(ConditionSet.DOC_REF_NAME)
                 .docRefType(docRefType)
                 .queryable(Boolean.TRUE)
@@ -238,8 +291,8 @@ public class QueryField implements Field, HasDisplayValue {
     public static QueryField createDocRefByUuid(final String docRefType,
                                                 final String name) {
         return builder()
-                .name(name)
-                .type(FieldType.DOC_REF)
+                .fldName(name)
+                .fldType(FieldType.DOC_REF)
                 .conditionSet(ConditionSet.DOC_REF_UUID)
                 .docRefType(docRefType)
                 .queryable(Boolean.TRUE)
@@ -247,13 +300,13 @@ public class QueryField implements Field, HasDisplayValue {
     }
 
     @Override
-    public String getName() {
-        return name;
+    public String getFldName() {
+        return fldName;
     }
 
     @Override
-    public FieldType getType() {
-        return type;
+    public FieldType getFldType() {
+        return fldType;
     }
 
     public ConditionSet getConditionSet() {
@@ -283,18 +336,18 @@ public class QueryField implements Field, HasDisplayValue {
 
     @JsonIgnore
     public boolean isNumeric() {
-        return getType().isNumeric();
+        return getFldType().isNumeric();
     }
 
     @JsonIgnore
     @Override
     public String getDisplayValue() {
-        return name;
+        return fldName;
     }
 
     @Override
     public int compareTo(final Field field) {
-        return name.compareTo(field.getName());
+        return fldName.compareTo(field.getFldName());
     }
 
     @Override
@@ -306,17 +359,17 @@ public class QueryField implements Field, HasDisplayValue {
             return false;
         }
         final QueryField that = (QueryField) o;
-        return Objects.equals(name, that.name);
+        return Objects.equals(fldName, that.fldName);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(name);
+        return Objects.hash(fldName);
     }
 
     @Override
     public String toString() {
-        return name;
+        return fldName;
     }
 
     public Builder copy() {
@@ -329,8 +382,8 @@ public class QueryField implements Field, HasDisplayValue {
 
     public static class Builder {
 
-        private String name;
-        private FieldType type;
+        private String fldName;
+        private FieldType fldType;
         private ConditionSet conditionSet;
         private String docRefType;
         private Boolean queryable;
@@ -339,20 +392,20 @@ public class QueryField implements Field, HasDisplayValue {
         }
 
         private Builder(final QueryField queryField) {
-            this.name = queryField.name;
-            this.type = queryField.type;
+            this.fldName = queryField.fldName;
+            this.fldType = queryField.fldType;
             this.conditionSet = queryField.conditionSet;
             this.docRefType = queryField.docRefType;
             this.queryable = queryField.queryable;
         }
 
-        public Builder name(final String name) {
-            this.name = name;
+        public Builder fldName(final String fldName) {
+            this.fldName = fldName;
             return this;
         }
 
-        public Builder type(final FieldType type) {
-            this.type = type;
+        public Builder fldType(final FieldType fldType) {
+            this.fldType = fldType;
             return this;
         }
 
@@ -372,10 +425,17 @@ public class QueryField implements Field, HasDisplayValue {
         }
 
         public QueryField build() {
-            if (conditionSet == null && type != null) {
-                conditionSet = ConditionSet.getDefault(type);
+            if (conditionSet == null && fldType != null) {
+                conditionSet = ConditionSet.getDefault(fldType);
             }
-            return new QueryField(name, type, conditionSet, docRefType, queryable);
+            return new QueryField(
+                    null,
+                    null,
+                    fldName,
+                    fldType,
+                    conditionSet,
+                    docRefType,
+                    queryable);
         }
     }
 }

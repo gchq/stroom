@@ -9086,18 +9086,6 @@ components:
     ElasticIndexField:
       type: object
       properties:
-        analyzerType:
-          type: string
-          enum:
-          - KEYWORD
-          - ALPHA
-          - NUMERIC
-          - ALPHA_NUMERIC
-          - WHITESPACE
-          - STOP
-          - STANDARD
-        caseSensitive:
-          type: boolean
         fieldName:
           type: string
         fieldType:
@@ -9116,17 +9104,9 @@ components:
           - KEYWORD
           - IPV4_ADDRESS
           - DOC_REF
-        indexed:
-          type: boolean
-        name:
+        fldName:
           type: string
-        nativeType:
-          type: string
-        stored:
-          type: boolean
-        termPositions:
-          type: boolean
-        type:
+        fldType:
           type: string
           enum:
           - ID
@@ -9140,6 +9120,10 @@ components:
           - KEYWORD
           - IPV4_ADDRESS
           - DOC_REF
+        indexed:
+          type: boolean
+        nativeType:
+          type: string
     ElasticIndexTestResponse:
       type: object
       properties:
@@ -9969,10 +9953,9 @@ components:
           - "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'"
         docRefType:
           type: string
-        fieldName:
+        fldName:
           type: string
-          writeOnly: true
-        fieldType:
+        fldType:
           type: string
           enum:
           - ID
@@ -9986,8 +9969,6 @@ components:
           - KEYWORD
           - IPV4_ADDRESS
           - DOC_REF
-        name:
-          type: string
         queryable:
           type: boolean
     Filter:
@@ -11494,15 +11475,9 @@ components:
           - DATE_FIELD
           - FIELD
           - NUMERIC_FIELD
-        indexed:
-          type: boolean
-        name:
+        fldName:
           type: string
-        stored:
-          type: boolean
-        termPositions:
-          type: boolean
-        type:
+        fldType:
           type: string
           enum:
           - ID
@@ -11516,6 +11491,12 @@ components:
           - KEYWORD
           - IPV4_ADDRESS
           - DOC_REF
+        indexed:
+          type: boolean
+        stored:
+          type: boolean
+        termPositions:
+          type: boolean
     MapDefinition:
       type: object
       properties:
@@ -12760,7 +12741,9 @@ components:
           - "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'"
         docRefType:
           type: string
-        fieldType:
+        fldName:
+          type: string
+        fldType:
           type: string
           enum:
           - ID
@@ -14280,18 +14263,6 @@ components:
     SolrIndexField:
       type: object
       properties:
-        analyzerType:
-          type: string
-          enum:
-          - KEYWORD
-          - ALPHA
-          - NUMERIC
-          - ALPHA_NUMERIC
-          - WHITESPACE
-          - STOP
-          - STANDARD
-        caseSensitive:
-          type: boolean
         defaultValue:
           type: string
         docValues:
@@ -14312,12 +14283,26 @@ components:
           - DATE_FIELD
           - FIELD
           - NUMERIC_FIELD
+        fldName:
+          type: string
+        fldType:
+          type: string
+          enum:
+          - ID
+          - BOOLEAN
+          - INTEGER
+          - LONG
+          - FLOAT
+          - DOUBLE
+          - DATE
+          - TEXT
+          - KEYWORD
+          - IPV4_ADDRESS
+          - DOC_REF
         indexed:
           type: boolean
         multiValued:
           type: boolean
-        name:
-          type: string
         nativeType:
           type: string
         omitNorms:
@@ -14342,20 +14327,6 @@ components:
           type: boolean
         termVectors:
           type: boolean
-        type:
-          type: string
-          enum:
-          - ID
-          - BOOLEAN
-          - INTEGER
-          - LONG
-          - FLOAT
-          - DOUBLE
-          - DATE
-          - TEXT
-          - KEYWORD
-          - IPV4_ADDRESS
-          - DOC_REF
         uninvertible:
           type: boolean
     SolrSynchState:

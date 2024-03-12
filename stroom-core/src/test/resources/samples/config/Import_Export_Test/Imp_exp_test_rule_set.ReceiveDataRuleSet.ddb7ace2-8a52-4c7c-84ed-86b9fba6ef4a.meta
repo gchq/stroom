@@ -4,16 +4,16 @@
   "name" : "Imp_exp_test_rule_set",
   "version" : "b2954372-49aa-44c8-9bca-2609051dd954",
   "fields" : [ {
-    "type" : "Text",
-    "name" : "One",
+    "fldName" : "One",
+    "fldType" : "TEXT",
     "queryable" : true
   }, {
-    "type" : "Boolean",
-    "name" : "Two",
+    "fldName" : "Two",
+    "fldType" : "BOOLEAN",
     "queryable" : true
   }, {
-    "type" : "Long",
-    "name" : "Three",
+    "fldName" : "Three",
+    "fldType" : "LONG",
     "queryable" : true
   } ],
   "rules" : [ {

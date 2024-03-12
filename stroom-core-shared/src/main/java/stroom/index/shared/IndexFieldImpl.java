@@ -23,23 +23,23 @@ import java.util.Objects;
 
 public class IndexFieldImpl implements IndexField {
 
-    private final String name;
-    private final FieldType type;
+    private final String fldName;
+    private final FieldType fldType;
     private final AnalyzerType analyzerType;
     private final boolean indexed;
     private final boolean stored;
     private final boolean termPositions;
     private final boolean caseSensitive;
 
-    public IndexFieldImpl(final String name,
-                          final FieldType type,
+    public IndexFieldImpl(final String fldName,
+                          final FieldType fldType,
                           final AnalyzerType analyzerType,
                           final boolean indexed,
                           final boolean stored,
                           final boolean termPositions,
                           final boolean caseSensitive) {
-        this.name = name;
-        this.type = type;
+        this.fldName = fldName;
+        this.fldType = fldType;
         this.analyzerType = analyzerType;
         this.stored = stored;
         this.indexed = indexed;
@@ -48,13 +48,13 @@ public class IndexFieldImpl implements IndexField {
     }
 
     @Override
-    public String getName() {
-        return name;
+    public String getFldName() {
+        return fldName;
     }
 
     @Override
-    public FieldType getType() {
-        return type;
+    public FieldType getFldType() {
+        return fldType;
     }
 
     @Override
@@ -87,7 +87,7 @@ public class IndexFieldImpl implements IndexField {
 
     @Override
     public String getDisplayValue() {
-        return name;
+        return fldName;
     }
 
     @Override
@@ -103,19 +103,24 @@ public class IndexFieldImpl implements IndexField {
                 stored == that.stored &&
                 termPositions == that.termPositions &&
                 caseSensitive == that.caseSensitive &&
-                Objects.equals(name, that.name) &&
-                type == that.type &&
+                Objects.equals(fldName, that.fldName) &&
+                fldType == that.fldType &&
                 analyzerType == that.analyzerType;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(name, type, analyzerType, indexed, stored, termPositions, caseSensitive);
+        return Objects.hash(fldName, fldType, analyzerType, indexed, stored, termPositions, caseSensitive);
+    }
+
+    @Override
+    public String toString() {
+        return fldName;
     }
 
     @Override
     public int compareTo(final Field o) {
-        return name.compareToIgnoreCase(o.getName());
+        return fldName.compareToIgnoreCase(o.getFldName());
     }
 
     public static Builder builder() {
@@ -128,8 +133,8 @@ public class IndexFieldImpl implements IndexField {
 
     public static final class Builder {
 
-        private String name;
-        private FieldType type = FieldType.TEXT;
+        private String fldName;
+        private FieldType fldType = FieldType.TEXT;
         private AnalyzerType analyzerType = AnalyzerType.KEYWORD;
         private boolean indexed = true;
         private boolean stored;
@@ -140,8 +145,8 @@ public class IndexFieldImpl implements IndexField {
         }
 
         private Builder(final IndexFieldImpl indexField) {
-            this.name = indexField.name;
-            this.type = indexField.type;
+            this.fldName = indexField.fldName;
+            this.fldType = indexField.fldType;
             this.analyzerType = indexField.analyzerType;
             this.indexed = indexField.indexed;
             this.stored = indexField.stored;
@@ -149,13 +154,13 @@ public class IndexFieldImpl implements IndexField {
             this.caseSensitive = indexField.caseSensitive;
         }
 
-        public Builder name(final String name) {
-            this.name = name;
+        public Builder fldName(final String fldName) {
+            this.fldName = fldName;
             return this;
         }
 
-        public Builder type(final FieldType type) {
-            this.type = type;
+        public Builder fldType(final FieldType fldType) {
+            this.fldType = fldType;
             return this;
         }
 
@@ -186,8 +191,8 @@ public class IndexFieldImpl implements IndexField {
 
         public IndexFieldImpl build() {
             return new IndexFieldImpl(
-                    name,
-                    type,
+                    fldName,
+                    fldType,
                     analyzerType,
                     indexed,
                     stored,

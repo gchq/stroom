@@ -94,8 +94,8 @@ class TestIndexingFilter extends AbstractProcessIntegrationTest {
         indexFields.add(LuceneIndexField.createField("sid2", AnalyzerType.ALPHA_NUMERIC, false, true, true, false));
         indexFields.add(LuceneIndexField
                 .builder()
-                .type(FieldType.LONG)
-                .name("size")
+                .fldType(FieldType.LONG)
+                .fldName("size")
                 .analyzerType(AnalyzerType.KEYWORD)
                 .indexed(false)
                 .build());
@@ -130,7 +130,7 @@ class TestIndexingFilter extends AbstractProcessIntegrationTest {
         return document
                 .getValues()
                 .stream()
-                .filter(fv -> fv.field().getName().equals(fieldName))
+                .filter(fv -> fv.field().getFldName().equals(fieldName))
                 .collect(Collectors.toList());
     }
 

@@ -156,11 +156,11 @@ class Lucene980SystemInfoProvider implements IndexSystemInfoProvider {
             Objects.requireNonNull(indexDoc);
 
             LuceneIndexField streamIdField = indexDoc.getFields().stream()
-                    .filter(indexField -> indexField.getName().equals(IndexConstants.STREAM_ID))
+                    .filter(indexField -> indexField.getFldName().equals(IndexConstants.STREAM_ID))
                     .findFirst()
                     .orElseThrow(() -> new RuntimeException("Can't find field " + IndexConstants.STREAM_ID));
 
-            if (FieldType.ID.equals(streamIdField.getType())) {
+            if (FieldType.ID.equals(streamIdField.getFldType())) {
                 return LongField.newExactQuery(IndexConstants.STREAM_ID, streamId);
             } else {
                 return new TermQuery(new Term(IndexConstants.STREAM_ID, streamId.toString()));

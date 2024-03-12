@@ -140,7 +140,7 @@ public class ExpressionMatcher {
         if (field == null) {
             throw new MatchException("Field not found in index: " + termField);
         }
-        final String fieldName = field.getName();
+        final String fieldName = field.getFldName();
 
         // Ensure an appropriate termValue has been provided for the condition type.
         if (Condition.IN_DICTIONARY.equals(condition) ||
@@ -220,9 +220,9 @@ public class ExpressionMatcher {
                     return isInFolder(fieldName, docRef, field, attribute);
                 default:
                     throw new MatchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
-                            + field.getType() + " field type");
+                            + field.getFldType() + " field type");
             }
-        } else if (FieldType.DATE.equals(field.getType())) {
+        } else if (FieldType.DATE.equals(field.getFldType())) {
             switch (condition) {
                 case EQUALS, CONTAINS: {
                     final long date1 = getDate(fieldName, attribute);
@@ -273,7 +273,7 @@ public class ExpressionMatcher {
                     return isInFolder(fieldName, docRef, field, attribute);
                 default:
                     throw new MatchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
-                            + field.getType() + " field type");
+                            + field.getFldType() + " field type");
             }
         } else {
             switch (condition) {
@@ -291,7 +291,7 @@ public class ExpressionMatcher {
                     return isDocRef(fieldName, docRef, field, attribute);
                 default:
                     throw new MatchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
-                            + field.getType() + " field type");
+                            + field.getFldType() + " field type");
             }
         }
     }
@@ -358,7 +358,7 @@ public class ExpressionMatcher {
                     if (isNumericIn(fieldName, line, attribute)) {
                         return true;
                     }
-                } else if (FieldType.DATE.equals(field.getType())) {
+                } else if (FieldType.DATE.equals(field.getFldType())) {
                     if (isDateIn(fieldName, line, attribute)) {
                         return true;
                     }
@@ -377,7 +377,7 @@ public class ExpressionMatcher {
                                final DocRef docRef,
                                final QueryField field,
                                final Object attribute) {
-        if (FieldType.DOC_REF.equals(field.getType())) {
+        if (FieldType.DOC_REF.equals(field.getFldType())) {
             final String type = field.getDocRefType();
             if (type != null && collectionService != null) {
                 final Set<DocRef> descendants = collectionService.getDescendants(docRef, type);

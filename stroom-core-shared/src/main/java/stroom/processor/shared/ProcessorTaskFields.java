@@ -73,7 +73,7 @@ public class ProcessorTaskFields {
         FIELDS.add(STATUS);
         FIELDS.add(TASK_ID);
         FIELD_MAP = FIELDS.stream()
-                .collect(Collectors.toMap(QueryField::getName, Function.identity()));
+                .collect(Collectors.toMap(QueryField::getFldName, Function.identity()));
     }
 
     public static List<QueryField> getFields() {

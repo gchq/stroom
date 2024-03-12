@@ -18,6 +18,7 @@ package stroom.search.elastic.shared;
 
 import stroom.datasource.api.v2.Field;
 import stroom.datasource.api.v2.FieldType;
+import stroom.index.shared.AnalyzerType;
 import stroom.index.shared.IndexField;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -39,8 +40,8 @@ import java.util.Objects;
         "fieldName", // deprecated
         "fieldType", // deprecated
 
-        "name",
-        "type",
+        "fldName",
+        "fldType",
         "nativeType",
         "indexed"
 })
@@ -59,9 +60,9 @@ public class ElasticIndexField implements IndexField {
 
 
     @JsonProperty
-    private final String name;
+    private final String fldName;
     @JsonProperty
-    private final FieldType type;
+    private final FieldType fldType;
     @JsonProperty
     private final String nativeType;
     @JsonProperty
@@ -73,12 +74,12 @@ public class ElasticIndexField implements IndexField {
             @Deprecated @JsonProperty("fieldUse") final FieldType fieldUse,
             @Deprecated @JsonProperty("fieldType") final String fieldType,
 
-            @JsonProperty("name") final String name,
-            @JsonProperty("type") final FieldType type,
+            @JsonProperty("fldName") final String fldName,
+            @JsonProperty("fldType") final FieldType fldType,
             @JsonProperty("nativeType") final String nativeType,
             @JsonProperty("indexed") final boolean indexed) {
-        this.name = convertLegacyName(name, fieldName);
-        this.type = convertLegacyType(type, fieldUse);
+        this.fldName = convertLegacyName(fldName, fieldName);
+        this.fldType = convertLegacyType(fldType, fieldUse);
         this.nativeType = convertLegacyNativeType(nativeType, fieldType);
         this.indexed = indexed;
     }
@@ -108,13 +109,13 @@ public class ElasticIndexField implements IndexField {
     }
 
     @Override
-    public String getName() {
-        return name;
+    public String getFldName() {
+        return fldName;
     }
 
     @Override
-    public FieldType getType() {
-        return type;
+    public FieldType getFldType() {
+        return fldType;
     }
 
     public String getNativeType() {
@@ -125,10 +126,34 @@ public class ElasticIndexField implements IndexField {
         return indexed;
     }
 
+    @JsonIgnore
+    @Override
+    public AnalyzerType getAnalyzerType() {
+        return IndexField.super.getAnalyzerType();
+    }
+
+    @JsonIgnore
+    @Override
+    public boolean isCaseSensitive() {
+        return IndexField.super.isCaseSensitive();
+    }
+
+    @JsonIgnore
+    @Override
+    public boolean isStored() {
+        return IndexField.super.isStored();
+    }
+
+    @JsonIgnore
+    @Override
+    public boolean isTermPositions() {
+        return IndexField.super.isTermPositions();
+    }
+
     @Override
     @JsonIgnore
     public String getDisplayValue() {
-        return name;
+        return fldName;
     }
 
     @Override
@@ -144,19 +169,19 @@ public class ElasticIndexField implements IndexField {
                 fieldUse == that.fieldUse &&
                 Objects.equals(fieldName, that.fieldName) &&
                 Objects.equals(fieldType, that.fieldType) &&
-                Objects.equals(name, that.name) &&
-                type == that.type &&
+                Objects.equals(fldName, that.fldName) &&
+                fldType == that.fldType &&
                 Objects.equals(nativeType, that.nativeType);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(fieldUse, fieldName, fieldType, name, type, nativeType, indexed);
+        return Objects.hash(fieldUse, fieldName, fieldType, fldName, fldType, nativeType, indexed);
     }
 
     @Override
     public int compareTo(final Field o) {
-        return name.compareToIgnoreCase(o.getName());
+        return fldName.compareToIgnoreCase(o.getFldName());
     }
 
     public static Builder builder() {
@@ -169,8 +194,8 @@ public class ElasticIndexField implements IndexField {
 
     public static final class Builder {
 
-        private String name;
-        private FieldType type = FieldType.TEXT;
+        private String fldName;
+        private FieldType fldType = FieldType.TEXT;
         private String nativeType;
         private boolean indexed = true;
 
@@ -178,19 +203,19 @@ public class ElasticIndexField implements IndexField {
         }
 
         private Builder(final ElasticIndexField indexField) {
-            this.name = indexField.name;
-            this.type = indexField.type;
+            this.fldName = indexField.fldName;
+            this.fldType = indexField.fldType;
             this.nativeType = indexField.nativeType;
             this.indexed = indexField.indexed;
         }
 
-        public Builder name(final String name) {
-            this.name = name;
+        public Builder fldName(final String fldName) {
+            this.fldName = fldName;
             return this;
         }
 
-        public Builder type(final FieldType type) {
-            this.type = type;
+        public Builder fldType(final FieldType fldType) {
+            this.fldType = fldType;
             return this;
         }
 
@@ -210,8 +235,8 @@ public class ElasticIndexField implements IndexField {
                     null,
                     null,
                     null,
-                    name,
-                    type,
+                    fldName,
+                    fldType,
                     nativeType,
                     indexed);
         }

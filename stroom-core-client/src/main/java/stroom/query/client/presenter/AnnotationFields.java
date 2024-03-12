@@ -55,5 +55,5 @@ public interface AnnotationFields {
             COMMENT_FIELD,
             HISTORY_FIELD);
     Map<String, QueryField> FIELD_MAP = FIELDS.stream()
-            .collect(Collectors.toMap(QueryField::getName, Function.identity()));
+            .collect(Collectors.toMap(QueryField::getFldName, Function.identity()));
 }

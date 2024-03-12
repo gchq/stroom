@@ -185,8 +185,8 @@ public class IndexVolumeGroupEditPresenter
                     volumeGroup.getId());
             final ExpressionCriteria expressionCriteria = new ExpressionCriteria(expression);
             // TODO: 09/09/2022 Need to implement user defined sorting
-            expressionCriteria.setSort(IndexVolumeFields.NODE_NAME.getName());
-            expressionCriteria.addSort(IndexVolumeFields.PATH.getName());
+            expressionCriteria.setSort(IndexVolumeFields.NODE_NAME.getFldName());
+            expressionCriteria.addSort(IndexVolumeFields.PATH.getFldName());
 
             volumeStatusListPresenter.init(expressionCriteria, volumes ->
                     open(volumeGroup, title, consumer));

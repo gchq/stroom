@@ -4,7 +4,7 @@ import stroom.docref.HasDisplayValue;
 
 public interface Field extends HasDisplayValue, Comparable<Field> {
 
-    String getName();
+    String getFldName();
 
-    FieldType getType();
+    FieldType getFldType();
 }

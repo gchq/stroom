@@ -258,10 +258,10 @@ class SolrIndexingFilter extends AbstractXMLFilter {
         try {
             Object val = null;
 
-            if (indexField.getType().isNumeric()) {
+            if (indexField.getFldType().isNumeric()) {
                 val = Long.parseLong(value);
 
-            } else if (FieldType.DATE.equals(indexField.getType())) {
+            } else if (FieldType.DATE.equals(indexField.getFldType())) {
                 try {
                     val = DateUtil.parseUnknownString(value);
                 } catch (final Exception e) {
@@ -277,12 +277,12 @@ class SolrIndexingFilter extends AbstractXMLFilter {
                 LOGGER.debug(() -> "processIndexContent() - Adding to index indexName=" +
                         indexRef.getName() +
                         " name=" +
-                        indexField.getName() +
+                        indexField.getFldName() +
                         " value=" +
                         value);
 
                 fieldsIndexed++;
-                document.addField(indexField.getName(), val);
+                document.addField(indexField.getFldName(), val);
             }
         } catch (final RuntimeException e) {
             log(Severity.ERROR, e.getMessage(), e);

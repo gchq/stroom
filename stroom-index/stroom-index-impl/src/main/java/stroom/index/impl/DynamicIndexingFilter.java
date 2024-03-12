@@ -167,17 +167,8 @@ class DynamicIndexingFilter extends AbstractFieldFilter {
                 }
                 indexDoc.setFields(foundFields
                         .stream()
-                        .map(field -> LuceneIndexField
-                                .builder()
-                                .name(field.getName())
-                                .type(field.getType())
-                                .analyzerType(field.getAnalyzerType())
-                                .indexed(field.isIndexed())
-                                .stored(field.isStored())
-                                .caseSensitive(field.isCaseSensitive())
-                                .termPositions(field.isTermPositions())
-                                .build())
-                        .sorted(Comparator.comparing(IndexField::getName))
+                        .map(LuceneIndexField::fromIndexField)
+                        .sorted(Comparator.comparing(IndexField::getFldName))
                         .toList());
 
                 indexStore.writeDocument(indexDoc);
@@ -211,7 +202,7 @@ class DynamicIndexingFilter extends AbstractFieldFilter {
 
             if (indexField.isIndexed() || indexField.isStored()) {
                 // Set the current event time if this is a recognised event time field.
-                if (currentEventTime == null && indexField.getName().equals(index.getTimeField())) {
+                if (currentEventTime == null && indexField.getFldName().equals(index.getTimeField())) {
                     currentEventTime = fieldValue.value().toLong();
                 }
 
@@ -220,7 +211,7 @@ class DynamicIndexingFilter extends AbstractFieldFilter {
                     debugBuffer.append("processIndexContent() - Adding to index indexName=");
                     debugBuffer.append(indexRef.getName());
                     debugBuffer.append(" name=");
-                    debugBuffer.append(fieldValue.field().getName());
+                    debugBuffer.append(fieldValue.field().getFldName());
                     debugBuffer.append(" value=");
                     debugBuffer.append(fieldValue.value());
 

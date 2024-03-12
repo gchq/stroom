@@ -5,11 +5,10 @@ import stroom.datasource.api.v2.FieldInfo;
 import stroom.datasource.api.v2.FindFieldInfoCriteria;
 import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
-import stroom.docref.StringMatch;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.index.shared.IndexField;
+import stroom.index.shared.IndexFieldCache;
 import stroom.index.shared.IndexFieldProvider;
-import stroom.index.shared.LuceneIndexField;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.SearchRequest;
@@ -21,7 +20,6 @@ import stroom.query.common.v2.StoreFactoryRegistry;
 import stroom.security.api.SecurityContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 import stroom.view.api.ViewStore;
 import stroom.view.shared.ViewDoc;
@@ -43,35 +41,44 @@ public class ViewSearchProvider implements SearchProvider, IndexFieldProvider {
     private final Provider<StoreFactoryRegistry> storeFactoryRegistryProvider;
     private final SecurityContext securityContext;
     private final Provider<DataSourceProviderRegistry> dataSourceProviderRegistry;
+    private final IndexFieldCache indexFieldCache;
 
     @Inject
     public ViewSearchProvider(final ViewStore viewStore,
                               final Provider<StoreFactoryRegistry> storeFactoryRegistryProvider,
                               final SecurityContext securityContext,
-                              final Provider<DataSourceProviderRegistry> dataSourceProviderRegistry) {
+                              final Provider<DataSourceProviderRegistry> dataSourceProviderRegistry,
+                              final IndexFieldCache indexFieldCache) {
         this.viewStore = viewStore;
         this.storeFactoryRegistryProvider = storeFactoryRegistryProvider;
         this.securityContext = securityContext;
         this.dataSourceProviderRegistry = dataSourceProviderRegistry;
+        this.indexFieldCache = indexFieldCache;
+    }
+
+    private DocRef getReferencedDataSource(final DocRef viewDocRef) {
+        final ViewDoc viewDoc = viewStore.readDocument(viewDocRef);
+        if (viewDoc != null) {
+            // Find the referenced data source.
+            return viewDoc.getDataSource();
+        }
+        return null;
     }
 
     @Override
     public ResultPage<FieldInfo> getFieldInfo(final FindFieldInfoCriteria criteria) {
         final Optional<ResultPage<FieldInfo>> optional = securityContext.useAsReadResult(() -> {
-            final ViewDoc viewDoc = viewStore.readDocument(criteria.getDataSourceRef());
-            if (viewDoc != null) {
-                // Find the referenced data source.
-                final DocRef docRef = viewDoc.getDataSource();
-                if (docRef != null) {
-                    final FindFieldInfoCriteria findFieldInfoCriteria = new FindFieldInfoCriteria(
-                            criteria.getPageRequest(),
-                            criteria.getSortList(),
-                            docRef,
-                            criteria.getStringMatch());
-                    final Optional<DataSourceProvider> delegate =
-                            dataSourceProviderRegistry.get().getDataSourceProvider(docRef.getType());
-                    return delegate.map(dataSourceProvider -> dataSourceProvider.getFieldInfo(findFieldInfoCriteria));
-                }
+            // Find the referenced data source.
+            final DocRef docRef = getReferencedDataSource(criteria.getDataSourceRef());
+            if (docRef != null) {
+                final FindFieldInfoCriteria findFieldInfoCriteria = new FindFieldInfoCriteria(
+                        criteria.getPageRequest(),
+                        criteria.getSortList(),
+                        docRef,
+                        criteria.getStringMatch());
+                final Optional<DataSourceProvider> delegate =
+                        dataSourceProviderRegistry.get().getDataSourceProvider(docRef.getType());
+                return delegate.map(dataSourceProvider -> dataSourceProvider.getFieldInfo(findFieldInfoCriteria));
             }
             return Optional.empty();
         });
@@ -82,21 +89,10 @@ public class ViewSearchProvider implements SearchProvider, IndexFieldProvider {
     }
 
     @Override
-    public IndexField getIndexField(final DocRef docRef, final String fieldName) {
-        final FindFieldInfoCriteria criteria = new FindFieldInfoCriteria(
-                new PageRequest(0, 1),
-                null,
-                docRef,
-                StringMatch.equals(fieldName, true));
-        final ResultPage<FieldInfo> resultPage = getFieldInfo(criteria);
-        if (resultPage.size() > 0) {
-            final FieldInfo fieldInfo = resultPage.getFirst();
-            return LuceneIndexField
-                    .builder()
-                    .name(fieldInfo.getName())
-                    .type(fieldInfo.getType())
-                    .indexed(true)
-                    .build();
+    public IndexField getIndexField(final DocRef viewDocRef, final String fieldName) {
+        final DocRef docRef = getReferencedDataSource(viewDocRef);
+        if (docRef != null) {
+            return indexFieldCache.get(docRef, fieldName);
         }
         return null;
     }

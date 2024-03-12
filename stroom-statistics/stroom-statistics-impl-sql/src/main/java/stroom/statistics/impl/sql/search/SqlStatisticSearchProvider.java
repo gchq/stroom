@@ -121,8 +121,8 @@ public class SqlStatisticSearchProvider implements SearchProvider {
         // more conditions like >, >=, <, <=, =
         fields.add(QueryField
                 .builder()
-                .name(StatisticStoreDoc.FIELD_NAME_DATE_TIME)
-                .type(FieldType.DATE)
+                .fldName(StatisticStoreDoc.FIELD_NAME_DATE_TIME)
+                .fldType(FieldType.DATE)
                 .conditionSet(ConditionSet.STAT_DATE)
                 .queryable(true)
                 .build());
@@ -134,8 +134,8 @@ public class SqlStatisticSearchProvider implements SearchProvider {
                 // support for more conditions like CONTAINS
                 fields.add(QueryField
                         .builder()
-                        .name(statisticField.getFieldName())
-                        .type(FieldType.TEXT)
+                        .fldName(statisticField.getFieldName())
+                        .fldType(FieldType.TEXT)
                         .conditionSet(ConditionSet.STAT_TEXT)
                         .queryable(true)
                         .build());

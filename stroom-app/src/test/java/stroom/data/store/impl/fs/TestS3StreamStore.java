@@ -350,7 +350,7 @@ class TestS3StreamStore extends AbstractCoreIntegrationTest {
                 .build();
         final FindMetaCriteria findMetaCriteria = new FindMetaCriteria(expression);
         findMetaCriteria.setPageRequest(new PageRequest(0, 100));
-        findMetaCriteria.setSort(MetaFields.CREATE_TIME.getName());
+        findMetaCriteria.setSort(MetaFields.CREATE_TIME.getFldName());
 //        findStreamCriteria.setStreamIdRange(new IdRange(0L, 1L));
 
         assertThat(metaService.find(findMetaCriteria).size()).isEqualTo(0L);
@@ -545,8 +545,8 @@ class TestS3StreamStore extends AbstractCoreIntegrationTest {
         try (final Target streamTarget = streamStore.openTarget(metaProperties)) {
             exactMetaData = streamTarget.getMeta();
             TargetUtil.write(streamTarget, testString);
-            streamTarget.getAttributes().put(MetaFields.REC_READ.getName(), "10");
-            streamTarget.getAttributes().put(MetaFields.REC_WRITE.getName(), "20");
+            streamTarget.getAttributes().put(MetaFields.REC_READ.getFldName(), "10");
+            streamTarget.getAttributes().put(MetaFields.REC_WRITE.getFldName(), "20");
         }
 
         final Meta reloadMetaData = metaService.find(FindMetaCriteria.createFromMeta(exactMetaData)).getFirst();
@@ -564,8 +564,8 @@ class TestS3StreamStore extends AbstractCoreIntegrationTest {
 //        streamAttributeValueFlush.flush();
         final MetaRow metaRow = metaService.findRows(criteria).getFirst();
 
-        assertThat(metaRow.getAttributeValue(MetaFields.REC_READ.getName())).isEqualTo("10");
-        assertThat(metaRow.getAttributeValue(MetaFields.REC_WRITE.getName())).isEqualTo("20");
+        assertThat(metaRow.getAttributeValue(MetaFields.REC_READ.getFldName())).isEqualTo("10");
+        assertThat(metaRow.getAttributeValue(MetaFields.REC_WRITE.getFldName())).isEqualTo("20");
     }
 
     @Test
@@ -736,7 +736,7 @@ class TestS3StreamStore extends AbstractCoreIntegrationTest {
             meta = streamTarget.getMeta();
             TargetUtil.write(streamTarget, "xyz");
             streamTarget.getAttributes().put(testString1, testString2);
-            streamTarget.getAttributes().put(MetaFields.REC_READ.getName(), "100");
+            streamTarget.getAttributes().put(MetaFields.REC_READ.getFldName(), "100");
         }
 
         final DataVolume dataVolume = dataVolumeService.findDataVolume(meta.getId());

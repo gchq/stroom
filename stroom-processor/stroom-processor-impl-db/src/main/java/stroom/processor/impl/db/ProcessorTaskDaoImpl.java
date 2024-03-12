@@ -162,16 +162,16 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
 
         expressionMapper = expressionMapperFactory.create();
         expressionMapper.map(ProcessorTaskFields.CREATE_TIME, PROCESSOR_TASK.CREATE_TIME_MS, value ->
-                DateExpressionParser.getMs(ProcessorTaskFields.CREATE_TIME.getName(), value));
+                DateExpressionParser.getMs(ProcessorTaskFields.CREATE_TIME.getFldName(), value));
         expressionMapper.map(ProcessorTaskFields.CREATE_TIME_MS, PROCESSOR_TASK.CREATE_TIME_MS, Long::valueOf);
         expressionMapper.map(ProcessorTaskFields.START_TIME, PROCESSOR_TASK.START_TIME_MS, value ->
-                DateExpressionParser.getMs(ProcessorTaskFields.START_TIME.getName(), value));
+                DateExpressionParser.getMs(ProcessorTaskFields.START_TIME.getFldName(), value));
         expressionMapper.map(ProcessorTaskFields.START_TIME_MS, PROCESSOR_TASK.START_TIME_MS, Long::valueOf);
         expressionMapper.map(ProcessorTaskFields.END_TIME, PROCESSOR_TASK.END_TIME_MS, value ->
-                DateExpressionParser.getMs(ProcessorTaskFields.END_TIME.getName(), value));
+                DateExpressionParser.getMs(ProcessorTaskFields.END_TIME.getFldName(), value));
         expressionMapper.map(ProcessorTaskFields.END_TIME_MS, PROCESSOR_TASK.END_TIME_MS, Long::valueOf);
         expressionMapper.map(ProcessorTaskFields.STATUS_TIME, PROCESSOR_TASK.STATUS_TIME_MS, value ->
-                DateExpressionParser.getMs(ProcessorTaskFields.STATUS_TIME.getName(), value));
+                DateExpressionParser.getMs(ProcessorTaskFields.STATUS_TIME.getFldName(), value));
         expressionMapper.map(ProcessorTaskFields.STATUS_TIME_MS, PROCESSOR_TASK.STATUS_TIME_MS, Long::valueOf);
         expressionMapper.map(ProcessorTaskFields.META_ID, PROCESSOR_TASK.META_ID, Long::valueOf);
         expressionMapper.map(ProcessorTaskFields.NODE_NAME, PROCESSOR_NODE.NAME, value -> value);
@@ -525,7 +525,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
     /**
      * Change the node ownership of the tasks in the id set and select them back to include in the queue.
      *
-     * @param idSet        The ids of the tasks to take ownership of.
+     * @param idSet    The ids of the tasks to take ownership of.
      * @param nodeName This node name.
      * @return A list of tasks to queue.
      */
@@ -817,17 +817,19 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                        final FieldIndex fieldIndex,
                        final ValuesConsumer consumer) {
         final Set<String> processorFields = Set.of(
-                ProcessorTaskFields.PROCESSOR_FILTER_ID.getName(),
-                ProcessorTaskFields.PROCESSOR_FILTER_PRIORITY.getName());
+                ProcessorTaskFields.PROCESSOR_FILTER_ID.getFldName(),
+                ProcessorTaskFields.PROCESSOR_FILTER_PRIORITY.getFldName());
 
         validateExpressionTerms(criteria.getExpression());
 
         final String[] fieldNames = fieldIndex.getFields();
-        final boolean nodeUsed = isUsed(Set.of(ProcessorTaskFields.NODE_NAME.getName()), fieldNames, criteria);
-        final boolean feedUsed = isUsed(Set.of(ProcessorTaskFields.FEED.getName()), fieldNames, criteria);
+        final boolean nodeUsed = isUsed(Set.of(ProcessorTaskFields.NODE_NAME.getFldName()), fieldNames, criteria);
+        final boolean feedUsed = isUsed(Set.of(ProcessorTaskFields.FEED.getFldName()), fieldNames, criteria);
         final boolean processorFilterUsed = isUsed(processorFields, fieldNames, criteria);
-        final boolean processorUsed = isUsed(Set.of(ProcessorTaskFields.PROCESSOR_ID.getName()), fieldNames, criteria);
-        final boolean pipelineUsed = isUsed(Set.of(ProcessorTaskFields.PIPELINE.getName()), fieldNames, criteria);
+        final boolean processorUsed =
+                isUsed(Set.of(ProcessorTaskFields.PROCESSOR_ID.getFldName()), fieldNames, criteria);
+        final boolean pipelineUsed =
+                isUsed(Set.of(ProcessorTaskFields.PIPELINE.getFldName()), fieldNames, criteria);
 
         final PageRequest pageRequest = criteria.getPageRequest();
         final Condition condition = expressionMapper.apply(criteria.getExpression());
@@ -1098,7 +1100,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                                         "of type {}. Term: {}",
                                 term.getCondition(),
                                 term.getField(),
-                                field.getType(), term));
+                                field.getFldType(), term));
                     } else {
                         return true;
                     }

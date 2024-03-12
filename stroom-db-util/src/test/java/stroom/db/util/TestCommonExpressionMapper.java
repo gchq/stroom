@@ -302,7 +302,7 @@ class TestCommonExpressionMapper {
         // Set up some noddy term handlers so we can test expression terms
         FIELD_NAMES.forEach(fieldName -> mapper.addHandler(QueryField
                 .builder()
-                .name(fieldName)
+                .fldName(fieldName)
                 .queryable(true)
                 .conditionSet(ConditionSet.DEFAULT_ID)
                 .build(), handler));

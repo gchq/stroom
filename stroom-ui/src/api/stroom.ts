@@ -1290,8 +1290,6 @@ export interface ElasticIndexDoc {
 }
 
 export interface ElasticIndexField {
-  analyzerType?: "KEYWORD" | "ALPHA" | "NUMERIC" | "ALPHA_NUMERIC" | "WHITESPACE" | "STOP" | "STANDARD";
-  caseSensitive?: boolean;
   fieldName?: string;
   fieldType?: string;
   fieldUse?:
@@ -1306,12 +1304,8 @@ export interface ElasticIndexField {
     | "KEYWORD"
     | "IPV4_ADDRESS"
     | "DOC_REF";
-  indexed?: boolean;
-  name?: string;
-  nativeType?: string;
-  stored?: boolean;
-  termPositions?: boolean;
-  type?:
+  fldName?: string;
+  fldType?:
     | "ID"
     | "BOOLEAN"
     | "INTEGER"
@@ -1323,6 +1317,8 @@ export interface ElasticIndexField {
     | "KEYWORD"
     | "IPV4_ADDRESS"
     | "DOC_REF";
+  indexed?: boolean;
+  nativeType?: string;
 }
 
 export interface ElasticIndexTestResponse {
@@ -1857,8 +1853,8 @@ export interface FieldInfo {
     | "'=', '!=', 'in'"
     | "'=', '!=', 'in', 'in dictionary', 'is'";
   docRefType?: string;
-  fieldName?: string;
-  fieldType?:
+  fldName?: string;
+  fldType?:
     | "ID"
     | "BOOLEAN"
     | "INTEGER"
@@ -1870,7 +1866,6 @@ export interface FieldInfo {
     | "KEYWORD"
     | "IPV4_ADDRESS"
     | "DOC_REF";
-  name?: string;
   queryable?: boolean;
 }
 
@@ -2939,11 +2934,8 @@ export interface LuceneIndexField {
     | "DATE_FIELD"
     | "FIELD"
     | "NUMERIC_FIELD";
-  indexed?: boolean;
-  name?: string;
-  stored?: boolean;
-  termPositions?: boolean;
-  type?:
+  fldName?: string;
+  fldType?:
     | "ID"
     | "BOOLEAN"
     | "INTEGER"
@@ -2955,6 +2947,9 @@ export interface LuceneIndexField {
     | "KEYWORD"
     | "IPV4_ADDRESS"
     | "DOC_REF";
+  indexed?: boolean;
+  stored?: boolean;
+  termPositions?: boolean;
 }
 
 export interface MapDefinition {
@@ -3787,7 +3782,8 @@ export interface QueryField {
     | "'=', '!=', 'in'"
     | "'=', '!=', 'in', 'in dictionary', 'is'";
   docRefType?: string;
-  fieldType?:
+  fldName?: string;
+  fldType?:
     | "ID"
     | "BOOLEAN"
     | "INTEGER"
@@ -4832,8 +4828,6 @@ export interface SolrIndexDoc {
 }
 
 export interface SolrIndexField {
-  analyzerType?: "KEYWORD" | "ALPHA" | "NUMERIC" | "ALPHA_NUMERIC" | "WHITESPACE" | "STOP" | "STANDARD";
-  caseSensitive?: boolean;
   defaultValue?: string;
   docValues?: boolean;
   fieldName?: string;
@@ -4848,9 +4842,21 @@ export interface SolrIndexField {
     | "DATE_FIELD"
     | "FIELD"
     | "NUMERIC_FIELD";
+  fldName?: string;
+  fldType?:
+    | "ID"
+    | "BOOLEAN"
+    | "INTEGER"
+    | "LONG"
+    | "FLOAT"
+    | "DOUBLE"
+    | "DATE"
+    | "TEXT"
+    | "KEYWORD"
+    | "IPV4_ADDRESS"
+    | "DOC_REF";
   indexed?: boolean;
   multiValued?: boolean;
-  name?: string;
   nativeType?: string;
   omitNorms?: boolean;
   omitPositions?: boolean;
@@ -4863,18 +4869,6 @@ export interface SolrIndexField {
   termPayloads?: boolean;
   termPositions?: boolean;
   termVectors?: boolean;
-  type?:
-    | "ID"
-    | "BOOLEAN"
-    | "INTEGER"
-    | "LONG"
-    | "FLOAT"
-    | "DOUBLE"
-    | "DATE"
-    | "TEXT"
-    | "KEYWORD"
-    | "IPV4_ADDRESS"
-    | "DOC_REF";
   uninvertible?: boolean;
 }
 

@@ -150,7 +150,7 @@ public class AnalyticHelper {
         builder = builder.addOperator(statusExpression);
 
         final FindMetaCriteria findMetaCriteria = new FindMetaCriteria(builder.build());
-        findMetaCriteria.setSort(MetaFields.ID.getName(), false, false);
+        findMetaCriteria.setSort(MetaFields.ID.getFldName(), false, false);
         findMetaCriteria.obtainPageRequest().setLength(length);
 
         return metaService.find(findMetaCriteria).getValues();

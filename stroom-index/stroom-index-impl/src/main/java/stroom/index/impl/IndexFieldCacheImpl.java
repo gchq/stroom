@@ -21,8 +21,8 @@ import stroom.cache.api.CacheManager;
 import stroom.cache.api.LoadingStroomCache;
 import stroom.docref.DocRef;
 import stroom.index.shared.IndexField;
+import stroom.index.shared.IndexFieldCache;
 import stroom.index.shared.IndexFieldProvider;
-import stroom.search.extraction.IndexFieldCache;
 import stroom.util.shared.Clearable;
 
 import jakarta.inject.Inject;
@@ -56,11 +56,11 @@ public class IndexFieldCacheImpl implements IndexFieldCache, Clearable {
     }
 
     private IndexField create(final Key key) {
-        if (key == null) {
+        if (key == null || key.docRef == null || key.docRef.getType() == null) {
             throw new NullPointerException("Null key supplied");
         }
 
-        final IndexFieldProvider provider = providers.get(key.fieldName);
+        final IndexFieldProvider provider = providers.get(key.docRef.getType());
         if (provider == null) {
             throw new NullPointerException("No provider can be found for: " + key.fieldName);
         }

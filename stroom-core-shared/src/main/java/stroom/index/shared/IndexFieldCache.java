@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
-package stroom.search.extraction;
+package stroom.index.shared;
 
 import stroom.docref.DocRef;
-import stroom.index.shared.IndexField;
 
 public interface IndexFieldCache {
 

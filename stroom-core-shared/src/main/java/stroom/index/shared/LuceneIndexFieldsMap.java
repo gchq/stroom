@@ -33,10 +33,10 @@ public class LuceneIndexFieldsMap extends HashMap<String, LuceneIndexField> {
     }
 
     public LuceneIndexField put(final LuceneIndexField indexField) {
-        return put(indexField.getName(), indexField);
+        return put(indexField.getFldName(), indexField);
     }
 
     public LuceneIndexField putIfAbsent(final LuceneIndexField indexField) {
-        return putIfAbsent(indexField.getName(), indexField);
+        return putIfAbsent(indexField.getFldName(), indexField);
     }
 }

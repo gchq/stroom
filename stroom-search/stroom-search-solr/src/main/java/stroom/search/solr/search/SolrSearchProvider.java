@@ -129,7 +129,7 @@ public class SolrSearchProvider implements SearchProvider, IndexFieldProvider {
             final Optional<SolrIndexField> optionalSolrIndexField = index
                     .getFields()
                     .stream()
-                    .filter(field -> Objects.equals(fieldName, field.getName()))
+                    .filter(field -> Objects.equals(fieldName, field.getFldName()))
                     .findFirst();
             return optionalSolrIndexField.orElse(null);
         }
@@ -230,7 +230,7 @@ public class SolrSearchProvider implements SearchProvider, IndexFieldProvider {
             final Map<String, SolrIndexField> indexFieldsMap = index
                     .getFields()
                     .stream()
-                    .collect(Collectors.toMap(SolrIndexField::getName, Function.identity()));
+                    .collect(Collectors.toMap(SolrIndexField::getFldName, Function.identity()));
             // Parse the query.
             final SearchExpressionQueryBuilder searchExpressionQueryBuilder = new SearchExpressionQueryBuilder(
                     wordListProvider,
