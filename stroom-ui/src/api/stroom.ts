@@ -361,8 +361,6 @@ export interface Base64EncodedDocumentData {
   docRef?: DocRef;
 }
 
-export type BooleanField = QueryField;
-
 export interface BuildInfo {
   /** @format int64 */
   buildTime?: number;
@@ -853,8 +851,6 @@ export interface DataRetentionRules {
   version?: string;
 }
 
-export type DateField = QueryField;
-
 /**
  * The string formatting to apply to a date value
  */
@@ -969,8 +965,6 @@ export interface DocRef {
    */
   uuid: string;
 }
-
-export type DocRefField = QueryField;
 
 export interface DocRefInfo {
   /** @format int64 */
@@ -1208,8 +1202,6 @@ export interface DocumentationDoc {
   version?: string;
 }
 
-export type DoubleField = QueryField;
-
 export interface DownloadQueryResultsRequest {
   componentId?: string;
   fileType?: "EXCEL" | "CSV" | "TSV";
@@ -1298,10 +1290,39 @@ export interface ElasticIndexDoc {
 }
 
 export interface ElasticIndexField {
+  analyzerType?: "KEYWORD" | "ALPHA" | "NUMERIC" | "ALPHA_NUMERIC" | "WHITESPACE" | "STOP" | "STANDARD";
+  caseSensitive?: boolean;
   fieldName?: string;
   fieldType?: string;
-  fieldUse?: "ID" | "BOOLEAN" | "INTEGER" | "LONG" | "FLOAT" | "DOUBLE" | "DATE" | "TEXT" | "KEYWORD" | "IPV4_ADDRESS";
+  fieldUse?:
+    | "ID"
+    | "BOOLEAN"
+    | "INTEGER"
+    | "LONG"
+    | "FLOAT"
+    | "DOUBLE"
+    | "DATE"
+    | "TEXT"
+    | "KEYWORD"
+    | "IPV4_ADDRESS"
+    | "DOC_REF";
   indexed?: boolean;
+  name?: string;
+  nativeType?: string;
+  stored?: boolean;
+  termPositions?: boolean;
+  type?:
+    | "ID"
+    | "BOOLEAN"
+    | "INTEGER"
+    | "LONG"
+    | "FLOAT"
+    | "DOUBLE"
+    | "DATE"
+    | "TEXT"
+    | "KEYWORD"
+    | "IPV4_ADDRESS"
+    | "DOC_REF";
 }
 
 export interface ElasticIndexTestResponse {
@@ -1849,6 +1870,7 @@ export interface FieldInfo {
     | "KEYWORD"
     | "IPV4_ADDRESS"
     | "DOC_REF";
+  name?: string;
   queryable?: boolean;
 }
 
@@ -2416,8 +2438,6 @@ export interface FindUserNameCriteria {
  */
 export type FlatResult = Result & { size?: number; structure?: Column[]; values?: object[][] };
 
-export type FloatField = QueryField;
-
 /**
  * Describes the formatting that will be applied to values in a field
  */
@@ -2594,8 +2614,6 @@ export interface HashedApiKey {
 
 export type HoppingWindow = Window & { advanceSize?: string; timeField?: string; windowSize?: string };
 
-export type IdField = QueryField;
-
 export interface ImportConfigRequest {
   confirmList?: ImportState[];
   importSettings?: ImportSettings;
@@ -2630,59 +2648,6 @@ export interface ImportState {
   sourcePath?: string;
   state?: "NEW" | "UPDATE" | "EQUAL" | "IGNORE";
   updatedFieldList?: string[];
-}
-
-export interface IndexDoc {
-  /** @format int64 */
-  createTimeMs?: number;
-  createUser?: string;
-
-  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
-  defaultExtractionPipeline?: DocRef;
-  description?: string;
-  fields?: IndexField[];
-
-  /** @format int32 */
-  maxDocsPerShard?: number;
-  name?: string;
-  partitionBy?: "DAY" | "WEEK" | "MONTH" | "YEAR";
-
-  /** @format int32 */
-  partitionSize?: number;
-
-  /** @format int32 */
-  retentionDayAge?: number;
-
-  /** @format int32 */
-  shardsPerPartition?: number;
-  timeField?: string;
-  type?: string;
-
-  /** @format int64 */
-  updateTimeMs?: number;
-  updateUser?: string;
-  uuid?: string;
-  version?: string;
-  volumeGroupName?: string;
-}
-
-export interface IndexField {
-  analyzerType?: "KEYWORD" | "ALPHA" | "NUMERIC" | "ALPHA_NUMERIC" | "WHITESPACE" | "STOP" | "STANDARD";
-  caseSensitive?: boolean;
-  fieldName?: string;
-  fieldType?:
-    | "ID"
-    | "BOOLEAN_FIELD"
-    | "INTEGER_FIELD"
-    | "LONG_FIELD"
-    | "FLOAT_FIELD"
-    | "DOUBLE_FIELD"
-    | "DATE_FIELD"
-    | "FIELD"
-    | "NUMERIC_FIELD";
-  indexed?: boolean;
-  stored?: boolean;
-  termPositions?: boolean;
 }
 
 export interface IndexShard {
@@ -2783,10 +2748,6 @@ export interface InfoPopupConfig {
   validationRegex?: string;
 }
 
-export type IntegerField = QueryField;
-
-export type IpV4AddressField = QueryField;
-
 export interface Job {
   advanced?: boolean;
 
@@ -2861,8 +2822,6 @@ export interface KafkaConfigDoc {
 
 export type KeyValueInputComponentSettings = ComponentSettings & { text?: string };
 
-export type KeywordField = QueryField;
-
 export interface LayoutConfig {
   preferredSize?: Size;
   type: string;
@@ -2918,6 +2877,7 @@ export interface Location {
   /** @format int32 */
   lineNo?: number;
   type: string;
+  unknown?: boolean;
 }
 
 export interface LoginRequest {
@@ -2931,7 +2891,71 @@ export interface LoginResponse {
   requirePasswordChange?: boolean;
 }
 
-export type LongField = QueryField;
+export interface LuceneIndexDoc {
+  /** @format int64 */
+  createTimeMs?: number;
+  createUser?: string;
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
+  defaultExtractionPipeline?: DocRef;
+  description?: string;
+  fields?: LuceneIndexField[];
+
+  /** @format int32 */
+  maxDocsPerShard?: number;
+  name?: string;
+  partitionBy?: "DAY" | "WEEK" | "MONTH" | "YEAR";
+
+  /** @format int32 */
+  partitionSize?: number;
+
+  /** @format int32 */
+  retentionDayAge?: number;
+
+  /** @format int32 */
+  shardsPerPartition?: number;
+  timeField?: string;
+  type?: string;
+
+  /** @format int64 */
+  updateTimeMs?: number;
+  updateUser?: string;
+  uuid?: string;
+  version?: string;
+  volumeGroupName?: string;
+}
+
+export interface LuceneIndexField {
+  analyzerType?: "KEYWORD" | "ALPHA" | "NUMERIC" | "ALPHA_NUMERIC" | "WHITESPACE" | "STOP" | "STANDARD";
+  caseSensitive?: boolean;
+  fieldName?: string;
+  fieldType?:
+    | "ID"
+    | "BOOLEAN_FIELD"
+    | "INTEGER_FIELD"
+    | "LONG_FIELD"
+    | "FLOAT_FIELD"
+    | "DOUBLE_FIELD"
+    | "DATE_FIELD"
+    | "FIELD"
+    | "NUMERIC_FIELD";
+  indexed?: boolean;
+  name?: string;
+  stored?: boolean;
+  termPositions?: boolean;
+  type?:
+    | "ID"
+    | "BOOLEAN"
+    | "INTEGER"
+    | "LONG"
+    | "FLOAT"
+    | "DOUBLE"
+    | "DATE"
+    | "TEXT"
+    | "KEYWORD"
+    | "IPV4_ADDRESS"
+    | "DOC_REF";
+}
 
 export interface MapDefinition {
   mapName?: string;
@@ -3777,7 +3801,7 @@ export interface QueryField {
     | "DOC_REF";
   name?: string;
   queryable?: boolean;
-  type: string;
+  type?: string;
 }
 
 export interface QueryHelpData {
@@ -4740,12 +4764,11 @@ export interface SetStatusRequest {
 }
 
 export interface SharedElementData {
-  codeIndicators?: Indicators;
   formatInput?: boolean;
   formatOutput?: boolean;
+  indicators?: Indicators;
   input?: string;
   output?: string;
-  outputIndicators?: Indicators;
 }
 
 export interface SharedStepData {
@@ -4809,6 +4832,8 @@ export interface SolrIndexDoc {
 }
 
 export interface SolrIndexField {
+  analyzerType?: "KEYWORD" | "ALPHA" | "NUMERIC" | "ALPHA_NUMERIC" | "WHITESPACE" | "STOP" | "STANDARD";
+  caseSensitive?: boolean;
   defaultValue?: string;
   docValues?: boolean;
   fieldName?: string;
@@ -4825,6 +4850,8 @@ export interface SolrIndexField {
     | "NUMERIC_FIELD";
   indexed?: boolean;
   multiValued?: boolean;
+  name?: string;
+  nativeType?: string;
   omitNorms?: boolean;
   omitPositions?: boolean;
   omitTermFreqAndPositions?: boolean;
@@ -4836,6 +4863,18 @@ export interface SolrIndexField {
   termPayloads?: boolean;
   termPositions?: boolean;
   termVectors?: boolean;
+  type?:
+    | "ID"
+    | "BOOLEAN"
+    | "INTEGER"
+    | "LONG"
+    | "FLOAT"
+    | "DOUBLE"
+    | "DATE"
+    | "TEXT"
+    | "KEYWORD"
+    | "IPV4_ADDRESS"
+    | "DOC_REF";
   uninvertible?: boolean;
 }
 
@@ -4980,6 +5019,7 @@ export interface SteppingResult {
 
 export interface StoredError {
   elementId?: string;
+  errorType?: "CODE" | "GENERIC" | "INPUT" | "OUTPUT" | "UNKNOWN";
   location?: Location;
   message?: string;
   severity?: "INFO" | "WARN" | "ERROR" | "FATAL";
@@ -5283,8 +5323,6 @@ export interface TextConverterDoc {
   uuid?: string;
   version?: string;
 }
-
-export type TextField = QueryField;
 
 export interface ThemeConfig {
   backgroundColour?: string;
@@ -8705,7 +8743,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @secure
      */
     fetchIndex: (uuid: string, params: RequestParams = {}) =>
-      this.request<any, IndexDoc>({
+      this.request<any, LuceneIndexDoc>({
         path: `/index/v2/${uuid}`,
         method: "GET",
         secure: true,
@@ -8721,8 +8759,8 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @request PUT:/index/v2/{uuid}
      * @secure
      */
-    updateIndex: (uuid: string, data: IndexDoc, params: RequestParams = {}) =>
-      this.request<any, IndexDoc>({
+    updateIndex: (uuid: string, data: LuceneIndexDoc, params: RequestParams = {}) =>
+      this.request<any, LuceneIndexDoc>({
         path: `/index/v2/${uuid}`,
         method: "PUT",
         body: data,
