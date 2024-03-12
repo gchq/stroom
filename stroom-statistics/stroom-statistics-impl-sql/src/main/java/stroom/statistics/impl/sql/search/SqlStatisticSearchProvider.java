@@ -1,7 +1,6 @@
 package stroom.statistics.impl.sql.search;
 
 import stroom.datasource.api.v2.ConditionSet;
-import stroom.datasource.api.v2.FieldInfo;
 import stroom.datasource.api.v2.FieldType;
 import stroom.datasource.api.v2.FindFieldInfoCriteria;
 import stroom.datasource.api.v2.QueryField;
@@ -83,7 +82,7 @@ public class SqlStatisticSearchProvider implements SearchProvider {
     }
 
     @Override
-    public ResultPage<FieldInfo> getFieldInfo(final FindFieldInfoCriteria criteria) {
+    public ResultPage<QueryField> getFieldInfo(final FindFieldInfoCriteria criteria) {
         final FieldInfoResultPageBuilder builder = FieldInfoResultPageBuilder.builder(criteria);
         final StatisticStoreDoc entity = statisticStoreCache.getStatisticsDataSource(criteria.getDataSourceRef());
         if (entity != null) {
@@ -109,7 +108,7 @@ public class SqlStatisticSearchProvider implements SearchProvider {
     }
 
     /**
-     * Turn the {@link StatisticStoreDoc} into an {@link List< QueryField >} object
+     * Turn the {@link StatisticStoreDoc} into an {@link List<  QueryField  >} object
      * <p>
      * This builds the standard set of fields for a statistics store, which can
      * be filtered by the relevant statistics store instance

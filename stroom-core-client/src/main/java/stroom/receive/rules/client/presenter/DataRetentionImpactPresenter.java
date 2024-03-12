@@ -29,7 +29,7 @@ import stroom.data.retention.shared.DataRetentionDeleteSummaryResponse;
 import stroom.data.retention.shared.DataRetentionRules;
 import stroom.data.retention.shared.DataRetentionRulesResource;
 import stroom.data.retention.shared.FindDataRetentionImpactCriteria;
-import stroom.datasource.api.v2.FieldInfo;
+import stroom.datasource.api.v2.QueryField;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.meta.shared.MetaFields;
@@ -76,11 +76,11 @@ public class DataRetentionImpactPresenter
     private static final String BTN_TITLE_EXPAND_ALL = "Expand all";
     private static final String BTN_TITLE_COLLAPSE_ALL = "Collapse all";
 
-    private static final List<FieldInfo> FILTERABLE_FIELDS = new ArrayList<>();
+    private static final List<QueryField> FILTERABLE_FIELDS = new ArrayList<>();
 
     static {
-        FILTERABLE_FIELDS.add(FieldInfo.create(MetaFields.FEED));
-        FILTERABLE_FIELDS.add(FieldInfo.create(MetaFields.TYPE));
+        FILTERABLE_FIELDS.add(MetaFields.FEED);
+        FILTERABLE_FIELDS.add(MetaFields.TYPE);
     }
 
     private final MyDataGrid<DataRetentionImpactRow> dataGrid;

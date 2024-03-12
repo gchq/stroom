@@ -17,7 +17,6 @@
 
 package stroom.search.solr.search;
 
-import stroom.datasource.api.v2.FieldInfo;
 import stroom.datasource.api.v2.FindFieldInfoCriteria;
 import stroom.datasource.api.v2.QueryField;
 import stroom.dictionary.api.WordListProvider;
@@ -110,7 +109,7 @@ public class SolrSearchProvider implements SearchProvider, IndexFieldProvider {
     }
 
     @Override
-    public ResultPage<FieldInfo> getFieldInfo(final FindFieldInfoCriteria criteria) {
+    public ResultPage<QueryField> getFieldInfo(final FindFieldInfoCriteria criteria) {
         return securityContext.useAsReadResult(() -> {
             final FieldInfoResultPageBuilder builder = FieldInfoResultPageBuilder.builder(criteria);
             final SolrIndexDoc index = solrIndexStore.readDocument(criteria.getDataSourceRef());

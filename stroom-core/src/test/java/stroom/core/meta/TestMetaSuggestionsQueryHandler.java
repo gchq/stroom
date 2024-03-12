@@ -1,6 +1,5 @@
 package stroom.core.meta;
 
-import stroom.datasource.api.v2.FieldInfo;
 import stroom.docref.DocRef;
 import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.feed.api.FeedStore;
@@ -143,7 +142,7 @@ class TestMetaSuggestionsQueryHandler {
         final String userInput = "feed";
         final FetchSuggestionsRequest request = new FetchSuggestionsRequest(
                 MetaFields.STREAM_STORE_DOC_REF,
-                FieldInfo.create(MetaFields.FEED),
+                MetaFields.FEED,
                 userInput);
 
         Mockito.when(metaService.getFeeds())

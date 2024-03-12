@@ -1,6 +1,5 @@
 package stroom.searchable.api;
 
-import stroom.datasource.api.v2.FieldInfo;
 import stroom.datasource.api.v2.FindFieldInfoCriteria;
 import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
@@ -15,7 +14,7 @@ public interface Searchable {
 
     DocRef getDocRef();
 
-    ResultPage<FieldInfo> getFieldInfo(FindFieldInfoCriteria criteria);
+    ResultPage<QueryField> getFieldInfo(FindFieldInfoCriteria criteria);
 
     Optional<String> fetchDocumentation(DocRef docRef);
 

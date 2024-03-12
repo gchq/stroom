@@ -17,7 +17,6 @@
 
 package stroom.analytics.impl;
 
-import stroom.datasource.api.v2.FieldInfo;
 import stroom.datasource.api.v2.FindFieldInfoCriteria;
 import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
@@ -65,7 +64,7 @@ public class AnalyticsSearchProvider implements SearchProvider, HasDataSourceDoc
     }
 
     @Override
-    public ResultPage<FieldInfo> getFieldInfo(final FindFieldInfoCriteria criteria) {
+    public ResultPage<QueryField> getFieldInfo(final FindFieldInfoCriteria criteria) {
         return FieldInfoResultPageBuilder.builder(criteria).addAll(AnalyticFields.getFields()).build();
     }
 

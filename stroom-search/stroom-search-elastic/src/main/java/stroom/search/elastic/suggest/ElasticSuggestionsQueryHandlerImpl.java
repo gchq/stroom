@@ -1,7 +1,7 @@
 package stroom.search.elastic.suggest;
 
-import stroom.datasource.api.v2.FieldInfo;
 import stroom.datasource.api.v2.FieldType;
+import stroom.datasource.api.v2.QueryField;
 import stroom.query.shared.FetchSuggestionsRequest;
 import stroom.query.shared.Suggestions;
 import stroom.search.elastic.ElasticClientCache;
@@ -86,7 +86,7 @@ public class ElasticSuggestionsQueryHandlerImpl implements ElasticSuggestionsQue
     private Suggestions querySuggestions(final FetchSuggestionsRequest request,
                                           final ElasticIndexDoc elasticIndex,
                                           final RestHighLevelClient elasticClient) {
-        final FieldInfo field = request.getField();
+        final QueryField field = request.getField();
         final String query = request.getText();
 
         try {

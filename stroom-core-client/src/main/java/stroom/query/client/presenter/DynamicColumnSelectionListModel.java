@@ -1,8 +1,8 @@
 package stroom.query.client.presenter;
 
-import stroom.datasource.api.v2.FieldInfo;
 import stroom.datasource.api.v2.FieldType;
 import stroom.datasource.api.v2.FindFieldInfoCriteria;
+import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.docref.StringMatch;
 import stroom.docref.StringMatch.MatchType;
@@ -90,7 +90,7 @@ public class DynamicColumnSelectionListModel implements SelectionListModel<Colum
     private ResultPage<ColumnSelectionItem> createResults(final StringMatch filter,
                                                           final String parentPath,
                                                           final PageRequest pageRequest,
-                                                          final ResultPage<FieldInfo> response) {
+                                                          final ResultPage<QueryField> response) {
         final ResultPage<ColumnSelectionItem> counts = getCounts(filter, pageRequest);
         final ResultPage<ColumnSelectionItem> annotations = getAnnotations(filter, pageRequest);
 
@@ -165,8 +165,7 @@ public class DynamicColumnSelectionListModel implements SelectionListModel<Colum
                     "SolrIndex".equals(dataSourceRef.getType()) ||
                     "ElasticIndex".equals(dataSourceRef.getType())) {
                 AnnotationFields.FIELDS.forEach(field -> {
-                    final FieldInfo fieldInfo = FieldInfo.create(field);
-                    final ColumnSelectionItem columnSelectionItem = ColumnSelectionItem.create(fieldInfo);
+                    final ColumnSelectionItem columnSelectionItem = ColumnSelectionItem.create(field);
                     add(filter, columnSelectionItem, builder);
                 });
             }
@@ -253,7 +252,7 @@ public class DynamicColumnSelectionListModel implements SelectionListModel<Colum
             return new ColumnSelectionItem(column, column.getDisplayValue(), false);
         }
 
-        public static ColumnSelectionItem create(final FieldInfo fieldInfo) {
+        public static ColumnSelectionItem create(final QueryField fieldInfo) {
             final Column column = convertFieldInfo(fieldInfo);
             return new ColumnSelectionItem(column, column.getDisplayValue(), false);
         }
@@ -280,7 +279,7 @@ public class DynamicColumnSelectionListModel implements SelectionListModel<Colum
             params.add(ParamSubstituteUtil.makeParam(fieldName));
         }
 
-        private static Column convertFieldInfo(final FieldInfo fieldInfo) {
+        private static Column convertFieldInfo(final QueryField fieldInfo) {
             final String indexFieldName = fieldInfo.getFldName();
             final Builder columnBuilder = Column.builder();
             columnBuilder.name(indexFieldName);

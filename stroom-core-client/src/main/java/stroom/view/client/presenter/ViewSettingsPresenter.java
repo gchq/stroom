@@ -18,7 +18,6 @@
 package stroom.view.client.presenter;
 
 import stroom.data.client.presenter.EditExpressionPresenter;
-import stroom.datasource.api.v2.FieldInfo;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocumentEditPresenter;
@@ -39,8 +38,6 @@ import stroom.view.shared.ViewDoc;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
-
-import java.util.stream.Collectors;
 
 public class ViewSettingsPresenter extends DocumentEditPresenter<ViewSettingsView, ViewDoc> {
 
@@ -98,11 +95,7 @@ public class ViewSettingsPresenter extends DocumentEditPresenter<ViewSettingsVie
         dataSourceSelectionPresenter.setSelectedEntityReference(entity.getDataSource());
         pipelineSelectionPresenter.setSelectedEntityReference(entity.getPipeline());
         final SimpleFieldSelectionListModel fieldSelectionBoxModel = new SimpleFieldSelectionListModel();
-        fieldSelectionBoxModel.addItems(MetaFields
-                .getAllFields()
-                .stream()
-                .map(FieldInfo::create)
-                .collect(Collectors.toList()));
+        fieldSelectionBoxModel.addItems(MetaFields.getAllFields());
         expressionPresenter.init(restFactory, MetaFields.STREAM_STORE_DOC_REF, fieldSelectionBoxModel);
 
         // Read expression.

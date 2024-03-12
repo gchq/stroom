@@ -1,7 +1,6 @@
 package stroom.view.impl;
 
 import stroom.datasource.api.v2.DataSourceProvider;
-import stroom.datasource.api.v2.FieldInfo;
 import stroom.datasource.api.v2.FindFieldInfoCriteria;
 import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
@@ -66,8 +65,8 @@ public class ViewSearchProvider implements SearchProvider, IndexFieldProvider {
     }
 
     @Override
-    public ResultPage<FieldInfo> getFieldInfo(final FindFieldInfoCriteria criteria) {
-        final Optional<ResultPage<FieldInfo>> optional = securityContext.useAsReadResult(() -> {
+    public ResultPage<QueryField> getFieldInfo(final FindFieldInfoCriteria criteria) {
+        final Optional<ResultPage<QueryField>> optional = securityContext.useAsReadResult(() -> {
             // Find the referenced data source.
             final DocRef docRef = getReferencedDataSource(criteria.getDataSourceRef());
             if (docRef != null) {
@@ -83,7 +82,7 @@ public class ViewSearchProvider implements SearchProvider, IndexFieldProvider {
             return Optional.empty();
         });
         return optional.orElseGet(() -> {
-            final List<FieldInfo> list = Collections.emptyList();
+            final List<QueryField> list = Collections.emptyList();
             return ResultPage.createCriterialBasedList(list, criteria);
         });
     }

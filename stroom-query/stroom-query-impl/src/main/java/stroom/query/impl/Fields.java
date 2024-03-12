@@ -1,7 +1,7 @@
 package stroom.query.impl;
 
-import stroom.datasource.api.v2.FieldInfo;
 import stroom.datasource.api.v2.FindFieldInfoCriteria;
+import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.docref.StringMatch.MatchType;
 import stroom.query.shared.CompletionValue;
@@ -62,7 +62,7 @@ public class Fields {
                             Collections.emptyList(),
                             optional.get(),
                             request.getStringMatch());
-                    hasChildren = queryService.getFieldInfo(criteria).size() > 0;
+                    hasChildren = queryService.findFields(criteria).size() > 0;
                 }
 
                 final StringMatcher stringMatcher = new StringMatcher(request.getStringMatch());
@@ -80,7 +80,7 @@ public class Fields {
                         request.getSortList(),
                         optional.get(),
                         request.getStringMatch());
-                final ResultPage<FieldInfo> resultPage = queryService.getFieldInfo(criteria);
+                final ResultPage<QueryField> resultPage = queryService.findFields(criteria);
                 resultConsumer.skip(resultPage.getPageStart());
                 resultPage.getValues().forEach(fieldInfo -> {
                     final QueryHelpRow row = new QueryHelpRow(
@@ -109,12 +109,12 @@ public class Fields {
                     docRef,
                     request.getStringMatch());
 
-            final ResultPage<FieldInfo> resultPage = queryService.getFieldInfo(criteria);
+            final ResultPage<QueryField> resultPage = queryService.findFields(criteria);
             resultPage.getValues().forEach(fieldInfo -> resultList.add(createCompletionValue(fieldInfo)));
         });
     }
 
-    private CompletionValue createCompletionValue(final FieldInfo fieldInfo) {
+    private CompletionValue createCompletionValue(final QueryField fieldInfo) {
         final String insertText = getInsertText(fieldInfo.getFldName());
         final String tooltip = getDetail(fieldInfo);
         return new CompletionValue(
@@ -125,7 +125,7 @@ public class Fields {
                 tooltip);
     }
 
-    private String getDetail(final FieldInfo fieldInfo) {
+    private String getDetail(final QueryField fieldInfo) {
         final DetailBuilder detail = new DetailBuilder();
         detail.title(fieldInfo.getFldName());
         detail.description(description -> addFieldDetails(description, fieldInfo));
@@ -138,10 +138,10 @@ public class Fields {
                 : fieldName;
     }
 
-    private void addFieldDetails(final DetailBuilder detail, final FieldInfo field) {
+    private void addFieldDetails(final DetailBuilder detail, final QueryField field) {
         final String fieldName = field.getFldName();
         final String fieldType = field.getFldType().getDisplayValue();
-        final String supportedConditions = field.getConditions().toString();
+        final String supportedConditions = field.getConditionSet().toString();
 
         detail.table(table -> table.appendKVRow("Name:", fieldName)
                 .appendKVRow("Type:", fieldType)
@@ -166,7 +166,7 @@ public class Fields {
 
         } else if (row.getId().startsWith(FIELDS_ID + ".") && row.getData() instanceof
                 final QueryHelpField queryHelpField) {
-            final FieldInfo fieldInfo = queryHelpField.getFieldInfo();
+            final QueryField fieldInfo = queryHelpField.getField();
             final InsertType insertType = NullSafe.isBlankString(row.getTitle())
                     ? InsertType.BLANK
                     : InsertType.PLAIN_TEXT;

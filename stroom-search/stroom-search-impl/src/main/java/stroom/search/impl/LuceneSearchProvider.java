@@ -17,7 +17,6 @@
 
 package stroom.search.impl;
 
-import stroom.datasource.api.v2.FieldInfo;
 import stroom.datasource.api.v2.FindFieldInfoCriteria;
 import stroom.datasource.api.v2.QueryField;
 import stroom.datasource.api.v2.QueryFieldService;
@@ -87,7 +86,7 @@ public class LuceneSearchProvider implements SearchProvider, IndexFieldProvider 
     }
 
     @Override
-    public ResultPage<FieldInfo> getFieldInfo(final FindFieldInfoCriteria criteria) {
+    public ResultPage<QueryField> getFieldInfo(final FindFieldInfoCriteria criteria) {
         return securityContext.useAsReadResult(() -> {
             final DocRef docRef = criteria.getDataSourceRef();
 
@@ -107,8 +106,7 @@ public class LuceneSearchProvider implements SearchProvider, IndexFieldProvider 
 
                 final List<QueryField> fields = IndexDataSourceFieldUtil.getDataSourceFields(index);
                 final int fieldSourceId = queryFieldService.getOrCreateFieldSource(docRef);
-                final List<FieldInfo> mapped = fields.stream().map(FieldInfo::create).toList();
-                queryFieldService.addFields(fieldSourceId, mapped);
+                queryFieldService.addFields(fieldSourceId, fields);
 
 //                // TEST DATA
 //                for (int i = 0; i < 1000; i++) {
@@ -156,7 +154,7 @@ public class LuceneSearchProvider implements SearchProvider, IndexFieldProvider 
 
     private void addField(final int fieldSourceId, final QueryField field) {
         queryFieldService.addFields(fieldSourceId,
-                Collections.singletonList(FieldInfo.create(field)));
+                Collections.singletonList(field));
     }
 
     @Override

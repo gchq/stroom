@@ -1,6 +1,5 @@
 package stroom.query.common.v2;
 
-import stroom.datasource.api.v2.FieldInfo;
 import stroom.datasource.api.v2.FindFieldInfoCriteria;
 import stroom.datasource.api.v2.QueryField;
 import stroom.util.resultpage.InexactResultPageBuilder;
@@ -14,7 +13,7 @@ public class FieldInfoResultPageBuilder {
 
     private final StringMatcher stringMatcher;
 
-    private final ResultPageBuilder<FieldInfo> resultPageBuilder;
+    private final ResultPageBuilder<QueryField> resultPageBuilder;
     private boolean addMore = true;
 
 
@@ -38,12 +37,12 @@ public class FieldInfoResultPageBuilder {
 
     public boolean add(final QueryField field) {
         if (stringMatcher.match(field.getFldName()).isPresent()) {
-            addMore = resultPageBuilder.add(FieldInfo.create(field));
+            addMore = resultPageBuilder.add(field);
         }
         return addMore;
     }
 
-    public ResultPage<FieldInfo> build() {
+    public ResultPage<QueryField> build() {
         return resultPageBuilder.build();
     }
 }

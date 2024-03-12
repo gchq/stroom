@@ -1834,39 +1834,8 @@ export interface FetchPropertyTypesResult {
 export interface FetchSuggestionsRequest {
   /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   dataSource: DocRef;
-  field: FieldInfo;
+  field: QueryField;
   text?: string;
-}
-
-export interface FieldInfo {
-  conditions?:
-    | "'=', '!=', 'between', '>', '>=', '<', '<='"
-    | "'=', '!=', 'in', 'in dictionary', 'between', '>', '>=', '<', '<='"
-    | "'=', '!='"
-    | "'=', '!=', 'in', 'in dictionary'"
-    | "'is', 'in folder'"
-    | "'is', 'in folder', '=', '!=', 'in', 'in dictionary'"
-    | "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'"
-    | "'=', '!=', 'in', 'in dictionary', 'matches regex'"
-    | "'is', '=', '!='"
-    | "'between'"
-    | "'=', '!=', 'in'"
-    | "'=', '!=', 'in', 'in dictionary', 'is'";
-  docRefType?: string;
-  fldName?: string;
-  fldType?:
-    | "ID"
-    | "BOOLEAN"
-    | "INTEGER"
-    | "LONG"
-    | "FLOAT"
-    | "DOUBLE"
-    | "DATE"
-    | "TEXT"
-    | "KEYWORD"
-    | "IPV4_ADDRESS"
-    | "DOC_REF";
-  queryable?: boolean;
 }
 
 /**
@@ -3812,7 +3781,7 @@ export interface QueryHelpDetail {
   insertType?: "PLAIN_TEXT" | "SNIPPET" | "BLANK" | "NOT_INSERTABLE";
 }
 
-export type QueryHelpField = QueryHelpData & { fieldInfo?: FieldInfo };
+export type QueryHelpField = QueryHelpData & { field?: QueryField };
 
 export type QueryHelpFunctionSignature = QueryHelpData & {
   aliases?: string[];
@@ -4277,15 +4246,6 @@ export interface ResultPageDependency {
 /**
  * A page of results.
  */
-export interface ResultPageFieldInfo {
-  /** Details of the page of results being returned. */
-  pageResponse?: PageResponse;
-  values?: FieldInfo[];
-}
-
-/**
- * A page of results.
- */
 export interface ResultPageFindInContentResult {
   /** Details of the page of results being returned. */
   pageResponse?: PageResponse;
@@ -4389,6 +4349,15 @@ export interface ResultPageProcessorTaskSummary {
   /** Details of the page of results being returned. */
   pageResponse?: PageResponse;
   values?: ProcessorTaskSummary[];
+}
+
+/**
+ * A page of results.
+ */
+export interface ResultPageQueryField {
+  /** Details of the page of results being returned. */
+  pageResponse?: PageResponse;
+  values?: QueryField[];
 }
 
 /**
@@ -7596,7 +7565,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @secure
      */
     findDataSourceFields: (data: FindFieldInfoCriteria, params: RequestParams = {}) =>
-      this.request<any, ResultPageFieldInfo>({
+      this.request<any, ResultPageQueryField>({
         path: `/dataSource/v1/findFields`,
         method: "POST",
         body: data,

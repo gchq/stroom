@@ -1,10 +1,10 @@
 package stroom.query.client.presenter;
 
-import stroom.datasource.api.v2.FieldInfo;
+import stroom.datasource.api.v2.QueryField;
 import stroom.item.client.SelectionListModel;
 
 import java.util.function.Consumer;
 
-public interface FieldSelectionListModel extends SelectionListModel<FieldInfo, FieldInfoSelectionItem> {
-    void findFieldByName(String fieldName, Consumer<FieldInfo> consumer);
+public interface FieldSelectionListModel extends SelectionListModel<QueryField, FieldInfoSelectionItem> {
+    void findFieldByName(String fieldName, Consumer<QueryField> consumer);
 }

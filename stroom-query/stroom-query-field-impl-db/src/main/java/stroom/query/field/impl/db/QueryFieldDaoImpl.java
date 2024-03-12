@@ -17,9 +17,9 @@
 package stroom.query.field.impl.db;
 
 import stroom.datasource.api.v2.ConditionSet;
-import stroom.datasource.api.v2.FieldInfo;
 import stroom.datasource.api.v2.FieldType;
 import stroom.datasource.api.v2.FindFieldInfoCriteria;
+import stroom.datasource.api.v2.QueryField;
 import stroom.db.util.JooqUtil;
 import stroom.docref.DocRef;
 import stroom.docref.StringMatch;
@@ -77,13 +77,13 @@ public class QueryFieldDaoImpl implements QueryFieldDao {
                 .execute());
     }
 
-    public void addFields(final int fieldSourceId, final Collection<FieldInfo> fields) {
+    public void addFields(final int fieldSourceId, final Collection<QueryField> fields) {
         JooqUtil.context(queryDatasourceDbConnProvider, context -> {
             var c = context.insertInto(FIELD_INFO,
                     FIELD_INFO.FK_FIELD_SOURCE_ID,
                     FIELD_INFO.FIELD_TYPE,
                     FIELD_INFO.FIELD_NAME);
-            for (final FieldInfo field : fields) {
+            for (final QueryField field : fields) {
                 c = c.values(fieldSourceId,
                         (byte) field.getFldType().getIndex(),
                         field.getFldName());
@@ -95,7 +95,7 @@ public class QueryFieldDaoImpl implements QueryFieldDao {
     }
 
     @Override
-    public ResultPage<FieldInfo> findFieldInfo(final FindFieldInfoCriteria criteria) {
+    public ResultPage<QueryField> findFieldInfo(final FindFieldInfoCriteria criteria) {
         final Optional<Integer> optional = getFieldSource(criteria.getDataSourceRef());
         if (optional.isEmpty()) {
             return ResultPage.createCriterialBasedList(Collections.emptyList(), criteria);
@@ -107,7 +107,7 @@ public class QueryFieldDaoImpl implements QueryFieldDao {
         final int offset = JooqUtil.getOffset(criteria.getPageRequest());
         final int limit = JooqUtil.getLimit(criteria.getPageRequest(), true);
 
-        final List<FieldInfo> fieldInfoList = JooqUtil
+        final List<QueryField> fieldInfoList = JooqUtil
                 .contextResult(queryDatasourceDbConnProvider, context -> context
                         .select(FIELD_INFO.FIELD_TYPE,
                                 FIELD_INFO.FIELD_NAME)
@@ -122,7 +122,7 @@ public class QueryFieldDaoImpl implements QueryFieldDao {
                     final String name = r.get(FIELD_INFO.FIELD_NAME);
                     final FieldType fieldType = FieldType.get(typeId);
                     final ConditionSet conditions = ConditionSet.getDefault(fieldType);
-                    return new FieldInfo(name, fieldType, conditions, null, null);
+                    return new QueryField(null, null, name, fieldType, conditions, null, null);
                 });
         return ResultPage.createCriterialBasedList(fieldInfoList, criteria);
     }

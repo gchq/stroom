@@ -22,7 +22,6 @@ import stroom.dashboard.client.main.AbstractSettingsTabPresenter;
 import stroom.dashboard.client.table.TablePresenter;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.TableComponentSettings;
-import stroom.datasource.api.v2.FieldInfo;
 import stroom.datasource.api.v2.QueryField;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
@@ -201,7 +200,7 @@ public class RulesPresenter
                 .build();
         final RulePresenter editRulePresenter = editRulePresenterProvider.get();
         final SimpleFieldSelectionListModel selectionBoxModel = new SimpleFieldSelectionListModel();
-        selectionBoxModel.addItems(fields.stream().map(FieldInfo::create).collect(Collectors.toList()));
+        selectionBoxModel.addItems(fields);
         editRulePresenter.read(newRule, selectionBoxModel);
 
         final PopupSize popupSize = PopupSize.resizable(800, 550);
@@ -226,7 +225,7 @@ public class RulesPresenter
     private void edit(final ConditionalFormattingRule existingRule) {
         final RulePresenter editRulePresenter = editRulePresenterProvider.get();
         final SimpleFieldSelectionListModel selectionBoxModel = new SimpleFieldSelectionListModel();
-        selectionBoxModel.addItems(fields.stream().map(FieldInfo::create).collect(Collectors.toList()));
+        selectionBoxModel.addItems(fields);
         editRulePresenter.read(existingRule, selectionBoxModel);
 
         final PopupSize popupSize = PopupSize.resizable(800, 400);

@@ -9,7 +9,7 @@ public interface QueryFieldService {
 
     int getOrCreateFieldSource(DocRef docRef);
 
-    void addFields(int fieldSourceId, Collection<FieldInfo> fields);
+    void addFields(int fieldSourceId, Collection<QueryField> fields);
 
-    ResultPage<FieldInfo> findFieldInfo(FindFieldInfoCriteria criteria);
+    ResultPage<QueryField> findFieldInfo(FindFieldInfoCriteria criteria);
 }

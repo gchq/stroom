@@ -2784,7 +2784,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ResultPageFieldInfo"
+                  "$ref" : "#/components/schemas/ResultPageQueryField"
                 }
               }
             },
@@ -13701,35 +13701,13 @@
             "$ref" : "#/components/schemas/DocRef"
           },
           "field" : {
-            "$ref" : "#/components/schemas/FieldInfo"
+            "$ref" : "#/components/schemas/QueryField"
           },
           "text" : {
             "type" : "string"
           }
         },
         "required" : [ "dataSource", "field" ]
-      },
-      "FieldInfo" : {
-        "type" : "object",
-        "properties" : {
-          "conditions" : {
-            "type" : "string",
-            "enum" : [ "'=', '!=', 'between', '>', '>=', '<', '<='", "'=', '!=', 'in', 'in dictionary', 'between', '>', '>=', '<', '<='", "'=', '!='", "'=', '!=', 'between', '>', '>=', '<', '<='", "'=', '!=', 'in', 'in dictionary'", "'is', 'in folder'", "'=', '!=', 'in', 'in dictionary'", "'is', 'in folder', '=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary', 'matches regex'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!='", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'is', '=', '!='", "'between'", "'=', '!=', 'in'", "'=', '!=', 'in'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary', 'is'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'" ]
-          },
-          "docRefType" : {
-            "type" : "string"
-          },
-          "fldName" : {
-            "type" : "string"
-          },
-          "fldType" : {
-            "type" : "string",
-            "enum" : [ "ID", "BOOLEAN", "INTEGER", "LONG", "FLOAT", "DOUBLE", "DATE", "TEXT", "KEYWORD", "IPV4_ADDRESS", "DOC_REF" ]
-          },
-          "queryable" : {
-            "type" : "boolean"
-          }
-        }
       },
       "Filter" : {
         "type" : "object",
@@ -16780,8 +16758,8 @@
         }, {
           "type" : "object",
           "properties" : {
-            "fieldInfo" : {
-              "$ref" : "#/components/schemas/FieldInfo"
+            "field" : {
+              "$ref" : "#/components/schemas/QueryField"
             }
           }
         } ]
@@ -17361,21 +17339,6 @@
           }
         }
       },
-      "ResultPageFieldInfo" : {
-        "type" : "object",
-        "description" : "A page of results.",
-        "properties" : {
-          "pageResponse" : {
-            "$ref" : "#/components/schemas/PageResponse"
-          },
-          "values" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/FieldInfo"
-            }
-          }
-        }
-      },
       "ResultPageFindInContentResult" : {
         "type" : "object",
         "description" : "A page of results.",
@@ -17552,6 +17515,21 @@
             "type" : "array",
             "items" : {
               "$ref" : "#/components/schemas/ProcessorTaskSummary"
+            }
+          }
+        }
+      },
+      "ResultPageQueryField" : {
+        "type" : "object",
+        "description" : "A page of results.",
+        "properties" : {
+          "pageResponse" : {
+            "$ref" : "#/components/schemas/PageResponse"
+          },
+          "values" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/QueryField"
             }
           }
         }

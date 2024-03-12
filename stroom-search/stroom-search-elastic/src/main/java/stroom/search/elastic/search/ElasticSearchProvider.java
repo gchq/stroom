@@ -18,7 +18,6 @@
 package stroom.search.elastic.search;
 
 import stroom.datasource.api.v2.ConditionSet;
-import stroom.datasource.api.v2.FieldInfo;
 import stroom.datasource.api.v2.FieldType;
 import stroom.datasource.api.v2.FindFieldInfoCriteria;
 import stroom.datasource.api.v2.QueryField;
@@ -153,7 +152,7 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
     }
 
     @Override
-    public ResultPage<FieldInfo> getFieldInfo(final FindFieldInfoCriteria criteria) {
+    public ResultPage<QueryField> getFieldInfo(final FindFieldInfoCriteria criteria) {
         return securityContext.useAsReadResult(() -> {
             final FieldInfoResultPageBuilder builder = FieldInfoResultPageBuilder.builder(criteria);
             final ElasticIndexDoc index = elasticIndexStore.readDocument(criteria.getDataSourceRef());

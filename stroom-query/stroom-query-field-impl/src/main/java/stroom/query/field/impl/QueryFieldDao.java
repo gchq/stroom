@@ -17,8 +17,8 @@
 package stroom.query.field.impl;
 
 
-import stroom.datasource.api.v2.FieldInfo;
 import stroom.datasource.api.v2.FindFieldInfoCriteria;
+import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.util.shared.ResultPage;
 
@@ -28,7 +28,7 @@ public interface QueryFieldDao {
 
     int getOrCreateFieldSource(DocRef docRef);
 
-    void addFields(int fieldSourceId, Collection<FieldInfo> fields);
+    void addFields(int fieldSourceId, Collection<QueryField> fields);
 
-    ResultPage<FieldInfo> findFieldInfo(FindFieldInfoCriteria criteria);
+    ResultPage<QueryField> findFieldInfo(FindFieldInfoCriteria criteria);
 }

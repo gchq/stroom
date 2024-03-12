@@ -1,6 +1,5 @@
 package stroom.searchable.impl;
 
-import stroom.datasource.api.v2.FieldInfo;
 import stroom.datasource.api.v2.FindFieldInfoCriteria;
 import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
@@ -80,8 +79,8 @@ class SearchableSearchProvider implements SearchProvider {
     }
 
     @Override
-    public ResultPage<FieldInfo> getFieldInfo(final FindFieldInfoCriteria criteria) {
-        final Optional<ResultPage<FieldInfo>> optional = securityContext.useAsReadResult(() -> {
+    public ResultPage<QueryField> getFieldInfo(final FindFieldInfoCriteria criteria) {
+        final Optional<ResultPage<QueryField>> optional = securityContext.useAsReadResult(() -> {
             final Searchable searchable = searchableProvider.get(criteria.getDataSourceRef());
             if (searchable != null) {
                 return Optional.ofNullable(searchable.getFieldInfo(criteria));
@@ -89,7 +88,7 @@ class SearchableSearchProvider implements SearchProvider {
             return Optional.empty();
         });
         return optional.orElseGet(() -> {
-            final List<FieldInfo> list = Collections.emptyList();
+            final List<QueryField> list = Collections.emptyList();
             return ResultPage.createCriterialBasedList(list, criteria);
         });
     }
@@ -176,7 +175,7 @@ class SearchableSearchProvider implements SearchProvider {
                 null,
                 docRef,
                 null);
-        final ResultPage<FieldInfo> resultPage = searchable.getFieldInfo(findFieldInfoCriteria);
+        final ResultPage<QueryField> resultPage = searchable.getFieldInfo(findFieldInfoCriteria);
         final Runnable runnable = taskContextFactory.context(taskName, taskContext -> {
             final AtomicBoolean destroyed = new AtomicBoolean();
 
