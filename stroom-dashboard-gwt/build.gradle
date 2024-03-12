@@ -23,7 +23,7 @@ def outputDir = "${warDir}/dashboard"
 def javaIoTmpDir = getSysPropertyOrDefault("java.io.tmpdir", "/tmp")
 logger.info('javaIoTmpDir: ' + javaIoTmpDir)
 // Append the rootDir so gwt builds from different dirs don't conflict
-def gwtBuildDir = javaIoTmpDir + "/dashboard-gwt_build/" + rootDir
+def gwtBuildDir = "${javaIoTmpDir}/gwt/${rootProjectAbsPathStr}/dashboard-gwt_build"
 gwtBuildDir = gwtBuildDir.replaceAll('//', '/')
 logger.info('gwtBuildDir: ' + gwtBuildDir)
 
@@ -32,10 +32,11 @@ logger.info('gwtTmpDir: ' + gwtTmpDir)
 def workDir = "${gwtBuildDir}/work"
 def deployDir = "${gwtBuildDir}/deploy"
 def extraDir = "${gwtBuildDir}/extra"
-// This is where eclipse transformer outputs to
-def modifiedProjectsBasePath = "${gwtBuildDir}/modified_projects"
-// This will contain a copy of modifiedProjectsBasePath that GWT uses on its classpath
-def modifiedProjectsBasePathGwt = "${gwtBuildDir}/modified_projects_gwt"
+
+def allSourceDir = "${gwtBuildDir}/all-source"
+def transformedSourceDir = "${gwtBuildDir}/transformed-source"
+def transformedBuildDir = "${gwtBuildDir}/transformed-build"
+def rsyncOutputDir = "${gwtBuildDir}/rsync-output"
 
 def gwtSourceDirs = []
 
@@ -119,8 +120,7 @@ tasks.register('copySources') {
     doLast {
         // This file has all the rename mappings for TransformerCLI to use
         def propFilePath = rootDir.toPath().resolve('jakarta-renames-reverse.properties')
-        def inputProjectPath = layout.buildDirectory.dir("raw-source").get()
-        def outputProjectPath = layout.buildDirectory.dir("transformed-source").get()
+        def inputProjectPath = "${gwtBuildDir}/raw-source"
 
         // Delete current source output.
         delete inputProjectPath
@@ -140,16 +140,16 @@ tasks.register('copySources') {
 
         // Transform code.
         println 'Running eclipse TransformerCLI'
-        println('inputProjectPath: ' + inputProjectPath)
-        println('outputProjectPath: ' + outputProjectPath)
-        delete outputProjectPath
+        println('  input: ' + inputProjectPath)
+        println('  outpu: ' + transformedSourceDir)
+        delete transformedSourceDir
 
         javaexec {
             classpath = files(sourceSets.jakartaTransformer.compileClasspath)
             mainClass = "org.eclipse.transformer.cli.TransformerCLI"
             args = [
                     inputProjectPath,
-                    outputProjectPath,
+                    transformedSourceDir,
                     '-tr', propFilePath,
             ]
         }
@@ -158,8 +158,10 @@ tasks.register('copySources') {
 
 tasks.register('compileSources', JavaCompile) {
     dependsOn copySources
-    def sources = layout.buildDirectory.dir("transformed-source").get()
-    def build = layout.buildDirectory.dir("transformed-build").get()
+    def sources = transformedSourceDir
+    new File(sources).mkdirs()
+    def build = transformedBuildDir
+    new File(build).mkdirs()
 
     source = file(sources)
     destinationDirectory.set(file(build))
@@ -180,8 +182,8 @@ tasks.register('makeGwtSourceDirs') {
 
         gwtSourceDirs.addAll(project(':stroom-gwt').sourceSets.main.output.classesDirs)
 
-        gwtSourceDirs.add(layout.buildDirectory.dir("transformed-source").get())
-        gwtSourceDirs.add(layout.buildDirectory.dir("transformed-build").get())
+        gwtSourceDirs.add(transformedSourceDir)
+        gwtSourceDirs.add(transformedBuildDir)
 
         println "Dumping ${gwtSourceDirs.size()} gwtSourceDirs"
         gwtSourceDirs.each {
@@ -222,7 +224,6 @@ tasks.register('gwtCompile', JavaExec) {
         //gwtSourceDirs.each {
         //println "${it.toString()}"
         //}
-        logger.info('modifiedProjectsBasePath: ' + modifiedProjectsBasePath)
 
         gwtSourceDirs.each {
             if (it instanceof java.nio.file.Path && Files.exists(it)) {
@@ -395,14 +396,8 @@ tasks.register('gwtClean') {
 //        println 'Deleting GWT unit cache: ' + unitCacheDir.toString()
 //        delete unitCacheDir
 
-        logger.info('Deleting GWT compiled output: ' + outputDir.toString())
-        delete outputDir
-        logger.info('Deleting GWT build dir: ' + gwtBuildDir.toString())
+        logger.info('Deleting gwtBuildDir: ' + gwtBuildDir.toString())
         delete gwtBuildDir
-        logger.info('Deleting modified projects: ' + modifiedProjectsBasePath.toString())
-        delete modifiedProjectsBasePath
-        logger.info('Deleting modified projects (GWT copy): ' + modifiedProjectsBasePathGwt.toString())
-        delete modifiedProjectsBasePathGwt
 
         logger.info("Ensuring directory gwtBuildDir ${gwtBuildDir}")
         new File(gwtBuildDir).mkdirs()
