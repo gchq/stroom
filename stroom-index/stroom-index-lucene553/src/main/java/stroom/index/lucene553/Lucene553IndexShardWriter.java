@@ -30,7 +30,7 @@ import stroom.index.shared.LuceneIndexField;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
 import stroom.search.extraction.FieldValue;
-import stroom.search.extraction.IndexStructure;
+import stroom.index.impl.LuceneIndexStructure;
 import stroom.util.NullSafe;
 import stroom.util.io.FileUtil;
 import stroom.util.io.PathCreator;
@@ -117,7 +117,7 @@ class Lucene553IndexShardWriter implements IndexShardWriter {
      */
     Lucene553IndexShardWriter(final IndexShardManager indexShardManager,
                                      final IndexConfig indexConfig,
-                                     final IndexStructure indexStructure,
+                                     final LuceneIndexStructure indexStructure,
                                      final IndexShardKey indexShardKey,
                                      final IndexShard indexShard,
                                      final PathCreator pathCreator) {
@@ -132,7 +132,7 @@ class Lucene553IndexShardWriter implements IndexShardWriter {
 
     Lucene553IndexShardWriter(final IndexShardManager indexShardManager,
                               final IndexConfig indexConfig,
-                              final IndexStructure indexStructure,
+                              final LuceneIndexStructure indexStructure,
                               final IndexShardKey indexShardKey,
                               final IndexShard indexShard,
                               final int ramBufferSizeMB,
@@ -307,7 +307,7 @@ class Lucene553IndexShardWriter implements IndexShardWriter {
     }
 
     @Override
-    public void updateIndexStructure(final IndexStructure indexStructure) {
+    public void updateIndexStructure(final LuceneIndexStructure indexStructure) {
         this.maxDocumentCount = indexStructure.getIndex().getMaxDocsPerShard();
         if (indexStructure.getIndexFields() != null) {
             for (final LuceneIndexField indexField : indexStructure.getIndexFields()) {

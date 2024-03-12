@@ -6,7 +6,7 @@ import stroom.docref.DocRef;
 import stroom.expression.api.DateTimeSettings;
 import stroom.index.shared.AnalyzerType;
 import stroom.index.shared.LuceneIndexField;
-import stroom.index.shared.IndexFieldsMap;
+import stroom.index.shared.LuceneIndexFieldsMap;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 
@@ -60,7 +60,7 @@ public class TestSearchExpressionQueryBuilder {
         };
 
 
-        final IndexFieldsMap indexFieldsMap = new IndexFieldsMap();
+        final LuceneIndexFieldsMap indexFieldsMap = new LuceneIndexFieldsMap();
         indexFieldsMap.put(LuceneIndexField.createField("test", analyzerType));
 
         final SearchExpressionQueryBuilder searchExpressionQueryBuilder = new SearchExpressionQueryBuilder(

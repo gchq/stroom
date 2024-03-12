@@ -26,8 +26,6 @@ import stroom.index.shared.IndexShardKey;
 import stroom.index.shared.LuceneVersion;
 import stroom.index.shared.LuceneVersionUtil;
 import stroom.node.api.NodeInfo;
-import stroom.search.extraction.IndexStructure;
-import stroom.search.extraction.IndexStructureCache;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TerminateHandlerFactory;
@@ -71,7 +69,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
 
     private final NodeInfo nodeInfo;
     private final IndexShardService indexShardService;
-    private final IndexStructureCache indexStructureCache;
+    private final LuceneIndexStructureCache indexStructureCache;
     private final IndexShardManager indexShardManager;
     private final Provider<IndexConfig> indexConfigProvider;
 
@@ -91,7 +89,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
     public IndexShardWriterCacheImpl(final NodeInfo nodeInfo,
                                      final IndexShardService indexShardService,
                                      final Provider<IndexConfig> indexConfigProvider,
-                                     final IndexStructureCache indexStructureCache,
+                                     final LuceneIndexStructureCache indexStructureCache,
                                      final IndexShardManager indexShardManager,
                                      final IndexShardWriterExecutorProvider executorProvider,
                                      final TaskContextFactory taskContextFactory,
@@ -160,7 +158,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
                 // Look for non deleted, non full, non corrupt index shards.
                 if (IndexShardStatus.CLOSED.equals(indexShard.getStatus())) {
                     // Get the index fields.
-                    final IndexStructure indexStructure = indexStructureCache.get(new DocRef(LuceneIndexDoc.DOCUMENT_TYPE,
+                    final LuceneIndexStructure indexStructure = indexStructureCache.get(new DocRef(LuceneIndexDoc.DOCUMENT_TYPE,
                             indexShardKey.getIndexUuid()));
                     if (indexStructure != null
                             && indexShard.getDocumentCount() < indexStructure.getIndex().getMaxDocsPerShard()) {
@@ -200,7 +198,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
         final long indexShardId = indexShard.getId();
 
         // Get the index fields.
-        final IndexStructure indexStructure = indexStructureCache.get(new DocRef(LuceneIndexDoc.DOCUMENT_TYPE,
+        final LuceneIndexStructure indexStructure = indexStructureCache.get(new DocRef(LuceneIndexDoc.DOCUMENT_TYPE,
                 indexShardKey.getIndexUuid()));
 
         // Create the writer.

@@ -1,34 +1,45 @@
 package stroom.search.extraction;
 
 import stroom.docref.DocRef;
+import stroom.index.shared.IndexField;
+import stroom.index.shared.LuceneIndexField;
 import stroom.query.language.functions.FieldIndex;
-import stroom.view.api.ViewStore;
-import stroom.view.shared.ViewDoc;
 
 import jakarta.inject.Inject;
 
 public class FieldValueExtractorFactory {
 
-    private final IndexStructureCache indexStructureCache;
-    private final ViewStore viewStore;
+    private final IndexFieldCache indexFieldCache;
 
     @Inject
-    public FieldValueExtractorFactory(final IndexStructureCache indexStructureCache,
-                                      final ViewStore viewStore) {
-        this.indexStructureCache = indexStructureCache;
-        this.viewStore = viewStore;
+    public FieldValueExtractorFactory(final IndexFieldCache indexFieldCache) {
+        this.indexFieldCache = indexFieldCache;
     }
 
     public FieldValueExtractor create(final DocRef dataSource, final FieldIndex fieldIndex) {
+        final IndexField[] indexFields = new IndexField[fieldIndex.size()];
 
-        DocRef docRef = dataSource;
+        // Populate the index field map with the expected fields.
+        for (final String fieldName : fieldIndex.getFields()) {
+            final int pos = fieldIndex.getPos(fieldName);
+            IndexField indexField = null;
 
-        if (ViewDoc.DOCUMENT_TYPE.equals(dataSource.getType())) {
-            final ViewDoc viewDoc = viewStore.readDocument(dataSource);
-            docRef = viewDoc.getDataSource();
+            if (dataSource != null &&
+                    indexFieldCache != null) {
+                indexField = indexFieldCache.get(dataSource, fieldName);
+            }
+
+            if (indexField == null) {
+                indexField = LuceneIndexField
+                        .builder()
+                        .name(fieldName)
+                        .indexed(false)
+                        .build();
+            }
+
+            indexFields[pos] = indexField;
         }
 
-        final IndexStructure indexStructure = indexStructureCache.get(docRef);
-        return new FieldValueExtractor(fieldIndex, indexStructure);
+        return new FieldValueExtractor(fieldIndex, indexFields);
     }
 }

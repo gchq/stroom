@@ -24,7 +24,7 @@ import stroom.expression.api.DateTimeSettings;
 import stroom.index.lucene980.analyser.AnalyzerFactory;
 import stroom.index.shared.AnalyzerType;
 import stroom.index.shared.LuceneIndexField;
-import stroom.index.shared.IndexFieldsMap;
+import stroom.index.shared.LuceneIndexFieldsMap;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
@@ -67,12 +67,12 @@ class SearchExpressionQueryBuilder {
     private static final Pattern NON_WORD = Pattern.compile("[^a-zA-Z0-9]");
     private static final Pattern MULTIPLE_WILDCARD = Pattern.compile("[+]+");
     private static final Pattern MULTIPLE_SPACE = Pattern.compile("[ ]+");
-    private final IndexFieldsMap indexFieldsMap;
+    private final LuceneIndexFieldsMap indexFieldsMap;
     private final WordListProvider wordListProvider;
     private final DateTimeSettings dateTimeSettings;
 
     SearchExpressionQueryBuilder(final WordListProvider wordListProvider,
-                                 final IndexFieldsMap indexFieldsMap,
+                                 final LuceneIndexFieldsMap indexFieldsMap,
                                  final DateTimeSettings dateTimeSettings) {
         this.wordListProvider = wordListProvider;
         this.indexFieldsMap = indexFieldsMap;

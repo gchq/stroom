@@ -18,7 +18,7 @@ package stroom.search.extraction;
 
 import stroom.datasource.api.v2.FieldType;
 import stroom.index.shared.AnalyzerType;
-import stroom.index.shared.LuceneIndexField;
+import stroom.index.shared.IndexFieldImpl;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.filter.AbstractXMLFilter;
@@ -60,7 +60,7 @@ public abstract class AbstractFieldFilter extends AbstractXMLFilter {
     private Locator locator;
 
 
-    private LuceneIndexField.Builder currentFieldBuilder;
+    private IndexFieldImpl.Builder currentFieldBuilder;
     private String currentElement;
     private String currentValue;
 
@@ -91,7 +91,7 @@ public abstract class AbstractFieldFilter extends AbstractXMLFilter {
         if (DOCUMENT.equals(localName)) {
             currentFieldValues = new ArrayList<>();
         } else if (FIELD.equals(localName)) {
-            currentFieldBuilder = LuceneIndexField.builder();
+            currentFieldBuilder = IndexFieldImpl.builder();
             currentValue = null;
         }
         super.startElement(uri, localName, qName, atts);
@@ -109,7 +109,7 @@ public abstract class AbstractFieldFilter extends AbstractXMLFilter {
 
         } else if (FIELD.equals(localName)) {
             if (currentFieldBuilder != null && currentValue != null) {
-                final LuceneIndexField indexField = currentFieldBuilder.build();
+                final IndexFieldImpl indexField = currentFieldBuilder.build();
                 final Val val = convertValue(indexField, currentValue);
                 if (val != null) {
                     final FieldValue fieldValue = new FieldValue(indexField, val);
@@ -150,7 +150,7 @@ public abstract class AbstractFieldFilter extends AbstractXMLFilter {
         super.characters(ch, start, length);
     }
 
-    private Val convertValue(final LuceneIndexField indexField, final String value) {
+    private Val convertValue(final IndexFieldImpl indexField, final String value) {
         try {
             switch (indexField.getType()) {
                 case LONG, ID -> {

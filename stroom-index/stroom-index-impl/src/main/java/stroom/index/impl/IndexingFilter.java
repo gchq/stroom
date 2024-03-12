@@ -19,9 +19,10 @@ package stroom.index.impl;
 import stroom.datasource.api.v2.FieldType;
 import stroom.docref.DocRef;
 import stroom.index.shared.AllPartition;
+import stroom.index.shared.IndexField;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.index.shared.LuceneIndexField;
-import stroom.index.shared.IndexFieldsMap;
+import stroom.index.shared.LuceneIndexFieldsMap;
 import stroom.index.shared.IndexShardKey;
 import stroom.index.shared.Partition;
 import stroom.index.shared.TimePartition;
@@ -38,8 +39,6 @@ import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.MetaHolder;
 import stroom.query.language.functions.ValString;
 import stroom.search.extraction.FieldValue;
-import stroom.search.extraction.IndexStructure;
-import stroom.search.extraction.IndexStructureCache;
 import stroom.svg.shared.SvgImage;
 import stroom.util.CharBuffer;
 import stroom.util.date.DateUtil;
@@ -85,9 +84,9 @@ class IndexingFilter extends AbstractXMLFilter {
     private final LocationFactoryProxy locationFactory;
     private final Indexer indexer;
     private final ErrorReceiverProxy errorReceiverProxy;
-    private final IndexStructureCache indexStructureCache;
+    private final LuceneIndexStructureCache indexStructureCache;
     private final CharBuffer debugBuffer = new CharBuffer(10);
-    private IndexFieldsMap indexFieldsMap;
+    private LuceneIndexFieldsMap indexFieldsMap;
     private DocRef indexRef;
     private LuceneIndexDoc index;
     private final TimePartitionFactory timePartitionFactory = new TimePartitionFactory();
@@ -105,7 +104,7 @@ class IndexingFilter extends AbstractXMLFilter {
                    final LocationFactoryProxy locationFactory,
                    final Indexer indexer,
                    final ErrorReceiverProxy errorReceiverProxy,
-                   final IndexStructureCache indexStructureCache) {
+                   final LuceneIndexStructureCache indexStructureCache) {
         this.metaHolder = metaHolder;
         this.locationFactory = locationFactory;
         this.indexer = indexer;
@@ -125,7 +124,7 @@ class IndexingFilter extends AbstractXMLFilter {
             }
 
             // Get the index and index fields from the cache.
-            final IndexStructure indexStructure = indexStructureCache.get(indexRef);
+            final LuceneIndexStructure indexStructure = indexStructureCache.get(indexRef);
             if (indexStructure == null) {
                 log(Severity.FATAL_ERROR, "Unable to load index", null);
                 throw LoggedException.create("Unable to load index");
@@ -246,7 +245,7 @@ class IndexingFilter extends AbstractXMLFilter {
         }
     }
 
-    private void processIndexContent(final LuceneIndexField indexField, final String value) {
+    private void processIndexContent(final IndexField indexField, final String value) {
         try {
             if (currentEventTime == null &&
                     FieldType.DATE.equals(indexField.getType()) &&

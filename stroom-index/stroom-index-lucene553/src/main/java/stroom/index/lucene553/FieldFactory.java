@@ -16,6 +16,7 @@
 
 package stroom.index.lucene553;
 
+import stroom.index.shared.IndexField;
 import stroom.index.shared.LuceneIndexField;
 import stroom.query.language.functions.Val;
 import stroom.search.extraction.FieldValue;
@@ -53,52 +54,61 @@ class FieldFactory {
     }
 
     public static Field create(final FieldValue fieldValue) {
-        final LuceneIndexField indexField = fieldValue.field();
+        final IndexField indexField = fieldValue.field();
+        final LuceneIndexField luceneIndexField = LuceneIndexField
+                .builder()
+                .name(indexField.getName())
+                .type(indexField.getType())
+                .analyzerType(indexField.getAnalyzerType())
+                .indexed(indexField.isIndexed())
+                .caseSensitive(indexField.isCaseSensitive())
+                .build();
+
         final Val value = fieldValue.value();
 
         org.apache.lucene553.document.Field field = null;
         switch (indexField.getType()) {
             case LONG, ID -> {
                 try {
-                    field = FieldFactory.create(indexField, value.toLong());
+                    field = FieldFactory.create(luceneIndexField, value.toLong());
                 } catch (final Exception e) {
                     LOGGER.trace(e.getMessage(), e);
                 }
             }
             case BOOLEAN -> {
                 // TODo : We are indexing boolean as String, not sure this is right.
-                field = FieldFactory.create(indexField, value.toString());
+                field = FieldFactory.create(luceneIndexField, value.toString());
             }
             case INTEGER -> {
                 try {
-                    field = FieldFactory.createInt(indexField, value.toInteger());
+                    field = FieldFactory.createInt(luceneIndexField, value.toInteger());
                 } catch (final Exception e) {
                     LOGGER.trace(e.getMessage(), e);
                 }
             }
             case FLOAT -> {
                 try {
-                    field = FieldFactory.createFloat(indexField, value.toDouble().floatValue());
+                    field = FieldFactory.createFloat(luceneIndexField, value.toDouble().floatValue());
                 } catch (final Exception e) {
                     LOGGER.trace(e.getMessage(), e);
                 }
             }
             case DOUBLE -> {
                 try {
-                    field = FieldFactory.createDouble(indexField, value.toDouble());
+                    field = FieldFactory.createDouble(luceneIndexField, value.toDouble());
                 } catch (final Exception e) {
                     LOGGER.trace(e.getMessage(), e);
                 }
             }
             case DATE -> {
                 try {
-                    field = FieldFactory.create(indexField, value.toLong());
+                    field = FieldFactory.create(luceneIndexField, value.toLong());
                 } catch (final RuntimeException e) {
                     LOGGER.trace(e.getMessage(), e);
                 }
             }
             case TEXT -> {
-                field = FieldFactory.create(indexField, value.toString());
+                field = FieldFactory.create(luceneIndexField, value.toString());
             }
         }
 

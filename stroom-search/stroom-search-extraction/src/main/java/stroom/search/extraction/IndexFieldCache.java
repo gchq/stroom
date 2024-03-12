@@ -17,9 +17,9 @@
 package stroom.search.extraction;
 
 import stroom.docref.DocRef;
+import stroom.index.shared.IndexField;
 
-public interface IndexStructureCache {
-    IndexStructure get(DocRef key);
+public interface IndexFieldCache {
 
-    void remove(DocRef key);
+    IndexField get(DocRef key, String fieldName);
 }

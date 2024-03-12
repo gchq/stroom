@@ -22,7 +22,7 @@ import stroom.index.impl.IndexShardKeyUtil;
 import stroom.index.impl.IndexShardUtil;
 import stroom.index.impl.IndexShardWriter;
 import stroom.index.impl.IndexFields;
-import stroom.index.shared.IndexFieldsMap;
+import stroom.index.shared.LuceneIndexFieldsMap;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
 import stroom.index.shared.IndexVolume;
@@ -32,7 +32,7 @@ import stroom.index.shared.LuceneVersionUtil;
 import stroom.query.language.functions.ValInteger;
 import stroom.query.language.functions.ValString;
 import stroom.search.extraction.FieldValue;
-import stroom.search.extraction.IndexStructure;
+import stroom.index.impl.LuceneIndexStructure;
 import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.io.FileUtil;
 import stroom.util.io.PathCreator;
@@ -59,7 +59,7 @@ class TestIndexShardIO extends StroomUnitTest {
     private static final List<LuceneIndexField> INDEX_FIELDS = IndexFields.createStreamIndexFields();
     //    private static final IndexShardWriterCache INDEX_SHARD_WRITER_CACHE = new MockIndexShardWriterCache();
 //    private static final IndexShardManager INDEX_SHARD_MANAGER = new MockIndexShardManager();
-    private static final IndexStructure INDEX_CONFIG;
+    private static final LuceneIndexStructure INDEX_CONFIG;
 
     static {
         INDEX_FIELDS.add(LuceneIndexField.createField("Id"));
@@ -68,7 +68,7 @@ class TestIndexShardIO extends StroomUnitTest {
 
         final LuceneIndexDoc index = new LuceneIndexDoc();
         index.setName("Test");
-        INDEX_CONFIG = new IndexStructure(index, INDEX_FIELDS, new IndexFieldsMap(INDEX_FIELDS));
+        INDEX_CONFIG = new LuceneIndexStructure(index, INDEX_FIELDS, new LuceneIndexFieldsMap(INDEX_FIELDS));
     }
 
     private PathCreator pathCreator;

@@ -14,32 +14,12 @@
  * limitations under the License.
  */
 
-package stroom.index.shared;
+package stroom.index.impl;
 
-import stroom.datasource.api.v2.Field;
-import stroom.datasource.api.v2.FieldType;
+import stroom.docref.DocRef;
 
-public interface IndexField extends Field {
+public interface LuceneIndexStructureCache {
+    LuceneIndexStructure get(DocRef key);
 
-    FieldType getType();
-
-    default AnalyzerType getAnalyzerType() {
-        return AnalyzerType.KEYWORD;
-    }
-
-    default boolean isCaseSensitive() {
-        return true;
-    }
-
-    default boolean isIndexed() {
-        return true;
-    }
-
-    default boolean isStored() {
-        return false;
-    }
-
-    default boolean isTermPositions() {
-        return false;
-    }
+    void remove(DocRef key);
 }

@@ -24,6 +24,8 @@ import stroom.datasource.api.v2.QueryField;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
 import stroom.expression.api.DateTimeSettings;
+import stroom.index.shared.IndexField;
+import stroom.index.shared.IndexFieldProvider;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.Query;
@@ -36,6 +38,8 @@ import stroom.query.common.v2.FieldInfoResultPageBuilder;
 import stroom.query.common.v2.ResultStore;
 import stroom.query.common.v2.ResultStoreFactory;
 import stroom.query.common.v2.SearchProvider;
+import stroom.search.elastic.shared.ElasticIndexDoc;
+import stroom.search.elastic.shared.ElasticIndexField;
 import stroom.search.solr.CachedSolrIndex;
 import stroom.search.solr.SolrIndexCache;
 import stroom.search.solr.SolrIndexStore;
@@ -55,6 +59,7 @@ import org.slf4j.LoggerFactory;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Executor;
@@ -63,7 +68,7 @@ import java.util.stream.Collectors;
 
 // used by DI
 @SuppressWarnings("unused")
-public class SolrSearchProvider implements SearchProvider {
+public class SolrSearchProvider implements SearchProvider, IndexFieldProvider {
 
     public static final String ENTITY_TYPE = SolrIndexDoc.DOCUMENT_TYPE;
     private static final Logger LOGGER = LoggerFactory.getLogger(SolrSearchProvider.class);
@@ -118,6 +123,20 @@ public class SolrSearchProvider implements SearchProvider {
             }
             return builder.build();
         });
+    }
+
+    @Override
+    public IndexField getIndexField(final DocRef docRef, final String fieldName) {
+        final SolrIndexDoc index = solrIndexStore.readDocument(docRef);
+        if (index != null && index.getFields() != null) {
+            final Optional<SolrIndexField> optionalSolrIndexField = index
+                    .getFields()
+                    .stream()
+                    .filter(field -> Objects.equals(fieldName, field.getName()))
+                    .findFirst();
+            return optionalSolrIndexField.orElse(null);
+        }
+        return null;
     }
 
     @Override
@@ -214,7 +233,7 @@ public class SolrSearchProvider implements SearchProvider {
             final Map<String, SolrIndexField> indexFieldsMap = index
                     .getFields()
                     .stream()
-                    .collect(Collectors.toMap(SolrIndexField::getFieldName, Function.identity()));
+                    .collect(Collectors.toMap(SolrIndexField::getName, Function.identity()));
             // Parse the query.
             final SearchExpressionQueryBuilder searchExpressionQueryBuilder = new SearchExpressionQueryBuilder(
                     wordListProvider,

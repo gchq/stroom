@@ -7,7 +7,7 @@ import stroom.index.impl.LuceneProviderFactory;
 import stroom.index.impl.LuceneShardSearcher;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.index.shared.LuceneIndexField;
-import stroom.index.shared.IndexFieldsMap;
+import stroom.index.shared.LuceneIndexFieldsMap;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.LuceneVersion;
 import stroom.index.shared.LuceneVersionUtil;
@@ -85,7 +85,7 @@ public class LuceneSearcher {
         }
 
         // Create a map of index fields keyed by name.
-        final IndexFieldsMap indexFieldsMap = new IndexFieldsMap(index.getFields());
+        final LuceneIndexFieldsMap indexFieldsMap = new LuceneIndexFieldsMap(index.getFields());
 
         final String[] storedFieldNames = new String[fieldIndex.size()];
         for (int i = 0; i < storedFieldNames.length; i++) {

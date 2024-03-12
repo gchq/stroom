@@ -5,7 +5,7 @@ import stroom.expression.api.DateTimeSettings;
 import stroom.index.impl.HighlightProvider;
 import stroom.index.lucene553.SearchExpressionQueryBuilder.SearchExpressionQuery;
 import stroom.index.shared.LuceneIndexDoc;
-import stroom.index.shared.IndexFieldsMap;
+import stroom.index.shared.LuceneIndexFieldsMap;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.search.impl.SearchConfig;
 import stroom.util.logging.LambdaLogger;
@@ -43,7 +43,7 @@ class Lucene553HighlightProvider implements HighlightProvider {
 
         try {
             // Create a map of index fields keyed by name.
-            final IndexFieldsMap indexFieldsMap = new IndexFieldsMap(index.getFields());
+            final LuceneIndexFieldsMap indexFieldsMap = new LuceneIndexFieldsMap(index.getFields());
             // Parse the query.
             final SearchExpressionQueryBuilder searchExpressionQueryBuilder = new SearchExpressionQueryBuilder(
                     wordListProvider,

@@ -16,8 +16,9 @@
 
 package stroom.search.solr.shared;
 
+import stroom.datasource.api.v2.Field;
 import stroom.datasource.api.v2.FieldType;
-import stroom.docref.HasDisplayValue;
+import stroom.index.shared.IndexField;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -26,7 +27,6 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import java.io.Serializable;
 import java.util.Objects;
 
 /**
@@ -35,13 +35,16 @@ import java.util.Objects;
  * </p>
  */
 @JsonPropertyOrder({
+        "fieldUse", // deprecated
+        "fieldName", // deprecated
+        "fieldType", // deprecated
+
+        "name",
         "type",
-        "fieldUse",
-        "fieldName",
-        "fieldType",
-        "defaultValue",
-        "stored",
+        "nativeType",
         "indexed",
+        "stored",
+        "defaultValue",
         "uninvertible",
         "docValues",
         "multiValued",
@@ -57,19 +60,28 @@ import java.util.Objects;
         "sortMissingLast"
 })
 @JsonInclude(Include.NON_NULL)
-public class SolrIndexField implements HasDisplayValue, Comparable<SolrIndexField>, Serializable {
+public class SolrIndexField implements IndexField {
 
     public static final String VALID_FIELD_NAME_PATTERN = "[a-zA-Z_](?:[a-zA-Z0-9_])*";
 
-    @JsonProperty
-    private FieldType type;
+
     @Deprecated
     @JsonProperty("fieldUse")
     private OldSolrIndexFieldType fieldUse;
-    @JsonProperty
+    @Deprecated
+    @JsonProperty("fieldName")
     private String fieldName;
-    @JsonProperty
+    @Deprecated
+    @JsonProperty("fieldType")
     private String fieldType;
+
+    @JsonProperty
+    private String name;
+    @JsonProperty
+    private FieldType type;
+    @JsonProperty
+    private String nativeType;
+
     @JsonProperty
     private String defaultValue;
     @JsonProperty
@@ -104,31 +116,20 @@ public class SolrIndexField implements HasDisplayValue, Comparable<SolrIndexFiel
     private boolean sortMissingLast;
 
     public SolrIndexField() {
-        type = FieldType.TEXT;
-        indexed = true;
-    }
-
-    private SolrIndexField(final FieldType type,
-                           final String fieldName,
-                           final boolean stored,
-                           final boolean indexed,
-                           final boolean termPositions) {
-        this.type = type;
-        this.fieldName = fieldName;
-        this.stored = stored;
-        this.indexed = indexed;
-        this.termPositions = termPositions;
     }
 
     @JsonCreator
     public SolrIndexField(
+            @Deprecated @JsonProperty("fieldUse") final OldSolrIndexFieldType fieldUse,
+            @Deprecated @JsonProperty("fieldName") final String fieldName,
+            @Deprecated @JsonProperty("fieldType") final String fieldType,
+
+            @JsonProperty("name") final String name,
             @JsonProperty("type") final FieldType type,
-            @JsonProperty("fieldUse") final OldSolrIndexFieldType fieldUse,
-            @JsonProperty("fieldName") final String fieldName,
-            @JsonProperty("fieldType") final String fieldType,
+            @JsonProperty("nativeType") final String nativeType,
             @JsonProperty("defaultValue") final String defaultValue,
+            @JsonProperty("indexed") final boolean indexed,
             @JsonProperty("stored") final boolean stored,
-            @JsonProperty("indexed") final Boolean indexed,
             @JsonProperty("uninvertible") final boolean uninvertible,
             @JsonProperty("docValues") final boolean docValues,
             @JsonProperty("multiValued") final boolean multiValued,
@@ -142,21 +143,14 @@ public class SolrIndexField implements HasDisplayValue, Comparable<SolrIndexFiel
             @JsonProperty("termPayloads") final boolean termPayloads,
             @JsonProperty("sortMissingFirst") final boolean sortMissingFirst,
             @JsonProperty("sortMissingLast") final boolean sortMissingLast) {
-        if (type == null && fieldType != null) {
-            this.type = convertLegacyType(fieldUse);
-        } else {
-            this.type = type;
-        }
 
-        this.fieldName = fieldName;
-        this.fieldType = fieldType;
-        this.defaultValue = defaultValue;
+
+        this.name = convertLegacyName(name, fieldName);
+        this.type = convertLegacyType(type, fieldUse);
+        this.nativeType = convertLegacyNativeType(nativeType, fieldType);
         this.stored = stored;
-        if (indexed != null) {
-            this.indexed = indexed;
-        } else {
-            this.indexed = true;
-        }
+        this.indexed = indexed;
+        this.defaultValue = defaultValue;
         this.uninvertible = uninvertible;
         this.docValues = docValues;
         this.multiValued = multiValued;
@@ -172,85 +166,72 @@ public class SolrIndexField implements HasDisplayValue, Comparable<SolrIndexFiel
         this.sortMissingLast = sortMissingLast;
     }
 
-    private FieldType convertLegacyType(final OldSolrIndexFieldType fieldType) {
-        switch (fieldType) {
-            case ID: {
-                return FieldType.ID;
-            }
-            case BOOLEAN_FIELD: {
-                return FieldType.BOOLEAN;
-            }
-            case INTEGER_FIELD: {
-                return FieldType.INTEGER;
-            }
-            case LONG_FIELD: {
-                return FieldType.LONG;
-            }
-            case FLOAT_FIELD: {
-                return FieldType.FLOAT;
-            }
-            case DOUBLE_FIELD: {
-                return FieldType.DOUBLE;
-            }
-            case DATE_FIELD: {
-                return FieldType.DATE;
-            }
-            case FIELD: {
-                return FieldType.TEXT;
-            }
-            case NUMERIC_FIELD: {
-                return FieldType.LONG;
-            }
+    private static String convertLegacyName(final String name, final String fieldName) {
+        if (name == null) {
+            return fieldName;
         }
-        return FieldType.TEXT;
+        return name;
+    }
+
+    private static FieldType convertLegacyType(final FieldType type, final OldSolrIndexFieldType fieldType) {
+        if (type == null) {
+            if (fieldType != null) {
+                switch (fieldType) {
+                    case ID: {
+                        return FieldType.ID;
+                    }
+                    case BOOLEAN_FIELD: {
+                        return FieldType.BOOLEAN;
+                    }
+                    case INTEGER_FIELD: {
+                        return FieldType.INTEGER;
+                    }
+                    case LONG_FIELD: {
+                        return FieldType.LONG;
+                    }
+                    case FLOAT_FIELD: {
+                        return FieldType.FLOAT;
+                    }
+                    case DOUBLE_FIELD: {
+                        return FieldType.DOUBLE;
+                    }
+                    case DATE_FIELD: {
+                        return FieldType.DATE;
+                    }
+                    case FIELD: {
+                        return FieldType.TEXT;
+                    }
+                    case NUMERIC_FIELD: {
+                        return FieldType.LONG;
+                    }
+                }
+            }
+            return FieldType.TEXT;
+        }
+        return type;
+    }
+
+    private static String convertLegacyNativeType(final String nativeType, final String fieldType) {
+        if (nativeType == null) {
+            return fieldType;
+        }
+        return nativeType;
     }
 
     public static SolrIndexField createIdField(final String fieldName) {
-        return new SolrIndexField(FieldType.ID, fieldName, true, true, false);
+        return builder()
+                .type(FieldType.ID)
+                .name(fieldName)
+                .stored(true)
+                .build();
     }
 
-    public static SolrIndexField createBooleanField(final String fieldName) {
-        return new SolrIndexField(FieldType.BOOLEAN, fieldName, false, true, false);
+    public String getName() {
+        return name;
     }
 
-    public static SolrIndexField createIntegerField(final String fieldName) {
-        return new SolrIndexField(FieldType.INTEGER, fieldName, false, true, false);
-    }
-
-    public static SolrIndexField createLongField(final String fieldName) {
-        return new SolrIndexField(FieldType.LONG, fieldName, false, true, false);
-    }
-
-    public static SolrIndexField createFloatField(final String fieldName) {
-        return new SolrIndexField(FieldType.FLOAT, fieldName, false, true, false);
-    }
-
-    public static SolrIndexField createDoubleField(final String fieldName) {
-        return new SolrIndexField(FieldType.DOUBLE, fieldName, false, true, false);
-    }
-
-
-    public static SolrIndexField createDateField(final String fieldName) {
-        return new SolrIndexField(FieldType.DATE, fieldName, false, true, false);
-    }
-
-    public static SolrIndexField createTextField(final String fieldName) {
-        return createTextField(fieldName, false, true, false);
-    }
-
-    public static SolrIndexField createTextField(final String fieldName,
-                                                 final boolean stored,
-                                                 final boolean indexed,
-                                                 final boolean termPositions) {
-        return new SolrIndexField(FieldType.TEXT, fieldName, stored, indexed, termPositions);
-    }
-
-    public static SolrIndexField create(final FieldType type,
-                                        final String fieldName,
-                                        final boolean stored,
-                                        final boolean indexed,
-                                        final boolean termPositions) {
-        return new SolrIndexField(type, fieldName, stored, indexed, termPositions);
+    public void setName(final String name) {
+        this.name = name;
     }
 
     public FieldType getType() {
@@ -261,20 +242,12 @@ public class SolrIndexField implements HasDisplayValue, Comparable<SolrIndexFiel
         this.type = type;
     }
 
-    public String getFieldName() {
-        return fieldName;
+    public String getNativeType() {
+        return nativeType;
     }
 
-    public void setFieldName(final String fieldName) {
-        this.fieldName = fieldName;
-    }
-
-    public String getFieldType() {
-        return fieldType;
-    }
-
-    public void setFieldType(final String fieldType) {
-        this.fieldType = fieldType;
+    public void setNativeType(final String nativeType) {
+        this.nativeType = nativeType;
     }
 
     public String getDefaultValue() {
@@ -408,7 +381,7 @@ public class SolrIndexField implements HasDisplayValue, Comparable<SolrIndexFiel
     @JsonIgnore
     @Override
     public String getDisplayValue() {
-        return fieldName;
+        return name;
     }
 
     @Override
@@ -416,7 +389,7 @@ public class SolrIndexField implements HasDisplayValue, Comparable<SolrIndexFiel
         if (this == o) {
             return true;
         }
-        if (!(o instanceof SolrIndexField)) {
+        if (o == null || getClass() != o.getClass()) {
             return false;
         }
         final SolrIndexField that = (SolrIndexField) o;
@@ -435,17 +408,18 @@ public class SolrIndexField implements HasDisplayValue, Comparable<SolrIndexFiel
                 termPayloads == that.termPayloads &&
                 sortMissingFirst == that.sortMissingFirst &&
                 sortMissingLast == that.sortMissingLast &&
+                Objects.equals(name, that.name) &&
                 type == that.type &&
-                Objects.equals(fieldName, that.fieldName) &&
-                Objects.equals(fieldType, that.fieldType) &&
+                Objects.equals(nativeType, that.nativeType) &&
                 Objects.equals(defaultValue, that.defaultValue);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(type,
-                fieldName,
-                fieldType,
+        return Objects.hash(
+                name,
+                type,
+                nativeType,
                 defaultValue,
                 stored,
                 indexed,
@@ -466,12 +440,12 @@ public class SolrIndexField implements HasDisplayValue, Comparable<SolrIndexFiel
 
     @Override
     public String toString() {
-        return fieldName;
+        return name;
     }
 
     @Override
-    public int compareTo(final SolrIndexField o) {
-        return fieldName.compareToIgnoreCase(o.fieldName);
+    public int compareTo(final Field o) {
+        return name.compareToIgnoreCase(o.getName());
     }
 
     public static Builder builder() {
@@ -485,8 +459,8 @@ public class SolrIndexField implements HasDisplayValue, Comparable<SolrIndexFiel
     public static final class Builder {
 
         private FieldType type = FieldType.TEXT;
-        private String fieldName;
-        private String fieldType;
+        private String name;
+        private String nativeType;
         private String defaultValue;
         private boolean stored;
         private boolean indexed = true;
@@ -509,8 +483,8 @@ public class SolrIndexField implements HasDisplayValue, Comparable<SolrIndexFiel
 
         private Builder(final SolrIndexField solrIndexField) {
             this.type = solrIndexField.type;
-            this.fieldName = solrIndexField.fieldName;
-            this.fieldType = solrIndexField.fieldType;
+            this.name = solrIndexField.name;
+            this.nativeType = solrIndexField.nativeType;
             this.defaultValue = solrIndexField.defaultValue;
             this.stored = solrIndexField.stored;
             this.indexed = solrIndexField.indexed;
@@ -534,13 +508,13 @@ public class SolrIndexField implements HasDisplayValue, Comparable<SolrIndexFiel
             return this;
         }
 
-        public Builder fieldName(final String fieldName) {
-            this.fieldName = fieldName;
+        public Builder name(final String name) {
+            this.name = name;
             return this;
         }
 
-        public Builder fieldType(final String fieldType) {
-            this.fieldType = fieldType;
+        public Builder nativeType(final String nativeType) {
+            this.nativeType = nativeType;
             return this;
         }
 
@@ -627,13 +601,15 @@ public class SolrIndexField implements HasDisplayValue, Comparable<SolrIndexFiel
 
         public SolrIndexField build() {
             return new SolrIndexField(
-                    type,
                     null,
-                    fieldName,
-                    fieldType,
+                    null,
+                    null,
+                    name,
+                    type,
+                    nativeType,
                     defaultValue,
-                    stored,
                     indexed,
+                    stored,
                     uninvertible,
                     docValues,
                     multiValued,

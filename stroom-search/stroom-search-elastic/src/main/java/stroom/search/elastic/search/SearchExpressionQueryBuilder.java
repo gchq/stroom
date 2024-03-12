@@ -131,7 +131,7 @@ public class SearchExpressionQueryBuilder {
         if (indexField == null) {
             throw new SearchException("Field not found in index: " + field);
         }
-        final String fieldName = indexField.getFieldName();
+        final String fieldName = indexField.getName();
 
         // Validate the expression
         if (value == null || value.isEmpty()) {
@@ -177,7 +177,7 @@ public class SearchExpressionQueryBuilder {
             return null;
         }
 
-        if (indexField.getFieldType().equals("keyword")) {
+        if (indexField.getNativeType().equals("keyword")) {
             // Elasticsearch field mapping type is `keyword`, so generate a term-level query
             switch (condition) {
                 case EQUALS -> {
@@ -451,7 +451,7 @@ public class SearchExpressionQueryBuilder {
                 mustQueries.must(QueryBuilders.termQuery(fieldName, getDate(condition, fieldName, line)));
             } else if (elasticFieldType.equals(FieldType.IPV4_ADDRESS)) {
                 mustQueries.must(QueryBuilders.termQuery(fieldName, getIpV4Address(condition, fieldName, line)));
-            } else if (indexField.getFieldType().equals("keyword")) {
+            } else if (indexField.getNativeType().equals("keyword")) {
                 mustQueries.must(buildKeywordQuery(fieldName, line));
             } else {
                 mustQueries.must(buildTextQuery(fieldName, line));

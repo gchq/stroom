@@ -23,7 +23,7 @@ import stroom.index.impl.IndexShardWriter;
 import stroom.index.impl.IndexShardWriterCache;
 import stroom.index.impl.LuceneShardSearcher;
 import stroom.index.lucene980.SearchExpressionQueryBuilder.SearchExpressionQuery;
-import stroom.index.shared.IndexFieldsMap;
+import stroom.index.shared.LuceneIndexFieldsMap;
 import stroom.index.shared.IndexShard;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.QueryKey;
@@ -78,7 +78,7 @@ class Lucene980ShardSearcher implements LuceneShardSearcher {
                            final ExecutorProvider executorProvider,
                            final TaskContextFactory taskContextFactory,
                            final PathCreator pathCreator,
-                           final IndexFieldsMap indexFieldsMap,
+                           final LuceneIndexFieldsMap indexFieldsMap,
                            final ExpressionOperator expression,
                            final WordListProvider dictionaryStore,
                            final DateTimeSettings dateTimeSettings,

@@ -1,6 +1,6 @@
 package stroom.search.extraction;
 
-import stroom.index.shared.LuceneIndexField;
+import stroom.index.shared.IndexField;
 import stroom.query.common.v2.StringFieldValue;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
@@ -23,37 +23,16 @@ public class FieldValueExtractor {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FieldValueExtractor.class);
 
     private final FieldIndex fieldIndex;
-    private final LuceneIndexField[] indexFields;
+    private final IndexField[] indexFields;
 
     FieldValueExtractor(final FieldIndex fieldIndex,
-                        final IndexStructure indexStructure) {
+                        final IndexField[] indexFields) {
         this.fieldIndex = fieldIndex;
-        indexFields = new LuceneIndexField[fieldIndex.size()];
-
-        // Populate the index field map with the expected fields.
-        for (final String fieldName : fieldIndex.getFields()) {
-            final int pos = fieldIndex.getPos(fieldName);
-            LuceneIndexField indexField = null;
-
-            if (indexStructure != null &&
-                    indexStructure.getIndexFieldsMap() != null) {
-                indexField = indexStructure.getIndexFieldsMap().get(fieldName);
-            }
-
-            if (indexField == null) {
-                indexField = LuceneIndexField
-                        .builder()
-                        .name(fieldName)
-                        .indexed(false)
-                        .build();
-            }
-
-            indexFields[pos] = indexField;
-        }
+        this.indexFields = indexFields;
     }
 
     public FieldValue convert(final int pos, final String stringValue) {
-        final LuceneIndexField indexField = indexFields[pos];
+        final IndexField indexField = indexFields[pos];
         final Val val = convertValue(indexField, stringValue);
         return new FieldValue(indexField, val);
     }
@@ -63,7 +42,7 @@ public class FieldValueExtractor {
         for (final StringFieldValue stringFieldValue : stringValues) {
             final Integer pos = fieldIndex.getPos(stringFieldValue.fieldName());
             if (pos != null) {
-                final LuceneIndexField indexField = indexFields[pos];
+                final IndexField indexField = indexFields[pos];
                 final Val val = convertValue(indexField, stringFieldValue.fieldValue());
                 fieldValues.add(new FieldValue(indexField, val));
             }
@@ -71,7 +50,7 @@ public class FieldValueExtractor {
         return fieldValues;
     }
 
-    private Val convertValue(final LuceneIndexField indexField, final String value) {
+    private Val convertValue(final IndexField indexField, final String value) {
         try {
             switch (indexField.getType()) {
                 case LONG, ID -> {

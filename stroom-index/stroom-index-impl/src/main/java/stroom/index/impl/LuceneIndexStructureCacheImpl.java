@@ -22,9 +22,7 @@ import stroom.cache.api.LoadingStroomCache;
 import stroom.docref.DocRef;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.index.shared.LuceneIndexField;
-import stroom.index.shared.IndexFieldsMap;
-import stroom.search.extraction.IndexStructure;
-import stroom.search.extraction.IndexStructureCache;
+import stroom.index.shared.LuceneIndexFieldsMap;
 import stroom.util.shared.Clearable;
 
 import jakarta.inject.Inject;
@@ -35,17 +33,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Singleton
-public class IndexStructureCacheImpl implements IndexStructureCache, Clearable {
+public class LuceneIndexStructureCacheImpl implements LuceneIndexStructureCache, Clearable {
 
     private static final String CACHE_NAME = "Index Config Cache";
 
     private final IndexStore indexStore;
-    private final LoadingStroomCache<DocRef, IndexStructure> cache;
+    private final LoadingStroomCache<DocRef, LuceneIndexStructure> cache;
 
     @Inject
-    IndexStructureCacheImpl(final CacheManager cacheManager,
-                            final IndexStore indexStore,
-                            final Provider<IndexConfig> indexConfigProvider) {
+    LuceneIndexStructureCacheImpl(final CacheManager cacheManager,
+                                  final IndexStore indexStore,
+                                  final Provider<IndexConfig> indexConfigProvider) {
         this.indexStore = indexStore;
         cache = cacheManager.createLoadingCache(
                 CACHE_NAME,
@@ -53,7 +51,7 @@ public class IndexStructureCacheImpl implements IndexStructureCache, Clearable {
                 this::create);
     }
 
-    private IndexStructure create(final DocRef docRef) {
+    private LuceneIndexStructure create(final DocRef docRef) {
         if (docRef == null) {
             throw new NullPointerException("Null key supplied");
         }
@@ -69,12 +67,12 @@ public class IndexStructureCacheImpl implements IndexStructureCache, Clearable {
             indexFields = new ArrayList<>();
         }
 
-        final IndexFieldsMap indexFieldsMap = new IndexFieldsMap(indexFields);
-        return new IndexStructure(loaded, indexFields, indexFieldsMap);
+        final LuceneIndexFieldsMap indexFieldsMap = new LuceneIndexFieldsMap(indexFields);
+        return new LuceneIndexStructure(loaded, indexFields, indexFieldsMap);
     }
 
     @Override
-    public IndexStructure get(final DocRef key) {
+    public LuceneIndexStructure get(final DocRef key) {
         return cache.get(key);
     }
 

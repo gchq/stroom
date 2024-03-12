@@ -5,7 +5,7 @@ import stroom.expression.api.DateTimeSettings;
 import stroom.index.impl.IndexShardSearchConfig;
 import stroom.index.impl.IndexShardWriterCache;
 import stroom.index.impl.LuceneShardSearcher;
-import stroom.index.shared.IndexFieldsMap;
+import stroom.index.shared.LuceneIndexFieldsMap;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.QueryKey;
 import stroom.search.impl.SearchConfig;
@@ -44,7 +44,7 @@ class Lucene553ShardSearcherFactory {
     }
 
     public LuceneShardSearcher create(final ExpressionOperator expression,
-                                      final IndexFieldsMap indexFieldsMap,
+                                      final LuceneIndexFieldsMap indexFieldsMap,
                                       final DateTimeSettings dateTimeSettings,
                                       final QueryKey queryKey) {
         return new Lucene553ShardSearcher(

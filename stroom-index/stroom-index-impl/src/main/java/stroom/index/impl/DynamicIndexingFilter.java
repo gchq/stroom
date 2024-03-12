@@ -18,7 +18,9 @@ package stroom.index.impl;
 
 import stroom.docref.DocRef;
 import stroom.index.shared.AllPartition;
+import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexShardKey;
+import stroom.index.shared.LuceneIndexDoc;
 import stroom.index.shared.LuceneIndexField;
 import stroom.index.shared.Partition;
 import stroom.index.shared.TimePartition;
@@ -33,8 +35,6 @@ import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.MetaHolder;
 import stroom.search.extraction.AbstractFieldFilter;
 import stroom.search.extraction.FieldValue;
-import stroom.search.extraction.IndexStructure;
-import stroom.search.extraction.IndexStructureCache;
 import stroom.svg.shared.SvgImage;
 import stroom.util.CharBuffer;
 import stroom.util.shared.Severity;
@@ -76,10 +76,10 @@ class DynamicIndexingFilter extends AbstractFieldFilter {
     private final Indexer indexer;
     private final ErrorReceiverProxy errorReceiverProxy;
     private final IndexStore indexStore;
-    private final IndexStructureCache indexStructureCache;
+    private final LuceneIndexStructureCache indexStructureCache;
     private final CharBuffer debugBuffer = new CharBuffer(10);
     private DocRef indexRef;
-    private stroom.index.shared.LuceneIndexDoc index;
+    private LuceneIndexDoc index;
     private final TimePartitionFactory timePartitionFactory = new TimePartitionFactory();
     private final TreeMap<Long, TimePartition> timePartitionTreeMap = new TreeMap<>();
     private final Map<Partition, IndexShardKey> indexShardKeyMap = new HashMap<>();
@@ -89,7 +89,7 @@ class DynamicIndexingFilter extends AbstractFieldFilter {
     private Long currentEventTime;
     private Partition defaultPartition;
 
-    private final Set<LuceneIndexField> foundFields = new HashSet<>();
+    private final Set<IndexField> foundFields = new HashSet<>();
 
     @Inject
     DynamicIndexingFilter(final MetaHolder metaHolder,
@@ -97,7 +97,7 @@ class DynamicIndexingFilter extends AbstractFieldFilter {
                           final Indexer indexer,
                           final ErrorReceiverProxy errorReceiverProxy,
                           final IndexStore indexStore,
-                          final IndexStructureCache indexStructureCache) {
+                          final LuceneIndexStructureCache indexStructureCache) {
         super(locationFactory, errorReceiverProxy);
         this.metaHolder = metaHolder;
         this.locationFactory = locationFactory;
@@ -119,7 +119,7 @@ class DynamicIndexingFilter extends AbstractFieldFilter {
             }
 
             // Get the index and index fields from the cache.
-            final IndexStructure indexStructure = indexStructureCache.get(indexRef);
+            final LuceneIndexStructure indexStructure = indexStructureCache.get(indexRef);
             if (indexStructure == null) {
                 log(Severity.FATAL_ERROR, "Unable to load index", null);
                 throw LoggedException.create("Unable to load index");
@@ -156,7 +156,7 @@ class DynamicIndexingFilter extends AbstractFieldFilter {
     private void flushFields() {
         try {
             // Flush found fields to the index.
-            final IndexStructure indexStructure = indexStructureCache.get(indexRef);
+            final LuceneIndexStructure indexStructure = indexStructureCache.get(indexRef);
             // Remove fields we already know about.
             indexStructure.getIndexFields().forEach(foundFields::remove);
             if (!foundFields.isEmpty()) {
@@ -167,8 +167,19 @@ class DynamicIndexingFilter extends AbstractFieldFilter {
                 }
                 indexDoc.setFields(foundFields
                         .stream()
-                        .sorted(Comparator.comparing(LuceneIndexField::getName))
+                        .map(field -> LuceneIndexField
+                                .builder()
+                                .name(field.getName())
+                                .type(field.getType())
+                                .analyzerType(field.getAnalyzerType())
+                                .indexed(field.isIndexed())
+                                .stored(field.isStored())
+                                .caseSensitive(field.isCaseSensitive())
+                                .termPositions(field.isTermPositions())
+                                .build())
+                        .sorted(Comparator.comparing(IndexField::getName))
                         .toList());
+
                 indexStore.writeDocument(indexDoc);
                 foundFields.clear();
             }
@@ -192,7 +203,7 @@ class DynamicIndexingFilter extends AbstractFieldFilter {
     protected void processFields(final List<FieldValue> fieldValues) {
         final IndexDocument document = new IndexDocument();
         for (final FieldValue fieldValue : fieldValues) {
-            final LuceneIndexField indexField = fieldValue.field();
+            final IndexField indexField = fieldValue.field();
             foundFields.add(indexField);
             if (foundFields.size() > 10_000) {
                 flushFields();

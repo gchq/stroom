@@ -99,14 +99,14 @@ public class ElasticSuggestionsQueryHandlerImpl implements ElasticSuggestionsQue
             }
 
             final SuggestionBuilder<TermSuggestionBuilder> termSuggestionBuilder = SuggestBuilders
-                    .termSuggestion(field.getFieldName())
+                    .termSuggestion(field.getName())
                     .suggestMode(SuggestMode.ALWAYS)
                     .minWordLength(3)
                     .text(query);
             final SuggestBuilder suggestBuilder = new SuggestBuilder()
                     .addSuggestion("suggest", termSuggestionBuilder);
             final SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder()
-                    .fetchField(field.getFieldName())
+                    .fetchField(field.getName())
                     .suggest(suggestBuilder);
             final SearchRequest searchRequest = new SearchRequest(elasticIndex.getIndexName())
                     .source(searchSourceBuilder);
@@ -121,7 +121,7 @@ public class ElasticSuggestionsQueryHandlerImpl implements ElasticSuggestionsQue
                     .map(option -> option.getText().string())
                     .collect(Collectors.toList()));
         } catch (IOException | RuntimeException e) {
-            LOGGER.error(() -> "Failed to retrieve search suggestions for field: " + field.getFieldName() +
+            LOGGER.error(() -> "Failed to retrieve search suggestions for field: " + field.getName() +
                     ". " + e.getMessage(), e);
             return Suggestions.EMPTY;
         }

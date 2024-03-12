@@ -281,7 +281,7 @@ public class DynamicColumnSelectionListModel implements SelectionListModel<Colum
         }
 
         private static Column convertFieldInfo(final FieldInfo fieldInfo) {
-            final String indexFieldName = fieldInfo.getFieldName();
+            final String indexFieldName = fieldInfo.getName();
             final Builder columnBuilder = Column.builder();
             columnBuilder.name(indexFieldName);
 

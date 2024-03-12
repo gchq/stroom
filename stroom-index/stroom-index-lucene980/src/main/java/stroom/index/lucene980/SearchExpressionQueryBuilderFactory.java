@@ -2,7 +2,7 @@ package stroom.index.lucene980;
 
 import stroom.dictionary.api.WordListProvider;
 import stroom.expression.api.DateTimeSettings;
-import stroom.index.shared.IndexFieldsMap;
+import stroom.index.shared.LuceneIndexFieldsMap;
 import stroom.search.impl.SearchConfig;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -25,7 +25,7 @@ class SearchExpressionQueryBuilderFactory {
         this.searchConfigProvider = searchConfigProvider;
     }
 
-    public SearchExpressionQueryBuilder create(final IndexFieldsMap indexFieldsMap,
+    public SearchExpressionQueryBuilder create(final LuceneIndexFieldsMap indexFieldsMap,
                                                final DateTimeSettings dateTimeSettings) {
         try {
             IndexSearcher.setMaxClauseCount(searchConfigProvider.get().getMaxBooleanClauseCount());

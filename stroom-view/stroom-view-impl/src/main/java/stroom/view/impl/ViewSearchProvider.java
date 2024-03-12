@@ -5,7 +5,11 @@ import stroom.datasource.api.v2.DateField;
 import stroom.datasource.api.v2.FieldInfo;
 import stroom.datasource.api.v2.FindFieldInfoCriteria;
 import stroom.docref.DocRef;
+import stroom.docref.StringMatch;
 import stroom.docstore.shared.DocRefUtil;
+import stroom.index.shared.IndexField;
+import stroom.index.shared.IndexFieldProvider;
+import stroom.index.shared.LuceneIndexField;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.SearchRequest;
@@ -17,6 +21,7 @@ import stroom.query.common.v2.StoreFactoryRegistry;
 import stroom.security.api.SecurityContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 import stroom.view.api.ViewStore;
 import stroom.view.shared.ViewDoc;
@@ -30,7 +35,7 @@ import java.util.List;
 import java.util.Optional;
 
 @SuppressWarnings("unused")
-public class ViewSearchProvider implements SearchProvider {
+public class ViewSearchProvider implements SearchProvider, IndexFieldProvider {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ViewSearchProvider.class);
 
@@ -74,6 +79,26 @@ public class ViewSearchProvider implements SearchProvider {
             final List<FieldInfo> list = Collections.emptyList();
             return ResultPage.createCriterialBasedList(list, criteria);
         });
+    }
+
+    @Override
+    public IndexField getIndexField(final DocRef docRef, final String fieldName) {
+        final FindFieldInfoCriteria criteria = new FindFieldInfoCriteria(
+                new PageRequest(0, 1),
+                null,
+                docRef,
+                StringMatch.equals(fieldName, true));
+        final ResultPage<FieldInfo> resultPage = getFieldInfo(criteria);
+        if (resultPage.size() > 0) {
+            final FieldInfo fieldInfo = resultPage.getFirst();
+            return LuceneIndexField
+                    .builder()
+                    .name(fieldInfo.getName())
+                    .type(fieldInfo.getFieldType())
+                    .indexed(true)
+                    .build();
+        }
+        return null;
     }
 
     @Override

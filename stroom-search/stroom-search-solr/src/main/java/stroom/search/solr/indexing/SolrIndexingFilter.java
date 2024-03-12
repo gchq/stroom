@@ -277,12 +277,12 @@ class SolrIndexingFilter extends AbstractXMLFilter {
                 LOGGER.debug(() -> "processIndexContent() - Adding to index indexName=" +
                         indexRef.getName() +
                         " name=" +
-                        indexField.getFieldName() +
+                        indexField.getName() +
                         " value=" +
                         value);
 
                 fieldsIndexed++;
-                document.addField(indexField.getFieldName(), val);
+                document.addField(indexField.getName(), val);
             }
         } catch (final RuntimeException e) {
             log(Severity.ERROR, e.getMessage(), e);

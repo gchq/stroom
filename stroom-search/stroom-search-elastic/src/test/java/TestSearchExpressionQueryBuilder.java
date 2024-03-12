@@ -40,16 +40,18 @@ public class TestSearchExpressionQueryBuilder {
 
     @Test
     public void testBuildQuery() {
-        ElasticIndexField answerField = new ElasticIndexField();
-        answerField.setFieldName("answer");
-        answerField.setFieldType("long");
-        answerField.setType(FieldType.LONG);
-        indexFieldsMap.put(answerField.getFieldName(), answerField);
+        final ElasticIndexField answerField = ElasticIndexField
+                .builder()
+                .name("answer")
+                .nativeType("long")
+                .type(FieldType.LONG)
+                .build();
+        indexFieldsMap.put(answerField.getName(), answerField);
         final Long answerFieldValue = 42L;
 
         // Single numeric EQUALS condition contained within the default AND clause
 
-        expressionBuilder.addTerm(answerField.getFieldName(), Condition.EQUALS, answerFieldValue.toString());
+        expressionBuilder.addTerm(answerField.getName(), Condition.EQUALS, answerFieldValue.toString());
         QueryBuilder queryBuilder = builder.buildQuery(expressionBuilder.build());
 
         Assertions.assertTrue(queryBuilder instanceof BoolQueryBuilder, "Is a `bool` query");
@@ -57,24 +59,26 @@ public class TestSearchExpressionQueryBuilder {
         Assertions.assertEquals(1, boolQuery.must().size(), "Bool query contains exactly one item");
 
         TermQueryBuilder termQuery = (TermQueryBuilder) boolQuery.must().get(0);
-        Assertions.assertEquals(answerField.getFieldName(), termQuery.fieldName(), "Field name is correct");
+        Assertions.assertEquals(answerField.getName(), termQuery.fieldName(), "Field name is correct");
         Assertions.assertEquals(answerFieldValue, termQuery.value(), "Query value is correct");
 
         // Add a second text EQUALS condition
-
-        ElasticIndexField nameField = new ElasticIndexField();
-        nameField.setFieldName("name");
-        nameField.setFieldType("text");
-        nameField.setType(FieldType.TEXT);
-        indexFieldsMap.put(nameField.getFieldName(), nameField);
+        final ElasticIndexField nameField = ElasticIndexField
+                .builder()
+                .name("name")
+                .nativeType("text")
+                .type(FieldType.TEXT)
+                .build();
+        indexFieldsMap.put(nameField.getName(), nameField);
 
         // Add a nested NOT GREATER THAN date condition
-
-        ElasticIndexField dateField = new ElasticIndexField();
-        dateField.setFieldName("date");
-        dateField.setFieldType("date");
-        dateField.setType(FieldType.DATE);
-        indexFieldsMap.put(dateField.getFieldName(), dateField);
+        final ElasticIndexField dateField = ElasticIndexField
+                .builder()
+                .name("date")
+                .nativeType("date")
+                .type(FieldType.DATE)
+                .build();
+        indexFieldsMap.put(dateField.getName(), dateField);
         final String nowStr = "2021-02-17T01:23:34.000";
         final long expectedParsedDateFieldValue = 1613525014000L;
 
@@ -86,7 +90,7 @@ public class TestSearchExpressionQueryBuilder {
 
         ExpressionOperator notOperator = ExpressionOperator.builder()
                 .op(Op.NOT)
-                .addTerm(dateField.getFieldName(), Condition.GREATER_THAN, nowStr)
+                .addTerm(dateField.getName(), Condition.GREATER_THAN, nowStr)
                 .build();
 
         expressionBuilder.addOperator(notOperator);
@@ -99,7 +103,7 @@ public class TestSearchExpressionQueryBuilder {
                 "Inner bool query contains one item");
 
         RangeQueryBuilder firstRangeQuery = (RangeQueryBuilder) innerBoolQuery.mustNot().get(0);
-        Assertions.assertEquals(dateField.getFieldName(), firstRangeQuery.fieldName(),
+        Assertions.assertEquals(dateField.getName(), firstRangeQuery.fieldName(),
                 "Field name of first range query is correct");
         Assertions.assertEquals(expectedParsedDateFieldValue, firstRangeQuery.from(),
                 "Field value of first range query is correct");

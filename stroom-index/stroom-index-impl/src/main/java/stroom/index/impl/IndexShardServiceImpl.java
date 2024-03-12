@@ -33,8 +33,6 @@ import stroom.index.shared.LuceneVersionUtil;
 import stroom.query.common.v2.FieldInfoResultPageBuilder;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.ValuesConsumer;
-import stroom.search.extraction.IndexStructure;
-import stroom.search.extraction.IndexStructureCache;
 import stroom.searchable.api.Searchable;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
@@ -59,7 +57,7 @@ public class IndexShardServiceImpl implements IndexShardService, Searchable {
 
 
     private final SecurityContext securityContext;
-    private final IndexStructureCache indexStructureCache;
+    private final LuceneIndexStructureCache indexStructureCache;
     private final IndexShardDao indexShardDao;
     private final IndexVolumeService indexVolumeService;
 
@@ -67,7 +65,7 @@ public class IndexShardServiceImpl implements IndexShardService, Searchable {
 
     @Inject
     IndexShardServiceImpl(final SecurityContext securityContext,
-                          final IndexStructureCache indexStructureCache,
+                          final LuceneIndexStructureCache indexStructureCache,
                           final IndexShardDao indexShardDao,
                           final IndexVolumeService indexVolumeService) {
         this.securityContext = securityContext;
@@ -90,7 +88,7 @@ public class IndexShardServiceImpl implements IndexShardService, Searchable {
     public IndexShard createIndexShard(final IndexShardKey indexShardKey,
                                        final String ownerNodeName) {
         return securityContext.secureResult(PermissionNames.MANAGE_INDEX_SHARDS_PERMISSION, () -> {
-            final IndexStructure indexStructure = indexStructureCache.get(
+            final LuceneIndexStructure indexStructure = indexStructureCache.get(
                     new DocRef(LuceneIndexDoc.DOCUMENT_TYPE, indexShardKey.getIndexUuid()));
             final LuceneIndexDoc index = indexStructure.getIndex();
             final IndexVolume indexVolume = indexVolumeService.selectVolume(index.getVolumeGroupName(), ownerNodeName);

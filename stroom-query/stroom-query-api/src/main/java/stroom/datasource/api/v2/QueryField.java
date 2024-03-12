@@ -48,7 +48,7 @@ import java.util.Objects;
         @Type(value = DocRefField.class, name = "DocRef")
 })
 @JsonInclude(Include.NON_NULL)
-public abstract class QueryField implements HasDisplayValue {
+public abstract class QueryField implements Field, HasDisplayValue {
 
     @JsonProperty
     private final String name;
@@ -77,6 +77,7 @@ public abstract class QueryField implements HasDisplayValue {
 
     public abstract FieldType getFieldType();
 
+    @Override
     public String getName() {
         return name;
     }
@@ -115,6 +116,11 @@ public abstract class QueryField implements HasDisplayValue {
     @Override
     public String getDisplayValue() {
         return name;
+    }
+
+    @Override
+    public int compareTo(final Field field) {
+        return name.compareTo(field.getName());
     }
 
     @Override

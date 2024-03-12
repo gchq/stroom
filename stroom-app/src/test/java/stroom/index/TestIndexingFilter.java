@@ -25,6 +25,7 @@ import stroom.index.impl.IndexStore;
 import stroom.index.mock.MockIndexShardWriter;
 import stroom.index.mock.MockIndexShardWriterCache;
 import stroom.index.shared.AnalyzerType;
+import stroom.index.shared.IndexField;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.index.shared.LuceneIndexField;
 import stroom.index.impl.IndexFields;
@@ -107,7 +108,7 @@ class TestIndexingFilter extends AbstractProcessIntegrationTest {
         final List<FieldValue> list = getFields(doc, "sid2");
         assertThat(list.size()).isOne();
         final FieldValue fieldValue = list.get(0);
-        final LuceneIndexField field = fieldValue.field();
+        final IndexField field = fieldValue.field();
 
 
         // FIXME : BROKEN BY LUCENE553 SEGREGATION

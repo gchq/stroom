@@ -19,12 +19,12 @@ package stroom.index.shared;
 import java.util.HashMap;
 import java.util.List;
 
-public class IndexFieldsMap extends HashMap<String, LuceneIndexField> {
+public class LuceneIndexFieldsMap extends HashMap<String, LuceneIndexField> {
 
-    public IndexFieldsMap() {
+    public LuceneIndexFieldsMap() {
     }
 
-    public IndexFieldsMap(final List<LuceneIndexField> indexFields) {
+    public LuceneIndexFieldsMap(final List<LuceneIndexField> indexFields) {
         if (indexFields != null) {
             for (final LuceneIndexField indexField : indexFields) {
                 put(indexField);

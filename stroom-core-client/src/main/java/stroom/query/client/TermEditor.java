@@ -192,7 +192,7 @@ public class TermEditor extends Composite {
         if (selectedField != null && conditionListBox.getValue() != null) {
             DocRef docRef = null;
 
-            term.setField(selectedField.getFieldName());
+            term.setField(selectedField.getName());
             term.setCondition(conditionListBox.getValue());
 
             final StringBuilder sb = new StringBuilder();

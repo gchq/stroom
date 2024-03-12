@@ -33,6 +33,8 @@ import stroom.datasource.api.v2.LongField;
 import stroom.datasource.api.v2.QueryField;
 import stroom.datasource.api.v2.TextField;
 import stroom.docref.DocRef;
+import stroom.index.shared.IndexField;
+import stroom.index.shared.IndexFieldProvider;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.SearchRequest;
@@ -81,7 +83,7 @@ import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
 
 @SuppressWarnings("unused")
-public class ElasticSearchProvider implements SearchProvider, ElasticIndexService {
+public class ElasticSearchProvider implements SearchProvider, ElasticIndexService, IndexFieldProvider {
 
     public static final String ENTITY_TYPE = ElasticIndexDoc.DOCUMENT_TYPE;
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ElasticSearchProvider.class);
@@ -174,6 +176,16 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
     }
 
     @Override
+    public IndexField getIndexField(final DocRef docRef, final String fieldName) {
+        final ElasticIndexDoc index = elasticIndexStore.readDocument(docRef);
+        if (index != null) {
+            final Map<String, ElasticIndexField> indexFieldMap = getFieldsMap(index);
+            return indexFieldMap.get(fieldName);
+        }
+        return null;
+    }
+
+    @Override
     public DocRef fetchDefaultExtractionPipeline(final DocRef dataSourceRef) {
         return securityContext.useAsReadResult(() -> {
             final ElasticIndexDoc index = elasticIndexStore.readDocument(dataSourceRef);
@@ -210,38 +222,40 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
         return fieldMappings
                 .entrySet()
                 .stream()
-                .map(field -> {
-                    final String fieldName = field.getKey();
-                    final FieldMappingMetadata fieldMeta = field.getValue();
-                    String nativeType = getFieldPropertyFromMapping(fieldName, field.getValue(), "type");
-
-                    if (nativeType == null) {
-                        // If field type is null, this is a system field, so ignore
-                        return null;
-                    } else if (nativeType.equals("alias")) {
-                        // Determine the mapping type of the field the alias is referring to
-                        try {
-                            final String aliasPath = getFieldPropertyFromMapping(fieldName, field.getValue(), "path");
-                            final FieldMappingMetadata targetFieldMeta = fieldMappings.get(aliasPath);
-                            nativeType = getFieldPropertyFromMapping(aliasPath, targetFieldMeta, "type");
-                        } catch (Exception e) {
-                            LOGGER.error("Could not determine mapping type for alias field '{}'", fieldName);
-                        }
-                    }
-
-                    try {
-                        final String fullName = fieldMeta.fullName();
-                        final FieldType elasticFieldType =
-                                ElasticNativeTypes.fromNativeType(fullName, nativeType);
-
-                        return toDataSourceField(elasticFieldType, fieldName, fieldIsIndexed(field.getValue()));
-                    } catch (IllegalArgumentException e) {
-                        LOGGER.warn(e::getMessage);
-                        return null;
-                    }
-                })
+                .map(field -> createQueryField(fieldMappings, field.getKey(), field.getValue()))
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
+    }
+
+    private QueryField createQueryField(final Map<String, FieldMappingMetadata> fieldMappings,
+                                        final String fieldName,
+                                        final FieldMappingMetadata fieldMeta) {
+        String nativeType = getFieldPropertyFromMapping(fieldName, fieldMeta, "type");
+
+        if (nativeType == null) {
+            // If field type is null, this is a system field, so ignore
+            return null;
+        } else if (nativeType.equals("alias")) {
+            // Determine the mapping type of the field the alias is referring to
+            try {
+                final String aliasPath = getFieldPropertyFromMapping(fieldName, fieldMeta, "path");
+                final FieldMappingMetadata targetFieldMeta = fieldMappings.get(aliasPath);
+                nativeType = getFieldPropertyFromMapping(aliasPath, targetFieldMeta, "type");
+            } catch (Exception e) {
+                LOGGER.error("Could not determine mapping type for alias field '{}'", fieldName);
+            }
+        }
+
+        try {
+            final String fullName = fieldMeta.fullName();
+            final FieldType elasticFieldType =
+                    ElasticNativeTypes.fromNativeType(fullName, nativeType);
+
+            return toDataSourceField(elasticFieldType, fieldName, fieldIsIndexed(fieldMeta));
+        } catch (IllegalArgumentException e) {
+            LOGGER.warn(e::getMessage);
+            return null;
+        }
     }
 
     /**
@@ -333,9 +347,11 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
 
                 final FieldType type = ElasticNativeTypes.fromNativeType(fieldName, nativeType);
                 fieldsMap.put(fieldName, new ElasticIndexField(
-                        type,
+                        null,
+                        null,
                         null,
                         fieldName,
+                        type,
                         nativeType,
                         indexed));
             } catch (Exception e) {

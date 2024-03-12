@@ -25,6 +25,8 @@ import stroom.datasource.api.v2.QueryFieldService;
 import stroom.docref.DocRef;
 import stroom.index.impl.IndexStore;
 import stroom.index.impl.LuceneProviderFactory;
+import stroom.index.shared.IndexField;
+import stroom.index.shared.IndexFieldProvider;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.index.shared.LuceneVersionUtil;
 import stroom.query.api.v2.ExpressionUtil;
@@ -50,7 +52,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class LuceneSearchProvider implements SearchProvider {
+public class LuceneSearchProvider implements SearchProvider, IndexFieldProvider {
 
     private final IndexStore indexStore;
     private final SecurityContext securityContext;
@@ -121,6 +123,17 @@ public class LuceneSearchProvider implements SearchProvider {
 
             return queryFieldService.findFieldInfo(criteria);
         });
+    }
+
+    @Override
+    public IndexField getIndexField(final DocRef docRef, final String fieldName) {
+        // TODO : GET FIELD
+//        final ElasticIndexDoc index = elasticIndexStore.readDocument(docRef);
+//        if (index != null) {
+//            final Map<String, ElasticIndexField> indexFieldMap = getFieldsMap(index);
+//            return indexFieldMap.get(fieldName);
+//        }
+        return null;
     }
 
     private void addField(final int fieldSourceId, final QueryField field) {

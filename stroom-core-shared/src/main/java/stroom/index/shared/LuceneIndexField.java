@@ -16,19 +16,37 @@
 
 package stroom.index.shared;
 
+import stroom.datasource.api.v2.Field;
 import stroom.datasource.api.v2.FieldType;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+
+import java.util.Objects;
 
 /**
  * <p>
  * Wrapper for index field info
  * </p>
  */
+@JsonPropertyOrder({
+        "fieldName", // deprecated
+        "fieldType", // deprecated
+
+        "name",
+        "type",
+        "nativeType",
+        "analyzerType",
+        "indexed",
+        "stored",
+        "termPositions",
+        "caseSensitive"
+})
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class LuceneIndexField extends IndexField {
+public class LuceneIndexField implements IndexField {
 
     @Deprecated
     @JsonProperty("fieldType")
@@ -36,6 +54,21 @@ public class LuceneIndexField extends IndexField {
     @Deprecated
     @JsonProperty("fieldName")
     private String fieldName;
+
+    @JsonProperty
+    private final String name;
+    @JsonProperty
+    private final FieldType type;
+    @JsonProperty
+    private final AnalyzerType analyzerType;
+    @JsonProperty
+    private final boolean indexed;
+    @JsonProperty
+    private final boolean stored;
+    @JsonProperty
+    private final boolean termPositions;
+    @JsonProperty
+    private final boolean caseSensitive;
 
     @JsonCreator
     public LuceneIndexField(@JsonProperty("name") final String name,
@@ -47,13 +80,13 @@ public class LuceneIndexField extends IndexField {
                             @JsonProperty("stored") final boolean stored,
                             @JsonProperty("termPositions") final boolean termPositions,
                             @JsonProperty("caseSensitive") final boolean caseSensitive) {
-        super(convertLegacyName(name, fieldName),
-                convertLegacyType(type, fieldType),
-                analyzerType,
-                indexed,
-                stored,
-                termPositions,
-                caseSensitive);
+        this.name = convertLegacyName(name, fieldName);
+        this.type = convertLegacyType(type, fieldType);
+        this.analyzerType = analyzerType;
+        this.stored = stored;
+        this.indexed = indexed;
+        this.termPositions = termPositions;
+        this.caseSensitive = caseSensitive;
     }
 
     private static String convertLegacyName(final String name, final String fieldName) {
@@ -163,6 +196,71 @@ public class LuceneIndexField extends IndexField {
                 .name(fieldName)
                 .analyzerType(AnalyzerType.ALPHA_NUMERIC)
                 .build();
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public FieldType getType() {
+        return type;
+    }
+
+    public AnalyzerType getAnalyzerType() {
+        if (analyzerType == null) {
+            return AnalyzerType.KEYWORD;
+        }
+        return analyzerType;
+    }
+
+    public boolean isCaseSensitive() {
+        return caseSensitive;
+    }
+
+    public boolean isStored() {
+        return stored;
+    }
+
+    public boolean isIndexed() {
+        return indexed;
+    }
+
+    public boolean isTermPositions() {
+        return termPositions;
+    }
+
+    @Override
+    @JsonIgnore
+    public String getDisplayValue() {
+        return name;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        final LuceneIndexField that = (LuceneIndexField) o;
+        return indexed == that.indexed &&
+                stored == that.stored &&
+                termPositions == that.termPositions &&
+                caseSensitive == that.caseSensitive &&
+                Objects.equals(name, that.name) &&
+                type == that.type &&
+                analyzerType == that.analyzerType;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(name, type, analyzerType, indexed, stored, termPositions, caseSensitive);
+    }
+
+    @Override
+    public int compareTo(final Field o) {
+        return name.compareToIgnoreCase(o.getName());
     }
 
     public static Builder builder() {

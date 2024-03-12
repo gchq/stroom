@@ -14,23 +14,23 @@
  * limitations under the License.
  */
 
-package stroom.search.extraction;
+package stroom.index.impl;
 
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.index.shared.LuceneIndexField;
-import stroom.index.shared.IndexFieldsMap;
+import stroom.index.shared.LuceneIndexFieldsMap;
 
 import java.util.List;
 
-public class IndexStructure {
+public class LuceneIndexStructure {
 
     private final LuceneIndexDoc index;
     private final List<LuceneIndexField> indexFields;
-    private final IndexFieldsMap indexFieldsMap;
+    private final LuceneIndexFieldsMap indexFieldsMap;
 
-    public IndexStructure(final LuceneIndexDoc index,
-                          final List<LuceneIndexField> indexFields,
-                          final IndexFieldsMap indexFieldsMap) {
+    public LuceneIndexStructure(final LuceneIndexDoc index,
+                                final List<LuceneIndexField> indexFields,
+                                final LuceneIndexFieldsMap indexFieldsMap) {
         this.index = index;
         this.indexFields = indexFields;
         this.indexFieldsMap = indexFieldsMap;
@@ -44,7 +44,7 @@ public class IndexStructure {
         return indexFields;
     }
 
-    public IndexFieldsMap getIndexFieldsMap() {
+    public LuceneIndexFieldsMap getIndexFieldsMap() {
         return indexFieldsMap;
     }
 }

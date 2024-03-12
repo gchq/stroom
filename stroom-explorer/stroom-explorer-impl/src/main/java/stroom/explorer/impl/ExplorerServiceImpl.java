@@ -1572,11 +1572,11 @@ class ExplorerServiceImpl
     @Override
     public Suggestions getSuggestions(final FetchSuggestionsRequest request) {
         return securityContext.secureResult(() -> {
-            if (ExplorerFields.TAG.getName().equals(request.getField().getFieldName())) {
+            if (ExplorerFields.TAG.getName().equals(request.getField().getName())) {
                 final Set<String> tags = getTags();
                 return new Suggestions(new ArrayList<>(tags), false);
             } else {
-                throw new RuntimeException(LogUtil.message("Unexpected field " + request.getField().getFieldName()));
+                throw new RuntimeException(LogUtil.message("Unexpected field " + request.getField().getName()));
             }
         });
     }

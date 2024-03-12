@@ -86,7 +86,7 @@ public class QueryFieldDaoImpl implements QueryFieldDao {
             for (final FieldInfo field : fields) {
                 c = c.values(fieldSourceId,
                         (byte) field.getFieldType().getIndex(),
-                        field.getFieldName());
+                        field.getName());
             }
             c.onDuplicateKeyUpdate()
                     .set(FIELD_INFO.FK_FIELD_SOURCE_ID, fieldSourceId)
@@ -122,7 +122,7 @@ public class QueryFieldDaoImpl implements QueryFieldDao {
                     final String name = r.get(FIELD_INFO.FIELD_NAME);
                     final FieldType fieldType = FieldType.get(typeId);
                     final ConditionSet conditions = ConditionSet.getDefault(fieldType);
-                    return new FieldInfo(fieldType, name, conditions, null, null);
+                    return new FieldInfo(name, fieldType, conditions, null, null);
                 });
         return ResultPage.createCriterialBasedList(fieldInfoList, criteria);
     }

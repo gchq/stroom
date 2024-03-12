@@ -22,7 +22,7 @@ import stroom.importexport.api.ImportExportActionHandler;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.lifecycle.api.LifecycleBinder;
-import stroom.search.extraction.IndexStructureCache;
+import stroom.search.extraction.IndexFieldCache;
 import stroom.searchable.api.Searchable;
 import stroom.util.RunnableWrapper;
 import stroom.util.entityevent.EntityEvent;
@@ -44,7 +44,8 @@ public class IndexModule extends AbstractModule {
         install(new IndexElementModule());
 
         bind(IndexShardWriterCache.class).to(IndexShardWriterCacheImpl.class);
-        bind(IndexStructureCache.class).to(IndexStructureCacheImpl.class);
+        bind(LuceneIndexStructureCache.class).to(LuceneIndexStructureCacheImpl.class);
+        bind(IndexFieldCache.class).to(IndexFieldCacheImpl.class);
         bind(IndexStore.class).to(IndexStoreImpl.class);
         bind(IndexVolumeService.class).to(IndexVolumeServiceImpl.class);
         bind(IndexVolumeGroupService.class).to(IndexVolumeGroupServiceImpl.class);
@@ -52,9 +53,10 @@ public class IndexModule extends AbstractModule {
         bind(Indexer.class).to(IndexerImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class)
-                .addBinding(IndexStructureCacheImpl.class)
+                .addBinding(LuceneIndexStructureCacheImpl.class)
                 .addBinding(IndexVolumeServiceImpl.class)
-                .addBinding(IndexVolumeGroupServiceImpl.class);
+                .addBinding(IndexVolumeGroupServiceImpl.class)
+                .addBinding(IndexFieldCacheImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), EntityEvent.Handler.class)
                 .addBinding(IndexConfigCacheEntityEventHandler.class);

@@ -6,13 +6,13 @@ import stroom.index.impl.IndexShardWriter;
 import stroom.index.impl.IndexSystemInfoProvider;
 import stroom.index.impl.LuceneProvider;
 import stroom.index.impl.LuceneShardSearcher;
-import stroom.index.shared.IndexFieldsMap;
+import stroom.index.shared.LuceneIndexFieldsMap;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
 import stroom.index.shared.LuceneVersion;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.QueryKey;
-import stroom.search.extraction.IndexStructure;
+import stroom.index.impl.LuceneIndexStructure;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -38,7 +38,7 @@ class Lucene553Provider implements LuceneProvider {
 
     @Override
     public LuceneShardSearcher createLuceneShardSearcher(final ExpressionOperator expression,
-                                                         final IndexFieldsMap indexFieldsMap,
+                                                         final LuceneIndexFieldsMap indexFieldsMap,
                                                          final DateTimeSettings dateTimeSettings,
                                                          final QueryKey queryKey) {
         return shardSearcherFactory.create(
@@ -54,7 +54,7 @@ class Lucene553Provider implements LuceneProvider {
     }
 
     @Override
-    public IndexShardWriter createIndexShardWriter(final IndexStructure indexStructure,
+    public IndexShardWriter createIndexShardWriter(final LuceneIndexStructure indexStructure,
                                                    final IndexShardKey indexShardKey,
                                                    final IndexShard indexShard) {
         return indexShardWriterFactory.create(

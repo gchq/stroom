@@ -23,12 +23,12 @@ import stroom.index.impl.IndexShardService;
 import stroom.index.impl.IndexShardWriterCache;
 import stroom.index.impl.IndexStore;
 import stroom.index.impl.IndexStoreImpl;
-import stroom.index.impl.IndexStructureCacheImpl;
+import stroom.index.impl.LuceneIndexStructureCacheImpl;
 import stroom.index.impl.IndexVolumeGroupService;
 import stroom.index.impl.IndexVolumeService;
 import stroom.index.impl.Indexer;
 import stroom.index.shared.LuceneIndexDoc;
-import stroom.search.extraction.IndexStructureCache;
+import stroom.index.impl.LuceneIndexStructureCache;
 import stroom.util.guice.GuiceUtil;
 
 import com.google.inject.AbstractModule;
@@ -40,7 +40,7 @@ public class MockIndexModule extends AbstractModule {
         install(new IndexElementModule());
 
         bind(IndexShardWriterCache.class).to(MockIndexShardWriterCache.class);
-        bind(IndexStructureCache.class).to(IndexStructureCacheImpl.class);
+        bind(LuceneIndexStructureCache.class).to(LuceneIndexStructureCacheImpl.class);
         bind(IndexStore.class).to(IndexStoreImpl.class);
         bind(IndexVolumeService.class).to(MockIndexVolumeService.class);
         bind(IndexVolumeGroupService.class).to(MockIndexVolumeGroupService.class);

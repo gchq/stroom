@@ -1,7 +1,5 @@
 package stroom.datasource.api.v2;
 
-import stroom.docref.HasDisplayValue;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -13,12 +11,12 @@ import java.util.Objects;
 
 @JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
-public class FieldInfo implements HasDisplayValue {
+public class FieldInfo implements Field {
 
     @JsonProperty
-    private final FieldType fieldType;
+    private final String name;
     @JsonProperty
-    private final String fieldName;
+    private final FieldType fieldType;
     @JsonProperty
     private final ConditionSet conditions;
     @JsonProperty
@@ -27,13 +25,13 @@ public class FieldInfo implements HasDisplayValue {
     private final Boolean queryable;
 
     @JsonCreator
-    public FieldInfo(@JsonProperty("fieldType") final FieldType fieldType,
-                     @JsonProperty("fieldName") final String fieldName,
+    public FieldInfo(@JsonProperty("fieldName") final String name,
+                     @JsonProperty("fieldType") final FieldType fieldType,
                      @JsonProperty("conditions") final ConditionSet conditions,
                      @JsonProperty("docRefType") final String docRefType,
                      @JsonProperty("queryable") final Boolean queryable) {
+        this.name = name;
         this.fieldType = fieldType;
-        this.fieldName = fieldName;
         this.conditions = conditions;
         this.docRefType = docRefType;
         this.queryable = queryable;
@@ -41,19 +39,20 @@ public class FieldInfo implements HasDisplayValue {
 
     public static FieldInfo create(final QueryField field) {
         return builder()
+                .name(field.getName())
                 .fieldType(field.getFieldType())
-                .fieldName(field.getName())
                 .conditions(field.getConditionSet())
                 .docRefType(field.getDocRefType())
                 .build();
     }
 
-    public FieldType getFieldType() {
-        return fieldType;
+    @Override
+    public String getName() {
+        return name;
     }
 
-    public String getFieldName() {
-        return fieldName;
+    public FieldType getFieldType() {
+        return fieldType;
     }
 
     public ConditionSet getConditions() {
@@ -75,7 +74,12 @@ public class FieldInfo implements HasDisplayValue {
     @JsonIgnore
     @Override
     public String getDisplayValue() {
-        return fieldName;
+        return name;
+    }
+
+    @Override
+    public int compareTo(final Field field) {
+        return name.compareTo(field.getName());
     }
 
     @Override
@@ -87,13 +91,12 @@ public class FieldInfo implements HasDisplayValue {
             return false;
         }
         final FieldInfo that = (FieldInfo) o;
-        return fieldType == that.fieldType &&
-                Objects.equals(fieldName, that.fieldName);
+        return Objects.equals(name, that.name) && fieldType == that.fieldType;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(fieldType, fieldName);
+        return Objects.hash(name, fieldType);
     }
 
     public Builder copy() {
@@ -106,8 +109,8 @@ public class FieldInfo implements HasDisplayValue {
 
     public static class Builder {
 
+        private String name;
         private FieldType fieldType;
-        private String fieldName;
         private ConditionSet conditions;
         private String docRefType;
         private Boolean queryable;
@@ -116,20 +119,20 @@ public class FieldInfo implements HasDisplayValue {
         }
 
         public Builder(final FieldInfo fieldInfo) {
+            this.name = fieldInfo.name;
             this.fieldType = fieldInfo.fieldType;
-            this.fieldName = fieldInfo.fieldName;
             this.conditions = fieldInfo.conditions;
             this.docRefType = fieldInfo.docRefType;
             this.queryable = fieldInfo.queryable;
         }
 
-        public Builder fieldType(final FieldType fieldType) {
-            this.fieldType = fieldType;
+        public Builder name(final String name) {
+            this.name = name;
             return this;
         }
 
-        public Builder fieldName(final String fieldName) {
-            this.fieldName = fieldName;
+        public Builder fieldType(final FieldType fieldType) {
+            this.fieldType = fieldType;
             return this;
         }
 
@@ -150,8 +153,8 @@ public class FieldInfo implements HasDisplayValue {
 
         public FieldInfo build() {
             return new FieldInfo(
+                    name,
                     fieldType,
-                    fieldName,
                     conditions,
                     docRefType,
                     queryable);

@@ -16,8 +16,9 @@
 
 package stroom.search.elastic.shared;
 
+import stroom.datasource.api.v2.Field;
 import stroom.datasource.api.v2.FieldType;
-import stroom.docref.HasDisplayValue;
+import stroom.index.shared.IndexField;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -26,7 +27,6 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import java.io.Serializable;
 import java.util.Objects;
 
 /**
@@ -35,106 +35,98 @@ import java.util.Objects;
  * </p>
  */
 @JsonPropertyOrder({
+        "fieldUse", // deprecated
+        "fieldName", // deprecated
+        "fieldType", // deprecated
+
+        "name",
         "type",
-        "fieldUse",
-        "fieldName",
-        "fieldType",
+        "nativeType",
         "indexed"
 })
 @JsonInclude(Include.NON_NULL)
-public class ElasticIndexField implements HasDisplayValue, Comparable<ElasticIndexField>, Serializable {
-
-    @JsonProperty
-    private FieldType type;
+public class ElasticIndexField implements IndexField {
 
     @Deprecated
     @JsonProperty("fieldUse")
     private FieldType fieldUse;
-
-    @JsonProperty
+    @Deprecated
+    @JsonProperty("fieldName")
     private String fieldName;
-
-    @JsonProperty
+    @Deprecated
+    @JsonProperty("fieldType")
     private String fieldType;
 
-    @JsonProperty
-    private boolean indexed;
 
-    public ElasticIndexField() {
-    }
+    @JsonProperty
+    private final String name;
+    @JsonProperty
+    private final FieldType type;
+    @JsonProperty
+    private final String nativeType;
+    @JsonProperty
+    private final boolean indexed;
 
     @JsonCreator
     public ElasticIndexField(
+            @Deprecated @JsonProperty("fieldName") final String fieldName,
+            @Deprecated @JsonProperty("fieldUse") final FieldType fieldUse,
+            @Deprecated @JsonProperty("fieldType") final String fieldType,
+
+            @JsonProperty("name") final String name,
             @JsonProperty("type") final FieldType type,
-            @JsonProperty("fieldUse") final FieldType fieldUse,
-            @JsonProperty("fieldName") final String fieldName,
-            @JsonProperty("fieldType") final String fieldType,
+            @JsonProperty("nativeType") final String nativeType,
             @JsonProperty("indexed") final boolean indexed) {
+        this.name = convertLegacyName(name, fieldName);
+        this.type = convertLegacyType(type, fieldUse);
+        this.nativeType = convertLegacyNativeType(nativeType, fieldType);
+        this.indexed = indexed;
+    }
 
-        // Legacy conversion.
-        if (fieldUse != null) {
-            this.type = fieldUse;
+    private static String convertLegacyName(final String name, final String fieldName) {
+        if (name == null) {
+            return fieldName;
         }
+        return name;
+    }
 
-        if (type != null) {
-            this.type = type;
+    private static FieldType convertLegacyType(final FieldType type, final FieldType fieldUse) {
+        if (type == null) {
+            if (fieldUse != null) {
+                return fieldUse;
+            }
+            return FieldType.TEXT;
         }
+        return type;
+    }
 
-        setFieldName(fieldName);
-        setFieldType(fieldType);
-        setIndexed(indexed);
+    private static String convertLegacyNativeType(final String nativeType, final String fieldType) {
+        if (nativeType == null) {
+            return fieldType;
+        }
+        return nativeType;
+    }
+
+    public String getName() {
+        return name;
     }
 
     public FieldType getType() {
         return type;
     }
 
-    public void setType(final FieldType type) {
-        this.type = type;
-    }
-
-//    @JsonProperty
-//    @Deprecated
-//    public FieldType getFieldUse() {
-//        return type;
-//    }
-//
-//    @JsonProperty
-//    @Deprecated
-//    public void setFieldUse(final FieldType fieldUse) {
-//        if (fieldUse != null) {
-//            this.type = fieldUse;
-//        }
-//    }
-
-    public String getFieldName() {
-        return fieldName;
-    }
-
-    public void setFieldName(final String fieldName) {
-        this.fieldName = fieldName;
-    }
-
-    public String getFieldType() {
-        return fieldType;
-    }
-
-    public void setFieldType(final String fieldType) {
-        this.fieldType = fieldType;
+    public String getNativeType() {
+        return nativeType;
     }
 
     public boolean isIndexed() {
         return indexed;
     }
 
-    public void setIndexed(final boolean indexed) {
-        this.indexed = indexed;
-    }
-
-    @JsonIgnore
     @Override
+    @JsonIgnore
     public String getDisplayValue() {
-        return fieldName;
+        return name;
     }
 
     @Override
@@ -142,28 +134,84 @@ public class ElasticIndexField implements HasDisplayValue, Comparable<ElasticInd
         if (this == o) {
             return true;
         }
-        if (!(o instanceof ElasticIndexField)) {
+        if (o == null || getClass() != o.getClass()) {
             return false;
         }
         final ElasticIndexField that = (ElasticIndexField) o;
-        return type == that.type &&
-                indexed == that.indexed &&
+        return indexed == that.indexed &&
+                fieldUse == that.fieldUse &&
                 Objects.equals(fieldName, that.fieldName) &&
-                Objects.equals(fieldType, that.fieldType);
+                Objects.equals(fieldType, that.fieldType) &&
+                Objects.equals(name, that.name) &&
+                type == that.type &&
+                Objects.equals(nativeType, that.nativeType);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(type, fieldName, fieldType, indexed);
+        return Objects.hash(fieldUse, fieldName, fieldType, name, type, nativeType, indexed);
     }
 
     @Override
-    public String toString() {
-        return fieldName;
+    public int compareTo(final Field o) {
+        return name.compareToIgnoreCase(o.getName());
     }
 
-    @Override
-    public int compareTo(final ElasticIndexField o) {
-        return fieldName.compareToIgnoreCase(o.fieldName);
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static final class Builder {
+
+        private String name;
+        private FieldType type = FieldType.TEXT;
+        private String nativeType;
+        private boolean indexed = true;
+
+        private Builder() {
+        }
+
+        private Builder(final ElasticIndexField indexField) {
+            this.name = indexField.name;
+            this.type = indexField.type;
+            this.nativeType = indexField.nativeType;
+            this.indexed = indexField.indexed;
+        }
+
+        public Builder name(final String name) {
+            this.name = name;
+            return this;
+        }
+
+        public Builder type(final FieldType type) {
+            this.type = type;
+            return this;
+        }
+
+        public Builder nativeType(final String nativeType) {
+            this.nativeType = nativeType;
+            return this;
+        }
+
+        public Builder indexed(final boolean indexed) {
+            this.indexed = indexed;
+            return this;
+        }
+
+
+        public ElasticIndexField build() {
+            return new ElasticIndexField(
+                    null,
+                    null,
+                    null,
+                    name,
+                    type,
+                    nativeType,
+                    indexed);
+        }
     }
 }

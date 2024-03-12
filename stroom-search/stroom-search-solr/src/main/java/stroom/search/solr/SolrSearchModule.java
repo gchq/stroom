@@ -20,6 +20,7 @@ import stroom.datasource.api.v2.DataSourceProvider;
 import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
+import stroom.index.shared.IndexFieldProvider;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.query.common.v2.SearchProvider;
 import stroom.search.solr.indexing.SolrIndexingElementModule;
@@ -50,6 +51,8 @@ public class SolrSearchModule extends AbstractModule {
         GuiceUtil.buildMultiBinder(binder(), DataSourceProvider.class)
                 .addBinding(SolrSearchProvider.class);
         GuiceUtil.buildMultiBinder(binder(), SearchProvider.class)
+                .addBinding(SolrSearchProvider.class);
+        GuiceUtil.buildMultiBinder(binder(), IndexFieldProvider.class)
                 .addBinding(SolrSearchProvider.class);
 
         GuiceUtil.buildMultiBinder(binder(), EntityEvent.Handler.class)

@@ -5,7 +5,7 @@ import stroom.index.impl.IndexShardManager;
 import stroom.index.impl.IndexShardWriter;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
-import stroom.search.extraction.IndexStructure;
+import stroom.index.impl.LuceneIndexStructure;
 import stroom.util.io.PathCreator;
 
 import jakarta.inject.Inject;
@@ -25,7 +25,7 @@ class Lucene980IndexShardWriterFactory {
         this.pathCreator = pathCreator;
     }
 
-    IndexShardWriter create(final IndexStructure indexStructure,
+    IndexShardWriter create(final LuceneIndexStructure indexStructure,
                             final IndexShardKey indexShardKey,
                             final IndexShard indexShard) {
         return new Lucene980IndexShardWriter(

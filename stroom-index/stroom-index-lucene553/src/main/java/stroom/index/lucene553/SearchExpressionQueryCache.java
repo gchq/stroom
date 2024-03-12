@@ -2,8 +2,9 @@ package stroom.index.lucene553;
 
 import stroom.index.lucene553.SearchExpressionQueryBuilder.SearchExpressionQuery;
 import stroom.index.lucene553.analyser.AnalyzerFactory;
+import stroom.index.shared.IndexField;
 import stroom.index.shared.LuceneIndexField;
-import stroom.index.shared.IndexFieldsMap;
+import stroom.index.shared.LuceneIndexFieldsMap;
 import stroom.query.api.v2.SearchRequest;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -19,7 +20,7 @@ class SearchExpressionQueryCache {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SearchExpressionQueryCache.class);
 
     private final SearchExpressionQueryBuilderFactory searchExpressionQueryBuilderFactory;
-    private final IndexFieldsMap indexFieldsMap = new IndexFieldsMap();
+    private final LuceneIndexFieldsMap indexFieldsMap = new LuceneIndexFieldsMap();
     private final Map<String, Analyzer> analyzerMap = new HashMap<>();
     private SearchExpressionQuery luceneQuery;
 
