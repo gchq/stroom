@@ -17,9 +17,7 @@
 package stroom.expression.matcher;
 
 import stroom.data.shared.StreamTypeNames;
-import stroom.datasource.api.v2.DocRefField;
 import stroom.datasource.api.v2.QueryField;
-import stroom.datasource.api.v2.TextField;
 import stroom.dictionary.api.WordListProvider;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docref.DocRef;
@@ -56,9 +54,9 @@ class TestExpressionMatcher {
     @Mock
     private WordListProvider mockWordListProvider;
 
-    public static final DocRefField FEED = DocRefField.byUniqueName("Feed", "Feed");
-    private static final TextField TYPE = new TextField("Type");
-    private static final TextField FRUIT = new TextField("Fruit");
+    public static final QueryField FEED = QueryField.byUniqueName("Feed", "Feed");
+    private static final QueryField TYPE = QueryField.createText("Type");
+    private static final QueryField FRUIT = QueryField.createText("Fruit");
     private static final Map<String, QueryField> FIELD_MAP = Map.of(
             FEED.getName(),
             FEED,
@@ -79,7 +77,7 @@ class TestExpressionMatcher {
     void testEnabledState() {
         // TEST_FEED term is disabled so there should be no match
         final ExpressionOperator.Builder builder = ExpressionOperator.builder().op(Op.OR);
-        builder.addTerm(FEED, Condition.EQUALS, "FOO");
+        builder.addDateTerm(FEED, Condition.EQUALS, "FOO");
         final ExpressionTerm disabledTerm = ExpressionTerm.builder()
                 .field(FEED.getName())
                 .condition(Condition.EQUALS)
@@ -223,7 +221,7 @@ class TestExpressionMatcher {
 
     private ExpressionOperator createExpression(final Op op, final String feedName) {
         final ExpressionOperator.Builder builder = ExpressionOperator.builder().op(op);
-        builder.addTerm(FEED, Condition.EQUALS, feedName);
+        builder.addDateTerm(FEED, Condition.EQUALS, feedName);
         return builder.build();
     }
 

@@ -18,18 +18,8 @@
 package stroom.receive.rules.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.datasource.api.v2.BooleanField;
-import stroom.datasource.api.v2.DateField;
-import stroom.datasource.api.v2.DocRefField;
-import stroom.datasource.api.v2.DoubleField;
 import stroom.datasource.api.v2.FieldType;
-import stroom.datasource.api.v2.FloatField;
-import stroom.datasource.api.v2.IdField;
-import stroom.datasource.api.v2.IntegerField;
-import stroom.datasource.api.v2.IpV4AddressField;
-import stroom.datasource.api.v2.LongField;
 import stroom.datasource.api.v2.QueryField;
-import stroom.datasource.api.v2.TextField;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -97,31 +87,11 @@ public class FieldEditPresenter extends MyPresenterWidget<FieldEditPresenter.Fie
     }
 
     private QueryField create(final FieldType type, final String name) {
-        switch (type) {
-            case ID:
-                return new IdField(name);
-            case BOOLEAN:
-                return new BooleanField(name);
-            case INTEGER:
-                return new IntegerField(name);
-            case LONG:
-                return new LongField(name);
-            case FLOAT:
-                return new FloatField(name);
-            case DOUBLE:
-                return new DoubleField(name);
-            case DATE:
-                return new DateField(name);
-            case TEXT:
-                return new TextField(name);
-            case IPV4_ADDRESS:
-                return new IpV4AddressField(name);
-            case DOC_REF:
-                return new DocRefField(null, name);
-            default:
-                AlertEvent.fireWarn(this, "Unexpected type " + type, null);
-        }
-
-        return null;
+        return QueryField
+                .builder()
+                .name(name)
+                .fieldType(type)
+                .queryable(true)
+                .build();
     }
 }

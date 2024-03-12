@@ -18,7 +18,6 @@
 package stroom.expression.matcher;
 
 import stroom.collection.api.CollectionService;
-import stroom.datasource.api.v2.DocRefField;
 import stroom.datasource.api.v2.FieldType;
 import stroom.datasource.api.v2.QueryField;
 import stroom.dictionary.api.WordListProvider;
@@ -374,9 +373,11 @@ public class ExpressionMatcher {
         return false;
     }
 
-    private boolean isInFolder(final String fieldName, final DocRef docRef,
-                               final QueryField field, final Object attribute) {
-        if (field instanceof DocRefField) {
+    private boolean isInFolder(final String fieldName,
+                               final DocRef docRef,
+                               final QueryField field,
+                               final Object attribute) {
+        if (FieldType.DOC_REF.equals(field.getFieldType())) {
             final String type = field.getDocRefType();
             if (type != null && collectionService != null) {
                 final Set<DocRef> descendants = collectionService.getDescendants(docRef, type);

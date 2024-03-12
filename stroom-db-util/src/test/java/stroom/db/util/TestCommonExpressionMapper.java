@@ -2,14 +2,12 @@ package stroom.db.util;
 
 
 import stroom.datasource.api.v2.ConditionSet;
-import stroom.datasource.api.v2.FieldType;
 import stroom.datasource.api.v2.QueryField;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.jooq.Condition;
 import org.jooq.impl.DSL;
 import org.junit.jupiter.api.DynamicTest;
@@ -302,8 +300,12 @@ class TestCommonExpressionMapper {
         final CommonExpressionMapper mapper = new CommonExpressionMapper();
 
         // Set up some noddy term handlers so we can test expression terms
-        FIELD_NAMES.forEach(fieldName ->
-                mapper.addHandler(new MyDbField(fieldName), handler));
+        FIELD_NAMES.forEach(fieldName -> mapper.addHandler(QueryField
+                .builder()
+                .name(fieldName)
+                .queryable(true)
+                .conditionSet(ConditionSet.DEFAULT_ID)
+                .build(), handler));
 
         final Condition condition = mapper.apply(expressionItem);
 
@@ -315,26 +317,5 @@ class TestCommonExpressionMapper {
 
     private String conditionString(final String fieldName, final String value) {
         return "(" + DB_FIELD_NAME_1 + "=" + FIELD_1_VALUE + ")";
-    }
-
-    private static class MyDbField extends QueryField {
-
-        private final String name;
-
-        public MyDbField(String name) {
-            super(name, true, ConditionSet.DEFAULT_ID);
-            this.name = name;
-        }
-
-        @Override
-        public String getName() {
-            return name;
-        }
-
-        @JsonIgnore
-        @Override
-        public FieldType getFieldType() {
-            return null;
-        }
     }
 }

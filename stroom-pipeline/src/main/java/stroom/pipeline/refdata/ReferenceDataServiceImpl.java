@@ -2,7 +2,6 @@ package stroom.pipeline.refdata;
 
 import stroom.bytebuffer.ByteBufferPool;
 import stroom.data.shared.StreamTypeNames;
-import stroom.datasource.api.v2.DateField;
 import stroom.datasource.api.v2.FieldInfo;
 import stroom.datasource.api.v2.FindFieldInfoCriteria;
 import stroom.datasource.api.v2.QueryField;
@@ -690,7 +689,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
     }
 
     @Override
-    public DateField getTimeField() {
+    public QueryField getTimeField() {
         return null;
     }
 

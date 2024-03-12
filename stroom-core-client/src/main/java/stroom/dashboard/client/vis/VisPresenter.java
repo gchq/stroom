@@ -33,7 +33,6 @@ import stroom.dashboard.shared.TableComponentSettings;
 import stroom.dashboard.shared.VisComponentSettings;
 import stroom.dashboard.shared.VisResultRequest;
 import stroom.datasource.api.v2.QueryField;
-import stroom.datasource.api.v2.TextField;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
@@ -727,8 +726,8 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
     public List<QueryField> getFields() {
         final List<QueryField> abstractFields = new ArrayList<>();
         // TODO : @66 TEMPORARY FIELDS
-        abstractFields.add(new TextField("name", true));
-        abstractFields.add(new TextField("value", true));
+        abstractFields.add(QueryField.createText("name", true));
+        abstractFields.add(QueryField.createText("value", true));
         return abstractFields;
     }
 

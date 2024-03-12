@@ -237,8 +237,8 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
             final QueryData findStreamQueryData = QueryData.builder()
                     .dataSource(MetaFields.STREAM_STORE_DOC_REF)
                     .expression(ExpressionOperator.builder()
-                            .addTerm(MetaFields.FEED, ExpressionTerm.Condition.EQUALS, feedDoc.getName())
-                            .addTerm(MetaFields.TYPE, ExpressionTerm.Condition.EQUALS, streamType)
+                            .addDateTerm(MetaFields.FEED, ExpressionTerm.Condition.EQUALS, feedDoc.getName())
+                            .addDateTerm(MetaFields.TYPE, ExpressionTerm.Condition.EQUALS, streamType)
                             .build())
                     .build();
 
@@ -312,8 +312,8 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
                     final QueryData findStreamQueryData = QueryData.builder()
                             .dataSource(MetaFields.STREAM_STORE_DOC_REF)
                             .expression(ExpressionOperator.builder()
-                                    .addTerm(MetaFields.FEED, ExpressionTerm.Condition.EQUALS, feedDoc.getName())
-                                    .addTerm(MetaFields.TYPE, ExpressionTerm.Condition.EQUALS, streamType)
+                                    .addDateTerm(MetaFields.FEED, ExpressionTerm.Condition.EQUALS, feedDoc.getName())
+                                    .addDateTerm(MetaFields.TYPE, ExpressionTerm.Condition.EQUALS, streamType)
                                     .build())
                             .build();
 
@@ -570,10 +570,10 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
                 pipelineRef.getName());
 
         final ExpressionOperator expression = ExpressionOperator.builder()
-                .addTerm(MetaFields.FEED, Condition.EQUALS, feedName)
+                .addDateTerm(MetaFields.FEED, Condition.EQUALS, feedName)
                 .addOperator(ExpressionOperator.builder().op(Op.OR)
-                        .addTerm(MetaFields.TYPE, Condition.EQUALS, StreamTypeNames.RAW_REFERENCE)
-                        .addTerm(MetaFields.TYPE, Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
+                        .addDateTerm(MetaFields.TYPE, Condition.EQUALS, StreamTypeNames.RAW_REFERENCE)
+                        .addDateTerm(MetaFields.TYPE, Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
                         .build())
                 .build();
 

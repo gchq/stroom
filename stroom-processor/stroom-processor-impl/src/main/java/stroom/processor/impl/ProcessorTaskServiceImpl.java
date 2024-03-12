@@ -17,9 +17,9 @@
 package stroom.processor.impl;
 
 
-import stroom.datasource.api.v2.DateField;
 import stroom.datasource.api.v2.FieldInfo;
 import stroom.datasource.api.v2.FindFieldInfoCriteria;
+import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.entity.shared.ExpressionCriteria;
@@ -104,7 +104,7 @@ class ProcessorTaskServiceImpl implements ProcessorTaskService, Searchable {
     }
 
     @Override
-    public DateField getTimeField() {
+    public QueryField getTimeField() {
         return ProcessorTaskFields.CREATE_TIME;
     }
 }

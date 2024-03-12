@@ -1,6 +1,6 @@
 package stroom.db.util;
 
-import stroom.datasource.api.v2.DocRefField;
+import stroom.datasource.api.v2.FieldType;
 import stroom.datasource.api.v2.QueryField;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
@@ -71,8 +71,7 @@ public final class CommonExpressionMapper implements Function<ExpressionItem, Co
         Optional<Condition> result = Optional.empty();
 
         if (item != null && item.enabled()) {
-            if (item instanceof ExpressionTerm) {
-                final ExpressionTerm term = (ExpressionTerm) item;
+            if (item instanceof final ExpressionTerm term) {
                 final String fieldName = term.getField();
                 if (fieldName == null) {
                     throw new NullPointerException("Term has a null field '" + term + "'");
@@ -93,12 +92,11 @@ public final class CommonExpressionMapper implements Function<ExpressionItem, Co
                         LOGGER.debug(() -> LogUtil.message(
                                 "Condition '{}' is not supported by field '{}' of type {}. Term: {}",
                                 term.getCondition(), fieldName, abstractField.getFieldType().getTypeName(), term));
-                        if (abstractField instanceof DocRefField) {
+                        if (FieldType.DOC_REF.equals(abstractField.getFieldType())) {
                             // https://github.com/gchq/stroom/issues/3074 removed some conditions from DocRefField
                             // instances so log an error
-                            final DocRefField docRefField = (DocRefField) abstractField;
                             LOGGER.error("Condition '{}' is not supported by field '{}' of type {}. Term: {}",
-                                    term.getCondition(), fieldName, docRefField.getFieldType().getTypeName(), term);
+                                    term.getCondition(), fieldName, abstractField.getFieldType(), term);
                         }
                     }
 
@@ -109,8 +107,7 @@ public final class CommonExpressionMapper implements Function<ExpressionItem, Co
                     throw new RuntimeException("No term handler supplied for term '" + term.getField() + "'");
                 }
 
-            } else if (item instanceof ExpressionOperator) {
-                final ExpressionOperator operator = (ExpressionOperator) item;
+            } else if (item instanceof final ExpressionOperator operator) {
                 List<ExpressionItem> items = operator.getChildren();
                 if (items == null) {
                     items = Collections.emptyList();
@@ -124,14 +121,14 @@ public final class CommonExpressionMapper implements Function<ExpressionItem, Co
                         .collect(Collectors.toList());
 
                 if (children.size() == 1) {
-                    final Condition child = children.get(0);
+                    final Condition child = children.getFirst();
                     if (Op.NOT.equals(operator.op())) {
                         result = Optional.of(DSL.not(child));
                     } else {
                         result = Optional.of(child);
                     }
 
-                } else if (children.size() > 0) {
+                } else if (!children.isEmpty()) {
                     if (Op.NOT.equals(operator.op())) {
                         result = Optional.of(DSL.not(DSL.and(children)));
                     } else if (Op.AND.equals(operator.op())) {

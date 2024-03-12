@@ -102,8 +102,8 @@ class TestMetaValueDaoImpl {
         metaService.addAttributes(meta, createAttributes());
 
         ExpressionOperator expression = ExpressionOperator.builder()
-                .addTerm(MetaFields.ID, Condition.EQUALS, meta.getId())
-                .addTerm(MetaFields.CREATE_TIME,
+                .addIdTerm(MetaFields.ID, Condition.EQUALS, meta.getId())
+                .addDateTerm(MetaFields.CREATE_TIME,
                         Condition.EQUALS,
                         DateUtil.createNormalDateTimeString(meta.getCreateMs()))
                 .build();
@@ -111,21 +111,21 @@ class TestMetaValueDaoImpl {
         assertThat(metaService.find(criteria).size()).isEqualTo(1);
 
         expression = ExpressionOperator.builder()
-                .addTerm(MetaFields.ID, Condition.EQUALS, meta.getId())
-                .addTerm(MetaFields.CREATE_TIME, Condition.EQUALS, DateUtil.createNormalDateTimeString(0L))
+                .addIdTerm(MetaFields.ID, Condition.EQUALS, meta.getId())
+                .addDateTerm(MetaFields.CREATE_TIME, Condition.EQUALS, DateUtil.createNormalDateTimeString(0L))
                 .build();
         criteria = new FindMetaCriteria(expression);
         assertThat(metaService.find(criteria).size()).isEqualTo(0);
 
         expression = ExpressionOperator.builder()
-                .addTerm(MetaFields.ID, Condition.EQUALS, meta.getId())
-                .addTerm(MetaFields.FILE_SIZE, Condition.GREATER_THAN, 0)
+                .addIdTerm(MetaFields.ID, Condition.EQUALS, meta.getId())
+                .addIdTerm(MetaFields.FILE_SIZE, Condition.GREATER_THAN, 0)
                 .build();
         criteria = new FindMetaCriteria(expression);
         assertThat(metaService.find(criteria).size()).isEqualTo(1);
 
         expression = ExpressionOperator.builder()
-                .addTerm(MetaFields.ID, Condition.EQUALS, meta.getId())
+                .addIdTerm(MetaFields.ID, Condition.EQUALS, meta.getId())
                 .addTerm(MetaFields.FILE_SIZE.getName(), Condition.BETWEEN, "0,1000000")
                 .build();
         criteria = new FindMetaCriteria(expression);
@@ -139,8 +139,8 @@ class TestMetaValueDaoImpl {
         metaService.addAttributes(meta, createAttributes());
 
         ExpressionOperator expression = ExpressionOperator.builder()
-                .addTerm(MetaFields.ID, Condition.EQUALS, meta.getId())
-                .addTerm(MetaFields.CREATE_TIME,
+                .addIdTerm(MetaFields.ID, Condition.EQUALS, meta.getId())
+                .addDateTerm(MetaFields.CREATE_TIME,
                         Condition.EQUALS,
                         DateUtil.createNormalDateTimeString(meta.getCreateMs()))
                 .build();
@@ -148,21 +148,21 @@ class TestMetaValueDaoImpl {
         assertThat(metaService.find(criteria).size()).isEqualTo(1);
 
         expression = ExpressionOperator.builder()
-                .addTerm(MetaFields.ID, Condition.EQUALS, meta.getId())
-                .addTerm(MetaFields.CREATE_TIME, Condition.EQUALS, DateUtil.createNormalDateTimeString(0L))
+                .addIdTerm(MetaFields.ID, Condition.EQUALS, meta.getId())
+                .addDateTerm(MetaFields.CREATE_TIME, Condition.EQUALS, DateUtil.createNormalDateTimeString(0L))
                 .build();
         criteria = new FindMetaCriteria(expression);
         assertThat(metaService.find(criteria).size()).isEqualTo(0);
 
         expression = ExpressionOperator.builder()
-                .addTerm(MetaFields.ID, Condition.EQUALS, meta.getId())
-                .addTerm(MetaFields.FILE_SIZE, Condition.GREATER_THAN, 0)
+                .addIdTerm(MetaFields.ID, Condition.EQUALS, meta.getId())
+                .addIdTerm(MetaFields.FILE_SIZE, Condition.GREATER_THAN, 0)
                 .build();
         criteria = new FindMetaCriteria(expression);
         assertThat(metaService.find(criteria).size()).isEqualTo(1);
 
         expression = ExpressionOperator.builder()
-                .addTerm(MetaFields.ID, Condition.EQUALS, meta.getId())
+                .addIdTerm(MetaFields.ID, Condition.EQUALS, meta.getId())
                 .addTerm(MetaFields.FILE_SIZE.getName(), Condition.BETWEEN, "0,1000000")
                 .build();
         criteria = new FindMetaCriteria(expression);
@@ -171,7 +171,7 @@ class TestMetaValueDaoImpl {
         metaValueDao.deleteOldValues();
 
         expression = ExpressionOperator.builder()
-                .addTerm(MetaFields.ID, Condition.EQUALS, meta.getId())
+                .addIdTerm(MetaFields.ID, Condition.EQUALS, meta.getId())
                 .addTerm(MetaFields.FILE_SIZE.getName(), Condition.BETWEEN, "0,1000000")
                 .build();
         criteria = new FindMetaCriteria(expression);

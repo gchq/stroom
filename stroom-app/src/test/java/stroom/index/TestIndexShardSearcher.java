@@ -154,7 +154,7 @@ public class TestIndexShardSearcher extends AbstractCoreIntegrationTest {
 //                    indexFieldsMap,
 //                    1024,
 //                    DateTimeSettings.builder().build());
-//            final TextField textField = new TextField("test");
+//            final QueryField textField = QueryField.createText("test");
 //            final ExpressionOperator expression = ExpressionOperator
 //                    .builder()
 //                    .addTerm(textField, Condition.EQUALS, "test")

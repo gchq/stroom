@@ -1,11 +1,6 @@
 package stroom.meta.shared;
 
-import stroom.datasource.api.v2.DateField;
-import stroom.datasource.api.v2.DocRefField;
-import stroom.datasource.api.v2.IdField;
-import stroom.datasource.api.v2.LongField;
 import stroom.datasource.api.v2.QueryField;
-import stroom.datasource.api.v2.TextField;
 import stroom.docref.DocRef;
 import stroom.pipeline.shared.PipelineDoc;
 
@@ -37,49 +32,49 @@ public class MetaFields {
 
     // Non grouped fields
     // Maps to the docref name (which is unique)
-    public static final DocRefField FEED = DocRefField.byUniqueName("Feed", "Feed");
+    public static final QueryField FEED = QueryField.byUniqueName("Feed", "Feed");
 
     // Maps to the docref uuid
-    public static final DocRefField PIPELINE = DocRefField.byUuid(
+    public static final QueryField PIPELINE = QueryField.byUuid(
             PipelineDoc.DOCUMENT_TYPE,
             "Pipeline");
 
     // Maps to the docref name (which is not unique)
-    public static final DocRefField PIPELINE_NAME = DocRefField.byNonUniqueName(
+    public static final QueryField PIPELINE_NAME = QueryField.byNonUniqueName(
             PipelineDoc.DOCUMENT_TYPE,
             "Pipeline Name");
 
-    public static final TextField STATUS = new TextField("Status");
-    public static final TextField TYPE = new TextField("Type");
+    public static final QueryField STATUS = QueryField.createText("Status");
+    public static final QueryField TYPE = QueryField.createText("Type");
 
     // Id's
-    public static final IdField ID = new IdField("Id");
-    public static final IdField META_INTERNAL_PROCESSOR_ID = new IdField("Processor Id");
-    public static final IdField META_PROCESSOR_FILTER_ID = new IdField("Processor Filter Id");
-    public static final IdField META_PROCESSOR_TASK_ID = new IdField("Processor Task Id");
+    public static final QueryField ID = QueryField.createId("Id");
+    public static final QueryField META_INTERNAL_PROCESSOR_ID = QueryField.createId("Processor Id");
+    public static final QueryField META_PROCESSOR_FILTER_ID = QueryField.createId("Processor Filter Id");
+    public static final QueryField META_PROCESSOR_TASK_ID = QueryField.createId("Processor Task Id");
 
     // Times
-    public static final DateField CREATE_TIME = new DateField("Create Time");
-    public static final DateField EFFECTIVE_TIME = new DateField("Effective Time");
-    public static final DateField STATUS_TIME = new DateField("Status Time");
+    public static final QueryField CREATE_TIME = QueryField.createDate("Create Time");
+    public static final QueryField EFFECTIVE_TIME = QueryField.createDate("Effective Time");
+    public static final QueryField STATUS_TIME = QueryField.createDate("Status Time");
 
     // Extended fields.
 //    public static final String NODE = "Node";
-    public static final LongField REC_READ = new LongField("Read Count");
-    public static final LongField REC_WRITE = new LongField("Write Count");
-    public static final LongField REC_INFO = new LongField("Info Count");
-    public static final LongField REC_WARN = new LongField("Warning Count");
-    public static final LongField REC_ERROR = new LongField("Error Count");
-    public static final LongField REC_FATAL = new LongField("Fatal Error Count");
-    public static final LongField DURATION = new LongField("Duration");
-    public static final LongField FILE_SIZE = new LongField("File Size");
-    public static final LongField RAW_SIZE = new LongField("Raw Size");
+    public static final QueryField REC_READ = QueryField.createLong("Read Count");
+    public static final QueryField REC_WRITE = QueryField.createLong("Write Count");
+    public static final QueryField REC_INFO = QueryField.createLong("Info Count");
+    public static final QueryField REC_WARN = QueryField.createLong("Warning Count");
+    public static final QueryField REC_ERROR = QueryField.createLong("Error Count");
+    public static final QueryField REC_FATAL = QueryField.createLong("Fatal Error Count");
+    public static final QueryField DURATION = QueryField.createLong("Duration");
+    public static final QueryField FILE_SIZE = QueryField.createLong("File Size");
+    public static final QueryField RAW_SIZE = QueryField.createLong("Raw Size");
 
     // Parent fields.
-    public static final IdField PARENT_ID = new IdField("Parent Id");
-    public static final TextField PARENT_STATUS = new TextField("Parent Status");
-    public static final DateField PARENT_CREATE_TIME = new DateField("Parent Create Time");
-    public static final DocRefField PARENT_FEED = DocRefField.byUniqueName("Feed", FIELD_PARENT_FEED);
+    public static final QueryField PARENT_ID = QueryField.createId("Parent Id");
+    public static final QueryField PARENT_STATUS = QueryField.createText("Parent Status");
+    public static final QueryField PARENT_CREATE_TIME = QueryField.createDate("Parent Create Time");
+    public static final QueryField PARENT_FEED = QueryField.byUniqueName("Feed", FIELD_PARENT_FEED);
 
     static {
         // Non grouped fields

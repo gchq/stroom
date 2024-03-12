@@ -18,15 +18,15 @@
 package stroom.search;
 
 
+import stroom.datasource.api.v2.FieldType;
 import stroom.datasource.api.v2.QueryField;
-import stroom.datasource.api.v2.TextField;
 import stroom.docref.DocRef;
 import stroom.index.impl.IndexShardService;
 import stroom.index.impl.IndexShardUtil;
 import stroom.index.impl.IndexStore;
 import stroom.index.shared.FindIndexShardCriteria;
-import stroom.index.shared.LuceneIndexDoc;
 import stroom.index.shared.IndexShard;
+import stroom.index.shared.LuceneIndexDoc;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
@@ -76,7 +76,13 @@ class TestBasicSearch_EndToEnd extends AbstractCoreIntegrationTest {
                 .stream()
                 .collect(Collectors.toMap(QueryField::getName, Function.identity()));
         final QueryField actual = dataSourceFieldsMap.get("Action");
-        final QueryField expected = new TextField("Action", actual.getConditionSet(), null, true);
+        final QueryField expected = QueryField
+                .builder()
+                .name("Action")
+                .fieldType(FieldType.TEXT)
+                .conditionSet(actual.getConditionSet())
+                .queryable(true)
+                .build();
         assertThat(actual).as("Expected to index action").isEqualTo(expected);
     }
 

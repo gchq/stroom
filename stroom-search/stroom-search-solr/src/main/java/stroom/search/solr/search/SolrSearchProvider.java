@@ -17,7 +17,6 @@
 
 package stroom.search.solr.search;
 
-import stroom.datasource.api.v2.DateField;
 import stroom.datasource.api.v2.FieldInfo;
 import stroom.datasource.api.v2.FindFieldInfoCriteria;
 import stroom.datasource.api.v2.QueryField;
@@ -38,8 +37,6 @@ import stroom.query.common.v2.FieldInfoResultPageBuilder;
 import stroom.query.common.v2.ResultStore;
 import stroom.query.common.v2.ResultStoreFactory;
 import stroom.query.common.v2.SearchProvider;
-import stroom.search.elastic.shared.ElasticIndexDoc;
-import stroom.search.elastic.shared.ElasticIndexField;
 import stroom.search.solr.CachedSolrIndex;
 import stroom.search.solr.SolrIndexCache;
 import stroom.search.solr.SolrIndexStore;
@@ -156,12 +153,12 @@ public class SolrSearchProvider implements SearchProvider, IndexFieldProvider {
     }
 
     @Override
-    public DateField getTimeField(final DocRef docRef) {
+    public QueryField getTimeField(final DocRef docRef) {
         return securityContext.useAsReadResult(() -> {
             final SolrIndexDoc index = solrIndexStore.readDocument(docRef);
-            DateField timeField = null;
+            QueryField timeField = null;
             if (index.getTimeField() != null && !index.getTimeField().isBlank()) {
-                return new DateField(index.getTimeField());
+                return QueryField.createDate(index.getTimeField());
             }
 
             return null;

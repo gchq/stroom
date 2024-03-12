@@ -5,9 +5,9 @@ import stroom.data.retention.api.DataRetentionTracker;
 import stroom.data.retention.shared.DataRetentionDeleteSummary;
 import stroom.data.retention.shared.DataRetentionRules;
 import stroom.data.retention.shared.FindDataRetentionImpactCriteria;
-import stroom.datasource.api.v2.DateField;
 import stroom.datasource.api.v2.FieldInfo;
 import stroom.datasource.api.v2.FindFieldInfoCriteria;
+import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.entity.shared.ExpressionCriteria;
@@ -295,7 +295,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
     }
 
     @Override
-    public DateField getTimeField() {
+    public QueryField getTimeField() {
         return MetaFields.CREATE_TIME;
     }
 
@@ -394,7 +394,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
 
     private Meta findParent(final Meta meta) {
         final ExpressionOperator expression = ExpressionOperator.builder()
-                .addTerm(MetaFields.ID, ExpressionTerm.Condition.EQUALS, meta.getParentMetaId())
+                .addIdTerm(MetaFields.ID, ExpressionTerm.Condition.EQUALS, meta.getParentMetaId())
                 .build();
         final ResultPage<Meta> parentList = simpleFind(expression);
         if (parentList != null && parentList.size() > 0) {
@@ -605,26 +605,26 @@ public class MetaServiceImpl implements MetaService, Searchable {
     private ExpressionOperator getIdExpression(final long id, final boolean anyStatus) {
         if (anyStatus) {
             return ExpressionOperator.builder()
-                    .addTerm(MetaFields.ID, ExpressionTerm.Condition.EQUALS, id)
+                    .addIdTerm(MetaFields.ID, ExpressionTerm.Condition.EQUALS, id)
                     .build();
         }
 
         return ExpressionOperator.builder()
-                .addTerm(MetaFields.ID, ExpressionTerm.Condition.EQUALS, id)
-                .addTerm(MetaFields.STATUS, ExpressionTerm.Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+                .addIdTerm(MetaFields.ID, ExpressionTerm.Condition.EQUALS, id)
+                .addDateTerm(MetaFields.STATUS, ExpressionTerm.Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                 .build();
     }
 
     private ExpressionOperator getParentIdExpression(final long id, final boolean anyStatus) {
         if (anyStatus) {
             return ExpressionOperator.builder()
-                    .addTerm(MetaFields.PARENT_ID, ExpressionTerm.Condition.EQUALS, id)
+                    .addIdTerm(MetaFields.PARENT_ID, ExpressionTerm.Condition.EQUALS, id)
                     .build();
         }
 
         return ExpressionOperator.builder()
-                .addTerm(MetaFields.PARENT_ID, ExpressionTerm.Condition.EQUALS, id)
-                .addTerm(MetaFields.STATUS, ExpressionTerm.Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+                .addIdTerm(MetaFields.PARENT_ID, ExpressionTerm.Condition.EQUALS, id)
+                .addDateTerm(MetaFields.STATUS, ExpressionTerm.Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                 .build();
     }
 

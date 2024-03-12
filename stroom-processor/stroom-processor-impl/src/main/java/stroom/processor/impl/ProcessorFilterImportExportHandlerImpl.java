@@ -191,7 +191,7 @@ public class ProcessorFilterImportExportHandlerImpl implements ImportExportActio
         }
 
         final ExpressionOperator expression = ExpressionOperator.builder()
-                .addTerm(ProcessorFilterFields.UUID, ExpressionTerm.Condition.EQUALS, docRef.getUuid()).build();
+                .addDateTerm(ProcessorFilterFields.UUID, ExpressionTerm.Condition.EQUALS, docRef.getUuid()).build();
 
         ExpressionCriteria criteria = new ExpressionCriteria(expression);
         ResultPage<ProcessorFilter> page = processorFilterService.find(criteria);
@@ -311,7 +311,7 @@ public class ProcessorFilterImportExportHandlerImpl implements ImportExportActio
         }
 
         final ExpressionOperator expression = ExpressionOperator.builder()
-                .addTerm(ProcessorFields.UUID, ExpressionTerm.Condition.EQUALS, processorUuid).build();
+                .addTextTerm(ProcessorFields.UUID, ExpressionTerm.Condition.EQUALS, processorUuid).build();
 
         ExpressionCriteria criteria = new ExpressionCriteria(expression);
         ResultPage<Processor> page = processorService.find(criteria);
@@ -390,7 +390,7 @@ public class ProcessorFilterImportExportHandlerImpl implements ImportExportActio
     public Set<DocRef> getDependencies(final DocRef docRef) {
         final DependencyRemapper dependencyRemapper = new DependencyRemapper();
         final ExpressionOperator expression = ExpressionOperator.builder()
-                .addTerm(ProcessorFilterFields.UUID, ExpressionTerm.Condition.EQUALS, docRef.getUuid()).build();
+                .addDateTerm(ProcessorFilterFields.UUID, ExpressionTerm.Condition.EQUALS, docRef.getUuid()).build();
         final ExpressionCriteria criteria = new ExpressionCriteria(expression);
         final ResultPage<ProcessorFilter> page = processorFilterService.find(criteria);
         if (page != null && page.getValues() != null) {

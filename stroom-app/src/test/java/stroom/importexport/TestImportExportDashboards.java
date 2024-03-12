@@ -337,7 +337,7 @@ class TestImportExportDashboards extends AbstractCoreIntegrationTest {
     private ExpressionOperator.Builder createExpression(final DictionaryDoc dictionary) {
         final ExpressionOperator.Builder root = ExpressionOperator.builder();
         root.addTerm("EventTime", Condition.LESS_THAN, "2020-01-01T00:00:00.000Z");
-        root.addTerm("User", Condition.IN_DICTIONARY, stroom.docstore.shared.DocRefUtil.create(dictionary));
+        root.addDocRefTerm("User", Condition.IN_DICTIONARY, stroom.docstore.shared.DocRefUtil.create(dictionary));
         return root;
     }
 }

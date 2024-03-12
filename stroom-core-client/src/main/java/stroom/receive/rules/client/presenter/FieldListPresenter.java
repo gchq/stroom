@@ -22,7 +22,6 @@ import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.datasource.api.v2.QueryField;
-import stroom.datasource.api.v2.TextField;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
 import stroom.entity.client.presenter.DocumentEditPresenter;
@@ -183,7 +182,7 @@ public class FieldListPresenter extends DocumentEditPresenter<PagerView, Receive
     private void onAdd() {
         final Set<String> otherNames = fields.stream().map(QueryField::getName).collect(Collectors.toSet());
 
-        fieldEditPresenter.read(new TextField(""), otherNames);
+        fieldEditPresenter.read(QueryField.createText(""), otherNames);
         fieldEditPresenter.show("New Field", e -> {
             if (e.isOk()) {
                 final QueryField newField = fieldEditPresenter.write();

@@ -16,15 +16,8 @@
 
 package stroom.search.impl;
 
-import stroom.datasource.api.v2.BooleanField;
-import stroom.datasource.api.v2.DateField;
-import stroom.datasource.api.v2.DoubleField;
-import stroom.datasource.api.v2.FloatField;
-import stroom.datasource.api.v2.IdField;
-import stroom.datasource.api.v2.IntegerField;
-import stroom.datasource.api.v2.LongField;
+import stroom.datasource.api.v2.ConditionSet;
 import stroom.datasource.api.v2.QueryField;
-import stroom.datasource.api.v2.TextField;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.index.shared.LuceneIndexField;
 
@@ -48,25 +41,12 @@ public final class IndexDataSourceFieldUtil {
     }
 
     private static QueryField convert(final LuceneIndexField field) {
-        switch (field.getType()) {
-            case ID:
-                return new IdField(field.getName(), field.isIndexed());
-            case BOOLEAN:
-                return new BooleanField(field.getName(), field.isIndexed());
-            case INTEGER:
-                return new IntegerField(field.getName(), field.isIndexed());
-            case LONG:
-                return new LongField(field.getName(), field.isIndexed());
-            case FLOAT:
-                return new FloatField(field.getName(), field.isIndexed());
-            case DOUBLE:
-                return new DoubleField(field.getName(), field.isIndexed());
-            case DATE:
-                return new DateField(field.getName(), field.isIndexed());
-            case TEXT:
-                return new TextField(field.getName(), field.isIndexed());
-        }
-
-        return null;
+        return QueryField
+                .builder()
+                .name(field.getName())
+                .fieldType(field.getType())
+                .conditionSet(ConditionSet.getDefault(field.getType()))
+                .queryable(true)
+                .build();
     }
 }

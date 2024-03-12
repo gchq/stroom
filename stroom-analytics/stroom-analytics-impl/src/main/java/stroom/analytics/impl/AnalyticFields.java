@@ -1,8 +1,6 @@
 package stroom.analytics.impl;
 
-import stroom.datasource.api.v2.DateField;
 import stroom.datasource.api.v2.QueryField;
-import stroom.datasource.api.v2.TextField;
 import stroom.docref.DocRef;
 
 import java.util.ArrayList;
@@ -28,11 +26,11 @@ public class AnalyticFields {
     private static final Map<String, QueryField> FIELD_MAP;
 
     // Times
-    public static final DateField TIME_FIELD = new DateField(TIME);
+    public static final QueryField TIME_FIELD = QueryField.createDate(TIME);
 
-    public static final TextField NAME_FIELD = new TextField(NAME);
-    public static final TextField UUID_FIELD = new TextField(UUID);
-    public static final TextField VALUE_FIELD = new TextField(VALUE);
+    public static final QueryField NAME_FIELD = QueryField.createText(NAME);
+    public static final QueryField UUID_FIELD = QueryField.createText(UUID);
+    public static final QueryField VALUE_FIELD = QueryField.createText(VALUE);
 
     static {
         FIELDS.add(TIME_FIELD);

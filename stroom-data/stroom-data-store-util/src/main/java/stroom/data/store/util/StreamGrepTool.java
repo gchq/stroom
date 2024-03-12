@@ -127,24 +127,24 @@ public class StreamGrepTool extends AbstractCommandLineTool {
                 && !createPeriodFrom.isEmpty()
                 && createPeriodTo != null
                 && !createPeriodTo.isEmpty()) {
-            builder.addTerm(MetaFields.CREATE_TIME, Condition.BETWEEN, createPeriodFrom + "," + createPeriodTo);
+            builder.addDateTerm(MetaFields.CREATE_TIME, Condition.BETWEEN, createPeriodFrom + "," + createPeriodTo);
         } else if (createPeriodFrom != null && !createPeriodFrom.isEmpty()) {
-            builder.addTerm(MetaFields.CREATE_TIME, Condition.GREATER_THAN_OR_EQUAL_TO, createPeriodFrom);
+            builder.addDateTerm(MetaFields.CREATE_TIME, Condition.GREATER_THAN_OR_EQUAL_TO, createPeriodFrom);
         } else if (createPeriodTo != null && !createPeriodTo.isEmpty()) {
-            builder.addTerm(MetaFields.CREATE_TIME, Condition.LESS_THAN_OR_EQUAL_TO, createPeriodTo);
+            builder.addDateTerm(MetaFields.CREATE_TIME, Condition.LESS_THAN_OR_EQUAL_TO, createPeriodTo);
         }
 
         final MetaService metaService = injector.getInstance(MetaService.class);
         final Store streamStore = injector.getInstance(Store.class);
 
         if (feed != null) {
-            builder.addTerm(MetaFields.FEED, Condition.EQUALS, feed);
+            builder.addDateTerm(MetaFields.FEED, Condition.EQUALS, feed);
         }
 
         if (streamType != null) {
-            builder.addTerm(MetaFields.TYPE, Condition.EQUALS, streamType);
+            builder.addDateTerm(MetaFields.TYPE, Condition.EQUALS, streamType);
         } else {
-            builder.addTerm(MetaFields.TYPE, Condition.EQUALS, StreamTypeNames.RAW_EVENTS);
+            builder.addDateTerm(MetaFields.TYPE, Condition.EQUALS, StreamTypeNames.RAW_EVENTS);
         }
 
         // Query the stream store

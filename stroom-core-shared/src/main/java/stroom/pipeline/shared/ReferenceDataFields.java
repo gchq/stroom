@@ -1,13 +1,8 @@
 package stroom.pipeline.shared;
 
 import stroom.datasource.api.v2.ConditionSet;
-import stroom.datasource.api.v2.DateField;
-import stroom.datasource.api.v2.DocRefField;
-import stroom.datasource.api.v2.IdField;
-import stroom.datasource.api.v2.IntegerField;
-import stroom.datasource.api.v2.LongField;
+import stroom.datasource.api.v2.FieldType;
 import stroom.datasource.api.v2.QueryField;
-import stroom.datasource.api.v2.TextField;
 import stroom.docref.DocRef;
 
 import java.util.Arrays;
@@ -19,31 +14,57 @@ public class ReferenceDataFields {
             "Searchable",
             "Reference Data Store",
             "Reference Data Store (This Node Only)");
-    public static final QueryField FEED_NAME_FIELD = new TextField(
-            "Feed Name", ConditionSet.REF_DATA_TEXT, null, true);
-    public static final QueryField KEY_FIELD = new TextField(
-            "Key", ConditionSet.REF_DATA_TEXT, null, true);
-    public static final QueryField VALUE_FIELD = new TextField(
-            "Value", ConditionSet.REF_DATA_TEXT, null, true);
-    public static final QueryField VALUE_REF_COUNT_FIELD = new IntegerField(
+    public static final QueryField FEED_NAME_FIELD = QueryField
+            .builder()
+            .name("Feed Name")
+            .fieldType(FieldType.TEXT)
+            .conditionSet(ConditionSet.REF_DATA_TEXT)
+            .queryable(true)
+            .build();
+    public static final QueryField KEY_FIELD = QueryField
+            .builder()
+            .name("Key")
+            .fieldType(FieldType.TEXT)
+            .conditionSet(ConditionSet.REF_DATA_TEXT)
+            .queryable(true)
+            .build();
+    public static final QueryField VALUE_FIELD = QueryField
+            .builder()
+            .name("Value")
+            .fieldType(FieldType.TEXT)
+            .conditionSet(ConditionSet.REF_DATA_TEXT)
+            .queryable(true)
+            .build();
+    public static final QueryField VALUE_REF_COUNT_FIELD = QueryField.createInteger(
             "Value Reference Count", false);
-    public static final QueryField MAP_NAME_FIELD = new TextField(
-            "Map Name", ConditionSet.REF_DATA_TEXT, null, true);
-    public static final QueryField CREATE_TIME_FIELD = new DateField(
-            "Create Time", true);
-    public static final QueryField EFFECTIVE_TIME_FIELD = new DateField(
-            "Effective Time", true);
-    public static final QueryField LAST_ACCESSED_TIME_FIELD = new DateField(
-            "Last Accessed Time", true);
-    public static final QueryField PIPELINE_FIELD = new DocRefField(
-            "Reference Loader Pipeline", ConditionSet.REF_DATA_DOC_REF, PipelineDoc.DOCUMENT_TYPE, true);
-    public static final QueryField PROCESSING_STATE_FIELD = new TextField(
-            "Processing State", false);
-    public static final QueryField STREAM_ID_FIELD = new IdField(
+    public static final QueryField MAP_NAME_FIELD = QueryField
+            .builder()
+            .name("Map Name")
+            .fieldType(FieldType.TEXT)
+            .conditionSet(ConditionSet.REF_DATA_TEXT)
+            .queryable(true)
+            .build();
+    public static final QueryField CREATE_TIME_FIELD = QueryField
+            .createDate("Create Time", true);
+    public static final QueryField EFFECTIVE_TIME_FIELD = QueryField
+            .createDate("Effective Time", true);
+    public static final QueryField LAST_ACCESSED_TIME_FIELD = QueryField
+            .createDate("Last Accessed Time", true);
+    public static final QueryField PIPELINE_FIELD = QueryField
+            .builder()
+            .name("Reference Loader Pipeline")
+            .fieldType(FieldType.DOC_REF)
+            .conditionSet(ConditionSet.REF_DATA_DOC_REF)
+            .docRefType(PipelineDoc.DOCUMENT_TYPE)
+            .queryable(true)
+            .build();
+    public static final QueryField PROCESSING_STATE_FIELD = QueryField
+            .createText("Processing State", false);
+    public static final QueryField STREAM_ID_FIELD = QueryField.createId(
             "Stream ID", false);
-    public static final QueryField PART_NO_FIELD = new LongField(
+    public static final QueryField PART_NO_FIELD = QueryField.createLong(
             "Part Number", false);
-    public static final QueryField PIPELINE_VERSION_FIELD = new TextField(
+    public static final QueryField PIPELINE_VERSION_FIELD = QueryField.createText(
             "Pipeline Version", false);
 
     public static final List<QueryField> FIELDS = Arrays.asList(

@@ -1,11 +1,6 @@
 package stroom.index.shared;
 
-import stroom.datasource.api.v2.DateField;
-import stroom.datasource.api.v2.DocRefField;
-import stroom.datasource.api.v2.IntegerField;
-import stroom.datasource.api.v2.LongField;
 import stroom.datasource.api.v2.QueryField;
-import stroom.datasource.api.v2.TextField;
 import stroom.docref.DocRef;
 
 import java.util.ArrayList;
@@ -31,17 +26,17 @@ public class IndexShardFields {
     public static final String FIELD_NAME_STATUS = "Status";
     public static final String FIELD_NAME_LAST_COMMIT = "Last Commit";
 
-    public static final TextField FIELD_NODE = new TextField(FIELD_NAME_NODE);
-    public static final DocRefField FIELD_INDEX = DocRefField.byUuid(LuceneIndexDoc.DOCUMENT_TYPE, FIELD_NAME_INDEX);
-    public static final DocRefField FIELD_INDEX_NAME = DocRefField.byNonUniqueName(
+    public static final QueryField FIELD_NODE = QueryField.createText(FIELD_NAME_NODE);
+    public static final QueryField FIELD_INDEX = QueryField.byUuid(LuceneIndexDoc.DOCUMENT_TYPE, FIELD_NAME_INDEX);
+    public static final QueryField FIELD_INDEX_NAME = QueryField.byNonUniqueName(
             LuceneIndexDoc.DOCUMENT_TYPE, FIELD_NAME_INDEX_NAME);
-    public static final TextField FIELD_VOLUME_PATH = new TextField(FIELD_NAME_VOLUME_PATH);
-    public static final TextField FIELD_VOLUME_GROUP = new TextField(FIELD_NAME_VOLUME_GROUP);
-    public static final TextField FIELD_PARTITION = new TextField(FIELD_NAME_PARTITION);
-    public static final IntegerField FIELD_DOC_COUNT = new IntegerField(FIELD_NAME_DOC_COUNT);
-    public static final LongField FIELD_FILE_SIZE = new LongField(FIELD_NAME_FILE_SIZE);
-    public static final TextField FIELD_STATUS = new TextField(FIELD_NAME_STATUS);
-    public static final DateField FIELD_LAST_COMMIT = new DateField(FIELD_NAME_LAST_COMMIT);
+    public static final QueryField FIELD_VOLUME_PATH = QueryField.createText(FIELD_NAME_VOLUME_PATH);
+    public static final QueryField FIELD_VOLUME_GROUP = QueryField.createText(FIELD_NAME_VOLUME_GROUP);
+    public static final QueryField FIELD_PARTITION = QueryField.createText(FIELD_NAME_PARTITION);
+    public static final QueryField FIELD_DOC_COUNT = QueryField.createInteger(FIELD_NAME_DOC_COUNT);
+    public static final QueryField FIELD_FILE_SIZE = QueryField.createLong(FIELD_NAME_FILE_SIZE);
+    public static final QueryField FIELD_STATUS = QueryField.createText(FIELD_NAME_STATUS);
+    public static final QueryField FIELD_LAST_COMMIT = QueryField.createDate(FIELD_NAME_LAST_COMMIT);
 
     // GWT so no List.of
     private static final List<QueryField> FIELDS = Arrays.asList(

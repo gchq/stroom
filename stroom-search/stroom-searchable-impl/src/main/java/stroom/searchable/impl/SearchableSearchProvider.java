@@ -1,8 +1,8 @@
 package stroom.searchable.impl;
 
-import stroom.datasource.api.v2.DateField;
 import stroom.datasource.api.v2.FieldInfo;
 import stroom.datasource.api.v2.FindFieldInfoCriteria;
+import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.query.api.v2.ExpressionOperator;
@@ -272,7 +272,7 @@ class SearchableSearchProvider implements SearchProvider {
     }
 
     @Override
-    public DateField getTimeField(final DocRef docRef) {
+    public QueryField getTimeField(final DocRef docRef) {
         return searchableProvider.get(docRef).getTimeField();
     }
 

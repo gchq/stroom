@@ -1,10 +1,8 @@
 package stroom.task.impl;
 
-import stroom.datasource.api.v2.DateField;
 import stroom.datasource.api.v2.FieldInfo;
 import stroom.datasource.api.v2.FindFieldInfoCriteria;
 import stroom.datasource.api.v2.QueryField;
-import stroom.datasource.api.v2.TextField;
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.query.common.v2.FieldInfoResultPageBuilder;
@@ -26,7 +24,7 @@ public class SearchableDual implements Searchable {
             "Dual",
             "Dual");
 
-    private static final QueryField DUMMY_FIELD = new TextField(
+    private static final QueryField DUMMY_FIELD = QueryField.createText(
             "Dummy", true);
 
     private static final List<QueryField> FIELDS = Collections.singletonList(DUMMY_FIELD);
@@ -47,7 +45,7 @@ public class SearchableDual implements Searchable {
     }
 
     @Override
-    public DateField getTimeField() {
+    public QueryField getTimeField() {
         return null;
     }
 

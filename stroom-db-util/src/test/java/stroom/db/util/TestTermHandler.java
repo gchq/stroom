@@ -1,9 +1,7 @@
 package stroom.db.util;
 
 import stroom.collection.api.CollectionService;
-import stroom.datasource.api.v2.DocRefField;
-import stroom.datasource.api.v2.IdField;
-import stroom.datasource.api.v2.TextField;
+import stroom.datasource.api.v2.QueryField;
 import stroom.db.util.ExpressionMapper.MultiConverter;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
@@ -32,9 +30,9 @@ import java.util.stream.Stream;
 @ExtendWith(MockitoExtension.class)
 class TestTermHandler {
 
-    private static final DocRefField DOC_REF_FIELD = MetaFields.FEED;
-    private static final TextField TEXT_FIELD = MetaFields.TYPE;
-    private static final IdField ID_FIELD = MetaFields.ID;
+    private static final QueryField DOC_REF_FIELD = MetaFields.FEED;
+    private static final QueryField TEXT_FIELD = MetaFields.TYPE;
+    private static final QueryField ID_FIELD = MetaFields.ID;
 
     private static final Field<String> DOC_REF_DB_FIELD = DSL.field(DOC_REF_FIELD.getName(), String.class);
     private static final Field<String> TEXT_DB_FIELD = DSL.field(TEXT_FIELD.getName(), String.class);

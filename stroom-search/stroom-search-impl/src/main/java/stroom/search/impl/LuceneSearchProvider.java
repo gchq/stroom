@@ -17,7 +17,6 @@
 
 package stroom.search.impl;
 
-import stroom.datasource.api.v2.DateField;
 import stroom.datasource.api.v2.FieldInfo;
 import stroom.datasource.api.v2.FindFieldInfoCriteria;
 import stroom.datasource.api.v2.QueryField;
@@ -110,11 +109,11 @@ public class LuceneSearchProvider implements SearchProvider, IndexFieldProvider 
 
 //                // TEST DATA
 //                for (int i = 0; i < 1000; i++) {
-//                    addField(fieldSourceId, new IdField("test" + i));
+//                    addField(fieldSourceId, QueryField.createId("test" + i));
 //                    for (int j = 0; j < 1000; j++) {
-//                        addField(fieldSourceId, new IdField("test" + i + ".test" + j));
+//                        addField(fieldSourceId, QueryField.createId("test" + i + ".test" + j));
 //                        for (int k = 0; k < 1000; k++) {
-//                            addField(fieldSourceId, new IdField("test" + i + ".test" + j + ".test" + k));
+//                            addField(fieldSourceId, QueryField.createId("test" + i + ".test" + j + ".test" + k));
 //                        }
 //                    }
 //                }
@@ -158,12 +157,12 @@ public class LuceneSearchProvider implements SearchProvider, IndexFieldProvider 
     }
 
     @Override
-    public DateField getTimeField(final DocRef docRef) {
+    public QueryField getTimeField(final DocRef docRef) {
         return securityContext.useAsReadResult(() -> {
             final LuceneIndexDoc index = indexStore.readDocument(docRef);
-            DateField timeField = null;
+            QueryField timeField = null;
             if (index.getTimeField() != null && !index.getTimeField().isBlank()) {
-                timeField = new DateField(index.getTimeField());
+                timeField = QueryField.createDate(index.getTimeField());
             }
             return timeField;
         });

@@ -1,9 +1,6 @@
 package stroom.task.impl;
 
-import stroom.datasource.api.v2.DateField;
-import stroom.datasource.api.v2.LongField;
 import stroom.datasource.api.v2.QueryField;
-import stroom.datasource.api.v2.TextField;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,12 +20,12 @@ public class TaskManagerFields {
     private static final List<QueryField> FIELDS = new ArrayList<>();
     private static final Map<String, QueryField> FIELD_MAP;
 
-    public static final TextField NODE = new TextField(FIELD_NODE);
-    public static final TextField NAME = new TextField(FIELD_NAME);
-    public static final TextField USER = new TextField(FIELD_USER);
-    public static final DateField SUBMIT_TIME = new DateField(FIELD_SUBMIT_TIME);
-    public static final LongField AGE = new LongField(FIELD_AGE);
-    public static final TextField INFO = new TextField(FIELD_INFO);
+    public static final QueryField NODE = QueryField.createText(FIELD_NODE);
+    public static final QueryField NAME = QueryField.createText(FIELD_NAME);
+    public static final QueryField USER = QueryField.createText(FIELD_USER);
+    public static final QueryField SUBMIT_TIME = QueryField.createDate(FIELD_SUBMIT_TIME);
+    public static final QueryField AGE = QueryField.createLong(FIELD_AGE);
+    public static final QueryField INFO = QueryField.createText(FIELD_INFO);
 
     static {
         FIELDS.add(NODE);

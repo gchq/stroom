@@ -129,7 +129,7 @@ class TestMetaServiceImpl {
         final Meta meta2 = metaService.create(createRawProperties(FEED_2));
 
         final ExpressionOperator expression = ExpressionOperator.builder()
-                .addTerm(MetaFields.ID, Condition.EQUALS, meta2.getId())
+                .addIdTerm(MetaFields.ID, Condition.EQUALS, meta2.getId())
                 .build();
         final FindMetaCriteria criteria = new FindMetaCriteria(expression);
 
@@ -232,7 +232,7 @@ class TestMetaServiceImpl {
         final Meta meta2 = metaService.create(createRawProperties(FEED_2));
 
         final ExpressionOperator expression = ExpressionOperator.builder()
-                .addTerm(MetaFields.ID, Condition.EQUALS, meta2.getId())
+                .addIdTerm(MetaFields.ID, Condition.EQUALS, meta2.getId())
                 .build();
         final FindMetaCriteria criteria = new FindMetaCriteria(expression);
 
@@ -809,7 +809,7 @@ class TestMetaServiceImpl {
     private void assertTotalRowCount(final int expectedRowCount, final Status status) {
         FindMetaCriteria criteria = new FindMetaCriteria();
         criteria.setExpression(ExpressionOperator.builder()
-                .addTerm(MetaFields.STATUS, Condition.EQUALS, status.getDisplayValue())
+                .addDateTerm(MetaFields.STATUS, Condition.EQUALS, status.getDisplayValue())
                 .build());
         final int rowCount = metaDao.count(criteria);
 

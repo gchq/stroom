@@ -126,7 +126,7 @@ public class AnalyticsDataSetup {
         viewDoc.setDataSource(indexDocRef);
         viewDoc.setPipeline(searchResultPipeline);
         viewDoc.setFilter(ExpressionOperator.builder()
-                .addTerm(MetaFields.TYPE, ExpressionTerm.Condition.EQUALS, StreamTypeNames.EVENTS)
+                .addDateTerm(MetaFields.TYPE, ExpressionTerm.Condition.EQUALS, StreamTypeNames.EVENTS)
                 .build());
         viewStore.writeDocument(viewDoc);
 
@@ -170,7 +170,7 @@ public class AnalyticsDataSetup {
             final QueryData findStreamQueryData = QueryData.builder()
                     .dataSource(MetaFields.STREAM_STORE_DOC_REF)
                     .expression(ExpressionOperator.builder()
-                            .addTerm(MetaFields.TYPE, ExpressionTerm.Condition.EQUALS, StreamTypeNames.EVENTS)
+                            .addDateTerm(MetaFields.TYPE, ExpressionTerm.Condition.EQUALS, StreamTypeNames.EVENTS)
                             .build())
                     .build();
             processorFilterService.create(

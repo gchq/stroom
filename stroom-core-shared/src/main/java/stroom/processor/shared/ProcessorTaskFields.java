@@ -1,11 +1,6 @@
 package stroom.processor.shared;
 
-import stroom.datasource.api.v2.DateField;
-import stroom.datasource.api.v2.DocRefField;
-import stroom.datasource.api.v2.IdField;
-import stroom.datasource.api.v2.LongField;
 import stroom.datasource.api.v2.QueryField;
-import stroom.datasource.api.v2.TextField;
 import stroom.docref.DocRef;
 import stroom.pipeline.shared.PipelineDoc;
 
@@ -38,25 +33,25 @@ public class ProcessorTaskFields {
     public static final String FIELD_NODE = "Node";
     public static final String FIELD_POLL_AGE = "Poll Age";
 
-    public static final DateField CREATE_TIME = new DateField("Create Time");
-    public static final LongField CREATE_TIME_MS = new LongField("Create Time Ms");
-    public static final DateField START_TIME = new DateField("Start Time");
-    public static final LongField START_TIME_MS = new LongField("Start Time Ms");
-    public static final LongField END_TIME_MS = new LongField("End Time Ms");
-    public static final DateField END_TIME = new DateField("End Time");
-    public static final LongField STATUS_TIME_MS = new LongField("Status Time Ms");
-    public static final DateField STATUS_TIME = new DateField("Status Time");
-    public static final IdField META_ID = new IdField("Meta Id");
-    public static final TextField NODE_NAME = new TextField("Node");
-    public static final DocRefField PIPELINE = DocRefField.byUuid(PipelineDoc.DOCUMENT_TYPE, FIELD_PIPELINE);
-    public static final DocRefField PIPELINE_NAME = DocRefField.byNonUniqueName(
+    public static final QueryField CREATE_TIME = QueryField.createDate("Create Time");
+    public static final QueryField CREATE_TIME_MS = QueryField.createLong("Create Time Ms");
+    public static final QueryField START_TIME = QueryField.createDate("Start Time");
+    public static final QueryField START_TIME_MS = QueryField.createLong("Start Time Ms");
+    public static final QueryField END_TIME_MS = QueryField.createLong("End Time Ms");
+    public static final QueryField END_TIME = QueryField.createDate("End Time");
+    public static final QueryField STATUS_TIME_MS = QueryField.createLong("Status Time Ms");
+    public static final QueryField STATUS_TIME = QueryField.createDate("Status Time");
+    public static final QueryField META_ID = QueryField.createId("Meta Id");
+    public static final QueryField NODE_NAME = QueryField.createText("Node");
+    public static final QueryField PIPELINE = QueryField.byUuid(PipelineDoc.DOCUMENT_TYPE, FIELD_PIPELINE);
+    public static final QueryField PIPELINE_NAME = QueryField.byNonUniqueName(
             PipelineDoc.DOCUMENT_TYPE, FIELD_PIPELINE_NAME);
-    public static final IdField PROCESSOR_FILTER_ID = new IdField("Processor Filter Id");
-    public static final LongField PROCESSOR_FILTER_PRIORITY = new LongField("Processor Filter Priority");
-    public static final IdField PROCESSOR_ID = new IdField("Processor Id");
-    public static final DocRefField FEED = DocRefField.byUniqueName("Feed", "Feed");
-    public static final TextField STATUS = new TextField("Status");
-    public static final IdField TASK_ID = new IdField("Task Id");
+    public static final QueryField PROCESSOR_FILTER_ID = QueryField.createId("Processor Filter Id");
+    public static final QueryField PROCESSOR_FILTER_PRIORITY = QueryField.createLong("Processor Filter Priority");
+    public static final QueryField PROCESSOR_ID = QueryField.createId("Processor Id");
+    public static final QueryField FEED = QueryField.byUniqueName("Feed", "Feed");
+    public static final QueryField STATUS = QueryField.createText("Status");
+    public static final QueryField TASK_ID = QueryField.createId("Task Id");
 
     static {
         FIELDS.add(CREATE_TIME);

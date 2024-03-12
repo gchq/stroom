@@ -70,7 +70,7 @@ public class TestSearchExpressionQueryBuilder {
                 DateTimeSettings.builder().build());
 
         final ExpressionOperator expressionOperator = ExpressionOperator.builder()
-                .addTerm(
+                .addDocRefTerm(
                         "test",
                         ExpressionTerm.Condition.IN_DICTIONARY,
                         dictionaryRef)

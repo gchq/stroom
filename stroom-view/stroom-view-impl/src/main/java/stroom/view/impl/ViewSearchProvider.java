@@ -1,9 +1,9 @@
 package stroom.view.impl;
 
 import stroom.datasource.api.v2.DataSourceProvider;
-import stroom.datasource.api.v2.DateField;
 import stroom.datasource.api.v2.FieldInfo;
 import stroom.datasource.api.v2.FindFieldInfoCriteria;
+import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.docref.StringMatch;
 import stroom.docstore.shared.DocRefUtil;
@@ -189,7 +189,7 @@ public class ViewSearchProvider implements SearchProvider, IndexFieldProvider {
     }
 
     @Override
-    public DateField getTimeField(final DocRef docRef) {
+    public QueryField getTimeField(final DocRef docRef) {
         final ViewDoc viewDoc = getView(docRef);
         return getDelegateStoreFactory(viewDoc).getTimeField(viewDoc.getDataSource());
     }

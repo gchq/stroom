@@ -17,9 +17,9 @@
 
 package stroom.index.impl;
 
-import stroom.datasource.api.v2.DateField;
 import stroom.datasource.api.v2.FieldInfo;
 import stroom.datasource.api.v2.FindFieldInfoCriteria;
+import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.index.shared.FindIndexShardCriteria;
@@ -156,7 +156,7 @@ public class IndexShardServiceImpl implements IndexShardService, Searchable {
     }
 
     @Override
-    public DateField getTimeField() {
+    public QueryField getTimeField() {
         return null;
     }
 

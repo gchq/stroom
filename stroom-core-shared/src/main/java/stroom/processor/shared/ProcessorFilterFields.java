@@ -1,11 +1,6 @@
 package stroom.processor.shared;
 
-import stroom.datasource.api.v2.BooleanField;
-import stroom.datasource.api.v2.IdField;
-import stroom.datasource.api.v2.IntegerField;
-import stroom.datasource.api.v2.LongField;
 import stroom.datasource.api.v2.QueryField;
-import stroom.datasource.api.v2.TextField;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,15 +15,15 @@ public class ProcessorFilterFields {
     private static final List<QueryField> FIELDS = new ArrayList<>();
     private static final Map<String, QueryField> FIELD_MAP;
 
-    public static final IdField ID = new IdField("Processor Filter Id");
-//    public static final TextField CREATE_USER = new TextField("Processor Filter Create User");
-    public static final TextField OWNER_UUID = new TextField("Processor Filter Owner User UUID");
-    public static final LongField LAST_POLL_MS = new LongField("Processor Filter Last Poll Ms");
-    public static final IntegerField PRIORITY = new IntegerField("Processor Filter Priority");
-    public static final BooleanField ENABLED = new BooleanField("Processor Filter Enabled");
-    public static final BooleanField DELETED = new BooleanField("Processor Filter Deleted");
-    public static final IdField PROCESSOR_ID = new IdField("Processor Id");
-    public static final TextField UUID = new TextField("Processor Filter UUID");
+    public static final QueryField ID = QueryField.createId("Processor Filter Id");
+//    public static final QueryField CREATE_USER = QueryField.createText("Processor Filter Create User");
+    public static final QueryField OWNER_UUID = QueryField.createText("Processor Filter Owner User UUID");
+    public static final QueryField LAST_POLL_MS = QueryField.createLong("Processor Filter Last Poll Ms");
+    public static final QueryField PRIORITY = QueryField.createInteger("Processor Filter Priority");
+    public static final QueryField ENABLED = QueryField.createBoolean("Processor Filter Enabled");
+    public static final QueryField DELETED = QueryField.createBoolean("Processor Filter Deleted");
+    public static final QueryField PROCESSOR_ID = QueryField.createId("Processor Id");
+    public static final QueryField UUID = QueryField.createText("Processor Filter UUID");
 
     static {
         FIELDS.add(ID);

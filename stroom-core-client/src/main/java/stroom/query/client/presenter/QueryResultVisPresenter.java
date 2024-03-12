@@ -710,8 +710,8 @@ public class QueryResultVisPresenter
 //    public List<AbstractField> getFields() {
 //        final List<AbstractField> abstractFields = new ArrayList<>();
 //        // TODO : @66 TEMPORARY FIELDS
-//        abstractFields.add(new TextField("name", true));
-//        abstractFields.add(new TextField("value", true));
+//        abstractFields.add(QueryField.createText("name", true));
+//        abstractFields.add(QueryField.createText("value", true));
 //        return abstractFields;
 //    }
 //
