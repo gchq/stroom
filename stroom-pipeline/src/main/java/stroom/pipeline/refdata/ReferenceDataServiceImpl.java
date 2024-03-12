@@ -936,7 +936,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
         // field => fieldType
         QueryField abstractField = FIELD_NAME_TO_FIELD_MAP.get(expressionTerm.getField());
 
-        return switch (abstractField.getFieldType()) {
+        return switch (abstractField.getType()) {
             case TEXT -> buildTextFieldPredicate(expressionTerm, refStoreEntry ->
                     (String) FIELD_TO_EXTRACTOR_MAP.get(expressionTerm.getField()).apply(refStoreEntry));
             case LONG -> buildLongFieldPredicate(expressionTerm, refStoreEntry ->
@@ -1067,12 +1067,12 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
     }
 
     private Val convertToVal(final Object object, final QueryField field) {
-        return switch (field.getFieldType()) {
+        return switch (field.getType()) {
             case TEXT -> ValString.create((String) object);
             case INTEGER -> ValInteger.create((Integer) object);
             case LONG, ID, DATE -> ValLong.create((long) object);
             case DOC_REF -> getPipelineNameAsVal((DocRef) object);
-            default -> throw new RuntimeException("Unexpected field type " + field.getFieldType());
+            default -> throw new RuntimeException("Unexpected field type " + field.getType());
         };
     }
 

@@ -80,7 +80,7 @@ public class ExpressionValidator {
             if (isNumeric) {
                 validateNumericTerm(term);
             } else {
-                final FieldType fieldType = field.getFieldType();
+                final FieldType fieldType = field.getType();
                 if (FieldType.DATE.equals(fieldType)) {
                     validateDateTerm(term);
                 }

@@ -54,7 +54,7 @@ class TestExpressionMatcher {
     @Mock
     private WordListProvider mockWordListProvider;
 
-    public static final QueryField FEED = QueryField.byUniqueName("Feed", "Feed");
+    public static final QueryField FEED = QueryField.createDocRefByUniqueName("Feed", "Feed");
     private static final QueryField TYPE = QueryField.createText("Type");
     private static final QueryField FRUIT = QueryField.createText("Fruit");
     private static final Map<String, QueryField> FIELD_MAP = Map.of(

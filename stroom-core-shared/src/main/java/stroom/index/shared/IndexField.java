@@ -17,11 +17,8 @@
 package stroom.index.shared;
 
 import stroom.datasource.api.v2.Field;
-import stroom.datasource.api.v2.FieldType;
 
 public interface IndexField extends Field {
-
-    FieldType getType();
 
     default AnalyzerType getAnalyzerType() {
         return AnalyzerType.KEYWORD;

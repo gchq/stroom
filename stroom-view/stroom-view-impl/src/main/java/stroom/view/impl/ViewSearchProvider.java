@@ -94,7 +94,7 @@ public class ViewSearchProvider implements SearchProvider, IndexFieldProvider {
             return LuceneIndexField
                     .builder()
                     .name(fieldInfo.getName())
-                    .type(fieldInfo.getFieldType())
+                    .type(fieldInfo.getType())
                     .indexed(true)
                     .build();
         }

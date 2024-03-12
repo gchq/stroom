@@ -85,7 +85,7 @@ public class QueryFieldDaoImpl implements QueryFieldDao {
                     FIELD_INFO.FIELD_NAME);
             for (final FieldInfo field : fields) {
                 c = c.values(fieldSourceId,
-                        (byte) field.getFieldType().getIndex(),
+                        (byte) field.getType().getIndex(),
                         field.getName());
             }
             c.onDuplicateKeyUpdate()

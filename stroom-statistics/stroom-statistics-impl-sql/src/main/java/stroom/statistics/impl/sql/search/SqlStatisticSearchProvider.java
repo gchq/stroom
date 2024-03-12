@@ -122,7 +122,7 @@ public class SqlStatisticSearchProvider implements SearchProvider {
         fields.add(QueryField
                 .builder()
                 .name(StatisticStoreDoc.FIELD_NAME_DATE_TIME)
-                .fieldType(FieldType.DATE)
+                .type(FieldType.DATE)
                 .conditionSet(ConditionSet.STAT_DATE)
                 .queryable(true)
                 .build());
@@ -135,7 +135,7 @@ public class SqlStatisticSearchProvider implements SearchProvider {
                 fields.add(QueryField
                         .builder()
                         .name(statisticField.getFieldName())
-                        .fieldType(FieldType.TEXT)
+                        .type(FieldType.TEXT)
                         .conditionSet(ConditionSet.STAT_TEXT)
                         .queryable(true)
                         .build());

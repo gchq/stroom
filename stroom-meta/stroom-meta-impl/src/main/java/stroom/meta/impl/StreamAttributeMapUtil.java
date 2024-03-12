@@ -59,7 +59,7 @@ class StreamAttributeMapUtil {
             final String value = attributeMap.get(field.getName());
             if (value != null) {
                 try {
-                    switch (field.getFieldType()) {
+                    switch (field.getType()) {
                         case TEXT:
                             map.put(field.getName(), value);
                             break;

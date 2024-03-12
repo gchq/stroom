@@ -27,8 +27,8 @@ public class IndexShardFields {
     public static final String FIELD_NAME_LAST_COMMIT = "Last Commit";
 
     public static final QueryField FIELD_NODE = QueryField.createText(FIELD_NAME_NODE);
-    public static final QueryField FIELD_INDEX = QueryField.byUuid(LuceneIndexDoc.DOCUMENT_TYPE, FIELD_NAME_INDEX);
-    public static final QueryField FIELD_INDEX_NAME = QueryField.byNonUniqueName(
+    public static final QueryField FIELD_INDEX = QueryField.createDocRefByUuid(LuceneIndexDoc.DOCUMENT_TYPE, FIELD_NAME_INDEX);
+    public static final QueryField FIELD_INDEX_NAME = QueryField.createDocRefByNonUniqueName(
             LuceneIndexDoc.DOCUMENT_TYPE, FIELD_NAME_INDEX_NAME);
     public static final QueryField FIELD_VOLUME_PATH = QueryField.createText(FIELD_NAME_VOLUME_PATH);
     public static final QueryField FIELD_VOLUME_GROUP = QueryField.createText(FIELD_NAME_VOLUME_GROUP);

@@ -246,9 +246,9 @@ public class TermEditor extends Composite {
         conditionListBox.setValue(selected);
         changeCondition(field, selected);
 
-        if (field != null && field.getFieldType() != null) {
-            fieldTypeLabel.setText(field.getFieldType().getShortTypeName());
-            fieldTypeLabel.setTitle(field.getFieldType().getDescription());
+        if (field != null && field.getType() != null) {
+            fieldTypeLabel.setText(field.getType().getShortTypeName());
+            fieldTypeLabel.setTitle(field.getType().getDescription());
             fieldTypeLabel.setVisible(true);
         } else {
             fieldTypeLabel.setVisible(false);
@@ -263,7 +263,7 @@ public class TermEditor extends Composite {
         } else {
             FieldType fieldType = null;
             if (field != null) {
-                fieldType = field.getFieldType();
+                fieldType = field.getType();
             }
             conditions = ConditionSet.getUiDefaultConditions(fieldType);
         }
@@ -275,8 +275,8 @@ public class TermEditor extends Composite {
                                  final Condition condition) {
         final FieldInfo selectedField = fieldListBox.getValue();
         FieldType indexFieldType = null;
-        if (selectedField != null && selectedField.getFieldType() != null) {
-            indexFieldType = selectedField.getFieldType();
+        if (selectedField != null && selectedField.getType() != null) {
+            indexFieldType = selectedField.getType();
         }
 
         if (indexFieldType == null) {
@@ -351,7 +351,7 @@ public class TermEditor extends Composite {
             } else if (Condition.IN_FOLDER.equals(condition)) {
                 docSelectionBoxPresenter.setIncludedTypes("Folder");
                 docSelectionBoxPresenter.setAllowFolderSelection(true);
-            } else if (FieldType.DOC_REF.equals(field.getFieldType())) {
+            } else if (FieldType.DOC_REF.equals(field.getType())) {
                 docSelectionBoxPresenter.setIncludedTypes(field.getDocRefType());
             }
             docSelectionBoxPresenter.setSelectedEntityReference(term.getDocRef());

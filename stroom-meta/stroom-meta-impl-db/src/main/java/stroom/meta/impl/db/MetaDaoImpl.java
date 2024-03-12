@@ -1894,7 +1894,7 @@ public class MetaDaoImpl implements MetaDao {
                                         "of type {}. Term: {}",
                                 term.getCondition(),
                                 term.getField(),
-                                field.getFieldType().getTypeName(), term));
+                                field.getType().getTypeName(), term));
                     } else {
                         return true;
                     }

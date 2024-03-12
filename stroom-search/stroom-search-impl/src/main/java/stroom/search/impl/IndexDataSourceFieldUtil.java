@@ -44,7 +44,7 @@ public final class IndexDataSourceFieldUtil {
         return QueryField
                 .builder()
                 .name(field.getName())
-                .fieldType(field.getType())
+                .type(field.getType())
                 .conditionSet(ConditionSet.getDefault(field.getType()))
                 .queryable(true)
                 .build();

@@ -17,21 +17,21 @@ public class ReferenceDataFields {
     public static final QueryField FEED_NAME_FIELD = QueryField
             .builder()
             .name("Feed Name")
-            .fieldType(FieldType.TEXT)
+            .type(FieldType.TEXT)
             .conditionSet(ConditionSet.REF_DATA_TEXT)
             .queryable(true)
             .build();
     public static final QueryField KEY_FIELD = QueryField
             .builder()
             .name("Key")
-            .fieldType(FieldType.TEXT)
+            .type(FieldType.TEXT)
             .conditionSet(ConditionSet.REF_DATA_TEXT)
             .queryable(true)
             .build();
     public static final QueryField VALUE_FIELD = QueryField
             .builder()
             .name("Value")
-            .fieldType(FieldType.TEXT)
+            .type(FieldType.TEXT)
             .conditionSet(ConditionSet.REF_DATA_TEXT)
             .queryable(true)
             .build();
@@ -40,7 +40,7 @@ public class ReferenceDataFields {
     public static final QueryField MAP_NAME_FIELD = QueryField
             .builder()
             .name("Map Name")
-            .fieldType(FieldType.TEXT)
+            .type(FieldType.TEXT)
             .conditionSet(ConditionSet.REF_DATA_TEXT)
             .queryable(true)
             .build();
@@ -53,7 +53,7 @@ public class ReferenceDataFields {
     public static final QueryField PIPELINE_FIELD = QueryField
             .builder()
             .name("Reference Loader Pipeline")
-            .fieldType(FieldType.DOC_REF)
+            .type(FieldType.DOC_REF)
             .conditionSet(ConditionSet.REF_DATA_DOC_REF)
             .docRefType(PipelineDoc.DOCUMENT_TYPE)
             .queryable(true)

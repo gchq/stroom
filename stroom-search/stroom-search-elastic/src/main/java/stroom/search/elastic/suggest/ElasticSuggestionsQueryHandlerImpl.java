@@ -93,7 +93,7 @@ public class ElasticSuggestionsQueryHandlerImpl implements ElasticSuggestionsQue
             if (!elasticSuggestConfigProvider.get().getEnabled() || query == null || query.length() == 0) {
                 return Suggestions.EMPTY;
             }
-            if (!(FieldType.TEXT.equals(field.getFieldType()) || FieldType.KEYWORD.equals(field.getFieldType()))) {
+            if (!(FieldType.TEXT.equals(field.getType()) || FieldType.KEYWORD.equals(field.getType()))) {
                 // Only generate suggestions for text and keyword fields
                 return Suggestions.EMPTY;
             }

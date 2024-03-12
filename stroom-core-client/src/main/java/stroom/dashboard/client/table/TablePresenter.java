@@ -531,7 +531,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                     return QueryField
                             .builder()
                             .name(column.getName())
-                            .fieldType(FieldType.TEXT)
+                            .type(FieldType.TEXT)
                             .conditionSet(ConditionSet.BASIC_TEXT)
                             .queryable(true)
                             .build();

@@ -16,7 +16,7 @@ public class FieldInfo implements Field {
     @JsonProperty
     private final String name;
     @JsonProperty
-    private final FieldType fieldType;
+    private final FieldType type;
     @JsonProperty
     private final ConditionSet conditions;
     @JsonProperty
@@ -25,13 +25,13 @@ public class FieldInfo implements Field {
     private final Boolean queryable;
 
     @JsonCreator
-    public FieldInfo(@JsonProperty("fieldName") final String name,
-                     @JsonProperty("fieldType") final FieldType fieldType,
+    public FieldInfo(@JsonProperty("name") final String name,
+                     @JsonProperty("type") final FieldType type,
                      @JsonProperty("conditions") final ConditionSet conditions,
                      @JsonProperty("docRefType") final String docRefType,
                      @JsonProperty("queryable") final Boolean queryable) {
         this.name = name;
-        this.fieldType = fieldType;
+        this.type = type;
         this.conditions = conditions;
         this.docRefType = docRefType;
         this.queryable = queryable;
@@ -40,7 +40,7 @@ public class FieldInfo implements Field {
     public static FieldInfo create(final QueryField field) {
         return builder()
                 .name(field.getName())
-                .fieldType(field.getFieldType())
+                .type(field.getType())
                 .conditions(field.getConditionSet())
                 .docRefType(field.getDocRefType())
                 .build();
@@ -51,8 +51,9 @@ public class FieldInfo implements Field {
         return name;
     }
 
-    public FieldType getFieldType() {
-        return fieldType;
+    @Override
+    public FieldType getType() {
+        return type;
     }
 
     public ConditionSet getConditions() {
@@ -91,12 +92,12 @@ public class FieldInfo implements Field {
             return false;
         }
         final FieldInfo that = (FieldInfo) o;
-        return Objects.equals(name, that.name) && fieldType == that.fieldType;
+        return Objects.equals(name, that.name) && type == that.type;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(name, fieldType);
+        return Objects.hash(name, type);
     }
 
     public Builder copy() {
@@ -110,7 +111,7 @@ public class FieldInfo implements Field {
     public static class Builder {
 
         private String name;
-        private FieldType fieldType;
+        private FieldType type;
         private ConditionSet conditions;
         private String docRefType;
         private Boolean queryable;
@@ -120,7 +121,7 @@ public class FieldInfo implements Field {
 
         public Builder(final FieldInfo fieldInfo) {
             this.name = fieldInfo.name;
-            this.fieldType = fieldInfo.fieldType;
+            this.type = fieldInfo.type;
             this.conditions = fieldInfo.conditions;
             this.docRefType = fieldInfo.docRefType;
             this.queryable = fieldInfo.queryable;
@@ -131,8 +132,8 @@ public class FieldInfo implements Field {
             return this;
         }
 
-        public Builder fieldType(final FieldType fieldType) {
-            this.fieldType = fieldType;
+        public Builder type(final FieldType type) {
+            this.type = type;
             return this;
         }
 
@@ -154,7 +155,7 @@ public class FieldInfo implements Field {
         public FieldInfo build() {
             return new FieldInfo(
                     name,
-                    fieldType,
+                    type,
                     conditions,
                     docRefType,
                     queryable);

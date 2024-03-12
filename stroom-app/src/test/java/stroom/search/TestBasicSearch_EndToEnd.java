@@ -79,7 +79,7 @@ class TestBasicSearch_EndToEnd extends AbstractCoreIntegrationTest {
         final QueryField expected = QueryField
                 .builder()
                 .name("Action")
-                .fieldType(FieldType.TEXT)
+                .type(FieldType.TEXT)
                 .conditionSet(actual.getConditionSet())
                 .queryable(true)
                 .build();

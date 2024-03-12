@@ -140,14 +140,14 @@ public class Fields {
 
     private void addFieldDetails(final DetailBuilder detail, final FieldInfo field) {
         final String fieldName = field.getName();
-        final String fieldType = field.getFieldType().getDisplayValue();
+        final String fieldType = field.getType().getDisplayValue();
         final String supportedConditions = field.getConditions().toString();
 
         detail.table(table -> table.appendKVRow("Name:", fieldName)
                 .appendKVRow("Type:", fieldType)
                 .appendKVRow("Supported Conditions:", supportedConditions)
                 .appendKVRow("Is queryable:", asDisplayValue(field.queryable()))
-                .appendKVRow("Is numeric:", asDisplayValue(field.getFieldType().isNumeric())));
+                .appendKVRow("Is numeric:", asDisplayValue(field.getType().isNumeric())));
     }
 
     private String asDisplayValue(final boolean bool) {

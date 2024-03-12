@@ -198,10 +198,12 @@ public class LuceneIndexField implements IndexField {
                 .build();
     }
 
+    @Override
     public String getName() {
         return name;
     }
 
+    @Override
     public FieldType getType() {
         return type;
     }

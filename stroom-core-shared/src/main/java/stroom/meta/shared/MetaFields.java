@@ -32,15 +32,15 @@ public class MetaFields {
 
     // Non grouped fields
     // Maps to the docref name (which is unique)
-    public static final QueryField FEED = QueryField.byUniqueName("Feed", "Feed");
+    public static final QueryField FEED = QueryField.createDocRefByUniqueName("Feed", "Feed");
 
     // Maps to the docref uuid
-    public static final QueryField PIPELINE = QueryField.byUuid(
+    public static final QueryField PIPELINE = QueryField.createDocRefByUuid(
             PipelineDoc.DOCUMENT_TYPE,
             "Pipeline");
 
     // Maps to the docref name (which is not unique)
-    public static final QueryField PIPELINE_NAME = QueryField.byNonUniqueName(
+    public static final QueryField PIPELINE_NAME = QueryField.createDocRefByNonUniqueName(
             PipelineDoc.DOCUMENT_TYPE,
             "Pipeline Name");
 
@@ -74,7 +74,7 @@ public class MetaFields {
     public static final QueryField PARENT_ID = QueryField.createId("Parent Id");
     public static final QueryField PARENT_STATUS = QueryField.createText("Parent Status");
     public static final QueryField PARENT_CREATE_TIME = QueryField.createDate("Parent Create Time");
-    public static final QueryField PARENT_FEED = QueryField.byUniqueName("Feed", FIELD_PARENT_FEED);
+    public static final QueryField PARENT_FEED = QueryField.createDocRefByUniqueName("Feed", FIELD_PARENT_FEED);
 
     static {
         // Non grouped fields

@@ -39,7 +39,7 @@ public final class SolrIndexDataSourceFieldUtil {
         return QueryField
                 .builder()
                 .name(field.getName())
-                .fieldType(field.getType())
+                .type(field.getType())
                 .conditionSet(ConditionSet.getSolr(field.getType()))
                 .queryable(field.isIndexed())
                 .build();

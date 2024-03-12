@@ -237,7 +237,7 @@ public final class TermHandler<T> implements Function<ExpressionTerm, Condition>
     private Condition isInFolder(final ExpressionTerm term, final DocRef docRef) {
         Condition condition = field.in(Collections.emptyList());
 
-        if (FieldType.DOC_REF.equals(dataSourceField.getFieldType())) {
+        if (FieldType.DOC_REF.equals(dataSourceField.getType())) {
             final String type = dataSourceField.getDocRefType();
             if (type != null && collectionService != null) {
                 final Set<DocRef> descendants = collectionService.getDescendants(docRef, type);

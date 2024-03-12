@@ -226,6 +226,7 @@ public class SolrIndexField implements IndexField {
                 .build();
     }
 
+    @Override
     public String getName() {
         return name;
     }
@@ -234,6 +235,7 @@ public class SolrIndexField implements IndexField {
         this.name = name;
     }
 
+    @Override
     public FieldType getType() {
         return type;
     }

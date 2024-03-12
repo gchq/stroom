@@ -28,18 +28,15 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Objects;
 
-@JsonPropertyOrder({"name", "fieldType", "type", "docRefType", "queryable", "conditionSet"})
+@JsonPropertyOrder({"name", "type", "docRefType", "queryable", "conditionSet"})
 @JsonInclude(Include.NON_NULL)
 public class QueryField implements Field, HasDisplayValue {
 
-    @Deprecated
-    @JsonProperty("type")
-    private String typeName;
 
     @JsonProperty
     private final String name;
     @JsonProperty
-    private final FieldType fieldType;
+    private final FieldType type;
     @JsonProperty
     private final ConditionSet conditionSet;
     @JsonProperty
@@ -48,14 +45,13 @@ public class QueryField implements Field, HasDisplayValue {
     private final Boolean queryable;
 
     @JsonCreator
-    public QueryField(final String name,
-                      @JsonProperty("fieldType") final FieldType fieldType,
-                      @Deprecated @JsonProperty("type") final String typeName,
-                      final ConditionSet conditionSet,
-                      final String docRefType,
-                      final Boolean queryable) {
+    public QueryField(@JsonProperty("name") final String name,
+                      @JsonProperty("type") final FieldType type,
+                      @JsonProperty("conditionSet") final ConditionSet conditionSet,
+                      @JsonProperty("docRefType") final String docRefType,
+                      @JsonProperty("queryable") final Boolean queryable) {
         this.name = name;
-        this.fieldType = convertType(fieldType, typeName);
+        this.type = type;
         this.conditionSet = conditionSet;
         this.docRefType = docRefType;
         this.queryable = queryable;
@@ -69,7 +65,7 @@ public class QueryField implements Field, HasDisplayValue {
                                       final Boolean queryable) {
         return builder()
                 .name(name)
-                .fieldType(FieldType.ID)
+                .type(FieldType.ID)
                 .conditionSet(ConditionSet.DEFAULT_ID)
                 .queryable(queryable)
                 .build();
@@ -83,7 +79,7 @@ public class QueryField implements Field, HasDisplayValue {
                                            final Boolean queryable) {
         return builder()
                 .name(name)
-                .fieldType(FieldType.KEYWORD)
+                .type(FieldType.KEYWORD)
                 .conditionSet(ConditionSet.DEFAULT_KEYWORD)
                 .queryable(queryable)
                 .build();
@@ -97,7 +93,7 @@ public class QueryField implements Field, HasDisplayValue {
                                            final Boolean queryable) {
         return builder()
                 .name(name)
-                .fieldType(FieldType.INTEGER)
+                .type(FieldType.INTEGER)
                 .conditionSet(ConditionSet.DEFAULT_NUMERIC)
                 .queryable(queryable)
                 .build();
@@ -111,7 +107,7 @@ public class QueryField implements Field, HasDisplayValue {
                                         final Boolean queryable) {
         return builder()
                 .name(name)
-                .fieldType(FieldType.LONG)
+                .type(FieldType.LONG)
                 .conditionSet(ConditionSet.DEFAULT_NUMERIC)
                 .queryable(queryable)
                 .build();
@@ -125,7 +121,7 @@ public class QueryField implements Field, HasDisplayValue {
                                          final Boolean queryable) {
         return builder()
                 .name(name)
-                .fieldType(FieldType.FLOAT)
+                .type(FieldType.FLOAT)
                 .conditionSet(ConditionSet.DEFAULT_NUMERIC)
                 .queryable(queryable)
                 .build();
@@ -139,7 +135,7 @@ public class QueryField implements Field, HasDisplayValue {
                                           final Boolean queryable) {
         return builder()
                 .name(name)
-                .fieldType(FieldType.DOUBLE)
+                .type(FieldType.DOUBLE)
                 .conditionSet(ConditionSet.DEFAULT_NUMERIC)
                 .queryable(queryable)
                 .build();
@@ -153,7 +149,7 @@ public class QueryField implements Field, HasDisplayValue {
                                                final Boolean queryable) {
         return builder()
                 .name(name)
-                .fieldType(FieldType.IPV4_ADDRESS)
+                .type(FieldType.IPV4_ADDRESS)
                 .conditionSet(ConditionSet.DEFAULT_NUMERIC)
                 .queryable(queryable)
                 .build();
@@ -167,7 +163,7 @@ public class QueryField implements Field, HasDisplayValue {
                                            final Boolean queryable) {
         return builder()
                 .name(name)
-                .fieldType(FieldType.BOOLEAN)
+                .type(FieldType.BOOLEAN)
                 .conditionSet(ConditionSet.DEFAULT_BOOLEAN)
                 .queryable(queryable)
                 .build();
@@ -181,7 +177,7 @@ public class QueryField implements Field, HasDisplayValue {
                                         final Boolean queryable) {
         return builder()
                 .name(name)
-                .fieldType(FieldType.DATE)
+                .type(FieldType.DATE)
                 .conditionSet(ConditionSet.DEFAULT_DATE)
                 .queryable(queryable)
                 .build();
@@ -195,39 +191,22 @@ public class QueryField implements Field, HasDisplayValue {
                                         final Boolean queryable) {
         return builder()
                 .name(name)
-                .fieldType(FieldType.TEXT)
+                .type(FieldType.TEXT)
                 .conditionSet(ConditionSet.DEFAULT_TEXT)
                 .queryable(queryable)
                 .build();
     }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     /**
-     * A {@link DocRefField} for a {@link stroom.docref.DocRef} type whose names are unique, allowing
+     * A {@link QueryField} for a {@link stroom.docref.DocRef} type whose names are unique, allowing
      * the name to be used as the value in expression terms.
      */
-    public static QueryField byUniqueName(final String docRefType,
-                                           final String name) {
+    public static QueryField createDocRefByUniqueName(final String docRefType,
+                                                      final String name) {
         return builder()
                 .name(name)
-                .fieldType(FieldType.DOC_REF)
+                .type(FieldType.DOC_REF)
                 .conditionSet(ConditionSet.DOC_REF_ALL)
                 .docRefType(docRefType)
                 .queryable(Boolean.TRUE)
@@ -235,15 +214,15 @@ public class QueryField implements Field, HasDisplayValue {
     }
 
     /**
-     * A {@link DocRefField} for a {@link stroom.docref.DocRef} type whose names are NOT unique.
+     * A {@link QueryField} for a {@link stroom.docref.DocRef} type whose names are NOT unique.
      * The {@link stroom.docref.DocRef} name is used as the value in expression terms, accepting
      * that name=x may match >1 docrefs.
      */
-    public static QueryField byNonUniqueName(final String docRefType,
-                                              final String name) {
+    public static QueryField createDocRefByNonUniqueName(final String docRefType,
+                                                         final String name) {
         return builder()
                 .name(name)
-                .fieldType(FieldType.DOC_REF)
+                .type(FieldType.DOC_REF)
                 .conditionSet(ConditionSet.DOC_REF_NAME)
                 .docRefType(docRefType)
                 .queryable(Boolean.TRUE)
@@ -251,70 +230,20 @@ public class QueryField implements Field, HasDisplayValue {
     }
 
     /**
-     * A {@link DocRefField} for a {@link stroom.docref.DocRef} type whose names are NOT unique.
+     * A {@link QueryField} for a {@link stroom.docref.DocRef} type whose names are NOT unique.
      * The {@link stroom.docref.DocRef} uuid is used as the value in expression terms for a unique
      * match. Other conditions are not supported as that would require the user to enter uuids,
      * and it is not clear in the UI whether they are dealing in UUIDs or names.
      */
-    public static QueryField byUuid(final String docRefType,
-                                     final String name) {
+    public static QueryField createDocRefByUuid(final String docRefType,
+                                                final String name) {
         return builder()
                 .name(name)
-                .fieldType(FieldType.DOC_REF)
+                .type(FieldType.DOC_REF)
                 .conditionSet(ConditionSet.DOC_REF_UUID)
                 .docRefType(docRefType)
                 .queryable(Boolean.TRUE)
                 .build();
-    }
-
-
-
-
-
-
-
-    private FieldType convertType(final FieldType fieldType, final String typeName) {
-        if (fieldType == null) {
-            if (typeName != null) {
-                switch (typeName) {
-                    case "Id": {
-                        return FieldType.ID;
-                    }
-                    case "Boolean": {
-                        return FieldType.BOOLEAN;
-                    }
-                    case "Integer": {
-                        return FieldType.INTEGER;
-                    }
-                    case "Long": {
-                        return FieldType.LONG;
-                    }
-                    case "Float": {
-                        return FieldType.FLOAT;
-                    }
-                    case "Double": {
-                        return FieldType.DOUBLE;
-                    }
-                    case "Date": {
-                        return FieldType.DATE;
-                    }
-                    case "Text": {
-                        return FieldType.TEXT;
-                    }
-                    case "Keyword": {
-                        return FieldType.KEYWORD;
-                    }
-                    case "IpV4Address": {
-                        return FieldType.IPV4_ADDRESS;
-                    }
-                    case "DocRef": {
-                        return FieldType.DOC_REF;
-                    }
-                }
-            }
-            return FieldType.TEXT;
-        }
-        return fieldType;
     }
 
     @Override
@@ -322,8 +251,9 @@ public class QueryField implements Field, HasDisplayValue {
         return name;
     }
 
-    public FieldType getFieldType() {
-        return fieldType;
+    @Override
+    public FieldType getType() {
+        return type;
     }
 
     public ConditionSet getConditionSet() {
@@ -353,7 +283,7 @@ public class QueryField implements Field, HasDisplayValue {
 
     @JsonIgnore
     public boolean isNumeric() {
-        return getFieldType().isNumeric();
+        return getType().isNumeric();
     }
 
     @JsonIgnore
@@ -400,7 +330,7 @@ public class QueryField implements Field, HasDisplayValue {
     public static class Builder {
 
         private String name;
-        private FieldType fieldType;
+        private FieldType type;
         private ConditionSet conditionSet;
         private String docRefType;
         private Boolean queryable;
@@ -410,7 +340,7 @@ public class QueryField implements Field, HasDisplayValue {
 
         private Builder(final QueryField queryField) {
             this.name = queryField.name;
-            this.fieldType = queryField.fieldType;
+            this.type = queryField.type;
             this.conditionSet = queryField.conditionSet;
             this.docRefType = queryField.docRefType;
             this.queryable = queryField.queryable;
@@ -421,8 +351,8 @@ public class QueryField implements Field, HasDisplayValue {
             return this;
         }
 
-        public Builder fieldType(final FieldType fieldType) {
-            this.fieldType = fieldType;
+        public Builder type(final FieldType type) {
+            this.type = type;
             return this;
         }
 
@@ -442,10 +372,10 @@ public class QueryField implements Field, HasDisplayValue {
         }
 
         public QueryField build() {
-            if (conditionSet == null && fieldType != null) {
-                conditionSet = ConditionSet.getDefault(fieldType);
+            if (conditionSet == null && type != null) {
+                conditionSet = ConditionSet.getDefault(type);
             }
-            return new QueryField(name, fieldType, null, conditionSet, docRefType, queryable);
+            return new QueryField(name, type, conditionSet, docRefType, queryable);
         }
     }
 }

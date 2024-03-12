@@ -107,10 +107,12 @@ public class ElasticIndexField implements IndexField {
         return nativeType;
     }
 
+    @Override
     public String getName() {
         return name;
     }
 
+    @Override
     public FieldType getType() {
         return type;
     }

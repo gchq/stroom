@@ -259,7 +259,7 @@ public class ElasticSearchProvider implements SearchProvider, ElasticIndexServic
         return QueryField
                 .builder()
                 .name(fieldName)
-                .fieldType(elasticIndexFieldType)
+                .type(elasticIndexFieldType)
                 .conditionSet(conditionSet)
                 .queryable(isIndexed)
                 .build();

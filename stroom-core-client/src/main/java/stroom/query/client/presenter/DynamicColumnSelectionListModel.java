@@ -285,7 +285,7 @@ public class DynamicColumnSelectionListModel implements SelectionListModel<Colum
             final Builder columnBuilder = Column.builder();
             columnBuilder.name(indexFieldName);
 
-            final FieldType fieldType = fieldInfo.getFieldType();
+            final FieldType fieldType = fieldInfo.getType();
             if (fieldType != null) {
                 switch (fieldType) {
                     case DATE:
@@ -309,7 +309,7 @@ public class DynamicColumnSelectionListModel implements SelectionListModel<Colum
                 // Turn 'annotation:.*' fields into annotation links that make use of either the special
                 // eventId/streamId fields (so event results can link back to annotations) OR
                 // the annotation:Id field so Annotations datasource results can link back.
-                expression = buildAnnotationFieldExpression(fieldInfo.getFieldType(), indexFieldName);
+                expression = buildAnnotationFieldExpression(fieldInfo.getType(), indexFieldName);
                 columnBuilder.expression(expression);
             } else {
                 expression = ParamSubstituteUtil.makeParam(indexFieldName);

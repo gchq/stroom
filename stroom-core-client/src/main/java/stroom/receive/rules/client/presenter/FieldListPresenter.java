@@ -174,7 +174,7 @@ public class FieldListPresenter extends DocumentEditPresenter<PagerView, Receive
         dataGrid.addResizableColumn(new Column<QueryField, String>(new TextCell()) {
             @Override
             public String getValue(final QueryField row) {
-                return row.getFieldType().getTypeName();
+                return row.getType().getTypeName();
             }
         }, "Type", 100);
     }
