@@ -5,6 +5,7 @@ import stroom.util.shared.ResultPage;
 import com.google.inject.TypeLiteral;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public interface RestFactory {
@@ -72,7 +73,7 @@ public interface RestFactory {
 
         /**
          * Create a {@link Rest} for a simple return type with no generics,
-         * e.g. {@link String}.
+         * e.g. {@link String} or {@link stroom.docref.DocRef}.
          */
         <R> Rest<R> forType(final Class<R> type);
 
@@ -101,6 +102,16 @@ public interface RestFactory {
          * non-generic item type, e.g. {@link String}.
          */
         <T> Rest<Set<T>> forSetOf(final Class<T> itemType);
+
+        /**
+         * Create a {@link Rest} for a {@link Map} return type with given
+         * non-generic key and value types, e.g. a {@link Map} of {@link Long} to
+         * {@link String}.
+         * <p>
+         * If either key or value type has generics then use {@link RestBuilder#forWrappedType(TypeLiteral)}.
+         * </p>
+         */
+        <K, V> Rest<Map<K, V>> forMapOf(final Class<K> keyType, final Class<V> valueType);
 
         /**
          * Create a {@link Rest} for a {@link ResultPage} return type with a given

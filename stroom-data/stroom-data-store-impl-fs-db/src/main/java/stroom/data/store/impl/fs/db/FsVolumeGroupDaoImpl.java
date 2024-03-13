@@ -14,6 +14,7 @@ import org.jooq.exception.DataAccessException;
 
 import java.sql.SQLIntegrityConstraintViolationException;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
@@ -66,8 +67,32 @@ class FsVolumeGroupDaoImpl implements FsVolumeGroupDao {
     }
 
     @Override
+    public FsVolumeGroup create(final FsVolumeGroup fsVolumeGroup) {
+        Objects.requireNonNull(fsVolumeGroup);
+        return JooqUtil.transactionResultWithOptimisticLocking(fsDataStoreDbConnProvider, context -> {
+            if (fsVolumeGroup.isDefaultVolume()) {
+                // Can only have one that is default
+                removeCurrentDefault(context);
+            }
+            return genericDao.create(context, fsVolumeGroup);
+        });
+    }
+
+    @Override
     public FsVolumeGroup getOrCreate(final FsVolumeGroup fsVolumeGroup) {
-        return genericDao.tryCreate(fsVolumeGroup, FS_VOLUME_GROUP.UUID);
+        Objects.requireNonNull(fsVolumeGroup);
+        return JooqUtil.transactionResultWithOptimisticLocking(fsDataStoreDbConnProvider, context -> {
+            if (fsVolumeGroup.isDefaultVolume()) {
+                // Can only have one that is default
+                removeCurrentDefault(context);
+            }
+            return genericDao.tryCreate(
+                    context,
+                    fsVolumeGroup,
+                    FS_VOLUME_GROUP.UUID,
+                    null,
+                    null);
+        });
     }
 
     @Override
@@ -77,9 +102,9 @@ class FsVolumeGroupDaoImpl implements FsVolumeGroupDao {
             try {
                 if (fsVolumeGroup.isDefaultVolume()) {
                     // Can only have one that is default
-                    setAllOthersNonDefault(fsVolumeGroup, context);
+                    removeCurrentDefault(context);
                 }
-                saved = genericDao.update(fsVolumeGroup);
+                saved = genericDao.update(context, fsVolumeGroup);
             } catch (DataAccessException e) {
                 if (e.getCause() != null
                         && e.getCause() instanceof SQLIntegrityConstraintViolationException) {
@@ -104,10 +129,10 @@ class FsVolumeGroupDaoImpl implements FsVolumeGroupDao {
                 : null;
     }
 
-    private void setAllOthersNonDefault(final FsVolumeGroup fsVolumeGroup, final DSLContext context) {
+    private void removeCurrentDefault(final DSLContext context) {
         context.update(FS_VOLUME_GROUP)
-                .set(FS_VOLUME_GROUP.IS_DEFAULT, getDbIsDefaultValue(fsVolumeGroup))
-                .where(FS_VOLUME_GROUP.ID.notEqual(fsVolumeGroup.getId()))
+                .set(FS_VOLUME_GROUP.IS_DEFAULT, (Boolean) null)
+                .where(FS_VOLUME_GROUP.IS_DEFAULT.eq(true))
                 .execute();
     }
 
@@ -189,8 +214,4 @@ class FsVolumeGroupDaoImpl implements FsVolumeGroupDao {
         genericDao.delete(id);
     }
 
-    @Override
-    public FsVolumeGroup create(final FsVolumeGroup fsVolumeGroup) {
-        return genericDao.create(fsVolumeGroup);
-    }
 }

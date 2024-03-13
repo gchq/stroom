@@ -204,7 +204,7 @@ public class RulesPresenter
         selectionBoxModel.addItems(fields.stream().map(FieldInfo::create).collect(Collectors.toList()));
         editRulePresenter.read(newRule, selectionBoxModel);
 
-        final PopupSize popupSize = PopupSize.resizable(800, 550);
+        final PopupSize popupSize = PopupSize.resizable(1400, 550);
         ShowPopupEvent.builder(editRulePresenter)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(popupSize)
@@ -229,7 +229,7 @@ public class RulesPresenter
         selectionBoxModel.addItems(fields.stream().map(FieldInfo::create).collect(Collectors.toList()));
         editRulePresenter.read(existingRule, selectionBoxModel);
 
-        final PopupSize popupSize = PopupSize.resizable(800, 400);
+        final PopupSize popupSize = PopupSize.resizable(800, 450);
         ShowPopupEvent.builder(editRulePresenter)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(popupSize)
@@ -358,6 +358,10 @@ public class RulesPresenter
     public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
         return addHandlerToSource(DirtyEvent.getType(), handler);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface RulesView extends View {
 

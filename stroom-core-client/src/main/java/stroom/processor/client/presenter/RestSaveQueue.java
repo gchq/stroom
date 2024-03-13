@@ -42,7 +42,6 @@ public abstract class RestSaveQueue<K, V> implements HasHandlers {
                         tryAndSetValue(key);
                     });
             doAction(rest, key, value);
-
         } else {
             setting.remove(key);
         }

@@ -1729,6 +1729,9 @@ export interface FeedDoc {
   uuid?: string;
   version?: string;
   volumeGroup?: string;
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
+  volumeGroupDocRef?: DocRef;
 }
 
 export interface FetchAllDocumentPermissionsRequest {
@@ -2469,14 +2472,17 @@ export interface FsVolumeGroup {
   /** @format int64 */
   createTimeMs?: number;
   createUser?: string;
+  defaultVolume?: boolean;
 
   /** @format int32 */
   id?: number;
   name?: string;
+  type?: string;
 
   /** @format int64 */
   updateTimeMs?: number;
   updateUser?: string;
+  uuid?: string;
 
   /** @format int32 */
   version?: number;
@@ -2663,6 +2669,9 @@ export interface IndexDoc {
   updateUser?: string;
   uuid?: string;
   version?: string;
+
+  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
+  volumeGroupDocRef?: DocRef;
   volumeGroupName?: string;
 }
 
@@ -2758,14 +2767,17 @@ export interface IndexVolumeGroup {
   /** @format int64 */
   createTimeMs?: number;
   createUser?: string;
+  defaultVolume?: boolean;
 
   /** @format int32 */
   id?: number;
   name?: string;
+  type?: string;
 
   /** @format int64 */
   updateTimeMs?: number;
   updateUser?: string;
+  uuid?: string;
 
   /** @format int32 */
   version?: number;
@@ -2918,6 +2930,7 @@ export interface Location {
   /** @format int32 */
   lineNo?: number;
   type: string;
+  unknown?: boolean;
 }
 
 export interface LoginRequest {
@@ -3542,6 +3555,7 @@ export interface ProcessorFilter {
 
   /** @format int64 */
   minMetaCreateTimeMs?: number;
+  name?: string;
   pipelineName?: string;
   pipelineUuid?: string;
 
@@ -3553,6 +3567,7 @@ export interface ProcessorFilter {
   processorUuid?: string;
   queryData?: QueryData;
   reprocess?: boolean;
+  type?: string;
 
   /** @format int64 */
   updateTimeMs?: number;
@@ -4740,12 +4755,11 @@ export interface SetStatusRequest {
 }
 
 export interface SharedElementData {
-  codeIndicators?: Indicators;
   formatInput?: boolean;
   formatOutput?: boolean;
+  indicators?: Indicators;
   input?: string;
   output?: string;
-  outputIndicators?: Indicators;
 }
 
 export interface SharedStepData {
@@ -4980,6 +4994,7 @@ export interface SteppingResult {
 
 export interface StoredError {
   elementId?: string;
+  errorType?: "CODE" | "GENERIC" | "INPUT" | "OUTPUT" | "UNKNOWN";
   location?: Location;
   message?: string;
   severity?: "INFO" | "WARN" | "ERROR" | "FATAL";
@@ -8536,7 +8551,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @request POST:/fsVolume/volumeGroup/v2
      * @secure
      */
-    createFsVolumeGroup: (data: string, params: RequestParams = {}) =>
+    createFsVolumeGroup: (data: FsVolumeGroup, params: RequestParams = {}) =>
       this.request<any, FsVolumeGroup>({
         path: `/fsVolume/volumeGroup/v2`,
         method: "POST",

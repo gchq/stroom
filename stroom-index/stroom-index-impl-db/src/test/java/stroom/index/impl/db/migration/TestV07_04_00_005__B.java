@@ -36,7 +36,7 @@ public class TestV07_04_00_005__B extends AbstractIndexMigrationTest {
                     UNIX_TIMESTAMP() * 1000,
                     'admin',
                     'Default Volume Group');
-                    
+
                 INSERT INTO index_volume (
                     id,
                     version,
@@ -55,7 +55,7 @@ public class TestV07_04_00_005__B extends AbstractIndexMigrationTest {
                     'admin',
                     '/my/path',
                     123);
-                    
+
                 INSERT INTO index_volume_group (
                     id,
                     version,

@@ -106,6 +106,23 @@ public class GenericDao<T_REC_TYPE extends UpdatableRecord<T_REC_TYPE>, T_OBJ_TY
                                                      final TableField<T_REC_TYPE, T_FIELD1> keyField1,
                                                      final TableField<T_REC_TYPE, T_FIELD2> keyField2,
                                                      final Consumer<T_OBJ_TYPE> onCreateAction) {
+
+        return JooqUtil.contextResult(connectionProvider, context ->
+                tryCreate(context, object, keyField1, keyField2, onCreateAction));
+    }
+
+    /**
+     * Will try to insert the record, but will fail silently if it already exists.
+     * It will use keyField1 and keyField2 (a compound key) to retrieve the persisted
+     * record if it already exists.
+     *
+     * @return The persisted record
+     */
+    public <T_FIELD1, T_FIELD2> T_OBJ_TYPE tryCreate(final DSLContext context,
+                                                     final T_OBJ_TYPE object,
+                                                     final TableField<T_REC_TYPE, T_FIELD1> keyField1,
+                                                     final TableField<T_REC_TYPE, T_FIELD2> keyField2,
+                                                     final Consumer<T_OBJ_TYPE> onCreateAction) {
         LAMBDA_LOGGER.debug(() -> LogUtil.message("Creating a {}", table.getName()));
         final T_REC_TYPE record = objectToRecord(object);
 
@@ -120,7 +137,7 @@ public class GenericDao<T_REC_TYPE extends UpdatableRecord<T_REC_TYPE>, T_OBJ_TY
         }
 
         final T_REC_TYPE persistedRecord = JooqUtil.tryCreate(
-                connectionProvider,
+                context,
                 record,
                 keyField1,
                 keyField2,

@@ -16,6 +16,8 @@
 
 package stroom.index.client.presenter;
 
+import stroom.cell.tickbox.shared.TickBoxState;
+import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.EndColumn;
@@ -26,11 +28,11 @@ import stroom.dispatch.client.RestFactory;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.index.shared.IndexVolumeGroup;
 import stroom.index.shared.IndexVolumeGroupResource;
+import stroom.util.client.DataGridUtil;
 import stroom.util.shared.ResultPage;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
-import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.view.client.Range;
@@ -85,13 +87,37 @@ public class IndexVolumeGroupListPresenter extends MyPresenterWidget<PagerView> 
      */
     private void initTableColumns() {
         // Name.
-        final Column<IndexVolumeGroup, String> volumeColumn = new Column<IndexVolumeGroup, String>(new TextCell()) {
-            @Override
-            public String getValue(final IndexVolumeGroup volume) {
-                return volume.getName();
-            }
-        };
-        dataGrid.addResizableColumn(volumeColumn, "Name", 400);
+        dataGrid.addResizableColumn(
+                DataGridUtil.copyTextColumnBuilder(IndexVolumeGroup::getName)
+                        .build(),
+                DataGridUtil.headingBuilder("Name")
+                        .withToolTip("The name of the volume group.")
+                        .build(),
+                400);
+
+        // UUID
+        dataGrid.addResizableColumn(
+                DataGridUtil.copyTextColumnBuilder(IndexVolumeGroup::getUuid)
+                        .build(),
+                DataGridUtil.headingBuilder("UUID")
+                        .withToolTip("The unique identifier for the volume group.")
+                        .build(),
+                ColumnSizeConstants.UUID_COL);
+
+        // Is Default
+        final Column<IndexVolumeGroup, TickBoxState> defaultColumn = DataGridUtil.updatableTickBoxColumnBuilder(
+                        IndexVolumeGroup::isDefaultVolume)
+                .centerAligned()
+                .build();
+        defaultColumn.setFieldUpdater((index, object, value) -> {
+
+        });
+        dataGrid.addColumn(
+                defaultColumn,
+                DataGridUtil.headingBuilder("Default Group")
+                        .withToolTip("If checked, this group will be used when no group has been specified.")
+                        .build(),
+                100);  // To allow for heading width
 
         dataGrid.addEndColumn(new EndColumn<>());
     }

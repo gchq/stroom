@@ -4278,11 +4278,11 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "type" : "string"
+                "$ref" : "#/components/schemas/FsVolumeGroup"
               }
             }
           },
-          "description" : "name",
+          "description" : "volumeGroup",
           "required" : true
         },
         "responses" : {
@@ -13482,6 +13482,9 @@
           },
           "volumeGroup" : {
             "type" : "string"
+          },
+          "volumeGroupDocRef" : {
+            "$ref" : "#/components/schemas/DocRef"
           }
         }
       },
@@ -14429,6 +14432,9 @@
           "createUser" : {
             "type" : "string"
           },
+          "defaultVolume" : {
+            "type" : "boolean"
+          },
           "id" : {
             "type" : "integer",
             "format" : "int32"
@@ -14436,11 +14442,17 @@
           "name" : {
             "type" : "string"
           },
+          "type" : {
+            "type" : "string"
+          },
           "updateTimeMs" : {
             "type" : "integer",
             "format" : "int64"
           },
           "updateUser" : {
+            "type" : "string"
+          },
+          "uuid" : {
             "type" : "string"
           },
           "version" : {
@@ -14806,6 +14818,9 @@
           "version" : {
             "type" : "string"
           },
+          "volumeGroupDocRef" : {
+            "$ref" : "#/components/schemas/DocRef"
+          },
           "volumeGroupName" : {
             "type" : "string"
           }
@@ -14966,6 +14981,9 @@
           "createUser" : {
             "type" : "string"
           },
+          "defaultVolume" : {
+            "type" : "boolean"
+          },
           "id" : {
             "type" : "integer",
             "format" : "int32"
@@ -14973,11 +14991,17 @@
           "name" : {
             "type" : "string"
           },
+          "type" : {
+            "type" : "string"
+          },
           "updateTimeMs" : {
             "type" : "integer",
             "format" : "int64"
           },
           "updateUser" : {
+            "type" : "string"
+          },
+          "uuid" : {
             "type" : "string"
           },
           "version" : {
@@ -16273,6 +16297,9 @@
             "type" : "integer",
             "format" : "int64"
           },
+          "name" : {
+            "type" : "string"
+          },
           "pipelineName" : {
             "type" : "string"
           },
@@ -16301,6 +16328,9 @@
           },
           "reprocess" : {
             "type" : "boolean"
+          },
+          "type" : {
+            "type" : "string"
           },
           "updateTimeMs" : {
             "type" : "integer",

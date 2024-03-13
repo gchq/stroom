@@ -22,11 +22,11 @@ import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.data.grid.client.WrapperView;
 import stroom.data.store.impl.fs.shared.FsVolumeGroup;
 import stroom.data.store.impl.fs.shared.FsVolumeGroupResource;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.svg.client.IconColour;
 import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
+import stroom.util.shared.GwtNullSafe;
 import stroom.widget.button.client.ButtonView;
 
 import com.google.gwt.core.client.GWT;
@@ -107,8 +107,8 @@ public class FsVolumeGroupPresenter extends ContentTabPresenter<WrapperView> {
     private void edit() {
         final FsVolumeGroup volume = volumeStatusListPresenter.getSelectionModel().getSelected();
         if (volume != null) {
-            final Rest<FsVolumeGroup> rest = restFactory.create();
-            rest
+            restFactory.builder()
+                    .forType(FsVolumeGroup.class)
                     .onSuccess(this::edit)
                     .call(FS_VOLUME_GROUP_RESOURCE)
                     .fetch(volume.getId());
@@ -117,17 +117,20 @@ public class FsVolumeGroupPresenter extends ContentTabPresenter<WrapperView> {
 
     private void edit(final FsVolumeGroup volumeGroup) {
         final FsVolumeGroupEditPresenter editor = editProvider.get();
-        editor.show(volumeGroup, "Edit Volume Group - " + volumeGroup.getName(), result -> {
-            if (result != null) {
-                refresh();
-            }
-            editor.hide();
-        });
+        editor.show(
+                volumeGroup,
+                "Edit Volume Group - " + volumeGroup.getName(),
+                result -> {
+                    if (result != null) {
+                        refresh();
+                    }
+                    editor.hide();
+                });
     }
 
     private void delete() {
         final List<FsVolumeGroup> list = volumeStatusListPresenter.getSelectionModel().getSelectedItems();
-        if (list != null && list.size() > 0) {
+        if (GwtNullSafe.hasItems(list)) {
             String message = "Are you sure you want to delete the selected volume group?";
             if (list.size() > 1) {
                 message = "Are you sure you want to delete the selected volume groups?";
@@ -137,9 +140,11 @@ public class FsVolumeGroupPresenter extends ContentTabPresenter<WrapperView> {
                         if (result) {
                             volumeStatusListPresenter.getSelectionModel().clear();
                             for (final FsVolumeGroup volume : list) {
-                                final Rest<Boolean> rest = restFactory.create();
-                                rest.onSuccess(response ->
-                                        refresh()).call(FS_VOLUME_GROUP_RESOURCE).delete(volume.getId());
+                                restFactory.builder()
+                                        .forBoolean()
+                                        .onSuccess(response ->
+                                                refresh())
+                                        .call(FS_VOLUME_GROUP_RESOURCE).delete(volume.getId());
                             }
                         }
                     });

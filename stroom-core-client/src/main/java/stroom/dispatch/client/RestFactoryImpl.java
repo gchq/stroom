@@ -14,6 +14,7 @@ import org.fusesource.restygwt.client.Defaults;
 import org.fusesource.restygwt.client.Dispatcher;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 class RestFactoryImpl implements RestFactory, HasHandlers {
@@ -131,6 +132,13 @@ class RestFactoryImpl implements RestFactory, HasHandlers {
         public <T> Rest<List<T>> forListOf(final Class<T> itemType) {
             //noinspection Convert2Diamond
             return createRest(new TypeLiteral<List<T>>() {
+            });
+        }
+
+        @Override
+        public <K, V> Rest<Map<K, V>> forMapOf(final Class<K> keyType, final Class<V> valueType) {
+            //noinspection Convert2Diamond
+            return createRest(new TypeLiteral<Map<K, V>>() {
             });
         }
 

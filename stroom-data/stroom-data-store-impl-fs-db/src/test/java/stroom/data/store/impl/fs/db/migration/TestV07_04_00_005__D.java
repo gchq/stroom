@@ -36,14 +36,14 @@ public class TestV07_04_00_005__D extends AbstractDataStoreMigrationTest {
                     UNIX_TIMESTAMP() * 1000,
                     'admin',
                     'Default Volume Group');
-                    
+
                 INSERT INTO fs_volume_state (
                     id,
                     version)
                 VALUES (
                     456,
                     1);
-                    
+
                 INSERT INTO fs_volume (
                     id,
                     version,
@@ -68,7 +68,7 @@ public class TestV07_04_00_005__D extends AbstractDataStoreMigrationTest {
                     456,
                     0,
                     123);
-                    
+
                 INSERT INTO fs_volume_group (
                     id,
                     version,

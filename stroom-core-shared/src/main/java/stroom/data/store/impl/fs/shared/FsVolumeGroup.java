@@ -9,6 +9,7 @@ import stroom.util.shared.HasAuditInfo;
 import stroom.util.shared.HasIntegerId;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -145,6 +146,7 @@ public class FsVolumeGroup implements HasAuditInfo, HasIntegerId, HasNameMutable
         this.name = name;
     }
 
+    @JsonIgnore
     @Override
     public String getType() {
         return DOCUMENT_TYPE;

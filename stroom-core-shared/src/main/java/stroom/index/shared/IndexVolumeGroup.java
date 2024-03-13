@@ -8,6 +8,7 @@ import stroom.util.shared.HasAuditInfo;
 import stroom.util.shared.HasIntegerId;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -157,6 +158,7 @@ public class IndexVolumeGroup implements HasAuditInfo, HasIntegerId, HasNameMuta
         this.name = name;
     }
 
+    @JsonIgnore
     @Override
     public String getType() {
         return null;

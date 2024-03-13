@@ -377,12 +377,14 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid, HasIntegerId, Has
         this.maxMetaCreateTimeMs = maxMetaCreateTimeMs;
     }
 
+    @JsonIgnore
     @Override
     public String getName() {
         // Doesn't have a name
         return null;
     }
 
+    @JsonIgnore
     @Override
     public String getType() {
         return ENTITY_TYPE;

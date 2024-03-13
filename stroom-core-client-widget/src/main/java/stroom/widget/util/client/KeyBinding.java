@@ -186,6 +186,30 @@ public class KeyBinding {
         return null;
     }
 
+    static void add(final Action action,
+                    final boolean ctrl,
+                    final int... keyCode) {
+        for (int code : keyCode) {
+            add(action, new Builder().ctrl(ctrl).keyCode(code).build());
+        }
+    }
+
+    static void add(final Action action, final int... keyCode) {
+        for (int code : keyCode) {
+            add(action, new Builder().keyCode(code).build());
+        }
+    }
+
+    static void add(final Action action, final Shortcut... shortcuts) {
+        for (final Shortcut shortcut : shortcuts) {
+            BINDINGS.add(new Binding.Builder().shortcut(shortcut).action(action).build());
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
     public enum Action {
         MOVE_UP,
         MOVE_DOWN,
@@ -209,26 +233,6 @@ public class KeyBinding {
         FIND_IN_CONTENT,
         RECENT_ITEMS,
         LOCATE
-    }
-
-    static void add(final Action action,
-                    final boolean ctrl,
-                    final int... keyCode) {
-        for (int code : keyCode) {
-            add(action, new Builder().ctrl(ctrl).keyCode(code).build());
-        }
-    }
-
-    static void add(final Action action, final int... keyCode) {
-        for (int code : keyCode) {
-            add(action, new Builder().keyCode(code).build());
-        }
-    }
-
-    static void add(final Action action, final Shortcut... shortcuts) {
-        for (final Shortcut shortcut : shortcuts) {
-            BINDINGS.add(new Binding.Builder().shortcut(shortcut).action(action).build());
-        }
     }
 
 

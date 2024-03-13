@@ -340,60 +340,71 @@ public final class JooqUtil {
                                                                      final TableField<R, T1> keyField1,
                                                                      final TableField<R, T2> keyField2,
                                                                      final Consumer<R> onCreateAction) {
-        R persistedRecord;
+//        R persistedRecord;
         LOGGER.debug(() -> "Creating a " + record.getTable() + " record if it doesn't already exist:\n" + record);
         try (final Connection connection = dataSource.getConnection()) {
             try {
                 checkDataSource(dataSource);
                 final DSLContext context = createContext(connection);
-                record.attach(context.configuration());
-                try {
-                    // Attempt to write the record, which may already be there
-                    record.insert();
-                    persistedRecord = record;
-                    if (onCreateAction != null) {
-                        onCreateAction.accept(persistedRecord);
-                    }
-                } catch (RuntimeException e) {
-                    if (e instanceof DataAccessException
-                            && e.getCause() != null
-                            && e.getCause() instanceof SQLIntegrityConstraintViolationException
-                            && ((SQLIntegrityConstraintViolationException) e.getCause()).getErrorCode() == 1062) {
-                        // 1062 is a duplicate key exception so someone else has already inserted it
-                        LOGGER.debug(e::getMessage, e);
-
-                        // In theory we could get the unique key fields from record.getTable().getKeys()
-                        // but this is a bit fragile if the table has multiple unique keys, so better to let
-                        // the caller make the decision as to which fields to use
-                        final List<Condition> conditionList = new ArrayList<>();
-                        // For now support up to two fields in a compound key
-                        if (keyField1 != null) {
-                            conditionList.add(keyField1.eq(record.get(keyField1)));
-                        }
-                        if (keyField2 != null) {
-                            conditionList.add(keyField2.eq(record.get(keyField2)));
-                        }
-                        if (conditionList.isEmpty()) {
-                            throw new RuntimeException("No key fields supplied");
-                        }
-
-                        final Table<R> table = record.getTable();
-                        LOGGER.debug("Re-fetching existing record from {} with conditions: {}", table, conditionList);
-                        // Now need to re-fetch the record using the key fields so we have the full record with ids
-                        persistedRecord = context.selectFrom(table)
-                                .where(conditionList.toArray(new Condition[0]))
-                                .fetchOne();
-                    } else {
-                        // Some other error so just re-throw
-                        LOGGER.error(e::getMessage, e);
-                        throw e;
-                    }
-                }
+                return tryCreate(context, record, keyField1, keyField2, onCreateAction);
             } finally {
                 releaseDataSource();
             }
         } catch (final Exception e) {
             throw convertException(e);
+        }
+//        return persistedRecord;
+    }
+
+    public static <R extends UpdatableRecord<R>, T1, T2> R tryCreate(final DSLContext context,
+                                                                     final R record,
+                                                                     final TableField<R, T1> keyField1,
+                                                                     final TableField<R, T2> keyField2,
+                                                                     final Consumer<R> onCreateAction) {
+        R persistedRecord;
+        LOGGER.debug(() -> "Creating a " + record.getTable() + " record if it doesn't already exist:\n" + record);
+        record.attach(context.configuration());
+        try {
+            // Attempt to write the record, which may already be there
+            record.insert();
+            persistedRecord = record;
+            if (onCreateAction != null) {
+                onCreateAction.accept(persistedRecord);
+            }
+        } catch (RuntimeException e) {
+            if (e instanceof DataAccessException
+                    && e.getCause() != null
+                    && e.getCause() instanceof SQLIntegrityConstraintViolationException
+                    && ((SQLIntegrityConstraintViolationException) e.getCause()).getErrorCode() == 1062) {
+                // 1062 is a duplicate key exception so someone else has already inserted it
+                LOGGER.debug(e::getMessage, e);
+
+                // In theory we could get the unique key fields from record.getTable().getKeys()
+                // but this is a bit fragile if the table has multiple unique keys, so better to let
+                // the caller make the decision as to which fields to use
+                final List<Condition> conditionList = new ArrayList<>();
+                // For now support up to two fields in a compound key
+                if (keyField1 != null) {
+                    conditionList.add(keyField1.eq(record.get(keyField1)));
+                }
+                if (keyField2 != null) {
+                    conditionList.add(keyField2.eq(record.get(keyField2)));
+                }
+                if (conditionList.isEmpty()) {
+                    throw new RuntimeException("No key fields supplied");
+                }
+
+                final Table<R> table = record.getTable();
+                LOGGER.debug("Re-fetching existing record from {} with conditions: {}", table, conditionList);
+                // Now need to re-fetch the record using the key fields so we have the full record with ids
+                persistedRecord = context.selectFrom(table)
+                        .where(conditionList.toArray(new Condition[0]))
+                        .fetchOne();
+            } else {
+                // Some other error so just re-throw
+                LOGGER.error(e::getMessage, e);
+                throw e;
+            }
         }
         return persistedRecord;
     }
@@ -596,6 +607,7 @@ public final class JooqUtil {
 
     /**
      * Combine multiple conditions in a null safe way
+     *
      * @param conditions
      * @return A non-null condition
      */

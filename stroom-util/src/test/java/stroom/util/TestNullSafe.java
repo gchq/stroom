@@ -38,6 +38,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -105,6 +106,38 @@ class TestNullSafe {
                         Level2::getNonNullLevel3,
                         nonNullLevel1.getNonNullLevel2().getNonNullLevel3()))
                 .isTrue();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testEqualProperties() {
+        final AtomicReference<String> val1 = new AtomicReference<>("foo");
+        final AtomicReference<String> val1b = new AtomicReference<>("foo");
+        final AtomicReference<String> val2 = new AtomicReference<>("bar");
+        final AtomicReference<String> valNull = new AtomicReference<>(null);
+
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(
+                        new TypeLiteral<Tuple2<
+                                AtomicReference<String>,
+                                AtomicReference<String>>>() {
+                        })
+                .withOutputType(boolean.class)
+                .withTestFunction(testCase -> {
+                    final AtomicReference<String> v1 = testCase.getInput()._1;
+                    final AtomicReference<String> v2 = testCase.getInput()._2;
+                    return NullSafe.equalProperties(v1, v2, AtomicReference::get);
+                })
+                .withSimpleEqualityAssertion()
+                .addCase(Tuple.of(null, null), true)
+                .addCase(Tuple.of(val1, null), false)
+                .addCase(Tuple.of(null, val1), false)
+                .addCase(Tuple.of(val1, val2), false)
+                .addCase(Tuple.of(val1, valNull), false)
+                .addCase(Tuple.of(valNull, val2), false)
+                .addCase(Tuple.of(valNull, valNull), true)
+                .addCase(Tuple.of(val1, val1), true)
+                .addCase(Tuple.of(val1, val1b), true)
+                .build();
     }
 
     @TestFactory

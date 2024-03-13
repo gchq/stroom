@@ -23,10 +23,10 @@ import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.data.store.impl.fs.shared.FsVolumeGroup;
 import stroom.data.store.impl.fs.shared.FsVolumeGroupResource;
 import stroom.data.store.impl.fs.shared.FsVolumeResource;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.svg.client.SvgPresets;
 import stroom.util.client.DelayedUpdate;
+import stroom.util.shared.GwtNullSafe;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -100,9 +100,9 @@ public class FsVolumeGroupEditPresenter
         registerHandler(openButton.addClickHandler(event -> edit()));
         registerHandler(deleteButton.addClickHandler(event -> delete()));
         registerHandler(rescanButton.addClickHandler(event -> {
-            final Rest<Boolean> rest = restFactory.create();
             delayedUpdate.reset();
-            rest
+            restFactory.builder()
+                    .forBoolean()
                     .onSuccess(response -> delayedUpdate.update())
                     .onFailure(throwable -> {
                     })
@@ -121,9 +121,10 @@ public class FsVolumeGroupEditPresenter
     private void edit() {
         final FsVolume volume = volumeStatusListPresenter.getSelectionModel().getSelected();
         if (volume != null) {
-            final Rest<FsVolume> rest = restFactory.create();
-            rest
-                    .onSuccess(result -> editVolume(result, "Edit Volume"))
+            restFactory.builder()
+                    .forType(FsVolume.class)
+                    .onSuccess(result ->
+                            editVolume(result, "Edit Volume"))
                     .call(FS_VOLUME_RESOURCE)
                     .fetch(volume.getId());
         }
@@ -141,7 +142,7 @@ public class FsVolumeGroupEditPresenter
 
     private void delete() {
         final List<FsVolume> list = volumeStatusListPresenter.getSelectionModel().getSelectedItems();
-        if (list != null && list.size() > 0) {
+        if (GwtNullSafe.hasItems(list)) {
             String message = "Are you sure you want to delete the selected volume?";
             if (list.size() > 1) {
                 message = "Are you sure you want to delete the selected volumes?";
@@ -151,9 +152,10 @@ public class FsVolumeGroupEditPresenter
                         if (result) {
                             volumeStatusListPresenter.getSelectionModel().clear();
                             for (final FsVolume volume : list) {
-                                final Rest<Boolean> rest = restFactory.create();
-                                rest.onSuccess(response -> volumeStatusListPresenter.refresh()).call(
-                                        FS_VOLUME_RESOURCE).delete(volume.getId());
+                                restFactory.builder()
+                                        .forBoolean()
+                                        .onSuccess(response -> volumeStatusListPresenter.refresh())
+                                        .call(FS_VOLUME_RESOURCE).delete(volume.getId());
                             }
                         }
                     });
@@ -191,12 +193,15 @@ public class FsVolumeGroupEditPresenter
         if (!open) {
             open = true;
 
-            this.volumeGroup = volumeGroup;
+            this.volumeGroup = volumeGroup.copy()
+                    .build();
             volumeStatusListPresenter.setGroup(volumeGroup);
             getView().setName(volumeGroup.getName());
+            getView().setDefault(volumeGroup.isDefaultVolume());
 
-            final PopupSize popupSize = PopupSize.resizable(1000, 600);
+            final PopupSize popupSize = PopupSize.resizable(1400, 600);
             ShowPopupEvent.builder(this)
+                    .modal()
                     .popupType(PopupType.OK_CANCEL_DIALOG)
                     .popupSize(popupSize)
                     .caption(title)
@@ -204,14 +209,24 @@ public class FsVolumeGroupEditPresenter
                     .onHideRequest(event -> {
                         if (event.isOk()) {
                             volumeGroup.setName(getView().getName());
-                            try {
-                                doWithGroupNameValidation(getView().getName(), volumeGroup.getId(), () ->
-                                        createVolumeGroup(consumer, volumeGroup));
-                            } catch (final RuntimeException e) {
-                                AlertEvent.fireError(
-                                        FsVolumeGroupEditPresenter.this,
-                                        e.getMessage(),
-                                        null);
+                            volumeGroup.setDefaultVolume(getView().isDefault());
+                            final boolean hasChanged = !GwtNullSafe.equalProperties(
+                                    this.volumeGroup, volumeGroup, FsVolumeGroup::getName)
+                                    || !GwtNullSafe.equalProperties(
+                                    this.volumeGroup, volumeGroup, FsVolumeGroup::isDefaultVolume);
+//                            GWT.log("hasChanged " + hasChanged);
+                            if (hasChanged) {
+                                try {
+                                    doWithGroupNameValidation(getView().getName(), volumeGroup.getId(), () ->
+                                            editVolumeGroup(consumer, volumeGroup));
+                                } catch (final RuntimeException e) {
+                                    AlertEvent.fireError(
+                                            FsVolumeGroupEditPresenter.this,
+                                            e.getMessage(),
+                                            null);
+                                }
+                            } else {
+                                consumer.accept(null);
                             }
                         } else {
                             consumer.accept(null);
@@ -224,14 +239,14 @@ public class FsVolumeGroupEditPresenter
     private void doWithGroupNameValidation(final String groupName,
                                            final Integer groupId,
                                            final Runnable work) {
-        if (groupName == null || groupName.isEmpty()) {
+        if (GwtNullSafe.isBlankString(groupName)) {
             AlertEvent.fireError(
                     FsVolumeGroupEditPresenter.this,
                     "You must provide a name for the index volume group.",
                     null);
         } else {
-            final Rest<FsVolumeGroup> rest = restFactory.create();
-            rest
+            restFactory.builder()
+                    .forType(FsVolumeGroup.class)
                     .onSuccess(grp -> {
                         if (grp != null && !Objects.equals(groupId, grp.getId())) {
                             AlertEvent.fireError(
@@ -245,14 +260,14 @@ public class FsVolumeGroupEditPresenter
                         }
                     })
                     .call(FS_VOLUME_GROUP_RESOURCE)
-                    .fetchByName(getView().getName());
+                    .fetchByName(groupName);
         }
     }
 
-    private void createVolumeGroup(final Consumer<FsVolumeGroup> consumer,
-                                   final FsVolumeGroup volumeGroup) {
-        final Rest<FsVolumeGroup> rest = restFactory.create();
-        rest
+    private void editVolumeGroup(final Consumer<FsVolumeGroup> consumer,
+                                 final FsVolumeGroup volumeGroup) {
+        restFactory.builder()
+                .forType(FsVolumeGroup.class)
                 .onSuccess(consumer)
                 .call(FS_VOLUME_GROUP_RESOURCE)
                 .update(volumeGroup.getId(), volumeGroup);

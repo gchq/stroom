@@ -6,6 +6,8 @@
     <g:FlowPanel styleName="max form">
         <form:FormGroup identity="fsVolumeGroupEditVolumeGroupName" label="Volume Group Name">
             <g:TextBox ui:field="name" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup identity="fsVolumeGroupEditVolumeIsDefault" label="Is Default Volume Group?">
             <tickbox:CustomCheckBox ui:field="isDefaultCheckBox" />
         </form:FormGroup>
     </g:FlowPanel>

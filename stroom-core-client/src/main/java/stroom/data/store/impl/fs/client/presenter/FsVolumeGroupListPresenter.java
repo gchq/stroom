@@ -16,6 +16,7 @@
 
 package stroom.data.store.impl.fs.client.presenter;
 
+import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
@@ -31,6 +32,7 @@ import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -85,19 +87,36 @@ public class FsVolumeGroupListPresenter extends MyPresenterWidget<PagerView> {
     private void initTableColumns() {
         // Name.
         dataGrid.addResizableColumn(
-                DataGridUtil.copyTextColumnBuilder(FsVolumeGroup::getName).build(),
-                "Name",
+                DataGridUtil.copyTextColumnBuilder(FsVolumeGroup::getName)
+                        .build(),
+                DataGridUtil.headingBuilder("Name")
+                        .withToolTip("The name of the volume group.")
+                        .build(),
                 400);
         // UUID
         dataGrid.addResizableColumn(
-                DataGridUtil.copyTextColumnBuilder(FsVolumeGroup::getUuid).build(),
-                "UUID",
+                DataGridUtil.copyTextColumnBuilder(FsVolumeGroup::getUuid)
+                        .build(),
+                DataGridUtil.headingBuilder("UUID")
+                        .withToolTip("The unique identifier for the volume group.")
+                        .build(),
                 ColumnSizeConstants.UUID_COL);
+
         // Is Default
+        final Column<FsVolumeGroup, TickBoxState> defaultColumn = DataGridUtil.updatableTickBoxColumnBuilder(
+                        FsVolumeGroup::isDefaultVolume)
+                .centerAligned()
+                .build();
+        defaultColumn.setFieldUpdater((index, object, value) -> {
+
+        });
         dataGrid.addColumn(
-                DataGridUtil.readOnlyTickBoxColumnBuilder(FsVolumeGroup::isDefaultVolume).build(),
-                "Default Group",
-                ColumnSizeConstants.CHECKBOX_COL);
+                defaultColumn,
+                DataGridUtil.headingBuilder("Default Group")
+                        .withToolTip("If checked, this group will be used when no group has been specified.")
+                        .build(),
+                100);  // To allow for heading width
+
         DataGridUtil.addEndColumn(dataGrid);
     }
 
