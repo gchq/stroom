@@ -35,7 +35,7 @@ public class IndexConfig extends AbstractConfig implements IsStroomConfig, HasDb
                 .build();
         indexFieldCache = CacheConfig.builder()
                 .maximumSize(10000L)
-                .expireAfterWrite(StroomDuration.ofSeconds(10))
+                .expireAfterWrite(StroomDuration.ofHours(10))
                 .build();
     }
 
