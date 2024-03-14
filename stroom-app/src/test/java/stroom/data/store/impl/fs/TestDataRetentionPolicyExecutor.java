@@ -40,6 +40,7 @@ import stroom.util.shared.time.TimeUnit;
 import stroom.util.time.StroomDuration;
 
 import jakarta.inject.Inject;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -80,6 +81,11 @@ class TestDataRetentionPolicyExecutor extends AbstractCoreIntegrationTest {
     private PhysicalDeleteExecutor physicalDeleteExecutor;
     @Inject
     private DataStoreServiceConfig dataStoreServiceConfig;
+
+    @AfterEach
+    void unsetProperties() {
+        clearConfigValueMapper();
+    }
 
     @Test
     void testCheckArchive() throws IOException {

@@ -128,7 +128,6 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
     @AfterEach
     void unsetProperties() {
         clearConfigValueMapper();
-//        metaValueConfig.setAddAsync(true);
     }
 
     /**

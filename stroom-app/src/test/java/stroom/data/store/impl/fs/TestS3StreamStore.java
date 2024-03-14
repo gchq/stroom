@@ -126,7 +126,6 @@ class TestS3StreamStore extends AbstractCoreIntegrationTest {
     @AfterEach
     void unsetProperties() {
         clearConfigValueMapper();
-//        metaValueConfig.setAddAsync(true);
     }
 
     /**
