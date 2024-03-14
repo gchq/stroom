@@ -16,9 +16,9 @@
 
 package stroom.index.client.presenter;
 
+import stroom.datasource.api.v2.AnalyzerType;
 import stroom.datasource.api.v2.FieldType;
 import stroom.index.client.presenter.IndexFieldEditPresenter.IndexFieldEditView;
-import stroom.index.shared.AnalyzerType;
 import stroom.index.shared.LuceneIndexField;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;

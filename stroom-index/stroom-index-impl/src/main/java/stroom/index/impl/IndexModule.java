@@ -44,16 +44,17 @@ public class IndexModule extends AbstractModule {
         install(new IndexElementModule());
 
         bind(IndexShardWriterCache.class).to(IndexShardWriterCacheImpl.class);
-        bind(LuceneIndexStructureCache.class).to(LuceneIndexStructureCacheImpl.class);
+        bind(LuceneIndexDocCache.class).to(LuceneIndexDocCacheImpl.class);
         bind(IndexFieldCache.class).to(IndexFieldCacheImpl.class);
         bind(IndexStore.class).to(IndexStoreImpl.class);
         bind(IndexVolumeService.class).to(IndexVolumeServiceImpl.class);
         bind(IndexVolumeGroupService.class).to(IndexVolumeGroupServiceImpl.class);
         bind(IndexShardService.class).to(IndexShardServiceImpl.class);
+        bind(IndexFieldService.class).to(IndexFieldServiceImpl.class);
         bind(Indexer.class).to(IndexerImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class)
-                .addBinding(LuceneIndexStructureCacheImpl.class)
+                .addBinding(LuceneIndexDocCacheImpl.class)
                 .addBinding(IndexVolumeServiceImpl.class)
                 .addBinding(IndexVolumeGroupServiceImpl.class)
                 .addBinding(IndexFieldCacheImpl.class);

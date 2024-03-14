@@ -23,7 +23,7 @@ public interface IndexShardWriter {
 
     void addDocument(IndexDocument document) throws IndexException;
 
-    void updateIndexStructure(LuceneIndexStructure indexStructure);
+    void setMaxDocumentCount(int maxDocumentCount);
 
     void flush();
 

@@ -4,7 +4,6 @@ import stroom.expression.api.DateTimeSettings;
 import stroom.index.impl.HighlightProvider;
 import stroom.index.impl.IndexShardWriter;
 import stroom.index.impl.IndexSystemInfoProvider;
-import stroom.index.impl.LuceneIndexStructure;
 import stroom.index.impl.LuceneProvider;
 import stroom.index.impl.LuceneShardSearcher;
 import stroom.index.shared.IndexShard;
@@ -54,13 +53,13 @@ class Lucene980Provider implements LuceneProvider {
     }
 
     @Override
-    public IndexShardWriter createIndexShardWriter(final LuceneIndexStructure indexStructure,
-                                                   final IndexShardKey indexShardKey,
-                                                   final IndexShard indexShard) {
+    public IndexShardWriter createIndexShardWriter(final IndexShardKey indexShardKey,
+                                                   final IndexShard indexShard,
+                                                   final int maxDocumentCount) {
         return indexShardWriterFactory.create(
-                indexStructure,
                 indexShardKey,
-                indexShard);
+                indexShard,
+                maxDocumentCount);
     }
 
     @Override

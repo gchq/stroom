@@ -261,6 +261,15 @@ public class ConfigProvidersModule extends AbstractModule {
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
+    stroom.index.impl.IndexFieldDbConfig getIndexFieldDbConfig(
+            final ConfigMapper configMapper) {
+        return configMapper.getConfigObject(
+                stroom.index.impl.IndexFieldDbConfig.class);
+    }
+
+    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
     stroom.index.impl.IndexShardSearchConfig getIndexShardSearchConfig(
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(
@@ -463,15 +472,6 @@ public class ConfigProvidersModule extends AbstractModule {
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(
                 stroom.query.common.v2.SearchResultStoreConfig.class);
-    }
-
-    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
-    @Provides
-    @SuppressWarnings("unused")
-    stroom.query.field.impl.QueryFieldConfig getQueryFieldConfig(
-            final ConfigMapper configMapper) {
-        return configMapper.getConfigObject(
-                stroom.query.field.impl.QueryFieldConfig.class);
     }
 
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")

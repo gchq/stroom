@@ -143,12 +143,16 @@ public enum FieldType implements HasDisplayValue {
         return TYPE_ARRAY[index];
     }
 
-    public static final Map<String, FieldType> TYPE_NAME_MAP = new HashMap<>();
+    private static final Map<String, FieldType> TYPE_NAME_MAP = new HashMap<>();
 
     static {
         for (final FieldType fieldType : values()) {
             TYPE_NAME_MAP.put(fieldType.getDisplayValue().toLowerCase(Locale.ROOT), fieldType);
         }
+    }
+
+    public static FieldType fromDisplayValue(final String displayValue) {
+        return TYPE_NAME_MAP.get(displayValue.toLowerCase(Locale.ROOT));
     }
 
     private final int index;

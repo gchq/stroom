@@ -16,10 +16,10 @@
 
 package stroom.search.elastic.shared;
 
+import stroom.datasource.api.v2.AnalyzerType;
 import stroom.datasource.api.v2.Field;
 import stroom.datasource.api.v2.FieldType;
-import stroom.index.shared.AnalyzerType;
-import stroom.index.shared.IndexField;
+import stroom.datasource.api.v2.IndexField;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;

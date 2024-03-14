@@ -18,17 +18,14 @@ package stroom.index.lucene553;
 
 import stroom.index.impl.IndexConfig;
 import stroom.index.impl.IndexDocument;
-import stroom.index.impl.IndexFields;
 import stroom.index.impl.IndexShardKeyUtil;
 import stroom.index.impl.IndexShardUtil;
 import stroom.index.impl.IndexShardWriter;
-import stroom.index.impl.LuceneIndexStructure;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
 import stroom.index.shared.IndexVolume;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.index.shared.LuceneIndexField;
-import stroom.index.shared.LuceneIndexFieldsMap;
 import stroom.index.shared.LuceneVersionUtil;
 import stroom.query.language.functions.ValInteger;
 import stroom.query.language.functions.ValString;
@@ -48,28 +45,13 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashSet;
-import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestIndexShardIO extends StroomUnitTest {
 
-    //    private static final IndexShardService INDEX_SHARD_SERVICE = new MockIndexShardService();
-    private static final List<LuceneIndexField> INDEX_FIELDS = IndexFields.createStreamIndexFields();
-    //    private static final IndexShardWriterCache INDEX_SHARD_WRITER_CACHE = new MockIndexShardWriterCache();
-//    private static final IndexShardManager INDEX_SHARD_MANAGER = new MockIndexShardManager();
-    private static final LuceneIndexStructure INDEX_CONFIG;
-
-    static {
-        INDEX_FIELDS.add(LuceneIndexField.createField("Id"));
-        INDEX_FIELDS.add(LuceneIndexField.createField("Test"));
-        INDEX_FIELDS.add(LuceneIndexField.createField("Id2"));
-
-        final LuceneIndexDoc index = new LuceneIndexDoc();
-        index.setName("Test");
-        INDEX_CONFIG = new LuceneIndexStructure(index, INDEX_FIELDS, new LuceneIndexFieldsMap(INDEX_FIELDS));
-    }
+    private static final int MAX_DOCS = 1000000000;
 
     private PathCreator pathCreator;
 
@@ -118,7 +100,8 @@ class TestIndexShardIO extends StroomUnitTest {
 
         for (int i = 1; i <= 10; i++) {
             final IndexShardWriter writer = new Lucene553IndexShardWriter(
-                    null, new IndexConfig(), INDEX_CONFIG, indexShardKey, idx1, pathCreator);
+                    null, new IndexConfig(), indexShardKey, idx1, pathCreator,
+                    MAX_DOCS);
             writer.flush();
             writer.addDocument(buildDocument(i));
             writer.flush();
@@ -150,7 +133,8 @@ class TestIndexShardIO extends StroomUnitTest {
 
         for (int i = 1; i <= 10; i++) {
             final IndexShardWriter writer = new Lucene553IndexShardWriter(
-                    null, new IndexConfig(), INDEX_CONFIG, indexShardKey, idx1, pathCreator);
+                    null, new IndexConfig(), indexShardKey, idx1, pathCreator,
+                    MAX_DOCS);
             writer.addDocument(buildDocument(i));
             writer.close();
             assertThat(writer.getDocumentCount()).isEqualTo(i);
@@ -329,7 +313,8 @@ class TestIndexShardIO extends StroomUnitTest {
         FileUtil.deleteDir(dir);
 
         final IndexShardWriter writer = new Lucene553IndexShardWriter(
-                null, new IndexConfig(), INDEX_CONFIG, indexShardKey, idx1, pathCreator);
+                null, new IndexConfig(), indexShardKey, idx1, pathCreator,
+                MAX_DOCS);
 
         for (int i = 1; i <= 10; i++) {
             writer.addDocument(buildDocument(i));
@@ -362,7 +347,7 @@ class TestIndexShardIO extends StroomUnitTest {
         FileUtil.deleteDir(dir);
 
         final IndexShardWriter writer = new Lucene553IndexShardWriter(
-                null, new IndexConfig(), INDEX_CONFIG, indexShardKey, idx1, pathCreator);
+                null, new IndexConfig(), indexShardKey, idx1, pathCreator, MAX_DOCS);
 
         for (int i = 1; i <= 10; i++) {
             writer.addDocument(buildDocument(i));
@@ -392,7 +377,7 @@ class TestIndexShardIO extends StroomUnitTest {
         final IndexShardKey indexShardKey = IndexShardKeyUtil.createTestKey(index);
 
         final IndexShardWriter writer = new Lucene553IndexShardWriter(
-                null, new IndexConfig(), INDEX_CONFIG, indexShardKey, idx1, pathCreator);
+                null, new IndexConfig(), indexShardKey, idx1, pathCreator, MAX_DOCS);
 
         Long lastSize = null;
 

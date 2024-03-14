@@ -16,9 +16,9 @@
 
 package stroom.index.client.view;
 
+import stroom.datasource.api.v2.AnalyzerType;
 import stroom.datasource.api.v2.FieldType;
 import stroom.index.client.presenter.IndexFieldEditPresenter.IndexFieldEditView;
-import stroom.index.shared.AnalyzerType;
 import stroom.index.shared.LuceneFieldTypes;
 import stroom.item.client.SelectionBox;
 import stroom.widget.tickbox.client.view.CustomCheckBox;

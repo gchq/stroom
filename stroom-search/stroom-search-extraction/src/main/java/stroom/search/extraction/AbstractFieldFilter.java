@@ -16,8 +16,8 @@
 
 package stroom.search.extraction;
 
+import stroom.datasource.api.v2.AnalyzerType;
 import stroom.datasource.api.v2.FieldType;
-import stroom.index.shared.AnalyzerType;
 import stroom.index.shared.IndexFieldImpl;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
@@ -130,10 +130,10 @@ public abstract class AbstractFieldFilter extends AbstractXMLFilter {
         if (NAME.equals(currentElement)) {
             currentFieldBuilder.fldName(string);
         } else if (TYPE.equals(currentElement)) {
-            final FieldType type = FieldType.TYPE_NAME_MAP.get(string.toLowerCase(Locale.ROOT));
+            final FieldType type = FieldType.fromDisplayValue(string);
             currentFieldBuilder.fldType(type);
         } else if (ANALYSER.equals(currentElement)) {
-            final AnalyzerType analyzerType = AnalyzerType.TYPE_MAP.get(string.toLowerCase(Locale.ROOT));
+            final AnalyzerType analyzerType = AnalyzerType.fromDisplayValue(string);
             currentFieldBuilder.analyzerType(analyzerType);
         } else if (INDEXED.equals(currentElement)) {
             currentFieldBuilder.indexed(Boolean.parseBoolean(string));

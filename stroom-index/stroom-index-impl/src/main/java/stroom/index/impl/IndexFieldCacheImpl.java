@@ -19,8 +19,8 @@ package stroom.index.impl;
 
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.LoadingStroomCache;
+import stroom.datasource.api.v2.IndexField;
 import stroom.docref.DocRef;
-import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFieldCache;
 import stroom.index.shared.IndexFieldProvider;
 import stroom.util.shared.Clearable;
@@ -62,7 +62,7 @@ public class IndexFieldCacheImpl implements IndexFieldCache, Clearable {
 
         final IndexFieldProvider provider = providers.get(key.docRef.getType());
         if (provider == null) {
-            throw new NullPointerException("No provider can be found for: " + key.fieldName);
+            throw new NullPointerException("No provider can be found for: " + key.docRef.getType());
         }
 
         return provider.getIndexField(key.docRef, key.fieldName);

@@ -17,13 +17,12 @@
 package stroom.index.impl;
 
 import stroom.datasource.api.v2.FieldType;
+import stroom.datasource.api.v2.IndexField;
 import stroom.docref.DocRef;
 import stroom.index.shared.AllPartition;
-import stroom.index.shared.IndexField;
+import stroom.index.shared.IndexFieldCache;
 import stroom.index.shared.IndexShardKey;
 import stroom.index.shared.LuceneIndexDoc;
-import stroom.index.shared.LuceneIndexField;
-import stroom.index.shared.LuceneIndexFieldsMap;
 import stroom.index.shared.Partition;
 import stroom.index.shared.TimePartition;
 import stroom.pipeline.LocationFactoryProxy;
@@ -84,9 +83,9 @@ class IndexingFilter extends AbstractXMLFilter {
     private final LocationFactoryProxy locationFactory;
     private final Indexer indexer;
     private final ErrorReceiverProxy errorReceiverProxy;
-    private final LuceneIndexStructureCache indexStructureCache;
+    private final LuceneIndexDocCache luceneIndexDocCache;
+    private final IndexFieldCache indexFieldCache;
     private final CharBuffer debugBuffer = new CharBuffer(10);
-    private LuceneIndexFieldsMap indexFieldsMap;
     private DocRef indexRef;
     private LuceneIndexDoc index;
     private final TimePartitionFactory timePartitionFactory = new TimePartitionFactory();
@@ -104,12 +103,14 @@ class IndexingFilter extends AbstractXMLFilter {
                    final LocationFactoryProxy locationFactory,
                    final Indexer indexer,
                    final ErrorReceiverProxy errorReceiverProxy,
-                   final LuceneIndexStructureCache indexStructureCache) {
+                   final LuceneIndexDocCache luceneIndexDocCache,
+                   final IndexFieldCache indexFieldCache) {
         this.metaHolder = metaHolder;
         this.locationFactory = locationFactory;
         this.indexer = indexer;
         this.errorReceiverProxy = errorReceiverProxy;
-        this.indexStructureCache = indexStructureCache;
+        this.luceneIndexDocCache = luceneIndexDocCache;
+        this.indexFieldCache = indexFieldCache;
     }
 
     /**
@@ -124,14 +125,11 @@ class IndexingFilter extends AbstractXMLFilter {
             }
 
             // Get the index and index fields from the cache.
-            final LuceneIndexStructure indexStructure = indexStructureCache.get(indexRef);
-            if (indexStructure == null) {
+            index = luceneIndexDocCache.get(indexRef);
+            if (index == null) {
                 log(Severity.FATAL_ERROR, "Unable to load index", null);
                 throw LoggedException.create("Unable to load index");
             }
-
-            index = indexStructure.getIndex();
-            indexFieldsMap = indexStructure.getIndexFieldsMap();
 
             // Create a key to create shards with.
             if (metaHolder == null || metaHolder.getMeta() == null || index.getPartitionBy() == null) {
@@ -177,7 +175,7 @@ class IndexingFilter extends AbstractXMLFilter {
 
                 if (!name.isEmpty() && !value.isEmpty()) {
                     // See if we can get this field.
-                    final LuceneIndexField indexField = indexFieldsMap.get(name);
+                    final IndexField indexField = indexFieldCache.get(indexRef, name);
                     if (indexField != null) {
                         // Index the current content if we are to store or index
                         // this field.

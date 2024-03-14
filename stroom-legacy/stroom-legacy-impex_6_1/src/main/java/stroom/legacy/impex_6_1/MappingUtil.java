@@ -1,6 +1,6 @@
 package stroom.legacy.impex_6_1;
 
-import stroom.index.shared.AnalyzerType;
+import stroom.datasource.api.v2.AnalyzerType;
 import stroom.index.shared.LuceneIndexField;
 import stroom.index.shared.OldIndexFieldType;
 import stroom.query.api.v2.Column;

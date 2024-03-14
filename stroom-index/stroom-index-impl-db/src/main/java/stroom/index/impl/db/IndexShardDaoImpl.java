@@ -33,8 +33,6 @@ import stroom.query.language.functions.ValLong;
 import stroom.query.language.functions.ValNull;
 import stroom.query.language.functions.ValString;
 import stroom.query.language.functions.ValuesConsumer;
-import stroom.util.logging.LambdaLogger;
-import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.Range;
 import stroom.util.shared.ResultPage;
@@ -67,8 +65,6 @@ import static stroom.index.impl.db.jooq.tables.IndexVolume.INDEX_VOLUME;
 
 @Singleton // holding all the volume selectors
 class IndexShardDaoImpl implements IndexShardDao {
-
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexShardDaoImpl.class);
 
     private static final Function<Record, IndexShard> RECORD_TO_INDEX_SHARD_MAPPER = record -> {
         final IndexShard indexShard = new IndexShard();

@@ -2,10 +2,10 @@ package stroom.view.impl;
 
 import stroom.datasource.api.v2.DataSourceProvider;
 import stroom.datasource.api.v2.FindFieldInfoCriteria;
+import stroom.datasource.api.v2.IndexField;
 import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
-import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFieldCache;
 import stroom.index.shared.IndexFieldProvider;
 import stroom.query.api.v2.Query;

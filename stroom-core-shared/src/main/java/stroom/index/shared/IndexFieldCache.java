@@ -16,6 +16,7 @@
 
 package stroom.index.shared;
 
+import stroom.datasource.api.v2.IndexField;
 import stroom.docref.DocRef;
 
 public interface IndexFieldCache {

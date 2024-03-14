@@ -17,16 +17,19 @@
 
 package stroom.search.impl;
 
+import stroom.datasource.api.v2.ConditionSet;
 import stroom.datasource.api.v2.FindFieldInfoCriteria;
+import stroom.datasource.api.v2.FindIndexFieldCriteria;
+import stroom.datasource.api.v2.IndexField;
 import stroom.datasource.api.v2.QueryField;
-import stroom.datasource.api.v2.QueryFieldService;
 import stroom.docref.DocRef;
+import stroom.docref.StringMatch;
+import stroom.index.impl.IndexFieldService;
 import stroom.index.impl.IndexStore;
+import stroom.index.impl.LuceneIndexDocCache;
 import stroom.index.impl.LuceneProviderFactory;
-import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFieldProvider;
 import stroom.index.shared.LuceneIndexDoc;
-import stroom.index.shared.LuceneIndexField;
 import stroom.index.shared.LuceneVersionUtil;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.Query;
@@ -40,49 +43,47 @@ import stroom.query.common.v2.ResultStoreFactory;
 import stroom.query.common.v2.SearchProvider;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
-import stroom.util.NullSafe;
+import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
-public class LuceneSearchProvider implements SearchProvider, IndexFieldProvider {
+public class LuceneSearchProvider implements SearchProvider {
 
     private final IndexStore indexStore;
+    private final LuceneIndexDocCache luceneIndexDocCache;
     private final SecurityContext securityContext;
     private final CoprocessorsFactory coprocessorsFactory;
     private final ResultStoreFactory resultStoreFactory;
     private final FederatedSearchExecutor federatedSearchExecutor;
     private final NodeSearchTaskCreator nodeSearchTaskCreator;
     private final LuceneProviderFactory luceneProviderFactory;
-    private final QueryFieldService queryFieldService;
-
-    private static final Map<DocRef, Integer> FIELD_SOURCE_MAP = new ConcurrentHashMap<>();
+    private final IndexFieldService indexFieldService;
 
     @Inject
     public LuceneSearchProvider(final IndexStore indexStore,
+                                final LuceneIndexDocCache luceneIndexDocCache,
                                 final SecurityContext securityContext,
                                 final CoprocessorsFactory coprocessorsFactory,
                                 final ResultStoreFactory resultStoreFactory,
                                 final FederatedSearchExecutor federatedSearchExecutor,
                                 final NodeSearchTaskCreator nodeSearchTaskCreator,
                                 final LuceneProviderFactory luceneProviderFactory,
-                                final QueryFieldService queryFieldService) {
+                                final IndexFieldService indexFieldService) {
         this.indexStore = indexStore;
+        this.luceneIndexDocCache = luceneIndexDocCache;
         this.securityContext = securityContext;
         this.coprocessorsFactory = coprocessorsFactory;
         this.resultStoreFactory = resultStoreFactory;
         this.federatedSearchExecutor = federatedSearchExecutor;
         this.nodeSearchTaskCreator = nodeSearchTaskCreator;
         this.luceneProviderFactory = luceneProviderFactory;
-        this.queryFieldService = queryFieldService;
+        this.indexFieldService = indexFieldService;
     }
 
     @Override
@@ -96,76 +97,36 @@ public class LuceneSearchProvider implements SearchProvider, IndexFieldProvider 
                 return ResultPage.createCriterialBasedList(Collections.emptyList(), criteria);
             }
 
-            if (!FIELD_SOURCE_MAP.containsKey(docRef)) {
-                // Load fields.
-                final LuceneIndexDoc index = indexStore.readDocument(docRef);
-                if (index == null) {
-                    // We can't read the index so return no fields.
-                    return ResultPage.createCriterialBasedList(Collections.emptyList(), criteria);
-                }
-
-                final List<QueryField> fields = IndexDataSourceFieldUtil.getDataSourceFields(index);
-                final int fieldSourceId = queryFieldService.getOrCreateFieldSource(docRef);
-                queryFieldService.addFields(fieldSourceId, fields);
-
-//                // TEST DATA
-//                for (int i = 0; i < 1000; i++) {
-//                    addField(fieldSourceId, QueryField.createId("test" + i));
-//                    for (int j = 0; j < 1000; j++) {
-//                        addField(fieldSourceId, QueryField.createId("test" + i + ".test" + j));
-//                        for (int k = 0; k < 1000; k++) {
-//                            addField(fieldSourceId, QueryField.createId("test" + i + ".test" + j + ".test" + k));
-//                        }
-//                    }
-//                }
-                FIELD_SOURCE_MAP.put(docRef, fieldSourceId);
-            }
-
-            return queryFieldService.findFieldInfo(criteria);
+            final FindIndexFieldCriteria findIndexFieldCriteria = new FindIndexFieldCriteria(
+                    criteria.getPageRequest(),
+                    criteria.getSortList(),
+                    criteria.getDataSourceRef(),
+                    criteria.getStringMatch());
+            final ResultPage<IndexField> resultPage = indexFieldService.findFields(findIndexFieldCriteria);
+            final List<QueryField> queryFields = resultPage
+                    .getValues()
+                    .stream()
+                    .map(indexField -> QueryField
+                            .builder()
+                            .fldName(indexField.getFldName())
+                            .fldType(indexField.getFldType())
+                            .conditionSet(ConditionSet.getDefault(indexField.getFldType()))
+                            .queryable(indexField.isIndexed())
+                            .build())
+                    .toList();
+            return new ResultPage<>(queryFields, resultPage.getPageResponse());
         });
-    }
-
-    @Override
-    public IndexField getIndexField(final DocRef docRef, final String fieldName) {
-        return securityContext.useAsReadResult(() -> {
-
-            // Check for read permission.
-            if (!securityContext.hasDocumentPermission(docRef.getUuid(), DocumentPermissionNames.READ)) {
-                // If there is no read permission then return no fields.
-                return null;
-            }
-
-            if (!FIELD_SOURCE_MAP.containsKey(docRef)) {
-                // Load fields.
-                final LuceneIndexDoc index = indexStore.readDocument(docRef);
-                if (index != null) {
-                    final List<LuceneIndexField> fields = NullSafe.list(index.getFields());
-                    return fields
-                            .stream()
-                            .filter(field -> Objects.equals(field.getFldName(), fieldName))
-                            .findFirst()
-                            .orElse(null);
-                }
-            }
-
-            return null;
-        });
-    }
-
-    private void addField(final int fieldSourceId, final QueryField field) {
-        queryFieldService.addFields(fieldSourceId,
-                Collections.singletonList(field));
     }
 
     @Override
     public Optional<String> fetchDocumentation(final DocRef docRef) {
-        return Optional.ofNullable(indexStore.readDocument(docRef)).map(LuceneIndexDoc::getDescription);
+        return Optional.ofNullable(luceneIndexDocCache.get(docRef)).map(LuceneIndexDoc::getDescription);
     }
 
     @Override
     public DocRef fetchDefaultExtractionPipeline(final DocRef dataSourceRef) {
         return securityContext.useAsReadResult(() -> {
-            final LuceneIndexDoc index = indexStore.readDocument(dataSourceRef);
+            final LuceneIndexDoc index = luceneIndexDocCache.get(dataSourceRef);
             if (index != null) {
                 return index.getDefaultExtractionPipeline();
             }
@@ -176,7 +137,7 @@ public class LuceneSearchProvider implements SearchProvider, IndexFieldProvider 
     @Override
     public QueryField getTimeField(final DocRef docRef) {
         return securityContext.useAsReadResult(() -> {
-            final LuceneIndexDoc index = indexStore.readDocument(docRef);
+            final LuceneIndexDoc index = luceneIndexDocCache.get(docRef);
             QueryField timeField = null;
             if (index.getTimeField() != null && !index.getTimeField().isBlank()) {
                 timeField = QueryField.createDate(index.getTimeField());
@@ -194,7 +155,7 @@ public class LuceneSearchProvider implements SearchProvider, IndexFieldProvider 
 
         // Load the index.
         final LuceneIndexDoc index = securityContext.useAsReadResult(() ->
-                indexStore.readDocument(query.getDataSource()));
+                luceneIndexDocCache.get(query.getDataSource()));
 
         // Extract highlights.
         final Set<String> highlights = luceneProviderFactory

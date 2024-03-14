@@ -56,7 +56,7 @@ public class IndexShardServiceImpl implements IndexShardService, Searchable {
 
 
     private final SecurityContext securityContext;
-    private final LuceneIndexStructureCache indexStructureCache;
+    private final LuceneIndexDocCache indexStructureCache;
     private final IndexShardDao indexShardDao;
     private final IndexVolumeService indexVolumeService;
 
@@ -64,7 +64,7 @@ public class IndexShardServiceImpl implements IndexShardService, Searchable {
 
     @Inject
     IndexShardServiceImpl(final SecurityContext securityContext,
-                          final LuceneIndexStructureCache indexStructureCache,
+                          final LuceneIndexDocCache indexStructureCache,
                           final IndexShardDao indexShardDao,
                           final IndexVolumeService indexVolumeService) {
         this.securityContext = securityContext;
@@ -87,9 +87,8 @@ public class IndexShardServiceImpl implements IndexShardService, Searchable {
     public IndexShard createIndexShard(final IndexShardKey indexShardKey,
                                        final String ownerNodeName) {
         return securityContext.secureResult(PermissionNames.MANAGE_INDEX_SHARDS_PERMISSION, () -> {
-            final LuceneIndexStructure indexStructure = indexStructureCache.get(
+            final LuceneIndexDoc index = indexStructureCache.get(
                     new DocRef(LuceneIndexDoc.DOCUMENT_TYPE, indexShardKey.getIndexUuid()));
-            final LuceneIndexDoc index = indexStructure.getIndex();
             final IndexVolume indexVolume = indexVolumeService.selectVolume(index.getVolumeGroupName(), ownerNodeName);
 
             return indexShardDao.create(

@@ -18,11 +18,11 @@
 package stroom.search.solr.search;
 
 import stroom.datasource.api.v2.FindFieldInfoCriteria;
+import stroom.datasource.api.v2.IndexField;
 import stroom.datasource.api.v2.QueryField;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
 import stroom.expression.api.DateTimeSettings;
-import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFieldProvider;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionUtil;

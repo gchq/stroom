@@ -1,7 +1,7 @@
 package stroom.index.lucene553;
 
+import stroom.datasource.api.v2.IndexField;
 import stroom.index.lucene553.SearchExpressionQueryBuilder.SearchExpressionQuery;
-import stroom.index.shared.IndexField;
 import stroom.index.shared.LuceneIndexField;
 import stroom.query.api.v2.SearchRequest;
 import stroom.search.extraction.FieldValue;

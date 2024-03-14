@@ -1,7 +1,7 @@
 package stroom.search.extraction;
 
+import stroom.datasource.api.v2.IndexField;
 import stroom.docref.DocRef;
-import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFieldCache;
 import stroom.index.shared.LuceneIndexField;
 import stroom.query.language.functions.FieldIndex;

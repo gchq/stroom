@@ -16,7 +16,9 @@
 
 package stroom.index;
 
+import stroom.datasource.api.v2.AnalyzerType;
 import stroom.datasource.api.v2.FieldType;
+import stroom.datasource.api.v2.IndexField;
 import stroom.docref.DocRef;
 import stroom.index.impl.IndexDocument;
 import stroom.index.impl.IndexFields;
@@ -25,8 +27,6 @@ import stroom.index.impl.IndexShardWriter;
 import stroom.index.impl.IndexStore;
 import stroom.index.mock.MockIndexShardWriter;
 import stroom.index.mock.MockIndexShardWriterCache;
-import stroom.index.shared.AnalyzerType;
-import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexShardKey;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.index.shared.LuceneIndexField;

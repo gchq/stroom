@@ -17,9 +17,9 @@ public interface LuceneProvider {
 
     HighlightProvider createHighlightProvider();
 
-    IndexShardWriter createIndexShardWriter(LuceneIndexStructure indexStructure,
-                                            IndexShardKey indexShardKey,
-                                            IndexShard indexShard);
+    IndexShardWriter createIndexShardWriter(IndexShardKey indexShardKey,
+                                            IndexShard indexShard,
+                                            int maxDocumentCount);
 
     IndexSystemInfoProvider getIndexSystemInfoProvider();
 

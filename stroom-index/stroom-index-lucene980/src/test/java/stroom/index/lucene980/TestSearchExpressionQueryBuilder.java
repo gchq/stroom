@@ -1,10 +1,10 @@
 package stroom.index.lucene980;
 
+import stroom.datasource.api.v2.AnalyzerType;
 import stroom.dictionary.api.WordListProvider;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docref.DocRef;
 import stroom.expression.api.DateTimeSettings;
-import stroom.index.shared.AnalyzerType;
 import stroom.index.shared.LuceneIndexField;
 import stroom.index.shared.LuceneIndexFieldsMap;
 import stroom.query.api.v2.ExpressionOperator;

@@ -31,13 +31,13 @@ import jakarta.inject.Inject;
 @EntityEventHandler(type = LuceneIndexDoc.DOCUMENT_TYPE)
 class IndexConfigCacheEntityEventHandler implements EntityEvent.Handler {
     private final NodeInfo nodeInfo;
-    private final LuceneIndexStructureCacheImpl indexStructureCache;
+    private final LuceneIndexDocCacheImpl indexStructureCache;
     private final IndexShardService indexShardService;
     private final IndexShardWriterCache indexShardWriterCache;
 
     @Inject
     IndexConfigCacheEntityEventHandler(final NodeInfo nodeInfo,
-                                       final LuceneIndexStructureCacheImpl indexStructureCache,
+                                       final LuceneIndexDocCacheImpl indexStructureCache,
                                        final IndexShardService indexShardService,
                                        final IndexShardWriterCache indexShardWriterCache) {
         this.nodeInfo = nodeInfo;
@@ -63,8 +63,8 @@ class IndexConfigCacheEntityEventHandler implements EntityEvent.Handler {
         shards.getValues().forEach(shard -> {
             final IndexShardWriter indexShardWriter = indexShardWriterCache.getWriterByShardId(shard.getId());
             if (indexShardWriter != null) {
-                final LuceneIndexStructure indexStructure = indexStructureCache.get(indexRef);
-                indexShardWriter.updateIndexStructure(indexStructure);
+                final LuceneIndexDoc index = indexStructureCache.get(indexRef);
+                indexShardWriter.setMaxDocumentCount(index.getMaxDocsPerShard());
             }
         });
     }

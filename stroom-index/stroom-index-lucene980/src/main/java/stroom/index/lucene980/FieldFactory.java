@@ -16,7 +16,7 @@
 
 package stroom.index.lucene980;
 
-import stroom.index.shared.IndexField;
+import stroom.datasource.api.v2.IndexField;
 import stroom.index.shared.LuceneIndexField;
 import stroom.query.language.functions.Val;
 import stroom.search.extraction.FieldValue;
@@ -34,7 +34,7 @@ class FieldFactory {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(FieldFactory.class);
 
-    public static LongField create(final LuceneIndexField indexField, final long initialValue) {
+    public static LongField createLong(final LuceneIndexField indexField, final long initialValue) {
         return new LongField(indexField.getFldName(),
                 initialValue,
                 indexField.isStored()
@@ -81,7 +81,7 @@ class FieldFactory {
         switch (indexField.getFldType()) {
             case LONG, ID -> {
                 try {
-                    field = FieldFactory.create(luceneIndexField, value.toLong());
+                    field = FieldFactory.createLong(luceneIndexField, value.toLong());
                 } catch (final Exception e) {
                     LOGGER.trace(e.getMessage(), e);
                 }
@@ -113,7 +113,7 @@ class FieldFactory {
             }
             case DATE -> {
                 try {
-                    field = FieldFactory.create(luceneIndexField, value.toLong());
+                    field = FieldFactory.createLong(luceneIndexField, value.toLong());
                 } catch (final RuntimeException e) {
                     LOGGER.trace(e.getMessage(), e);
                 }
