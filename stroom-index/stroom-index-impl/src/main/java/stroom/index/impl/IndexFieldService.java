@@ -3,7 +3,7 @@ package stroom.index.impl;
 import stroom.datasource.api.v2.FindIndexFieldCriteria;
 import stroom.datasource.api.v2.IndexField;
 import stroom.docref.DocRef;
-import stroom.index.shared.IndexFieldProvider;
+import stroom.query.common.v2.IndexFieldProvider;
 import stroom.util.shared.ResultPage;
 
 import java.util.Collection;

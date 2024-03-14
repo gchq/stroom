@@ -2,9 +2,9 @@ package stroom.index.lucene980;
 
 import stroom.index.lucene980.SearchExpressionQueryBuilder.SearchExpressionQuery;
 import stroom.index.lucene980.analyser.AnalyzerFactory;
-import stroom.index.shared.IndexFieldCache;
 import stroom.index.shared.LuceneIndexField;
 import stroom.query.api.v2.SearchRequest;
+import stroom.query.common.v2.IndexFieldCache;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 

@@ -6,9 +6,9 @@ import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docref.DocRef;
 import stroom.expression.api.DateTimeSettings;
 import stroom.index.shared.LuceneIndexField;
-import stroom.index.shared.MockIndexFieldCache;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
+import stroom.query.common.v2.MockIndexFieldCache;
 
 import org.junit.jupiter.api.Test;
 

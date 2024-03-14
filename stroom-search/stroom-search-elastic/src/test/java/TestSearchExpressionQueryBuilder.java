@@ -1,11 +1,11 @@
 import stroom.datasource.api.v2.FieldType;
 import stroom.docref.DocRef;
 import stroom.expression.api.DateTimeSettings;
-import stroom.index.shared.MockIndexFieldCache;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.common.v2.DateExpressionParser;
+import stroom.query.common.v2.MockIndexFieldCache;
 import stroom.search.elastic.search.SearchExpressionQueryBuilder;
 import stroom.search.elastic.shared.ElasticIndexField;
 

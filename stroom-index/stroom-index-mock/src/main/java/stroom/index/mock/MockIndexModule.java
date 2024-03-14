@@ -30,9 +30,9 @@ import stroom.index.impl.IndexVolumeService;
 import stroom.index.impl.Indexer;
 import stroom.index.impl.LuceneIndexDocCache;
 import stroom.index.impl.LuceneIndexDocCacheImpl;
-import stroom.index.shared.IndexFieldCache;
-import stroom.index.shared.IndexFieldProvider;
 import stroom.index.shared.LuceneIndexDoc;
+import stroom.query.common.v2.IndexFieldCache;
+import stroom.query.common.v2.IndexFieldProvider;
 import stroom.util.guice.GuiceUtil;
 
 import com.google.inject.AbstractModule;

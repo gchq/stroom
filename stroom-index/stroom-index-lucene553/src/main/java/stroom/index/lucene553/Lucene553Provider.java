@@ -7,12 +7,12 @@ import stroom.index.impl.IndexShardWriter;
 import stroom.index.impl.IndexSystemInfoProvider;
 import stroom.index.impl.LuceneProvider;
 import stroom.index.impl.LuceneShardSearcher;
-import stroom.index.shared.IndexFieldCache;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
 import stroom.index.shared.LuceneVersion;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.QueryKey;
+import stroom.query.common.v2.IndexFieldCache;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;

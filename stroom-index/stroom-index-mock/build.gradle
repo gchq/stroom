@@ -9,6 +9,7 @@ dependencies {
     implementation project(':stroom-index:stroom-index-impl')
     implementation project(':stroom-pipeline')
     implementation project(':stroom-query:stroom-query-api')
+    implementation project(':stroom-query:stroom-query-common')
     implementation project(':stroom-search:stroom-search-extraction')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')

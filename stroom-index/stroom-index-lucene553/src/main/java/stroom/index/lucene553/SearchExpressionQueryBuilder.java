@@ -24,12 +24,12 @@ import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
 import stroom.expression.api.DateTimeSettings;
 import stroom.index.lucene553.analyser.AnalyzerFactory;
-import stroom.index.shared.IndexFieldCache;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.common.v2.DateExpressionParser;
+import stroom.query.common.v2.IndexFieldCache;
 import stroom.search.impl.SearchException;
 
 import org.apache.lucene553.analysis.Analyzer;

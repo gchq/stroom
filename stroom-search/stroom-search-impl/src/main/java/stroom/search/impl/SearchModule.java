@@ -18,11 +18,11 @@ package stroom.search.impl;
 
 import stroom.datasource.api.v2.DataSourceProvider;
 import stroom.index.impl.IndexFieldServiceImpl;
-import stroom.index.shared.IndexFieldProvider;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.query.common.v2.DataStoreFactory;
 import stroom.query.common.v2.EventSearch;
 import stroom.query.common.v2.HasResultStoreInfo;
+import stroom.query.common.v2.IndexFieldProvider;
 import stroom.query.common.v2.LmdbDataStoreFactory;
 import stroom.query.common.v2.ResultStoreManager;
 import stroom.query.common.v2.SearchProvider;

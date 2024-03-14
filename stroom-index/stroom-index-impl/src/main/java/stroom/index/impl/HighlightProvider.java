@@ -2,8 +2,8 @@ package stroom.index.impl;
 
 import stroom.docref.DocRef;
 import stroom.expression.api.DateTimeSettings;
-import stroom.index.shared.IndexFieldCache;
 import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.common.v2.IndexFieldCache;
 
 import java.util.Set;
 
