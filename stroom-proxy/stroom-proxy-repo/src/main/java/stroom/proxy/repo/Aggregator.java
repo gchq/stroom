@@ -16,15 +16,17 @@
 
 package stroom.proxy.repo;
 
-import stroom.proxy.repo.dao.db.AggregateDao;
+import stroom.proxy.repo.dao.lmdb.AggregateDao;
 import stroom.proxy.repo.dao.db.ProxyDbConfig;
+import stroom.proxy.repo.dao.lmdb.AggregateKey;
 import stroom.proxy.repo.queue.Batch;
-import stroom.proxy.repo.queue.BatchUtil;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
+import org.checkerframework.checker.units.qual.Time;
 
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 @Singleton
@@ -50,12 +52,16 @@ public class Aggregator {
     }
 
     public synchronized void aggregateAll() {
-//        BatchUtil.transfer(sourceItems::getNewSourceItems, this::addItems);
+        Optional<RepoSourceItemRef> optional = sourceItems.getNextSourceItem(0, TimeUnit.MILLISECONDS);
+        while (optional.isPresent()) {
+            addItem(optional.get());
+            optional = sourceItems.getNextSourceItem(0, TimeUnit.MILLISECONDS);
+        }
     }
 
-    void addItems(final Batch<RepoSourceItemRef> newSourceItems) {
+    public void addItem(final RepoSourceItemRef newSourceItem) {
         final AggregatorConfig aggregatorConfig = aggregatorConfigProvider.get();
-        aggregateDao.addItems(newSourceItems,
+        aggregateDao.addItem(newSourceItem,
                 aggregatorConfig.getMaxItemsPerAggregate(),
                 aggregatorConfig.getMaxUncompressedByteSize());
     }
@@ -71,27 +77,20 @@ public class Aggregator {
     public void closeOldAggregates(final int maxItemsPerAggregate,
                                    final long maxUncompressedByteSize,
                                    final long maxAggregateAgeMs) {
-        boolean full = true;
-        final int batchSize = dbConfig.getBatchSize();
-        while (full) {
-            final long count = aggregateDao.closeAggregates(
+        aggregateDao.closeAggregates(
                     maxItemsPerAggregate,
                     maxUncompressedByteSize,
-                    maxAggregateAgeMs,
-                    batchSize);
-            progressLog.add("Aggregator - closeOldAggregates", count);
-            full = count == batchSize;
-        }
+                    maxAggregateAgeMs);
     }
 
-    public Batch<Aggregate> getCompleteAggregates() {
-        return aggregateDao.getNewAggregates();
+    public AggregateKey getCompleteAggregates() {
+        return aggregateDao.getNewAggregate();
     }
 
-    public Batch<Aggregate> getCompleteAggregates(final long timeout,
-                                                  final TimeUnit timeUnit) {
-        return aggregateDao.getNewAggregates(timeout, timeUnit);
-    }
+//    public Batch<Aggregate> getCompleteAggregates(final long timeout,
+//                                                  final TimeUnit timeUnit) {
+//        return aggregateDao.getNewAggregates(timeout, timeUnit);
+//    }
 
     public void clear() {
         aggregateDao.clear();

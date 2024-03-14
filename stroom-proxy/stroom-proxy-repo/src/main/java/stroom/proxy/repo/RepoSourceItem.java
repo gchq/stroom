@@ -72,7 +72,7 @@ public record RepoSourceItem(
         }
 
         public RepoSourceItem build(final FeedDao feedDao) {
-            final long feedId = feedDao.getId(new FeedKey(feedName, typeName));
+            final long feedId = feedDao.getId(new FeedAndType(feedName, typeName));
             return new RepoSourceItem(
                     repoSource,
                     id,

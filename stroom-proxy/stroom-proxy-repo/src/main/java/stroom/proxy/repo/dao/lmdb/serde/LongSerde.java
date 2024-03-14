@@ -2,21 +2,10 @@ package stroom.proxy.repo.dao.lmdb.serde;
 
 import stroom.bytebuffer.ByteBufferPool;
 import stroom.bytebuffer.PooledByteBuffer;
-import stroom.lmdb.serde.Serde;
-import stroom.proxy.repo.FeedKey;
-
-import jakarta.inject.Inject;
 
 import java.nio.ByteBuffer;
 
-public class LongSerde implements Serde<Long> {
-
-    private final ByteBufferPool byteBufferPool;
-
-    @Inject
-    LongSerde(final ByteBufferPool byteBufferPool) {
-        this.byteBufferPool = byteBufferPool;
-    }
+public class LongSerde implements ExtendedSerde<Long> {
 
     @Override
     public void serialize(final ByteBuffer byteBuffer, final Long val) {
@@ -39,7 +28,7 @@ public class LongSerde implements Serde<Long> {
     }
 
     @Override
-    public PooledByteBuffer serialize(final Long value) {
+    public PooledByteBuffer serialize(final Long value, final ByteBufferPool byteBufferPool) {
         final PooledByteBuffer pooledByteBuffer = byteBufferPool.getPooledByteBuffer(Long.BYTES);
         pooledByteBuffer.getByteBuffer().putLong(value);
         pooledByteBuffer.getByteBuffer().flip();

@@ -50,7 +50,7 @@ public class PooledByteBufferOutput extends ByteBufferOutput {
     private final ByteBufferPool byteBufferPool;
     private PooledByteBuffer pooledByteBuffer;
 
-    PooledByteBufferOutput(final ByteBufferPool byteBufferPool,
+    public PooledByteBufferOutput(final ByteBufferPool byteBufferPool,
                                   final int bufferSize,
                                   final int maxBufferSize) {
         this.byteBufferPool = byteBufferPool;

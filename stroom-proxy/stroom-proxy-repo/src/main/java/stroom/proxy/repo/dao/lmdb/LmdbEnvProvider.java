@@ -1,5 +1,6 @@
 package stroom.proxy.repo.dao.lmdb;
 
+import stroom.bytebuffer.ByteBufferPool;
 import stroom.util.io.PathCreator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -26,10 +27,13 @@ public class LmdbEnvProvider implements Provider<LmdbEnv> {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(LmdbEnvProvider.class);
 
     private final LmdbEnv lmdbEnv;
+    private final ByteBufferPool byteBufferPool;
 
     @Inject
     public LmdbEnvProvider(final ProxyLmdbConfig lmdbConfig,
-                           final PathCreator pathCreator) {
+                           final PathCreator pathCreator,
+                           final ByteBufferPool byteBufferPool) {
+        this.byteBufferPool = byteBufferPool;
         final Path envDir = pathCreator.toAppPath(lmdbConfig.getLocalDir());
         LOGGER.debug(() -> "Ensuring existence of directory " + envDir.toAbsolutePath().normalize());
         try {
@@ -79,7 +83,7 @@ public class LmdbEnvProvider implements Provider<LmdbEnv> {
                     "Error creating LMDB env at {}: {}",
                     envDir.toAbsolutePath().normalize(), e.getMessage()), e);
         }
-        return new LmdbEnv(env);
+        return new LmdbEnv(env, byteBufferPool);
     }
 
     @Override

@@ -4,18 +4,12 @@ import stroom.bytebuffer.ByteBufferPool;
 import stroom.bytebuffer.PooledByteBuffer;
 import stroom.lmdb.serde.Serde;
 
+import com.google.inject.TypeLiteral;
 import jakarta.inject.Inject;
 
 import java.nio.ByteBuffer;
 
-public class IntegerSerde implements Serde<Integer> {
-
-    private final ByteBufferPool byteBufferPool;
-
-    @Inject
-    IntegerSerde(final ByteBufferPool byteBufferPool) {
-        this.byteBufferPool = byteBufferPool;
-    }
+public class IntegerSerde implements ExtendedSerde<Integer> {
 
     @Override
     public void serialize(final ByteBuffer byteBuffer, final Integer val) {
@@ -38,7 +32,7 @@ public class IntegerSerde implements Serde<Integer> {
     }
 
     @Override
-    public PooledByteBuffer serialize(final Integer value) {
+    public PooledByteBuffer serialize(final Integer value, final ByteBufferPool byteBufferPool) {
         final PooledByteBuffer pooledByteBuffer = byteBufferPool.getPooledByteBuffer(Integer.BYTES);
         pooledByteBuffer.getByteBuffer().putInt(value);
         pooledByteBuffer.getByteBuffer().flip();

@@ -61,10 +61,6 @@ public interface Serializer<T> {
      */
     void serialize(final ByteBuffer byteBuffer, final T object);
 
-    default PooledByteBuffer serialize(T value) {
-        throw new UnsupportedOperationException("Not implemented for this serializer");
-    }
-
     /**
      * Method for serialising the value when the length of the serialized form is unknown.
      *

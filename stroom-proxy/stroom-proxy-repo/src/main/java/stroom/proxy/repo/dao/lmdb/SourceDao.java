@@ -1,10 +1,9 @@
 package stroom.proxy.repo.dao.lmdb;
 
-import stroom.bytebuffer.PooledByteBuffer;
-import stroom.proxy.repo.FeedKey;
+import stroom.proxy.repo.FeedAndType;
 import stroom.proxy.repo.RepoSource;
 import stroom.proxy.repo.dao.lmdb.serde.LongSerde;
-import stroom.proxy.repo.dao.lmdb.serde.RepoSourcePartSerde;
+import stroom.proxy.repo.dao.lmdb.serde.RepoSourceValueSerde;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Clearable;
@@ -12,9 +11,7 @@ import stroom.util.shared.Flushable;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-import org.lmdbjava.Dbi;
 
-import java.nio.ByteBuffer;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
@@ -23,13 +20,13 @@ public class SourceDao implements Clearable, Flushable {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SourceDao.class);
 
-    private final LmdbEnv env;
-    private final Dbi<ByteBuffer> dbi;
+    //    private final LmdbEnv env;
+    private final Db<Long, RepoSourceValue> db;
 
 
     private final FeedDao feedDao;
-    private final LongSerde keySerde;
-    private final RepoSourcePartSerde valueSerde;
+//    private final LongSerde keySerde;
+//    private final RepoSourceValueSerde valueSerde;
 
     private final LmdbQueue<Long> newSourceQueue;
     private final LmdbQueue<Long> examinedSourceQueue;
@@ -164,18 +161,13 @@ public class SourceDao implements Clearable, Flushable {
 
     @Inject
     public SourceDao(final LmdbEnv env,
-                     final FeedDao feedDao,
-                     final LongSerde keySerde,
-                     final RepoSourcePartSerde valueSerde) {
+                     final FeedDao feedDao) {
         try {
-            this.env = env;
-            this.dbi = env.openDbi("source");
-            this.keySerde = keySerde;
-            this.valueSerde = valueSerde;
-
-            newSourceQueue = new LmdbQueue<>(env, "new-source", keySerde, keySerde);
-            examinedSourceQueue = new LmdbQueue<>(env, "examined-source", keySerde, keySerde);
-            deletableSourceQueue = new LmdbQueue<>(env, "deletable-source", keySerde, keySerde);
+//            this.env = env;
+            db = env.openDb("source", new LongSerde(), new RepoSourceValueSerde());
+            newSourceQueue = new LmdbQueue<>(env, "new-source", new LongSerde());
+            examinedSourceQueue = new LmdbQueue<>(env, "examined-source", new LongSerde());
+            deletableSourceQueue = new LmdbQueue<>(env, "deletable-source", new LongSerde());
         } catch (final RuntimeException e) {
             LOGGER.error(e::getMessage, e);
             throw e;
@@ -221,20 +213,21 @@ public class SourceDao implements Clearable, Flushable {
 
 
     public long getMaxFileStoreId() {
-        return env.getMaxKey(dbi, keySerde).orElse(0L);
+        return db.getMaxKey().orElse(0L);
     }
 
     public void addSource(final long fileStoreId, final String feedName, final String typeName) {
-        final long feedId = feedDao.getId(new FeedKey(feedName, typeName));
-
+        final long feedId = feedDao.getId(new FeedAndType(feedName, typeName));
         final RepoSourceValue value = new RepoSourceValue(feedId, 0);
-        final PooledByteBuffer keyByteBuffer = keySerde.serialize(fileStoreId);
-        final PooledByteBuffer valueByteBuffer = valueSerde.serialize(value);
-        env.write(txn -> {
-            dbi.put(txn, keyByteBuffer.getByteBuffer(), valueByteBuffer.getByteBuffer());
-            keyByteBuffer.release();
-            valueByteBuffer.release();
-        });
+        db.put(fileStoreId, value);
+
+//        final PooledByteBuffer keyByteBuffer = keySerde.serialize(fileStoreId);
+//        final PooledByteBuffer valueByteBuffer = valueSerde.serialize(value);
+//        env.writeAsync(txn -> {
+//            dbi.put(txn, keyByteBuffer.getByteBuffer(), valueByteBuffer.getByteBuffer());
+//            keyByteBuffer.release();
+//            valueByteBuffer.release();
+//        });
         newSourceQueue.put(fileStoreId);
     }
 
@@ -249,17 +242,19 @@ public class SourceDao implements Clearable, Flushable {
     }
 
     private RepoSource getSource(long fileStoreId) {
-        final PooledByteBuffer keyBuffer = keySerde.serialize(fileStoreId);
-        final RepoSourceValue value = env.readResult(txn -> {
-            final ByteBuffer valueBuffer = dbi.get(txn, keyBuffer.getByteBuffer());
-            return valueSerde.deserialize(valueBuffer);
-        });
-        keyBuffer.release();
+        final RepoSourceValue value = db.get(fileStoreId);
+
+//        final PooledByteBuffer keyBuffer = keySerde.serialize(fileStoreId);
+//        final RepoSourceValue value = env.readResult(txn -> {
+//            final ByteBuffer valueBuffer = dbi.get(txn, keyBuffer.getByteBuffer());
+//            return valueSerde.deserialize(valueBuffer);
+//        });
+//        keyBuffer.release();
         return new RepoSource(fileStoreId, value.feedId());
     }
 
     public long countSources() {
-        return env.count(dbi);
+        return db.count();
     }
 
 //    @Override
@@ -322,11 +317,13 @@ public class SourceDao implements Clearable, Flushable {
     }
 
     public void deleteSource(final long fileStoreId) {
-        final PooledByteBuffer keyBuffer = keySerde.serialize(fileStoreId);
-        env.write(txn -> {
-            dbi.delete(txn, keyBuffer.getByteBuffer());
-            keyBuffer.release();
-        });
+        db.delete(fileStoreId);
+
+//        final PooledByteBuffer keyBuffer = keySerde.serialize(fileStoreId);
+//        env.writeAsync(txn -> {
+//            dbi.delete(txn, keyBuffer.getByteBuffer());
+//            keyBuffer.release();
+//        });
     }
 
 //    @Override
@@ -370,19 +367,26 @@ public class SourceDao implements Clearable, Flushable {
             deletableSourceQueue.put(fileStoreId);
 
         } else {
-            final PooledByteBuffer keyBuffer = keySerde.serialize(fileStoreId);
-            env.write(txn -> {
-                final ByteBuffer value = dbi.get(txn, keyBuffer.getByteBuffer());
-                final RepoSourceValue repoSourcePart = valueSerde.deserialize(value);
-                final RepoSourceValue newRepoSourcePart = new RepoSourceValue(
-                        repoSourcePart.feedId(),
-                        itemCount);
-                final PooledByteBuffer newValue = valueSerde.serialize(newRepoSourcePart);
-                dbi.put(txn, keyBuffer.getByteBuffer(), newValue.getByteBuffer());
-                keyBuffer.release();
-                newValue.release();
-            });
+            final RepoSourceValue value = db.get(fileStoreId);
+            final RepoSourceValue newValue = new RepoSourceValue(
+                    value.feedId(),
+                    itemCount);
+            db.put(fileStoreId, newValue);
             examinedSourceQueue.put(fileStoreId);
+
+//            final PooledByteBuffer keyBuffer = keySerde.serialize(fileStoreId);
+//            env.writeAsync(txn -> {
+//                final ByteBuffer value = dbi.get(txn, keyBuffer.getByteBuffer());
+//                final RepoSourceValue repoSourcePart = valueSerde.deserialize(value);
+//                final RepoSourceValue newRepoSourcePart = new RepoSourceValue(
+//                        repoSourcePart.feedId(),
+//                        itemCount);
+//                final PooledByteBuffer newValue = valueSerde.serialize(newRepoSourcePart);
+//                dbi.put(txn, keyBuffer.getByteBuffer(), newValue.getByteBuffer());
+//                keyBuffer.release();
+//                newValue.release();
+//            });
+//            examinedSourceQueue.put(fileStoreId);
         }
     }
 //
@@ -402,7 +406,7 @@ public class SourceDao implements Clearable, Flushable {
 
     @Override
     public void clear() {
-        env.clear(dbi);
+        db.clear();
         newSourceQueue.clear();
         examinedSourceQueue.clear();
         deletableSourceQueue.clear();

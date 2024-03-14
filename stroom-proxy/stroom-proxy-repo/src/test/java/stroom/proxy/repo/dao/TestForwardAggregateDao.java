@@ -1,17 +1,12 @@
 package stroom.proxy.repo.dao;
 
-import stroom.proxy.repo.FeedKey;
 import stroom.proxy.repo.ProxyRepoTestModule;
-import stroom.proxy.repo.RepoSource;
-import stroom.proxy.repo.RepoSourceItem;
-import stroom.proxy.repo.dao.db.AggregateDao;
+import stroom.proxy.repo.dao.lmdb.AggregateDao;
 import stroom.proxy.repo.dao.db.ForwardAggregateDao;
 import stroom.proxy.repo.dao.lmdb.FeedDao;
 import stroom.proxy.repo.dao.lmdb.ForwardDestDao;
 import stroom.proxy.repo.dao.lmdb.SourceDao;
 import stroom.proxy.repo.dao.lmdb.SourceItemDao;
-import stroom.proxy.repo.queue.Batch;
-import stroom.proxy.repo.queue.BatchUtil;
 
 import jakarta.inject.Inject;
 import name.falgout.jeffrey.testing.junit.guice.GuiceExtension;
@@ -19,10 +14,6 @@ import name.falgout.jeffrey.testing.junit.guice.IncludeModule;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

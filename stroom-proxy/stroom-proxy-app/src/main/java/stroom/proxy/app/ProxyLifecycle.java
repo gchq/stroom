@@ -95,21 +95,19 @@ public class ProxyLifecycle implements Managed {
                                 repoSources::getNextSource,
                                 repoSourceItems::examineSource),
                         threadConfig.getExamineSourceThreadCount());
-//                proxyServices.addBatchExecutor("RepoSourceItems - examine",
-//                        threadConfig.getExamineSourceThreadCount(),
-//                        repoSources::getNewSources,
-//                        repoSourceItems::examineSource);
 
-//                // Just keep trying to aggregate based on a frequency and not changes to source entries.
-//                proxyServices.addFrequencyExecutor("Aggregator - aggregate",
-//                        () -> aggregator::aggregateAll,
-//                        dbFlushFrequencyMs);
-//
-//                // Periodically close old aggregates.
-//                proxyServices.addFrequencyExecutor("Aggregator - closeOldAggregates",
-//                        () -> aggregator::closeOldAggregates,
-//                        aggregationFrequencyMs);
-//
+                // Just keep trying to aggregate based on a frequency and not changes to source entries.
+                proxyServices.addParallelExecutor("Aggregator - aggregate", () -> () ->
+                                TransferUtil.transfer(
+                                        repoSourceItems::getNextSourceItem,
+                                        aggregator::addItem),
+                        threadConfig.getExamineSourceThreadCount());
+
+                // Periodically close old aggregates.
+                proxyServices.addFrequencyExecutor("Aggregator - closeOldAggregates",
+                        () -> aggregator::closeOldAggregates,
+                        aggregationFrequencyMs);
+
 //                // Create forward records.
 //                proxyServices.addFrequencyExecutor("AggregateForwarder - createForwardRecord",
 //                        () -> aggregateForwarder::createAllForwardAggregates,

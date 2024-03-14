@@ -5,9 +5,13 @@ import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.repo.RepoSourceItem.RepoSourceItemBuilder;
+import stroom.proxy.repo.dao.lmdb.Db;
 import stroom.proxy.repo.dao.lmdb.FeedDao;
+import stroom.proxy.repo.dao.lmdb.LmdbEnv;
 import stroom.proxy.repo.dao.lmdb.SourceItemDao;
-import stroom.proxy.repo.queue.Batch;
+import stroom.proxy.repo.dao.lmdb.serde.FeedAndTypeSerde;
+import stroom.proxy.repo.dao.lmdb.serde.LongSerde;
+import stroom.proxy.repo.dao.lmdb.serde.StringSerde;
 import stroom.proxy.repo.store.FileSet;
 import stroom.proxy.repo.store.SequentialFileStore;
 import stroom.util.io.FileName;
@@ -25,12 +29,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 @Singleton
 public class RepoSourceItems {
@@ -42,22 +43,25 @@ public class RepoSourceItems {
     private final ErrorReceiver errorReceiver;
     private final ProgressLog progressLog;
     private final SequentialFileStore sequentialFileStore;
+    private final LmdbEnv env;
 
     @Inject
     public RepoSourceItems(final SourceItemDao sourceItemDao,
                            final FeedDao feedDao,
                            final ErrorReceiver errorReceiver,
                            final ProgressLog progressLog,
-                           final SequentialFileStore sequentialFileStore) {
+                           final SequentialFileStore sequentialFileStore,
+                           final LmdbEnv env) {
         this.sourceItemDao = sourceItemDao;
         this.feedDao = feedDao;
         this.errorReceiver = errorReceiver;
         this.progressLog = progressLog;
         this.sequentialFileStore = sequentialFileStore;
+        this.env = env;
     }
 
     public void examineSource(final RepoSource source) {
-        final FeedKey feedKey = feedDao.getKey(source.feedId());
+        final FeedAndType feedKey = feedDao.getKey(source.feedId());
         Metrics.measure("Examine Source", () -> {
             final FileSet fileSet = sequentialFileStore.getStoreFileSet(source.fileStoreId());
             final Path zipPath = fileSet.getZip();
@@ -65,8 +69,16 @@ public class RepoSourceItems {
             LOGGER.debug(() -> "Examining zip  '" + FileUtil.getCanonicalPath(zipPath) + "'");
             progressLog.increment("ProxyRepoSourceEntries - examineSource");
 
-            final Map<String, RepoSourceItemBuilder> itemNameMap = new HashMap<>();
-            final List<RepoSourceItemBuilder> builderList = new ArrayList<>();
+            long order = 1;
+            final Db<Long, String> baseNameOrder = env
+                    .openDb("zip-base-name-order-" + source.fileStoreId(),
+                            new LongSerde(),
+                            new StringSerde());
+            final Db<String, FeedAndType> baseNameFeed = env
+                    .openDb("zip-base-name-feed-" + source.fileStoreId(),
+                            new StringSerde(),
+                            new FeedAndTypeSerde());
+            long entryCount = 0;
             try (final ZipFile zipFile = new ZipFile(Files.newByteChannel(zipPath))) {
                 final Enumeration<ZipArchiveEntry> entries = zipFile.getEntries();
                 while (entries.hasMoreElements()) {
@@ -75,14 +87,15 @@ public class RepoSourceItems {
 
                     // Skip directories
                     if (!entry.isDirectory()) {
+                        entryCount++;
                         final FileName fileName = FileName.parse(entry.getName());
                         final String baseName = fileName.getBaseName();
                         final StroomZipFileType stroomZipFileType =
                                 StroomZipFileType.fromExtension(fileName.getExtension());
 
                         // If this is a meta entry then get the feed name.
-                        String feedName = feedKey.feed();
-                        String typeName = feedKey.type();
+                        String feedName = null;
+                        String typeName = null;
 
                         if (StroomZipFileType.META.equals(stroomZipFileType)) {
                             try (final InputStream metaStream = zipFile.getInputStream(entry)) {
@@ -106,28 +119,50 @@ public class RepoSourceItems {
                             }
                         }
 
-                        final RepoSourceItemBuilder builder = itemNameMap.computeIfAbsent(baseName, k -> {
-                            final RepoSourceItemBuilder b = new RepoSourceItemBuilder()
-                                    .repoSource(source)
-                                    .name(baseName);
-                            // Use a list to keep the items in the same order as the source.
-                            builderList.add(b);
-                            return b;
-                        });
+                        // See if we already know about this base name.
+                        final Optional<FeedAndType> optional = baseNameFeed.getOptional(baseName);
+                        if (optional.isEmpty()) {
+                            baseNameFeed.put(baseName, new FeedAndType(
+                                    feedName != null ? feedName : feedKey.feed(),
+                                    typeName != null ? typeName : feedKey.type()));
+                            baseNameOrder.put(order++, baseName);
 
-                        // If we have an existing source item then update the feed and type names if we have some.
-                        if (feedName != null && builder.getFeedName() == null) {
-                            builder.feedName(feedName);
-                        }
-                        if (typeName != null && builder.getTypeName() == null) {
-                            builder.typeName(typeName);
+                        } else {
+                            // Update feed and type if we can.
+                            FeedAndType feedAndType = optional.get();
+                            if (feedName != null) {
+                                feedAndType = new FeedAndType(feedName, feedAndType.type());
+                            }
+                            if (typeName != null) {
+                                feedAndType = new FeedAndType(feedAndType.feed(), typeName);
+                            }
+                            if (!optional.get().equals(feedAndType)) {
+                                baseNameFeed.put(baseName, feedAndType);
+                            }
                         }
 
-                        builder.addEntry(fileName.getExtension(), entry.getSize());
+//                        final RepoSourceItemBuilder builder = itemNameMap.computeIfAbsent(baseName, k -> {
+//                            final RepoSourceItemBuilder b = new RepoSourceItemBuilder()
+//                                    .repoSource(source)
+//                                    .name(baseName);
+//                            // Use a list to keep the items in the same order as the source.
+//                            builderList.add(b);
+//                            return b;
+//                        });
+//
+//                        // If we have an existing source item then update the feed and type names if we have some.
+//                        if (feedName != null && builder.getFeedName() == null) {
+//                            builder.feedName(feedName);
+//                        }
+//                        if (typeName != null && builder.getTypeName() == null) {
+//                            builder.typeName(typeName);
+//                        }
+//
+//                        builder.addEntry(fileName.getExtension(), entry.getSize());
                     }
                 }
 
-                if (itemNameMap.isEmpty()) {
+                if (entryCount == 0) {
                     errorReceiver.error(fileSet, "Unable to find any entries?");
                 }
 
@@ -150,7 +185,11 @@ public class RepoSourceItems {
         sourceItemDao.clear();
     }
 
-//    public Batch<RepoSourceItemRef> getNewSourceItems() {
-//        return sourceItemDao.getNewSourceItems();
-//    }
+    public RepoSourceItemRef getNextSourceItem() {
+        return sourceItemDao.getNextSourceItem();
+    }
+
+    public Optional<RepoSourceItemRef> getNextSourceItem(final long time, final TimeUnit timeUnit) {
+        return sourceItemDao.getNextSourceItem(time, timeUnit);
+    }
 }

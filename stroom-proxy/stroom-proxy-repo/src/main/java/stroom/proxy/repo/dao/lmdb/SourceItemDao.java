@@ -3,31 +3,37 @@ package stroom.proxy.repo.dao.lmdb;
 import stroom.bytebuffer.PooledByteBuffer;
 import stroom.proxy.repo.RepoSource;
 import stroom.proxy.repo.RepoSourceItem;
+import stroom.proxy.repo.RepoSourceItemRef;
 import stroom.proxy.repo.dao.lmdb.serde.LongSerde;
 import stroom.proxy.repo.dao.lmdb.serde.RepoSourceItemSerde;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.Clearable;
+import stroom.util.shared.Flushable;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import org.lmdbjava.Dbi;
 
 import java.nio.ByteBuffer;
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 
 @Singleton
-public class SourceItemDao {
+public class SourceItemDao implements Clearable, Flushable {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AbstractDaoLmdb.class);
 
-    private final LmdbEnv env;
-    private final Dbi<ByteBuffer> dbi;
+//    private final LmdbEnv env;
+    private final Db<Long, RepoSourceItemPart> db;
 
     private RowKey<Long> rowKey;
 
     private final SourceDao sourceDao;
-    private final LongSerde keySerde;
-    private final RepoSourceItemSerde valueSerde;
+//    private final LongSerde keySerde;
+//    private final RepoSourceItemSerde valueSerde;
+    private final LmdbQueue<Long> newSourceItemQueue;
 
     @Inject
     public SourceItemDao(final LmdbEnv env,
@@ -35,11 +41,13 @@ public class SourceItemDao {
                          final LongSerde keySerde,
                          final RepoSourceItemSerde valueSerde) {
         try {
-            this.env = env;
-            this.dbi = env.openDbi("source-item");
-            this.keySerde = keySerde;
-            this.valueSerde = valueSerde;
-            rowKey = new LongRowKey(env, dbi, keySerde);
+//            this.env = env;
+            this.db = env.openDb("source-item", new LongSerde(), new RepoSourceItemSerde());
+//            this.keySerde = keySerde;
+//            this.valueSerde = valueSerde;
+            rowKey = new LongRowKey(db);
+
+            newSourceItemQueue = new LmdbQueue<>(env, "new-source-item", new LongSerde());
         } catch (final RuntimeException e) {
             LOGGER.error(e::getMessage, e);
             throw e;
@@ -48,13 +56,8 @@ public class SourceItemDao {
         this.sourceDao = sourceDao;
     }
 
-    public void clear() {
-        env.clear(dbi);
-        rowKey = new LongRowKey(env, dbi, keySerde);
-    }
-
     public int countItems() {
-        return (int) env.count(dbi);
+        return (int) db.count();
     }
 
     public void addItem(final RepoSource source, final RepoSourceItem item) {
@@ -65,14 +68,59 @@ public class SourceItemDao {
                 item.aggregateId(),
                 item.totalByteSize(),
                 item.extensions());
-        final PooledByteBuffer valueByteBuffer = valueSerde.serialize(value);
-        final Long newId = rowKey.next();
-        final PooledByteBuffer idByteBuffer = keySerde.serialize(newId);
-        env.write(txn -> {
-            dbi.put(txn, idByteBuffer.getByteBuffer(), valueByteBuffer.getByteBuffer());
-            idByteBuffer.release();
-            valueByteBuffer.release();
-        });
+        final long newId = rowKey.next();
+        db.put(newId, value);
+
+//        final PooledByteBuffer valueByteBuffer = valueSerde.serialize(value);
+//
+//        final PooledByteBuffer idByteBuffer = keySerde.serialize(newId);
+//        env.writeAsync(txn -> {
+//            dbi.put(txn, idByteBuffer.getByteBuffer(), valueByteBuffer.getByteBuffer());
+//            idByteBuffer.release();
+//            valueByteBuffer.release();
+//        });
+    }
+
+    public void setAggregate(final long itemId, final long aggregateId) {
+//        final PooledByteBuffer keyByteBuffer = keySerde.serialize(itemId);
+//        RepoSourceItemPart repoSourceItemPart = env.readResult(txn -> valueSerde
+//                .deserialize(dbi.get(txn, keyByteBuffer.getByteBuffer())));
+//        repoSourceItemPart = new RepoSourceItemPart(
+//                repoSourceItemPart.fileStoreId(),
+//                repoSourceItemPart.feedId(),
+//                repoSourceItemPart.name(),
+//                aggregateId,
+//                repoSourceItemPart.totalByteSize(),
+//                repoSourceItemPart.extensions());
+//        final PooledByteBuffer valueByteBuffer = valueSerde.serialize(repoSourceItemPart);
+//        env.writeAsync(txn -> {
+//            dbi.put(txn, keyByteBuffer.getByteBuffer(), valueByteBuffer.getByteBuffer());
+//            keyByteBuffer.release();
+//            valueByteBuffer.release();
+//        });
+    }
+
+    public RepoSourceItemRef getNextSourceItem() {
+        final long itemId = newSourceItemQueue.take();
+        return getSourceItem(itemId);
+    }
+
+    public Optional<RepoSourceItemRef> getNextSourceItem(final long time, final TimeUnit timeUnit) {
+        final Optional<Long> optional = newSourceItemQueue.take(time, timeUnit);
+        return optional.map(this::getSourceItem);
+    }
+
+    private RepoSourceItemRef getSourceItem(final long itemId) {
+        final RepoSourceItemPart repoSourceItemPart = db.get(itemId);
+        return new RepoSourceItemRef(itemId, repoSourceItemPart.feedId(), repoSourceItemPart.totalByteSize());
+
+//        try (final PooledByteBuffer keyBuffer = keySerde.serialize(itemId)) {
+//            return env.readResult(txn -> {
+//                final ByteBuffer valueBuffer = dbi.get(txn, keyBuffer.getByteBuffer());
+//                final RepoSourceItemPart repoSourceItemPart = valueSerde.deserialize(valueBuffer);
+//                return new RepoSourceItemRef(itemId, repoSourceItemPart.feedId(), repoSourceItemPart.totalByteSize());
+//            });
+//        }
     }
 //
 //
@@ -135,4 +183,16 @@ public class SourceItemDao {
 //                .sorted(Comparator.comparing(sourceItems -> sourceItems.source().id()))
 //                .toList();
 //    }
+
+    @Override
+    public void clear() {
+        db.clear();
+        rowKey = new LongRowKey(db);
+        newSourceItemQueue.clear();
+    }
+
+    @Override
+    public void flush() {
+        newSourceItemQueue.flush();
+    }
 }

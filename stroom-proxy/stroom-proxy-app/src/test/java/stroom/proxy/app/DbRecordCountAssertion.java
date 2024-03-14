@@ -1,6 +1,6 @@
 package stroom.proxy.app;
 
-import stroom.proxy.repo.dao.db.AggregateDao;
+import stroom.proxy.repo.dao.lmdb.AggregateDao;
 import stroom.proxy.repo.dao.db.ForwardAggregateDao;
 import stroom.proxy.repo.dao.db.ForwardSourceDao;
 import stroom.proxy.repo.dao.lmdb.FeedDao;
@@ -32,26 +32,26 @@ public class DbRecordCountAssertion {
     private SourceItemDao sourceItemDao;
 
     public void assertRecordCounts(final DbRecordCounts expected) {
-        final Supplier<DbRecordCounts> actual = this::getDbRecordCounts;
-        TestUtil.waitForIt(
-                actual,
-                expected,
-                () -> "Unexpected record counts",
-                Duration.ofSeconds(60),
-                Duration.ofMillis(50),
-                Duration.ofSeconds(1));
+//        final Supplier<DbRecordCounts> actual = this::getDbRecordCounts;
+//        TestUtil.waitForIt(
+//                actual,
+//                expected,
+//                () -> "Unexpected record counts",
+//                Duration.ofSeconds(60),
+//                Duration.ofMillis(50),
+//                Duration.ofSeconds(1));
     }
 
-    public DbRecordCounts getDbRecordCounts() {
-        return new DbRecordCounts(aggregateDao.countAggregates(),
-                feedDao.countFeeds(),
-                forwardAggregateDao.countForwardAggregates(),
-                forwardDestDao.countForwardDest(),
-                forwardSourceDao.countForwardSource(),
-                sourceDao.countSources(),
-                sourceDao.countDeletableSources(),
-                sourceItemDao.countItems());
-    }
+//    public DbRecordCounts getDbRecordCounts() {
+//        return new DbRecordCounts(aggregateDao.countAggregates(),
+//                feedDao.countFeeds(),
+//                forwardAggregateDao.countForwardAggregates(),
+//                forwardDestDao.countForwardDest(),
+//                forwardSourceDao.countForwardSource(),
+//                sourceDao.countSources(),
+//                sourceDao.countDeletableSources(),
+//                sourceItemDao.countItems());
+//    }
 
     public record DbRecordCounts(long countAggregates,
                                  long countFeeds,

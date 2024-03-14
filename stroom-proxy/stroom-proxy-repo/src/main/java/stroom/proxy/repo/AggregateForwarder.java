@@ -99,7 +99,7 @@ public class AggregateForwarder {
 //    }
 
     public synchronized void createAllForwardAggregates() {
-        BatchUtil.transfer(aggregator::getCompleteAggregates, this::createForwardAggregates);
+//        BatchUtil.transfer(aggregator::getCompleteAggregates, this::createForwardAggregates);
     }
 
     private void createForwardAggregates(final Batch<Aggregate> batch) {

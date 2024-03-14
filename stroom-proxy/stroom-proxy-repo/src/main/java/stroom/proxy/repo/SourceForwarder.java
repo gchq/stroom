@@ -22,7 +22,6 @@ import stroom.proxy.repo.dao.db.ForwardSourceDao;
 import stroom.proxy.repo.dao.lmdb.FeedDao;
 import stroom.proxy.repo.queue.Batch;
 import stroom.proxy.repo.queue.BatchUtil;
-import stroom.proxy.repo.queue.TransferUtil;
 import stroom.receive.common.StreamHandlers;
 import stroom.util.concurrent.ThreadUtil;
 import stroom.util.logging.LambdaLogger;
@@ -177,7 +176,7 @@ public class SourceForwarder {
         final AtomicBoolean success = new AtomicBoolean();
         final AtomicReference<String> error = new AtomicReference<>();
 
-        final FeedKey feedKey = feedDao.getKey(source.feedId());
+        final FeedAndType feedKey = feedDao.getKey(source.feedId());
         final long thisPostId = proxyForwardId.incrementAndGet();
         final String info = thisPostId + " " + feedKey.feed() + " - " + feedKey.type();
         LOGGER.debug(() -> "processFeedFiles() - proxyForwardId " + info);

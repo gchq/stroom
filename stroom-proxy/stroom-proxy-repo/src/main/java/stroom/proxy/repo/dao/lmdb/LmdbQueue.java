@@ -1,7 +1,7 @@
 package stroom.proxy.repo.dao.lmdb;
 
 import stroom.bytebuffer.PooledByteBuffer;
-import stroom.lmdb.serde.Serde;
+import stroom.proxy.repo.dao.lmdb.serde.ExtendedSerde;
 import stroom.proxy.repo.dao.lmdb.serde.LongSerde;
 import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.logging.LambdaLogger;
@@ -9,20 +9,15 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.Flushable;
 
-import org.lmdbjava.CursorIterable;
-import org.lmdbjava.CursorIterable.KeyVal;
-import org.lmdbjava.Dbi;
-import org.lmdbjava.DbiFlags;
-import org.lmdbjava.KeyRange;
-import org.lmdbjava.PutFlags;
+import org.lmdbjava.KeyRangeType;
 
 import java.nio.ByteBuffer;
-import java.util.Iterator;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Consumer;
 
 public class LmdbQueue<FK> implements Clearable, Flushable {
 
@@ -31,10 +26,7 @@ public class LmdbQueue<FK> implements Clearable, Flushable {
     private static final long DELETE_BATCH_SIZE = 10_000;
     private final LmdbEnv env;
     private final String queueName;
-    private final Dbi<ByteBuffer> dbi;
-
-    private final LongSerde keySerde;
-    private final Serde<FK> fkSerde;
+    private final Db<Long, FK> db;
 
     private final ReentrantLock readLock = new ReentrantLock();
     private final Condition notEmpty = readLock.newCondition();
@@ -48,15 +40,14 @@ public class LmdbQueue<FK> implements Clearable, Flushable {
 
     public LmdbQueue(final LmdbEnv env,
                      final String queueName,
-                     final LongSerde keySerde,
-                     final Serde<FK> fkSerde) {
+                     final ExtendedSerde<FK> fkSerde) {
         try {
             this.env = env;
             this.queueName = queueName;
-            this.keySerde = keySerde;
-            this.fkSerde = fkSerde;
+//            this.keySerde = keySerde;
+//            this.fkSerde = fkSerde;
             writeIdByteBuffer = ByteBuffer.allocateDirect(Long.BYTES);
-            this.dbi = env.openDbi(queueName, DbiFlags.MDB_CREATE);
+            this.db = env.openDb(queueName, new LongSerde(), fkSerde);
 
             // Get the current maximum write id and set.
             initPositions();
@@ -68,14 +59,72 @@ public class LmdbQueue<FK> implements Clearable, Flushable {
     }
 
     public void put(final FK fk) {
-        final PooledByteBuffer fkBuffer = fkSerde.serialize(fk);
-        env.write(txn -> {
+
+
+//        // Update the current write position.
+//        readLock.lock();
+//        try {
             final long id = writeId.incrementAndGet();
-            writeIdByteBuffer.putLong(id);
-            writeIdByteBuffer.flip();
-            dbi.put(txn, writeIdByteBuffer, fkBuffer.getByteBuffer(), PutFlags.MDB_APPEND);
-            fkBuffer.release();
-        });
+////            writeIdByteBuffer.putLong(id);
+////            writeIdByteBuffer.flip();
+//            currentWriteId = id;
+
+            db.putAsync(id, fk);
+
+//            notEmpty.signalAll();
+//        } finally {
+//            readLock.unlock();
+//        }
+
+
+
+
+//        final PooledByteBuffer valueBuffer = db.serializeValue(fk);
+//        db.putAsync(() -> {
+//            final long id = writeId.incrementAndGet();
+//            writeIdByteBuffer.putLong(id);
+//            writeIdByteBuffer.flip();
+//            final PooledByteBuffer pooledByteBuffer = new PooledByteBuffer() {
+//                @Override
+//                public ByteBuffer getByteBuffer() {
+//                    return writeIdByteBuffer;
+//                }
+//
+//                @Override
+//                public void doWithByteBuffer(final Consumer<ByteBuffer> byteBufferConsumer) {
+//
+//                }
+//
+//                @Override
+//                public void release() {
+//
+//                }
+//
+//                @Override
+//                public void clear() {
+//
+//                }
+//
+//                @Override
+//                public void close() {
+//
+//                }
+//
+//                @Override
+//                public Optional<Integer> getCapacity() {
+//                    return Optional.empty();
+//                }
+//            };
+//            return pooledByteBuffer;
+//        },                () -> valueBuffer);
+////        final PooledByteBuffer fkBuffer = fkSerde.serialize(fk);
+////        env.writeAsync(txn -> {
+////            final long id = writeId.incrementAndGet();
+////            writeIdByteBuffer.putLong(id);
+////            writeIdByteBuffer.flip();
+////            dbi.put(txn, writeIdByteBuffer, fkBuffer.getByteBuffer(), PutFlags.MDB_APPEND);
+////            fkBuffer.release();
+////        });
     }
 
     public FK take() {
@@ -133,17 +182,19 @@ public class LmdbQueue<FK> implements Clearable, Flushable {
     }
 
     private FK getAndDelete(final long id) {
-        final PooledByteBuffer keyBuffer = keySerde.serialize(id);
-        final FK fk = env.readResult(txn -> {
-            final ByteBuffer valueBuffer = dbi.get(txn, keyBuffer.getByteBuffer());
-            if (valueBuffer == null) {
-                LOGGER.error(() -> "ERROR: " + id);
-                LOGGER.error(() -> "Current write: " + currentWriteId);
-                LOGGER.error(() -> "Current read: " + currentReadId);
-            }
-            return fkSerde.deserialize(valueBuffer);
-        });
-        keyBuffer.release();
+        final FK fk = db.get(id);
+
+//        final PooledByteBuffer keyBuffer = keySerde.serialize(id);
+//        final FK fk = env.readResult(txn -> {
+//            final ByteBuffer valueBuffer = dbi.get(txn, keyBuffer.getByteBuffer());
+//            if (valueBuffer == null) {
+//                LOGGER.error(() -> "ERROR: " + id);
+//                LOGGER.error(() -> "Current write: " + currentWriteId);
+//                LOGGER.error(() -> "Current read: " + currentReadId);
+//            }
+//            return fkSerde.deserialize(valueBuffer);
+//        });
+//        keyBuffer.release();
 
         // Delete some old ids.
         final long currentDeleteId = lastDeleteId.get();
@@ -158,24 +209,26 @@ public class LmdbQueue<FK> implements Clearable, Flushable {
     }
 
     private void deleteBatch(final long from, final long to) {
-        final PooledByteBuffer fromByteBuffer = keySerde.serialize(from);
-        final PooledByteBuffer toByteBuffer = keySerde.serialize(to);
-        final KeyRange<ByteBuffer> keyRange = KeyRange.closed(
-                fromByteBuffer.getByteBuffer(),
-                toByteBuffer.getByteBuffer());
+        db.delete(KeyRangeType.FORWARD_CLOSED, from, to);
 
-        env.write(txn -> {
-            try (final CursorIterable<ByteBuffer> cursorIterable = dbi.iterate(txn, keyRange)) {
-                final Iterator<KeyVal<ByteBuffer>> iterator = cursorIterable.iterator();
-                while (iterator.hasNext()) {
-                    iterator.next();
-                    iterator.remove();
-                }
-            } finally {
-                fromByteBuffer.release();
-                toByteBuffer.release();
-            }
-        });
+//        final PooledByteBuffer fromByteBuffer = db.serializeKey(from);
+//        final PooledByteBuffer toByteBuffer = db.serializeKey(to);
+//        final KeyRange<ByteBuffer> keyRange = KeyRange.closed(
+//                fromByteBuffer.getByteBuffer(),
+//                toByteBuffer.getByteBuffer());
+//
+//        env.writeAsync(txn -> {
+//            try (final CursorIterable<ByteBuffer> cursorIterable = dbi.iterate(txn, keyRange)) {
+//                final Iterator<KeyVal<ByteBuffer>> iterator = cursorIterable.iterator();
+//                while (iterator.hasNext()) {
+//                    iterator.next();
+//                    iterator.remove();
+//                }
+//            } finally {
+//                fromByteBuffer.release();
+//                toByteBuffer.release();
+//            }
+//        });
     }
 
     private void initPositions() {
@@ -196,47 +249,47 @@ public class LmdbQueue<FK> implements Clearable, Flushable {
 
     @Override
     public void clear() {
-        env.clear(dbi);
+        db.clear();
         initPositions();
     }
 
     @Override
     public void flush() {
-        env.writeFunction(txn -> {
-            // Record current id.
-            final long id = writeId.get();
-            if (currentWriteId != id) {
-                // Commit the current transaction.
-                txn.commit();
-                txn.close();
-
-                // Update the current write position.
-                readLock.lock();
-                try {
-                    currentWriteId = id;
-                    notEmpty.signalAll();
-                } finally {
-                    readLock.unlock();
-                }
-
-                return null;
-
-            } else {
-                return txn;
-            }
-        });
+//        env.writeFunctionAsync(txn -> {
+//            // Record current id.
+//            final long id = writeId.get();
+//            if (currentWriteId != id) {
+//                // Commit the current transaction.
+//                txn.commit();
+//                txn.close();
+//
+//                // Update the current write position.
+//                readLock.lock();
+//                try {
+//                    currentWriteId = id;
+//                    notEmpty.signalAll();
+//                } finally {
+//                    readLock.unlock();
+//                }
+//
+//                return null;
+//
+//            } else {
+//                return txn;
+//            }
+//        });
     }
 
     public long size() {
-        return env.count(dbi);
+        return db.count();
     }
 
     Optional<Long> getMinId() {
-        return env.getMinKey(dbi, keySerde);
+        return db.getMinKey();
     }
 
     Optional<Long> getMaxId() {
-        return env.getMaxKey(dbi, keySerde);
+        return db.getMaxKey();
     }
 
     @Override

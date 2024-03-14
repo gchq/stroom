@@ -2,21 +2,11 @@ package stroom.proxy.repo.dao.lmdb.serde;
 
 import stroom.bytebuffer.ByteBufferPool;
 import stroom.bytebuffer.PooledByteBuffer;
-import stroom.lmdb.serde.Serde;
 import stroom.proxy.repo.dao.lmdb.RepoSourceValue;
-
-import jakarta.inject.Inject;
 
 import java.nio.ByteBuffer;
 
-public class RepoSourcePartSerde implements Serde<RepoSourceValue> {
-
-    private final ByteBufferPool byteBufferPool;
-
-    @Inject
-    RepoSourcePartSerde(final ByteBufferPool byteBufferPool) {
-        this.byteBufferPool = byteBufferPool;
-    }
+public class RepoSourceValueSerde implements ExtendedSerde<RepoSourceValue> {
 
     @Override
     public void serialize(final ByteBuffer byteBuffer, final RepoSourceValue value) {
@@ -26,7 +16,7 @@ public class RepoSourcePartSerde implements Serde<RepoSourceValue> {
     }
 
     @Override
-    public PooledByteBuffer serialize(final RepoSourceValue value) {
+    public PooledByteBuffer serialize(final RepoSourceValue value, final ByteBufferPool byteBufferPool) {
         final PooledByteBuffer pooledByteBuffer = byteBufferPool.getPooledByteBuffer(Long.BYTES * 2);
         serialize(pooledByteBuffer.getByteBuffer(), value);
         return pooledByteBuffer;

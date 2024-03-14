@@ -1,5 +1,6 @@
 package stroom.proxy.repo.dao.lmdb;
 
+import stroom.proxy.repo.Aggregator;
 import stroom.proxy.repo.FeedAndType;
 import stroom.proxy.repo.ProxyRepoTestModule;
 import stroom.proxy.repo.RepoSource;
@@ -17,8 +18,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(GuiceExtension.class)
 @IncludeModule(ProxyRepoTestModule.class)
-public class TestSourceItemDao {
+public class TestAggregateDao {
 
+    @Inject
+    private LmdbEnv lmdbEnv;
     @Inject
     private FeedDao feedDao;
     @Inject
@@ -26,7 +29,9 @@ public class TestSourceItemDao {
     @Inject
     private SourceItemDao sourceItemDao;
     @Inject
-    private LmdbEnv lmdbEnv;
+    private AggregateDao aggregateDao;
+    @Inject
+    private Aggregator aggregator;
 
     @BeforeEach
     void beforeEach() {
@@ -37,20 +42,22 @@ public class TestSourceItemDao {
     void afterEach() {
         sourceDao.clear();
         sourceItemDao.clear();
+        aggregateDao.clear();
         lmdbEnv.stop();
     }
 
     @Test
-    void testSourceEntry() {
+    void testAggregate() {
         assertThat(sourceDao.countSources()).isZero();
+        assertThat(aggregateDao.countAggregates()).isZero();
+//        assertThat(sourceDao.pathExists("test")).isFalse();
 
         sourceDao.addSource(1L, "test", "test");
         sourceDao.flush();
-        lmdbEnv.sync();
+
 
         final RepoSource source = sourceDao.getNextSource();
         assertThat(source).isNotNull();
-        assertThat(sourceDao.countDeletableSources()).isZero();
         assertThat(source.fileStoreId()).isEqualTo(1L);
 
         final long feedId = feedDao.getId(new FeedAndType("testFeed", "Raw Events"));
@@ -67,17 +74,13 @@ public class TestSourceItemDao {
         }
         sourceDao.setSourceExamined(source.fileStoreId(), 100);
         sourceDao.flush();
-        lmdbEnv.sync();
+        assertThat(sourceDao.countDeletableSources()).isZero();
 
-//        assertThat(sourceDao.countDeletableSources()).isZero();
-//        jooq.transaction(context -> sourceItemDao.deleteBySourceId(context, source.id()));
-//        assertThat(sourceDao.countDeletableSources()).isZero();
-//        jooq.transaction(context -> sourceDao.setSourceExamined(context, source.id(), true, 0));
-//        assertThat(sourceDao.countDeletableSources()).isOne();
-//
-//        sourceDao.deleteSources();
-//        assertThat(sourceDao.countSources()).isZero();
-//
-//        sourceDao.clear();
+        sourceItemDao.flush();
+        assertThat(sourceDao.countDeletableSources()).isZero();
+        aggregator.aggregateAll();
+        aggregator.closeOldAggregates(1, 1, System.currentTimeMillis());
+
+        assertThat(aggregateDao.countAggregates()).isOne();
     }
 }

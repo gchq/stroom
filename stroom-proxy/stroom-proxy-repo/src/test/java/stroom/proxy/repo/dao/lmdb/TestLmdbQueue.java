@@ -30,10 +30,6 @@ public class TestLmdbQueue {
 
     @Inject
     private LmdbEnv lmdbEnv;
-    @Inject
-    private LongSerde keySerde;
-    @Inject
-    private LongSerde fkSerde;
 
     @Test
     void testSimple() {
@@ -63,15 +59,14 @@ public class TestLmdbQueue {
     void test(final int producerThreads,
               final int consumerThreads,
               final long totalSources) {
-        final LmdbQueue<Long> newSourceQueue = new LmdbQueue<>(
-                lmdbEnv,
-                "new-queue",
-                keySerde,
-                fkSerde);
-
         LOGGER.logDurationIfInfoEnabled(() -> {
             lmdbEnv.start();
         }, "start");
+
+        final LmdbQueue<Long> newSourceQueue = new LmdbQueue<>(
+                lmdbEnv,
+                "new-queue",
+                new LongSerde());
 
         Optional<Long> minId = newSourceQueue.getMinId();
         Optional<Long> maxId = newSourceQueue.getMaxId();
@@ -98,22 +93,23 @@ public class TestLmdbQueue {
             all.add(completableFuture);
         }
 
-        for (int threads = 0; threads < consumerThreads; threads++) {
-            final CompletableFuture<Void> completableFuture = CompletableFuture.runAsync(() -> {
-                long consumed = totalConsumed.incrementAndGet();
-                while (consumed <= totalSources) {
-                    final Optional<Long> source = newSourceQueue.take(1, TimeUnit.SECONDS);
-                    if (source.isPresent()) {
-                        consumed = totalConsumed.incrementAndGet();
-                    }
-                }
-            });
-            consumers.add(completableFuture);
-            all.add(completableFuture);
-        }
+//        for (int threads = 0; threads < consumerThreads; threads++) {
+//            final CompletableFuture<Void> completableFuture = CompletableFuture.runAsync(() -> {
+//                long consumed = totalConsumed.incrementAndGet();
+//                while (consumed <= totalSources) {
+//                    final Optional<Long> source = newSourceQueue.take(1, TimeUnit.SECONDS);
+//                    if (source.isPresent()) {
+//                        consumed = totalConsumed.incrementAndGet();
+//                    }
+//                }
+//            });
+//            consumers.add(completableFuture);
+//            all.add(completableFuture);
+//        }
 
         CompletableFuture.allOf(producers.toArray(new CompletableFuture[0])).whenCompleteAsync((unused, throwable) -> {
-            lmdbEnv.sync();
+//            lmdbEnv.sync();
+            newSourceQueue.flush();
             LOGGER.info("Completed production in: " + Duration.between(start, Instant.now()).toString());
         });
         CompletableFuture.allOf(consumers.toArray(new CompletableFuture[0])).whenCompleteAsync((unused, throwable) -> {

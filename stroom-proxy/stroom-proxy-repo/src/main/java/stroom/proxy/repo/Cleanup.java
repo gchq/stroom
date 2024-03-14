@@ -16,7 +16,7 @@
 
 package stroom.proxy.repo;
 
-import stroom.proxy.repo.dao.db.AggregateDao;
+import stroom.proxy.repo.dao.lmdb.AggregateDao;
 import stroom.proxy.repo.dao.db.ForwardAggregateDao;
 import stroom.proxy.repo.dao.db.ForwardSourceDao;
 import stroom.proxy.repo.dao.db.ProxyDbConfig;
@@ -28,9 +28,6 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.util.List;
 
 @Singleton
 public class Cleanup {
