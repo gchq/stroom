@@ -178,12 +178,18 @@
 }
 
 .dataGridDisabledCell {
-	color: var(--text-color--disabled);
+    color: var(--text-color--disabled);
+}
+
+.dataGridDisabledCell .tickBox {
+    cursor: default;
+    color: #000;
+    opacity: 0.3;
 }
 
 .dataGridSelectedRow {
-	background-color: var(--row__background-color--selected);
-	color: var(--row__text-color--selected);
+    background-color: var(--row__background-color--selected);
+    color: var(--row__text-color--selected);
 }
 
 .dataGridOddRow:hover,

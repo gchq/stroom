@@ -67,7 +67,7 @@ public class KeyBinding {
     }
 
     public static Action test(final NativeEvent e) {
-//        log(e);
+//        logKeyPress(e);
 
         Command command = null;
         if (BrowserEvents.KEYDOWN.equals(e.getType())) {
@@ -117,10 +117,10 @@ public class KeyBinding {
         return null;
     }
 
-    private static void log(final NativeEvent e) {
+    private static void logKeyPress(final NativeEvent e) {
         GWT.log(e.getType() +
                 "\nkeyCode=" +
-                e.getKeyCode() +
+                keyCodeToString(e.getKeyCode()) +
                 "\nshift=" +
                 e.getShiftKey() +
                 "\nctrlKey=" +
@@ -136,17 +136,14 @@ public class KeyBinding {
         final Shortcut shortcut = getShortcut(e);
 
 //        GWT.log("KEYDOWN = " + shortcut);
-
         final Binding binding = getBinding(shortcut);
         if (binding != null) {
 
 //            GWT.log("BINDING = " + binding);
-
             final Action action = binding.action;
             final Command command = COMMANDS.get(action);
             if (command != null) {
 //                GWT.log("EXECUTE = " + action);
-
                 e.preventDefault();
                 e.stopPropagation();
                 command.execute();
@@ -196,13 +193,84 @@ public class KeyBinding {
 
     static void add(final Action action, final int... keyCode) {
         for (int code : keyCode) {
-            add(action, new Builder().keyCode(code).build());
+            add(action, new Builder()
+                    .keyCode(code)
+                    .build());
         }
     }
 
     static void add(final Action action, final Shortcut... shortcuts) {
         for (final Shortcut shortcut : shortcuts) {
-            BINDINGS.add(new Binding.Builder().shortcut(shortcut).action(action).build());
+            BINDINGS.add(new Binding.Builder()
+                    .shortcut(shortcut)
+                    .action(action)
+                    .build());
+        }
+    }
+
+    public static String keyCodeToString(final int keyCode) {
+        //noinspection EnhancedSwitchMigration // cos GWT
+        switch (keyCode) {
+            case KeyCodes.KEY_LEFT:
+                return "left-arrow";
+            case KeyCodes.KEY_RIGHT:
+                return "right-arrow";
+            case KeyCodes.KEY_UP:
+                return "up-arrow";
+            case KeyCodes.KEY_DOWN:
+                return "down-arrow";
+            case KeyCodes.KEY_SPACE:
+                return "space";
+            case KeyCodes.KEY_CTRL:
+                return "ctrl";
+            case KeyCodes.KEY_ALT:
+                return "alt";
+            case KeyCodes.KEY_SHIFT:
+                return "shift";
+            case KeyCodes.KEY_TAB:
+                return "tab";
+            case KeyCodes.KEY_ESCAPE:
+                return "esc";
+            case KeyCodes.KEY_ENTER:
+                return "enter";
+            case KeyCodes.KEY_MAC_ENTER:
+                return "mac-enter";
+            case KeyCodes.KEY_BACKSPACE:
+                return "backspace";
+            case KeyCodes.KEY_DELETE:
+                return "delete";
+            case KeyCodes.KEY_INSERT:
+                return "insert";
+            case KeyCodes.KEY_F1:
+                return "F1";
+            case KeyCodes.KEY_F2:
+                return "F2";
+            case KeyCodes.KEY_F3:
+                return "F3";
+            case KeyCodes.KEY_F4:
+                return "F4";
+            case KeyCodes.KEY_F5:
+                return "F5";
+            case KeyCodes.KEY_F6:
+                return "F6";
+            case KeyCodes.KEY_F7:
+                return "F7";
+            case KeyCodes.KEY_F8:
+                return "F8";
+            case KeyCodes.KEY_F9:
+                return "F9";
+            case KeyCodes.KEY_F10:
+                return "F10";
+            case KeyCodes.KEY_END:
+                return "end";
+            case KeyCodes.KEY_HOME:
+                return "home";
+            case KeyCodes.KEY_PAGEUP:
+                return "pageup";
+            case KeyCodes.KEY_PAGEDOWN:
+                return "pagedown";
+            default:
+                return String.valueOf(((char) keyCode));
         }
     }
 
@@ -257,6 +325,10 @@ public class KeyBinding {
                     ", action=" + action +
                     '}';
         }
+
+
+        // --------------------------------------------------------------------------------
+
 
         public static class Builder {
 
@@ -326,43 +398,23 @@ public class KeyBinding {
 
         @Override
         public String toString() {
-            final StringBuilder sb = new StringBuilder();
+            final List<String> keysPressed = new ArrayList<>();
             if (ctrl) {
-                if (sb.length() > 0) {
-                    sb.append("+");
-                }
-                sb.append("Ctrl");
+                keysPressed.add("ctrl");
             }
             if (alt) {
-                if (sb.length() > 0) {
-                    sb.append("+");
-                }
-                sb.append("Alt");
+                keysPressed.add("alt");
             }
             if (shift) {
-                if (sb.length() > 0) {
-                    sb.append("+");
-                }
-                sb.append("Shift");
+                keysPressed.add("shift");
             }
             if (meta) {
-                if (sb.length() > 0) {
-                    sb.append("+");
-                }
-                sb.append("Meta");
+                keysPressed.add("meta");
             }
-            if (sb.length() > 0) {
-                sb.append("+");
-            }
-            if (keyCode == KeyCodes.KEY_SPACE) {
-                sb.append("space");
-            } else if (keyCode == KeyCodes.KEY_TAB) {
-                sb.append("tab");
-            } else {
-                sb.append((char) keyCode);
-            }
-            return sb.toString();
+            keysPressed.add(keyCodeToString(keyCode));
+            return java.lang.String.join("+", keysPressed);
         }
+
 
         public boolean hasModifiers() {
             return shift || ctrl || alt || meta;

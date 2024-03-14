@@ -99,6 +99,7 @@ public class RulesPresenter
 
     @Override
     protected void onBind() {
+        registerHandler(listPresenter.addDirtyHandler(event -> setDirty(true)));
         registerHandler(addButton.addClickHandler(event -> {
             add();
         }));
@@ -209,7 +210,7 @@ public class RulesPresenter
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(popupSize)
                 .caption("Add New Rule")
-                .onShow(e -> addButton.focus())
+                .onShow(e -> editRulePresenter.focus())
                 .onHideRequest(e -> {
                     if (e.isOk()) {
                         final ConditionalFormattingRule rule = editRulePresenter.write();
@@ -219,6 +220,8 @@ public class RulesPresenter
                         setDirty(true);
                     }
                     e.hide();
+                    // Return focus to the add button
+                    addButton.focus();
                 })
                 .fire();
     }
@@ -229,12 +232,12 @@ public class RulesPresenter
         selectionBoxModel.addItems(fields.stream().map(FieldInfo::create).collect(Collectors.toList()));
         editRulePresenter.read(existingRule, selectionBoxModel);
 
-        final PopupSize popupSize = PopupSize.resizable(800, 450);
+        final PopupSize popupSize = PopupSize.resizable(800, 600);
         ShowPopupEvent.builder(editRulePresenter)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(popupSize)
                 .caption("Edit Rule")
-                .onShow(e -> addButton.focus())
+                .onShow(e -> editRulePresenter.focus())
                 .onHideRequest(e -> {
                     if (e.isOk()) {
                         final ConditionalFormattingRule rule = editRulePresenter.write();
@@ -251,6 +254,8 @@ public class RulesPresenter
                         }
                     }
                     e.hide();
+                    // Return focus to the add button
+                    addButton.focus();
                 })
                 .fire();
     }
