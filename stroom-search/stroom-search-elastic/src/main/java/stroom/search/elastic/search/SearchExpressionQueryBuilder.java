@@ -18,9 +18,11 @@
 package stroom.search.elastic.search;
 
 import stroom.datasource.api.v2.FieldType;
+import stroom.datasource.api.v2.IndexField;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
 import stroom.expression.api.DateTimeSettings;
+import stroom.index.shared.IndexFieldCache;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
@@ -38,7 +40,6 @@ import org.elasticsearch.index.query.QueryBuilders;
 import java.net.InetAddress;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -57,15 +58,18 @@ public class SearchExpressionQueryBuilder {
             Pattern.compile("^(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})(?:/\\d{1,2})?$");
     private static final Pattern IPV4_CIDR_PATTERN =
             Pattern.compile("^\\d+\\.\\d+\\.\\d+\\.\\d+/\\d{1,2}$");
-    private final Map<String, ElasticIndexField> indexFieldsMap;
+    private final DocRef indexDocRef;
+    private final IndexFieldCache indexFieldCache;
     private final WordListProvider wordListProvider;
     private final DateTimeSettings dateTimeSettings;
 
-    public SearchExpressionQueryBuilder(final WordListProvider wordListProvider,
-                                        final Map<String, ElasticIndexField> indexFieldsMap,
+    public SearchExpressionQueryBuilder(final DocRef indexDocRef,
+                                        final IndexFieldCache indexFieldCache,
+                                        final WordListProvider wordListProvider,
                                         final DateTimeSettings dateTimeSettings) {
+        this.indexDocRef = indexDocRef;
+        this.indexFieldCache = indexFieldCache;
         this.wordListProvider = wordListProvider;
-        this.indexFieldsMap = indexFieldsMap;
         this.dateTimeSettings = dateTimeSettings;
     }
 
@@ -124,14 +128,14 @@ public class SearchExpressionQueryBuilder {
         }
 
         // Validate the field
-        if (field == null || field.length() == 0) {
+        if (field == null || field.isEmpty()) {
             throw new IllegalArgumentException("Field not set");
         }
-        final ElasticIndexField indexField = indexFieldsMap.get(field);
-        if (indexField == null) {
+        final IndexField indexField = indexFieldCache.get(indexDocRef, field);
+        if (!(indexField instanceof final ElasticIndexField elasticIndexField)) {
             throw new SearchException("Field not found in index: " + field);
         }
-        final String fieldName = indexField.getFldName();
+        final String fieldName = elasticIndexField.getFldName();
 
         // Validate the expression
         if (value == null || value.isEmpty()) {
@@ -149,21 +153,21 @@ public class SearchExpressionQueryBuilder {
         }
 
         // Create a query based on the field type and condition.
-        final FieldType elasticFieldType = indexField.getFldType();
+        final FieldType elasticFieldType = elasticIndexField.getFldType();
         if (elasticFieldType.equals(FieldType.ID) ||
                 elasticFieldType.equals(FieldType.LONG) ||
                 elasticFieldType.equals(FieldType.INTEGER)) {
-            return buildScalarQuery(condition, indexField, fieldName, value, this::getNumber, docRef);
+            return buildScalarQuery(condition, elasticIndexField, fieldName, value, this::getNumber, docRef);
         } else if (elasticFieldType.equals(FieldType.FLOAT)) {
-            return buildScalarQuery(condition, indexField, fieldName, value, this::getFloat, docRef);
+            return buildScalarQuery(condition, elasticIndexField, fieldName, value, this::getFloat, docRef);
         } else if (elasticFieldType.equals(FieldType.DOUBLE)) {
-            return buildScalarQuery(condition, indexField, fieldName, value, this::getDouble, docRef);
+            return buildScalarQuery(condition, elasticIndexField, fieldName, value, this::getDouble, docRef);
         } else if (elasticFieldType.equals(FieldType.DATE)) {
-            return buildScalarQuery(condition, indexField, fieldName, value, this::getDate, docRef);
+            return buildScalarQuery(condition, elasticIndexField, fieldName, value, this::getDate, docRef);
         } else if (elasticFieldType.equals(FieldType.IPV4_ADDRESS)) {
-            return buildScalarQuery(condition, indexField, fieldName, value, this::getIpV4Address, docRef);
+            return buildScalarQuery(condition, elasticIndexField, fieldName, value, this::getIpV4Address, docRef);
         } else {
-            return buildStringQuery(condition, value, docRef, indexField, fieldName);
+            return buildStringQuery(condition, value, docRef, elasticIndexField, fieldName);
         }
     }
 

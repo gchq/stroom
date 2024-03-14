@@ -17,7 +17,9 @@
 package stroom.search.solr.indexing;
 
 import stroom.datasource.api.v2.FieldType;
+import stroom.datasource.api.v2.IndexField;
 import stroom.docref.DocRef;
+import stroom.index.shared.IndexFieldCache;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.ErrorStatistics;
@@ -28,11 +30,9 @@ import stroom.pipeline.factory.PipelinePropertyDocRef;
 import stroom.pipeline.filter.AbstractXMLFilter;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
-import stroom.search.solr.CachedSolrIndex;
-import stroom.search.solr.SolrIndexCache;
 import stroom.search.solr.SolrIndexClientCache;
+import stroom.search.solr.SolrIndexDocCache;
 import stroom.search.solr.shared.SolrIndexDoc;
-import stroom.search.solr.shared.SolrIndexField;
 import stroom.svg.shared.SvgImage;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
@@ -50,7 +50,6 @@ import org.xml.sax.SAXException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Map;
 
 /**
  * The Solr index filter... takes the index XML and sends documents to Solr for indexing.
@@ -77,10 +76,10 @@ class SolrIndexingFilter extends AbstractXMLFilter {
 
     private final LocationFactoryProxy locationFactory;
     private final ErrorReceiverProxy errorReceiverProxy;
-    private final SolrIndexCache solrIndexCache;
+    private final SolrIndexDocCache solrIndexDocCache;
     private final SolrIndexClientCache solrIndexClientCache;
-    private Map<String, SolrIndexField> fieldsMap;
-    private CachedSolrIndex indexConfig;
+    private final IndexFieldCache indexFieldCache;
+    private SolrIndexDoc index;
     private DocRef indexRef;
     private Collection<SolrInputDocument> currentDocuments = new ArrayList<>();
     private SolrInputDocument document = new SolrInputDocument();
@@ -96,12 +95,14 @@ class SolrIndexingFilter extends AbstractXMLFilter {
     @Inject
     SolrIndexingFilter(final LocationFactoryProxy locationFactory,
                        final ErrorReceiverProxy errorReceiverProxy,
-                       final SolrIndexCache solrIndexCache,
-                       final SolrIndexClientCache solrIndexClientCache) {
+                       final SolrIndexDocCache solrIndexDocCache,
+                       final SolrIndexClientCache solrIndexClientCache,
+                       final IndexFieldCache indexFieldCache) {
         this.locationFactory = locationFactory;
         this.errorReceiverProxy = errorReceiverProxy;
-        this.solrIndexCache = solrIndexCache;
+        this.solrIndexDocCache = solrIndexDocCache;
         this.solrIndexClientCache = solrIndexClientCache;
+        this.indexFieldCache = indexFieldCache;
     }
 
     /**
@@ -116,16 +117,14 @@ class SolrIndexingFilter extends AbstractXMLFilter {
             }
 
             // Get the index and index fields from the cache.
-            indexConfig = solrIndexCache.get(indexRef);
-            if (indexConfig == null) {
+            index = solrIndexDocCache.get(indexRef);
+            if (index == null) {
                 log(Severity.FATAL_ERROR, "Unable to load index", null);
                 throw LoggedException.create("Unable to load index");
             }
 
-            fieldsMap = indexConfig.getFieldsMap();
-
             // Create a solr client.
-            solrIndexClientCache.context(indexConfig.getIndex().getSolrConnectionConfig(), solrClient -> {
+            solrIndexClientCache.context(index.getSolrConnectionConfig(), solrClient -> {
                 try {
                     final SolrPingResponse response = solrClient.ping();
                     LOGGER.debug(() ->
@@ -175,9 +174,9 @@ class SolrIndexingFilter extends AbstractXMLFilter {
                 name = name.trim();
                 value = value.trim();
 
-                if (name.length() > 0 && value.length() > 0) {
+                if (!name.isEmpty() && !value.isEmpty()) {
                     // See if we can get this field.
-                    final SolrIndexField indexField = fieldsMap.get(name);
+                    final IndexField indexField = indexFieldCache.get(indexRef, name);
                     if (indexField != null) {
                         // Index the current content if we are to store or index
                         // this field.
@@ -233,10 +232,10 @@ class SolrIndexingFilter extends AbstractXMLFilter {
 
     private void addDocuments(final Collection<SolrInputDocument> documents, final boolean commit) {
         if (docsIndexed > 0) {
-            final String collection = indexConfig.getIndex().getCollection();
-            solrIndexClientCache.context(indexConfig.getIndex().getSolrConnectionConfig(), solrClient -> {
+            final String collection = index.getCollection();
+            solrIndexClientCache.context(index.getSolrConnectionConfig(), solrClient -> {
                 try {
-                    if (documents.size() > 0) {
+                    if (!documents.isEmpty()) {
                         solrClient.add(collection, documents, commitWithinMs);
                     }
 
@@ -254,7 +253,7 @@ class SolrIndexingFilter extends AbstractXMLFilter {
         }
     }
 
-    private void processIndexContent(final SolrIndexField indexField, final String value) {
+    private void processIndexContent(final IndexField indexField, final String value) {
         try {
             Object val = null;
 

@@ -23,12 +23,11 @@ import stroom.datasource.api.v2.FindIndexFieldCriteria;
 import stroom.datasource.api.v2.IndexField;
 import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
-import stroom.docref.StringMatch;
 import stroom.index.impl.IndexFieldService;
 import stroom.index.impl.IndexStore;
 import stroom.index.impl.LuceneIndexDocCache;
 import stroom.index.impl.LuceneProviderFactory;
-import stroom.index.shared.IndexFieldProvider;
+import stroom.index.shared.IndexFieldCache;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.index.shared.LuceneVersionUtil;
 import stroom.query.api.v2.ExpressionUtil;
@@ -43,7 +42,6 @@ import stroom.query.common.v2.ResultStoreFactory;
 import stroom.query.common.v2.SearchProvider;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
-import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
@@ -64,6 +62,7 @@ public class LuceneSearchProvider implements SearchProvider {
     private final NodeSearchTaskCreator nodeSearchTaskCreator;
     private final LuceneProviderFactory luceneProviderFactory;
     private final IndexFieldService indexFieldService;
+    private final IndexFieldCache indexFieldCache;
 
     @Inject
     public LuceneSearchProvider(final IndexStore indexStore,
@@ -74,7 +73,8 @@ public class LuceneSearchProvider implements SearchProvider {
                                 final FederatedSearchExecutor federatedSearchExecutor,
                                 final NodeSearchTaskCreator nodeSearchTaskCreator,
                                 final LuceneProviderFactory luceneProviderFactory,
-                                final IndexFieldService indexFieldService) {
+                                final IndexFieldService indexFieldService,
+                                final IndexFieldCache indexFieldCache) {
         this.indexStore = indexStore;
         this.luceneIndexDocCache = luceneIndexDocCache;
         this.securityContext = securityContext;
@@ -84,6 +84,7 @@ public class LuceneSearchProvider implements SearchProvider {
         this.nodeSearchTaskCreator = nodeSearchTaskCreator;
         this.luceneProviderFactory = luceneProviderFactory;
         this.indexFieldService = indexFieldService;
+        this.indexFieldCache = indexFieldCache;
     }
 
     @Override
@@ -161,7 +162,11 @@ public class LuceneSearchProvider implements SearchProvider {
         final Set<String> highlights = luceneProviderFactory
                 .get(LuceneVersionUtil.CURRENT_LUCENE_VERSION)
                 .createHighlightProvider()
-                .getHighlights(index, query.getExpression(), modifiedSearchRequest.getDateTimeSettings());
+                .getHighlights(
+                        query.getDataSource(),
+                        indexFieldCache,
+                        query.getExpression(),
+                        modifiedSearchRequest.getDateTimeSettings());
 
         // Create a coprocessor settings list.
         final List<CoprocessorSettings> coprocessorSettingsList = coprocessorsFactory

@@ -44,7 +44,7 @@ public class SolrSearchModule extends AbstractModule {
     protected void configure() {
         install(new SolrIndexingElementModule());
 
-        bind(SolrIndexCache.class).to(SolrIndexCacheImpl.class);
+        bind(SolrIndexDocCache.class).to(SolrIndexDocCacheImpl.class);
         bind(SolrIndexClientCache.class).to(SolrIndexClientCacheImpl.class);
         bind(SolrIndexStore.class).to(SolrIndexStoreImpl.class);
 
@@ -56,10 +56,10 @@ public class SolrSearchModule extends AbstractModule {
                 .addBinding(SolrSearchProvider.class);
 
         GuiceUtil.buildMultiBinder(binder(), EntityEvent.Handler.class)
-                .addBinding(SolrIndexCacheImpl.class);
+                .addBinding(SolrIndexDocCacheImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class)
-                .addBinding(SolrIndexCacheImpl.class)
+                .addBinding(SolrIndexDocCacheImpl.class)
                 .addBinding(SolrIndexClientCacheImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), ExplorerActionHandler.class)

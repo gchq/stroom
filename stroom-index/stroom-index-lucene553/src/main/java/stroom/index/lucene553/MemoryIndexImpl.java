@@ -47,8 +47,6 @@ class MemoryIndexImpl implements stroom.search.extraction.MemoryIndex {
                     memoryIndex.addField(field.name(), tokenStream, field.boost());
                 }
             }
-
-            searchExpressionQueryCache.addIndexField(luceneIndexField);
         }
 
         // See if this set of fields matches the rule expression.

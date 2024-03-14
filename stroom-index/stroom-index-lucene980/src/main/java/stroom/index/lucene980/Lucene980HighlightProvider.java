@@ -1,11 +1,11 @@
 package stroom.index.lucene980;
 
 import stroom.dictionary.api.WordListProvider;
+import stroom.docref.DocRef;
 import stroom.expression.api.DateTimeSettings;
 import stroom.index.impl.HighlightProvider;
 import stroom.index.lucene980.SearchExpressionQueryBuilder.SearchExpressionQuery;
-import stroom.index.shared.LuceneIndexDoc;
-import stroom.index.shared.LuceneIndexFieldsMap;
+import stroom.index.shared.IndexFieldCache;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.search.impl.SearchConfig;
 import stroom.util.logging.LambdaLogger;
@@ -22,12 +22,15 @@ class Lucene980HighlightProvider implements HighlightProvider {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(Lucene980HighlightProvider.class);
 
+    private final IndexFieldCache indexFieldCache;
     private final WordListProvider wordListProvider;
     private final Provider<SearchConfig> searchConfigProvider;
 
     @Inject
-    Lucene980HighlightProvider(final WordListProvider wordListProvider,
-                                      final Provider<SearchConfig> searchConfigProvider) {
+    Lucene980HighlightProvider(final IndexFieldCache indexFieldCache,
+                               final WordListProvider wordListProvider,
+                               final Provider<SearchConfig> searchConfigProvider) {
+        this.indexFieldCache = indexFieldCache;
         this.wordListProvider = wordListProvider;
         this.searchConfigProvider = searchConfigProvider;
     }
@@ -37,19 +40,19 @@ class Lucene980HighlightProvider implements HighlightProvider {
      * highlighting.
      */
     @Override
-    public Set<String> getHighlights(final LuceneIndexDoc index,
+    public Set<String> getHighlights(final DocRef indexDocRef,
+                                     final IndexFieldCache indexFieldCache,
                                      final ExpressionOperator expression,
                                      final DateTimeSettings dateTimeSettings) {
         Set<String> highlights = Collections.emptySet();
 
         try {
-            // Create a map of index fields keyed by name.
-            final LuceneIndexFieldsMap indexFieldsMap = new LuceneIndexFieldsMap(index.getFields());
             // Parse the query.
             IndexSearcher.setMaxClauseCount(searchConfigProvider.get().getMaxBooleanClauseCount());
             final SearchExpressionQueryBuilder searchExpressionQueryBuilder = new SearchExpressionQueryBuilder(
+                    indexDocRef,
+                    indexFieldCache,
                     wordListProvider,
-                    indexFieldsMap,
                     dateTimeSettings);
             final SearchExpressionQuery query = searchExpressionQueryBuilder.buildQuery(expression);
 

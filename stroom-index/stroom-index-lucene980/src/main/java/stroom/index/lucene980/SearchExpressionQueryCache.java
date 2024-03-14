@@ -2,8 +2,8 @@ package stroom.index.lucene980;
 
 import stroom.index.lucene980.SearchExpressionQueryBuilder.SearchExpressionQuery;
 import stroom.index.lucene980.analyser.AnalyzerFactory;
+import stroom.index.shared.IndexFieldCache;
 import stroom.index.shared.LuceneIndexField;
-import stroom.index.shared.LuceneIndexFieldsMap;
 import stroom.query.api.v2.SearchRequest;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -19,13 +19,15 @@ class SearchExpressionQueryCache {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SearchExpressionQueryCache.class);
 
     private final SearchExpressionQueryBuilderFactory searchExpressionQueryBuilderFactory;
-    private final LuceneIndexFieldsMap indexFieldsMap = new LuceneIndexFieldsMap();
+    private final IndexFieldCache indexFieldCache;
     private final Map<String, Analyzer> analyzerMap = new HashMap<>();
     private SearchExpressionQuery luceneQuery;
 
     @Inject
-    SearchExpressionQueryCache(final SearchExpressionQueryBuilderFactory searchExpressionQueryBuilderFactory) {
+    SearchExpressionQueryCache(final SearchExpressionQueryBuilderFactory searchExpressionQueryBuilderFactory,
+                               final IndexFieldCache indexFieldCache) {
         this.searchExpressionQueryBuilderFactory = searchExpressionQueryBuilderFactory;
+        this.indexFieldCache = indexFieldCache;
     }
 
     SearchExpressionQuery getQuery(final SearchRequest searchRequest,
@@ -34,7 +36,8 @@ class SearchExpressionQueryCache {
             if (luceneQuery == null) {
                 final SearchExpressionQueryBuilder searchExpressionQueryBuilder =
                         searchExpressionQueryBuilderFactory.create(
-                                indexFieldsMap,
+                                searchRequest.getQuery().getDataSource(),
+                                indexFieldCache,
                                 searchRequest.getDateTimeSettings());
                 luceneQuery = searchExpressionQueryBuilder
                         .buildQuery(searchRequest.getQuery().getExpression());
@@ -59,13 +62,6 @@ class SearchExpressionQueryCache {
         } catch (final RuntimeException e) {
             LOGGER.error(e::getMessage, e);
             throw e;
-        }
-    }
-
-    void addIndexField(final LuceneIndexField indexField) {
-        if (indexFieldsMap.putIfAbsent(indexField) == null) {
-            // We didn't already have this field so make sure the query is rebuilt.
-            luceneQuery = null;
         }
     }
 }

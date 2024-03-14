@@ -21,17 +21,23 @@ import stroom.cache.api.CacheManager;
 import stroom.cache.api.LoadingStroomCache;
 import stroom.docref.DocRef;
 import stroom.index.shared.LuceneIndexDoc;
+import stroom.security.api.SecurityContext;
+import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.NullSafe;
 import stroom.util.entityevent.EntityAction;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEventHandler;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.Clearable;
+import stroom.util.shared.PermissionException;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Objects;
 
 @Singleton
 @EntityEventHandler(
@@ -45,34 +51,42 @@ public class LuceneIndexDocCacheImpl implements LuceneIndexDocCache, Clearable, 
 
     private final IndexStore indexStore;
     private final LoadingStroomCache<DocRef, LuceneIndexDoc> cache;
+    private final SecurityContext securityContext;
 
     @Inject
     LuceneIndexDocCacheImpl(final CacheManager cacheManager,
                             final IndexStore indexStore,
+                            final SecurityContext securityContext,
                             final Provider<IndexConfig> indexConfigProvider) {
         this.indexStore = indexStore;
+        this.securityContext = securityContext;
         cache = cacheManager.createLoadingCache(
                 CACHE_NAME,
-                () -> indexConfigProvider.get().getIndexStructureCache(),
+                () -> indexConfigProvider.get().getIndexCache(),
                 this::create);
     }
 
     private LuceneIndexDoc create(final DocRef docRef) {
-        if (docRef == null) {
-            throw new NullPointerException("Null key supplied");
-        }
+        return securityContext.asProcessingUserResult(() -> {
+            final LuceneIndexDoc loaded = indexStore.readDocument(docRef);
+            if (loaded == null) {
+                throw new NullPointerException("No index can be found for: " + docRef);
+            }
 
-        final LuceneIndexDoc loaded = indexStore.readDocument(docRef);
-        if (loaded == null) {
-            throw new NullPointerException("No index can be found for: " + docRef);
-        }
-
-        return loaded;
+            return loaded;
+        });
     }
 
     @Override
-    public LuceneIndexDoc get(final DocRef key) {
-        return cache.get(key);
+    public LuceneIndexDoc get(final DocRef docRef) {
+        Objects.requireNonNull(docRef, "Null DocRef supplied");
+
+        if (!securityContext.hasDocumentPermission(docRef, DocumentPermissionNames.USE)) {
+            throw new PermissionException(
+                    securityContext.getUserIdentityForAudit(),
+                    LogUtil.message("You are not authorised to read {}", docRef));
+        }
+        return cache.get(docRef);
     }
 
     @Override

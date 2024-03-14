@@ -364,10 +364,15 @@ appConfig:
         minimumIdle: 10
         prepStmtCacheSize: 25
         prepStmtCacheSqlLimit: 256
-    indexStructureCache:
+    indexCache:
+      expireAfterAccess: null
+      expireAfterWrite: "PT10M"
+      maximumSize: 100
+      refreshAfterWrite: null
+    indexFieldCache:
       expireAfterAccess: null
       expireAfterWrite: "PT10S"
-      maximumSize: 100
+      maximumSize: 10000
       refreshAfterWrite: null
     ramBufferSizeMB: 1024
     writer:

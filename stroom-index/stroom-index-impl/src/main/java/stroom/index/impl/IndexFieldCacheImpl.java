@@ -23,7 +23,11 @@ import stroom.datasource.api.v2.IndexField;
 import stroom.docref.DocRef;
 import stroom.index.shared.IndexFieldCache;
 import stroom.index.shared.IndexFieldProvider;
+import stroom.security.api.SecurityContext;
+import stroom.security.shared.DocumentPermissionNames;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.Clearable;
+import stroom.util.shared.PermissionException;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -41,35 +45,45 @@ public class IndexFieldCacheImpl implements IndexFieldCache, Clearable {
 
     private final Map<String, IndexFieldProvider> providers = new HashMap<>();
     private final LoadingStroomCache<Key, IndexField> cache;
+    private final SecurityContext securityContext;
 
     @Inject
     IndexFieldCacheImpl(final CacheManager cacheManager,
                         final Provider<IndexConfig> indexConfigProvider,
-                        final Set<IndexFieldProvider> indexFieldProviders) {
+                        final Set<IndexFieldProvider> indexFieldProviders,
+                        final SecurityContext securityContext) {
+        this.securityContext = securityContext;
         for (final IndexFieldProvider provider : indexFieldProviders) {
             providers.put(provider.getType(), provider);
         }
         cache = cacheManager.createLoadingCache(
                 CACHE_NAME,
-                () -> indexConfigProvider.get().getIndexStructureCache(),
+                () -> indexConfigProvider.get().getIndexFieldCache(),
                 this::create);
     }
 
     private IndexField create(final Key key) {
-        if (key == null || key.docRef == null || key.docRef.getType() == null) {
-            throw new NullPointerException("Null key supplied");
-        }
+        return securityContext.asProcessingUserResult(() -> {
+            final IndexFieldProvider provider = providers.get(key.docRef.getType());
+            if (provider == null) {
+                throw new NullPointerException("No provider can be found for: " + key.docRef.getType());
+            }
 
-        final IndexFieldProvider provider = providers.get(key.docRef.getType());
-        if (provider == null) {
-            throw new NullPointerException("No provider can be found for: " + key.docRef.getType());
-        }
-
-        return provider.getIndexField(key.docRef, key.fieldName);
+            return provider.getIndexField(key.docRef, key.fieldName);
+        });
     }
 
     @Override
     public IndexField get(final DocRef docRef, final String fieldName) {
+        Objects.requireNonNull(docRef, "Null DocRef supplied");
+        Objects.requireNonNull(docRef.getType(), "Null DocRef type supplied");
+        Objects.requireNonNull(fieldName, "Null field name supplied");
+
+        if (!securityContext.hasDocumentPermission(docRef, DocumentPermissionNames.USE)) {
+            throw new PermissionException(
+                    securityContext.getUserIdentityForAudit(),
+                    LogUtil.message("You are not authorised to read {}", docRef));
+        }
         final Key key = new Key(docRef, fieldName);
         return cache.get(key);
     }

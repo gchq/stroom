@@ -21,11 +21,11 @@ import stroom.cluster.lock.api.ClusterLockService;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
 import stroom.expression.api.DateTimeSettings;
+import stroom.index.shared.IndexFieldCache;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.search.elastic.search.SearchExpressionQueryBuilder;
 import stroom.search.elastic.shared.ElasticClusterDoc;
 import stroom.search.elastic.shared.ElasticIndexDoc;
-import stroom.search.elastic.shared.ElasticIndexField;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.util.logging.LambdaLogger;
@@ -40,11 +40,11 @@ import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.reindex.DeleteByQueryRequest;
 
 import java.util.List;
-import java.util.Map;
 import java.util.function.Supplier;
 
 @Singleton
 public class ElasticIndexRetentionExecutor {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ElasticIndexRetentionExecutor.class);
 
     private static final String TASK_NAME = "Elastic Index Retention Executor";
@@ -54,8 +54,8 @@ public class ElasticIndexRetentionExecutor {
     private final ElasticClusterStore elasticClusterStore;
     private final ElasticIndexStore elasticIndexStore;
     private final ElasticIndexCache elasticIndexCache;
-    private final ElasticIndexService elasticIndexService;
     private final ElasticClientCache elasticClientCache;
+    private final IndexFieldCache indexFieldCache;
     private final WordListProvider dictionaryStore;
     private final ClusterLockService clusterLockService;
     private final TaskContextFactory taskContextFactory;
@@ -65,17 +65,16 @@ public class ElasticIndexRetentionExecutor {
             final ElasticClusterStore elasticClusterStore,
             final ElasticIndexStore elasticIndexStore,
             final ElasticIndexCache elasticIndexCache,
-            final ElasticIndexService elasticIndexService,
             final ElasticClientCache elasticClientCache,
+            final IndexFieldCache indexFieldCache,
             final WordListProvider dictionaryStore,
             final ClusterLockService clusterLockService,
-            final TaskContextFactory taskContextFactory
-    ) {
+            final TaskContextFactory taskContextFactory) {
         this.elasticClusterStore = elasticClusterStore;
         this.elasticIndexStore = elasticIndexStore;
         this.elasticIndexCache = elasticIndexCache;
-        this.elasticIndexService = elasticIndexService;
         this.elasticClientCache = elasticClientCache;
+        this.indexFieldCache = indexFieldCache;
         this.dictionaryStore = dictionaryStore;
         this.clusterLockService = clusterLockService;
         this.taskContextFactory = taskContextFactory;
@@ -118,10 +117,10 @@ public class ElasticIndexRetentionExecutor {
             if (elasticIndex != null) {
                 final int termCount = ExpressionUtil.terms(elasticIndex.getRetentionExpression(), null).size();
                 if (termCount > 0) {
-                    final Map<String, ElasticIndexField> indexFieldsMap = getFieldsMap(docRef);
                     final SearchExpressionQueryBuilder searchExpressionQueryBuilder = new SearchExpressionQueryBuilder(
+                            docRef,
+                            indexFieldCache,
                             dictionaryStore,
-                            indexFieldsMap,
                             DateTimeSettings.builder().build());
 
                     final QueryBuilder query = searchExpressionQueryBuilder.buildQuery(
@@ -135,9 +134,9 @@ public class ElasticIndexRetentionExecutor {
                                     "Deleting data from Elasticsearch index '" + elasticIndex.getName() + "'");
 
                             DeleteByQueryRequest request = new DeleteByQueryRequest(elasticIndex.getIndexName())
-                                .setQuery(query)
-                                .setTimeout(new TimeValue(DELETE_REQUEST_TIMEOUT_MILLIS))
-                                .setRefresh(true);
+                                    .setQuery(query)
+                                    .setTimeout(new TimeValue(DELETE_REQUEST_TIMEOUT_MILLIS))
+                                    .setRefresh(true);
 
                             elasticClient.deleteByQuery(request, RequestOptions.DEFAULT);
                         } catch (Exception e) {
@@ -149,18 +148,6 @@ public class ElasticIndexRetentionExecutor {
         } catch (final RuntimeException e) {
             LOGGER.error(e::getMessage, e);
         }
-    }
-
-    /**
-     * Query field mappings for this index
-     */
-    private Map<String, ElasticIndexField> getFieldsMap(final DocRef docRef) {
-        final ElasticIndexDoc index = elasticIndexStore.readDocument(docRef);
-        if (index == null) {
-            throw new RuntimeException("Elasticsearch index not found for: '" + docRef.getUuid() + "'");
-        }
-
-        return elasticIndexService.getFieldsMap(index);
     }
 
     private void info(final TaskContext taskContext, final Supplier<String> message) {

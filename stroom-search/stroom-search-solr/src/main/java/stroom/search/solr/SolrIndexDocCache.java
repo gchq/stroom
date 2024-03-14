@@ -17,9 +17,11 @@
 package stroom.search.solr;
 
 import stroom.docref.DocRef;
+import stroom.search.solr.shared.SolrIndexDoc;
 
-public interface SolrIndexCache {
-    CachedSolrIndex get(DocRef key);
+public interface SolrIndexDocCache {
+
+    SolrIndexDoc get(DocRef key);
 
     void remove(DocRef key);
 }

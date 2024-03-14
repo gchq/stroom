@@ -16,6 +16,9 @@
 
 package stroom.search.solr.search;
 
+import stroom.datasource.api.v2.IndexField;
+import stroom.docref.DocRef;
+import stroom.index.shared.IndexFieldCache;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValBoolean;
@@ -27,13 +30,10 @@ import stroom.query.language.functions.ValNull;
 import stroom.query.language.functions.ValString;
 import stroom.query.language.functions.ValuesConsumer;
 import stroom.query.language.functions.ref.ErrorConsumer;
-import stroom.search.solr.CachedSolrIndex;
 import stroom.search.solr.SolrIndexClientCache;
 import stroom.search.solr.shared.SolrConnectionConfig;
 import stroom.search.solr.shared.SolrIndexDoc;
-import stroom.search.solr.shared.SolrIndexField;
 import stroom.task.api.TaskContext;
-import stroom.task.api.TaskContextFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -59,18 +59,19 @@ public class SolrSearchTaskHandler {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SolrSearchTaskHandler.class);
 
     private final SolrIndexClientCache solrIndexClientCache;
-    private final TaskContextFactory taskContextFactory;
+    private final IndexFieldCache indexFieldCache;
     private final CountDownLatch completionLatch = new CountDownLatch(1);
 
     @Inject
     SolrSearchTaskHandler(final SolrIndexClientCache solrIndexClientCache,
-                          final TaskContextFactory taskContextFactory) {
+                          final IndexFieldCache indexFieldCache) {
         this.solrIndexClientCache = solrIndexClientCache;
-        this.taskContextFactory = taskContextFactory;
+        this.indexFieldCache = indexFieldCache;
     }
 
     public void search(final TaskContext taskContext,
-                       final CachedSolrIndex solrIndex,
+                       final DocRef indexDocRef,
+                       final SolrIndexDoc solrIndexDoc,
                        final SolrParams solrParams,
                        final FieldIndex fieldIndex,
                        final ValuesConsumer valuesConsumer,
@@ -81,7 +82,8 @@ public class SolrSearchTaskHandler {
             taskContext.info(() -> "Searching Solr index");
 
             // Start searching.
-            searchIndex(solrIndex,
+            searchIndex(indexDocRef,
+                    solrIndexDoc,
                     solrParams,
                     fieldIndex,
                     valuesConsumer,
@@ -90,14 +92,13 @@ public class SolrSearchTaskHandler {
         }
     }
 
-    private void searchIndex(final CachedSolrIndex solrIndex,
+    private void searchIndex(final DocRef indexDocRef,
+                             final SolrIndexDoc solrIndexDoc,
                              final SolrParams solrParams,
                              final FieldIndex fieldIndex,
                              final ValuesConsumer valuesConsumer,
                              final ErrorConsumer errorConsumer,
                              final LongAdder hitCount) {
-        final CachedSolrIndex cachedSolrIndex = solrIndex;
-        final SolrIndexDoc solrIndexDoc = cachedSolrIndex.getIndex();
         final SolrConnectionConfig connectionConfig = solrIndexDoc.getSolrConnectionConfig();
 
         // If there is an error building the query then it will be null here.
@@ -113,7 +114,7 @@ public class SolrSearchTaskHandler {
 
                         try {
                             streamingSearch(
-                                    solrIndex,
+                                    indexDocRef,
                                     solrParams,
                                     fieldIndex,
                                     valuesConsumer,
@@ -133,13 +134,13 @@ public class SolrSearchTaskHandler {
         }
     }
 
-    private String[] getStoredFieldNames(final Map<String, SolrIndexField> fieldsMap,
+    private String[] getStoredFieldNames(final DocRef indexDocRef,
                                          final FieldIndex fieldIndex) {
         final String[] storedFieldNames = new String[fieldIndex.size()];
         for (int i = 0; i < storedFieldNames.length; i++) {
             final String fieldName = fieldIndex.getField(i);
             if (fieldName != null) {
-                final SolrIndexField indexField = fieldsMap.get(fieldName);
+                final IndexField indexField = indexFieldCache.get(indexDocRef, fieldName);
                 if (indexField != null && indexField.isStored()) {
                     storedFieldNames[i] = fieldName;
                 }
@@ -148,34 +149,34 @@ public class SolrSearchTaskHandler {
         return storedFieldNames;
     }
 
-    private void fastStreamingDocsSearch(final CachedSolrIndex solrIndex,
-                                         final SolrParams solrParams,
-                                         final FieldIndex fieldIndex,
-                                         final ValuesConsumer valuesConsumer,
-                                         final ErrorConsumer errorConsumer,
-                                         final AtomicLong hitCount,
-                                         final SolrIndexDoc solrIndexDoc,
-                                         final SolrConnectionConfig connectionConfig) {
-        final String[] fieldNames = getStoredFieldNames(solrIndex.getFieldsMap(), fieldIndex);
+//    private void fastStreamingDocsSearch(final CachedSolrIndex solrIndex,
+//                                         final SolrParams solrParams,
+//                                         final FieldIndex fieldIndex,
+//                                         final ValuesConsumer valuesConsumer,
+//                                         final ErrorConsumer errorConsumer,
+//                                         final AtomicLong hitCount,
+//                                         final SolrIndexDoc solrIndexDoc,
+//                                         final SolrConnectionConfig connectionConfig) {
+//        final String[] fieldNames = getStoredFieldNames(solrIndex.getFieldsMap(), fieldIndex);
+//
+//        final Callback2 callback = new Callback2(
+//                hitCount,
+//                fieldNames,
+//                valuesConsumer,
+//                errorConsumer);
+//        solrIndexClientCache.context(connectionConfig, solrClient -> {
+//            try {
+//                final QueryResponse response = solrClient.queryAndStreamResponse(solrIndexDoc.getCollection(),
+//                        solrParams,
+//                        callback);
+//                LOGGER.debug(() -> "fastStreamingDocsSearch() - response=" + response);
+//            } catch (final SolrServerException | IOException | RuntimeException e) {
+//                error(errorConsumer, e);
+//            }
+//        });
+//    }
 
-        final Callback2 callback = new Callback2(
-                hitCount,
-                fieldNames,
-                valuesConsumer,
-                errorConsumer);
-        solrIndexClientCache.context(connectionConfig, solrClient -> {
-            try {
-                final QueryResponse response = solrClient.queryAndStreamResponse(solrIndexDoc.getCollection(),
-                        solrParams,
-                        callback);
-                LOGGER.debug(() -> "fastStreamingDocsSearch() - response=" + response);
-            } catch (final SolrServerException | IOException | RuntimeException e) {
-                error(errorConsumer, e);
-            }
-        });
-    }
-
-    private void streamingSearch(final CachedSolrIndex solrIndex,
+    private void streamingSearch(final DocRef indexDocRef,
                                  final SolrParams solrParams,
                                  final FieldIndex fieldIndex,
                                  final ValuesConsumer valuesConsumer,
@@ -184,7 +185,7 @@ public class SolrSearchTaskHandler {
                                  final SolrIndexDoc solrIndexDoc,
                                  final SolrConnectionConfig connectionConfig) {
 
-        final String[] fieldNames = getStoredFieldNames(solrIndex.getFieldsMap(), fieldIndex);
+        final String[] fieldNames = getStoredFieldNames(indexDocRef, fieldIndex);
 
         final Callback callback = new Callback(
                 hitCount,

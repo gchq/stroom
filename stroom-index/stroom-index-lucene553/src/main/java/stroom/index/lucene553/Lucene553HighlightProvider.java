@@ -1,11 +1,11 @@
 package stroom.index.lucene553;
 
 import stroom.dictionary.api.WordListProvider;
+import stroom.docref.DocRef;
 import stroom.expression.api.DateTimeSettings;
 import stroom.index.impl.HighlightProvider;
 import stroom.index.lucene553.SearchExpressionQueryBuilder.SearchExpressionQuery;
-import stroom.index.shared.LuceneIndexDoc;
-import stroom.index.shared.LuceneIndexFieldsMap;
+import stroom.index.shared.IndexFieldCache;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.search.impl.SearchConfig;
 import stroom.util.logging.LambdaLogger;
@@ -36,18 +36,18 @@ class Lucene553HighlightProvider implements HighlightProvider {
      * highlighting.
      */
     @Override
-    public Set<String> getHighlights(final LuceneIndexDoc index,
+    public Set<String> getHighlights(final DocRef indexDocRef,
+                                     final IndexFieldCache indexFieldCache,
                                      final ExpressionOperator expression,
                                      final DateTimeSettings dateTimeSettings) {
         Set<String> highlights = Collections.emptySet();
 
         try {
-            // Create a map of index fields keyed by name.
-            final LuceneIndexFieldsMap indexFieldsMap = new LuceneIndexFieldsMap(index.getFields());
             // Parse the query.
             final SearchExpressionQueryBuilder searchExpressionQueryBuilder = new SearchExpressionQueryBuilder(
+                    indexDocRef,
+                    indexFieldCache,
                     wordListProvider,
-                    indexFieldsMap,
                     searchConfigProvider.get().getMaxBooleanClauseCount(),
                     dateTimeSettings);
             final SearchExpressionQuery query = searchExpressionQueryBuilder.buildQuery(expression);

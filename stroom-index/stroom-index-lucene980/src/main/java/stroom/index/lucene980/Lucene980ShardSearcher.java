@@ -17,14 +17,15 @@
 package stroom.index.lucene980;
 
 import stroom.dictionary.api.WordListProvider;
+import stroom.docref.DocRef;
 import stroom.expression.api.DateTimeSettings;
 import stroom.index.impl.IndexShardSearchConfig;
 import stroom.index.impl.IndexShardWriter;
 import stroom.index.impl.IndexShardWriterCache;
 import stroom.index.impl.LuceneShardSearcher;
 import stroom.index.lucene980.SearchExpressionQueryBuilder.SearchExpressionQuery;
+import stroom.index.shared.IndexFieldCache;
 import stroom.index.shared.IndexShard;
-import stroom.index.shared.LuceneIndexFieldsMap;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.common.v2.SearchProgressLog;
@@ -78,7 +79,8 @@ class Lucene980ShardSearcher implements LuceneShardSearcher {
                            final ExecutorProvider executorProvider,
                            final TaskContextFactory taskContextFactory,
                            final PathCreator pathCreator,
-                           final LuceneIndexFieldsMap indexFieldsMap,
+                           final DocRef indexDocRef,
+                           final IndexFieldCache indexFieldCache,
                            final ExpressionOperator expression,
                            final WordListProvider dictionaryStore,
                            final DateTimeSettings dateTimeSettings,
@@ -91,8 +93,9 @@ class Lucene980ShardSearcher implements LuceneShardSearcher {
         this.pathCreator = pathCreator;
 
         final SearchExpressionQueryBuilder searchExpressionQueryBuilder = new SearchExpressionQueryBuilder(
+                indexDocRef,
+                indexFieldCache,
                 dictionaryStore,
-                indexFieldsMap,
                 dateTimeSettings);
         SearchExpressionQuery searchExpressionQuery = searchExpressionQueryBuilder.buildQuery(expression);
         query = searchExpressionQuery.getQuery();

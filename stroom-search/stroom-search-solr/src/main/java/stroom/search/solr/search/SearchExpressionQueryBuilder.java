@@ -18,15 +18,16 @@
 package stroom.search.solr.search;
 
 import stroom.datasource.api.v2.FieldType;
+import stroom.datasource.api.v2.IndexField;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
 import stroom.expression.api.DateTimeSettings;
+import stroom.index.shared.IndexFieldCache;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.common.v2.DateExpressionParser;
-import stroom.search.solr.shared.SolrIndexField;
 
 import org.apache.lucene553.index.Term;
 import org.apache.lucene553.search.BooleanClause;
@@ -43,7 +44,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -57,17 +57,21 @@ public class SearchExpressionQueryBuilder {
     private static final Pattern NON_WORD = Pattern.compile("[^a-zA-Z0-9]");
     private static final Pattern MULTIPLE_WILDCARD = Pattern.compile("[+]+");
     private static final Pattern MULTIPLE_SPACE = Pattern.compile("[ ]+");
-    private final Map<String, SolrIndexField> indexFieldsMap;
+
+    private final DocRef indexDocRef;
+    private final IndexFieldCache indexFieldCache;
     private final WordListProvider wordListProvider;
     private final int maxBooleanClauseCount;
     private final DateTimeSettings dateTimeSettings;
 
-    public SearchExpressionQueryBuilder(final WordListProvider wordListProvider,
-                                        final Map<String, SolrIndexField> indexFieldsMap,
+    public SearchExpressionQueryBuilder(final DocRef indexDocRef,
+                                        final IndexFieldCache indexFieldCache,
+                                        final WordListProvider wordListProvider,
                                         final int maxBooleanClauseCount,
                                         final DateTimeSettings dateTimeSettings) {
+        this.indexDocRef = indexDocRef;
+        this.indexFieldCache = indexFieldCache;
         this.wordListProvider = wordListProvider;
-        this.indexFieldsMap = indexFieldsMap;
         this.maxBooleanClauseCount = maxBooleanClauseCount;
         this.dateTimeSettings = dateTimeSettings;
     }
@@ -215,7 +219,7 @@ public class SearchExpressionQueryBuilder {
         if (field == null || field.isEmpty()) {
             throw new SearchException("Field not set");
         }
-        final SolrIndexField indexField = indexFieldsMap.get(field);
+        final IndexField indexField = indexFieldCache.get(indexDocRef, field);
         if (indexField == null) {
             // Ignore missing fields.
             return null;
@@ -423,7 +427,7 @@ public class SearchExpressionQueryBuilder {
 
     private Query getContains(final String fieldName,
                               final String value,
-                              final SolrIndexField indexField,
+                              final IndexField indexField,
                               final Set<String> terms) {
         final Query query = getSubQuery(indexField, value, terms, false);
         return modifyOccurrence(query, Occur.MUST);
@@ -431,7 +435,7 @@ public class SearchExpressionQueryBuilder {
 
     private Query getIn(final String fieldName,
                         final String value,
-                        final SolrIndexField indexField,
+                        final IndexField indexField,
                         final Set<String> terms) {
         final Query query = getSubQuery(indexField, value, terms, true);
         return modifyOccurrence(query, Occur.SHOULD);
@@ -451,7 +455,7 @@ public class SearchExpressionQueryBuilder {
     }
 
     private Query getDictionary(final String fieldName, final DocRef docRef,
-                                final SolrIndexField indexField, final Set<String> terms) {
+                                final IndexField indexField, final Set<String> terms) {
         final String[] wordArr = loadWords(docRef);
         final Builder builder = new Builder();
         for (final String val : wordArr) {
@@ -492,7 +496,7 @@ public class SearchExpressionQueryBuilder {
         };
     }
 
-    private Query getSubQuery(final SolrIndexField field, final String value,
+    private Query getSubQuery(final IndexField field, final String value,
                               final Set<String> terms, final boolean in) {
         Query query = null;
 

@@ -45,8 +45,6 @@ class Lucene980MemoryIndex implements stroom.search.extraction.MemoryIndex {
                     memoryIndex.addField(field, fieldAnalyzer);
                 }
             }
-
-            searchExpressionQueryCache.addIndexField(luceneIndexField);
         }
 
         // See if this set of fields matches the rule expression.

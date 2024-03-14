@@ -21,68 +21,68 @@ import stroom.cache.api.CacheManager;
 import stroom.cache.api.LoadingStroomCache;
 import stroom.docref.DocRef;
 import stroom.search.solr.shared.SolrIndexDoc;
-import stroom.search.solr.shared.SolrIndexField;
+import stroom.security.api.SecurityContext;
+import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.entityevent.EntityAction;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEventHandler;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.Clearable;
+import stroom.util.shared.PermissionException;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
-import java.util.List;
-import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
+import java.util.Objects;
 
 @Singleton
 @EntityEventHandler(type = SolrIndexDoc.DOCUMENT_TYPE, action = {
         EntityAction.CREATE,
         EntityAction.DELETE,
         EntityAction.UPDATE})
-class SolrIndexCacheImpl implements SolrIndexCache, EntityEvent.Handler, Clearable {
+class SolrIndexDocCacheImpl implements SolrIndexDocCache, EntityEvent.Handler, Clearable {
 
-    private static final String CACHE_NAME = "Solr Index Cache";
+    private static final String CACHE_NAME = "Solr Index Doc Cache";
 
     private final SolrIndexStore solrIndexStore;
-    private final LoadingStroomCache<DocRef, CachedSolrIndex> cache;
+    private final SecurityContext securityContext;
+    private final LoadingStroomCache<DocRef, SolrIndexDoc> cache;
 
     @Inject
-    SolrIndexCacheImpl(final CacheManager cacheManager,
-                       final SolrIndexStore solrIndexStore,
-                       final Provider<SolrConfig> solrConfigProvider) {
+    SolrIndexDocCacheImpl(final CacheManager cacheManager,
+                          final SolrIndexStore solrIndexStore,
+                          final SecurityContext securityContext,
+                          final Provider<SolrConfig> solrConfigProvider) {
         this.solrIndexStore = solrIndexStore;
+        this.securityContext = securityContext;
         cache = cacheManager.createLoadingCache(
                 CACHE_NAME,
                 () -> solrConfigProvider.get().getIndexCache(),
                 this::create);
     }
 
-    private CachedSolrIndex create(final DocRef docRef) {
-        if (docRef == null) {
-            throw new NullPointerException("Null key supplied");
-        }
+    private SolrIndexDoc create(final DocRef docRef) {
+        return securityContext.asProcessingUserResult(() -> {
+            final SolrIndexDoc loaded = solrIndexStore.readDocument(docRef);
+            if (loaded == null) {
+                throw new NullPointerException("No index can be found for: " + docRef);
+            }
 
-        final SolrIndexDoc loaded = solrIndexStore.readDocument(docRef);
-        if (loaded == null) {
-            throw new NullPointerException("No solr index can be found for: " + docRef);
-        }
-
-        // Create a map of index fields keyed by name.
-        final List<SolrIndexField> fields = loaded.getFields();
-        if (fields == null || fields.size() == 0) {
-            throw new SolrIndexException("No index fields have been set for: " + docRef);
-        }
-
-        final Map<String, SolrIndexField> fieldMap = fields.stream()
-                .collect(Collectors.toMap(SolrIndexField::getFldName, Function.identity()));
-        return new CachedSolrIndex(loaded, fields, fieldMap);
+            return loaded;
+        });
     }
 
     @Override
-    public CachedSolrIndex get(final DocRef key) {
-        return cache.get(key);
+    public SolrIndexDoc get(final DocRef docRef) {
+        Objects.requireNonNull(docRef, "Null DocRef supplied");
+
+        if (!securityContext.hasDocumentPermission(docRef, DocumentPermissionNames.USE)) {
+            throw new PermissionException(
+                    securityContext.getUserIdentityForAudit(),
+                    LogUtil.message("You are not authorised to read {}", docRef));
+        }
+        return cache.get(docRef);
     }
 
     @Override

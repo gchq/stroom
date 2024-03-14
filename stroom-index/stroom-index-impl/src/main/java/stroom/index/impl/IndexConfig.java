@@ -22,14 +22,19 @@ public class IndexConfig extends AbstractConfig implements IsStroomConfig, HasDb
     private final IndexDbConfig dbConfig;
     private final int ramBufferSizeMB;
     private final IndexWriterConfig indexWriterConfig;
-    private final CacheConfig indexStructureCache;
+    private final CacheConfig indexCache;
+    private final CacheConfig indexFieldCache;
 
     public IndexConfig() {
         dbConfig = new IndexDbConfig();
         ramBufferSizeMB = 1024;
         indexWriterConfig = new IndexWriterConfig();
-        indexStructureCache = CacheConfig.builder()
+        indexCache = CacheConfig.builder()
                 .maximumSize(100L)
+                .expireAfterWrite(StroomDuration.ofMinutes(10))
+                .build();
+        indexFieldCache = CacheConfig.builder()
+                .maximumSize(10000L)
                 .expireAfterWrite(StroomDuration.ofSeconds(10))
                 .build();
     }
@@ -39,11 +44,13 @@ public class IndexConfig extends AbstractConfig implements IsStroomConfig, HasDb
     public IndexConfig(@JsonProperty("db") final IndexDbConfig dbConfig,
                        @JsonProperty("ramBufferSizeMB") final int ramBufferSizeMB,
                        @JsonProperty("writer") final IndexWriterConfig indexWriterConfig,
-                       @JsonProperty("indexStructureCache") final CacheConfig indexStructureCache) {
+                       @JsonProperty("indexCache") final CacheConfig indexCache,
+                       @JsonProperty("indexFieldCache") final CacheConfig indexFieldCache) {
         this.dbConfig = dbConfig;
         this.ramBufferSizeMB = ramBufferSizeMB;
         this.indexWriterConfig = indexWriterConfig;
-        this.indexStructureCache = indexStructureCache;
+        this.indexCache = indexCache;
+        this.indexFieldCache = indexFieldCache;
     }
 
     @Override
@@ -62,8 +69,12 @@ public class IndexConfig extends AbstractConfig implements IsStroomConfig, HasDb
         return indexWriterConfig;
     }
 
-    public CacheConfig getIndexStructureCache() {
-        return indexStructureCache;
+    public CacheConfig getIndexCache() {
+        return indexCache;
+    }
+
+    public CacheConfig getIndexFieldCache() {
+        return indexFieldCache;
     }
 
     @Override
@@ -72,7 +83,7 @@ public class IndexConfig extends AbstractConfig implements IsStroomConfig, HasDb
                 "dbConfig=" + dbConfig +
                 ", ramBufferSizeMB=" + ramBufferSizeMB +
                 ", indexWriterConfig=" + indexWriterConfig +
-                ", indexStructureCache=" + indexStructureCache +
+                ", indexStructureCache=" + indexFieldCache +
                 '}';
     }
 

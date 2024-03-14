@@ -1,14 +1,14 @@
 package stroom.search.impl;
 
+import stroom.datasource.api.v2.IndexField;
 import stroom.index.impl.IndexShardSearchConfig;
 import stroom.index.impl.IndexShardService;
 import stroom.index.impl.IndexStore;
 import stroom.index.impl.LuceneProviderFactory;
 import stroom.index.impl.LuceneShardSearcher;
+import stroom.index.shared.IndexFieldCache;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.LuceneIndexDoc;
-import stroom.index.shared.LuceneIndexField;
-import stroom.index.shared.LuceneIndexFieldsMap;
 import stroom.index.shared.LuceneVersion;
 import stroom.index.shared.LuceneVersionUtil;
 import stroom.query.api.v2.ExpressionOperator;
@@ -46,6 +46,7 @@ public class LuceneSearcher {
     private final IndexShardSearchConfig indexShardSearchConfig;
     private final IndexShardService indexShardService;
     private final LuceneProviderFactory luceneProviderFactory;
+    private final IndexFieldCache indexFieldCache;
     private final TaskContextFactory taskContextFactory;
 
 
@@ -57,12 +58,14 @@ public class LuceneSearcher {
                    final IndexShardSearchConfig indexShardSearchConfig,
                    final IndexShardService indexShardService,
                    final LuceneProviderFactory luceneProviderFactory,
+                   final IndexFieldCache indexFieldCache,
                    final TaskContextFactory taskContextFactory) {
         this.indexStore = indexStore;
         this.executorProvider = executorProvider;
         this.indexShardSearchConfig = indexShardSearchConfig;
         this.indexShardService = indexShardService;
         this.luceneProviderFactory = luceneProviderFactory;
+        this.indexFieldCache = indexFieldCache;
         this.taskContextFactory = taskContextFactory;
     }
 
@@ -84,14 +87,11 @@ public class LuceneSearcher {
             throw new SearchException("Search index has not been set");
         }
 
-        // Create a map of index fields keyed by name.
-        final LuceneIndexFieldsMap indexFieldsMap = new LuceneIndexFieldsMap(index.getFields());
-
         final String[] storedFieldNames = new String[fieldIndex.size()];
         for (int i = 0; i < storedFieldNames.length; i++) {
             final String fieldName = fieldIndex.getField(i);
             if (fieldName != null) {
-                final LuceneIndexField indexField = indexFieldsMap.get(fieldName);
+                final IndexField indexField = indexFieldCache.get(task.getQuery().getDataSource(), fieldName);
                 if (indexField != null && indexField.isStored()) {
                     storedFieldNames[i] = fieldName;
                 }
@@ -139,8 +139,9 @@ public class LuceneSearcher {
                                                         .computeIfAbsent(luceneVersion, k ->
                                                                 luceneProviderFactory.get(k)
                                                                         .createLuceneShardSearcher(
+                                                                                task.getQuery().getDataSource(),
+                                                                                indexFieldCache,
                                                                                 expression,
-                                                                                indexFieldsMap,
                                                                                 task.getDateTimeSettings(),
                                                                                 task.getKey()));
 

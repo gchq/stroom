@@ -19,12 +19,12 @@ package stroom.index.lucene553;
 
 import stroom.datasource.api.v2.AnalyzerType;
 import stroom.datasource.api.v2.FieldType;
+import stroom.datasource.api.v2.IndexField;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
 import stroom.expression.api.DateTimeSettings;
 import stroom.index.lucene553.analyser.AnalyzerFactory;
-import stroom.index.shared.LuceneIndexField;
-import stroom.index.shared.LuceneIndexFieldsMap;
+import stroom.index.shared.IndexFieldCache;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
@@ -64,17 +64,20 @@ class SearchExpressionQueryBuilder {
     private static final Pattern NON_WORD = Pattern.compile("[^a-zA-Z0-9]");
     private static final Pattern MULTIPLE_WILDCARD = Pattern.compile("[+]+");
     private static final Pattern MULTIPLE_SPACE = Pattern.compile("[ ]+");
-    private final LuceneIndexFieldsMap indexFieldsMap;
+    private final DocRef indexDocRef;
+    private final IndexFieldCache indexFieldCache;
     private final WordListProvider wordListProvider;
     private final int maxBooleanClauseCount;
     private final DateTimeSettings dateTimeSettings;
 
-    SearchExpressionQueryBuilder(final WordListProvider wordListProvider,
-                                 final LuceneIndexFieldsMap indexFieldsMap,
+    SearchExpressionQueryBuilder(final DocRef indexDocRef,
+                                 final IndexFieldCache indexFieldCache,
+                                 final WordListProvider wordListProvider,
                                  final int maxBooleanClauseCount,
                                  final DateTimeSettings dateTimeSettings) {
+        this.indexDocRef = indexDocRef;
+        this.indexFieldCache = indexFieldCache;
         this.wordListProvider = wordListProvider;
-        this.indexFieldsMap = indexFieldsMap;
         this.maxBooleanClauseCount = maxBooleanClauseCount;
         this.dateTimeSettings = dateTimeSettings;
     }
@@ -246,7 +249,7 @@ class SearchExpressionQueryBuilder {
         if (field == null || field.isEmpty()) {
             throw new SearchException("Field not set");
         }
-        final LuceneIndexField indexField = indexFieldsMap.get(field);
+        final IndexField indexField = indexFieldCache.get(indexDocRef, field);
         if (indexField == null) {
             return new MatchNoDocsQuery();
         }
@@ -704,7 +707,7 @@ class SearchExpressionQueryBuilder {
 
     private Query getContains(final String fieldName,
                               final String value,
-                              final LuceneIndexField indexField,
+                              final IndexField indexField,
                               final Set<String> terms) {
         final Query query = getSubQuery(indexField, value, terms, false);
         return modifyOccurrence(query, Occur.MUST);
@@ -712,7 +715,7 @@ class SearchExpressionQueryBuilder {
 
     private Query getIn(final String fieldName,
                         final String value,
-                        final LuceneIndexField indexField,
+                        final IndexField indexField,
                         final Set<String> terms) {
         final Query query = getSubQuery(indexField, value, terms, true);
         return modifyOccurrence(query, Occur.SHOULD);
@@ -733,7 +736,7 @@ class SearchExpressionQueryBuilder {
 
     private Query getDictionary(final String fieldName,
                                 final DocRef docRef,
-                                final LuceneIndexField indexField,
+                                final IndexField indexField,
                                 final Set<String> terms) {
         final String[] wordArr = loadWords(docRef);
         final Builder builder = new Builder();
@@ -783,7 +786,7 @@ class SearchExpressionQueryBuilder {
         };
     }
 
-    private Query getSubQuery(final LuceneIndexField field, final String value,
+    private Query getSubQuery(final IndexField field, final String value,
                               final Set<String> terms, final boolean in) {
         Query query = null;
 

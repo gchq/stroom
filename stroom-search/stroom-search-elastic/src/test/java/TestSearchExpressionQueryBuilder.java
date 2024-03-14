@@ -1,5 +1,7 @@
 import stroom.datasource.api.v2.FieldType;
+import stroom.docref.DocRef;
 import stroom.expression.api.DateTimeSettings;
+import stroom.index.shared.MockIndexFieldCache;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
@@ -12,31 +14,13 @@ import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.RangeQueryBuilder;
 import org.elasticsearch.index.query.TermQueryBuilder;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.time.ZonedDateTime;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
 
 public class TestSearchExpressionQueryBuilder {
 
-    private ExpressionOperator.Builder expressionBuilder;
-    private Map<String, ElasticIndexField> indexFieldsMap;
-    private SearchExpressionQueryBuilder builder;
-
-    @BeforeEach
-    public void init() {
-        expressionBuilder = ExpressionOperator.builder().op(Op.AND);
-        indexFieldsMap = new HashMap<>();
-
-        builder = new SearchExpressionQueryBuilder(
-                null,
-                indexFieldsMap,
-                DateTimeSettings.builder().build()
-        );
-    }
 
     @Test
     public void testBuildQuery() {
@@ -46,7 +30,17 @@ public class TestSearchExpressionQueryBuilder {
                 .nativeType("long")
                 .fldType(FieldType.LONG)
                 .build();
-        indexFieldsMap.put(answerField.getFldName(), answerField);
+
+        final MockIndexFieldCache indexFieldCache = new MockIndexFieldCache();
+        final ExpressionOperator.Builder expressionBuilder = ExpressionOperator.builder().op(Op.AND);
+        final SearchExpressionQueryBuilder builder = new SearchExpressionQueryBuilder(
+                new DocRef("test", "test"),
+                indexFieldCache,
+                null,
+                DateTimeSettings.builder().build()
+        );
+
+        indexFieldCache.put(answerField.getFldName(), answerField);
         final Long answerFieldValue = 42L;
 
         // Single numeric EQUALS condition contained within the default AND clause
@@ -54,11 +48,11 @@ public class TestSearchExpressionQueryBuilder {
         expressionBuilder.addTerm(answerField.getFldName(), Condition.EQUALS, answerFieldValue.toString());
         QueryBuilder queryBuilder = builder.buildQuery(expressionBuilder.build());
 
-        Assertions.assertTrue(queryBuilder instanceof BoolQueryBuilder, "Is a `bool` query");
+        Assertions.assertInstanceOf(BoolQueryBuilder.class, queryBuilder, "Is a `bool` query");
         BoolQueryBuilder boolQuery = (BoolQueryBuilder) queryBuilder;
         Assertions.assertEquals(1, boolQuery.must().size(), "Bool query contains exactly one item");
 
-        TermQueryBuilder termQuery = (TermQueryBuilder) boolQuery.must().get(0);
+        TermQueryBuilder termQuery = (TermQueryBuilder) boolQuery.must().getFirst();
         Assertions.assertEquals(answerField.getFldName(), termQuery.fieldName(), "Field name is correct");
         Assertions.assertEquals(answerFieldValue, termQuery.value(), "Query value is correct");
 
@@ -69,7 +63,7 @@ public class TestSearchExpressionQueryBuilder {
                 .nativeType("text")
                 .fldType(FieldType.TEXT)
                 .build();
-        indexFieldsMap.put(nameField.getFldName(), nameField);
+        indexFieldCache.put(nameField.getFldName(), nameField);
 
         // Add a nested NOT GREATER THAN date condition
         final ElasticIndexField dateField = ElasticIndexField
@@ -78,7 +72,7 @@ public class TestSearchExpressionQueryBuilder {
                 .nativeType("date")
                 .fldType(FieldType.DATE)
                 .build();
-        indexFieldsMap.put(dateField.getFldName(), dateField);
+        indexFieldCache.put(dateField.getFldName(), dateField);
         final String nowStr = "2021-02-17T01:23:34.000";
         final long expectedParsedDateFieldValue = 1613525014000L;
 
@@ -102,7 +96,7 @@ public class TestSearchExpressionQueryBuilder {
         Assertions.assertEquals(1, innerBoolQuery.mustNot().size(),
                 "Inner bool query contains one item");
 
-        RangeQueryBuilder firstRangeQuery = (RangeQueryBuilder) innerBoolQuery.mustNot().get(0);
+        RangeQueryBuilder firstRangeQuery = (RangeQueryBuilder) innerBoolQuery.mustNot().getFirst();
         Assertions.assertEquals(dateField.getFldName(), firstRangeQuery.fieldName(),
                 "Field name of first range query is correct");
         Assertions.assertEquals(expectedParsedDateFieldValue, firstRangeQuery.from(),
