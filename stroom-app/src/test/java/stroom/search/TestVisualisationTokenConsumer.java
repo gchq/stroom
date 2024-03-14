@@ -61,9 +61,8 @@ public class TestVisualisationTokenConsumer extends AbstractCoreIntegrationTest 
                 eval count = count()
                 group by EventTime
                 select EventTime, count
-                show LineChart (x = EventTime, y = count)
+                show LineChart (x = EventTime, y = count, interpolationMode = "basis-open", maxValues = 500)
                 """;
-
 
         SearchRequest searchRequest = new SearchRequest(
                 null,
@@ -80,5 +79,4 @@ public class TestVisualisationTokenConsumer extends AbstractCoreIntegrationTest 
 
 
     }
-
 }

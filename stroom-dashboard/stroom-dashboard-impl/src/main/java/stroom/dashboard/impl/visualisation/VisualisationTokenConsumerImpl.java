@@ -184,7 +184,7 @@ public class VisualisationTokenConsumerImpl implements VisualisationTokenConsume
         for (int i = 0; i < children.size(); i++) {
             AbstractToken t = children.get(i);
             String controlId;
-            String columnName;
+            String controlValue;
 
             // Get param name.
             if (!TokenType.isString(t)) {
@@ -221,18 +221,25 @@ public class VisualisationTokenConsumerImpl implements VisualisationTokenConsume
             i++;
             if (i < children.size()) {
                 t = children.get(i);
-                if (!TokenType.isString(t)) {
-                    throw new TokenException(t, "Expected column name");
-                }
-                columnName = t.getUnescapedText();
-            } else {
-                throw new TokenException(t, "Expected column name");
-            }
+                if (TokenType.STRING.equals(t.getTokenType()) || TokenType.PARAM.equals(t.getTokenType())) {
+                    final String columnName = t.getUnescapedText();
 
-            // Validate the column name.
-            final Column column = columnMap.get(columnName);
-            if (column == null) {
-                throw new TokenException(t, "Unable to find selected column: " + columnName);
+                    // Validate the column name.
+                    final Column column = columnMap.get(columnName);
+                    if (column == null) {
+                        throw new TokenException(t, "Unable to find selected column: " + columnName);
+                    }
+
+                    controlValue = columnName;
+
+                } else if (TokenType.isString(t) || TokenType.NUMBER.equals(t.getTokenType())) {
+                    controlValue = t.getUnescapedText();
+
+                } else {
+                    throw new TokenException(t, "Expected column name or value");
+                }
+            } else {
+                throw new TokenException(t, "Expected column name or value");
             }
 
             // Strip comma if there is one.
@@ -244,8 +251,8 @@ public class VisualisationTokenConsumerImpl implements VisualisationTokenConsume
                 }
             }
 
-            if (controlId != null && columnName != null) {
-                params.put(controlId, columnName);
+            if (controlId != null && controlValue != null) {
+                params.put(controlId, controlValue);
             }
         }
         return params;
