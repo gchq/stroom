@@ -73,7 +73,7 @@ class FsOrphanFileFinder {
 
     public ScanVolumePathResult scanVolumePath(final FsVolume volume,
                                                final Consumer<Path> orphanConsumer,
-                                               final long oldestDirTime,
+                                               final Instant oldestDirTime,
                                                final TaskContext taskContext) {
         final String volumePathStr = pathCreator.toAppPath(volume.getPath()).toString();
 
@@ -91,10 +91,10 @@ class FsOrphanFileFinder {
                 return result;
             }
             LOGGER.debug(() -> LogUtil.message("{} - Scanning directory {} with oldestDirTime {}",
-                    FsOrphanFileFinderExecutor.TASK_NAME, directory, Instant.ofEpochMilli(oldestDirTime)));
+                    FsOrphanFileFinderExecutor.TASK_NAME, directory, oldestDirTime));
 
             final Map<Long, Set<Path>> fileMap = new HashMap<>();
-            final Map<Path, Long> dirAges = new HashMap<>();
+            final Map<Path, Instant> dirAges = new HashMap<>();
             try {
                 Files.walkFileTree(directory,
                         EnumSet.of(FileVisitOption.FOLLOW_LINKS),
@@ -104,7 +104,8 @@ class FsOrphanFileFinder {
                             public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
                                 cleanProgress.addDir();
                                 // Remember the dir age.
-                                dirAges.put(dir, attrs.creationTime().toMillis());
+                                final Instant instant = Instant.ofEpochMilli(attrs.lastModifiedTime().toMillis());
+                                dirAges.put(dir, instant);
 
                                 // The parent dir has child dirs so we won't be considering the dir for deletion.
                                 final Path parent = dir.getParent();
@@ -118,8 +119,8 @@ class FsOrphanFileFinder {
                             @Override
                             public FileVisitResult postVisitDirectory(final Path dir, final IOException exc) {
                                 // If the dir is empty and old then record it.
-                                final Long age = dirAges.remove(dir);
-                                if (age != null && age < oldestDirTime) {
+                                final Instant age = dirAges.remove(dir);
+                                if (age != null && age.isBefore(oldestDirTime)) {
                                     LOGGER.trace(() -> "Orphan dir: " + FileUtil.getCanonicalPath(dir));
                                     orphanConsumer.accept(dir);
                                 } else {
