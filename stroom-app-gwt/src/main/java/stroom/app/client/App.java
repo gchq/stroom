@@ -23,6 +23,9 @@ import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
 import com.gwtplatform.mvp.client.DelayedBindRegistry;
 
+import java.util.Arrays;
+import java.util.stream.Collectors;
+
 /**
  * Entry point classes define <code>onModuleLoad()</code>.
  */
@@ -36,6 +39,23 @@ public class App implements EntryPoint {
     public void onModuleLoad() {
         // This is required for Gwt-Platform proxy's generator.
         DelayedBindRegistry.bind(ginjector);
+
+//        GWT.setUncaughtExceptionHandler(e -> {
+//            GWT.log(e.getClass().getName());
+//
+//            final StringBuilder stringBuilder = new StringBuilder();
+//            appendStackTraces(e, stringBuilder);
+////            final String stack;
+////            if (e.getCause() != null && e.getCause().getStackTrace() != null) {
+////                stack = appendStackTraces(e.getCause().getStackTrace());
+////            } else if (e.getStackTrace() != null) {
+////                stack = appendStackTraces(e.getStackTrace());
+////            } else {
+////                stack = "";
+////            }
+//
+//            Window.alert("ERROR: " + stringBuilder);
+//        });
 
         final UserPreferencesManager userPreferencesManager = ginjector.getPreferencesManager();
         userPreferencesManager.fetch(preferences -> {
@@ -54,5 +74,28 @@ public class App implements EntryPoint {
             // at some point.
             // ginjector.getPlaceManager().revealCurrentPlace();
         });
+    }
+
+    private void appendStackTraces(final Throwable e, final StringBuilder stringBuilder) {
+        if (e.getStackTrace() != null) {
+            //noinspection SizeReplaceableByIsEmpty // cos GWT
+            if (stringBuilder.length() > 0) {
+                stringBuilder.append("\n");
+            }
+            stringBuilder.append(e.getClass().getName())
+                    .append(" - ")
+                    .append(e.getMessage())
+                    .append(":\n");
+
+            final String stack = Arrays.stream(e.getStackTrace())
+                    .map(StackTraceElement::toString)
+                    .collect(Collectors.joining("\n"));
+            stringBuilder.append(stack);
+
+            final Throwable cause = e.getCause();
+            if (cause != null) {
+                appendStackTraces(cause, stringBuilder);
+            }
+        }
     }
 }

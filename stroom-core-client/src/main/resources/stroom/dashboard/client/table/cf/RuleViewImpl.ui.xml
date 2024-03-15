@@ -7,30 +7,22 @@
 
         <form:FormGroup addStyleNames="dock-max"
                         identity="cfRuleExpression"
-                        label="Row Match Expression">
-            <g:HTMLPanel addStyleNames="dock-max">
-                <label>
-                    <p>All rows matching this expression will be formatted according to the settings below.</p>
-                </label>
+                        label="Row Match Expression"
+                        helpText="All rows matching this expression will be formatted according to the settings below.">
                 <g:SimplePanel ui:field="expression" styleName="dock-max stroom-control"/>
-            </g:HTMLPanel>
         </form:FormGroup>
 
         <form:FormGroup addStyleNames="dock-min"
-                        label="Hide Matching Rows">
-            <g:HTMLPanel addStyleNames="dock-min">
-                <label style="markdown">
-                    <p>When checked, prevents matching rows from appearing in the table.</p>
-                </label>
-                <tickbox:CustomCheckBox ui:field="hide" identity="cfRuleHide" label="Hide"/>
-            </g:HTMLPanel>
+                        label="Hide Matching Rows"
+                        helpText="When checked, prevents matching rows from appearing in the table.">
+            <tickbox:CustomCheckBox ui:field="hide" identity="cfRuleHide" label="Hide"/>
         </form:FormGroup>
 
         <form:FormGroup addStyleNames="dock-min"
                         identity="cfRuleBackgroundColor"
                         label="Row Background Colour">
             <g:HTMLPanel addStyleNames="dock-min">
-                <label style="markdown">
+                <label class="helpText">
                     <p>
                         Sets the background colour of matching rows.
                     </p>
@@ -47,7 +39,7 @@
                         identity="cfRuleTextColor"
                         label="Text Colour">
             <g:HTMLPanel addStyleNames="dock-min">
-                <label style="markdown">
+                <label class="helpText">
                     <p>
                         Sets the text colour of matching rows.
                     </p>
@@ -62,13 +54,9 @@
 
         <form:FormGroup addStyleNames="dock-min"
                         identity="cfRuleEnabledState"
-                        label="Rule Enabled State">
-            <g:HTMLPanel addStyleNames="dock-min">
-                <label style="markdown">
-                    <p>Enables or disables this rule. When disabled this rule will be ignored.</p>
-                </label>
-                <tickbox:CustomCheckBox ui:field="enabled" identity="cfRuleEnabled" label="Enabled"/>
-            </g:HTMLPanel>
+                        label="Rule Enabled State"
+                        helpText="Enables or disables this rule. When disabled this rule will be ignored.">
+            <tickbox:CustomCheckBox ui:field="enabled" identity="cfRuleEnabled" label="Enabled"/>
         </form:FormGroup>
 
     </g:FlowPanel>

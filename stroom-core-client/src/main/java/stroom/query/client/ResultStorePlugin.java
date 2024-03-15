@@ -29,6 +29,7 @@ import stroom.widget.menu.client.presenter.IconMenuItem;
 
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 import javax.inject.Singleton;
@@ -38,18 +39,21 @@ public class ResultStorePlugin extends Plugin implements ShowMainEvent.Handler, 
 
     private final ClientSecurityContext securityContext;
 
-    private final ResultStorePresenter resultStorePresenter;
-    private final ResultStoreModel resultStoreModel;
+    private final Provider<ResultStorePresenter> resultStorePresenterProvider;
+    private final Provider<ResultStoreModel> resultStoreModelProvider;
+
+    private ResultStorePresenter resultStorePresenter = null;
+    private ResultStoreModel resultStoreModel = null;
 
     @Inject
     public ResultStorePlugin(final EventBus eventBus,
                              final ClientSecurityContext securityContext,
-                             final ResultStorePresenter resultStorePresenter,
-                             final ResultStoreModel resultStoreModel) {
+                             final Provider<ResultStorePresenter> resultStorePresenterProvider,
+                             final Provider<ResultStoreModel> resultStoreModelProvider) {
         super(eventBus);
         this.securityContext = securityContext;
-        this.resultStorePresenter = resultStorePresenter;
-        this.resultStoreModel = resultStoreModel;
+        this.resultStorePresenterProvider = resultStorePresenterProvider;
+        this.resultStoreModelProvider = resultStoreModelProvider;
 
         registerHandler(getEventBus().addHandler(ShowMainEvent.getType(), this));
     }
@@ -64,7 +68,7 @@ public class ResultStorePlugin extends Plugin implements ShowMainEvent.Handler, 
                         .icon(SvgImage.DATABASE)
                         .iconColour(IconColour.GREY)
                         .text("Search Results")
-                        .command(resultStorePresenter::show)
+                        .command(getResultStorePresenter()::show)
                         .build());
 //        }
     }
@@ -82,5 +86,19 @@ public class ResultStorePlugin extends Plugin implements ShowMainEvent.Handler, 
 //                },
 //                throwable ->
 //                        AlertEvent.fireError(this, "Error fetching result stores", throwable.getMessage(), null));
+    }
+
+    private ResultStorePresenter getResultStorePresenter() {
+        if (resultStorePresenter == null) {
+            resultStorePresenter = resultStorePresenterProvider.get();
+        }
+        return resultStorePresenter;
+    }
+
+    public ResultStoreModel getResultStoreModel() {
+        if (resultStoreModel == null) {
+            resultStoreModel = resultStoreModelProvider.get();
+        }
+        return resultStoreModel;
     }
 }

@@ -38,19 +38,20 @@ public class KeyBinding {
         add(Action.CLOSE, KeyCodes.KEY_ESCAPE);
         add(Action.EXECUTE, KeyCodes.KEY_ENTER, KeyCodes.KEY_MAC_ENTER, '\n', '\r');
         add(Action.SELECT, KeyCodes.KEY_SPACE);
-        add(Action.SELECT_ALL, new Builder().keyCode(KeyCodes.KEY_A).ctrl(true).build());
-        add(Action.MENU, new Builder().keyCode(KeyCodes.KEY_CONTEXT_MENU).alt(true).build());
+        add(Action.SELECT_ALL, new Builder().ctrl().keyCode(KeyCodes.KEY_A).build());
+        add(Action.MENU, new Builder().alt().keyCode(KeyCodes.KEY_CONTEXT_MENU).build());
         add(Action.OK, true, KeyCodes.KEY_ENTER, KeyCodes.KEY_MAC_ENTER, '\n', '\r');
 
-        add(Action.ITEM_SAVE, new Builder().keyCode(KeyCodes.KEY_S).ctrl(true).build());
-        add(Action.ITEM_SAVE_ALL, new Builder().keyCode(KeyCodes.KEY_S).shift(true).ctrl(true).build());
-        add(Action.ITEM_CLOSE, new Builder().keyCode(KeyCodes.KEY_W).alt(true).build());
-        add(Action.ITEM_CLOSE_ALL, new Builder().keyCode(KeyCodes.KEY_W).shift(true).alt(true).build());
+        add(Action.ITEM_SAVE, new Builder().ctrl().keyCode(KeyCodes.KEY_S).build());
+        add(Action.ITEM_SAVE_ALL, new Builder().shift().ctrl().keyCode(KeyCodes.KEY_S).build());
+        add(Action.ITEM_CLOSE, new Builder().alt().keyCode(KeyCodes.KEY_W).build());
+        add(Action.ITEM_CLOSE_ALL, new Builder().shift().alt().keyCode(KeyCodes.KEY_W).build());
 
-        add(Action.FIND, new Builder().keyCode(KeyCodes.KEY_F).alt(true).shift(true).build());
-        add(Action.FIND_IN_CONTENT, new Builder().keyCode(KeyCodes.KEY_F).ctrl(true).shift(true).build());
-        add(Action.RECENT_ITEMS, new Builder().keyCode(KeyCodes.KEY_E).ctrl(true).build());
-        add(Action.LOCATE, new Builder().keyCode(KeyCodes.KEY_L).alt(true).build());
+        add(Action.FIND, new Builder().alt().shift().keyCode(KeyCodes.KEY_F).build());
+        add(Action.FIND_IN_CONTENT, new Builder().ctrl().shift().keyCode(KeyCodes.KEY_F).build());
+        add(Action.RECENT_ITEMS, new Builder().ctrl().keyCode(KeyCodes.KEY_E).build());
+        add(Action.LOCATE, new Builder().alt().keyCode(KeyCodes.KEY_L).build());
+        add(Action.HELP, new Builder().keyCode(KeyCodes.KEY_F1).build());
     }
 
     public static void addCommand(final Action action, final Command command) {
@@ -279,28 +280,29 @@ public class KeyBinding {
 
 
     public enum Action {
-        MOVE_UP,
-        MOVE_DOWN,
-        MOVE_LEFT,
-        MOVE_RIGHT,
-        MOVE_PAGE_DOWN,
-        MOVE_PAGE_UP,
-        MOVE_START,
-        MOVE_END,
         CLOSE,
         EXECUTE,
-        SELECT,
-        MENU,
-        SELECT_ALL,
-        OK,
-        ITEM_SAVE,
-        ITEM_SAVE_ALL,
-        ITEM_CLOSE,
-        ITEM_CLOSE_ALL,
         FIND,
         FIND_IN_CONTENT,
+        HELP,
+        ITEM_CLOSE,
+        ITEM_CLOSE_ALL,
+        ITEM_SAVE,
+        ITEM_SAVE_ALL,
+        LOCATE,
+        MENU,
+        MOVE_DOWN,
+        MOVE_END,
+        MOVE_LEFT,
+        MOVE_PAGE_DOWN,
+        MOVE_PAGE_UP,
+        MOVE_RIGHT,
+        MOVE_START,
+        MOVE_UP,
+        OK,
         RECENT_ITEMS,
-        LOCATE
+        SELECT,
+        SELECT_ALL
     }
 
 
@@ -443,8 +445,23 @@ public class KeyBinding {
             return this;
         }
 
+        public Builder shift() {
+            this.shift = true;
+            return this;
+        }
+
+        public Builder ctrl() {
+            this.ctrl = true;
+            return this;
+        }
+
         public Builder ctrl(final boolean ctrl) {
             this.ctrl = ctrl;
+            return this;
+        }
+
+        public Builder alt() {
+            this.alt = true;
             return this;
         }
 
@@ -453,12 +470,17 @@ public class KeyBinding {
             return this;
         }
 
+        public Builder meta() {
+            this.meta = true;
+            return this;
+        }
+
         public Builder meta(final boolean meta) {
             this.meta = meta;
             return this;
         }
 
-        public Shortcut build() {
+        private Shortcut build() {
             return new Shortcut(keyCode, shift, ctrl, alt, meta);
         }
     }

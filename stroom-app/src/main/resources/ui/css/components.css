@@ -1675,11 +1675,11 @@ button.main-menu svg {
     margin-bottom: 0.25rem;
 }
 
-.form-group-help {
+.form-group .help-button {
     margin-bottom: 0rem;
 }
 
-.form-group-help-tooltip {
+.help-button-tooltip {
     /* width: 500px; */
     max-width: 500px;
     border-width: 2px;
@@ -1688,21 +1688,21 @@ button.main-menu svg {
     border-radius: 6px;
 }
 
-.form-group-help-tooltip .popupContent {
+.help-button-tooltip .popupContent {
     margin: 5px;
-    font-weight: 500;
+    font-weight: 400;
 }
 
-.form-group-help-tooltip .popupContent div {
-    font-weight: 500;
+.help-button-tooltip .popupContent div {
+    font-weight: 400;
 }
 
-.form-group-help.icon-button {
+.form-group .help-button .icon-button {
     width: 18px;
     height: 18px;
 }
 
-.form-group-help svg {
+.form-group .help-button svg {
     width: 16px;
     height: 16px;
     /* margin-bottom: 0.6em; */
