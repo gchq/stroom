@@ -18,12 +18,12 @@ package stroom.pipeline.destination;
 
 import stroom.util.io.ByteCountOutputStream;
 import stroom.util.io.FileUtil;
-import stroom.util.io.GZipByteCountOutputStream;
-import stroom.util.io.GZipOutputStream;
 import stroom.util.io.PathCreator;
 import stroom.util.scheduler.SimpleCron;
 
 import com.google.common.base.Strings;
+import org.apache.commons.compress.compressors.CompressorException;
+import org.apache.commons.compress.compressors.CompressorStreamFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,9 +51,10 @@ public class RollingFileDestination extends RollingDestination {
     private final Path file;
 
     /**
-     * Whether to apply GZIP compression to output files
+     * Whether to compress output files
      */
     private final boolean useCompression;
+    private final String compressionMethod;
 
     /**
      * Optional file permissions to apply to finished files
@@ -71,6 +72,7 @@ public class RollingFileDestination extends RollingDestination {
                                   final Path dir,
                                   final Path file,
                                   final boolean useCompression,
+                                  final String compressionMethod,
                                   final Set<PosixFilePermission> filePermissions
     ) throws IOException {
         super(key, frequency, schedule, rollSize, creationTime);
@@ -78,11 +80,10 @@ public class RollingFileDestination extends RollingDestination {
         this.pathCreator = pathCreator;
         this.fileName = fileName;
         this.rolledFileName = rolledFileName;
-
         this.dir = dir;
         this.file = file;
-
         this.useCompression = useCompression;
+        this.compressionMethod = compressionMethod;
         this.filePermissions = filePermissions;
 
         // Make sure we can create this path.
@@ -101,17 +102,17 @@ public class RollingFileDestination extends RollingDestination {
             } else {
                 setOutputStream(createOutputStream(file));
             }
-        } catch (final IOException e) {
+        } catch (final IOException | CompressorException e) {
             try {
                 close();
             } catch (final IOException t) {
                 LOGGER.error("Unable to close the output stream.");
+                throw new IOException(e);
             }
-            throw e;
         }
     }
 
-    private ByteCountOutputStream createOutputStream(final Path file) throws IOException {
+    private ByteCountOutputStream createOutputStream(final Path file) throws IOException, CompressorException {
         OutputStream fileOutputStream = Files.newOutputStream(
                 file,
                 StandardOpenOption.CREATE,
@@ -119,7 +120,8 @@ public class RollingFileDestination extends RollingDestination {
                 StandardOpenOption.APPEND);
 
         if (useCompression) {
-            return new GZipByteCountOutputStream(new GZipOutputStream(fileOutputStream));
+            return new ByteCountOutputStream(new CompressorStreamFactory()
+                    .createCompressorOutputStream(compressionMethod, fileOutputStream));
         } else {
             return new ByteCountOutputStream(new BufferedOutputStream(fileOutputStream));
         }

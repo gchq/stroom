@@ -25,10 +25,12 @@ import stroom.pipeline.factory.PipelineProperty;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.svg.shared.SvgImage;
+import stroom.util.io.CompressionUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.PathCreator;
 
 import jakarta.inject.Inject;
+import org.apache.commons.compress.compressors.CompressorStreamFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -70,8 +72,8 @@ public class RollingFileAppender extends AbstractRollingAppender {
     private String fileNamePattern;
     private String rolledFileNamePattern;
     private boolean useCompression;
+    private String compressionMethod = CompressorStreamFactory.GZIP;
     private String filePermissions;
-
     private String dir;
     private String fileName;
     private String rolledFileName;
@@ -125,6 +127,7 @@ public class RollingFileAppender extends AbstractRollingAppender {
                 parentDir,
                 file,
                 useCompression,
+                compressionMethod,
                 permissions
         );
     }
@@ -257,8 +260,22 @@ public class RollingFileAppender extends AbstractRollingAppender {
         this.useCompression = useCompression;
     }
 
+    @PipelineProperty(
+            description = "Compression method to apply, if compression is enabled. Supported values: " +
+                    CompressionUtil.SUPPORTED_COMPRESSORS + ".",
+            defaultValue = CompressorStreamFactory.GZIP,
+            displayPriority = 6)
+    public void setCompressionMethod(final String compressionMethod) {
+        if (CompressionUtil.isSupportedCompressor(compressionMethod)) {
+            this.compressionMethod = compressionMethod;
+        } else {
+            String errorMsg = "Unsupported compression method: " + compressionMethod;
+            throw ProcessException.create(errorMsg);
+        }
+    }
+
     @PipelineProperty(description = "Set file system permissions of finished files (example: 'rwxr--r--')",
-            displayPriority = 8)
+            displayPriority = 10)
     public void setFilePermissions(final String filePermissions) {
         this.filePermissions = filePermissions;
     }

@@ -24,12 +24,13 @@ import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.svg.shared.SvgImage;
 import stroom.util.io.ByteCountOutputStream;
+import stroom.util.io.CompressionUtil;
 import stroom.util.io.FileUtil;
-import stroom.util.io.GZipByteCountOutputStream;
-import stroom.util.io.GZipOutputStream;
 import stroom.util.io.PathCreator;
 
 import jakarta.inject.Inject;
+import org.apache.commons.compress.compressors.CompressorException;
+import org.apache.commons.compress.compressors.CompressorStreamFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -68,7 +69,8 @@ public class FileAppender extends AbstractAppender {
     private final PathCreator pathCreator;
     private ByteCountOutputStream byteCountOutputStream;
     private String[] outputPaths;
-    private boolean useCompression;
+    private boolean useCompression = false;
+    private String compressionMethod = CompressorStreamFactory.GZIP;
     private String filePermissions;
 
     @Inject
@@ -130,17 +132,20 @@ public class FileAppender extends AbstractAppender {
 
             // Get a writer for the new lock file.
             if (useCompression) {
-                byteCountOutputStream =
-                        new GZipByteCountOutputStream(new GZipOutputStream(Files.newOutputStream(lockFile)));
+                byteCountOutputStream = new ByteCountOutputStream(new CompressorStreamFactory()
+                        .createCompressorOutputStream(compressionMethod, Files.newOutputStream(lockFile)));
             } else {
-                byteCountOutputStream =
-                        new ByteCountOutputStream(new BufferedOutputStream(Files.newOutputStream(lockFile)));
+                byteCountOutputStream = new ByteCountOutputStream(
+                        new BufferedOutputStream(Files.newOutputStream(lockFile)));
             }
 
             return new LockedOutputStream(byteCountOutputStream, lockFile, file, permissions);
 
         } catch (final RuntimeException e) {
             throw new IOException(e.getMessage(), e);
+        } catch (CompressorException e) {
+            error(e.getMessage(), e);
+            throw new IOException(e);
         }
     }
 
@@ -204,15 +209,30 @@ public class FileAppender extends AbstractAppender {
     }
 
     @PipelineProperty(
-            description = "Apply GZIP compression to output files",
+            description = "Apply compression to output files.",
             defaultValue = "false",
             displayPriority = 5)
     public void setUseCompression(final boolean useCompression) {
         this.useCompression = useCompression;
     }
 
-    @PipelineProperty(description = "Set file system permissions of finished files (example: 'rwxr--r--')",
+    @PipelineProperty(
+            description = "Compression method to apply, if compression is enabled. Supported values: " +
+                    CompressionUtil.SUPPORTED_COMPRESSORS + ".",
+            defaultValue = CompressorStreamFactory.GZIP,
             displayPriority = 6)
+    public void setCompressionMethod(final String compressionMethod) {
+        if (CompressionUtil.isSupportedCompressor(compressionMethod)) {
+            this.compressionMethod = compressionMethod;
+        } else {
+            String errorMsg = "Unsupported compression method: " + compressionMethod;
+            error(errorMsg, null);
+            throw ProcessException.create(errorMsg);
+        }
+    }
+
+    @PipelineProperty(description = "Set file system permissions of finished files (example: 'rwxr--r--')",
+            displayPriority = 8)
     public void setFilePermissions(final String filePermissions) {
         this.filePermissions = filePermissions;
     }
