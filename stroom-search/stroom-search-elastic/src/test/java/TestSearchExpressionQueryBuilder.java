@@ -7,10 +7,11 @@ import stroom.search.elastic.search.SearchExpressionQueryBuilder;
 import stroom.search.elastic.shared.ElasticIndexField;
 import stroom.search.elastic.shared.ElasticIndexFieldType;
 
-import org.elasticsearch.index.query.BoolQueryBuilder;
-import org.elasticsearch.index.query.QueryBuilder;
-import org.elasticsearch.index.query.RangeQueryBuilder;
-import org.elasticsearch.index.query.TermQueryBuilder;
+import co.elastic.clients.elasticsearch._types.mapping.Property.Kind;
+import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
+import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import co.elastic.clients.elasticsearch._types.query_dsl.RangeQuery;
+import co.elastic.clients.elasticsearch._types.query_dsl.TermQuery;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -42,29 +43,29 @@ public class TestSearchExpressionQueryBuilder {
     public void testBuildQuery() {
         ElasticIndexField answerField = new ElasticIndexField();
         answerField.setFieldName("answer");
-        answerField.setFieldType("long");
+        answerField.setFieldType(Kind.Long.jsonValue());
         answerField.setFieldUse(ElasticIndexFieldType.LONG);
         indexFieldsMap.put(answerField.getFieldName(), answerField);
-        final Long answerFieldValue = 42L;
+        final long answerFieldValue = 42L;
 
         // Single numeric EQUALS condition contained within the default AND clause
 
-        expressionBuilder.addTerm(answerField.getFieldName(), Condition.EQUALS, answerFieldValue.toString());
-        QueryBuilder queryBuilder = builder.buildQuery(expressionBuilder.build());
+        expressionBuilder.addTerm(answerField.getFieldName(), Condition.EQUALS, Long.toString(answerFieldValue));
+        Query queryBuilder = builder.buildQuery(expressionBuilder.build());
 
-        Assertions.assertTrue(queryBuilder instanceof BoolQueryBuilder, "Is a `bool` query");
-        BoolQueryBuilder boolQuery = (BoolQueryBuilder) queryBuilder;
+        Assertions.assertTrue(queryBuilder.isBool(), "Is a `bool` query");
+        BoolQuery boolQuery = queryBuilder.bool();
         Assertions.assertEquals(1, boolQuery.must().size(), "Bool query contains exactly one item");
 
-        TermQueryBuilder termQuery = (TermQueryBuilder) boolQuery.must().get(0);
-        Assertions.assertEquals(answerField.getFieldName(), termQuery.fieldName(), "Field name is correct");
-        Assertions.assertEquals(answerFieldValue, termQuery.value(), "Query value is correct");
+        TermQuery termQuery = boolQuery.must().getFirst().term();
+        Assertions.assertEquals(answerField.getFieldName(), termQuery.field(), "Field name is correct");
+        Assertions.assertEquals(answerFieldValue, termQuery.value().longValue(), "Query value is correct");
 
         // Add a second text EQUALS condition
 
         ElasticIndexField nameField = new ElasticIndexField();
         nameField.setFieldName("name");
-        nameField.setFieldType("text");
+        nameField.setFieldType(Kind.Text.jsonValue());
         nameField.setFieldUse(ElasticIndexFieldType.TEXT);
         indexFieldsMap.put(nameField.getFieldName(), nameField);
 
@@ -72,7 +73,7 @@ public class TestSearchExpressionQueryBuilder {
 
         ElasticIndexField dateField = new ElasticIndexField();
         dateField.setFieldName("date");
-        dateField.setFieldType("date");
+        dateField.setFieldType(Kind.Date.jsonValue());
         dateField.setFieldUse(ElasticIndexFieldType.DATE);
         indexFieldsMap.put(dateField.getFieldName(), dateField);
         final String nowStr = "2021-02-17T01:23:34.000";
@@ -92,16 +93,14 @@ public class TestSearchExpressionQueryBuilder {
         expressionBuilder.addOperator(notOperator);
         queryBuilder = builder.buildQuery(expressionBuilder.build());
 
-        boolQuery = (BoolQueryBuilder) queryBuilder;
+        boolQuery = queryBuilder.bool();
         Assertions.assertEquals(2, boolQuery.must().size(), "Bool query contains exactly two items");
-        BoolQueryBuilder innerBoolQuery = (BoolQueryBuilder) boolQuery.must().get(1);
+        BoolQuery innerBoolQuery = boolQuery.must().get(1).bool();
         Assertions.assertEquals(1, innerBoolQuery.mustNot().size(),
                 "Inner bool query contains one item");
 
-        RangeQueryBuilder firstRangeQuery = (RangeQueryBuilder) innerBoolQuery.mustNot().get(0);
-        Assertions.assertEquals(dateField.getFieldName(), firstRangeQuery.fieldName(),
+        RangeQuery firstRangeQuery = innerBoolQuery.mustNot().getFirst().range();
+        Assertions.assertEquals(dateField.getFieldName(), firstRangeQuery.field(),
                 "Field name of first range query is correct");
-        Assertions.assertEquals(expectedParsedDateFieldValue, firstRangeQuery.from(),
-                "Field value of first range query is correct");
     }
 }

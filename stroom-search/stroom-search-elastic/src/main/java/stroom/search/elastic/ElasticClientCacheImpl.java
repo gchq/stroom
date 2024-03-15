@@ -24,10 +24,10 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Clearable;
 
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
-import org.elasticsearch.client.RestHighLevelClient;
 
 import java.io.IOException;
 import java.util.IdentityHashMap;
@@ -40,8 +40,8 @@ public class ElasticClientCacheImpl implements ElasticClientCache, Clearable {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ElasticClientCacheImpl.class);
     private static final String CACHE_NAME = "Elastic Client Cache";
 
-    private final LoadingStroomCache<ElasticConnectionConfig, RestHighLevelClient> cache;
-    private final IdentityHashMap<RestHighLevelClient, State> useMap = new IdentityHashMap<>();
+    private final LoadingStroomCache<ElasticConnectionConfig, ElasticsearchClient> cache;
+    private final IdentityHashMap<ElasticsearchClient, State> useMap = new IdentityHashMap<>();
 
     private final Provider<ElasticConfig> elasticConfigProvider;
 
@@ -56,7 +56,7 @@ public class ElasticClientCacheImpl implements ElasticClientCache, Clearable {
                 this::destroy);
     }
 
-    private RestHighLevelClient create(ElasticConnectionConfig elasticConnectionConfig) {
+    private ElasticsearchClient create(ElasticConnectionConfig elasticConnectionConfig) {
         if (elasticConnectionConfig == null) {
             throw new NullPointerException("Elasticsearch connection config not provided");
         }
@@ -66,7 +66,7 @@ public class ElasticClientCacheImpl implements ElasticClientCache, Clearable {
                 elasticConfigProvider.get().getClientConfig());
     }
 
-    private void destroy(final ElasticConnectionConfig key, final RestHighLevelClient value) {
+    private void destroy(final ElasticConnectionConfig key, final ElasticsearchClient value) {
         synchronized (this) {
             final State state = useMap.get(value);
             state.stale = true;
@@ -78,8 +78,8 @@ public class ElasticClientCacheImpl implements ElasticClientCache, Clearable {
     }
 
     @Override
-    public void context(final ElasticConnectionConfig key, final Consumer<RestHighLevelClient> consumer) {
-        final RestHighLevelClient client = borrowClient(key);
+    public void context(final ElasticConnectionConfig key, final Consumer<ElasticsearchClient> consumer) {
+        final ElasticsearchClient client = borrowClient(key);
         try {
             consumer.accept(client);
         } finally {
@@ -88,8 +88,8 @@ public class ElasticClientCacheImpl implements ElasticClientCache, Clearable {
     }
 
     @Override
-    public <R> R contextResult(final ElasticConnectionConfig key, final Function<RestHighLevelClient, R> function) {
-        final RestHighLevelClient client = borrowClient(key);
+    public <R> R contextResult(final ElasticConnectionConfig key, final Function<ElasticsearchClient, R> function) {
+        final ElasticsearchClient client = borrowClient(key);
         try {
             return function.apply(client);
         } finally {
@@ -97,15 +97,15 @@ public class ElasticClientCacheImpl implements ElasticClientCache, Clearable {
         }
     }
 
-    private RestHighLevelClient borrowClient(final ElasticConnectionConfig key) {
-        final RestHighLevelClient client = cache.get(key);
+    private ElasticsearchClient borrowClient(final ElasticConnectionConfig key) {
+        final ElasticsearchClient client = cache.get(key);
         synchronized (this) {
             useMap.computeIfAbsent(client, k -> new State()).increment();
         }
         return client;
     }
 
-    private void returnClient(final RestHighLevelClient client) {
+    private void returnClient(final ElasticsearchClient client) {
         synchronized (this) {
             final State state = useMap.get(client);
             state.decrement();
@@ -116,9 +116,9 @@ public class ElasticClientCacheImpl implements ElasticClientCache, Clearable {
         }
     }
 
-    private void close(final RestHighLevelClient client) {
+    private void close(final ElasticsearchClient client) {
         try {
-            client.close();
+            client._transport().close();
         } catch (final RuntimeException | IOException e) {
             LOGGER.error(e::getMessage, e);
         }
