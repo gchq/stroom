@@ -331,7 +331,7 @@ class AnalyticsNodeSearchTaskHandler implements NodeSearchTaskHandler {
         public TableResultConsumer columns(final List<Column> columns) {
             this.columns = columns;
             fieldIndex = new FieldIndex();
-            columns.forEach(field -> fieldIndex.create(field.getName()));
+            columns.forEach(column -> fieldIndex.create(column.getName()));
             return this;
         }
 
