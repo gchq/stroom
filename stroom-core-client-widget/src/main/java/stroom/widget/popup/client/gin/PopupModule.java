@@ -16,7 +16,7 @@
 
 package stroom.widget.popup.client.gin;
 
-import stroom.widget.popup.client.presenter.HelpManager;
+import stroom.widget.help.client.presenter.HelpManager;
 import stroom.widget.popup.client.presenter.PopupManager;
 
 import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;

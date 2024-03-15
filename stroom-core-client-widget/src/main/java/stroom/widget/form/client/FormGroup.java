@@ -1,18 +1,17 @@
 package stroom.widget.form.client;
 
 import stroom.util.shared.GwtNullSafe;
-import stroom.widget.button.client.HelpButton;
+import stroom.widget.help.client.HelpButton;
 import stroom.widget.util.client.KeyBinding;
 import stroom.widget.util.client.KeyBinding.Action;
 
-import com.google.gwt.dom.client.LabelElement;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.dom.client.Node;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
-import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.HasWidgets;
 import com.google.gwt.user.client.ui.Label;
@@ -29,24 +28,24 @@ import java.util.Iterator;
  * For plain text help (or if you want to escape html special chars) use
  * the {@code helpText} attr:
  * <pre>{@code
- * <form:FormGroup
- *     ...
- *     helpText="This is my help text"
+ * <form:FormGroup ... helpText="This is my help text">
  * }</pre>
  * <p>
  * For rich help text then add a {@code label} element (wrapped in a
  * {@link HTMLPanel}) like this:
  * <pre>{@code
  * <form:FormGroup ...>
- *     <g:HTMLPanel addStyleNames="dock-min">
- *         <label class="helpText">
- *             <p>This is para 1</p>
- *             <p>This is some <code>code</code></p>
- *         </label>
- *         <g:TextBox ui:field="textBox" addStyleNames="w-100"/>
- *     </g:HTMLPanel>
+ *     <g:HTML>
+ *         <p>This is para 1</p>
+ *         <p>This is some <code>code</code></p>
+ *     </g:HTML>
+ *     <g:TextBox ui:field="textBox" addStyleNames="w-100"/>
  * </form:FormGroup>
  * }</pre>
+ * <p>
+ * {@code formLabel} will be automatically added as a {@code <h4>} heading
+ * at the top of the help popup.
+ * </p>
  */
 public class FormGroup extends Composite implements HasWidgets {
 
@@ -57,7 +56,8 @@ public class FormGroup extends Composite implements HasWidgets {
     private final Label feedback = new Label();
 
     private String id;
-    private Widget widget;
+    private Widget childWidget = null;
+    private HTML helpHTML = null;
     private String helpText = null;
 
     public FormGroup() {
@@ -89,8 +89,8 @@ public class FormGroup extends Composite implements HasWidgets {
     public void setIdentity(final String id) {
         this.id = id;
         formLabel.setIdentity(id);
-        if (widget != null) {
-            widget.getElement().setId(id);
+        if (childWidget != null) {
+            childWidget.getElement().setId(id);
         }
     }
 
@@ -130,54 +130,30 @@ public class FormGroup extends Composite implements HasWidgets {
 
     @Override
     public void add(final Widget w) {
-        if (widget != null) {
-            throw new IllegalStateException("FormRow can only contain one child widget");
-        }
+        GWT.log("Adding widget " + w.getClass().getName());
 
-        // The helpText attr trumps a child label elm so no point looking for one
-        if (w instanceof HTMLPanel) {
-            //noinspection PatternVariableCanBeUsed // Cos GWT
-            final HTMLPanel htmlPanel = (HTMLPanel) w;
-
-            final Element panelElm = htmlPanel.getElement();
-
-            if (panelElm.hasChildNodes()) {
-                Node helpLabelElm = null;
-                for (int i = 0; i < panelElm.getChildCount(); i++) {
-                    final Node child = panelElm.getChild(i);
-                    if (child instanceof LabelElement) {
-                        //noinspection PatternVariableCanBeUsed  // cos GWT
-                        final LabelElement labelElm = (LabelElement) child;
-                        final boolean isHelpLabel = GwtNullSafe.test(
-                                labelElm,
-                                LabelElement::getClassName,
-                                classAttr -> classAttr.contains("helpText"));
-                        if (isHelpLabel) {
-                            helpText = labelElm.getInnerHTML();
-                            updateHelpButton();
-                            if (helpLabelElm != null) {
-                                throw new IllegalStateException("Found two label elements with class 'helpText'");
-                            }
-                            helpLabelElm = child;
-                        }
-                    }
-                }
-                // Prevent the label element containing the help text from being seen in the browser
-                // now we have extracted its content
-                if (helpLabelElm != null) {
-                    panelElm.removeChild(helpLabelElm);
-                }
+        if (w instanceof HTML) {
+            if (helpHTML != null) {
+                throw new IllegalStateException("FormGroup can only contain one child HelpHTML widget. " +
+                        "Class: " + w.getClass().getName());
             }
+            this.helpHTML = (HTML) w;
+            this.helpText = helpHTML.getHTML();
+            updateHelpButton();
+        } else {
+            // Not a HelpHTML so must be the childWidget
+            if (childWidget != null) {
+                throw new IllegalStateException("FormGroup can only contain one child widget that is not a HelpHTML. " +
+                        "Class: " + w.getClass().getName());
+            }
+            this.childWidget = w;
+            if (id != null) {
+                w.getElement().setId(id);
+            }
+            w.addStyleName("allow-focus");
         }
 
-        this.widget = w;
-        if (id != null) {
-            w.getElement().setId(id);
-        }
-
-        w.addStyleName("allow-focus");
         formGroup.clear();
-
         updateLabelPanel();
         formGroup.add(labelPanel);
         formGroup.add(w);
@@ -186,8 +162,7 @@ public class FormGroup extends Composite implements HasWidgets {
 
     @Override
     public void clear() {
-        widget = null;
-
+        childWidget = null;
         updateLabelPanel();
         formGroup.clear();
         formGroup.add(labelPanel);
@@ -205,12 +180,12 @@ public class FormGroup extends Composite implements HasWidgets {
 
     @Override
     public Iterator<Widget> iterator() {
-        return Collections.singleton(widget).iterator();
+        return Collections.singleton(childWidget).iterator();
     }
 
     @Override
     public boolean remove(final Widget w) {
-        if (widget == w) {
+        if (childWidget == w) {
             clear();
             return true;
         } else {

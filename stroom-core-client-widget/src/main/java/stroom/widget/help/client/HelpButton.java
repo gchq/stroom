@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-package stroom.widget.button.client;
+package stroom.widget.help.client;
 
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.util.shared.GwtNullSafe;
+import stroom.widget.button.client.InlineSvgButton;
 import stroom.widget.tooltip.client.event.ShowHelpEvent;
 import stroom.widget.util.client.KeyBinding;
 import stroom.widget.util.client.KeyBinding.Action;
