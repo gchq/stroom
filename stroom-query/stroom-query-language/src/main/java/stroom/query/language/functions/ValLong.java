@@ -106,6 +106,11 @@ public final class ValLong implements ValNumber {
         return COMPARATOR;
     }
 
+    @Override
+    public Object unwrap() {
+        return value;
+    }
+
 
     // --------------------------------------------------------------------------------
 

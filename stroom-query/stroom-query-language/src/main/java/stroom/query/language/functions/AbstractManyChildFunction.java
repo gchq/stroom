@@ -79,9 +79,4 @@ abstract class AbstractManyChildFunction extends AbstractFunction {
         }
         return super.requiresChildData();
     }
-
-    @Override
-    public Type getCommonReturnType() {
-        return functions[0].getCommonReturnType();
-    }
 }

@@ -108,4 +108,9 @@ public final class ValDuration implements ValNumber {
     public Comparator<Val> getDefaultComparator(final boolean isCaseSensitive) {
         return COMPARATOR;
     }
+
+    @Override
+    public Object unwrap() {
+        return milliseconds;
+    }
 }

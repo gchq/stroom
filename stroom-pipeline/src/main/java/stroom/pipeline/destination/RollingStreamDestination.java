@@ -79,7 +79,7 @@ public class RollingStreamDestination extends RollingDestination {
     @Override
     protected void afterRoll(final Consumer<Throwable> exceptionConsumer) {
         try {
-            streamTarget.getAttributes().put(MetaFields.REC_WRITE.getName(), recordCount.toString());
+            streamTarget.getAttributes().put(MetaFields.REC_WRITE.getFldName(), recordCount.toString());
             streamTarget.close();
         } catch (final IOException e) {
             throw new RuntimeException(e.getMessage(), e);

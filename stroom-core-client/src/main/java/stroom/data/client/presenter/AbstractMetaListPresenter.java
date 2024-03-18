@@ -143,7 +143,7 @@ public abstract class AbstractMetaListPresenter
         addColumns(allowSelectAll);
 
         criteria = new FindMetaCriteria();
-        criteria.setSort(MetaFields.CREATE_TIME.getName(), true, false);
+        criteria.setSort(MetaFields.CREATE_TIME.getFldName(), true, false);
 
         dataProvider = new RestDataProvider<MetaRow, ResultPage<MetaRow>>(eventBus) {
             @Override
@@ -442,7 +442,7 @@ public abstract class AbstractMetaListPresenter
                             final int size) {
 
         final Function<MetaRow, String> extractor = metaRow ->
-                metaRow.getAttributeValue(attribute.getName());
+                metaRow.getAttributeValue(attribute.getFldName());
 
         final Column<MetaRow, String> column = DataGridUtil.columnBuilder(extractor, formatter, TextCell::new)
                 .build();
@@ -459,7 +459,7 @@ public abstract class AbstractMetaListPresenter
                                         final int size) {
 
         final Function<MetaRow, String> extractor = metaRow ->
-                metaRow.getAttributeValue(attribute.getName());
+                metaRow.getAttributeValue(attribute.getFldName());
 
         final Column<MetaRow, String> column = DataGridUtil.columnBuilder(extractor, formatter, TextCell::new)
                 .rightAligned()
@@ -477,7 +477,7 @@ public abstract class AbstractMetaListPresenter
                                         final int size) {
 
         final Function<MetaRow, String> extractor = metaRow -> {
-            final String value = metaRow.getAttributeValue(attribute.getName());
+            final String value = metaRow.getAttributeValue(attribute.getFldName());
             if (value == null) {
                 return null;
             } else {

@@ -370,7 +370,7 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
         // nodes can pile in and do this at the same time
         final String nodeName = nodeInfo.getThisNodeName();
         taskContext.info(() -> "Updating index volume status for node " + nodeName);
-        final ExpressionOperator expression = ExpressionUtil.equals(IndexVolumeFields.NODE_NAME, nodeName);
+        final ExpressionOperator expression = ExpressionUtil.equalsDate(IndexVolumeFields.NODE_NAME, nodeName);
         final List<IndexVolume> volumes = find(new ExpressionCriteria(expression)).getValues();
         for (final IndexVolume volume : volumes) {
             taskContext.info(() -> "Updating index volume status for '" + volume.getPath() + "' and node " + nodeName);

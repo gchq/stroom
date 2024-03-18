@@ -222,7 +222,7 @@ public class StreamAppender extends AbstractAppender {
                 currentStatistics.write(streamTarget.getAttributes());
 
                 // Overwrite the actual output record count.
-                streamTarget.getAttributes().put(MetaFields.REC_WRITE.getName(), String.valueOf(count));
+                streamTarget.getAttributes().put(MetaFields.REC_WRITE.getFldName(), String.valueOf(count));
 
                 // Close the stream target.
                 try {

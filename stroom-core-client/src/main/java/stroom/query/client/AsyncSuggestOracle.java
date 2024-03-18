@@ -16,7 +16,7 @@
 
 package stroom.query.client;
 
-import stroom.datasource.api.v2.FieldInfo;
+import stroom.datasource.api.v2.QueryField;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
@@ -43,7 +43,7 @@ public class AsyncSuggestOracle extends SuggestOracle {
 
     private RestFactory restFactory;
     private DocRef dataSource;
-    private FieldInfo field;
+    private QueryField field;
     private Timer requestTimer;
 
     public void setRestFactory(final RestFactory restFactory) {
@@ -54,7 +54,7 @@ public class AsyncSuggestOracle extends SuggestOracle {
         this.dataSource = dataSource;
     }
 
-    public void setField(final FieldInfo field) {
+    public void setField(final QueryField field) {
         this.field = field;
     }
 

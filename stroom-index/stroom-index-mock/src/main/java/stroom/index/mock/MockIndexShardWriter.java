@@ -21,7 +21,6 @@ import stroom.index.impl.IndexShardWriter;
 import stroom.index.shared.IndexException;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
-import stroom.search.extraction.IndexStructure;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -82,7 +81,8 @@ public class MockIndexShardWriter implements IndexShardWriter {
     }
 
     @Override
-    public void updateIndexStructure(final IndexStructure indexStructure) {
+    public void setMaxDocumentCount(final int maxDocumentCount) {
+
     }
 
     @Override

@@ -148,4 +148,9 @@ public final class ValErr implements Val {
                 ? CASE_SENSITIVE_COMPARATOR
                 : CASE_INSENSITIVE_COMPARATOR;
     }
+
+    @Override
+    public Object unwrap() {
+        return toString();
+    }
 }

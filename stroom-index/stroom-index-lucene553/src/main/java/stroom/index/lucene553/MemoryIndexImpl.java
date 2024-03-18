@@ -1,7 +1,8 @@
 package stroom.index.lucene553;
 
+import stroom.datasource.api.v2.IndexField;
 import stroom.index.lucene553.SearchExpressionQueryBuilder.SearchExpressionQuery;
-import stroom.index.shared.IndexField;
+import stroom.index.shared.LuceneIndexField;
 import stroom.query.api.v2.SearchRequest;
 import stroom.search.extraction.FieldValue;
 import stroom.search.impl.SearchException;
@@ -35,16 +36,17 @@ class MemoryIndexImpl implements stroom.search.extraction.MemoryIndex {
         final MemoryIndex memoryIndex = new MemoryIndex();
         for (final FieldValue fieldValue : fieldValues) {
             final IndexField indexField = fieldValue.field();
-            if (indexField.isIndexed()) {
-                final Analyzer fieldAnalyzer = searchExpressionQueryCache.getAnalyser(indexField);
+            final LuceneIndexField luceneIndexField = LuceneIndexField
+                    .fromIndexField(indexField);
+
+            if (luceneIndexField.isIndexed()) {
+                final Analyzer fieldAnalyzer = searchExpressionQueryCache.getAnalyser(luceneIndexField);
                 final IndexableField field = FieldFactory.create(fieldValue);
                 TokenStream tokenStream = field.tokenStream(fieldAnalyzer, null);
                 if (tokenStream != null) {
                     memoryIndex.addField(field.name(), tokenStream, field.boost());
                 }
             }
-
-            searchExpressionQueryCache.addIndexField(indexField);
         }
 
         // See if this set of fields matches the rule expression.

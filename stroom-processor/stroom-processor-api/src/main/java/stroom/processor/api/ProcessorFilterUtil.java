@@ -47,10 +47,10 @@ public final class ProcessorFilterUtil {
         for (ExpressionItem item : expression.getChildren()) {
             if (item instanceof ExpressionTerm) {
                 ExpressionTerm term = (ExpressionTerm) item;
-                if (MetaFields.ID.getName().equals(term.getField())) {
+                if (MetaFields.ID.getFldName().equals(term.getField())) {
                     return true;
                 }
-                if (MetaFields.PARENT_ID.getName().equals(term.getField())) {
+                if (MetaFields.PARENT_ID.getFldName().equals(term.getField())) {
                     return true;
                 }
                 if (MetaFields.META_INTERNAL_PROCESSOR_ID.equals(term.getField())) {

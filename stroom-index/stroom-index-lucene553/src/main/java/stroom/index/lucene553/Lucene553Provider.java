@@ -1,18 +1,18 @@
 package stroom.index.lucene553;
 
+import stroom.docref.DocRef;
 import stroom.expression.api.DateTimeSettings;
 import stroom.index.impl.HighlightProvider;
 import stroom.index.impl.IndexShardWriter;
 import stroom.index.impl.IndexSystemInfoProvider;
 import stroom.index.impl.LuceneProvider;
 import stroom.index.impl.LuceneShardSearcher;
-import stroom.index.shared.IndexFieldsMap;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
 import stroom.index.shared.LuceneVersion;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.QueryKey;
-import stroom.search.extraction.IndexStructure;
+import stroom.query.common.v2.IndexFieldCache;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -37,13 +37,15 @@ class Lucene553Provider implements LuceneProvider {
     }
 
     @Override
-    public LuceneShardSearcher createLuceneShardSearcher(final ExpressionOperator expression,
-                                                         final IndexFieldsMap indexFieldsMap,
+    public LuceneShardSearcher createLuceneShardSearcher(final DocRef indexDocRef,
+                                                         final IndexFieldCache indexFieldCache,
+                                                         final ExpressionOperator expression,
                                                          final DateTimeSettings dateTimeSettings,
                                                          final QueryKey queryKey) {
         return shardSearcherFactory.create(
+                indexDocRef,
+                indexFieldCache,
                 expression,
-                indexFieldsMap,
                 dateTimeSettings,
                 queryKey);
     }
@@ -54,13 +56,13 @@ class Lucene553Provider implements LuceneProvider {
     }
 
     @Override
-    public IndexShardWriter createIndexShardWriter(final IndexStructure indexStructure,
-                                                   final IndexShardKey indexShardKey,
-                                                   final IndexShard indexShard) {
+    public IndexShardWriter createIndexShardWriter(final IndexShardKey indexShardKey,
+                                                   final IndexShard indexShard,
+                                                   final int maxDocumentCount) {
         return indexShardWriterFactory.create(
-                indexStructure,
                 indexShardKey,
-                indexShard);
+                indexShard,
+                maxDocumentCount);
     }
 
     @Override

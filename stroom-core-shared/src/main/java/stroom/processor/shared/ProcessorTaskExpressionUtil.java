@@ -14,7 +14,7 @@ public final class ProcessorTaskExpressionUtil {
     }
 
     public static ExpressionOperator createWithStream(final Meta meta) {
-        return ExpressionUtil.equals(ProcessorTaskFields.META_ID, meta.getId());
+        return ExpressionUtil.equalsId(ProcessorTaskFields.META_ID, meta.getId());
     }
 
     public static ExpressionOperator createFolderExpression(final DocRef folder) {
@@ -26,8 +26,8 @@ public final class ProcessorTaskExpressionUtil {
 
         if (folders != null) {
             for (final DocRef folder : folders) {
-                builder.addTerm(ProcessorTaskFields.PIPELINE, Condition.IN_FOLDER, folder);
-                builder.addTerm(ProcessorTaskFields.FEED, Condition.IN_FOLDER, folder);
+                builder.addDocRefTerm(ProcessorTaskFields.PIPELINE, Condition.IN_FOLDER, folder);
+                builder.addDocRefTerm(ProcessorTaskFields.FEED, Condition.IN_FOLDER, folder);
             }
         }
 
@@ -36,13 +36,13 @@ public final class ProcessorTaskExpressionUtil {
 
     public static ExpressionOperator createPipelineExpression(final DocRef pipeline) {
         return ExpressionOperator.builder()
-                .addTerm(ProcessorTaskFields.PIPELINE, Condition.IS_DOC_REF, pipeline)
+                .addDocRefTerm(ProcessorTaskFields.PIPELINE, Condition.IS_DOC_REF, pipeline)
                 .build();
     }
 
     public static ExpressionOperator createFeedExpression(final DocRef feed) {
         return ExpressionOperator.builder()
-                .addTerm(ProcessorTaskFields.FEED, Condition.IS_DOC_REF, feed)
+                .addDocRefTerm(ProcessorTaskFields.FEED, Condition.IS_DOC_REF, feed)
                 .build();
     }
 }

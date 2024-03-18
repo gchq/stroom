@@ -3,8 +3,8 @@ package stroom.core.meta;
 import stroom.docref.DocRef;
 import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.feed.api.FeedStore;
-import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexShardFields;
+import stroom.index.shared.LuceneIndexDoc;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.Status;
@@ -53,22 +53,22 @@ public class MetaSuggestionsQueryHandlerImpl implements MetaSuggestionsQueryHand
 
     // This may need changing if we have suggestions that are not for the stream store data source
     private final Map<String, Function<String, List<String>>> metaFieldNameToFunctionMap = Map.of(
-            MetaFields.FEED.getName(), this::createFeedList,
-            MetaFields.PIPELINE.getName(), this::createPipelineList,
-            MetaFields.PIPELINE_NAME.getName(), this::createPipelineList,
-            MetaFields.TYPE.getName(), this::createStreamTypeList,
-            MetaFields.STATUS.getName(), this::createStatusList);
+            MetaFields.FEED.getFldName(), this::createFeedList,
+            MetaFields.PIPELINE.getFldName(), this::createPipelineList,
+            MetaFields.PIPELINE_NAME.getFldName(), this::createPipelineList,
+            MetaFields.TYPE.getFldName(), this::createStreamTypeList,
+            MetaFields.STATUS.getFldName(), this::createStatusList);
 
     private final Map<String, Function<String, List<String>>> indexShardsFieldNameToFunctionMap = Map.of(
-            IndexShardFields.FIELD_INDEX.getName(), filter ->
-                    getNonUniqueDocRefNames(IndexDoc.DOCUMENT_TYPE, filter));
+            IndexShardFields.FIELD_INDEX.getFldName(), filter ->
+                    getNonUniqueDocRefNames(LuceneIndexDoc.DOCUMENT_TYPE, filter));
 
     private final Map<String, Function<String, List<String>>> processorTaskFieldNameToFunctionMap = Map.of(
-            ProcessorTaskFields.PIPELINE_NAME.getName(), filter ->
+            ProcessorTaskFields.PIPELINE_NAME.getFldName(), filter ->
                     getNonUniqueDocRefNames(PipelineDoc.DOCUMENT_TYPE, filter));
 
     private final Map<String, Function<String, List<String>>> refDataFieldNameToFunctionMap = Map.of(
-            ReferenceDataFields.PIPELINE_FIELD.getName(), filter ->
+            ReferenceDataFields.PIPELINE_FIELD.getFldName(), filter ->
                     getNonUniqueDocRefNames(PipelineDoc.DOCUMENT_TYPE, filter));
 
     @SuppressWarnings("unused")
@@ -93,7 +93,7 @@ public class MetaSuggestionsQueryHandlerImpl implements MetaSuggestionsQueryHand
         return securityContext.secureResult(() -> {
             List<String> result = Collections.emptyList();
 
-            final String fieldName = request.getField().getFieldName();
+            final String fieldName = request.getField().getFldName();
             final Function<String, List<String>> suggestionFunc = getSuggestionFunc(request, fieldName);
             if (suggestionFunc != null) {
                 result = suggestionFunc.apply(request.getText());
@@ -101,8 +101,8 @@ public class MetaSuggestionsQueryHandlerImpl implements MetaSuggestionsQueryHand
 
             // Determine if we are going to allow the client to cache the suggestions.
             final boolean cache = ((request.getText() == null || request.getText().isBlank()) &&
-                    (request.getField().getFieldName().equals(MetaFields.TYPE.getName()) ||
-                            request.getField().getFieldName().equals(MetaFields.STATUS.getName())));
+                    (request.getField().getFldName().equals(MetaFields.TYPE.getFldName()) ||
+                            request.getField().getFldName().equals(MetaFields.STATUS.getFldName())));
 
             return new Suggestions(result, cache);
         });

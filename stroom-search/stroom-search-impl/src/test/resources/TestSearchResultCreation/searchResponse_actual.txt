@@ -125,7 +125,7 @@
     }, {
       "expression" : "${UserId}",
       "format" : {
-        "type" : "GENERAL"
+        "type" : "TEXT"
       },
       "width" : 200,
       "visible" : true,
@@ -645,7 +645,7 @@
         "direction" : "ASCENDING"
       },
       "format" : {
-        "type" : "GENERAL"
+        "type" : "TEXT"
       },
       "group" : 1,
       "width" : 200,
@@ -658,7 +658,7 @@
         "direction" : "ASCENDING"
       },
       "format" : {
-        "type" : "GENERAL"
+        "type" : "TEXT"
       },
       "width" : 200,
       "visible" : true,
@@ -712,7 +712,7 @@
         "direction" : "ASCENDING"
       },
       "format" : {
-        "type" : "GENERAL"
+        "type" : "TEXT"
       },
       "group" : 1,
       "width" : 200,

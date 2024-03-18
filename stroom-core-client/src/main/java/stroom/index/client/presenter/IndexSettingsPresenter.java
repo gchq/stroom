@@ -26,10 +26,10 @@ import stroom.entity.shared.ExpressionCriteria;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.feed.client.presenter.SupportedRetentionAge;
 import stroom.index.client.presenter.IndexSettingsPresenter.IndexSettingsView;
-import stroom.index.shared.IndexDoc;
-import stroom.index.shared.IndexDoc.PartitionBy;
 import stroom.index.shared.IndexVolumeGroup;
 import stroom.index.shared.IndexVolumeGroupResource;
+import stroom.index.shared.LuceneIndexDoc;
+import stroom.index.shared.LuceneIndexDoc.PartitionBy;
 import stroom.item.client.SelectionBox;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.security.shared.DocumentPermissionNames;
@@ -44,7 +44,7 @@ import com.gwtplatform.mvp.client.View;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class IndexSettingsPresenter extends DocumentEditPresenter<IndexSettingsView, IndexDoc>
+public class IndexSettingsPresenter extends DocumentEditPresenter<IndexSettingsView, LuceneIndexDoc>
         implements IndexSettingsUiHandlers {
 
     private static final IndexVolumeGroupResource INDEX_VOLUME_GROUP_RESOURCE =
@@ -80,7 +80,7 @@ public class IndexSettingsPresenter extends DocumentEditPresenter<IndexSettingsV
     }
 
     @Override
-    protected void onRead(final DocRef docRef, final IndexDoc index, final boolean readOnly) {
+    protected void onRead(final DocRef docRef, final LuceneIndexDoc index, final boolean readOnly) {
         getView().setMaxDocsPerShard(index.getMaxDocsPerShard());
         getView().setShardsPerPartition(index.getShardsPerPartition());
         getView().setPartitionBy(index.getPartitionBy());
@@ -92,7 +92,7 @@ public class IndexSettingsPresenter extends DocumentEditPresenter<IndexSettingsV
     }
 
     @Override
-    protected IndexDoc onWrite(final IndexDoc index) {
+    protected LuceneIndexDoc onWrite(final LuceneIndexDoc index) {
         index.setMaxDocsPerShard(getView().getMaxDocsPerShard());
         index.setShardsPerPartition(getView().getShardsPerPartition());
         index.setPartitionBy(getView().getPartitionBy());

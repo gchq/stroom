@@ -151,15 +151,6 @@ class ParseDate extends AbstractFunction {
         return super.requiresChildData();
     }
 
-    @Override
-    public Type getCommonReturnType() {
-        return Type.DATE;
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
     private static final class Gen extends AbstractSingleChildGenerator {
 
         private final String pattern;

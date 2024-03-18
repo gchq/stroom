@@ -1918,7 +1918,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ResultPageFieldInfo'
+                $ref: '#/components/schemas/ResultPageQueryField'
           description: default response
       summary: Find data source fields
       tags:
@@ -3136,7 +3136,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/IndexDoc'
+                $ref: '#/components/schemas/LuceneIndexDoc'
           description: default response
       summary: Fetch a index doc by its UUID
       tags:
@@ -3153,7 +3153,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/IndexDoc'
+              $ref: '#/components/schemas/LuceneIndexDoc'
         description: doc
         required: true
       responses:
@@ -3161,7 +3161,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/IndexDoc'
+                $ref: '#/components/schemas/LuceneIndexDoc'
           description: default response
       summary: Update an index doc
       tags:
@@ -7724,10 +7724,6 @@ components:
             type: string
         docRef:
           $ref: '#/components/schemas/DocRef'
-    BooleanField:
-      type: object
-      allOf:
-      - $ref: '#/components/schemas/QueryField'
     BuildInfo:
       type: object
       properties:
@@ -8509,10 +8505,6 @@ components:
           type: string
       xml:
         name: dataRetentionPolicy
-    DateField:
-      type: object
-      allOf:
-      - $ref: '#/components/schemas/QueryField'
     DateTimeFormatSettings:
       type: object
       allOf:
@@ -8675,10 +8667,6 @@ components:
       - uuid
       xml:
         name: doc
-    DocRefField:
-      type: object
-      allOf:
-      - $ref: '#/components/schemas/QueryField'
     DocRefInfo:
       type: object
       properties:
@@ -8964,10 +8952,6 @@ components:
           type: string
         version:
           type: string
-    DoubleField:
-      type: object
-      allOf:
-      - $ref: '#/components/schemas/QueryField'
     DownloadQueryResultsRequest:
       type: object
       properties:
@@ -9119,8 +9103,27 @@ components:
           - TEXT
           - KEYWORD
           - IPV4_ADDRESS
+          - DOC_REF
+        fldName:
+          type: string
+        fldType:
+          type: string
+          enum:
+          - ID
+          - BOOLEAN
+          - INTEGER
+          - LONG
+          - FLOAT
+          - DOUBLE
+          - DATE
+          - TEXT
+          - KEYWORD
+          - IPV4_ADDRESS
+          - DOC_REF
         indexed:
           type: boolean
+        nativeType:
+          type: string
     ElasticIndexTestResponse:
       type: object
       properties:
@@ -9911,63 +9914,12 @@ components:
         dataSource:
           $ref: '#/components/schemas/DocRef'
         field:
-          $ref: '#/components/schemas/FieldInfo'
+          $ref: '#/components/schemas/QueryField'
         text:
           type: string
       required:
       - dataSource
       - field
-    FieldInfo:
-      type: object
-      properties:
-        conditions:
-          type: string
-          enum:
-          - "'=', '!=', 'between', '>', '>=', '<', '<='"
-          - "'=', '!=', 'in', 'in dictionary', 'between', '>', '>=', '<', '<='"
-          - "'=', '!='"
-          - "'=', '!=', 'between', '>', '>=', '<', '<='"
-          - "'=', '!=', 'in', 'in dictionary'"
-          - "'is', 'in folder'"
-          - "'=', '!=', 'in', 'in dictionary'"
-          - "'is', 'in folder', '=', '!=', 'in', 'in dictionary'"
-          - "'=', '!=', 'in', 'in dictionary'"
-          - "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'"
-          - "'=', '!=', 'in', 'in dictionary', 'matches regex'"
-          - "'=', '!=', 'in', 'in dictionary'"
-          - "'=', '!=', 'in', 'in dictionary'"
-          - "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'"
-          - "'=', '!='"
-          - "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'"
-          - "'=', '!=', 'in', 'in dictionary'"
-          - "'is', '=', '!='"
-          - '''between'''
-          - "'=', '!=', 'in'"
-          - "'=', '!=', 'in'"
-          - "'=', '!=', 'in', 'in dictionary'"
-          - "'=', '!=', 'in', 'in dictionary', 'is'"
-          - "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'"
-          - "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'"
-        docRefType:
-          type: string
-        fieldName:
-          type: string
-        fieldType:
-          type: string
-          enum:
-          - ID
-          - BOOLEAN
-          - INTEGER
-          - LONG
-          - FLOAT
-          - DOUBLE
-          - DATE
-          - TEXT
-          - KEYWORD
-          - IPV4_ADDRESS
-          - DOC_REF
-        queryable:
-          type: boolean
     Filter:
       type: object
       description: A pair of regular expression filters (inclusion and exclusion)
@@ -10715,10 +10667,6 @@ components:
       description: A result structure used primarily for visualisation data
       required:
       - componentId
-    FloatField:
-      type: object
-      allOf:
-      - $ref: '#/components/schemas/QueryField'
     Format:
       type: object
       description: Describes the formatting that will be applied to values in a field
@@ -10971,10 +10919,6 @@ components:
             type: string
           windowSize:
             type: string
-    IdField:
-      type: object
-      allOf:
-      - $ref: '#/components/schemas/QueryField'
     ImportConfigRequest:
       type: object
       properties:
@@ -11041,93 +10985,6 @@ components:
           type: array
           items:
             type: string
-    IndexDoc:
-      type: object
-      properties:
-        createTimeMs:
-          type: integer
-          format: int64
-        createUser:
-          type: string
-        defaultExtractionPipeline:
-          $ref: '#/components/schemas/DocRef'
-        description:
-          type: string
-        fields:
-          type: array
-          items:
-            $ref: '#/components/schemas/IndexField'
-        maxDocsPerShard:
-          type: integer
-          format: int32
-        name:
-          type: string
-        partitionBy:
-          type: string
-          enum:
-          - DAY
-          - WEEK
-          - MONTH
-          - YEAR
-        partitionSize:
-          type: integer
-          format: int32
-        retentionDayAge:
-          type: integer
-          format: int32
-        shardsPerPartition:
-          type: integer
-          format: int32
-        timeField:
-          type: string
-        type:
-          type: string
-        updateTimeMs:
-          type: integer
-          format: int64
-        updateUser:
-          type: string
-        uuid:
-          type: string
-        version:
-          type: string
-        volumeGroupName:
-          type: string
-    IndexField:
-      type: object
-      properties:
-        analyzerType:
-          type: string
-          enum:
-          - KEYWORD
-          - ALPHA
-          - NUMERIC
-          - ALPHA_NUMERIC
-          - WHITESPACE
-          - STOP
-          - STANDARD
-        caseSensitive:
-          type: boolean
-        fieldName:
-          type: string
-        fieldType:
-          type: string
-          enum:
-          - ID
-          - BOOLEAN_FIELD
-          - INTEGER_FIELD
-          - LONG_FIELD
-          - FLOAT_FIELD
-          - DOUBLE_FIELD
-          - DATE_FIELD
-          - FIELD
-          - NUMERIC_FIELD
-        indexed:
-          type: boolean
-        stored:
-          type: boolean
-        termPositions:
-          type: boolean
     IndexShard:
       type: object
       properties:
@@ -11269,14 +11126,6 @@ components:
           type: string
         validationRegex:
           type: string
-    IntegerField:
-      type: object
-      allOf:
-      - $ref: '#/components/schemas/QueryField'
-    IpV4AddressField:
-      type: object
-      allOf:
-      - $ref: '#/components/schemas/QueryField'
     Job:
       type: object
       properties:
@@ -11386,10 +11235,6 @@ components:
         properties:
           text:
             type: string
-    KeywordField:
-      type: object
-      allOf:
-      - $ref: '#/components/schemas/QueryField'
     LayoutConfig:
       type: object
       discriminator:
@@ -11498,10 +11343,109 @@ components:
           type: string
         requirePasswordChange:
           type: boolean
-    LongField:
+    LuceneIndexDoc:
       type: object
-      allOf:
-      - $ref: '#/components/schemas/QueryField'
+      properties:
+        createTimeMs:
+          type: integer
+          format: int64
+        createUser:
+          type: string
+        defaultExtractionPipeline:
+          $ref: '#/components/schemas/DocRef'
+        description:
+          type: string
+        fields:
+          type: array
+          items:
+            $ref: '#/components/schemas/LuceneIndexField'
+        maxDocsPerShard:
+          type: integer
+          format: int32
+        name:
+          type: string
+        partitionBy:
+          type: string
+          enum:
+          - DAY
+          - WEEK
+          - MONTH
+          - YEAR
+        partitionSize:
+          type: integer
+          format: int32
+        retentionDayAge:
+          type: integer
+          format: int32
+        shardsPerPartition:
+          type: integer
+          format: int32
+        timeField:
+          type: string
+        type:
+          type: string
+        updateTimeMs:
+          type: integer
+          format: int64
+        updateUser:
+          type: string
+        uuid:
+          type: string
+        version:
+          type: string
+        volumeGroupName:
+          type: string
+    LuceneIndexField:
+      type: object
+      properties:
+        analyzerType:
+          type: string
+          enum:
+          - KEYWORD
+          - ALPHA
+          - NUMERIC
+          - ALPHA_NUMERIC
+          - WHITESPACE
+          - STOP
+          - STANDARD
+        caseSensitive:
+          type: boolean
+        fieldName:
+          type: string
+        fieldType:
+          type: string
+          enum:
+          - ID
+          - BOOLEAN_FIELD
+          - INTEGER_FIELD
+          - LONG_FIELD
+          - FLOAT_FIELD
+          - DOUBLE_FIELD
+          - DATE_FIELD
+          - FIELD
+          - NUMERIC_FIELD
+        fldName:
+          type: string
+        fldType:
+          type: string
+          enum:
+          - ID
+          - BOOLEAN
+          - INTEGER
+          - LONG
+          - FLOAT
+          - DOUBLE
+          - DATE
+          - TEXT
+          - KEYWORD
+          - IPV4_ADDRESS
+          - DOC_REF
+        indexed:
+          type: boolean
+        stored:
+          type: boolean
+        termPositions:
+          type: boolean
     MapDefinition:
       type: object
       properties:
@@ -12715,8 +12659,6 @@ components:
           type: string
     QueryField:
       type: object
-      discriminator:
-        propertyName: type
       properties:
         conditionSet:
           type: string
@@ -12748,7 +12690,9 @@ components:
           - "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'"
         docRefType:
           type: string
-        fieldType:
+        fldName:
+          type: string
+        fldType:
           type: string
           enum:
           - ID
@@ -12768,8 +12712,6 @@ components:
           type: boolean
         type:
           type: string
-      required:
-      - type
     QueryHelpData:
       type: object
       discriminator:
@@ -12807,8 +12749,8 @@ components:
       - $ref: '#/components/schemas/QueryHelpData'
       - type: object
         properties:
-          fieldInfo:
-            $ref: '#/components/schemas/FieldInfo'
+          field:
+            $ref: '#/components/schemas/QueryField'
     QueryHelpFunctionSignature:
       type: object
       allOf:
@@ -13421,16 +13363,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Dependency'
-    ResultPageFieldInfo:
-      type: object
-      description: A page of results.
-      properties:
-        pageResponse:
-          $ref: '#/components/schemas/PageResponse'
-        values:
-          type: array
-          items:
-            $ref: '#/components/schemas/FieldInfo'
     ResultPageFindInContentResult:
       type: object
       description: A page of results.
@@ -13551,6 +13483,16 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ProcessorTaskSummary'
+    ResultPageQueryField:
+      type: object
+      description: A page of results.
+      properties:
+        pageResponse:
+          $ref: '#/components/schemas/PageResponse'
+        values:
+          type: array
+          items:
+            $ref: '#/components/schemas/QueryField'
     ResultPageQueryHelpRow:
       type: object
       description: A page of results.
@@ -14290,10 +14232,28 @@ components:
           - DATE_FIELD
           - FIELD
           - NUMERIC_FIELD
+        fldName:
+          type: string
+        fldType:
+          type: string
+          enum:
+          - ID
+          - BOOLEAN
+          - INTEGER
+          - LONG
+          - FLOAT
+          - DOUBLE
+          - DATE
+          - TEXT
+          - KEYWORD
+          - IPV4_ADDRESS
+          - DOC_REF
         indexed:
           type: boolean
         multiValued:
           type: boolean
+        nativeType:
+          type: string
         omitNorms:
           type: boolean
         omitPositions:
@@ -15135,10 +15095,6 @@ components:
           type: string
         version:
           type: string
-    TextField:
-      type: object
-      allOf:
-      - $ref: '#/components/schemas/QueryField'
     ThemeConfig:
       type: object
       properties:

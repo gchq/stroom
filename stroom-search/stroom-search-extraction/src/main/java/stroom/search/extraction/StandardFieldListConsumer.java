@@ -24,7 +24,7 @@ public class StandardFieldListConsumer implements FieldListConsumer {
     public void acceptFieldValues(final List<FieldValue> fieldValues) {
         final Val[] values = new Val[fieldIndex.size()];
         for (final FieldValue fieldValue : fieldValues) {
-            final Integer pos = fieldIndex.getPos(fieldValue.field().getFieldName());
+            final Integer pos = fieldIndex.getPos(fieldValue.field().getFldName());
             if (pos != null) {
                 values[pos] = fieldValue.value();
             }

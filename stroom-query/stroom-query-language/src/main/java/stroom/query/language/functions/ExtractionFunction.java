@@ -70,9 +70,4 @@ abstract class ExtractionFunction extends AbstractFunction {
     }
 
     abstract Extractor getExtractor();
-
-    @Override
-    public Type getCommonReturnType() {
-        return Type.STRING;
-    }
 }

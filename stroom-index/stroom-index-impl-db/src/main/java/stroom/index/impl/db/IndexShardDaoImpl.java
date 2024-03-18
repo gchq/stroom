@@ -16,12 +16,12 @@ import stroom.index.impl.IndexShardDao;
 import stroom.index.impl.IndexStore;
 import stroom.index.impl.db.jooq.tables.records.IndexShardRecord;
 import stroom.index.shared.FindIndexShardCriteria;
-import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.index.shared.IndexShardFields;
 import stroom.index.shared.IndexShardKey;
 import stroom.index.shared.IndexVolume;
+import stroom.index.shared.LuceneIndexDoc;
 import stroom.index.shared.Partition;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionUtil;
@@ -33,8 +33,6 @@ import stroom.query.language.functions.ValLong;
 import stroom.query.language.functions.ValNull;
 import stroom.query.language.functions.ValString;
 import stroom.query.language.functions.ValuesConsumer;
-import stroom.util.logging.LambdaLogger;
-import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.Range;
 import stroom.util.shared.ResultPage;
@@ -67,8 +65,6 @@ import static stroom.index.impl.db.jooq.tables.IndexVolume.INDEX_VOLUME;
 
 @Singleton // holding all the volume selectors
 class IndexShardDaoImpl implements IndexShardDao {
-
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexShardDaoImpl.class);
 
     private static final Function<Record, IndexShard> RECORD_TO_INDEX_SHARD_MAPPER = record -> {
         final IndexShard indexShard = new IndexShard();
@@ -209,11 +205,12 @@ class IndexShardDaoImpl implements IndexShardDao {
         final Condition condition = indexShardExpressionMapper.apply(criteria.getExpression());
 
         final boolean volumeUsed = isUsed(
-                Set.of(IndexShardFields.FIELD_VOLUME_PATH.getName(), IndexShardFields.FIELD_VOLUME_GROUP.getName()),
+                Set.of(IndexShardFields.FIELD_VOLUME_PATH.getFldName(),
+                        IndexShardFields.FIELD_VOLUME_GROUP.getFldName()),
                 fieldNames,
                 criteria);
         final boolean volumeGroupUsed = isUsed(
-                Set.of(IndexShardFields.FIELD_VOLUME_GROUP.getName()),
+                Set.of(IndexShardFields.FIELD_VOLUME_GROUP.getFldName()),
                 fieldNames,
                 criteria);
 
@@ -360,7 +357,7 @@ class IndexShardDaoImpl implements IndexShardDao {
         private Val getDocRefName(final String uuid) {
             String val = uuid;
             if (docRefInfoService != null) {
-                val = docRefInfoService.name(new DocRef(IndexDoc.DOCUMENT_TYPE, uuid))
+                val = docRefInfoService.name(new DocRef(LuceneIndexDoc.DOCUMENT_TYPE, uuid))
                         .orElse(uuid);
             }
             return ValString.create(val);
@@ -410,7 +407,7 @@ class IndexShardDaoImpl implements IndexShardDao {
             expressionMapper.map(IndexShardFields.FIELD_STATUS, INDEX_SHARD.STATUS, value ->
                     IndexShardStatus.fromDisplayValue(value).getPrimitiveValue());
             expressionMapper.map(IndexShardFields.FIELD_LAST_COMMIT, INDEX_SHARD.COMMIT_MS, value ->
-                    DateExpressionParser.getMs(IndexShardFields.FIELD_LAST_COMMIT.getName(), value));
+                    DateExpressionParser.getMs(IndexShardFields.FIELD_LAST_COMMIT.getFldName(), value));
             expressionMapper.map(IndexShardFields.FIELD_VOLUME_PATH, INDEX_VOLUME.PATH, value -> value);
             expressionMapper.map(IndexShardFields.FIELD_VOLUME_GROUP, INDEX_VOLUME_GROUP.NAME, value -> value);
         }

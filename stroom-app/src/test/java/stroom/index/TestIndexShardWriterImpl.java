@@ -28,12 +28,12 @@ import stroom.index.impl.IndexShardWriterCache;
 import stroom.index.impl.IndexStore;
 import stroom.index.impl.Indexer;
 import stroom.index.shared.FindIndexShardCriteria;
-import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexException;
-import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.index.shared.IndexShardKey;
+import stroom.index.shared.LuceneIndexDoc;
+import stroom.index.shared.LuceneIndexField;
 import stroom.query.language.functions.ValString;
 import stroom.search.extraction.FieldValue;
 import stroom.test.AbstractCoreIntegrationTest;
@@ -77,11 +77,11 @@ class TestIndexShardWriterImpl extends AbstractCoreIntegrationTest {
 
         // Do some work.
         final IndexDocument document = new IndexDocument();
-        document.add(new FieldValue(IndexField.createField("test"), ValString.create("test")));
+        document.add(new FieldValue(LuceneIndexField.createField("test"), ValString.create("test")));
 
         // Create an index
         final DocRef indexRef1 = commonTestScenarioCreator.createIndex("TEST_2010a");
-        final IndexDoc index1 = indexStore.readDocument(indexRef1);
+        final LuceneIndexDoc index1 = indexStore.readDocument(indexRef1);
         final IndexShardKey indexShardKey1 = IndexShardKeyUtil.createTestKey(index1);
 
         // Create a writer in the pool
@@ -124,14 +124,14 @@ class TestIndexShardWriterImpl extends AbstractCoreIntegrationTest {
 
         // Do some work.
         final IndexDocument document = new IndexDocument();
-        document.add(new FieldValue(IndexField.createField("test"), ValString.create("test")));
+        document.add(new FieldValue(LuceneIndexField.createField("test"), ValString.create("test")));
 
         final DocRef indexRef1 = commonTestScenarioCreator.createIndex("TEST_2010");
-        final IndexDoc index1 = indexStore.readDocument(indexRef1);
+        final LuceneIndexDoc index1 = indexStore.readDocument(indexRef1);
         final IndexShardKey indexShardKey1 = IndexShardKeyUtil.createTestKey(index1);
 
         final DocRef indexRef2 = commonTestScenarioCreator.createIndex("TEST_2011");
-        final IndexDoc index2 = indexStore.readDocument(indexRef2);
+        final LuceneIndexDoc index2 = indexStore.readDocument(indexRef2);
         final IndexShardKey indexShardKey2 = IndexShardKeyUtil.createTestKey(index2);
 
         // Create 2 writers in the pool.
@@ -206,12 +206,12 @@ class TestIndexShardWriterImpl extends AbstractCoreIntegrationTest {
     void testSimpleRoll() throws IOException {
         // Do some work.
         final IndexDocument document = new IndexDocument();
-        document.add(new FieldValue(IndexField.createField("test"), ValString.create("test")));
+        document.add(new FieldValue(LuceneIndexField.createField("test"), ValString.create("test")));
 
         final DocRef indexRef1 = commonTestScenarioCreator.createIndex("TEST_2010",
                 commonTestScenarioCreator.createIndexFields(),
                 10);
-        final IndexDoc index1 = indexStore.readDocument(indexRef1);
+        final LuceneIndexDoc index1 = indexStore.readDocument(indexRef1);
         final IndexShardKey indexShardKey1 = IndexShardKeyUtil.createTestKey(index1);
 
         final IndexShardWriter writer1 = indexShardWriterCache.getWriterByShardKey(indexShardKey1);

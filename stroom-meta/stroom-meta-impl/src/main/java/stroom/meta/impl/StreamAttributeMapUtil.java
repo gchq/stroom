@@ -28,24 +28,24 @@ class StreamAttributeMapUtil {
         final Map<String, Object> map = new HashMap<>();
 
         if (meta != null) {
-            map.put(MetaFields.ID.getName(), meta.getId());
-            map.put(MetaFields.CREATE_TIME.getName(), meta.getCreateMs());
-            map.put(MetaFields.EFFECTIVE_TIME.getName(), meta.getEffectiveMs());
-            map.put(MetaFields.STATUS_TIME.getName(), meta.getStatusMs());
-            map.put(MetaFields.STATUS.getName(), NullSafe.get(meta.getStatus(), Status::getDisplayValue));
+            map.put(MetaFields.ID.getFldName(), meta.getId());
+            map.put(MetaFields.CREATE_TIME.getFldName(), meta.getCreateMs());
+            map.put(MetaFields.EFFECTIVE_TIME.getFldName(), meta.getEffectiveMs());
+            map.put(MetaFields.STATUS_TIME.getFldName(), meta.getStatusMs());
+            map.put(MetaFields.STATUS.getFldName(), NullSafe.get(meta.getStatus(), Status::getDisplayValue));
             if (meta.getParentMetaId() != null) {
-                map.put(MetaFields.PARENT_ID.getName(), meta.getParentMetaId());
+                map.put(MetaFields.PARENT_ID.getFldName(), meta.getParentMetaId());
             }
             if (meta.getTypeName() != null) {
-                map.put(MetaFields.TYPE.getName(), meta.getTypeName());
+                map.put(MetaFields.TYPE.getFldName(), meta.getTypeName());
             }
             final String feedName = meta.getFeedName();
             if (feedName != null) {
-                map.put(MetaFields.FEED.getName(), feedName);
+                map.put(MetaFields.FEED.getFldName(), feedName);
             }
             final String pipelineUuid = meta.getPipelineUuid();
             if (pipelineUuid != null) {
-                map.put(MetaFields.PIPELINE.getName(), new DocRef("Pipeline", pipelineUuid));
+                map.put(MetaFields.PIPELINE.getFldName(), new DocRef("Pipeline", pipelineUuid));
             }
 //            if (streamProcessor != null) {
 //                final String pipelineUuid = streamProcessor.getPipelineUuid();
@@ -56,22 +56,22 @@ class StreamAttributeMapUtil {
         }
 
         MetaFields.getExtendedFields().forEach(field -> {
-            final String value = attributeMap.get(field.getName());
+            final String value = attributeMap.get(field.getFldName());
             if (value != null) {
                 try {
-                    switch (field.getFieldType()) {
+                    switch (field.getFldType()) {
                         case TEXT:
-                            map.put(field.getName(), value);
+                            map.put(field.getFldName(), value);
                             break;
                         case DATE:
-                            map.put(field.getName(), DateUtil.parseNormalDateTimeString(value));
+                            map.put(field.getFldName(), DateUtil.parseNormalDateTimeString(value));
                             break;
                         case DOC_REF:
-                            attributeMap.put(field.getName(), value);
+                            attributeMap.put(field.getFldName(), value);
                             break;
                         case ID:
                         case LONG:
-                            map.put(field.getName(), Long.valueOf(value));
+                            map.put(field.getFldName(), Long.valueOf(value));
                             break;
                     }
                 } catch (final RuntimeException e) {

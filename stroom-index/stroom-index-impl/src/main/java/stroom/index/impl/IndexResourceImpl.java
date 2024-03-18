@@ -5,9 +5,9 @@ import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.index.impl.IndexShardManager.IndexShardAction;
 import stroom.index.shared.FindIndexShardCriteria;
-import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexResource;
 import stroom.index.shared.IndexShard;
+import stroom.index.shared.LuceneIndexDoc;
 import stroom.node.api.NodeCallUtil;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
@@ -54,12 +54,12 @@ class IndexResourceImpl implements IndexResource {
     }
 
     @Override
-    public IndexDoc fetch(final String uuid) {
+    public LuceneIndexDoc fetch(final String uuid) {
         return indexStoreProvider.get().readDocument(getDocRef(uuid));
     }
 
     @Override
-    public IndexDoc update(final String uuid, final IndexDoc doc) {
+    public LuceneIndexDoc update(final String uuid, final LuceneIndexDoc doc) {
         if (doc.getUuid() == null || !doc.getUuid().equals(uuid)) {
             throw new EntityServiceException("The document UUID must match the update UUID");
         }
@@ -69,7 +69,7 @@ class IndexResourceImpl implements IndexResource {
     private DocRef getDocRef(final String uuid) {
         return DocRef.builder()
                 .uuid(uuid)
-                .type(IndexDoc.DOCUMENT_TYPE)
+                .type(LuceneIndexDoc.DOCUMENT_TYPE)
                 .build();
     }
 

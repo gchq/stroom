@@ -68,11 +68,6 @@ class Ref extends AbstractFunction {
         return false;
     }
 
-    @Override
-    public Type getCommonReturnType() {
-        return Type.STRING;
-    }
-
     private static final class Gen extends AbstractNoChildGenerator {
 
 

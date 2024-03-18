@@ -40,6 +40,7 @@ import stroom.util.shared.time.TimeUnit;
 import stroom.util.time.StroomDuration;
 
 import jakarta.inject.Inject;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -80,6 +81,11 @@ class TestDataRetentionPolicyExecutor extends AbstractCoreIntegrationTest {
     private PhysicalDeleteExecutor physicalDeleteExecutor;
     @Inject
     private DataStoreServiceConfig dataStoreServiceConfig;
+
+    @AfterEach
+    void unsetProperties() {
+        clearConfigValueMapper();
+    }
 
     @Test
     void testCheckArchive() throws IOException {
@@ -151,7 +157,7 @@ class TestDataRetentionPolicyExecutor extends AbstractCoreIntegrationTest {
         DataRetentionRules dataRetentionRules = dataRetentionRulesService.readDocument(docRef);
 
         final ExpressionOperator.Builder builder = ExpressionOperator.builder();
-        builder.addTerm(MetaFields.FEED, Condition.EQUALS, feedName);
+        builder.addDateTerm(MetaFields.FEED, Condition.EQUALS, feedName);
         final DataRetentionRule rule = createRule(1, builder.build(), FIFTY_FIVE, TimeUnit.DAYS);
         dataRetentionRules.setRules(Collections.singletonList(rule));
         dataRetentionRulesService.writeDocument(dataRetentionRules);

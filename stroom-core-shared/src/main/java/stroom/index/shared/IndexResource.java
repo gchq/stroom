@@ -40,7 +40,7 @@ import org.fusesource.restygwt.client.DirectRestService;
 @Path(IndexResource.BASE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-public interface IndexResource extends RestResource, DirectRestService, FetchWithUuid<IndexDoc>,
+public interface IndexResource extends RestResource, DirectRestService, FetchWithUuid<LuceneIndexDoc>,
         FindWithCriteria<FindIndexShardCriteria, IndexShard> {
 
     String BASE_PATH = "/index" + ResourcePaths.V2;
@@ -52,15 +52,15 @@ public interface IndexResource extends RestResource, DirectRestService, FetchWit
     @Operation(
             summary = "Fetch a index doc by its UUID",
             operationId = "fetchIndex")
-    IndexDoc fetch(@PathParam("uuid") String uuid);
+    LuceneIndexDoc fetch(@PathParam("uuid") String uuid);
 
     @PUT
     @Path("/{uuid}")
     @Operation(
             summary = "Update an index doc",
             operationId = "updateIndex")
-    IndexDoc update(@PathParam("uuid") String uuid,
-                    @Parameter(description = "doc", required = true) IndexDoc doc);
+    LuceneIndexDoc update(@PathParam("uuid") String uuid,
+                          @Parameter(description = "doc", required = true) LuceneIndexDoc doc);
 
     @POST
     @Path("/shard/find")

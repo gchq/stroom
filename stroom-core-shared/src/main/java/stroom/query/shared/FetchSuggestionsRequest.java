@@ -16,7 +16,7 @@
 
 package stroom.query.shared;
 
-import stroom.datasource.api.v2.FieldInfo;
+import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -35,14 +35,14 @@ public class FetchSuggestionsRequest {
 
     @NotNull
     @JsonProperty
-    private final FieldInfo field;
+    private final QueryField field;
 
     @JsonProperty
     private final String text;
 
     @JsonCreator
     public FetchSuggestionsRequest(@JsonProperty("dataSource") final DocRef dataSource,
-                                   @JsonProperty("field") final FieldInfo field,
+                                   @JsonProperty("field") final QueryField field,
                                    @JsonProperty("text") final String text) {
         this.dataSource = dataSource;
         this.field = field;
@@ -53,7 +53,7 @@ public class FetchSuggestionsRequest {
         return dataSource;
     }
 
-    public FieldInfo getField() {
+    public QueryField getField() {
         return field;
     }
 

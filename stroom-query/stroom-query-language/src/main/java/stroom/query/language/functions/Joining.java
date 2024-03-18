@@ -144,11 +144,6 @@ class Joining extends AbstractFunction implements AggregateFunction {
         return super.requiresChildData();
     }
 
-    @Override
-    public Type getCommonReturnType() {
-        return Type.STRING;
-    }
-
     private static class Gen extends AbstractSingleChildGenerator {
 
         private final String delimiter;

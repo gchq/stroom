@@ -1,6 +1,6 @@
 package stroom.index.shared;
 
-import stroom.index.shared.IndexDoc.PartitionBy;
+import stroom.index.shared.LuceneIndexDoc.PartitionBy;
 
 import java.util.Objects;
 
