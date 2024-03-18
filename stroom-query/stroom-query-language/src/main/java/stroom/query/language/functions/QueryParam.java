@@ -86,9 +86,4 @@ class QueryParam extends AbstractFunction {
     public boolean hasAggregate() {
         return false;
     }
-
-    @Override
-    public Type getCommonReturnType() {
-        return Type.STRING;
-    }
 }

@@ -8,7 +8,6 @@ import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.Filter;
-import stroom.query.api.v2.Format;
 import stroom.query.api.v2.HoppingWindow;
 import stroom.query.api.v2.ParamSubstituteUtil;
 import stroom.query.api.v2.Query;
@@ -1074,14 +1073,6 @@ public class SearchRequestFactory {
                 }
             }
 
-            Format format = Format.GENERAL;
-            switch (expression.getCommonReturnType()) {
-                case DATE -> format = Format.DATE_TIME;
-                case LONG, INTEGER, DOUBLE, FLOAT -> format = Format.NUMBER;
-                default -> {
-                }
-            }
-
             final String expressionString = expression.toString();
             final Column field = Column.builder()
                     .id(id)
@@ -1092,7 +1083,6 @@ public class SearchRequestFactory {
                     .sort(sortMap.get(fieldName))
                     .group(groupMap.get(fieldName))
                     .filter(filterMap.get(fieldName))
-                    .format(format)
                     .visible(visible)
                     .special(special)
                     .build();

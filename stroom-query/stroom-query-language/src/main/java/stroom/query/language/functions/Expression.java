@@ -81,9 +81,4 @@ public class Expression implements Function {
     public boolean requiresChildData() {
         return function.requiresChildData();
     }
-
-    @Override
-    public Type getCommonReturnType() {
-        return function.getCommonReturnType();
-    }
 }

@@ -89,4 +89,9 @@ public final class ValNull implements Val {
     public Comparator<Val> getDefaultComparator(final boolean isCaseSensitive) {
         return COMPARATOR;
     }
+
+    @Override
+    public Object unwrap() {
+        return null;
+    }
 }

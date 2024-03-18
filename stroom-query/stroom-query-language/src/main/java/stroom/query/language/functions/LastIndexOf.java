@@ -113,11 +113,6 @@ class LastIndexOf extends AbstractFunction {
         return requiresChildData;
     }
 
-    @Override
-    public Type getCommonReturnType() {
-        return Type.INTEGER;
-    }
-
     private static final class Gen extends AbstractSingleChildGenerator {
 
         private final Generator stringGenerator;

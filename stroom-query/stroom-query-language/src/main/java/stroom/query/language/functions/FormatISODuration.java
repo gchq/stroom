@@ -86,11 +86,6 @@ class FormatISODuration extends AbstractFunction {
         return super.requiresChildData();
     }
 
-    @Override
-    public Type getCommonReturnType() {
-        return Type.DURATION;
-    }
-
     private static final class Gen extends AbstractSingleChildGenerator {
 
         Gen(final Generator childGenerator) {

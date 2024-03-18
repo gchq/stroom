@@ -47,11 +47,6 @@ class ToLong extends AbstractCast {
         return CAST;
     }
 
-    @Override
-    public Type getCommonReturnType() {
-        return Type.LONG;
-    }
-
     private static class Cast extends AbstractCaster {
 
         @Override
