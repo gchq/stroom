@@ -371,7 +371,7 @@ appConfig:
       refreshAfterWrite: null
     indexFieldCache:
       expireAfterAccess: null
-      expireAfterWrite: "PT10S"
+      expireAfterWrite: "PT10H"
       maximumSize: 10000
       refreshAfterWrite: null
     ramBufferSizeMB: 1024
