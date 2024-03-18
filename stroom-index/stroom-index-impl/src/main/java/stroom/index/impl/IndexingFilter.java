@@ -36,11 +36,11 @@ import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.MetaHolder;
 import stroom.query.common.v2.IndexFieldCache;
-import stroom.query.language.functions.ValString;
+import stroom.query.language.functions.Val;
 import stroom.search.extraction.FieldValue;
+import stroom.search.extraction.IndexFieldUtil;
 import stroom.svg.shared.SvgImage;
 import stroom.util.CharBuffer;
-import stroom.util.date.DateUtil;
 import stroom.util.shared.Severity;
 
 import jakarta.inject.Inject;
@@ -245,97 +245,52 @@ class IndexingFilter extends AbstractXMLFilter {
 
     private void processIndexContent(final IndexField indexField, final String value) {
         try {
-            if (currentEventTime == null &&
-                    FieldType.DATE.equals(indexField.getFldType()) &&
-                    indexField.getFldName().equals(index.getTimeField())) {
-                try {
-                    // Set the current event time if this is a recognised event time field.
-                    currentEventTime = DateUtil.parseUnknownString(value);
-                } catch (final RuntimeException e) {
-                    LOGGER.trace(e.getMessage(), e);
+            final Val val = convertValue(indexField, value);
+            if (val != null) {
+                if (currentEventTime == null &&
+                        FieldType.DATE.equals(indexField.getFldType()) &&
+                        indexField.getFldName().equals(index.getTimeField())) {
+                    try {
+                        // Set the current event time if this is a recognised event time field.
+                        currentEventTime = val.toLong();
+                    } catch (final RuntimeException e) {
+                        LOGGER.trace(e.getMessage(), e);
+                    }
                 }
+
+                // Add the current field to the document if it is not null.
+                final FieldValue fieldValue = new FieldValue(indexField, val);
+
+                // Output some debug.
+                if (LOGGER.isDebugEnabled()) {
+                    debugBuffer.append("processIndexContent() - Adding to index indexName=");
+                    debugBuffer.append(indexRef.getName());
+                    debugBuffer.append(" name=");
+                    debugBuffer.append(indexField.getFldName());
+                    debugBuffer.append(" value=");
+                    debugBuffer.append(value);
+
+                    final String debug = debugBuffer.toString();
+                    debugBuffer.clear();
+
+                    LOGGER.debug(debug);
+                }
+
+                document.add(fieldValue);
             }
-
-
-//            Field field = null;
-//
-//            if (IndexFieldType.INTEGER_FIELD.equals(indexField.getFieldType())) {
-//                FieldValue fieldValue = new FieldValue(indexField, ValString.create(value));
-//
-//                try {
-//                    final int val = Integer.parseInt(value);
-//                    field = FieldFactory.createInt(indexField, val);
-//                } catch (final Exception e) {
-//                    LOGGER.trace(e.getMessage(), e);
-//                }
-//            } else if (IndexFieldType.LONG_FIELD.equals(indexField.getFieldType())) {
-//                try {
-//                    final long val = Long.parseLong(value);
-//                    field = FieldFactory.create(indexField, val);
-//                } catch (final Exception e) {
-//                    LOGGER.trace(e.getMessage(), e);
-//                }
-//            } else if (IndexFieldType.FLOAT_FIELD.equals(indexField.getFieldType())) {
-//                try {
-//                    final float val = Float.parseFloat(value);
-//                    field = FieldFactory.createFloat(indexField, val);
-//                } catch (final Exception e) {
-//                    LOGGER.trace(e.getMessage(), e);
-//                }
-//            } else if (IndexFieldType.DOUBLE_FIELD.equals(indexField.getFieldType())) {
-//                try {
-//                    final double val = Double.parseDouble(value);
-//                    field = FieldFactory.createDouble(indexField, val);
-//                } catch (final Exception e) {
-//                    LOGGER.trace(e.getMessage(), e);
-//                }
-//            } else if (IndexFieldType.DATE_FIELD.equals(indexField.getFieldType())) {
-//                try {
-//                    final long val = DateUtil.parseUnknownString(value);
-//
-//                    // Set the current event time if this is a recognised event time field.
-//                    if (currentEventTime == null && indexField.getFieldName().equals(index.getTimeField())) {
-//                        currentEventTime = val;
-//                    }
-//
-//                    field = FieldFactory.create(indexField, val);
-//                } catch (final RuntimeException e) {
-//                    LOGGER.trace(e.getMessage(), e);
-//                }
-//            } else if (indexField.getFieldType().isNumeric()) {
-//                try {
-//                    final long val = Long.parseLong(value);
-//                    field = FieldFactory.create(indexField, val);
-//                } catch (final Exception e) {
-//                    LOGGER.trace(e.getMessage(), e);
-//                }
-//            } else {
-//                field = FieldFactory.create(indexField, value);
-//            }
-
-            // Add the current field to the document if it is not null.
-            final FieldValue fieldValue = new FieldValue(indexField, ValString.create(value));
-
-            // Output some debug.
-            if (LOGGER.isDebugEnabled()) {
-                debugBuffer.append("processIndexContent() - Adding to index indexName=");
-                debugBuffer.append(indexRef.getName());
-                debugBuffer.append(" name=");
-                debugBuffer.append(indexField.getFldName());
-                debugBuffer.append(" value=");
-                debugBuffer.append(value);
-
-                final String debug = debugBuffer.toString();
-                debugBuffer.clear();
-
-                LOGGER.debug(debug);
-            }
-
-            document.add(fieldValue);
 
         } catch (final RuntimeException e) {
             log(Severity.ERROR, e.getMessage(), e);
         }
+    }
+
+    private Val convertValue(final IndexField indexField, final String value) {
+        try {
+            return IndexFieldUtil.convertValue(indexField, value);
+        } catch (final RuntimeException e) {
+            log(Severity.ERROR, e.getMessage(), e);
+        }
+        return null;
     }
 
     @PipelineProperty(description = "The index to send records to.", displayPriority = 1)

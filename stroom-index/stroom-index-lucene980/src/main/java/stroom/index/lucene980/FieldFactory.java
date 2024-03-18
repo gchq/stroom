@@ -19,6 +19,13 @@ package stroom.index.lucene980;
 import stroom.datasource.api.v2.IndexField;
 import stroom.index.shared.LuceneIndexField;
 import stroom.query.language.functions.Val;
+import stroom.query.language.functions.ValBoolean;
+import stroom.query.language.functions.ValDate;
+import stroom.query.language.functions.ValDouble;
+import stroom.query.language.functions.ValFloat;
+import stroom.query.language.functions.ValInteger;
+import stroom.query.language.functions.ValLong;
+import stroom.query.language.functions.ValString;
 import stroom.search.extraction.FieldValue;
 
 import org.apache.lucene980.document.DoubleField;
@@ -27,6 +34,7 @@ import org.apache.lucene980.document.Field.Store;
 import org.apache.lucene980.document.FloatField;
 import org.apache.lucene980.document.IntField;
 import org.apache.lucene980.document.LongField;
+import org.apache.lucene980.index.IndexableField;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -87,7 +95,7 @@ class FieldFactory {
                 }
             }
             case BOOLEAN -> {
-                // TODo : We are indexing boolean as String, not sure this is right.
+                // TODO : We are indexing boolean as String, not sure this is right.
                 field = FieldFactory.create(luceneIndexField, value.toString());
             }
             case INTEGER -> {
@@ -124,5 +132,39 @@ class FieldFactory {
         }
 
         return field;
+    }
+
+    public static Val convertValue(final IndexField indexField, final IndexableField indexableField) {
+        switch (indexField.getFldType()) {
+            case LONG, ID -> {
+                final long val = indexableField.numericValue().longValue();
+                return ValLong.create(val);
+            }
+            case BOOLEAN -> {
+                // TODO : We are indexing boolean as String, not sure this is right.
+                final boolean val = Boolean.parseBoolean(indexableField.stringValue());
+                return ValBoolean.create(val);
+            }
+            case INTEGER -> {
+                final int val = indexableField.numericValue().intValue();
+                return ValInteger.create(val);
+            }
+            case FLOAT -> {
+                final float val = indexableField.numericValue().floatValue();
+                return ValFloat.create(val);
+            }
+            case DOUBLE -> {
+                final double val = indexableField.numericValue().doubleValue();
+                return ValDouble.create(val);
+            }
+            case DATE -> {
+                final long val = indexableField.numericValue().longValue();
+                return ValDate.create(val);
+            }
+            case TEXT -> {
+                return ValString.create(indexableField.stringValue());
+            }
+        }
+        return ValString.create(indexableField.stringValue());
     }
 }

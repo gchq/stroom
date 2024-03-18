@@ -28,7 +28,9 @@ import stroom.util.logging.LambdaLoggerFactory;
 
 import jakarta.inject.Inject;
 
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
@@ -87,19 +89,21 @@ public class LuceneSearcher {
             throw new SearchException("Search index has not been set");
         }
 
-        final String[] storedFieldNames = new String[fieldIndex.size()];
-        for (int i = 0; i < storedFieldNames.length; i++) {
+        final IndexField[] storedFields = new IndexField[fieldIndex.size()];
+        final Set<String> fieldsToLoad = new HashSet<>();
+        for (int i = 0; i < storedFields.length; i++) {
             final String fieldName = fieldIndex.getField(i);
             if (fieldName != null) {
                 final IndexField indexField = indexFieldCache.get(task.getQuery().getDataSource(), fieldName);
                 if (indexField != null && indexField.isStored()) {
-                    storedFieldNames[i] = fieldName;
+                    storedFields[i] = indexField;
+                    fieldsToLoad.add(indexField.getFldName());
                 }
             }
         }
 
         // Get the stored fields that search is hoping to use.
-        if (storedFieldNames.length == 0) {
+        if (storedFields.length == 0) {
             throw new SearchException("No stored fields have been requested");
         }
 
@@ -107,7 +111,7 @@ public class LuceneSearcher {
         final CompletableFuture<Void>[] futures = new CompletableFuture[threadCount];
         final Executor executor = executorProvider.get(INDEX_SHARD_SEARCH_THREAD_POOL);
 
-        if (task.getShards().size() > 0) {
+        if (!task.getShards().isEmpty()) {
 //            final IndexShardQueryFactory queryFactory = createIndexShardQueryFactory(
 //                    task, expression, indexFieldsMap, errorConsumer);
 
@@ -148,7 +152,8 @@ public class LuceneSearcher {
                                                 luceneShardSearcher.searchShard(
                                                         taskContext,
                                                         indexShard,
-                                                        storedFieldNames,
+                                                        storedFields,
+                                                        fieldsToLoad,
                                                         hitCount,
                                                         shardNo.incrementAndGet(),
                                                         task.getShards().size(),
