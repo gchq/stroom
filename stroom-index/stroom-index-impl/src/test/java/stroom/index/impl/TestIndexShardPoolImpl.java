@@ -18,10 +18,9 @@ package stroom.index.impl;
 
 import stroom.index.mock.MockIndexShardService;
 import stroom.index.mock.MockIndexShardWriterCache;
-import stroom.index.shared.IndexDoc;
-import stroom.index.shared.IndexField;
-import stroom.index.shared.IndexFields;
 import stroom.index.shared.IndexShardKey;
+import stroom.index.shared.LuceneIndexDoc;
+import stroom.index.shared.LuceneIndexField;
 import stroom.query.language.functions.ValString;
 import stroom.search.extraction.FieldValue;
 import stroom.test.common.util.test.StroomUnitTest;
@@ -95,8 +94,8 @@ class TestIndexShardPoolImpl extends StroomUnitTest {
 
     private void doTest(final int threadSize, final int jobSize, final int numberOfIndexes,
                         final int shardsPerPartition, final int maxDocumentsPerIndexShard) throws InterruptedException {
-        final IndexField indexField = IndexField.createField("test");
-        final List<IndexField> indexFields = IndexFields.createStreamIndexFields();
+        final LuceneIndexField indexField = LuceneIndexField.createField("test");
+        final List<LuceneIndexField> indexFields = IndexFields.createStreamIndexFields();
         indexFields.add(indexField);
 
         final IndexShardService mockIndexShardService = new MockIndexShardService(indexShardsCreated,
@@ -113,7 +112,7 @@ class TestIndexShardPoolImpl extends StroomUnitTest {
         final SimpleExecutor simpleExecutor = new SimpleExecutor(threadSize);
 
         for (int i = 0; i < numberOfIndexes; i++) {
-            final IndexDoc index = new IndexDoc();
+            final LuceneIndexDoc index = new LuceneIndexDoc();
             index.setUuid("uuid" + i);
             index.setName("index " + i);
             index.setFields(indexFields);
@@ -140,11 +139,11 @@ class TestIndexShardPoolImpl extends StroomUnitTest {
 
         private final Indexer indexer;
         private final IndexShardKey indexShardKey;
-        private final IndexField indexField;
+        private final LuceneIndexField indexField;
         private final int testNumber;
 
         IndexThread(final Indexer indexer, final IndexShardKey indexShardKey,
-                    final IndexField indexField, final int testNumber) {
+                    final LuceneIndexField indexField, final int testNumber) {
             this.indexer = indexer;
             this.indexShardKey = indexShardKey;
             this.indexField = indexField;

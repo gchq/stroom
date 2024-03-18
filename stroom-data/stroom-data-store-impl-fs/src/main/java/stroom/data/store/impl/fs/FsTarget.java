@@ -147,8 +147,8 @@ final class FsTarget implements InternalTarget, SegmentOutputStreamProviderFacto
     }
 
     private void updateAttribute(final FsTarget target, final QueryField key, final String value) {
-        if (!target.getAttributes().containsKey(key.getName())) {
-            target.getAttributes().put(key.getName(), value);
+        if (!target.getAttributes().containsKey(key.getFldName())) {
+            target.getAttributes().put(key.getFldName(), value);
         }
     }
 

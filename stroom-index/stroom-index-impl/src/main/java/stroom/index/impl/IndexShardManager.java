@@ -19,9 +19,9 @@ package stroom.index.impl;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentNotFoundException;
 import stroom.index.shared.FindIndexShardCriteria;
-import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
+import stroom.index.shared.LuceneIndexDoc;
 import stroom.node.api.NodeInfo;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
@@ -314,7 +314,8 @@ public class IndexShardManager {
     private void checkRetention(final IndexShard shard) {
         try {
             // Delete this shard if it is older than the retention age.
-            final IndexDoc index = indexStore.readDocument(new DocRef(IndexDoc.DOCUMENT_TYPE, shard.getIndexUuid()));
+            final LuceneIndexDoc index = indexStore.readDocument(
+                    new DocRef(LuceneIndexDoc.DOCUMENT_TYPE, shard.getIndexUuid()));
             if (index == null) {
                 // If there is no associated index then delete the shard.
                 setStatus(shard.getId(), IndexShardStatus.DELETED);

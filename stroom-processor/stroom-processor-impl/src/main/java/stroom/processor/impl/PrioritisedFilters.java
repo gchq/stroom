@@ -57,10 +57,10 @@ public class PrioritisedFilters implements Clearable {
             LOGGER.trace("Getting enabled non deleted filters");
             info(() -> "Getting enabled non deleted filters");
             final ExpressionOperator expression = ExpressionOperator.builder()
-                    .addTerm(ProcessorFields.ENABLED, Condition.EQUALS, true)
-                    .addTerm(ProcessorFields.DELETED, Condition.EQUALS, false)
-                    .addTerm(ProcessorFilterFields.ENABLED, Condition.EQUALS, true)
-                    .addTerm(ProcessorFilterFields.DELETED, Condition.EQUALS, false)
+                    .addBooleanTerm(ProcessorFields.ENABLED, Condition.EQUALS, true)
+                    .addBooleanTerm(ProcessorFields.DELETED, Condition.EQUALS, false)
+                    .addBooleanTerm(ProcessorFilterFields.ENABLED, Condition.EQUALS, true)
+                    .addBooleanTerm(ProcessorFilterFields.DELETED, Condition.EQUALS, false)
                     .build();
 
             final ExpressionCriteria findProcessorFilterCriteria = new ExpressionCriteria(expression);

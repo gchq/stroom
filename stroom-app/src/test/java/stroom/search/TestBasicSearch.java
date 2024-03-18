@@ -38,7 +38,7 @@ class TestBasicSearch extends AbstractCoreIntegrationTest {
 //    @Test
 //    void testSimple() throws IOException {
 //        final List<IndexField> indexFields = IndexFields.createStreamIndexFields();
-//        final IndexField idField = IndexField.createField("IdTreeNode",
+//        final IndexField QueryField = IndexField.createField("IdTreeNode",
 //                AnalyzerType.ALPHA_NUMERIC,
 //                false,
 //                true,

@@ -36,8 +36,7 @@ public class ComparatorFactory {
             // Even if we have numbers mixed in with words, we want the numbers
             // sorted numerically, i.e. 3, 20, 100, foo
             // rather than 100, 20, 3, foo
-            return ValComparators.getSortComparator(compiledColumn.getCommonReturnType())
-                    .orElse(ValComparators.AS_DOUBLE_THEN_CASE_INSENSITIVE_STRING_COMPARATOR);
+            return ValComparators.AS_DOUBLE_THEN_CASE_INSENSITIVE_STRING_COMPARATOR;
         }
     }
 }

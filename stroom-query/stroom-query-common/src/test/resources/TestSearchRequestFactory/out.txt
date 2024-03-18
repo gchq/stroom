@@ -65,9 +65,6 @@ select StreamId, EventId, EventTime, Status
         "id" : "StreamId",
         "name" : "StreamId",
         "expression" : "${StreamId}",
-        "format" : {
-          "type" : "GENERAL"
-        },
         "width" : 200,
         "visible" : true,
         "special" : false
@@ -75,9 +72,6 @@ select StreamId, EventId, EventTime, Status
         "id" : "EventId",
         "name" : "EventId",
         "expression" : "${EventId}",
-        "format" : {
-          "type" : "GENERAL"
-        },
         "width" : 200,
         "visible" : true,
         "special" : false
@@ -85,9 +79,6 @@ select StreamId, EventId, EventTime, Status
         "id" : "EventTime",
         "name" : "EventTime",
         "expression" : "${EventTime}",
-        "format" : {
-          "type" : "GENERAL"
-        },
         "width" : 200,
         "visible" : true,
         "special" : false
@@ -95,9 +86,6 @@ select StreamId, EventId, EventTime, Status
         "id" : "Status",
         "name" : "Status",
         "expression" : "${Status}",
-        "format" : {
-          "type" : "GENERAL"
-        },
         "width" : 200,
         "visible" : true,
         "special" : false
@@ -184,9 +172,6 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "id" : "StreamId",
         "name" : "Stream Id",
         "expression" : "${StreamId}",
-        "format" : {
-          "type" : "GENERAL"
-        },
         "width" : 200,
         "visible" : true,
         "special" : false
@@ -194,9 +179,6 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "id" : "EventId",
         "name" : "Event Id",
         "expression" : "${EventId}",
-        "format" : {
-          "type" : "GENERAL"
-        },
         "width" : 200,
         "visible" : true,
         "special" : false
@@ -204,9 +186,6 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "id" : "EventTime",
         "name" : "Event Time",
         "expression" : "${EventTime}",
-        "format" : {
-          "type" : "GENERAL"
-        },
         "width" : 200,
         "visible" : true,
         "special" : false
@@ -214,9 +193,6 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "id" : "Status",
         "name" : "Status",
         "expression" : "${Status}",
-        "format" : {
-          "type" : "GENERAL"
-        },
         "width" : 200,
         "visible" : true,
         "special" : false
@@ -304,9 +280,6 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "id" : "StreamId",
         "name" : "Stream Id",
         "expression" : "${StreamId}",
-        "format" : {
-          "type" : "GENERAL"
-        },
         "width" : 200,
         "visible" : true,
         "special" : false
@@ -314,9 +287,6 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "id" : "EventId",
         "name" : "Event Id",
         "expression" : "${EventId}",
-        "format" : {
-          "type" : "GENERAL"
-        },
         "width" : 200,
         "visible" : true,
         "special" : false
@@ -324,9 +294,6 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "id" : "EventTime",
         "name" : "Event Time",
         "expression" : "${EventTime}",
-        "format" : {
-          "type" : "GENERAL"
-        },
         "width" : 200,
         "visible" : true,
         "special" : false
@@ -334,9 +301,6 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "id" : "Status",
         "name" : "Status",
         "expression" : "${Status}",
-        "format" : {
-          "type" : "GENERAL"
-        },
         "width" : 200,
         "visible" : true,
         "special" : false
@@ -344,9 +308,6 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "id" : "UserId",
         "name" : "User Id",
         "expression" : "upperCase(${UserId})",
-        "format" : {
-          "type" : "GENERAL"
-        },
         "width" : 200,
         "visible" : true,
         "special" : false
@@ -425,9 +386,6 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "id" : "StreamId",
         "name" : "Stream Id",
         "expression" : "${StreamId}",
-        "format" : {
-          "type" : "GENERAL"
-        },
         "width" : 200,
         "visible" : true,
         "special" : false
@@ -435,9 +393,6 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "id" : "EventId",
         "name" : "Event Id",
         "expression" : "${EventId}",
-        "format" : {
-          "type" : "GENERAL"
-        },
         "width" : 200,
         "visible" : true,
         "special" : false
@@ -445,9 +400,6 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "id" : "EventTime",
         "name" : "Event Time",
         "expression" : "${EventTime}",
-        "format" : {
-          "type" : "GENERAL"
-        },
         "width" : 200,
         "visible" : true,
         "special" : false
@@ -455,9 +407,6 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "id" : "Status",
         "name" : "Status",
         "expression" : "${Status}",
-        "format" : {
-          "type" : "GENERAL"
-        },
         "width" : 200,
         "visible" : true,
         "special" : false
@@ -465,9 +414,6 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "id" : "UserId",
         "name" : "User Id",
         "expression" : "upperCase(${UserId})",
-        "format" : {
-          "type" : "GENERAL"
-        },
         "width" : 200,
         "visible" : true,
         "special" : false
@@ -546,9 +492,6 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "id" : "StreamId",
         "name" : "Stream Id",
         "expression" : "${StreamId}",
-        "format" : {
-          "type" : "GENERAL"
-        },
         "width" : 200,
         "visible" : true,
         "special" : false
@@ -556,9 +499,6 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "id" : "EventId",
         "name" : "Event Id",
         "expression" : "${EventId}",
-        "format" : {
-          "type" : "GENERAL"
-        },
         "width" : 200,
         "visible" : true,
         "special" : false
@@ -566,9 +506,6 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "id" : "EventTime",
         "name" : "Event Time",
         "expression" : "${EventTime}",
-        "format" : {
-          "type" : "GENERAL"
-        },
         "width" : 200,
         "visible" : true,
         "special" : false
@@ -576,9 +513,6 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "id" : "Status",
         "name" : "Status",
         "expression" : "${Status}",
-        "format" : {
-          "type" : "GENERAL"
-        },
         "width" : 200,
         "visible" : true,
         "special" : false
@@ -586,9 +520,6 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "id" : "UserId",
         "name" : "User Id",
         "expression" : "upperCase(${UserId})",
-        "format" : {
-          "type" : "GENERAL"
-        },
         "width" : 200,
         "visible" : true,
         "special" : false
@@ -641,9 +572,6 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "id" : "StreamId",
         "name" : "Stream Id",
         "expression" : "${StreamId}",
-        "format" : {
-          "type" : "GENERAL"
-        },
         "width" : 200,
         "visible" : true,
         "special" : false
@@ -651,9 +579,6 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "id" : "EventId",
         "name" : "Event Id",
         "expression" : "${EventId}",
-        "format" : {
-          "type" : "GENERAL"
-        },
         "width" : 200,
         "visible" : true,
         "special" : false
@@ -661,9 +586,6 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "id" : "EventTime",
         "name" : "Event Time",
         "expression" : "${EventTime}",
-        "format" : {
-          "type" : "GENERAL"
-        },
         "width" : 200,
         "visible" : true,
         "special" : false
@@ -671,9 +593,6 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "id" : "Status",
         "name" : "Status",
         "expression" : "${Status}",
-        "format" : {
-          "type" : "GENERAL"
-        },
         "width" : 200,
         "visible" : true,
         "special" : false
@@ -681,9 +600,6 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "id" : "UserId",
         "name" : "User Id",
         "expression" : "upperCase(${UserId})",
-        "format" : {
-          "type" : "GENERAL"
-        },
         "width" : 200,
         "visible" : true,
         "special" : false
@@ -735,9 +651,6 @@ select StreamId
         "id" : "StreamId",
         "name" : "StreamId",
         "expression" : "${StreamId}",
-        "format" : {
-          "type" : "GENERAL"
-        },
         "width" : 200,
         "visible" : true,
         "special" : false
@@ -797,9 +710,6 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "id" : "StreamId",
         "name" : "Stream Id",
         "expression" : "${StreamId}",
-        "format" : {
-          "type" : "GENERAL"
-        },
         "width" : 200,
         "visible" : true,
         "special" : false
@@ -807,9 +717,6 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "id" : "EventId",
         "name" : "Event Id",
         "expression" : "${EventId}",
-        "format" : {
-          "type" : "GENERAL"
-        },
         "width" : 200,
         "visible" : true,
         "special" : false
@@ -817,9 +724,6 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "id" : "EventTime",
         "name" : "Event Time",
         "expression" : "${EventTime}",
-        "format" : {
-          "type" : "GENERAL"
-        },
         "width" : 200,
         "visible" : true,
         "special" : false
@@ -827,9 +731,6 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "id" : "Status",
         "name" : "Status",
         "expression" : "${Status}",
-        "format" : {
-          "type" : "GENERAL"
-        },
         "width" : 200,
         "visible" : true,
         "special" : false
@@ -837,9 +738,6 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "id" : "UserId",
         "name" : "User Id",
         "expression" : "upperCase(${UserId})",
-        "format" : {
-          "type" : "GENERAL"
-        },
         "width" : 200,
         "visible" : true,
         "special" : false
@@ -892,9 +790,6 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "id" : "StreamId",
         "name" : "Stream Id",
         "expression" : "${StreamId}",
-        "format" : {
-          "type" : "GENERAL"
-        },
         "width" : 200,
         "visible" : true,
         "special" : false
@@ -902,9 +797,6 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "id" : "EventId",
         "name" : "Event Id",
         "expression" : "${EventId}",
-        "format" : {
-          "type" : "GENERAL"
-        },
         "width" : 200,
         "visible" : true,
         "special" : false
@@ -912,9 +804,6 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "id" : "EventTime",
         "name" : "Event Time",
         "expression" : "${EventTime}",
-        "format" : {
-          "type" : "GENERAL"
-        },
         "width" : 200,
         "visible" : true,
         "special" : false
@@ -922,9 +811,6 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "id" : "Status",
         "name" : "Status",
         "expression" : "${Status}",
-        "format" : {
-          "type" : "GENERAL"
-        },
         "width" : 200,
         "visible" : true,
         "special" : false
@@ -932,9 +818,6 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "id" : "UserId",
         "name" : "User Id",
         "expression" : "upperCase(${UserId})",
-        "format" : {
-          "type" : "GENERAL"
-        },
         "width" : 200,
         "visible" : true,
         "special" : false
@@ -987,9 +870,6 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "id" : "StreamId",
         "name" : "Stream Id",
         "expression" : "${StreamId}",
-        "format" : {
-          "type" : "GENERAL"
-        },
         "width" : 200,
         "visible" : true,
         "special" : false
@@ -997,9 +877,6 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "id" : "EventId",
         "name" : "Event Id",
         "expression" : "${EventId}",
-        "format" : {
-          "type" : "GENERAL"
-        },
         "width" : 200,
         "visible" : true,
         "special" : false
@@ -1007,9 +884,6 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "id" : "EventTime",
         "name" : "Event Time",
         "expression" : "${EventTime}",
-        "format" : {
-          "type" : "GENERAL"
-        },
         "width" : 200,
         "visible" : true,
         "special" : false
@@ -1017,9 +891,6 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "id" : "Status",
         "name" : "Status",
         "expression" : "${Status}",
-        "format" : {
-          "type" : "GENERAL"
-        },
         "width" : 200,
         "visible" : true,
         "special" : false
@@ -1027,9 +898,6 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "id" : "UserId",
         "name" : "User Id",
         "expression" : "upperCase(${UserId})",
-        "format" : {
-          "type" : "GENERAL"
-        },
         "width" : 200,
         "visible" : true,
         "special" : false
@@ -1073,9 +941,6 @@ select StreamId as "Stream Id", count as Count
         "id" : "StreamId",
         "name" : "Stream Id",
         "expression" : "${StreamId}",
-        "format" : {
-          "type" : "GENERAL"
-        },
         "group" : 0,
         "width" : 200,
         "visible" : true,
@@ -1084,9 +949,6 @@ select StreamId as "Stream Id", count as Count
         "id" : "count",
         "name" : "Count",
         "expression" : "count()",
-        "format" : {
-          "type" : "NUMBER"
-        },
         "width" : 200,
         "visible" : true,
         "special" : false
@@ -1167,9 +1029,6 @@ select comp
         "id" : "comp",
         "name" : "comp",
         "expression" : "max(toFloat(day()-10d))",
-        "format" : {
-          "type" : "NUMBER"
-        },
         "width" : 200,
         "visible" : true,
         "special" : false
@@ -1227,9 +1086,6 @@ select StreamId, EventTime
         "id" : "StreamId",
         "name" : "StreamId",
         "expression" : "${StreamId}",
-        "format" : {
-          "type" : "GENERAL"
-        },
         "group" : 0,
         "width" : 200,
         "visible" : true,
@@ -1238,9 +1094,6 @@ select StreamId, EventTime
         "id" : "EventTime",
         "name" : "EventTime",
         "expression" : "${EventTime}",
-        "format" : {
-          "type" : "GENERAL"
-        },
         "group" : 1,
         "width" : 200,
         "visible" : true,
@@ -1285,9 +1138,6 @@ select ${Stream Id}, ${Event Time}
         "id" : "Stream Id",
         "name" : "Stream Id",
         "expression" : "${Stream Id}",
-        "format" : {
-          "type" : "GENERAL"
-        },
         "group" : 0,
         "width" : 200,
         "visible" : true,
@@ -1296,9 +1146,6 @@ select ${Stream Id}, ${Event Time}
         "id" : "Event Time",
         "name" : "Event Time",
         "expression" : "${Event Time}",
-        "format" : {
-          "type" : "GENERAL"
-        },
         "group" : 1,
         "width" : 200,
         "visible" : true,
@@ -1344,9 +1191,6 @@ select ${Stream Id}, ${Event Time}
         "id" : "Stream Id",
         "name" : "Stream Id",
         "expression" : "${Stream Id}",
-        "format" : {
-          "type" : "GENERAL"
-        },
         "group" : 0,
         "width" : 200,
         "visible" : true,
@@ -1355,9 +1199,6 @@ select ${Stream Id}, ${Event Time}
         "id" : "Event Time",
         "name" : "Event Time",
         "expression" : "${Event Time}",
-        "format" : {
-          "type" : "GENERAL"
-        },
         "group" : 1,
         "width" : 200,
         "visible" : true,
@@ -1415,9 +1256,6 @@ select ${Event Time}
         "id" : "Event Time",
         "name" : "Event Time",
         "expression" : "${Event Time}",
-        "format" : {
-          "type" : "GENERAL"
-        },
         "group" : 1,
         "width" : 200,
         "visible" : true,
@@ -1426,9 +1264,6 @@ select ${Event Time}
         "id" : "__Stream_Id__",
         "name" : "Stream Id",
         "expression" : "${Stream Id}",
-        "format" : {
-          "type" : "GENERAL"
-        },
         "group" : 0,
         "width" : 200,
         "visible" : false,
@@ -1495,9 +1330,6 @@ select StreamId
         "id" : "StreamId",
         "name" : "StreamId",
         "expression" : "${StreamId}",
-        "format" : {
-          "type" : "GENERAL"
-        },
         "width" : 200,
         "visible" : true,
         "special" : false
@@ -1556,9 +1388,6 @@ select StreamId
         "id" : "StreamId",
         "name" : "StreamId",
         "expression" : "${StreamId}",
-        "format" : {
-          "type" : "GENERAL"
-        },
         "width" : 200,
         "visible" : true,
         "special" : false

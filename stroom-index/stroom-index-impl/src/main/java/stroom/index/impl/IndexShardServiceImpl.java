@@ -17,24 +17,21 @@
 
 package stroom.index.impl;
 
-import stroom.datasource.api.v2.DateField;
-import stroom.datasource.api.v2.FieldInfo;
 import stroom.datasource.api.v2.FindFieldInfoCriteria;
+import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.index.shared.FindIndexShardCriteria;
-import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardFields;
 import stroom.index.shared.IndexShardKey;
 import stroom.index.shared.IndexVolume;
+import stroom.index.shared.LuceneIndexDoc;
 import stroom.index.shared.LuceneVersion;
 import stroom.index.shared.LuceneVersionUtil;
 import stroom.query.common.v2.FieldInfoResultPageBuilder;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.ValuesConsumer;
-import stroom.search.extraction.IndexStructure;
-import stroom.search.extraction.IndexStructureCache;
 import stroom.searchable.api.Searchable;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
@@ -59,7 +56,7 @@ public class IndexShardServiceImpl implements IndexShardService, Searchable {
 
 
     private final SecurityContext securityContext;
-    private final IndexStructureCache indexStructureCache;
+    private final LuceneIndexDocCache indexStructureCache;
     private final IndexShardDao indexShardDao;
     private final IndexVolumeService indexVolumeService;
 
@@ -67,7 +64,7 @@ public class IndexShardServiceImpl implements IndexShardService, Searchable {
 
     @Inject
     IndexShardServiceImpl(final SecurityContext securityContext,
-                          final IndexStructureCache indexStructureCache,
+                          final LuceneIndexDocCache indexStructureCache,
                           final IndexShardDao indexShardDao,
                           final IndexVolumeService indexVolumeService) {
         this.securityContext = securityContext;
@@ -90,9 +87,8 @@ public class IndexShardServiceImpl implements IndexShardService, Searchable {
     public IndexShard createIndexShard(final IndexShardKey indexShardKey,
                                        final String ownerNodeName) {
         return securityContext.secureResult(PermissionNames.MANAGE_INDEX_SHARDS_PERMISSION, () -> {
-            final IndexStructure indexStructure = indexStructureCache.get(
-                    new DocRef(IndexDoc.DOCUMENT_TYPE, indexShardKey.getIndexUuid()));
-            final IndexDoc index = indexStructure.getIndex();
+            final LuceneIndexDoc index = indexStructureCache.get(
+                    new DocRef(LuceneIndexDoc.DOCUMENT_TYPE, indexShardKey.getIndexUuid()));
             final IndexVolume indexVolume = indexVolumeService.selectVolume(index.getVolumeGroupName(), ownerNodeName);
 
             return indexShardDao.create(
@@ -148,7 +144,7 @@ public class IndexShardServiceImpl implements IndexShardService, Searchable {
     }
 
     @Override
-    public ResultPage<FieldInfo> getFieldInfo(final FindFieldInfoCriteria criteria) {
+    public ResultPage<QueryField> getFieldInfo(final FindFieldInfoCriteria criteria) {
         return FieldInfoResultPageBuilder.builder(criteria).addAll(IndexShardFields.getFields()).build();
     }
 
@@ -158,7 +154,7 @@ public class IndexShardServiceImpl implements IndexShardService, Searchable {
     }
 
     @Override
-    public DateField getTimeField() {
+    public QueryField getTimeField() {
         return null;
     }
 

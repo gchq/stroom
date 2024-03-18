@@ -74,6 +74,14 @@ public class DateTimeFormatter {
         pattern = pattern.replaceAll("\\[+", "[");
         pattern = pattern.replaceAll("]+", "]");
 
+        // If UTC then just display the `Z` suffix.
+        if (Use.UTC.equals(use)) {
+            pattern = pattern.replaceAll("Z", "[Z]");
+        }
+        // Ensure we haven't doubled up square brackets.
+        pattern = pattern.replaceAll("\\[+", "[");
+        pattern = pattern.replaceAll("]+", "]");
+
         return MomentJs.nativeToDateString(ms, use.getDisplayValue(), pattern, zoneId, offsetMinutes);
     }
 

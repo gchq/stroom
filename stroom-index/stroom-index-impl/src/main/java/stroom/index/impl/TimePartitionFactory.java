@@ -1,7 +1,7 @@
 package stroom.index.impl;
 
-import stroom.index.shared.IndexDoc;
-import stroom.index.shared.IndexDoc.PartitionBy;
+import stroom.index.shared.LuceneIndexDoc;
+import stroom.index.shared.LuceneIndexDoc.PartitionBy;
 import stroom.index.shared.TimePartition;
 
 import java.time.Instant;
@@ -24,7 +24,7 @@ public class TimePartitionFactory {
     private static final DateTimeFormatter DAY_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd", Locale.ENGLISH);
     private static final TemporalField DAY_OF_WEEK = WeekFields.of(Locale.UK).dayOfWeek();
 
-    public TimePartition create(final IndexDoc index, final long timeMs) {
+    public TimePartition create(final LuceneIndexDoc index, final long timeMs) {
         final PartitionBy partitionBy = index.getPartitionBy();
         final int partitionSize = index.getPartitionSize() == null
                 ? 1

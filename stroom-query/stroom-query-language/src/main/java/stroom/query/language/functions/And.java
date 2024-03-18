@@ -57,11 +57,6 @@ class And extends AbstractManyChildFunction {
         return new Gen(childGenerators);
     }
 
-    @Override
-    public Type getCommonReturnType() {
-        return Type.BOOLEAN;
-    }
-
     private static final class Gen extends AbstractManyChildGenerator {
 
         Gen(final Generator[] childGenerators) {

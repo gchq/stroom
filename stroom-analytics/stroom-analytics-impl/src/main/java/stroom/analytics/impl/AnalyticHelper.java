@@ -118,30 +118,30 @@ public class AnalyticHelper {
                                final int length) {
         // Don't select deleted streams.
         final ExpressionOperator statusExpression = ExpressionOperator.builder().op(Op.OR)
-                .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
-                .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.LOCKED.getDisplayValue())
+                .addDateTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+                .addDateTerm(MetaFields.STATUS, Condition.EQUALS, Status.LOCKED.getDisplayValue())
                 .build();
 
         ExpressionOperator.Builder builder = ExpressionOperator.builder()
                 .addOperator(expression);
         if (minMetaId != null) {
-            builder = builder.addTerm(MetaFields.ID, Condition.GREATER_THAN_OR_EQUAL_TO, minMetaId);
+            builder = builder.addIdTerm(MetaFields.ID, Condition.GREATER_THAN_OR_EQUAL_TO, minMetaId);
         }
 
         if (minMetaCreateTimeMs != null) {
-            builder = builder.addTerm(MetaFields.CREATE_TIME,
+            builder = builder.addDateTerm(MetaFields.CREATE_TIME,
                     Condition.GREATER_THAN_OR_EQUAL_TO,
                     DateUtil.createNormalDateTimeString(minMetaCreateTimeMs));
         }
         if (maxMetaCreateTimeMs != null) {
-            builder = builder.addTerm(MetaFields.CREATE_TIME,
+            builder = builder.addDateTerm(MetaFields.CREATE_TIME,
                     Condition.LESS_THAN_OR_EQUAL_TO,
                     DateUtil.createNormalDateTimeString(maxMetaCreateTimeMs));
         }
         builder = builder.addOperator(statusExpression);
 
         final FindMetaCriteria findMetaCriteria = new FindMetaCriteria(builder.build());
-        findMetaCriteria.setSort(MetaFields.ID.getName(), false, false);
+        findMetaCriteria.setSort(MetaFields.ID.getFldName(), false, false);
         findMetaCriteria.obtainPageRequest().setLength(length);
 
         return metaService.find(findMetaCriteria).getValues();

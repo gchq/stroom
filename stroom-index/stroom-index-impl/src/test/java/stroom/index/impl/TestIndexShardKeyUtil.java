@@ -17,8 +17,8 @@
 package stroom.index.impl;
 
 
-import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexShardKey;
+import stroom.index.shared.LuceneIndexDoc;
 
 import org.junit.jupiter.api.Test;
 
@@ -30,7 +30,7 @@ class TestIndexShardKeyUtil {
 
     @Test
     void testMultishard() {
-        final IndexDoc index = new IndexDoc();
+        final LuceneIndexDoc index = new LuceneIndexDoc();
         index.setUuid(UUID.randomUUID().toString());
         index.setShardsPerPartition(5);
         final IndexShardKey indexShardKey = IndexShardKeyUtil.createTestKey(index);

@@ -1,15 +1,15 @@
 package stroom.index.lucene553;
 
+import stroom.datasource.api.v2.FieldType;
 import stroom.docref.DocRef;
 import stroom.index.impl.IndexShardWriter;
 import stroom.index.impl.IndexShardWriterCache;
 import stroom.index.impl.IndexStore;
 import stroom.index.impl.IndexSystemInfoProvider;
 import stroom.index.shared.IndexConstants;
-import stroom.index.shared.IndexDoc;
-import stroom.index.shared.IndexField;
-import stroom.index.shared.IndexFieldType;
 import stroom.index.shared.IndexShard;
+import stroom.index.shared.LuceneIndexDoc;
+import stroom.index.shared.LuceneIndexField;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.Status;
@@ -149,18 +149,18 @@ class Lucene553SystemInfoProvider implements IndexSystemInfoProvider {
         if (streamId == null) {
             return new MatchAllDocsQuery();
         } else {
-            final IndexDoc indexDoc = indexStore.readDocument(DocRef.builder()
+            final LuceneIndexDoc indexDoc = indexStore.readDocument(DocRef.builder()
                     .uuid(indexShard.getIndexUuid())
-                    .type(IndexDoc.DOCUMENT_TYPE)
+                    .type(LuceneIndexDoc.DOCUMENT_TYPE)
                     .build());
             Objects.requireNonNull(indexDoc);
 
-            IndexField streamIdField = indexDoc.getFields().stream()
-                    .filter(indexField -> indexField.getFieldName().equals(IndexConstants.STREAM_ID))
+            LuceneIndexField streamIdField = indexDoc.getFields().stream()
+                    .filter(indexField -> indexField.getFldName().equals(IndexConstants.STREAM_ID))
                     .findFirst()
                     .orElseThrow(() -> new RuntimeException("Can't find field " + IndexConstants.STREAM_ID));
 
-            if (IndexFieldType.ID.equals(streamIdField.getFieldType())) {
+            if (FieldType.ID.equals(streamIdField.getFldType())) {
                 return NumericRangeQuery.newLongRange(
                         IndexConstants.STREAM_ID,
                         streamId,

@@ -16,19 +16,20 @@
 
 package stroom.index;
 
+import stroom.datasource.api.v2.AnalyzerType;
+import stroom.datasource.api.v2.FieldType;
+import stroom.datasource.api.v2.IndexField;
 import stroom.docref.DocRef;
 import stroom.index.impl.IndexDocument;
+import stroom.index.impl.IndexFields;
 import stroom.index.impl.IndexShardKeyUtil;
 import stroom.index.impl.IndexShardWriter;
 import stroom.index.impl.IndexStore;
 import stroom.index.mock.MockIndexShardWriter;
 import stroom.index.mock.MockIndexShardWriterCache;
-import stroom.index.shared.AnalyzerType;
-import stroom.index.shared.IndexDoc;
-import stroom.index.shared.IndexField;
-import stroom.index.shared.IndexFieldType;
-import stroom.index.shared.IndexFields;
 import stroom.index.shared.IndexShardKey;
+import stroom.index.shared.LuceneIndexDoc;
+import stroom.index.shared.LuceneIndexField;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.PipelineTestUtil;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
@@ -88,17 +89,17 @@ class TestIndexingFilter extends AbstractProcessIntegrationTest {
 
     @Test
     void testSimpleDocuments() {
-        final List<IndexField> indexFields = IndexFields.createStreamIndexFields();
-        indexFields.add(IndexField.createField("sid"));
-        indexFields.add(IndexField.createField("sid2", AnalyzerType.ALPHA_NUMERIC, false, true, true, false));
-        indexFields.add(IndexField
+        final List<LuceneIndexField> indexFields = IndexFields.createStreamIndexFields();
+        indexFields.add(LuceneIndexField.createField("sid"));
+        indexFields.add(LuceneIndexField.createField("sid2", AnalyzerType.ALPHA_NUMERIC, false, true, true, false));
+        indexFields.add(LuceneIndexField
                 .builder()
-                .fieldType(IndexFieldType.NUMERIC_FIELD)
-                .fieldName("size")
+                .fldType(FieldType.LONG)
+                .fldName("size")
                 .analyzerType(AnalyzerType.KEYWORD)
                 .indexed(false)
                 .build());
-        indexFields.add(IndexField.createDateField("eventTime"));
+        indexFields.add(LuceneIndexField.createDateField("eventTime"));
 
         final List<IndexDocument> documents = doTest("TestIndexDocumentFilter/SimpleDocuments.xml", indexFields);
 
@@ -129,7 +130,7 @@ class TestIndexingFilter extends AbstractProcessIntegrationTest {
         return document
                 .getValues()
                 .stream()
-                .filter(fv -> fv.field().getFieldName().equals(fieldName))
+                .filter(fv -> fv.field().getFldName().equals(fieldName))
                 .collect(Collectors.toList());
     }
 
@@ -141,9 +142,9 @@ class TestIndexingFilter extends AbstractProcessIntegrationTest {
 
     @Test
     void testDuplicateFields() {
-        final List<IndexField> indexFields = IndexFields.createStreamIndexFields();
-        indexFields.add(IndexField.createField("sid"));
-        indexFields.add(IndexField.createDateField("eventTime"));
+        final List<LuceneIndexField> indexFields = IndexFields.createStreamIndexFields();
+        indexFields.add(LuceneIndexField.createField("sid"));
+        indexFields.add(LuceneIndexField.createDateField("eventTime"));
 
         final List<IndexDocument> documents = doTest("TestIndexDocumentFilter/DuplicateFields.xml", indexFields);
 
@@ -156,8 +157,8 @@ class TestIndexingFilter extends AbstractProcessIntegrationTest {
 
     @Test
     void testBlankDocuments() {
-        final List<IndexField> indexFields = IndexFields.createStreamIndexFields();
-        indexFields.add(IndexField.createField("sid"));
+        final List<LuceneIndexField> indexFields = IndexFields.createStreamIndexFields();
+        indexFields.add(LuceneIndexField.createField("sid"));
 
         final List<IndexDocument> documents = doTest("TestIndexDocumentFilter/BlankDocuments.xml", indexFields);
         assertThat(documents).isNull();
@@ -165,8 +166,8 @@ class TestIndexingFilter extends AbstractProcessIntegrationTest {
 
     @Test
     void testInvalidContent1() {
-        final List<IndexField> indexFields = IndexFields.createStreamIndexFields();
-        indexFields.add(IndexField.createField("sid"));
+        final List<LuceneIndexField> indexFields = IndexFields.createStreamIndexFields();
+        indexFields.add(LuceneIndexField.createField("sid"));
 
         final List<IndexDocument> documents = doTest("TestIndexDocumentFilter/InvalidContent1.xml", indexFields);
         Assertions.assertThat(documents).isNull();
@@ -174,8 +175,8 @@ class TestIndexingFilter extends AbstractProcessIntegrationTest {
 
     @Test
     void testInvalidContent2() {
-        final List<IndexField> indexFields = IndexFields.createStreamIndexFields();
-        indexFields.add(IndexField.createField("sid"));
+        final List<LuceneIndexField> indexFields = IndexFields.createStreamIndexFields();
+        indexFields.add(LuceneIndexField.createField("sid"));
 
         final List<IndexDocument> documents = doTest("TestIndexDocumentFilter/InvalidContent2.xml", indexFields);
         assertThat(documents.size()).isEqualTo(1);
@@ -183,12 +184,12 @@ class TestIndexingFilter extends AbstractProcessIntegrationTest {
 
     @Test
     void testComplexContent() {
-        final List<IndexField> indexFields = IndexFields.createStreamIndexFields();
-        indexFields.add(IndexField.createField("f1", AnalyzerType.ALPHA_NUMERIC, false, true, true, true));
-        indexFields.add(IndexField.createField("f2", AnalyzerType.ALPHA_NUMERIC, false, false, true, false));
-        indexFields.add(IndexField.createDateField("d1"));
-        indexFields.add(IndexField.createNumericField("n1"));
-        indexFields.add(IndexField.createNumericField("n2"));
+        final List<LuceneIndexField> indexFields = IndexFields.createStreamIndexFields();
+        indexFields.add(LuceneIndexField.createField("f1", AnalyzerType.ALPHA_NUMERIC, false, true, true, true));
+        indexFields.add(LuceneIndexField.createField("f2", AnalyzerType.ALPHA_NUMERIC, false, false, true, false));
+        indexFields.add(LuceneIndexField.createDateField("d1"));
+        indexFields.add(LuceneIndexField.createNumericField("n1"));
+        indexFields.add(LuceneIndexField.createNumericField("n2"));
 
         final List<IndexDocument> documents = doTest("TestIndexDocumentFilter/ComplexContent.xml", indexFields);
 
@@ -206,11 +207,11 @@ class TestIndexingFilter extends AbstractProcessIntegrationTest {
 
     }
 
-    private List<IndexDocument> doTest(final String resourceName, final List<IndexField> indexFields) {
+    private List<IndexDocument> doTest(final String resourceName, final List<LuceneIndexField> indexFields) {
         return pipelineScopeRunnable.scopeResult(() -> {
             // Setup the index.
             final DocRef indexRef = indexStore.createDocument("Test index");
-            final IndexDoc index = indexStore.readDocument(indexRef);
+            final LuceneIndexDoc index = indexStore.readDocument(indexRef);
             index.setFields(indexFields);
             indexStore.writeDocument(index);
 

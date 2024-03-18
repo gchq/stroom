@@ -2,8 +2,8 @@ package stroom.query.impl;
 
 import stroom.dashboard.shared.DashboardSearchResponse;
 import stroom.dashboard.shared.ValidateExpressionResult;
-import stroom.datasource.api.v2.FieldInfo;
 import stroom.datasource.api.v2.FindFieldInfoCriteria;
+import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.query.shared.DownloadQueryResultsRequest;
 import stroom.query.shared.QueryDoc;
@@ -32,7 +32,7 @@ public interface QueryService {
 
     Optional<DocRef> getReferencedDataSource(String query);
 
-    ResultPage<FieldInfo> getFieldInfo(FindFieldInfoCriteria criteria);
+    ResultPage<QueryField> findFields(FindFieldInfoCriteria criteria);
 
     Optional<String> fetchDocumentation(DocRef dataSourceRef);
 }

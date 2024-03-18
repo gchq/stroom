@@ -677,32 +677,32 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
         if (reprocess) {
             // Don't select deleted streams.
             final ExpressionOperator statusExpression = ExpressionOperator.builder().op(Op.OR)
-                    .addTerm(MetaFields.PARENT_STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
-                    .addTerm(MetaFields.PARENT_STATUS, Condition.EQUALS, Status.LOCKED.getDisplayValue())
+                    .addDateTerm(MetaFields.PARENT_STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+                    .addDateTerm(MetaFields.PARENT_STATUS, Condition.EQUALS, Status.LOCKED.getDisplayValue())
                     .build();
 
             ExpressionOperator.Builder builder = ExpressionOperator.builder()
                     .addOperator(expression)
-                    .addTerm(MetaFields.PARENT_ID, Condition.GREATER_THAN_OR_EQUAL_TO, minMetaId);
+                    .addIdTerm(MetaFields.PARENT_ID, Condition.GREATER_THAN_OR_EQUAL_TO, minMetaId);
 
             if (pipelineDocRef != null) {
-                builder.addTerm(MetaFields.PIPELINE, Condition.IS_DOC_REF, pipelineDocRef);
+                builder.addDocRefTerm(MetaFields.PIPELINE, Condition.IS_DOC_REF, pipelineDocRef);
             }
 
             if (minMetaCreateTimeMs != null) {
-                builder = builder.addTerm(MetaFields.PARENT_CREATE_TIME,
+                builder = builder.addDateTerm(MetaFields.PARENT_CREATE_TIME,
                         Condition.GREATER_THAN_OR_EQUAL_TO,
                         DateUtil.createNormalDateTimeString(minMetaCreateTimeMs));
             }
             if (maxMetaCreateTimeMs != null) {
-                builder = builder.addTerm(MetaFields.PARENT_CREATE_TIME,
+                builder = builder.addDateTerm(MetaFields.PARENT_CREATE_TIME,
                         Condition.LESS_THAN_OR_EQUAL_TO,
                         DateUtil.createNormalDateTimeString(maxMetaCreateTimeMs));
             }
             builder = builder.addOperator(statusExpression);
 
             final FindMetaCriteria findMetaCriteria = new FindMetaCriteria(builder.build());
-            findMetaCriteria.setSort(MetaFields.PARENT_ID.getName(), false, false);
+            findMetaCriteria.setSort(MetaFields.PARENT_ID.getFldName(), false, false);
             findMetaCriteria.obtainPageRequest().setLength(length);
 
             return metaService.findReprocess(findMetaCriteria).getValues();
@@ -710,28 +710,28 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
         } else {
             // Don't select deleted streams.
             final ExpressionOperator statusExpression = ExpressionOperator.builder().op(Op.OR)
-                    .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
-                    .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.LOCKED.getDisplayValue())
+                    .addDateTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+                    .addDateTerm(MetaFields.STATUS, Condition.EQUALS, Status.LOCKED.getDisplayValue())
                     .build();
 
             ExpressionOperator.Builder builder = ExpressionOperator.builder()
                     .addOperator(expression)
-                    .addTerm(MetaFields.ID, Condition.GREATER_THAN_OR_EQUAL_TO, minMetaId);
+                    .addIdTerm(MetaFields.ID, Condition.GREATER_THAN_OR_EQUAL_TO, minMetaId);
 
             if (minMetaCreateTimeMs != null) {
-                builder = builder.addTerm(MetaFields.CREATE_TIME,
+                builder = builder.addDateTerm(MetaFields.CREATE_TIME,
                         Condition.GREATER_THAN_OR_EQUAL_TO,
                         DateUtil.createNormalDateTimeString(minMetaCreateTimeMs));
             }
             if (maxMetaCreateTimeMs != null) {
-                builder = builder.addTerm(MetaFields.CREATE_TIME,
+                builder = builder.addDateTerm(MetaFields.CREATE_TIME,
                         Condition.LESS_THAN_OR_EQUAL_TO,
                         DateUtil.createNormalDateTimeString(maxMetaCreateTimeMs));
             }
             builder = builder.addOperator(statusExpression);
 
             final FindMetaCriteria findMetaCriteria = new FindMetaCriteria(builder.build());
-            findMetaCriteria.setSort(MetaFields.ID.getName(), false, false);
+            findMetaCriteria.setSort(MetaFields.ID.getFldName(), false, false);
             findMetaCriteria.obtainPageRequest().setLength(length);
 
             return metaService.find(findMetaCriteria).getValues();

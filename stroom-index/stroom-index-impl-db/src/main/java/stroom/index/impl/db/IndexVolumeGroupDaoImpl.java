@@ -6,8 +6,8 @@ import stroom.docref.DocRef;
 import stroom.index.impl.IndexStore;
 import stroom.index.impl.IndexVolumeGroupDao;
 import stroom.index.impl.db.jooq.tables.records.IndexVolumeGroupRecord;
-import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexVolumeGroup;
+import stroom.index.shared.LuceneIndexDoc;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -132,7 +132,7 @@ class IndexVolumeGroupDaoImpl implements IndexVolumeGroupDao {
             if (indexStore != null) {
                 final List<DocRef> indexes = indexStore.list();
                 for (final DocRef docRef : indexes) {
-                    final IndexDoc indexDoc = indexStore.readDocument(docRef);
+                    final LuceneIndexDoc indexDoc = indexStore.readDocument(docRef);
                     if (indexDoc.getVolumeGroupName() != null &&
                             indexDoc.getVolumeGroupName().equals(currentGroupName)) {
                         indexDoc.setVolumeGroupName(saved.getName());

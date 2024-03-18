@@ -39,6 +39,7 @@ import stroom.util.time.StroomDuration;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -106,6 +107,11 @@ class TestOrphanFileFinder extends AbstractCoreIntegrationTest {
             FileUtil.deleteContents(path);
         });
         listAllVolsContent();
+    }
+
+    @AfterEach
+    void unsetProperties() {
+        clearConfigValueMapper();
     }
 
     private void listAllVolsContent() {
@@ -310,6 +316,15 @@ class TestOrphanFileFinder extends AbstractCoreIntegrationTest {
             final FsOrphanFileFinderSummary summary2 = new FsOrphanFileFinderSummary();
             final List<String> fileList = scan(summary2);
 
+            assertThat(fileList).as("expected orphan old file " + oldfile)
+                    .contains(FileUtil.getCanonicalPath(oldfile));
+            assertThat(fileList).as("expected orphan old dir " + olddir)
+                    .contains(FileUtil.getCanonicalPath(olddir));
+            assertThat(fileList).as("unexpected orphan new dir " + newdir)
+                    .doesNotContain(FileUtil.getCanonicalPath(newdir));
+            assertThat(fileList).as("old file in new dir")
+                    .contains(FileUtil.getCanonicalPath(oldfileinnewdir));
+
             final String expected = LogUtil.message("""
                     Summary:
 
@@ -325,15 +340,6 @@ class TestOrphanFileFinder extends AbstractCoreIntegrationTest {
 
             assertThat(FileSystemUtil.isAllFile(lockedFiles)).as("Locked files should still exist").isTrue();
             assertThat(FileSystemUtil.isAllFile(unlockedFiles)).as("Unlocked files should still exist").isTrue();
-
-            assertThat(fileList).as("expected orphan " + oldfile)
-                    .contains(FileUtil.getCanonicalPath(oldfile));
-            assertThat(fileList).as("expected orphan " + olddir)
-                    .contains(FileUtil.getCanonicalPath(olddir));
-            assertThat(fileList).as("unexpected orphan " + newdir)
-                    .doesNotContain(FileUtil.getCanonicalPath(newdir));
-            assertThat(fileList).as("old file in new dir")
-                    .contains(FileUtil.getCanonicalPath(oldfileinnewdir));
         }
     }
 

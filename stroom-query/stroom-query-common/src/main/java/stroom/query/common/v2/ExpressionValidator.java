@@ -24,14 +24,14 @@ public class ExpressionValidator {
 
     public ExpressionValidator(final List<QueryField> fields) {
         this.fieldMap = fields.stream()
-                .collect(Collectors.toMap(QueryField::getName, Function.identity()));
+                .collect(Collectors.toMap(QueryField::getFldName, Function.identity()));
         this.dateTimeSettings = DateTimeSettings.builder().build();
     }
 
     public ExpressionValidator(final List<QueryField> fields,
                                final DateTimeSettings dateTimeSettings) {
         this.fieldMap = fields.stream()
-                .collect(Collectors.toMap(QueryField::getName, Function.identity()));
+                .collect(Collectors.toMap(QueryField::getFldName, Function.identity()));
         this.dateTimeSettings = dateTimeSettings;
     }
 
@@ -80,7 +80,7 @@ public class ExpressionValidator {
             if (isNumeric) {
                 validateNumericTerm(term);
             } else {
-                final FieldType fieldType = field.getFieldType();
+                final FieldType fieldType = field.getFldType();
                 if (FieldType.DATE.equals(fieldType)) {
                     validateDateTerm(term);
                 }

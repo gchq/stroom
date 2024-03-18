@@ -13,6 +13,19 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Issue **#4051** : Fix search extraction for Elastic indexes.
+
+* Issue **#4159** : Fix StroomQL vis params.
+
+* Issue **#4149** : Format results based on real result value types rather than expected expression return type.
+
+* Issue **#4093** : Fix value type for stored values.
+
+* Issue **#4152** : Fix date time formatter always showing `Z` when it should show actual timezone.
+
+* Issue **#4150** : StroomQL `vis as` keyword replaced with `show` plus added validation to parameters.
+
+
 ## [v7.4-beta.1] - 2024-03-12
 
 * Issue **#3749** : Replace Stroom simple cron scheduler with standard compliant Quartz cron scheduler.
@@ -374,14 +387,4 @@ eval EventId = first(EventId)`, `evt` => `eval EventId = first(EventId)` and `st
 
 [Unreleased]: https://github.com/gchq/stroom/compare/v7.4-beta.1...HEAD
 [v7.4-beta.1]: https://github.com/gchq/stroom/compare/v7.3-beta.11...v7.4-beta.1
-[v7.3-beta.11]: https://github.com/gchq/stroom/compare/v7.3-beta.10...v7.3-beta.11
-[v7.3-beta.10]: https://github.com/gchq/stroom/compare/v7.3-beta.9...v7.3-beta.10
-[v7.3-beta.9]: https://github.com/gchq/stroom/compare/v7.3-beta.8...v7.3-beta.9
-[v7.3-beta.8]: https://github.com/gchq/stroom/compare/v7.3-beta.7...v7.3-beta.8
-[v7.3-beta.7]: https://github.com/gchq/stroom/compare/v7.3-beta.6...v7.3-beta.7
-[v7.3-beta.6]: https://github.com/gchq/stroom/compare/v7.3-beta.5...v7.3-beta.6
-[v7.3-beta.5]: https://github.com/gchq/stroom/compare/v7.3-beta.4...v7.3-beta.5
-[v7.3-beta.4]: https://github.com/gchq/stroom/compare/v7.2.8...v7.3-beta.4
-[v7.3-beta.3]: https://github.com/gchq/stroom/compare/v7.3-beta.2...v7.3-beta.3
-[v7.3-beta.2]: https://github.com/gchq/stroom/compare/v7.3-beta.1...v7.3-beta.2
 [v7.2.2]: https://github.com/gchq/stroom/compare/v7.2.1...v7.2.2

@@ -44,6 +44,8 @@ public sealed interface Val
 
     String toString();
 
+    Object unwrap();
+
     /**
      * @return The {@link Val} as a number or null if it cannot be represented as a number.
      * Returns an impl of {@link Number} that is appropriate for this value. The returned type may differ for

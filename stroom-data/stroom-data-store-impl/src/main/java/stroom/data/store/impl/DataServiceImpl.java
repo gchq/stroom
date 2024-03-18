@@ -243,7 +243,7 @@ class DataServiceImpl implements DataService {
                         !DataRetentionFields.RETENTION_UNTIL.equals(key) &&
                         !DataRetentionFields.RETENTION_RULE.equals(key)) {
 
-                    if (MetaFields.DURATION.getName().equals(key)) {
+                    if (MetaFields.DURATION.getFldName().equals(key)) {
                         entries.add(new DataInfoSection.Entry(key, convertDuration(value)));
                     } else if (key.toLowerCase().contains("time")) {
                         entries.add(new DataInfoSection.Entry(key, convertTime(value)));

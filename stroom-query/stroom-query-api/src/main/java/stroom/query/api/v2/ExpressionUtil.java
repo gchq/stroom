@@ -1,14 +1,6 @@
 package stroom.query.api.v2;
 
-import stroom.datasource.api.v2.BooleanField;
-import stroom.datasource.api.v2.DateField;
-import stroom.datasource.api.v2.DocRefField;
-import stroom.datasource.api.v2.DoubleField;
-import stroom.datasource.api.v2.FloatField;
-import stroom.datasource.api.v2.IdField;
-import stroom.datasource.api.v2.IntegerField;
-import stroom.datasource.api.v2.LongField;
-import stroom.datasource.api.v2.TextField;
+import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
@@ -34,63 +26,63 @@ public class ExpressionUtil {
                 .build();
     }
 
-    public static ExpressionOperator equals(final BooleanField field, final boolean value) {
+    public static ExpressionOperator equalsBoolean(final QueryField field, final boolean value) {
         return ExpressionOperator.builder()
-                .addTerm(field, Condition.EQUALS, value)
+                .addBooleanTerm(field, Condition.EQUALS, value)
                 .build();
     }
 
-    public static ExpressionOperator equals(final DateField field, final String value) {
+    public static ExpressionOperator equalsDate(final QueryField field, final String value) {
         return ExpressionOperator.builder()
-                .addTerm(field, Condition.EQUALS, value)
+                .addDateTerm(field, Condition.EQUALS, value)
                 .build();
     }
 
-    public static ExpressionOperator equals(final DocRefField field, final DocRef value) {
+    public static ExpressionOperator equalsDocRef(final QueryField field, final DocRef value) {
         return ExpressionOperator.builder()
-                .addTerm(field, Condition.IS_DOC_REF, value)
+                .addDocRefTerm(field, Condition.IS_DOC_REF, value)
                 .build();
     }
 
-    public static ExpressionOperator equals(final IdField field, final long value) {
+    public static ExpressionOperator equalsId(final QueryField field, final long value) {
         return ExpressionOperator.builder()
-                .addTerm(field, Condition.EQUALS, value)
+                .addIdTerm(field, Condition.EQUALS, value)
                 .build();
     }
 
-    public static ExpressionOperator equals(final IntegerField field, final int value) {
+    public static ExpressionOperator equalsInteger(final QueryField field, final int value) {
         return ExpressionOperator.builder()
-                .addTerm(field, Condition.EQUALS, value)
+                .addIntegerTerm(field, Condition.EQUALS, value)
                 .build();
     }
 
-    public static ExpressionOperator equals(final LongField field, final long value) {
+    public static ExpressionOperator equalsLong(final QueryField field, final long value) {
         return ExpressionOperator.builder()
-                .addTerm(field, Condition.EQUALS, value)
+                .addLongTerm(field, Condition.EQUALS, value)
                 .build();
     }
 
-    public static ExpressionOperator equals(final FloatField field, final float value) {
+    public static ExpressionOperator equalsFloat(final QueryField field, final float value) {
         return ExpressionOperator.builder()
-                .addTerm(field, Condition.EQUALS, value)
+                .addFloatTerm(field, Condition.EQUALS, value)
                 .build();
     }
 
-    public static ExpressionOperator equals(final DoubleField field, final double value) {
+    public static ExpressionOperator equalsDouble(final QueryField field, final double value) {
         return ExpressionOperator.builder()
-                .addTerm(field, Condition.EQUALS, value)
+                .addDoubleTerm(field, Condition.EQUALS, value)
                 .build();
     }
 
-    public static ExpressionOperator equals(final TextField field, final String value) {
+    public static ExpressionOperator equalsText(final QueryField field, final String value) {
         return ExpressionOperator.builder()
-                .addTerm(field, Condition.EQUALS, value)
+                .addDateTerm(field, Condition.EQUALS, value)
                 .build();
     }
 
-    public static ExpressionOperator equals(final String field, final DocRef value) {
+    public static ExpressionOperator equalsDocRef(final String field, final DocRef value) {
         return ExpressionOperator.builder()
-                .addTerm(field, Condition.EQUALS, value)
+                .addDocRefTerm(field, Condition.EQUALS, value)
                 .build();
     }
 

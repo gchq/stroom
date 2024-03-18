@@ -8,7 +8,6 @@ import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.Filter;
-import stroom.query.api.v2.Format;
 import stroom.query.api.v2.HoppingWindow;
 import stroom.query.api.v2.ParamSubstituteUtil;
 import stroom.query.api.v2.Query;
@@ -710,7 +709,7 @@ public class SearchRequestFactory {
                                             TokenType.LIMIT,
                                             TokenType.SELECT,
                                             TokenType.HAVING,
-                                            TokenType.VIS)));
+                                            TokenType.SHOW)));
                             processSortBy(
                                     keywordGroup,
                                     sortMap);
@@ -724,7 +723,7 @@ public class SearchRequestFactory {
                                             TokenType.LIMIT,
                                             TokenType.SELECT,
                                             TokenType.HAVING,
-                                            TokenType.VIS)));
+                                            TokenType.SHOW)));
                             processGroupBy(
                                     keywordGroup,
                                     groupMap,
@@ -737,11 +736,11 @@ public class SearchRequestFactory {
                             checkTokenOrder(token,
                                     consumedTokens,
                                     Set.of(TokenType.FROM),
-                                    inverse(Set.of(TokenType.LIMIT, TokenType.SELECT, TokenType.VIS)));
+                                    inverse(Set.of(TokenType.LIMIT, TokenType.SELECT, TokenType.SHOW)));
                             remaining =
                                     addExpression(remaining,
                                             consumedTokens,
-                                            inverse(Set.of(TokenType.LIMIT, TokenType.SELECT, TokenType.VIS)),
+                                            inverse(Set.of(TokenType.LIMIT, TokenType.SELECT, TokenType.SHOW)),
                                             TokenType.HAVING,
                                             tableSettingsBuilder::aggregateFilter);
                             inHaving = false;
@@ -750,7 +749,7 @@ public class SearchRequestFactory {
                             checkTokenOrder(token,
                                     consumedTokens,
                                     Set.of(TokenType.FROM),
-                                    inverse(Set.of(TokenType.SELECT, TokenType.VIS)));
+                                    inverse(Set.of(TokenType.SELECT, TokenType.SHOW)));
                             processSelect(
                                     keywordGroup,
                                     sortMap,
@@ -763,17 +762,17 @@ public class SearchRequestFactory {
                             checkTokenOrder(token,
                                     consumedTokens,
                                     Set.of(TokenType.FROM),
-                                    inverse(Set.of(TokenType.SELECT, TokenType.VIS)));
+                                    inverse(Set.of(TokenType.SELECT, TokenType.SHOW)));
                             processLimit(
                                     keywordGroup,
                                     tableSettingsBuilder);
                             remaining.remove(0);
                         }
-                        case VIS -> {
+                        case SHOW -> {
                             checkTokenOrder(token,
                                     consumedTokens,
                                     Set.of(TokenType.FROM),
-                                    inverse(Set.of(TokenType.VIS)));
+                                    inverse(Set.of(TokenType.SHOW)));
                             final TableSettings parentTableSettings = tableSettingsBuilder.build();
                             visTableSettings = visualisationTokenConsumer
                                     .processVis(keywordGroup, parentTableSettings);
@@ -1074,14 +1073,6 @@ public class SearchRequestFactory {
                 }
             }
 
-            Format format = Format.GENERAL;
-            switch (expression.getCommonReturnType()) {
-                case DATE -> format = Format.DATE_TIME;
-                case LONG, INTEGER, DOUBLE, FLOAT -> format = Format.NUMBER;
-                default -> {
-                }
-            }
-
             final String expressionString = expression.toString();
             final Column field = Column.builder()
                     .id(id)
@@ -1092,7 +1083,6 @@ public class SearchRequestFactory {
                     .sort(sortMap.get(fieldName))
                     .group(groupMap.get(fieldName))
                     .filter(filterMap.get(fieldName))
-                    .format(format)
                     .visible(visible)
                     .special(special)
                     .build();

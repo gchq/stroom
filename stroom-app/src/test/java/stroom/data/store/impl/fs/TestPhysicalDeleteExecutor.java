@@ -32,6 +32,7 @@ import stroom.util.time.StroomDuration;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
 import java.nio.file.Files;
@@ -65,6 +66,11 @@ class TestPhysicalDeleteExecutor extends AbstractCoreIntegrationTest {
     private Provider<DataStoreServiceConfig> dataStoreServiceConfigProvider;
     @Inject
     private MetaDbConnProvider metaDbConnProvider;
+
+    @AfterEach
+    void unsetProperties() {
+        clearConfigValueMapper();
+    }
 
     @Test
     void test_oneBatch() {

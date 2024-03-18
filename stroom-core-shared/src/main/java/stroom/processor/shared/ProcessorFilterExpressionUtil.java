@@ -13,8 +13,8 @@ public final class ProcessorFilterExpressionUtil {
 
     public static ExpressionOperator createBasicExpression() {
         return ExpressionOperator.builder()
-                .addTerm(ProcessorFields.DELETED, Condition.EQUALS, false)
-                .addTerm(ProcessorFilterFields.DELETED, Condition.EQUALS, false)
+                .addBooleanTerm(ProcessorFields.DELETED, Condition.EQUALS, false)
+                .addBooleanTerm(ProcessorFilterFields.DELETED, Condition.EQUALS, false)
                 .build();
     }
 
@@ -28,14 +28,15 @@ public final class ProcessorFilterExpressionUtil {
         if (folders != null) {
             final ExpressionOperator.Builder or = ExpressionOperator.builder().op(Op.OR);
             for (final DocRef folder : folders) {
-                or.addTerm(ProcessorFields.PIPELINE, Condition.IN_FOLDER, folder);
-                or.addTerm(ProcessorFields.ANALYTIC_RULE, Condition.IN_FOLDER, folder);
+                or.addDocRefTerm(ProcessorFields.PIPELINE, Condition.IN_FOLDER, folder);
+                or.addDocRefTerm(ProcessorFields.ANALYTIC_RULE, Condition.IN_FOLDER, folder);
             }
             builder.addOperator(or.build());
         }
 
-        return builder.addTerm(ProcessorFields.DELETED, Condition.EQUALS, false)
-                .addTerm(ProcessorFilterFields.DELETED, Condition.EQUALS, false)
+        return builder
+                .addBooleanTerm(ProcessorFields.DELETED, Condition.EQUALS, false)
+                .addBooleanTerm(ProcessorFilterFields.DELETED, Condition.EQUALS, false)
                 .build();
     }
 
@@ -45,9 +46,9 @@ public final class ProcessorFilterExpressionUtil {
 //                        ProcessorFields.PROCESSOR_TYPE,
 //                        Condition.EQUALS,
 //                        ProcessorType.PIPELINE.getDisplayValue())
-                .addTerm(ProcessorFields.PIPELINE, Condition.IS_DOC_REF, pipelineRef)
-                .addTerm(ProcessorFields.DELETED, Condition.EQUALS, false)
-                .addTerm(ProcessorFilterFields.DELETED, Condition.EQUALS, false)
+                .addDocRefTerm(ProcessorFields.PIPELINE, Condition.IS_DOC_REF, pipelineRef)
+                .addBooleanTerm(ProcessorFields.DELETED, Condition.EQUALS, false)
+                .addBooleanTerm(ProcessorFilterFields.DELETED, Condition.EQUALS, false)
                 .build();
     }
 
@@ -57,9 +58,9 @@ public final class ProcessorFilterExpressionUtil {
 //                        ProcessorFields.PROCESSOR_TYPE,
 //                        Condition.EQUALS,
 //                        ProcessorType.STREAMING_ANALYTIC.getDisplayValue())
-                .addTerm(ProcessorFields.ANALYTIC_RULE, Condition.IS_DOC_REF, analyticRuleRef)
-                .addTerm(ProcessorFields.DELETED, Condition.EQUALS, false)
-                .addTerm(ProcessorFilterFields.DELETED, Condition.EQUALS, false)
+                .addDocRefTerm(ProcessorFields.ANALYTIC_RULE, Condition.IS_DOC_REF, analyticRuleRef)
+                .addBooleanTerm(ProcessorFields.DELETED, Condition.EQUALS, false)
+                .addBooleanTerm(ProcessorFilterFields.DELETED, Condition.EQUALS, false)
                 .build();
     }
 }

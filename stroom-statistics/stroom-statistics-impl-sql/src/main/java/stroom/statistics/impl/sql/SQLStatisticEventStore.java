@@ -457,7 +457,7 @@ public class SQLStatisticEventStore implements Statistics, HasSystemInfo {
             // sub-class
             final List<QueryField> supportedIndexFields = new ArrayList<>();
             indexFields.stream()
-                    .filter(indexField -> !blackList.contains(indexField.getName()))
+                    .filter(indexField -> !blackList.contains(indexField.getFldName()))
                     .forEach(supportedIndexFields::add);
 
             return supportedIndexFields;

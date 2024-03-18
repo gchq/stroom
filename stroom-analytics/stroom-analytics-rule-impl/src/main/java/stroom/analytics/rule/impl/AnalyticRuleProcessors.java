@@ -77,11 +77,11 @@ public class AnalyticRuleProcessors {
         if (docRef != null) {
             // First try to find the associated processors
             final ExpressionOperator processorExpression = ExpressionOperator.builder()
-                    .addTerm(
+                    .addTextTerm(
                             ProcessorFields.PROCESSOR_TYPE,
                             Condition.EQUALS,
                             ProcessorType.STREAMING_ANALYTIC.getDisplayValue())
-                    .addTerm(
+                    .addDocRefTerm(
                             ProcessorFields.ANALYTIC_RULE,
                             Condition.IS_DOC_REF,
                             docRef)
@@ -93,11 +93,11 @@ public class AnalyticRuleProcessors {
 
     private ResultPage<ProcessorFilter> getProcessorFilters(final Processor processor) {
         final ExpressionOperator filterExpression = ExpressionOperator.builder()
-                .addTerm(
+                .addIdTerm(
                         ProcessorFilterFields.PROCESSOR_ID,
                         ExpressionTerm.Condition.EQUALS,
                         processor.getId())
-                .addTerm(
+                .addBooleanTerm(
                         ProcessorFilterFields.DELETED,
                         Condition.EQUALS,
                         false)

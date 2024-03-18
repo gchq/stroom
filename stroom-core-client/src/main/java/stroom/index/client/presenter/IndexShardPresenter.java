@@ -34,9 +34,9 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.index.shared.FindIndexShardCriteria;
-import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexResource;
 import stroom.index.shared.IndexShard;
+import stroom.index.shared.LuceneIndexDoc;
 import stroom.node.client.NodeManager;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.security.client.api.ClientSecurityContext;
@@ -66,7 +66,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Consumer;
 
-public class IndexShardPresenter extends DocumentEditPresenter<PagerView, IndexDoc> implements Refreshable {
+public class IndexShardPresenter extends DocumentEditPresenter<PagerView, LuceneIndexDoc> implements Refreshable {
 
     private static final IndexResource INDEX_RESOURCE = GWT.create(IndexResource.class);
 
@@ -84,7 +84,7 @@ public class IndexShardPresenter extends DocumentEditPresenter<PagerView, IndexD
 
     private ButtonView buttonFlush;
     private ButtonView buttonDelete;
-    private IndexDoc index;
+    private LuceneIndexDoc index;
     private boolean readOnly;
     private boolean allowDelete;
 
@@ -418,7 +418,7 @@ public class IndexShardPresenter extends DocumentEditPresenter<PagerView, IndexD
     }
 
     @Override
-    protected void onRead(final DocRef docRef, final IndexDoc document, final boolean readOnly) {
+    protected void onRead(final DocRef docRef, final LuceneIndexDoc document, final boolean readOnly) {
         this.readOnly = readOnly;
         enableButtons();
 
@@ -461,7 +461,7 @@ public class IndexShardPresenter extends DocumentEditPresenter<PagerView, IndexD
     }
 
     @Override
-    protected IndexDoc onWrite(final IndexDoc entity) {
+    protected LuceneIndexDoc onWrite(final LuceneIndexDoc entity) {
         return entity;
     }
 

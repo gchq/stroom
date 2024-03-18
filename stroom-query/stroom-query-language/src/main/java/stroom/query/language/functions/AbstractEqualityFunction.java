@@ -66,11 +66,6 @@ abstract class AbstractEqualityFunction extends AbstractManyChildFunction {
         }
     }
 
-    @Override
-    public Type getCommonReturnType() {
-        return Type.BOOLEAN;
-    }
-
 
     // --------------------------------------------------------------------------------
 

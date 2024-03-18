@@ -55,7 +55,7 @@ abstract class AbstractAnalyticFieldListConsumer implements AnalyticFieldListCon
                     // We have a match so pass the values on to the receiver.
                     final Val[] values = new Val[fieldIndex.size()];
                     for (final FieldValue fieldValue : fieldValues) {
-                        final Integer index = fieldIndex.getPos(fieldValue.field().getFieldName());
+                        final Integer index = fieldIndex.getPos(fieldValue.field().getFldName());
                         if (index != null) {
                             values[index] = fieldValue.value();
                         }

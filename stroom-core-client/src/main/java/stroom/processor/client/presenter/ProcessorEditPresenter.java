@@ -4,7 +4,6 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.dashboard.shared.ValidateExpressionResult;
 import stroom.data.client.presenter.EditExpressionPresenter;
-import stroom.datasource.api.v2.FieldInfo;
 import stroom.datasource.api.v2.QueryField;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
@@ -69,7 +68,7 @@ public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView>
                      final Long minMetaCreateTimeMs,
                      final Long maxMetaCreateTimeMs) {
         final SimpleFieldSelectionListModel selectionBoxModel = new SimpleFieldSelectionListModel();
-        selectionBoxModel.addItems(fields.stream().map(FieldInfo::create).collect(Collectors.toList()));
+        selectionBoxModel.addItems(fields);
         editExpressionPresenter.init(restFactory, dataSource, selectionBoxModel);
 
         if (expression != null) {
@@ -258,7 +257,7 @@ public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView>
         if (queryData == null || queryData.getExpression() == null) {
             return 0;
         }
-        return ExpressionUtil.termCount(queryData.getExpression(), field.getName());
+        return ExpressionUtil.termCount(queryData.getExpression(), field.getFldName());
     }
 
     private void createOrUpdateProcessor(final ProcessorFilter filter,

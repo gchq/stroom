@@ -45,10 +45,8 @@ import stroom.dashboard.shared.TableResultRequest;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.datasource.api.v2.ConditionSet;
-import stroom.datasource.api.v2.DateField;
-import stroom.datasource.api.v2.LongField;
+import stroom.datasource.api.v2.FieldType;
 import stroom.datasource.api.v2.QueryField;
-import stroom.datasource.api.v2.TextField;
 import stroom.dispatch.client.ExportFileCompleteUtil;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
@@ -523,14 +521,20 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         try {
             switch (colType) {
                 case NUMBER:
-                    return new LongField(column.getName(), true);
+                    return QueryField.createLong(column.getName());
 
                 case DATE_TIME:
-                    return new DateField(column.getName(), true);
+                    return QueryField.createDate(column.getName());
 
                 default:
                     // CONTAINS only supported for legacy content, not for use in UI
-                    return new TextField(column.getName(), ConditionSet.BASIC_TEXT, null, true);
+                    return QueryField
+                            .builder()
+                            .fldName(column.getName())
+                            .fldType(FieldType.TEXT)
+                            .conditionSet(ConditionSet.BASIC_TEXT)
+                            .queryable(true)
+                            .build();
 
             }
         } catch (Exception e) {
@@ -970,7 +974,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         final List<Column> columns = getTableSettings().getColumns();
         if (columns != null && columns.size() > 0) {
             for (final Column column : columns) {
-                abstractFields.add(new TextField(column.getName(), true));
+                abstractFields.add(QueryField.createText(column.getName(), true));
             }
         }
         return abstractFields;

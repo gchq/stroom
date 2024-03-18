@@ -1,6 +1,6 @@
 package stroom.index.lucene980.analyser;
 
-import stroom.index.shared.AnalyzerType;
+import stroom.datasource.api.v2.AnalyzerType;
 import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;

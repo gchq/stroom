@@ -484,4 +484,4 @@ tasks.register('gwtClean') {
 }
 
 tasks.clean.dependsOn(tasks.gwtClean)
-
+tasks.copySources.mustRunAfter(tasks.gwtClean)

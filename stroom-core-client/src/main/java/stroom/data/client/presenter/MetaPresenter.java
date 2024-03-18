@@ -397,7 +397,7 @@ public class MetaPresenter extends MyPresenterWidget<MetaView>
             for (final ExpressionItem item : expressionOperator.getChildren()) {
                 if (item.enabled()) {
                     if (item instanceof ExpressionTerm) {
-                        if (field.getName().equals(((ExpressionTerm) item).getField())) {
+                        if (field.getFldName().equals(((ExpressionTerm) item).getField())) {
                             terms.add(((ExpressionTerm) item).getValue());
                         }
                     } else if (item instanceof ExpressionOperator) {

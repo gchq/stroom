@@ -320,7 +320,7 @@ abstract class AbstractInteractiveSearchTest extends AbstractSearchTest {
         dictionaryStore.writeDocument(dic);
 
         final ExpressionOperator.Builder and = ExpressionOperator.builder();
-        and.addTerm("UserId", Condition.IN_DICTIONARY, stroom.docstore.shared.DocRefUtil.create(dic));
+        and.addDocRefTerm("UserId", Condition.IN_DICTIONARY, stroom.docstore.shared.DocRefUtil.create(dic));
 
         test(and, 15);
 
@@ -343,8 +343,8 @@ abstract class AbstractInteractiveSearchTest extends AbstractSearchTest {
         dictionaryStore.writeDocument(dic2);
 
         final ExpressionOperator.Builder and = ExpressionOperator.builder();
-        and.addTerm("UserId", Condition.IN_DICTIONARY, stroom.docstore.shared.DocRefUtil.create(dic1));
-        and.addTerm("Command", Condition.IN_DICTIONARY, stroom.docstore.shared.DocRefUtil.create(dic2));
+        and.addDocRefTerm("UserId", Condition.IN_DICTIONARY, stroom.docstore.shared.DocRefUtil.create(dic1));
+        and.addDocRefTerm("Command", Condition.IN_DICTIONARY, stroom.docstore.shared.DocRefUtil.create(dic2));
 
         test(and, 10);
 
@@ -368,8 +368,8 @@ abstract class AbstractInteractiveSearchTest extends AbstractSearchTest {
         dictionaryStore.writeDocument(dic2);
 
         final ExpressionOperator.Builder and = ExpressionOperator.builder();
-        and.addTerm("UserId", Condition.IN_DICTIONARY, stroom.docstore.shared.DocRefUtil.create(dic1));
-        and.addTerm("Command", Condition.IN_DICTIONARY, stroom.docstore.shared.DocRefUtil.create(dic2));
+        and.addDocRefTerm("UserId", Condition.IN_DICTIONARY, stroom.docstore.shared.DocRefUtil.create(dic1));
+        and.addDocRefTerm("Command", Condition.IN_DICTIONARY, stroom.docstore.shared.DocRefUtil.create(dic2));
 
         test(and, 10);
 

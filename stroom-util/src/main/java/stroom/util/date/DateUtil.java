@@ -23,8 +23,6 @@ import stroom.util.logging.LogUtil;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.Period;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -100,15 +98,6 @@ public final class DateUtil {
     }
 
     /**
-     * Create a 'file' format date string with the current system time.
-     *
-     * @return string The date as a 'file' format date string.
-     */
-    public static String createFileDateTimeString() {
-        return FILE_TIME_STROOM_TIME_FORMATTER.format(Instant.now().atZone(ZoneOffset.UTC));
-    }
-
-    /**
      * Create a 'file' format date string.
      *
      * @param ms The date to create the string for.
@@ -181,27 +170,6 @@ public final class DateUtil {
             // Our format requires a zone offset, e.g. 'Z', '+02', '+00:00', '-02:00', etc.
             final ZonedDateTime zonedDateTime = ZonedDateTime.parse(date, DEFAULT_ISO_PARSER);
             return zonedDateTime.toInstant();
-        } catch (DateTimeParseException e) {
-            throw new IllegalArgumentException("Unable to parse date: \"" + date + "\": " + e.getMessage(), e);
-        }
-    }
-
-    /**
-     * Parse a 'file' type date.
-     *
-     * @param date string date
-     * @return date as milliseconds since epoch
-     * @throws IllegalArgumentException if date does not parse
-     */
-    public static long parseFileDateTimeString(final String date) {
-        if (date == null) {
-            throw new IllegalArgumentException("Unable to parse null date");
-        }
-
-        try {
-            // Our format requires a zone offset, e.g. 'Z', '+02', '+00:00', '-02:00', etc.
-            final ZonedDateTime zonedDateTime = ZonedDateTime.parse(date, FILE_TIME_STROOM_TIME_FORMATTER);
-            return zonedDateTime.toInstant().toEpochMilli();
         } catch (DateTimeParseException e) {
             throw new IllegalArgumentException("Unable to parse date: \"" + date + "\": " + e.getMessage(), e);
         }
@@ -297,13 +265,6 @@ public final class DateUtil {
                 || date.contains("+"));
     }
 
-    public static boolean looksLikeUTCDate(final String date) {
-        // Can't check the length as Instant.parse() accepts strings with variable numbers
-        // of mills
-        return date != null
-                && date.charAt(date.length() - 1) == 'Z';
-    }
-
     public static Instant roundDown(final Instant instant, final Duration duration) {
         Instant result;
         if (duration.toMillis() < 1000) {
@@ -326,38 +287,5 @@ public final class DateUtil {
         }
 
         return result;
-    }
-
-    public static LocalDateTime roundDown(LocalDateTime dateTime, Period period) {
-        int year = dateTime.getYear();
-        int month = dateTime.getMonthValue();
-        int day = dateTime.getDayOfMonth();
-
-        if (period.getYears() != 0) {
-            if (period.getYears() > 1) {
-                final int multiple = (year - 1970) / period.getYears();
-                year = multiple * period.getYears();
-            }
-            month = 1;
-            day = 1;
-
-        } else if (period.getMonths() != 0) {
-            if (period.getMonths() >= 12) {
-                month = 1;
-            } else if (period.getMonths() > 1) {
-                final int multiple = 12 / period.getMonths();
-                month = multiple * period.getMonths();
-            }
-            day = 1;
-
-        } else if (period.getDays() != 0) {
-            if (period.getDays() >= 365) {
-                day = 1;
-            } else if (period.getDays() > 1) {
-                final int multiple = 365 / period.getDays();
-                day = multiple * period.getDays();
-            }
-        }
-        return LocalDateTime.of(year, month, day, 0, 0, 0);
     }
 }
