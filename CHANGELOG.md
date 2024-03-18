@@ -13,6 +13,17 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.3-beta.13] - 2024-03-18
+
+* Issue **#4051** : Fix search extraction for Elastic indexes.
+
+* Issue **#4159** : Fix StroomQL vis params.
+
+* Issue **#4149** : Format results based on real result value types rather than expected expression return type.
+
+* Issue **#4093** : Fix value type for stored values.
+
+
 ## [v7.3-beta.12] - 2024-03-11
 
 * Issue **#4152** : Fix date time formatter always showing `Z` when it should show actual timezone.
@@ -370,7 +381,8 @@ eval EventId = first(EventId)`, `evt` => `eval EventId = first(EventId)` and `st
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.3-beta.12...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.3-beta.13...HEAD
+[v7.3-beta.13]: https://github.com/gchq/stroom/compare/v7.3-beta.12...v7.3-beta.13
 [v7.3-beta.12]: https://github.com/gchq/stroom/compare/v7.3-beta.11...v7.3-beta.12
 [v7.3-beta.11]: https://github.com/gchq/stroom/compare/v7.3-beta.10...v7.3-beta.11
 [v7.3-beta.10]: https://github.com/gchq/stroom/compare/v7.3-beta.9...v7.3-beta.10
