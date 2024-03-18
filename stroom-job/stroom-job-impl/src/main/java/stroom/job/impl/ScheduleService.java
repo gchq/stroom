@@ -18,6 +18,7 @@ package stroom.job.impl;
 
 import stroom.job.shared.GetScheduledTimesRequest;
 import stroom.job.shared.ScheduledTimes;
+import stroom.util.NullSafe;
 import stroom.util.scheduler.Trigger;
 import stroom.util.scheduler.TriggerFactory;
 import stroom.util.shared.scheduler.Schedule;
@@ -113,7 +114,7 @@ class ScheduleService {
             final Instant nextScheduledTime = trigger.getNextExecutionTimeAfter(afterTime);
             return new ScheduledTimes(
                     workingSchedule,
-                    nextScheduledTime.toEpochMilli(),
+                    NullSafe.get(nextScheduledTime, Instant::toEpochMilli),
                     null);
         } catch (final Exception e) {
             return new ScheduledTimes(

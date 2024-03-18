@@ -152,7 +152,7 @@ public class SchedulePopup
                         getView().getNextScheduledTime().setText(dateTimeFormatter
                                 .format(result.getNextScheduledTimeMs()));
                     } else {
-                        getView().getNextScheduledTime().setText("");
+                        getView().getNextScheduledTime().setText("Never");
                     }
                 }
             });
