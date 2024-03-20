@@ -830,7 +830,6 @@ public abstract class AbstractMetaListPresenter
                                                 runnable.run();
                                             }
                                         });
-
                             } else {
                                 runnable.run();
                             }

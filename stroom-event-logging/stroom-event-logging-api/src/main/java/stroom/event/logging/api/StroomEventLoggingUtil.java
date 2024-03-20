@@ -101,6 +101,13 @@ public class StroomEventLoggingUtil {
         return builder.build();
     }
 
+    public static Data createData(final String name, final String value) {
+        return Data.builder()
+                .withName(name)
+                .withValue(value)
+                .build();
+    }
+
     public static Group createGroup(final stroom.security.shared.User group) {
         Objects.requireNonNull(group);
         if (!group.isGroup()) {
