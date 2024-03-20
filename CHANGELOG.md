@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.3-beta.14] - 2024-03-20
+
+* Issue **#4169** : Fix index field `Positions` setting not being passed through to Lucene resulting in corrupt shards.
+
+
 ## [v7.3-beta.13] - 2024-03-18
 
 * Issue **#4051** : Fix search extraction for Elastic indexes.
@@ -381,7 +386,8 @@ eval EventId = first(EventId)`, `evt` => `eval EventId = first(EventId)` and `st
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.3-beta.13...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.3-beta.14...HEAD
+[v7.3-beta.14]: https://github.com/gchq/stroom/compare/v7.3-beta.13...v7.3-beta.14
 [v7.3-beta.13]: https://github.com/gchq/stroom/compare/v7.3-beta.12...v7.3-beta.13
 [v7.3-beta.12]: https://github.com/gchq/stroom/compare/v7.3-beta.11...v7.3-beta.12
 [v7.3-beta.11]: https://github.com/gchq/stroom/compare/v7.3-beta.10...v7.3-beta.11
