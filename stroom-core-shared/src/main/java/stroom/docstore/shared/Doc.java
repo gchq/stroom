@@ -18,9 +18,7 @@
 package stroom.docstore.shared;
 
 import stroom.docref.DocRef;
-import stroom.docref.HasType;
-import stroom.docref.HasUuid;
-import stroom.util.shared.HasAuditInfo;
+import stroom.util.shared.Document;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -40,7 +38,8 @@ import java.util.Objects;
         "createUser",
         "updateUser"})
 @JsonInclude(Include.NON_NULL)
-public abstract class Doc implements HasAuditInfo, HasUuid, HasType {
+// TODO Ought to be renamed AbstractDoc, job for master branch
+public abstract class Doc implements Document {
 
     @JsonProperty
     private String type;
@@ -200,6 +199,10 @@ public abstract class Doc implements HasAuditInfo, HasUuid, HasType {
                 ", name='" + name + '\'' +
                 '}';
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public abstract static class AbstractBuilder<T extends Doc, B extends AbstractBuilder<T, ?>> {
 

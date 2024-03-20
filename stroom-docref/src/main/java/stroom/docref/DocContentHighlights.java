@@ -67,6 +67,10 @@ public class DocContentHighlights {
         return new Builder();
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public static class Builder {
 
         private DocRef docRef;

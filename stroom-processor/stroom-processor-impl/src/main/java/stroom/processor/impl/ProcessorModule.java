@@ -16,6 +16,7 @@
 
 package stroom.processor.impl;
 
+import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.job.api.DistributedTaskFactory;
 import stroom.job.api.ScheduledJobsBinder;
@@ -23,6 +24,7 @@ import stroom.lifecycle.api.LifecycleBinder;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorService;
 import stroom.processor.api.ProcessorTaskService;
+import stroom.processor.shared.ProcessorFilterDoc;
 import stroom.processor.shared.ProcessorResource;
 import stroom.processor.shared.ProcessorTaskResource;
 import stroom.searchable.api.Searchable;
@@ -68,6 +70,9 @@ public class ProcessorModule extends AbstractModule {
 
         GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
                 .addBinding(ProcessorFilterImportExportHandlerImpl.class);
+
+        DocumentActionHandlerBinder.create(binder())
+                .bind(ProcessorFilterDoc.DOCUMENT_TYPE, ProcessorFilterImportExportHandlerImpl.class);
 
         HasSystemInfoBinder.create(binder())
                 .bind(ProcessorTaskQueueManagerImpl.class);
