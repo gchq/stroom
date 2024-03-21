@@ -4,6 +4,8 @@ import stroom.data.grid.client.PagerViewImpl;
 import stroom.data.table.client.MyCellTable;
 import stroom.util.shared.PageRequest;
 import stroom.widget.dropdowntree.client.view.QuickFilter;
+import stroom.widget.tab.client.event.CloseEvent;
+import stroom.widget.tab.client.event.CloseEvent.CloseHandler;
 import stroom.widget.util.client.AbstractSelectionEventManager;
 import stroom.widget.util.client.DoubleSelectTester;
 import stroom.widget.util.client.MouseUtil;
@@ -31,6 +33,7 @@ import com.google.gwt.view.client.AsyncDataProvider;
 import com.google.gwt.view.client.CellPreviewEvent;
 import com.google.gwt.view.client.HasData;
 import com.google.gwt.view.client.Range;
+import com.google.web.bindery.event.shared.HandlerRegistration;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -75,9 +78,13 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
 
             @Override
             protected void onBrowserEvent2(final Event event) {
-                if (event.getTypeInt() == Event.ONKEYDOWN && event.getKeyCode() == KeyCodes.KEY_UP) {
-                    if (cellTable.getKeyboardSelectedRow() == 0) {
-                        quickFilter.focus();
+                if (event.getTypeInt() == Event.ONKEYDOWN) {
+                    if (event.getKeyCode() == KeyCodes.KEY_UP) {
+                        if (cellTable.getKeyboardSelectedRow() == 0) {
+                            quickFilter.focus();
+                        }
+                    } else if (event.getKeyCode() == KeyCodes.KEY_ESCAPE) {
+                        CloseEvent.fire(SelectionList.this);
                     }
                 }
                 super.onBrowserEvent2(event);
@@ -115,6 +122,8 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
                 super.onKeyDown(event);
                 if (event.isDownArrow()) {
                     cellTable.setKeyboardSelectedRow(0, true);
+                } else if (event.getNativeKeyCode() == KeyCodes.KEY_ESCAPE) {
+                    CloseEvent.fire(SelectionList.this);
                 }
             }
         };
@@ -234,6 +243,10 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
 
     public MultiSelectionModel<I> getSelectionModel() {
         return selectionModel;
+    }
+
+    public HandlerRegistration addCloseHandler(final CloseHandler handler) {
+        return addHandler(handler, CloseEvent.getType());
     }
 
     private static class SelectionEventManager<T, I extends SelectionItem>

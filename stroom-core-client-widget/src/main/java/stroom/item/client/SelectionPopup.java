@@ -23,6 +23,7 @@ public class SelectionPopup<T, I extends SelectionItem> extends Composite {
         protected void onBind() {
             super.onBind();
             registerHandler(popupPanel.addCloseHandler(event -> hide()));
+            registerHandler(selectionList.addCloseHandler(event -> hide()));
         }
     };
 
