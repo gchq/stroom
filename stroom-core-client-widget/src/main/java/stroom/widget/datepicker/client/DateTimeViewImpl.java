@@ -14,12 +14,10 @@
  * limitations under the License.
  */
 
-package stroom.job.client.view;
+package stroom.widget.datepicker.client;
 
-import stroom.job.client.presenter.DateTimePopup.DateTimeView;
-import stroom.widget.datepicker.client.CustomDatePicker;
-import stroom.widget.datepicker.client.UTCDate;
-import stroom.widget.datepicker.client.ValueChooser;
+import stroom.widget.datepicker.client.DateTimePopup.DateTimeView;
+import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -47,16 +45,16 @@ public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
     Label time;
     @SuppressWarnings("unused")
     @UiField
-    ValueChooser hour;
+    ValueSpinner hour;
     @SuppressWarnings("unused")
     @UiField
-    ValueChooser minute;
+    ValueSpinner minute;
     @SuppressWarnings("unused")
     @UiField
-    ValueChooser second;
+    ValueSpinner second;
     @SuppressWarnings("unused")
     @UiField
-    ValueChooser millisecond;
+    ValueSpinner millisecond;
 
     @SuppressWarnings("unused")
     @UiField
@@ -80,6 +78,7 @@ public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
     private UTCDate value;
     private String currentDateString;
     private DateTimeModel dateTimeModel;
+    private int previousHour = 0;
 
     @Inject
     public DateTimeViewImpl(final Binder binder) {
@@ -89,12 +88,20 @@ public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
 
         hour.setMin(0);
         hour.setMax(23);
+        hour.setMinStep(1);
+        hour.setMaxStep(1);
         minute.setMin(0);
         minute.setMax(59);
+        minute.setMinStep(1);
+        minute.setMaxStep(1);
         second.setMin(0);
         second.setMax(59);
+        second.setMinStep(1);
+        second.setMaxStep(1);
         millisecond.setMin(0);
         millisecond.setMax(999);
+        millisecond.setMinStep(1);
+        millisecond.setMaxStep(10);
     }
 
     private void setDatePickerTime(final UTCDate value) {
@@ -110,7 +117,6 @@ public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
 
         datePicker.setCurrentMonth(utc);
         datePicker.setValue(utc);
-        datePicker.setToday(getTodayUTC());
     }
 
     @Override
@@ -134,22 +140,10 @@ public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
         hour.focus();
     }
 
-    private UTCDate getTodayUTC() {
-        final DateRecord today = dateTimeModel.parseDate(UTCDate.create());
-        return UTCDate.create(
-                today.getYear(),
-                today.getMonth(),
-                today.getDay(),
-                0,
-                0,
-                0,
-                0);
-    }
-
     @SuppressWarnings("unused")
     @UiHandler("today")
     public void onToday(final ClickEvent event) {
-        final UTCDate utc = getTodayUTC();
+        final UTCDate utc = dateTimeModel.getTodayUTC();
         setDatePickerTime(utc);
         value = resolveDateTime(value);
         update();
@@ -158,7 +152,7 @@ public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
     @SuppressWarnings("unused")
     @UiHandler("yesterday")
     public void onYesterday(final ClickEvent event) {
-        final UTCDate utc = getTodayUTC();
+        final UTCDate utc = dateTimeModel.getTodayUTC();
         utc.setDate(utc.getDate() - 1);
         setDatePickerTime(utc);
         value = resolveDateTime(value);
@@ -168,7 +162,7 @@ public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
     @SuppressWarnings("unused")
     @UiHandler("weekStart")
     public void onWeekStart(final ClickEvent event) {
-        final UTCDate utc = getTodayUTC();
+        final UTCDate utc = dateTimeModel.getTodayUTC();
         utc.setDate(utc.getDate() - utc.getDay());
         setDatePickerTime(utc);
         value = resolveDateTime(value);
@@ -220,27 +214,54 @@ public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
     @SuppressWarnings("unused")
     @UiHandler("hour")
     public void onHour(final ValueChangeEvent<Long> event) {
+        final int previousHour = this.previousHour;
         final DateRecord dateBefore = dateTimeModel.parseDate(value);
         final int hour = this.hour.getIntValue();
-        value = resolveDateTime(value, false);
+        value = resolveDateTime(value, hour == 23);
         updateTime();
 
-        // Deal with daylight savings offset changes that could switch the day.
+        // Deal with daylight savings offset changes that could switch the day or hour.
         if (hour == 0) {
             final DateRecord dateAfter = dateTimeModel.parseDate(value);
             if (!dateBefore.equals(dateAfter)) {
                 GWT.log("Fix hour for DST: " + dateBefore + " -> " + dateAfter);
                 value.setTime(value.getTime() + DateTimeModel.MILLIS_IN_HOUR);
                 updateTime();
+            } else if (previousHour == 23 && this.hour.getIntValue() == 1) {
+                GWT.log("Fix hour for DST wrap: " + dateBefore + " -> " + dateAfter);
+                value.setTime(value.getTime() - DateTimeModel.MILLIS_IN_HOUR);
+                updateTime();
             }
         }
     }
 
     @SuppressWarnings("unused")
+    @UiHandler("hourReset")
+    public void onHourReset(final ClickEvent event) {
+        hour.setValue(0);
+        minute.setValue(0);
+        second.setValue(0);
+        millisecond.setValue(0);
+        value = resolveDateTime(value);
+        update();
+    }
+
+    @SuppressWarnings("unused")
     @UiHandler("minute")
     public void onMinute(final ValueChangeEvent<Long> event) {
-        value = resolveDateTime(value, false);
+        final int minute = this.minute.getIntValue();
+        value = resolveDateTime(value, minute == 59);
         updateTime();
+    }
+
+    @SuppressWarnings("unused")
+    @UiHandler("minuteReset")
+    public void onMinuteReset(final ClickEvent event) {
+        minute.setValue(0);
+        second.setValue(0);
+        millisecond.setValue(0);
+        value = resolveDateTime(value);
+        update();
     }
 
     @SuppressWarnings("unused")
@@ -251,10 +272,27 @@ public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
     }
 
     @SuppressWarnings("unused")
+    @UiHandler("secondReset")
+    public void onSecondReset(final ClickEvent event) {
+        second.setValue(0);
+        millisecond.setValue(0);
+        value = resolveDateTime(value);
+        update();
+    }
+
+    @SuppressWarnings("unused")
     @UiHandler("millisecond")
     public void onMillisecond(final ValueChangeEvent<Long> event) {
         value.setMilliseconds(millisecond.getIntValue());
         updateTimeLabel();
+    }
+
+    @SuppressWarnings("unused")
+    @UiHandler("millisecondReset")
+    public void onMillisecondReset(final ClickEvent event) {
+        millisecond.setValue(0);
+        value = resolveDateTime(value);
+        update();
     }
 
     private UTCDate resolveDateTime(final UTCDate previousTime) {
@@ -330,6 +368,7 @@ public class DateTimeViewImpl extends ViewImpl implements DateTimeView {
             minute = minute + 60;
         }
 
+        previousHour = hour;
         this.hour.setValue(hour);
         this.minute.setValue(minute);
         this.second.setValue(value.getSeconds());

@@ -22,7 +22,7 @@ import stroom.pipeline.destination.RollingDestinationFactory;
 import stroom.pipeline.destination.RollingDestinations;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.factory.PipelineFactoryException;
-import stroom.query.api.v2.FrequencyExpressions;
+import stroom.util.shared.scheduler.FrequencyExpressions;
 import stroom.util.scheduler.CronTrigger;
 import stroom.util.scheduler.FrequencyTrigger;
 import stroom.util.scheduler.Trigger;

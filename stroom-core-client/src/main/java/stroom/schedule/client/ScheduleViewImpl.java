@@ -14,15 +14,14 @@
  * limitations under the License.
  */
 
-package stroom.job.client.view;
+package stroom.schedule.client;
 
 import stroom.item.client.SelectionBox;
-import stroom.job.client.presenter.SchedulePopup.ScheduleView;
-import stroom.job.client.presenter.ScheduleUiHandlers;
-import stroom.query.api.v2.CronExpression;
-import stroom.query.api.v2.CronExpressions;
-import stroom.query.api.v2.FrequencyExpression;
-import stroom.query.api.v2.FrequencyExpressions;
+import stroom.schedule.client.SchedulePopup.ScheduleView;
+import stroom.util.shared.scheduler.CronExpression;
+import stroom.util.shared.scheduler.CronExpressions;
+import stroom.util.shared.scheduler.FrequencyExpression;
+import stroom.util.shared.scheduler.FrequencyExpressions;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.scheduler.ScheduleType;
 import stroom.widget.button.client.Button;

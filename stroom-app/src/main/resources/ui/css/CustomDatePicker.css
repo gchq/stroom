@@ -95,8 +95,7 @@ td:hover .customDatePickerDayIsValue {
     padding: 0 2px;
 }
 .customDatePickerYear .icon-button,
-.customDatePickerMonth .icon-button,
-.valueChooser .reset {
+.customDatePickerMonth .icon-button {
     width: 26px;
     height: 26px;
 }
@@ -165,8 +164,5 @@ td:hover .customDatePickerDayIsValue {
     align-items: center;
     gap: 4px;
     padding-bottom: 4px;
-}
-
-.valueChooser svg {
-    color: var(--navigation__text-color);
+    width: 176px;
 }

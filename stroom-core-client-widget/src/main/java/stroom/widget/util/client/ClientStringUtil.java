@@ -1,4 +1,4 @@
-package stroom.util.client;
+package stroom.widget.util.client;
 
 public class ClientStringUtil {
     public static String zeroPad(final int amount, int value) {

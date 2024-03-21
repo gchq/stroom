@@ -26,7 +26,7 @@ abstract class DatePickerComponent extends Composite {
 
     private CustomDatePicker datePicker;
 
-    public CalendarModel getModel() {
+    public DateTimeModel getModel() {
         return datePicker.getModel();
     }
 
@@ -48,7 +48,7 @@ abstract class DatePickerComponent extends Composite {
 
     /**
      * Refreshes the {@link CustomDatePicker}, {@link CalendarView}, and
-     * {@link CalendarModel}.
+     * {@link DateTimeModel}.
      */
     protected void refreshAll() {
         getDatePicker().refreshAll();

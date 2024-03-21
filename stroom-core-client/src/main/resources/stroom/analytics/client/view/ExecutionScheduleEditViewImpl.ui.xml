@@ -3,9 +3,9 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
              xmlns:form="urn:import:stroom.widget.form.client"
-             xmlns:s="urn:import:stroom.job.client.presenter"
+             xmlns:schedule="urn:import:stroom.schedule.client"
              xmlns:l="urn:import:stroom.item.client"
-             xmlns:datetimebox="urn:import:stroom.job.client.presenter">
+             xmlns:datetimebox="urn:import:stroom.widget.datepicker.client">
     <g:FlowPanel styleName="max form-padding form">
         <form:FormGroup identity="name" label="Name">
             <g:TextBox ui:field="name" addStyleNames="w-100"/>
@@ -17,7 +17,7 @@
             <l:SelectionBox ui:field="node" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup identity="schedule" label="Schedule">
-            <s:ScheduleBox ui:field="schedule" addStyleNames="w-100"/>
+            <schedule:ScheduleBox ui:field="schedule" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup identity="startTime" label="Start Time">
             <datetimebox:DateTimeBox ui:field="startTime" addStyleNames="w-100"/>

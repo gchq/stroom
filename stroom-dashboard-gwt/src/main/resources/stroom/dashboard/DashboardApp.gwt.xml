@@ -99,6 +99,7 @@
     <inherits name="stroom.feed.Feed"/>
 <!--    <inherits name="stroom.monitoring.Monitoring" />-->
     <inherits name="stroom.job.Job" />
+    <inherits name="stroom.schedule.Schedule" />
     <inherits name="stroom.importexport.ImportExport" />
     <inherits name="stroom.analytics.Analytics" />
     <inherits name="stroom.view.View" />

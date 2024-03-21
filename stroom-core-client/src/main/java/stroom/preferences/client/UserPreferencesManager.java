@@ -4,13 +4,17 @@ import stroom.config.global.shared.UserPreferencesResource;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.editor.client.presenter.CurrentPreferences;
+import stroom.expression.api.UserTimeZone;
 import stroom.expression.api.UserTimeZone.Use;
 import stroom.ui.config.shared.Themes;
 import stroom.ui.config.shared.Themes.ThemeType;
 import stroom.ui.config.shared.UserPreferences;
 import stroom.util.shared.GwtNullSafe;
+import stroom.widget.datepicker.client.ClientTimeZone;
+import stroom.widget.util.client.ClientStringUtil;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.ui.RootPanel;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorTheme;
 
@@ -58,8 +62,9 @@ public class UserPreferencesManager {
     }
 
     public void fetch(final Consumer<UserPreferences> consumer) {
-        final Rest<UserPreferences> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forType(UserPreferences.class)
                 .onSuccess(consumer)
                 .call(PREFERENCES_RESOURCE)
                 .fetch();
@@ -67,8 +72,9 @@ public class UserPreferencesManager {
 
     public void update(final UserPreferences userPreferences,
                        final Consumer<Boolean> consumer) {
-        final Rest<Boolean> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forType(Boolean.class)
                 .onSuccess(consumer)
                 .call(PREFERENCES_RESOURCE)
                 .update(userPreferences);
@@ -76,16 +82,18 @@ public class UserPreferencesManager {
 
     public void setDefaultUserPreferences(final UserPreferences userPreferences,
                                           final Consumer<UserPreferences> consumer) {
-        final Rest<UserPreferences> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forType(UserPreferences.class)
                 .onSuccess(consumer)
                 .call(PREFERENCES_RESOURCE)
                 .setDefaultUserPreferences(userPreferences);
     }
 
     public void resetToDefaultUserPreferences(final Consumer<UserPreferences> consumer) {
-        final Rest<UserPreferences> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forType(UserPreferences.class)
                 .onSuccess(consumer)
                 .call(PREFERENCES_RESOURCE)
                 .resetToDefaultUserPreferences();
@@ -95,9 +103,40 @@ public class UserPreferencesManager {
         this.currentUserPreferences = userPreferences;
         applyUserPreferences(this.currentPreferences, userPreferences);
 
-        final com.google.gwt.dom.client.Element element = RootPanel.getBodyElement().getParentElement();
+        final Element element = RootPanel.getBodyElement().getParentElement();
         String className = getCurrentPreferenceClasses();
         element.setClassName(className);
+
+        ClientTimeZone.setTimeZone(getTimeZone(currentUserPreferences));
+    }
+
+    private String getTimeZone(final UserPreferences userPreferences) {
+        final UserTimeZone userTimeZone = userPreferences.getTimeZone();
+        String timeZone = null;
+        switch (userTimeZone.getUse()) {
+            case UTC: {
+                timeZone = "GMT";
+                break;
+            }
+            case ID: {
+                timeZone = userTimeZone.getId();
+                break;
+            }
+            case OFFSET: {
+                final String hours = ClientStringUtil.zeroPad(2, userTimeZone.getOffsetHours());
+                final String minutes = ClientStringUtil.zeroPad(2, userTimeZone.getOffsetMinutes());
+                String offset = hours + minutes;
+                if (userTimeZone.getOffsetHours() >= 0 && userTimeZone.getOffsetMinutes() >= 0) {
+                    offset = "+" + offset;
+                } else {
+                    offset = "-" + offset;
+                }
+
+                timeZone = "GMT" + offset;
+                break;
+            }
+        }
+        return timeZone;
     }
 
     public UserPreferences getCurrentUserPreferences() {

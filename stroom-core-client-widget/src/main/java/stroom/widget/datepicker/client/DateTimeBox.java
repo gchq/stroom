@@ -1,10 +1,9 @@
-package stroom.job.client.presenter;
+package stroom.widget.datepicker.client;
 
 import stroom.item.client.EventBinder;
 import stroom.svg.client.SvgIconBox;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.GwtNullSafe;
-import stroom.widget.datepicker.client.UTCDate;
 
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
@@ -84,10 +83,15 @@ public class DateTimeBox
     private void showPopup() {
         final DateTimePopup popup = getPopup();
         if (popup != null) {
-            if (longValue == null) {
-                popup.setTime(System.currentTimeMillis());
+            final UTCDate date = UTCDate.create(textBox.getValue());
+            if (date != null) {
+                popup.setTime((long) date.getTime());
             } else {
-                popup.setTime(longValue);
+                if (longValue == null) {
+                    popup.setTime(System.currentTimeMillis());
+                } else {
+                    popup.setTime(longValue);
+                }
             }
             popup.show(newValue -> {
                 if (!Objects.equals(longValue, newValue)) {

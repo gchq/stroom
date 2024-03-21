@@ -39,6 +39,7 @@ import stroom.job.shared.JobNodeResource;
 import stroom.job.shared.JobNodeUtil;
 import stroom.job.shared.ScheduleReferenceTime;
 import stroom.preferences.client.DateTimeFormatter;
+import stroom.schedule.client.SchedulePopup;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.ui.config.client.UiConfigCache;

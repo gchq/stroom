@@ -34,6 +34,7 @@ import com.google.gwt.user.client.ui.HasValue;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Standard GWT date picker.
@@ -269,7 +270,8 @@ public class CustomDatePicker extends Composite implements
 
     private final MonthSelector monthAndYearSelector;
     private final CalendarView view;
-    private final CalendarModel model;
+    private final DateTimeModel model;
+    private UTCDate today;
     private UTCDate value;
     private UTCDate highlighted;
     private StandardCss css = StandardCss.DEFAULT;
@@ -284,7 +286,7 @@ public class CustomDatePicker extends Composite implements
     public CustomDatePicker() {
         this(new DefaultMonthSelector(),
                 new DefaultCalendarView(),
-                new CalendarModel());
+                new DateTimeModel());
     }
 
     /**
@@ -297,7 +299,7 @@ public class CustomDatePicker extends Composite implements
 
     protected CustomDatePicker(MonthSelector monthAndYearSelector,
                                CalendarView view,
-                               CalendarModel model) {
+                               DateTimeModel model) {
 
         this.model = model;
         this.monthAndYearSelector = monthAndYearSelector;
@@ -308,10 +310,6 @@ public class CustomDatePicker extends Composite implements
         view.setup();
         monthAndYearSelector.setup();
         this.setup();
-    }
-
-    public void setToday(final UTCDate today) {
-        addStyleToDates(css().dayIsToday(), today);
     }
 
     public HandlerRegistration addHighlightHandler(HighlightHandler<UTCDate> handler) {
@@ -505,9 +503,9 @@ public class CustomDatePicker extends Composite implements
         CalendarView r = getView();
         UTCDate first = r.getFirstDate();
         UTCDate last = r.getLastDate();
-        return (date != null && (CalendarUtil.isSameDate(first, date)
-                || CalendarUtil.isSameDate(last, date) ||
-                (first.getTime() < date.getTime()) && last.getTime() > date.getTime()));
+        return (date != null && first != null && last != null &&
+                (CalendarUtil.isSameDate(first, date) || CalendarUtil.isSameDate(last, date) ||
+                        (first.getTime() < date.getTime()) && last.getTime() > date.getTime()));
     }
 
     /**
@@ -682,11 +680,11 @@ public class CustomDatePicker extends Composite implements
     }
 
     /**
-     * Gets the {@link CalendarModel} associated with this date picker.
+     * Gets the {@link DateTimeModel} associated with this date picker.
      *
      * @return the model
      */
-    protected final CalendarModel getModel() {
+    protected final DateTimeModel getModel() {
         return model;
     }
 
@@ -713,14 +711,25 @@ public class CustomDatePicker extends Composite implements
      */
     protected final void refreshAll() {
         highlighted = null;
-        getModel().refresh();
 
+        updateToday();
         getView().refresh();
         getMonthSelector().refresh();
         if (isAttached()) {
             ShowRangeEvent.fire(this, getFirstDate(), getLastDate());
         }
         getView().setAriaSelectedCell(value);
+    }
+
+    private void updateToday() {
+        final UTCDate today = model.getTodayUTC();
+        if (!Objects.equals(this.today, today)) {
+            if (this.today != null) {
+                removeStyleFromDates(css().dayIsToday(), this.today);
+            }
+            addStyleToDates(css().dayIsToday(), today);
+            this.today = today;
+        }
     }
 
     /**

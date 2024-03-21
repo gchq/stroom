@@ -136,11 +136,11 @@ public final class DefaultCalendarView extends CalendarView {
         int weekendEndColumn = -1;
 
         // Set up the day labels.
-        for (int i = 0; i < CalendarModel.DAYS_IN_WEEK; i++) {
+        for (int i = 0; i < DateTimeModel.DAYS_IN_WEEK; i++) {
             int shift = CalendarUtil.getStartingDayOfWeek();
-            int dayIdx = i + shift < CalendarModel.DAYS_IN_WEEK
+            int dayIdx = i + shift < DateTimeModel.DAYS_IN_WEEK
                     ? i + shift
-                    : i + shift - CalendarModel.DAYS_IN_WEEK;
+                    : i + shift - DateTimeModel.DAYS_IN_WEEK;
             final DayLabel cell = new DayLabel(getModel().formatDayOfWeek(dayIdx));
             grid.addElement(cell);
             grid.setWidget(0, i, cell);
@@ -158,8 +158,8 @@ public final class DefaultCalendarView extends CalendarView {
         }
 
         // Set up the calendar grid.
-        for (int row = 1; row <= CalendarModel.WEEKS_IN_MONTH; row++) {
-            for (int column = 0; column < CalendarModel.DAYS_IN_WEEK; column++) {
+        for (int row = 1; row <= DateTimeModel.WEEKS_IN_MONTH; row++) {
+            for (int column = 0; column < DateTimeModel.DAYS_IN_WEEK; column++) {
                 final int index = grid.getNumCells();
                 final DateCell cell = new DateCell(
                         this,

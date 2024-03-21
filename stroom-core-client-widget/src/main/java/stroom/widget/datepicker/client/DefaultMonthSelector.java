@@ -133,7 +133,7 @@ public final class DefaultMonthSelector extends MonthSelector {
     private SelectionBox<IntItem> createMonthSelect() {
         final SelectionBox<IntItem> monthListBox = new SelectionBox<>();
 
-        for (int i = 0; i < CalendarModel.MONTHS_IN_YEAR; i++) {
+        for (int i = 0; i < DateTimeModel.MONTHS_IN_YEAR; i++) {
             monthListBox.addItem(new IntItem(getModel().formatMonth(i), i));
         }
 
@@ -153,7 +153,7 @@ public final class DefaultMonthSelector extends MonthSelector {
             int previousYear = getModel().getCurrentMonth().getFullYear();
             int newYear = yearListBox.getValue().getValue();
             int delta = newYear - previousYear;
-            addMonths(delta * CalendarModel.MONTHS_IN_YEAR);
+            addMonths(delta * DateTimeModel.MONTHS_IN_YEAR);
         });
 
         return yearListBox;

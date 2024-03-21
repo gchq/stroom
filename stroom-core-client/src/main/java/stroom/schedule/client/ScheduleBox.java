@@ -1,4 +1,4 @@
-package stroom.job.client.presenter;
+package stroom.schedule.client;
 
 import stroom.item.client.EventBinder;
 import stroom.job.shared.ScheduleReferenceTime;

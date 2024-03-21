@@ -19,8 +19,8 @@ package stroom.analytics.client.view;
 import stroom.analytics.client.presenter.ExecutionScheduleEditView;
 import stroom.analytics.client.presenter.ProcessingStatusUiHandlers;
 import stroom.item.client.SelectionBox;
-import stroom.job.client.presenter.DateTimeBox;
-import stroom.job.client.presenter.ScheduleBox;
+import stroom.widget.datepicker.client.DateTimeBox;
+import stroom.schedule.client.ScheduleBox;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;

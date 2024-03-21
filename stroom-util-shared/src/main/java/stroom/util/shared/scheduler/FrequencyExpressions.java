@@ -1,4 +1,4 @@
-package stroom.query.api.v2;
+package stroom.util.shared.scheduler;
 
 public class FrequencyExpressions {
 

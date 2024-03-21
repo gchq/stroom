@@ -1,4 +1,4 @@
-package stroom.job.client.presenter;
+package stroom.schedule.client;
 
 import stroom.util.shared.scheduler.ScheduleType;
 

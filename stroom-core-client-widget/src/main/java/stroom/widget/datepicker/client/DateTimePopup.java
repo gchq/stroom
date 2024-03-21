@@ -1,7 +1,6 @@
-package stroom.job.client.presenter;
+package stroom.widget.datepicker.client;
 
-import stroom.job.client.presenter.DateTimePopup.DateTimeView;
-import stroom.job.client.view.DateTimeModel;
+import stroom.widget.datepicker.client.DateTimePopup.DateTimeView;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupType;
 

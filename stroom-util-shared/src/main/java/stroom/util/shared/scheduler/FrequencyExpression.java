@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.query.api.v2;
+package stroom.util.shared.scheduler;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;

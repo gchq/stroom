@@ -145,6 +145,10 @@ public class ValueSpinner
         spinner.setMinStep(minStep);
     }
 
+    public void setWrapValues(final boolean wrapValues) {
+        spinner.setWrapValues(wrapValues);
+    }
+
     public int getIntValue() {
         return (int) spinner.getValue();
     }
@@ -176,14 +180,6 @@ public class ValueSpinner
     @Override
     public HandlerRegistration addValueChangeHandler(final ValueChangeHandler<Long> handler) {
         return spinner.addValueChangeHandler(handler);
-    }
-
-    public HandlerRegistration addIncreaseHandler(final IncreaseEvent.Handler handler) {
-        return spinner.addIncreaseHandler(handler);
-    }
-
-    public HandlerRegistration addDecreaseHandler(final DecreaseEvent.Handler handler) {
-        return spinner.addDecreaseHandler(handler);
     }
 
     @Override

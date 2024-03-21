@@ -1,10 +1,5 @@
-package stroom.job.client.view;
+package stroom.widget.datepicker.client;
 
-import stroom.expression.api.UserTimeZone;
-import stroom.preferences.client.UserPreferencesManager;
-import stroom.ui.config.shared.UserPreferences;
-import stroom.util.client.ClientStringUtil;
-import stroom.widget.datepicker.client.IntlDateTimeFormat;
 import stroom.widget.datepicker.client.IntlDateTimeFormat.FormatOptions;
 import stroom.widget.datepicker.client.IntlDateTimeFormat.FormatOptions.Day;
 import stroom.widget.datepicker.client.IntlDateTimeFormat.FormatOptions.Hour;
@@ -13,9 +8,7 @@ import stroom.widget.datepicker.client.IntlDateTimeFormat.FormatOptions.Month;
 import stroom.widget.datepicker.client.IntlDateTimeFormat.FormatOptions.Second;
 import stroom.widget.datepicker.client.IntlDateTimeFormat.FormatOptions.TimeZoneName;
 import stroom.widget.datepicker.client.IntlDateTimeFormat.FormatOptions.Year;
-import stroom.widget.datepicker.client.UTCDate;
-
-import com.google.inject.Inject;
+import stroom.widget.util.client.ClientStringUtil;
 
 public class DateTimeModel {
 
@@ -25,12 +18,191 @@ public class DateTimeModel {
     public static final long MILLIS_IN_MINUTE = 60 * MILLIS_IN_SECOND;
     public static final long MILLIS_IN_HOUR = 60 * MILLIS_IN_MINUTE;
 
-    private final UserPreferencesManager userPreferencesManager;
 
-    @Inject
-    public DateTimeModel(final UserPreferencesManager userPreferencesManager) {
-        this.userPreferencesManager = userPreferencesManager;
+
+
+
+
+
+
+
+
+
+
+
+
+    private static final DateTimeConstants DATE_TIME_CONSTANTS = new DateTimeConstants();
+
+    /**
+     * The number of weeks normally displayed in a month.
+     */
+    public static final int WEEKS_IN_MONTH = 6;
+
+    /**
+     * Number of days normally displayed in a week.
+     */
+    public static final int DAYS_IN_WEEK = 7;
+
+    public static final int MONTHS_IN_YEAR = 12;
+
+    private static final int MAX_DAYS_IN_MONTH = 31;
+
+    private final String[] dayOfWeekNames = DATE_TIME_CONSTANTS.getDayOfWeekNames();
+    private final String[] dayOfMonthNames = DATE_TIME_CONSTANTS.getDayOfMonthNames();
+    private final String[] monthOfYearNames = DATE_TIME_CONSTANTS.getMonthNames();
+    private final UTCDate currentMonth;
+
+    /**
+     * Constructor.
+     */
+    public DateTimeModel() {
+        currentMonth = getFirstDayOfMonth(UTCDate.create());
     }
+
+    public static UTCDate getFirstDayOfMonth(UTCDate date) {
+        return UTCDate.create(
+                date.getFullYear(),
+                date.getMonth(),
+                1,
+                0,
+                0,
+                0,
+                0);
+    }
+
+    /**
+     * Formats a date's day of month. For example "1".
+     *
+     * @param date the date
+     * @return the formated day of month
+     */
+    public String formatDayOfMonth(UTCDate date) {
+        return dayOfMonthNames[date.getDate()];
+    }
+
+    /**
+     * Format a day in the week. So, for example "Monday".
+     *
+     * @param dayInWeek the day in week to format
+     * @return the formatted day in week
+     */
+    public String formatDayOfWeek(int dayInWeek) {
+        return dayOfWeekNames[dayInWeek];
+    }
+
+    /**
+     * Format a month in the year. So, for example "January".
+     *
+     * @param month A number from 0 (for January) to 11 (for December) identifying the month wanted.
+     * @return the formatted month
+     */
+    public String formatMonth(int month) {
+        return monthOfYearNames[month];
+    }
+
+    /**
+     * Gets the first day of the first week in the currently specified month.
+     *
+     * @return the first day
+     */
+    public UTCDate getCurrentFirstDayOfFirstWeek() {
+        final int wkDayOfMonth1st = currentMonth.getDay();
+        final int start = CalendarUtil.getStartingDayOfWeek();
+        final UTCDate copy = CalendarUtil.copyDate(currentMonth);
+        if (wkDayOfMonth1st == start) {
+            // always return a copy to allow SimpleCalendarView to adjust first
+            // display date
+            return copy;
+        } else {
+
+            int offset = wkDayOfMonth1st - start > 0
+                    ? wkDayOfMonth1st - start
+                    : DAYS_IN_WEEK - (start - wkDayOfMonth1st);
+            CalendarUtil.addDaysToDate(copy, -offset);
+            return copy;
+        }
+    }
+
+    /**
+     * Gets the date representation of the currently specified month. Used to
+     * access both the month and year information.
+     *
+     * @return the month and year
+     */
+    public UTCDate getCurrentMonth() {
+        return currentMonth;
+    }
+
+    /**
+     * Is a date in the currently specified month?
+     *
+     * @param date the date
+     * @return date
+     */
+    public boolean isInCurrentMonth(UTCDate date) {
+        return currentMonth.getMonth() == date.getMonth();
+    }
+
+    /**
+     * Sets the currently specified date.
+     *
+     * @param currentDate the currently specified date
+     */
+    public void setCurrentMonth(UTCDate currentDate) {
+        this.currentMonth.setFullYear(currentDate.getFullYear());
+        this.currentMonth.setMonth(currentDate.getMonth());
+    }
+
+    /**
+     * Shifts the currently specified date by the given number of months. The day
+     * of the month will be pinned to the original value as far as possible.
+     *
+     * @param deltaMonths - number of months to be added to the current date
+     */
+    public void shiftCurrentMonth(int deltaMonths) {
+        CalendarUtil.addMonthsToDate(currentMonth, deltaMonths);
+//        refresh();
+    }
+
+    public UTCDate getTodayUTC() {
+        final DateRecord today = parseDate(UTCDate.create());
+        return UTCDate.create(
+                today.getYear(),
+                today.getMonth(),
+                today.getDay(),
+                0,
+                0,
+                0,
+                0);
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     public String formatDateLabel(final UTCDate value) {
         final FormatOptions.Builder builder = FormatOptions
@@ -129,7 +301,7 @@ public class DateTimeModel {
     }
 
     private void setTimeZone(final FormatOptions.Builder builder) {
-        final String timeZone = getTimeZone();
+        final String timeZone = ClientTimeZone.getTimeZone();
         if (timeZone != null) {
             builder.timeZone(timeZone);
         }
@@ -176,35 +348,5 @@ public class DateTimeModel {
         final int second = ClientStringUtil.getInt(secondParts[0]);
         final int millisecond = ClientStringUtil.getInt(secondParts[1]);
         return new TimeRecord(hour, minute, second, millisecond);
-    }
-
-    public String getTimeZone() {
-        final UserPreferences userPreferences = userPreferencesManager.getCurrentUserPreferences();
-        final UserTimeZone userTimeZone = userPreferences.getTimeZone();
-        String timeZone = null;
-        switch (userTimeZone.getUse()) {
-            case UTC: {
-                timeZone = "GMT";
-                break;
-            }
-            case ID: {
-                timeZone = userTimeZone.getId();
-                break;
-            }
-            case OFFSET: {
-                final String hours = ClientStringUtil.zeroPad(2, userTimeZone.getOffsetHours());
-                final String minutes = ClientStringUtil.zeroPad(2, userTimeZone.getOffsetMinutes());
-                String offset = hours + minutes;
-                if (userTimeZone.getOffsetHours() >= 0 && userTimeZone.getOffsetMinutes() >= 0) {
-                    offset = "+" + offset;
-                } else {
-                    offset = "-" + offset;
-                }
-
-                timeZone = "GMT" + offset;
-                break;
-            }
-        }
-        return timeZone;
     }
 }

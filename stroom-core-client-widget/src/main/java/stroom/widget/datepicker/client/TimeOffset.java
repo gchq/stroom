@@ -1,6 +1,6 @@
-package stroom.job.client.view;
+package stroom.widget.datepicker.client;
 
-import stroom.util.client.ClientStringUtil;
+import stroom.widget.util.client.ClientStringUtil;
 
 import java.util.Objects;
 

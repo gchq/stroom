@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.job.client.presenter;
+package stroom.schedule.client;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.job.shared.GetScheduledTimesRequest;
@@ -22,8 +22,8 @@ import stroom.job.shared.ScheduleReferenceTime;
 import stroom.job.shared.ScheduleRestriction;
 import stroom.job.shared.ScheduledTimes;
 import stroom.preferences.client.DateTimeFormatter;
-import stroom.query.api.v2.CronExpressions;
-import stroom.query.api.v2.FrequencyExpressions;
+import stroom.util.shared.scheduler.CronExpressions;
+import stroom.util.shared.scheduler.FrequencyExpressions;
 import stroom.util.shared.GwtNullSafe;
 import stroom.util.shared.StringUtil;
 import stroom.util.shared.scheduler.Schedule;

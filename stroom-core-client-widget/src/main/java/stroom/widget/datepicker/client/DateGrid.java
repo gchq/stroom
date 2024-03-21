@@ -41,7 +41,7 @@ public class DateGrid extends Grid {
         setCellPadding(0);
         setCellSpacing(0);
         setBorderWidth(0);
-        resize(CalendarModel.WEEKS_IN_MONTH + 1, CalendarModel.DAYS_IN_WEEK);
+        resize(DateTimeModel.WEEKS_IN_MONTH + 1, DateTimeModel.DAYS_IN_WEEK);
     }
 
     public void addElement(final AbstractCell abstractCell) {
