@@ -15095,6 +15095,16 @@ components:
           type: string
         version:
           type: string
+    TextInputComponentSettings:
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/ComponentSettings'
+      - type: object
+        properties:
+          key:
+            type: string
+          value:
+            type: string
     ThemeConfig:
       type: object
       properties:

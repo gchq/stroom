@@ -16,11 +16,11 @@
 
 package stroom.dashboard.client.input;
 
+import stroom.dashboard.client.input.TextInputPresenter.TextInputView;
 import stroom.dashboard.client.main.AbstractComponentPresenter;
 import stroom.dashboard.client.main.ComponentChangeEvent;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentUse;
-import stroom.dashboard.client.input.TextInputPresenter.TextInputView;
 import stroom.dashboard.client.main.HasParams;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentSettings;
