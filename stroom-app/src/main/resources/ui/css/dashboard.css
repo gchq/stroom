@@ -642,6 +642,7 @@
 	background-color: #1f77b4;
 }
 
+.TextInputView,
 .KeyValueInputView {
     padding: 0 0.4rem 0.4rem 0.4rem;
 }
