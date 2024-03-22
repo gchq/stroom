@@ -67,6 +67,10 @@ public class ShowExplorerMenuEvent extends GwtEvent<ShowExplorerMenuEvent.Handle
         return popupPosition;
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface Handler extends EventHandler {
 
         void onShow(ShowExplorerMenuEvent event);

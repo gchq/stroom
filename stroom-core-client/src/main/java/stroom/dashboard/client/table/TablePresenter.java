@@ -124,6 +124,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class TablePresenter extends AbstractComponentPresenter<TableView>
         implements HasDirtyHandlers, ResultComponent, HasSelection, TableUiHandlers {
 
+    public static final String TAB_TYPE = "table-component";
     private static final DashboardResource DASHBOARD_RESOURCE = GWT.create(DashboardResource.class);
     public static final ComponentType TYPE = new ComponentType(1, "table", "Table", ComponentUse.PANEL);
     private static final Version CURRENT_MODEL_VERSION = new Version(6, 1, 26);
@@ -856,7 +857,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     }
 
     @Override
-    public ComponentType getType() {
+    public ComponentType getComponentType() {
         return TYPE;
     }
 
@@ -1053,6 +1054,15 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     public SearchModel getCurrentSearchModel() {
         return currentSearchModel;
     }
+
+    @Override
+    public String getType() {
+        return TAB_TYPE;
+    }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface TableView extends View, HasUiHandlers<TableUiHandlers> {
 

@@ -308,4 +308,8 @@ public class QueryDocEditPresenter extends DocumentEditPresenter<QueryEditView, 
         queryEditPresenter.onClose();
         super.onClose();
     }
+
+    void startStop() {
+        queryEditPresenter.startStop();
+    }
 }

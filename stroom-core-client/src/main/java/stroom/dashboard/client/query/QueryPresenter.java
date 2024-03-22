@@ -101,12 +101,9 @@ import java.util.stream.Collectors;
 
 public class QueryPresenter
         extends AbstractComponentPresenter<QueryPresenter.QueryView>
-        implements
-        HasDirtyHandlers,
-        Queryable,
-        SearchStateListener,
-        SearchErrorListener {
+        implements HasDirtyHandlers, Queryable, SearchStateListener, SearchErrorListener {
 
+    public static final String TAB_TYPE = "query-component";
     private static final DashboardResource DASHBOARD_RESOURCE = GWT.create(DashboardResource.class);
     private static final ResultStoreResource RESULT_STORE_RESOURCE = GWT.create(ResultStoreResource.class);
     private static final ProcessorFilterResource PROCESSOR_FILTER_RESOURCE = GWT.create(ProcessorFilterResource.class);
@@ -794,7 +791,7 @@ public class QueryPresenter
     }
 
     @Override
-    public ComponentType getType() {
+    public ComponentType getComponentType() {
         return TYPE;
     }
 
@@ -942,6 +939,10 @@ public class QueryPresenter
                 : 0);
     }
 
+    @Override
+    public String getType() {
+        return TAB_TYPE;
+    }
 
     // --------------------------------------------------------------------------------
 

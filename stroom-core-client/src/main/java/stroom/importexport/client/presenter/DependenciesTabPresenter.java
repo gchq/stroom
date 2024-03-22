@@ -5,6 +5,7 @@ import stroom.importexport.client.presenter.DependenciesTabPresenter.Dependencie
 import stroom.importexport.shared.DependencyCriteria;
 import stroom.svg.shared.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
+import stroom.util.shared.GwtNullSafe;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -17,6 +18,7 @@ public class DependenciesTabPresenter
         extends ContentTabPresenter<DependenciesTabView>
         implements DependenciesUiHandlers {
 
+    public static final String TAB_TYPE = "Dependencies";
     public static final String LIST = "LIST";
 
     private final DependenciesPresenter dependenciesPresenter;
@@ -51,7 +53,7 @@ public class DependenciesTabPresenter
 
     @Override
     public void changeQuickFilter(final String name) {
-        if (name.length() > 0) {
+        if (GwtNullSafe.isNonEmptyString(name)) {
             dependenciesPresenter.setFilterInput(name);
         } else {
             dependenciesPresenter.clearFilterInput();
@@ -62,6 +64,15 @@ public class DependenciesTabPresenter
     public void setQuickFilterText(final String text) {
         getView().setQuickFilterText(text);
     }
+
+    @Override
+    public String getType() {
+        return TAB_TYPE;
+    }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface DependenciesTabView extends View, HasUiHandlers<DependenciesUiHandlers> {
 

@@ -21,6 +21,7 @@ import stroom.config.global.shared.ConfigProperty;
 import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
+import stroom.util.shared.GwtNullSafe;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.util.client.MouseUtil;
 
@@ -33,6 +34,7 @@ import com.gwtplatform.mvp.client.View;
 public class GlobalPropertyTabPresenter extends ContentTabPresenter<GlobalPropertyTabPresenter.GlobalPropertyTabView>
         implements ManageGlobalPropertyUiHandlers {
 
+    public static final String TAB_TYPE = "Caches";
     public static final String LIST = "LIST";
 
     private final ManageGlobalPropertyListPresenter listPresenter;
@@ -127,7 +129,7 @@ public class GlobalPropertyTabPresenter extends ContentTabPresenter<GlobalProper
 
     @Override
     public void changeNameFilter(final String name) {
-        if (name.length() > 0) {
+        if (GwtNullSafe.isNonEmptyString(name)) {
             // This will initiate a timer to refresh the data
             listPresenter.setPartialName(name);
         } else {
@@ -139,6 +141,15 @@ public class GlobalPropertyTabPresenter extends ContentTabPresenter<GlobalProper
 //            lastFilterValue = name;
 //        }
     }
+
+    @Override
+    public String getType() {
+        return TAB_TYPE;
+    }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface GlobalPropertyTabView extends View, HasUiHandlers<ManageGlobalPropertyUiHandlers> {
 

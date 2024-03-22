@@ -28,7 +28,7 @@ public abstract class AbstractSelectionEventManager<T>
         final Action action = KeyBinding.test(nativeEvent);
         if (action != null) {
             final List<T> items = cellTable.getVisibleItems();
-            if (items.size() > 0) {
+            if (!items.isEmpty()) {
                 switch (action) {
                     case MOVE_UP:
                         onMoveUp(event);
@@ -83,7 +83,6 @@ public abstract class AbstractSelectionEventManager<T>
                         break;
                 }
             }
-
         } else if (BrowserEvents.MOUSEDOWN.equals(type)) {
             onMouseDown(event);
 

@@ -28,9 +28,11 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 
-public class TaskManagerPresenter extends ContentTabPresenter<TaskManagerView>
+public class TaskManagerPresenter
+        extends ContentTabPresenter<TaskManagerView>
         implements Refreshable, TaskManagerUiHandlers {
 
+    public static final String TAB_TYPE = "ServerTasks";
     private final TaskManagerListPresenter listPresenter;
 
     @Inject
@@ -66,6 +68,11 @@ public class TaskManagerPresenter extends ContentTabPresenter<TaskManagerView>
     @Override
     public void changeNameFilter(final String name) {
         listPresenter.setNameFilter(name);
+    }
+
+    @Override
+    public String getType() {
+        return TAB_TYPE;
     }
 
 

@@ -38,6 +38,7 @@ import java.util.List;
 
 public class IndexVolumeGroupPresenter extends ContentTabPresenter<WrapperView> {
 
+    public static final String TAB_TYPE = "IndexVolumes";
     private static final IndexVolumeGroupResource INDEX_VOLUME_GROUP_RESOURCE =
             GWT.create(IndexVolumeGroupResource.class);
 
@@ -192,5 +193,10 @@ public class IndexVolumeGroupPresenter extends ContentTabPresenter<WrapperView> 
     @Override
     public String getLabel() {
         return "Index Volumes";
+    }
+
+    @Override
+    public String getType() {
+        return TAB_TYPE;
     }
 }

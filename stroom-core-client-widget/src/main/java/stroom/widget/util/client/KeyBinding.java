@@ -36,21 +36,26 @@ public class KeyBinding {
         add(Action.MOVE_START, KeyCodes.KEY_HOME);
         add(Action.MOVE_END, KeyCodes.KEY_END);
         add(Action.CLOSE, KeyCodes.KEY_ESCAPE);
+//        add(Action.EDIT, KeyCodes.KEY_E);
         add(Action.EXECUTE, KeyCodes.KEY_ENTER, KeyCodes.KEY_MAC_ENTER, '\n', '\r');
         add(Action.SELECT, KeyCodes.KEY_SPACE);
-        add(Action.SELECT_ALL, new Builder().keyCode(KeyCodes.KEY_A).ctrl(true).build());
-        add(Action.MENU, new Builder().keyCode(KeyCodes.KEY_CONTEXT_MENU).alt(true).build());
+        add(Action.SELECT_ALL, new Builder().ctrl().keyCode(KeyCodes.KEY_A).build());
+        add(Action.MENU, new Builder().alt().keyCode(KeyCodes.KEY_CONTEXT_MENU).build());
         add(Action.OK, true, KeyCodes.KEY_ENTER, KeyCodes.KEY_MAC_ENTER, '\n', '\r');
 
-        add(Action.ITEM_SAVE, new Builder().keyCode(KeyCodes.KEY_S).ctrl(true).build());
-        add(Action.ITEM_SAVE_ALL, new Builder().keyCode(KeyCodes.KEY_S).shift(true).ctrl(true).build());
-        add(Action.ITEM_CLOSE, new Builder().keyCode(KeyCodes.KEY_W).alt(true).build());
-        add(Action.ITEM_CLOSE_ALL, new Builder().keyCode(KeyCodes.KEY_W).shift(true).alt(true).build());
+        add(Action.ITEM_SAVE, new Builder().ctrl().keyCode(KeyCodes.KEY_S).build());
+        add(Action.ITEM_SAVE_ALL, new Builder().shift().ctrl().keyCode(KeyCodes.KEY_S).build());
+        add(Action.ITEM_CLOSE, new Builder().alt().keyCode(KeyCodes.KEY_W).build());
+        add(Action.ITEM_CLOSE_ALL, new Builder().shift().alt().keyCode(KeyCodes.KEY_W).build());
 
-        add(Action.FIND, new Builder().keyCode(KeyCodes.KEY_F).alt(true).shift(true).build());
-        add(Action.FIND_IN_CONTENT, new Builder().keyCode(KeyCodes.KEY_F).ctrl(true).shift(true).build());
-        add(Action.RECENT_ITEMS, new Builder().keyCode(KeyCodes.KEY_E).ctrl(true).build());
-        add(Action.LOCATE, new Builder().keyCode(KeyCodes.KEY_L).alt(true).build());
+        add(Action.FIND, new Builder().alt().shift().keyCode(KeyCodes.KEY_F).build());
+        add(Action.FIND_IN_CONTENT, new Builder().ctrl().shift().keyCode(KeyCodes.KEY_F).build());
+        add(Action.RECENT_ITEMS, new Builder().ctrl().keyCode(KeyCodes.KEY_E).build());
+        add(Action.LOCATE, new Builder().alt().keyCode(KeyCodes.KEY_L).build());
+        add(Action.HELP, new Builder().keyCode(KeyCodes.KEY_F1).build());
+        add(Action.DOCUMENTATION, new Builder().keyCode(KeyCodes.KEY_D).build());
+        add(Action.SHOW_KEY_BINDS, new Builder().keyCode(MyKeyCodes.KEY_QUESTION_MARK).build());
+        add(Action.INFO, new Builder().keyCode(KeyCodes.KEY_I).build());
     }
 
     public static void addCommand(final Action action, final Command command) {
@@ -66,86 +71,118 @@ public class KeyBinding {
         return null;
     }
 
-    public static Action test(final NativeEvent e) {
-//        log(e);
+    public static void consumeAction(final NativeEvent e,
+                                     final Action action,
+                                     final Runnable onAction) {
 
-        Command command = null;
-        if (BrowserEvents.KEYDOWN.equals(e.getType())) {
-            if (e.getKeyCode() == KeyCodes.KEY_SHIFT &&
-                    e.getShiftKey() &&
-                    !e.getCtrlKey() &&
-                    !e.getAltKey() &&
-                    !e.getMetaKey()) {
-                if (shiftCount == 0) {
-                    shiftCount = 1;
-                    doubleShiftTimer.cancel();
-                    doubleShiftTimer.schedule(DoubleClickTester.DOUBLE_CLICK_PERIOD);
-                } else if (shiftCount == 2) {
-                    shiftCount = 0;
-                    command = COMMANDS.get(Action.FIND);
-                    if (command != null) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        command.execute();
-                    }
-                }
-            } else {
-                shiftCount = 0;
-                doubleShiftTimer.cancel();
-            }
-        } else if (BrowserEvents.KEYUP.equals(e.getType())) {
-//            GWT.log("key up " + e.getKeyCode());
-            if (e.getKeyCode() == KeyCodes.KEY_SHIFT &&
-                    !e.getShiftKey() &&
-                    !e.getCtrlKey() &&
-                    !e.getAltKey() &&
-                    !e.getMetaKey()) {
-//                GWT.log("key up shift");
-                if (shiftCount == 1) {
-                    shiftCount = 2;
-                }
-            } else {
-                shiftCount = 0;
-                doubleShiftTimer.cancel();
-            }
+        final Action actualAction = test(e);
+        if (actualAction == action && onAction != null) {
+            onAction.run();
+            // Caller has consumed it so stop it propagating further
+            e.stopPropagation();
         }
-
-        if (command == null && BrowserEvents.KEYDOWN.equals(e.getType())) {
-            return onKeyDown(e);
-        }
-
-        return null;
     }
 
-    private static void log(final NativeEvent e) {
-        GWT.log(e.getType() +
-                "\nkeyCode=" +
-                e.getKeyCode() +
-                "\nshift=" +
-                e.getShiftKey() +
-                "\nctrlKey=" +
-                e.getCtrlKey() +
-                "\naltKey=" +
-                e.getAltKey() +
-                "\nmetaKey=" +
-                e.getMetaKey() +
-                "\n\n");
+    /**
+     * Tests the supplied {@link NativeEvent} to see if the key(s) are associated with an {@link Action}.
+     * If a {@link Command} has been assigned to the {@link Action} then the command will be run and a
+     * null {@link Action} will be returned.
+     *
+     * @return Matching {@link Action} or null
+     */
+    public static Action test(final NativeEvent e) {
+        Action action = null;
+        if (BrowserEvents.KEYDOWN.equals(e.getType())) {
+            final Command command = testKeyDownEvent(e);
+            // No command assigned so return the action for the caller to do something with
+            if (command == null) {
+                action = onKeyDown(e);
+            }
+        } else if (BrowserEvents.KEYUP.equals(e.getType())) {
+            testKeyUpEvent(e);
+        }
+        return action;
+    }
+
+    private static void testKeyUpEvent(final NativeEvent e) {
+        //            log(e);
+        if (e.getKeyCode() == KeyCodes.KEY_SHIFT &&
+                !e.getShiftKey() &&
+                !e.getCtrlKey() &&
+                !e.getAltKey() &&
+                !e.getMetaKey()) {
+//                GWT.log("key up shift");
+            if (shiftCount == 1) {
+                shiftCount = 2;
+            }
+        } else {
+            shiftCount = 0;
+            doubleShiftTimer.cancel();
+        }
+    }
+
+    private static Command testKeyDownEvent(final NativeEvent e) {
+        Command command = null;
+        logKey(e);
+        if (e.getKeyCode() == KeyCodes.KEY_SHIFT &&
+                e.getShiftKey() &&
+                !e.getCtrlKey() &&
+                !e.getAltKey() &&
+                !e.getMetaKey()) {
+            if (shiftCount == 0) {
+                shiftCount = 1;
+                doubleShiftTimer.cancel();
+                doubleShiftTimer.schedule(DoubleClickTester.DOUBLE_CLICK_PERIOD);
+            } else if (shiftCount == 2) {
+                shiftCount = 0;
+                command = COMMANDS.get(Action.FIND);
+                if (command != null) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    command.execute();
+                }
+            }
+        } else {
+            shiftCount = 0;
+            doubleShiftTimer.cancel();
+        }
+        return command;
+    }
+
+    private static void logKey(final NativeEvent e) {
+        final List<String> keys = new ArrayList<>();
+        if (e.getShiftKey()) {
+            keys.add("shift");
+        }
+        if (e.getCtrlKey()) {
+            keys.add("ctrl");
+        }
+        if (e.getAltKey()) {
+            keys.add("alt");
+        }
+        if (e.getMetaKey()) {
+            keys.add("meta");
+        }
+        keys.add(KeyBinding.keyCodeToString(e.getKeyCode()));
+        GWT.log(e.getType()
+                + " (" + e.getKeyCode() + ") - "
+                + String.join(" ", keys));
     }
 
     private static Action onKeyDown(final NativeEvent e) {
         final Shortcut shortcut = getShortcut(e);
 
-//        GWT.log("KEYDOWN = " + shortcut);
+        GWT.log("KEYDOWN = " + shortcut);
 
         final Binding binding = getBinding(shortcut);
         if (binding != null) {
 
-//            GWT.log("BINDING = " + binding);
+            GWT.log("BINDING = " + binding);
 
             final Action action = binding.action;
             final Command command = COMMANDS.get(action);
             if (command != null) {
-//                GWT.log("EXECUTE = " + action);
+                GWT.log("COMMAND = " + command);
 
                 e.preventDefault();
                 e.stopPropagation();
@@ -186,31 +223,6 @@ public class KeyBinding {
         return null;
     }
 
-    public enum Action {
-        MOVE_UP,
-        MOVE_DOWN,
-        MOVE_LEFT,
-        MOVE_RIGHT,
-        MOVE_PAGE_DOWN,
-        MOVE_PAGE_UP,
-        MOVE_START,
-        MOVE_END,
-        CLOSE,
-        EXECUTE,
-        SELECT,
-        MENU,
-        SELECT_ALL,
-        OK,
-        ITEM_SAVE,
-        ITEM_SAVE_ALL,
-        ITEM_CLOSE,
-        ITEM_CLOSE_ALL,
-        FIND,
-        FIND_IN_CONTENT,
-        RECENT_ITEMS,
-        LOCATE
-    }
-
     static void add(final Action action,
                     final boolean ctrl,
                     final int... keyCode) {
@@ -221,14 +233,139 @@ public class KeyBinding {
 
     static void add(final Action action, final int... keyCode) {
         for (int code : keyCode) {
-            add(action, new Builder().keyCode(code).build());
+            add(action, new Builder()
+                    .keyCode(code)
+                    .build());
         }
     }
 
     static void add(final Action action, final Shortcut... shortcuts) {
         for (final Shortcut shortcut : shortcuts) {
-            BINDINGS.add(new Binding.Builder().shortcut(shortcut).action(action).build());
+            BINDINGS.add(new Binding.Builder()
+                    .shortcut(shortcut)
+                    .action(action)
+                    .build());
         }
+    }
+
+    public static String keyCodeToString(final int keyCode) {
+        //noinspection EnhancedSwitchMigration // cos GWT
+        switch (keyCode) {
+            case KeyCodes.KEY_LEFT:
+                return "left-arrow";
+            case KeyCodes.KEY_RIGHT:
+                return "right-arrow";
+            case KeyCodes.KEY_UP:
+                return "up-arrow";
+            case KeyCodes.KEY_DOWN:
+                return "down-arrow";
+            case KeyCodes.KEY_SPACE:
+                return "space";
+            case KeyCodes.KEY_CTRL:
+                return "ctrl";
+            case KeyCodes.KEY_ALT:
+                return "alt";
+            case KeyCodes.KEY_SHIFT:
+                return "shift";
+            case KeyCodes.KEY_TAB:
+                return "tab";
+            case KeyCodes.KEY_ESCAPE:
+                return "esc";
+            case KeyCodes.KEY_ENTER:
+                return "enter";
+            case KeyCodes.KEY_MAC_ENTER:
+                return "mac-enter";
+            case KeyCodes.KEY_BACKSPACE:
+                return "backspace";
+            case KeyCodes.KEY_DELETE:
+                return "delete";
+            case KeyCodes.KEY_INSERT:
+                return "insert";
+            case KeyCodes.KEY_F1:
+                return "F1";
+            case KeyCodes.KEY_F2:
+                return "F2";
+            case KeyCodes.KEY_F3:
+                return "F3";
+            case KeyCodes.KEY_F4:
+                return "F4";
+            case KeyCodes.KEY_F5:
+                return "F5";
+            case KeyCodes.KEY_F6:
+                return "F6";
+            case KeyCodes.KEY_F7:
+                return "F7";
+            case KeyCodes.KEY_F8:
+                return "F8";
+            case KeyCodes.KEY_F9:
+                return "F9";
+            case KeyCodes.KEY_F10:
+                return "F10";
+            case KeyCodes.KEY_END:
+                return "end";
+            case KeyCodes.KEY_HOME:
+                return "home";
+            case KeyCodes.KEY_PAGEUP:
+                return "pageup";
+            case KeyCodes.KEY_PAGEDOWN:
+                return "pagedown";
+            default:
+                return String.valueOf(((char) keyCode));
+        }
+    }
+
+    private static class MyKeyCodes {
+
+        /**
+         * Question mark '?'
+         */
+        private static final int KEY_QUESTION_MARK = 63;
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    public enum Action {
+        MOVE_UP,
+        MOVE_DOWN,
+        MOVE_LEFT,
+        MOVE_RIGHT,
+        MOVE_PAGE_DOWN,
+        MOVE_PAGE_UP,
+        MOVE_START,
+        MOVE_END,
+        /**
+         * 'e' - E.g. to edit the current item
+         */
+        EDIT,
+        CLOSE,
+        /**
+         * enter
+         */
+        EXECUTE,
+        /**
+         * space
+         */
+        SELECT,
+        MENU,
+        SELECT_ALL,
+        /**
+         * ctrl-enter
+         */
+        OK,
+        ITEM_SAVE,
+        ITEM_SAVE_ALL,
+        ITEM_CLOSE,
+        ITEM_CLOSE_ALL,
+        FIND,
+        FIND_IN_CONTENT,
+        RECENT_ITEMS,
+        LOCATE,
+        HELP,
+        DOCUMENTATION,
+        SHOW_KEY_BINDS,
+        INFO
     }
 
 
@@ -322,42 +459,21 @@ public class KeyBinding {
 
         @Override
         public String toString() {
-            final StringBuilder sb = new StringBuilder();
+            final List<String> keysPressed = new ArrayList<>();
             if (ctrl) {
-                if (sb.length() > 0) {
-                    sb.append("+");
-                }
-                sb.append("Ctrl");
+                keysPressed.add("ctrl");
             }
             if (alt) {
-                if (sb.length() > 0) {
-                    sb.append("+");
-                }
-                sb.append("Alt");
+                keysPressed.add("alt");
             }
             if (shift) {
-                if (sb.length() > 0) {
-                    sb.append("+");
-                }
-                sb.append("Shift");
+                keysPressed.add("shift");
             }
             if (meta) {
-                if (sb.length() > 0) {
-                    sb.append("+");
-                }
-                sb.append("Meta");
+                keysPressed.add("meta");
             }
-            if (sb.length() > 0) {
-                sb.append("+");
-            }
-            if (keyCode == KeyCodes.KEY_SPACE) {
-                sb.append("space");
-            } else if (keyCode == KeyCodes.KEY_TAB) {
-                sb.append("tab");
-            } else {
-                sb.append((char) keyCode);
-            }
-            return sb.toString();
+            keysPressed.add(keyCodeToString(keyCode));
+            return java.lang.String.join("+", keysPressed);
         }
 
         public boolean hasModifiers() {
@@ -387,8 +503,23 @@ public class KeyBinding {
             return this;
         }
 
+        public Builder shift() {
+            this.shift = true;
+            return this;
+        }
+
+        public Builder ctrl() {
+            this.ctrl = true;
+            return this;
+        }
+
         public Builder ctrl(final boolean ctrl) {
             this.ctrl = ctrl;
+            return this;
+        }
+
+        public Builder alt() {
+            this.alt = true;
             return this;
         }
 
@@ -397,12 +528,17 @@ public class KeyBinding {
             return this;
         }
 
+        public Builder meta() {
+            this.meta = true;
+            return this;
+        }
+
         public Builder meta(final boolean meta) {
             this.meta = meta;
             return this;
         }
 
-        public Shortcut build() {
+        private Shortcut build() {
             return new Shortcut(keyCode, shift, ctrl, alt, meta);
         }
     }

@@ -22,14 +22,24 @@ public class TabDataImpl implements TabData {
 
     private final String text;
     private final boolean closeable;
+    private final String type;
 
     public TabDataImpl(final String text) {
-        this(text, false);
+        this(text, false, null);
     }
 
     public TabDataImpl(final String text, final boolean closeable) {
+        this(text, closeable, null);
+    }
+
+    public TabDataImpl(final String text, final String type) {
+        this(text, false, type);
+    }
+
+    public TabDataImpl(final String text, final boolean closeable, final String type) {
         this.text = text;
         this.closeable = closeable;
+        this.type = type;
     }
 
     @Override
@@ -45,5 +55,19 @@ public class TabDataImpl implements TabData {
     @Override
     public boolean isCloseable() {
         return closeable;
+    }
+
+    @Override
+    public String getType() {
+        return type;
+    }
+
+    @Override
+    public String toString() {
+        return "TabDataImpl{" +
+                "text='" + text + '\'' +
+                ", closeable=" + closeable +
+                ", type='" + type + '\'' +
+                '}';
     }
 }
