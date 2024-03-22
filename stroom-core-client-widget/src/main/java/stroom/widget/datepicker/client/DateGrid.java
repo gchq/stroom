@@ -19,7 +19,7 @@ package stroom.widget.datepicker.client;
 import stroom.widget.util.client.ElementUtil;
 
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.user.client.DOM;
+import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.impl.ElementMapperImpl;
 import com.google.gwt.user.client.ui.Grid;
@@ -35,13 +35,16 @@ public class DateGrid extends Grid {
     private final ElementMapperImpl<AbstractCell> elementToCell = new ElementMapperImpl<>();
     private final ArrayList<DateCell> cellList = new ArrayList<>();
     private DateCell selectedCell;
+    private DateCell keyboardSelectedCell;
+    private int keyboardSelectionIndex = -1;
 
     protected DateGrid() {
-        sinkEvents(Event.ONCLICK);
+        sinkEvents(Event.ONCLICK | Event.ONKEYDOWN);
         setCellPadding(0);
         setCellSpacing(0);
         setBorderWidth(0);
         resize(DateTimeModel.WEEKS_IN_MONTH + 1, DateTimeModel.DAYS_IN_WEEK);
+        getElement().setTabIndex(0);
     }
 
     public void addElement(final AbstractCell abstractCell) {
@@ -62,14 +65,17 @@ public class DateGrid extends Grid {
 
     @Override
     public void onBrowserEvent(Event event) {
-        final Element element = event.getEventTarget().cast();
-        if (element != null) {
-            final Element outer = ElementUtil.findMatching(element, "cellOuter", 0, 5);
-            if (outer != null) {
-                final AbstractCell cell = elementToCell.get(outer);
-                if (cell instanceof DateCell) {
-                    final DateCell dateCell = (DateCell) cell;
-                    if (DOM.eventGetType(event) == Event.ONCLICK) {
+        if (event.getTypeInt() == Event.ONKEYDOWN) {
+            navigate(event.getKeyCode());
+
+        } else if (event.getTypeInt() == Event.ONCLICK) {
+            final Element element = event.getEventTarget().cast();
+            if (element != null) {
+                final Element outer = ElementUtil.findMatching(element, "cellOuter", 0, 5);
+                if (outer != null) {
+                    final AbstractCell cell = elementToCell.get(outer);
+                    if (cell instanceof DateCell) {
+                        final DateCell dateCell = (DateCell) cell;
                         if (isActive(dateCell)) {
                             setSelected(dateCell);
                         }
@@ -79,7 +85,29 @@ public class DateGrid extends Grid {
         }
     }
 
+    public void setKeyboardSelectedCell(final int index) {
+        if (index != keyboardSelectionIndex) {
+            if (keyboardSelectedCell != null) {
+                keyboardSelectedCell.setKeyboardSelected(false);
+            }
+            if (index >= 0 && index < cellList.size()) {
+                final DateCell cell = getCell(index);
+                if (cell != null) {
+                    cell.setKeyboardSelected(true);
+                }
+                keyboardSelectedCell = cell;
+            }
+            keyboardSelectionIndex = index;
+        }
+    }
+
+    public void setKeyboardSelectedCell(final DateCell cell) {
+        setKeyboardSelectedCell(cellList.indexOf(cell));
+    }
+
     public final void setSelected(DateCell cell) {
+        setKeyboardSelectedCell(cell);
+
         DateCell last = selectedCell;
         selectedCell = cell;
 
@@ -95,34 +123,36 @@ public class DateGrid extends Grid {
         return cell != null && cell.isEnabled();
     }
 
-
-//    public void verticalNavigation(int keyCode) {
-//        switch (keyCode) {
-//            case KeyCodes.KEY_UP:
-//                setHighlighted(previousItem());
-//                break;
-//            case KeyCodes.KEY_DOWN:
-//                setHighlighted(nextItem());
-//                break;
-//            case KeyCodes.KEY_ENTER:
-//                setSelected(this);
-//                break;
-//        }
-//    }
-//
-//    private DateCell nextItem() {
-//        if (index == getLastIndex()) {
-//            return getCell(0);
-//        } else {
-//            return getCell(index + 1);
-//        }
-//    }
-//
-//    private DateCell previousItem() {
-//        if (index != 0) {
-//            return getCell(index - 1);
-//        } else {
-//            return getCell(getLastIndex());
-//        }
-//    }
+    public void navigate(int keyCode) {
+        switch (keyCode) {
+            case KeyCodes.KEY_UP: {
+                if (keyboardSelectionIndex >= 7) {
+                    setKeyboardSelectedCell(keyboardSelectionIndex - 7);
+                }
+                break;
+            }
+            case KeyCodes.KEY_DOWN: {
+                if (keyboardSelectionIndex < cellList.size() - 7) {
+                    setKeyboardSelectedCell(keyboardSelectionIndex + 7);
+                }
+                break;
+            }
+            case KeyCodes.KEY_LEFT: {
+                int index = keyboardSelectionIndex;
+                index = Math.max(0, index - 1);
+                setKeyboardSelectedCell(index);
+                break;
+            }
+            case KeyCodes.KEY_RIGHT: {
+                int index = keyboardSelectionIndex;
+                index = Math.min(cellList.size() - 1, index + 1);
+                setKeyboardSelectedCell(index);
+                break;
+            }
+            case KeyCodes.KEY_ENTER: {
+                setSelected(keyboardSelectedCell);
+                break;
+            }
+        }
+    }
 }

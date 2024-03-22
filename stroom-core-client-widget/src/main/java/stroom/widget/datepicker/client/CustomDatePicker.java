@@ -346,56 +346,6 @@ public class CustomDatePicker extends Composite implements
         }
     }
 
-    /**
-     * Add a style name to the given dates.
-     */
-    public void addStyleToDates(String styleName, UTCDate date, UTCDate... moreDates) {
-        addStyleToDates(styleName, date);
-        for (UTCDate d : moreDates) {
-            addStyleToDates(styleName, d);
-        }
-    }
-
-    /**
-     * Add a style name to the given dates.
-     */
-    public void addStyleToDates(String styleName, Iterable<UTCDate> dates) {
-        for (UTCDate d : dates) {
-            addStyleToDates(styleName, d);
-        }
-    }
-
-    /**
-     * Adds the given style name to the specified dates, which must be visible.
-     * This is only set until the next time the DatePicker is refreshed.
-     */
-    public void addTransientStyleToDates(String styleName, UTCDate date) {
-        assert isDateVisible(date) : date + " must be visible";
-        getView().addStyleToDate(styleName, date);
-    }
-
-    /**
-     * Adds the given style name to the specified dates, which must be visible.
-     * This is only set until the next time the DatePicker is refreshed.
-     */
-    public final void addTransientStyleToDates(String styleName, UTCDate date,
-                                               UTCDate... moreDates) {
-        addTransientStyleToDates(styleName, date);
-        for (UTCDate d : moreDates) {
-            addTransientStyleToDates(styleName, d);
-        }
-    }
-
-    /**
-     * Adds the given style name to the specified dates, which must be visible.
-     * This is only set until the next time the DatePicker is refreshed.
-     */
-    public final void addTransientStyleToDates(String styleName,
-                                               Iterable<UTCDate> dates) {
-        for (UTCDate d : dates) {
-            addTransientStyleToDates(styleName, d);
-        }
-    }
 
     public HandlerRegistration addValueChangeHandler(
             ValueChangeHandler<UTCDate> handler) {
@@ -540,26 +490,6 @@ public class CustomDatePicker extends Composite implements
     }
 
     /**
-     * Removes the styleName from the given dates (even if it is transient).
-     */
-    public void removeStyleFromDates(String styleName, UTCDate date,
-                                     UTCDate... moreDates) {
-        removeStyleFromDates(styleName, date);
-        for (UTCDate d : moreDates) {
-            removeStyleFromDates(styleName, d);
-        }
-    }
-
-    /**
-     * Removes the styleName from the given dates (even if it is transient).
-     */
-    public void removeStyleFromDates(String styleName, Iterable<UTCDate> dates) {
-        for (UTCDate d : dates) {
-            removeStyleFromDates(styleName, d);
-        }
-    }
-
-    /**
      * Sets the date picker to show the given month, use {@link #getFirstDate()}
      * and {@link #getLastDate()} to access the exact date range the date picker
      * chose to display.
@@ -673,6 +603,7 @@ public class CustomDatePicker extends Composite implements
             addStyleToDates(css().dayIsValue(), value);
         }
         getView().setAriaSelectedCell(newValue);
+        getView().setKeyboardSelectedCell(newValue);
 
         if (fireEvents) {
             DateChangeEvent.fireIfNotEqualDates(this, oldValue, newValue);
@@ -719,6 +650,7 @@ public class CustomDatePicker extends Composite implements
             ShowRangeEvent.fire(this, getFirstDate(), getLastDate());
         }
         getView().setAriaSelectedCell(value);
+        getView().setKeyboardSelectedCell(value);
     }
 
     private void updateToday() {

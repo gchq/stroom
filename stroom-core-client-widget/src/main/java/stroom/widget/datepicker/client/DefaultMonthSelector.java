@@ -24,6 +24,8 @@ import stroom.widget.datepicker.client.IntlDateTimeFormat.FormatOptions;
 import stroom.widget.datepicker.client.IntlDateTimeFormat.FormatOptions.Year;
 
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.user.client.ui.FlowPanel;
 
 import java.util.Objects;
@@ -122,10 +124,9 @@ public final class DefaultMonthSelector extends MonthSelector {
             final SvgImage svgImage, final int noOfMonths, String styleName) {
         InlineSvgButton button = new InlineSvgButton();
         button.setSvg(svgImage);
-
         button.addClickHandler(event -> addMonths(noOfMonths));
-
         button.addStyleName(styleName);
+        button.setTabIndex(-2);
 
         return button;
     }
@@ -143,6 +144,13 @@ public final class DefaultMonthSelector extends MonthSelector {
             int delta = newMonth - previousMonth;
             addMonths(delta);
         });
+        monthListBox.addDomHandler(e -> {
+            if (KeyCodes.KEY_LEFT == e.getNativeKeyCode()) {
+                addMonths(-1);
+            } else if (KeyCodes.KEY_RIGHT == e.getNativeKeyCode()) {
+                addMonths(1);
+            }
+        }, KeyDownEvent.getType());
 
         return monthListBox;
     }
@@ -155,6 +163,13 @@ public final class DefaultMonthSelector extends MonthSelector {
             int delta = newYear - previousYear;
             addMonths(delta * DateTimeModel.MONTHS_IN_YEAR);
         });
+        yearListBox.addDomHandler(e -> {
+            if (KeyCodes.KEY_LEFT == e.getNativeKeyCode()) {
+                addMonths(-DateTimeModel.MONTHS_IN_YEAR);
+            } else if (KeyCodes.KEY_RIGHT == e.getNativeKeyCode()) {
+                addMonths(DateTimeModel.MONTHS_IN_YEAR);
+            }
+        }, KeyDownEvent.getType());
 
         return yearListBox;
     }

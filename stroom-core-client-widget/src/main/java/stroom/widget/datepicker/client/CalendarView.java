@@ -77,6 +77,9 @@ public abstract class CalendarView extends DatePickerComponent {
     public void setAriaSelectedCell(UTCDate date) {
     }
 
+    public void setKeyboardSelectedCell(UTCDate date) {
+    }
+
     /**
      * Enables or Disables a particular date. by default all valid dates are
      * enabled after a rendering event. Disabled dates cannot be selected.

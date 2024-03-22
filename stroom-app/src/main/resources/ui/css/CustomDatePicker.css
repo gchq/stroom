@@ -51,11 +51,24 @@
     color: var(--text-color--disabled);
     /*color: transparent;*/
 }
+
 .customDatePickerDayIsValue {
     background: var(--row__background-color--selected);
     border: 1px solid var(--row__background-color--selected);
     color: var(--row__text-color--selected);
 }
+
+.customDatePickerDays:focus .customDatePickerDay.keyboard-selected {
+    background: var(--row__background-color--focussed);
+    border: 1px solid transparent;
+}
+
+.customDatePickerDays:focus .customDatePickerDayIsValue.keyboard-selected {
+    background: var(--row__background-color--selected--focussed);
+    border: 1px solid var(--row__background-color--selected--focussed);
+    color: var(--row__text-color--selected);
+}
+
 .customDatePickerDayIsDisabled {
     color: var(--text-color--disabled);
 }

@@ -6,6 +6,7 @@ import com.google.gwt.aria.client.SelectedValue;
 public final class DateCell extends AbstractCell {
 
     private boolean enabled = true;
+    private boolean keyboardSelected;
     private final int index;
 
     private final DefaultCalendarView defaultCalendarView;
@@ -13,7 +14,6 @@ public final class DateCell extends AbstractCell {
     private String cellStyle;
     private String dateStyle;
     private UTCDate value = UTCDate.create();
-
 
     public DateCell(final DefaultCalendarView defaultCalendarView,
                     final CustomDatePicker.StandardCss css,
@@ -49,10 +49,6 @@ public final class DateCell extends AbstractCell {
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
-        onEnabled(enabled);
-    }
-
-    private void onEnabled(boolean enabled) {
         updateStyle();
     }
 
@@ -66,6 +62,9 @@ public final class DateCell extends AbstractCell {
         }
         if (!isEnabled()) {
             accum += " " + css.dayIsDisabled();
+        }
+        if (keyboardSelected) {
+            accum += " " + "keyboard-selected";
         }
         setStyleName("cellOuter " + accum);
     }
@@ -93,6 +92,11 @@ public final class DateCell extends AbstractCell {
         updateStyle();
     }
 
+    public void setKeyboardSelected(boolean selected) {
+        this.keyboardSelected = selected;
+        updateStyle();
+    }
+
     @Override
     public void removeStyleName(String styleName) {
         dateStyle = dateStyle.replace(" " + styleName + " ", " ");
@@ -117,7 +121,7 @@ public final class DateCell extends AbstractCell {
             getElement().setTabIndex(-1);
             dateStyle += " " + css.dayIsFiller();
         } else {
-            getElement().setTabIndex(0);
+            getElement().setTabIndex(-1);
             String extraStyle = defaultCalendarView.getDatePicker().getStyleOfDate(value);
             if (extraStyle != null) {
                 dateStyle += " " + extraStyle;

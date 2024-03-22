@@ -121,6 +121,18 @@ public final class DefaultCalendarView extends CalendarView {
     }
 
     @Override
+    public void setKeyboardSelectedCell(final UTCDate date) {
+        if (date == null) {
+            grid.setKeyboardSelectedCell(-1);
+        } else {
+            final DateCell cell = getCell(date);
+            if (cell != null) {
+                grid.setKeyboardSelectedCell(cell);
+            }
+        }
+    }
+
+    @Override
     public void setEnabledOnDate(boolean enabled, UTCDate date) {
         final DateCell dateCell = getCell(date);
         if (dateCell != null) {
