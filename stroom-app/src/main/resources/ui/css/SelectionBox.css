@@ -1,8 +1,9 @@
 .SelectionBox {
 	width: 200px;
+	cursor: pointer;
 }
 
-.SelectionBox-textBox {
+.pointer {
     cursor: pointer;
 }
 

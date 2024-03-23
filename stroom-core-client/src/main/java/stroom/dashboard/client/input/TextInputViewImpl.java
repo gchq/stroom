@@ -18,7 +18,7 @@ package stroom.dashboard.client.input;
 
 import stroom.dashboard.client.input.TextInputPresenter.TextInputView;
 
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
@@ -55,9 +55,9 @@ public class TextInputViewImpl extends ViewWithUiHandlers<TextInputUiHandlers> i
     }
 
     @UiHandler("value")
-    public void onValueChange(final ValueChangeEvent<String> event) {
+    public void onValueKeyUp(final KeyUpEvent event) {
         if (getUiHandlers() != null) {
-            getUiHandlers().onValueChanged(value.getValue());
+            getUiHandlers().onValueChanged(value.getText());
         }
     }
 
