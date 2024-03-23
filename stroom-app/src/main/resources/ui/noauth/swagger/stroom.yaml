@@ -11298,6 +11298,8 @@ components:
       - $ref: '#/components/schemas/ComponentSettings'
       - type: object
         properties:
+          allowTextEntry:
+            type: boolean
           dictionary:
             $ref: '#/components/schemas/DocRef'
           key:

@@ -15124,6 +15124,9 @@
         }, {
           "type" : "object",
           "properties" : {
+            "allowTextEntry" : {
+              "type" : "boolean"
+            },
             "dictionary" : {
               "$ref" : "#/components/schemas/DocRef"
             },
