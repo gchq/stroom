@@ -932,11 +932,7 @@ public class DocumentPluginEventManager extends Plugin {
         final boolean isCopyEnabled = allowRead && !hasFeed;
 
         addFavouritesMenuItem(menuItems, singleSelection, 10);
-//        if (singleSelection && getPrimarySelection() != null &&
-//                !DocumentTypes.isSystem(getPrimarySelection().getType())) {
-//            menuItems.add(createCopyLinkMenuItem(getPrimarySelection(), 11));
-//            menuItems.add(new Separator(12));
-//        }
+        menuItems.add(new Separator(12));
 
         menuItems.add(createInfoMenuItem(singleReadableItem, 20, isInfoEnabled));
         menuItems.add(createEditOrAddTagsMenuItem(updatableItems, 21, allowUpdate));
