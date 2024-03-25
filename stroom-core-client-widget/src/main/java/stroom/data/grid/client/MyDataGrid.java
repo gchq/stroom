@@ -21,8 +21,6 @@ import stroom.util.shared.GwtNullSafe;
 import stroom.widget.tab.client.view.GlobalResizeObserver;
 import stroom.widget.util.client.DoubleClickTester;
 import stroom.widget.util.client.ElementUtil;
-import stroom.widget.util.client.KeyBinding;
-import stroom.widget.util.client.KeyBinding.Action;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
@@ -35,7 +33,6 @@ import com.google.gwt.dom.client.Style.Cursor;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.dom.client.TableCellElement;
 import com.google.gwt.dom.client.TableRowElement;
-import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.cellview.client.Column;
@@ -105,15 +102,6 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
 
         // Sink all mouse events.
         sinkEvents(Event.MOUSEEVENTS);
-
-        this.asWidget().addDomHandler(
-                event -> {
-                    final Action action = KeyBinding.test(event.getNativeEvent());
-                    if (Action.MOVE_DOWN == action) {
-
-                    }
-                },
-                KeyDownEvent.getType());
     }
 
     public MultiSelectionModelImpl<R> addDefaultSelectionModel(final boolean allowMultiSelect) {
