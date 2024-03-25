@@ -21,6 +21,7 @@ import stroom.data.table.client.Refreshable;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.presenter.TaskManagerPresenter.TaskManagerView;
+import stroom.widget.util.client.KeyBinding.Action;
 
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -75,6 +76,14 @@ public class TaskManagerPresenter
         return TAB_TYPE;
     }
 
+    @Override
+    public boolean handleKeyAction(final Action action) {
+        if (Action.FOCUS_FILTER == action) {
+            getView().focusFilter();
+            return true;
+        }
+        return false;
+    }
 
     // --------------------------------------------------------------------------------
 
@@ -82,5 +91,7 @@ public class TaskManagerPresenter
     public interface TaskManagerView extends View, HasUiHandlers<TaskManagerUiHandlers> {
 
         void setList(Widget widget);
+
+        void focusFilter();
     }
 }

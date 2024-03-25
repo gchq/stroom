@@ -26,6 +26,8 @@ import stroom.security.client.api.ClientSecurityContext;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.menu.client.presenter.IconMenuItem;
+import stroom.widget.util.client.KeyBinding;
+import stroom.widget.util.client.KeyBinding.Action;
 
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.inject.Inject;
@@ -36,6 +38,7 @@ import javax.inject.Singleton;
 @Singleton
 public class ResultStorePlugin extends Plugin implements ShowMainEvent.Handler, HasHandlers {
 
+    private static final Action ACTION = Action.GOTO_SEARCH_RESULTS;
     private final ClientSecurityContext securityContext;
 
     private final ResultStorePresenter resultStorePresenter;
@@ -52,6 +55,8 @@ public class ResultStorePlugin extends Plugin implements ShowMainEvent.Handler, 
         this.resultStoreModel = resultStoreModel;
 
         registerHandler(getEventBus().addHandler(ShowMainEvent.getType(), this));
+
+        KeyBinding.addCommand(ACTION, resultStorePresenter::show);
     }
 
     @Override
@@ -64,6 +69,7 @@ public class ResultStorePlugin extends Plugin implements ShowMainEvent.Handler, 
                         .icon(SvgImage.DATABASE)
                         .iconColour(IconColour.GREY)
                         .text("Search Results")
+                        .action(ACTION)
                         .command(resultStorePresenter::show)
                         .build());
 //        }

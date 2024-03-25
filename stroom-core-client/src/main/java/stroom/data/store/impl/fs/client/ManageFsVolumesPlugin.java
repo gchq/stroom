@@ -26,6 +26,7 @@ import stroom.security.shared.PermissionNames;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.menu.client.presenter.IconMenuItem;
+import stroom.widget.util.client.KeyBinding.Action;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -45,8 +46,18 @@ public class ManageFsVolumesPlugin extends NodeToolsContentPlugin<FsVolumeGroupP
     }
 
     @Override
+    protected String getRequiredAppPermission() {
+        return PermissionNames.MANAGE_VOLUMES_PERMISSION;
+    }
+
+    @Override
+    protected Action getOpenAction() {
+        return Action.GOTO_FS_VOLUMES;
+    }
+
+    @Override
     protected void addChildItems(final BeforeRevealMenubarEvent event) {
-        if (getSecurityContext().hasAppPermission(PermissionNames.MANAGE_VOLUMES_PERMISSION)) {
+        if (getSecurityContext().hasAppPermission(getRequiredAppPermission())) {
             MenuKeys.addAdministrationMenu(event.getMenuItems());
             event.getMenuItems().addMenuItem(MenuKeys.ADMINISTRATION_MENU,
                     new IconMenuItem.Builder()
@@ -54,6 +65,7 @@ public class ManageFsVolumesPlugin extends NodeToolsContentPlugin<FsVolumeGroupP
                             .icon(SvgImage.VOLUMES)
                             .iconColour(IconColour.GREY)
                             .text("Data Volumes")
+                            .action(getOpenAction())
                             .command(this::open)
                             .build());
         }

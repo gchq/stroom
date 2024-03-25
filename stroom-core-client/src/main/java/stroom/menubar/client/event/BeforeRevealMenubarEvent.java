@@ -56,6 +56,10 @@ public class BeforeRevealMenubarEvent extends GwtEvent<BeforeRevealMenubarEvent.
         return menuItems;
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface Handler extends EventHandler {
 
         void onReveal(BeforeRevealMenubarEvent event);

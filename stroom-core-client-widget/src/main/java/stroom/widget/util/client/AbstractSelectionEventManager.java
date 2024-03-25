@@ -2,6 +2,7 @@ package stroom.widget.util.client;
 
 import stroom.widget.util.client.KeyBinding.Action;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.BrowserEvents;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.user.cellview.client.AbstractHasData;
@@ -25,6 +26,7 @@ public abstract class AbstractSelectionEventManager<T>
         final NativeEvent nativeEvent = event.getNativeEvent();
         final String type = nativeEvent.getType();
 
+//        GWT.log("AbstractSelectionEventManager calling cellPreview test");
         final Action action = KeyBinding.test(nativeEvent);
         if (action != null) {
             final List<T> items = cellTable.getVisibleItems();
@@ -97,6 +99,8 @@ public abstract class AbstractSelectionEventManager<T>
     void handledEvent(CellPreviewEvent<
             ?> event) {
 //        event.setCanceled(true);
+        GWT.log("Stopping propagation");
+        event.getNativeEvent().stopPropagation();
         event.getNativeEvent().preventDefault();
     }
 

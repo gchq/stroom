@@ -37,7 +37,6 @@ import stroom.widget.util.client.DoubleClickTester;
 import stroom.widget.util.client.KeyBinding;
 import stroom.widget.util.client.KeyBinding.Action;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.HasClickHandlers;
@@ -92,7 +91,7 @@ public class MainPresenter
             // else we pass the action down to the current tab to deal with
             final Action action = KeyBinding.test(nativeEvent);
             if (action != null && selectedTabData != null) {
-                GWT.log("Passing " + action + " to " + selectedTabData.getClass().getName());
+//                GWT.log("Passing " + action + " to " + selectedTabData.getClass().getName());
                 final boolean wasActionConsumed = selectedTabData.handleKeyAction(action);
                 if (wasActionConsumed) {
                     // Stop anyone else dealing with this key bind
@@ -103,18 +102,18 @@ public class MainPresenter
         }, KeyDownEvent.getType());
 
         // Inspect the keyUp so we can catch stuff like 'shift,shift'
-        view.asWidget().addDomHandler(event ->
-                KeyBinding.test(event.getNativeEvent()), KeyUpEvent.getType());
+        view.asWidget().addDomHandler(
+                event -> KeyBinding.test(event.getNativeEvent()),
+                KeyUpEvent.getType());
 
         // track the currently selected tab
         registerHandler(getEventBus().addHandler(ContentTabSelectionChangeEvent.getType(), e -> {
-            final TabData tabData = e.getTabData();
-            selectedTabData = tabData;
-            if (selectedTabData != null) {
-                GWT.log("Selected tab - label: '" + tabData.getLabel()
-                        + "', type: " + tabData.getType()
-                        + ", class: " + tabData.getClass().getName());
-            }
+            selectedTabData = e.getTabData();
+//            if (selectedTabData != null) {
+//                GWT.log("Selected tab - label: '" + tabData.getLabel()
+//                        + "', type: " + tabData.getType()
+//                        + ", class: " + tabData.getClass().getName());
+//            }
         }));
 
         addRegisteredHandler(TaskStartEvent.getType(), event -> {

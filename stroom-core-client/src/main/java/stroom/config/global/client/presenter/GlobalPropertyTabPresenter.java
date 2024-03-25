@@ -23,6 +23,7 @@ import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.GwtNullSafe;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.util.client.KeyBinding.Action;
 import stroom.widget.util.client.MouseUtil;
 
 import com.google.inject.Inject;
@@ -94,6 +95,7 @@ public class GlobalPropertyTabPresenter extends ContentTabPresenter<GlobalProper
         registerHandler(listPresenter.addErrorHandler(event -> setErrors(event.getError())));
         super.onBind();
         listPresenter.refresh();
+        getView().focusFilter();
     }
 
     public void setErrors(final String errors) {
@@ -147,11 +149,20 @@ public class GlobalPropertyTabPresenter extends ContentTabPresenter<GlobalProper
         return TAB_TYPE;
     }
 
+    @Override
+    public boolean handleKeyAction(final Action action) {
+        if (Action.FOCUS_FILTER == action) {
+            getView().focusFilter();
+            return true;
+        }
+        return false;
+    }
 
     // --------------------------------------------------------------------------------
 
 
     public interface GlobalPropertyTabView extends View, HasUiHandlers<ManageGlobalPropertyUiHandlers> {
 
+        void focusFilter();
     }
 }

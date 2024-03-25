@@ -36,6 +36,7 @@ import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.InlineSvgToggleButton;
 import stroom.widget.util.client.MouseUtil;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Widget;
@@ -66,7 +67,7 @@ public class MarkdownEditPresenter
     private final MarkdownConverter markdownConverter;
     private boolean reading;
     private boolean readOnly = true;
-    private boolean editMode;
+    private boolean editMode = false;
 
     @Inject
     public MarkdownEditPresenter(final EventBus eventBus,
@@ -85,7 +86,7 @@ public class MarkdownEditPresenter
 
         iFramePresenter.setId(MARKDOWN_FRAME_ID);
         iFramePresenter.setSandboxEnabled(true, SandboxOption.ALLOW_POPUPS);
-        view.setView(iFramePresenter.getView());
+//        view.setView(iFramePresenter.getView());
 
         editModeButton = new InlineSvgToggleButton();
         editModeButton.setSvg(SvgImage.EDIT);
@@ -122,6 +123,7 @@ public class MarkdownEditPresenter
                 showHelp();
             }
         }));
+        setEditMode(false);
     }
 
     private void toggleEditMode() {
@@ -129,20 +131,15 @@ public class MarkdownEditPresenter
     }
 
     private void setEditMode(final boolean isInEditMode) {
-        if (!readOnly) {
-//            this.editMode = isInEditMode;
-            if (isInEditMode) {
-                // Raw markdown likely been changed to update the iframe content
-                updateMarkdownOnIFramePresenter();
-                getView().setView(iFramePresenter.getView());
-            } else {
-                getView().setView(markdownPreviewPresenter.getView());
-            }
-            editModeButton.setState(isInEditMode);
-        } else {
-            editModeButton.setState(false);
+        if (!readOnly && isInEditMode) {
             getView().setView(markdownPreviewPresenter.getView());
+            this.editMode = true;
+        } else {
+            updateMarkdownOnIFramePresenter();
+            getView().setView(iFramePresenter.getView());
+            this.editMode = false;
         }
+        editModeButton.setState(this.editMode);
     }
 
     private void setDirty(final boolean dirty) {
@@ -167,19 +164,38 @@ public class MarkdownEditPresenter
 
         reading = true;
 
-        // No content do default to edit mode
-        if (GwtNullSafe.isBlankString(rawMarkdown)) {
-            setEditMode(true);
-            editModeButton.setState(true);
-        } else {
-            setEditMode(false);
-            editModeButton.setState(false);
-        }
         if (!Objects.equals(markdownPreviewPresenter.getText(), rawMarkdown)) {
             markdownPreviewPresenter.setText(rawMarkdown);
         }
+
+        updateEditState();
+
+//        // No content do default to edit mode
+//        if (GwtNullSafe.isBlankString(rawMarkdown)) {
+//            GWT.log("setText, editMode: true");
+//            setEditMode(true);
+////            editModeButton.setState(true);
+//        } else {
+//            GWT.log("setText, editMode: false");
+//            setEditMode(false);
+////            editModeButton.setState(false);
+//        }
         reading = false;
         updateMarkdownOnIFramePresenter();
+    }
+
+    private void updateEditState() {
+        final String rawMarkdown = markdownPreviewPresenter.getText();
+        // No content do default to edit mode
+        if (GwtNullSafe.isBlankString(rawMarkdown) && !readOnly) {
+            GWT.log("setText, editMode: true");
+            setEditMode(true);
+//            editModeButton.setState(true);
+        } else {
+            GWT.log("setText, editMode: false");
+            setEditMode(false);
+//            editModeButton.setState(false);
+        }
     }
 
     private void showHelp() {
@@ -210,7 +226,8 @@ public class MarkdownEditPresenter
     public void setReadOnly(final boolean readOnly) {
         this.readOnly = readOnly;
         // Ensure we are not in edit mode in case this is called after setText
-        setEditMode(false);
+//        setEditMode(this.editMode);
+        updateEditState();
     }
 
 

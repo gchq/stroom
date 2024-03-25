@@ -20,15 +20,15 @@ import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 
-public class ShowFindEvent extends GwtEvent<ShowFindEvent.Handler> {
+public class FocusExplorerFilterEvent extends GwtEvent<FocusExplorerFilterEvent.Handler> {
 
     private static Type<Handler> TYPE;
 
-    private ShowFindEvent() {
+    private FocusExplorerFilterEvent() {
     }
 
     public static void fire(final HasHandlers handlers) {
-        handlers.fireEvent(new ShowFindEvent());
+        handlers.fireEvent(new FocusExplorerFilterEvent());
     }
 
     public static Type<Handler> getType() {
@@ -45,7 +45,7 @@ public class ShowFindEvent extends GwtEvent<ShowFindEvent.Handler> {
 
     @Override
     protected void dispatch(final Handler handler) {
-        handler.onShow(this);
+        handler.onFocusExplorerFilter(this);
     }
 
 
@@ -54,6 +54,6 @@ public class ShowFindEvent extends GwtEvent<ShowFindEvent.Handler> {
 
     public interface Handler extends EventHandler {
 
-        void onShow(ShowFindEvent event);
+        void onFocusExplorerFilter(FocusExplorerFilterEvent event);
     }
 }

@@ -49,6 +49,10 @@ public class FindPresenter
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     @ProxyCodeSplit
     public interface FindProxy extends Proxy<FindPresenter> {
 

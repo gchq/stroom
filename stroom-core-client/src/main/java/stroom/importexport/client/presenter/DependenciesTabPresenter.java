@@ -7,6 +7,7 @@ import stroom.svg.shared.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.GwtNullSafe;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
+import stroom.widget.util.client.KeyBinding.Action;
 
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.inject.Inject;
@@ -42,6 +43,11 @@ public class DependenciesTabPresenter
     }
 
     @Override
+    protected void onBind() {
+        getView().focusFilter();
+    }
+
+    @Override
     public SvgImage getIcon() {
         return SvgImage.DEPENDENCIES;
     }
@@ -70,6 +76,15 @@ public class DependenciesTabPresenter
         return TAB_TYPE;
     }
 
+    @Override
+    public boolean handleKeyAction(final Action action) {
+        if (Action.FOCUS_FILTER == action) {
+            getView().focusFilter();
+            return true;
+        }
+        return false;
+    }
+
 
     // --------------------------------------------------------------------------------
 
@@ -79,5 +94,7 @@ public class DependenciesTabPresenter
         void setHelpTooltipText(final SafeHtml helpTooltipText);
 
         void setQuickFilterText(final String text);
+
+        void focusFilter();
     }
 }
