@@ -26,9 +26,10 @@ public interface DocRefInfoService extends DocRefDecorator {
      * If allowWildCards is true '*' can be used to denote a 0-many char wild card.
      * Names may not be unique for a given type, so a non-wild carded nameFilter may return
      * more than one {@link DocRef}.
-     * @param type The {@link DocRef} type. Mandatory.
+     *
+     * @param type       Can be null. If null all handlers will be searched
      * @param nameFilter The name of the {@link DocRef}s to filter by. If allowWildCards is true
-     *             find all matching else find those with an exact case-sensitive name match.
+     *                   find all matching else find those with an exact case-sensitive name match.
      */
     List<DocRef> findByName(final String type,
                             final String nameFilter,
@@ -40,9 +41,10 @@ public interface DocRefInfoService extends DocRefDecorator {
      * Names may not be unique for a given type, so a non-wild carded nameFilter may return
      * more than one {@link DocRef}. Applies all nameFilters using an OR, i.e. returns all docRefs
      * associated with any of the passed nameFilters.
-     * @param type The {@link DocRef} type. Mandatory.
+     *
+     * @param type        The {@link DocRef} type. Mandatory.
      * @param nameFilters The names of the {@link DocRef}s to filter by. If allowWildCards is true
-     *             find all matching else find those with an exact case-sensitive name match.
+     *                    find all matching else find those with an exact case-sensitive name match.
      */
     List<DocRef> findByNames(final String type,
                              final List<String> nameFilters,

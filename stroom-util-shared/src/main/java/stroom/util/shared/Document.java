@@ -16,9 +16,18 @@
 
 package stroom.util.shared;
 
+import stroom.docref.DocRef;
+import stroom.docref.HasName;
 import stroom.docref.HasType;
 import stroom.docref.HasUuid;
 
-public interface Document extends HasType, HasUuid {
+public interface Document extends HasType, HasUuid, HasName, HasAuditInfo {
 
+    default DocRef asDocRef() {
+        return DocRef.builder()
+                .type(getType())
+                .name(getName())
+                .uuid(getUuid())
+                .build();
+    }
 }

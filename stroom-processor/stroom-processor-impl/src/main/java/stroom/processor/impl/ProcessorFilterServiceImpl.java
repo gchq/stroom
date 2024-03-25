@@ -200,6 +200,12 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
     }
 
     @Override
+    public Optional<ProcessorFilter> fetchByUuid(final String uuid) {
+        return securityContext.secureResult(PERMISSION, () ->
+                processorFilterDao.fetchByUuid(uuid));
+    }
+
+    @Override
     public ProcessorFilter update(final ProcessorFilter processorFilter) {
         // Check the user has update permissions on the pipeline.
         if (!securityContext.hasDocumentPermission(

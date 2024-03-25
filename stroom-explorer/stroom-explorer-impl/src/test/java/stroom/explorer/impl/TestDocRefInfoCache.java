@@ -1,24 +1,20 @@
 package stroom.explorer.impl;
 
 import stroom.cache.impl.CacheManagerImpl;
-import stroom.docref.DocContentHighlights;
-import stroom.docref.DocContentMatch;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
-import stroom.docref.StringMatch;
-import stroom.explorer.api.ExplorerActionHandler;
-import stroom.explorer.shared.DocumentType;
-import stroom.explorer.shared.DocumentTypeGroup;
+import stroom.docstore.api.DocumentActionHandler;
+import stroom.docstore.api.DocumentActionHandlers;
+import stroom.docstore.api.DocumentType;
 import stroom.security.api.SecurityContext;
 import stroom.security.mock.MockSecurityContext;
-import stroom.svg.shared.SvgImage;
 import stroom.util.NullSafe;
+import stroom.util.shared.Document;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -53,16 +49,16 @@ class TestDocRefInfoCache {
 
     @BeforeEach
     void setUp() {
-        final ExplorerActionHandlers explorerActionHandlers = new ExplorerActionHandlers(
-                Set.of(
-                        new MyExplorerActionHandler(Set.of(DOC_REF_1, DOC_REF_2)),
-                        new MyExplorerActionHandler(Set.of(DOC_REF_3, DOC_REF_4))));
+        final DocumentActionHandlers documentActionHandlers = new DocumentActionHandlers(
+                Map.of(
+                        new DocumentType(TYPE_FOO), new MyDocumentActionHandler(Set.of(DOC_REF_1, DOC_REF_2)),
+                        new DocumentType(TYPE_BAR), new MyDocumentActionHandler(Set.of(DOC_REF_3, DOC_REF_4))));
 
         docRefInfoCache = new DocRefInfoCache(
                 cacheManager,
-                explorerActionHandlers,
                 ExplorerConfig::new,
-                securityContext);
+                securityContext,
+                () -> documentActionHandlers);
     }
 
     @Test
@@ -122,12 +118,12 @@ class TestDocRefInfoCache {
     // --------------------------------------------------------------------------------
 
 
-    private static class MyExplorerActionHandler implements ExplorerActionHandler {
+    private static class MyDocumentActionHandler implements DocumentActionHandler {
 
         private final Map<String, DocRef> docRefs = new HashMap<>();
         private final String type;
 
-        private MyExplorerActionHandler(final Set<DocRef> docRefs) {
+        public MyDocumentActionHandler(final Set<DocRef> docRefs) {
             docRefs.forEach(docRef -> this.docRefs.put(docRef.getUuid(), docRef));
             final Set<String> types = docRefs.stream()
                     .map(DocRef::getType)
@@ -139,41 +135,18 @@ class TestDocRefInfoCache {
         }
 
         @Override
-        public Set<DocRef> listDocuments() {
-            throw new UnsupportedOperationException();
+        public Document readDocument(final DocRef docRef) {
+            return null;
         }
 
         @Override
-        public List<DocRef> findByNames(final List<String> names, final boolean allowWildCards) {
-            throw new UnsupportedOperationException();
+        public Document writeDocument(final Document document) {
+            return null;
         }
 
         @Override
-        public DocRef createDocument(final String name) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public DocRef copyDocument(final DocRef docRef,
-                                   final String name,
-                                   final boolean makeNameUnique,
-                                   final Set<String> existingNames) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public DocRef moveDocument(final String uuid) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public DocRef renameDocument(final String uuid, final String name) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public void deleteDocument(final String uuid) {
-            throw new UnsupportedOperationException();
+        public String getType() {
+            return type;
         }
 
         @Override
@@ -187,42 +160,6 @@ class TestDocRefInfoCache {
                             "user1",
                             "user1",
                             null));
-        }
-
-        @Override
-        public DocumentType getDocumentType() {
-            return new DocumentType(
-                    DocumentTypeGroup.CONFIGURATION,
-                    type,
-                    type,
-                    SvgImage.OK);
-        }
-
-        @Override
-        public Map<DocRef, Set<DocRef>> getDependencies() {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public Set<DocRef> getDependencies(final DocRef docRef) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public void remapDependencies(final DocRef docRef, final Map<DocRef, DocRef> remappings) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public List<DocContentMatch> findByContent(final StringMatch filter) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public DocContentHighlights fetchHighlights(final DocRef docRef,
-                                                    final String extension,
-                                                    final StringMatch filter) {
-            throw new UnsupportedOperationException();
         }
     }
 }

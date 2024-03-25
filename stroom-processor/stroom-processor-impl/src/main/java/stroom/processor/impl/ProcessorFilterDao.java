@@ -6,8 +6,11 @@ import stroom.util.shared.HasIntCrud;
 import stroom.util.shared.ResultPage;
 
 import java.time.Instant;
+import java.util.Optional;
 
 public interface ProcessorFilterDao extends HasIntCrud<ProcessorFilter> {
+
+    Optional<ProcessorFilter> fetchByUuid(String uuid);
 
     ResultPage<ProcessorFilter> find(ExpressionCriteria criteria);
 
