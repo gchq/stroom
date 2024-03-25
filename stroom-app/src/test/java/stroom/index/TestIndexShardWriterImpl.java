@@ -44,8 +44,6 @@ import jakarta.inject.Inject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -72,7 +70,7 @@ class TestIndexShardWriterImpl extends AbstractCoreIntegrationTest {
     }
 
     @Test
-    void testSingle() throws IOException {
+    void testSingle() {
         assertThat(indexShardService.find(FindIndexShardCriteria.matchAll()).size()).isZero();
 
         // Do some work.
@@ -119,7 +117,7 @@ class TestIndexShardWriterImpl extends AbstractCoreIntegrationTest {
     }
 
     @Test
-    void testSimple() throws IOException {
+    void testSimple() {
         assertThat(indexShardService.find(FindIndexShardCriteria.matchAll()).size()).isZero();
 
         // Do some work.
@@ -203,7 +201,7 @@ class TestIndexShardWriterImpl extends AbstractCoreIntegrationTest {
     }
 
     @Test
-    void testSimpleRoll() throws IOException {
+    void testSimpleRoll() {
         // Do some work.
         final IndexDocument document = new IndexDocument();
         document.add(new FieldValue(LuceneIndexField.createField("test"), ValString.create("test")));

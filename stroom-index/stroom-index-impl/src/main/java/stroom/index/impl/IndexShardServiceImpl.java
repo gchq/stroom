@@ -100,7 +100,7 @@ public class IndexShardServiceImpl implements IndexShardService, Searchable {
     }
 
     @Override
-    public Boolean delete(final IndexShard indexShard) {
+    public boolean delete(final IndexShard indexShard) {
         return securityContext.secureResult(PermissionNames.MANAGE_INDEX_SHARDS_PERMISSION, () -> {
             if (!securityContext.hasDocumentPermission(indexShard.getIndexUuid(), DocumentPermissionNames.DELETE)) {
                 throw new PermissionException(
@@ -108,19 +108,15 @@ public class IndexShardServiceImpl implements IndexShardService, Searchable {
                         "You do not have permission to delete index shard");
             }
 
-            indexShardDao.delete(indexShard.getId());
-
-            return Boolean.TRUE;
+            return indexShardDao.delete(indexShard.getId());
         });
     }
 
     @Override
-    public Boolean setStatus(final Long id,
+    public boolean setStatus(final Long id,
                              final IndexShard.IndexShardStatus status) {
-        return securityContext.secureResult(PermissionNames.MANAGE_INDEX_SHARDS_PERMISSION, () -> {
-            indexShardDao.setStatus(id, status);
-            return Boolean.TRUE;
-        });
+        return securityContext.secureResult(PermissionNames.MANAGE_INDEX_SHARDS_PERMISSION, () ->
+                indexShardDao.setStatus(id, status));
     }
 
     @Override

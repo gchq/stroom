@@ -45,13 +45,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -82,8 +78,6 @@ public class IndexShardManager {
     private final StripedLock shardUpdateLocks = new StripedLock();
     private final AtomicBoolean deletingShards = new AtomicBoolean();
 
-    private final Map<IndexShardStatus, Set<IndexShardStatus>> allowedStateTransitions = new HashMap<>();
-
     @Inject
     IndexShardManager(final IndexStore indexStore,
                       final IndexShardService indexShardService,
@@ -101,29 +95,6 @@ public class IndexShardManager {
         this.taskContextFactory = taskContextFactory;
         this.securityContext = securityContext;
         this.pathCreator = pathCreator;
-
-        // Ensure all but deleted and corrupt states can be set to closed on clean.
-        allowedStateTransitions.put(IndexShardStatus.NEW,
-                Set.of(IndexShardStatus.OPENING,
-                        IndexShardStatus.CLOSED,
-                        IndexShardStatus.DELETED,
-                        IndexShardStatus.CORRUPT));
-        allowedStateTransitions.put(IndexShardStatus.OPENING,
-                Set.of(IndexShardStatus.OPEN,
-                        IndexShardStatus.CLOSED,
-                        IndexShardStatus.DELETED,
-                        IndexShardStatus.CORRUPT));
-        allowedStateTransitions.put(IndexShardStatus.OPEN,
-                Set.of(IndexShardStatus.CLOSING,
-                        IndexShardStatus.CLOSED,
-                        IndexShardStatus.DELETED,
-                        IndexShardStatus.CORRUPT));
-        allowedStateTransitions.put(IndexShardStatus.CLOSING,
-                Set.of(IndexShardStatus.CLOSED, IndexShardStatus.DELETED, IndexShardStatus.CORRUPT));
-        allowedStateTransitions.put(IndexShardStatus.CLOSED,
-                Set.of(IndexShardStatus.OPENING, IndexShardStatus.DELETED, IndexShardStatus.CORRUPT));
-        allowedStateTransitions.put(IndexShardStatus.DELETED, Collections.emptySet());
-        allowedStateTransitions.put(IndexShardStatus.CORRUPT, Collections.singleton(IndexShardStatus.DELETED));
     }
 
     /**
@@ -234,7 +205,7 @@ public class IndexShardManager {
 
     private long performAction(final List<IndexShard> ownedShards, final IndexShardAction action) {
         final AtomicLong shardCount = new AtomicLong();
-        if (ownedShards.size() > 0) {
+        if (!ownedShards.isEmpty()) {
             taskContextFactory.context(
                     "Index Shard Manager",
                     TerminateHandlerFactory.NOOP_FACTORY,
@@ -372,21 +343,13 @@ public class IndexShardManager {
             try {
                 final IndexShard indexShard = indexShardService.loadById(indexShardId);
                 if (indexShard != null) {
-                    // Only allow certain state transitions.
-                    final Set<IndexShardStatus> allowed = allowedStateTransitions.get(indexShard.getStatus());
-                    if (allowed == null) {
-                        throw new RuntimeException("No state transitions are defined for " +
-                                indexShard.getStatus());
-                    } else {
-                        if (allowed.contains(status)) {
-                            indexShardService.setStatus(indexShard.getId(), status);
-                        } else {
-                            LOGGER.debug("State transition from " +
-                                    indexShard.getStatus() +
-                                    " to " +
-                                    status +
-                                    " was attempted but is not allowed");
-                        }
+                    final boolean success = indexShardService.setStatus(indexShard.getId(), status);
+                    if (!success) {
+                        LOGGER.debug("State transition from " +
+                                indexShard.getStatus() +
+                                " to " +
+                                status +
+                                " was attempted but is not allowed");
                     }
                 }
             } catch (final RuntimeException e) {
