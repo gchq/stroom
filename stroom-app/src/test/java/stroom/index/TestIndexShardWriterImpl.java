@@ -18,6 +18,7 @@
 package stroom.index;
 
 import stroom.docref.DocRef;
+import stroom.entity.shared.ExpressionCriteria;
 import stroom.index.impl.IndexDocument;
 import stroom.index.impl.IndexShardKeyUtil;
 import stroom.index.impl.IndexShardManager;
@@ -26,12 +27,14 @@ import stroom.index.impl.IndexShardService;
 import stroom.index.impl.IndexShardWriter;
 import stroom.index.impl.IndexShardWriterCache;
 import stroom.index.impl.IndexStore;
+import stroom.index.impl.IndexVolumeDao;
 import stroom.index.impl.Indexer;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexException;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.index.shared.IndexShardKey;
+import stroom.index.shared.IndexVolume;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.index.shared.LuceneIndexField;
 import stroom.query.language.functions.ValString;
@@ -39,10 +42,17 @@ import stroom.search.extraction.FieldValue;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
 import stroom.test.CommonTestScenarioCreator;
+import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.attribute.PosixFilePermission;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -63,6 +73,8 @@ class TestIndexShardWriterImpl extends AbstractCoreIntegrationTest {
     private CommonTestControl commonTestControl;
     @Inject
     private IndexStore indexStore;
+    @Inject
+    private IndexVolumeDao indexVolumeDao;
 
     @BeforeEach
     void onBefore() {
@@ -186,20 +198,6 @@ class TestIndexShardWriterImpl extends AbstractCoreIntegrationTest {
         assertThat(compareStatus(IndexShardStatus.OPEN, writer2.getIndexShardId())).isFalse();
     }
 
-    private void checkDocCount(final int expected, final IndexShardWriter indexShardWriter) {
-        assertThat(indexShardWriter.getDocumentCount()).isEqualTo(expected);
-    }
-
-    private void checkDocCount(final int expected, final long indexShardId) {
-        final IndexShard loaded = indexShardService.loadById(indexShardId);
-        assertThat(loaded.getDocumentCount()).isEqualTo(expected);
-    }
-
-    private boolean compareStatus(final IndexShardStatus expected, final long indexShardId) {
-        final IndexShard loaded = indexShardService.loadById(indexShardId);
-        return expected.equals(loaded.getStatus());
-    }
-
     @Test
     void testSimpleRoll() {
         // Do some work.
@@ -244,5 +242,47 @@ class TestIndexShardWriterImpl extends AbstractCoreIntegrationTest {
 
         // Make sure the writer is still open.
         assertThat(compareStatus(IndexShardStatus.OPEN, writer2.getIndexShardId())).isTrue();
+    }
+
+    @Test
+    void testFileSystemError() throws IOException {
+        assertThat(indexShardService.find(FindIndexShardCriteria.matchAll()).size()).isZero();
+
+        // Make index volume paths that we cannot write to.
+        final Path tempDir = Files.createTempDirectory("stroom");
+        Files.setPosixFilePermissions(tempDir, Set.of(PosixFilePermission.OWNER_READ));
+        final ResultPage<IndexVolume> resultPage = indexVolumeDao.find(new ExpressionCriteria());
+        resultPage.forEach(indexVolume -> {
+            indexVolume.setPath(tempDir + indexVolume.getPath());
+            indexVolumeDao.update(indexVolume);
+        });
+
+        // Do some work.
+        final IndexDocument document = new IndexDocument();
+        document.add(new FieldValue(LuceneIndexField.createField("test"), ValString.create("test")));
+
+        final DocRef indexRef1 = commonTestScenarioCreator.createIndex("TEST_2010",
+                commonTestScenarioCreator.createIndexFields(),
+                10);
+        final LuceneIndexDoc index1 = indexStore.readDocument(indexRef1);
+        final IndexShardKey indexShardKey1 = IndexShardKeyUtil.createTestKey(index1);
+
+        assertThatThrownBy(() -> indexer.addDocument(indexShardKey1, document))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("Index volume path not found");
+    }
+
+    private void checkDocCount(final int expected, final IndexShardWriter indexShardWriter) {
+        assertThat(indexShardWriter.getDocumentCount()).isEqualTo(expected);
+    }
+
+    private void checkDocCount(final int expected, final long indexShardId) {
+        final IndexShard loaded = indexShardService.loadById(indexShardId);
+        assertThat(loaded.getDocumentCount()).isEqualTo(expected);
+    }
+
+    private boolean compareStatus(final IndexShardStatus expected, final long indexShardId) {
+        final IndexShard loaded = indexShardService.loadById(indexShardId);
+        return expected.equals(loaded.getStatus());
     }
 }

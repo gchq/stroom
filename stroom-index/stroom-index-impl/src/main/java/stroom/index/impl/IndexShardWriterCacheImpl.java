@@ -205,6 +205,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
         final int ramBufferSizeMB = getRamBufferSize();
 
         // Mark the index shard as opening.
+        final boolean isNew = IndexShardStatus.NEW.equals(indexShard.getStatus());
         LOGGER.debug(() -> "Opening " + indexShardId);
         LOGGER.trace(() -> "Opening " + indexShardId + " - " + indexShardKey);
         indexShardManager.setStatus(indexShardId, IndexShardStatus.OPENING);
@@ -237,8 +238,13 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
 
         } catch (final RuntimeException e) {
             // Something unexpected went wrong.
-            LOGGER.error(() -> "Setting index shard status to corrupt because (" + e + ")", e);
-            indexShardManager.setStatus(indexShardId, IndexShardStatus.CORRUPT);
+            if (isNew) {
+                LOGGER.error(() -> "Deleting new index shard because (" + e + ")", e);
+                indexShardManager.setStatus(indexShardId, IndexShardStatus.DELETED);
+            } else {
+                LOGGER.error(() -> "Setting index shard status to corrupt because (" + e + ")", e);
+                indexShardManager.setStatus(indexShardId, IndexShardStatus.CORRUPT);
+            }
         }
 
         return null;
