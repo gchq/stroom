@@ -29,13 +29,7 @@ public interface IndexShardWriter {
 
     void close();
 
-//     IndexWriter getWriter() {
-//        return indexWriter;
-//    }
-
     int getDocumentCount();
-
-    IndexShardKey getIndexShardKey();
 
     long getIndexShardId();
 

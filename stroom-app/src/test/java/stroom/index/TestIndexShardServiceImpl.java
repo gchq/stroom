@@ -92,13 +92,13 @@ class TestIndexShardServiceImpl extends AbstractCoreIntegrationTest {
 //        index1.setVolumeGroupName(volumeGroup);
 //        indexStore.writeDocument(index1);
 //
-//        final IndexShardKey indexShardKey1 = IndexShardKeyUtil.createTestKey(index1);
+//        final IndexShardKey indexShardKey1 = IndexShardKey.createTestKey(index1);
 //
 //        final DocRef indexRef2 = indexStore.createDocument("Test Index 2");
 //        final IndexDoc index2 = indexStore.readDocument(indexRef2);
 //        index2.setVolumeGroupName(volumeGroup);
 //        indexStore.writeDocument(index2);
-//        final IndexShardKey indexShardKey2 = IndexShardKeyUtil.createTestKey(index2);
+//        final IndexShardKey indexShardKey2 = IndexShardKey.createTestKey(index2);
 //
 //        final String nodeName = nodeInfo.getThisNodeName();
 //
@@ -193,7 +193,7 @@ class TestIndexShardServiceImpl extends AbstractCoreIntegrationTest {
 //                             final String dateTime,
 //                             final int shardNo) {
 //        final long timeMs = DateUtil.parseNormalDateTimeString(dateTime);
-//        final IndexShardKey key = IndexShardKeyUtil.createTimeBasedKey(index, timeMs, shardNo);
+//        final IndexShardKey key = IndexShardKey.createTimeBasedKey(index, timeMs, shardNo);
 //        indexShardService.createIndexShard(key, nodeName);
 //    }
 }

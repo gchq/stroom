@@ -19,17 +19,8 @@ package stroom.index.impl;
 import stroom.index.shared.IndexException;
 
 public class ShardFullException extends IndexException {
-    private static final long serialVersionUID = -482925256715483280L;
-
-    public ShardFullException(final Throwable t) {
-        super(t);
-    }
 
     public ShardFullException(final String message) {
         super(message);
-    }
-
-    public ShardFullException(final String message, final Throwable t) {
-        super(message, t);
     }
 }

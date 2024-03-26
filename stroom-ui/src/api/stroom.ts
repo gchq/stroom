@@ -2827,6 +2827,7 @@ export interface ListConfigResponse {
 }
 
 export type ListInputComponentSettings = ComponentSettings & {
+  allowTextEntry?: boolean;
   dictionary?: DocRef;
   key?: string;
   useDictionary?: boolean;
@@ -5286,6 +5287,8 @@ export interface TextConverterDoc {
   uuid?: string;
   version?: string;
 }
+
+export type TextInputComponentSettings = ComponentSettings & { key?: string; value?: string };
 
 export interface ThemeConfig {
   backgroundColour?: string;

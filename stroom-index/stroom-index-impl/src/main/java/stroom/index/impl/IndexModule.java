@@ -52,6 +52,7 @@ public class IndexModule extends AbstractModule {
         bind(IndexShardService.class).to(IndexShardServiceImpl.class);
         bind(IndexFieldService.class).to(IndexFieldServiceImpl.class);
         bind(Indexer.class).to(IndexerImpl.class);
+        bind(ActiveShardsCache.class).to(ActiveShardsCacheImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class)
                 .addBinding(LuceneIndexDocCacheImpl.class)

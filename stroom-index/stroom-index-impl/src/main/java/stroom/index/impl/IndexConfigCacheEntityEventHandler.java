@@ -61,7 +61,7 @@ class IndexConfigCacheEntityEventHandler implements EntityEvent.Handler {
 
         final ResultPage<IndexShard> shards = indexShardService.find(criteria);
         shards.getValues().forEach(shard -> {
-            final IndexShardWriter indexShardWriter = indexShardWriterCache.getWriterByShardId(shard.getId());
+            final IndexShardWriter indexShardWriter = indexShardWriterCache.getWriter(shard.getId());
             if (indexShardWriter != null) {
                 final LuceneIndexDoc index = indexStructureCache.get(indexRef);
                 indexShardWriter.setMaxDocumentCount(index.getMaxDocsPerShard());
