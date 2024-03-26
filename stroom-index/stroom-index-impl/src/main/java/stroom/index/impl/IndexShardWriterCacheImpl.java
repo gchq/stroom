@@ -21,7 +21,6 @@ import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexException;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
-import stroom.index.shared.IndexShardKey;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.index.shared.LuceneVersion;
 import stroom.index.shared.LuceneVersionUtil;
@@ -29,7 +28,6 @@ import stroom.node.api.NodeInfo;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TerminateHandlerFactory;
-import stroom.util.concurrent.StripedLock;
 import stroom.util.io.PathCreator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -58,7 +56,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.locks.Lock;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -74,8 +71,6 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
     private final Provider<IndexConfig> indexConfigProvider;
 
     private final Map<Long, IndexShardWriter> openWritersByShardId = new ConcurrentHashMap<>();
-    private final Map<IndexShardKey, IndexShardWriter> openWritersByShardKey = new ConcurrentHashMap<>();
-    private final StripedLock existingShardQueryLocks = new StripedLock();
     private final AtomicLong closing = new AtomicLong();
     private final IndexShardWriterExecutorProvider executorProvider;
     private final TaskContextFactory taskContextFactory;
@@ -109,12 +104,8 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
     }
 
     @Override
-    public IndexShardWriter getWriterByShardId(final long indexShardId) {
-        return openWritersByShardId.get(indexShardId);
-    }
-
-    public IndexShardWriter getWriterByShardKey(final IndexShardKey indexShardKey) {
-        return openWritersByShardKey.compute(indexShardKey, (k, v) -> {
+    public IndexShardWriter getWriter(final long indexShardId) {
+        return openWritersByShardId.compute(indexShardId, (k, v) -> {
             // If there is already a value in this map for the provided key just return the value.
             if (v != null) {
                 return v;
@@ -123,65 +114,13 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
             // Make sure we have room to add a new writer.
             makeRoom();
 
-            IndexShardWriter indexShardWriter = openExistingShard(k);
+            final IndexShardWriter indexShardWriter = openWriter(k);
             if (indexShardWriter == null) {
-                indexShardWriter = openNewShard(k);
+                throw new IndexException("Unable to create writer for " + indexShardId);
             }
-
-            if (indexShardWriter == null) {
-                throw new IndexException("Unable to create writer for " + indexShardKey);
-            }
-
-            openWritersByShardId.put(indexShardWriter.getIndexShardId(), indexShardWriter);
 
             return indexShardWriter;
         });
-    }
-
-    /**
-     * Finds an existing shard for the specified key and opens a writer for it.
-     */
-    private IndexShardWriter openExistingShard(final IndexShardKey indexShardKey) {
-        // Get all index shards that are owned by this node.
-        final FindIndexShardCriteria criteria = FindIndexShardCriteria.matchAll();
-        criteria.getNodeNameSet().add(nodeInfo.getThisNodeName());
-        criteria.getIndexUuidSet().add(indexShardKey.getIndexUuid());
-        criteria.getPartition().setString(indexShardKey.getPartition().getLabel());
-
-        // Don't allow us to try to open more than one existing shard for the same index, node and
-        // partition at the same time.
-        final Lock lock = existingShardQueryLocks.getLockForKey(criteria);
-        lock.lock();
-        try {
-            final ResultPage<IndexShard> indexShardResultPage = indexShardService.find(criteria);
-            for (final IndexShard indexShard : indexShardResultPage.getValues()) {
-                // Look for non deleted, non full, non corrupt index shards.
-                if (IndexShardStatus.CLOSED.equals(indexShard.getStatus())) {
-                    // Get the index fields.
-                    final LuceneIndexDoc luceneIndexDoc = luceneIndexDocCache.get(
-                            new DocRef(LuceneIndexDoc.DOCUMENT_TYPE, indexShardKey.getIndexUuid()));
-                    if (luceneIndexDoc != null
-                            && indexShard.getDocumentCount() < luceneIndexDoc.getMaxDocsPerShard()) {
-                        final IndexShardWriter indexShardWriter = openWriter(indexShardKey, indexShard);
-                        if (indexShardWriter != null) {
-                            return indexShardWriter;
-                        }
-                    }
-                }
-            }
-        } finally {
-            lock.unlock();
-        }
-
-        return null;
-    }
-
-    /**
-     * Creates a new index shard writer for the specified key and opens a writer for it.
-     */
-    private IndexShardWriter openNewShard(final IndexShardKey indexShardKey) {
-        final IndexShard indexShard = indexShardService.createIndexShard(indexShardKey, nodeInfo.getThisNodeName());
-        return openWriter(indexShardKey, indexShard);
     }
 
     /**
@@ -190,31 +129,25 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
      * will return null from this method so that the calling code will create a new shard instead.
      * This means more shards are created but stops closing shards from blocking indexing.
      *
-     * @param indexShardKey
-     * @param indexShard
-     * @return
+     * @param indexShardId The id of the index shard.
+     * @return A writer for the index shard.
      */
-    private IndexShardWriter openWriter(final IndexShardKey indexShardKey, final IndexShard indexShard) {
-        final long indexShardId = indexShard.getId();
+    private IndexShardWriter openWriter(final long indexShardId) {
+        final IndexShard indexShard = indexShardService.loadById(indexShardId);
 
         // Get the index fields.
         final LuceneIndexDoc luceneIndexDoc = luceneIndexDocCache.get(new DocRef(LuceneIndexDoc.DOCUMENT_TYPE,
-                indexShardKey.getIndexUuid()));
-
-        // Create the writer.
-        final int ramBufferSizeMB = getRamBufferSize();
+                indexShard.getIndexUuid()));
 
         // Mark the index shard as opening.
         final boolean isNew = IndexShardStatus.NEW.equals(indexShard.getStatus());
         LOGGER.debug(() -> "Opening " + indexShardId);
-        LOGGER.trace(() -> "Opening " + indexShardId + " - " + indexShardKey);
         indexShardManager.setStatus(indexShardId, IndexShardStatus.OPENING);
 
         try {
             final LuceneVersion luceneVersion = LuceneVersionUtil.getLuceneVersion(indexShard.getIndexVersion());
             final LuceneProvider luceneProvider = luceneProviderFactory.get(luceneVersion);
             final IndexShardWriter indexShardWriter = luceneProvider.createIndexShardWriter(
-                    indexShardKey,
                     indexShard,
                     luceneIndexDoc.getMaxDocsPerShard());
 
@@ -241,21 +174,13 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
             if (isNew) {
                 LOGGER.error(() -> "Deleting new index shard because (" + e + ")", e);
                 indexShardManager.setStatus(indexShardId, IndexShardStatus.DELETED);
+
             } else {
-                LOGGER.error(() -> "Setting index shard status to corrupt because (" + e + ")", e);
-                indexShardManager.setStatus(indexShardId, IndexShardStatus.CORRUPT);
+                LOGGER.error(e::getMessage, e);
             }
         }
 
         return null;
-    }
-
-    private int getRamBufferSize() {
-        int ramBufferSizeMB = 1024;
-        if (indexConfigProvider != null) {
-            ramBufferSizeMB = indexConfigProvider.get().getRamBufferSizeMB();
-        }
-        return ramBufferSizeMB;
     }
 
     @Override
@@ -274,7 +199,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
     public void flushAll() {
         LOGGER.logDurationIfDebugEnabled(() -> {
             try {
-                final Set<IndexShardWriter> openWriters = new HashSet<>(openWritersByShardKey.values());
+                final Set<IndexShardWriter> openWriters = new HashSet<>(openWritersByShardId.values());
                 if (!openWriters.isEmpty()) {
                     // Flush all writers.
                     final CountDownLatch countDownLatch = new CountDownLatch(openWriters.size());
@@ -324,7 +249,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
         final Settings settings = getSettings();
 
         // Deal with TTL and TTI.
-        long overflow = openWritersByShardKey.size() - settings.minItems;
+        long overflow = openWritersByShardId.size() - settings.minItems;
         if (overflow > 0 && (settings.timeToLive > 0 || settings.timeToIdle > 0)) {
             final long now = System.currentTimeMillis();
 
@@ -332,7 +257,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
             final Set<IndexShardWriter> candidates = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
             // Add open writers that are currently exceeding TTL or TTI.
-            openWritersByShardKey.values().parallelStream().forEach(indexShardWriter -> {
+            openWritersByShardId.values().parallelStream().forEach(indexShardWriter -> {
                 if (settings.timeToLive > 0 && indexShardWriter.getCreationTime() < now - settings.timeToLive) {
                     candidates.add(indexShardWriter);
                 } else if (settings.timeToIdle > 0 && indexShardWriter.getLastUsedTime() < now - settings.timeToIdle) {
@@ -362,10 +287,10 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
 
     private void trim(final long trimSize, final Executor executor) {
         // Deal with exceeding trim size.
-        long overflow = openWritersByShardKey.size() - trimSize;
+        long overflow = openWritersByShardId.size() - trimSize;
         if (overflow > 0) {
             // Get LRU list.
-            final List<IndexShardWriter> lruList = getLeastRecentlyUsedList(openWritersByShardKey.values());
+            final List<IndexShardWriter> lruList = getLeastRecentlyUsedList(openWritersByShardId.values());
             while (overflow > 0 && !lruList.isEmpty()) {
                 final IndexShardWriter indexShardWriter = lruList.removeFirst();
                 overflow--;
@@ -389,7 +314,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
     @Override
     public void delete(final long indexShardId) {
         indexShardManager.setStatus(indexShardId, IndexShardStatus.DELETED);
-        openWritersByShardKey.values().forEach(indexShardWriter -> {
+        openWritersByShardId.values().forEach(indexShardWriter -> {
             if (indexShardWriter.getIndexShardId() == indexShardId) {
                 close(indexShardWriter);
             }
@@ -422,7 +347,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
         final long indexShardId = indexShardWriter.getIndexShardId();
 
         // Remove the shard from the map.
-        openWritersByShardKey.compute(indexShardWriter.getIndexShardKey(), (indexShardKey, v) -> {
+        openWritersByShardId.compute(indexShardWriter.getIndexShardId(), (indexShardKey, v) -> {
             // If there is no value associated with the key or the value is not the one we expect it to be then
             // just return the current value.
             if (v == null || v != indexShardWriter) {
@@ -513,7 +438,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
 
                 try {
                     // Close any remaining writers.
-                    openWritersByShardKey.values()
+                    openWritersByShardId.values()
                             .forEach(indexShardWriter ->
                                     close(indexShardWriter, executorProvider.getAsyncExecutor()));
 
@@ -591,9 +516,9 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
 
     private Settings getSettings() {
         if (settings == null || settings.creationTime < (System.currentTimeMillis() - 60_000)) {
-            final IndexCacheConfig indexCacheConfig = indexConfigProvider.get()
+            final IndexShardWriterCacheConfig indexCacheConfig = indexConfigProvider.get()
                     .getIndexWriterConfig()
-                    .getIndexCacheConfig();
+                    .getIndexShardWriterCacheConfig();
             final long timeToLive = indexCacheConfig.getTimeToLive() != null
                     ? indexCacheConfig.getTimeToLive().toMillis()
                     : 0L;

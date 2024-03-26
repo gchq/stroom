@@ -22,12 +22,10 @@ import stroom.datasource.api.v2.IndexField;
 import stroom.docref.DocRef;
 import stroom.index.impl.IndexDocument;
 import stroom.index.impl.IndexFields;
-import stroom.index.impl.IndexShardKeyUtil;
 import stroom.index.impl.IndexShardWriter;
 import stroom.index.impl.IndexStore;
 import stroom.index.mock.MockIndexShardWriter;
 import stroom.index.mock.MockIndexShardWriterCache;
-import stroom.index.shared.IndexShardKey;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.index.shared.LuceneIndexField;
 import stroom.pipeline.PipelineStore;
@@ -248,10 +246,8 @@ class TestIndexingFilter extends AbstractProcessIntegrationTest {
             }
 
             // Wrote anything ?
-            final IndexShardKey indexShardKey = IndexShardKeyUtil.createTestKey(index);
-            if (indexShardWriterCache.getWriters().size() > 0) {
+            if (!indexShardWriterCache.getWriters().isEmpty()) {
                 assertThat(indexShardWriterCache.getWriters().size()).isEqualTo(1);
-                assertThat(indexShardWriterCache.getWriters().containsKey(indexShardKey)).isTrue();
 
                 // Get a writer from the pool.
                 for (final IndexShardWriter writer : indexShardWriterCache.getWriters().values()) {

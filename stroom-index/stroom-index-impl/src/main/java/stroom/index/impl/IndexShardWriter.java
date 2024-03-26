@@ -31,8 +31,6 @@ public interface IndexShardWriter {
 
     int getDocumentCount();
 
-    IndexShardKey getIndexShardKey();
-
     long getIndexShardId();
 
     long getCreationTime();

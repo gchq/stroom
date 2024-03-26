@@ -19,7 +19,6 @@ package stroom.index.impl;
 import stroom.index.shared.IndexShardKey;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.index.shared.LuceneIndexField;
-import stroom.node.shared.Node;
 import stroom.query.language.functions.ValString;
 import stroom.search.extraction.FieldValue;
 import stroom.test.common.util.test.StroomUnitTest;
@@ -44,9 +43,6 @@ class TestIndexShardPoolImpl2 extends StroomUnitTest {
         final List<LuceneIndexField> indexFields = IndexFields.createStreamIndexFields();
         indexFields.add(indexField);
 
-        final Node defaultNode = new Node();
-        defaultNode.setName("TEST");
-
         try {
             final Indexer indexer = (key, document) -> {
             };
@@ -56,7 +52,7 @@ class TestIndexShardPoolImpl2 extends StroomUnitTest {
             index.setFields(indexFields);
             index.setMaxDocsPerShard(1000);
 
-            final IndexShardKey indexShardKey = IndexShardKeyUtil.createTestKey(index);
+            final IndexShardKey indexShardKey = IndexShardKey.createKey(index);
             final SimpleExecutor simpleExecutor = new SimpleExecutor(10);
 
             for (int i = 0; i < 1000; i++) {

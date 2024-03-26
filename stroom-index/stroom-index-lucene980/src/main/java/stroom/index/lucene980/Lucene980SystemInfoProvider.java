@@ -66,7 +66,7 @@ class Lucene980SystemInfoProvider implements IndexSystemInfoProvider {
     @Override
     public SystemInfoResult getSystemInfo(final IndexShard indexShard, final Integer limit, final Long streamId) {
         // This may be null if we don't happen to have a writer
-        final IndexShardWriter indexShardWriter = indexShardWriterCache.getWriterByShardId(indexShard.getId());
+        final IndexShardWriter indexShardWriter = indexShardWriterCache.getWriter(indexShard.getId());
         final IndexWriter indexWriter = NullSafe
                 .get(indexShardWriter, w -> ((Lucene980IndexShardWriter) w).getWriter());
 

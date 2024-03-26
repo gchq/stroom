@@ -157,7 +157,7 @@ class Lucene980ShardSearcher implements LuceneShardSearcher {
         IndexWriter indexWriter = null;
 
         // Load the current index shard.
-        final IndexShardWriter indexShardWriter = indexShardWriterCache.getWriterByShardId(indexShardId);
+        final IndexShardWriter indexShardWriter = indexShardWriterCache.getWriter(indexShardId);
         if (indexShardWriter instanceof final Lucene980IndexShardWriter writer) {
             indexWriter = writer.getWriter();
         }
