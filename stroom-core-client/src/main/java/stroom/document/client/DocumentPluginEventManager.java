@@ -769,7 +769,9 @@ public class DocumentPluginEventManager extends Plugin {
                 .fetchExplorerPermissions(explorerNodes);
     }
 
-    private void addFavouritesMenuItem(final List<Item> menuItems, final boolean singleSelection, final int priority) {
+    private boolean addFavouritesMenuItem(final List<Item> menuItems,
+                                          final boolean singleSelection,
+                                          final int priority) {
         final ExplorerNode primarySelection = getPrimarySelection();
 
         // Add the favourites menu item if an item is selected, and it's not a root-level node or a favourite folder
@@ -789,7 +791,9 @@ public class DocumentPluginEventManager extends Plugin {
                         selectionModel.clear();
                     })
                     .build());
+            return true;
         }
+        return false;
     }
 
     private void toggleFavourite(final DocRef docRef, final boolean isFavourite) {
@@ -931,8 +935,10 @@ public class DocumentPluginEventManager extends Plugin {
         // Feeds are a special case so can't be copied, see https://github.com/gchq/stroom/issues/3048
         final boolean isCopyEnabled = allowRead && !hasFeed;
 
-        addFavouritesMenuItem(menuItems, singleSelection, 10);
-        menuItems.add(new Separator(12));
+        final boolean wasAdded = addFavouritesMenuItem(menuItems, singleSelection, 10);
+        if (wasAdded) {
+            menuItems.add(new Separator(12));
+        }
 
         menuItems.add(createInfoMenuItem(singleReadableItem, 20, isInfoEnabled));
         menuItems.add(createEditOrAddTagsMenuItem(updatableItems, 21, allowUpdate));
@@ -1187,28 +1193,55 @@ public class DocumentPluginEventManager extends Plugin {
     }
 
     private List<Item> createCopyAsChildMenuItems(final List<ExplorerNode> explorerNodes) {
-        List<Item> children = new ArrayList<>();
+        final List<Item> children = new ArrayList<>();
         final int count = explorerNodes.size();
-        final String plural = count > 1
-                ? "s"
-                : "";
-
         int priority = 1;
-        children.add(new IconMenuItem.Builder()
-                .priority(priority++)
-                .icon(SvgImage.COPY)
-                .text("Copy Name" + plural + " to clipboard")
-                .enabled(true)
-                .command(() -> copyAs(explorerNodes, ExplorerNode::getName))
-                .build());
+        if (count == 1) {
+            children.add(new IconMenuItem.Builder()
+                    .priority(priority++)
+                    .icon(SvgImage.COPY)
+                    .text("Copy Name to Clipboard")
+                    .enabled(true)
+                    .command(() -> copyAs(explorerNodes, ExplorerNode::getName, "\n"))
+                    .build());
 
-        children.add(new IconMenuItem.Builder()
-                .priority(priority++)
-                .icon(SvgImage.COPY)
-                .text("Copy UUID" + plural + " to clipboard")
-                .enabled(true)
-                .command(() -> copyAs(explorerNodes, ExplorerNode::getUuid))
-                .build());
+            children.add(new IconMenuItem.Builder()
+                    .priority(priority++)
+                    .icon(SvgImage.COPY)
+                    .text("Copy UUID to Clipboard")
+                    .enabled(true)
+                    .command(() -> copyAs(explorerNodes, ExplorerNode::getUuid, "\n"))
+                    .build());
+        } else if (count > 1) {
+            children.add(new IconMenuItem.Builder()
+                    .priority(priority++)
+                    .icon(SvgImage.COPY)
+                    .text("Copy Names to Clipboard (lines)")
+                    .enabled(true)
+                    .command(() -> copyAs(explorerNodes, ExplorerNode::getName, "\n"))
+                    .build());
+            children.add(new IconMenuItem.Builder()
+                    .priority(priority++)
+                    .icon(SvgImage.COPY)
+                    .text("Copy Names to Clipboard (comma delimited)")
+                    .enabled(true)
+                    .command(() -> copyAs(explorerNodes, ExplorerNode::getName, ","))
+                    .build());
+            children.add(new IconMenuItem.Builder()
+                    .priority(priority++)
+                    .icon(SvgImage.COPY)
+                    .text("Copy UUIDs to Clipboard (lines)")
+                    .enabled(true)
+                    .command(() -> copyAs(explorerNodes, ExplorerNode::getUuid, "\n"))
+                    .build());
+            children.add(new IconMenuItem.Builder()
+                    .priority(priority++)
+                    .icon(SvgImage.COPY)
+                    .text("Copy UUIDs to Clipboard (comma delimited)")
+                    .enabled(true)
+                    .command(() -> copyAs(explorerNodes, ExplorerNode::getUuid, ","))
+                    .build());
+        }
 
         if (explorerNodes.size() == 1) {
             children.add(createCopyLinkMenuItem(explorerNodes.get(0), priority++));
@@ -1218,7 +1251,8 @@ public class DocumentPluginEventManager extends Plugin {
     }
 
     private void copyAs(final List<ExplorerNode> nodes,
-                        final Function<ExplorerNode, String> extractor) {
+                        final Function<ExplorerNode, String> extractor,
+                        final String delimter) {
         final String value;
         if (nodes.isEmpty()) {
             value = "";
@@ -1227,7 +1261,7 @@ public class DocumentPluginEventManager extends Plugin {
         } else {
             value = nodes.stream()
                     .map(extractor)
-                    .collect(Collectors.joining("\n"));
+                    .collect(Collectors.joining(delimter));
         }
         if (!GwtNullSafe.isBlankString(value)) {
             ClipboardUtil.copy(value);
