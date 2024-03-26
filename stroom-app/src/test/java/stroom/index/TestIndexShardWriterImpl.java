@@ -50,6 +50,7 @@ import stroom.util.shared.Selection;
 
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -341,6 +342,32 @@ class TestIndexShardWriterImpl extends AbstractCoreIntegrationTest {
         indexer.addDocument(indexShardKey1, document3);
         indexer.addDocument(indexShardKey1, document3);
         assertThat(indexShardService.find(criteria).size()).isEqualTo(3);
+    }
+
+    @Disabled
+    @Test
+    void testPerformance() {
+        assertThat(indexShardService.find(FindIndexShardCriteria.matchAll()).size()).isZero();
+
+        final DocRef indexRef1 = commonTestScenarioCreator.createIndex("TEST_2010",
+                commonTestScenarioCreator.createIndexFields(),
+                1000000);
+        final LuceneIndexDoc index1 = indexStore.readDocument(indexRef1);
+        final IndexShardKey indexShardKey1 = IndexShardKey.createKey(index1);
+
+        final IndexDocument document1 = new IndexDocument();
+        document1.add(new FieldValue(LuceneIndexField
+                .builder()
+                .fldName("SourcePort")
+                .fldType(FieldType.TEXT)
+                .analyzerType(AnalyzerType.ALPHA_NUMERIC)
+                .termPositions(false)
+                .indexed(true)
+                .stored(false)
+                .build(), ValString.create("12345")));
+        for (int i = 0; i < 1000000; i++) {
+            indexer.addDocument(indexShardKey1, document1);
+        }
     }
 
     private void checkDocCount(final int expected, final IndexShardWriter indexShardWriter) {
