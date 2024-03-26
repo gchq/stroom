@@ -17,30 +17,42 @@
 package stroom.index.mock;
 
 import stroom.index.impl.IndexDocument;
+import stroom.index.impl.IndexShardService;
 import stroom.index.impl.IndexShardWriter;
 import stroom.index.impl.IndexShardWriterCache;
 import stroom.index.impl.Indexer;
+import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
 import stroom.util.io.TempDirProvider;
 
 import jakarta.inject.Inject;
 
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 public class MockIndexer implements Indexer {
 
+    private final IndexShardService indexShardService;
     private final IndexShardWriterCache indexShardWriterCache;
+    private final Map<IndexShardKey, IndexShard> indexShardMap = new ConcurrentHashMap<>();
 
     MockIndexer(final TempDirProvider tempDirProvider) {
-        this.indexShardWriterCache = new MockIndexShardWriterCache(tempDirProvider);
+        this.indexShardService = new MockIndexShardService(tempDirProvider);
+        this.indexShardWriterCache = new MockIndexShardWriterCache();
     }
 
     @Inject
-    public MockIndexer(final IndexShardWriterCache indexShardWriterCache) {
+    public MockIndexer(final IndexShardService indexShardService,
+                       final IndexShardWriterCache indexShardWriterCache) {
+        this.indexShardService = indexShardService;
         this.indexShardWriterCache = indexShardWriterCache;
     }
 
     @Override
     public void addDocument(final IndexShardKey key, final IndexDocument document) {
-        final IndexShardWriter indexShardWriter = indexShardWriterCache.getWriterByShardKey(key);
+        final IndexShard indexShard = indexShardMap.computeIfAbsent(key, k ->
+                indexShardService.createIndexShard(k, null));
+        final IndexShardWriter indexShardWriter = indexShardWriterCache.getWriter(indexShard.getId());
         indexShardWriter.addDocument(document);
     }
 }

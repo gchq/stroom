@@ -22,14 +22,28 @@ public class IndexShardKey {
 
     private final String indexUuid;
     private final Partition partition;
-    private final int shardNo;
 
     public IndexShardKey(final String indexUuid,
-                         final Partition partition,
-                         final int shardNo) {
+                         final Partition partition) {
         this.indexUuid = indexUuid;
         this.partition = partition;
-        this.shardNo = shardNo;
+    }
+
+    public static IndexShardKey createKey(final LuceneIndexDoc index) {
+        return IndexShardKey
+                .builder()
+                .indexUuid(index.getUuid())
+                .partition(AllPartition.INSTANCE)
+                .build();
+    }
+
+    public static IndexShardKey createKey(final LuceneIndexDoc index,
+                                          final Partition partition) {
+        return IndexShardKey
+                .builder()
+                .indexUuid(index.getUuid())
+                .partition(partition)
+                .build();
     }
 
     public String getIndexUuid() {
@@ -38,10 +52,6 @@ public class IndexShardKey {
 
     public Partition getPartition() {
         return partition;
-    }
-
-    public int getShardNo() {
-        return shardNo;
     }
 
     @Override
@@ -53,14 +63,13 @@ public class IndexShardKey {
             return false;
         }
         final IndexShardKey that = (IndexShardKey) o;
-        return shardNo == that.shardNo &&
-                Objects.equals(indexUuid, that.indexUuid) &&
+        return Objects.equals(indexUuid, that.indexUuid) &&
                 Objects.equals(partition, that.partition);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(indexUuid, partition, shardNo);
+        return Objects.hash(indexUuid, partition);
     }
 
     @Override
@@ -68,7 +77,6 @@ public class IndexShardKey {
         return "IndexShardKey{" +
                 "indexUuid='" + indexUuid + '\'' +
                 ", partition='" + partition + '\'' +
-                ", shardNo=" + shardNo +
                 '}';
     }
 
@@ -84,7 +92,6 @@ public class IndexShardKey {
 
         private String indexUuid;
         private Partition partition;
-        private int shardNo;
 
         private Builder() {
         }
@@ -92,7 +99,6 @@ public class IndexShardKey {
         private Builder(final IndexShardKey indexShardKey) {
             this.indexUuid = indexShardKey.indexUuid;
             this.partition = indexShardKey.partition;
-            this.shardNo = indexShardKey.shardNo;
         }
 
         public Builder indexUuid(final String indexUuid) {
@@ -105,15 +111,10 @@ public class IndexShardKey {
             return this;
         }
 
-        public Builder shardNo(final int shardNo) {
-            this.shardNo = shardNo;
-            return this;
-        }
-
         public IndexShardKey build() {
             Objects.requireNonNull(indexUuid);
             Objects.requireNonNull(partition);
-            return new IndexShardKey(indexUuid, partition, shardNo);
+            return new IndexShardKey(indexUuid, partition);
         }
     }
 }

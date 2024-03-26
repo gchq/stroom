@@ -16,8 +16,8 @@
 
 package stroom.dashboard.impl.format;
 
-import stroom.expression.api.TimeZone;
-import stroom.expression.api.TimeZone.Use;
+import stroom.expression.api.UserTimeZone;
+import stroom.expression.api.UserTimeZone.Use;
 import stroom.query.api.v2.DateTimeFormatSettings;
 import stroom.query.api.v2.FormatSettings;
 import stroom.query.language.functions.Val;
@@ -50,7 +50,7 @@ public class DateFormatter implements Formatter {
                     && dateTimeFormatSettings.getPattern().trim().length() > 0) {
                 pattern = dateTimeFormatSettings.getPattern();
 
-                final TimeZone timeZone = dateTimeFormatSettings.getTimeZone();
+                final UserTimeZone timeZone = dateTimeFormatSettings.getTimeZone();
                 if (timeZone != null) {
                     if (timeZone.getUse() != null) {
                         use = timeZone.getUse();
@@ -64,9 +64,9 @@ public class DateFormatter implements Formatter {
         }
 
         ZoneId zone = ZoneOffset.UTC;
-        if (TimeZone.Use.UTC.equals(use)) {
+        if (UserTimeZone.Use.UTC.equals(use)) {
             zone = ZoneOffset.UTC;
-        } else if (TimeZone.Use.LOCAL.equals(use)) {
+        } else if (UserTimeZone.Use.LOCAL.equals(use)) {
             zone = ZoneId.systemDefault();
 
             try {
@@ -78,9 +78,9 @@ public class DateFormatter implements Formatter {
                 // use the default.
             }
 
-        } else if (TimeZone.Use.ID.equals(use)) {
+        } else if (UserTimeZone.Use.ID.equals(use)) {
             zone = ZoneId.of(zoneId);
-        } else if (TimeZone.Use.OFFSET.equals(use)) {
+        } else if (UserTimeZone.Use.OFFSET.equals(use)) {
             zone = ZoneOffset.ofHoursMinutes(offsetHours, offsetMinutes);
         }
 

@@ -26,7 +26,7 @@ public class JobNodeTracker {
     private final AtomicInteger currentTaskCount = new AtomicInteger();
     private JobNode jobNode;
     /**
-     * Last time tasks we actually executed a task for this job.
+     * Last time we actually executed a task for this job.
      */
     private Long lastExecutedTime;
 

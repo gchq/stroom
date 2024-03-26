@@ -52,7 +52,7 @@ public interface IndexShardDao {
      *
      * @param id The database ID of the shard to delete
      */
-    void delete(Long id);
+    boolean delete(Long id);
 
     /**
      * Update the status of a shard
@@ -60,7 +60,7 @@ public interface IndexShardDao {
      * @param id     The database ID of the shard to update
      * @param status The new status value
      */
-    void setStatus(Long id, IndexShard.IndexShardStatus status);
+    boolean setStatus(Long id, IndexShard.IndexShardStatus status);
 
     /**
      * Update the details of the contents of a shard

@@ -1691,18 +1691,18 @@ button.main-menu svg {
 }
 
 .timeRange-popup {
-    width: 33rem;
     z-index: 10;
     /*padding: 0.6rem 0.6rem 0.4rem 0.6rem;*/
 }
 
 .timeRange-quickSettings {
     display: flex;
+    min-width: 32rem;
 }
 
 .timeRange-quickSettingPanel {
     padding: 0.4rem;
-    width: 9rem;
+    min-width: 8rem;
 }
 
 .timeRange-quickSettingPanel-title {

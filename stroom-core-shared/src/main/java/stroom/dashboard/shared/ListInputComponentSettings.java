@@ -33,7 +33,8 @@ import java.util.Objects;
         "value",
         "values",
         "dictionary",
-        "useDictionary"
+        "useDictionary",
+        "allowTextEntry"
 })
 @JsonInclude(Include.NON_NULL)
 public class ListInputComponentSettings implements ComponentSettings {
@@ -48,18 +49,22 @@ public class ListInputComponentSettings implements ComponentSettings {
     private final DocRef dictionary;
     @JsonProperty
     private final boolean useDictionary;
+    @JsonProperty
+    private final boolean allowTextEntry;
 
     @JsonCreator
     public ListInputComponentSettings(@JsonProperty("key") final String key,
                                       @JsonProperty("value") final String value,
                                       @JsonProperty("values") final List<String> values,
                                       @JsonProperty("dictionary") final DocRef dictionary,
-                                      @JsonProperty("useDictionary") final boolean useDictionary) {
+                                      @JsonProperty("useDictionary") final boolean useDictionary,
+                                      @JsonProperty("allowTextEntry") final boolean allowTextEntry) {
         this.key = key;
         this.value = value;
         this.values = values;
         this.dictionary = dictionary;
         this.useDictionary = useDictionary;
+        this.allowTextEntry = allowTextEntry;
     }
 
     public String getKey() {
@@ -82,6 +87,10 @@ public class ListInputComponentSettings implements ComponentSettings {
         return useDictionary;
     }
 
+    public boolean isAllowTextEntry() {
+        return allowTextEntry;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -91,15 +100,17 @@ public class ListInputComponentSettings implements ComponentSettings {
             return false;
         }
         final ListInputComponentSettings that = (ListInputComponentSettings) o;
-        return useDictionary == that.useDictionary && Objects.equals(key, that.key) && Objects.equals(
-                value,
-                that.value) && Objects.equals(values, that.values) && Objects.equals(dictionary,
-                that.dictionary);
+        return useDictionary == that.useDictionary &&
+                Objects.equals(key, that.key) &&
+                Objects.equals(value, that.value) &&
+                Objects.equals(values, that.values) &&
+                Objects.equals(dictionary, that.dictionary) &&
+                Objects.equals(allowTextEntry, that.allowTextEntry);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(key, value, values, dictionary, useDictionary);
+        return Objects.hash(key, value, values, dictionary, useDictionary, allowTextEntry);
     }
 
     @Override
@@ -110,6 +121,7 @@ public class ListInputComponentSettings implements ComponentSettings {
                 ", values=" + values +
                 ", dictionary=" + dictionary +
                 ", useDictionary=" + useDictionary +
+                ", allowTextEntry=" + allowTextEntry +
                 '}';
     }
 
@@ -129,18 +141,20 @@ public class ListInputComponentSettings implements ComponentSettings {
         private List<String> values;
         private DocRef dictionary;
         private boolean useDictionary;
+        private boolean allowTextEntry;
 
         private Builder() {
         }
 
-        private Builder(final ListInputComponentSettings keyValueInputComponentSettings) {
-            this.key = keyValueInputComponentSettings.key;
-            this.value = keyValueInputComponentSettings.value;
-            this.values = keyValueInputComponentSettings.values == null
+        private Builder(final ListInputComponentSettings listInputComponentSettings) {
+            this.key = listInputComponentSettings.key;
+            this.value = listInputComponentSettings.value;
+            this.values = listInputComponentSettings.values == null
                     ? null
-                    : new ArrayList<>(keyValueInputComponentSettings.values);
-            this.dictionary = keyValueInputComponentSettings.dictionary;
-            this.useDictionary = keyValueInputComponentSettings.useDictionary;
+                    : new ArrayList<>(listInputComponentSettings.values);
+            this.dictionary = listInputComponentSettings.dictionary;
+            this.useDictionary = listInputComponentSettings.useDictionary;
+            this.allowTextEntry = listInputComponentSettings.allowTextEntry;
         }
 
         public Builder key(final String key) {
@@ -168,6 +182,11 @@ public class ListInputComponentSettings implements ComponentSettings {
             return this;
         }
 
+        public Builder allowTextEntry(final boolean allowTextEntry) {
+            this.allowTextEntry = allowTextEntry;
+            return this;
+        }
+
         @Override
         public ListInputComponentSettings build() {
             return new ListInputComponentSettings(
@@ -175,7 +194,8 @@ public class ListInputComponentSettings implements ComponentSettings {
                     value,
                     values,
                     dictionary,
-                    useDictionary
+                    useDictionary,
+                    allowTextEntry
             );
         }
     }

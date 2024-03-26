@@ -159,7 +159,7 @@ class Lucene553ShardSearcher implements LuceneShardSearcher {
         IndexWriter indexWriter = null;
 
         // Load the current index shard.
-        final IndexShardWriter indexShardWriter = indexShardWriterCache.getWriterByShardId(indexShardId);
+        final IndexShardWriter indexShardWriter = indexShardWriterCache.getWriter(indexShardId);
         if (indexShardWriter instanceof final Lucene553IndexShardWriter writer) {
             indexWriter = writer.getWriter();
         }

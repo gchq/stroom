@@ -20,8 +20,8 @@ import stroom.util.concurrent.ThreadUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.Metrics;
-import stroom.util.scheduler.FrequencyScheduler;
-import stroom.util.scheduler.Scheduler;
+import stroom.util.scheduler.FrequencyTrigger;
+import stroom.util.scheduler.SimpleScheduleExec;
 
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -63,7 +63,7 @@ class TestDistributedTaskFetcher extends StroomUnitTest {
             final JobNode jobNode =
                     new JobNode(1, nodeName, job, 100, JobType.DISTRIBUTED, frequency, true);
             final JobNodeTracker jobNodeTracker = new JobNodeTracker(jobNode);
-            final Scheduler scheduler = new FrequencyScheduler(frequency);
+            final SimpleScheduleExec scheduler = new SimpleScheduleExec(new FrequencyTrigger(frequency));
             final JobNodeTrackerCache jobNodeTrackerCache = () -> new JobNodeTrackers() {
                 @Override
                 public JobNodeTracker getTrackerForJobName(final String jobName1) {
@@ -76,7 +76,7 @@ class TestDistributedTaskFetcher extends StroomUnitTest {
                 }
 
                 @Override
-                public Scheduler getScheduler(final JobNode jobNode1) {
+                public SimpleScheduleExec getScheduleExec(final JobNode jobNode1) {
                     return scheduler;
                 }
             };

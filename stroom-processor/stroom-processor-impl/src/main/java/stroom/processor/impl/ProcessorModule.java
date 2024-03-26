@@ -16,6 +16,7 @@
 
 package stroom.processor.impl;
 
+import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.job.api.DistributedTaskFactory;
 import stroom.job.api.ScheduledJobsBinder;
@@ -23,6 +24,7 @@ import stroom.lifecycle.api.LifecycleBinder;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorService;
 import stroom.processor.api.ProcessorTaskService;
+import stroom.processor.shared.ProcessorFilterDoc;
 import stroom.processor.shared.ProcessorResource;
 import stroom.processor.shared.ProcessorTaskResource;
 import stroom.searchable.api.Searchable;
@@ -34,8 +36,6 @@ import stroom.util.shared.Clearable;
 
 import com.google.inject.AbstractModule;
 import jakarta.inject.Inject;
-
-import static stroom.job.api.Schedule.ScheduleType.PERIODIC;
 
 public class ProcessorModule extends AbstractModule {
 
@@ -69,6 +69,9 @@ public class ProcessorModule extends AbstractModule {
         GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
                 .addBinding(ProcessorFilterImportExportHandlerImpl.class);
 
+        DocumentActionHandlerBinder.create(binder())
+                .bind(ProcessorFilterDoc.DOCUMENT_TYPE, ProcessorFilterImportExportHandlerImpl.class);
+
         HasSystemInfoBinder.create(binder())
                 .bind(ProcessorTaskQueueManagerImpl.class);
 
@@ -76,26 +79,26 @@ public class ProcessorModule extends AbstractModule {
                 .bindJobTo(ProcessorTaskQueueStatistics.class, builder -> builder
                         .name("Processor Task Queue Statistics")
                         .description("Write statistics about the size of the task queue")
-                        .schedule(PERIODIC, "1m"))
+                        .frequencySchedule("1m"))
                 .bindJobTo(ProcessorTaskRetention.class, builder -> builder
                         .name(PROCESSOR_TASK_RETENTION_JOB_NAME)
                         .description("Physically delete processor tasks that have been logically " +
                                 "deleted or complete based on age (stroom.processor.deleteAge)")
-                        .schedule(PERIODIC, "10m"))
+                        .frequencySchedule("10m"))
                 .bindJobTo(ProcessorTaskManagerDisownDeadTasks.class, builder -> builder
                         .name("Processor Task Manager Disown Dead Tasks")
                         .description("Tasks that seem to be stuck processing due to the death of a processing node " +
                                 "are disowned and added back to the task queue for processing after " +
                                 "(stroom.processor.disownDeadTasksAfter)")
-                        .schedule(PERIODIC, "1m"))
+                        .frequencySchedule("1m"))
                 .bindJobTo(ProcessorTaskManagerReleaseOldQueuedTasks.class, builder -> builder
                         .name("Processor Task Manager Release Old Queued Tasks")
                         .description("Release queued tasks from old master nodes")
-                        .schedule(PERIODIC, "1m"))
+                        .frequencySchedule("1m"))
                 .bindJobTo(ProcessorTaskCreatorJob.class, builder -> builder
                         .name("Processor Task Creator")
                         .description("Create Processor Tasks From Processor Filters")
-                        .schedule(PERIODIC, "10s")
+                        .frequencySchedule("10s")
                         .enabled(false)
                         .advanced(false));
 

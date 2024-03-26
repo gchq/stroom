@@ -20,7 +20,6 @@ import stroom.analytics.rule.impl.AnalyticRuleProcessors;
 import stroom.analytics.shared.AnalyticProcessType;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.QueryLanguageVersion;
-import stroom.analytics.shared.StreamingAnalyticProcessConfig;
 import stroom.app.guice.CoreModule;
 import stroom.app.guice.JerseyModule;
 import stroom.app.uri.UriFactoryModule;
@@ -32,7 +31,6 @@ import stroom.meta.statistics.impl.MockMetaStatisticsModule;
 import stroom.node.api.NodeInfo;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.shared.CreateProcessFilterRequest;
-import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorType;
 import stroom.processor.shared.QueryData;
 import stroom.query.api.v2.ExpressionOperator;
@@ -115,7 +113,6 @@ class TestStreamingAnalytics extends AbstractAnalyticsTest {
                 .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
                 .query(query)
                 .analyticProcessType(AnalyticProcessType.STREAMING)
-                .analyticProcessConfig(new StreamingAnalyticProcessConfig(analyticsDataSetup.getDetections()))
                 .analyticNotificationConfig(createNotificationConfig())
                 .build();
         final DocRef analyticRuleDocRef = writeRule(analyticRuleDoc);

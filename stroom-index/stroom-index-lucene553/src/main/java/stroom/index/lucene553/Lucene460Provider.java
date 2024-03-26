@@ -8,7 +8,6 @@ import stroom.index.impl.IndexSystemInfoProvider;
 import stroom.index.impl.LuceneProvider;
 import stroom.index.impl.LuceneShardSearcher;
 import stroom.index.shared.IndexShard;
-import stroom.index.shared.IndexShardKey;
 import stroom.index.shared.LuceneVersion;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.QueryKey;
@@ -56,11 +55,9 @@ class Lucene460Provider implements LuceneProvider {
     }
 
     @Override
-    public IndexShardWriter createIndexShardWriter(final IndexShardKey indexShardKey,
-                                                   final IndexShard indexShard,
+    public IndexShardWriter createIndexShardWriter(final IndexShard indexShard,
                                                    final int maxDocumentCount) {
         return indexShardWriterFactory.create(
-                indexShardKey,
                 indexShard,
                 maxDocumentCount);
     }

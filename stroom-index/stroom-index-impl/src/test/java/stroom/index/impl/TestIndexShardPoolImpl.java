@@ -16,8 +16,11 @@
 
 package stroom.index.impl;
 
+import stroom.docref.DocRef;
+import stroom.index.mock.MockActiveShardsCache;
 import stroom.index.mock.MockIndexShardService;
 import stroom.index.mock.MockIndexShardWriterCache;
+import stroom.index.mock.MockLuceneIndexDocCache;
 import stroom.index.shared.IndexShardKey;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.index.shared.LuceneIndexField;
@@ -103,8 +106,14 @@ class TestIndexShardPoolImpl extends StroomUnitTest {
                 () -> tempDir);
 
         final IndexShardWriterCache indexShardWriterCache =
-                new MockIndexShardWriterCache(mockIndexShardService, maxDocumentsPerIndexShard);
-        final Indexer indexer = new IndexerImpl(indexShardWriterCache, null);
+                new MockIndexShardWriterCache(maxDocumentsPerIndexShard);
+        final MockLuceneIndexDocCache luceneIndexDocCache = new MockLuceneIndexDocCache();
+        final ActiveShardsCache activeShardsCache =
+                new MockActiveShardsCache(() -> "test",
+                        indexShardWriterCache,
+                        mockIndexShardService,
+                        luceneIndexDocCache);
+        final Indexer indexer = new IndexerImpl(activeShardsCache);
 
         indexShardsCreated.set(0);
         failedThreads.set(0);
@@ -118,9 +127,10 @@ class TestIndexShardPoolImpl extends StroomUnitTest {
             index.setFields(indexFields);
             index.setMaxDocsPerShard(maxDocumentsPerIndexShard);
             index.setShardsPerPartition(shardsPerPartition);
+            luceneIndexDocCache.put(new DocRef(LuceneIndexDoc.DOCUMENT_TYPE, "uuid" + i), index);
 
             for (int j = 0; j < jobSize; j++) {
-                final IndexShardKey indexShardKey = IndexShardKeyUtil.createTestKey(index);
+                final IndexShardKey indexShardKey = IndexShardKey.createKey(index);
                 simpleExecutor.execute(new IndexThread(indexer, indexShardKey, indexField, i));
             }
         }

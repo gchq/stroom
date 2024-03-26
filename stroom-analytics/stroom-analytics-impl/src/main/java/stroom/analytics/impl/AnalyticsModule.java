@@ -31,8 +31,6 @@ import stroom.util.guice.RestResourcesBinder;
 import com.google.inject.AbstractModule;
 import jakarta.inject.Inject;
 
-import static stroom.job.api.Schedule.ScheduleType.PERIODIC;
-
 public class AnalyticsModule extends AbstractModule {
 
     @Override
@@ -41,26 +39,27 @@ public class AnalyticsModule extends AbstractModule {
                 .bindJobTo(TableBuilderAnalyticExecutorRunnable.class, builder -> builder
                         .name("Analytic Executor: Table Builder")
                         .description("Run table building analytics periodically")
-                        .schedule(PERIODIC, "10m")
+                        .frequencySchedule("10m")
                         .enabled(false)
                         .advanced(true))
 //                .bindJobTo(StreamingAnalyticExecutorRunnable.class, builder -> builder
 //                        .name("Analytic Executor: Streaming")
 //                        .description("Run streaming analytics periodically")
-//                        .schedule(PERIODIC, "1m")
+//                        .periodicSchedule("1m")
 //                        .enabled(false)
 //                        .advanced(true))
                 .bindJobTo(ScheduledAnalyticExecutorRunnable.class, builder -> builder
                         .name("Analytic Executor: Scheduled Query")
                         .description("Run scheduled index query analytics periodically")
-                        .schedule(PERIODIC, "10m")
+                        .frequencySchedule("10m")
                         .enabled(false)
                         .advanced(true));
         GuiceUtil.buildMultiBinder(binder(), HasResultStoreInfo.class).addBinding(AnalyticDataStores.class);
 
         RestResourcesBinder.create(binder())
                 .bind(AnalyticProcessResourceImpl.class)
-                .bind(AnalyticDataShardResourceImpl.class);
+                .bind(AnalyticDataShardResourceImpl.class)
+                .bind(ExecutionScheduleResourceImpl.class);
 
         // Live federated search provision.
         GuiceUtil.buildMultiBinder(binder(), DataSourceProvider.class)

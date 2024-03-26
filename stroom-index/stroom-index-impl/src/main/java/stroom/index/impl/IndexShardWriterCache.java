@@ -16,12 +16,9 @@
 
 package stroom.index.impl;
 
-import stroom.index.shared.IndexShardKey;
-
 public interface IndexShardWriterCache {
-    IndexShardWriter getWriterByShardKey(IndexShardKey key);
 
-    IndexShardWriter getWriterByShardId(long indexShardId);
+    IndexShardWriter getWriter(long indexShardId);
 
     void flush(long indexShardId);
 
