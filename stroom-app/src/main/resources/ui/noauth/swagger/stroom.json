@@ -15124,6 +15124,9 @@
         }, {
           "type" : "object",
           "properties" : {
+            "allowTextEntry" : {
+              "type" : "boolean"
+            },
             "dictionary" : {
               "$ref" : "#/components/schemas/DocRef"
             },
@@ -19621,6 +19624,22 @@
             "type" : "string"
           }
         }
+      },
+      "TextInputComponentSettings" : {
+        "type" : "object",
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/ComponentSettings"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "key" : {
+              "type" : "string"
+            },
+            "value" : {
+              "type" : "string"
+            }
+          }
+        } ]
       },
       "ThemeConfig" : {
         "type" : "object",

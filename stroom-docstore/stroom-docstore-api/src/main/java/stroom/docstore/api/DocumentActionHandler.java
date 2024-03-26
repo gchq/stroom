@@ -19,10 +19,45 @@ package stroom.docstore.api;
 
 
 import stroom.docref.DocRef;
+import stroom.docref.DocRefInfo;
+import stroom.util.shared.Document;
 
-public interface DocumentActionHandler<D> {
+import java.util.Objects;
+
+public interface DocumentActionHandler<D extends Document> {
 
     D readDocument(DocRef docRef);
 
     D writeDocument(D document);
+
+    /**
+     * @return The {@link DocRef} type that this handler supports.
+     */
+    String getType();
+
+    /**
+     * Retrieve the audit information for a particular doc ref
+     *
+     * @param uuid The UUID to return the information for
+     * @return The Audit information about the given DocRef.
+     */
+    DocRefInfo info(String uuid);
+
+    static DocRefInfo getDocRefInfo(final Document document) {
+
+        Objects.requireNonNull(document);
+
+        return DocRefInfo
+                .builder()
+                .docRef(DocRef.builder()
+                        .type(document.getType())
+                        .uuid(document.getUuid())
+                        .name(document.getName())
+                        .build())
+                .createTime(document.getCreateTimeMs())
+                .createUser(document.getCreateUser())
+                .updateTime(document.getUpdateTimeMs())
+                .updateUser(document.getUpdateUser())
+                .build();
+    }
 }

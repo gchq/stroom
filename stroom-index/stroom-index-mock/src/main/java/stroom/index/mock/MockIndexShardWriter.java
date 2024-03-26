@@ -20,7 +20,6 @@ import stroom.index.impl.IndexDocument;
 import stroom.index.impl.IndexShardWriter;
 import stroom.index.shared.IndexException;
 import stroom.index.shared.IndexShard;
-import stroom.index.shared.IndexShardKey;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,10 +27,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class MockIndexShardWriter implements IndexShardWriter {
 
-    //    private final IndexShardManager indexShardManager;
     private final List<IndexDocument> documents = new ArrayList<>();
 
-    private final IndexShardKey indexShardKey;
     private final long indexShardId;
     private final long creationTime;
 
@@ -39,12 +36,8 @@ public class MockIndexShardWriter implements IndexShardWriter {
     private final AtomicInteger documentCount = new AtomicInteger();
     private final long lastUsedTime;
 
-    MockIndexShardWriter(final IndexShardKey indexShardKey, final IndexShard indexShard, final int maxDocumentCount) {
-//        this.indexShardManager = indexShardManager;
-        this.indexShardKey = indexShardKey;
-        this.indexShardId = indexShard.getId();
-//        indexShardManager.setStatus(indexShardId, IndexShardStatus.OPEN);
-
+    MockIndexShardWriter(final long indexShardId, final int maxDocumentCount) {
+        this.indexShardId = indexShardId;
         this.maxDocumentCount = maxDocumentCount;
         this.creationTime = System.currentTimeMillis();
         this.lastUsedTime = creationTime;
@@ -70,11 +63,6 @@ public class MockIndexShardWriter implements IndexShardWriter {
         return documents;
     }
 
-//    @Override
-//    public IndexWriter getWriter() {
-//        return null;
-//    }
-
     @Override
     public int getDocumentCount() {
         return documents.size();
@@ -91,11 +79,6 @@ public class MockIndexShardWriter implements IndexShardWriter {
 
     @Override
     public void close() {
-    }
-
-    @Override
-    public IndexShardKey getIndexShardKey() {
-        return indexShardKey;
     }
 
     @Override

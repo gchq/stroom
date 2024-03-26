@@ -24,13 +24,11 @@ class Lucene980IndexShardWriterFactory {
         this.pathCreator = pathCreator;
     }
 
-    IndexShardWriter create(final IndexShardKey indexShardKey,
-                            final IndexShard indexShard,
+    IndexShardWriter create(final IndexShard indexShard,
                             final int maxDocumentCount) {
         return new Lucene980IndexShardWriter(
                 indexShardManager,
                 indexConfigProvider.get(),
-                indexShardKey,
                 indexShard,
                 pathCreator,
                 maxDocumentCount);

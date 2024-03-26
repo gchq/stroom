@@ -13,6 +13,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Issue **#4169** : Fix index field `Positions` setting not being passed through to Lucene resulting in corrupt shards.
+
 * Issue **#4051** : Fix search extraction for Elastic indexes.
 
 * Issue **#4159** : Fix StroomQL vis params.

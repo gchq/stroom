@@ -15,9 +15,9 @@ import jakarta.validation.constraints.NotNull;
 import java.util.Objects;
 
 @JsonPropertyOrder(alphabetic = true)
-public class IndexCacheConfig extends AbstractConfig implements IsStroomConfig {
+public class IndexShardWriterCacheConfig extends AbstractConfig implements IsStroomConfig {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexCacheConfig.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexShardWriterCacheConfig.class);
     protected static final StroomDuration TIME_TO_LIVE_DEFAULT = StroomDuration.ZERO;
     protected static final StroomDuration TIME_TO_IDLE_DEFAULT = StroomDuration.ZERO;
     protected static final int MIN_ITEMS_DEFAULT = 0;
@@ -30,7 +30,7 @@ public class IndexCacheConfig extends AbstractConfig implements IsStroomConfig {
     private final long coreItems;
     private final long maxItems;
 
-    public IndexCacheConfig() {
+    public IndexShardWriterCacheConfig() {
         timeToLive = TIME_TO_LIVE_DEFAULT;
         timeToIdle = TIME_TO_IDLE_DEFAULT;
         minItems = MIN_ITEMS_DEFAULT;
@@ -40,11 +40,11 @@ public class IndexCacheConfig extends AbstractConfig implements IsStroomConfig {
 
     @SuppressWarnings("unused")
     @JsonCreator
-    public IndexCacheConfig(@JsonProperty("timeToLive") final StroomDuration timeToLive,
-                            @JsonProperty("timeToIdle") final StroomDuration timeToIdle,
-                            @JsonProperty("minItems") final long minItems,
-                            @JsonProperty("coreItems") final long coreItems,
-                            @JsonProperty("maxItems") final long maxItems) {
+    public IndexShardWriterCacheConfig(@JsonProperty("timeToLive") final StroomDuration timeToLive,
+                                       @JsonProperty("timeToIdle") final StroomDuration timeToIdle,
+                                       @JsonProperty("minItems") final long minItems,
+                                       @JsonProperty("coreItems") final long coreItems,
+                                       @JsonProperty("maxItems") final long maxItems) {
         this.timeToLive = timeToLive;
         this.timeToIdle = timeToIdle;
         this.minItems = minItems;
@@ -120,8 +120,8 @@ public class IndexCacheConfig extends AbstractConfig implements IsStroomConfig {
             return this;
         }
 
-        public IndexCacheConfig build() {
-            return new IndexCacheConfig(timeToLive, timeToIdle, minItems, coreItems, maxItems);
+        public IndexShardWriterCacheConfig build() {
+            return new IndexShardWriterCacheConfig(timeToLive, timeToIdle, minItems, coreItems, maxItems);
         }
     }
 }

@@ -18,11 +18,9 @@ package stroom.index.lucene980;
 
 import stroom.index.impl.IndexConfig;
 import stroom.index.impl.IndexDocument;
-import stroom.index.impl.IndexShardKeyUtil;
 import stroom.index.impl.IndexShardUtil;
 import stroom.index.impl.IndexShardWriter;
 import stroom.index.shared.IndexShard;
-import stroom.index.shared.IndexShardKey;
 import stroom.index.shared.IndexVolume;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.index.shared.LuceneIndexField;
@@ -92,15 +90,13 @@ class TestIndexShardIO extends StroomUnitTest {
         idx1.setVolume(volume);
         idx1.setIndexVersion(LuceneVersionUtil.getCurrentVersion());
 
-        final IndexShardKey indexShardKey = IndexShardKeyUtil.createTestKey(index);
-
         // Clean up from previous tests.
         final Path dir = IndexShardUtil.getIndexPath(idx1, pathCreator);
         FileUtil.deleteDir(dir);
 
         for (int i = 1; i <= 10; i++) {
             final IndexShardWriter writer = new Lucene980IndexShardWriter(
-                    null, new IndexConfig(), indexShardKey, idx1, pathCreator, MAX_DOCS);
+                    null, new IndexConfig(), idx1, pathCreator, MAX_DOCS);
             writer.flush();
             writer.addDocument(buildDocument(i));
             writer.flush();
@@ -124,15 +120,13 @@ class TestIndexShardIO extends StroomUnitTest {
         idx1.setVolume(volume);
         idx1.setIndexVersion(LuceneVersionUtil.getCurrentVersion());
 
-        final IndexShardKey indexShardKey = IndexShardKeyUtil.createTestKey(index);
-
         // Clean up from previous tests.
         final Path dir = IndexShardUtil.getIndexPath(idx1, pathCreator);
         FileUtil.deleteDir(dir);
 
         for (int i = 1; i <= 10; i++) {
             final IndexShardWriter writer = new Lucene980IndexShardWriter(
-                    null, new IndexConfig(), indexShardKey, idx1, pathCreator, MAX_DOCS);
+                    null, new IndexConfig(), idx1, pathCreator, MAX_DOCS);
             writer.addDocument(buildDocument(i));
             writer.close();
             assertThat(writer.getDocumentCount()).isEqualTo(i);
@@ -165,7 +159,7 @@ class TestIndexShardIO extends StroomUnitTest {
 //        idx1.setVolume(volume);
 //        idx1.setIndexVersion(LuceneVersionUtil.getCurrentVersion());
 //
-//        final IndexShardKey indexShardKey = IndexShardKeyUtil.createTestKey(index);
+//        final IndexShardKey indexShardKey = IndexShardKey.createTestKey(index);
 //
 //        // Clean up from previous tests.
 //        final File dir = IndexShardUtil.getIndexDir(idx1);
@@ -304,14 +298,12 @@ class TestIndexShardIO extends StroomUnitTest {
         idx1.setVolume(volume);
         idx1.setIndexVersion(LuceneVersionUtil.getCurrentVersion());
 
-        final IndexShardKey indexShardKey = IndexShardKeyUtil.createTestKey(index);
-
         // Clean up from previous tests.
         final Path dir = IndexShardUtil.getIndexPath(idx1, pathCreator);
         FileUtil.deleteDir(dir);
 
         final IndexShardWriter writer = new Lucene980IndexShardWriter(
-                null, new IndexConfig(), indexShardKey, idx1, pathCreator, MAX_DOCS);
+                null, new IndexConfig(), idx1, pathCreator, MAX_DOCS);
 
         for (int i = 1; i <= 10; i++) {
             writer.addDocument(buildDocument(i));
@@ -337,14 +329,12 @@ class TestIndexShardIO extends StroomUnitTest {
         idx1.setVolume(volume);
         idx1.setIndexVersion(LuceneVersionUtil.getCurrentVersion());
 
-        final IndexShardKey indexShardKey = IndexShardKeyUtil.createTestKey(index);
-
         // Clean up from previous tests.
         final Path dir = IndexShardUtil.getIndexPath(idx1, pathCreator);
         FileUtil.deleteDir(dir);
 
         final IndexShardWriter writer = new Lucene980IndexShardWriter(
-                null, new IndexConfig(), indexShardKey, idx1, pathCreator, MAX_DOCS);
+                null, new IndexConfig(), idx1, pathCreator, MAX_DOCS);
 
         for (int i = 1; i <= 10; i++) {
             writer.addDocument(buildDocument(i));
@@ -371,10 +361,8 @@ class TestIndexShardIO extends StroomUnitTest {
         idx1.setVolume(volume);
         idx1.setIndexVersion(LuceneVersionUtil.getCurrentVersion());
 
-        final IndexShardKey indexShardKey = IndexShardKeyUtil.createTestKey(index);
-
         final IndexShardWriter writer = new Lucene980IndexShardWriter(
-                null, new IndexConfig(), indexShardKey, idx1, pathCreator, MAX_DOCS);
+                null, new IndexConfig(), idx1, pathCreator, MAX_DOCS);
 
         Long lastSize = null;
 

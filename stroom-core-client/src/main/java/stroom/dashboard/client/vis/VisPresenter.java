@@ -85,6 +85,22 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
     public static final ComponentType TYPE = new ComponentType(4, "vis", "Visualisation", ComponentUse.PANEL);
     private static final long UPDATE_INTERVAL = 2000;
 
+
+    private static final JavaScriptObject EMPTY_DATA;
+
+    static {
+        final JSONObject dataObject = JSONUtil.getObject(JSONUtil.parse(
+                "{" +
+                        "\"values\": []," +
+                        "\"min\": []," +
+                        "\"max\": []," +
+                        "\"sum\": []," +
+                        "\"types\": []," +
+                        "\"sortDirections\": []" +
+                        "}"));
+        EMPTY_DATA = dataObject.getJavaScriptObject();
+    }
+
     private final VisFunctionCache visFunctionCache;
     private final ScriptCache scriptCache;
     private final RestFactory restFactory;
@@ -292,7 +308,7 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
     public void startSearch() {
         nextUpdate = 0;
         currentSettings = null;
-        currentData = null;
+        currentData = EMPTY_DATA;
         lastData = null;
 
         if (!searching) {
@@ -406,7 +422,7 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
     }
 
     private JavaScriptObject getJSONData(final VisResult visResult) {
-        JavaScriptObject data = null;
+        JavaScriptObject data = EMPTY_DATA;
 
         // Turn JSON result text into an object.
         final JSONObject dataObject = JSONUtil.getObject(JSONUtil.parse(visResult.getJsonData()));
@@ -509,10 +525,8 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
                         visFrame.setVisType(function.getFunctionName(), getClassName(currentPreferences.getTheme()));
                     }
 
-                    if (currentData != null) {
-                        update();
-                        currentError = null;
-                    }
+                    currentError = null;
+                    update();
 
                 } catch (final RuntimeException e) {
                     currentError = e.getMessage();
@@ -520,8 +534,10 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
             } else if (LoadStatus.FAILURE.equals(function.getStatus())) {
                 // Try and clear the current visualisation.
                 try {
-                    // getView().clear();
+                    currentData = EMPTY_DATA;
                     currentError = null;
+
+                    update();
                 } catch (final RuntimeException e) {
                     // Ignore.
                 }
@@ -574,13 +590,6 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
                     case LOADED:
                         if (currentError != null) {
                             getView().showMessage(currentError);
-                        } else if (currentData == null) {
-                            if (searching) {
-                                getView().hideMessage();
-                                //getView().showMessage("Waiting for data...");
-                            } else {
-                                getView().showMessage("No data");
-                            }
                         } else {
                             getView().hideMessage();
                         }

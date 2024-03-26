@@ -2,7 +2,9 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:l="urn:import:stroom.item.client">
-    <g:FlowPanel styleName="ListInputView max dock-container-horizontal">
-        <l:SelectionBox ui:field="value" addStyleNames="dock-max allow-focus"/>
-    </g:FlowPanel>
+    <g:SimplePanel styleName="max dock-container-horizontal">
+        <g:SimplePanel styleName="ListInputView dock-max">
+            <l:SelectionBox ui:field="value" addStyleNames="w-100 allow-focus"/>
+        </g:SimplePanel>
+    </g:SimplePanel>
 </ui:UiBinder>

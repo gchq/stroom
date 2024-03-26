@@ -64,7 +64,7 @@ public class ListInputViewImpl extends ViewWithUiHandlers<ListInputUiHandlers> i
 
     @Override
     public String getSelectedValue() {
-        return value.getValue();
+        return value.getText();
     }
 
 //    @UiHandler("params")
@@ -95,10 +95,16 @@ public class ListInputViewImpl extends ViewWithUiHandlers<ListInputUiHandlers> i
 //        }
 //    }
 
+
+    @Override
+    public void setAllowTextEntry(final boolean allowTextEntry) {
+        value.setAllowTextEntry(allowTextEntry);
+    }
+
     @UiHandler("value")
     public void onSelectionChange(final ValueChangeEvent<String> event) {
         if (getUiHandlers() != null) {
-            getUiHandlers().onValueChanged(value.getValue());
+            getUiHandlers().onValueChanged(value.getText());
         }
     }
 
