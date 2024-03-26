@@ -151,6 +151,7 @@ class AbstractAnalyticsTest extends StroomIntegrationTest {
                         .destinationFeed(analyticsDataSetup.getDetections())
                         .useSourceFeedIfPossible(false)
                         .build())
+                .errorFeed(analyticsDataSetup.getDetections())
                 .build();
     }
 }

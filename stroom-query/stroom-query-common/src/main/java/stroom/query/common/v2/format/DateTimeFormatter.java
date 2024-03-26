@@ -17,7 +17,7 @@
 package stroom.query.common.v2.format;
 
 import stroom.expression.api.DateTimeSettings;
-import stroom.expression.api.TimeZone;
+import stroom.expression.api.UserTimeZone;
 import stroom.query.api.v2.DateTimeFormatSettings;
 import stroom.query.language.functions.DateUtil;
 import stroom.query.language.functions.Val;
@@ -47,7 +47,7 @@ public class DateTimeFormatter implements Formatter {
         ZoneId zone = ZoneOffset.UTC;
 
         String pattern = null;
-        TimeZone timeZone = null;
+        UserTimeZone timeZone = null;
         if (dateTimeFormat != null && !dateTimeFormat.isUsePreferences()) {
             pattern = dateTimeFormat.getPattern();
             timeZone = dateTimeFormat.getTimeZone();
@@ -58,9 +58,9 @@ public class DateTimeFormatter implements Formatter {
 
         if (!NullSafe.isBlankString(pattern)) {
             if (timeZone != null) {
-                if (TimeZone.Use.UTC.equals(timeZone.getUse())) {
+                if (UserTimeZone.Use.UTC.equals(timeZone.getUse())) {
                     zone = ZoneOffset.UTC;
-                } else if (TimeZone.Use.LOCAL.equals(timeZone.getUse())) {
+                } else if (UserTimeZone.Use.LOCAL.equals(timeZone.getUse())) {
                     zone = ZoneId.systemDefault();
 
                     try {
@@ -72,9 +72,9 @@ public class DateTimeFormatter implements Formatter {
                         // use the default.
                     }
 
-                } else if (TimeZone.Use.ID.equals(timeZone.getUse())) {
+                } else if (UserTimeZone.Use.ID.equals(timeZone.getUse())) {
                     zone = ZoneId.of(timeZone.getId());
-                } else if (TimeZone.Use.OFFSET.equals(timeZone.getUse())) {
+                } else if (UserTimeZone.Use.OFFSET.equals(timeZone.getUse())) {
                     zone = ZoneOffset.ofHoursMinutes(
                             NullSafe.getInt(timeZone.getOffsetHours()),
                             NullSafe.getInt(timeZone.getOffsetMinutes()));

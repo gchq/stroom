@@ -34,9 +34,6 @@ import stroom.util.shared.Clearable;
 import com.google.inject.AbstractModule;
 import jakarta.inject.Inject;
 
-import static stroom.job.api.Schedule.ScheduleType.CRON;
-import static stroom.job.api.Schedule.ScheduleType.PERIODIC;
-
 public class IndexModule extends AbstractModule {
 
     @Override
@@ -86,24 +83,24 @@ public class IndexModule extends AbstractModule {
                 .bindJobTo(IndexShardDelete.class, builder -> builder
                         .name("Index Shard Delete")
                         .description("Job to delete index shards from disk that have been marked as deleted")
-                        .schedule(CRON, "0 0 *"))
+                        .cronSchedule("0 0 0 * * ?"))
                 .bindJobTo(IndexShardRetention.class, builder -> builder
                         .name("Index Shard Retention")
                         .description("Job to set index shards to have a status of deleted that have past their " +
                                 "retention period")
-                        .schedule(PERIODIC, "10m"))
+                        .frequencySchedule("10m"))
                 .bindJobTo(IndexWriterCacheSweep.class, builder -> builder
                         .name("Index Writer Cache Sweep")
                         .description("Job to remove old index shard writers from the cache")
-                        .schedule(PERIODIC, "10m"))
+                        .frequencySchedule("10m"))
                 .bindJobTo(IndexWriterFlush.class, builder -> builder
                         .name("Index Writer Flush")
                         .description("Job to flush index shard data to disk")
-                        .schedule(PERIODIC, "10m"))
+                        .frequencySchedule("10m"))
                 .bindJobTo(VolumeStatus.class, builder -> builder
                         .name("Index Volume Status")
                         .description("Update the usage status of volumes owned by the node")
-                        .schedule(PERIODIC, "5m"));
+                        .frequencySchedule("5m"));
 
         LifecycleBinder.create(binder())
                 .bindStartupTaskTo(IndexShardWriterCacheStartup.class)

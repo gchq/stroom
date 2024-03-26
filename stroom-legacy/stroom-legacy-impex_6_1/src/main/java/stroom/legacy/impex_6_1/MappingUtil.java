@@ -1,6 +1,7 @@
 package stroom.legacy.impex_6_1;
 
 import stroom.datasource.api.v2.AnalyzerType;
+import stroom.expression.api.UserTimeZone;
 import stroom.index.shared.LuceneIndexField;
 import stroom.index.shared.OldIndexFieldType;
 import stroom.query.api.v2.Column;
@@ -393,23 +394,23 @@ public final class MappingUtil {
         return stroom.query.api.v2.Format.Type.valueOf(value.name());
     }
 
-    public static stroom.expression.api.TimeZone map(stroom.legacy.model_6_1.TimeZone value) {
+    public static UserTimeZone map(stroom.legacy.model_6_1.TimeZone value) {
         if (value == null) {
             return null;
         }
 
-        return new stroom.expression.api.TimeZone(map(value.getUse()),
+        return new UserTimeZone(map(value.getUse()),
                 value.getId(),
                 value.getOffsetHours(),
                 value.getOffsetMinutes());
     }
 
-    public static stroom.expression.api.TimeZone.Use map(stroom.legacy.model_6_1.TimeZone.Use value) {
+    public static UserTimeZone.Use map(stroom.legacy.model_6_1.TimeZone.Use value) {
         if (value == null) {
             return null;
         }
 
-        return stroom.expression.api.TimeZone.Use.valueOf(value.name());
+        return UserTimeZone.Use.valueOf(value.name());
     }
 
     public static stroom.dashboard.shared.LayoutConfig map(stroom.legacy.model_6_1.LayoutConfig value) {

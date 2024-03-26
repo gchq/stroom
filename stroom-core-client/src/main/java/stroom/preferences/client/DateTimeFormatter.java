@@ -1,9 +1,9 @@
 package stroom.preferences.client;
 
-import stroom.expression.api.TimeZone;
-import stroom.expression.api.TimeZone.Use;
+import stroom.expression.api.UserTimeZone;
+import stroom.expression.api.UserTimeZone.Use;
 import stroom.ui.config.shared.UserPreferences;
-import stroom.widget.customdatebox.client.ClientDurationUtil;
+import stroom.widget.customdatebox.client.MomentJs;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -26,7 +26,7 @@ public class DateTimeFormatter {
         final long now = System.currentTimeMillis();
         return format(ms) +
                 " (" +
-                ClientDurationUtil.humanise(ms - now, true) +
+                MomentJs.humanise(ms - now, true) +
                 ")";
     }
 
@@ -45,7 +45,7 @@ public class DateTimeFormatter {
             if (userPreferences.getDateTimePattern() != null &&
                     userPreferences.getDateTimePattern().trim().length() > 0) {
 
-                final TimeZone timeZone = userPreferences.getTimeZone();
+                final UserTimeZone timeZone = userPreferences.getTimeZone();
                 if (timeZone != null) {
                     if (timeZone.getUse() != null) {
                         use = timeZone.getUse();
@@ -74,7 +74,15 @@ public class DateTimeFormatter {
         pattern = pattern.replaceAll("\\[+", "[");
         pattern = pattern.replaceAll("]+", "]");
 
-        return nativeToDateString(ms, use.getDisplayValue(), pattern, zoneId, offsetMinutes);
+        // If UTC then just display the `Z` suffix.
+        if (Use.UTC.equals(use)) {
+            pattern = pattern.replaceAll("Z", "[Z]");
+        }
+        // Ensure we haven't doubled up square brackets.
+        pattern = pattern.replaceAll("\\[+", "[");
+        pattern = pattern.replaceAll("]+", "]");
+
+        return MomentJs.nativeToDateString(ms, use.getDisplayValue(), pattern, zoneId, offsetMinutes);
     }
 
     String convertJavaDateTimePattern(final String pattern) {
@@ -101,31 +109,4 @@ public class DateTimeFormatter {
 
         return converted;
     }
-
-    private static native String nativeToDateString(final double ms,
-                                                    final String use,
-                                                    final String dateTimePattern,
-                                                    final String id,
-                                                    final Integer offsetMinutes)/*-{
-        var m = $wnd.moment.utc(ms);
-        switch (use) {
-            case "UTC": {
-                m = m.utc();
-                return m.format(dateTimePattern);
-            }
-            case "Local": {
-                m = m.local();
-                return m.format(dateTimePattern);
-            }
-            case "Offset": {
-                m = m.utcOffset(offsetMinutes);
-                return m.format(dateTimePattern);
-            }
-            case "Id": {
-                m = m.tz(id);
-                return m.format(dateTimePattern);
-            }
-        }
-        return m.format(dateTimePattern);
-    }-*/;
 }

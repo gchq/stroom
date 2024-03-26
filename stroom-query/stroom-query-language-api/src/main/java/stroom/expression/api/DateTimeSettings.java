@@ -1,6 +1,6 @@
 package stroom.expression.api;
 
-import stroom.expression.api.TimeZone.Use;
+import stroom.expression.api.UserTimeZone.Use;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -21,7 +21,7 @@ public class DateTimeSettings {
     private final String dateTimePattern;
 
     @JsonProperty
-    private final TimeZone timeZone;
+    private final UserTimeZone timeZone;
 
     @Schema(description = "The local zone id to use when formatting date values in the search results. The " +
             "value is the string form of a java.time.ZoneId",
@@ -47,7 +47,7 @@ public class DateTimeSettings {
      */
     @JsonCreator
     public DateTimeSettings(@JsonProperty("dateTimePattern") final String dateTimePattern,
-                            @JsonProperty("timeZone") final TimeZone timeZone,
+                            @JsonProperty("timeZone") final UserTimeZone timeZone,
                             @JsonProperty("localZoneId") final String localZoneId,
                             @JsonProperty("referenceTime") final Long referenceTime) {
         this.dateTimePattern = dateTimePattern;
@@ -60,7 +60,7 @@ public class DateTimeSettings {
         return dateTimePattern;
     }
 
-    public TimeZone getTimeZone() {
+    public UserTimeZone getTimeZone() {
         return timeZone;
     }
 
@@ -124,7 +124,7 @@ public class DateTimeSettings {
     public static final class Builder {
 
         private String dateTimePattern = "yyyy-MM-dd'T'HH:mm:ss.SSSXX";
-        private TimeZone timeZone = TimeZone.builder().use(Use.UTC).build();
+        private UserTimeZone timeZone = UserTimeZone.builder().use(Use.UTC).build();
         private String localZoneId = "Z";
         private Long referenceTime;
 
@@ -142,7 +142,7 @@ public class DateTimeSettings {
             return this;
         }
 
-        public Builder timeZone(final TimeZone timeZone) {
+        public Builder timeZone(final UserTimeZone timeZone) {
             this.timeZone = timeZone;
             return this;
         }

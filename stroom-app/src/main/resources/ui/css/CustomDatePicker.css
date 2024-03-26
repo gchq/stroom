@@ -1,0 +1,181 @@
+.CustomDatePicker {
+}
+.CustomDatePicker .gwt-ListBox {
+    border: none;
+    padding: 2px;
+}
+.CustomDatePicker .form-label {
+    margin-top: 0.25rem;
+}
+.CustomDatePicker td,
+.customDatePickerMonthSelector td:focus {
+    outline: none
+}
+
+.CustomDatePicker .cellOuter {
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+}
+.CustomDatePicker .cellInner {
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    width: 100%;
+}
+
+.customDatePickerDay,
+.customDatePickerWeekdayLabel,
+.customDatePickerWeekendLabel {
+  outline: none;
+  color: var(--text-color);
+}
+.customDatePickerWeekdayLabel,
+.customDatePickerWeekendLabel {
+    cursor: default;
+}
+.customDatePickerDay {
+    padding: 4px;
+    cursor: pointer;
+    border-radius: 2rem;
+    border: 1px solid transparent;
+}
+.customDatePickerDayIsToday {
+    color: var(--text-color);
+    border: 1px solid var(--row__background-color--selected);
+}
+.customDatePickerDayIsWeekend {
+}
+.customDatePickerDayIsFiller {
+    color: var(--text-color--disabled);
+    /*color: transparent;*/
+}
+
+.customDatePickerDayIsValue {
+    background: var(--row__background-color--selected);
+    border: 1px solid var(--row__background-color--selected);
+    color: var(--row__text-color--selected);
+}
+
+.customDatePickerDays:focus .customDatePickerDay.keyboard-selected {
+    background: var(--row__background-color--focussed);
+    border: 1px solid transparent;
+}
+
+.customDatePickerDays:focus .customDatePickerDayIsValue.keyboard-selected {
+    background: var(--row__background-color--selected--focussed);
+    border: 1px solid var(--row__background-color--selected--focussed);
+    color: var(--row__text-color--selected);
+}
+
+.customDatePickerDayIsDisabled {
+    color: var(--text-color--disabled);
+}
+
+td:hover .customDatePickerDay {
+    background: var(--row__background-color--hovered);
+}
+td:hover .customDatePickerDayIsValue {
+    background: var(--row__background-color--selected--hovered) !important;
+    border: 1px solid var(--row__background-color--selected--hovered) !important;
+    color: var(--row__text-color--selected) !important;
+}
+
+/*
+.customDatePickerDayIsHighlighted {
+    background: var(--row__background-color--hovered);
+}
+.customDatePickerDayIsValueAndHighlighted {
+    background: var(--row__background-color--selected--hovered) !important;
+    border: 1px solid var(--row__background-color--selected--hovered) !important;
+    color: var(--row__text-color--selected) !important;
+}
+.customDatePickerDayIsValue.customDatePickerDayIsHighlighted {
+    background: var(--row__background-color--hovered);
+    color: var(--text-color);
+}
+*/
+
+.customDatePickerMonthSelector {
+}
+.customDatePickerYear,
+.customDatePickerMonth {
+    display: flex;
+    align-items: center;
+
+    gap: 4px;
+    padding: 0 2px;
+}
+.customDatePickerYear .icon-button,
+.customDatePickerMonth .icon-button {
+    width: 26px;
+    height: 26px;
+}
+.customDatePickerPreviousButton svg,
+.customDatePickerNextButton svg,
+.customDatePickerPreviousYearButton svg,
+.customDatePickerNextYearButton svg {
+    color: var(--navigation__text-color);
+    width: 10px;
+    height: 10px;
+}
+
+
+
+
+
+
+.customDatePickerDay,.customDatePickerWeekdayLabel,.customDatePickerWeekendLabel {
+
+}
+
+.DateTimeView-heading {
+    color: var(--heading-color);
+    font-weight: bold;
+    font-size: 125%;
+    padding-bottom: 0.3em;
+}
+
+.DateTimeView-right {
+    padding-left: 1rem;
+}
+
+.customDatePickerMonth .SelectionBox,
+.customDatePickerYear .SelectionBox {
+    flex-grow: 1;
+    width: 5px;
+}
+
+.customDatePickerMonth .SelectionBox input,
+.customDatePickerYear .SelectionBox input {
+    min-width: 5px;
+}
+
+.DateTimeView-date,
+.DateTimeView-time {
+    padding: 5px 0 10px 0;
+}
+
+.dateTime-quickSettingPanel {
+    padding: 0.4rem;
+    min-width: 8rem;
+}
+
+.dateTime-quickSetting {
+    color: var(--link__text-color);
+    cursor: pointer;
+    padding-bottom: 0.2rem;
+}
+
+.dateTime-quickSetting:hover {
+    text-decoration: underline;
+}
+
+.valueChooser {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding-bottom: 4px;
+    width: 176px;
+}

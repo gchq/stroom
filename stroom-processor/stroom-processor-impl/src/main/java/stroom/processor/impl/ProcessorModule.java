@@ -35,8 +35,6 @@ import stroom.util.shared.Clearable;
 import com.google.inject.AbstractModule;
 import jakarta.inject.Inject;
 
-import static stroom.job.api.Schedule.ScheduleType.PERIODIC;
-
 public class ProcessorModule extends AbstractModule {
 
     public static final String PROCESSOR_TASK_RETENTION_JOB_NAME = "Processor Task Retention";
@@ -76,26 +74,26 @@ public class ProcessorModule extends AbstractModule {
                 .bindJobTo(ProcessorTaskQueueStatistics.class, builder -> builder
                         .name("Processor Task Queue Statistics")
                         .description("Write statistics about the size of the task queue")
-                        .schedule(PERIODIC, "1m"))
+                        .frequencySchedule("1m"))
                 .bindJobTo(ProcessorTaskRetention.class, builder -> builder
                         .name(PROCESSOR_TASK_RETENTION_JOB_NAME)
                         .description("Physically delete processor tasks that have been logically " +
                                 "deleted or complete based on age (stroom.processor.deleteAge)")
-                        .schedule(PERIODIC, "10m"))
+                        .frequencySchedule("10m"))
                 .bindJobTo(ProcessorTaskManagerDisownDeadTasks.class, builder -> builder
                         .name("Processor Task Manager Disown Dead Tasks")
                         .description("Tasks that seem to be stuck processing due to the death of a processing node " +
                                 "are disowned and added back to the task queue for processing after " +
                                 "(stroom.processor.disownDeadTasksAfter)")
-                        .schedule(PERIODIC, "1m"))
+                        .frequencySchedule("1m"))
                 .bindJobTo(ProcessorTaskManagerReleaseOldQueuedTasks.class, builder -> builder
                         .name("Processor Task Manager Release Old Queued Tasks")
                         .description("Release queued tasks from old master nodes")
-                        .schedule(PERIODIC, "1m"))
+                        .frequencySchedule("1m"))
                 .bindJobTo(ProcessorTaskCreatorJob.class, builder -> builder
                         .name("Processor Task Creator")
                         .description("Create Processor Tasks From Processor Filters")
-                        .schedule(PERIODIC, "10s")
+                        .frequencySchedule("10s")
                         .enabled(false)
                         .advanced(false));
 

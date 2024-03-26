@@ -32,6 +32,33 @@
     height: 22px
 }
 
+.valueSpinner .resetPanel {
+    position: absolute;
+    right: 18px;
+    top: 0;
+    width: 18px;
+    height: 100%;
+    font-size: 0;
+    display: flex;
+    align-items: center;
+}
+
+.valueSpinner .reset {
+/*
+    position: absolute;
+    right: 18px;
+    top: 0;
+    width: 18px;
+    height: 100%;
+    font-size: 0;
+    */
+    cursor: pointer;
+}
+
+.valueSpinner .reset svg {
+    color: var(--text-color);
+}
+
 .valueSpinner .arrows {
     position: absolute;
     right: 0;
@@ -44,6 +71,7 @@
 .valueSpinner-arrow {
    width: 100%;
    height: 50%;
+   cursor: pointer;
 }
 
 .valueSpinner-arrow .svg-image {

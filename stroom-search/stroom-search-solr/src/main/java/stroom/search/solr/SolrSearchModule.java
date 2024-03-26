@@ -36,8 +36,6 @@ import stroom.util.shared.Clearable;
 import com.google.inject.AbstractModule;
 import jakarta.inject.Inject;
 
-import static stroom.job.api.Schedule.ScheduleType.CRON;
-
 public class SolrSearchModule extends AbstractModule {
 
     @Override
@@ -80,11 +78,11 @@ public class SolrSearchModule extends AbstractModule {
                         .name("Solr Index Retention")
                         .description("Logically delete indexed documents in Solr indexes based on the specified " +
                                 "deletion query")
-                        .schedule(CRON, "0 2 *"))
+                        .cronSchedule("0 0 2 * * ?"))
                 .bindJobTo(SolrIndexOptimiseExecutorJob.class, builder -> builder
                         .name("Solr Index Optimise")
                         .description("Optimise Solr indexes")
-                        .schedule(CRON, "0 3 *"));
+                        .cronSchedule("0 0 3 * * ?"));
     }
 
     private static class DataRetention extends RunnableWrapper {

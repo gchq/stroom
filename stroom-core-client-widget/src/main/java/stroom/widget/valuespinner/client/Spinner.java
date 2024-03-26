@@ -55,6 +55,7 @@ public class Spinner implements HasValueChangeHandlers<Long> {
     private long value = 0;
     private long min = 0;
     private long max = 100;
+    private boolean wrapValues;
     private boolean increment;
 
     private final Timer timer = new Timer() {
@@ -64,6 +65,7 @@ public class Spinner implements HasValueChangeHandlers<Long> {
         @Override
         public void cancel() {
             super.cancel();
+            step = minStep;
             speed = initialSpeed;
             counter = 0;
         }
@@ -229,6 +231,10 @@ public class Spinner implements HasValueChangeHandlers<Long> {
         this.minStep = minStep;
     }
 
+    public void setWrapValues(final boolean wrapValues) {
+        this.wrapValues = wrapValues;
+    }
+
     /**
      * @return the current value
      */
@@ -289,31 +295,38 @@ public class Spinner implements HasValueChangeHandlers<Long> {
     }
 
     /**
-     * Decreases the current value of the spinner by subtracting current step
-     */
-    protected void decrease() {
-        value -= step;
-        if (constrained && value < min) {
-            value = min;
-            timer.cancel();
-        }
-        ValueChangeEvent.fire(this, value);
-    }
-
-    /**
      * Increases the current value of the spinner by adding current step
      */
     protected void increase() {
         value += step;
         if (constrained && value > max) {
-            value = max;
-            timer.cancel();
+            if (wrapValues) {
+                value = min;
+            } else {
+                value = max;
+                timer.cancel();
+            }
+        }
+        ValueChangeEvent.fire(this, value);
+    }
+
+    /**
+     * Decreases the current value of the spinner by subtracting current step
+     */
+    protected void decrease() {
+        value -= step;
+        if (constrained && value < min) {
+            if (wrapValues) {
+                value = max;
+            } else {
+                value = min;
+                timer.cancel();
+            }
         }
         ValueChangeEvent.fire(this, value);
     }
 
     private void cancelTimer(final Widget sender) {
-        step = minStep;
         if (sender == incrementArrow) {
             sender.getElement().setClassName("valueSpinner-arrow valueSpinner-arrowUp");
         } else {

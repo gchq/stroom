@@ -1,6 +1,6 @@
 package stroom.query.api.v2;
 
-import stroom.expression.api.TimeZone;
+import stroom.expression.api.UserTimeZone;
 
 import org.junit.jupiter.api.Test;
 
@@ -10,11 +10,11 @@ class TimeZoneBuilderTest {
     @Test
     void doesBuild() {
         final String id = "someId";
-        final TimeZone.Use use = TimeZone.Use.LOCAL;
+        final UserTimeZone.Use use = UserTimeZone.Use.LOCAL;
         final Integer offsetHours = 3;
         final Integer offsetMinutes = 5;
 
-        final TimeZone timeZone = TimeZone
+        final UserTimeZone timeZone = UserTimeZone
                 .builder()
                 .id(id)
                 .use(use)

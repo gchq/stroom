@@ -29,12 +29,15 @@ import stroom.data.grid.client.WrapperView;
 import stroom.data.grid.client.WrapperViewImpl;
 import stroom.data.store.impl.fs.client.ManageFsVolumesPlugin;
 import stroom.index.client.ManageIndexVolumesPlugin;
+import stroom.widget.datepicker.client.DateTimePopup;
+import stroom.widget.datepicker.client.DateTimePopup.DateTimeView;
 import stroom.job.client.presenter.JobPresenter;
 import stroom.job.client.presenter.JobPresenter.JobView;
-import stroom.job.client.presenter.SchedulePresenter;
-import stroom.job.client.presenter.SchedulePresenter.ScheduleView;
+import stroom.schedule.client.SchedulePopup;
+import stroom.schedule.client.SchedulePopup.ScheduleView;
+import stroom.widget.datepicker.client.DateTimeViewImpl;
 import stroom.job.client.view.JobViewImpl;
-import stroom.job.client.view.ScheduleViewImpl;
+import stroom.schedule.client.ScheduleViewImpl;
 import stroom.monitoring.client.DatabaseTablesMonitoringPlugin;
 import stroom.monitoring.client.JobListPlugin;
 import stroom.monitoring.client.NodeMonitoringPlugin;
@@ -56,9 +59,13 @@ public class MonitoringModule extends PluginModule {
         // Job management.
         bindPlugin(JobListPlugin.class);
         bindPresenterWidget(
-                SchedulePresenter.class,
+                SchedulePopup.class,
                 ScheduleView.class,
                 ScheduleViewImpl.class);
+        bindPresenterWidget(
+                DateTimePopup.class,
+                DateTimeView.class,
+                DateTimeViewImpl.class);
 
         // Node management.
         bindPlugin(NodeMonitoringPlugin.class);

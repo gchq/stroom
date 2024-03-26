@@ -22,12 +22,16 @@ import stroom.pipeline.destination.RollingDestinationFactory;
 import stroom.pipeline.destination.RollingDestinations;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.factory.PipelineFactoryException;
-import stroom.util.scheduler.SimpleCron;
+import stroom.util.shared.scheduler.FrequencyExpressions;
+import stroom.util.scheduler.CronTrigger;
+import stroom.util.scheduler.FrequencyTrigger;
+import stroom.util.scheduler.Trigger;
 import stroom.util.shared.ModelStringUtil;
 
 import java.io.IOException;
 
 public abstract class AbstractRollingAppender extends AbstractDestinationProvider implements RollingDestinationFactory {
+
     private static final int MB = 1024 * 1024;
     private static final int DEFAULT_ROLL_SIZE = 100 * MB;
 
@@ -35,8 +39,8 @@ public abstract class AbstractRollingAppender extends AbstractDestinationProvide
     private static final long MINUTE = 60 * SECOND;
     private static final long HOUR = 60 * MINUTE;
 
-    private Long frequency;
-    private SimpleCron schedule;
+    private FrequencyTrigger frequencyTrigger;
+    private CronTrigger cronTrigger;
     private long rollSize = DEFAULT_ROLL_SIZE;
 
     private boolean validatedSettings;
@@ -71,13 +75,9 @@ public abstract class AbstractRollingAppender extends AbstractDestinationProvide
         if (!validatedSettings) {
             validatedSettings = true;
 
-            if (frequency != null) {
-                if (frequency <= 0) {
-                    throw ProcessException.create("Rolling frequency must be greater than 0");
-                }
-            } else if (schedule == null) {
+            if (frequencyTrigger == null && cronTrigger == null) {
                 // Default the frequency to an hour if there is no schedule.
-                frequency = HOUR;
+                frequencyTrigger = new FrequencyTrigger(FrequencyExpressions.EVERY_HOUR.getExpression());
             }
 
             if (rollSize <= 0) {
@@ -88,12 +88,12 @@ public abstract class AbstractRollingAppender extends AbstractDestinationProvide
         }
     }
 
-    protected Long getFrequency() {
-        return frequency;
+    protected Trigger getFrequencyTrigger() {
+        return frequencyTrigger;
     }
 
-    protected SimpleCron getSchedule() {
-        return schedule;
+    protected Trigger getCronTrigger() {
+        return cronTrigger;
     }
 
     protected long getRollSize() {
@@ -116,15 +116,10 @@ public abstract class AbstractRollingAppender extends AbstractDestinationProvide
 
     protected void setFrequency(final String frequency) {
         if (frequency == null || frequency.trim().length() == 0) {
-            this.frequency = null;
+            this.frequencyTrigger = null;
         } else {
             try {
-                final Long value = ModelStringUtil.parseDurationString(frequency);
-                if (value == null || value <= 0) {
-                    throw new PipelineFactoryException("Incorrect value for frequency: " + frequency);
-                }
-
-                this.frequency = value;
+                this.frequencyTrigger = new FrequencyTrigger(frequency);
             } catch (final NumberFormatException e) {
                 throw new PipelineFactoryException("Incorrect value for frequency: " + frequency);
             }
@@ -133,10 +128,10 @@ public abstract class AbstractRollingAppender extends AbstractDestinationProvide
 
     protected void setSchedule(final String expression) {
         if (expression == null || expression.trim().length() == 0) {
-            this.schedule = null;
+            this.cronTrigger = null;
         } else {
             try {
-                this.schedule = SimpleCron.compile(expression);
+                this.cronTrigger = new CronTrigger(expression);
             } catch (final NumberFormatException e) {
                 throw new PipelineFactoryException("Incorrect value for schedule: " + expression);
             }

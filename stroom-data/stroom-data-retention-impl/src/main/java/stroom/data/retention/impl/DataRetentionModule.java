@@ -25,8 +25,6 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import jakarta.inject.Inject;
 
-import static stroom.job.api.Schedule.ScheduleType.CRON;
-
 public class DataRetentionModule extends AbstractModule {
 
     @Override
@@ -41,7 +39,7 @@ public class DataRetentionModule extends AbstractModule {
                         .name(DataRetentionPolicyExecutor.JOB_NAME)
                         .description("Delete data that exceeds the retention period " +
                                 "specified by data retention policy")
-                        .schedule(CRON, "0 0 *"));
+                        .cronSchedule("0 0 0 * * ?"));
     }
 
     @SuppressWarnings("unused") // called by guice
