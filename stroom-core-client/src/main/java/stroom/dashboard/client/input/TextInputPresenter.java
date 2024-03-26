@@ -40,6 +40,7 @@ public class TextInputPresenter
         extends AbstractComponentPresenter<TextInputView>
         implements TextInputUiHandlers, HasParams {
 
+    public static final String TAB_TYPE = "TextInput";
     public static final ComponentType TYPE =
             new ComponentType(1,
                     "text-input",
@@ -97,7 +98,6 @@ public class TextInputPresenter
         return TextInputComponentSettings.builder().build();
     }
 
-
     @Override
     public void link() {
     }
@@ -109,9 +109,18 @@ public class TextInputPresenter
     }
 
     @Override
-    public ComponentType getType() {
+    public ComponentType getComponentType() {
         return TYPE;
     }
+
+    @Override
+    public String getType() {
+        return TAB_TYPE;
+    }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface TextInputView extends View, HasUiHandlers<TextInputUiHandlers> {
 
