@@ -20,12 +20,13 @@ package stroom.job.impl;
 import stroom.job.shared.FindJobNodeCriteria;
 import stroom.job.shared.JobNode;
 import stroom.job.shared.JobNode.JobType;
+import stroom.job.shared.JobNodeUtil;
 import stroom.node.api.NodeInfo;
 import stroom.task.api.ExecutorProvider;
 import stroom.util.concurrent.AsyncReference;
-import stroom.util.scheduler.FrequencyScheduler;
-import stroom.util.scheduler.Scheduler;
-import stroom.util.scheduler.SimpleCron;
+import stroom.util.scheduler.SimpleScheduleExec;
+import stroom.util.scheduler.TriggerFactory;
+import stroom.util.shared.scheduler.Schedule;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -67,7 +68,7 @@ class JobNodeTrackerCacheImpl implements JobNodeTrackerCache {
         private final Map<JobNode, JobNodeTracker> trackersForJobNode = new HashMap<>();
         private final Map<String, JobNodeTracker> trackersForJobName = new HashMap<>();
         private final Map<JobNode, String> scheduleValueMap = new HashMap<>();
-        private final Map<JobNode, Scheduler> schedulerMap = new HashMap<>();
+        private final Map<JobNode, SimpleScheduleExec> schedulerMap = new HashMap<>();
         private final List<JobNodeTracker> distributedJobNodeTrackers = new ArrayList<>();
 
         JobNodeTrackersImpl(final JobNodeTrackersImpl previousState,
@@ -110,21 +111,20 @@ class JobNodeTrackerCacheImpl implements JobNodeTrackerCache {
                         // has a job type of cron or frequency.
                         if (JobType.CRON.equals(jobNode.getJobType())
                                 || JobType.FREQUENCY.equals(jobNode.getJobType())) {
-                            final String schedule = jobNode.getSchedule();
+                            final String expression = jobNode.getSchedule();
                             // Update the schedule cache if the schedule has
                             // changed.
-                            if (schedule != null) {
-                                scheduleValueMap.put(jobNode, schedule);
+                            if (expression != null) {
+                                scheduleValueMap.put(jobNode, expression);
                                 if (previousState != null
-                                        && schedule.equals(previousState.scheduleValueMap.get(jobNode))) {
+                                        && expression.equals(previousState.scheduleValueMap.get(jobNode))) {
                                     schedulerMap.put(jobNode, previousState.schedulerMap.get(jobNode));
                                 } else {
                                     try {
-                                        if (JobType.CRON.equals(jobNode.getJobType())) {
-                                            schedulerMap.put(jobNode,
-                                                    SimpleCron.compile(jobNode.getSchedule()).createScheduler());
-                                        } else if (JobType.FREQUENCY.equals(jobNode.getJobType())) {
-                                            schedulerMap.put(jobNode, new FrequencyScheduler(jobNode.getSchedule()));
+                                        final Schedule schedule = JobNodeUtil.getSchedule(jobNode);
+                                        if (schedule != null) {
+                                            schedulerMap.put(jobNode, new SimpleScheduleExec(
+                                                    TriggerFactory.create(schedule)));
                                         }
                                     } catch (final RuntimeException e) {
                                         LOGGER.error("Problem updating schedule for '" + jobName + "' job : "
@@ -153,7 +153,7 @@ class JobNodeTrackerCacheImpl implements JobNodeTrackerCache {
         }
 
         @Override
-        public Scheduler getScheduler(final JobNode jobNode) {
+        public SimpleScheduleExec getScheduleExec(final JobNode jobNode) {
             return schedulerMap.get(jobNode);
         }
     }

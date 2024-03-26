@@ -25,7 +25,6 @@ import stroom.index.impl.IndexShardWriter;
 import stroom.index.impl.IndexStore;
 import stroom.index.mock.MockIndexShardWriter;
 import stroom.index.mock.MockIndexShardWriterCache;
-import stroom.index.shared.IndexShardKey;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.index.shared.LuceneIndexField;
 import stroom.meta.shared.Meta;
@@ -152,7 +151,7 @@ class TestIndexingPipeline extends AbstractProcessIntegrationTest {
             assertThat(indexShardWriterCache.getWriters().size()).isEqualTo(1);
 
             // Get the writer from the pool.
-            final Map<IndexShardKey, IndexShardWriter> writers = indexShardWriterCache.getWriters();
+            final Map<Long, IndexShardWriter> writers = indexShardWriterCache.getWriters();
             final MockIndexShardWriter writer = (MockIndexShardWriter) writers.values().iterator().next();
 
             // Check that we indexed 4 documents.

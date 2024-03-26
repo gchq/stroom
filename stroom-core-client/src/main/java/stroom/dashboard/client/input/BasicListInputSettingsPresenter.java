@@ -67,6 +67,7 @@ public class BasicListInputSettingsPresenter
             getView().setValues(settings.getValues());
             getView().setUseDictionary(settings.isUseDictionary());
             dictionaryPresenter.setSelectedEntityReference(settings.getDictionary());
+            getView().setAllowTextEntry(settings.isAllowTextEntry());
         }
     }
 
@@ -85,6 +86,7 @@ public class BasicListInputSettingsPresenter
                 .values(getView().getValues())
                 .useDictionary(getView().isUseDictionary())
                 .dictionary(dictionaryPresenter.getSelectedEntityReference())
+                .allowTextEntry(getView().isAllowTextEntry())
                 .build();
     }
 
@@ -100,7 +102,8 @@ public class BasicListInputSettingsPresenter
         final boolean equal = Objects.equals(oldSettings.getKey(), newSettings.getKey()) &&
                 Objects.equals(oldSettings.getValues(), newSettings.getValues()) &&
                 Objects.equals(oldSettings.isUseDictionary(), newSettings.isUseDictionary()) &&
-                Objects.equals(oldSettings.getDictionary(), newSettings.getDictionary());
+                Objects.equals(oldSettings.getDictionary(), newSettings.getDictionary()) &&
+                Objects.equals(oldSettings.isAllowTextEntry(), newSettings.isAllowTextEntry());
 
         return !equal;
     }
@@ -120,5 +123,9 @@ public class BasicListInputSettingsPresenter
         void setUseDictionary(boolean useDictionary);
 
         void setDictionaryView(View view);
+
+        boolean isAllowTextEntry();
+
+        void setAllowTextEntry(boolean allowTextEntry);
     }
 }

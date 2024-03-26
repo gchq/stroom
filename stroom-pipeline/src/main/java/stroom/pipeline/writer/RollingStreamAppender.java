@@ -43,6 +43,8 @@ import stroom.svg.shared.SvgImage;
 import com.google.common.base.Strings;
 import jakarta.inject.Inject;
 
+import java.time.Instant;
+
 /**
  * Joins text instances into a single text instance.
  */
@@ -110,10 +112,10 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
                 .getVolumeGroupName(key.getFeed(), key.getStreamType(), volumeGroup);
         final Target streamTarget = streamStore.openTarget(metaProperties, volumeGroupName);
         return new RollingStreamDestination(key,
-                getFrequency(),
-                getSchedule(),
+                getFrequencyTrigger(),
+                getCronTrigger(),
                 getRollSize(),
-                System.currentTimeMillis(),
+                Instant.now(),
                 streamStore,
                 streamTarget,
                 nodeName);

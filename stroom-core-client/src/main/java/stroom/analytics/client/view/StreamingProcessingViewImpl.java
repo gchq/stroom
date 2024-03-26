@@ -33,8 +33,6 @@ public class StreamingProcessingViewImpl
     private final Widget widget;
 
     @UiField
-    SimplePanel errorFeed;
-    @UiField
     SimplePanel processors;
 
     @Inject
@@ -45,11 +43,6 @@ public class StreamingProcessingViewImpl
     @Override
     public Widget asWidget() {
         return widget;
-    }
-
-    @Override
-    public void setErrorFeedView(final View view) {
-        this.errorFeed.setWidget(view.asWidget());
     }
 
     @Override

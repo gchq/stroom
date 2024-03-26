@@ -104,7 +104,6 @@ class TestIndexShardDaoImpl {
                 .builder()
                 .indexUuid(index.getUuid())
                 .partition(AllPartition.INSTANCE)
-                .shardNo(0)
                 .build();
 
         final IndexShard indexShard = indexShardDao.create(

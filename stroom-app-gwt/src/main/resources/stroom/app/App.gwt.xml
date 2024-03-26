@@ -40,6 +40,7 @@
     <inherits name="stroom.widget.contextmenu.ContextMenu"/>
     <inherits name="stroom.widget.tab.Tab"/>
     <inherits name="stroom.widget.customdatebox.CustomDateBox"/>
+    <inherits name="stroom.widget.datepicker.DatePicker"/>
 
     <inherits name="stroom.widget.debug.Debug" />
     <inherits name="stroom.widget.dropdowntree.DropDownTree" />
@@ -119,6 +120,7 @@
     <inherits name="stroom.help.Help" />
     <inherits name="stroom.importexport.ImportExport" />
     <inherits name="stroom.job.Job" />
+    <inherits name="stroom.schedule.Schedule" />
     <inherits name="stroom.monitoring.Monitoring" />
     <inherits name="stroom.index.Index"/>
     <inherits name="stroom.analytics.Analytics" />

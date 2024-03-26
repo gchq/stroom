@@ -81,7 +81,6 @@ class TestRepeatedTableBuilderAnalytics extends AbstractAnalyticsTest {
                 .analyticProcessConfig(TableBuilderAnalyticProcessConfig.builder()
                         .enabled(true)
                         .node(nodeInfo.getThisNodeName())
-                        .errorFeed(analyticsDataSetup.getDetections())
                         .timeToWaitForData(INSTANT)
                         .build())
                 .analyticNotificationConfig(createNotificationConfig())

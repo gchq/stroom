@@ -4,7 +4,6 @@ import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.explorer.api.ExplorerActionHandler;
-import stroom.explorer.shared.DocumentType;
 import stroom.feed.shared.FeedDoc;
 import stroom.security.api.SecurityContext;
 import stroom.util.NullSafe;
@@ -76,14 +75,11 @@ class DocRefInfoServiceImpl implements DocRefInfoService {
         } else {
             return securityContext.asProcessingUserResult(() -> {
                 if (type == null) {
+                    // No type so have to search all handlers
                     final List<DocRef> result = new ArrayList<>();
-                    for (final DocumentType documentType : explorerActionHandlers.getTypes()) {
-                        final ExplorerActionHandler handler =
-                                explorerActionHandlers.getHandler(documentType.toString());
-                        if (handler != null) {
-                            result.addAll(handler.findByName(nameFilter, allowWildCards));
-                        }
-                    }
+                    explorerActionHandlers.forEach((handlerType, handler) -> {
+                        result.addAll(handler.findByName(nameFilter, allowWildCards));
+                    });
                     return result;
                 } else {
                     final ExplorerActionHandler handler = explorerActionHandlers.getHandler(type);

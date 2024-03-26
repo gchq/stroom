@@ -58,6 +58,9 @@ public class DetectionWriter implements DetectionConsumer {
     private static final String DETECTION_UNIQUE_ID = "detectionUniqueId";
     private static final String DETECTION_REVISION = "detectionRevision";
     private static final String DEFUNCT = "defunct";
+    private static final String EXECUTION_SCHEDULE = "executionSchedule";
+    private static final String EXECUTION_TIME = "executionTime";
+    private static final String EFFECTIVE_EXECUTION_TIME = "effectiveExecutionTime";
     private static final String VALUE = "value";
     private static final String NAME = "name";
     private static final String LINKED_EVENTS = "linkedEvents";
@@ -129,6 +132,9 @@ public class DetectionWriter implements DetectionConsumer {
             writeOptionalDataElement(DETECTION_UNIQUE_ID, detection.getDetectionUniqueId());
             writeOptionalDataElement(DETECTION_REVISION, detection.getDetectionRevision());
             writeOptionalDataElement(DEFUNCT, detection.getDefunct());
+            writeOptionalDataElement(EXECUTION_SCHEDULE, detection.getExecutionSchedule());
+            writeOptionalDataElement(EXECUTION_TIME, detection.getExecutionTime());
+            writeOptionalDataElement(EFFECTIVE_EXECUTION_TIME, detection.getEffectiveExecutionTime());
             writeValues(detection.getValues());
             writeLinkedEvents(detection.getLinkedEvents());
             writeEndElement(DETECTION);

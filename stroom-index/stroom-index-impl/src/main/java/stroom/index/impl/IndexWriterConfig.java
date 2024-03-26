@@ -1,5 +1,6 @@
 package stroom.index.impl;
 
+import stroom.util.cache.CacheConfig;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsStroomConfig;
 import stroom.util.time.StroomDuration;
@@ -14,11 +15,16 @@ import jakarta.validation.constraints.NotNull;
 @JsonPropertyOrder(alphabetic = true)
 public class IndexWriterConfig extends AbstractConfig implements IsStroomConfig {
 
-    private final IndexCacheConfig indexCacheConfig;
+    private final CacheConfig activeShardCache;
+    private final IndexShardWriterCacheConfig indexShardWriterCacheConfig;
     private final StroomDuration slowIndexWriteWarningThreshold;
 
     public IndexWriterConfig() {
-        indexCacheConfig = IndexCacheConfig.builder()
+        activeShardCache = CacheConfig.builder()
+                .maximumSize(100L)
+                .expireAfterWrite(StroomDuration.ofHours(1))
+                .build();
+        indexShardWriterCacheConfig = IndexShardWriterCacheConfig.builder()
                 .withCoreItems(50)
                 .withMaxItems(100)
                 .build();
@@ -28,15 +34,21 @@ public class IndexWriterConfig extends AbstractConfig implements IsStroomConfig 
     @SuppressWarnings("unused")
     @JsonCreator
     public IndexWriterConfig(
-            @JsonProperty("cache") final IndexCacheConfig indexCacheConfig,
+            @JsonProperty("activeShardCache") final CacheConfig activeShardCache,
+            @JsonProperty("cache") final IndexShardWriterCacheConfig indexShardWriterCacheConfig,
             @JsonProperty("slowIndexWriteWarningThreshold") final StroomDuration slowIndexWriteWarningThreshold) {
-        this.indexCacheConfig = indexCacheConfig;
+        this.activeShardCache = activeShardCache;
+        this.indexShardWriterCacheConfig = indexShardWriterCacheConfig;
         this.slowIndexWriteWarningThreshold = slowIndexWriteWarningThreshold;
     }
 
+    public CacheConfig getActiveShardCache() {
+        return activeShardCache;
+    }
+
     @JsonProperty("cache")
-    public IndexCacheConfig getIndexCacheConfig() {
-        return indexCacheConfig;
+    public IndexShardWriterCacheConfig getIndexShardWriterCacheConfig() {
+        return indexShardWriterCacheConfig;
     }
 
     @NotNull
@@ -50,7 +62,8 @@ public class IndexWriterConfig extends AbstractConfig implements IsStroomConfig 
     @Override
     public String toString() {
         return "IndexWriterConfig{" +
-                "indexCacheConfig=" + indexCacheConfig +
+                "activeShardCache=" + activeShardCache +
+                ", indexShardWriterCacheConfig=" + indexShardWriterCacheConfig +
                 ", slowIndexWriteWarningThreshold=" + slowIndexWriteWarningThreshold +
                 '}';
     }

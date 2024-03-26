@@ -19,7 +19,6 @@ package stroom.pipeline.refdata.store;
 
 import stroom.bytebuffer.ByteBufferModule;
 import stroom.bytebuffer.PooledByteBufferOutputStream;
-import stroom.job.api.Schedule;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.pipeline.refdata.store.offheapstore.DelegatingRefDataOffHeapStore;
 import stroom.pipeline.refdata.store.offheapstore.FastInfosetByteBufferConsumer;
@@ -98,11 +97,7 @@ public class RefDataStoreModule extends AbstractModule {
                         .name(RefDataPurge.JOB_NAME)
                         .description("Purge old and partial reference data loads from the off heap store as " +
                                 "configured by 'purgeAge'.")
-                        .schedule(Schedule.cronSchedule()
-                                .withMinutes(0)
-                                .withHours(2)
-                                .everyDay()
-                                .build()));
+                        .cronSchedule("0 0 2 * * ?"));
     }
 
     public static class RefDataPurge extends RunnableWrapper {

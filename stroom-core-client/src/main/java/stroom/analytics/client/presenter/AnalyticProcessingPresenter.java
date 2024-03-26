@@ -22,11 +22,8 @@ import stroom.analytics.shared.AnalyticProcessConfig;
 import stroom.analytics.shared.AnalyticProcessType;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.QueryLanguageVersion;
-import stroom.analytics.shared.ScheduledQueryAnalyticProcessConfig;
-import stroom.analytics.shared.StreamingAnalyticProcessConfig;
 import stroom.analytics.shared.TableBuilderAnalyticProcessConfig;
 import stroom.docref.DocRef;
-import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.pipeline.client.event.ChangeDataEvent;
 import stroom.pipeline.client.event.ChangeDataEvent.ChangeDataHandler;
@@ -37,47 +34,42 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
-import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 
 public class AnalyticProcessingPresenter
         extends DocumentEditPresenter<AnalyticProcessingView, AnalyticRuleDoc>
         implements AnalyticProcessingUiHandlers, HasChangeDataHandlers<AnalyticProcessType> {
 
-    private final EditorPresenter editorPresenter;
-    private final ScheduledQueryProcessingPresenter scheduledQueryProcessingPresenter;
+    private final ExecutionPresenter executionSchedulePresenter;
     private final TableBuilderProcessingPresenter tableBuilderProcessingPresenter;
     private final StreamingProcessingPresenter streamingProcessingPresenter;
 
     @Inject
     public AnalyticProcessingPresenter(final EventBus eventBus,
                                        final AnalyticProcessingView view,
-                                       final EditorPresenter editorPresenter,
-                                       final ScheduledQueryProcessingPresenter scheduledQueryProcessingPresenter,
+                                       final ExecutionPresenter executionSchedulePresenter,
                                        final TableBuilderProcessingPresenter tableBuilderProcessingPresenter,
                                        final StreamingProcessingPresenter streamingProcessingPresenter) {
         super(eventBus, view);
-        this.editorPresenter = editorPresenter;
-        this.scheduledQueryProcessingPresenter = scheduledQueryProcessingPresenter;
+        this.executionSchedulePresenter = executionSchedulePresenter;
         this.tableBuilderProcessingPresenter = tableBuilderProcessingPresenter;
         this.streamingProcessingPresenter = streamingProcessingPresenter;
         view.setUiHandlers(this);
 
-        view.setQueryEditorView(editorPresenter.getView());
-        this.editorPresenter.setMode(AceEditorMode.STROOM_QUERY);
+        executionSchedulePresenter.setDocumentEditPresenter(this);
     }
 
     @Override
     protected void onBind() {
         super.onBind();
-        registerHandler(editorPresenter.addValueChangeHandler(event -> setDirty(true)));
-        registerHandler(scheduledQueryProcessingPresenter.addDirtyHandler(event -> setDirty(true)));
+//        registerHandler(executionSchedulePresenter.addDirtyHandler(event -> setDirty(true)));
         registerHandler(tableBuilderProcessingPresenter.addDirtyHandler(event -> setDirty(true)));
         registerHandler(streamingProcessingPresenter.addDirtyHandler(event -> setDirty(true)));
     }
 
     @Override
     public void onProcessingTypeChange() {
-        setProcessType(getView().getProcessingType(), getEntity().getAnalyticProcessConfig());
+        setDirty(true);
+        setProcessType(getView().getProcessingType());
         ChangeDataEvent.fire(this, getView().getProcessingType());
     }
 
@@ -89,50 +81,38 @@ public class AnalyticProcessingPresenter
     @Override
     protected void onRead(final DocRef docRef, final AnalyticRuleDoc analyticRuleDoc, final boolean readOnly) {
         final AnalyticProcessConfig analyticProcessConfig = analyticRuleDoc.getAnalyticProcessConfig();
-        if (analyticProcessConfig != null) {
-            final AnalyticProcessType analyticProcessType = analyticRuleDoc.getAnalyticProcessType() == null
-                    ? AnalyticProcessType.SCHEDULED_QUERY
-                    : analyticRuleDoc.getAnalyticProcessType();
-            setProcessType(analyticProcessType, analyticProcessConfig);
+        final AnalyticProcessType analyticProcessType = analyticRuleDoc.getAnalyticProcessType() == null
+                ? AnalyticProcessType.SCHEDULED_QUERY
+                : analyticRuleDoc.getAnalyticProcessType();
+        setProcessType(analyticProcessType);
 
-            editorPresenter.setText(analyticRuleDoc.getQuery());
+        if (AnalyticProcessType.SCHEDULED_QUERY.equals(analyticProcessType)) {
+            executionSchedulePresenter.read(docRef);
+        } else if (AnalyticProcessType.STREAMING.equals(analyticProcessType)) {
+            streamingProcessingPresenter.update(getEntity(), isReadOnly(), analyticRuleDoc.getQuery());
+        } else if (analyticProcessConfig instanceof TableBuilderAnalyticProcessConfig) {
+            final TableBuilderAnalyticProcessConfig ac =
+                    (TableBuilderAnalyticProcessConfig) analyticProcessConfig;
+            tableBuilderProcessingPresenter.read(docRef, ac);
 
-            if (analyticProcessConfig instanceof TableBuilderAnalyticProcessConfig) {
-                final TableBuilderAnalyticProcessConfig ac =
-                        (TableBuilderAnalyticProcessConfig) analyticProcessConfig;
-                tableBuilderProcessingPresenter.read(docRef, ac);
-
-            } else if (analyticProcessConfig instanceof ScheduledQueryAnalyticProcessConfig) {
-                final ScheduledQueryAnalyticProcessConfig ac =
-                        (ScheduledQueryAnalyticProcessConfig) analyticProcessConfig;
-                scheduledQueryProcessingPresenter.read(docRef, ac);
-
-            } else if (analyticProcessConfig instanceof StreamingAnalyticProcessConfig) {
-                final StreamingAnalyticProcessConfig ac =
-                        (StreamingAnalyticProcessConfig) analyticProcessConfig;
-                streamingProcessingPresenter.read(ac);
-                streamingProcessingPresenter.update(getEntity(), isReadOnly(), editorPresenter.getText());
-            }
         }
     }
 
-    private void setProcessType(final AnalyticProcessType analyticProcessType,
-                                final AnalyticProcessConfig analyticProcessConfig) {
-        if (analyticProcessConfig != null) {
-            switch (analyticProcessType) {
-                case STREAMING: {
-                    streamingProcessingPresenter.update(getEntity(), isReadOnly(), editorPresenter.getText());
-                    getView().setProcessSettings(streamingProcessingPresenter.getView());
-                    break;
-                }
-                case SCHEDULED_QUERY: {
-                    getView().setProcessSettings(scheduledQueryProcessingPresenter.getView());
-                    break;
-                }
-                case TABLE_BUILDER: {
-                    getView().setProcessSettings(tableBuilderProcessingPresenter.getView());
-                    break;
-                }
+    private void setProcessType(final AnalyticProcessType analyticProcessType) {
+        switch (analyticProcessType) {
+            case STREAMING: {
+                streamingProcessingPresenter.update(getEntity(), isReadOnly(), getEntity().getQuery());
+                getView().setProcessSettings(streamingProcessingPresenter.getView());
+                break;
+            }
+            case SCHEDULED_QUERY: {
+                executionSchedulePresenter.read(getEntity().asDocRef());
+                getView().setProcessSettings(executionSchedulePresenter.getView());
+                break;
+            }
+            case TABLE_BUILDER: {
+                getView().setProcessSettings(tableBuilderProcessingPresenter.getView());
+                break;
             }
         }
 
@@ -144,18 +124,16 @@ public class AnalyticProcessingPresenter
         AnalyticProcessConfig analyticProcessConfig = null;
         switch (getView().getProcessingType()) {
             case STREAMING:
-                analyticProcessConfig = streamingProcessingPresenter.write();
                 break;
             case TABLE_BUILDER:
                 analyticProcessConfig = tableBuilderProcessingPresenter.write();
                 break;
             case SCHEDULED_QUERY:
-                analyticProcessConfig = scheduledQueryProcessingPresenter.write();
                 break;
         }
 
-        return analyticRuleDoc.copy()
-                .query(editorPresenter.getText())
+        return analyticRuleDoc
+                .copy()
                 .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
                 .analyticProcessType(getView().getProcessingType())
                 .analyticProcessConfig(analyticProcessConfig)
@@ -168,8 +146,6 @@ public class AnalyticProcessingPresenter
     }
 
     public interface AnalyticProcessingView extends View, HasUiHandlers<AnalyticProcessingUiHandlers> {
-
-        void setQueryEditorView(View view);
 
         AnalyticProcessType getProcessingType();
 

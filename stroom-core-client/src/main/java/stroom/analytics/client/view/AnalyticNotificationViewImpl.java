@@ -51,6 +51,8 @@ public class AnalyticNotificationViewImpl
     SelectionBox<AnalyticNotificationDestinationType> destinationType;
     @UiField
     SimplePanel destinationContainer;
+    @UiField
+    SimplePanel errorFeed;
 
     @Inject
     public AnalyticNotificationViewImpl(final Binder binder) {
@@ -110,6 +112,11 @@ public class AnalyticNotificationViewImpl
     @Override
     public void setDestinationView(final View view) {
         destinationContainer.setWidget(view.asWidget());
+    }
+
+    @Override
+    public void setErrorFeedView(final View view) {
+        this.errorFeed.setWidget(view.asWidget());
     }
 
     @UiHandler("limitNotifications")

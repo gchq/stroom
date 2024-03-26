@@ -642,14 +642,10 @@
 	background-color: #1f77b4;
 }
 
-.KeyValueInputView {
+.KeyValueInputView,
+.ListInputView,
+.TextInputView {
     padding: 0 0.4rem 0.4rem 0.4rem;
-}
-
-.ListInputView {
-    padding-left: 0.4rem;
-    padding-right: 0.4rem;
-    height: auto;
 }
 
 .VisFrame-container {

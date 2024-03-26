@@ -25,8 +25,6 @@ import stroom.analytics.shared.AnalyticProcessType;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.AnalyticRuleResource;
 import stroom.analytics.shared.QueryLanguageVersion;
-import stroom.analytics.shared.ScheduledQueryAnalyticProcessConfig;
-import stroom.analytics.shared.StreamingAnalyticProcessConfig;
 import stroom.analytics.shared.TableBuilderAnalyticProcessConfig;
 import stroom.dashboard.shared.ValidateExpressionResult;
 import stroom.dispatch.client.Rest;
@@ -197,16 +195,11 @@ public class QueryDocEditPresenter extends DocumentEditPresenter<QueryEditView, 
                                             final AnalyticRuleDoc doc,
                                             final AnalyticUiDefaultConfig analyticUiDefaultConfig,
                                             final String query) {
-        final StreamingAnalyticProcessConfig analyticProcessConfig =
-                StreamingAnalyticProcessConfig.builder()
-                        .errorFeed(analyticUiDefaultConfig.getDefaultErrorFeed())
-                        .build();
         AnalyticRuleDoc updated = doc
                 .copy()
                 .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
                 .query(query)
                 .analyticProcessType(AnalyticProcessType.STREAMING)
-                .analyticProcessConfig(analyticProcessConfig)
                 .analyticNotificationConfig(createDefaultNotificationConfig(analyticUiDefaultConfig))
                 .build();
         updateRule(ruleDocRef, updated);
@@ -216,22 +209,21 @@ public class QueryDocEditPresenter extends DocumentEditPresenter<QueryEditView, 
                                             final AnalyticRuleDoc doc,
                                             final AnalyticUiDefaultConfig analyticUiDefaultConfig,
                                             final String query) {
-        final SimpleDuration oneHour = SimpleDuration.builder().time(1).timeUnit(TimeUnit.HOURS).build();
-        final ScheduledQueryAnalyticProcessConfig analyticProcessConfig =
-                ScheduledQueryAnalyticProcessConfig.builder()
-                        .node(analyticUiDefaultConfig.getDefaultNode())
-                        .errorFeed(analyticUiDefaultConfig.getDefaultErrorFeed())
-                        .minEventTimeMs(System.currentTimeMillis())
-                        .maxEventTimeMs(null)
-                        .queryFrequency(oneHour)
-                        .timeToWaitForData(oneHour)
-                        .build();
+//        final SimpleDuration oneHour = SimpleDuration.builder().time(1).timeUnit(TimeUnit.HOURS).build();
+//        final ScheduledQueryAnalyticProcessConfig analyticProcessConfig =
+//                ScheduledQueryAnalyticProcessConfig.builder()
+//                        .node(analyticUiDefaultConfig.getDefaultNode())
+//                        .schedule(new Schedule(ScheduleType.CRON, CronExpressions.EVERY_HOUR.getExpression()))
+//                        .contiguous(true)
+//                        .scheduleBounds(new ScheduleBounds(System.currentTimeMillis(), null))
+//                        .errorFeed(analyticUiDefaultConfig.getDefaultErrorFeed())
+//                        .build();
         AnalyticRuleDoc updated = doc
                 .copy()
                 .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
                 .query(query)
                 .analyticProcessType(AnalyticProcessType.SCHEDULED_QUERY)
-                .analyticProcessConfig(analyticProcessConfig)
+//                .analyticProcessConfig(analyticProcessConfig)
                 .analyticNotificationConfig(createDefaultNotificationConfig(analyticUiDefaultConfig))
                 .build();
         updateRule(ruleDocRef, updated);
@@ -245,7 +237,6 @@ public class QueryDocEditPresenter extends DocumentEditPresenter<QueryEditView, 
         final TableBuilderAnalyticProcessConfig analyticProcessConfig =
                 TableBuilderAnalyticProcessConfig.builder()
                         .node(analyticUiDefaultConfig.getDefaultNode())
-                        .errorFeed(analyticUiDefaultConfig.getDefaultErrorFeed())
                         .minMetaCreateTimeMs(System.currentTimeMillis())
                         .maxMetaCreateTimeMs(null)
                         .timeToWaitForData(oneHour)
@@ -275,6 +266,7 @@ public class QueryDocEditPresenter extends DocumentEditPresenter<QueryEditView, 
                 .resumeAfter(SimpleDuration.builder().time(1).timeUnit(TimeUnit.HOURS).build())
                 .destinationType(AnalyticNotificationDestinationType.STREAM)
                 .destination(destination)
+                .errorFeed(analyticUiDefaultConfig.getDefaultErrorFeed())
                 .build();
     }
 
@@ -294,11 +286,13 @@ public class QueryDocEditPresenter extends DocumentEditPresenter<QueryEditView, 
     @Override
     public void onRead(final DocRef docRef, final QueryDoc entity, final boolean readOnly) {
         this.docRef = docRef;
+        queryEditPresenter.setTimeRange(entity.getTimeRange());
         queryEditPresenter.setQuery(docRef, entity.getQuery(), readOnly);
     }
 
     @Override
     protected QueryDoc onWrite(final QueryDoc entity) {
+        entity.setTimeRange(queryEditPresenter.getTimeRange());
         entity.setQuery(queryEditPresenter.getQuery());
         return entity;
     }

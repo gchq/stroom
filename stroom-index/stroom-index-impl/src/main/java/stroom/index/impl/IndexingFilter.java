@@ -137,13 +137,13 @@ class IndexingFilter extends AbstractXMLFilter {
                 // create a basic key.
                 final Partition partition = AllPartition.INSTANCE;
                 defaultPartition = partition;
-                final IndexShardKey indexShardKey = IndexShardKeyUtil.createKey(index, partition);
+                final IndexShardKey indexShardKey = IndexShardKey.createKey(index, partition);
                 indexShardKeyMap.put(indexShardKey.getPartition(), indexShardKey);
             } else {
                 final long metaCreateMs = metaHolder.getMeta().getCreateMs();
                 final TimePartition timePartition = timePartitionFactory.create(index, metaCreateMs);
                 defaultPartition = timePartition;
-                final IndexShardKey indexShardKey = IndexShardKeyUtil.createKey(index, timePartition);
+                final IndexShardKey indexShardKey = IndexShardKey.createKey(index, timePartition);
                 indexShardKeyMap.put(indexShardKey.getPartition(), indexShardKey);
                 timePartitionTreeMap.put(timePartition.getPartitionFromTime(), timePartition);
             }
@@ -232,7 +232,7 @@ class IndexingFilter extends AbstractXMLFilter {
                 }
 
                 final IndexShardKey indexShardKey =
-                        indexShardKeyMap.computeIfAbsent(partition, k -> IndexShardKeyUtil.createKey(index, k));
+                        indexShardKeyMap.computeIfAbsent(partition, k -> IndexShardKey.createKey(index, k));
 
                 indexer.addDocument(indexShardKey, document);
             } catch (final RuntimeException e) {

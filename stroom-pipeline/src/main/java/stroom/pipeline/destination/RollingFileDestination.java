@@ -21,7 +21,7 @@ import stroom.util.io.FileUtil;
 import stroom.util.io.GZipByteCountOutputStream;
 import stroom.util.io.GZipOutputStream;
 import stroom.util.io.PathCreator;
-import stroom.util.scheduler.SimpleCron;
+import stroom.util.scheduler.Trigger;
 
 import com.google.common.base.Strings;
 import org.slf4j.Logger;
@@ -34,6 +34,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.PosixFilePermission;
+import java.time.Instant;
 import java.util.Set;
 import java.util.function.Consumer;
 
@@ -62,10 +63,10 @@ public class RollingFileDestination extends RollingDestination {
 
     public RollingFileDestination(final PathCreator pathCreator,
                                   final String key,
-                                  final Long frequency,
-                                  final SimpleCron schedule,
+                                  final Trigger frequencyTrigger,
+                                  final Trigger cronTrigger,
                                   final long rollSize,
-                                  final long creationTime,
+                                  final Instant creationTime,
                                   final String fileName,
                                   final String rolledFileName,
                                   final Path dir,
@@ -73,7 +74,7 @@ public class RollingFileDestination extends RollingDestination {
                                   final boolean useCompression,
                                   final Set<PosixFilePermission> filePermissions
     ) throws IOException {
-        super(key, frequency, schedule, rollSize, creationTime);
+        super(key, frequencyTrigger, cronTrigger, rollSize, creationTime);
 
         this.pathCreator = pathCreator;
         this.fileName = fileName;

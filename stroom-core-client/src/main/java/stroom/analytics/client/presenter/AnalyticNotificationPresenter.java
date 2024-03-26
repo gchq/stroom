@@ -27,6 +27,9 @@ import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyUiHandlers;
 import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
+import stroom.feed.shared.FeedDoc;
+import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.shared.time.SimpleDuration;
 
 import com.google.inject.Inject;
@@ -40,22 +43,30 @@ public class AnalyticNotificationPresenter
 
     private final AnalyticStreamDestinationPresenter analyticStreamDestinationPresenter;
     private final AnalyticEmailDestinationPresenter analyticEmailDestinationPresenter;
+    private final DocSelectionBoxPresenter errorFeedPresenter;
 
     @Inject
     public AnalyticNotificationPresenter(final EventBus eventBus,
                                          final AnalyticNotificationView view,
                                          final AnalyticStreamDestinationPresenter analyticStreamDestinationPresenter,
-                                         final AnalyticEmailDestinationPresenter analyticEmailDestinationPresenter) {
+                                         final AnalyticEmailDestinationPresenter analyticEmailDestinationPresenter,
+                                         final DocSelectionBoxPresenter errorFeedPresenter) {
         super(eventBus, view);
         view.setUiHandlers(this);
         this.analyticStreamDestinationPresenter = analyticStreamDestinationPresenter;
         this.analyticEmailDestinationPresenter = analyticEmailDestinationPresenter;
+        this.errorFeedPresenter = errorFeedPresenter;
+
+        errorFeedPresenter.setIncludedTypes(FeedDoc.DOCUMENT_TYPE);
+        errorFeedPresenter.setRequiredPermissions(DocumentPermissionNames.READ);
+        getView().setErrorFeedView(errorFeedPresenter.getView());
     }
 
     @Override
     protected void onBind() {
         registerHandler(analyticStreamDestinationPresenter.addDirtyHandler(e -> setDirty(true)));
         registerHandler(analyticEmailDestinationPresenter.addDirtyHandler(e -> setDirty(true)));
+        registerHandler(errorFeedPresenter.addDataSelectionHandler(e -> onDirty()));
     }
 
     @Override
@@ -66,6 +77,7 @@ public class AnalyticNotificationPresenter
             getView().setMaxNotifications(config.getMaxNotifications());
             getView().setResumeAfter(config.getResumeAfter());
             getView().setDestinationType(config.getDestinationType());
+            errorFeedPresenter.setSelectedEntityReference(config.getErrorFeed());
 
             if (config.getDestinationType() != null) {
                 switch (config.getDestinationType()) {
@@ -112,6 +124,7 @@ public class AnalyticNotificationPresenter
                 .resumeAfter(getView().getResumeAfter())
                 .destinationType(getView().getDestinationType())
                 .destination(destination)
+                .errorFeed(errorFeedPresenter.getSelectedEntityReference())
                 .build();
         return document.copy().analyticNotificationConfig(analyticNotificationConfig).build();
     }
@@ -152,5 +165,7 @@ public class AnalyticNotificationPresenter
         void setDestinationType(AnalyticNotificationDestinationType destinationType);
 
         void setDestinationView(View view);
+
+        void setErrorFeedView(View view);
     }
 }

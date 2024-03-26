@@ -33,7 +33,7 @@ public class TestIndexShardSearcher extends AbstractCoreIntegrationTest {
 //        // Create an index
 //        final DocRef indexRef = commonTestScenarioCreator.createIndex("TEST_2010a");
 //        final IndexDoc index = indexStore.readDocument(indexRef);
-//        final IndexShardKey indexShardKey = IndexShardKeyUtil.createTestKey(index);
+//        final IndexShardKey indexShardKey = IndexShardKey.createTestKey(index);
 //
 //        // Create and close writer.
 //        final IndexShardWriter writer = indexShardWriterCache.getWriterByShardKey(indexShardKey);
