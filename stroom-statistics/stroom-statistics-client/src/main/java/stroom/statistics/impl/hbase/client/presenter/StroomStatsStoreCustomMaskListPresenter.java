@@ -195,7 +195,8 @@ public class StroomStatsStoreCustomMaskListPresenter
                     if (result) {
                         restFactory
                                 .create(STATS_STORE_ROLLUP_RESOURCE)
-                                .method(res -> res.bitMaskPermGeneration(stroomStatsStoreEntity.getStatisticFieldCount()))
+                                .method(res ->
+                                        res.bitMaskPermGeneration(stroomStatsStoreEntity.getStatisticFieldCount()))
 //                        restFactory
 //                                .forResultPage(CustomRollUpMask.class)
                                 .onSuccess(res -> {

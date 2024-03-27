@@ -135,7 +135,8 @@ public class DocumentPermissionsPresenter
             final DocRef docRef = explorerNode.getDocRef();
             restFactory
                     .create(DOC_PERMISSION_RESOURCE)
-                    .method(res -> res.fetchAllDocumentPermissions(new FetchAllDocumentPermissionsRequest(explorerNode.getDocRef())))
+                    .method(res -> res.fetchAllDocumentPermissions(
+                            new FetchAllDocumentPermissionsRequest(explorerNode.getDocRef())))
                     .onSuccess(documentPermissions -> {
                         this.documentPermissions = documentPermissions;
                         // Take a deep copy of documentPermissions before the user mutates it with client side
@@ -178,7 +179,8 @@ public class DocumentPermissionsPresenter
         return event -> {
             restFactory
                     .create(DOC_PERMISSION_RESOURCE)
-                    .method(res -> res.copyPermissionFromParent(new CopyPermissionsFromParentRequest(explorerNode.getDocRef())))
+                    .method(res -> res.copyPermissionFromParent(
+                            new CopyPermissionsFromParentRequest(explorerNode.getDocRef())))
                     .onSuccess(parentDocPermissions -> {
                         // We want to wipe existing permissions on the server, which means creating REMOVES
                         // for all the perms that we started with except those that are also on the parent.
