@@ -23,7 +23,6 @@ import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.OrderByColumn;
 import stroom.data.grid.client.PagerView;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.node.shared.DBTableStatus;
 import stroom.node.shared.DbStatusResource;
@@ -109,8 +108,9 @@ public class DatabaseTablesMonitoringPresenter
                                 final Consumer<ResultPage<DBTableStatus>> dataConsumer,
                                 final Consumer<Throwable> throwableConsumer) {
                 CriteriaUtil.setRange(criteria, range);
-                final Rest<ResultPage<DBTableStatus>> rest = restFactory.create();
-                rest
+                restFactory
+                        .builder()
+                        .forResultPageOf(DBTableStatus.class)
                         .onSuccess(dataConsumer)
                         .onFailure(throwableConsumer)
                         .call(DB_STATUS_RESOURCE)

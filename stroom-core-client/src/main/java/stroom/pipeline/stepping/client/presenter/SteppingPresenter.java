@@ -20,7 +20,6 @@ package stroom.pipeline.stepping.client.presenter;
 import stroom.alert.client.event.AlertEvent;
 import stroom.data.client.presenter.ClassificationUiHandlers;
 import stroom.data.client.presenter.SourcePresenter;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
@@ -529,8 +528,9 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
         request.setChildStreamType(childStreamType);
 
         // Load the pipeline.
-        final Rest<List<PipelineData>> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forListOf(PipelineData.class)
                 .onSuccess(result -> {
                     final PipelineData pipelineData = result.get(result.size() - 1);
                     final List<PipelineData> baseStack = new ArrayList<>(result.size() - 1);
@@ -602,8 +602,9 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
 
             request.setStepType(stepType);
 
-            final Rest<SteppingResult> rest = restFactory.create();
-            rest
+            restFactory
+                    .builder()
+                    .forType(SteppingResult.class)
                     .onSuccess(this::readResult)
                     .onFailure(caught -> {
                         AlertEvent.fireErrorFromException(SteppingPresenter.this, caught, null);

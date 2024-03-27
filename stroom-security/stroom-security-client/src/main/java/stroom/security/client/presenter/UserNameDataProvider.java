@@ -20,7 +20,6 @@ import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.OrderByColumn;
 import stroom.data.table.client.Refreshable;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.security.shared.FindUserNameCriteria;
 import stroom.security.shared.UserNameResource;
@@ -69,8 +68,9 @@ public class UserNameDataProvider implements Refreshable {
                                     final Consumer<ResultPage<UserName>> dataConsumer,
                                     final Consumer<Throwable> throwableConsumer) {
                     CriteriaUtil.setRange(criteria, range);
-                    final Rest<ResultPage<UserName>> rest = restFactory.create();
-                    rest
+                    restFactory
+                            .builder()
+                            .forResultPageOf(UserName.class)
                             .onSuccess(dataConsumer)
                             .onFailure(throwableConsumer)
                             .call(USER_RESOURCE)

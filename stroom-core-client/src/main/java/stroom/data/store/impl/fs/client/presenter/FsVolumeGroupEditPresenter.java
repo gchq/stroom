@@ -23,7 +23,6 @@ import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.data.store.impl.fs.shared.FsVolumeGroup;
 import stroom.data.store.impl.fs.shared.FsVolumeGroupResource;
 import stroom.data.store.impl.fs.shared.FsVolumeResource;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.svg.client.SvgPresets;
 import stroom.util.client.DelayedUpdate;
@@ -100,15 +99,15 @@ public class FsVolumeGroupEditPresenter
         registerHandler(openButton.addClickHandler(event -> edit()));
         registerHandler(deleteButton.addClickHandler(event -> delete()));
         registerHandler(rescanButton.addClickHandler(event -> {
-            final Rest<Boolean> rest = restFactory.create();
             delayedUpdate.reset();
-            rest
+            restFactory
+                    .builder()
+                    .forBoolean()
                     .onSuccess(response -> delayedUpdate.update())
                     .onFailure(throwable -> {
                     })
                     .call(FS_VOLUME_RESOURCE)
                     .rescan();
-
         }));
     }
 
@@ -121,8 +120,9 @@ public class FsVolumeGroupEditPresenter
     private void edit() {
         final FsVolume volume = volumeStatusListPresenter.getSelectionModel().getSelected();
         if (volume != null) {
-            final Rest<FsVolume> rest = restFactory.create();
-            rest
+            restFactory
+                    .builder()
+                    .forType(FsVolume.class)
                     .onSuccess(result -> editVolume(result, "Edit Volume"))
                     .call(FS_VOLUME_RESOURCE)
                     .fetch(volume.getId());
@@ -151,9 +151,12 @@ public class FsVolumeGroupEditPresenter
                         if (result) {
                             volumeStatusListPresenter.getSelectionModel().clear();
                             for (final FsVolume volume : list) {
-                                final Rest<Boolean> rest = restFactory.create();
-                                rest.onSuccess(response -> volumeStatusListPresenter.refresh()).call(
-                                        FS_VOLUME_RESOURCE).delete(volume.getId());
+                                restFactory
+                                        .builder()
+                                        .forBoolean()
+                                        .onSuccess(response -> volumeStatusListPresenter.refresh())
+                                        .call(FS_VOLUME_RESOURCE)
+                                        .delete(volume.getId());
                             }
                         }
                     });
@@ -228,8 +231,9 @@ public class FsVolumeGroupEditPresenter
                     "You must provide a name for the index volume group.",
                     null);
         } else {
-            final Rest<FsVolumeGroup> rest = restFactory.create();
-            rest
+            restFactory
+                    .builder()
+                    .forType(FsVolumeGroup.class)
                     .onSuccess(grp -> {
                         if (grp != null && !Objects.equals(groupId, grp.getId())) {
                             AlertEvent.fireError(
@@ -249,8 +253,9 @@ public class FsVolumeGroupEditPresenter
 
     private void createVolumeGroup(final Consumer<FsVolumeGroup> consumer,
                                    final FsVolumeGroup volumeGroup) {
-        final Rest<FsVolumeGroup> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forType(FsVolumeGroup.class)
                 .onSuccess(consumer)
                 .call(FS_VOLUME_GROUP_RESOURCE)
                 .update(volumeGroup.getId(), volumeGroup);

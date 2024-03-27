@@ -28,6 +28,7 @@ import stroom.pipeline.shared.FetchDataRequest;
 import stroom.pipeline.shared.FetchDataResult;
 import stroom.pipeline.shared.SourceLocation;
 import stroom.query.api.v2.Column;
+import stroom.query.api.v2.ResultStoreInfo;
 import stroom.query.client.presenter.TextPresenter.TextView;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.util.shared.DefaultLocation;
@@ -573,8 +574,9 @@ public class TextPresenter extends MyPresenterWidget<TextView> implements TextUi
                     final FetchDataRequest request = fetchDataQueue.get(fetchDataQueue.size() - 1);
                     fetchDataQueue.clear();
 
-                    final Rest<AbstractFetchDataResult> rest = restFactory.create();
-                    rest
+                    restFactory
+                            .builder()
+                            .forType(AbstractFetchDataResult.class)
                             .onSuccess(result -> {
                                 // If we are queueing more actions then don't update
                                 // the text.

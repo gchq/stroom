@@ -235,8 +235,9 @@ public class QueryModel {
                     .requestedRange(resultConsumer.getRequestedRange())
                     .build();
 
-            final Rest<DashboardSearchResponse> rest = restFactory.create();
-            rest
+            restFactory
+                    .builder()
+                    .forType(DashboardSearchResponse.class)
                     .onSuccess(response -> {
                         try {
                             if (response != null && response.getResults() != null) {
@@ -273,8 +274,9 @@ public class QueryModel {
 //                .queryDocUuid(queryUuid)
 //                .componentId(componentId)
 //                .build();
-//        final Rest<Boolean> rest = restFactory.create();
-//        rest
+//        restFactory
+//                .builder()
+//                .forBoolean()
 //                .onSuccess(response -> {
 //                    if (!response) {
 //                        Console.log("Unable to destroy search: " + request);
@@ -313,8 +315,9 @@ public class QueryModel {
 //                    .storeHistory(storeHistory)
 //                    .build();
 
-            final Rest<DashboardSearchResponse> rest = restFactory.create();
-            rest
+            restFactory
+                    .builder()
+                    .forType(DashboardSearchResponse.class)
                     .onSuccess(response -> {
                         GWT.log(response.toString());
 

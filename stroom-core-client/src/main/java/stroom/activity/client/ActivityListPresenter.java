@@ -24,7 +24,6 @@ import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.data.table.client.Refreshable;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.svg.client.Preset;
 import stroom.util.shared.ResultPage;
@@ -104,8 +103,9 @@ public class ActivityListPresenter
             protected void exec(final Range range,
                                 final Consumer<ResultPage<Activity>> dataConsumer,
                                 final Consumer<Throwable> throwableConsumer) {
-                final Rest<ResultPage<Activity>> rest = restFactory.create();
-                rest
+                restFactory
+                        .builder()
+                        .forResultPageOf(Activity.class)
                         .onSuccess(dataConsumer)
                         .onFailure(throwableConsumer)
                         .call(ACTIVITY_RESOURCE)

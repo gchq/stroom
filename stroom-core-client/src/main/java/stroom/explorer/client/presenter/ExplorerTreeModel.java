@@ -17,7 +17,6 @@
 
 package stroom.explorer.client.presenter;
 
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.explorer.shared.ExplorerNode;
@@ -186,8 +185,9 @@ public class ExplorerTreeModel {
 //                            + " openItems: " + openItems.getOpenItems().size()
 //                            + " minDepth: " + minDepth
 //                            + " ensureVisible: " + ensureVisible);
-                    final Rest<FetchExplorerNodeResult> rest = restFactory.create();
-                    rest
+                    restFactory
+                            .builder()
+                            .forType(FetchExplorerNodeResult.class)
                             .onSuccess(result -> {
                                 handleFetchResult(criteria, result);
                             })

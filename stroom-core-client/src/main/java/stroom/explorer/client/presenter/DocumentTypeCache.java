@@ -18,6 +18,7 @@ package stroom.explorer.client.presenter;
 
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
+import stroom.explorer.shared.BulkActionResult;
 import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.ExplorerResource;
 
@@ -45,8 +46,9 @@ public class DocumentTypeCache {
     public void fetch(final Consumer<DocumentTypes> consumer) {
         // Get the document types if they are null.
         if (documentTypes == null) {
-            final Rest<DocumentTypes> rest = restFactory.create();
-            rest
+            restFactory
+                    .builder()
+                    .forType(DocumentTypes.class)
                     .onSuccess(result -> {
                         documentTypes = result;
                         consumer.accept(result);

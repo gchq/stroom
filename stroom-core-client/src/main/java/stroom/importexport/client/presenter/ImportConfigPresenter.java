@@ -18,7 +18,6 @@ package stroom.importexport.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.dispatch.client.AbstractSubmitCompleteHandler;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.importexport.client.event.ImportConfigConfirmEvent;
 import stroom.importexport.client.event.ImportConfigEvent;
@@ -77,8 +76,9 @@ public class ImportConfigPresenter
 
             @Override
             protected void onSuccess(final ResourceKey resourceKey) {
-                final Rest<ImportConfigResponse> rest = restFactory.create();
-                rest
+                restFactory
+                        .builder()
+                        .forType(ImportConfigResponse.class)
                         .onSuccess(response -> {
                             if (response.getConfirmList().isEmpty()) {
                                 warning("The import package contains nothing that can be imported into " +

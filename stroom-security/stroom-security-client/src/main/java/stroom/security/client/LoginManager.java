@@ -17,7 +17,6 @@
 package stroom.security.client;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.security.client.api.event.LogoutEvent;
 import stroom.security.shared.AppPermissionResource;
@@ -59,8 +58,9 @@ public class LoginManager implements HasHandlers {
     public void fetchUserAndPermissions() {
         // When we start the application we will try and auto login using a client certificates.
         TaskStartEvent.fire(this, "Fetching permissions...");
-        final Rest<UserAndPermissions> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forType(UserAndPermissions.class)
                 .onSuccess(userAndPermissions -> {
                     if (userAndPermissions != null) {
                         currentUser.setUserAndPermissions(userAndPermissions);
@@ -78,8 +78,9 @@ public class LoginManager implements HasHandlers {
 
     private void logout() {
         // Tell the server we want to logout and the server will provide a logout URL.
-        final Rest<UrlResponse> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forType(UrlResponse.class)
                 .onSuccess(response -> setLocation(response.getUrl()))
                 .onFailure(throwable -> AlertEvent.fireErrorFromException(LoginManager.this, throwable, null))
                 .call(STROOM_SESSION_RESOURCE)

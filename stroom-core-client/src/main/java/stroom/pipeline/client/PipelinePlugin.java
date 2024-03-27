@@ -18,7 +18,6 @@
 package stroom.pipeline.client;
 
 import stroom.core.client.ContentManager;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
@@ -87,8 +86,9 @@ public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
     public void load(final DocRef docRef,
                      final Consumer<PipelineDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
-        final Rest<PipelineDoc> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forType(PipelineDoc.class)
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
                 .call(PIPELINE_RESOURCE)
@@ -100,8 +100,9 @@ public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
                      final PipelineDoc document,
                      final Consumer<PipelineDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
-        final Rest<PipelineDoc> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forType(PipelineDoc.class)
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
                 .call(PIPELINE_RESOURCE)

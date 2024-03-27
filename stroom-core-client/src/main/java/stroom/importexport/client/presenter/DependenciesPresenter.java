@@ -23,7 +23,6 @@ import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DeleteDocumentEvent;
@@ -110,8 +109,9 @@ public class DependenciesPresenter extends MyPresenterWidget<PagerView> {
                                 final Consumer<ResultPage<Dependency>> dataConsumer,
                                 final Consumer<Throwable> throwableConsumer) {
                 CriteriaUtil.setRange(criteria, range);
-                final Rest<ResultPage<Dependency>> rest = restFactory.create();
-                rest
+                restFactory
+                        .builder()
+                        .forResultPageOf(Dependency.class)
                         .onSuccess(dataConsumer)
                         .onFailure(throwableConsumer)
                         .call(CONTENT_RESOURCE)
@@ -274,8 +274,9 @@ public class DependenciesPresenter extends MyPresenterWidget<PagerView> {
     private void refreshDocTypeIcons() {
 
         // Hold map of doc type icons keyed on type to save constructing for each row
-        final Rest<DocumentTypes> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forType(DocumentTypes.class)
                 .onSuccess(documentTypes -> {
                     openableTypes = documentTypes
                             .getTypes()

@@ -22,7 +22,6 @@ import stroom.data.client.view.FileData.Status;
 import stroom.data.shared.DataResource;
 import stroom.data.shared.UploadDataRequest;
 import stroom.dispatch.client.AbstractSubmitCompleteHandler;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.item.client.SelectionBox;
@@ -84,8 +83,9 @@ public class DataUploadPresenter extends MyPresenterWidget<DataUploadPresenter.D
                         getView().getMetaData(),
                         fileName);
 
-                final Rest<ResourceKey> rest = restFactory.create();
-                rest
+                restFactory
+                        .builder()
+                        .forType(ResourceKey.class)
                         .onSuccess(result -> {
                             hide();
                             AlertEvent.fireInfo(DataUploadPresenter.this.metaPresenter, "Uploaded file", null);

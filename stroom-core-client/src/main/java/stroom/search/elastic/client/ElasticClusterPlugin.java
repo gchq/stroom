@@ -18,7 +18,6 @@
 package stroom.search.elastic.client;
 
 import stroom.core.client.ContentManager;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
@@ -69,8 +68,9 @@ public class ElasticClusterPlugin extends DocumentPlugin<ElasticClusterDoc> {
     public void load(final DocRef docRef,
                      final Consumer<ElasticClusterDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
-        final Rest<ElasticClusterDoc> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forType(ElasticClusterDoc.class)
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
                 .call(ELASTIC_CLUSTER_RESOURCE)
@@ -82,8 +82,9 @@ public class ElasticClusterPlugin extends DocumentPlugin<ElasticClusterDoc> {
                      final ElasticClusterDoc document,
                      final Consumer<ElasticClusterDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
-        final Rest<ElasticClusterDoc> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forType(ElasticClusterDoc.class)
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
                 .call(ELASTIC_CLUSTER_RESOURCE)

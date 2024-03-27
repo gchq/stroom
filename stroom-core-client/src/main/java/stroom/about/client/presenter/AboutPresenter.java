@@ -18,7 +18,6 @@ package stroom.about.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.config.global.shared.SessionInfoResource;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.ui.config.client.UiConfigCache;
@@ -59,8 +58,9 @@ public class AboutPresenter extends MyPresenter<AboutPresenter.AboutView, AboutP
     }
 
     private void buildContent() {
-        final Rest<SessionInfo> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forType(SessionInfo.class)
                 .onSuccess(sessionInfo -> {
                     final BuildInfo buildInfo = sessionInfo.getBuildInfo();
                     getView().getBuildVersion().setText("Build Version: " + buildInfo.getBuildVersion());

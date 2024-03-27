@@ -18,7 +18,6 @@
 package stroom.visualisation.client;
 
 import stroom.core.client.ContentManager;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
@@ -67,8 +66,9 @@ public class VisualisationPlugin extends DocumentPlugin<VisualisationDoc> {
     public void load(final DocRef docRef,
                      final Consumer<VisualisationDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
-        final Rest<VisualisationDoc> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forType(VisualisationDoc.class)
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
                 .call(VISUALISATION_RESOURCE)
@@ -80,8 +80,9 @@ public class VisualisationPlugin extends DocumentPlugin<VisualisationDoc> {
                      final VisualisationDoc document,
                      final Consumer<VisualisationDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
-        final Rest<VisualisationDoc> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forType(VisualisationDoc.class)
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
                 .call(VISUALISATION_RESOURCE)

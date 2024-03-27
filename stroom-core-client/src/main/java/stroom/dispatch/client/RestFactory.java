@@ -5,6 +5,7 @@ import stroom.util.shared.ResultPage;
 import com.google.inject.TypeLiteral;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public interface RestFactory {
@@ -15,6 +16,7 @@ public interface RestFactory {
      * Equivalent to passing {@code false} to {@link RestFactory#builder(boolean)},
      * i.e. does not fire {@link stroom.task.client.TaskStartEvent}
      * or {@link stroom.task.client.TaskEndEvent} events.
+     *
      * @return An untyped {@link RestBuilder} to set the return type of the REST service.
      */
     RestBuilder builder();
@@ -35,7 +37,8 @@ public interface RestFactory {
      * Deprecated, use {@link RestFactory#builder()} instead
      */
     @Deprecated
-    <R> Rest<R> create();
+    <R> Rest<R> creafte();
+
 
 
     // --------------------------------------------------------------------------------
@@ -54,8 +57,23 @@ public interface RestFactory {
         Rest<Boolean> forBoolean();
 
         /**
+         * Create a {@link Rest} for a String return type
+         */
+        Rest<String> forString();
+
+        /**
+         * Create a {@link Rest} for a Integer return type
+         */
+        Rest<Integer> forInteger();
+
+        /**
+         * Create a {@link Rest} for a Long return type
+         */
+        Rest<Long> forLong();
+
+        /**
          * Create a {@link Rest} for a simple return type with no generics,
-         * e.g. {@link String}.
+         * e.g. {@link String} or {@link stroom.docref.DocRef}.
          */
         <R> Rest<R> forType(final Class<R> type);
 
@@ -65,6 +83,11 @@ public interface RestFactory {
          * <pre>{@code
          * RestFactory.build()
          *   .forWrappedType(new TypeLiteral<Collection<String>>(){ })}</pre>
+         * <p>
+         * Before you use this look at the other {@code forXXX} methods to see
+         * if there is a pre-canned one for your wrapped type,
+         * e.g. {@link RestBuilder#forResultPageOf(Class)}
+         * </p>
          */
         <R> Rest<R> forWrappedType(final TypeLiteral<R> typeLiteral);
 
@@ -75,10 +98,26 @@ public interface RestFactory {
         <T> Rest<List<T>> forListOf(final Class<T> itemType);
 
         /**
+         * Create a {@link Rest} for a {@link List} return type with a given
+         * non-generic item type, e.g. {@link String}.
+         */
+        Rest<List<String>> forStringList();
+
+        /**
          * Create a {@link Rest} for a {@link Set} return type with a given
          * non-generic item type, e.g. {@link String}.
          */
         <T> Rest<Set<T>> forSetOf(final Class<T> itemType);
+
+        /**
+         * Create a {@link Rest} for a {@link Map} return type with given
+         * non-generic key and value types, e.g. a {@link Map} of {@link Long} to
+         * {@link String}.
+         * <p>
+         * If either key or value type has generics then use {@link RestBuilder#forWrappedType(TypeLiteral)}.
+         * </p>
+         */
+        <K, V> Rest<Map<K, V>> forMapOf(final Class<K> keyType, final Class<V> valueType);
 
         /**
          * Create a {@link Rest} for a {@link ResultPage} return type with a given

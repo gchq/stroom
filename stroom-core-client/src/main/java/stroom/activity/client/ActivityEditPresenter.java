@@ -23,7 +23,6 @@ import stroom.activity.shared.Activity.Prop;
 import stroom.activity.shared.ActivityResource;
 import stroom.activity.shared.ActivityValidationResult;
 import stroom.alert.client.event.AlertEvent;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.ActivityConfig;
@@ -214,8 +213,9 @@ public class ActivityEditPresenter extends MyPresenterWidget<ActivityEditView> {
         activity.setDetails(details);
 
         // Validate the activity.
-        final Rest<ActivityValidationResult> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forType(ActivityValidationResult.class)
                 .onSuccess(result -> afterValidation(result, details, consumer))
                 .call(ACTIVITY_RESOURCE)
                 .validate(activity);
@@ -234,8 +234,9 @@ public class ActivityEditPresenter extends MyPresenterWidget<ActivityEditView> {
         } else {
             // Save the activity.
             if (activity.getId() == null) {
-                final Rest<Activity> rest = restFactory.create();
-                rest
+                restFactory
+                        .builder()
+                        .forType(Activity.class)
                         .onSuccess(result -> {
                             activity = result;
                             activity.setDetails(details);
@@ -251,8 +252,9 @@ public class ActivityEditPresenter extends MyPresenterWidget<ActivityEditView> {
     }
 
     private void update(final Activity activity, final ActivityDetails details, final Consumer<Activity> consumer) {
-        final Rest<Activity> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forType(Activity.class)
                 .onSuccess(result -> {
                     ActivityEditPresenter.this.activity = result;
                     consumer.accept(result);

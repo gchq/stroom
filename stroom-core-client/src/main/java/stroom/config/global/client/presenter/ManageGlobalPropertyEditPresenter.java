@@ -223,8 +223,9 @@ public final class ManageGlobalPropertyEditPresenter
     }
 
     private void updateValuesFromResource(final String propertyName, final Runnable hideRunnable) {
-        final Rest<ConfigProperty> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forType(ConfigProperty.class)
                 .onSuccess(configProperty ->
                         show(configProperty, hideRunnable))
                 .onFailure(throwable ->
@@ -453,16 +454,18 @@ public final class ManageGlobalPropertyEditPresenter
 
         ConfigProperty configPropertyToSave = getEntity();
 
-        Rest<ConfigProperty> restCall = restFactory.create();
-        restCall
-                .onSuccess(savedConfigProperty -> {
-                    setEntity(savedConfigProperty);
-                    if (hideOnSave) {
-                        event.hide();
-                        // Refresh client properties in case they were affected by this change.
-                        clientPropertyCache.refresh();
-                    }
-                });
+        final Rest<ConfigProperty> restCall =
+                restFactory
+                        .builder()
+                        .forType(ConfigProperty.class)
+                        .onSuccess(savedConfigProperty -> {
+                            setEntity(savedConfigProperty);
+                            if (hideOnSave) {
+                                event.hide();
+                                // Refresh client properties in case they were affected by this change.
+                                clientPropertyCache.refresh();
+                            }
+                        });
 
         if (configPropertyToSave.getId() == null) {
             // No ID so this doesn't exist in the DB

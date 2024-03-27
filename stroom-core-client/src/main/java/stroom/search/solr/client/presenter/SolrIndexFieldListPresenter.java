@@ -266,8 +266,9 @@ public class SolrIndexFieldListPresenter extends DocumentEditPresenter<SolrIndex
     }
 
     private void fetchFieldTypes(final Consumer<List<String>> consumer) {
-        final Rest<List<String>> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forStringList()
                 .onSuccess(consumer)
                 .onFailure(throwable -> AlertEvent.fireError(SolrIndexFieldListPresenter.this,
                         "Unable to connect to Solr please check connection",

@@ -17,7 +17,6 @@
 package stroom.task.client.presenter;
 
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.node.client.NodeManager;
 import stroom.task.client.event.OpenTaskManagerEvent;
@@ -136,8 +135,9 @@ public class UserTaskManagerPresenter
         for (final String nodeName : nodeNames) {
             if (!refreshing.contains(nodeName)) {
                 refreshing.add(nodeName);
-                final Rest<TaskProgressResponse> rest = restFactory.create();
-                rest
+                restFactory
+                        .builder()
+                        .forType(TaskProgressResponse.class)
                         .onSuccess(response -> {
                             responseMap.put(nodeName, response.getValues());
                             delayedUpdate.update();
@@ -215,8 +215,9 @@ public class UserTaskManagerPresenter
             final FindTaskCriteria findTaskCriteria = new FindTaskCriteria();
             findTaskCriteria.addId(taskProgress.getId());
             final TerminateTaskProgressRequest request = new TerminateTaskProgressRequest(findTaskCriteria);
-            final Rest<Boolean> rest = restFactory.create();
-            rest
+            restFactory
+                    .builder()
+                    .forBoolean()
                     .call(TASK_RESOURCE)
                     .terminate(taskProgress.getNodeName(), request);
         });

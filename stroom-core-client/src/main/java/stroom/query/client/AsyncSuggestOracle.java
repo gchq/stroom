@@ -17,7 +17,6 @@
 package stroom.query.client;
 
 import stroom.datasource.api.v2.QueryField;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.query.shared.FetchSuggestionsRequest;
@@ -87,8 +86,9 @@ public class AsyncSuggestOracle extends SuggestOracle {
                         returnSuggestions(request, callback, cachedSuggestions);
 
                     } else {
-                        final Rest<Suggestions> rest = restFactory.create();
-                        rest
+                        restFactory
+                                .builder()
+                                .forType(Suggestions.class)
                                 .onSuccess(result -> {
                                     if (result.isCacheable()) {
                                         CACHE.put(fetchSuggestionsRequest, result.getList());

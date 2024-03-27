@@ -285,7 +285,7 @@ public class NewPropertyPresenter
             // Load data types.
             restFactory
                     .builder()
-                    .forListOf(String.class)
+                    .forStringList()
                     .onSuccess(result -> {
                         if (result != null) {
                             dataTypeWidget.addItems(result);

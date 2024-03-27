@@ -20,7 +20,6 @@ package stroom.importexport.client.presenter;
 import stroom.alert.client.event.AlertEvent;
 import stroom.core.client.LocationManager;
 import stroom.dispatch.client.ExportFileCompleteUtil;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.DocumentTypeCache;
@@ -183,8 +182,9 @@ public class ExportConfigPresenter
                 docRefs.add(explorerNode.getDocRef());
             }
 
-            final Rest<ResourceGeneration> rest = restFactory.create();
-            rest
+            restFactory
+                    .builder()
+                    .forType(ResourceGeneration.class)
                     .onSuccess(result -> ExportFileCompleteUtil.onSuccess(locationManager, this, result))
                     .onFailure(throwable -> ExportFileCompleteUtil.onFailure(this, throwable))
                     .call(CONTENT_RESOURCE)

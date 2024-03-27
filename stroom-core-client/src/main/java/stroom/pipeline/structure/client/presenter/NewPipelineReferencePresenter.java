@@ -142,8 +142,9 @@ public class NewPipelineReferencePresenter
     private void updateDataTypes(final String selectedDataType) {
         dataTypeWidget.clear();
 
-        final Rest<List<String>> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forStringList()
                 .onSuccess(result -> {
                     if (result != null) {
                         dataTypeWidget.addItems(result);

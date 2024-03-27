@@ -21,7 +21,6 @@ import stroom.core.client.ContentManager;
 import stroom.dictionary.client.presenter.DictionaryPresenter;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.dictionary.shared.DictionaryResource;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
@@ -67,8 +66,9 @@ public class DictionaryPlugin extends DocumentPlugin<DictionaryDoc> {
     public void load(final DocRef docRef,
                      final Consumer<DictionaryDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
-        final Rest<DictionaryDoc> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forType(DictionaryDoc.class)
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
                 .call(DICTIONARY_RESOURCE)
@@ -80,8 +80,9 @@ public class DictionaryPlugin extends DocumentPlugin<DictionaryDoc> {
                      final DictionaryDoc document,
                      final Consumer<DictionaryDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
-        final Rest<DictionaryDoc> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forType(DictionaryDoc.class)
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
                 .call(DICTIONARY_RESOURCE)

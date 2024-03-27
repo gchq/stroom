@@ -18,7 +18,6 @@
 package stroom.security.client.presenter;
 
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.explorer.shared.DocumentTypes;
@@ -102,8 +101,9 @@ public class DocumentPermissionsPresenter
         if (cached != null) {
             consumer.accept(cached);
         } else {
-            final Rest<List<String>> rest = restFactory.create();
-            rest
+            restFactory
+                    .builder()
+                    .forStringList()
                     .onSuccess(permissions -> {
                         ALL_PERMISSIONS_CACHE.put(docType, permissions);
                         consumer.accept(permissions);
@@ -135,8 +135,9 @@ public class DocumentPermissionsPresenter
             }
 
             final DocRef docRef = explorerNode.getDocRef();
-            final Rest<DocumentPermissions> rest = restFactory.create();
-            rest
+            restFactory
+                    .builder()
+                    .forType(DocumentPermissions.class)
                     .onSuccess(documentPermissions -> {
                         this.documentPermissions = documentPermissions;
                         // Take a deep copy of documentPermissions before the user mutates it with client side
@@ -178,8 +179,9 @@ public class DocumentPermissionsPresenter
             final DocumentPermissionsTabPresenter groupsPresenter) {
 
         return event -> {
-            final Rest<DocumentPermissions> rest = restFactory.create();
-            rest
+            restFactory
+                    .builder()
+                    .forType(DocumentPermissions.class)
                     .onSuccess(parentDocPermissions -> {
                         // We want to wipe existing permissions on the server, which means creating REMOVES
                         // for all the perms that we started with except those that are also on the parent.
@@ -264,8 +266,9 @@ public class DocumentPermissionsPresenter
             // If user is cascading then we need to show them a confirm dialog first showing the impact
             // of what they are about to do as it may impact 00s or 000s of documents.
             if (Cascade.isCascading(cascade)) {
-                final Rest<PermissionChangeImpactSummary> rest = restFactory.create();
-                rest
+                restFactory
+                        .builder()
+                        .forType(PermissionChangeImpactSummary.class)
                         .onSuccess(impactSummary -> {
                             if (GwtNullSafe.isBlankString(impactSummary.getImpactSummary())) {
                                 doPermissionChange(e, docRef);
@@ -295,8 +298,9 @@ public class DocumentPermissionsPresenter
     }
 
     private void doPermissionChange(final HidePopupRequestEvent e, final DocRef docRef) {
-        final Rest<Boolean> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forBoolean()
                 .onSuccess(result -> e.hide())
                 .call(DOC_PERMISSION_RESOURCE)
                 .changeDocumentPermissions(new ChangeDocumentPermissionsRequest(

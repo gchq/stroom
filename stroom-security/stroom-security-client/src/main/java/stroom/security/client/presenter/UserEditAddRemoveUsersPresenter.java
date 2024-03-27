@@ -83,8 +83,9 @@ public class UserEditAddRemoveUsersPresenter
                         changedLinkedUsers,
                         null);
 
-                final Rest<Boolean> rest = restFactory.create();
-                rest
+                restFactory
+                        .builder()
+                        .forBoolean()
                         .onSuccess(result -> {
                             refresh();
                         })
@@ -107,8 +108,9 @@ public class UserEditAddRemoveUsersPresenter
                 final ChangeSet<User> changedLinkedUsers = new ChangeSet<>(null, removeSet);
                 final ChangeUserRequest request = new ChangeUserRequest(relatedUser, changedLinkedUsers, null);
 
-                final Rest<Boolean> rest = restFactory.create();
-                rest
+                restFactory
+                        .builder()
+                        .forBoolean()
                         .onSuccess(result -> refresh())
                         .call(APP_PERMISSION_RESOURCE)
                         .changeUser(request);

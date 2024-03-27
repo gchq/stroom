@@ -31,7 +31,6 @@ import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.OrderByColumn;
 import stroom.data.grid.client.PagerView;
 import stroom.data.table.client.Refreshable;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.entity.client.presenter.TreeRowHandler;
 import stroom.node.client.NodeManager;
@@ -448,8 +447,9 @@ public class TaskManagerListPresenter
                                     final List<String> nodeNames) {
         responseMap.clear();
         for (final String nodeName : nodeNames) {
-            final Rest<TaskProgressResponse> rest = restFactory.create();
-            rest
+            restFactory
+                    .builder()
+                    .forType(TaskProgressResponse.class)
                     .onSuccess(response -> {
                         responseMap.put(nodeName, response.getValues());
                         errorMap.put(nodeName, response.getErrors());
@@ -516,7 +516,9 @@ public class TaskManagerListPresenter
         final FindTaskCriteria findTaskCriteria = new FindTaskCriteria();
         findTaskCriteria.addId(taskProgress.getId());
         final TerminateTaskProgressRequest request = new TerminateTaskProgressRequest(findTaskCriteria);
-        restFactory.create()
+        restFactory
+                .builder()
+                .forBoolean()
                 .call(TASK_RESOURCE)
                 .terminate(taskProgress.getNodeName(), request);
     }

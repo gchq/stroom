@@ -23,7 +23,6 @@ import stroom.dashboard.client.main.SearchModel;
 import stroom.dashboard.client.table.ColumnFunctionEditorPresenter.ColumnFunctionEditorView;
 import stroom.dashboard.shared.DashboardResource;
 import stroom.dashboard.shared.ValidateExpressionResult;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.editor.client.presenter.EditorView;
@@ -147,8 +146,9 @@ public class ColumnFunctionEditorPresenter
                     e.hide();
                 } else {
                     // Check the validity of the expression.
-                    final Rest<ValidateExpressionResult> rest = restFactory.create();
-                    rest
+                    restFactory
+                            .builder()
+                            .forType(ValidateExpressionResult.class)
                             .onSuccess(result -> {
                                 if (result.isOk()) {
                                     columnChangeConsumer.accept(column, column

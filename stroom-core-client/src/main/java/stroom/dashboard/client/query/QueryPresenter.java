@@ -38,7 +38,6 @@ import stroom.dashboard.shared.DashboardResource;
 import stroom.dashboard.shared.DashboardSearchRequest;
 import stroom.dashboard.shared.QueryComponentSettings;
 import stroom.dispatch.client.ExportFileCompleteUtil;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.event.HasDirtyHandlers;
@@ -570,8 +569,9 @@ public class QueryPresenter
                 .queryData(queryData)
                 .priority(1)
                 .build();
-        final Rest<ProcessorFilter> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forType(ProcessorFilter.class)
                 .onSuccess(streamProcessorFilter -> {
                     if (streamProcessorFilter != null) {
                         CreateProcessorEvent.fire(QueryPresenter.this, streamProcessorFilter);
@@ -770,8 +770,9 @@ public class QueryPresenter
 
             } else if (getQuerySettings().getLastQueryKey() != null) {
                 // See if the result store exists before we try and resume a query.
-                final Rest<Boolean> rest = restFactory.create();
-                rest
+                restFactory
+                        .builder()
+                        .forBoolean()
                         .onSuccess(result -> {
                             if (result != null && result) {
                                 // Resume search if we have a stored query key.
@@ -924,8 +925,9 @@ public class QueryPresenter
                     dashboardContext.getParams(),
                     dashboardContext.getTimeRange());
 
-            final Rest<ResourceGeneration> rest = restFactory.create();
-            rest
+            restFactory
+                    .builder()
+                    .forType(ResourceGeneration.class)
                     .onSuccess(result ->
                             ExportFileCompleteUtil.onSuccess(locationManager, null, result))
                     .call(DASHBOARD_RESOURCE)

@@ -18,7 +18,6 @@
 package stroom.kafka.client;
 
 import stroom.core.client.ContentManager;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
@@ -77,8 +76,9 @@ public class KafkaConfigPlugin extends DocumentPlugin<KafkaConfigDoc> {
     public void load(final DocRef docRef,
                      final Consumer<KafkaConfigDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
-        final Rest<KafkaConfigDoc> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forType(KafkaConfigDoc.class)
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
                 .call(KAFKA_CONFIG_RESOURCE)
@@ -90,8 +90,9 @@ public class KafkaConfigPlugin extends DocumentPlugin<KafkaConfigDoc> {
                      final KafkaConfigDoc document,
                      final Consumer<KafkaConfigDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
-        final Rest<KafkaConfigDoc> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forType(KafkaConfigDoc.class)
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
                 .call(KAFKA_CONFIG_RESOURCE)

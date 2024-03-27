@@ -19,7 +19,6 @@ package stroom.search.elastic.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.data.client.presenter.EditExpressionPresenter;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocumentEditPresenter;
@@ -100,8 +99,9 @@ public class ElasticIndexSettingsPresenter extends DocumentEditPresenter<Elastic
         ElasticIndexDoc index = new ElasticIndexDoc();
         index = onWrite(index);
 
-        final Rest<ElasticIndexTestResponse> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forType(ElasticIndexTestResponse.class)
                 .onSuccess(result -> {
                     if (result.isOk()) {
                         AlertEvent.fireInfo(this, "Connection Success", result.getMessage(), null);

@@ -2,7 +2,6 @@ package stroom.security.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.presenter.EditApiKeyPresenter.EditApiKeyView;
@@ -65,8 +64,9 @@ public class EditApiKeyPresenter
         super.onBind();
         getView().setCanSelectOwner(securityContext.hasAppPermission(PermissionNames.MANAGE_USERS_PERMISSION));
 
-        final Rest<List<UserName>> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forListOf(UserName.class)
                 .onSuccess(userNames ->
                         getView().setUserNames(userNames))
                 .call(USER_RESOURCE)
@@ -161,9 +161,9 @@ public class EditApiKeyPresenter
                         .build();
 
 //                GWT.log("ID: " + this.apiKey.getId());
-
-                final Rest<HashedApiKey> rest = restFactory.create();
-                rest
+                restFactory
+                        .builder()
+                        .forType(HashedApiKey.class)
                         .onSuccess(apiKey -> {
                             this.apiKey = apiKey;
                             GwtNullSafe.run(onChangeHandler);
@@ -196,8 +196,9 @@ public class EditApiKeyPresenter
                     ok -> {
                         if (ok) {
                             // cancel clicked so delete the created key
-                            final Rest<Boolean> rest = restFactory.create();
-                            rest
+                            restFactory
+                                    .builder()
+                                    .forBoolean()
                                     .onSuccess(didDelete -> {
                                         GwtNullSafe.run(onChangeHandler);
                                         event.hide();
@@ -237,8 +238,9 @@ public class EditApiKeyPresenter
                     getView().getComments(),
                     getView().isEnabled());
 //            GWT.log("sending create req");
-            final Rest<CreateHashedApiKeyResponse> rest = restFactory.create();
-            rest
+            restFactory
+                    .builder()
+                    .forType(CreateHashedApiKeyResponse.class)
                     .onSuccess(response -> {
                         apiKey = response.getHashedApiKey();
                         // API Key created so change the mode and update the fields on the dialog

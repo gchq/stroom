@@ -18,7 +18,6 @@ package stroom.security.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.FindUserCriteria;
@@ -36,7 +35,6 @@ import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
-import java.util.List;
 import javax.inject.Inject;
 
 /**
@@ -196,8 +194,9 @@ public class UsersAndGroupsTabPresenter
                     "Are you sure you want to delete the selected " + getTypeName() + "?",
                     ok -> {
                         if (ok) {
-                            final Rest<Boolean> rest = restFactory.create();
-                            rest
+                            restFactory
+                                    .builder()
+                                    .forBoolean()
                                     .onSuccess(result -> {
                                         listPresenter.refresh();
                                         listPresenter.getSelectionModel().clear();
@@ -242,8 +241,9 @@ public class UsersAndGroupsTabPresenter
     private void showNewGroupDialog() {
         newGroupPresenter.show(e -> {
             if (e.isOk()) {
-                final Rest<User> rest = restFactory.create();
-                rest
+                restFactory
+                        .builder()
+                        .forType(User.class)
                         .onSuccess(result -> {
                             e.hide();
                             edit(result);
@@ -259,8 +259,9 @@ public class UsersAndGroupsTabPresenter
     private void showNewUserDialog() {
         newUserPresenter.show(e -> {
             if (e.isOk()) {
-                final Rest<User> rest = restFactory.create();
-                rest
+                restFactory
+                        .builder()
+                        .forType(User.class)
                         .onSuccess(result -> {
                             e.hide();
 //                            newUserPresenter.hide();
@@ -279,8 +280,9 @@ public class UsersAndGroupsTabPresenter
             if (e.isOk()) {
                 final String usersCsvData = createMultipleUsersPresenter.getUsersCsvData();
                 if (usersCsvData != null && !usersCsvData.isEmpty()) {
-                    final Rest<List<User>> rest = restFactory.create();
-                    rest
+                    restFactory
+                            .builder()
+                            .forListOf(User.class)
                             .onSuccess(result -> {
                                 e.hide();
 //                                createMultipleUsersPresenter.hide();

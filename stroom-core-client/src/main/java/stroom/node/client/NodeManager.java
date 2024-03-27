@@ -1,6 +1,5 @@
 package stroom.node.client;
 
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.node.shared.ClusterNodeInfo;
 import stroom.node.shared.FetchNodeStatusResponse;
@@ -29,8 +28,9 @@ public class NodeManager {
     public void fetchNodeStatus(final Consumer<FetchNodeStatusResponse> dataConsumer,
                                 final Consumer<Throwable> throwableConsumer,
                                 final FindNodeStatusCriteria findNodeStatusCriteria) {
-        final Rest<FetchNodeStatusResponse> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forType(FetchNodeStatusResponse.class)
                 .onSuccess(dataConsumer)
                 .onFailure(throwableConsumer)
                 .call(NODE_RESOURCE)
@@ -40,8 +40,9 @@ public class NodeManager {
     public void ping(final String nodeName,
                      final Consumer<Long> pingConsumer,
                      final Consumer<Throwable> throwableConsumer) {
-        final Rest<Long> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forType(Long.class)
                 .onSuccess(pingConsumer)
                 .onFailure(throwableConsumer)
                 .call(NODE_RESOURCE)
@@ -51,8 +52,9 @@ public class NodeManager {
     public void info(final String nodeName,
                      final Consumer<ClusterNodeInfo> infoConsumer,
                      final Consumer<Throwable> throwableConsumer) {
-        final Rest<ClusterNodeInfo> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forType(ClusterNodeInfo.class)
                 .onSuccess(infoConsumer)
                 .onFailure(throwableConsumer)
                 .call(NODE_RESOURCE)
@@ -62,8 +64,9 @@ public class NodeManager {
     public void setPriority(final String nodeName,
                             final int priority,
                             final Consumer<Boolean> resultConsumer) {
-        final Rest<Boolean> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forBoolean()
                 .onSuccess(resultConsumer)
                 .call(NODE_RESOURCE)
                 .setPriority(nodeName, priority);
@@ -72,8 +75,9 @@ public class NodeManager {
     public void setEnabled(final String nodeName,
                            final boolean enabled,
                            final Consumer<Boolean> resultConsumer) {
-        final Rest<Boolean> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forBoolean()
                 .onSuccess(resultConsumer)
                 .call(NODE_RESOURCE)
                 .setEnabled(nodeName, enabled);
@@ -81,8 +85,9 @@ public class NodeManager {
 
     public void listAllNodes(final Consumer<List<String>> nodeListConsumer,
                              final Consumer<Throwable> throwableConsumer) {
-        final Rest<List<String>> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forStringList()
                 .onSuccess(nodeListConsumer)
                 .onFailure(throwableConsumer)
                 .call(NODE_RESOURCE)
@@ -91,8 +96,9 @@ public class NodeManager {
 
     public void listEnabledNodes(final Consumer<List<String>> nodeListConsumer,
                                  final Consumer<Throwable> throwableConsumer) {
-        final Rest<List<String>> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forStringList()
                 .onSuccess(nodeListConsumer)
                 .onFailure(throwableConsumer)
                 .call(NODE_RESOURCE)

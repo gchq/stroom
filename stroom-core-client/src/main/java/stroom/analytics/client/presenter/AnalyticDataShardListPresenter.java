@@ -26,7 +26,6 @@ import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.node.client.NodeManager;
@@ -173,8 +172,9 @@ public class AnalyticDataShardListPresenter
         for (final String nodeName : nodeNames) {
             if (criteria.getAnalyticDocUuid() != null) {
                 CriteriaUtil.setRange(criteria, range);
-                final Rest<ResultPage<AnalyticDataShard>> rest = restFactory.create();
-                rest
+                restFactory
+                        .builder()
+                        .forResultPageOf(AnalyticDataShard.class)
                         .onSuccess(response -> {
                             responseMap.put(nodeName, response.getValues());
 //                            errorMap.put(nodeName, response.getErrors());

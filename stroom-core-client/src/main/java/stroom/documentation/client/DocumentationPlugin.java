@@ -18,7 +18,6 @@
 package stroom.documentation.client;
 
 import stroom.core.client.ContentManager;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
@@ -67,8 +66,9 @@ public class DocumentationPlugin extends DocumentPlugin<DocumentationDoc> {
     public void load(final DocRef docRef,
                      final Consumer<DocumentationDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
-        final Rest<DocumentationDoc> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forType(DocumentationDoc.class)
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
                 .call(DOCUMENTATION_RESOURCE)
@@ -80,8 +80,9 @@ public class DocumentationPlugin extends DocumentPlugin<DocumentationDoc> {
                      final DocumentationDoc document,
                      final Consumer<DocumentationDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
-        final Rest<DocumentationDoc> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forType(DocumentationDoc.class)
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
                 .call(DOCUMENTATION_RESOURCE)

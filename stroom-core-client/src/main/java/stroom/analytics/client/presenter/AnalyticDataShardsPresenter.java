@@ -22,7 +22,6 @@ import stroom.analytics.shared.AnalyticDataShard;
 import stroom.analytics.shared.AnalyticDataShardResource;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.GetAnalyticShardDataRequest;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocumentEditPresenter;
@@ -103,8 +102,9 @@ public class AnalyticDataShardsPresenter
                             dateTimeSettingsFactory.getDateTimeSettings());
 
             queryToolbarPresenter.onSearching(true);
-            final Rest<Result> rest = restFactory.create();
-            rest
+            restFactory
+                    .builder()
+                    .forType(Result.class)
                     .onSuccess(result -> {
                         tablePresenter.setData(result);
                         queryToolbarPresenter.onSearching(false);

@@ -20,7 +20,6 @@ package stroom.index.client.presenter;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.data.grid.client.WrapperView;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.index.shared.IndexVolumeGroup;
 import stroom.index.shared.IndexVolumeGroupResource;
@@ -113,8 +112,9 @@ public class IndexVolumeGroupPresenter extends ContentTabPresenter<WrapperView> 
         final NewIndexVolumeGroupPresenter presenter = newIndexVolumeGroupPresenterProvider.get();
         presenter.show("", name -> {
             if (name != null) {
-                final Rest<IndexVolumeGroup> rest = restFactory.create();
-                rest
+                restFactory
+                        .builder()
+                        .forType(IndexVolumeGroup.class)
                         .onSuccess(indexVolumeGroup -> {
                             edit(indexVolumeGroup);
                             presenter.hide();
@@ -131,8 +131,9 @@ public class IndexVolumeGroupPresenter extends ContentTabPresenter<WrapperView> 
     private void edit() {
         final IndexVolumeGroup volume = volumeStatusListPresenter.getSelectionModel().getSelected();
         if (volume != null) {
-            final Rest<IndexVolumeGroup> rest = restFactory.create();
-            rest
+            restFactory
+                    .builder()
+                    .forType(IndexVolumeGroup.class)
                     .onSuccess(this::edit)
                     .call(INDEX_VOLUME_GROUP_RESOURCE)
                     .fetch(volume.getId());
@@ -161,9 +162,12 @@ public class IndexVolumeGroupPresenter extends ContentTabPresenter<WrapperView> 
                         if (result) {
                             volumeStatusListPresenter.getSelectionModel().clear();
                             for (final IndexVolumeGroup volume : list) {
-                                final Rest<Boolean> rest = restFactory.create();
-                                rest.onSuccess(response ->
-                                        refresh()).call(INDEX_VOLUME_GROUP_RESOURCE).delete(volume.getId());
+                                restFactory
+                                        .builder()
+                                        .forBoolean()
+                                        .onSuccess(response -> refresh())
+                                        .call(INDEX_VOLUME_GROUP_RESOURCE)
+                                        .delete(volume.getId());
                             }
                         }
                     });

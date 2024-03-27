@@ -19,7 +19,6 @@ package stroom.kafka.client.presenter;
 
 import stroom.core.client.LocationManager;
 import stroom.dispatch.client.ExportFileCompleteUtil;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.editor.client.presenter.EditorPresenter;
@@ -123,8 +122,9 @@ public class KafkaConfigPresenter extends DocumentEditTabPresenter<LinkTabPanelV
     protected void onBind() {
         super.onBind();
         registerHandler(downloadButton.addClickHandler(clickEvent -> {
-            final Rest<ResourceGeneration> rest = restFactory.create();
-            rest
+            restFactory
+                    .builder()
+                    .forType(ResourceGeneration.class)
                     .onSuccess(result -> ExportFileCompleteUtil.onSuccess(locationManager, this, result))
                     .call(KAFKA_CONFIG_RESOURCE)
                     .download(docRef);

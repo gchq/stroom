@@ -24,7 +24,6 @@ import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.explorer.client.event.RefreshExplorerTreeEvent;
@@ -176,8 +175,9 @@ public class ImportConfigConfirmPresenter extends
 
     public void refresh() {
         importSettingsBuilder.importMode(ImportMode.CREATE_CONFIRMATION);
-        final Rest<ImportConfigResponse> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forType(ImportConfigResponse.class)
                 .onSuccess(result -> {
                     confirmList = result.getConfirmList();
                     if (confirmList.isEmpty()) {
@@ -451,8 +451,9 @@ public class ImportConfigConfirmPresenter extends
         importSettingsBuilder.useImportFolders(false);
         importSettingsBuilder.enableFilters(false);
 
-        final Rest<ImportConfigResponse> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forType(ImportConfigResponse.class)
                 .onSuccess(result2 -> AlertEvent.fireWarn(ImportConfigConfirmPresenter.this,
                         "Import Aborted",
                         () -> HidePopupEvent.builder(ImportConfigConfirmPresenter.this).ok(false).fire()))
@@ -465,8 +466,9 @@ public class ImportConfigConfirmPresenter extends
 
     public void importData() {
         importSettingsBuilder.importMode(ImportMode.ACTION_CONFIRMATION);
-        final Rest<ImportConfigResponse> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forType(ImportConfigResponse.class)
                 .onSuccess(result2 ->
                         AlertEvent.fireInfo(
                                 ImportConfigConfirmPresenter.this,

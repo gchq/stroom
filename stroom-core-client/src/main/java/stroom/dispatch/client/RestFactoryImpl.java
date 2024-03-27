@@ -14,6 +14,7 @@ import org.fusesource.restygwt.client.Defaults;
 import org.fusesource.restygwt.client.Dispatcher;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 class RestFactoryImpl implements RestFactory, HasHandlers {
@@ -43,7 +44,7 @@ class RestFactoryImpl implements RestFactory, HasHandlers {
     }
 
     @Override
-    public <R> Rest<R> create() {
+    public <R> Rest<R> creafte() {
         return new RestImpl<>(this);
     }
 
@@ -68,6 +69,15 @@ class RestFactoryImpl implements RestFactory, HasHandlers {
         };
         @SuppressWarnings("Convert2Diamond")
         private static final TypeLiteral<Boolean> BOOLEAN_TYPE_LITERAL = new TypeLiteral<Boolean>() {
+        };
+        @SuppressWarnings("Convert2Diamond")
+        private static final TypeLiteral<String> STRING_TYPE_LITERAL = new TypeLiteral<String>() {
+        };
+        @SuppressWarnings("Convert2Diamond")
+        private static final TypeLiteral<Integer> INTEGER_TYPE_LITERAL = new TypeLiteral<Integer>() {
+        };
+        @SuppressWarnings("Convert2Diamond")
+        private static final TypeLiteral<Long> LONG_TYPE_LITERAL = new TypeLiteral<Long>() {
         };
 
         private final HasHandlers hasHandlers;
@@ -96,6 +106,21 @@ class RestFactoryImpl implements RestFactory, HasHandlers {
         }
 
         @Override
+        public Rest<String> forString() {
+            return createRest(STRING_TYPE_LITERAL);
+        }
+
+        @Override
+        public Rest<Long> forLong() {
+            return createRest(LONG_TYPE_LITERAL);
+        }
+
+        @Override
+        public Rest<Integer> forInteger() {
+            return createRest(INTEGER_TYPE_LITERAL);
+        }
+
+        @Override
         public <R> Rest<R> forType(final Class<R> type) {
             return createRest(new TypeLiteral<R>() {
             });
@@ -110,6 +135,20 @@ class RestFactoryImpl implements RestFactory, HasHandlers {
         public <T> Rest<List<T>> forListOf(final Class<T> itemType) {
             //noinspection Convert2Diamond
             return createRest(new TypeLiteral<List<T>>() {
+            });
+        }
+
+        @Override
+        public Rest<List<String>> forStringList() {
+            //noinspection Convert2Diamond
+            return createRest(new TypeLiteral<List<String>>() {
+            });
+        }
+
+        @Override
+        public <K, V> Rest<Map<K, V>> forMapOf(final Class<K> keyType, final Class<V> valueType) {
+            //noinspection Convert2Diamond
+            return createRest(new TypeLiteral<Map<K, V>>() {
             });
         }
 

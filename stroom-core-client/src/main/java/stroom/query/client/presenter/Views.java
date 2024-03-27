@@ -1,7 +1,6 @@
 package stroom.query.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.view.shared.ViewResource;
@@ -40,8 +39,9 @@ public class Views implements HasHandlers {
         if (views != null && System.currentTimeMillis() < nextUpdateTimeEpochMs) {
             consumer.accept(views);
         } else {
-            final Rest<List<DocRef>> rest = restFactory.create();
-            rest
+            restFactory
+                    .builder()
+                    .forListOf(DocRef.class)
                     .onSuccess(result -> {
                         views = result;
                         consumer.accept(result);

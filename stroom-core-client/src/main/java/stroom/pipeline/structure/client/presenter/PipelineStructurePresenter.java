@@ -19,7 +19,6 @@ package stroom.pipeline.structure.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
@@ -128,8 +127,9 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
         pipelinePresenter.setRequiredPermissions(DocumentPermissionNames.USE);
 
         // Get a map of all available elements and properties.
-        final Rest<List<FetchPropertyTypesResult>> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forListOf(FetchPropertyTypesResult.class)
                 .onSuccess(result -> {
                     final Map<PipelineElementType, Map<String, PipelinePropertyType>> propertyTypes =
                             result.stream().collect(Collectors.toMap(FetchPropertyTypesResult::getPipelineElementType,
@@ -234,8 +234,9 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
             }
             pipelinePresenter.setSelectedEntityReference(document.getParentPipeline());
 
-            final Rest<List<PipelineData>> rest = restFactory.create();
-            rest
+            restFactory
+                    .builder()
+                    .forListOf(PipelineData.class)
                     .onSuccess(result -> {
                         final PipelineData pipelineData = result.get(result.size() - 1);
                         final List<PipelineData> baseStack = new ArrayList<>(result.size() - 1);
@@ -503,8 +504,9 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
             xmlEditor.getView().asWidget().getElement().addClassName("default-min-sizes");
 
             final PopupSize popupSize = PopupSize.resizable(600, 400);
-            final Rest<FetchPipelineXmlResponse> rest = restFactory.create();
-            rest
+            restFactory
+                    .builder()
+                    .forType(FetchPipelineXmlResponse.class)
                     .onSuccess(result -> {
                         String text = "";
                         if (result != null) {
@@ -546,8 +548,9 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
     }
 
     private void doActualSave(final EditorPresenter xmlEditor) {
-        final Rest<Boolean> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forBoolean()
                 .onSuccess(result -> {
                     // Hide the popup.
                     HidePopupEvent.builder(xmlEditor).fire();
@@ -597,8 +600,9 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
             }
 
         } else {
-            final Rest<List<PipelineData>> rest = restFactory.create();
-            rest
+            restFactory
+                    .builder()
+                    .forListOf(PipelineData.class)
                     .onSuccess(result -> {
                         pipelineModel.setBaseStack(result);
 

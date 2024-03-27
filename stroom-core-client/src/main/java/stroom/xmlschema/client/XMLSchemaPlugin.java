@@ -18,7 +18,6 @@
 package stroom.xmlschema.client;
 
 import stroom.core.client.ContentManager;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
@@ -67,8 +66,9 @@ public class XMLSchemaPlugin extends DocumentPlugin<XmlSchemaDoc> {
     public void load(final DocRef docRef,
                      final Consumer<XmlSchemaDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
-        final Rest<XmlSchemaDoc> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forType(XmlSchemaDoc.class)
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
                 .call(XML_SCHEMA_RESOURCE)
@@ -80,8 +80,9 @@ public class XMLSchemaPlugin extends DocumentPlugin<XmlSchemaDoc> {
                      final XmlSchemaDoc document,
                      final Consumer<XmlSchemaDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
-        final Rest<XmlSchemaDoc> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forType(XmlSchemaDoc.class)
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
                 .call(XML_SCHEMA_RESOURCE)

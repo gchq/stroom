@@ -33,7 +33,6 @@ import stroom.data.shared.DataResource;
 import stroom.data.table.client.Refreshable;
 import stroom.datasource.api.v2.QueryField;
 import stroom.dispatch.client.ExportFileCompleteUtil;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.DocSelectionPopup;
@@ -152,8 +151,9 @@ public abstract class AbstractMetaListPresenter
                                 final Consumer<Throwable> throwableConsumer) {
                 if (criteria.getExpression() != null) {
                     CriteriaUtil.setRange(criteria, range);
-                    final Rest<ResultPage<MetaRow>> rest = restFactory.create();
-                    rest
+                    restFactory
+                            .builder()
+                            .forResultPageOf(MetaRow.class)
                             .onSuccess(dataConsumer)
                             .onFailure(throwableConsumer)
                             .call(META_RESOURCE)
@@ -668,8 +668,9 @@ public abstract class AbstractMetaListPresenter
                             final Status currentStatus,
                             final Status newStatus) {
         return () -> {
-            final Rest<Integer> rest = restFactory.create();
-            rest
+            restFactory
+                    .builder()
+                    .forInteger()
                     .onSuccess(result ->
                             AlertEvent.fireInfo(
                                     AbstractMetaListPresenter.this,
@@ -683,8 +684,9 @@ public abstract class AbstractMetaListPresenter
     }
 
     private void download(final FindMetaCriteria criteria) {
-        final Rest<ResourceGeneration> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forType(ResourceGeneration.class)
                 .onSuccess(result -> ExportFileCompleteUtil.onSuccess(locationManager, this, result))
                 .call(DATA_RESOURCE)
                 .download(criteria);
@@ -709,8 +711,9 @@ public abstract class AbstractMetaListPresenter
                 .maxMetaCreateTimeMs(processChoice.getMaxMetaCreateTimeMs())
                 .build();
 
-        final Rest<ProcessorFilter> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forType(ProcessorFilter.class)
                 .onSuccess(processorFilter -> {
                     if (processorFilter != null) {
                         CreateProcessorEvent.fire(AbstractMetaListPresenter.this, processorFilter);
@@ -741,8 +744,9 @@ public abstract class AbstractMetaListPresenter
                 .maxMetaCreateTimeMs(processChoice.getMaxMetaCreateTimeMs())
                 .build();
 
-        final Rest<List<ReprocessDataInfo>> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forListOf(ReprocessDataInfo.class)
                 .onSuccess(result -> {
                     if (result != null && result.size() > 0) {
                         Severity maxSeverity = null;

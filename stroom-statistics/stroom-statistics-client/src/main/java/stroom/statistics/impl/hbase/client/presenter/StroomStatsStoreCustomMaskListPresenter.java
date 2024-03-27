@@ -23,7 +23,6 @@ import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
@@ -35,7 +34,6 @@ import stroom.statistics.impl.hbase.shared.StroomStatsStoreDoc;
 import stroom.statistics.impl.hbase.shared.StroomStatsStoreEntityData;
 import stroom.statistics.impl.hbase.shared.StroomStatsStoreFieldChangeRequest;
 import stroom.svg.client.SvgPresets;
-import stroom.util.shared.ResultPage;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectionModelImpl;
@@ -195,8 +193,9 @@ public class StroomStatsStoreCustomMaskListPresenter
                         "permutations for the field list?",
                 result -> {
                     if (result) {
-                        final Rest<ResultPage<CustomRollUpMask>> rest = restFactory.create();
-                        rest
+                        restFactory
+                                .builder()
+                                .forResultPageOf(CustomRollUpMask.class)
 //                        restFactory.builder()
 //                                .forResultPage(CustomRollUpMask.class)
                                 .onSuccess(res -> {
@@ -289,9 +288,9 @@ public class StroomStatsStoreCustomMaskListPresenter
                                        final StroomStatsStoreEntityData newEntityData) {
         // grab the mask list from this presenter
         oldEntityData.setCustomRollUpMasks(new HashSet<>(maskList.getMasks()));
-
-        final Rest<StroomStatsStoreEntityData> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forType(StroomStatsStoreEntityData.class)
                 .onSuccess(result -> {
                     newEntityData.setCustomRollUpMasks(result.getCustomRollUpMasks());
 

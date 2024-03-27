@@ -23,7 +23,6 @@ import stroom.dashboard.client.main.SettingsPresenter;
 import stroom.dashboard.client.table.TablePresenter;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.VisComponentSettings;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
@@ -128,8 +127,9 @@ public class BasicVisSettingsPresenter extends BasicSettingsTabPresenter<BasicVi
     private void loadVisualisation(final DocRef docRef, final JSONObject dynamicSettings) {
         currentVisualisation = docRef;
         if (docRef != null) {
-            final Rest<VisualisationDoc> rest = restFactory.create();
-            rest
+            restFactory
+                    .builder()
+                    .forType(VisualisationDoc.class)
                     .onSuccess(result -> {
                         String jsonString = "";
                         if (result != null && result.getSettings() != null) {

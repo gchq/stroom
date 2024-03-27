@@ -99,8 +99,9 @@ public class ListInputPresenter
     private void update(final ListInputComponentSettings settings) {
         if (settings.isUseDictionary() &&
                 settings.getDictionary() != null) {
-            final Rest<List<String>> rest = restFactory.create();
-            rest
+            restFactory
+                    .builder()
+                    .forStringList()
                     .onSuccess(words -> {
                         if (words != null) {
                             getView().setValues(words);

@@ -29,7 +29,6 @@ import stroom.dashboard.shared.IndexConstants;
 import stroom.dashboard.shared.TableComponentSettings;
 import stroom.dashboard.shared.TextComponentSettings;
 import stroom.data.shared.DataResource;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.editor.client.presenter.HtmlPresenter;
@@ -593,8 +592,9 @@ public class TextPresenter
                     final FetchDataRequest request = fetchDataQueue.get(fetchDataQueue.size() - 1);
                     fetchDataQueue.clear();
 
-                    final Rest<AbstractFetchDataResult> rest = restFactory.create();
-                    rest
+                    restFactory
+                            .builder()
+                            .forType(AbstractFetchDataResult.class)
                             .onSuccess(result -> {
                                 // If we are queueing more actions then don't update
                                 // the text.

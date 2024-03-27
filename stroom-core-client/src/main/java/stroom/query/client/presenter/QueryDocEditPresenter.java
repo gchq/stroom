@@ -27,7 +27,6 @@ import stroom.analytics.shared.AnalyticRuleResource;
 import stroom.analytics.shared.QueryLanguageVersion;
 import stroom.analytics.shared.TableBuilderAnalyticProcessConfig;
 import stroom.dashboard.shared.ValidateExpressionResult;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.event.OpenDocumentEvent;
@@ -118,8 +117,9 @@ public class QueryDocEditPresenter extends DocumentEditPresenter<QueryEditView, 
                 AlertEvent.fireError(this, "No default processing node configured", null);
             } else {
                 final String query = queryEditPresenter.getQuery();
-                final Rest<ValidateExpressionResult> rest = restFactory.create();
-                rest
+                restFactory
+                        .builder()
+                        .forType(ValidateExpressionResult.class)
                         .onSuccess(validateExpressionResult -> {
                             if (!validateExpressionResult.isOk()) {
                                 AlertEvent.fireError(this,
@@ -151,8 +151,9 @@ public class QueryDocEditPresenter extends DocumentEditPresenter<QueryEditView, 
         };
 
         // First get the explorer node for the docref.
-        final Rest<ExplorerNode> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forType(ExplorerNode.class)
                 .onSuccess(explorerNode -> {
                     // Ask the user to create a new document.
                     ShowCreateDocumentDialogEvent.fire(
@@ -172,8 +173,9 @@ public class QueryDocEditPresenter extends DocumentEditPresenter<QueryEditView, 
                              final AnalyticUiDefaultConfig analyticUiDefaultConfig,
                              final String query,
                              final AnalyticProcessType analyticProcessType) {
-        final Rest<AnalyticRuleDoc> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forType(AnalyticRuleDoc.class)
                 .onSuccess(doc -> {
                     // Create default config.
                     switch (analyticProcessType) {
@@ -272,8 +274,9 @@ public class QueryDocEditPresenter extends DocumentEditPresenter<QueryEditView, 
 
     private void updateRule(final DocRef ruleDocRef,
                             final AnalyticRuleDoc ruleDoc) {
-        final Rest<AnalyticRuleDoc> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forType(AnalyticRuleDoc.class)
                 .onSuccess(doc -> OpenDocumentEvent.fire(
                         QueryDocEditPresenter.this,
                         ruleDocRef,

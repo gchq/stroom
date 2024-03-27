@@ -13,7 +13,6 @@ import stroom.data.grid.client.DataGridSelectionEventManager;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.OrderByColumn;
 import stroom.data.grid.client.PagerView;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.security.client.api.ClientSecurityContext;
@@ -208,8 +207,9 @@ public class ApiKeysListPresenter
             ConfirmEvent.fire(this, msg, ok -> {
 //                GWT.log("id: " + id);
                 if (ok) {
-                    final Rest<Boolean> rest = restFactory.create();
-                    rest
+                    restFactory
+                            .builder()
+                            .forBoolean()
                             .onSuccess(unused -> {
                                 onSuccess.run();
                             })
@@ -224,8 +224,9 @@ public class ApiKeysListPresenter
                     "and it will not be possible to re-create them.";
             ConfirmEvent.fire(this, msg, ok -> {
                 if (ok) {
-                    final Rest<Integer> rest = restFactory.create();
-                    rest
+                    restFactory
+                            .builder()
+                            .forInteger()
                             .onSuccess(count -> {
                                 onSuccess.run();
                             })
@@ -310,9 +311,9 @@ public class ApiKeysListPresenter
     private void fetchData(final Range range,
                            final Consumer<ApiKeyResultPage> dataConsumer,
                            final Consumer<Throwable> throwableConsumer) {
-
-        final Rest<ApiKeyResultPage> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forType(ApiKeyResultPage.class)
                 .onSuccess(response -> {
                     apiKeys.clear();
                     response.stream()

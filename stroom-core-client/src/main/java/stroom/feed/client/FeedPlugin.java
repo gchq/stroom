@@ -18,7 +18,6 @@
 package stroom.feed.client;
 
 import stroom.core.client.ContentManager;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
@@ -67,8 +66,9 @@ public class FeedPlugin extends DocumentPlugin<FeedDoc> {
     public void load(final DocRef docRef,
                      final Consumer<FeedDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
-        final Rest<FeedDoc> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forType(FeedDoc.class)
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
                 .call(FEED_RESOURCE)
@@ -80,8 +80,9 @@ public class FeedPlugin extends DocumentPlugin<FeedDoc> {
                      final FeedDoc document,
                      final Consumer<FeedDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
-        final Rest<FeedDoc> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forType(FeedDoc.class)
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
                 .call(FEED_RESOURCE)

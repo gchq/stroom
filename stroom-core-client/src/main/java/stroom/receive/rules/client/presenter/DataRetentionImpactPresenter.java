@@ -164,8 +164,9 @@ public class DataRetentionImpactPresenter
         // Get the summary data from the rest service, this could
         // take a looooong time
         // Need to assign it to a variable for the generics typing
-        final Rest<DataRetentionDeleteSummaryResponse> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forType(DataRetentionDeleteSummaryResponse.class)
                 .onSuccess(response -> {
                     // check we are expecting the results
                     if (isQueryRunning && currentQueryId.equals(response.getQueryId())) {
@@ -195,8 +196,9 @@ public class DataRetentionImpactPresenter
 
     private void cancelQuery() {
         if (currentQueryId != null) {
-            final Rest<Boolean> rest = restFactory.create();
-            rest
+            restFactory
+                    .builder()
+                    .forBoolean()
                     .onSuccess(success -> {
                         isQueryRunning = false;
                         clearTable();

@@ -18,7 +18,6 @@
 package stroom.explorer.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.event.RefreshDocumentEvent;
@@ -92,14 +91,16 @@ public class ExplorerNodeEditTagsPresenter
                     .map(ExplorerNode::getDocRef)
                     .collect(Collectors.toList());
 
-            final Rest<Set<String>> allNodeTagsRest = restFactory.create();
-            allNodeTagsRest
+            restFactory
+                    .builder()
+                    .forSetOf(String.class)
                     .onSuccess(allTags -> {
                         if (isSingleDocRef()) {
-                            final Rest<Set<String>> expNodeRest = restFactory.create();
-                            expNodeRest
-                                    .onSuccess(nodetags -> {
-                                        getView().setData(docRefs, nodetags, allTags);
+                            restFactory
+                                    .builder()
+                                    .forSetOf(String.class)
+                                    .onSuccess(nodeTags -> {
+                                        getView().setData(docRefs, nodeTags, allTags);
                                         forceReveal();
                                     })
                                     .onFailure(this::handleFailure)
@@ -172,8 +173,9 @@ public class ExplorerNodeEditTagsPresenter
 
     private void addTagsToNodes(final HidePopupRequestEvent event, final Set<String> editedTags) {
         final List<DocRef> nodeDocRefs = getNodeDocRefs();
-        final Rest<Void> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forVoid()
                 .onSuccess(voidResult -> {
                     // Update the node in the tree with the new tags
                     nodeDocRefs.forEach(docRef ->
@@ -190,9 +192,9 @@ public class ExplorerNodeEditTagsPresenter
         final ExplorerNode updatedNode = getSingleNode().copy()
                 .tags(editedTags)
                 .build();
-
-        final Rest<ExplorerNode> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forType(ExplorerNode.class)
                 .onSuccess(explorerNode -> {
                     // Update the node in the tree with the new tags
                     RefreshDocumentEvent.fire(

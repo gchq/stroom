@@ -21,7 +21,6 @@ import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermissionResource;
@@ -86,8 +85,9 @@ public class AppPermissionsPresenter extends
 
         } else {
             // Fetch permissions and populate table.
-            final Rest<UserAndPermissions> rest = restFactory.create();
-            rest
+            restFactory
+                    .builder()
+                    .forType(UserAndPermissions.class)
                     .onSuccess(userAppPermissions -> {
                         AppPermissionsPresenter.this.userAppPermissions = userAppPermissions;
                         updateAllPermissions();
@@ -103,8 +103,9 @@ public class AppPermissionsPresenter extends
             dataGrid.setRowCount(allPermissions.size(), true);
 
         } else {
-            final Rest<List<String>> rest = restFactory.create();
-            rest
+            restFactory
+                    .builder()
+                    .forStringList()
                     .onSuccess(allPermissions -> {
                         Collections.sort(allPermissions);
                         this.allPermissions = allPermissions;
@@ -147,8 +148,9 @@ public class AppPermissionsPresenter extends
                     request.getChangedAppPermissions().remove(permission);
                 }
 
-                final Rest<Boolean> rest = restFactory.create();
-                rest
+                restFactory
+                        .builder()
+                        .forBoolean()
                         .onSuccess(result -> refresh())
                         .call(APP_PERMISSION_RESOURCE)
                         .changeUser(request);

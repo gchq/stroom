@@ -81,6 +81,7 @@ import stroom.importexport.client.event.ImportConfigEvent;
 import stroom.importexport.client.event.ShowDocRefDependenciesEvent;
 import stroom.importexport.client.event.ShowDocRefDependenciesEvent.DependencyType;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
+import stroom.receive.rules.shared.ReceiveDataRules;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.PermissionNames;
@@ -578,8 +579,9 @@ public class DocumentPluginEventManager extends Plugin {
                        final ExplorerNode destinationFolder,
                        final PermissionInheritance permissionInheritance,
                        final Consumer<ExplorerNode> consumer) {
-        final Rest<ExplorerNode> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forType(ExplorerNode.class)
                 .onSuccess(consumer)
                 .call(EXPLORER_RESOURCE)
                 .create(new ExplorerServiceCreateRequest(
@@ -595,8 +597,9 @@ public class DocumentPluginEventManager extends Plugin {
                       final String newName,
                       final PermissionInheritance permissionInheritance,
                       final Consumer<BulkActionResult> consumer) {
-        final Rest<BulkActionResult> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forType(BulkActionResult.class)
                 .onSuccess(consumer)
                 .call(EXPLORER_RESOURCE)
                 .copy(new ExplorerServiceCopyRequest(
@@ -611,24 +614,27 @@ public class DocumentPluginEventManager extends Plugin {
                       final ExplorerNode destinationFolder,
                       final PermissionInheritance permissionInheritance,
                       final Consumer<BulkActionResult> consumer) {
-        final Rest<BulkActionResult> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forType(BulkActionResult.class)
                 .onSuccess(consumer)
                 .call(EXPLORER_RESOURCE)
                 .move(new ExplorerServiceMoveRequest(explorerNodes, destinationFolder, permissionInheritance));
     }
 
     private void rename(final ExplorerNode explorerNode, final String docName, final Consumer<ExplorerNode> consumer) {
-        final Rest<ExplorerNode> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forType(ExplorerNode.class)
                 .onSuccess(consumer)
                 .call(EXPLORER_RESOURCE)
                 .rename(new ExplorerServiceRenameRequest(explorerNode, docName));
     }
 
     public void delete(final List<DocRef> docRefs, final Consumer<BulkActionResult> consumer) {
-        final Rest<BulkActionResult> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forType(BulkActionResult.class)
                 .onSuccess(consumer)
                 .call(EXPLORER_RESOURCE)
                 .delete(new ExplorerServiceDeleteRequest(docRefs));
@@ -673,8 +679,10 @@ public class DocumentPluginEventManager extends Plugin {
 
     public void highlight(final DocRef docRef) {
         // Obtain the Explorer node for the provided DocRef
-        restFactory.create()
-                .onSuccess(explorerNode -> highlight((ExplorerNode) explorerNode))
+        restFactory
+                .builder()
+                .forType(ExplorerNode.class)
+                .onSuccess(this::highlight)
                 .call(EXPLORER_RESOURCE)
                 .getFromDocRef(docRef);
     }
@@ -757,8 +765,9 @@ public class DocumentPluginEventManager extends Plugin {
 
     private void fetchPermissions(final List<ExplorerNode> explorerNodes,
                                   final Consumer<Map<ExplorerNode, ExplorerNodePermissions>> consumer) {
-        final Rest<Set<ExplorerNodePermissions>> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forSetOf(ExplorerNodePermissions.class)
                 .onSuccess(response -> {
                     final Map<ExplorerNode, ExplorerNodePermissions> map = response.stream().collect(Collectors.toMap(
                             ExplorerNodePermissions::getExplorerNode,
@@ -1080,8 +1089,9 @@ public class DocumentPluginEventManager extends Plugin {
             command = () -> {
                 // Should only be one item as info is not supported for multi selection
                 // in the tree
-                final Rest<ExplorerNodeInfo> rest = restFactory.create();
-                rest
+                restFactory
+                        .builder()
+                        .forType(ExplorerNodeInfo.class)
                         .onSuccess(explorerNodeInfo -> {
                             ShowInfoDocumentDialogEvent.fire(
                                     DocumentPluginEventManager.this,

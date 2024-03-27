@@ -19,7 +19,6 @@ package stroom.welcome.client.presenter;
 import stroom.alert.client.event.AlertEvent;
 import stroom.config.global.shared.SessionInfoResource;
 import stroom.content.client.presenter.ContentTabPresenter;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.svg.shared.SvgImage;
@@ -50,8 +49,9 @@ public class WelcomePresenter extends ContentTabPresenter<WelcomePresenter.Welco
                             final DateTimeFormatter dateTimeFormatter) {
         super(eventBus, view);
 
-        final Rest<SessionInfo> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forType(SessionInfo.class)
                 .onSuccess(sessionInfo -> {
                     final UserName userName = sessionInfo.getUserName();
                     view.getUserIdentity().setText(userName.getSubjectId());

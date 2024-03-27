@@ -24,6 +24,7 @@ import stroom.util.shared.DefaultLocation;
 import stroom.util.shared.HasCharacterData;
 import stroom.util.shared.HasCharacterData.NavigationMode;
 import stroom.util.shared.Location;
+import stroom.util.shared.ResourceKey;
 import stroom.util.shared.TextRange;
 import stroom.util.shared.string.HexDump;
 import stroom.widget.progress.client.presenter.Progress;
@@ -420,9 +421,9 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements
             request.setDisplayMode(FetchDataRequest.DisplayMode.TEXT);
         }
 
-        final Rest<AbstractFetchDataResult> rest = restFactory.create();
-
-        rest
+        restFactory
+                .builder()
+                .forType(AbstractFetchDataResult.class)
                 .onSuccess(this::handleResponse)
                 .onFailure(caught -> AlertEvent.fireError(
                         SourcePresenter.this,

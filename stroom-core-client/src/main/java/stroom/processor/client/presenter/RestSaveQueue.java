@@ -34,7 +34,7 @@ public abstract class RestSaveQueue<K, V> implements HasHandlers {
     private void tryAndSetValue(final K key) {
         V value = nextValue.remove(key);
         if (value != null) {
-            Rest<?> rest = restFactory.create();
+            Rest<?> rest = restFactory.creafte();
             rest = rest
                     .onSuccess(res -> tryAndSetValue(key))
                     .onFailure(res -> {

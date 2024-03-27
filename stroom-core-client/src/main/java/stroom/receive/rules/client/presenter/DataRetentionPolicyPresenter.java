@@ -20,7 +20,6 @@ import stroom.alert.client.event.ConfirmEvent;
 import stroom.data.retention.shared.DataRetentionRule;
 import stroom.data.retention.shared.DataRetentionRules;
 import stroom.data.retention.shared.DataRetentionRulesResource;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.client.ExpressionTreePresenter;
@@ -129,8 +128,9 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
     }
 
     private void initialiseRules(final RestFactory restFactory) {
-        final Rest<DataRetentionRules> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forType(DataRetentionRules.class)
                 .onSuccess(result -> {
                     policy = result;
                     if (policy.getRules() == null) {
@@ -452,8 +452,9 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
             // Get the user's rules without our default one
             policy.setRules(getUserRules());
 
-            final Rest<DataRetentionRules> rest = restFactory.create();
-            rest
+            restFactory
+                    .builder()
+                    .forType(DataRetentionRules.class)
                     .onSuccess(result -> {
                         policy = result;
                         setVisibleRules(policy.getRules());

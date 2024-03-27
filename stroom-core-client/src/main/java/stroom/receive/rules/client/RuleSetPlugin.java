@@ -18,7 +18,6 @@
 package stroom.receive.rules.client;
 
 import stroom.core.client.ContentManager;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.DocumentPlugin;
@@ -69,8 +68,9 @@ public class RuleSetPlugin extends DocumentPlugin<ReceiveDataRules> {
     public void load(final DocRef docRef,
                      final Consumer<ReceiveDataRules> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
-        final Rest<ReceiveDataRules> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forType(ReceiveDataRules.class)
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
                 .call(RULES_RESOURCE)
@@ -82,8 +82,9 @@ public class RuleSetPlugin extends DocumentPlugin<ReceiveDataRules> {
                      final ReceiveDataRules document,
                      final Consumer<ReceiveDataRules> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
-        final Rest<ReceiveDataRules> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forType(ReceiveDataRules.class)
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
                 .call(RULES_RESOURCE)

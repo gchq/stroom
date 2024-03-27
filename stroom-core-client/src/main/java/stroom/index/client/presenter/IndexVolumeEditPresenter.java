@@ -19,7 +19,6 @@ package stroom.index.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.index.client.presenter.IndexVolumeEditPresenter.IndexVolumeEditView;
 import stroom.index.shared.IndexVolume;
@@ -102,9 +101,9 @@ public class IndexVolumeEditPresenter extends MyPresenterWidget<IndexVolumeEditV
 
     private void doWithVolumeValidation(final IndexVolume volume,
                                         final Runnable work) {
-
-        final Rest<ValidationResult> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forType(ValidationResult.class)
                 .onSuccess(validationResult -> {
                     if (validationResult.isOk()) {
                         if (work != null) {
@@ -136,8 +135,9 @@ public class IndexVolumeEditPresenter extends MyPresenterWidget<IndexVolumeEditV
     }
 
     private void createIndexVolume(final Consumer<IndexVolume> savedVolumeConsumer, final IndexVolume volume) {
-        final Rest<IndexVolume> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forType(IndexVolume.class)
                 .onSuccess(savedVolumeConsumer)
                 .call(INDEX_VOLUME_RESOURCE)
                 .create(volume);
@@ -145,8 +145,9 @@ public class IndexVolumeEditPresenter extends MyPresenterWidget<IndexVolumeEditV
 
     private void updateVolume(final Consumer<IndexVolume> consumer,
                               final IndexVolume volume) {
-        final Rest<IndexVolume> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forType(IndexVolume.class)
                 .onSuccess(consumer)
                 .call(INDEX_VOLUME_RESOURCE)
                 .update(volume.getId(), volume);

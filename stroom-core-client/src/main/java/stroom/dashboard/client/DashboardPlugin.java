@@ -24,7 +24,6 @@ import stroom.dashboard.client.event.ReopenResultStoreEvent;
 import stroom.dashboard.client.main.DashboardSuperPresenter;
 import stroom.dashboard.shared.DashboardDoc;
 import stroom.dashboard.shared.DashboardResource;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
@@ -189,8 +188,9 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
     public void load(final DocRef docRef,
                      final Consumer<DashboardDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
-        final Rest<DashboardDoc> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forType(DashboardDoc.class)
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
                 .call(DASHBOARD_RESOURCE)
@@ -202,8 +202,9 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
                      final DashboardDoc document,
                      final Consumer<DashboardDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
-        final Rest<DashboardDoc> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forType(DashboardDoc.class)
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
                 .call(DASHBOARD_RESOURCE)

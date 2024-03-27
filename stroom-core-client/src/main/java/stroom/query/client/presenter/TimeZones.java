@@ -42,8 +42,9 @@ public class TimeZones {
             localTimeZoneId = "Z";
         }
 
-        final Rest<List<String>> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forStringList()
                 .onSuccess(result -> ids = result)
                 .call(QUERY_RESOURCE)
                 .fetchTimeZones();

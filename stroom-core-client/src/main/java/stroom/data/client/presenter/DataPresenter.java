@@ -23,7 +23,6 @@ import stroom.data.shared.DataInfoSection;
 import stroom.data.shared.DataResource;
 import stroom.data.shared.DataType;
 import stroom.data.shared.StreamTypeNames;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.editor.client.presenter.HtmlPresenter;
 import stroom.meta.shared.Meta;
@@ -461,9 +460,9 @@ public class DataPresenter
 
     public void fetchData(final SourceLocation sourceLocation) {
         // We know the location but not what type of data we are fetching so first get the meta
-
-        final Rest<Meta> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forType(Meta.class)
                 .onSuccess(meta -> {
                     fetchData(meta, sourceLocation, false);
                 })
@@ -749,8 +748,9 @@ public class DataPresenter
                         final FetchDataRequest request = actionQueue.get(actionQueue.size() - 1);
                         actionQueue.clear();
 
-                        final Rest<AbstractFetchDataResult> rest = restFactory.create();
-                        rest
+                        restFactory
+                                .builder()
+                                .forType(AbstractFetchDataResult.class)
                                 .onSuccess(result -> {
                                     // If we are queueing more actions then don't
                                     // update the text.

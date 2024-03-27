@@ -29,7 +29,6 @@ import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.OrderByColumn;
 import stroom.data.grid.client.PagerView;
 import stroom.data.table.client.Refreshable;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocumentEditPresenter;
@@ -435,8 +434,9 @@ public class IndexShardPresenter extends DocumentEditPresenter<PagerView, Lucene
                                         final Consumer<ResultPage<IndexShard>> dataConsumer,
                                         final Consumer<Throwable> throwableConsumer) {
                         CriteriaUtil.setRange(queryCriteria, range);
-                        final Rest<ResultPage<IndexShard>> rest = restFactory.create();
-                        rest
+                        restFactory
+                                .builder()
+                                .forResultPageOf(IndexShard.class)
                                 .onSuccess(dataConsumer)
                                 .onFailure(throwableConsumer)
                                 .call(INDEX_RESOURCE)
@@ -541,8 +541,9 @@ public class IndexShardPresenter extends DocumentEditPresenter<PagerView, Lucene
     private void doFlush() {
         delayedUpdate.reset();
         nodeManager.listEnabledNodes(nodeNames -> nodeNames.forEach(nodeName -> {
-            final Rest<Long> rest = restFactory.create();
-            rest
+            restFactory
+                    .builder()
+                    .forLong()
                     .onSuccess(result -> delayedUpdate.update())
                     .call(INDEX_RESOURCE)
                     .flushIndexShards(nodeName, selectionCriteria);
@@ -557,8 +558,9 @@ public class IndexShardPresenter extends DocumentEditPresenter<PagerView, Lucene
     private void doDelete() {
         delayedUpdate.reset();
         nodeManager.listEnabledNodes(nodeNames -> nodeNames.forEach(nodeName -> {
-            final Rest<Long> rest = restFactory.create();
-            rest
+            restFactory
+                    .builder()
+                    .forLong()
                     .onSuccess(result -> delayedUpdate.update())
                     .call(INDEX_RESOURCE)
                     .deleteIndexShards(nodeName, selectionCriteria);

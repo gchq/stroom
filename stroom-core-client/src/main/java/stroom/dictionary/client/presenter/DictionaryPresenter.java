@@ -20,7 +20,6 @@ import stroom.core.client.LocationManager;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.dictionary.shared.DictionaryResource;
 import stroom.dispatch.client.ExportFileCompleteUtil;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.editor.client.presenter.EditorPresenter;
@@ -126,8 +125,9 @@ public class DictionaryPresenter extends DocumentEditTabPresenter<LinkTabPanelVi
     protected void onBind() {
         super.onBind();
         registerHandler(downloadButton.addClickHandler(clickEvent -> {
-            final Rest<ResourceGeneration> rest = restFactory.create();
-            rest
+            restFactory
+                    .builder()
+                    .forType(ResourceGeneration.class)
                     .onSuccess(result -> ExportFileCompleteUtil.onSuccess(locationManager, this, result))
                     .call(DICTIONARY_RESOURCE)
                     .download(docRef);

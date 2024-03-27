@@ -122,8 +122,9 @@ public class CurrentUser implements ClientSecurityContext, HasHandlers {
         // Set the default behaviour of the future to show an error.
         future.onFailure(throwable -> AlertEvent.fireErrorFromException(CurrentUser.this, throwable, null));
 
-        final Rest<Boolean> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forBoolean()
                 .onSuccess(future::setResult)
                 .onFailure(future::setThrowable)
                 .call(DOC_PERMISSION_RESOURCE)

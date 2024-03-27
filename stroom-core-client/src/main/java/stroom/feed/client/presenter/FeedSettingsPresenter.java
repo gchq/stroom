@@ -20,7 +20,6 @@ package stroom.feed.client.presenter;
 import stroom.data.client.presenter.DataTypeUiManager;
 import stroom.data.store.impl.fs.shared.FsVolumeGroup;
 import stroom.data.store.impl.fs.shared.FsVolumeGroupResource;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocumentEditPresenter;
@@ -31,7 +30,6 @@ import stroom.feed.shared.FeedDoc.FeedStatus;
 import stroom.feed.shared.FeedResource;
 import stroom.item.client.SelectionBox;
 import stroom.util.shared.EqualsUtil;
-import stroom.util.shared.ResultPage;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 
 import com.google.gwt.core.client.GWT;
@@ -40,8 +38,6 @@ import com.google.gwt.user.client.ui.TextBox;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
-
-import java.util.List;
 
 public class FeedSettingsPresenter extends DocumentEditPresenter<FeedSettingsView, FeedDoc> {
 
@@ -115,8 +111,9 @@ public class FeedSettingsPresenter extends DocumentEditPresenter<FeedSettingsVie
     }
 
     private void updateEncodings() {
-        final Rest<List<String>> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forStringList()
                 .onSuccess(result -> {
                     getView().getDataEncoding().clear();
                     getView().getContextEncoding().clear();
@@ -139,8 +136,9 @@ public class FeedSettingsPresenter extends DocumentEditPresenter<FeedSettingsVie
     }
 
     private void updateVolumeGroups() {
-        final Rest<ResultPage<FsVolumeGroup>> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forResultPageOf(FsVolumeGroup.class)
                 .onSuccess(result -> {
                     getView().getVolumeGroup().clear();
                     getView().getVolumeGroup().setNonSelectString("");

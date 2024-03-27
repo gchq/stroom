@@ -18,7 +18,6 @@
 package stroom.search.solr.client;
 
 import stroom.core.client.ContentManager;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
@@ -67,8 +66,9 @@ public class SolrIndexPlugin extends DocumentPlugin<SolrIndexDoc> {
     public void load(final DocRef docRef,
                      final Consumer<SolrIndexDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
-        final Rest<SolrIndexDoc> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forType(SolrIndexDoc.class)
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
                 .call(SOLR_INDEX_RESOURCE)
@@ -80,8 +80,9 @@ public class SolrIndexPlugin extends DocumentPlugin<SolrIndexDoc> {
                      final SolrIndexDoc document,
                      final Consumer<SolrIndexDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
-        final Rest<SolrIndexDoc> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forType(SolrIndexDoc.class)
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
                 .call(SOLR_INDEX_RESOURCE)

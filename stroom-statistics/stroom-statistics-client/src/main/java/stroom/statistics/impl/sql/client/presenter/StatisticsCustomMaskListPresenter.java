@@ -23,7 +23,6 @@ import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
@@ -190,8 +189,9 @@ public class StatisticsCustomMaskListPresenter extends DocumentEditPresenter<Pag
                         "permutations for the field list?",
                 result -> {
                     if (result) {
-                        final Rest<List<CustomRollUpMask>> rest = restFactory.create();
-                        rest
+                        restFactory
+                                .builder()
+                                .forListOf(CustomRollUpMask.class)
                                 .onSuccess(res -> {
                                     updateState(new HashSet<>(res));
                                     DirtyEvent.fire(thisInstance, true);
@@ -282,9 +282,9 @@ public class StatisticsCustomMaskListPresenter extends DocumentEditPresenter<Pag
                                        final StatisticsDataSourceData newStatisticsDataSourceData) {
         // grab the mask list from this presenter
         oldStatisticsDataSourceData.setCustomRollUpMasks(new HashSet<>(maskList.getMasks()));
-
-        final Rest<StatisticsDataSourceData> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forType(StatisticsDataSourceData.class)
                 .onSuccess(result -> {
                     newStatisticsDataSourceData.setCustomRollUpMasks(result.getCustomRollUpMasks());
 

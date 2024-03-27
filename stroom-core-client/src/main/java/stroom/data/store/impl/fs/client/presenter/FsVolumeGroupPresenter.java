@@ -22,7 +22,6 @@ import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.data.grid.client.WrapperView;
 import stroom.data.store.impl.fs.shared.FsVolumeGroup;
 import stroom.data.store.impl.fs.shared.FsVolumeGroupResource;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.svg.client.IconColour;
 import stroom.svg.client.SvgPresets;
@@ -90,8 +89,9 @@ public class FsVolumeGroupPresenter extends ContentTabPresenter<WrapperView> {
         final NewFsVolumeGroupPresenter presenter = newFsVolumeGroupPresenterProvider.get();
         presenter.show("", name -> {
             if (name != null) {
-                final Rest<FsVolumeGroup> rest = restFactory.create();
-                rest
+                restFactory
+                        .builder()
+                        .forType(FsVolumeGroup.class)
                         .onSuccess(volumeGroup -> {
                             edit(volumeGroup);
                             presenter.hide();
@@ -108,8 +108,9 @@ public class FsVolumeGroupPresenter extends ContentTabPresenter<WrapperView> {
     private void edit() {
         final FsVolumeGroup volume = volumeStatusListPresenter.getSelectionModel().getSelected();
         if (volume != null) {
-            final Rest<FsVolumeGroup> rest = restFactory.create();
-            rest
+            restFactory
+                    .builder()
+                    .forType(FsVolumeGroup.class)
                     .onSuccess(this::edit)
                     .call(FS_VOLUME_GROUP_RESOURCE)
                     .fetch(volume.getId());
@@ -138,9 +139,12 @@ public class FsVolumeGroupPresenter extends ContentTabPresenter<WrapperView> {
                         if (result) {
                             volumeStatusListPresenter.getSelectionModel().clear();
                             for (final FsVolumeGroup volume : list) {
-                                final Rest<Boolean> rest = restFactory.create();
-                                rest.onSuccess(response ->
-                                        refresh()).call(FS_VOLUME_GROUP_RESOURCE).delete(volume.getId());
+                                restFactory
+                                        .builder()
+                                        .forBoolean()
+                                        .onSuccess(response -> refresh())
+                                        .call(FS_VOLUME_GROUP_RESOURCE)
+                                        .delete(volume.getId());
                             }
                         }
                     });

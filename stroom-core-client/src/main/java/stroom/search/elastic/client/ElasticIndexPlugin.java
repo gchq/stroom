@@ -18,7 +18,6 @@
 package stroom.search.elastic.client;
 
 import stroom.core.client.ContentManager;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
@@ -69,8 +68,9 @@ public class ElasticIndexPlugin extends DocumentPlugin<ElasticIndexDoc> {
     public void load(final DocRef docRef,
                      final Consumer<ElasticIndexDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
-        final Rest<ElasticIndexDoc> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forType(ElasticIndexDoc.class)
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
                 .call(ELASTIC_INDEX_RESOURCE)
@@ -82,8 +82,9 @@ public class ElasticIndexPlugin extends DocumentPlugin<ElasticIndexDoc> {
                      final ElasticIndexDoc document,
                      final Consumer<ElasticIndexDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
-        final Rest<ElasticIndexDoc> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forType(ElasticIndexDoc.class)
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
                 .call(ELASTIC_INDEX_RESOURCE)

@@ -18,7 +18,6 @@
 package stroom.view.client;
 
 import stroom.core.client.ContentManager;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
@@ -67,8 +66,9 @@ public class ViewPlugin extends DocumentPlugin<ViewDoc> {
     public void load(final DocRef docRef,
                      final Consumer<ViewDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
-        final Rest<ViewDoc> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forType(ViewDoc.class)
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
                 .call(VIEW_RESOURCE)
@@ -80,8 +80,9 @@ public class ViewPlugin extends DocumentPlugin<ViewDoc> {
                      final ViewDoc document,
                      final Consumer<ViewDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
-        final Rest<ViewDoc> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forType(ViewDoc.class)
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
                 .call(VIEW_RESOURCE)

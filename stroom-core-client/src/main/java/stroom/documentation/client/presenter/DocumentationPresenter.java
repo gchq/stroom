@@ -18,7 +18,6 @@ package stroom.documentation.client.presenter;
 
 import stroom.core.client.LocationManager;
 import stroom.dispatch.client.ExportFileCompleteUtil;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.documentation.shared.DocumentationDoc;
@@ -91,8 +90,9 @@ public class DocumentationPresenter extends DocumentEditTabPresenter<LinkTabPane
     protected void onBind() {
         super.onBind();
         registerHandler(downloadButton.addClickHandler(clickEvent -> {
-            final Rest<ResourceGeneration> rest = restFactory.create();
-            rest
+            restFactory
+                    .builder()
+                    .forType(ResourceGeneration.class)
                     .onSuccess(result -> ExportFileCompleteUtil.onSuccess(locationManager, this, result))
                     .call(DOCUMENTATION_RESOURCE)
                     .download(docRef);

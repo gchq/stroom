@@ -23,7 +23,6 @@ import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.EventId;
 import stroom.dashboard.shared.IndexConstants;
 import stroom.dashboard.shared.TableComponentSettings;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.query.api.v2.Column;
 import stroom.query.client.presenter.TableRow;
@@ -246,9 +245,9 @@ public class AnnotationManager {
 
         // assignedTo is a display name so have to convert it back to a unique username
         final UserNameResource userNameResource = GWT.create(UserNameResource.class);
-        final Rest<UserName> rest = restFactory.create();
-
-        rest
+        restFactory
+                .builder()
+                .forType(UserName.class)
                 .onSuccess(optUserName -> {
                     final Annotation annotation = new Annotation();
                     annotation.setTitle(title);

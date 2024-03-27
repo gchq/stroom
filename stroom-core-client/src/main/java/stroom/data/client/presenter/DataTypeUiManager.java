@@ -40,8 +40,9 @@ public class DataTypeUiManager {
     }
 
     public void getTypes(final Consumer<List<String>> consumer) {
-        final Rest<List<String>> streamTypesRest = restFactory.create();
-        streamTypesRest
+        restFactory
+                .builder()
+                .forStringList()
                 .onSuccess(consumer::accept)
                 .call(META_RESOURCE)
                 .getTypes();

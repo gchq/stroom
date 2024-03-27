@@ -24,7 +24,6 @@ import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.job.shared.Job;
 import stroom.job.shared.JobResource;
@@ -83,8 +82,11 @@ public class JobListPresenter extends MyPresenterWidget<PagerView> {
         };
         enabledColumn.setFieldUpdater((index, row, value) -> {
             row.setEnabled(value.toBoolean());
-            final Rest<Job> rest = restFactory.create();
-            rest.call(JOB_RESOURCE).setEnabled(row.getId(), value.toBoolean());
+            restFactory
+                    .builder()
+                    .forType(Job.class)
+                    .call(JOB_RESOURCE)
+                    .setEnabled(row.getId(), value.toBoolean());
         });
         dataGrid.addColumn(enabledColumn, "Enabled", 80);
 
@@ -149,8 +151,9 @@ public class JobListPresenter extends MyPresenterWidget<PagerView> {
                     protected void exec(final Range range,
                                         final Consumer<ResultPage<Job>> dataConsumer,
                                         final Consumer<Throwable> throwableConsumer) {
-                        final Rest<ResultPage<Job>> rest = restFactory.create();
-                        rest
+                        restFactory
+                                .builder()
+                                .forResultPageOf(Job.class)
                                 .onSuccess(dataConsumer)
                                 .onFailure(throwableConsumer)
                                 .call(JOB_RESOURCE).list();

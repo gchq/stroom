@@ -26,7 +26,6 @@ import stroom.annotation.shared.CreateEntryRequest;
 import stroom.annotation.shared.EntryValue;
 import stroom.annotation.shared.EventId;
 import stroom.annotation.shared.UserNameEntryValue;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.hyperlink.client.Hyperlink;
 import stroom.hyperlink.client.HyperlinkEvent;
@@ -147,8 +146,9 @@ public class AnnotationEditPresenter
 
         this.statusPresenter.setDataSupplier((filter, consumer) -> {
             final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
-            final Rest<List<String>> rest = restFactory.create();
-            rest
+            restFactory
+                    .builder()
+                    .forStringList()
                     .onSuccess(consumer)
                     .call(annotationResource)
                     .getStatus(filter);
@@ -156,8 +156,9 @@ public class AnnotationEditPresenter
 
         this.assignedToPresenter.setDataSupplier((filter, consumer) -> {
             final UserResource userResource = GWT.create(UserResource.class);
-            final Rest<List<UserName>> rest = restFactory.create();
-            rest
+            restFactory
+                    .builder()
+                    .forListOf(UserName.class)
                     .onSuccess(userNames -> consumer.accept(userNames.stream()
                             .sorted(Comparator.comparing(UserName::getUserIdentityForAudit))
                             .collect(Collectors.toList())))
@@ -167,8 +168,12 @@ public class AnnotationEditPresenter
 
         this.commentPresenter.setDataSupplier((filter, consumer) -> {
             final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
-            final Rest<List<String>> rest = restFactory.create();
-            rest.onSuccess(consumer).call(annotationResource).getComment(filter);
+            restFactory
+                    .builder()
+                    .forStringList()
+                    .onSuccess(consumer)
+                    .call(annotationResource)
+                    .getComment(filter);
         });
     }
 
@@ -190,8 +195,9 @@ public class AnnotationEditPresenter
         }));
 
         final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
-        final Rest<List<String>> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forStringList()
                 .onSuccess(values -> getView().setHasCommentValues(values != null && !values.isEmpty()))
                 .call(annotationResource)
                 .getComment(null);
@@ -316,8 +322,9 @@ public class AnnotationEditPresenter
 
     private void addEntry(final CreateEntryRequest request) {
         final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
-        final Rest<AnnotationDetail> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forType(AnnotationDetail.class)
                 .onSuccess(this::read)
                 .onFailure(caught -> AlertEvent.fireError(
                         AnnotationEditPresenter.this,
@@ -353,8 +360,9 @@ public class AnnotationEditPresenter
                 edit(null);
             } else {
                 final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
-                final Rest<AnnotationDetail> rest = restFactory.create();
-                rest
+                restFactory
+                        .builder()
+                        .forType(AnnotationDetail.class)
                         .onSuccess(this::edit)
                         .call(annotationResource)
                         .get(annotation.getId());
@@ -411,8 +419,9 @@ public class AnnotationEditPresenter
 
         if (currentStatus == null) {
             final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
-            final Rest<List<String>> rest = restFactory.create();
-            rest
+            restFactory
+                    .builder()
+                    .forStringList()
                     .onSuccess(values -> {
                         if (currentStatus == null && values != null && values.size() > 0) {
                             setStatus(values.get(0));

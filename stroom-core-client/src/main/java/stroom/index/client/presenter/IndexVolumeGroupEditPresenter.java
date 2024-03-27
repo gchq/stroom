@@ -19,7 +19,6 @@ package stroom.index.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.index.shared.IndexVolume;
@@ -108,11 +107,12 @@ public class IndexVolumeGroupEditPresenter
         registerHandler(openButton.addClickHandler(event -> edit()));
         registerHandler(deleteButton.addClickHandler(event -> delete()));
         registerHandler(rescanButton.addClickHandler(event -> {
-            final Rest<Boolean> rest = restFactory.create();
             delayedUpdate.reset();
             nodeManager.listAllNodes(nodeNames ->
                             nodeNames.forEach(nodeName ->
-                                    rest
+                                    restFactory
+                                            .builder()
+                                            .forBoolean()
                                             .onSuccess(response -> delayedUpdate.update())
                                             .onFailure(throwable -> {
                                             })
@@ -133,8 +133,9 @@ public class IndexVolumeGroupEditPresenter
     private void edit() {
         final IndexVolume volume = volumeStatusListPresenter.getSelectionModel().getSelected();
         if (volume != null) {
-            final Rest<IndexVolume> rest = restFactory.create();
-            rest
+            restFactory
+                    .builder()
+                    .forType(IndexVolume.class)
                     .onSuccess(result -> editVolume(result, "Edit Volume"))
                     .call(INDEX_VOLUME_RESOURCE)
                     .fetch(volume.getId());
@@ -163,9 +164,12 @@ public class IndexVolumeGroupEditPresenter
                         if (result) {
                             volumeStatusListPresenter.getSelectionModel().clear();
                             for (final IndexVolume volume : list) {
-                                final Rest<Boolean> rest = restFactory.create();
-                                rest.onSuccess(response -> volumeStatusListPresenter.refresh()).call(
-                                        INDEX_VOLUME_RESOURCE).delete(volume.getId());
+                                restFactory
+                                        .builder()
+                                        .forBoolean()
+                                        .onSuccess(response -> volumeStatusListPresenter.refresh())
+                                        .call(INDEX_VOLUME_RESOURCE)
+                                        .delete(volume.getId());
                             }
                         }
                     });
@@ -237,8 +241,9 @@ public class IndexVolumeGroupEditPresenter
                     "You must provide a name for the index volume group.",
                     null);
         } else {
-            final Rest<IndexVolumeGroup> rest = restFactory.create();
-            rest
+            restFactory
+                    .builder()
+                    .forType(IndexVolumeGroup.class)
                     .onSuccess(grp -> {
                         if (grp != null && !Objects.equals(groupId, grp.getId())) {
                             AlertEvent.fireError(
@@ -258,8 +263,9 @@ public class IndexVolumeGroupEditPresenter
 
     private void createVolumeGroup(final Consumer<IndexVolumeGroup> consumer,
                                    final IndexVolumeGroup volumeGroup) {
-        final Rest<IndexVolumeGroup> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forType(IndexVolumeGroup.class)
                 .onSuccess(consumer)
                 .call(INDEX_VOLUME_GROUP_RESOURCE)
                 .update(volumeGroup.getId(), volumeGroup);

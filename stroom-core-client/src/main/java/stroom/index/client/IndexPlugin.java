@@ -1,7 +1,6 @@
 package stroom.index.client;
 
 import stroom.core.client.ContentManager;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
@@ -50,8 +49,9 @@ public class IndexPlugin extends DocumentPlugin<LuceneIndexDoc> {
     public void load(final DocRef docRef,
                      final Consumer<LuceneIndexDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
-        final Rest<LuceneIndexDoc> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forType(LuceneIndexDoc.class)
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
                 .call(INDEX_RESOURCE)
@@ -63,8 +63,9 @@ public class IndexPlugin extends DocumentPlugin<LuceneIndexDoc> {
                      final LuceneIndexDoc document,
                      final Consumer<LuceneIndexDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
-        final Rest<LuceneIndexDoc> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forType(LuceneIndexDoc.class)
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
                 .call(INDEX_RESOURCE)

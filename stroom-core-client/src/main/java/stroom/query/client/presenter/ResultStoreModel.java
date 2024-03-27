@@ -1,7 +1,6 @@
 package stroom.query.client.presenter;
 
 import stroom.data.client.presenter.CriteriaUtil;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.node.client.NodeManager;
 import stroom.query.api.v2.DestroyReason;
@@ -67,8 +66,9 @@ public class ResultStoreModel {
         responseMap.clear();
         CriteriaUtil.setRange(criteria, range);
         for (final String nodeName : nodeNames) {
-            final Rest<ResultPage<ResultStoreInfo>> rest = restFactory.create();
-            rest
+            restFactory
+                    .builder()
+                    .forResultPageOf(ResultStoreInfo.class)
                     .onSuccess(response -> {
                         responseMap.put(nodeName, response.getValues());
                         delayedUpdate.update();
@@ -93,8 +93,9 @@ public class ResultStoreModel {
     public void terminate(final String nodeName,
                           final QueryKey queryKey,
                           final Consumer<Boolean> consumer) {
-        final Rest<Boolean> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forBoolean()
                 .onSuccess(consumer)
                 .onFailure(t -> consumer.accept(false))
                 .call(RESULT_STORE_RESOURCE)
@@ -105,8 +106,9 @@ public class ResultStoreModel {
                         final QueryKey queryKey,
                         final DestroyReason destroyReason,
                         final Consumer<Boolean> consumer) {
-        final Rest<Boolean> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forBoolean()
                 .onSuccess(consumer)
                 .onFailure(t -> consumer.accept(false))
                 .call(RESULT_STORE_RESOURCE)
@@ -116,8 +118,9 @@ public class ResultStoreModel {
     public void updateSettings(final String nodeName,
                                final UpdateStoreRequest updateStoreRequest,
                                final Consumer<Boolean> consumer) {
-        final Rest<Boolean> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forBoolean()
                 .onSuccess(consumer)
                 .call(RESULT_STORE_RESOURCE)
                 .update(nodeName, updateStoreRequest);

@@ -5,7 +5,6 @@ import stroom.alert.client.event.ConfirmEvent;
 import stroom.dashboard.shared.ValidateExpressionResult;
 import stroom.data.client.presenter.EditExpressionPresenter;
 import stroom.datasource.api.v2.QueryField;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.meta.shared.MetaFields;
@@ -34,7 +33,6 @@ import com.gwtplatform.mvp.client.View;
 
 import java.util.List;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView> {
 
@@ -270,8 +268,12 @@ public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView>
             filter.setMinMetaCreateTimeMs(minMetaCreateTimeMs);
             filter.setMaxMetaCreateTimeMs(maxMetaCreateTimeMs);
 
-            final Rest<ProcessorFilter> rest = restFactory.create();
-            rest.onSuccess(this::hide).call(PROCESSOR_FILTER_RESOURCE).update(filter.getId(), filter);
+            restFactory
+                    .builder()
+                    .forType(ProcessorFilter.class)
+                    .onSuccess(this::hide)
+                    .call(PROCESSOR_FILTER_RESOURCE)
+                    .update(filter.getId(), filter);
 
         } else {
             // Now create the processor filter using the find stream criteria.
@@ -285,8 +287,12 @@ public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView>
                     .minMetaCreateTimeMs(minMetaCreateTimeMs)
                     .maxMetaCreateTimeMs(maxMetaCreateTimeMs)
                     .build();
-            final Rest<ProcessorFilter> rest = restFactory.create();
-            rest.onSuccess(this::hide).call(PROCESSOR_FILTER_RESOURCE).create(request);
+            restFactory
+                    .builder()
+                    .forType(ProcessorFilter.class)
+                    .onSuccess(this::hide)
+                    .call(PROCESSOR_FILTER_RESOURCE)
+                    .create(request);
         }
     }
 

@@ -21,7 +21,6 @@ import stroom.activity.shared.Activity;
 import stroom.activity.shared.ActivityResource;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.core.client.UrlParameters;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.svg.client.SvgPresets;
 import stroom.ui.config.client.UiConfigCache;
@@ -47,7 +46,6 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
-import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -166,9 +164,9 @@ public class ManageActivityPresenter
     private void updateQuickFilterTooltipContentSupplier() {
         uiConfigCache.get().onSuccess(uiConfig -> {
             final String helpUrl = uiConfig.getHelpUrlQuickFilter();
-            final Rest<List<FilterFieldDefinition>> rest = restFactory.create();
-            // Separate to aid type inference
-            rest
+            restFactory
+                    .builder()
+                    .forListOf(FilterFieldDefinition.class)
                     .onSuccess(fieldDefinitions -> {
                         quickFilterTooltipSupplier = () -> QuickFilterTooltipUtil.createTooltip(
                                 "Choose Activity Quick Filter",
@@ -243,8 +241,9 @@ public class ManageActivityPresenter
         final Activity e = getSelected();
         if (e != null) {
             // Load the activity.
-            final Rest<Activity> rest = restFactory.create();
-            rest
+            restFactory
+                    .builder()
+                    .forType(Activity.class)
                     .onSuccess(this::onEdit)
                     .call(ACTIVITY_RESOURCE)
                     .fetch(e.getId());
@@ -272,8 +271,9 @@ public class ManageActivityPresenter
                     result -> {
                         if (result) {
                             // Delete the activity
-                            final Rest<Boolean> rest = restFactory.create();
-                            rest
+                            restFactory
+                                    .builder()
+                                    .forBoolean()
                                     .onSuccess(success -> {
                                         listPresenter.refresh();
                                         listPresenter.getSelectionModel().clear();

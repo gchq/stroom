@@ -19,7 +19,6 @@ package stroom.annotation.client;
 import stroom.annotation.client.ChangeAssignedToPresenter.ChangeAssignedToView;
 import stroom.annotation.shared.AnnotationResource;
 import stroom.annotation.shared.SetAssignedToRequest;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.UserResource;
@@ -82,11 +81,11 @@ public class ChangeAssignedToPresenter extends MyPresenterWidget<ChangeAssignedT
                 .onHideRequest(e -> {
                     if (e.isOk()) {
                         final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
-                        final Rest<Integer> rest = restFactory.create();
-
                         final SetAssignedToRequest request = new SetAssignedToRequest(annotationIdList,
                                 currentAssignedTo);
-                        rest.onSuccess(values -> GWT.log("Updated " + values + " annotations"))
+                        restFactory
+                                .builder()
+                                .forInteger().onSuccess(values -> GWT.log("Updated " + values + " annotations"))
                                 .call(annotationResource)
                                 .setAssignedTo(request);
                     }
@@ -113,8 +112,9 @@ public class ChangeAssignedToPresenter extends MyPresenterWidget<ChangeAssignedT
         }
         assignedToPresenter.setDataSupplier((filter, consumer) -> {
             final UserResource userResource = GWT.create(UserResource.class);
-            final Rest<List<UserName>> rest = restFactory.create();
-            rest
+            restFactory
+                    .builder()
+                    .forListOf(UserName.class)
                     .onSuccess(consumer)
                     .call(userResource)
                     .getAssociates(filter);

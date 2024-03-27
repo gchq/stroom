@@ -24,7 +24,6 @@ import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.node.client.NodeManager;
 import stroom.svg.client.Preset;
@@ -126,8 +125,9 @@ public class CacheNodeListPresenter extends MyPresenterWidget<PagerView> {
         addIconButtonColumn(
                 SvgPresets.of(SvgPresets.DELETE, "Clear and rebuild cache", true),
                 (row, nativeEvent) -> {
-                    final Rest<Long> rest = restFactory.create();
-                    rest
+                    restFactory
+                            .builder()
+                            .forLong()
                             .onSuccess(result -> {
                                 dataProvider.refresh();
                             })
@@ -321,8 +321,9 @@ public class CacheNodeListPresenter extends MyPresenterWidget<PagerView> {
                                     final List<String> nodeNames) {
         cacheInfoKeys.clear();
         for (final String nodeName : nodeNames) {
-            final Rest<CacheInfoResponse> rest = restFactory.create();
-            rest
+            restFactory
+                    .builder()
+                    .forType(CacheInfoResponse.class)
                     .onSuccess(response -> {
                         responseMap.put(nodeName, response.getValues());
 

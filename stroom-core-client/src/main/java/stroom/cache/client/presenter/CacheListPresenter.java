@@ -24,7 +24,6 @@ import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.node.client.NodeManager;
 import stroom.svg.client.Preset;
@@ -86,8 +85,9 @@ public class CacheListPresenter extends MyPresenterWidget<PagerView> {
                 dataGrid,
                 SvgPresets.of(SvgPresets.DELETE, "Clear and rebuild cache", true),
                 (row, nativeEvent) -> {
-                    final Rest<Long> rest = restFactory.create();
-                    rest
+                    restFactory
+                            .builder()
+                            .forLong()
                             .onSuccess(result -> {
                                 if (cacheUpdateHandler != null) {
                                     cacheUpdateHandler.accept(row);
@@ -156,8 +156,9 @@ public class CacheListPresenter extends MyPresenterWidget<PagerView> {
 
     private void fetchNamesForNodes(final List<String> nodeNames) {
         for (final String nodeName : nodeNames) {
-            final Rest<CacheNamesResponse> rest = restFactory.create();
-            rest
+            restFactory
+                    .builder()
+                    .forType(CacheNamesResponse.class)
                     .onSuccess(response -> {
                         allCacheIdentities.addAll(response.getValues());
                         delayedUpdate.update();

@@ -23,7 +23,6 @@ import stroom.config.global.shared.GlobalConfigResource;
 import stroom.config.global.shared.ListConfigResponse;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.node.client.NodeManager;
 import stroom.svg.client.Preset;
@@ -145,8 +144,9 @@ public class ManageGlobalPropertyListPresenter
 
 //        GWT.log("Refresh table called");
 
-        final Rest<ListConfigResponse> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forType(ListConfigResponse.class)
                 .onSuccess(listConfigResponse -> {
 
                     lastNodeName = listConfigResponse.getNodeName();
@@ -200,13 +200,13 @@ public class ManageGlobalPropertyListPresenter
 
     private void refreshPropertiesForNode(final String nodeName) {
 //        GWT.log("Refreshing " + nodeName);
-        final Rest<ListConfigResponse> listPropertiesRest = restFactory.create();
-
         criteria.setPageRequest(new PageRequest(
                 dataGrid.getVisibleRange().getStart(),
                 dataGrid.getVisibleRange().getLength()));
 
-        listPropertiesRest
+        restFactory
+                .builder()
+                .forType(ListConfigResponse.class)
                 .onSuccess(this::handleNodeResponse)
                 .onFailure(throwable -> {
                     unreachableNodes.add(nodeName);

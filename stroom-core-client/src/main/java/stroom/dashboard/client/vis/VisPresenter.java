@@ -33,7 +33,6 @@ import stroom.dashboard.shared.TableComponentSettings;
 import stroom.dashboard.shared.VisComponentSettings;
 import stroom.dashboard.shared.VisResultRequest;
 import stroom.datasource.api.v2.QueryField;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.editor.client.presenter.ChangeCurrentPreferencesEvent;
@@ -460,8 +459,9 @@ public class VisPresenter
     private void loadVisualisation(final VisFunction function, final DocRef visualisationDocRef) {
         function.setStatus(LoadStatus.LOADING_ENTITY);
 
-        final Rest<VisualisationDoc> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forType(VisualisationDoc.class)
                 .onSuccess(result -> {
                     if (result != null) {
                         // Get all possible settings for this visualisation.
@@ -502,9 +502,9 @@ public class VisPresenter
 
     private void loadScripts(final VisFunction function, final DocRef scriptRef) {
         function.setStatus(LoadStatus.LOADING_SCRIPT);
-
-        final Rest<List<ScriptDoc>> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forListOf(ScriptDoc.class)
                 .onSuccess(result -> startInjectingScripts(result, function))
                 .call(SCRIPT_RESOURCE)
                 .fetchLinkedScripts(new FetchLinkedScriptRequest(scriptRef, scriptCache.getLoadedScripts()));

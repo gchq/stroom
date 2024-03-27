@@ -18,7 +18,6 @@
 package stroom.search.elastic.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocumentEditPresenter;
@@ -72,8 +71,9 @@ public class ElasticClusterSettingsPresenter
         ElasticClusterDoc cluster = new ElasticClusterDoc();
         cluster = onWrite(cluster);
 
-        final Rest<ElasticClusterTestResponse> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forType(ElasticClusterTestResponse.class)
                 .onSuccess(result -> {
                     if (result.isOk()) {
                         AlertEvent.fireInfo(this, "Connection Success", result.getMessage(), null);

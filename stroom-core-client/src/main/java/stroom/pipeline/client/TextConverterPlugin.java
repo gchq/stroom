@@ -18,7 +18,6 @@
 package stroom.pipeline.client;
 
 import stroom.core.client.ContentManager;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
@@ -67,8 +66,9 @@ public class TextConverterPlugin extends DocumentPlugin<TextConverterDoc> {
     public void load(final DocRef docRef,
                      final Consumer<TextConverterDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
-        final Rest<TextConverterDoc> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forType(TextConverterDoc.class)
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
                 .call(TEXT_CONVERTER_RESOURCE)
@@ -80,8 +80,9 @@ public class TextConverterPlugin extends DocumentPlugin<TextConverterDoc> {
                      final TextConverterDoc document,
                      final Consumer<TextConverterDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
-        final Rest<TextConverterDoc> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forType(TextConverterDoc.class)
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
                 .call(TEXT_CONVERTER_RESOURCE)

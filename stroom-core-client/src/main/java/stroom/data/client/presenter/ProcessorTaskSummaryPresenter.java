@@ -21,7 +21,6 @@ import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.OrderByColumn;
 import stroom.data.grid.client.PagerView;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
@@ -83,8 +82,9 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<PagerView>
                                 final Consumer<ResultPage<ProcessorTaskSummary>> dataConsumer,
                                 final Consumer<Throwable> throwableConsumer) {
                 CriteriaUtil.setRange(criteria, range);
-                final Rest<ResultPage<ProcessorTaskSummary>> rest = restFactory.create();
-                rest
+                restFactory
+                        .builder()
+                        .forResultPageOf(ProcessorTaskSummary.class)
                         .onSuccess(dataConsumer)
                         .onFailure(throwableConsumer)
                         .call(PROCESSOR_TASK_RESOURCE)

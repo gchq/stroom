@@ -6,7 +6,6 @@ import stroom.analytics.shared.AnalyticTracker;
 import stroom.analytics.shared.AnalyticTrackerData;
 import stroom.analytics.shared.TableBuilderAnalyticProcessConfig;
 import stroom.analytics.shared.TableBuilderAnalyticTrackerData;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
@@ -98,8 +97,9 @@ public class TableBuilderProcessingPresenter
 
     private void refreshTracker() {
         if (ruleDocRef != null && ruleDocRef.getUuid() != null) {
-            final Rest<AnalyticTracker> rest = restFactory.create();
-            rest
+            restFactory
+                    .builder()
+                    .forType(AnalyticTracker.class)
                     .onSuccess(result -> {
                         final SafeHtml safeHtml = getInfo(result);
                         getView().setInfo(safeHtml);

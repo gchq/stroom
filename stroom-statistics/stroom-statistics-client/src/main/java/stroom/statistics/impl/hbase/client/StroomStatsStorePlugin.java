@@ -19,7 +19,6 @@ package stroom.statistics.impl.hbase.client;
 
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.core.client.ContentManager;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
@@ -157,8 +156,9 @@ public class StroomStatsStorePlugin extends DocumentPlugin<StroomStatsStoreDoc> 
     public void load(final DocRef docRef,
                      final Consumer<StroomStatsStoreDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
-        final Rest<StroomStatsStoreDoc> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forType(StroomStatsStoreDoc.class)
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
                 .call(STATS_STORE_RESOURCE)
@@ -170,8 +170,9 @@ public class StroomStatsStorePlugin extends DocumentPlugin<StroomStatsStoreDoc> 
                      final StroomStatsStoreDoc document,
                      final Consumer<StroomStatsStoreDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
-        final Rest<StroomStatsStoreDoc> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forType(StroomStatsStoreDoc.class)
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
                 .call(STATS_STORE_RESOURCE)

@@ -18,7 +18,6 @@
 package stroom.script.client;
 
 import stroom.core.client.ContentManager;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
@@ -67,8 +66,9 @@ public class ScriptPlugin extends DocumentPlugin<ScriptDoc> {
     public void load(final DocRef docRef,
                      final Consumer<ScriptDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
-        final Rest<ScriptDoc> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forType(ScriptDoc.class)
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
                 .call(SCRIPT_RESOURCE)
@@ -80,8 +80,9 @@ public class ScriptPlugin extends DocumentPlugin<ScriptDoc> {
                      final ScriptDoc document,
                      final Consumer<ScriptDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
-        final Rest<ScriptDoc> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forType(ScriptDoc.class)
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
                 .call(SCRIPT_RESOURCE)

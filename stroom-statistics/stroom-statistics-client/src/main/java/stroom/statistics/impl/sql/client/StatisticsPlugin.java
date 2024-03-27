@@ -19,7 +19,6 @@ package stroom.statistics.impl.sql.client;
 
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.core.client.ContentManager;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
@@ -156,8 +155,9 @@ public class StatisticsPlugin extends DocumentPlugin<StatisticStoreDoc> {
     public void load(final DocRef docRef,
                      final Consumer<StatisticStoreDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
-        final Rest<StatisticStoreDoc> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forType(StatisticStoreDoc.class)
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
                 .call(STATISTIC_RESOURCE)
@@ -169,8 +169,9 @@ public class StatisticsPlugin extends DocumentPlugin<StatisticStoreDoc> {
                      final StatisticStoreDoc document,
                      final Consumer<StatisticStoreDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
-        final Rest<StatisticStoreDoc> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forType(StatisticStoreDoc.class)
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
                 .call(STATISTIC_RESOURCE)

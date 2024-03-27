@@ -21,7 +21,6 @@ import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.OrderByColumn;
 import stroom.data.grid.client.PagerView;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
@@ -97,8 +96,9 @@ public class ProcessorTaskListPresenter
                                 final Consumer<Throwable> throwableConsumer) {
                 if (criteria.getExpression() != null) {
                     CriteriaUtil.setRange(criteria, range);
-                    final Rest<ResultPage<ProcessorTask>> rest = restFactory.create();
-                    rest
+                    restFactory
+                            .builder()
+                            .forResultPageOf(ProcessorTask.class)
                             .onSuccess(dataConsumer)
                             .onFailure(throwableConsumer)
                             .call(PROCESSOR_TASK_RESOURCE)
@@ -114,8 +114,9 @@ public class ProcessorTaskListPresenter
                 FindMetaCriteria findMetaCriteria = new FindMetaCriteria();
                 findMetaCriteria.setExpression(MetaExpressionUtil.createDataIdExpression(row.getMetaId()));
 
-                final Rest<ResultPage<MetaRow>> rest = restFactory.create();
-                rest
+                restFactory
+                        .builder()
+                        .forResultPageOf(MetaRow.class)
                         .onSuccess(metaRows -> {
                             // Should only get one back
                             final Meta meta = Optional.ofNullable(metaRows)

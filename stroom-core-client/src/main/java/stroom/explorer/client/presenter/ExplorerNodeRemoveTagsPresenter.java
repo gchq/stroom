@@ -18,7 +18,6 @@
 package stroom.explorer.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.event.RefreshDocumentEvent;
@@ -91,8 +90,9 @@ public class ExplorerNodeRemoveTagsPresenter
                     .map(ExplorerNode::getDocRef)
                     .collect(Collectors.toList());
 
-            final Rest<Set<String>> expNodeRest = restFactory.create();
-            expNodeRest
+            restFactory
+                    .builder()
+                    .forSetOf(String.class)
                     .onSuccess(nodetags -> {
                         getView().setData(docRefs, nodetags);
                         forceReveal();
@@ -139,8 +139,9 @@ public class ExplorerNodeRemoveTagsPresenter
     private void removeTagsFromNodes(final HidePopupRequestEvent event,
                                      final Set<String> editedTags) {
         final List<DocRef> nodeDocRefs = getNodeDocRefs();
-        final Rest<Void> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forVoid()
                 .onSuccess(voidResult -> {
                     // Update the node in the tree with the new tags
                     nodeDocRefs.forEach(docRef ->

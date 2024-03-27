@@ -19,7 +19,6 @@ package stroom.search.solr.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.data.client.presenter.EditExpressionPresenter;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocumentEditPresenter;
@@ -91,8 +90,9 @@ public class SolrIndexSettingsPresenter extends DocumentEditPresenter<SolrIndexS
         SolrIndexDoc index = new SolrIndexDoc();
         index = onWrite(index);
 
-        final Rest<SolrConnectionTestResponse> rest = restFactory.create();
-        rest
+        restFactory
+                .builder()
+                .forType(SolrConnectionTestResponse.class)
                 .onSuccess(result -> {
                     if (result.isOk()) {
                         AlertEvent.fireInfo(this, "Connection Success", result.getMessage(), null);
