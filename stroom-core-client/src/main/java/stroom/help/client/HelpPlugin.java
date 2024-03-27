@@ -67,5 +67,13 @@ public class HelpPlugin extends Plugin {
                     event.getMenuItems().addMenuItem(MenuKeys.HELP_MENU, helpMenuItem);
                 })
                 .onFailure(caught -> AlertEvent.fireError(HelpPlugin.this, caught.getMessage(), null));
+
+        final IconMenuItem apiMenuItem = new IconMenuItem.Builder()
+                .priority(2)
+                .icon(SvgImage.OPERATOR)
+                .text("API Specification")
+                .command(() -> Window.open("/stroom/noauth/swagger-ui", "_blank", ""))
+                .build();
+        event.getMenuItems().addMenuItem(MenuKeys.HELP_MENU, apiMenuItem);
     }
 }
