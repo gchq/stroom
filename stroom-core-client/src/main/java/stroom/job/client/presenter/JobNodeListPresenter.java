@@ -108,7 +108,6 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
                                 final Consumer<Throwable> throwableConsumer) {
                 findJobNodeCriteria.getJobName().setString(jobName);
                 restFactory
-                        .builder()
                         .forResultPageOf(JobNode.class)
                         .onSuccess(dataConsumer)
                         .onFailure(throwableConsumer)
@@ -121,7 +120,6 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
                 // Ping each node.
                 data.getValues().forEach(row -> {
                     restFactory
-                            .builder()
                             .forType(JobNodeInfo.class)
                             .onSuccess(info -> {
                                 latestNodeInfo.put(row, info);
@@ -163,7 +161,6 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
         enabledColumn.setFieldUpdater((index, row, value) -> {
             row.setEnabled(value.toBoolean());
             restFactory
-                    .builder()
                     .forType(JobNode.class)
                     .call(JOB_NODE_RESOURCE)
                     .setEnabled(row.getId(), value.toBoolean());
@@ -285,7 +282,6 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
         maxColumn.setFieldUpdater((index, row, value) -> {
             row.setTaskLimit(value.intValue());
             restFactory
-                    .builder()
                     .forType(JobNode.class)
                     .call(JOB_NODE_RESOURCE)
                     .setTaskLimit(row.getId(), value.intValue());
@@ -325,7 +321,6 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
 
     private void showSchedule(final JobNode row) {
         restFactory
-                .builder()
                 .forType(JobNodeInfo.class)
                 .onSuccess(result -> setSchedule(row, result))
                 .onFailure(throwable -> setSchedule(row, null))
@@ -346,7 +341,6 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
             schedulePresenter.show(schedule -> {
                 JobNodeUtil.setSchedule(jobNode, schedule);
                 restFactory
-                        .builder()
                         .forType(JobNode.class)
                         .onSuccess(result ->
                                 dataProvider.refresh())

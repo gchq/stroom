@@ -41,7 +41,6 @@ public class DataTypeUiManager {
 
     public void getTypes(final Consumer<List<String>> consumer) {
         restFactory
-                .builder()
                 .forStringList()
                 .onSuccess(consumer::accept)
                 .call(META_RESOURCE)

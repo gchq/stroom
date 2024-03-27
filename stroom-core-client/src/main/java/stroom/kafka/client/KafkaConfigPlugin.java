@@ -77,7 +77,6 @@ public class KafkaConfigPlugin extends DocumentPlugin<KafkaConfigDoc> {
                      final Consumer<KafkaConfigDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .builder()
                 .forType(KafkaConfigDoc.class)
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
@@ -91,7 +90,6 @@ public class KafkaConfigPlugin extends DocumentPlugin<KafkaConfigDoc> {
                      final Consumer<KafkaConfigDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .builder()
                 .forType(KafkaConfigDoc.class)
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)

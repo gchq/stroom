@@ -435,7 +435,6 @@ public class IndexShardPresenter extends DocumentEditPresenter<PagerView, Lucene
                                         final Consumer<Throwable> throwableConsumer) {
                         CriteriaUtil.setRange(queryCriteria, range);
                         restFactory
-                                .builder()
                                 .forResultPageOf(IndexShard.class)
                                 .onSuccess(dataConsumer)
                                 .onFailure(throwableConsumer)
@@ -542,7 +541,6 @@ public class IndexShardPresenter extends DocumentEditPresenter<PagerView, Lucene
         delayedUpdate.reset();
         nodeManager.listEnabledNodes(nodeNames -> nodeNames.forEach(nodeName -> {
             restFactory
-                    .builder()
                     .forLong()
                     .onSuccess(result -> delayedUpdate.update())
                     .call(INDEX_RESOURCE)
@@ -559,7 +557,6 @@ public class IndexShardPresenter extends DocumentEditPresenter<PagerView, Lucene
         delayedUpdate.reset();
         nodeManager.listEnabledNodes(nodeNames -> nodeNames.forEach(nodeName -> {
             restFactory
-                    .builder()
                     .forLong()
                     .onSuccess(result -> delayedUpdate.update())
                     .call(INDEX_RESOURCE)

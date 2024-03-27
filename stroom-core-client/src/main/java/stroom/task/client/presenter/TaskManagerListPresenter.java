@@ -448,7 +448,6 @@ public class TaskManagerListPresenter
         responseMap.clear();
         for (final String nodeName : nodeNames) {
             restFactory
-                    .builder()
                     .forType(TaskProgressResponse.class)
                     .onSuccess(response -> {
                         responseMap.put(nodeName, response.getValues());
@@ -517,7 +516,6 @@ public class TaskManagerListPresenter
         findTaskCriteria.addId(taskProgress.getId());
         final TerminateTaskProgressRequest request = new TerminateTaskProgressRequest(findTaskCriteria);
         restFactory
-                .builder()
                 .forBoolean()
                 .call(TASK_RESOURCE)
                 .terminate(taskProgress.getNodeName(), request);

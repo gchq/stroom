@@ -67,7 +67,6 @@ public class SolrIndexPlugin extends DocumentPlugin<SolrIndexDoc> {
                      final Consumer<SolrIndexDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .builder()
                 .forType(SolrIndexDoc.class)
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
@@ -81,7 +80,6 @@ public class SolrIndexPlugin extends DocumentPlugin<SolrIndexDoc> {
                      final Consumer<SolrIndexDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .builder()
                 .forType(SolrIndexDoc.class)
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)

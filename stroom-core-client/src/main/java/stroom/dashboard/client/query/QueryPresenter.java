@@ -570,7 +570,6 @@ public class QueryPresenter
                 .priority(1)
                 .build();
         restFactory
-                .builder()
                 .forType(ProcessorFilter.class)
                 .onSuccess(streamProcessorFilter -> {
                     if (streamProcessorFilter != null) {
@@ -771,7 +770,6 @@ public class QueryPresenter
             } else if (getQuerySettings().getLastQueryKey() != null) {
                 // See if the result store exists before we try and resume a query.
                 restFactory
-                        .builder()
                         .forBoolean()
                         .onSuccess(result -> {
                             if (result != null && result) {
@@ -926,7 +924,6 @@ public class QueryPresenter
                     dashboardContext.getTimeRange());
 
             restFactory
-                    .builder()
                     .forType(ResourceGeneration.class)
                     .onSuccess(result ->
                             ExportFileCompleteUtil.onSuccess(locationManager, null, result))

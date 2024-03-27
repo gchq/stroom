@@ -79,7 +79,6 @@ public class NewIndexVolumeGroupPresenter
                         null);
             } else {
                 restFactory
-                        .builder()
                         .forResultPageOf(IndexVolumeGroup.class)
                         .onSuccess(result -> {
                             if (result != null) {

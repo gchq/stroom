@@ -56,7 +56,6 @@ public class CurrentActivity implements HasHandlers {
             consumer.accept(currentActivity);
         } else {
             restFactory
-                    .builder()
                     .forType(Activity.class)
                     .onSuccess(a -> {
                         currentActivity = a;
@@ -70,7 +69,6 @@ public class CurrentActivity implements HasHandlers {
 
     public void setActivity(final Activity activity) {
         restFactory
-                .builder()
                 .forType(Activity.class)
                 .onSuccess(a -> {
                     currentActivity = a;

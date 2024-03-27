@@ -284,7 +284,6 @@ public class NewPropertyPresenter
 
             // Load data types.
             restFactory
-                    .builder()
                     .forStringList()
                     .onSuccess(result -> {
                         if (result != null) {
@@ -327,7 +326,6 @@ public class NewPropertyPresenter
 
             // Load data types.
             restFactory
-                    .builder()
                     .forResultPageOf(FsVolumeGroup.class)
                     .onSuccess(result -> {
                         dataTypeWidget.clear();

@@ -47,7 +47,6 @@ public class DocumentTypeCache {
         // Get the document types if they are null.
         if (documentTypes == null) {
             restFactory
-                    .builder()
                     .forType(DocumentTypes.class)
                     .onSuccess(result -> {
                         documentTypes = result;

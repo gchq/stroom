@@ -111,7 +111,6 @@ public class IndexVolumeGroupEditPresenter
             nodeManager.listAllNodes(nodeNames ->
                             nodeNames.forEach(nodeName ->
                                     restFactory
-                                            .builder()
                                             .forBoolean()
                                             .onSuccess(response -> delayedUpdate.update())
                                             .onFailure(throwable -> {
@@ -134,7 +133,6 @@ public class IndexVolumeGroupEditPresenter
         final IndexVolume volume = volumeStatusListPresenter.getSelectionModel().getSelected();
         if (volume != null) {
             restFactory
-                    .builder()
                     .forType(IndexVolume.class)
                     .onSuccess(result -> editVolume(result, "Edit Volume"))
                     .call(INDEX_VOLUME_RESOURCE)
@@ -165,7 +163,6 @@ public class IndexVolumeGroupEditPresenter
                             volumeStatusListPresenter.getSelectionModel().clear();
                             for (final IndexVolume volume : list) {
                                 restFactory
-                                        .builder()
                                         .forBoolean()
                                         .onSuccess(response -> volumeStatusListPresenter.refresh())
                                         .call(INDEX_VOLUME_RESOURCE)
@@ -242,7 +239,6 @@ public class IndexVolumeGroupEditPresenter
                     null);
         } else {
             restFactory
-                    .builder()
                     .forType(IndexVolumeGroup.class)
                     .onSuccess(grp -> {
                         if (grp != null && !Objects.equals(groupId, grp.getId())) {
@@ -264,7 +260,6 @@ public class IndexVolumeGroupEditPresenter
     private void createVolumeGroup(final Consumer<IndexVolumeGroup> consumer,
                                    final IndexVolumeGroup volumeGroup) {
         restFactory
-                .builder()
                 .forType(IndexVolumeGroup.class)
                 .onSuccess(consumer)
                 .call(INDEX_VOLUME_GROUP_RESOURCE)

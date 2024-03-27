@@ -92,7 +92,6 @@ public class ExecutionHistoryListPresenter
                 if (request != null && request.getExecutionSchedule() != null) {
                     CriteriaUtil.setRange(request, range);
                     restFactory
-                            .builder()
                             .forResultPageOf(ExecutionHistory.class)
                             .onSuccess(dataConsumer)
                             .onFailure(throwableConsumer)

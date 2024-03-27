@@ -128,7 +128,6 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
 
         // Get a map of all available elements and properties.
         restFactory
-                .builder()
                 .forListOf(FetchPropertyTypesResult.class)
                 .onSuccess(result -> {
                     final Map<PipelineElementType, Map<String, PipelinePropertyType>> propertyTypes =
@@ -235,7 +234,6 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
             pipelinePresenter.setSelectedEntityReference(document.getParentPipeline());
 
             restFactory
-                    .builder()
                     .forListOf(PipelineData.class)
                     .onSuccess(result -> {
                         final PipelineData pipelineData = result.get(result.size() - 1);
@@ -505,7 +503,6 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
 
             final PopupSize popupSize = PopupSize.resizable(600, 400);
             restFactory
-                    .builder()
                     .forType(FetchPipelineXmlResponse.class)
                     .onSuccess(result -> {
                         String text = "";
@@ -549,7 +546,6 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
 
     private void doActualSave(final EditorPresenter xmlEditor) {
         restFactory
-                .builder()
                 .forBoolean()
                 .onSuccess(result -> {
                     // Hide the popup.
@@ -601,7 +597,6 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
 
         } else {
             restFactory
-                    .builder()
                     .forListOf(PipelineData.class)
                     .onSuccess(result -> {
                         pipelineModel.setBaseStack(result);

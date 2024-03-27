@@ -575,7 +575,6 @@ public class TextPresenter extends MyPresenterWidget<TextView> implements TextUi
                     fetchDataQueue.clear();
 
                     restFactory
-                            .builder()
                             .forType(AbstractFetchDataResult.class)
                             .onSuccess(result -> {
                                 // If we are queueing more actions then don't update

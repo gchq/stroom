@@ -67,7 +67,6 @@ public class DictionaryPlugin extends DocumentPlugin<DictionaryDoc> {
                      final Consumer<DictionaryDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .builder()
                 .forType(DictionaryDoc.class)
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
@@ -81,7 +80,6 @@ public class DictionaryPlugin extends DocumentPlugin<DictionaryDoc> {
                      final Consumer<DictionaryDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .builder()
                 .forType(DictionaryDoc.class)
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)

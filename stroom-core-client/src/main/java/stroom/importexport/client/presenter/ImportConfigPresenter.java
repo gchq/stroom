@@ -77,7 +77,6 @@ public class ImportConfigPresenter
             @Override
             protected void onSuccess(final ResourceKey resourceKey) {
                 restFactory
-                        .builder()
                         .forType(ImportConfigResponse.class)
                         .onSuccess(response -> {
                             if (response.getConfirmList().isEmpty()) {

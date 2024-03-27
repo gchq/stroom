@@ -237,7 +237,6 @@ public class SelectUserPresenter
                         final UserName selected = getSelected();
                         if (selected != null) {
                             restFactory
-                                    .builder()
                                     .forType(User.class)
                                     .onSuccess(userConsumer)
                                     .call(USER_RESOURCE)

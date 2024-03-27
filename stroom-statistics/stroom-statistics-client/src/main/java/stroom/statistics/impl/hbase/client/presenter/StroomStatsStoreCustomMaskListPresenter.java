@@ -194,9 +194,8 @@ public class StroomStatsStoreCustomMaskListPresenter
                 result -> {
                     if (result) {
                         restFactory
-                                .builder()
                                 .forResultPageOf(CustomRollUpMask.class)
-//                        restFactory.builder()
+//                        restFactory
 //                                .forResultPage(CustomRollUpMask.class)
                                 .onSuccess(res -> {
                                     updateState(new HashSet<>(res.getValues()));
@@ -289,7 +288,6 @@ public class StroomStatsStoreCustomMaskListPresenter
         // grab the mask list from this presenter
         oldEntityData.setCustomRollUpMasks(new HashSet<>(maskList.getMasks()));
         restFactory
-                .builder()
                 .forType(StroomStatsStoreEntityData.class)
                 .onSuccess(result -> {
                     newEntityData.setCustomRollUpMasks(result.getCustomRollUpMasks());

@@ -281,7 +281,7 @@ public class DocumentPluginEventManager extends Plugin {
         // 6. Handle save as events.
         registerHandler(getEventBus().addHandler(SaveAsDocumentEvent.getType(), event -> {
             // First get the explorer node for the docref.
-            restFactory.builder()
+            restFactory
                     .forType(ExplorerNode.class)
                     .onSuccess(explorerNode -> {
                         // Now we have the explorer node proceed with the save as.
@@ -580,7 +580,6 @@ public class DocumentPluginEventManager extends Plugin {
                        final PermissionInheritance permissionInheritance,
                        final Consumer<ExplorerNode> consumer) {
         restFactory
-                .builder()
                 .forType(ExplorerNode.class)
                 .onSuccess(consumer)
                 .call(EXPLORER_RESOURCE)
@@ -598,7 +597,6 @@ public class DocumentPluginEventManager extends Plugin {
                       final PermissionInheritance permissionInheritance,
                       final Consumer<BulkActionResult> consumer) {
         restFactory
-                .builder()
                 .forType(BulkActionResult.class)
                 .onSuccess(consumer)
                 .call(EXPLORER_RESOURCE)
@@ -615,7 +613,6 @@ public class DocumentPluginEventManager extends Plugin {
                       final PermissionInheritance permissionInheritance,
                       final Consumer<BulkActionResult> consumer) {
         restFactory
-                .builder()
                 .forType(BulkActionResult.class)
                 .onSuccess(consumer)
                 .call(EXPLORER_RESOURCE)
@@ -624,7 +621,6 @@ public class DocumentPluginEventManager extends Plugin {
 
     private void rename(final ExplorerNode explorerNode, final String docName, final Consumer<ExplorerNode> consumer) {
         restFactory
-                .builder()
                 .forType(ExplorerNode.class)
                 .onSuccess(consumer)
                 .call(EXPLORER_RESOURCE)
@@ -633,7 +629,6 @@ public class DocumentPluginEventManager extends Plugin {
 
     public void delete(final List<DocRef> docRefs, final Consumer<BulkActionResult> consumer) {
         restFactory
-                .builder()
                 .forType(BulkActionResult.class)
                 .onSuccess(consumer)
                 .call(EXPLORER_RESOURCE)
@@ -641,7 +636,7 @@ public class DocumentPluginEventManager extends Plugin {
     }
 
     private void setAsFavourite(final DocRef docRef, final boolean setFavourite) {
-        final Rest<Void> rest = restFactory.builder()
+        final Rest<Void> rest = restFactory
                 .forVoid();
         rest.onSuccess(result -> RefreshExplorerTreeEvent.fire(DocumentPluginEventManager.this));
         if (setFavourite) {
@@ -655,7 +650,7 @@ public class DocumentPluginEventManager extends Plugin {
         final DocumentPlugin<?> documentPlugin = documentPluginRegistry.get(docRef.getType());
         if (documentPlugin != null) {
             // Decorate the DocRef with its name from the info service (required by the doc presenter)
-            restFactory.builder()
+            restFactory
                     .forType(DocRef.class)
                     .onSuccess(decoratedDocRef -> {
                         if (decoratedDocRef != null) {
@@ -680,7 +675,6 @@ public class DocumentPluginEventManager extends Plugin {
     public void highlight(final DocRef docRef) {
         // Obtain the Explorer node for the provided DocRef
         restFactory
-                .builder()
                 .forType(ExplorerNode.class)
                 .onSuccess(this::highlight)
                 .call(EXPLORER_RESOURCE)
@@ -766,7 +760,6 @@ public class DocumentPluginEventManager extends Plugin {
     private void fetchPermissions(final List<ExplorerNode> explorerNodes,
                                   final Consumer<Map<ExplorerNode, ExplorerNodePermissions>> consumer) {
         restFactory
-                .builder()
                 .forSetOf(ExplorerNodePermissions.class)
                 .onSuccess(response -> {
                     final Map<ExplorerNode, ExplorerNodePermissions> map = response.stream().collect(Collectors.toMap(
@@ -1090,7 +1083,6 @@ public class DocumentPluginEventManager extends Plugin {
                 // Should only be one item as info is not supported for multi selection
                 // in the tree
                 restFactory
-                        .builder()
                         .forType(ExplorerNodeInfo.class)
                         .onSuccess(explorerNodeInfo -> {
                             ShowInfoDocumentDialogEvent.fire(

@@ -50,7 +50,6 @@ public class IndexPlugin extends DocumentPlugin<LuceneIndexDoc> {
                      final Consumer<LuceneIndexDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .builder()
                 .forType(LuceneIndexDoc.class)
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
@@ -64,7 +63,6 @@ public class IndexPlugin extends DocumentPlugin<LuceneIndexDoc> {
                      final Consumer<LuceneIndexDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .builder()
                 .forType(LuceneIndexDoc.class)
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)

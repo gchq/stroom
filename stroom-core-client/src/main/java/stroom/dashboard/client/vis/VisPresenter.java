@@ -460,7 +460,6 @@ public class VisPresenter
         function.setStatus(LoadStatus.LOADING_ENTITY);
 
         restFactory
-                .builder()
                 .forType(VisualisationDoc.class)
                 .onSuccess(result -> {
                     if (result != null) {
@@ -503,7 +502,6 @@ public class VisPresenter
     private void loadScripts(final VisFunction function, final DocRef scriptRef) {
         function.setStatus(LoadStatus.LOADING_SCRIPT);
         restFactory
-                .builder()
                 .forListOf(ScriptDoc.class)
                 .onSuccess(result -> startInjectingScripts(result, function))
                 .call(SCRIPT_RESOURCE)

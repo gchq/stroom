@@ -50,7 +50,6 @@ public class WelcomePresenter extends ContentTabPresenter<WelcomePresenter.Welco
         super(eventBus, view);
 
         restFactory
-                .builder()
                 .forType(SessionInfo.class)
                 .onSuccess(sessionInfo -> {
                     final UserName userName = sessionInfo.getUserName();

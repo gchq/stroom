@@ -593,7 +593,6 @@ public class TextPresenter
                     fetchDataQueue.clear();
 
                     restFactory
-                            .builder()
                             .forType(AbstractFetchDataResult.class)
                             .onSuccess(result -> {
                                 // If we are queueing more actions then don't update

@@ -529,7 +529,6 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
 
         // Load the pipeline.
         restFactory
-                .builder()
                 .forListOf(PipelineData.class)
                 .onSuccess(result -> {
                     final PipelineData pipelineData = result.get(result.size() - 1);
@@ -603,7 +602,6 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
             request.setStepType(stepType);
 
             restFactory
-                    .builder()
                     .forType(SteppingResult.class)
                     .onSuccess(this::readResult)
                     .onFailure(caught -> {

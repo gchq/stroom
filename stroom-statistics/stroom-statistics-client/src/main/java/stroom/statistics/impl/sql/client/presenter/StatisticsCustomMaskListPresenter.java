@@ -190,7 +190,6 @@ public class StatisticsCustomMaskListPresenter extends DocumentEditPresenter<Pag
                 result -> {
                     if (result) {
                         restFactory
-                                .builder()
                                 .forListOf(CustomRollUpMask.class)
                                 .onSuccess(res -> {
                                     updateState(new HashSet<>(res));
@@ -283,7 +282,6 @@ public class StatisticsCustomMaskListPresenter extends DocumentEditPresenter<Pag
         // grab the mask list from this presenter
         oldStatisticsDataSourceData.setCustomRollUpMasks(new HashSet<>(maskList.getMasks()));
         restFactory
-                .builder()
                 .forType(StatisticsDataSourceData.class)
                 .onSuccess(result -> {
                     newStatisticsDataSourceData.setCustomRollUpMasks(result.getCustomRollUpMasks());

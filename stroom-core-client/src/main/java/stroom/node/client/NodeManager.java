@@ -29,7 +29,6 @@ public class NodeManager {
                                 final Consumer<Throwable> throwableConsumer,
                                 final FindNodeStatusCriteria findNodeStatusCriteria) {
         restFactory
-                .builder()
                 .forType(FetchNodeStatusResponse.class)
                 .onSuccess(dataConsumer)
                 .onFailure(throwableConsumer)
@@ -41,7 +40,6 @@ public class NodeManager {
                      final Consumer<Long> pingConsumer,
                      final Consumer<Throwable> throwableConsumer) {
         restFactory
-                .builder()
                 .forType(Long.class)
                 .onSuccess(pingConsumer)
                 .onFailure(throwableConsumer)
@@ -53,7 +51,6 @@ public class NodeManager {
                      final Consumer<ClusterNodeInfo> infoConsumer,
                      final Consumer<Throwable> throwableConsumer) {
         restFactory
-                .builder()
                 .forType(ClusterNodeInfo.class)
                 .onSuccess(infoConsumer)
                 .onFailure(throwableConsumer)
@@ -65,7 +62,6 @@ public class NodeManager {
                             final int priority,
                             final Consumer<Boolean> resultConsumer) {
         restFactory
-                .builder()
                 .forBoolean()
                 .onSuccess(resultConsumer)
                 .call(NODE_RESOURCE)
@@ -76,7 +72,6 @@ public class NodeManager {
                            final boolean enabled,
                            final Consumer<Boolean> resultConsumer) {
         restFactory
-                .builder()
                 .forBoolean()
                 .onSuccess(resultConsumer)
                 .call(NODE_RESOURCE)
@@ -86,7 +81,6 @@ public class NodeManager {
     public void listAllNodes(final Consumer<List<String>> nodeListConsumer,
                              final Consumer<Throwable> throwableConsumer) {
         restFactory
-                .builder()
                 .forStringList()
                 .onSuccess(nodeListConsumer)
                 .onFailure(throwableConsumer)
@@ -97,7 +91,6 @@ public class NodeManager {
     public void listEnabledNodes(final Consumer<List<String>> nodeListConsumer,
                                  final Consumer<Throwable> throwableConsumer) {
         restFactory
-                .builder()
                 .forStringList()
                 .onSuccess(nodeListConsumer)
                 .onFailure(throwableConsumer)

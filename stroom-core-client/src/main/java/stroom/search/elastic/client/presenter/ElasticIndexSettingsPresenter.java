@@ -100,7 +100,6 @@ public class ElasticIndexSettingsPresenter extends DocumentEditPresenter<Elastic
         index = onWrite(index);
 
         restFactory
-                .builder()
                 .forType(ElasticIndexTestResponse.class)
                 .onSuccess(result -> {
                     if (result.isOk()) {

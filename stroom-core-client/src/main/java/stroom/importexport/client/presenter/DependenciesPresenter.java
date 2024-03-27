@@ -110,7 +110,6 @@ public class DependenciesPresenter extends MyPresenterWidget<PagerView> {
                                 final Consumer<Throwable> throwableConsumer) {
                 CriteriaUtil.setRange(criteria, range);
                 restFactory
-                        .builder()
                         .forResultPageOf(Dependency.class)
                         .onSuccess(dataConsumer)
                         .onFailure(throwableConsumer)
@@ -275,7 +274,6 @@ public class DependenciesPresenter extends MyPresenterWidget<PagerView> {
 
         // Hold map of doc type icons keyed on type to save constructing for each row
         restFactory
-                .builder()
                 .forType(DocumentTypes.class)
                 .onSuccess(documentTypes -> {
                     openableTypes = documentTypes

@@ -92,12 +92,10 @@ public class ExplorerNodeEditTagsPresenter
                     .collect(Collectors.toList());
 
             restFactory
-                    .builder()
                     .forSetOf(String.class)
                     .onSuccess(allTags -> {
                         if (isSingleDocRef()) {
                             restFactory
-                                    .builder()
                                     .forSetOf(String.class)
                                     .onSuccess(nodeTags -> {
                                         getView().setData(docRefs, nodeTags, allTags);
@@ -174,7 +172,6 @@ public class ExplorerNodeEditTagsPresenter
     private void addTagsToNodes(final HidePopupRequestEvent event, final Set<String> editedTags) {
         final List<DocRef> nodeDocRefs = getNodeDocRefs();
         restFactory
-                .builder()
                 .forVoid()
                 .onSuccess(voidResult -> {
                     // Update the node in the tree with the new tags
@@ -193,7 +190,6 @@ public class ExplorerNodeEditTagsPresenter
                 .tags(editedTags)
                 .build();
         restFactory
-                .builder()
                 .forType(ExplorerNode.class)
                 .onSuccess(explorerNode -> {
                     // Update the node in the tree with the new tags

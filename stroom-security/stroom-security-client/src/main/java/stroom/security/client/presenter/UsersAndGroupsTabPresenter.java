@@ -195,7 +195,6 @@ public class UsersAndGroupsTabPresenter
                     ok -> {
                         if (ok) {
                             restFactory
-                                    .builder()
                                     .forBoolean()
                                     .onSuccess(result -> {
                                         listPresenter.refresh();
@@ -242,7 +241,6 @@ public class UsersAndGroupsTabPresenter
         newGroupPresenter.show(e -> {
             if (e.isOk()) {
                 restFactory
-                        .builder()
                         .forType(User.class)
                         .onSuccess(result -> {
                             e.hide();
@@ -260,7 +258,6 @@ public class UsersAndGroupsTabPresenter
         newUserPresenter.show(e -> {
             if (e.isOk()) {
                 restFactory
-                        .builder()
                         .forType(User.class)
                         .onSuccess(result -> {
                             e.hide();
@@ -281,7 +278,6 @@ public class UsersAndGroupsTabPresenter
                 final String usersCsvData = createMultipleUsersPresenter.getUsersCsvData();
                 if (usersCsvData != null && !usersCsvData.isEmpty()) {
                     restFactory
-                            .builder()
                             .forListOf(User.class)
                             .onSuccess(result -> {
                                 e.hide();

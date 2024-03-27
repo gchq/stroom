@@ -75,7 +75,6 @@ public class UiConfigCache implements HasHandlers {
     public Future<ExtendedUiConfig> refresh() {
         final FutureImpl<ExtendedUiConfig> future = new FutureImpl<>();
         restFactory
-                .builder()
                 .forType(ExtendedUiConfig.class)
                 .onSuccess(result -> {
                     clientProperties = result;

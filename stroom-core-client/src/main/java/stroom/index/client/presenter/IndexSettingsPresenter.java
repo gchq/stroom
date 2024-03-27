@@ -115,7 +115,6 @@ public class IndexSettingsPresenter extends DocumentEditPresenter<IndexSettingsV
 
     private void updateGroupList(final String selected) {
         restFactory
-                .builder()
                 .forResultPageOf(IndexVolumeGroup.class)
                 .onSuccess(result -> {
                     final List<String> volumeGroupNames = result

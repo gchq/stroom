@@ -84,7 +84,6 @@ public class DataUploadPresenter extends MyPresenterWidget<DataUploadPresenter.D
                         fileName);
 
                 restFactory
-                        .builder()
                         .forType(ResourceKey.class)
                         .onSuccess(result -> {
                             hide();

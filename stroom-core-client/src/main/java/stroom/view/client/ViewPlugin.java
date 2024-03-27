@@ -67,7 +67,6 @@ public class ViewPlugin extends DocumentPlugin<ViewDoc> {
                      final Consumer<ViewDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .builder()
                 .forType(ViewDoc.class)
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
@@ -81,7 +80,6 @@ public class ViewPlugin extends DocumentPlugin<ViewDoc> {
                      final Consumer<ViewDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .builder()
                 .forType(ViewDoc.class)
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)

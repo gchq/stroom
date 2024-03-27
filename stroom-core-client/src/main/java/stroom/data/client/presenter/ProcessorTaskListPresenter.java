@@ -97,7 +97,6 @@ public class ProcessorTaskListPresenter
                 if (criteria.getExpression() != null) {
                     CriteriaUtil.setRange(criteria, range);
                     restFactory
-                            .builder()
                             .forResultPageOf(ProcessorTask.class)
                             .onSuccess(dataConsumer)
                             .onFailure(throwableConsumer)
@@ -115,7 +114,6 @@ public class ProcessorTaskListPresenter
                 findMetaCriteria.setExpression(MetaExpressionUtil.createDataIdExpression(row.getMetaId()));
 
                 restFactory
-                        .builder()
                         .forResultPageOf(MetaRow.class)
                         .onSuccess(metaRows -> {
                             // Should only get one back

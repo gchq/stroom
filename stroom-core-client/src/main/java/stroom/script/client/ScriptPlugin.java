@@ -67,7 +67,6 @@ public class ScriptPlugin extends DocumentPlugin<ScriptDoc> {
                      final Consumer<ScriptDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .builder()
                 .forType(ScriptDoc.class)
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
@@ -81,7 +80,6 @@ public class ScriptPlugin extends DocumentPlugin<ScriptDoc> {
                      final Consumer<ScriptDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .builder()
                 .forType(ScriptDoc.class)
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)

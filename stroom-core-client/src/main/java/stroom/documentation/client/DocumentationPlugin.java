@@ -67,7 +67,6 @@ public class DocumentationPlugin extends DocumentPlugin<DocumentationDoc> {
                      final Consumer<DocumentationDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .builder()
                 .forType(DocumentationDoc.class)
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
@@ -81,7 +80,6 @@ public class DocumentationPlugin extends DocumentPlugin<DocumentationDoc> {
                      final Consumer<DocumentationDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .builder()
                 .forType(DocumentationDoc.class)
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)

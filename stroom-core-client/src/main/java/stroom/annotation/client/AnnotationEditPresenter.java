@@ -147,7 +147,6 @@ public class AnnotationEditPresenter
         this.statusPresenter.setDataSupplier((filter, consumer) -> {
             final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
             restFactory
-                    .builder()
                     .forStringList()
                     .onSuccess(consumer)
                     .call(annotationResource)
@@ -157,7 +156,6 @@ public class AnnotationEditPresenter
         this.assignedToPresenter.setDataSupplier((filter, consumer) -> {
             final UserResource userResource = GWT.create(UserResource.class);
             restFactory
-                    .builder()
                     .forListOf(UserName.class)
                     .onSuccess(userNames -> consumer.accept(userNames.stream()
                             .sorted(Comparator.comparing(UserName::getUserIdentityForAudit))
@@ -169,7 +167,6 @@ public class AnnotationEditPresenter
         this.commentPresenter.setDataSupplier((filter, consumer) -> {
             final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
             restFactory
-                    .builder()
                     .forStringList()
                     .onSuccess(consumer)
                     .call(annotationResource)
@@ -196,7 +193,6 @@ public class AnnotationEditPresenter
 
         final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
         restFactory
-                .builder()
                 .forStringList()
                 .onSuccess(values -> getView().setHasCommentValues(values != null && !values.isEmpty()))
                 .call(annotationResource)
@@ -323,7 +319,6 @@ public class AnnotationEditPresenter
     private void addEntry(final CreateEntryRequest request) {
         final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
         restFactory
-                .builder()
                 .forType(AnnotationDetail.class)
                 .onSuccess(this::read)
                 .onFailure(caught -> AlertEvent.fireError(
@@ -361,7 +356,6 @@ public class AnnotationEditPresenter
             } else {
                 final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
                 restFactory
-                        .builder()
                         .forType(AnnotationDetail.class)
                         .onSuccess(this::edit)
                         .call(annotationResource)
@@ -420,7 +414,6 @@ public class AnnotationEditPresenter
         if (currentStatus == null) {
             final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
             restFactory
-                    .builder()
                     .forStringList()
                     .onSuccess(values -> {
                         if (currentStatus == null && values != null && values.size() > 0) {
@@ -936,7 +929,7 @@ public class AnnotationEditPresenter
             linkedEventPresenter.edit(annotationDetail.getAnnotation(), refresh -> {
                 if (refresh) {
                     final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
-                    restFactory.builder()
+                    restFactory
                             .forType(AnnotationDetail.class)
                             .onSuccess(this::updateHistory)
                             .call(annotationResource)

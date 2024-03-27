@@ -183,7 +183,6 @@ public class ExportConfigPresenter
             }
 
             restFactory
-                    .builder()
                     .forType(ResourceGeneration.class)
                     .onSuccess(result -> ExportFileCompleteUtil.onSuccess(locationManager, this, result))
                     .onFailure(throwable -> ExportFileCompleteUtil.onFailure(this, throwable))

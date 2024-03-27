@@ -40,7 +40,6 @@ public class Views implements HasHandlers {
             consumer.accept(views);
         } else {
             restFactory
-                    .builder()
                     .forListOf(DocRef.class)
                     .onSuccess(result -> {
                         views = result;

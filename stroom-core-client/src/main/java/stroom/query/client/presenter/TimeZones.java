@@ -43,7 +43,6 @@ public class TimeZones {
         }
 
         restFactory
-                .builder()
                 .forStringList()
                 .onSuccess(result -> ids = result)
                 .call(QUERY_RESOURCE)

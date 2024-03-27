@@ -143,7 +143,6 @@ public class NewPipelineReferencePresenter
         dataTypeWidget.clear();
 
         restFactory
-                .builder()
                 .forStringList()
                 .onSuccess(result -> {
                     if (result != null) {

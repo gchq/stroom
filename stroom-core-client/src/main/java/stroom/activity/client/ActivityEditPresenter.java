@@ -214,7 +214,6 @@ public class ActivityEditPresenter extends MyPresenterWidget<ActivityEditView> {
 
         // Validate the activity.
         restFactory
-                .builder()
                 .forType(ActivityValidationResult.class)
                 .onSuccess(result -> afterValidation(result, details, consumer))
                 .call(ACTIVITY_RESOURCE)
@@ -235,7 +234,6 @@ public class ActivityEditPresenter extends MyPresenterWidget<ActivityEditView> {
             // Save the activity.
             if (activity.getId() == null) {
                 restFactory
-                        .builder()
                         .forType(Activity.class)
                         .onSuccess(result -> {
                             activity = result;
@@ -253,7 +251,6 @@ public class ActivityEditPresenter extends MyPresenterWidget<ActivityEditView> {
 
     private void update(final Activity activity, final ActivityDetails details, final Consumer<Activity> consumer) {
         restFactory
-                .builder()
                 .forType(Activity.class)
                 .onSuccess(result -> {
                     ActivityEditPresenter.this.activity = result;

@@ -87,7 +87,6 @@ public class AsyncSuggestOracle extends SuggestOracle {
 
                     } else {
                         restFactory
-                                .builder()
                                 .forType(Suggestions.class)
                                 .onSuccess(result -> {
                                     if (result.isCacheable()) {

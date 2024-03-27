@@ -62,7 +62,6 @@ public class UserPreferencesManager {
 
     public void fetch(final Consumer<UserPreferences> consumer) {
         restFactory
-                .builder()
                 .forType(UserPreferences.class)
                 .onSuccess(consumer)
                 .call(PREFERENCES_RESOURCE)
@@ -72,7 +71,6 @@ public class UserPreferencesManager {
     public void update(final UserPreferences userPreferences,
                        final Consumer<Boolean> consumer) {
         restFactory
-                .builder()
                 .forType(Boolean.class)
                 .onSuccess(consumer)
                 .call(PREFERENCES_RESOURCE)
@@ -82,7 +80,6 @@ public class UserPreferencesManager {
     public void setDefaultUserPreferences(final UserPreferences userPreferences,
                                           final Consumer<UserPreferences> consumer) {
         restFactory
-                .builder()
                 .forType(UserPreferences.class)
                 .onSuccess(consumer)
                 .call(PREFERENCES_RESOURCE)
@@ -91,7 +88,6 @@ public class UserPreferencesManager {
 
     public void resetToDefaultUserPreferences(final Consumer<UserPreferences> consumer) {
         restFactory
-                .builder()
                 .forType(UserPreferences.class)
                 .onSuccess(consumer)
                 .call(PREFERENCES_RESOURCE)

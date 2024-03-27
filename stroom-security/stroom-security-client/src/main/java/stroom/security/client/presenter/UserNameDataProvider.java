@@ -69,7 +69,6 @@ public class UserNameDataProvider implements Refreshable {
                                     final Consumer<Throwable> throwableConsumer) {
                     CriteriaUtil.setRange(criteria, range);
                     restFactory
-                            .builder()
                             .forResultPageOf(UserName.class)
                             .onSuccess(dataConsumer)
                             .onFailure(throwableConsumer)

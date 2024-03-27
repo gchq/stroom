@@ -112,7 +112,6 @@ public class FeedSettingsPresenter extends DocumentEditPresenter<FeedSettingsVie
 
     private void updateEncodings() {
         restFactory
-                .builder()
                 .forStringList()
                 .onSuccess(result -> {
                     getView().getDataEncoding().clear();
@@ -137,7 +136,6 @@ public class FeedSettingsPresenter extends DocumentEditPresenter<FeedSettingsVie
 
     private void updateVolumeGroups() {
         restFactory
-                .builder()
                 .forResultPageOf(FsVolumeGroup.class)
                 .onSuccess(result -> {
                     getView().getVolumeGroup().clear();

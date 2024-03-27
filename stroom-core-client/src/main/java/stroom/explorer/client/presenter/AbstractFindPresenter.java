@@ -113,7 +113,7 @@ public abstract class AbstractFindPresenter<T_PROXY extends Proxy<?>>
                     resetFocus();
 
                 } else {
-                    restFactory.builder()
+                    restFactory
                             .forResultPageOf(FindResult.class)
                             .onSuccess(resultPage -> {
                                 if (resultPage.getPageStart() != cellTable.getPageStart()) {

@@ -103,7 +103,6 @@ public class AnalyticDataShardsPresenter
 
             queryToolbarPresenter.onSearching(true);
             restFactory
-                    .builder()
                     .forType(Result.class)
                     .onSuccess(result -> {
                         tablePresenter.setData(result);

@@ -156,7 +156,6 @@ public class StatisticsPlugin extends DocumentPlugin<StatisticStoreDoc> {
                      final Consumer<StatisticStoreDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .builder()
                 .forType(StatisticStoreDoc.class)
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
@@ -170,7 +169,6 @@ public class StatisticsPlugin extends DocumentPlugin<StatisticStoreDoc> {
                      final Consumer<StatisticStoreDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .builder()
                 .forType(StatisticStoreDoc.class)
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)

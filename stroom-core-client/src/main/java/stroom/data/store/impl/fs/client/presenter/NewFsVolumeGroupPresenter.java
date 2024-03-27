@@ -79,7 +79,6 @@ public class NewFsVolumeGroupPresenter
                         null);
             } else {
                 restFactory
-                        .builder()
                         .forResultPageOf(FsVolumeGroup.class)
                         .onSuccess(result -> {
                             if (result != null) {

@@ -69,7 +69,6 @@ public class RuleSetPlugin extends DocumentPlugin<ReceiveDataRules> {
                      final Consumer<ReceiveDataRules> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .builder()
                 .forType(ReceiveDataRules.class)
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
@@ -83,7 +82,6 @@ public class RuleSetPlugin extends DocumentPlugin<ReceiveDataRules> {
                      final Consumer<ReceiveDataRules> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .builder()
                 .forType(ReceiveDataRules.class)
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)

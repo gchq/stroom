@@ -129,7 +129,6 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
 
     private void initialiseRules(final RestFactory restFactory) {
         restFactory
-                .builder()
                 .forType(DataRetentionRules.class)
                 .onSuccess(result -> {
                     policy = result;
@@ -453,7 +452,6 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
             policy.setRules(getUserRules());
 
             restFactory
-                    .builder()
                     .forType(DataRetentionRules.class)
                     .onSuccess(result -> {
                         policy = result;

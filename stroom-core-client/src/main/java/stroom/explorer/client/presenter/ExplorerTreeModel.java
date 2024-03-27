@@ -186,7 +186,6 @@ public class ExplorerTreeModel {
 //                            + " minDepth: " + minDepth
 //                            + " ensureVisible: " + ensureVisible);
                     restFactory
-                            .builder()
                             .forType(FetchExplorerNodeResult.class)
                             .onSuccess(result -> {
                                 handleFetchResult(criteria, result);

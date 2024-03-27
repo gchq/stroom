@@ -91,7 +91,6 @@ public class SolrIndexSettingsPresenter extends DocumentEditPresenter<SolrIndexS
         index = onWrite(index);
 
         restFactory
-                .builder()
                 .forType(SolrConnectionTestResponse.class)
                 .onSuccess(result -> {
                     if (result.isOk()) {

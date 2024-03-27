@@ -87,7 +87,6 @@ public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
                      final Consumer<PipelineDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .builder()
                 .forType(PipelineDoc.class)
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
@@ -101,7 +100,6 @@ public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
                      final Consumer<PipelineDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .builder()
                 .forType(PipelineDoc.class)
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)

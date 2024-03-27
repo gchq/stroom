@@ -134,7 +134,6 @@ public class DocumentUserListPresenter extends AbstractUserListPresenter {
 
         if (!allSimpleUsers.isEmpty()) {
             restFactory
-                    .builder()
                     .forListOf(UserName.class)
                     .onSuccess(filteredSimpleUsers -> {
                         // Map the users back again

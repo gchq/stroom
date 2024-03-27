@@ -67,7 +67,6 @@ public class FeedPlugin extends DocumentPlugin<FeedDoc> {
                      final Consumer<FeedDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .builder()
                 .forType(FeedDoc.class)
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
@@ -81,7 +80,6 @@ public class FeedPlugin extends DocumentPlugin<FeedDoc> {
                      final Consumer<FeedDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .builder()
                 .forType(FeedDoc.class)
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)

@@ -102,7 +102,6 @@ public class ExecutionScheduleListPresenter
                 if (request != null) {
                     CriteriaUtil.setRange(request, range);
                     restFactory
-                            .builder()
                             .forResultPageOf(ExecutionSchedule.class)
                             .onSuccess(dataConsumer)
                             .onFailure(throwableConsumer)
@@ -142,7 +141,6 @@ public class ExecutionScheduleListPresenter
         };
         enabledColumn.setFieldUpdater((index, row, value) -> {
             restFactory
-                    .builder()
                     .forType(ExecutionSchedule.class)
                     .onSuccess(updated -> refresh())
                     .call(EXECUTION_SCHEDULE_RESOURCE)

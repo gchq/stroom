@@ -126,7 +126,6 @@ public class DictionaryPresenter extends DocumentEditTabPresenter<LinkTabPanelVi
         super.onBind();
         registerHandler(downloadButton.addClickHandler(clickEvent -> {
             restFactory
-                    .builder()
                     .forType(ResourceGeneration.class)
                     .onSuccess(result -> ExportFileCompleteUtil.onSuccess(locationManager, this, result))
                     .call(DICTIONARY_RESOURCE)

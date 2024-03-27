@@ -83,7 +83,6 @@ public class JobListPresenter extends MyPresenterWidget<PagerView> {
         enabledColumn.setFieldUpdater((index, row, value) -> {
             row.setEnabled(value.toBoolean());
             restFactory
-                    .builder()
                     .forType(Job.class)
                     .call(JOB_RESOURCE)
                     .setEnabled(row.getId(), value.toBoolean());
@@ -152,7 +151,6 @@ public class JobListPresenter extends MyPresenterWidget<PagerView> {
                                         final Consumer<ResultPage<Job>> dataConsumer,
                                         final Consumer<Throwable> throwableConsumer) {
                         restFactory
-                                .builder()
                                 .forResultPageOf(Job.class)
                                 .onSuccess(dataConsumer)
                                 .onFailure(throwableConsumer)

@@ -135,7 +135,6 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements
                             .build();
 
                     restFactory
-                            .builder()
                             .forType(DocRef.class)
                             .onSuccess(result -> loadEntityRef(result, future))
                             .onFailure(caught -> {

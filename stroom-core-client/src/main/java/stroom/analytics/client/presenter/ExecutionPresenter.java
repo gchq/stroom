@@ -113,7 +113,6 @@ public class ExecutionPresenter extends MyPresenterWidget<ExecutionView> {
             executionScheduleEditPresenter.show(newSchedule, executionSchedule -> {
                 if (executionSchedule != null) {
                     restFactory
-                            .builder()
                             .forType(ExecutionSchedule.class)
                             .onSuccess(created -> {
                                 executionScheduleListPresenter.refresh();
@@ -132,7 +131,6 @@ public class ExecutionPresenter extends MyPresenterWidget<ExecutionView> {
             executionScheduleEditPresenter.show(selected, executionSchedule -> {
                 if (executionSchedule != null) {
                     restFactory
-                            .builder()
                             .forType(ExecutionSchedule.class)
                             .onSuccess(updated -> {
                                 executionScheduleListPresenter.refresh();
@@ -149,7 +147,6 @@ public class ExecutionPresenter extends MyPresenterWidget<ExecutionView> {
         final ExecutionSchedule selected = executionScheduleListPresenter.getSelected();
         if (selected != null) {
             restFactory
-                    .builder()
                     .forType(Boolean.class)
                     .onSuccess(success -> executionScheduleListPresenter.refresh())
                     .call(EXECUTION_SCHEDULE_RESOURCE)

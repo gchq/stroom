@@ -123,7 +123,6 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
                                 final Consumer<ProcessorListRowResultPage> dataConsumer,
                                 final Consumer<Throwable> throwableConsumer) {
                 restFactory
-                        .builder()
                         .forType(ProcessorListRowResultPage.class)
                         .onSuccess(dataConsumer)
                         .onFailure(throwableConsumer)
@@ -141,7 +140,6 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
             @Override
             protected void doAction(final Integer key, final Boolean value, final Consumer<Integer> consumer) {
                 restFactory
-                        .builder()
                         .forBoolean()
                         .onSuccess(res -> consumer.accept(key))
                         .onFailure(res -> {
@@ -156,7 +154,6 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
             @Override
             protected void doAction(final Integer key, final Boolean value, final Consumer<Integer> consumer) {
                 restFactory
-                        .builder()
                         .forBoolean()
                         .onSuccess(res -> consumer.accept(key))
                         .onFailure(res -> {
@@ -171,7 +168,6 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
             @Override
             protected void doAction(final Integer key, final Integer value, final Consumer<Integer> consumer) {
                 restFactory
-                        .builder()
                         .forInteger()
                         .onSuccess(res -> consumer.accept(key))
                         .onFailure(res -> {
@@ -186,7 +182,6 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
             @Override
             protected void doAction(final Integer key, final Integer value, final Consumer<Integer> consumer) {
                 restFactory
-                        .builder()
                         .forInteger()
                         .onSuccess(res -> consumer.accept(key))
                         .onFailure(res -> {

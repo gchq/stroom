@@ -123,7 +123,6 @@ public class CurrentUser implements ClientSecurityContext, HasHandlers {
         future.onFailure(throwable -> AlertEvent.fireErrorFromException(CurrentUser.this, throwable, null));
 
         restFactory
-                .builder()
                 .forBoolean()
                 .onSuccess(future::setResult)
                 .onFailure(future::setThrowable)

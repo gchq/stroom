@@ -152,7 +152,6 @@ public abstract class AbstractMetaListPresenter
                 if (criteria.getExpression() != null) {
                     CriteriaUtil.setRange(criteria, range);
                     restFactory
-                            .builder()
                             .forResultPageOf(MetaRow.class)
                             .onSuccess(dataConsumer)
                             .onFailure(throwableConsumer)
@@ -669,7 +668,6 @@ public abstract class AbstractMetaListPresenter
                             final Status newStatus) {
         return () -> {
             restFactory
-                    .builder()
                     .forInteger()
                     .onSuccess(result ->
                             AlertEvent.fireInfo(
@@ -685,7 +683,6 @@ public abstract class AbstractMetaListPresenter
 
     private void download(final FindMetaCriteria criteria) {
         restFactory
-                .builder()
                 .forType(ResourceGeneration.class)
                 .onSuccess(result -> ExportFileCompleteUtil.onSuccess(locationManager, this, result))
                 .call(DATA_RESOURCE)
@@ -712,7 +709,6 @@ public abstract class AbstractMetaListPresenter
                 .build();
 
         restFactory
-                .builder()
                 .forType(ProcessorFilter.class)
                 .onSuccess(processorFilter -> {
                     if (processorFilter != null) {
@@ -745,7 +741,6 @@ public abstract class AbstractMetaListPresenter
                 .build();
 
         restFactory
-                .builder()
                 .forListOf(ReprocessDataInfo.class)
                 .onSuccess(result -> {
                     if (result != null && result.size() > 0) {

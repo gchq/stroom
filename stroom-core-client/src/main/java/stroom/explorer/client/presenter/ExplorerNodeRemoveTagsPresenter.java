@@ -91,7 +91,6 @@ public class ExplorerNodeRemoveTagsPresenter
                     .collect(Collectors.toList());
 
             restFactory
-                    .builder()
                     .forSetOf(String.class)
                     .onSuccess(nodetags -> {
                         getView().setData(docRefs, nodetags);
@@ -140,7 +139,6 @@ public class ExplorerNodeRemoveTagsPresenter
                                      final Set<String> editedTags) {
         final List<DocRef> nodeDocRefs = getNodeDocRefs();
         restFactory
-                .builder()
                 .forVoid()
                 .onSuccess(voidResult -> {
                     // Update the node in the tree with the new tags

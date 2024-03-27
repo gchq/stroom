@@ -92,7 +92,6 @@ public class FsVolumeStatusListPresenter extends MyPresenterWidget<PagerView> {
                                     final Consumer<Throwable> throwableConsumer) {
                     CriteriaUtil.setRange(criteria, range);
                     restFactory
-                            .builder()
                             .forResultPageOf(FsVolume.class)
                             .onSuccess(dataConsumer)
                             .onFailure(throwableConsumer)

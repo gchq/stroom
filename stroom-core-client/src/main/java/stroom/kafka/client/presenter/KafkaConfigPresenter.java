@@ -123,7 +123,6 @@ public class KafkaConfigPresenter extends DocumentEditTabPresenter<LinkTabPanelV
         super.onBind();
         registerHandler(downloadButton.addClickHandler(clickEvent -> {
             restFactory
-                    .builder()
                     .forType(ResourceGeneration.class)
                     .onSuccess(result -> ExportFileCompleteUtil.onSuccess(locationManager, this, result))
                     .call(KAFKA_CONFIG_RESOURCE)

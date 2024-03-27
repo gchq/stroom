@@ -90,7 +90,6 @@ public class FsVolumeGroupPresenter extends ContentTabPresenter<WrapperView> {
         presenter.show("", name -> {
             if (name != null) {
                 restFactory
-                        .builder()
                         .forType(FsVolumeGroup.class)
                         .onSuccess(volumeGroup -> {
                             edit(volumeGroup);
@@ -109,7 +108,6 @@ public class FsVolumeGroupPresenter extends ContentTabPresenter<WrapperView> {
         final FsVolumeGroup volume = volumeStatusListPresenter.getSelectionModel().getSelected();
         if (volume != null) {
             restFactory
-                    .builder()
                     .forType(FsVolumeGroup.class)
                     .onSuccess(this::edit)
                     .call(FS_VOLUME_GROUP_RESOURCE)
@@ -140,7 +138,6 @@ public class FsVolumeGroupPresenter extends ContentTabPresenter<WrapperView> {
                             volumeStatusListPresenter.getSelectionModel().clear();
                             for (final FsVolumeGroup volume : list) {
                                 restFactory
-                                        .builder()
                                         .forBoolean()
                                         .onSuccess(response -> refresh())
                                         .call(FS_VOLUME_GROUP_RESOURCE)

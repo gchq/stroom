@@ -174,7 +174,7 @@ public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView>
                                     final ExpressionOperator expression,
                                     final Runnable onSuccess) {
 
-        restFactory.builder()
+        restFactory
                 .forType(ValidateExpressionResult.class)
                 .onSuccess(result -> {
                     if (result.isOk()) {
@@ -269,7 +269,6 @@ public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView>
             filter.setMaxMetaCreateTimeMs(maxMetaCreateTimeMs);
 
             restFactory
-                    .builder()
                     .forType(ProcessorFilter.class)
                     .onSuccess(this::hide)
                     .call(PROCESSOR_FILTER_RESOURCE)
@@ -288,7 +287,6 @@ public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView>
                     .maxMetaCreateTimeMs(maxMetaCreateTimeMs)
                     .build();
             restFactory
-                    .builder()
                     .forType(ProcessorFilter.class)
                     .onSuccess(this::hide)
                     .call(PROCESSOR_FILTER_RESOURCE)

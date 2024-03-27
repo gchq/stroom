@@ -422,7 +422,6 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements
         }
 
         restFactory
-                .builder()
                 .forType(AbstractFetchDataResult.class)
                 .onSuccess(this::handleResponse)
                 .onFailure(caught -> AlertEvent.fireError(

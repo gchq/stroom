@@ -41,7 +41,6 @@ public class StreamingProcessingPresenter
                        final boolean readOnly,
                        final String query) {
         restFactory
-                .builder()
                 .forType(ExpressionOperator.class)
                 .onSuccess(expressionOperator -> {
                     processorPresenter.setDefaultExpression(expressionOperator);

@@ -72,7 +72,6 @@ public class ElasticClusterSettingsPresenter
         cluster = onWrite(cluster);
 
         restFactory
-                .builder()
                 .forType(ElasticClusterTestResponse.class)
                 .onSuccess(result -> {
                     if (result.isOk()) {

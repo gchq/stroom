@@ -286,7 +286,6 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
                 final ProcessorFilter filter = processorFilterRow.getProcessorFilter();
 
                 restFactory
-                        .builder()
                         .forType(ProcessorFilter.class)
                         .onSuccess(loadedFilter -> {
                             if (loadedFilter == null) {
@@ -338,7 +337,6 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
             ConfirmEvent.fire(this, "Are you sure you want to delete this filter?", result -> {
                 if (result) {
                     restFactory
-                            .builder()
                             .forType(Boolean.class)
                             .onSuccess(res -> processorListPresenter.refresh())
                             .call(PROCESSOR_FILTER_RESOURCE)
@@ -364,7 +362,6 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
     public void refresh(final ProcessorFilter processorFilter) {
         Objects.requireNonNull(processorFilter);
         restFactory
-                .builder()
                 .forListOf(UserName.class)
                 .onSuccess(owners -> {
                     String ownerDisplayName;

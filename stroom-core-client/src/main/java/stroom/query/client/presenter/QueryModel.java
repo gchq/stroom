@@ -236,7 +236,6 @@ public class QueryModel {
                     .build();
 
             restFactory
-                    .builder()
                     .forType(DashboardSearchResponse.class)
                     .onSuccess(response -> {
                         try {
@@ -316,7 +315,6 @@ public class QueryModel {
 //                    .build();
 
             restFactory
-                    .builder()
                     .forType(DashboardSearchResponse.class)
                     .onSuccess(response -> {
                         GWT.log(response.toString());

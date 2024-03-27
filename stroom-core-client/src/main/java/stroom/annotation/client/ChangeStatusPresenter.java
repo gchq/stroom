@@ -70,7 +70,6 @@ public class ChangeStatusPresenter extends MyPresenterWidget<ChangeStatusView>
         if (currentStatus == null) {
             final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
             restFactory
-                    .builder()
                     .forStringList()
                     .onSuccess(values -> {
                         if (currentStatus == null && values != null && values.size() > 0) {
@@ -91,7 +90,6 @@ public class ChangeStatusPresenter extends MyPresenterWidget<ChangeStatusView>
                         final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
                         final SetStatusRequest request = new SetStatusRequest(annotationIdList, currentStatus);
                         restFactory
-                                .builder()
                                 .forInteger()
                                 .onSuccess(values -> GWT.log("Updated " + values + " annotations"))
                                 .call(annotationResource)
@@ -115,7 +113,6 @@ public class ChangeStatusPresenter extends MyPresenterWidget<ChangeStatusView>
         statusPresenter.setDataSupplier((filter, consumer) -> {
             final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
             restFactory
-                    .builder()
                     .forStringList()
                     .onSuccess(consumer)
                     .call(annotationResource)

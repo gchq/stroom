@@ -104,7 +104,6 @@ public class ActivityListPresenter
                                 final Consumer<ResultPage<Activity>> dataConsumer,
                                 final Consumer<Throwable> throwableConsumer) {
                 restFactory
-                        .builder()
                         .forResultPageOf(Activity.class)
                         .onSuccess(dataConsumer)
                         .onFailure(throwableConsumer)

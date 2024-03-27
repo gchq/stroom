@@ -160,7 +160,6 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
         // assignedTo is a display name so have to convert it back to a unique username
         final UserNameResource userNameResource = GWT.create(UserNameResource.class);
         restFactory
-                .builder()
                 .forType(UserName.class)
                 .onSuccess(assignedToUserName -> {
                     final Annotation annotation = new Annotation();

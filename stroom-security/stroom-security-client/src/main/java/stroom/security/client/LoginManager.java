@@ -59,7 +59,6 @@ public class LoginManager implements HasHandlers {
         // When we start the application we will try and auto login using a client certificates.
         TaskStartEvent.fire(this, "Fetching permissions...");
         restFactory
-                .builder()
                 .forType(UserAndPermissions.class)
                 .onSuccess(userAndPermissions -> {
                     if (userAndPermissions != null) {
@@ -79,7 +78,6 @@ public class LoginManager implements HasHandlers {
     private void logout() {
         // Tell the server we want to logout and the server will provide a logout URL.
         restFactory
-                .builder()
                 .forType(UrlResponse.class)
                 .onSuccess(response -> setLocation(response.getUrl()))
                 .onFailure(throwable -> AlertEvent.fireErrorFromException(LoginManager.this, throwable, null))

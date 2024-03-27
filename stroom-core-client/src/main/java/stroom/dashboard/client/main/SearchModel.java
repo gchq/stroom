@@ -234,7 +234,6 @@ public class SearchModel {
                             .build();
 
                     restFactory
-                            .builder()
                             .forType(DashboardSearchResponse.class)
                             .onSuccess(response -> {
                                 Result result = null;
@@ -357,7 +356,6 @@ public class SearchModel {
                     .build();
 
             restFactory
-                    .builder()
                     .forType(DashboardSearchResponse.class)
                     .onSuccess(response -> {
                         if (search == currentSearch) {

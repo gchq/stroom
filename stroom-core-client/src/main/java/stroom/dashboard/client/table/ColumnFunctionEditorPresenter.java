@@ -147,7 +147,6 @@ public class ColumnFunctionEditorPresenter
                 } else {
                     // Check the validity of the expression.
                     restFactory
-                            .builder()
                             .forType(ValidateExpressionResult.class)
                             .onSuccess(result -> {
                                 if (result.isOk()) {

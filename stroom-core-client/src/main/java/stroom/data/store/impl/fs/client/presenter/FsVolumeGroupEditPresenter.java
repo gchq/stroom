@@ -101,7 +101,6 @@ public class FsVolumeGroupEditPresenter
         registerHandler(rescanButton.addClickHandler(event -> {
             delayedUpdate.reset();
             restFactory
-                    .builder()
                     .forBoolean()
                     .onSuccess(response -> delayedUpdate.update())
                     .onFailure(throwable -> {
@@ -121,7 +120,6 @@ public class FsVolumeGroupEditPresenter
         final FsVolume volume = volumeStatusListPresenter.getSelectionModel().getSelected();
         if (volume != null) {
             restFactory
-                    .builder()
                     .forType(FsVolume.class)
                     .onSuccess(result -> editVolume(result, "Edit Volume"))
                     .call(FS_VOLUME_RESOURCE)
@@ -152,7 +150,6 @@ public class FsVolumeGroupEditPresenter
                             volumeStatusListPresenter.getSelectionModel().clear();
                             for (final FsVolume volume : list) {
                                 restFactory
-                                        .builder()
                                         .forBoolean()
                                         .onSuccess(response -> volumeStatusListPresenter.refresh())
                                         .call(FS_VOLUME_RESOURCE)
@@ -232,7 +229,6 @@ public class FsVolumeGroupEditPresenter
                     null);
         } else {
             restFactory
-                    .builder()
                     .forType(FsVolumeGroup.class)
                     .onSuccess(grp -> {
                         if (grp != null && !Objects.equals(groupId, grp.getId())) {
@@ -254,7 +250,6 @@ public class FsVolumeGroupEditPresenter
     private void createVolumeGroup(final Consumer<FsVolumeGroup> consumer,
                                    final FsVolumeGroup volumeGroup) {
         restFactory
-                .builder()
                 .forType(FsVolumeGroup.class)
                 .onSuccess(consumer)
                 .call(FS_VOLUME_GROUP_RESOURCE)

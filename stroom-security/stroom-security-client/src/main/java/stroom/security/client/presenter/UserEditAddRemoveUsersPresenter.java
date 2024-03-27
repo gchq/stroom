@@ -84,7 +84,6 @@ public class UserEditAddRemoveUsersPresenter
                         null);
 
                 restFactory
-                        .builder()
                         .forBoolean()
                         .onSuccess(result -> {
                             refresh();
@@ -109,7 +108,6 @@ public class UserEditAddRemoveUsersPresenter
                 final ChangeUserRequest request = new ChangeUserRequest(relatedUser, changedLinkedUsers, null);
 
                 restFactory
-                        .builder()
                         .forBoolean()
                         .onSuccess(result -> refresh())
                         .call(APP_PERMISSION_RESOURCE)

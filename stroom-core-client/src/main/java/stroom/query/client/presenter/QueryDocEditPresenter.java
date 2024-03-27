@@ -118,7 +118,6 @@ public class QueryDocEditPresenter extends DocumentEditPresenter<QueryEditView, 
             } else {
                 final String query = queryEditPresenter.getQuery();
                 restFactory
-                        .builder()
                         .forType(ValidateExpressionResult.class)
                         .onSuccess(validateExpressionResult -> {
                             if (!validateExpressionResult.isOk()) {
@@ -152,7 +151,6 @@ public class QueryDocEditPresenter extends DocumentEditPresenter<QueryEditView, 
 
         // First get the explorer node for the docref.
         restFactory
-                .builder()
                 .forType(ExplorerNode.class)
                 .onSuccess(explorerNode -> {
                     // Ask the user to create a new document.
@@ -174,7 +172,6 @@ public class QueryDocEditPresenter extends DocumentEditPresenter<QueryEditView, 
                              final String query,
                              final AnalyticProcessType analyticProcessType) {
         restFactory
-                .builder()
                 .forType(AnalyticRuleDoc.class)
                 .onSuccess(doc -> {
                     // Create default config.
@@ -275,7 +272,6 @@ public class QueryDocEditPresenter extends DocumentEditPresenter<QueryEditView, 
     private void updateRule(final DocRef ruleDocRef,
                             final AnalyticRuleDoc ruleDoc) {
         restFactory
-                .builder()
                 .forType(AnalyticRuleDoc.class)
                 .onSuccess(doc -> OpenDocumentEvent.fire(
                         QueryDocEditPresenter.this,

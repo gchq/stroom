@@ -409,7 +409,6 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                                                 downloadPresenter.isSample(),
                                                 downloadPresenter.getPercent());
                                 restFactory
-                                        .builder()
                                         .forType(ResourceGeneration.class)
                                         .onSuccess(result -> ExportFileCompleteUtil.onSuccess(locationManager,
                                                 null,

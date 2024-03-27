@@ -109,7 +109,6 @@ public class DatabaseTablesMonitoringPresenter
                                 final Consumer<Throwable> throwableConsumer) {
                 CriteriaUtil.setRange(criteria, range);
                 restFactory
-                        .builder()
                         .forResultPageOf(DBTableStatus.class)
                         .onSuccess(dataConsumer)
                         .onFailure(throwableConsumer)

@@ -69,7 +69,6 @@ public class ElasticIndexPlugin extends DocumentPlugin<ElasticIndexDoc> {
                      final Consumer<ElasticIndexDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .builder()
                 .forType(ElasticIndexDoc.class)
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
@@ -83,7 +82,6 @@ public class ElasticIndexPlugin extends DocumentPlugin<ElasticIndexDoc> {
                      final Consumer<ElasticIndexDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .builder()
                 .forType(ElasticIndexDoc.class)
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)

@@ -59,7 +59,6 @@ public class AboutPresenter extends MyPresenter<AboutPresenter.AboutView, AboutP
 
     private void buildContent() {
         restFactory
-                .builder()
                 .forType(SessionInfo.class)
                 .onSuccess(sessionInfo -> {
                     final BuildInfo buildInfo = sessionInfo.getBuildInfo();

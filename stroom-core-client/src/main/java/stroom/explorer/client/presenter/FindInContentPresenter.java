@@ -137,7 +137,7 @@ public class FindInContentPresenter
                     resetFocus();
 
                 } else {
-                    restFactory.builder()
+                    restFactory
                             .forResultPageOf(FindInContentResult.class)
                             .onSuccess(resultPage -> {
                                 if (resultPage.getPageStart() != cellTable.getPageStart()) {
@@ -194,7 +194,7 @@ public class FindInContentPresenter
                     selection.getDocContentMatch().getDocRef(),
                     selection.getDocContentMatch().getExtension(),
                     currentQuery.getFilter());
-            restFactory.builder()
+            restFactory
                     .forType(DocContentHighlights.class)
                     .onSuccess(response -> {
                         if (response != null && response.getText() != null) {

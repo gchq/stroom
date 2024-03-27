@@ -145,7 +145,6 @@ public class ManageGlobalPropertyListPresenter
 //        GWT.log("Refresh table called");
 
         restFactory
-                .builder()
                 .forType(ListConfigResponse.class)
                 .onSuccess(listConfigResponse -> {
 
@@ -205,7 +204,6 @@ public class ManageGlobalPropertyListPresenter
                 dataGrid.getVisibleRange().getLength()));
 
         restFactory
-                .builder()
                 .forType(ListConfigResponse.class)
                 .onSuccess(this::handleNodeResponse)
                 .onFailure(throwable -> {

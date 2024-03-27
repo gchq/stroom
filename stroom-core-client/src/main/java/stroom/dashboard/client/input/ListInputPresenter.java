@@ -100,7 +100,6 @@ public class ListInputPresenter
         if (settings.isUseDictionary() &&
                 settings.getDictionary() != null) {
             restFactory
-                    .builder()
                     .forStringList()
                     .onSuccess(words -> {
                         if (words != null) {

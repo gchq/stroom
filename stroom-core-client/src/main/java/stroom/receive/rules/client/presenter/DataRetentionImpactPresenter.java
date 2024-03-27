@@ -165,7 +165,6 @@ public class DataRetentionImpactPresenter
         // take a looooong time
         // Need to assign it to a variable for the generics typing
         restFactory
-                .builder()
                 .forType(DataRetentionDeleteSummaryResponse.class)
                 .onSuccess(response -> {
                     // check we are expecting the results
@@ -197,7 +196,6 @@ public class DataRetentionImpactPresenter
     private void cancelQuery() {
         if (currentQueryId != null) {
             restFactory
-                    .builder()
                     .forBoolean()
                     .onSuccess(success -> {
                         isQueryRunning = false;

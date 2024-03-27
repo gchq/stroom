@@ -57,7 +57,7 @@ public class ExpressionValidator {
                 // Standard expression that needs no validation, so save on the rest call
                 consumer.accept(expression);
             } else {
-                restFactory.builder()
+                restFactory
                         .forType(ValidateExpressionResult.class)
                         .onSuccess(result -> {
                             if (result.isOk()) {

@@ -67,7 +67,6 @@ public class XMLSchemaPlugin extends DocumentPlugin<XmlSchemaDoc> {
                      final Consumer<XmlSchemaDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .builder()
                 .forType(XmlSchemaDoc.class)
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
@@ -81,7 +80,6 @@ public class XMLSchemaPlugin extends DocumentPlugin<XmlSchemaDoc> {
                      final Consumer<XmlSchemaDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .builder()
                 .forType(XmlSchemaDoc.class)
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)

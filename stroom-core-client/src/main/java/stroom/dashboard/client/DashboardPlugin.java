@@ -189,7 +189,6 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
                      final Consumer<DashboardDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .builder()
                 .forType(DashboardDoc.class)
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
@@ -203,7 +202,6 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
                      final Consumer<DashboardDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .builder()
                 .forType(DashboardDoc.class)
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)

@@ -67,7 +67,6 @@ public class VisualisationPlugin extends DocumentPlugin<VisualisationDoc> {
                      final Consumer<VisualisationDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .builder()
                 .forType(VisualisationDoc.class)
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
@@ -81,7 +80,6 @@ public class VisualisationPlugin extends DocumentPlugin<VisualisationDoc> {
                      final Consumer<VisualisationDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .builder()
                 .forType(VisualisationDoc.class)
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)

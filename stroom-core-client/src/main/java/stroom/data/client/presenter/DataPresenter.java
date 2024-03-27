@@ -461,7 +461,6 @@ public class DataPresenter
     public void fetchData(final SourceLocation sourceLocation) {
         // We know the location but not what type of data we are fetching so first get the meta
         restFactory
-                .builder()
                 .forType(Meta.class)
                 .onSuccess(meta -> {
                     fetchData(meta, sourceLocation, false);
@@ -571,7 +570,7 @@ public class DataPresenter
 
                 final Long currentMetaId = getCurrentMetaId();
                 if (currentMetaId != null && currentMetaId >= 0) {
-                    restFactory.builder()
+                    restFactory
                             .forSetOf(String.class)
                             .onSuccess(availableChildStreamTypes -> {
 //                                GWT.log("Received available child stream types " + availableChildStreamTypes);
@@ -749,7 +748,6 @@ public class DataPresenter
                         actionQueue.clear();
 
                         restFactory
-                                .builder()
                                 .forType(AbstractFetchDataResult.class)
                                 .onSuccess(result -> {
                                     // If we are queueing more actions then don't
@@ -1116,7 +1114,7 @@ public class DataPresenter
 
     private void fetchMetaInfoData(final Long metaId) {
         if (metaId != null) {
-            restFactory.builder()
+            restFactory
                     .forListOf(DataInfoSection.class)
                     .onSuccess(this::handleMetaInfoResult)
                     .call(DATA_RESOURCE)

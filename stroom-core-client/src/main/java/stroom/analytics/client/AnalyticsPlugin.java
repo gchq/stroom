@@ -67,7 +67,6 @@ public class AnalyticsPlugin extends DocumentPlugin<AnalyticRuleDoc> {
                      final Consumer<AnalyticRuleDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .builder()
                 .forType(AnalyticRuleDoc.class)
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
@@ -81,7 +80,6 @@ public class AnalyticsPlugin extends DocumentPlugin<AnalyticRuleDoc> {
                      final Consumer<AnalyticRuleDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .builder()
                 .forType(AnalyticRuleDoc.class)
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)

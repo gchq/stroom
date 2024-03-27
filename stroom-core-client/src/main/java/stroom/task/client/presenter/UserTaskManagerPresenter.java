@@ -136,7 +136,6 @@ public class UserTaskManagerPresenter
             if (!refreshing.contains(nodeName)) {
                 refreshing.add(nodeName);
                 restFactory
-                        .builder()
                         .forType(TaskProgressResponse.class)
                         .onSuccess(response -> {
                             responseMap.put(nodeName, response.getValues());
@@ -216,7 +215,6 @@ public class UserTaskManagerPresenter
             findTaskCriteria.addId(taskProgress.getId());
             final TerminateTaskProgressRequest request = new TerminateTaskProgressRequest(findTaskCriteria);
             restFactory
-                    .builder()
                     .forBoolean()
                     .call(TASK_RESOURCE)
                     .terminate(taskProgress.getNodeName(), request);

@@ -69,7 +69,6 @@ public class ElasticClusterPlugin extends DocumentPlugin<ElasticClusterDoc> {
                      final Consumer<ElasticClusterDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .builder()
                 .forType(ElasticClusterDoc.class)
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
@@ -83,7 +82,6 @@ public class ElasticClusterPlugin extends DocumentPlugin<ElasticClusterDoc> {
                      final Consumer<ElasticClusterDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .builder()
                 .forType(ElasticClusterDoc.class)
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)

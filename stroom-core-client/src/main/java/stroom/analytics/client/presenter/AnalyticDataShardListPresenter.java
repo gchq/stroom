@@ -173,7 +173,6 @@ public class AnalyticDataShardListPresenter
             if (criteria.getAnalyticDocUuid() != null) {
                 CriteriaUtil.setRange(criteria, range);
                 restFactory
-                        .builder()
                         .forResultPageOf(AnalyticDataShard.class)
                         .onSuccess(response -> {
                             responseMap.put(nodeName, response.getValues());

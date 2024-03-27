@@ -128,7 +128,6 @@ public class BasicVisSettingsPresenter extends BasicSettingsTabPresenter<BasicVi
         currentVisualisation = docRef;
         if (docRef != null) {
             restFactory
-                    .builder()
                     .forType(VisualisationDoc.class)
                     .onSuccess(result -> {
                         String jsonString = "";

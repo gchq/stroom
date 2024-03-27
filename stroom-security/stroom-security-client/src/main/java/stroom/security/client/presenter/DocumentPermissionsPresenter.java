@@ -102,7 +102,6 @@ public class DocumentPermissionsPresenter
             consumer.accept(cached);
         } else {
             restFactory
-                    .builder()
                     .forStringList()
                     .onSuccess(permissions -> {
                         ALL_PERMISSIONS_CACHE.put(docType, permissions);
@@ -136,7 +135,6 @@ public class DocumentPermissionsPresenter
 
             final DocRef docRef = explorerNode.getDocRef();
             restFactory
-                    .builder()
                     .forType(DocumentPermissions.class)
                     .onSuccess(documentPermissions -> {
                         this.documentPermissions = documentPermissions;
@@ -180,7 +178,6 @@ public class DocumentPermissionsPresenter
 
         return event -> {
             restFactory
-                    .builder()
                     .forType(DocumentPermissions.class)
                     .onSuccess(parentDocPermissions -> {
                         // We want to wipe existing permissions on the server, which means creating REMOVES
@@ -267,7 +264,6 @@ public class DocumentPermissionsPresenter
             // of what they are about to do as it may impact 00s or 000s of documents.
             if (Cascade.isCascading(cascade)) {
                 restFactory
-                        .builder()
                         .forType(PermissionChangeImpactSummary.class)
                         .onSuccess(impactSummary -> {
                             if (GwtNullSafe.isBlankString(impactSummary.getImpactSummary())) {
@@ -299,7 +295,6 @@ public class DocumentPermissionsPresenter
 
     private void doPermissionChange(final HidePopupRequestEvent e, final DocRef docRef) {
         restFactory
-                .builder()
                 .forBoolean()
                 .onSuccess(result -> e.hide())
                 .call(DOC_PERMISSION_RESOURCE)

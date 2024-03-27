@@ -168,7 +168,6 @@ public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesP
         criteria.setPageRequest(new PageRequest(0, 100));
 
         restFactory
-                .builder()
                 .forResultPageOf(StoredQuery.class)
                 .onSuccess(result -> {
                     selectionModel.clear();
@@ -205,7 +204,6 @@ public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesP
 
     private void create(final StoredQuery query) {
         restFactory
-                .builder()
                 .forType(StoredQuery.class)
                 .onSuccess(result -> {
                     refresh(false);
@@ -217,7 +215,6 @@ public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesP
 
     private void update(final StoredQuery query) {
         restFactory
-                .builder()
                 .forType(StoredQuery.class)
                 .onSuccess(result -> {
                     refresh(false);
@@ -229,7 +226,6 @@ public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesP
 
     private void delete(final StoredQuery query) {
         restFactory
-                .builder()
                 .forType(StoredQuery.class)
                 .onSuccess(result -> refresh(false))
                 .call(STORED_QUERY_RESOURCE)

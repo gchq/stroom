@@ -31,7 +31,6 @@ public class DataSourceClient {
     public void findFields(final FindFieldInfoCriteria findFieldInfoCriteria,
                            final Consumer<ResultPage<QueryField>> consumer) {
         restFactory
-                .builder()
                 .forResultPageOf(QueryField.class)
                 .onSuccess(consumer)
                 .call(DATA_SOURCE_RESOURCE)
@@ -48,7 +47,6 @@ public class DataSourceClient {
                     dataSourceRef,
                     StringMatch.equals(fieldName, true));
             restFactory
-                    .builder()
                     .forResultPageOf(QueryField.class)
                     .onSuccess(result -> {
                         if (result.getValues().size() > 0) {
@@ -65,7 +63,6 @@ public class DataSourceClient {
 
         if (dataSourceDocRef != null) {
             restFactory
-                    .builder()
                     .forType(Documentation.class)
                     .onSuccess(documentation -> {
                         final Optional<String> optMarkDown = GwtNullSafe.getAsOptional(documentation,
@@ -81,7 +78,6 @@ public class DataSourceClient {
 
     public void fetchDefaultExtractionPipeline(DocRef dataSourceRef, Consumer<DocRef> consumer) {
         restFactory
-                .builder()
                 .forType(DocRef.class)
                 .onSuccess(consumer)
                 .call(DATA_SOURCE_RESOURCE)

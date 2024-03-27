@@ -176,7 +176,6 @@ public class ImportConfigConfirmPresenter extends
     public void refresh() {
         importSettingsBuilder.importMode(ImportMode.CREATE_CONFIRMATION);
         restFactory
-                .builder()
                 .forType(ImportConfigResponse.class)
                 .onSuccess(result -> {
                     confirmList = result.getConfirmList();
@@ -452,7 +451,6 @@ public class ImportConfigConfirmPresenter extends
         importSettingsBuilder.enableFilters(false);
 
         restFactory
-                .builder()
                 .forType(ImportConfigResponse.class)
                 .onSuccess(result2 -> AlertEvent.fireWarn(ImportConfigConfirmPresenter.this,
                         "Import Aborted",
@@ -467,7 +465,6 @@ public class ImportConfigConfirmPresenter extends
     public void importData() {
         importSettingsBuilder.importMode(ImportMode.ACTION_CONFIRMATION);
         restFactory
-                .builder()
                 .forType(ImportConfigResponse.class)
                 .onSuccess(result2 ->
                         AlertEvent.fireInfo(

@@ -98,7 +98,6 @@ public class TableBuilderProcessingPresenter
     private void refreshTracker() {
         if (ruleDocRef != null && ruleDocRef.getUuid() != null) {
             restFactory
-                    .builder()
                     .forType(AnalyticTracker.class)
                     .onSuccess(result -> {
                         final SafeHtml safeHtml = getInfo(result);

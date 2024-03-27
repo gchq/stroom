@@ -96,7 +96,7 @@ public class LinkedEventPresenter extends MyPresenterWidget<LinkedEventView> {
                 dirty = true;
 
                 final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
-                restFactory.builder()
+                restFactory
                         .forListOf(EventId.class)
                         .onSuccess(this::setData)
                         .call(annotationResource)
@@ -118,7 +118,7 @@ public class LinkedEventPresenter extends MyPresenterWidget<LinkedEventView> {
                 }
 
                 final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
-                restFactory.builder()
+                restFactory
                         .forListOf(EventId.class)
                         .onSuccess(this::setData)
                         .call(annotationResource)
@@ -133,7 +133,7 @@ public class LinkedEventPresenter extends MyPresenterWidget<LinkedEventView> {
         dirty = false;
 
         final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
-        restFactory.builder()
+        restFactory
                 .forListOf(EventId.class)
                 .onSuccess(this::show)
                 .call(annotationResource)

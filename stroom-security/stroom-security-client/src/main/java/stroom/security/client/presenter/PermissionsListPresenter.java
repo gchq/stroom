@@ -203,7 +203,6 @@ public class PermissionsListPresenter
     private void refreshDocTypeIcons() {
         // Hold map of doc type icons keyed on type to save constructing for each row
         restFactory
-                .builder()
                 .forType(DocumentTypes.class)
                 .onSuccess(documentTypes -> {
                     typeToSvgMap = documentTypes

@@ -157,7 +157,6 @@ public class StroomStatsStorePlugin extends DocumentPlugin<StroomStatsStoreDoc> 
                      final Consumer<StroomStatsStoreDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .builder()
                 .forType(StroomStatsStoreDoc.class)
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
@@ -171,7 +170,6 @@ public class StroomStatsStorePlugin extends DocumentPlugin<StroomStatsStoreDoc> 
                      final Consumer<StroomStatsStoreDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .builder()
                 .forType(StroomStatsStoreDoc.class)
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)

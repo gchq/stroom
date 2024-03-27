@@ -67,7 +67,6 @@ public class XsltPlugin extends DocumentPlugin<XsltDoc> {
                      final Consumer<XsltDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .builder()
                 .forType(XsltDoc.class)
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
@@ -81,7 +80,6 @@ public class XsltPlugin extends DocumentPlugin<XsltDoc> {
                      final Consumer<XsltDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .builder()
                 .forType(XsltDoc.class)
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)

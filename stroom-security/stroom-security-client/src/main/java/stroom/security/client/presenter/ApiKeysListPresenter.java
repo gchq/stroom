@@ -208,7 +208,6 @@ public class ApiKeysListPresenter
 //                GWT.log("id: " + id);
                 if (ok) {
                     restFactory
-                            .builder()
                             .forBoolean()
                             .onSuccess(unused -> {
                                 onSuccess.run();
@@ -225,7 +224,6 @@ public class ApiKeysListPresenter
             ConfirmEvent.fire(this, msg, ok -> {
                 if (ok) {
                     restFactory
-                            .builder()
                             .forInteger()
                             .onSuccess(count -> {
                                 onSuccess.run();
@@ -312,7 +310,6 @@ public class ApiKeysListPresenter
                            final Consumer<ApiKeyResultPage> dataConsumer,
                            final Consumer<Throwable> throwableConsumer) {
         restFactory
-                .builder()
                 .forType(ApiKeyResultPage.class)
                 .onSuccess(response -> {
                     apiKeys.clear();

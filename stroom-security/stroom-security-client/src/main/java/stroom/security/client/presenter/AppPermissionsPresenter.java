@@ -86,7 +86,6 @@ public class AppPermissionsPresenter extends
         } else {
             // Fetch permissions and populate table.
             restFactory
-                    .builder()
                     .forType(UserAndPermissions.class)
                     .onSuccess(userAppPermissions -> {
                         AppPermissionsPresenter.this.userAppPermissions = userAppPermissions;
@@ -104,7 +103,6 @@ public class AppPermissionsPresenter extends
 
         } else {
             restFactory
-                    .builder()
                     .forStringList()
                     .onSuccess(allPermissions -> {
                         Collections.sort(allPermissions);
@@ -149,7 +147,6 @@ public class AppPermissionsPresenter extends
                 }
 
                 restFactory
-                        .builder()
                         .forBoolean()
                         .onSuccess(result -> refresh())
                         .call(APP_PERMISSION_RESOURCE)

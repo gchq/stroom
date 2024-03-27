@@ -57,7 +57,6 @@ public class QueryHelpAceCompletionProvider implements AceCompletionProvider {
                         new StringMatch(MatchType.STARTS_WITH, false, prefix),
                         showAll);
         restFactory
-                .builder()
                 .forResultPageOf(CompletionValue.class)
                 .onSuccess(result -> {
                     final List<AceCompletion> aceCompletions = result

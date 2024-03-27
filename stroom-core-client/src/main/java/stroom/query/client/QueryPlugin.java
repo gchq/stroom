@@ -67,7 +67,6 @@ public class QueryPlugin extends DocumentPlugin<QueryDoc> {
                      final Consumer<QueryDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .builder()
                 .forType(QueryDoc.class)
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
@@ -81,7 +80,6 @@ public class QueryPlugin extends DocumentPlugin<QueryDoc> {
                      final Consumer<QueryDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .builder()
                 .forType(QueryDoc.class)
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)

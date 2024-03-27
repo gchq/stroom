@@ -67,7 +67,6 @@ public class TextConverterPlugin extends DocumentPlugin<TextConverterDoc> {
                      final Consumer<TextConverterDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .builder()
                 .forType(TextConverterDoc.class)
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
@@ -81,7 +80,6 @@ public class TextConverterPlugin extends DocumentPlugin<TextConverterDoc> {
                      final Consumer<TextConverterDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .builder()
                 .forType(TextConverterDoc.class)
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)

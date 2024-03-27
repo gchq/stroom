@@ -224,7 +224,6 @@ public final class ManageGlobalPropertyEditPresenter
 
     private void updateValuesFromResource(final String propertyName, final Runnable hideRunnable) {
         restFactory
-                .builder()
                 .forType(ConfigProperty.class)
                 .onSuccess(configProperty ->
                         show(configProperty, hideRunnable))
@@ -315,7 +314,7 @@ public final class ManageGlobalPropertyEditPresenter
     }
 
     private void refreshYamlOverrideForNode(final String nodeName) {
-        restFactory.builder()
+        restFactory
                 .forWrappedType(new TypeLiteral<OverrideValue<String>>() {
                 })
                 .onSuccess(yamlOverride -> {
@@ -456,7 +455,6 @@ public final class ManageGlobalPropertyEditPresenter
 
         final Rest<ConfigProperty> restCall =
                 restFactory
-                        .builder()
                         .forType(ConfigProperty.class)
                         .onSuccess(savedConfigProperty -> {
                             setEntity(savedConfigProperty);
