@@ -51,6 +51,7 @@ public class Spinner implements HasValueChangeHandlers<Long> {
     private int step = 1;
     private int minStep = 1;
     private int maxStep = 99;
+    private int delta = 1;
     private int initialSpeed = INITIAL_SPEED;
     private long value = 0;
     private long min = 0;
@@ -83,7 +84,7 @@ public class Spinner implements HasValueChangeHandlers<Long> {
                 }
             }
             if (speed < 0 && step < maxStep) {
-                step += 1;
+                step += delta;
             }
         }
     };
@@ -229,6 +230,15 @@ public class Spinner implements HasValueChangeHandlers<Long> {
      */
     public void setMinStep(final int minStep) {
         this.minStep = minStep;
+        this.step = minStep;
+    }
+
+    public void setDelta(final int delta) {
+        this.delta = delta;
+    }
+
+    public int getDelta() {
+        return delta;
     }
 
     public void setWrapValues(final boolean wrapValues) {
