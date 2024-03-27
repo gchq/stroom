@@ -69,11 +69,11 @@ public class ElasticIndexPlugin extends DocumentPlugin<ElasticIndexDoc> {
                      final Consumer<ElasticIndexDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .forType(ElasticIndexDoc.class)
+                .resource(ELASTIC_INDEX_RESOURCE)
+                .method(res -> res.fetch(docRef.getUuid()))
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
-                .call(ELASTIC_INDEX_RESOURCE)
-                .fetch(docRef.getUuid());
+                .exec();
     }
 
     @Override
@@ -82,11 +82,11 @@ public class ElasticIndexPlugin extends DocumentPlugin<ElasticIndexDoc> {
                      final Consumer<ElasticIndexDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .forType(ElasticIndexDoc.class)
+                .resource(ELASTIC_INDEX_RESOURCE)
+                .method(res -> res.update(document.getUuid(), document))
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
-                .call(ELASTIC_INDEX_RESOURCE)
-                .update(document.getUuid(), document);
+                .exec();
     }
 
     @Override

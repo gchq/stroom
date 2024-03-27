@@ -67,11 +67,11 @@ public class XMLSchemaPlugin extends DocumentPlugin<XmlSchemaDoc> {
                      final Consumer<XmlSchemaDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .forType(XmlSchemaDoc.class)
+                .resource(XML_SCHEMA_RESOURCE)
+                .method(res -> res.fetch(docRef.getUuid()))
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
-                .call(XML_SCHEMA_RESOURCE)
-                .fetch(docRef.getUuid());
+                .exec();
     }
 
     @Override
@@ -80,11 +80,11 @@ public class XMLSchemaPlugin extends DocumentPlugin<XmlSchemaDoc> {
                      final Consumer<XmlSchemaDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .forType(XmlSchemaDoc.class)
+                .resource(XML_SCHEMA_RESOURCE)
+                .method(res -> res.update(document.getUuid(), document))
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
-                .call(XML_SCHEMA_RESOURCE)
-                .update(document.getUuid(), document);
+                .exec();
     }
 
     @Override

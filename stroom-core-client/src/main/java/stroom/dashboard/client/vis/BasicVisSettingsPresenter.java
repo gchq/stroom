@@ -128,7 +128,8 @@ public class BasicVisSettingsPresenter extends BasicSettingsTabPresenter<BasicVi
         currentVisualisation = docRef;
         if (docRef != null) {
             restFactory
-                    .forType(VisualisationDoc.class)
+                    .resource(VISUALISATION_RESOURCE)
+                    .method(res -> res.fetch(docRef.getUuid()))
                     .onSuccess(result -> {
                         String jsonString = "";
                         if (result != null && result.getSettings() != null) {
@@ -137,8 +138,7 @@ public class BasicVisSettingsPresenter extends BasicSettingsTabPresenter<BasicVi
                         final JSONObject settings = JSONUtil.getObject(JSONUtil.parse(jsonString));
                         readSettings(settings, dynamicSettings);
                     })
-                    .call(VISUALISATION_RESOURCE)
-                    .fetch(docRef.getUuid());
+                    .exec();
         }
     }
 

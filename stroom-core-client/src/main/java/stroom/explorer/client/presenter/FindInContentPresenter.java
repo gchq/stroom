@@ -4,7 +4,6 @@ import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.PagerView;
 import stroom.data.table.client.MyCellTable;
 import stroom.dispatch.client.RestFactory;
-import stroom.docref.DocContentHighlights;
 import stroom.docref.StringMatch;
 import stroom.document.client.event.OpenDocumentEvent;
 import stroom.editor.client.presenter.EditorPresenter;
@@ -138,7 +137,8 @@ public class FindInContentPresenter
 
                 } else {
                     restFactory
-                            .forResultPageOf(FindInContentResult.class)
+                            .resource(EXPLORER_RESOURCE)
+                            .method(res -> res.findInContent(currentQuery))
                             .onSuccess(resultPage -> {
                                 if (resultPage.getPageStart() != cellTable.getPageStart()) {
                                     cellTable.setPageStart(resultPage.getPageStart());
@@ -156,8 +156,7 @@ public class FindInContentPresenter
                                 resetFocus();
                             })
                             .onFailure(throwableConsumer)
-                            .call(EXPLORER_RESOURCE)
-                            .findInContent(currentQuery);
+                            .exec();
                 }
             }
         };
@@ -195,7 +194,8 @@ public class FindInContentPresenter
                     selection.getDocContentMatch().getExtension(),
                     currentQuery.getFilter());
             restFactory
-                    .forType(DocContentHighlights.class)
+                    .resource(EXPLORER_RESOURCE)
+                    .method(res -> res.fetchHighlights(fetchHighlightsRequest))
                     .onSuccess(response -> {
                         if (response != null && response.getText() != null) {
                             editorPresenter.setText(response.getText());
@@ -207,8 +207,7 @@ public class FindInContentPresenter
                         }
                     })
                     .onFailure(throwable -> editorPresenter.setText(throwable.getMessage()))
-                    .call(EXPLORER_RESOURCE)
-                    .fetchHighlights(fetchHighlightsRequest);
+                    .exec();
         }
     }
 

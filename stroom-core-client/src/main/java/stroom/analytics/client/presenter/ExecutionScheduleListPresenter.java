@@ -102,11 +102,11 @@ public class ExecutionScheduleListPresenter
                 if (request != null) {
                     CriteriaUtil.setRange(request, range);
                     restFactory
-                            .forResultPageOf(ExecutionSchedule.class)
+                            .resource(EXECUTION_SCHEDULE_RESOURCE)
+                            .method(res -> res.fetchExecutionSchedule(request))
                             .onSuccess(dataConsumer)
                             .onFailure(throwableConsumer)
-                            .call(EXECUTION_SCHEDULE_RESOURCE)
-                            .fetchExecutionSchedule(request);
+                            .exec();
                 }
             }
         };
@@ -141,10 +141,10 @@ public class ExecutionScheduleListPresenter
         };
         enabledColumn.setFieldUpdater((index, row, value) -> {
             restFactory
-                    .forType(ExecutionSchedule.class)
+                    .resource(EXECUTION_SCHEDULE_RESOURCE)
+                    .method(res -> res.updateExecutionSchedule(row.copy().enabled(value.toBoolean()).build()))
                     .onSuccess(updated -> refresh())
-                    .call(EXECUTION_SCHEDULE_RESOURCE)
-                    .updateExecutionSchedule(row.copy().enabled(value.toBoolean()).build());
+                    .exec();
         });
         dataGrid.addColumn(enabledColumn, "Enabled", 80);
 

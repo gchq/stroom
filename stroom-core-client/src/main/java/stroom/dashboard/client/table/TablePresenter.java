@@ -83,7 +83,6 @@ import stroom.svg.client.SvgPresets;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.UserPreferences;
 import stroom.util.shared.Expander;
-import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.Version;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -409,14 +408,14 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                                                 downloadPresenter.isSample(),
                                                 downloadPresenter.getPercent());
                                 restFactory
-                                        .forType(ResourceGeneration.class)
+                                        .resource(DASHBOARD_RESOURCE)
+                                        .method(res -> res.downloadSearchResults(
+                                                currentSearchModel.getCurrentNode(),
+                                                downloadSearchResultsRequest))
                                         .onSuccess(result -> ExportFileCompleteUtil.onSuccess(locationManager,
                                                 null,
                                                 result))
-                                        .call(DASHBOARD_RESOURCE)
-                                        .downloadSearchResults(
-                                                currentSearchModel.getCurrentNode(),
-                                                downloadSearchResultsRequest);
+                                        .exec();
                             }
 
                             e.hide();

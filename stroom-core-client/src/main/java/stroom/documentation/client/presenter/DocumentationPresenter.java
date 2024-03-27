@@ -27,7 +27,6 @@ import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.svg.client.SvgPresets;
-import stroom.util.shared.ResourceGeneration;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.SvgButton;
 import stroom.widget.tab.client.presenter.TabData;
@@ -91,10 +90,10 @@ public class DocumentationPresenter extends DocumentEditTabPresenter<LinkTabPane
         super.onBind();
         registerHandler(downloadButton.addClickHandler(clickEvent -> {
             restFactory
-                    .forType(ResourceGeneration.class)
+                    .resource(DOCUMENTATION_RESOURCE)
+                    .method(res -> res.download(docRef))
                     .onSuccess(result -> ExportFileCompleteUtil.onSuccess(locationManager, this, result))
-                    .call(DOCUMENTATION_RESOURCE)
-                    .download(docRef);
+                    .exec();
         }));
     }
 

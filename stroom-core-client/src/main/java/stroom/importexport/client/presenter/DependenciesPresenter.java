@@ -29,7 +29,6 @@ import stroom.document.client.event.DeleteDocumentEvent;
 import stroom.document.client.event.OpenDocumentEvent;
 import stroom.explorer.client.event.LocateDocEvent;
 import stroom.explorer.shared.DocumentType;
-import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.ExplorerResource;
 import stroom.importexport.client.event.ShowDependenciesInfoDialogEvent;
 import stroom.importexport.client.event.ShowDocRefDependenciesEvent;
@@ -110,11 +109,11 @@ public class DependenciesPresenter extends MyPresenterWidget<PagerView> {
                                 final Consumer<Throwable> throwableConsumer) {
                 CriteriaUtil.setRange(criteria, range);
                 restFactory
-                        .forResultPageOf(Dependency.class)
+                        .resource(CONTENT_RESOURCE)
+                        .method(res -> res.fetchDependencies(criteria))
                         .onSuccess(dataConsumer)
                         .onFailure(throwableConsumer)
-                        .call(CONTENT_RESOURCE)
-                        .fetchDependencies(criteria);
+                        .exec();
             }
         };
         dataProvider.addDataDisplay(dataGrid);
@@ -274,7 +273,8 @@ public class DependenciesPresenter extends MyPresenterWidget<PagerView> {
 
         // Hold map of doc type icons keyed on type to save constructing for each row
         restFactory
-                .forType(DocumentTypes.class)
+                .resource(EXPLORER_RESOURCE)
+                .method(ExplorerResource::fetchDocumentTypes)
                 .onSuccess(documentTypes -> {
                     openableTypes = documentTypes
                             .getTypes()
@@ -302,8 +302,7 @@ public class DependenciesPresenter extends MyPresenterWidget<PagerView> {
                             "ProcessorFilter",
                             SvgImage.FILTER);
                 })
-                .call(EXPLORER_RESOURCE)
-                .fetchDocumentTypes();
+                .exec();
     }
 
     private CommandLink getName(final Dependency row,

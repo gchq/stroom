@@ -214,7 +214,8 @@ public class IndexVolumeStatusListPresenter extends MyPresenterWidget<PagerView>
                                 final Consumer<Throwable> throwableConsumer) {
                 CriteriaUtil.setRange(criteria, range);
                 restFactory
-                        .forResultPageOf(IndexVolume.class)
+                        .resource(INDEX_VOLUME_RESOURCE)
+                        .method(res -> res.find(criteria))
                         .onSuccess(result -> {
                             dataConsumer.accept(result);
                             if (consumer != null) {
@@ -222,8 +223,7 @@ public class IndexVolumeStatusListPresenter extends MyPresenterWidget<PagerView>
                             }
                         })
                         .onFailure(throwableConsumer)
-                        .call(INDEX_VOLUME_RESOURCE)
-                        .find(criteria);
+                        .exec();
             }
         };
         dataProvider.addDataDisplay(dataGrid);

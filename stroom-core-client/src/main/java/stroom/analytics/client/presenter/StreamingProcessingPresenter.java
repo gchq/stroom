@@ -8,7 +8,6 @@ import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.processor.client.presenter.ProcessorPresenter;
-import stroom.query.api.v2.ExpressionOperator;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
@@ -41,14 +40,14 @@ public class StreamingProcessingPresenter
                        final boolean readOnly,
                        final String query) {
         restFactory
-                .forType(ExpressionOperator.class)
+                .resource(ANALYTIC_PROCESS_RESOURCE)
+                .method(res -> res.getDefaultProcessingFilterExpression(query))
                 .onSuccess(expressionOperator -> {
                     processorPresenter.setDefaultExpression(expressionOperator);
                     processorPresenter.read(analyticRuleDoc.asDocRef(), analyticRuleDoc, readOnly);
                     processorPresenter.setAllowUpdate(true);
                 })
-                .call(ANALYTIC_PROCESS_RESOURCE)
-                .getDefaultProcessingFilterExpression(query);
+                .exec();
     }
 
     public void onDirty() {

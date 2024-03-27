@@ -31,7 +31,6 @@ import stroom.security.shared.CopyPermissionsFromParentRequest;
 import stroom.security.shared.DocPermissionResource;
 import stroom.security.shared.DocumentPermissions;
 import stroom.security.shared.FetchAllDocumentPermissionsRequest;
-import stroom.security.shared.PermissionChangeImpactSummary;
 import stroom.util.shared.GwtNullSafe;
 import stroom.widget.button.client.Button;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
@@ -135,7 +134,8 @@ public class DocumentPermissionsPresenter
 
             final DocRef docRef = explorerNode.getDocRef();
             restFactory
-                    .forType(DocumentPermissions.class)
+                    .resource(DOC_PERMISSION_RESOURCE)
+                    .method(res -> res.fetchAllDocumentPermissions(new FetchAllDocumentPermissionsRequest(explorerNode.getDocRef())))
                     .onSuccess(documentPermissions -> {
                         this.documentPermissions = documentPermissions;
                         // Take a deep copy of documentPermissions before the user mutates it with client side
@@ -165,8 +165,7 @@ public class DocumentPermissionsPresenter
                                 .onHideRequest(e -> onHideRequest(e, docRef))
                                 .fire();
                     })
-                    .call(DOC_PERMISSION_RESOURCE)
-                    .fetchAllDocumentPermissions(new FetchAllDocumentPermissionsRequest(explorerNode.getDocRef()));
+                    .exec();
         });
     }
 
@@ -178,7 +177,8 @@ public class DocumentPermissionsPresenter
 
         return event -> {
             restFactory
-                    .forType(DocumentPermissions.class)
+                    .resource(DOC_PERMISSION_RESOURCE)
+                    .method(res -> res.copyPermissionFromParent(new CopyPermissionsFromParentRequest(explorerNode.getDocRef())))
                     .onSuccess(parentDocPermissions -> {
                         // We want to wipe existing permissions on the server, which means creating REMOVES
                         // for all the perms that we started with except those that are also on the parent.
@@ -213,8 +213,7 @@ public class DocumentPermissionsPresenter
 //                                + "\nREMOVEs:\n"
 //                                + DocumentPermissions.permsMapToStr(permissionsToRemove));
                     })
-                    .call(DOC_PERMISSION_RESOURCE)
-                    .copyPermissionFromParent(new CopyPermissionsFromParentRequest(explorerNode.getDocRef()));
+                    .exec();
         };
     }
 
@@ -264,7 +263,11 @@ public class DocumentPermissionsPresenter
             // of what they are about to do as it may impact 00s or 000s of documents.
             if (Cascade.isCascading(cascade)) {
                 restFactory
-                        .forType(PermissionChangeImpactSummary.class)
+                        .resource(DOC_PERMISSION_RESOURCE)
+                        .method(res -> res.fetchPermissionChangeImpact(new ChangeDocumentPermissionsRequest(
+                                docRef,
+                                changes,
+                                getView().getCascade().getValue())))
                         .onSuccess(impactSummary -> {
                             if (GwtNullSafe.isBlankString(impactSummary.getImpactSummary())) {
                                 doPermissionChange(e, docRef);
@@ -280,11 +283,7 @@ public class DocumentPermissionsPresenter
                                         });
                             }
                         })
-                        .call(DOC_PERMISSION_RESOURCE)
-                        .fetchPermissionChangeImpact(new ChangeDocumentPermissionsRequest(
-                                docRef,
-                                changes,
-                                getView().getCascade().getValue()));
+                        .exec();
             } else {
                 doPermissionChange(e, docRef);
             }

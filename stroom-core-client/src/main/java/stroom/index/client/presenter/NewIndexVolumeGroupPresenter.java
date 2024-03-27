@@ -20,7 +20,6 @@ package stroom.index.client.presenter;
 import stroom.alert.client.event.AlertEvent;
 import stroom.dispatch.client.RestFactory;
 import stroom.entity.client.presenter.NameDocumentView;
-import stroom.index.shared.IndexVolumeGroup;
 import stroom.index.shared.IndexVolumeGroupResource;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
@@ -79,7 +78,8 @@ public class NewIndexVolumeGroupPresenter
                         null);
             } else {
                 restFactory
-                        .forResultPageOf(IndexVolumeGroup.class)
+                        .resource(INDEX_VOLUME_GROUP_RESOURCE)
+                        .method(res -> res.fetchByName(name))
                         .onSuccess(result -> {
                             if (result != null) {
                                 AlertEvent.fireError(
@@ -92,8 +92,7 @@ public class NewIndexVolumeGroupPresenter
                                 consumer.accept(name);
                             }
                         })
-                        .call(INDEX_VOLUME_GROUP_RESOURCE)
-                        .fetchByName(name);
+                        .exec();
             }
         } else {
             consumer.accept(null);

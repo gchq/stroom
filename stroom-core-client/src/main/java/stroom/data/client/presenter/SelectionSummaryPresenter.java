@@ -44,16 +44,16 @@ public class SelectionSummaryPresenter extends MyPresenterWidget<CommonAlertView
 
         if (reprocess) {
             restFactory
-                    .forType(SelectionSummary.class)
+                    .resource(META_RESOURCE)
+                    .method(res -> res.getReprocessSelectionSummary(criteria))
                     .onSuccess(result -> update(postAction, action, result))
-                    .call(META_RESOURCE)
-                    .getReprocessSelectionSummary(criteria);
+                    .exec();
         } else {
             restFactory
-                    .forType(SelectionSummary.class)
+                    .resource(META_RESOURCE)
+                    .method(res -> res.getSelectionSummary(criteria))
                     .onSuccess(result -> update(postAction, action, result))
-                    .call(META_RESOURCE)
-                    .getSelectionSummary(criteria);
+                    .exec();
         }
 
         final PopupType popupType = postAction != null

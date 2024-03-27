@@ -32,7 +32,6 @@ import stroom.search.elastic.client.presenter.ElasticIndexSettingsPresenter.Elas
 import stroom.search.elastic.shared.ElasticClusterDoc;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.search.elastic.shared.ElasticIndexResource;
-import stroom.search.elastic.shared.ElasticIndexTestResponse;
 import stroom.security.shared.DocumentPermissionNames;
 
 import com.google.gwt.core.client.GWT;
@@ -96,11 +95,10 @@ public class ElasticIndexSettingsPresenter extends DocumentEditPresenter<Elastic
 
     @Override
     public void onTestIndex() {
-        ElasticIndexDoc index = new ElasticIndexDoc();
-        index = onWrite(index);
-
+        final ElasticIndexDoc index = onWrite(new ElasticIndexDoc());
         restFactory
-                .forType(ElasticIndexTestResponse.class)
+                .resource(ELASTIC_INDEX_RESOURCE)
+                .method(res -> res.testIndex(index))
                 .onSuccess(result -> {
                     if (result.isOk()) {
                         AlertEvent.fireInfo(this, "Connection Success", result.getMessage(), null);
@@ -108,8 +106,7 @@ public class ElasticIndexSettingsPresenter extends DocumentEditPresenter<Elastic
                         AlertEvent.fireError(this, "Connection Failure", result.getMessage(), null);
                     }
                 })
-                .call(ELASTIC_INDEX_RESOURCE)
-                .testIndex(index);
+                .exec();
     }
 
     @Override

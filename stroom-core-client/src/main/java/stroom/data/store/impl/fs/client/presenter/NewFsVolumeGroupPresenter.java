@@ -18,7 +18,6 @@
 package stroom.data.store.impl.fs.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.data.store.impl.fs.shared.FsVolumeGroup;
 import stroom.data.store.impl.fs.shared.FsVolumeGroupResource;
 import stroom.dispatch.client.RestFactory;
 import stroom.entity.client.presenter.NameDocumentView;
@@ -79,7 +78,8 @@ public class NewFsVolumeGroupPresenter
                         null);
             } else {
                 restFactory
-                        .forResultPageOf(FsVolumeGroup.class)
+                        .resource(FS_VOLUME_GROUP_RESOURCE)
+                        .method(res -> res.fetchByName(name))
                         .onSuccess(result -> {
                             if (result != null) {
                                 AlertEvent.fireError(
@@ -92,8 +92,7 @@ public class NewFsVolumeGroupPresenter
                                 consumer.accept(name);
                             }
                         })
-                        .call(FS_VOLUME_GROUP_RESOURCE)
-                        .fetchByName(name);
+                        .exec();
             }
         } else {
             consumer.accept(null);

@@ -26,7 +26,6 @@ import stroom.document.client.event.RefreshDocumentEvent;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
-import stroom.pipeline.shared.FetchPipelineXmlResponse;
 import stroom.pipeline.shared.FetchPropertyTypesResult;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.PipelineModelException;
@@ -503,7 +502,8 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
 
             final PopupSize popupSize = PopupSize.resizable(600, 400);
             restFactory
-                    .forType(FetchPipelineXmlResponse.class)
+                    .resource(PIPELINE_RESOURCE)
+                    .method(res -> res.fetchPipelineXml(docRef))
                     .onSuccess(result -> {
                         String text = "";
                         if (result != null) {
@@ -528,8 +528,7 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
                             "Unable to display pipeline source",
                             throwable.getMessage()
                     ))
-                    .call(PIPELINE_RESOURCE)
-                    .fetchPipelineXml(docRef);
+                    .exec();
         }
     }
 

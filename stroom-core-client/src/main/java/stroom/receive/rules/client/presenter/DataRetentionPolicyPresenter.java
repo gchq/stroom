@@ -129,7 +129,8 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
 
     private void initialiseRules(final RestFactory restFactory) {
         restFactory
-                .forType(DataRetentionRules.class)
+                .resource(DATA_RETENTION_RULES_RESOURCE)
+                .method(DataRetentionRulesResource::fetch)
                 .onSuccess(result -> {
                     policy = result;
                     if (policy.getRules() == null) {
@@ -138,8 +139,7 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
                     setVisibleRules(policy.getRules());
                     update();
                 })
-                .call(DATA_RETENTION_RULES_RESOURCE)
-                .fetch();
+                .exec();
     }
 
     private void setVisibleRules(final List<DataRetentionRule> rules) {
@@ -452,7 +452,8 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
             policy.setRules(getUserRules());
 
             restFactory
-                    .forType(DataRetentionRules.class)
+                    .resource(DATA_RETENTION_RULES_RESOURCE)
+                    .method(res -> res.update(policy))
                     .onSuccess(result -> {
                         policy = result;
                         setVisibleRules(policy.getRules());
@@ -461,8 +462,7 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
                         update();
                         setDirty(false);
                     })
-                    .call(DATA_RETENTION_RULES_RESOURCE)
-                    .update(policy);
+                    .exec();
         }));
     }
 

@@ -24,7 +24,6 @@ import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.data.store.impl.fs.shared.FsVolume.VolumeUseStatus;
 import stroom.data.store.impl.fs.shared.FsVolumeResource;
 import stroom.data.store.impl.fs.shared.FsVolumeType;
-import stroom.data.store.impl.fs.shared.ValidationResult;
 import stroom.dispatch.client.RestFactory;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.item.client.SelectionBox;
@@ -98,7 +97,8 @@ public class FsVolumeEditPresenter extends MyPresenterWidget<FsVolumeEditView> {
     private void doWithVolumeValidation(final FsVolume volume,
                                         final Runnable work) {
         restFactory
-                .forType(ValidationResult.class)
+                .resource(FS_VOLUME_RESOURCE)
+                .method(res -> res.validate(volume))
                 .onSuccess(validationResult -> {
                     if (validationResult.isOk()) {
                         if (work != null) {
@@ -125,24 +125,23 @@ public class FsVolumeEditPresenter extends MyPresenterWidget<FsVolumeEditView> {
                 .onFailure(throwable -> {
                     AlertEvent.fireError(FsVolumeEditPresenter.this, throwable.getMessage(), null);
                 })
-                .call(FS_VOLUME_RESOURCE)
-                .validate(volume);
+                .exec();
     }
 
     private void updateVolume(final Consumer<FsVolume> consumer, final FsVolume volume) {
         restFactory
-                .forType(FsVolume.class)
+                .resource(FS_VOLUME_RESOURCE)
+                .method(res -> res.update(volume.getId(), volume))
                 .onSuccess(consumer)
-                .call(FS_VOLUME_RESOURCE)
-                .update(volume.getId(), volume);
+                .exec();
     }
 
     private void createVolume(final Consumer<FsVolume> consumer, final FsVolume volume) {
         restFactory
-                .forType(FsVolume.class)
+                .resource(FS_VOLUME_RESOURCE)
+                .method(res -> res.create(volume))
                 .onSuccess(consumer)
-                .call(FS_VOLUME_RESOURCE)
-                .create(volume);
+                .exec();
     }
 
     void hide() {

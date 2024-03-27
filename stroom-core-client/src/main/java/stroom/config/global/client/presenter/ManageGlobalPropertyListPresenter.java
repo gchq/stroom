@@ -145,7 +145,8 @@ public class ManageGlobalPropertyListPresenter
 //        GWT.log("Refresh table called");
 
         restFactory
-                .forType(ListConfigResponse.class)
+                .resource(GLOBAL_CONFIG_RESOURCE_RESOURCE)
+                .method(res -> res.list(criteria))
                 .onSuccess(listConfigResponse -> {
 
                     lastNodeName = listConfigResponse.getNodeName();
@@ -177,8 +178,7 @@ public class ManageGlobalPropertyListPresenter
                                 ManageGlobalPropertyListPresenter.this,
                                 caught.getMessage(),
                                 null))
-                .call(GLOBAL_CONFIG_RESOURCE_RESOURCE)
-                .list(criteria);
+                .exec();
     }
 
     private void refreshPropertiesForAllNodes() {
@@ -204,7 +204,8 @@ public class ManageGlobalPropertyListPresenter
                 dataGrid.getVisibleRange().getLength()));
 
         restFactory
-                .forType(ListConfigResponse.class)
+                .resource(GLOBAL_CONFIG_RESOURCE_RESOURCE)
+                .method(res -> res.listByNode(nodeName, criteria))
                 .onSuccess(this::handleNodeResponse)
                 .onFailure(throwable -> {
                     unreachableNodes.add(nodeName);
@@ -226,8 +227,7 @@ public class ManageGlobalPropertyListPresenter
                     // unless another node has already kicked it off
                     updateChildMapsTimer.update();
                 })
-                .call(GLOBAL_CONFIG_RESOURCE_RESOURCE)
-                .listByNode(nodeName, criteria);
+                .exec();
     }
 
     private void handleNodeResponse(final ListConfigResponse listConfigResponse) {

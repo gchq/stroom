@@ -26,7 +26,6 @@ import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.AnalyticRuleResource;
 import stroom.analytics.shared.QueryLanguageVersion;
 import stroom.analytics.shared.TableBuilderAnalyticProcessConfig;
-import stroom.dashboard.shared.ValidateExpressionResult;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.event.OpenDocumentEvent;
@@ -118,7 +117,8 @@ public class QueryDocEditPresenter extends DocumentEditPresenter<QueryEditView, 
             } else {
                 final String query = queryEditPresenter.getQuery();
                 restFactory
-                        .forType(ValidateExpressionResult.class)
+                        .resource(QUERY_RESOURCE)
+                        .method(res -> res.validateQuery(query))
                         .onSuccess(validateExpressionResult -> {
                             if (!validateExpressionResult.isOk()) {
                                 AlertEvent.fireError(this,
@@ -135,8 +135,7 @@ public class QueryDocEditPresenter extends DocumentEditPresenter<QueryEditView, 
                         .onFailure(throwable -> {
                             AlertEvent.fireErrorFromException(this, throwable, null);
                         })
-                        .call(QUERY_RESOURCE)
-                        .validateQuery(query);
+                        .exec();
             }
         });
     }
@@ -151,7 +150,8 @@ public class QueryDocEditPresenter extends DocumentEditPresenter<QueryEditView, 
 
         // First get the explorer node for the docref.
         restFactory
-                .forType(ExplorerNode.class)
+                .resource(EXPLORER_RESOURCE)
+                .method(res -> res.getFromDocRef(docRef))
                 .onSuccess(explorerNode -> {
                     // Ask the user to create a new document.
                     ShowCreateDocumentDialogEvent.fire(
@@ -163,8 +163,7 @@ public class QueryDocEditPresenter extends DocumentEditPresenter<QueryEditView, 
                             true,
                             newDocumentConsumer);
                 })
-                .call(EXPLORER_RESOURCE)
-                .getFromDocRef(docRef);
+                .exec();
     }
 
     private void loadNewRule(final DocRef ruleDocRef,
@@ -172,7 +171,8 @@ public class QueryDocEditPresenter extends DocumentEditPresenter<QueryEditView, 
                              final String query,
                              final AnalyticProcessType analyticProcessType) {
         restFactory
-                .forType(AnalyticRuleDoc.class)
+                .resource(ANALYTIC_RULE_RESOURCE)
+                .method(res -> res.fetch(ruleDocRef.getUuid()))
                 .onSuccess(doc -> {
                     // Create default config.
                     switch (analyticProcessType) {
@@ -186,8 +186,7 @@ public class QueryDocEditPresenter extends DocumentEditPresenter<QueryEditView, 
                             createDefaultStreamingRule(ruleDocRef, doc, analyticUiDefaultConfig, query);
                     }
                 })
-                .call(ANALYTIC_RULE_RESOURCE)
-                .fetch(ruleDocRef.getUuid());
+                .exec();
     }
 
     private void createDefaultStreamingRule(final DocRef ruleDocRef,
@@ -272,14 +271,14 @@ public class QueryDocEditPresenter extends DocumentEditPresenter<QueryEditView, 
     private void updateRule(final DocRef ruleDocRef,
                             final AnalyticRuleDoc ruleDoc) {
         restFactory
-                .forType(AnalyticRuleDoc.class)
+                .resource(ANALYTIC_RULE_RESOURCE)
+                .method(res -> res.update(ruleDocRef.getUuid(), ruleDoc))
                 .onSuccess(doc -> OpenDocumentEvent.fire(
                         QueryDocEditPresenter.this,
                         ruleDocRef,
                         true,
                         false))
-                .call(ANALYTIC_RULE_RESOURCE)
-                .update(ruleDocRef.getUuid(), ruleDoc);
+                .exec();
     }
 
     @Override

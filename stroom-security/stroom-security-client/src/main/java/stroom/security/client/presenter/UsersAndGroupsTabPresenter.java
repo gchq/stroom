@@ -241,13 +241,13 @@ public class UsersAndGroupsTabPresenter
         newGroupPresenter.show(e -> {
             if (e.isOk()) {
                 restFactory
-                        .forType(User.class)
+                        .resource(USER_RESOURCE)
+                        .method(res -> res.createGroup(newGroupPresenter.getName()))
                         .onSuccess(result -> {
                             e.hide();
                             edit(result);
                         })
-                        .call(USER_RESOURCE)
-                        .createGroup(newGroupPresenter.getName());
+                        .exec();
             } else {
                 e.hide();
             }
@@ -258,14 +258,14 @@ public class UsersAndGroupsTabPresenter
         newUserPresenter.show(e -> {
             if (e.isOk()) {
                 restFactory
-                        .forType(User.class)
+                        .resource(USER_RESOURCE)
+                        .method(res -> res.createUser(newUserPresenter.getUserName()))
                         .onSuccess(result -> {
                             e.hide();
 //                            newUserPresenter.hide();
                             edit(result);
                         })
-                        .call(USER_RESOURCE)
-                        .createUser(newUserPresenter.getUserName());
+                        .exec();
             } else {
                 e.hide();
             }

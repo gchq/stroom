@@ -100,7 +100,8 @@ public class QueryHistoryPresenter extends MyPresenterWidget<QueryHistoryPresent
         criteria.setPageRequest(new PageRequest(0, 100));
 
         restFactory
-                .forResultPageOf(StoredQuery.class)
+                .resource(STORED_QUERY_RESOURCE)
+                .method(res -> res.find(criteria))
                 .onSuccess(result -> {
                     selectionModel.clear();
 
@@ -140,8 +141,7 @@ public class QueryHistoryPresenter extends MyPresenterWidget<QueryHistoryPresent
                                 .fire();
                     }
                 })
-                .call(STORED_QUERY_RESOURCE)
-                .find(criteria);
+                .exec();
     }
 
     @Override

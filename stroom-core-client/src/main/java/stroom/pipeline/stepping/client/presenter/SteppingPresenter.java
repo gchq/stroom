@@ -602,14 +602,14 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
             request.setStepType(stepType);
 
             restFactory
-                    .forType(SteppingResult.class)
+                    .resource(STEPPING_RESOURCE)
+                    .method(res -> res.step(request))
                     .onSuccess(this::readResult)
                     .onFailure(caught -> {
                         AlertEvent.fireErrorFromException(SteppingPresenter.this, caught, null);
                         busyTranslating = false;
                     })
-                    .call(STEPPING_RESOURCE)
-                    .step(request);
+                    .exec();
         }
     }
 

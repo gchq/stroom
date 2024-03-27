@@ -67,11 +67,11 @@ public class DocumentationPlugin extends DocumentPlugin<DocumentationDoc> {
                      final Consumer<DocumentationDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .forType(DocumentationDoc.class)
+                .resource(DOCUMENTATION_RESOURCE)
+                .method(res -> res.fetch(docRef.getUuid()))
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
-                .call(DOCUMENTATION_RESOURCE)
-                .fetch(docRef.getUuid());
+                .exec();
     }
 
     @Override
@@ -80,11 +80,11 @@ public class DocumentationPlugin extends DocumentPlugin<DocumentationDoc> {
                      final Consumer<DocumentationDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .forType(DocumentationDoc.class)
+                .resource(DOCUMENTATION_RESOURCE)
+                .method(res -> res.update(document.getUuid(), document))
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
-                .call(DOCUMENTATION_RESOURCE)
-                .update(document.getUuid(), document);
+                .exec();
     }
 
     @Override

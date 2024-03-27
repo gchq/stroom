@@ -461,7 +461,8 @@ public class DataPresenter
     public void fetchData(final SourceLocation sourceLocation) {
         // We know the location but not what type of data we are fetching so first get the meta
         restFactory
-                .forType(Meta.class)
+                .resource(META_RESOURCE)
+                .method(res -> res.fetch(sourceLocation.getMetaId()))
                 .onSuccess(meta -> {
                     fetchData(meta, sourceLocation, false);
                 })
@@ -472,8 +473,7 @@ public class DataPresenter
                             null,
                             Collections.singletonList(caught.getMessage()));
                 })
-                .call(META_RESOURCE)
-                .fetch(sourceLocation.getMetaId());
+                .exec();
     }
 
     public void fetchData(final Meta meta) {
@@ -748,7 +748,8 @@ public class DataPresenter
                         actionQueue.clear();
 
                         restFactory
-                                .forType(AbstractFetchDataResult.class)
+                                .resource(DATA_RESOURCE)
+                                .method(res -> res.fetch(request))
                                 .onSuccess(result -> {
                                     // If we are queueing more actions then don't
                                     // update the text.
@@ -759,8 +760,7 @@ public class DataPresenter
                                 })
                                 .onFailure(caught ->
                                         itemNavigatorPresenter.setRefreshing(false))
-                                .call(DATA_RESOURCE)
-                                .fetch(request);
+                                .exec();
                     }
                 }
             };

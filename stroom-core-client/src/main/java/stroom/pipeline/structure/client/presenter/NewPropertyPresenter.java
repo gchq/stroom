@@ -326,7 +326,8 @@ public class NewPropertyPresenter
 
             // Load data types.
             restFactory
-                    .forResultPageOf(FsVolumeGroup.class)
+                    .resource(VOLUME_GROUP_RESOURCE)
+                    .method(res -> res.find(new ExpressionCriteria()))
                     .onSuccess(result -> {
                         dataTypeWidget.clear();
                         dataTypeWidget.setNonSelectString("");
@@ -345,8 +346,7 @@ public class NewPropertyPresenter
 
                         dataTypePresenterInitialised = true;
                     })
-                    .call(VOLUME_GROUP_RESOURCE)
-                    .find(new ExpressionCriteria());
+                    .exec();
 
             dataTypeWidget.addValueChangeHandler(event -> {
                 setDirty(true);

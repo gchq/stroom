@@ -98,13 +98,13 @@ public class TableBuilderProcessingPresenter
     private void refreshTracker() {
         if (ruleDocRef != null && ruleDocRef.getUuid() != null) {
             restFactory
-                    .forType(AnalyticTracker.class)
+                    .resource(ANALYTIC_PROCESS_RESOURCE)
+                    .method(res -> res.getTracker(ruleDocRef.getUuid()))
                     .onSuccess(result -> {
                         final SafeHtml safeHtml = getInfo(result);
                         getView().setInfo(safeHtml);
                     })
-                    .call(ANALYTIC_PROCESS_RESOURCE)
-                    .getTracker(ruleDocRef.getUuid());
+                    .exec();
         }
     }
 

@@ -90,14 +90,14 @@ public class FsVolumeGroupPresenter extends ContentTabPresenter<WrapperView> {
         presenter.show("", name -> {
             if (name != null) {
                 restFactory
-                        .forType(FsVolumeGroup.class)
+                        .resource(FS_VOLUME_GROUP_RESOURCE)
+                        .method(res -> res.create(name))
                         .onSuccess(volumeGroup -> {
                             edit(volumeGroup);
                             presenter.hide();
                             refresh();
                         })
-                        .call(FS_VOLUME_GROUP_RESOURCE)
-                        .create(name);
+                        .exec();
             } else {
                 presenter.hide();
             }
@@ -108,10 +108,10 @@ public class FsVolumeGroupPresenter extends ContentTabPresenter<WrapperView> {
         final FsVolumeGroup volume = volumeStatusListPresenter.getSelectionModel().getSelected();
         if (volume != null) {
             restFactory
-                    .forType(FsVolumeGroup.class)
+                    .resource(FS_VOLUME_GROUP_RESOURCE)
+                    .method(res -> res.fetch(volume.getId()))
                     .onSuccess(this::edit)
-                    .call(FS_VOLUME_GROUP_RESOURCE)
-                    .fetch(volume.getId());
+                    .exec();
         }
     }
 

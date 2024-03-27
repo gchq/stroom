@@ -120,10 +120,10 @@ public class FsVolumeGroupEditPresenter
         final FsVolume volume = volumeStatusListPresenter.getSelectionModel().getSelected();
         if (volume != null) {
             restFactory
-                    .forType(FsVolume.class)
+                    .resource(FS_VOLUME_RESOURCE)
+                    .method(res -> res.fetch(volume.getId()))
                     .onSuccess(result -> editVolume(result, "Edit Volume"))
-                    .call(FS_VOLUME_RESOURCE)
-                    .fetch(volume.getId());
+                    .exec();
         }
     }
 
@@ -229,7 +229,8 @@ public class FsVolumeGroupEditPresenter
                     null);
         } else {
             restFactory
-                    .forType(FsVolumeGroup.class)
+                    .resource(FS_VOLUME_GROUP_RESOURCE)
+                    .method(res -> res.fetchByName(getView().getName()))
                     .onSuccess(grp -> {
                         if (grp != null && !Objects.equals(groupId, grp.getId())) {
                             AlertEvent.fireError(
@@ -242,18 +243,17 @@ public class FsVolumeGroupEditPresenter
                             work.run();
                         }
                     })
-                    .call(FS_VOLUME_GROUP_RESOURCE)
-                    .fetchByName(getView().getName());
+                    .exec();
         }
     }
 
     private void createVolumeGroup(final Consumer<FsVolumeGroup> consumer,
                                    final FsVolumeGroup volumeGroup) {
         restFactory
-                .forType(FsVolumeGroup.class)
+                .resource(FS_VOLUME_GROUP_RESOURCE)
+                .method(res -> res.update(volumeGroup.getId(), volumeGroup))
                 .onSuccess(consumer)
-                .call(FS_VOLUME_GROUP_RESOURCE)
-                .update(volumeGroup.getId(), volumeGroup);
+                .exec();
     }
 
     void hide() {

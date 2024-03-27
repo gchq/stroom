@@ -136,7 +136,8 @@ public class FeedSettingsPresenter extends DocumentEditPresenter<FeedSettingsVie
 
     private void updateVolumeGroups() {
         restFactory
-                .forResultPageOf(FsVolumeGroup.class)
+                .resource(VOLUME_GROUP_RESOURCE)
+                .method(res -> res.find(new ExpressionCriteria()))
                 .onSuccess(result -> {
                     getView().getVolumeGroup().clear();
                     getView().getVolumeGroup().setNonSelectString("");
@@ -151,8 +152,7 @@ public class FeedSettingsPresenter extends DocumentEditPresenter<FeedSettingsVie
                         getView().getVolumeGroup().setValue(feed.getVolumeGroup());
                     }
                 })
-                .call(VOLUME_GROUP_RESOURCE)
-                .find(new ExpressionCriteria());
+                .exec();
     }
 
     @Override

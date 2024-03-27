@@ -46,7 +46,6 @@ import stroom.pipeline.client.event.CreateProcessorEvent;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.shared.CreateProcessFilterRequest;
 import stroom.processor.shared.Limits;
-import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterResource;
 import stroom.processor.shared.QueryData;
 import stroom.query.api.v2.DestroyReason;
@@ -74,7 +73,6 @@ import stroom.svg.shared.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.ModelStringUtil;
-import stroom.util.shared.ResourceGeneration;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
@@ -570,7 +568,8 @@ public class QueryPresenter
                 .priority(1)
                 .build();
         restFactory
-                .forType(ProcessorFilter.class)
+                .resource(PROCESSOR_FILTER_RESOURCE)
+                .method(res -> res.create(request))
                 .onSuccess(streamProcessorFilter -> {
                     if (streamProcessorFilter != null) {
                         CreateProcessorEvent.fire(QueryPresenter.this, streamProcessorFilter);
@@ -578,8 +577,7 @@ public class QueryPresenter
                         AlertEvent.fireInfo(this, "Created batch processor", null);
                     }
                 })
-                .call(PROCESSOR_FILTER_RESOURCE)
-                .create(request);
+                .exec();
     }
 
     private void showWarnings() {
@@ -925,11 +923,11 @@ public class QueryPresenter
                     dashboardContext.getTimeRange());
 
             restFactory
-                    .forType(ResourceGeneration.class)
+                    .resource(DASHBOARD_RESOURCE)
+                    .method(res -> res.downloadQuery(searchRequest))
                     .onSuccess(result ->
                             ExportFileCompleteUtil.onSuccess(locationManager, null, result))
-                    .call(DASHBOARD_RESOURCE)
-                    .downloadQuery(searchRequest);
+                    .exec();
         }
     }
 

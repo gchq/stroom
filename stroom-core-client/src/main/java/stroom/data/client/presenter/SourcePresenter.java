@@ -5,7 +5,6 @@ import stroom.data.client.presenter.SourcePresenter.SourceView;
 import stroom.data.shared.DataResource;
 import stroom.data.shared.DataType;
 import stroom.data.shared.StreamTypeNames;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.pipeline.shared.AbstractFetchDataResult;
 import stroom.pipeline.shared.FetchDataRequest;
@@ -24,7 +23,6 @@ import stroom.util.shared.DefaultLocation;
 import stroom.util.shared.HasCharacterData;
 import stroom.util.shared.HasCharacterData.NavigationMode;
 import stroom.util.shared.Location;
-import stroom.util.shared.ResourceKey;
 import stroom.util.shared.TextRange;
 import stroom.util.shared.string.HexDump;
 import stroom.widget.progress.client.presenter.Progress;
@@ -422,14 +420,14 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements
         }
 
         restFactory
-                .forType(AbstractFetchDataResult.class)
+                .resource(DATA_RESOURCE)
+                .method(res -> res.fetch(request))
                 .onSuccess(this::handleResponse)
                 .onFailure(caught -> AlertEvent.fireError(
                         SourcePresenter.this,
                         caught.getMessage(),
                         null))
-                .call(DATA_RESOURCE)
-                .fetch(request);
+                .exec();
     }
 
     private void handleResponse(final AbstractFetchDataResult result) {

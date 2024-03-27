@@ -86,13 +86,13 @@ public class AppPermissionsPresenter extends
         } else {
             // Fetch permissions and populate table.
             restFactory
-                    .forType(UserAndPermissions.class)
+                    .resource(APP_PERMISSION_RESOURCE)
+                    .method(res -> res.fetchUserAppPermissions(relatedUser))
                     .onSuccess(userAppPermissions -> {
                         AppPermissionsPresenter.this.userAppPermissions = userAppPermissions;
                         updateAllPermissions();
                     })
-                    .call(APP_PERMISSION_RESOURCE)
-                    .fetchUserAppPermissions(relatedUser);
+                    .exec();
         }
     }
 

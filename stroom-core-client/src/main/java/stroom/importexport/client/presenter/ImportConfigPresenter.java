@@ -23,7 +23,6 @@ import stroom.importexport.client.event.ImportConfigConfirmEvent;
 import stroom.importexport.client.event.ImportConfigEvent;
 import stroom.importexport.shared.ContentResource;
 import stroom.importexport.shared.ImportConfigRequest;
-import stroom.importexport.shared.ImportConfigResponse;
 import stroom.importexport.shared.ImportSettings;
 import stroom.util.shared.ResourceKey;
 import stroom.util.shared.StringUtil;
@@ -77,7 +76,10 @@ public class ImportConfigPresenter
             @Override
             protected void onSuccess(final ResourceKey resourceKey) {
                 restFactory
-                        .forType(ImportConfigResponse.class)
+                        .resource(CONTENT_RESOURCE)
+                        .method(res -> res.importContent(new ImportConfigRequest(resourceKey,
+                                ImportSettings.createConfirmation(),
+                                new ArrayList<>())))
                         .onSuccess(response -> {
                             if (response.getConfirmList().isEmpty()) {
                                 warning("The import package contains nothing that can be imported into " +
@@ -89,10 +91,7 @@ public class ImportConfigPresenter
                             }
                         })
                         .onFailure(caught -> error(caught.getMessage()))
-                        .call(CONTENT_RESOURCE)
-                        .importContent(new ImportConfigRequest(resourceKey,
-                                ImportSettings.createConfirmation(),
-                                new ArrayList<>()));
+                        .exec();
             }
 
             @Override

@@ -56,27 +56,27 @@ public class CurrentActivity implements HasHandlers {
             consumer.accept(currentActivity);
         } else {
             restFactory
-                    .forType(Activity.class)
+                    .resource(ACTIVITY_RESOURCE)
+                    .method(ActivityResource::getCurrentActivity)
                     .onSuccess(a -> {
                         currentActivity = a;
                         fetched = true;
                         consumer.accept(a);
                     })
-                    .call(ACTIVITY_RESOURCE)
-                    .getCurrentActivity();
+                    .exec();
         }
     }
 
     public void setActivity(final Activity activity) {
         restFactory
-                .forType(Activity.class)
+                .resource(ACTIVITY_RESOURCE)
+                .method(res -> res.setCurrentActivity(activity))
                 .onSuccess(a -> {
                     currentActivity = a;
                     fetched = true;
                     ActivityChangedEvent.fire(this, a);
                 })
-                .call(ACTIVITY_RESOURCE)
-                .setCurrentActivity(activity);
+                .exec();
     }
 
     public void showInitialActivityChooser(final Consumer<Activity> consumer) {

@@ -97,11 +97,11 @@ public class ProcessorTaskListPresenter
                 if (criteria.getExpression() != null) {
                     CriteriaUtil.setRange(criteria, range);
                     restFactory
-                            .forResultPageOf(ProcessorTask.class)
+                            .resource(PROCESSOR_TASK_RESOURCE)
+                            .method(res -> res.find(criteria))
                             .onSuccess(dataConsumer)
                             .onFailure(throwableConsumer)
-                            .call(PROCESSOR_TASK_RESOURCE)
-                            .find(criteria);
+                            .exec();
                 }
             }
         };
@@ -114,7 +114,8 @@ public class ProcessorTaskListPresenter
                 findMetaCriteria.setExpression(MetaExpressionUtil.createDataIdExpression(row.getMetaId()));
 
                 restFactory
-                        .forResultPageOf(MetaRow.class)
+                        .resource(META_RESOURCE)
+                        .method(res -> res.findMetaRow(findMetaCriteria))
                         .onSuccess(metaRows -> {
                             // Should only get one back
                             final Meta meta = Optional.ofNullable(metaRows)
@@ -123,8 +124,7 @@ public class ProcessorTaskListPresenter
                                     .orElse(null);
                             showTooltip(popupPosition, row, meta);
                         })
-                        .call(META_RESOURCE)
-                        .findMetaRow(findMetaCriteria);
+                        .exec();
             }
         }, "<br/>", ColumnSizeConstants.ICON_COL);
 

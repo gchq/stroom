@@ -113,13 +113,13 @@ public class ExecutionPresenter extends MyPresenterWidget<ExecutionView> {
             executionScheduleEditPresenter.show(newSchedule, executionSchedule -> {
                 if (executionSchedule != null) {
                     restFactory
-                            .forType(ExecutionSchedule.class)
+                            .resource(EXECUTION_SCHEDULE_RESOURCE)
+                            .method(res -> res.createExecutionSchedule(executionSchedule))
                             .onSuccess(created -> {
                                 executionScheduleListPresenter.refresh();
                                 executionScheduleListPresenter.setSelected(created);
                             })
-                            .call(EXECUTION_SCHEDULE_RESOURCE)
-                            .createExecutionSchedule(executionSchedule);
+                            .exec();
                 }
             });
         }
@@ -131,13 +131,13 @@ public class ExecutionPresenter extends MyPresenterWidget<ExecutionView> {
             executionScheduleEditPresenter.show(selected, executionSchedule -> {
                 if (executionSchedule != null) {
                     restFactory
-                            .forType(ExecutionSchedule.class)
+                            .resource(EXECUTION_SCHEDULE_RESOURCE)
+                            .method(res -> res.updateExecutionSchedule(executionSchedule))
                             .onSuccess(updated -> {
                                 executionScheduleListPresenter.refresh();
                                 executionScheduleListPresenter.setSelected(updated);
                             })
-                            .call(EXECUTION_SCHEDULE_RESOURCE)
-                            .updateExecutionSchedule(executionSchedule);
+                            .exec();
                 }
             });
         }
@@ -147,10 +147,10 @@ public class ExecutionPresenter extends MyPresenterWidget<ExecutionView> {
         final ExecutionSchedule selected = executionScheduleListPresenter.getSelected();
         if (selected != null) {
             restFactory
-                    .forType(Boolean.class)
+                    .resource(EXECUTION_SCHEDULE_RESOURCE)
+                    .method(res -> res.deleteExecutionSchedule(selected))
                     .onSuccess(success -> executionScheduleListPresenter.refresh())
-                    .call(EXECUTION_SCHEDULE_RESOURCE)
-                    .deleteExecutionSchedule(selected);
+                    .exec();
         }
     }
 

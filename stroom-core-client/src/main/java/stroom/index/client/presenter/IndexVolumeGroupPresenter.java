@@ -113,14 +113,14 @@ public class IndexVolumeGroupPresenter extends ContentTabPresenter<WrapperView> 
         presenter.show("", name -> {
             if (name != null) {
                 restFactory
-                        .forType(IndexVolumeGroup.class)
+                        .resource(INDEX_VOLUME_GROUP_RESOURCE)
+                        .method(res -> res.create(name))
                         .onSuccess(indexVolumeGroup -> {
                             edit(indexVolumeGroup);
                             presenter.hide();
                             refresh();
                         })
-                        .call(INDEX_VOLUME_GROUP_RESOURCE)
-                        .create(name);
+                        .exec();
             } else {
                 presenter.hide();
             }
@@ -131,10 +131,10 @@ public class IndexVolumeGroupPresenter extends ContentTabPresenter<WrapperView> 
         final IndexVolumeGroup volume = volumeStatusListPresenter.getSelectionModel().getSelected();
         if (volume != null) {
             restFactory
-                    .forType(IndexVolumeGroup.class)
+                    .resource(INDEX_VOLUME_GROUP_RESOURCE)
+                    .method(res -> res.fetch(volume.getId()))
                     .onSuccess(this::edit)
-                    .call(INDEX_VOLUME_GROUP_RESOURCE)
-                    .fetch(volume.getId());
+                    .exec();
         }
     }
 

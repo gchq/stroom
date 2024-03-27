@@ -17,7 +17,6 @@
 package stroom.query.client.presenter;
 
 import stroom.dashboard.shared.DashboardSearchResponse;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.query.api.v2.DestroyReason;
 import stroom.query.api.v2.Param;
@@ -236,7 +235,8 @@ public class QueryModel {
                     .build();
 
             restFactory
-                    .forType(DashboardSearchResponse.class)
+                    .resource(QUERY_RESOURCE)
+                    .method(res -> res.search(currentNode, request))
                     .onSuccess(response -> {
                         try {
                             if (response != null && response.getResults() != null) {
@@ -261,8 +261,7 @@ public class QueryModel {
                         }
                         resultConsumer.setData(null);
                     })
-                    .call(QUERY_RESOURCE)
-                    .search(currentNode, request);
+                    .exec();
         }
     }
 
@@ -315,7 +314,8 @@ public class QueryModel {
 //                    .build();
 
             restFactory
-                    .forType(DashboardSearchResponse.class)
+                    .resource(QUERY_RESOURCE)
+                    .method(res -> res.search(currentNode, request))
                     .onSuccess(response -> {
                         GWT.log(response.toString());
 
@@ -352,8 +352,7 @@ public class QueryModel {
                             poll(false);
                         }
                     })
-                    .call(QUERY_RESOURCE)
-                    .search(currentNode, request);
+                    .exec();
         }
     }
 

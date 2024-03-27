@@ -186,12 +186,12 @@ public class ExplorerTreeModel {
 //                            + " minDepth: " + minDepth
 //                            + " ensureVisible: " + ensureVisible);
                     restFactory
-                            .forType(FetchExplorerNodeResult.class)
+                            .resource(EXPLORER_RESOURCE)
+                            .method(res -> res.fetchExplorerNodes(criteria))
                             .onSuccess(result -> {
                                 handleFetchResult(criteria, result);
                             })
-                            .call(EXPLORER_RESOURCE)
-                            .fetchExplorerNodes(criteria);
+                            .exec();
                 });
             }
         }

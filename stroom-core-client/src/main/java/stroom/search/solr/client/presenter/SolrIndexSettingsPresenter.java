@@ -30,7 +30,6 @@ import stroom.query.client.presenter.DynamicFieldSelectionListModel;
 import stroom.search.solr.client.presenter.SolrIndexSettingsPresenter.SolrIndexSettingsView;
 import stroom.search.solr.shared.SolrConnectionConfig;
 import stroom.search.solr.shared.SolrConnectionConfig.InstanceType;
-import stroom.search.solr.shared.SolrConnectionTestResponse;
 import stroom.search.solr.shared.SolrIndexDoc;
 import stroom.search.solr.shared.SolrIndexResource;
 import stroom.security.shared.DocumentPermissionNames;
@@ -87,11 +86,10 @@ public class SolrIndexSettingsPresenter extends DocumentEditPresenter<SolrIndexS
 
     @Override
     public void onTestConnection() {
-        SolrIndexDoc index = new SolrIndexDoc();
-        index = onWrite(index);
-
+        final SolrIndexDoc index = onWrite(new SolrIndexDoc());
         restFactory
-                .forType(SolrConnectionTestResponse.class)
+                .resource(SOLR_INDEX_RESOURCE)
+                .method(res -> res.solrConnectionTest(index))
                 .onSuccess(result -> {
                     if (result.isOk()) {
                         AlertEvent.fireInfo(this, "Connection Success", result.getMessage(), null);
@@ -99,8 +97,7 @@ public class SolrIndexSettingsPresenter extends DocumentEditPresenter<SolrIndexS
                         AlertEvent.fireError(this, "Connection Failure", result.getMessage(), null);
                     }
                 })
-                .call(SOLR_INDEX_RESOURCE)
-                .solrConnectionTest(index);
+                .exec();
     }
 
     @Override

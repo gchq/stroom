@@ -87,11 +87,11 @@ public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
                      final Consumer<PipelineDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .forType(PipelineDoc.class)
+                .resource(PIPELINE_RESOURCE)
+                .method(res -> res.fetch(docRef.getUuid()))
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
-                .call(PIPELINE_RESOURCE)
-                .fetch(docRef.getUuid());
+                .exec();
     }
 
     @Override
@@ -100,11 +100,11 @@ public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
                      final Consumer<PipelineDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .forType(PipelineDoc.class)
+                .resource(PIPELINE_RESOURCE)
+                .method(res -> res.update(document.getUuid(), document))
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
-                .call(PIPELINE_RESOURCE)
-                .update(document.getUuid(), document);
+                .exec();
     }
 
     @Override

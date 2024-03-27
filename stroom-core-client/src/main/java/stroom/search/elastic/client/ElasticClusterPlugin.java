@@ -69,11 +69,11 @@ public class ElasticClusterPlugin extends DocumentPlugin<ElasticClusterDoc> {
                      final Consumer<ElasticClusterDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .forType(ElasticClusterDoc.class)
+                .resource(ELASTIC_CLUSTER_RESOURCE)
+                .method(res -> res.fetch(docRef.getUuid()))
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
-                .call(ELASTIC_CLUSTER_RESOURCE)
-                .fetch(docRef.getUuid());
+                .exec();
     }
 
     @Override
@@ -82,11 +82,11 @@ public class ElasticClusterPlugin extends DocumentPlugin<ElasticClusterDoc> {
                      final Consumer<ElasticClusterDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .forType(ElasticClusterDoc.class)
+                .resource(ELASTIC_CLUSTER_RESOURCE)
+                .method(res -> res.update(document.getUuid(), document))
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
-                .call(ELASTIC_CLUSTER_RESOURCE)
-                .update(document.getUuid(), document);
+                .exec();
     }
 
     @Override

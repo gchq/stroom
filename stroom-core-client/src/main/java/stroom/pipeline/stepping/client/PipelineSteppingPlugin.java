@@ -79,17 +79,17 @@ public class PipelineSteppingPlugin extends Plugin implements BeginPipelineStepp
             // If we don't have a pipeline id then try to guess one for the
             // supplied stream.
             restFactory
-                    .forType(DocRef.class)
+                    .resource(STEPPING_RESOURCE)
+                    .method(res -> res.getPipelineForStepping(new GetPipelineForMetaRequest(
+                            event.getStepLocation().getMetaId(),
+                            event.getChildStreamId())))
                     .onSuccess(result ->
                             choosePipeline(
                                     result,
                                     event.getStepType(),
                                     event.getStepLocation(),
                                     event.getChildStreamType()))
-                    .call(STEPPING_RESOURCE)
-                    .getPipelineForStepping(new GetPipelineForMetaRequest(
-                            event.getStepLocation().getMetaId(),
-                            event.getChildStreamId()));
+                    .exec();
         }
     }
 
@@ -111,7 +111,8 @@ public class PipelineSteppingPlugin extends Plugin implements BeginPipelineStepp
                 final FindMetaCriteria findMetaCriteria = FindMetaCriteria.createFromId(
                         stepLocation.getMetaId());
                 restFactory
-                        .forResultPageOf(MetaRow.class)
+                        .resource(META_RESOURCE)
+                        .method(res -> res.findMetaRow(findMetaCriteria))
                         .onSuccess(result -> {
                             if (result != null && result.size() == 1) {
                                 final MetaRow row = result.getFirst();
@@ -122,7 +123,7 @@ public class PipelineSteppingPlugin extends Plugin implements BeginPipelineStepp
                                         childStreamType);
                             }
                         })
-                        .call(META_RESOURCE).findMetaRow(findMetaCriteria);
+                        .exec();
             }
         });
     }

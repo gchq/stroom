@@ -123,11 +123,11 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
                                 final Consumer<ProcessorListRowResultPage> dataConsumer,
                                 final Consumer<Throwable> throwableConsumer) {
                 restFactory
-                        .forType(ProcessorListRowResultPage.class)
+                        .resource(PROCESSOR_FILTER_RESOURCE)
+                        .method(res -> res.find(request))
                         .onSuccess(dataConsumer)
                         .onFailure(throwableConsumer)
-                        .call(PROCESSOR_FILTER_RESOURCE)
-                        .find(request);
+                        .exec();
             }
 
             @Override

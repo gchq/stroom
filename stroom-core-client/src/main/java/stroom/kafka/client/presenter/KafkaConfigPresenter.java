@@ -30,7 +30,6 @@ import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.kafka.shared.KafkaConfigDoc;
 import stroom.kafka.shared.KafkaConfigResource;
 import stroom.svg.client.SvgPresets;
-import stroom.util.shared.ResourceGeneration;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.SvgButton;
 import stroom.widget.tab.client.presenter.TabData;
@@ -123,10 +122,10 @@ public class KafkaConfigPresenter extends DocumentEditTabPresenter<LinkTabPanelV
         super.onBind();
         registerHandler(downloadButton.addClickHandler(clickEvent -> {
             restFactory
-                    .forType(ResourceGeneration.class)
+                    .resource(KAFKA_CONFIG_RESOURCE)
+                    .method(res -> res.download(docRef))
                     .onSuccess(result -> ExportFileCompleteUtil.onSuccess(locationManager, this, result))
-                    .call(KAFKA_CONFIG_RESOURCE)
-                    .download(docRef);
+                    .exec();
         }));
     }
 

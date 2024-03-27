@@ -26,7 +26,6 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.entity.client.presenter.HasToolbar;
-import stroom.query.api.v2.Result;
 import stroom.query.client.presenter.DateTimeSettingsFactory;
 import stroom.query.client.presenter.QueryResultTablePresenter;
 import stroom.query.client.presenter.QueryToolbarPresenter;
@@ -103,7 +102,8 @@ public class AnalyticDataShardsPresenter
 
             queryToolbarPresenter.onSearching(true);
             restFactory
-                    .forType(Result.class)
+                    .resource(ANALYTIC_DATA_SHARD_RESOURCE)
+                    .method(res -> res.getData(selected.getNode(), request))
                     .onSuccess(result -> {
                         tablePresenter.setData(result);
                         queryToolbarPresenter.onSearching(false);
@@ -112,8 +112,7 @@ public class AnalyticDataShardsPresenter
                         queryToolbarPresenter.onError(Collections.singletonList(t.getMessage()));
                         queryToolbarPresenter.onSearching(false);
                     })
-                    .call(ANALYTIC_DATA_SHARD_RESOURCE)
-                    .getData(selected.getNode(), request);
+                    .exec();
         }
     }
 

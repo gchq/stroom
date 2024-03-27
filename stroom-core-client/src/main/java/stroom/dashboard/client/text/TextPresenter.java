@@ -34,7 +34,6 @@ import stroom.editor.client.presenter.EditorPresenter;
 import stroom.editor.client.presenter.HtmlPresenter;
 import stroom.hyperlink.client.Hyperlink;
 import stroom.hyperlink.client.HyperlinkEvent;
-import stroom.pipeline.shared.AbstractFetchDataResult;
 import stroom.pipeline.shared.FetchDataRequest;
 import stroom.pipeline.shared.FetchDataResult;
 import stroom.pipeline.shared.SourceLocation;
@@ -593,7 +592,8 @@ public class TextPresenter
                     fetchDataQueue.clear();
 
                     restFactory
-                            .forType(AbstractFetchDataResult.class)
+                            .resource(DATA_RESOURCE)
+                            .method(res -> res.fetch(request))
                             .onSuccess(result -> {
                                 // If we are queueing more actions then don't update
                                 // the text.
@@ -621,8 +621,7 @@ public class TextPresenter
                                     }
                                 }
                             })
-                            .call(DATA_RESOURCE)
-                            .fetch(request);
+                            .exec();
                 }
             };
         }

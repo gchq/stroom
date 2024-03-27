@@ -31,10 +31,10 @@ public class DataSourceClient {
     public void findFields(final FindFieldInfoCriteria findFieldInfoCriteria,
                            final Consumer<ResultPage<QueryField>> consumer) {
         restFactory
-                .forResultPageOf(QueryField.class)
+                .resource(DATA_SOURCE_RESOURCE)
+                .method(res -> res.findFields(findFieldInfoCriteria))
                 .onSuccess(consumer)
-                .call(DATA_SOURCE_RESOURCE)
-                .findFields(findFieldInfoCriteria);
+                .exec();
     }
 
     public void findFieldByName(final DocRef dataSourceRef,
@@ -47,14 +47,14 @@ public class DataSourceClient {
                     dataSourceRef,
                     StringMatch.equals(fieldName, true));
             restFactory
-                    .forResultPageOf(QueryField.class)
+                    .resource(DATA_SOURCE_RESOURCE)
+                    .method(res -> res.findFields(findFieldInfoCriteria))
                     .onSuccess(result -> {
                         if (result.getValues().size() > 0) {
                             consumer.accept(result.getFirst());
                         }
                     })
-                    .call(DATA_SOURCE_RESOURCE)
-                    .findFields(findFieldInfoCriteria);
+                    .exec();
         }
     }
 
@@ -63,7 +63,8 @@ public class DataSourceClient {
 
         if (dataSourceDocRef != null) {
             restFactory
-                    .forType(Documentation.class)
+                    .resource(DATA_SOURCE_RESOURCE)
+                    .method(res -> res.fetchDocumentation(dataSourceDocRef))
                     .onSuccess(documentation -> {
                         final Optional<String> optMarkDown = GwtNullSafe.getAsOptional(documentation,
                                 Documentation::getMarkdown);
@@ -71,16 +72,15 @@ public class DataSourceClient {
                             descriptionConsumer.accept(optMarkDown);
                         }
                     })
-                    .call(DATA_SOURCE_RESOURCE)
-                    .fetchDocumentation(dataSourceDocRef);
+                    .exec();
         }
     }
 
     public void fetchDefaultExtractionPipeline(DocRef dataSourceRef, Consumer<DocRef> consumer) {
         restFactory
-                .forType(DocRef.class)
+                .resource(DATA_SOURCE_RESOURCE)
+                .method(res -> res.fetchDefaultExtractionPipeline(dataSourceRef))
                 .onSuccess(consumer)
-                .call(DATA_SOURCE_RESOURCE)
-                .fetchDefaultExtractionPipeline(dataSourceRef);
+                .exec();
     }
 }

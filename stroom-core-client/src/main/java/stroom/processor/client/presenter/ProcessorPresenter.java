@@ -285,7 +285,8 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
                 final ProcessorFilter filter = processorFilterRow.getProcessorFilter();
 
                 restFactory
-                        .forType(ProcessorFilter.class)
+                        .resource(PROCESSOR_FILTER_RESOURCE)
+                        .method(res -> res.fetch(filter.getId()))
                         .onSuccess(loadedFilter -> {
                             if (loadedFilter == null) {
                                 AlertEvent.fireError(
@@ -296,8 +297,7 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
                                 edit(loadedFilter, null, processorFilterRow.getOwnerDisplayName());
                             }
                         })
-                        .call(PROCESSOR_FILTER_RESOURCE)
-                        .fetch(filter.getId());
+                        .exec();
             }
         }
     }
@@ -336,10 +336,10 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
             ConfirmEvent.fire(this, "Are you sure you want to delete this filter?", result -> {
                 if (result) {
                     restFactory
-                            .forType(Boolean.class)
+                            .resource(PROCESSOR_FILTER_RESOURCE)
+                            .method(res -> res.delete(processorFilterRow.getProcessorFilter().getId()))
                             .onSuccess(res -> processorListPresenter.refresh())
-                            .call(PROCESSOR_FILTER_RESOURCE)
-                            .delete(processorFilterRow.getProcessorFilter().getId());
+                            .exec();
                 }
             });
         }

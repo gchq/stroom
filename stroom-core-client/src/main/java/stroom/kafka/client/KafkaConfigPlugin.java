@@ -77,11 +77,11 @@ public class KafkaConfigPlugin extends DocumentPlugin<KafkaConfigDoc> {
                      final Consumer<KafkaConfigDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .forType(KafkaConfigDoc.class)
+                .resource(KAFKA_CONFIG_RESOURCE)
+                .method(res -> res.fetch(docRef.getUuid()))
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
-                .call(KAFKA_CONFIG_RESOURCE)
-                .fetch(docRef.getUuid());
+                .exec();
     }
 
     @Override
@@ -90,10 +90,10 @@ public class KafkaConfigPlugin extends DocumentPlugin<KafkaConfigDoc> {
                      final Consumer<KafkaConfigDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .forType(KafkaConfigDoc.class)
+                .resource(KAFKA_CONFIG_RESOURCE)
+                .method(res -> res.update(document.getUuid(), document))
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
-                .call(KAFKA_CONFIG_RESOURCE)
-                .update(document.getUuid(), document);
+                .exec();
     }
 }

@@ -67,11 +67,11 @@ public class FeedPlugin extends DocumentPlugin<FeedDoc> {
                      final Consumer<FeedDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .forType(FeedDoc.class)
+                .resource(FEED_RESOURCE)
+                .method(res -> res.fetch(docRef.getUuid()))
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
-                .call(FEED_RESOURCE)
-                .fetch(docRef.getUuid());
+                .exec();
     }
 
     @Override
@@ -80,11 +80,11 @@ public class FeedPlugin extends DocumentPlugin<FeedDoc> {
                      final Consumer<FeedDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .forType(FeedDoc.class)
+                .resource(FEED_RESOURCE)
+                .method(res -> res.update(document.getUuid(), document))
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
-                .call(FEED_RESOURCE)
-                .update(document.getUuid(), document);
+                .exec();
     }
 
     @Override

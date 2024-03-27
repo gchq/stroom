@@ -67,11 +67,11 @@ public class XsltPlugin extends DocumentPlugin<XsltDoc> {
                      final Consumer<XsltDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .forType(XsltDoc.class)
+                .resource(XSLT_RESOURCE)
+                .method(res -> res.fetch(docRef.getUuid()))
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
-                .call(XSLT_RESOURCE)
-                .fetch(docRef.getUuid());
+                .exec();
     }
 
     @Override
@@ -80,11 +80,11 @@ public class XsltPlugin extends DocumentPlugin<XsltDoc> {
                      final Consumer<XsltDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .forType(XsltDoc.class)
+                .resource(XSLT_RESOURCE)
+                .method(res -> res.update(document.getUuid(), document))
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
-                .call(XSLT_RESOURCE)
-                .update(document.getUuid(), document);
+                .exec();
     }
 
     @Override

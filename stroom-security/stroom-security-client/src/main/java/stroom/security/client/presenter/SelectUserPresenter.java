@@ -237,10 +237,10 @@ public class SelectUserPresenter
                         final UserName selected = getSelected();
                         if (selected != null) {
                             restFactory
-                                    .forType(User.class)
+                                    .resource(USER_RESOURCE)
+                                    .method(res -> res.createUser(selected))
                                     .onSuccess(userConsumer)
-                                    .call(USER_RESOURCE)
-                                    .createUser(selected);
+                                    .exec();
                         }
                     }
                 })

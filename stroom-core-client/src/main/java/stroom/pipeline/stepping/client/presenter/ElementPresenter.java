@@ -135,7 +135,8 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements
                             .build();
 
                     restFactory
-                            .forType(DocRef.class)
+                            .resource(STEPPING_RESOURCE)
+                            .method(res -> res.findElementDoc(findElementDocRequest))
                             .onSuccess(result -> loadEntityRef(result, future))
                             .onFailure(caught -> {
                                 dirtyCode = false;
@@ -143,8 +144,7 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements
                                 clearAllIndicators();
                                 future.setResult(false);
                             })
-                            .call(STEPPING_RESOURCE)
-                            .findElementDoc(findElementDocRequest);
+                            .exec();
 
                     loading = true;
                 } catch (final RuntimeException e) {

@@ -1,7 +1,5 @@
 package stroom.dispatch.client;
 
-import stroom.util.shared.ResultPage;
-
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
@@ -50,15 +48,15 @@ class RestFactoryImpl implements RestFactory, HasHandlers {
         }
 
         @Override
-        public <R> RestExecutor<T, R> method(final Function<T, R> function) {
+        public <R> MethodExecutor<T, R> method(final Function<T, R> function) {
             final Rest<R> rest = new RestImpl<R>(hasHandlers, null);
             return new RestExecutorImpl<>(rest, service, function);
         }
 
         @Override
-        public <R> RestExecutor<T, R> call(final Consumer<T> consumer) {
-            final Rest<R> rest = new RestImpl<R>(hasHandlers, null);
-            final Function<T, R> function = t -> {
+        public MethodExecutor<T, Void> call(final Consumer<T> consumer) {
+            final Rest<Void> rest = new RestImpl<Void>(hasHandlers, null);
+            final Function<T, Void> function = t -> {
                 consumer.accept(t);
                 return null;
             };
@@ -66,7 +64,7 @@ class RestFactoryImpl implements RestFactory, HasHandlers {
         }
     }
 
-    private static class RestExecutorImpl<T extends DirectRestService, R> implements RestExecutor<T, R> {
+    private static class RestExecutorImpl<T extends DirectRestService, R> implements MethodExecutor<T, R> {
 
         private final Rest<R> rest;
         private final T service;
@@ -79,19 +77,19 @@ class RestFactoryImpl implements RestFactory, HasHandlers {
         }
 
         @Override
-        public RestExecutor<T, R> quiet(final boolean quiet) {
+        public MethodExecutor<T, R> quiet(final boolean quiet) {
             rest.quiet(quiet);
             return this;
         }
 
         @Override
-        public RestExecutor<T, R> onSuccess(final Consumer<R> consumer) {
+        public MethodExecutor<T, R> onSuccess(final Consumer<R> consumer) {
             rest.onSuccess(consumer);
             return this;
         }
 
         @Override
-        public RestExecutor<T, R> onFailure(final Consumer<Throwable> consumer) {
+        public MethodExecutor<T, R> onFailure(final Consumer<Throwable> consumer) {
             rest.onFailure(consumer);
             return this;
         }
@@ -100,19 +98,6 @@ class RestFactoryImpl implements RestFactory, HasHandlers {
         public void exec() {
             function.apply(rest.call(service));
         }
-    }
-
-    @Override
-    public <R> Rest<R> forType(final Class<R> type) {
-        return createRest(new TypeLiteral<R>() {
-        });
-    }
-
-    @Override
-    public <T> Rest<ResultPage<T>> forResultPageOf(final Class<T> itemType) {
-        //noinspection Convert2Diamond
-        return createRest(new TypeLiteral<ResultPage<T>>() {
-        });
     }
 
     private <R> RestImpl<R> createRest(final TypeLiteral<R> typeLiteral) {

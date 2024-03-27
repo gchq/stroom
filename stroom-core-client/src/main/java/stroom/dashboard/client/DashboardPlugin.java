@@ -189,11 +189,11 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
                      final Consumer<DashboardDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .forType(DashboardDoc.class)
+                .resource(DASHBOARD_RESOURCE)
+                .method(res -> res.fetch(docRef.getUuid()))
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
-                .call(DASHBOARD_RESOURCE)
-                .fetch(docRef.getUuid());
+                .exec();
     }
 
     @Override
@@ -202,11 +202,11 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
                      final Consumer<DashboardDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .forType(DashboardDoc.class)
+                .resource(DASHBOARD_RESOURCE)
+                .method(res -> res.update(document.getUuid(), document))
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
-                .call(DASHBOARD_RESOURCE)
-                .update(document.getUuid(), document);
+                .exec();
     }
 
     @Override

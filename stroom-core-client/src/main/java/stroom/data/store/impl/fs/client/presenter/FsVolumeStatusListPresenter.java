@@ -92,11 +92,11 @@ public class FsVolumeStatusListPresenter extends MyPresenterWidget<PagerView> {
                                     final Consumer<Throwable> throwableConsumer) {
                     CriteriaUtil.setRange(criteria, range);
                     restFactory
-                            .forResultPageOf(FsVolume.class)
+                            .resource(FS_VOLUME_RESOURCE)
+                            .method(res -> res.find(criteria))
                             .onSuccess(dataConsumer)
                             .onFailure(throwableConsumer)
-                            .call(FS_VOLUME_RESOURCE)
-                            .find(criteria);
+                            .exec();
                 }
             };
             dataProvider.addDataDisplay(dataGrid);

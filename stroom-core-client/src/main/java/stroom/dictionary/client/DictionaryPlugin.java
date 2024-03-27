@@ -67,11 +67,11 @@ public class DictionaryPlugin extends DocumentPlugin<DictionaryDoc> {
                      final Consumer<DictionaryDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .forType(DictionaryDoc.class)
+                .resource(DICTIONARY_RESOURCE)
+                .method(res -> res.fetch(docRef.getUuid()))
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
-                .call(DICTIONARY_RESOURCE)
-                .fetch(docRef.getUuid());
+                .exec();
     }
 
     @Override
@@ -80,11 +80,11 @@ public class DictionaryPlugin extends DocumentPlugin<DictionaryDoc> {
                      final Consumer<DictionaryDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .forType(DictionaryDoc.class)
+                .resource(DICTIONARY_RESOURCE)
+                .method(res -> res.update(document.getUuid(), document))
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
-                .call(DICTIONARY_RESOURCE)
-                .update(document.getUuid(), document);
+                .exec();
     }
 
     @Override

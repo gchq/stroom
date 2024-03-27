@@ -83,9 +83,9 @@ public class JobListPresenter extends MyPresenterWidget<PagerView> {
         enabledColumn.setFieldUpdater((index, row, value) -> {
             row.setEnabled(value.toBoolean());
             restFactory
-                    .forType(Job.class)
-                    .call(JOB_RESOURCE)
-                    .setEnabled(row.getId(), value.toBoolean());
+                    .resource(JOB_RESOURCE)
+                    .call(res -> res.setEnabled(row.getId(), value.toBoolean()))
+                    .exec();
         });
         dataGrid.addColumn(enabledColumn, "Enabled", 80);
 
@@ -151,10 +151,11 @@ public class JobListPresenter extends MyPresenterWidget<PagerView> {
                                         final Consumer<ResultPage<Job>> dataConsumer,
                                         final Consumer<Throwable> throwableConsumer) {
                         restFactory
-                                .forResultPageOf(Job.class)
+                                .resource(JOB_RESOURCE)
+                                .method(JobResource::list)
                                 .onSuccess(dataConsumer)
                                 .onFailure(throwableConsumer)
-                                .call(JOB_RESOURCE).list();
+                                .exec();
                     }
 
                     @Override

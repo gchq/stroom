@@ -234,7 +234,8 @@ public class SearchModel {
                             .build();
 
                     restFactory
-                            .forType(DashboardSearchResponse.class)
+                            .resource(DASHBOARD_RESOURCE)
+                            .method(res -> res.search(currentNode, request))
                             .onSuccess(response -> {
                                 Result result = null;
                                 try {
@@ -261,8 +262,7 @@ public class SearchModel {
                                 }
                                 resultConsumer.accept(null);
                             })
-                            .call(DASHBOARD_RESOURCE)
-                            .search(currentNode, request);
+                            .exec();
                 }
             }
         }
@@ -356,7 +356,8 @@ public class SearchModel {
                     .build();
 
             restFactory
-                    .forType(DashboardSearchResponse.class)
+                    .resource(DASHBOARD_RESOURCE)
+                    .method(res -> res.search(currentNode, request))
                     .onSuccess(response -> {
                         if (search == currentSearch) {
                             currentQueryKey = response.getQueryKey();
@@ -389,8 +390,7 @@ public class SearchModel {
                             poll(Fetch.CHANGES, false);
                         }
                     })
-                    .call(DASHBOARD_RESOURCE)
-                    .search(currentNode, request);
+                    .exec();
         }
     }
 

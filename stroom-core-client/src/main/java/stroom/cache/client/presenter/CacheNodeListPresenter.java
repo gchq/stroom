@@ -321,7 +321,8 @@ public class CacheNodeListPresenter extends MyPresenterWidget<PagerView> {
         cacheInfoKeys.clear();
         for (final String nodeName : nodeNames) {
             restFactory
-                    .forType(CacheInfoResponse.class)
+                    .resource(CACHE_RESOURCE)
+                    .method(res -> res.info(cacheName, nodeName))
                     .onSuccess(response -> {
                         responseMap.put(nodeName, response.getValues());
 
@@ -335,7 +336,7 @@ public class CacheNodeListPresenter extends MyPresenterWidget<PagerView> {
                         responseMap.remove(nodeName);
                         delayedUpdate.update();
                     })
-                    .call(CACHE_RESOURCE).info(cacheName, nodeName);
+                    .exec();
         }
     }
 

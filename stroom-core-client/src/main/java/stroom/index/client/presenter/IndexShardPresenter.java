@@ -435,11 +435,11 @@ public class IndexShardPresenter extends DocumentEditPresenter<PagerView, Lucene
                                         final Consumer<Throwable> throwableConsumer) {
                         CriteriaUtil.setRange(queryCriteria, range);
                         restFactory
-                                .forResultPageOf(IndexShard.class)
+                                .resource(INDEX_RESOURCE)
+                                .method(res -> res.find(queryCriteria))
                                 .onSuccess(dataConsumer)
                                 .onFailure(throwableConsumer)
-                                .call(INDEX_RESOURCE)
-                                .find(queryCriteria);
+                                .exec();
                     }
 
                     @Override

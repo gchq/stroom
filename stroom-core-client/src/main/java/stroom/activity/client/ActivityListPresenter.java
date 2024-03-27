@@ -104,11 +104,11 @@ public class ActivityListPresenter
                                 final Consumer<ResultPage<Activity>> dataConsumer,
                                 final Consumer<Throwable> throwableConsumer) {
                 restFactory
-                        .forResultPageOf(Activity.class)
+                        .resource(ACTIVITY_RESOURCE)
+                        .method(res -> res.list(name))
                         .onSuccess(dataConsumer)
                         .onFailure(throwableConsumer)
-                        .call(ACTIVITY_RESOURCE)
-                        .list(name);
+                        .exec();
             }
         };
         dataProvider.addDataDisplay(dataGrid);

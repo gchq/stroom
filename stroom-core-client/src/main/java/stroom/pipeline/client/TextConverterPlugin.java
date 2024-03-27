@@ -67,11 +67,11 @@ public class TextConverterPlugin extends DocumentPlugin<TextConverterDoc> {
                      final Consumer<TextConverterDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .forType(TextConverterDoc.class)
+                .resource(TEXT_CONVERTER_RESOURCE)
+                .method(res -> res.fetch(docRef.getUuid()))
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
-                .call(TEXT_CONVERTER_RESOURCE)
-                .fetch(docRef.getUuid());
+                .exec();
     }
 
     @Override
@@ -80,11 +80,11 @@ public class TextConverterPlugin extends DocumentPlugin<TextConverterDoc> {
                      final Consumer<TextConverterDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .forType(TextConverterDoc.class)
+                .resource(TEXT_CONVERTER_RESOURCE)
+                .method(res -> res.update(document.getUuid(), document))
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
-                .call(TEXT_CONVERTER_RESOURCE)
-                .update(document.getUuid(), document);
+                .exec();
     }
 
     @Override

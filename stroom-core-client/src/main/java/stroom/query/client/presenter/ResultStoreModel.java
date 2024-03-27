@@ -67,7 +67,8 @@ public class ResultStoreModel {
         CriteriaUtil.setRange(criteria, range);
         for (final String nodeName : nodeNames) {
             restFactory
-                    .forResultPageOf(ResultStoreInfo.class)
+                    .resource(RESULT_STORE_RESOURCE)
+                    .method(res -> res.find(nodeName, criteria))
                     .onSuccess(response -> {
                         responseMap.put(nodeName, response.getValues());
                         delayedUpdate.update();
@@ -76,8 +77,7 @@ public class ResultStoreModel {
                         responseMap.remove(nodeName);
                         delayedUpdate.update();
                     })
-                    .call(RESULT_STORE_RESOURCE)
-                    .find(nodeName, criteria);
+                    .exec();
         }
     }
 

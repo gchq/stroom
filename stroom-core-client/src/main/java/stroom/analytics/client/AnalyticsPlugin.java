@@ -67,11 +67,11 @@ public class AnalyticsPlugin extends DocumentPlugin<AnalyticRuleDoc> {
                      final Consumer<AnalyticRuleDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .forType(AnalyticRuleDoc.class)
+                .resource(ANALYTIC_RULE_RESOURCE)
+                .method(res -> res.fetch(docRef.getUuid()))
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
-                .call(ANALYTIC_RULE_RESOURCE)
-                .fetch(docRef.getUuid());
+                .exec();
     }
 
     @Override
@@ -80,11 +80,11 @@ public class AnalyticsPlugin extends DocumentPlugin<AnalyticRuleDoc> {
                      final Consumer<AnalyticRuleDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .forType(AnalyticRuleDoc.class)
+                .resource(ANALYTIC_RULE_RESOURCE)
+                .method(res -> res.update(document.getUuid(), document))
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
-                .call(ANALYTIC_RULE_RESOURCE)
-                .update(document.getUuid(), document);
+                .exec();
     }
 
     @Override

@@ -62,36 +62,36 @@ public class UserPreferencesManager {
 
     public void fetch(final Consumer<UserPreferences> consumer) {
         restFactory
-                .forType(UserPreferences.class)
+                .resource(PREFERENCES_RESOURCE)
+                .method(UserPreferencesResource::fetch)
                 .onSuccess(consumer)
-                .call(PREFERENCES_RESOURCE)
-                .fetch();
+                .exec();
     }
 
     public void update(final UserPreferences userPreferences,
                        final Consumer<Boolean> consumer) {
         restFactory
-                .forType(Boolean.class)
+                .resource(PREFERENCES_RESOURCE)
+                .method(res -> res.update(userPreferences))
                 .onSuccess(consumer)
-                .call(PREFERENCES_RESOURCE)
-                .update(userPreferences);
+                .exec();
     }
 
     public void setDefaultUserPreferences(final UserPreferences userPreferences,
                                           final Consumer<UserPreferences> consumer) {
         restFactory
-                .forType(UserPreferences.class)
+                .resource(PREFERENCES_RESOURCE)
+                .method(res -> res.setDefaultUserPreferences(userPreferences))
                 .onSuccess(consumer)
-                .call(PREFERENCES_RESOURCE)
-                .setDefaultUserPreferences(userPreferences);
+                .exec();
     }
 
     public void resetToDefaultUserPreferences(final Consumer<UserPreferences> consumer) {
         restFactory
-                .forType(UserPreferences.class)
+                .resource(PREFERENCES_RESOURCE)
+                .method(UserPreferencesResource::resetToDefaultUserPreferences)
                 .onSuccess(consumer)
-                .call(PREFERENCES_RESOURCE)
-                .resetToDefaultUserPreferences();
+                .exec();
     }
 
     public void setCurrentPreferences(final UserPreferences userPreferences) {

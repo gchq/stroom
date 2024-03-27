@@ -282,15 +282,15 @@ public class StatisticsCustomMaskListPresenter extends DocumentEditPresenter<Pag
         // grab the mask list from this presenter
         oldStatisticsDataSourceData.setCustomRollUpMasks(new HashSet<>(maskList.getMasks()));
         restFactory
-                .forType(StatisticsDataSourceData.class)
+                .resource(STATISTIC_ROLLUP_RESOURCE)
+                .method(res -> res.fieldChange(new StatisticsDataSourceFieldChangeRequest(oldStatisticsDataSourceData,
+                        newStatisticsDataSourceData)))
                 .onSuccess(result -> {
                     newStatisticsDataSourceData.setCustomRollUpMasks(result.getCustomRollUpMasks());
 
                     updateState(result.getCustomRollUpMasks());
                 })
-                .call(STATISTIC_ROLLUP_RESOURCE)
-                .fieldChange(new StatisticsDataSourceFieldChangeRequest(oldStatisticsDataSourceData,
-                        newStatisticsDataSourceData));
+                .exec();
     }
 
     /**

@@ -156,7 +156,8 @@ public class CacheListPresenter extends MyPresenterWidget<PagerView> {
     private void fetchNamesForNodes(final List<String> nodeNames) {
         for (final String nodeName : nodeNames) {
             restFactory
-                    .forType(CacheNamesResponse.class)
+                    .resource(CACHE_RESOURCE)
+                    .method(res -> res.list(nodeName))
                     .onSuccess(response -> {
                         allCacheIdentities.addAll(response.getValues());
                         delayedUpdate.update();
@@ -164,8 +165,7 @@ public class CacheListPresenter extends MyPresenterWidget<PagerView> {
                     .onFailure(throwable -> {
                         delayedUpdate.update();
                     })
-                    .call(CACHE_RESOURCE)
-                    .list(nodeName);
+                    .exec();
         }
     }
 

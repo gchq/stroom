@@ -32,7 +32,6 @@ import stroom.importexport.shared.ContentResource;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.DocRefs;
-import stroom.util.shared.ResourceGeneration;
 import stroom.widget.button.client.InlineSvgToggleButton;
 import stroom.widget.popup.client.event.DisablePopupEvent;
 import stroom.widget.popup.client.event.EnablePopupEvent;
@@ -183,11 +182,11 @@ public class ExportConfigPresenter
             }
 
             restFactory
-                    .forType(ResourceGeneration.class)
+                    .resource(CONTENT_RESOURCE)
+                    .method(res -> res.exportContent(new DocRefs(docRefs)))
                     .onSuccess(result -> ExportFileCompleteUtil.onSuccess(locationManager, this, result))
                     .onFailure(throwable -> ExportFileCompleteUtil.onFailure(this, throwable))
-                    .call(CONTENT_RESOURCE)
-                    .exportContent(new DocRefs(docRefs));
+                    .exec();
         }
     }
 

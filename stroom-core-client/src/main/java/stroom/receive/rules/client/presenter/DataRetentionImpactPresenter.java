@@ -25,7 +25,6 @@ import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.data.retention.shared.DataRetentionDeleteSummary;
 import stroom.data.retention.shared.DataRetentionDeleteSummaryRequest;
-import stroom.data.retention.shared.DataRetentionDeleteSummaryResponse;
 import stroom.data.retention.shared.DataRetentionRules;
 import stroom.data.retention.shared.DataRetentionRulesResource;
 import stroom.data.retention.shared.FindDataRetentionImpactCriteria;
@@ -164,7 +163,8 @@ public class DataRetentionImpactPresenter
         // take a looooong time
         // Need to assign it to a variable for the generics typing
         restFactory
-                .forType(DataRetentionDeleteSummaryResponse.class)
+                .resource(RETENTION_RULES_RESOURCE)
+                .method(res -> res.getRetentionDeletionSummary(request))
                 .onSuccess(response -> {
                     // check we are expecting the results
                     if (isQueryRunning && currentQueryId.equals(response.getQueryId())) {
@@ -188,8 +188,7 @@ public class DataRetentionImpactPresenter
                     updateButtonStates();
                     AlertEvent.fireErrorFromException(this, throwable, null);
                 })
-                .call(RETENTION_RULES_RESOURCE)
-                .getRetentionDeletionSummary(request);
+                .exec();
     }
 
     private void cancelQuery() {

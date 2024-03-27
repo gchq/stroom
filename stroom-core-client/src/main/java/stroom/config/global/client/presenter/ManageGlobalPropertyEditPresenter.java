@@ -21,7 +21,6 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.config.global.shared.ConfigProperty;
 import stroom.config.global.shared.GlobalConfigResource;
 import stroom.config.global.shared.OverrideValue;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.node.client.NodeManager;
 import stroom.security.client.api.ClientSecurityContext;
@@ -223,13 +222,13 @@ public final class ManageGlobalPropertyEditPresenter
 
     private void updateValuesFromResource(final String propertyName, final Runnable hideRunnable) {
         restFactory
-                .forType(ConfigProperty.class)
+                .resource(GLOBAL_CONFIG_RESOURCE_RESOURCE)
+                .method(res -> res.getPropertyByName(propertyName))
                 .onSuccess(configProperty ->
                         show(configProperty, hideRunnable))
                 .onFailure(throwable ->
                         showError(throwable, "Error fetching property " + propertyName))
-                .call(GLOBAL_CONFIG_RESOURCE_RESOURCE)
-                .getPropertyByName(propertyName);
+                .exec();
     }
 
     private long getUniqueEffectiveValuesCount() {
@@ -451,31 +450,38 @@ public final class ManageGlobalPropertyEditPresenter
 
         ConfigProperty configPropertyToSave = getEntity();
 
-        final Rest<ConfigProperty> restCall =
-                restFactory
-                        .forType(ConfigProperty.class)
-                        .onSuccess(savedConfigProperty -> {
-                            setEntity(savedConfigProperty);
-                            if (hideOnSave) {
-                                event.hide();
-                                // Refresh client properties in case they were affected by this change.
-                                clientPropertyCache.refresh();
-                            }
-                        });
 
         if (configPropertyToSave.getId() == null) {
             // No ID so this doesn't exist in the DB
-            restCall
+            restFactory
+                    .resource(GLOBAL_CONFIG_RESOURCE_RESOURCE)
+                    .method(res -> res.create(configPropertyToSave))
+                    .onSuccess(savedConfigProperty -> {
+                        setEntity(savedConfigProperty);
+                        if (hideOnSave) {
+                            event.hide();
+                            // Refresh client properties in case they were affected by this change.
+                            clientPropertyCache.refresh();
+                        }
+                    })
                     .onFailure(throwable ->
                             showError(throwable, "Error creating property"))
-                    .call(GLOBAL_CONFIG_RESOURCE_RESOURCE)
-                    .create(configPropertyToSave);
+                    .exec();
         } else {
-            restCall
+            restFactory
+                    .resource(GLOBAL_CONFIG_RESOURCE_RESOURCE)
+                    .method(res -> res.update(configPropertyToSave.getName().toString(), configPropertyToSave))
+                    .onSuccess(savedConfigProperty -> {
+                        setEntity(savedConfigProperty);
+                        if (hideOnSave) {
+                            event.hide();
+                            // Refresh client properties in case they were affected by this change.
+                            clientPropertyCache.refresh();
+                        }
+                    })
                     .onFailure(throwable ->
                             showError(throwable, "Error updating property"))
-                    .call(GLOBAL_CONFIG_RESOURCE_RESOURCE)
-                    .update(configPropertyToSave.getName().toString(), configPropertyToSave);
+                    .exec();
         }
     }
 

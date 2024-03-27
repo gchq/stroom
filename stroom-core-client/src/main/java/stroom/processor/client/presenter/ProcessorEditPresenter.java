@@ -2,7 +2,6 @@ package stroom.processor.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.dashboard.shared.ValidateExpressionResult;
 import stroom.data.client.presenter.EditExpressionPresenter;
 import stroom.datasource.api.v2.QueryField;
 import stroom.dispatch.client.RestFactory;
@@ -175,7 +174,11 @@ public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView>
                                     final Runnable onSuccess) {
 
         restFactory
-                .forType(ValidateExpressionResult.class)
+                .resource(EXPRESSION_RESOURCE)
+                .method(res -> res.validate(new ValidateExpressionRequest(
+                        expression,
+                        fields,
+                        dateTimeSettingsFactory.getDateTimeSettings())))
                 .onSuccess(result -> {
                     if (result.isOk()) {
                         onSuccess.run();
@@ -186,11 +189,7 @@ public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView>
                 .onFailure(throwable -> {
                     AlertEvent.fireError(ProcessorEditPresenter.this, throwable.getMessage(), null);
                 })
-                .call(EXPRESSION_RESOURCE)
-                .validate(new ValidateExpressionRequest(
-                        expression,
-                        fields,
-                        dateTimeSettingsFactory.getDateTimeSettings()));
+                .exec();
     }
 
     private void hide(final ProcessorFilter result) {
@@ -269,10 +268,10 @@ public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView>
             filter.setMaxMetaCreateTimeMs(maxMetaCreateTimeMs);
 
             restFactory
-                    .forType(ProcessorFilter.class)
+                    .resource(PROCESSOR_FILTER_RESOURCE)
+                    .method(res -> res.update(filter.getId(), filter))
                     .onSuccess(this::hide)
-                    .call(PROCESSOR_FILTER_RESOURCE)
-                    .update(filter.getId(), filter);
+                    .exec();
 
         } else {
             // Now create the processor filter using the find stream criteria.
@@ -287,10 +286,10 @@ public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView>
                     .maxMetaCreateTimeMs(maxMetaCreateTimeMs)
                     .build();
             restFactory
-                    .forType(ProcessorFilter.class)
+                    .resource(PROCESSOR_FILTER_RESOURCE)
+                    .method(res -> res.create(request))
                     .onSuccess(this::hide)
-                    .call(PROCESSOR_FILTER_RESOURCE)
-                    .create(request);
+                    .exec();
         }
     }
 

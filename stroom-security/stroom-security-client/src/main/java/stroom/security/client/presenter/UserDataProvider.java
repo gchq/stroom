@@ -76,11 +76,11 @@ public class UserDataProvider implements Refreshable {
                                     final Consumer<Throwable> throwableConsumer) {
                     CriteriaUtil.setRange(criteria, range);
                     restFactory
-                            .forResultPageOf(User.class)
+                            .resource(USER_RESOURCE)
+                            .method(res -> res.find(criteria))
                             .onSuccess(dataConsumer)
                             .onFailure(throwableConsumer)
-                            .call(USER_RESOURCE)
-                            .find(criteria);
+                            .exec();
                 }
 
                 // We override the default set data functionality to allow the

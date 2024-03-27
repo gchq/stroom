@@ -115,7 +115,8 @@ public class IndexSettingsPresenter extends DocumentEditPresenter<IndexSettingsV
 
     private void updateGroupList(final String selected) {
         restFactory
-                .forResultPageOf(IndexVolumeGroup.class)
+                .resource(INDEX_VOLUME_GROUP_RESOURCE)
+                .method(res -> res.find(new ExpressionCriteria()))
                 .onSuccess(result -> {
                     final List<String> volumeGroupNames = result
                             .getValues()
@@ -131,8 +132,7 @@ public class IndexSettingsPresenter extends DocumentEditPresenter<IndexSettingsV
                         listBox.setValue(selected);
                     }
                 })
-                .call(INDEX_VOLUME_GROUP_RESOURCE)
-                .find(new ExpressionCriteria());
+                .exec();
     }
 
     public interface IndexSettingsView extends View, ReadOnlyChangeHandler, HasUiHandlers<IndexSettingsUiHandlers> {

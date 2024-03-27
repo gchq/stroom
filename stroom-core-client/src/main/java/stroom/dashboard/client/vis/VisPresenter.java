@@ -51,7 +51,6 @@ import stroom.visualisation.client.presenter.VisFunction;
 import stroom.visualisation.client.presenter.VisFunction.LoadStatus;
 import stroom.visualisation.client.presenter.VisFunction.StatusHandler;
 import stroom.visualisation.client.presenter.VisFunctionCache;
-import stroom.visualisation.shared.VisualisationDoc;
 import stroom.visualisation.shared.VisualisationResource;
 
 import com.google.gwt.core.client.GWT;
@@ -460,7 +459,8 @@ public class VisPresenter
         function.setStatus(LoadStatus.LOADING_ENTITY);
 
         restFactory
-                .forType(VisualisationDoc.class)
+                .resource(VISUALISATION_RESOURCE)
+                .method(res -> res.fetch(visualisationDocRef.getUuid()))
                 .onSuccess(result -> {
                     if (result != null) {
                         // Get all possible settings for this visualisation.
@@ -495,8 +495,7 @@ public class VisPresenter
                     }
                 })
                 .onFailure(caught -> failure(function, caught.getMessage()))
-                .call(VISUALISATION_RESOURCE)
-                .fetch(visualisationDocRef.getUuid());
+                .exec();
     }
 
     private void loadScripts(final VisFunction function, final DocRef scriptRef) {

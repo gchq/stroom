@@ -24,9 +24,9 @@ public class QueryHelpDetailProvider {
     public void getDetail(QueryHelpRow row,
                           Consumer<QueryHelpDetail> consumer) {
         restFactory
-                .forType(QueryHelpDetail.class)
+                .resource(QUERY_RESOURCE)
+                .method(res -> res.fetchDetail(row))
                 .onSuccess(consumer)
-                .call(QUERY_RESOURCE)
-                .fetchDetail(row);
+                .exec();
     }
 }

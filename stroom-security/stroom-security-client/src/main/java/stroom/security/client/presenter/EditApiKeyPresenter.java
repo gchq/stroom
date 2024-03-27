@@ -7,7 +7,6 @@ import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.presenter.EditApiKeyPresenter.EditApiKeyView;
 import stroom.security.shared.ApiKeyResource;
 import stroom.security.shared.CreateHashedApiKeyRequest;
-import stroom.security.shared.CreateHashedApiKeyResponse;
 import stroom.security.shared.HashedApiKey;
 import stroom.security.shared.PermissionNames;
 import stroom.security.shared.UserResource;
@@ -161,18 +160,17 @@ public class EditApiKeyPresenter
 
 //                GWT.log("ID: " + this.apiKey.getId());
                 restFactory
-                        .forType(HashedApiKey.class)
+                        .resource(API_KEY_RESOURCE)
+                        .method(res -> res.update(this.apiKey.getId(), updatedApiKey))
                         .onSuccess(apiKey -> {
                             this.apiKey = apiKey;
                             GwtNullSafe.run(onChangeHandler);
                             event.hide();
                         })
-                        .onFailure(throwable -> {
-                            AlertEvent.fireError(this, "Error updating API key: "
-                                    + throwable.getMessage(), null);
-                        })
-                        .call(API_KEY_RESOURCE)
-                        .update(this.apiKey.getId(), updatedApiKey);
+                        .onFailure(throwable ->
+                                AlertEvent.fireError(this, "Error updating API key: "
+                                        + throwable.getMessage(), null))
+                        .exec();
             }
         }
     }
@@ -236,7 +234,8 @@ public class EditApiKeyPresenter
                     getView().isEnabled());
 //            GWT.log("sending create req");
             restFactory
-                    .forType(CreateHashedApiKeyResponse.class)
+                    .resource(API_KEY_RESOURCE)
+                    .method(res -> res.create(request))
                     .onSuccess(response -> {
                         apiKey = response.getHashedApiKey();
                         // API Key created so change the mode and update the fields on the dialog
@@ -257,8 +256,7 @@ public class EditApiKeyPresenter
                         AlertEvent.fireError(this, "Error creating API key: "
                                 + throwable.getMessage(), null);
                     })
-                    .call(API_KEY_RESOURCE)
-                    .create(request);
+                    .exec();
         }
     }
 

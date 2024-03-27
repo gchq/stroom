@@ -157,11 +157,11 @@ public class StroomStatsStorePlugin extends DocumentPlugin<StroomStatsStoreDoc> 
                      final Consumer<StroomStatsStoreDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .forType(StroomStatsStoreDoc.class)
+                .resource(STATS_STORE_RESOURCE)
+                .method(res -> res.fetch(docRef.getUuid()))
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
-                .call(STATS_STORE_RESOURCE)
-                .fetch(docRef.getUuid());
+                .exec();
     }
 
     @Override
@@ -170,10 +170,10 @@ public class StroomStatsStorePlugin extends DocumentPlugin<StroomStatsStoreDoc> 
                      final Consumer<StroomStatsStoreDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .forType(StroomStatsStoreDoc.class)
+                .resource(STATS_STORE_RESOURCE)
+                .method(res -> res.update(document.getUuid(), document))
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
-                .call(STATS_STORE_RESOURCE)
-                .update(document.getUuid(), document);
+                .exec();
     }
 }

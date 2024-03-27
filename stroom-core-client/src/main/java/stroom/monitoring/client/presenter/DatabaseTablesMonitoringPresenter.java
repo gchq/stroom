@@ -109,11 +109,11 @@ public class DatabaseTablesMonitoringPresenter
                                 final Consumer<Throwable> throwableConsumer) {
                 CriteriaUtil.setRange(criteria, range);
                 restFactory
-                        .forResultPageOf(DBTableStatus.class)
+                        .resource(DB_STATUS_RESOURCE)
+                        .method(res -> res.findSystemTableStatus(criteria))
                         .onSuccess(dataConsumer)
                         .onFailure(throwableConsumer)
-                        .call(DB_STATUS_RESOURCE)
-                        .findSystemTableStatus(criteria);
+                        .exec();
             }
         };
         dataProvider.addDataDisplay(dataGrid);

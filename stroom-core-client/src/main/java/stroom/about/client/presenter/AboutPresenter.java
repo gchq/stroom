@@ -22,7 +22,6 @@ import stroom.dispatch.client.RestFactory;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.BuildInfo;
-import stroom.util.shared.SessionInfo;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupType;
 
@@ -59,7 +58,8 @@ public class AboutPresenter extends MyPresenter<AboutPresenter.AboutView, AboutP
 
     private void buildContent() {
         restFactory
-                .forType(SessionInfo.class)
+                .resource(SESSION_INFO_RESOURCE)
+                .method(SessionInfoResource::get)
                 .onSuccess(sessionInfo -> {
                     final BuildInfo buildInfo = sessionInfo.getBuildInfo();
                     getView().getBuildVersion().setText("Build Version: " + buildInfo.getBuildVersion());
@@ -70,8 +70,7 @@ public class AboutPresenter extends MyPresenter<AboutPresenter.AboutView, AboutP
                     getView().getNodeName().setText("Node Name: " + sessionInfo.getNodeName());
                 })
                 .onFailure(caught -> AlertEvent.fireError(AboutPresenter.this, caught.getMessage(), null))
-                .call(SESSION_INFO_RESOURCE)
-                .get();
+                .exec();
 
         clientPropertyCache.get()
                 .onSuccess(result -> getView().setHTML(result.getAboutHtml()))

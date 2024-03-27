@@ -84,7 +84,8 @@ public class DataUploadPresenter extends MyPresenterWidget<DataUploadPresenter.D
                         fileName);
 
                 restFactory
-                        .forType(ResourceKey.class)
+                        .resource(DATA_RESOURCE)
+                        .method(res -> res.upload(request))
                         .onSuccess(result -> {
                             hide();
                             AlertEvent.fireInfo(DataUploadPresenter.this.metaPresenter, "Uploaded file", null);
@@ -93,8 +94,7 @@ public class DataUploadPresenter extends MyPresenterWidget<DataUploadPresenter.D
                         .onFailure(throwable -> {
                             error("Error uploading file: " + throwable.getMessage());
                         })
-                        .call(DATA_RESOURCE)
-                        .upload(request);
+                        .exec();
             }
 
             @Override

@@ -212,10 +212,10 @@ public class ExplorerPopupPresenter
 
     public void setSelectedEntityReference(final DocRef docRef) {
         restFactory
-                .forType(ExplorerNode.class)
+                .resource(EXPLORER_RESOURCE)
+                .method(res -> res.getFromDocRef(docRef))
                 .onSuccess(this::setSelectedEntityData)
-                .call(EXPLORER_RESOURCE)
-                .getFromDocRef(docRef);
+                .exec();
     }
 
     private ExplorerNode getSelectedEntityData() {

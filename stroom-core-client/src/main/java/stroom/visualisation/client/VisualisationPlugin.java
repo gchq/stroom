@@ -67,11 +67,11 @@ public class VisualisationPlugin extends DocumentPlugin<VisualisationDoc> {
                      final Consumer<VisualisationDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .forType(VisualisationDoc.class)
+                .resource(VISUALISATION_RESOURCE)
+                .method(res -> res.fetch(docRef.getUuid()))
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
-                .call(VISUALISATION_RESOURCE)
-                .fetch(docRef.getUuid());
+                .exec();
     }
 
     @Override
@@ -80,11 +80,11 @@ public class VisualisationPlugin extends DocumentPlugin<VisualisationDoc> {
                      final Consumer<VisualisationDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .forType(VisualisationDoc.class)
+                .resource(VISUALISATION_RESOURCE)
+                .method(res -> res.update(document.getUuid(), document))
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
-                .call(VISUALISATION_RESOURCE)
-                .update(document.getUuid(), document);
+                .exec();
     }
 
     @Override

@@ -3,7 +3,6 @@ package stroom.analytics.client.presenter;
 import stroom.alert.client.event.AlertEvent;
 import stroom.analytics.shared.ExecutionSchedule;
 import stroom.analytics.shared.ExecutionScheduleResource;
-import stroom.analytics.shared.ExecutionTracker;
 import stroom.analytics.shared.ScheduleBounds;
 import stroom.dispatch.client.RestFactory;
 import stroom.document.client.event.DirtyEvent;
@@ -56,7 +55,8 @@ public class ExecutionScheduleEditPresenter
         view.getScheduleBox().setSchedulePresenterProvider(schedulePresenterProvider);
         view.getScheduleBox().setScheduleRestriction(new ScheduleRestriction(false, false, true));
         view.getScheduleBox().setScheduleReferenceTimeConsumer(scheduleReferenceTimeConsumer -> restFactory
-                .forType(ExecutionTracker.class)
+                .resource(EXECUTION_SCHEDULE_RESOURCE)
+                .method(res -> res.fetchTracker(executionSchedule))
                 .onSuccess(tracker -> {
                     Long lastExecuted = null;
                     if (tracker != null) {
@@ -73,8 +73,7 @@ public class ExecutionScheduleEditPresenter
                     scheduleReferenceTimeConsumer.accept(new ScheduleReferenceTime(referenceTime,
                             lastExecuted));
                 })
-                .call(EXECUTION_SCHEDULE_RESOURCE)
-                .fetchTracker(executionSchedule));
+                .exec());
 
         nodeManager.listAllNodes(
                 list -> {

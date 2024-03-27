@@ -92,11 +92,11 @@ public class ExecutionHistoryListPresenter
                 if (request != null && request.getExecutionSchedule() != null) {
                     CriteriaUtil.setRange(request, range);
                     restFactory
-                            .forResultPageOf(ExecutionHistory.class)
+                            .resource(EXECUTION_SCHEDULE_RESOURCE)
+                            .method(res -> res.fetchExecutionHistory(request))
                             .onSuccess(dataConsumer)
                             .onFailure(throwableConsumer)
-                            .call(EXECUTION_SCHEDULE_RESOURCE)
-                            .fetchExecutionHistory(request);
+                            .exec();
                 } else {
                     dataConsumer.accept(ResultPage.empty());
                 }

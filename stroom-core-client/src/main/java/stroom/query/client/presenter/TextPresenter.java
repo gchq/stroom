@@ -17,18 +17,15 @@
 package stroom.query.client.presenter;
 
 import stroom.data.shared.DataResource;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.editor.client.presenter.HtmlPresenter;
 import stroom.hyperlink.client.Hyperlink;
 import stroom.hyperlink.client.HyperlinkEvent;
-import stroom.pipeline.shared.AbstractFetchDataResult;
 import stroom.pipeline.shared.FetchDataRequest;
 import stroom.pipeline.shared.FetchDataResult;
 import stroom.pipeline.shared.SourceLocation;
 import stroom.query.api.v2.Column;
-import stroom.query.api.v2.ResultStoreInfo;
 import stroom.query.client.presenter.TextPresenter.TextView;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.util.shared.DefaultLocation;
@@ -575,7 +572,8 @@ public class TextPresenter extends MyPresenterWidget<TextView> implements TextUi
                     fetchDataQueue.clear();
 
                     restFactory
-                            .forType(AbstractFetchDataResult.class)
+                            .resource(DATA_RESOURCE)
+                            .method(res -> res.fetch(request))
                             .onSuccess(result -> {
                                 // If we are queueing more actions then don't update
                                 // the text.
@@ -609,8 +607,7 @@ public class TextPresenter extends MyPresenterWidget<TextView> implements TextUi
                                     }
                                 }
                             })
-                            .call(DATA_RESOURCE)
-                            .fetch(request);
+                            .exec();
                 }
             };
         }

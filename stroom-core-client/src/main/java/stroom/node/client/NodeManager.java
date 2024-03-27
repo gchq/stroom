@@ -29,33 +29,33 @@ public class NodeManager {
                                 final Consumer<Throwable> throwableConsumer,
                                 final FindNodeStatusCriteria findNodeStatusCriteria) {
         restFactory
-                .forType(FetchNodeStatusResponse.class)
+                .resource(NODE_RESOURCE)
+                .method(res -> res.find(findNodeStatusCriteria))
                 .onSuccess(dataConsumer)
                 .onFailure(throwableConsumer)
-                .call(NODE_RESOURCE)
-                .find(findNodeStatusCriteria);
+                .exec();
     }
 
     public void ping(final String nodeName,
                      final Consumer<Long> pingConsumer,
                      final Consumer<Throwable> throwableConsumer) {
         restFactory
-                .forType(Long.class)
+                .resource(NODE_RESOURCE)
+                .method(res -> res.ping(nodeName))
                 .onSuccess(pingConsumer)
                 .onFailure(throwableConsumer)
-                .call(NODE_RESOURCE)
-                .ping(nodeName);
+                .exec();
     }
 
     public void info(final String nodeName,
                      final Consumer<ClusterNodeInfo> infoConsumer,
                      final Consumer<Throwable> throwableConsumer) {
         restFactory
-                .forType(ClusterNodeInfo.class)
+                .resource(NODE_RESOURCE)
+                .method(res -> res.info(nodeName))
                 .onSuccess(infoConsumer)
                 .onFailure(throwableConsumer)
-                .call(NODE_RESOURCE)
-                .info(nodeName);
+                .exec();
     }
 
     public void setPriority(final String nodeName,

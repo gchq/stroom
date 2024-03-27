@@ -69,11 +69,11 @@ public class RuleSetPlugin extends DocumentPlugin<ReceiveDataRules> {
                      final Consumer<ReceiveDataRules> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .forType(ReceiveDataRules.class)
+                .resource(RULES_RESOURCE)
+                .method(res -> res.fetch(docRef.getUuid()))
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
-                .call(RULES_RESOURCE)
-                .fetch(docRef.getUuid());
+                .exec();
     }
 
     @Override
@@ -82,11 +82,11 @@ public class RuleSetPlugin extends DocumentPlugin<ReceiveDataRules> {
                      final Consumer<ReceiveDataRules> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .forType(ReceiveDataRules.class)
+                .resource(RULES_RESOURCE)
+                .method(res -> res.update(document.getUuid(), document))
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
-                .call(RULES_RESOURCE)
-                .update(document.getUuid(), document);
+                .exec();
     }
 
     @Override

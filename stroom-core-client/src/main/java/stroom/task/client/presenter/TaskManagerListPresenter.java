@@ -448,7 +448,8 @@ public class TaskManagerListPresenter
         responseMap.clear();
         for (final String nodeName : nodeNames) {
             restFactory
-                    .forType(TaskProgressResponse.class)
+                    .resource(TASK_RESOURCE)
+                    .method(res -> res.find(nodeName, request))
                     .onSuccess(response -> {
                         responseMap.put(nodeName, response.getValues());
                         errorMap.put(nodeName, response.getErrors());
@@ -459,8 +460,7 @@ public class TaskManagerListPresenter
                         errorMap.put(nodeName, Collections.singletonList(throwable.getMessage()));
                         delayedUpdate.update();
                     })
-                    .call(TASK_RESOURCE)
-                    .find(nodeName, request);
+                    .exec();
         }
     }
 

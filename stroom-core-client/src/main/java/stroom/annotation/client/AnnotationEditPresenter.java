@@ -319,14 +319,14 @@ public class AnnotationEditPresenter
     private void addEntry(final CreateEntryRequest request) {
         final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
         restFactory
-                .forType(AnnotationDetail.class)
+                .resource(annotationResource)
+                .method(res -> res.createEntry(request))
                 .onSuccess(this::read)
                 .onFailure(caught -> AlertEvent.fireError(
                         AnnotationEditPresenter.this,
                         caught.getMessage(),
                         null))
-                .call(annotationResource)
-                .createEntry(request);
+                .exec();
     }
 
     public void show(final Annotation annotation, final List<EventId> linkedEvents) {
@@ -356,10 +356,10 @@ public class AnnotationEditPresenter
             } else {
                 final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
                 restFactory
-                        .forType(AnnotationDetail.class)
+                        .resource(annotationResource)
+                        .method(res -> res.get(annotation.getId()))
                         .onSuccess(this::edit)
-                        .call(annotationResource)
-                        .get(annotation.getId());
+                        .exec();
             }
         }
     }
@@ -930,10 +930,10 @@ public class AnnotationEditPresenter
                 if (refresh) {
                     final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
                     restFactory
-                            .forType(AnnotationDetail.class)
+                            .resource(annotationResource)
+                            .method(res -> res.get(annotationDetail.getAnnotation().getId()))
                             .onSuccess(this::updateHistory)
-                            .call(annotationResource)
-                            .get(annotationDetail.getAnnotation().getId());
+                            .exec();
                 }
             });
         } else {

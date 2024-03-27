@@ -32,7 +32,6 @@ import stroom.explorer.shared.ExplorerConstants;
 import stroom.importexport.client.event.ImportConfigConfirmEvent;
 import stroom.importexport.shared.ContentResource;
 import stroom.importexport.shared.ImportConfigRequest;
-import stroom.importexport.shared.ImportConfigResponse;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportSettings.ImportMode;
 import stroom.importexport.shared.ImportState;
@@ -176,7 +175,10 @@ public class ImportConfigConfirmPresenter extends
     public void refresh() {
         importSettingsBuilder.importMode(ImportMode.CREATE_CONFIRMATION);
         restFactory
-                .forType(ImportConfigResponse.class)
+                .resource(CONTENT_RESOURCE)
+                .method(res -> res.importContent(new ImportConfigRequest(resourceKey,
+                        importSettingsBuilder.build(),
+                        confirmList)))
                 .onSuccess(result -> {
                     confirmList = result.getConfirmList();
                     if (confirmList.isEmpty()) {
@@ -186,8 +188,7 @@ public class ImportConfigConfirmPresenter extends
                     updateList();
                 })
                 .onFailure(caught -> error(caught.getMessage()))
-                .call(CONTENT_RESOURCE)
-                .importContent(new ImportConfigRequest(resourceKey, importSettingsBuilder.build(), confirmList));
+                .exec();
     }
 
     private void updateList() {
@@ -451,21 +452,26 @@ public class ImportConfigConfirmPresenter extends
         importSettingsBuilder.enableFilters(false);
 
         restFactory
-                .forType(ImportConfigResponse.class)
+                .resource(CONTENT_RESOURCE)
+                .method(res -> res.importContent(new ImportConfigRequest(resourceKey,
+                        importSettingsBuilder.build(),
+                        new ArrayList<>())))
                 .onSuccess(result2 -> AlertEvent.fireWarn(ImportConfigConfirmPresenter.this,
                         "Import Aborted",
                         () -> HidePopupEvent.builder(ImportConfigConfirmPresenter.this).ok(false).fire()))
                 .onFailure(caught -> AlertEvent.fireError(ImportConfigConfirmPresenter.this,
                         caught.getMessage(),
                         () -> HidePopupEvent.builder(ImportConfigConfirmPresenter.this).ok(false).fire()))
-                .call(CONTENT_RESOURCE)
-                .importContent(new ImportConfigRequest(resourceKey, importSettingsBuilder.build(), new ArrayList<>()));
+                .exec();
     }
 
     public void importData() {
         importSettingsBuilder.importMode(ImportMode.ACTION_CONFIRMATION);
         restFactory
-                .forType(ImportConfigResponse.class)
+                .resource(CONTENT_RESOURCE)
+                .method(res -> res.importContent(new ImportConfigRequest(resourceKey,
+                        importSettingsBuilder.build(),
+                        confirmList)))
                 .onSuccess(result2 ->
                         AlertEvent.fireInfo(
                                 ImportConfigConfirmPresenter.this,
@@ -487,8 +493,7 @@ public class ImportConfigConfirmPresenter extends
                     // existing one.
                     clearCaches();
                 })
-                .call(CONTENT_RESOURCE)
-                .importContent(new ImportConfigRequest(resourceKey, importSettingsBuilder.build(), confirmList));
+                .exec();
     }
 
     private void clearCaches() {

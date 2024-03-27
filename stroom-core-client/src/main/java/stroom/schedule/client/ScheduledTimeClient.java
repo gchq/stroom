@@ -39,10 +39,10 @@ public class ScheduledTimeClient implements HasHandlers {
     public void getScheduledTimes(final GetScheduledTimesRequest request,
                                   final Consumer<ScheduledTimes> consumer) {
         restFactory
-                .forType(ScheduledTimes.class)
+                .resource(SCHEDULED_TIME_RESOURCE)
+                .method(res -> res.get(request))
                 .onSuccess(consumer)
-                .call(SCHEDULED_TIME_RESOURCE)
-                .get(request);
+                .exec();
     }
 
     @Override

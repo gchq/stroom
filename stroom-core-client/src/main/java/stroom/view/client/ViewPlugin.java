@@ -67,11 +67,11 @@ public class ViewPlugin extends DocumentPlugin<ViewDoc> {
                      final Consumer<ViewDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .forType(ViewDoc.class)
+                .resource(VIEW_RESOURCE)
+                .method(res -> res.fetch(docRef.getUuid()))
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
-                .call(VIEW_RESOURCE)
-                .fetch(docRef.getUuid());
+                .exec();
     }
 
     @Override
@@ -80,11 +80,11 @@ public class ViewPlugin extends DocumentPlugin<ViewDoc> {
                      final Consumer<ViewDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .forType(ViewDoc.class)
+                .resource(VIEW_RESOURCE)
+                .method(res -> res.update(document.getUuid(), document))
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
-                .call(VIEW_RESOURCE)
-                .update(document.getUuid(), document);
+                .exec();
     }
 
     @Override

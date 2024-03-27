@@ -5,7 +5,6 @@ import stroom.docref.DocRef;
 import stroom.docref.StringMatch;
 import stroom.docref.StringMatch.MatchType;
 import stroom.entity.client.presenter.MarkdownConverter;
-import stroom.query.shared.CompletionValue;
 import stroom.query.shared.CompletionsRequest;
 import stroom.query.shared.QueryResource;
 import stroom.util.shared.PageRequest;
@@ -57,7 +56,8 @@ public class QueryHelpAceCompletionProvider implements AceCompletionProvider {
                         new StringMatch(MatchType.STARTS_WITH, false, prefix),
                         showAll);
         restFactory
-                .forResultPageOf(CompletionValue.class)
+                .resource(QUERY_RESOURCE)
+                .method(res -> res.fetchCompletions(completionsRequest))
                 .onSuccess(result -> {
                     final List<AceCompletion> aceCompletions = result
                             .getValues()
@@ -75,8 +75,7 @@ public class QueryHelpAceCompletionProvider implements AceCompletionProvider {
                             .collect(Collectors.toList());
                     callback.invokeWithCompletions(aceCompletions.toArray(new AceCompletion[0]));
                 })
-                .call(QUERY_RESOURCE)
-                .fetchCompletions(completionsRequest);
+                .exec();
     }
 
     public void setDataSourceRef(final DocRef dataSourceRef) {

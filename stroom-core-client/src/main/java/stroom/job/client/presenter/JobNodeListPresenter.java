@@ -108,11 +108,11 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
                                 final Consumer<Throwable> throwableConsumer) {
                 findJobNodeCriteria.getJobName().setString(jobName);
                 restFactory
-                        .forResultPageOf(JobNode.class)
+                        .resource(JOB_NODE_RESOURCE)
+                        .method(res -> res.find(findJobNodeCriteria))
                         .onSuccess(dataConsumer)
                         .onFailure(throwableConsumer)
-                        .call(JOB_NODE_RESOURCE)
-                        .find(findJobNodeCriteria);
+                        .exec();
             }
 
             @Override
@@ -120,7 +120,8 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
                 // Ping each node.
                 data.getValues().forEach(row -> {
                     restFactory
-                            .forType(JobNodeInfo.class)
+                            .resource(JOB_NODE_RESOURCE)
+                            .method(res -> res.info(row.getJob().getName(), row.getNodeName()))
                             .onSuccess(info -> {
                                 latestNodeInfo.put(row, info);
                                 super.changeData(data);
@@ -129,8 +130,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
                                 latestNodeInfo.remove(row);
                                 super.changeData(data);
                             })
-                            .call(JOB_NODE_RESOURCE)
-                            .info(row.getJob().getName(), row.getNodeName());
+                            .exec();
                 });
                 super.changeData(data);
             }
@@ -161,9 +161,9 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
         enabledColumn.setFieldUpdater((index, row, value) -> {
             row.setEnabled(value.toBoolean());
             restFactory
-                    .forType(JobNode.class)
-                    .call(JOB_NODE_RESOURCE)
-                    .setEnabled(row.getId(), value.toBoolean());
+                    .resource(JOB_NODE_RESOURCE)
+                    .call(res -> res.setEnabled(row.getId(), value.toBoolean()))
+                    .exec();
         });
         dataGrid.addColumn(enabledColumn, "Enabled", 80);
 
@@ -282,9 +282,9 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
         maxColumn.setFieldUpdater((index, row, value) -> {
             row.setTaskLimit(value.intValue());
             restFactory
-                    .forType(JobNode.class)
-                    .call(JOB_NODE_RESOURCE)
-                    .setTaskLimit(row.getId(), value.intValue());
+                    .resource(JOB_NODE_RESOURCE)
+                    .call(res -> res.setTaskLimit(row.getId(), value.intValue()))
+                    .exec();
         });
         dataGrid.addColumn(maxColumn, "Max", 62);
 
@@ -321,11 +321,11 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
 
     private void showSchedule(final JobNode row) {
         restFactory
-                .forType(JobNodeInfo.class)
+                .resource(JOB_NODE_RESOURCE)
+                .method(res -> res.info(row.getJob().getName(), row.getNodeName()))
                 .onSuccess(result -> setSchedule(row, result))
                 .onFailure(throwable -> setSchedule(row, null))
-                .call(JOB_NODE_RESOURCE)
-                .info(row.getJob().getName(), row.getNodeName());
+                .exec();
     }
 
     private void setSchedule(final JobNode jobNode, JobNodeInfo jobNodeInfo) {
@@ -341,11 +341,11 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
             schedulePresenter.show(schedule -> {
                 JobNodeUtil.setSchedule(jobNode, schedule);
                 restFactory
-                        .forType(JobNode.class)
+                        .resource(JOB_NODE_RESOURCE)
+                        .call(res -> res.setSchedule(jobNode.getId(), schedule))
                         .onSuccess(result ->
                                 dataProvider.refresh())
-                        .call(JOB_NODE_RESOURCE)
-                        .setSchedule(jobNode.getId(), schedule);
+                        .exec();
             });
         }
     }
