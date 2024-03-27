@@ -1,5 +1,6 @@
 package stroom.config.global.impl;
 
+import stroom.analytics.impl.AnalyticsConfig;
 import stroom.config.global.shared.ConfigProperty;
 import stroom.config.global.shared.GlobalConfigCriteria;
 import stroom.config.global.shared.GlobalConfigResource;
@@ -340,9 +341,9 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
 
                         final ListConfigResponse response = new ListConfigResponse(
                                 QuickFilterPredicateFactory.filterStream(
-                                        criteria.getQuickFilterInput(),
-                                        fieldMappers,
-                                        FULL_PROP_LIST.stream())
+                                                criteria.getQuickFilterInput(),
+                                                fieldMappers,
+                                                FULL_PROP_LIST.stream())
                                         .peek(configProperty ->
                                                 configProperty.setYamlOverrideValue(node.getNodeName()))
                                         .collect(Collectors.toList()),
@@ -423,6 +424,7 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
                 () -> nodeInfo,
                 StroomOpenIdConfig::new,
                 ExplorerConfig::new,
-                AuthenticationConfig::new);
+                AuthenticationConfig::new,
+                AnalyticsConfig::new);
     }
 }

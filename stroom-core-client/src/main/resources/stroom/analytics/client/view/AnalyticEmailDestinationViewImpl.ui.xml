@@ -12,5 +12,13 @@
         <form:FormGroup identity="analyticEmailDestinationEmailAddress" label="Bcc">
             <g:TextBox ui:field="bcc"/>
         </form:FormGroup>
+        <form:FormGroup identity="analyticEmailDestinationSubjectTemplate" label="Email Subject Template">
+            <g:SimplePanel ui:field="subjectTemplatePanel"
+                           addStyleNames="dock-max stroom-control__no-padding"/>
+        </form:FormGroup>
+        <form:FormGroup identity="analyticEmailDestinationBodyTemplate" label="Email Body Template">
+            <g:SimplePanel ui:field="bodyTemplatePanel"
+                           addStyleNames="dock-max stroom-control__no-padding"/>
+        </form:FormGroup>
     </g:FlowPanel>
-</ui:UiBinder> 
+</ui:UiBinder>

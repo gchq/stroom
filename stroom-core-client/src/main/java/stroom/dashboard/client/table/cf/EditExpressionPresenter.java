@@ -90,7 +90,7 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
         registerHandler(expressionPresenter.addDataSelectionHandler(event -> setButtonsEnabled()));
         registerHandler(expressionPresenter.addContextMenuHandler(event -> {
             final List<Item> menuItems = addExpressionActionsToMenu();
-            if (menuItems.size() > 0) {
+            if (!menuItems.isEmpty()) {
                 showMenu(menuItems, event.getPopupPosition());
             }
         }));
@@ -236,6 +236,10 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
     public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
         return addHandlerToSource(DirtyEvent.getType(), handler);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface EditExpressionView extends View {
 

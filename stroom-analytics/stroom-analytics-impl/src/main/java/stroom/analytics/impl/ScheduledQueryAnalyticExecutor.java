@@ -67,7 +67,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -373,22 +372,20 @@ public class ScheduledQueryAnalyticExecutor {
 
                                     final Detection detection = Detection
                                             .builder()
-                                            .detectTime(DateUtil.createNormalDateTimeString())
-                                            .detectorName(analytic.getName())
-                                            .detectorUuid(analytic.getUuid())
-                                            .detectorVersion(analytic.getVersion())
-                                            .detailedDescription(analytic.getDescription())
-                                            .detectionUniqueId(UUID.randomUUID().toString())
-                                            .detectionRevision(0)
-                                            .executionSchedule(NullSafe
+                                            .withDetectTime(DateUtil.createNormalDateTimeString())
+                                            .withDetectorName(analytic.getName())
+                                            .withDetectorUuid(analytic.getUuid())
+                                            .withDetectorVersion(analytic.getVersion())
+                                            .withDetailedDescription(analytic.getDescription())
+                                            .withRandomDetectionUniqueId()
+                                            .withDetectionRevision(0)
+                                            .withExecutionSchedule(NullSafe
                                                     .get(executionSchedule, ExecutionSchedule::getName))
-                                            .executionTime(NullSafe
-                                                    .get(executionTime, DateUtil::createNormalDateTimeString))
-                                            .effectiveExecutionTime(NullSafe
-                                                    .get(effectiveExecutionTime, DateUtil::createNormalDateTimeString))
-                                            .defunct(false)
-                                            .values(values)
-                                            .linkedEvents(linkedEvents)
+                                            .withExecutionTime(executionTime)
+                                            .withEffectiveExecutionTime(effectiveExecutionTime)
+                                            .notDefunct()
+                                            .withValues(values)
+                                            .withLinkedEvents(linkedEvents)
                                             .build();
                                     detectionConsumerProxy.getDetectionConsumer().accept(detection);
                                 }

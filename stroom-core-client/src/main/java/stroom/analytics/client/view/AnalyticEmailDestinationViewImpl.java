@@ -23,9 +23,11 @@ import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
+import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 public class AnalyticEmailDestinationViewImpl
@@ -40,6 +42,10 @@ public class AnalyticEmailDestinationViewImpl
     TextBox cc;
     @UiField
     TextBox bcc;
+    @UiField
+    SimplePanel subjectTemplatePanel;
+    @UiField
+    SimplePanel bodyTemplatePanel;
 
     @Inject
     public AnalyticEmailDestinationViewImpl(final Binder binder) {
@@ -81,6 +87,40 @@ public class AnalyticEmailDestinationViewImpl
         this.bcc.setValue(bcc);
     }
 
+//    @Override
+//    public String getSubjectTemplate() {
+//        return null;
+//    }
+//
+//    @Override
+//    public void setSubjectTemplate() {
+//
+//    }
+//
+//    @Override
+//    public String getBodyTemplate() {
+//        return null;
+//    }
+//
+//    @Override
+//    public void setBodyTemplate() {
+//
+//    }
+
+    @Override
+    public void setSubjectTemplateEditorView(final View view) {
+        if (view != null) {
+            subjectTemplatePanel.setWidget(view.asWidget());
+        }
+    }
+
+    @Override
+    public void setBodyTemplateEditorView(final View view) {
+        if (view != null) {
+            bodyTemplatePanel.setWidget(view.asWidget());
+        }
+    }
+
     @UiHandler("to")
     public void onTo(final KeyUpEvent event) {
         getUiHandlers().onDirty();
@@ -95,6 +135,10 @@ public class AnalyticEmailDestinationViewImpl
     public void onBcc(final KeyUpEvent event) {
         getUiHandlers().onDirty();
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface Binder extends UiBinder<Widget, AnalyticEmailDestinationViewImpl> {
 

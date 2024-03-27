@@ -1,13 +1,21 @@
 package stroom.analytics.impl;
 
+import stroom.util.NullSafe;
+import stroom.util.date.DateUtil;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 @JsonPropertyOrder({
         "detectTime",
@@ -100,6 +108,43 @@ public class Detection {
         this.effectiveExecutionTime = effectiveExecutionTime;
         this.values = values;
         this.linkedEvents = linkedEvents;
+    }
+
+    private Detection(final Builder builder) {
+        detectTime = builder.detectTime;
+        detectorName = builder.detectorName;
+        detectorUuid = builder.detectorUuid;
+        detectorVersion = builder.detectorVersion;
+        detectorEnvironment = builder.detectorEnvironment;
+        headline = builder.headline;
+        detailedDescription = builder.detailedDescription;
+        fullDescription = builder.fullDescription;
+        detectionUniqueId = builder.detectionUniqueId;
+        detectionRevision = builder.detectionRevision;
+        defunct = builder.defunct;
+        executionSchedule = builder.executionSchedule;
+        executionTime = builder.executionTime;
+        effectiveExecutionTime = builder.effectiveExecutionTime;
+        values = builder.values;
+        linkedEvents = builder.linkedEvents;
+    }
+
+    public static Builder builder(final Detection copy) {
+        Builder builder = new Builder();
+        builder.detectTime = copy.getDetectTime();
+        builder.detectorName = copy.getDetectorName();
+        builder.detectorUuid = copy.getDetectorUuid();
+        builder.detectorVersion = copy.getDetectorVersion();
+        builder.detectorEnvironment = copy.getDetectorEnvironment();
+        builder.headline = copy.getHeadline();
+        builder.detailedDescription = copy.getDetailedDescription();
+        builder.fullDescription = copy.getFullDescription();
+        builder.detectionUniqueId = copy.getDetectionUniqueId();
+        builder.detectionRevision = copy.getDetectionRevision();
+        builder.defunct = copy.getDefunct();
+        builder.values = copy.getValues();
+        builder.linkedEvents = copy.getLinkedEvents();
+        return builder;
     }
 
     public String getDetectTime() {
@@ -235,16 +280,19 @@ public class Detection {
                 '}';
     }
 
+    public static Builder builder() {
+        return new Builder();
+    }
 
     public Builder copy() {
         return new Builder(this);
     }
 
-    public static Builder builder() {
-        return new Builder();
-    }
 
-    public static class Builder {
+    // --------------------------------------------------------------------------------
+
+
+    public static final class Builder {
 
         private String detectTime;
         private String detectorName;
@@ -285,104 +333,148 @@ public class Detection {
             this.linkedEvents = detection.linkedEvents;
         }
 
-        public Builder detectTime(final String detectTime) {
+        public Builder withDetectTime(final String detectTime) {
             this.detectTime = detectTime;
             return this;
         }
 
-        public Builder detectorName(final String detectorName) {
+        public Builder withDetectorName(final String detectorName) {
             this.detectorName = detectorName;
             return this;
         }
 
-        public Builder detectorUuid(final String detectorUuid) {
+        public Builder withDetectorUuid(final String detectorUuid) {
             this.detectorUuid = detectorUuid;
             return this;
         }
 
-        public Builder detectorVersion(final String detectorVersion) {
+        public Builder withRandomDetectorUuid() {
+            this.detectorUuid = UUID.randomUUID().toString();
+            return this;
+        }
+
+        public Builder withDetectorVersion(final String detectorVersion) {
             this.detectorVersion = detectorVersion;
             return this;
         }
 
-        public Builder detectorEnvironment(final String detectorEnvironment) {
+        public Builder withDetectorEnvironment(final String detectorEnvironment) {
             this.detectorEnvironment = detectorEnvironment;
             return this;
         }
 
-        public Builder headline(final String headline) {
+        public Builder withHeadline(final String headline) {
             this.headline = headline;
             return this;
         }
 
-        public Builder detailedDescription(final String detailedDescription) {
+        public Builder withDetailedDescription(final String detailedDescription) {
             this.detailedDescription = detailedDescription;
             return this;
         }
 
-        public Builder fullDescription(final String fullDescription) {
+        public Builder withFullDescription(final String fullDescription) {
             this.fullDescription = fullDescription;
             return this;
         }
 
-        public Builder detectionUniqueId(final String detectionUniqueId) {
+        public Builder withDetectionUniqueId(final String detectionUniqueId) {
             this.detectionUniqueId = detectionUniqueId;
             return this;
         }
 
-        public Builder detectionRevision(final Integer detectionRevision) {
+        public Builder withRandomDetectionUniqueId() {
+            this.detectionUniqueId = UUID.randomUUID().toString();
+            return this;
+        }
+
+        public Builder withDetectionRevision(final int detectionRevision) {
             this.detectionRevision = detectionRevision;
             return this;
         }
 
-        public Builder defunct(final Boolean defunct) {
+        public Builder withDefunct(final boolean defunct) {
             this.defunct = defunct;
             return this;
         }
 
-        public Builder executionSchedule(final String executionSchedule) {
+        public Builder defunct() {
+            this.defunct = true;
+            return this;
+        }
+
+        public Builder notDefunct() {
+            this.defunct = false;
+            return this;
+        }
+
+        public Builder withExecutionSchedule(final String executionSchedule) {
             this.executionSchedule = executionSchedule;
             return this;
         }
 
-        public Builder executionTime(final String executionTime) {
+        public Builder withExecutionTime(final String executionTime) {
             this.executionTime = executionTime;
             return this;
         }
 
-        public Builder effectiveExecutionTime(final String effectiveExecutionTime) {
+        public Builder withExecutionTime(final Instant executionTime) {
+            this.executionTime = NullSafe.get(executionTime, DateUtil::createNormalDateTimeString);
+            return this;
+        }
+
+        public Builder withEffectiveExecutionTime(final String effectiveExecutionTime) {
             this.effectiveExecutionTime = effectiveExecutionTime;
             return this;
         }
 
-        public Builder values(final List<DetectionValue> values) {
+        public Builder withEffectiveExecutionTime(final Instant effectiveExecutionTime) {
+            this.effectiveExecutionTime = NullSafe.get(effectiveExecutionTime, DateUtil::createNormalDateTimeString);
+            return this;
+        }
+
+        public Builder withValues(final List<DetectionValue> values) {
             this.values = values;
             return this;
         }
 
-        public Builder linkedEvents(final List<DetectionLinkedEvent> linkedEvents) {
+        public Builder withValues(final Map<String, String> values) {
+            this.values = NullSafe.map(values)
+                    .entrySet()
+                    .stream()
+                    .filter(entry -> entry.getKey() != null)
+                    .map(entry -> new DetectionValue(entry.getKey(), entry.getValue()))
+                    .collect(Collectors.toList());
+            return this;
+        }
+
+        public Builder addValue(final DetectionValue value) {
+            if (values == null) {
+                values = new ArrayList<>();
+            }
+            values.add(value);
+            return this;
+        }
+
+        public Builder addValue(final String name, final String value) {
+            return addValue(new DetectionValue(Objects.requireNonNull(name), value));
+        }
+
+        public Builder withLinkedEvents(final List<DetectionLinkedEvent> linkedEvents) {
             this.linkedEvents = linkedEvents;
             return this;
         }
 
+        public Builder addLinkedEvents(final DetectionLinkedEvent linkedEvent) {
+            if (linkedEvents == null) {
+                linkedEvents = new ArrayList<>();
+            }
+            linkedEvents.add(linkedEvent);
+            return this;
+        }
+
         public Detection build() {
-            return new Detection(
-                    detectTime,
-                    detectorName,
-                    detectorUuid,
-                    detectorVersion,
-                    detectorEnvironment,
-                    headline,
-                    detailedDescription,
-                    fullDescription,
-                    detectionUniqueId,
-                    detectionRevision,
-                    defunct,
-                    executionSchedule,
-                    executionTime,
-                    effectiveExecutionTime,
-                    values,
-                    linkedEvents);
+            return new Detection(this);
         }
     }
 }

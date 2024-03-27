@@ -1,7 +1,6 @@
 package stroom.preferences.client;
 
 import stroom.config.global.shared.UserPreferencesResource;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.editor.client.presenter.CurrentPreferences;
 import stroom.expression.api.UserTimeZone;
@@ -123,10 +122,12 @@ public class UserPreferencesManager {
                 break;
             }
             case OFFSET: {
-                final String hours = ClientStringUtil.zeroPad(2, userTimeZone.getOffsetHours());
-                final String minutes = ClientStringUtil.zeroPad(2, userTimeZone.getOffsetMinutes());
-                String offset = hours + minutes;
-                if (userTimeZone.getOffsetHours() >= 0 && userTimeZone.getOffsetMinutes() >= 0) {
+                final int hours = GwtNullSafe.requireNonNullElse(userTimeZone.getOffsetHours(), 0);
+                final int minutes = GwtNullSafe.requireNonNullElse(userTimeZone.getOffsetMinutes(), 0);
+                final String hoursStr = ClientStringUtil.zeroPad(2, hours);
+                final String minutesStr = ClientStringUtil.zeroPad(2, minutes);
+                String offset = hoursStr + minutesStr;
+                if (hours >= 0 && minutes >= 0) {
                     offset = "+" + offset;
                 } else {
                     offset = "-" + offset;

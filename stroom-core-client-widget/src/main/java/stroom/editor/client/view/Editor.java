@@ -40,6 +40,8 @@ public class Editor extends Composite implements HasValueChangeHandlers<String> 
     private boolean textDirty;
     private int firstLineNumber = 1;
     private boolean firstLineNumberDirty;
+    private int maxLines = 1;
+    private boolean maxLinesDirty;
     private List<Annotation> annotations;
     private boolean annotationsDirty;
     private List<Marker> markers;
@@ -181,6 +183,19 @@ public class Editor extends Composite implements HasValueChangeHandlers<String> 
             editor.setText(this.text);
             textDirty = false;
             markClean();
+        }
+    }
+
+    public void setFirstLineNumber(final int firstLineNumber) {
+        firstLineNumberDirty = true;
+        this.firstLineNumber = firstLineNumber;
+        updateFirstLineNumber();
+    }
+
+    private void updateFirstLineNumber() {
+        if (started && firstLineNumberDirty) {
+            editor.setFirstLineNumber(firstLineNumber);
+            firstLineNumberDirty = false;
         }
     }
 
