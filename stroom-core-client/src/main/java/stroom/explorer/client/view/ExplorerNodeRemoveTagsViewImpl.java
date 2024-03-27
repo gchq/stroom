@@ -23,7 +23,7 @@ import stroom.util.shared.GwtNullSafe;
 import stroom.widget.popup.client.view.HideRequestUiHandlers;
 
 import com.google.gwt.event.dom.client.KeyCodes;
-import com.google.gwt.event.dom.client.KeyUpEvent;
+import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Label;
@@ -58,10 +58,10 @@ public class ExplorerNodeRemoveTagsViewImpl
         widget.addAttachHandler(event -> focus());
         nodeTagsListBox.setMultipleSelect(true);
 
-        nodeTagsListBox.addKeyUpHandler(this::handleKeyUpEvent);
+        nodeTagsListBox.addKeyDownHandler(this::handleKeyDownEvent);
     }
 
-    private void handleKeyUpEvent(final KeyUpEvent event) {
+    private void handleKeyDownEvent(final KeyDownEvent event) {
         final int keyCode = event.getNativeEvent().getKeyCode();
         if (KeyCodes.KEY_J == keyCode) {
             final int selectedIndex = nodeTagsListBox.getSelectedIndex();

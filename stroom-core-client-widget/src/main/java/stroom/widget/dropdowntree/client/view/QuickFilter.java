@@ -84,8 +84,8 @@ public class QuickFilter extends FlowPanel
         add(clearButton);
         add(helpButton);
 
-        textBox.addKeyUpHandler(event -> onChange());
-        textBox.addKeyDownHandler(event -> onKeyDown(event));
+        textBox.addValueChangeHandler(event -> onChange());
+        textBox.addKeyDownHandler(this::onKeyDown);
         helpButton.addClickHandler(event -> showHelpPopup());
         clearButton.addClickHandler(event -> clear());
 
