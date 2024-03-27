@@ -2123,3 +2123,9 @@ button.main-menu svg {
 .docRefLinkContainer:hover .svg-image {
     opacity: .8;
 }
+
+.pipelineSource {
+    border: solid 1px var(--control__border-color);
+    border-radius: .25rem;
+    overflow: hidden;
+}

@@ -498,7 +498,7 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
             xmlEditor.getIndicatorsOption().setAvailable(false);
             xmlEditor.getIndicatorsOption().setOn(false);
             xmlEditor.getStylesOption().setOn(true);
-            xmlEditor.getView().asWidget().getElement().addClassName("default-min-sizes");
+            xmlEditor.getView().asWidget().getElement().addClassName("pipelineSource default-min-sizes");
 
             final PopupSize popupSize = PopupSize.resizable(600, 400);
             restFactory
