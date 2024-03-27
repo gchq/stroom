@@ -13,32 +13,12 @@ public interface RestFactory {
     /**
      * Returns a builder for creating a {@link Rest} instance for calling a RESTful
      * service.
-     * Equivalent to passing {@code false} to {@link RestFactory#builder(boolean)},
-     * i.e. does not fire {@link stroom.task.client.TaskStartEvent}
-     * or {@link stroom.task.client.TaskEndEvent} events.
      *
      * @return An untyped {@link RestBuilder} to set the return type of the REST service.
      */
     RestBuilder builder();
 
-    /**
-     * Returns a builder for creating a {@link Rest} instance for calling a RESTful
-     * service.
-     *
-     * @param isQuiet Set to true to not fire {@link stroom.task.client.TaskStartEvent}
-     *                or {@link stroom.task.client.TaskEndEvent} events.
-     * @return An untyped {@link RestBuilder} to set the return type of the REST service.
-     */
-    RestBuilder builder(final boolean isQuiet);
-
     String getImportFileURL();
-
-    /**
-     * Deprecated, use {@link RestFactory#builder()} instead
-     */
-    @Deprecated
-    <R> Rest<R> creafte();
-
 
 
     // --------------------------------------------------------------------------------

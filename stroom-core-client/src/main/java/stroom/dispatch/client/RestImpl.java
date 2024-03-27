@@ -2,6 +2,8 @@ package stroom.dispatch.client;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.GwtStringBuilderOutputStream;
+import stroom.task.client.TaskEndEvent;
+import stroom.task.client.TaskStartEvent;
 import stroom.util.client.JSONUtil;
 import stroom.util.shared.EntityServiceException;
 
@@ -10,6 +12,7 @@ import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONParser;
 import com.google.gwt.json.client.JSONValue;
+import com.google.inject.TypeLiteral;
 import org.fusesource.restygwt.client.DirectRestService;
 import org.fusesource.restygwt.client.Method;
 import org.fusesource.restygwt.client.MethodCallback;
@@ -21,13 +24,22 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import javax.ws.rs.core.MediaType;
 
-public abstract class AbstractRest<R> implements Rest<R> {
+public class RestImpl<R> implements Rest<R> {
 
+    private static final TaskListener QUIET_TASK_LISTENER = new QuietTaskListener();
+
+    private final HasHandlers hasHandlers;
     private final REST<R> rest;
     private Consumer<R> resultConsumer;
     private Consumer<Throwable> errorConsumer;
+    private TaskListener taskListener;
 
-    AbstractRest(final HasHandlers hasHandlers) {
+    // TypeLiteral used to fix the type
+    @SuppressWarnings("unused")
+    RestImpl(final HasHandlers hasHandlers, TypeLiteral<R> typeLiteral) {
+        this.hasHandlers = hasHandlers;
+        taskListener = new DefaultTaskListener(hasHandlers);
+
         final MethodCallback<R> methodCallback = new MethodCallback<R>() {
             @Override
             public void onFailure(final Method method, final Throwable exception) {
@@ -74,7 +86,7 @@ public abstract class AbstractRest<R> implements Rest<R> {
                 } catch (final Throwable t) {
                     showError(hasHandlers, method, t);
                 } finally {
-                    decrementTaskCount();
+                    taskListener.decrementTaskCount();
                 }
             }
 
@@ -87,7 +99,7 @@ public abstract class AbstractRest<R> implements Rest<R> {
                 } catch (final Throwable t) {
                     showError(hasHandlers, method, t);
                 } finally {
-                    decrementTaskCount();
+                    taskListener.decrementTaskCount();
                 }
             }
         };
@@ -210,6 +222,22 @@ public abstract class AbstractRest<R> implements Rest<R> {
         return newThrowable;
     }
 
+    /**
+     * Set quiet if we don't want REST call to register on the task spinner.
+     *
+     * @param quiet Set to true to not fire {@link stroom.task.client.TaskStartEvent}
+     *              or {@link stroom.task.client.TaskEndEvent} events.
+     **/
+    @Override
+    public Rest<R> quiet(final boolean quiet) {
+        if (quiet) {
+            taskListener = QUIET_TASK_LISTENER;
+        } else {
+            taskListener = new DefaultTaskListener(hasHandlers);
+        }
+        return this;
+    }
+
     @Override
     public Rest<R> onSuccess(Consumer<R> consumer) {
         resultConsumer = consumer;
@@ -224,13 +252,9 @@ public abstract class AbstractRest<R> implements Rest<R> {
 
     @Override
     public <T extends DirectRestService> T call(T service) {
-        incrementTaskCount();
+        taskListener.incrementTaskCount();
         return rest.call(service);
     }
-
-    protected abstract void incrementTaskCount();
-
-    protected abstract void decrementTaskCount();
 
     private String getJsonKey(final JSONObject jsonObject, final String key) {
 
@@ -251,5 +275,46 @@ public abstract class AbstractRest<R> implements Rest<R> {
             value = null;
         }
         return value;
+    }
+
+    private interface TaskListener {
+
+        void incrementTaskCount();
+
+        void decrementTaskCount();
+    }
+
+    private static class DefaultTaskListener implements TaskListener {
+
+        private final HasHandlers hasHandlers;
+
+        DefaultTaskListener(final HasHandlers hasHandlers) {
+            this.hasHandlers = hasHandlers;
+        }
+
+        @Override
+        public void incrementTaskCount() {
+            // Add the task to the map.
+            TaskStartEvent.fire(hasHandlers);
+        }
+
+        @Override
+        public void decrementTaskCount() {
+            // Remove the task from the task count.
+            TaskEndEvent.fire(hasHandlers);
+        }
+    }
+
+    private static class QuietTaskListener implements TaskListener {
+
+        @Override
+        public void incrementTaskCount() {
+
+        }
+
+        @Override
+        public void decrementTaskCount() {
+
+        }
     }
 }

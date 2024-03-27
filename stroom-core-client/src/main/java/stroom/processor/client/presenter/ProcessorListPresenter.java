@@ -16,6 +16,7 @@
 
 package stroom.processor.client.presenter;
 
+import stroom.alert.client.event.AlertEvent;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.cell.expander.client.ExpanderCell;
 import stroom.cell.info.client.InfoColumn;
@@ -34,7 +35,6 @@ import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.data.table.client.Refreshable;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.HasDocumentRead;
@@ -137,34 +137,62 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
                 onChangeData(data);
             }
         };
-        processorEnabledSaveQueue = new RestSaveQueue<Integer, Boolean>(eventBus, restFactory) {
+        processorEnabledSaveQueue = new RestSaveQueue<Integer, Boolean>(eventBus) {
             @Override
-            protected void doAction(final Rest<?> rest, final Integer key, final Boolean value) {
-                rest
+            protected void doAction(final Integer key, final Boolean value, final Consumer<Integer> consumer) {
+                restFactory
+                        .builder()
+                        .forBoolean()
+                        .onSuccess(res -> consumer.accept(key))
+                        .onFailure(res -> {
+                            AlertEvent.fireError(this, res.getMessage(), null);
+                            consumer.accept(key);
+                        })
                         .call(PROCESSOR_RESOURCE)
                         .setEnabled(key, value);
             }
         };
-        processorFilterEnabledSaveQueue = new RestSaveQueue<Integer, Boolean>(eventBus, restFactory) {
+        processorFilterEnabledSaveQueue = new RestSaveQueue<Integer, Boolean>(eventBus) {
             @Override
-            protected void doAction(final Rest<?> rest, final Integer key, final Boolean value) {
-                rest
+            protected void doAction(final Integer key, final Boolean value, final Consumer<Integer> consumer) {
+                restFactory
+                        .builder()
+                        .forBoolean()
+                        .onSuccess(res -> consumer.accept(key))
+                        .onFailure(res -> {
+                            AlertEvent.fireError(this, res.getMessage(), null);
+                            consumer.accept(key);
+                        })
                         .call(PROCESSOR_FILTER_RESOURCE)
                         .setEnabled(key, value);
             }
         };
-        processorFilterPrioritySaveQueue = new RestSaveQueue<Integer, Integer>(eventBus, restFactory) {
+        processorFilterPrioritySaveQueue = new RestSaveQueue<Integer, Integer>(eventBus) {
             @Override
-            protected void doAction(final Rest<?> rest, final Integer key, final Integer value) {
-                rest
+            protected void doAction(final Integer key, final Integer value, final Consumer<Integer> consumer) {
+                restFactory
+                        .builder()
+                        .forInteger()
+                        .onSuccess(res -> consumer.accept(key))
+                        .onFailure(res -> {
+                            AlertEvent.fireError(this, res.getMessage(), null);
+                            consumer.accept(key);
+                        })
                         .call(PROCESSOR_FILTER_RESOURCE)
                         .setPriority(key, value);
             }
         };
-        processorFilterMaxProcessingTasksSaveQueue = new RestSaveQueue<Integer, Integer>(eventBus, restFactory) {
+        processorFilterMaxProcessingTasksSaveQueue = new RestSaveQueue<Integer, Integer>(eventBus) {
             @Override
-            protected void doAction(final Rest<?> rest, final Integer key, final Integer value) {
-                rest
+            protected void doAction(final Integer key, final Integer value, final Consumer<Integer> consumer) {
+                restFactory
+                        .builder()
+                        .forInteger()
+                        .onSuccess(res -> consumer.accept(key))
+                        .onFailure(res -> {
+                            AlertEvent.fireError(this, res.getMessage(), null);
+                            consumer.accept(key);
+                        })
                         .call(PROCESSOR_FILTER_RESOURCE)
                         .setMaxProcessingTasks(key, value);
             }
