@@ -112,7 +112,8 @@ public class FeedSettingsPresenter extends DocumentEditPresenter<FeedSettingsVie
 
     private void updateEncodings() {
         restFactory
-                .forStringList()
+                .resource(FEED_RESOURCE)
+                .method(FeedResource::fetchSupportedEncodings)
                 .onSuccess(result -> {
                     getView().getDataEncoding().clear();
                     getView().getContextEncoding().clear();
@@ -130,8 +131,7 @@ public class FeedSettingsPresenter extends DocumentEditPresenter<FeedSettingsVie
                         getView().getContextEncoding().setValue(ensureEncoding(feed.getContextEncoding()));
                     }
                 })
-                .call(FEED_RESOURCE)
-                .fetchSupportedEncodings();
+                .exec();
     }
 
     private void updateVolumeGroups() {

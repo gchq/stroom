@@ -770,15 +770,16 @@ public class QueryPresenter
             } else if (getQuerySettings().getLastQueryKey() != null) {
                 // See if the result store exists before we try and resume a query.
                 restFactory
-                        .forBoolean()
+                        .resource(RESULT_STORE_RESOURCE)
+                        .method(res -> res.exists(getQuerySettings().getLastQueryNode(),
+                                getQuerySettings().getLastQueryKey()))
                         .onSuccess(result -> {
                             if (result != null && result) {
                                 // Resume search if we have a stored query key.
                                 resume(getQuerySettings().getLastQueryNode(), getQuerySettings().getLastQueryKey());
                             }
                         })
-                        .call(RESULT_STORE_RESOURCE)
-                        .exists(getQuerySettings().getLastQueryNode(), getQuerySettings().getLastQueryKey());
+                        .exec();
             }
         }
     }

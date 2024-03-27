@@ -16,7 +16,6 @@
 
 package stroom.data.client.presenter;
 
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.meta.shared.MetaResource;
 
@@ -41,9 +40,9 @@ public class DataTypeUiManager {
 
     public void getTypes(final Consumer<List<String>> consumer) {
         restFactory
-                .forStringList()
-                .onSuccess(consumer::accept)
-                .call(META_RESOURCE)
-                .getTypes();
+                .resource(META_RESOURCE)
+                .method(MetaResource::getTypes)
+                .onSuccess(consumer)
+                .exec();
     }
 }

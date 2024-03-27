@@ -2,91 +2,52 @@ package stroom.dispatch.client;
 
 import stroom.util.shared.ResultPage;
 
-import com.google.inject.TypeLiteral;
+import org.fusesource.restygwt.client.DirectRestService;
 
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 public interface RestFactory {
 
-    /**
-     * Create a {@link Rest} for a void return type
-     */
-    Rest<Void> forVoid();
+    <T extends DirectRestService> Resource<T> resource(T service);
 
-    /**
-     * Create a {@link Rest} for a boolean return type
-     */
-    Rest<Boolean> forBoolean();
+    interface Resource<T extends DirectRestService> {
 
-    /**
-     * Create a {@link Rest} for a String return type
-     */
-    Rest<String> forString();
+        <R> RestExecutor<T, R> method(Function<T, R> function);
 
-    /**
-     * Create a {@link Rest} for a Integer return type
-     */
-    Rest<Integer> forInteger();
+        <R> RestExecutor<T, R> call(Consumer<T> consumer);
+    }
 
-    /**
-     * Create a {@link Rest} for a Long return type
-     */
-    Rest<Long> forLong();
+    interface RestExecutor<T extends DirectRestService, R> {
+
+        /**
+         * Set quiet if we don't want REST call to register on the task spinner.
+         *
+         * @param quiet Set to true to not fire {@link stroom.task.client.TaskStartEvent}
+         *              or {@link stroom.task.client.TaskEndEvent} events.
+         **/
+        RestExecutor<T, R> quiet(boolean quiet);
+
+        RestExecutor<T, R> onSuccess(Consumer<R> consumer);
+
+        RestExecutor<T, R> onFailure(Consumer<Throwable> consumer);
+
+        void exec();
+    }
 
     /**
      * Create a {@link Rest} for a simple return type with no generics,
      * e.g. {@link String} or {@link stroom.docref.DocRef}.
      */
+    @Deprecated
     <R> Rest<R> forType(final Class<R> type);
-
-    /**
-     * Create a {@link Rest} for a given return type with generics,
-     * e.g. For a return type of {@link java.util.Collection<String>}
-     * <pre>{@code
-     * RestFactory.build()
-     *   .forWrappedType(new TypeLiteral<Collection<String>>(){ })}</pre>
-     * <p>
-     * Before you use this look at the other {@code forXXX} methods to see
-     * if there is a pre-canned one for your wrapped type,
-     * e.g. {@link forResultPageOf(Class)}
-     * </p>
-     */
-    <R> Rest<R> forWrappedType(final TypeLiteral<R> typeLiteral);
-
-    /**
-     * Create a {@link Rest} for a {@link List} return type with a given
-     * non-generic item type, e.g. {@link String}.
-     */
-    <T> Rest<List<T>> forListOf(final Class<T> itemType);
-
-    /**
-     * Create a {@link Rest} for a {@link List} return type with a given
-     * non-generic item type, e.g. {@link String}.
-     */
-    Rest<List<String>> forStringList();
-
-    /**
-     * Create a {@link Rest} for a {@link Set} return type with a given
-     * non-generic item type, e.g. {@link String}.
-     */
-    <T> Rest<Set<T>> forSetOf(final Class<T> itemType);
-
-    /**
-     * Create a {@link Rest} for a {@link Map} return type with given
-     * non-generic key and value types, e.g. a {@link Map} of {@link Long} to
-     * {@link String}.
-     * <p>
-     * If either key or value type has generics then use {@link forWrappedType(TypeLiteral)}.
-     * </p>
-     */
-    <K, V> Rest<Map<K, V>> forMapOf(final Class<K> keyType, final Class<V> valueType);
 
     /**
      * Create a {@link Rest} for a {@link ResultPage} return type with a given
      * non-generic item type, e.g. {@link String}.
      */
+    @Deprecated
     <T> Rest<ResultPage<T>> forResultPageOf(final Class<T> itemType);
 
     String getImportFileURL();

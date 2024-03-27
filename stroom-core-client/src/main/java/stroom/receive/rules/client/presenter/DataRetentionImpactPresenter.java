@@ -30,7 +30,6 @@ import stroom.data.retention.shared.DataRetentionRules;
 import stroom.data.retention.shared.DataRetentionRulesResource;
 import stroom.data.retention.shared.FindDataRetentionImpactCriteria;
 import stroom.datasource.api.v2.QueryField;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.meta.shared.MetaFields;
 import stroom.query.api.v2.ExpressionOperator;
@@ -196,7 +195,8 @@ public class DataRetentionImpactPresenter
     private void cancelQuery() {
         if (currentQueryId != null) {
             restFactory
-                    .forBoolean()
+                    .resource(RETENTION_RULES_RESOURCE)
+                    .method(res -> res.cancelQuery(currentQueryId))
                     .onSuccess(success -> {
                         isQueryRunning = false;
                         clearTable();
@@ -210,8 +210,7 @@ public class DataRetentionImpactPresenter
                         updateButtonStates();
                         AlertEvent.fireErrorFromException(this, throwable, null);
                     })
-                    .call(RETENTION_RULES_RESOURCE)
-                    .cancelQuery(currentQueryId);
+                    .exec();
         }
     }
 

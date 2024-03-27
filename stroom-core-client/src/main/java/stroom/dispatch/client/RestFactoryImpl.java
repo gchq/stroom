@@ -9,29 +9,13 @@ import com.google.inject.Inject;
 import com.google.inject.TypeLiteral;
 import com.google.web.bindery.event.shared.EventBus;
 import org.fusesource.restygwt.client.Defaults;
+import org.fusesource.restygwt.client.DirectRestService;
 import org.fusesource.restygwt.client.Dispatcher;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 class RestFactoryImpl implements RestFactory, HasHandlers {
-
-    @SuppressWarnings("Convert2Diamond")
-    private static final TypeLiteral<Void> VOID_TYPE_LITERAL = new TypeLiteral<Void>() {
-    };
-    @SuppressWarnings("Convert2Diamond")
-    private static final TypeLiteral<Boolean> BOOLEAN_TYPE_LITERAL = new TypeLiteral<Boolean>() {
-    };
-    @SuppressWarnings("Convert2Diamond")
-    private static final TypeLiteral<String> STRING_TYPE_LITERAL = new TypeLiteral<String>() {
-    };
-    @SuppressWarnings("Convert2Diamond")
-    private static final TypeLiteral<Integer> INTEGER_TYPE_LITERAL = new TypeLiteral<Integer>() {
-    };
-    @SuppressWarnings("Convert2Diamond")
-    private static final TypeLiteral<Long> LONG_TYPE_LITERAL = new TypeLiteral<Long>() {
-    };
 
     private final EventBus eventBus;
 
@@ -47,67 +31,80 @@ class RestFactoryImpl implements RestFactory, HasHandlers {
         Defaults.setDispatcher(dispatcher);
     }
 
-    @Override
-    public Rest<Void> forVoid() {
-        return createRest(VOID_TYPE_LITERAL);
-    }
 
     @Override
-    public Rest<Boolean> forBoolean() {
-        return createRest(BOOLEAN_TYPE_LITERAL);
+    public <T extends DirectRestService> Resource<T> resource(final T service) {
+        return new ResourceImpl<>(this, service);
     }
 
-    @Override
-    public Rest<String> forString() {
-        return createRest(STRING_TYPE_LITERAL);
+
+    private static class ResourceImpl<T extends DirectRestService> implements Resource<T> {
+
+        private final HasHandlers hasHandlers;
+        private final T service;
+
+        public ResourceImpl(final HasHandlers hasHandlers,
+                            final T service) {
+            this.hasHandlers = hasHandlers;
+            this.service = service;
+        }
+
+        @Override
+        public <R> RestExecutor<T, R> method(final Function<T, R> function) {
+            final Rest<R> rest = new RestImpl<R>(hasHandlers, null);
+            return new RestExecutorImpl<>(rest, service, function);
+        }
+
+        @Override
+        public <R> RestExecutor<T, R> call(final Consumer<T> consumer) {
+            final Rest<R> rest = new RestImpl<R>(hasHandlers, null);
+            final Function<T, R> function = t -> {
+                consumer.accept(t);
+                return null;
+            };
+            return new RestExecutorImpl<>(rest, service, function);
+        }
     }
 
-    @Override
-    public Rest<Long> forLong() {
-        return createRest(LONG_TYPE_LITERAL);
-    }
+    private static class RestExecutorImpl<T extends DirectRestService, R> implements RestExecutor<T, R> {
 
-    @Override
-    public Rest<Integer> forInteger() {
-        return createRest(INTEGER_TYPE_LITERAL);
+        private final Rest<R> rest;
+        private final T service;
+        private final Function<T, R> function;
+
+        public RestExecutorImpl(final Rest<R> rest, final T service, final Function<T, R> function) {
+            this.rest = rest;
+            this.service = service;
+            this.function = function;
+        }
+
+        @Override
+        public RestExecutor<T, R> quiet(final boolean quiet) {
+            rest.quiet(quiet);
+            return this;
+        }
+
+        @Override
+        public RestExecutor<T, R> onSuccess(final Consumer<R> consumer) {
+            rest.onSuccess(consumer);
+            return this;
+        }
+
+        @Override
+        public RestExecutor<T, R> onFailure(final Consumer<Throwable> consumer) {
+            rest.onFailure(consumer);
+            return this;
+        }
+
+        @Override
+        public void exec() {
+            function.apply(rest.call(service));
+        }
     }
 
     @Override
     public <R> Rest<R> forType(final Class<R> type) {
         return createRest(new TypeLiteral<R>() {
-        });
-    }
-
-    @Override
-    public <R> Rest<R> forWrappedType(final TypeLiteral<R> typeLiteral) {
-        return createRest(typeLiteral);
-    }
-
-    @Override
-    public <T> Rest<List<T>> forListOf(final Class<T> itemType) {
-        //noinspection Convert2Diamond
-        return createRest(new TypeLiteral<List<T>>() {
-        });
-    }
-
-    @Override
-    public Rest<List<String>> forStringList() {
-        //noinspection Convert2Diamond
-        return createRest(new TypeLiteral<List<String>>() {
-        });
-    }
-
-    @Override
-    public <K, V> Rest<Map<K, V>> forMapOf(final Class<K> keyType, final Class<V> valueType) {
-        //noinspection Convert2Diamond
-        return createRest(new TypeLiteral<Map<K, V>>() {
-        });
-    }
-
-    @Override
-    public <T> Rest<Set<T>> forSetOf(final Class<T> itemType) {
-        //noinspection Convert2Diamond
-        return createRest(new TypeLiteral<Set<T>>() {
         });
     }
 

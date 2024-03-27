@@ -190,13 +190,13 @@ public class StatisticsCustomMaskListPresenter extends DocumentEditPresenter<Pag
                 result -> {
                     if (result) {
                         restFactory
-                                .forListOf(CustomRollUpMask.class)
+                                .resource(STATISTIC_ROLLUP_RESOURCE)
+                                .method(res -> res.bitMaskPermGeneration(statisticsDataSource.getStatisticFieldCount()))
                                 .onSuccess(res -> {
                                     updateState(new HashSet<>(res));
                                     DirtyEvent.fire(thisInstance, true);
                                 })
-                                .call(STATISTIC_ROLLUP_RESOURCE)
-                                .bitMaskPermGeneration(statisticsDataSource.getStatisticFieldCount());
+                                .exec();
                     }
                 });
     }

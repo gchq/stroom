@@ -571,7 +571,10 @@ public class DataPresenter
                 final Long currentMetaId = getCurrentMetaId();
                 if (currentMetaId != null && currentMetaId >= 0) {
                     restFactory
-                            .forSetOf(String.class)
+                            .resource(DATA_RESOURCE)
+                            .method(res -> res.getChildStreamTypes(
+                                    currentSourceLocation.getMetaId(),
+                                    currentSourceLocation.getPartIndex()))
                             .onSuccess(availableChildStreamTypes -> {
 //                                GWT.log("Received available child stream types " + availableChildStreamTypes);
                                 currentAvailableStreamTypes = availableChildStreamTypes;
@@ -579,10 +582,7 @@ public class DataPresenter
                             })
                             .onFailure(caught ->
                                     itemNavigatorPresenter.setRefreshing(false))
-                            .call(DATA_RESOURCE)
-                            .getChildStreamTypes(
-                                    currentSourceLocation.getMetaId(),
-                                    currentSourceLocation.getPartIndex());
+                            .exec();
                 } else {
                     showInvalidStreamErrorMsg();
                     itemNavigatorPresenter.setRefreshing(false);
@@ -1115,10 +1115,10 @@ public class DataPresenter
     private void fetchMetaInfoData(final Long metaId) {
         if (metaId != null) {
             restFactory
-                    .forListOf(DataInfoSection.class)
+                    .resource(DATA_RESOURCE)
+                    .method(res -> res.viewInfo(metaId))
                     .onSuccess(this::handleMetaInfoResult)
-                    .call(DATA_RESOURCE)
-                    .viewInfo(metaId);
+                    .exec();
         }
     }
 

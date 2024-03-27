@@ -103,7 +103,8 @@ public class AppPermissionsPresenter extends
 
         } else {
             restFactory
-                    .forStringList()
+                    .resource(APP_PERMISSION_RESOURCE)
+                    .method(AppPermissionResource::fetchAllPermissions)
                     .onSuccess(allPermissions -> {
                         Collections.sort(allPermissions);
                         this.allPermissions = allPermissions;
@@ -111,8 +112,7 @@ public class AppPermissionsPresenter extends
                         dataGrid.setRowData(0, allPermissions);
                         dataGrid.setRowCount(allPermissions.size(), true);
                     })
-                    .call(APP_PERMISSION_RESOURCE)
-                    .fetchAllPermissions();
+                    .exec();
         }
     }
 
@@ -147,10 +147,10 @@ public class AppPermissionsPresenter extends
                 }
 
                 restFactory
-                        .forBoolean()
+                        .resource(APP_PERMISSION_RESOURCE)
+                        .method(res -> res.changeUser(request))
                         .onSuccess(result -> refresh())
-                        .call(APP_PERMISSION_RESOURCE)
-                        .changeUser(request);
+                        .exec();
             });
         }
 

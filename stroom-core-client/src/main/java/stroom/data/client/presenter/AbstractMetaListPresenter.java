@@ -49,7 +49,6 @@ import stroom.pipeline.client.event.CreateProcessorEvent;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.processor.shared.CreateProcessFilterRequest;
-import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterResource;
 import stroom.processor.shared.QueryData;
 import stroom.processor.shared.ReprocessDataInfo;
@@ -61,7 +60,6 @@ import stroom.svg.client.SvgPresets;
 import stroom.util.client.DataGridUtil;
 import stroom.util.client.MyDataGridUtil;
 import stroom.util.shared.GwtNullSafe;
-import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Selection;
 import stroom.util.shared.Severity;
@@ -152,11 +150,11 @@ public abstract class AbstractMetaListPresenter
                 if (criteria.getExpression() != null) {
                     CriteriaUtil.setRange(criteria, range);
                     restFactory
-                            .forResultPageOf(MetaRow.class)
+                            .resource(META_RESOURCE)
+                            .method(res -> res.findMetaRow(criteria))
                             .onSuccess(dataConsumer)
                             .onFailure(throwableConsumer)
-                            .call(META_RESOURCE)
-                            .findMetaRow(criteria);
+                            .exec();
                 } else {
                     dataConsumer.accept(new ResultPage<>(Collections.emptyList()));
                 }
@@ -668,7 +666,8 @@ public abstract class AbstractMetaListPresenter
                             final Status newStatus) {
         return () -> {
             restFactory
-                    .forInteger()
+                    .resource(META_RESOURCE)
+                    .method(res -> res.updateStatus(new UpdateStatusRequest(criteria, currentStatus, newStatus)))
                     .onSuccess(result ->
                             AlertEvent.fireInfo(
                                     AbstractMetaListPresenter.this,
@@ -676,17 +675,16 @@ public abstract class AbstractMetaListPresenter
                                             ? "s"
                                             : ""),
                                     this::refresh))
-                    .call(META_RESOURCE)
-                    .updateStatus(new UpdateStatusRequest(criteria, currentStatus, newStatus));
+                    .exec();
         };
     }
 
     private void download(final FindMetaCriteria criteria) {
         restFactory
-                .forType(ResourceGeneration.class)
+                .resource(DATA_RESOURCE)
+                .method(res -> res.download(criteria))
                 .onSuccess(result -> ExportFileCompleteUtil.onSuccess(locationManager, this, result))
-                .call(DATA_RESOURCE)
-                .download(criteria);
+                .exec();
     }
 
     private void process(final DocRef pipeline,
@@ -709,7 +707,8 @@ public abstract class AbstractMetaListPresenter
                 .build();
 
         restFactory
-                .forType(ProcessorFilter.class)
+                .resource(PROCESSOR_FILTER_RESOURCE)
+                .method(res -> res.create(request))
                 .onSuccess(processorFilter -> {
                     if (processorFilter != null) {
                         CreateProcessorEvent.fire(AbstractMetaListPresenter.this, processorFilter);
@@ -717,8 +716,7 @@ public abstract class AbstractMetaListPresenter
                         AlertEvent.fireInfo(this, "Created processor filter", null);
                     }
                 })
-                .call(PROCESSOR_FILTER_RESOURCE)
-                .create(request);
+                .exec();
 
     }
 
@@ -741,7 +739,8 @@ public abstract class AbstractMetaListPresenter
                 .build();
 
         restFactory
-                .forListOf(ReprocessDataInfo.class)
+                .resource(PROCESSOR_FILTER_RESOURCE)
+                .method(res -> res.reprocess(request))
                 .onSuccess(result -> {
                     if (result != null && result.size() > 0) {
                         Severity maxSeverity = null;
@@ -792,8 +791,7 @@ public abstract class AbstractMetaListPresenter
                         }
                     }
                 })
-                .call(PROCESSOR_FILTER_RESOURCE)
-                .reprocess(request);
+                .exec();
 
     }
 

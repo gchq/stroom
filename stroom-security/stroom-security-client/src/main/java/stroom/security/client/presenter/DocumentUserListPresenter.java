@@ -134,7 +134,8 @@ public class DocumentUserListPresenter extends AbstractUserListPresenter {
 
         if (!allSimpleUsers.isEmpty()) {
             restFactory
-                    .forListOf(UserName.class)
+                    .resource(DOC_PERMISSION_RESOURCE)
+                    .method(res -> res.filterUsers(new FilterUsersRequest(allSimpleUsers, filter)))
                     .onSuccess(filteredSimpleUsers -> {
                         // Map the users back again
                         final List<User> filteredUsers = filteredSimpleUsers.stream()
@@ -142,8 +143,7 @@ public class DocumentUserListPresenter extends AbstractUserListPresenter {
                                 .collect(Collectors.toList());
                         updateGrid(filteredUsers);
                     })
-                    .call(DOC_PERMISSION_RESOURCE)
-                    .filterUsers(new FilterUsersRequest(allSimpleUsers, filter));
+                    .exec();
         } else {
             updateGrid(Collections.emptyList());
         }

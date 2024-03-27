@@ -140,56 +140,56 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
             @Override
             protected void doAction(final Integer key, final Boolean value, final Consumer<Integer> consumer) {
                 restFactory
-                        .forBoolean()
+                        .resource(PROCESSOR_RESOURCE)
+                        .method(res -> res.setEnabled(key, value))
                         .onSuccess(res -> consumer.accept(key))
                         .onFailure(res -> {
                             AlertEvent.fireError(this, res.getMessage(), null);
                             consumer.accept(key);
                         })
-                        .call(PROCESSOR_RESOURCE)
-                        .setEnabled(key, value);
+                        .exec();
             }
         };
         processorFilterEnabledSaveQueue = new RestSaveQueue<Integer, Boolean>(eventBus) {
             @Override
             protected void doAction(final Integer key, final Boolean value, final Consumer<Integer> consumer) {
                 restFactory
-                        .forBoolean()
+                        .resource(PROCESSOR_FILTER_RESOURCE)
+                        .method(res -> res.setEnabled(key, value))
                         .onSuccess(res -> consumer.accept(key))
                         .onFailure(res -> {
                             AlertEvent.fireError(this, res.getMessage(), null);
                             consumer.accept(key);
                         })
-                        .call(PROCESSOR_FILTER_RESOURCE)
-                        .setEnabled(key, value);
+                        .exec();
             }
         };
         processorFilterPrioritySaveQueue = new RestSaveQueue<Integer, Integer>(eventBus) {
             @Override
             protected void doAction(final Integer key, final Integer value, final Consumer<Integer> consumer) {
                 restFactory
-                        .forInteger()
+                        .resource(PROCESSOR_FILTER_RESOURCE)
+                        .method(res -> res.setPriority(key, value))
                         .onSuccess(res -> consumer.accept(key))
                         .onFailure(res -> {
                             AlertEvent.fireError(this, res.getMessage(), null);
                             consumer.accept(key);
                         })
-                        .call(PROCESSOR_FILTER_RESOURCE)
-                        .setPriority(key, value);
+                        .exec();
             }
         };
         processorFilterMaxProcessingTasksSaveQueue = new RestSaveQueue<Integer, Integer>(eventBus) {
             @Override
             protected void doAction(final Integer key, final Integer value, final Consumer<Integer> consumer) {
                 restFactory
-                        .forInteger()
+                        .resource(PROCESSOR_FILTER_RESOURCE)
+                        .method(res -> res.setMaxProcessingTasks(key, value))
                         .onSuccess(res -> consumer.accept(key))
                         .onFailure(res -> {
                             AlertEvent.fireError(this, res.getMessage(), null);
                             consumer.accept(key);
                         })
-                        .call(PROCESSOR_FILTER_RESOURCE)
-                        .setMaxProcessingTasks(key, value);
+                        .exec();
             }
         };
     }

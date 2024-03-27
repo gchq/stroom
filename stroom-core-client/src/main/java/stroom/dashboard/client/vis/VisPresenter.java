@@ -502,10 +502,11 @@ public class VisPresenter
     private void loadScripts(final VisFunction function, final DocRef scriptRef) {
         function.setStatus(LoadStatus.LOADING_SCRIPT);
         restFactory
-                .forListOf(ScriptDoc.class)
+                .resource(SCRIPT_RESOURCE)
+                .method(res -> res.fetchLinkedScripts(
+                        new FetchLinkedScriptRequest(scriptRef, scriptCache.getLoadedScripts())))
                 .onSuccess(result -> startInjectingScripts(result, function))
-                .call(SCRIPT_RESOURCE)
-                .fetchLinkedScripts(new FetchLinkedScriptRequest(scriptRef, scriptCache.getLoadedScripts()));
+                .exec();
     }
 
     private void startInjectingScripts(final List<ScriptDoc> scripts, final VisFunction function) {

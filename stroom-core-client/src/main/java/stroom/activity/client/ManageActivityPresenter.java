@@ -24,7 +24,6 @@ import stroom.core.client.UrlParameters;
 import stroom.dispatch.client.RestFactory;
 import stroom.svg.client.SvgPresets;
 import stroom.ui.config.client.UiConfigCache;
-import stroom.util.shared.filter.FilterFieldDefinition;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 import stroom.widget.popup.client.event.DisablePopupEvent;
@@ -165,7 +164,8 @@ public class ManageActivityPresenter
         uiConfigCache.get().onSuccess(uiConfig -> {
             final String helpUrl = uiConfig.getHelpUrlQuickFilter();
             restFactory
-                    .forListOf(FilterFieldDefinition.class)
+                    .resource(ACTIVITY_RESOURCE)
+                    .method(ActivityResource::listFieldDefinitions)
                     .onSuccess(fieldDefinitions -> {
                         quickFilterTooltipSupplier = () -> QuickFilterTooltipUtil.createTooltip(
                                 "Choose Activity Quick Filter",
@@ -178,8 +178,7 @@ public class ManageActivityPresenter
                                 "Choose Activity Quick Filter",
                                 helpUrl);
                     })
-                    .call(ACTIVITY_RESOURCE)
-                    .listFieldDefinitions();
+                    .exec();
         });
     }
 
@@ -241,10 +240,10 @@ public class ManageActivityPresenter
         if (e != null) {
             // Load the activity.
             restFactory
-                    .forType(Activity.class)
+                    .resource(ACTIVITY_RESOURCE)
+                    .method(res -> res.fetch(e.getId()))
                     .onSuccess(this::onEdit)
-                    .call(ACTIVITY_RESOURCE)
-                    .fetch(e.getId());
+                    .exec();
         }
     }
 
@@ -270,14 +269,14 @@ public class ManageActivityPresenter
                         if (result) {
                             // Delete the activity
                             restFactory
-                                    .forBoolean()
+                                    .resource(ACTIVITY_RESOURCE)
+                                    .method(res -> res.delete(entity.getId()))
                                     .onSuccess(success -> {
                                         listPresenter.refresh();
                                         listPresenter.getSelectionModel().clear();
                                         updateQuickFilterTooltipContentSupplier();
                                     })
-                                    .call(ACTIVITY_RESOURCE)
-                                    .delete(entity.getId());
+                                    .exec();
                         }
                     });
         }

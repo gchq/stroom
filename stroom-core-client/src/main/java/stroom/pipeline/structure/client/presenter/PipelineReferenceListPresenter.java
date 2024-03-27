@@ -407,7 +407,8 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<PagerView>
         if (docRefs.size() > 0) {
             // Load entities.
             restFactory
-                    .forSetOf(DocRef.class)
+                    .resource(EXPLORER_RESOURCE)
+                    .method(res -> res.fetchDocRefs(docRefs))
                     .onSuccess(result -> {
                         final Map<DocRef, DocRef> fetchedDocRefs = result
                                 .stream()
@@ -420,8 +421,7 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<PagerView>
 
                         setData(references);
                     })
-                    .call(EXPLORER_RESOURCE)
-                    .fetchDocRefs(docRefs);
+                    .exec();
         } else {
             setData(references);
         }

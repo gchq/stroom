@@ -102,13 +102,13 @@ public class DocumentPermissionsPresenter
             consumer.accept(cached);
         } else {
             restFactory
-                    .forStringList()
+                    .resource(DOC_PERMISSION_RESOURCE)
+                    .method(res -> res.getPermissionForDocType(docType))
                     .onSuccess(permissions -> {
                         ALL_PERMISSIONS_CACHE.put(docType, permissions);
                         consumer.accept(permissions);
                     })
-                    .call(DOC_PERMISSION_RESOURCE)
-                    .getPermissionForDocType(docType);
+                    .exec();
         }
     }
 
@@ -295,13 +295,13 @@ public class DocumentPermissionsPresenter
 
     private void doPermissionChange(final HidePopupRequestEvent e, final DocRef docRef) {
         restFactory
-                .forBoolean()
-                .onSuccess(result -> e.hide())
-                .call(DOC_PERMISSION_RESOURCE)
-                .changeDocumentPermissions(new ChangeDocumentPermissionsRequest(
+                .resource(DOC_PERMISSION_RESOURCE)
+                .method(res -> res.changeDocumentPermissions(new ChangeDocumentPermissionsRequest(
                         docRef,
                         changes,
-                        getView().getCascade().getValue()));
+                        getView().getCascade().getValue())))
+                .onSuccess(result -> e.hide())
+                .exec();
     }
 
     private DocumentPermissionsTabPresenter getTabPresenter(final ExplorerNode entity) {

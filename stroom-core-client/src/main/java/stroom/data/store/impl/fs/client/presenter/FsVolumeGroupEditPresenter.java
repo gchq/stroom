@@ -101,12 +101,12 @@ public class FsVolumeGroupEditPresenter
         registerHandler(rescanButton.addClickHandler(event -> {
             delayedUpdate.reset();
             restFactory
-                    .forBoolean()
+                    .resource(FS_VOLUME_RESOURCE)
+                    .method(FsVolumeResource::rescan)
                     .onSuccess(response -> delayedUpdate.update())
                     .onFailure(throwable -> {
                     })
-                    .call(FS_VOLUME_RESOURCE)
-                    .rescan();
+                    .exec();
         }));
     }
 
@@ -150,10 +150,10 @@ public class FsVolumeGroupEditPresenter
                             volumeStatusListPresenter.getSelectionModel().clear();
                             for (final FsVolume volume : list) {
                                 restFactory
-                                        .forBoolean()
+                                        .resource(FS_VOLUME_RESOURCE)
+                                        .method(res -> res.delete(volume.getId()))
                                         .onSuccess(response -> volumeStatusListPresenter.refresh())
-                                        .call(FS_VOLUME_RESOURCE)
-                                        .delete(volume.getId());
+                                        .exec();
                             }
                         }
                     });

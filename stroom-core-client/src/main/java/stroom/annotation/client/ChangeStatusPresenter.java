@@ -70,14 +70,14 @@ public class ChangeStatusPresenter extends MyPresenterWidget<ChangeStatusView>
         if (currentStatus == null) {
             final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
             restFactory
-                    .forStringList()
+                    .resource(annotationResource)
+                    .method(res -> res.getStatus(null))
                     .onSuccess(values -> {
                         if (currentStatus == null && values != null && values.size() > 0) {
                             changeStatus(values.get(0));
                         }
                     })
-                    .call(annotationResource)
-                    .getStatus(null);
+                    .exec();
         }
 
         ShowPopupEvent.builder(this)
@@ -90,10 +90,10 @@ public class ChangeStatusPresenter extends MyPresenterWidget<ChangeStatusView>
                         final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
                         final SetStatusRequest request = new SetStatusRequest(annotationIdList, currentStatus);
                         restFactory
-                                .forInteger()
+                                .resource(annotationResource)
+                                .method(res -> res.setStatus(request))
                                 .onSuccess(values -> GWT.log("Updated " + values + " annotations"))
-                                .call(annotationResource)
-                                .setStatus(request);
+                                .exec();
                     }
                     e.hide();
                 })
@@ -113,10 +113,10 @@ public class ChangeStatusPresenter extends MyPresenterWidget<ChangeStatusView>
         statusPresenter.setDataSupplier((filter, consumer) -> {
             final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
             restFactory
-                    .forStringList()
+                    .resource(annotationResource)
+                    .method(res -> res.getStatus(filter))
                     .onSuccess(consumer)
-                    .call(annotationResource)
-                    .getStatus(filter);
+                    .exec();
         });
         statusPresenter.clearFilter();
         statusPresenter.setSelected(currentStatus);

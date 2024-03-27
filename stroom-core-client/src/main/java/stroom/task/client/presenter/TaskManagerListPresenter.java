@@ -516,9 +516,9 @@ public class TaskManagerListPresenter
         findTaskCriteria.addId(taskProgress.getId());
         final TerminateTaskProgressRequest request = new TerminateTaskProgressRequest(findTaskCriteria);
         restFactory
-                .forBoolean()
-                .call(TASK_RESOURCE)
-                .terminate(taskProgress.getNodeName(), request);
+                .resource(TASK_RESOURCE)
+                .method(res -> res.terminate(taskProgress.getNodeName(), request))
+                .exec();
     }
 
     @Override

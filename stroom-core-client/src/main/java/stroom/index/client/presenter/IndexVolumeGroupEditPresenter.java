@@ -111,12 +111,12 @@ public class IndexVolumeGroupEditPresenter
             nodeManager.listAllNodes(nodeNames ->
                             nodeNames.forEach(nodeName ->
                                     restFactory
-                                            .forBoolean()
+                                            .resource(INDEX_VOLUME_RESOURCE)
+                                            .method(res -> res.rescan(nodeName))
                                             .onSuccess(response -> delayedUpdate.update())
                                             .onFailure(throwable -> {
                                             })
-                                            .call(INDEX_VOLUME_RESOURCE)
-                                            .rescan(nodeName)
+                                            .exec()
                             ),
                     throwable -> {
                     });
@@ -163,10 +163,10 @@ public class IndexVolumeGroupEditPresenter
                             volumeStatusListPresenter.getSelectionModel().clear();
                             for (final IndexVolume volume : list) {
                                 restFactory
-                                        .forBoolean()
+                                        .resource(INDEX_VOLUME_RESOURCE)
+                                        .method(res -> res.delete(volume.getId()))
                                         .onSuccess(response -> volumeStatusListPresenter.refresh())
-                                        .call(INDEX_VOLUME_RESOURCE)
-                                        .delete(volume.getId());
+                                        .exec();
                             }
                         }
                     });

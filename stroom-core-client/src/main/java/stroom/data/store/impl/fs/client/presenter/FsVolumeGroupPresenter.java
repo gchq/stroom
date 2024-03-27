@@ -138,10 +138,10 @@ public class FsVolumeGroupPresenter extends ContentTabPresenter<WrapperView> {
                             volumeStatusListPresenter.getSelectionModel().clear();
                             for (final FsVolumeGroup volume : list) {
                                 restFactory
-                                        .forBoolean()
+                                        .resource(FS_VOLUME_GROUP_RESOURCE)
+                                        .method(res -> res.delete(volume.getId()))
                                         .onSuccess(response -> refresh())
-                                        .call(FS_VOLUME_GROUP_RESOURCE)
-                                        .delete(volume.getId());
+                                        .exec();
                             }
                         }
                     });

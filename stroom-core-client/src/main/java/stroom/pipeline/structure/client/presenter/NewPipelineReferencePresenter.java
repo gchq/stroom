@@ -16,7 +16,6 @@
 
 package stroom.pipeline.structure.client.presenter;
 
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
@@ -38,8 +37,6 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
-
-import java.util.List;
 
 public class NewPipelineReferencePresenter
         extends MyPresenterWidget<NewPipelineReferencePresenter.NewPipelineReferenceView>
@@ -143,7 +140,8 @@ public class NewPipelineReferencePresenter
         dataTypeWidget.clear();
 
         restFactory
-                .forStringList()
+                .resource(META_RESOURCE)
+                .method(MetaResource::getTypes)
                 .onSuccess(result -> {
                     if (result != null) {
                         dataTypeWidget.addItems(result);
@@ -155,8 +153,7 @@ public class NewPipelineReferencePresenter
 
                     initialised = true;
                 })
-                .call(META_RESOURCE)
-                .getTypes();
+                .exec();
     }
 
     public boolean isDirty() {

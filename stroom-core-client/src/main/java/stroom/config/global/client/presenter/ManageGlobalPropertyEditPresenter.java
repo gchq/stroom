@@ -44,7 +44,6 @@ import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.HasText;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
-import com.google.inject.TypeLiteral;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
@@ -315,8 +314,8 @@ public final class ManageGlobalPropertyEditPresenter
 
     private void refreshYamlOverrideForNode(final String nodeName) {
         restFactory
-                .forWrappedType(new TypeLiteral<OverrideValue<String>>() {
-                })
+                .resource(GLOBAL_CONFIG_RESOURCE_RESOURCE)
+                .method(res -> res.getYamlValueByNodeAndName(configProperty.getName().toString(), nodeName))
                 .onSuccess(yamlOverride -> {
                     // Add the node's result to our maps
                     refreshYamlOverrideForNode(nodeName, yamlOverride);
@@ -328,8 +327,7 @@ public final class ManageGlobalPropertyEditPresenter
 //                    updateEffectiveValueForNode(nodeName, ERROR_VALUE);
                     delayedUpdate.update();
                 })
-                .call(GLOBAL_CONFIG_RESOURCE_RESOURCE)
-                .getYamlValueByNodeAndName(configProperty.getName().toString(), nodeName);
+                .exec();
     }
 
     private void refreshYamlOverrideForNode(final String nodeName,

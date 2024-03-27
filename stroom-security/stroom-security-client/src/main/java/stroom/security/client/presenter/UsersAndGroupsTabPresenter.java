@@ -195,13 +195,13 @@ public class UsersAndGroupsTabPresenter
                     ok -> {
                         if (ok) {
                             restFactory
-                                    .forBoolean()
+                                    .resource(USER_RESOURCE)
+                                    .method(res -> res.delete(userRef.getUuid()))
                                     .onSuccess(result -> {
                                         listPresenter.refresh();
                                         listPresenter.getSelectionModel().clear();
                                     })
-                                    .call(USER_RESOURCE)
-                                    .delete(userRef.getUuid());
+                                    .exec();
                         }
                     });
         }
@@ -278,7 +278,8 @@ public class UsersAndGroupsTabPresenter
                 final String usersCsvData = createMultipleUsersPresenter.getUsersCsvData();
                 if (usersCsvData != null && !usersCsvData.isEmpty()) {
                     restFactory
-                            .forListOf(User.class)
+                            .resource(USER_RESOURCE)
+                            .method(res -> res.createUsersFromCsv(createMultipleUsersPresenter.getUsersCsvData()))
                             .onSuccess(result -> {
                                 e.hide();
 //                                createMultipleUsersPresenter.hide();
@@ -289,8 +290,7 @@ public class UsersAndGroupsTabPresenter
                                     UsersAndGroupsTabPresenter.this,
                                     caught.getMessage(),
                                     null))
-                            .call(USER_RESOURCE)
-                            .createUsersFromCsv(createMultipleUsersPresenter.getUsersCsvData());
+                            .exec();
                 } else {
                     e.hide();
 //                    createMultipleUsersPresenter.hide();

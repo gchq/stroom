@@ -86,14 +86,14 @@ public class CacheListPresenter extends MyPresenterWidget<PagerView> {
                 SvgPresets.of(SvgPresets.DELETE, "Clear and rebuild cache", true),
                 (row, nativeEvent) -> {
                     restFactory
-                            .forLong()
+                            .resource(CACHE_RESOURCE)
+                            .method(res -> res.clear(row, null))
                             .onSuccess(result -> {
                                 if (cacheUpdateHandler != null) {
                                     cacheUpdateHandler.accept(row);
                                 }
                             })
-                            .call(CACHE_RESOURCE)
-                            .clear(row, null);
+                            .exec();
                 });
 
         // Name

@@ -22,7 +22,6 @@ import stroom.alert.client.event.ConfirmEvent;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
@@ -267,14 +266,14 @@ public class SolrIndexFieldListPresenter extends DocumentEditPresenter<SolrIndex
 
     private void fetchFieldTypes(final Consumer<List<String>> consumer) {
         restFactory
-                .forStringList()
+                .resource(SOLR_INDEX_RESOURCE)
+                .method(res -> res.fetchSolrTypes(index))
                 .onSuccess(consumer)
                 .onFailure(throwable -> AlertEvent.fireError(SolrIndexFieldListPresenter.this,
                         "Unable to connect to Solr please check connection",
                         throwable.getMessage(),
                         null))
-                .call(SOLR_INDEX_RESOURCE)
-                .fetchSolrTypes(index);
+                .exec();
     }
 
     private void onRemove() {

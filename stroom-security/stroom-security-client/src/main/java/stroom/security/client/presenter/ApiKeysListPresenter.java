@@ -208,13 +208,13 @@ public class ApiKeysListPresenter
 //                GWT.log("id: " + id);
                 if (ok) {
                     restFactory
-                            .forBoolean()
+                            .resource(API_KEY_RESOURCE)
+                            .method(res -> res.delete(id))
                             .onSuccess(unused -> {
                                 onSuccess.run();
                             })
                             .onFailure(onFailure)
-                            .call(API_KEY_RESOURCE)
-                            .delete(id);
+                            .exec();
                 }
             });
         } else if (cnt > 1) {
@@ -224,13 +224,13 @@ public class ApiKeysListPresenter
             ConfirmEvent.fire(this, msg, ok -> {
                 if (ok) {
                     restFactory
-                            .forInteger()
+                            .resource(API_KEY_RESOURCE)
+                            .method(res -> res.deleteBatch(selection.getSet()))
                             .onSuccess(count -> {
                                 onSuccess.run();
                             })
                             .onFailure(onFailure)
-                            .call(API_KEY_RESOURCE)
-                            .deleteBatch(selection.getSet());
+                            .exec();
                 }
             });
         }
@@ -310,7 +310,8 @@ public class ApiKeysListPresenter
                            final Consumer<ApiKeyResultPage> dataConsumer,
                            final Consumer<Throwable> throwableConsumer) {
         restFactory
-                .forType(ApiKeyResultPage.class)
+                .resource(API_KEY_RESOURCE)
+                .method(res -> res.find(criteria))
                 .onSuccess(response -> {
                     apiKeys.clear();
                     response.stream()
@@ -334,8 +335,7 @@ public class ApiKeysListPresenter
                             "Error fetching API Keys: " + throwable.getMessage(),
                             null);
                 })
-                .call(API_KEY_RESOURCE)
-                .find(criteria);
+                .exec();
     }
 
     public void setQuickFilter(final String userInput) {

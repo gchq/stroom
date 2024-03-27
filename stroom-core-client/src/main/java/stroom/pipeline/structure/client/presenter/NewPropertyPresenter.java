@@ -284,7 +284,8 @@ public class NewPropertyPresenter
 
             // Load data types.
             restFactory
-                    .forStringList()
+                    .resource(META_RESOURCE)
+                    .method(MetaResource::getTypes)
                     .onSuccess(result -> {
                         if (result != null) {
                             dataTypeWidget.addItems(result);
@@ -296,8 +297,7 @@ public class NewPropertyPresenter
 
                         dataTypePresenterInitialised = true;
                     })
-                    .call(META_RESOURCE)
-                    .getTypes();
+                    .exec();
 
             dataTypeWidget.addValueChangeHandler(event -> {
                 setDirty(true);

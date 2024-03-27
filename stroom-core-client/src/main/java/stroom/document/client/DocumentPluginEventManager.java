@@ -24,7 +24,6 @@ import stroom.core.client.HasSave;
 import stroom.core.client.HasSaveRegistry;
 import stroom.core.client.UrlParameters;
 import stroom.core.client.presenter.Plugin;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docref.HasDisplayValue;
@@ -65,7 +64,6 @@ import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerFavouriteResource;
 import stroom.explorer.shared.ExplorerNode;
-import stroom.explorer.shared.ExplorerNodeInfo;
 import stroom.explorer.shared.ExplorerNodePermissions;
 import stroom.explorer.shared.ExplorerResource;
 import stroom.explorer.shared.ExplorerServiceCopyRequest;
@@ -81,7 +79,6 @@ import stroom.importexport.client.event.ImportConfigEvent;
 import stroom.importexport.client.event.ShowDocRefDependenciesEvent;
 import stroom.importexport.client.event.ShowDocRefDependenciesEvent.DependencyType;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
-import stroom.receive.rules.shared.ReceiveDataRules;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.PermissionNames;
@@ -119,7 +116,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -282,7 +278,8 @@ public class DocumentPluginEventManager extends Plugin {
         registerHandler(getEventBus().addHandler(SaveAsDocumentEvent.getType(), event -> {
             // First get the explorer node for the docref.
             restFactory
-                    .forType(ExplorerNode.class)
+                    .resource(EXPLORER_RESOURCE)
+                    .method(res -> res.getFromDocRef(event.getDocRef()))
                     .onSuccess(explorerNode -> {
                         // Now we have the explorer node proceed with the save as.
                         final DocumentPlugin<?> plugin = documentPluginRegistry.get(explorerNode.getType());
@@ -290,8 +287,7 @@ public class DocumentPluginEventManager extends Plugin {
                             plugin.saveAs(explorerNode);
                         }
                     })
-                    .call(EXPLORER_RESOURCE)
-                    .getFromDocRef(event.getDocRef());
+                    .exec();
         }));
 
         //////////////////////////////
@@ -580,14 +576,14 @@ public class DocumentPluginEventManager extends Plugin {
                        final PermissionInheritance permissionInheritance,
                        final Consumer<ExplorerNode> consumer) {
         restFactory
-                .forType(ExplorerNode.class)
-                .onSuccess(consumer)
-                .call(EXPLORER_RESOURCE)
-                .create(new ExplorerServiceCreateRequest(
+                .resource(EXPLORER_RESOURCE)
+                .method(res -> res.create(new ExplorerServiceCreateRequest(
                         docType,
                         docName,
                         destinationFolder,
-                        permissionInheritance));
+                        permissionInheritance)))
+                .onSuccess(consumer)
+                .exec();
     }
 
     private void copy(final List<ExplorerNode> explorerNodes,
@@ -597,15 +593,15 @@ public class DocumentPluginEventManager extends Plugin {
                       final PermissionInheritance permissionInheritance,
                       final Consumer<BulkActionResult> consumer) {
         restFactory
-                .forType(BulkActionResult.class)
-                .onSuccess(consumer)
-                .call(EXPLORER_RESOURCE)
-                .copy(new ExplorerServiceCopyRequest(
+                .resource(EXPLORER_RESOURCE)
+                .method(res -> res.copy(new ExplorerServiceCopyRequest(
                         explorerNodes,
                         destinationFolder,
                         allowRename,
                         newName,
-                        permissionInheritance));
+                        permissionInheritance)))
+                .onSuccess(consumer)
+                .exec();
     }
 
     private void move(final List<ExplorerNode> explorerNodes,
@@ -613,36 +609,44 @@ public class DocumentPluginEventManager extends Plugin {
                       final PermissionInheritance permissionInheritance,
                       final Consumer<BulkActionResult> consumer) {
         restFactory
-                .forType(BulkActionResult.class)
+                .resource(EXPLORER_RESOURCE)
+                .method(res -> res.move(new ExplorerServiceMoveRequest(
+                        explorerNodes,
+                        destinationFolder,
+                        permissionInheritance)))
                 .onSuccess(consumer)
-                .call(EXPLORER_RESOURCE)
-                .move(new ExplorerServiceMoveRequest(explorerNodes, destinationFolder, permissionInheritance));
+                .exec();
     }
 
     private void rename(final ExplorerNode explorerNode, final String docName, final Consumer<ExplorerNode> consumer) {
         restFactory
-                .forType(ExplorerNode.class)
+                .resource(EXPLORER_RESOURCE)
+                .method(res -> res.rename(new ExplorerServiceRenameRequest(explorerNode, docName)))
                 .onSuccess(consumer)
-                .call(EXPLORER_RESOURCE)
-                .rename(new ExplorerServiceRenameRequest(explorerNode, docName));
+                .exec();
     }
 
     public void delete(final List<DocRef> docRefs, final Consumer<BulkActionResult> consumer) {
         restFactory
-                .forType(BulkActionResult.class)
+                .resource(EXPLORER_RESOURCE)
+                .method(res -> res.delete(new ExplorerServiceDeleteRequest(docRefs)))
                 .onSuccess(consumer)
-                .call(EXPLORER_RESOURCE)
-                .delete(new ExplorerServiceDeleteRequest(docRefs));
+                .exec();
     }
 
     private void setAsFavourite(final DocRef docRef, final boolean setFavourite) {
-        final Rest<Void> rest = restFactory
-                .forVoid();
-        rest.onSuccess(result -> RefreshExplorerTreeEvent.fire(DocumentPluginEventManager.this));
         if (setFavourite) {
-            rest.call(EXPLORER_FAV_RESOURCE).createUserFavourite(docRef);
+            restFactory
+                    .resource(EXPLORER_FAV_RESOURCE)
+                    .call(res -> res.createUserFavourite(docRef))
+                    .onSuccess(result -> RefreshExplorerTreeEvent.fire(DocumentPluginEventManager.this))
+                    .exec();
         } else {
-            rest.call(EXPLORER_FAV_RESOURCE).deleteUserFavourite(docRef);
+            restFactory
+                    .resource(EXPLORER_FAV_RESOURCE)
+                    .call(res -> res.deleteUserFavourite(docRef))
+                    .onSuccess(result -> RefreshExplorerTreeEvent.fire(DocumentPluginEventManager.this))
+                    .exec();
         }
     }
 
@@ -651,15 +655,15 @@ public class DocumentPluginEventManager extends Plugin {
         if (documentPlugin != null) {
             // Decorate the DocRef with its name from the info service (required by the doc presenter)
             restFactory
-                    .forType(DocRef.class)
+                    .resource(EXPLORER_RESOURCE)
+                    .method(res -> res.decorate(docRef))
                     .onSuccess(decoratedDocRef -> {
                         if (decoratedDocRef != null) {
                             documentPlugin.open(decoratedDocRef, forceOpen, fullScreen);
                             highlight(decoratedDocRef);
                         }
                     })
-                    .call(EXPLORER_RESOURCE)
-                    .decorate(docRef);
+                    .exec();
         } else {
             throw new IllegalArgumentException("Document type '" + docRef.getType() + "' not registered");
         }
@@ -675,10 +679,10 @@ public class DocumentPluginEventManager extends Plugin {
     public void highlight(final DocRef docRef) {
         // Obtain the Explorer node for the provided DocRef
         restFactory
-                .forType(ExplorerNode.class)
+                .resource(EXPLORER_RESOURCE)
+                .method(res -> res.getFromDocRef(docRef))
                 .onSuccess(this::highlight)
-                .call(EXPLORER_RESOURCE)
-                .getFromDocRef(docRef);
+                .exec();
     }
 
     private List<ExplorerNode> getExplorerNodeListWithPermission(
@@ -760,15 +764,15 @@ public class DocumentPluginEventManager extends Plugin {
     private void fetchPermissions(final List<ExplorerNode> explorerNodes,
                                   final Consumer<Map<ExplorerNode, ExplorerNodePermissions>> consumer) {
         restFactory
-                .forSetOf(ExplorerNodePermissions.class)
+                .resource(EXPLORER_RESOURCE)
+                .method(res -> res.fetchExplorerPermissions(explorerNodes))
                 .onSuccess(response -> {
                     final Map<ExplorerNode, ExplorerNodePermissions> map = response.stream().collect(Collectors.toMap(
                             ExplorerNodePermissions::getExplorerNode,
                             Function.identity()));
                     consumer.accept(map);
                 })
-                .call(EXPLORER_RESOURCE)
-                .fetchExplorerPermissions(explorerNodes);
+                .exec();
     }
 
     private boolean addFavouritesMenuItem(final List<Item> menuItems,
@@ -1083,15 +1087,15 @@ public class DocumentPluginEventManager extends Plugin {
                 // Should only be one item as info is not supported for multi selection
                 // in the tree
                 restFactory
-                        .forType(ExplorerNodeInfo.class)
+                        .resource(EXPLORER_RESOURCE)
+                        .method(res -> res.info(explorerNode.getDocRef()))
                         .onSuccess(explorerNodeInfo -> {
                             ShowInfoDocumentDialogEvent.fire(
                                     DocumentPluginEventManager.this,
                                     explorerNodeInfo);
                         })
                         .onFailure(this::handleFailure)
-                        .call(EXPLORER_RESOURCE)
-                        .info(explorerNode.getDocRef());
+                        .exec();
             };
         } else {
             command = null;

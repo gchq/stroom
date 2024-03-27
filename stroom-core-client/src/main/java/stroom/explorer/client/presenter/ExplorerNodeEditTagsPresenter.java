@@ -92,18 +92,19 @@ public class ExplorerNodeEditTagsPresenter
                     .collect(Collectors.toList());
 
             restFactory
-                    .forSetOf(String.class)
+                    .resource(EXPLORER_RESOURCE)
+                    .method(ExplorerResource::fetchExplorerNodeTags)
                     .onSuccess(allTags -> {
                         if (isSingleDocRef()) {
                             restFactory
-                                    .forSetOf(String.class)
+                                    .resource(EXPLORER_RESOURCE)
+                                    .method(res -> res.fetchExplorerNodeTags(docRefs))
                                     .onSuccess(nodeTags -> {
                                         getView().setData(docRefs, nodeTags, allTags);
                                         forceReveal();
                                     })
                                     .onFailure(this::handleFailure)
-                                    .call(EXPLORER_RESOURCE)
-                                    .fetchExplorerNodeTags(docRefs);
+                                    .exec();
                         } else {
                             // Adding to multiple so don't need to know what tags the nodes have
                             getView().setData(docRefs, Collections.emptySet(), allTags);
@@ -111,8 +112,7 @@ public class ExplorerNodeEditTagsPresenter
                         }
                     })
                     .onFailure(this::handleFailure)
-                    .call(EXPLORER_RESOURCE)
-                    .fetchExplorerNodeTags();
+                    .exec();
 
         }
 
@@ -172,7 +172,8 @@ public class ExplorerNodeEditTagsPresenter
     private void addTagsToNodes(final HidePopupRequestEvent event, final Set<String> editedTags) {
         final List<DocRef> nodeDocRefs = getNodeDocRefs();
         restFactory
-                .forVoid()
+                .resource(EXPLORER_RESOURCE)
+                .call(res -> res.addTags(new AddRemoveTagsRequest(nodeDocRefs, editedTags)))
                 .onSuccess(voidResult -> {
                     // Update the node in the tree with the new tags
                     nodeDocRefs.forEach(docRef ->
@@ -181,8 +182,7 @@ public class ExplorerNodeEditTagsPresenter
                     event.hide();
                 })
                 .onFailure(this::handleFailure)
-                .call(EXPLORER_RESOURCE)
-                .addTags(new AddRemoveTagsRequest(nodeDocRefs, editedTags));
+                .exec();
     }
 
     private void updateTagsOnNode(final HidePopupRequestEvent event, final Set<String> editedTags) {
@@ -190,7 +190,8 @@ public class ExplorerNodeEditTagsPresenter
                 .tags(editedTags)
                 .build();
         restFactory
-                .forType(ExplorerNode.class)
+                .resource(EXPLORER_RESOURCE)
+                .method(res -> res.updateNodeTags(updatedNode))
                 .onSuccess(explorerNode -> {
                     // Update the node in the tree with the new tags
                     RefreshDocumentEvent.fire(
@@ -199,8 +200,7 @@ public class ExplorerNodeEditTagsPresenter
                     event.hide();
                 })
                 .onFailure(this::handleFailure)
-                .call(EXPLORER_RESOURCE)
-                .updateNodeTags(updatedNode);
+                .exec();
     }
 
     @Override

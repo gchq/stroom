@@ -407,7 +407,8 @@ public class PropertyListPresenter
         if (docRefs.size() > 0) {
             // Load entities.
             restFactory
-                    .forSetOf(DocRef.class)
+                    .resource(EXPLORER_RESOURCE)
+                    .method(res -> res.fetchDocRefs(docRefs))
                     .onSuccess(result -> {
                         final Map<DocRef, DocRef> fetchedDocRefs = result
                                 .stream()
@@ -425,8 +426,7 @@ public class PropertyListPresenter
 
                         setData(propertyList);
                     })
-                    .call(EXPLORER_RESOURCE)
-                    .fetchDocRefs(docRefs);
+                    .exec();
         } else {
             setData(propertyList);
         }

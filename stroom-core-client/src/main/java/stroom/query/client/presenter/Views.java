@@ -40,7 +40,8 @@ public class Views implements HasHandlers {
             consumer.accept(views);
         } else {
             restFactory
-                    .forListOf(DocRef.class)
+                    .resource(VIEW_RESOURCE)
+                    .method(ViewResource::list)
                     .onSuccess(result -> {
                         views = result;
                         consumer.accept(result);
@@ -50,8 +51,7 @@ public class Views implements HasHandlers {
                             this,
                             throwable.getMessage(),
                             null))
-                    .call(VIEW_RESOURCE)
-                    .list();
+                    .exec();
         }
     }
 

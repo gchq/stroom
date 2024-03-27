@@ -147,30 +147,30 @@ public class AnnotationEditPresenter
         this.statusPresenter.setDataSupplier((filter, consumer) -> {
             final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
             restFactory
-                    .forStringList()
+                    .resource(annotationResource)
+                    .method(res -> res.getStatus(filter))
                     .onSuccess(consumer)
-                    .call(annotationResource)
-                    .getStatus(filter);
+                    .exec();
         });
 
         this.assignedToPresenter.setDataSupplier((filter, consumer) -> {
             final UserResource userResource = GWT.create(UserResource.class);
             restFactory
-                    .forListOf(UserName.class)
+                    .resource(userResource)
+                    .method(res -> res.getAssociates(filter))
                     .onSuccess(userNames -> consumer.accept(userNames.stream()
                             .sorted(Comparator.comparing(UserName::getUserIdentityForAudit))
                             .collect(Collectors.toList())))
-                    .call(userResource)
-                    .getAssociates(filter);
+                    .exec();
         });
 
         this.commentPresenter.setDataSupplier((filter, consumer) -> {
             final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
             restFactory
-                    .forStringList()
+                    .resource(annotationResource)
+                    .method(res -> res.getComment(filter))
                     .onSuccess(consumer)
-                    .call(annotationResource)
-                    .getComment(filter);
+                    .exec();
         });
     }
 
@@ -193,10 +193,10 @@ public class AnnotationEditPresenter
 
         final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
         restFactory
-                .forStringList()
+                .resource(annotationResource)
+                .method(res -> res.getComment(null))
                 .onSuccess(values -> getView().setHasCommentValues(values != null && !values.isEmpty()))
-                .call(annotationResource)
-                .getComment(null);
+                .exec();
     }
 
     private void changeTitle(final String selected) {
@@ -414,14 +414,14 @@ public class AnnotationEditPresenter
         if (currentStatus == null) {
             final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
             restFactory
-                    .forStringList()
+                    .resource(annotationResource)
+                    .method(res -> res.getStatus(null))
                     .onSuccess(values -> {
                         if (currentStatus == null && values != null && values.size() > 0) {
                             setStatus(values.get(0));
                         }
                     })
-                    .call(annotationResource)
-                    .getStatus(null);
+                    .exec();
         }
 
         if (currentTitle == null || currentTitle.trim().length() == 0) {

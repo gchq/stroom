@@ -36,7 +36,6 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.client.ExpressionTreePresenter;
 import stroom.security.shared.DocPermissionResource;
 import stroom.svg.client.SvgPresets;
-import stroom.util.shared.UserName;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.util.client.MultiSelectionModel;
 
@@ -362,7 +361,8 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
     public void refresh(final ProcessorFilter processorFilter) {
         Objects.requireNonNull(processorFilter);
         restFactory
-                .forListOf(UserName.class)
+                .resource(DOC_PERMISSION_RESOURCE)
+                .method(res -> res.getDocumentOwners(processorFilter.getUuid()))
                 .onSuccess(owners -> {
                     String ownerDisplayName;
                     if (owners == null || owners.size() == 0) {
@@ -374,8 +374,7 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
                     }
                     refresh(processorFilter, ownerDisplayName);
                 })
-                .call(DOC_PERMISSION_RESOURCE)
-                .getDocumentOwners(processorFilter.getUuid());
+                .exec();
     }
 
     public void refresh(final ProcessorFilter processorFilter, final String ownerDisplayName) {

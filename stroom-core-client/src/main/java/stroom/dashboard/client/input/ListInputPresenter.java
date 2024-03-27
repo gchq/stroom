@@ -26,7 +26,6 @@ import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.ListInputComponentSettings;
 import stroom.dictionary.shared.WordListResource;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.query.api.v2.Param;
 
@@ -100,7 +99,8 @@ public class ListInputPresenter
         if (settings.isUseDictionary() &&
                 settings.getDictionary() != null) {
             restFactory
-                    .forStringList()
+                    .resource(WORD_LIST_RESOURCE)
+                    .method(res -> res.getWords(settings.getDictionary().getUuid()))
                     .onSuccess(words -> {
                         if (words != null) {
                             getView().setValues(words);
@@ -108,8 +108,7 @@ public class ListInputPresenter
                             getView().setAllowTextEntry(settings.isAllowTextEntry());
                         }
                     })
-                    .call(WORD_LIST_RESOURCE)
-                    .getWords(settings.getDictionary().getUuid());
+                    .exec();
         } else {
             getView().setValues(settings.getValues());
             getView().setSelectedValue(settings.getValue());

@@ -529,7 +529,8 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
 
         // Load the pipeline.
         restFactory
-                .forListOf(PipelineData.class)
+                .resource(PIPELINE_RESOURCE)
+                .method(res -> res.fetchPipelineData(pipeline))
                 .onSuccess(result -> {
                     final PipelineData pipelineData = result.get(result.size() - 1);
                     final List<PipelineData> baseStack = new ArrayList<>(result.size() - 1);
@@ -560,8 +561,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
                                 stepLocation.getRecordIndex()));
                     }
                 })
-                .call(PIPELINE_RESOURCE)
-                .fetchPipelineData(pipeline);
+                .exec();
     }
 
     public void save() {

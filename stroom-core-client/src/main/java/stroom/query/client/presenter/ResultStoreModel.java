@@ -93,11 +93,11 @@ public class ResultStoreModel {
                           final QueryKey queryKey,
                           final Consumer<Boolean> consumer) {
         restFactory
-                .forBoolean()
+                .resource(RESULT_STORE_RESOURCE)
+                .method(res -> res.terminate(nodeName, queryKey))
                 .onSuccess(consumer)
                 .onFailure(t -> consumer.accept(false))
-                .call(RESULT_STORE_RESOURCE)
-                .terminate(nodeName, queryKey);
+                .exec();
     }
 
     public void destroy(final String nodeName,
@@ -105,20 +105,20 @@ public class ResultStoreModel {
                         final DestroyReason destroyReason,
                         final Consumer<Boolean> consumer) {
         restFactory
-                .forBoolean()
+                .resource(RESULT_STORE_RESOURCE)
+                .method(res -> res.destroy(nodeName, new DestroyStoreRequest(queryKey, destroyReason)))
                 .onSuccess(consumer)
                 .onFailure(t -> consumer.accept(false))
-                .call(RESULT_STORE_RESOURCE)
-                .destroy(nodeName, new DestroyStoreRequest(queryKey, destroyReason));
+                .exec();
     }
 
     public void updateSettings(final String nodeName,
                                final UpdateStoreRequest updateStoreRequest,
                                final Consumer<Boolean> consumer) {
         restFactory
-                .forBoolean()
+                .resource(RESULT_STORE_RESOURCE)
+                .method(res -> res.update(nodeName, updateStoreRequest))
                 .onSuccess(consumer)
-                .call(RESULT_STORE_RESOURCE)
-                .update(nodeName, updateStoreRequest);
+                .exec();
     }
 }

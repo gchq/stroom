@@ -65,11 +65,11 @@ public class EditApiKeyPresenter
         getView().setCanSelectOwner(securityContext.hasAppPermission(PermissionNames.MANAGE_USERS_PERMISSION));
 
         restFactory
-                .forListOf(UserName.class)
+                .resource(USER_RESOURCE)
+                .method(res -> res.getAssociates(null))
                 .onSuccess(userNames ->
                         getView().setUserNames(userNames))
-                .call(USER_RESOURCE)
-                .getAssociates(null);
+                .exec();
     }
 
     public void showCreateDialog(final Mode mode,
@@ -195,7 +195,8 @@ public class EditApiKeyPresenter
                         if (ok) {
                             // cancel clicked so delete the created key
                             restFactory
-                                    .forBoolean()
+                                    .resource(API_KEY_RESOURCE)
+                                    .method(res -> res.delete(this.apiKey.getId()))
                                     .onSuccess(didDelete -> {
                                         GwtNullSafe.run(onChangeHandler);
                                         event.hide();
@@ -204,8 +205,7 @@ public class EditApiKeyPresenter
                                         AlertEvent.fireError(this, "Error deleting API key: "
                                                 + throwable.getMessage(), null);
                                     })
-                                    .call(API_KEY_RESOURCE)
-                                    .delete(this.apiKey.getId());
+                                    .exec();
                         }
                     });
         }

@@ -19,7 +19,6 @@ package stroom.security.client;
 import stroom.activity.client.CurrentActivity;
 import stroom.activity.client.SplashPresenter;
 import stroom.alert.client.event.AlertEvent;
-import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.api.Future;
@@ -123,11 +122,12 @@ public class CurrentUser implements ClientSecurityContext, HasHandlers {
         future.onFailure(throwable -> AlertEvent.fireErrorFromException(CurrentUser.this, throwable, null));
 
         restFactory
-                .forBoolean()
+                .resource(DOC_PERMISSION_RESOURCE)
+                .method(res ->
+                        res.checkDocumentPermission(new CheckDocumentPermissionRequest(documentUuid, permission)))
                 .onSuccess(future::setResult)
                 .onFailure(future::setThrowable)
-                .call(DOC_PERMISSION_RESOURCE)
-                .checkDocumentPermission(new CheckDocumentPermissionRequest(documentUuid, permission));
+                .exec();
 
         return future;
     }

@@ -161,10 +161,10 @@ public class IndexVolumeGroupPresenter extends ContentTabPresenter<WrapperView> 
                             volumeStatusListPresenter.getSelectionModel().clear();
                             for (final IndexVolumeGroup volume : list) {
                                 restFactory
-                                        .forBoolean()
+                                        .resource(INDEX_VOLUME_GROUP_RESOURCE)
+                                        .method(res -> res.delete(volume.getId()))
                                         .onSuccess(response -> refresh())
-                                        .call(INDEX_VOLUME_GROUP_RESOURCE)
-                                        .delete(volume.getId());
+                                        .exec();
                             }
                         }
                     });

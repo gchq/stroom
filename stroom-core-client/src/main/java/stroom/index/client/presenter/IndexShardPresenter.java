@@ -541,10 +541,10 @@ public class IndexShardPresenter extends DocumentEditPresenter<PagerView, Lucene
         delayedUpdate.reset();
         nodeManager.listEnabledNodes(nodeNames -> nodeNames.forEach(nodeName -> {
             restFactory
-                    .forLong()
+                    .resource(INDEX_RESOURCE)
+                    .method(res -> res.flushIndexShards(nodeName, selectionCriteria))
                     .onSuccess(result -> delayedUpdate.update())
-                    .call(INDEX_RESOURCE)
-                    .flushIndexShards(nodeName, selectionCriteria);
+                    .exec();
         }), throwable -> {
         });
 
@@ -557,10 +557,10 @@ public class IndexShardPresenter extends DocumentEditPresenter<PagerView, Lucene
         delayedUpdate.reset();
         nodeManager.listEnabledNodes(nodeNames -> nodeNames.forEach(nodeName -> {
             restFactory
-                    .forLong()
+                    .resource(INDEX_RESOURCE)
+                    .method(res -> res.deleteIndexShards(nodeName, selectionCriteria))
                     .onSuccess(result -> delayedUpdate.update())
-                    .call(INDEX_RESOURCE)
-                    .deleteIndexShards(nodeName, selectionCriteria);
+                    .exec();
         }), throwable -> {
         });
 

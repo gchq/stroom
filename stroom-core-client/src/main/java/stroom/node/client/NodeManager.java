@@ -62,39 +62,39 @@ public class NodeManager {
                             final int priority,
                             final Consumer<Boolean> resultConsumer) {
         restFactory
-                .forBoolean()
+                .resource(NODE_RESOURCE)
+                .method(res -> res.setPriority(nodeName, priority))
                 .onSuccess(resultConsumer)
-                .call(NODE_RESOURCE)
-                .setPriority(nodeName, priority);
+                .exec();
     }
 
     public void setEnabled(final String nodeName,
                            final boolean enabled,
                            final Consumer<Boolean> resultConsumer) {
         restFactory
-                .forBoolean()
+                .resource(NODE_RESOURCE)
+                .method(res -> res.setEnabled(nodeName, enabled))
                 .onSuccess(resultConsumer)
-                .call(NODE_RESOURCE)
-                .setEnabled(nodeName, enabled);
+                .exec();
     }
 
     public void listAllNodes(final Consumer<List<String>> nodeListConsumer,
                              final Consumer<Throwable> throwableConsumer) {
         restFactory
-                .forStringList()
+                .resource(NODE_RESOURCE)
+                .method(NodeResource::listAllNodes)
                 .onSuccess(nodeListConsumer)
                 .onFailure(throwableConsumer)
-                .call(NODE_RESOURCE)
-                .listAllNodes();
+                .exec();
     }
 
     public void listEnabledNodes(final Consumer<List<String>> nodeListConsumer,
                                  final Consumer<Throwable> throwableConsumer) {
         restFactory
-                .forStringList()
+                .resource(NODE_RESOURCE)
+                .method(NodeResource::listEnabledNodes)
                 .onSuccess(nodeListConsumer)
                 .onFailure(throwableConsumer)
-                .call(NODE_RESOURCE)
-                .listEnabledNodes();
+                .exec();
     }
 }
