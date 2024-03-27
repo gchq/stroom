@@ -117,7 +117,7 @@ public class QueryDocEditPresenter extends DocumentEditPresenter<QueryEditView, 
             } else {
                 final String query = queryEditPresenter.getQuery();
                 restFactory
-                        .resource(QUERY_RESOURCE)
+                        .create(QUERY_RESOURCE)
                         .method(res -> res.validateQuery(query))
                         .onSuccess(validateExpressionResult -> {
                             if (!validateExpressionResult.isOk()) {
@@ -150,7 +150,7 @@ public class QueryDocEditPresenter extends DocumentEditPresenter<QueryEditView, 
 
         // First get the explorer node for the docref.
         restFactory
-                .resource(EXPLORER_RESOURCE)
+                .create(EXPLORER_RESOURCE)
                 .method(res -> res.getFromDocRef(docRef))
                 .onSuccess(explorerNode -> {
                     // Ask the user to create a new document.
@@ -171,7 +171,7 @@ public class QueryDocEditPresenter extends DocumentEditPresenter<QueryEditView, 
                              final String query,
                              final AnalyticProcessType analyticProcessType) {
         restFactory
-                .resource(ANALYTIC_RULE_RESOURCE)
+                .create(ANALYTIC_RULE_RESOURCE)
                 .method(res -> res.fetch(ruleDocRef.getUuid()))
                 .onSuccess(doc -> {
                     // Create default config.
@@ -271,7 +271,7 @@ public class QueryDocEditPresenter extends DocumentEditPresenter<QueryEditView, 
     private void updateRule(final DocRef ruleDocRef,
                             final AnalyticRuleDoc ruleDoc) {
         restFactory
-                .resource(ANALYTIC_RULE_RESOURCE)
+                .create(ANALYTIC_RULE_RESOURCE)
                 .method(res -> res.update(ruleDocRef.getUuid(), ruleDoc))
                 .onSuccess(doc -> OpenDocumentEvent.fire(
                         QueryDocEditPresenter.this,

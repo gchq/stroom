@@ -67,7 +67,7 @@ public class AnalyticsPlugin extends DocumentPlugin<AnalyticRuleDoc> {
                      final Consumer<AnalyticRuleDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .resource(ANALYTIC_RULE_RESOURCE)
+                .create(ANALYTIC_RULE_RESOURCE)
                 .method(res -> res.fetch(docRef.getUuid()))
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
@@ -80,7 +80,7 @@ public class AnalyticsPlugin extends DocumentPlugin<AnalyticRuleDoc> {
                      final Consumer<AnalyticRuleDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .resource(ANALYTIC_RULE_RESOURCE)
+                .create(ANALYTIC_RULE_RESOURCE)
                 .method(res -> res.update(document.getUuid(), document))
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)

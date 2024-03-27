@@ -40,7 +40,7 @@ public class DataTypeUiManager {
 
     public void getTypes(final Consumer<List<String>> consumer) {
         restFactory
-                .resource(META_RESOURCE)
+                .create(META_RESOURCE)
                 .method(MetaResource::getTypes)
                 .onSuccess(consumer)
                 .exec();

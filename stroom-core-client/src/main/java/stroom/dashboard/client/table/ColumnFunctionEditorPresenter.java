@@ -146,7 +146,7 @@ public class ColumnFunctionEditorPresenter
                 } else {
                     // Check the validity of the expression.
                     restFactory
-                            .resource(DASHBOARD_RESOURCE)
+                            .create(DASHBOARD_RESOURCE)
                             .method(res -> res.validateExpression(expression))
                             .onSuccess(result -> {
                                 if (result.isOk()) {

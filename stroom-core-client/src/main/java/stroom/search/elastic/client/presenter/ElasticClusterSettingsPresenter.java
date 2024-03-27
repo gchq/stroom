@@ -69,7 +69,7 @@ public class ElasticClusterSettingsPresenter
     public void onTestConnection() {
         final ElasticClusterDoc cluster = onWrite(new ElasticClusterDoc());
         restFactory
-                .resource(ELASTIC_CLUSTER_RESOURCE)
+                .create(ELASTIC_CLUSTER_RESOURCE)
                 .method(res -> res.testCluster(cluster))
                 .onSuccess(result -> {
                     if (result.isOk()) {

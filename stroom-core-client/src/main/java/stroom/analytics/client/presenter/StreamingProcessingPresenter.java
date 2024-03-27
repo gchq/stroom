@@ -40,7 +40,7 @@ public class StreamingProcessingPresenter
                        final boolean readOnly,
                        final String query) {
         restFactory
-                .resource(ANALYTIC_PROCESS_RESOURCE)
+                .create(ANALYTIC_PROCESS_RESOURCE)
                 .method(res -> res.getDefaultProcessingFilterExpression(query))
                 .onSuccess(expressionOperator -> {
                     processorPresenter.setDefaultExpression(expressionOperator);

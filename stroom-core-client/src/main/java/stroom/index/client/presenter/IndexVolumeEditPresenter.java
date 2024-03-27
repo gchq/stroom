@@ -101,7 +101,7 @@ public class IndexVolumeEditPresenter extends MyPresenterWidget<IndexVolumeEditV
     private void doWithVolumeValidation(final IndexVolume volume,
                                         final Runnable work) {
         restFactory
-                .resource(INDEX_VOLUME_RESOURCE)
+                .create(INDEX_VOLUME_RESOURCE)
                 .method(res -> res.validate(volume))
                 .onSuccess(validationResult -> {
                     if (validationResult.isOk()) {
@@ -134,7 +134,7 @@ public class IndexVolumeEditPresenter extends MyPresenterWidget<IndexVolumeEditV
 
     private void createIndexVolume(final Consumer<IndexVolume> savedVolumeConsumer, final IndexVolume volume) {
         restFactory
-                .resource(INDEX_VOLUME_RESOURCE)
+                .create(INDEX_VOLUME_RESOURCE)
                 .method(res -> res.create(volume))
                 .onSuccess(savedVolumeConsumer)
                 .exec();
@@ -143,7 +143,7 @@ public class IndexVolumeEditPresenter extends MyPresenterWidget<IndexVolumeEditV
     private void updateVolume(final Consumer<IndexVolume> consumer,
                               final IndexVolume volume) {
         restFactory
-                .resource(INDEX_VOLUME_RESOURCE)
+                .create(INDEX_VOLUME_RESOURCE)
                 .method(res -> res.update(volume.getId(), volume))
                 .onSuccess(consumer)
                 .exec();

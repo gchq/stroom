@@ -135,7 +135,7 @@ public class UserTaskManagerPresenter
             if (!refreshing.contains(nodeName)) {
                 refreshing.add(nodeName);
                 restFactory
-                        .resource(TASK_RESOURCE)
+                        .create(TASK_RESOURCE)
                         .method(res -> res.userTasks(nodeName))
                         .onSuccess(response -> {
                             responseMap.put(nodeName, response.getValues());
@@ -214,7 +214,7 @@ public class UserTaskManagerPresenter
             findTaskCriteria.addId(taskProgress.getId());
             final TerminateTaskProgressRequest request = new TerminateTaskProgressRequest(findTaskCriteria);
             restFactory
-                    .resource(TASK_RESOURCE)
+                    .create(TASK_RESOURCE)
                     .method(res -> res.terminate(taskProgress.getNodeName(), request))
                     .exec();
         });

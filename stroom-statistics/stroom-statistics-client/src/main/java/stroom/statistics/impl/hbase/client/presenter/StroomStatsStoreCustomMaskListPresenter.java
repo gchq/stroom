@@ -194,7 +194,7 @@ public class StroomStatsStoreCustomMaskListPresenter
                 result -> {
                     if (result) {
                         restFactory
-                                .resource(STATS_STORE_ROLLUP_RESOURCE)
+                                .create(STATS_STORE_ROLLUP_RESOURCE)
                                 .method(res -> res.bitMaskPermGeneration(stroomStatsStoreEntity.getStatisticFieldCount()))
 //                        restFactory
 //                                .forResultPage(CustomRollUpMask.class)
@@ -288,7 +288,7 @@ public class StroomStatsStoreCustomMaskListPresenter
         // grab the mask list from this presenter
         oldEntityData.setCustomRollUpMasks(new HashSet<>(maskList.getMasks()));
         restFactory
-                .resource(STATS_STORE_ROLLUP_RESOURCE)
+                .create(STATS_STORE_ROLLUP_RESOURCE)
                 .method(res -> res.fieldChange(new StroomStatsStoreFieldChangeRequest(oldEntityData, newEntityData)))
                 .onSuccess(result -> {
                     newEntityData.setCustomRollUpMasks(result.getCustomRollUpMasks());

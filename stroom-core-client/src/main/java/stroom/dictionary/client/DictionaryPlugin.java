@@ -67,7 +67,7 @@ public class DictionaryPlugin extends DocumentPlugin<DictionaryDoc> {
                      final Consumer<DictionaryDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .resource(DICTIONARY_RESOURCE)
+                .create(DICTIONARY_RESOURCE)
                 .method(res -> res.fetch(docRef.getUuid()))
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
@@ -80,7 +80,7 @@ public class DictionaryPlugin extends DocumentPlugin<DictionaryDoc> {
                      final Consumer<DictionaryDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .resource(DICTIONARY_RESOURCE)
+                .create(DICTIONARY_RESOURCE)
                 .method(res -> res.update(document.getUuid(), document))
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)

@@ -461,7 +461,7 @@ public class DataPresenter
     public void fetchData(final SourceLocation sourceLocation) {
         // We know the location but not what type of data we are fetching so first get the meta
         restFactory
-                .resource(META_RESOURCE)
+                .create(META_RESOURCE)
                 .method(res -> res.fetch(sourceLocation.getMetaId()))
                 .onSuccess(meta -> {
                     fetchData(meta, sourceLocation, false);
@@ -571,7 +571,7 @@ public class DataPresenter
                 final Long currentMetaId = getCurrentMetaId();
                 if (currentMetaId != null && currentMetaId >= 0) {
                     restFactory
-                            .resource(DATA_RESOURCE)
+                            .create(DATA_RESOURCE)
                             .method(res -> res.getChildStreamTypes(
                                     currentSourceLocation.getMetaId(),
                                     currentSourceLocation.getPartIndex()))
@@ -748,7 +748,7 @@ public class DataPresenter
                         actionQueue.clear();
 
                         restFactory
-                                .resource(DATA_RESOURCE)
+                                .create(DATA_RESOURCE)
                                 .method(res -> res.fetch(request))
                                 .onSuccess(result -> {
                                     // If we are queueing more actions then don't
@@ -1115,7 +1115,7 @@ public class DataPresenter
     private void fetchMetaInfoData(final Long metaId) {
         if (metaId != null) {
             restFactory
-                    .resource(DATA_RESOURCE)
+                    .create(DATA_RESOURCE)
                     .method(res -> res.viewInfo(metaId))
                     .onSuccess(this::handleMetaInfoResult)
                     .exec();

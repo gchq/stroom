@@ -408,7 +408,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                                                 downloadPresenter.isSample(),
                                                 downloadPresenter.getPercent());
                                 restFactory
-                                        .resource(DASHBOARD_RESOURCE)
+                                        .create(DASHBOARD_RESOURCE)
                                         .method(res -> res.downloadSearchResults(
                                                 currentSearchModel.getCurrentNode(),
                                                 downloadSearchResultsRequest))

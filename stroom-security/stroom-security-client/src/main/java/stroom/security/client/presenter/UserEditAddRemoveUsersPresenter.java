@@ -83,7 +83,7 @@ public class UserEditAddRemoveUsersPresenter
                         null);
 
                 restFactory
-                        .resource(APP_PERMISSION_RESOURCE)
+                        .create(APP_PERMISSION_RESOURCE)
                         .method(res -> res.changeUser(request))
                         .onSuccess(result -> {
                             refresh();
@@ -107,7 +107,7 @@ public class UserEditAddRemoveUsersPresenter
                 final ChangeUserRequest request = new ChangeUserRequest(relatedUser, changedLinkedUsers, null);
 
                 restFactory
-                        .resource(APP_PERMISSION_RESOURCE)
+                        .create(APP_PERMISSION_RESOURCE)
                         .method(res -> res.changeUser(request))
                         .onSuccess(result -> refresh())
                         .exec();

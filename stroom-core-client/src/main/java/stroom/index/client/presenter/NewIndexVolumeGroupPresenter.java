@@ -78,7 +78,7 @@ public class NewIndexVolumeGroupPresenter
                         null);
             } else {
                 restFactory
-                        .resource(INDEX_VOLUME_GROUP_RESOURCE)
+                        .create(INDEX_VOLUME_GROUP_RESOURCE)
                         .method(res -> res.fetchByName(name))
                         .onSuccess(result -> {
                             if (result != null) {

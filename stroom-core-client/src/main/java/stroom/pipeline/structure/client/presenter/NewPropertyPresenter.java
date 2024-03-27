@@ -284,7 +284,7 @@ public class NewPropertyPresenter
 
             // Load data types.
             restFactory
-                    .resource(META_RESOURCE)
+                    .create(META_RESOURCE)
                     .method(MetaResource::getTypes)
                     .onSuccess(result -> {
                         if (result != null) {
@@ -326,7 +326,7 @@ public class NewPropertyPresenter
 
             // Load data types.
             restFactory
-                    .resource(VOLUME_GROUP_RESOURCE)
+                    .create(VOLUME_GROUP_RESOURCE)
                     .method(res -> res.find(new ExpressionCriteria()))
                     .onSuccess(result -> {
                         dataTypeWidget.clear();

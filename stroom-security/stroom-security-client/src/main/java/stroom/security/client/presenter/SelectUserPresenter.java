@@ -237,7 +237,7 @@ public class SelectUserPresenter
                         final UserName selected = getSelected();
                         if (selected != null) {
                             restFactory
-                                    .resource(USER_RESOURCE)
+                                    .create(USER_RESOURCE)
                                     .method(res -> res.createUser(selected))
                                     .onSuccess(userConsumer)
                                     .exec();

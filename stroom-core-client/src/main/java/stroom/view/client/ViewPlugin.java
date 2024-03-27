@@ -67,7 +67,7 @@ public class ViewPlugin extends DocumentPlugin<ViewDoc> {
                      final Consumer<ViewDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .resource(VIEW_RESOURCE)
+                .create(VIEW_RESOURCE)
                 .method(res -> res.fetch(docRef.getUuid()))
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
@@ -80,7 +80,7 @@ public class ViewPlugin extends DocumentPlugin<ViewDoc> {
                      final Consumer<ViewDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .resource(VIEW_RESOURCE)
+                .create(VIEW_RESOURCE)
                 .method(res -> res.update(document.getUuid(), document))
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)

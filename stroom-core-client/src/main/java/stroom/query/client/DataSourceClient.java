@@ -31,7 +31,7 @@ public class DataSourceClient {
     public void findFields(final FindFieldInfoCriteria findFieldInfoCriteria,
                            final Consumer<ResultPage<QueryField>> consumer) {
         restFactory
-                .resource(DATA_SOURCE_RESOURCE)
+                .create(DATA_SOURCE_RESOURCE)
                 .method(res -> res.findFields(findFieldInfoCriteria))
                 .onSuccess(consumer)
                 .exec();
@@ -47,7 +47,7 @@ public class DataSourceClient {
                     dataSourceRef,
                     StringMatch.equals(fieldName, true));
             restFactory
-                    .resource(DATA_SOURCE_RESOURCE)
+                    .create(DATA_SOURCE_RESOURCE)
                     .method(res -> res.findFields(findFieldInfoCriteria))
                     .onSuccess(result -> {
                         if (result.getValues().size() > 0) {
@@ -63,7 +63,7 @@ public class DataSourceClient {
 
         if (dataSourceDocRef != null) {
             restFactory
-                    .resource(DATA_SOURCE_RESOURCE)
+                    .create(DATA_SOURCE_RESOURCE)
                     .method(res -> res.fetchDocumentation(dataSourceDocRef))
                     .onSuccess(documentation -> {
                         final Optional<String> optMarkDown = GwtNullSafe.getAsOptional(documentation,
@@ -78,7 +78,7 @@ public class DataSourceClient {
 
     public void fetchDefaultExtractionPipeline(DocRef dataSourceRef, Consumer<DocRef> consumer) {
         restFactory
-                .resource(DATA_SOURCE_RESOURCE)
+                .create(DATA_SOURCE_RESOURCE)
                 .method(res -> res.fetchDefaultExtractionPipeline(dataSourceRef))
                 .onSuccess(consumer)
                 .exec();

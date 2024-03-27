@@ -91,7 +91,7 @@ public class ExplorerNodeRemoveTagsPresenter
                     .collect(Collectors.toList());
 
             restFactory
-                    .resource(EXPLORER_RESOURCE)
+                    .create(EXPLORER_RESOURCE)
                     .method(res -> res.fetchExplorerNodeTags(docRefs))
                     .onSuccess(nodetags -> {
                         getView().setData(docRefs, nodetags);
@@ -139,7 +139,7 @@ public class ExplorerNodeRemoveTagsPresenter
                                      final Set<String> editedTags) {
         final List<DocRef> nodeDocRefs = getNodeDocRefs();
         restFactory
-                .resource(EXPLORER_RESOURCE)
+                .create(EXPLORER_RESOURCE)
                 .call(res -> res.removeTags(new AddRemoveTagsRequest(nodeDocRefs, editedTags)))
                 .onSuccess(voidResult -> {
                     // Update the node in the tree with the new tags

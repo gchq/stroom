@@ -222,7 +222,7 @@ public final class ManageGlobalPropertyEditPresenter
 
     private void updateValuesFromResource(final String propertyName, final Runnable hideRunnable) {
         restFactory
-                .resource(GLOBAL_CONFIG_RESOURCE_RESOURCE)
+                .create(GLOBAL_CONFIG_RESOURCE_RESOURCE)
                 .method(res -> res.getPropertyByName(propertyName))
                 .onSuccess(configProperty ->
                         show(configProperty, hideRunnable))
@@ -313,7 +313,7 @@ public final class ManageGlobalPropertyEditPresenter
 
     private void refreshYamlOverrideForNode(final String nodeName) {
         restFactory
-                .resource(GLOBAL_CONFIG_RESOURCE_RESOURCE)
+                .create(GLOBAL_CONFIG_RESOURCE_RESOURCE)
                 .method(res -> res.getYamlValueByNodeAndName(configProperty.getName().toString(), nodeName))
                 .onSuccess(yamlOverride -> {
                     // Add the node's result to our maps
@@ -454,7 +454,7 @@ public final class ManageGlobalPropertyEditPresenter
         if (configPropertyToSave.getId() == null) {
             // No ID so this doesn't exist in the DB
             restFactory
-                    .resource(GLOBAL_CONFIG_RESOURCE_RESOURCE)
+                    .create(GLOBAL_CONFIG_RESOURCE_RESOURCE)
                     .method(res -> res.create(configPropertyToSave))
                     .onSuccess(savedConfigProperty -> {
                         setEntity(savedConfigProperty);
@@ -469,7 +469,7 @@ public final class ManageGlobalPropertyEditPresenter
                     .exec();
         } else {
             restFactory
-                    .resource(GLOBAL_CONFIG_RESOURCE_RESOURCE)
+                    .create(GLOBAL_CONFIG_RESOURCE_RESOURCE)
                     .method(res -> res.update(configPropertyToSave.getName().toString(), configPropertyToSave))
                     .onSuccess(savedConfigProperty -> {
                         setEntity(savedConfigProperty);

@@ -86,7 +86,7 @@ public class AppPermissionsPresenter extends
         } else {
             // Fetch permissions and populate table.
             restFactory
-                    .resource(APP_PERMISSION_RESOURCE)
+                    .create(APP_PERMISSION_RESOURCE)
                     .method(res -> res.fetchUserAppPermissions(relatedUser))
                     .onSuccess(userAppPermissions -> {
                         AppPermissionsPresenter.this.userAppPermissions = userAppPermissions;
@@ -103,7 +103,7 @@ public class AppPermissionsPresenter extends
 
         } else {
             restFactory
-                    .resource(APP_PERMISSION_RESOURCE)
+                    .create(APP_PERMISSION_RESOURCE)
                     .method(AppPermissionResource::fetchAllPermissions)
                     .onSuccess(allPermissions -> {
                         Collections.sort(allPermissions);
@@ -147,7 +147,7 @@ public class AppPermissionsPresenter extends
                 }
 
                 restFactory
-                        .resource(APP_PERMISSION_RESOURCE)
+                        .create(APP_PERMISSION_RESOURCE)
                         .method(res -> res.changeUser(request))
                         .onSuccess(result -> refresh())
                         .exec();

@@ -67,7 +67,7 @@ public class QueryPlugin extends DocumentPlugin<QueryDoc> {
                      final Consumer<QueryDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .resource(QUERY_RESOURCE)
+                .create(QUERY_RESOURCE)
                 .method(res -> res.fetch(docRef.getUuid()))
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
@@ -80,7 +80,7 @@ public class QueryPlugin extends DocumentPlugin<QueryDoc> {
                      final Consumer<QueryDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .resource(QUERY_RESOURCE)
+                .create(QUERY_RESOURCE)
                 .method(res -> res.update(document.getUuid(), document))
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)

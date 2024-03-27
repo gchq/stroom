@@ -235,7 +235,7 @@ public class QueryModel {
                     .build();
 
             restFactory
-                    .resource(QUERY_RESOURCE)
+                    .create(QUERY_RESOURCE)
                     .method(res -> res.search(currentNode, request))
                     .onSuccess(response -> {
                         try {
@@ -314,7 +314,7 @@ public class QueryModel {
 //                    .build();
 
             restFactory
-                    .resource(QUERY_RESOURCE)
+                    .create(QUERY_RESOURCE)
                     .method(res -> res.search(currentNode, request))
                     .onSuccess(response -> {
                         GWT.log(response.toString());

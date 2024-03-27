@@ -49,7 +49,7 @@ public class WelcomePresenter extends ContentTabPresenter<WelcomePresenter.Welco
         super(eventBus, view);
 
         restFactory
-                .resource(SESSION_INFO_RESOURCE)
+                .create(SESSION_INFO_RESOURCE)
                 .method(SessionInfoResource::get)
                 .onSuccess(sessionInfo -> {
                     final UserName userName = sessionInfo.getUserName();

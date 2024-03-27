@@ -69,7 +69,7 @@ public class IndexVolumeGroupListPresenter extends MyPresenterWidget<PagerView> 
                                 final Consumer<Throwable> throwableConsumer) {
                 CriteriaUtil.setRange(criteria, range);
                 restFactory
-                        .resource(INDEX_VOLUME_GROUP_RESOURCE)
+                        .create(INDEX_VOLUME_GROUP_RESOURCE)
                         .method(res -> res.find(criteria))
                         .onSuccess(dataConsumer)
                         .onFailure(throwableConsumer)

@@ -40,7 +40,7 @@ public class Views implements HasHandlers {
             consumer.accept(views);
         } else {
             restFactory
-                    .resource(VIEW_RESOURCE)
+                    .create(VIEW_RESOURCE)
                     .method(ViewResource::list)
                     .onSuccess(result -> {
                         views = result;

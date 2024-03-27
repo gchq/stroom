@@ -127,7 +127,7 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
 
         // Get a map of all available elements and properties.
         restFactory
-                .resource(PIPELINE_RESOURCE)
+                .create(PIPELINE_RESOURCE)
                 .method(PipelineResource::getPropertyTypes)
                 .onSuccess(result -> {
                     final Map<PipelineElementType, Map<String, PipelinePropertyType>> propertyTypes =
@@ -233,7 +233,7 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
             pipelinePresenter.setSelectedEntityReference(document.getParentPipeline());
 
             restFactory
-                    .resource(PIPELINE_RESOURCE)
+                    .create(PIPELINE_RESOURCE)
                     .method(res -> res.fetchPipelineData(docRef))
                     .onSuccess(result -> {
                         final PipelineData pipelineData = result.get(result.size() - 1);
@@ -502,7 +502,7 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
 
             final PopupSize popupSize = PopupSize.resizable(600, 400);
             restFactory
-                    .resource(PIPELINE_RESOURCE)
+                    .create(PIPELINE_RESOURCE)
                     .method(res -> res.fetchPipelineXml(docRef))
                     .onSuccess(result -> {
                         String text = "";
@@ -545,7 +545,7 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
 
     private void doActualSave(final EditorPresenter xmlEditor) {
         restFactory
-                .resource(PIPELINE_RESOURCE)
+                .create(PIPELINE_RESOURCE)
                 .method(res -> res.savePipelineXml(new SavePipelineXmlRequest(docRef, xmlEditor.getText())))
                 .onSuccess(result -> {
                     // Hide the popup.
@@ -596,7 +596,7 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
 
         } else {
             restFactory
-                    .resource(PIPELINE_RESOURCE)
+                    .create(PIPELINE_RESOURCE)
                     .method(res -> res.fetchPipelineData(parentPipeline))
                     .onSuccess(result -> {
                         pipelineModel.setBaseStack(result);

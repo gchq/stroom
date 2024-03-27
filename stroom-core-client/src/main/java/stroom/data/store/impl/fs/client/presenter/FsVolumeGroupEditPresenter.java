@@ -101,7 +101,7 @@ public class FsVolumeGroupEditPresenter
         registerHandler(rescanButton.addClickHandler(event -> {
             delayedUpdate.reset();
             restFactory
-                    .resource(FS_VOLUME_RESOURCE)
+                    .create(FS_VOLUME_RESOURCE)
                     .method(FsVolumeResource::rescan)
                     .onSuccess(response -> delayedUpdate.update())
                     .onFailure(throwable -> {
@@ -120,7 +120,7 @@ public class FsVolumeGroupEditPresenter
         final FsVolume volume = volumeStatusListPresenter.getSelectionModel().getSelected();
         if (volume != null) {
             restFactory
-                    .resource(FS_VOLUME_RESOURCE)
+                    .create(FS_VOLUME_RESOURCE)
                     .method(res -> res.fetch(volume.getId()))
                     .onSuccess(result -> editVolume(result, "Edit Volume"))
                     .exec();
@@ -150,7 +150,7 @@ public class FsVolumeGroupEditPresenter
                             volumeStatusListPresenter.getSelectionModel().clear();
                             for (final FsVolume volume : list) {
                                 restFactory
-                                        .resource(FS_VOLUME_RESOURCE)
+                                        .create(FS_VOLUME_RESOURCE)
                                         .method(res -> res.delete(volume.getId()))
                                         .onSuccess(response -> volumeStatusListPresenter.refresh())
                                         .exec();
@@ -229,7 +229,7 @@ public class FsVolumeGroupEditPresenter
                     null);
         } else {
             restFactory
-                    .resource(FS_VOLUME_GROUP_RESOURCE)
+                    .create(FS_VOLUME_GROUP_RESOURCE)
                     .method(res -> res.fetchByName(getView().getName()))
                     .onSuccess(grp -> {
                         if (grp != null && !Objects.equals(groupId, grp.getId())) {
@@ -250,7 +250,7 @@ public class FsVolumeGroupEditPresenter
     private void createVolumeGroup(final Consumer<FsVolumeGroup> consumer,
                                    final FsVolumeGroup volumeGroup) {
         restFactory
-                .resource(FS_VOLUME_GROUP_RESOURCE)
+                .create(FS_VOLUME_GROUP_RESOURCE)
                 .method(res -> res.update(volumeGroup.getId(), volumeGroup))
                 .onSuccess(consumer)
                 .exec();

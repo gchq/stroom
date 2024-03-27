@@ -67,7 +67,7 @@ public class XMLSchemaPlugin extends DocumentPlugin<XmlSchemaDoc> {
                      final Consumer<XmlSchemaDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .resource(XML_SCHEMA_RESOURCE)
+                .create(XML_SCHEMA_RESOURCE)
                 .method(res -> res.fetch(docRef.getUuid()))
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
@@ -80,7 +80,7 @@ public class XMLSchemaPlugin extends DocumentPlugin<XmlSchemaDoc> {
                      final Consumer<XmlSchemaDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .resource(XML_SCHEMA_RESOURCE)
+                .create(XML_SCHEMA_RESOURCE)
                 .method(res -> res.update(document.getUuid(), document))
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)

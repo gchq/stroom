@@ -100,7 +100,7 @@ public class QueryHistoryPresenter extends MyPresenterWidget<QueryHistoryPresent
         criteria.setPageRequest(new PageRequest(0, 100));
 
         restFactory
-                .resource(STORED_QUERY_RESOURCE)
+                .create(STORED_QUERY_RESOURCE)
                 .method(res -> res.find(criteria))
                 .onSuccess(result -> {
                     selectionModel.clear();

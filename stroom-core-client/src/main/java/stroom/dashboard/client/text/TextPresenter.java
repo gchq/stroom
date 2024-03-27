@@ -592,7 +592,7 @@ public class TextPresenter
                     fetchDataQueue.clear();
 
                     restFactory
-                            .resource(DATA_RESOURCE)
+                            .create(DATA_RESOURCE)
                             .method(res -> res.fetch(request))
                             .onSuccess(result -> {
                                 // If we are queueing more actions then don't update

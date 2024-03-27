@@ -266,7 +266,7 @@ public class SolrIndexFieldListPresenter extends DocumentEditPresenter<SolrIndex
 
     private void fetchFieldTypes(final Consumer<List<String>> consumer) {
         restFactory
-                .resource(SOLR_INDEX_RESOURCE)
+                .create(SOLR_INDEX_RESOURCE)
                 .method(res -> res.fetchSolrTypes(index))
                 .onSuccess(consumer)
                 .onFailure(throwable -> AlertEvent.fireError(SolrIndexFieldListPresenter.this,

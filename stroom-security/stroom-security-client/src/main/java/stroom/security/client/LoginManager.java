@@ -57,7 +57,7 @@ public class LoginManager implements HasHandlers {
         // When we start the application we will try and auto login using a client certificates.
         TaskStartEvent.fire(this, "Fetching permissions...");
         restFactory
-                .resource(APP_PERMISSION_RESOURCE)
+                .create(APP_PERMISSION_RESOURCE)
                 .method(AppPermissionResource::getUserAndPermissions)
                 .onSuccess(userAndPermissions -> {
                     if (userAndPermissions != null) {
@@ -77,7 +77,7 @@ public class LoginManager implements HasHandlers {
     private void logout() {
         // Tell the server we want to logout and the server will provide a logout URL.
         restFactory
-                .resource(STROOM_SESSION_RESOURCE)
+                .create(STROOM_SESSION_RESOURCE)
                 .method(res -> res.logout(getLocation()))
                 .onSuccess(response -> setLocation(response.getUrl()))
                 .onFailure(throwable -> AlertEvent.fireErrorFromException(LoginManager.this, throwable, null))

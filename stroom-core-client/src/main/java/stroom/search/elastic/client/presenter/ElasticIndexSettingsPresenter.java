@@ -97,7 +97,7 @@ public class ElasticIndexSettingsPresenter extends DocumentEditPresenter<Elastic
     public void onTestIndex() {
         final ElasticIndexDoc index = onWrite(new ElasticIndexDoc());
         restFactory
-                .resource(ELASTIC_INDEX_RESOURCE)
+                .create(ELASTIC_INDEX_RESOURCE)
                 .method(res -> res.testIndex(index))
                 .onSuccess(result -> {
                     if (result.isOk()) {

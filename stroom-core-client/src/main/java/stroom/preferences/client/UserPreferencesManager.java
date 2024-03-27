@@ -62,7 +62,7 @@ public class UserPreferencesManager {
 
     public void fetch(final Consumer<UserPreferences> consumer) {
         restFactory
-                .resource(PREFERENCES_RESOURCE)
+                .create(PREFERENCES_RESOURCE)
                 .method(UserPreferencesResource::fetch)
                 .onSuccess(consumer)
                 .exec();
@@ -71,7 +71,7 @@ public class UserPreferencesManager {
     public void update(final UserPreferences userPreferences,
                        final Consumer<Boolean> consumer) {
         restFactory
-                .resource(PREFERENCES_RESOURCE)
+                .create(PREFERENCES_RESOURCE)
                 .method(res -> res.update(userPreferences))
                 .onSuccess(consumer)
                 .exec();
@@ -80,7 +80,7 @@ public class UserPreferencesManager {
     public void setDefaultUserPreferences(final UserPreferences userPreferences,
                                           final Consumer<UserPreferences> consumer) {
         restFactory
-                .resource(PREFERENCES_RESOURCE)
+                .create(PREFERENCES_RESOURCE)
                 .method(res -> res.setDefaultUserPreferences(userPreferences))
                 .onSuccess(consumer)
                 .exec();
@@ -88,7 +88,7 @@ public class UserPreferencesManager {
 
     public void resetToDefaultUserPreferences(final Consumer<UserPreferences> consumer) {
         restFactory
-                .resource(PREFERENCES_RESOURCE)
+                .create(PREFERENCES_RESOURCE)
                 .method(UserPreferencesResource::resetToDefaultUserPreferences)
                 .onSuccess(consumer)
                 .exec();

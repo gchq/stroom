@@ -97,7 +97,7 @@ public class LinkedEventPresenter extends MyPresenterWidget<LinkedEventView> {
 
                 final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
                 restFactory
-                        .resource(annotationResource)
+                        .create(annotationResource)
                         .method(res -> res.link(new EventLink(annotation.getId(), eventId)))
                         .onSuccess(this::setData)
                         .exec();
@@ -119,7 +119,7 @@ public class LinkedEventPresenter extends MyPresenterWidget<LinkedEventView> {
 
                 final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
                 restFactory
-                        .resource(annotationResource)
+                        .create(annotationResource)
                         .method(res -> res.unlink(new EventLink(annotation.getId(), selected)))
                         .onSuccess(this::setData)
                         .exec();
@@ -134,7 +134,7 @@ public class LinkedEventPresenter extends MyPresenterWidget<LinkedEventView> {
 
         final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
         restFactory
-                .resource(annotationResource)
+                .create(annotationResource)
                 .method(res -> res.getLinkedEvents(annotation.getId()))
                 .onSuccess(this::show)
                 .exec();

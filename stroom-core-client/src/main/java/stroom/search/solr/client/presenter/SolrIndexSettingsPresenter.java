@@ -88,7 +88,7 @@ public class SolrIndexSettingsPresenter extends DocumentEditPresenter<SolrIndexS
     public void onTestConnection() {
         final SolrIndexDoc index = onWrite(new SolrIndexDoc());
         restFactory
-                .resource(SOLR_INDEX_RESOURCE)
+                .create(SOLR_INDEX_RESOURCE)
                 .method(res -> res.solrConnectionTest(index))
                 .onSuccess(result -> {
                     if (result.isOk()) {

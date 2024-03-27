@@ -78,7 +78,7 @@ public class DynamicQueryHelpSelectionListModel implements SelectionListModel<Qu
             lastRequest = request;
 
             restFactory
-                    .resource(QUERY_RESOURCE)
+                    .create(QUERY_RESOURCE)
                     .method(res -> res.fetchQueryHelpItems(request))
                     .onSuccess(response -> {
                         // Only update if the request is still current.

@@ -86,7 +86,7 @@ public class AsyncSuggestOracle extends SuggestOracle {
 
                     } else {
                         restFactory
-                                .resource(SUGGESTIONS_RESOURCE)
+                                .create(SUGGESTIONS_RESOURCE)
                                 .method(res -> res.fetch(fetchSuggestionsRequest))
                                 .onSuccess(result -> {
                                     if (result.isCacheable()) {

@@ -67,7 +67,7 @@ public class ResultStoreModel {
         CriteriaUtil.setRange(criteria, range);
         for (final String nodeName : nodeNames) {
             restFactory
-                    .resource(RESULT_STORE_RESOURCE)
+                    .create(RESULT_STORE_RESOURCE)
                     .method(res -> res.find(nodeName, criteria))
                     .onSuccess(response -> {
                         responseMap.put(nodeName, response.getValues());
@@ -93,7 +93,7 @@ public class ResultStoreModel {
                           final QueryKey queryKey,
                           final Consumer<Boolean> consumer) {
         restFactory
-                .resource(RESULT_STORE_RESOURCE)
+                .create(RESULT_STORE_RESOURCE)
                 .method(res -> res.terminate(nodeName, queryKey))
                 .onSuccess(consumer)
                 .onFailure(t -> consumer.accept(false))
@@ -105,7 +105,7 @@ public class ResultStoreModel {
                         final DestroyReason destroyReason,
                         final Consumer<Boolean> consumer) {
         restFactory
-                .resource(RESULT_STORE_RESOURCE)
+                .create(RESULT_STORE_RESOURCE)
                 .method(res -> res.destroy(nodeName, new DestroyStoreRequest(queryKey, destroyReason)))
                 .onSuccess(consumer)
                 .onFailure(t -> consumer.accept(false))
@@ -116,7 +116,7 @@ public class ResultStoreModel {
                                final UpdateStoreRequest updateStoreRequest,
                                final Consumer<Boolean> consumer) {
         restFactory
-                .resource(RESULT_STORE_RESOURCE)
+                .create(RESULT_STORE_RESOURCE)
                 .method(res -> res.update(nodeName, updateStoreRequest))
                 .onSuccess(consumer)
                 .exec();

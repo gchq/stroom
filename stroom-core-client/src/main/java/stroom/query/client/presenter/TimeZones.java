@@ -42,7 +42,7 @@ public class TimeZones {
         }
 
         restFactory
-                .resource(QUERY_RESOURCE)
+                .create(QUERY_RESOURCE)
                 .method(QueryResource::fetchTimeZones)
                 .onSuccess(result -> ids = result)
                 .exec();

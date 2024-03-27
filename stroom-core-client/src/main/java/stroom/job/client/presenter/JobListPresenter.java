@@ -83,7 +83,7 @@ public class JobListPresenter extends MyPresenterWidget<PagerView> {
         enabledColumn.setFieldUpdater((index, row, value) -> {
             row.setEnabled(value.toBoolean());
             restFactory
-                    .resource(JOB_RESOURCE)
+                    .create(JOB_RESOURCE)
                     .call(res -> res.setEnabled(row.getId(), value.toBoolean()))
                     .exec();
         });
@@ -151,7 +151,7 @@ public class JobListPresenter extends MyPresenterWidget<PagerView> {
                                         final Consumer<ResultPage<Job>> dataConsumer,
                                         final Consumer<Throwable> throwableConsumer) {
                         restFactory
-                                .resource(JOB_RESOURCE)
+                                .create(JOB_RESOURCE)
                                 .method(JobResource::list)
                                 .onSuccess(dataConsumer)
                                 .onFailure(throwableConsumer)

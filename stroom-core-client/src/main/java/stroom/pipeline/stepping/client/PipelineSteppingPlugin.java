@@ -79,7 +79,7 @@ public class PipelineSteppingPlugin extends Plugin implements BeginPipelineStepp
             // If we don't have a pipeline id then try to guess one for the
             // supplied stream.
             restFactory
-                    .resource(STEPPING_RESOURCE)
+                    .create(STEPPING_RESOURCE)
                     .method(res -> res.getPipelineForStepping(new GetPipelineForMetaRequest(
                             event.getStepLocation().getMetaId(),
                             event.getChildStreamId())))
@@ -111,7 +111,7 @@ public class PipelineSteppingPlugin extends Plugin implements BeginPipelineStepp
                 final FindMetaCriteria findMetaCriteria = FindMetaCriteria.createFromId(
                         stepLocation.getMetaId());
                 restFactory
-                        .resource(META_RESOURCE)
+                        .create(META_RESOURCE)
                         .method(res -> res.findMetaRow(findMetaCriteria))
                         .onSuccess(result -> {
                             if (result != null && result.size() == 1) {

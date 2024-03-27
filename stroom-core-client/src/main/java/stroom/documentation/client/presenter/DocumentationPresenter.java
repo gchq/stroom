@@ -90,7 +90,7 @@ public class DocumentationPresenter extends DocumentEditTabPresenter<LinkTabPane
         super.onBind();
         registerHandler(downloadButton.addClickHandler(clickEvent -> {
             restFactory
-                    .resource(DOCUMENTATION_RESOURCE)
+                    .create(DOCUMENTATION_RESOURCE)
                     .method(res -> res.download(docRef))
                     .onSuccess(result -> ExportFileCompleteUtil.onSuccess(locationManager, this, result))
                     .exec();

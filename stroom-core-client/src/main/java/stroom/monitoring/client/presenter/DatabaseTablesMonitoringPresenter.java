@@ -109,7 +109,7 @@ public class DatabaseTablesMonitoringPresenter
                                 final Consumer<Throwable> throwableConsumer) {
                 CriteriaUtil.setRange(criteria, range);
                 restFactory
-                        .resource(DB_STATUS_RESOURCE)
+                        .create(DB_STATUS_RESOURCE)
                         .method(res -> res.findSystemTableStatus(criteria))
                         .onSuccess(dataConsumer)
                         .onFailure(throwableConsumer)

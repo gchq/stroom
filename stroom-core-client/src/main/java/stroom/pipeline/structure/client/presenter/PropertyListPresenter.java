@@ -407,7 +407,7 @@ public class PropertyListPresenter
         if (docRefs.size() > 0) {
             // Load entities.
             restFactory
-                    .resource(EXPLORER_RESOURCE)
+                    .create(EXPLORER_RESOURCE)
                     .method(res -> res.fetchDocRefs(docRefs))
                     .onSuccess(result -> {
                         final Map<DocRef, DocRef> fetchedDocRefs = result

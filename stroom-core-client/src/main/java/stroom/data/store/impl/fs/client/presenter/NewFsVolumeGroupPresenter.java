@@ -78,7 +78,7 @@ public class NewFsVolumeGroupPresenter
                         null);
             } else {
                 restFactory
-                        .resource(FS_VOLUME_GROUP_RESOURCE)
+                        .create(FS_VOLUME_GROUP_RESOURCE)
                         .method(res -> res.fetchByName(name))
                         .onSuccess(result -> {
                             if (result != null) {

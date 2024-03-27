@@ -84,7 +84,7 @@ public class DataUploadPresenter extends MyPresenterWidget<DataUploadPresenter.D
                         fileName);
 
                 restFactory
-                        .resource(DATA_RESOURCE)
+                        .create(DATA_RESOURCE)
                         .method(res -> res.upload(request))
                         .onSuccess(result -> {
                             hide();

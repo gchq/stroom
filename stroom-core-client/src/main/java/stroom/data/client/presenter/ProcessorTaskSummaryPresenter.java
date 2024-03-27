@@ -83,7 +83,7 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<PagerView>
                                 final Consumer<Throwable> throwableConsumer) {
                 CriteriaUtil.setRange(criteria, range);
                 restFactory
-                        .resource(PROCESSOR_TASK_RESOURCE)
+                        .create(PROCESSOR_TASK_RESOURCE)
                         .method(res -> res.findSummary(criteria))
                         .onSuccess(dataConsumer)
                         .onFailure(throwableConsumer)

@@ -126,7 +126,7 @@ public class CacheNodeListPresenter extends MyPresenterWidget<PagerView> {
                 SvgPresets.of(SvgPresets.DELETE, "Clear and rebuild cache", true),
                 (row, nativeEvent) -> {
                     restFactory
-                            .resource(CACHE_RESOURCE)
+                            .create(CACHE_RESOURCE)
                             .method(res -> res.clear(row.getName(), row.getNodeName()))
                             .onSuccess(result -> {
                                 dataProvider.refresh();
@@ -321,7 +321,7 @@ public class CacheNodeListPresenter extends MyPresenterWidget<PagerView> {
         cacheInfoKeys.clear();
         for (final String nodeName : nodeNames) {
             restFactory
-                    .resource(CACHE_RESOURCE)
+                    .create(CACHE_RESOURCE)
                     .method(res -> res.info(cacheName, nodeName))
                     .onSuccess(response -> {
                         responseMap.put(nodeName, response.getValues());

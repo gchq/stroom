@@ -67,7 +67,7 @@ public class DocumentationPlugin extends DocumentPlugin<DocumentationDoc> {
                      final Consumer<DocumentationDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .resource(DOCUMENTATION_RESOURCE)
+                .create(DOCUMENTATION_RESOURCE)
                 .method(res -> res.fetch(docRef.getUuid()))
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
@@ -80,7 +80,7 @@ public class DocumentationPlugin extends DocumentPlugin<DocumentationDoc> {
                      final Consumer<DocumentationDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .resource(DOCUMENTATION_RESOURCE)
+                .create(DOCUMENTATION_RESOURCE)
                 .method(res -> res.update(document.getUuid(), document))
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)

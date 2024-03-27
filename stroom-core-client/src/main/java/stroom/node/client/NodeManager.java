@@ -29,7 +29,7 @@ public class NodeManager {
                                 final Consumer<Throwable> throwableConsumer,
                                 final FindNodeStatusCriteria findNodeStatusCriteria) {
         restFactory
-                .resource(NODE_RESOURCE)
+                .create(NODE_RESOURCE)
                 .method(res -> res.find(findNodeStatusCriteria))
                 .onSuccess(dataConsumer)
                 .onFailure(throwableConsumer)
@@ -40,7 +40,7 @@ public class NodeManager {
                      final Consumer<Long> pingConsumer,
                      final Consumer<Throwable> throwableConsumer) {
         restFactory
-                .resource(NODE_RESOURCE)
+                .create(NODE_RESOURCE)
                 .method(res -> res.ping(nodeName))
                 .onSuccess(pingConsumer)
                 .onFailure(throwableConsumer)
@@ -51,7 +51,7 @@ public class NodeManager {
                      final Consumer<ClusterNodeInfo> infoConsumer,
                      final Consumer<Throwable> throwableConsumer) {
         restFactory
-                .resource(NODE_RESOURCE)
+                .create(NODE_RESOURCE)
                 .method(res -> res.info(nodeName))
                 .onSuccess(infoConsumer)
                 .onFailure(throwableConsumer)
@@ -62,7 +62,7 @@ public class NodeManager {
                             final int priority,
                             final Consumer<Boolean> resultConsumer) {
         restFactory
-                .resource(NODE_RESOURCE)
+                .create(NODE_RESOURCE)
                 .method(res -> res.setPriority(nodeName, priority))
                 .onSuccess(resultConsumer)
                 .exec();
@@ -72,7 +72,7 @@ public class NodeManager {
                            final boolean enabled,
                            final Consumer<Boolean> resultConsumer) {
         restFactory
-                .resource(NODE_RESOURCE)
+                .create(NODE_RESOURCE)
                 .method(res -> res.setEnabled(nodeName, enabled))
                 .onSuccess(resultConsumer)
                 .exec();
@@ -81,7 +81,7 @@ public class NodeManager {
     public void listAllNodes(final Consumer<List<String>> nodeListConsumer,
                              final Consumer<Throwable> throwableConsumer) {
         restFactory
-                .resource(NODE_RESOURCE)
+                .create(NODE_RESOURCE)
                 .method(NodeResource::listAllNodes)
                 .onSuccess(nodeListConsumer)
                 .onFailure(throwableConsumer)
@@ -91,7 +91,7 @@ public class NodeManager {
     public void listEnabledNodes(final Consumer<List<String>> nodeListConsumer,
                                  final Consumer<Throwable> throwableConsumer) {
         restFactory
-                .resource(NODE_RESOURCE)
+                .create(NODE_RESOURCE)
                 .method(NodeResource::listEnabledNodes)
                 .onSuccess(nodeListConsumer)
                 .onFailure(throwableConsumer)

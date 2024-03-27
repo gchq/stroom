@@ -87,7 +87,7 @@ public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
                      final Consumer<PipelineDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .resource(PIPELINE_RESOURCE)
+                .create(PIPELINE_RESOURCE)
                 .method(res -> res.fetch(docRef.getUuid()))
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
@@ -100,7 +100,7 @@ public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
                      final Consumer<PipelineDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .resource(PIPELINE_RESOURCE)
+                .create(PIPELINE_RESOURCE)
                 .method(res -> res.update(document.getUuid(), document))
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)

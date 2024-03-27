@@ -173,7 +173,7 @@ public class AnalyticDataShardListPresenter
             if (criteria.getAnalyticDocUuid() != null) {
                 CriteriaUtil.setRange(criteria, range);
                 restFactory
-                        .resource(ANALYTIC_DATA_SHARD_RESOURCE)
+                        .create(ANALYTIC_DATA_SHARD_RESOURCE)
                         .method(res -> res.find(nodeName, criteria))
                         .onSuccess(response -> {
                             responseMap.put(nodeName, response.getValues());

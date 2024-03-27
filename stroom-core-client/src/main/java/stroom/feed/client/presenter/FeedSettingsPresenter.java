@@ -112,7 +112,7 @@ public class FeedSettingsPresenter extends DocumentEditPresenter<FeedSettingsVie
 
     private void updateEncodings() {
         restFactory
-                .resource(FEED_RESOURCE)
+                .create(FEED_RESOURCE)
                 .method(FeedResource::fetchSupportedEncodings)
                 .onSuccess(result -> {
                     getView().getDataEncoding().clear();
@@ -136,7 +136,7 @@ public class FeedSettingsPresenter extends DocumentEditPresenter<FeedSettingsVie
 
     private void updateVolumeGroups() {
         restFactory
-                .resource(VOLUME_GROUP_RESOURCE)
+                .create(VOLUME_GROUP_RESOURCE)
                 .method(res -> res.find(new ExpressionCriteria()))
                 .onSuccess(result -> {
                     getView().getVolumeGroup().clear();

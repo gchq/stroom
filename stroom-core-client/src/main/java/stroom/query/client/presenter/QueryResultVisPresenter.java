@@ -414,7 +414,7 @@ public class QueryResultVisPresenter
         function.setStatus(LoadStatus.LOADING_ENTITY);
 
         restFactory
-                .resource(VISUALISATION_RESOURCE)
+                .create(VISUALISATION_RESOURCE)
                 .method(res -> res.fetch(visualisationDocRef.getUuid()))
                 .onSuccess(result -> {
                     if (result != null) {
@@ -457,7 +457,7 @@ public class QueryResultVisPresenter
         function.setStatus(LoadStatus.LOADING_SCRIPT);
 
         restFactory
-                .resource(SCRIPT_RESOURCE)
+                .create(SCRIPT_RESOURCE)
                 .method(res -> res.fetchLinkedScripts(
                         new FetchLinkedScriptRequest(scriptRef, scriptCache.getLoadedScripts())))
                 .onSuccess(result -> startInjectingScripts(result, function))

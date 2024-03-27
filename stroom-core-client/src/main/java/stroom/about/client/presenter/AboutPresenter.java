@@ -58,7 +58,7 @@ public class AboutPresenter extends MyPresenter<AboutPresenter.AboutView, AboutP
 
     private void buildContent() {
         restFactory
-                .resource(SESSION_INFO_RESOURCE)
+                .create(SESSION_INFO_RESOURCE)
                 .method(SessionInfoResource::get)
                 .onSuccess(sessionInfo -> {
                     final BuildInfo buildInfo = sessionInfo.getBuildInfo();

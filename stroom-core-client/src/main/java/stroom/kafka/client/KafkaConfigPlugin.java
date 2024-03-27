@@ -77,7 +77,7 @@ public class KafkaConfigPlugin extends DocumentPlugin<KafkaConfigDoc> {
                      final Consumer<KafkaConfigDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .resource(KAFKA_CONFIG_RESOURCE)
+                .create(KAFKA_CONFIG_RESOURCE)
                 .method(res -> res.fetch(docRef.getUuid()))
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
@@ -90,7 +90,7 @@ public class KafkaConfigPlugin extends DocumentPlugin<KafkaConfigDoc> {
                      final Consumer<KafkaConfigDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .resource(KAFKA_CONFIG_RESOURCE)
+                .create(KAFKA_CONFIG_RESOURCE)
                 .method(res -> res.update(document.getUuid(), document))
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)

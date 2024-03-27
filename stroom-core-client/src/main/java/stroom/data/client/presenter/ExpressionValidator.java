@@ -57,7 +57,7 @@ public class ExpressionValidator {
                 consumer.accept(expression);
             } else {
                 restFactory
-                        .resource(EXPRESSION_RESOURCE)
+                        .create(EXPRESSION_RESOURCE)
                         .method(res -> res.validate(new ValidateExpressionRequest(
                                 expression,
                                 fields,

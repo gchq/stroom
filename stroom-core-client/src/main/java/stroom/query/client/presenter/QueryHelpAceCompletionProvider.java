@@ -56,7 +56,7 @@ public class QueryHelpAceCompletionProvider implements AceCompletionProvider {
                         new StringMatch(MatchType.STARTS_WITH, false, prefix),
                         showAll);
         restFactory
-                .resource(QUERY_RESOURCE)
+                .create(QUERY_RESOURCE)
                 .method(res -> res.fetchCompletions(completionsRequest))
                 .onSuccess(result -> {
                     final List<AceCompletion> aceCompletions = result

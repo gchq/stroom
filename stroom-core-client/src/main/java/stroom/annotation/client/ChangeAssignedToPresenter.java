@@ -84,7 +84,7 @@ public class ChangeAssignedToPresenter extends MyPresenterWidget<ChangeAssignedT
                         final SetAssignedToRequest request = new SetAssignedToRequest(annotationIdList,
                                 currentAssignedTo);
                         restFactory
-                                .resource(annotationResource)
+                                .create(annotationResource)
                                 .method(res -> res.setAssignedTo(request))
                                 .onSuccess(values -> GWT.log("Updated " + values + " annotations"))
                                 .exec();
@@ -113,7 +113,7 @@ public class ChangeAssignedToPresenter extends MyPresenterWidget<ChangeAssignedT
         assignedToPresenter.setDataSupplier((filter, consumer) -> {
             final UserResource userResource = GWT.create(UserResource.class);
             restFactory
-                    .resource(userResource)
+                    .create(userResource)
                     .method(res -> res.getAssociates(filter))
                     .onSuccess(consumer)
                     .exec();

@@ -420,7 +420,7 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements
         }
 
         restFactory
-                .resource(DATA_RESOURCE)
+                .create(DATA_RESOURCE)
                 .method(res -> res.fetch(request))
                 .onSuccess(this::handleResponse)
                 .onFailure(caught -> AlertEvent.fireError(

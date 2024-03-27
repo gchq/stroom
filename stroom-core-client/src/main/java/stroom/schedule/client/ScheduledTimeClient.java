@@ -39,7 +39,7 @@ public class ScheduledTimeClient implements HasHandlers {
     public void getScheduledTimes(final GetScheduledTimesRequest request,
                                   final Consumer<ScheduledTimes> consumer) {
         restFactory
-                .resource(SCHEDULED_TIME_RESOURCE)
+                .create(SCHEDULED_TIME_RESOURCE)
                 .method(res -> res.get(request))
                 .onSuccess(consumer)
                 .exec();

@@ -208,7 +208,7 @@ public class ApiKeysListPresenter
 //                GWT.log("id: " + id);
                 if (ok) {
                     restFactory
-                            .resource(API_KEY_RESOURCE)
+                            .create(API_KEY_RESOURCE)
                             .method(res -> res.delete(id))
                             .onSuccess(unused -> {
                                 onSuccess.run();
@@ -224,7 +224,7 @@ public class ApiKeysListPresenter
             ConfirmEvent.fire(this, msg, ok -> {
                 if (ok) {
                     restFactory
-                            .resource(API_KEY_RESOURCE)
+                            .create(API_KEY_RESOURCE)
                             .method(res -> res.deleteBatch(selection.getSet()))
                             .onSuccess(count -> {
                                 onSuccess.run();
@@ -310,7 +310,7 @@ public class ApiKeysListPresenter
                            final Consumer<ApiKeyResultPage> dataConsumer,
                            final Consumer<Throwable> throwableConsumer) {
         restFactory
-                .resource(API_KEY_RESOURCE)
+                .create(API_KEY_RESOURCE)
                 .method(res -> res.find(criteria))
                 .onSuccess(response -> {
                     apiKeys.clear();

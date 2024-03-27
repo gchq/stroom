@@ -7,7 +7,7 @@ import java.util.function.Function;
 
 public interface RestFactory {
 
-    <T extends DirectRestService> Resource<T> resource(T service);
+    <T extends DirectRestService> Resource<T> create(T service);
 
     interface Resource<T extends DirectRestService> {
 

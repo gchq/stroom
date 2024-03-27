@@ -214,7 +214,7 @@ public class IndexVolumeStatusListPresenter extends MyPresenterWidget<PagerView>
                                 final Consumer<Throwable> throwableConsumer) {
                 CriteriaUtil.setRange(criteria, range);
                 restFactory
-                        .resource(INDEX_VOLUME_RESOURCE)
+                        .create(INDEX_VOLUME_RESOURCE)
                         .method(res -> res.find(criteria))
                         .onSuccess(result -> {
                             dataConsumer.accept(result);

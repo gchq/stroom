@@ -123,7 +123,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
                                 final Consumer<ProcessorListRowResultPage> dataConsumer,
                                 final Consumer<Throwable> throwableConsumer) {
                 restFactory
-                        .resource(PROCESSOR_FILTER_RESOURCE)
+                        .create(PROCESSOR_FILTER_RESOURCE)
                         .method(res -> res.find(request))
                         .onSuccess(dataConsumer)
                         .onFailure(throwableConsumer)
@@ -140,7 +140,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
             @Override
             protected void doAction(final Integer key, final Boolean value, final Consumer<Integer> consumer) {
                 restFactory
-                        .resource(PROCESSOR_RESOURCE)
+                        .create(PROCESSOR_RESOURCE)
                         .method(res -> res.setEnabled(key, value))
                         .onSuccess(res -> consumer.accept(key))
                         .onFailure(res -> {
@@ -154,7 +154,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
             @Override
             protected void doAction(final Integer key, final Boolean value, final Consumer<Integer> consumer) {
                 restFactory
-                        .resource(PROCESSOR_FILTER_RESOURCE)
+                        .create(PROCESSOR_FILTER_RESOURCE)
                         .method(res -> res.setEnabled(key, value))
                         .onSuccess(res -> consumer.accept(key))
                         .onFailure(res -> {
@@ -168,7 +168,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
             @Override
             protected void doAction(final Integer key, final Integer value, final Consumer<Integer> consumer) {
                 restFactory
-                        .resource(PROCESSOR_FILTER_RESOURCE)
+                        .create(PROCESSOR_FILTER_RESOURCE)
                         .method(res -> res.setPriority(key, value))
                         .onSuccess(res -> consumer.accept(key))
                         .onFailure(res -> {
@@ -182,7 +182,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
             @Override
             protected void doAction(final Integer key, final Integer value, final Consumer<Integer> consumer) {
                 restFactory
-                        .resource(PROCESSOR_FILTER_RESOURCE)
+                        .create(PROCESSOR_FILTER_RESOURCE)
                         .method(res -> res.setMaxProcessingTasks(key, value))
                         .onSuccess(res -> consumer.accept(key))
                         .onFailure(res -> {

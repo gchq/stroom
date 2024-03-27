@@ -285,7 +285,7 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
                 final ProcessorFilter filter = processorFilterRow.getProcessorFilter();
 
                 restFactory
-                        .resource(PROCESSOR_FILTER_RESOURCE)
+                        .create(PROCESSOR_FILTER_RESOURCE)
                         .method(res -> res.fetch(filter.getId()))
                         .onSuccess(loadedFilter -> {
                             if (loadedFilter == null) {
@@ -336,7 +336,7 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
             ConfirmEvent.fire(this, "Are you sure you want to delete this filter?", result -> {
                 if (result) {
                     restFactory
-                            .resource(PROCESSOR_FILTER_RESOURCE)
+                            .create(PROCESSOR_FILTER_RESOURCE)
                             .method(res -> res.delete(processorFilterRow.getProcessorFilter().getId()))
                             .onSuccess(res -> processorListPresenter.refresh())
                             .exec();
@@ -361,7 +361,7 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
     public void refresh(final ProcessorFilter processorFilter) {
         Objects.requireNonNull(processorFilter);
         restFactory
-                .resource(DOC_PERMISSION_RESOURCE)
+                .create(DOC_PERMISSION_RESOURCE)
                 .method(res -> res.getDocumentOwners(processorFilter.getUuid()))
                 .onSuccess(owners -> {
                     String ownerDisplayName;

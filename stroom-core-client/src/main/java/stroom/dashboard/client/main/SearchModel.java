@@ -234,7 +234,7 @@ public class SearchModel {
                             .build();
 
                     restFactory
-                            .resource(DASHBOARD_RESOURCE)
+                            .create(DASHBOARD_RESOURCE)
                             .method(res -> res.search(currentNode, request))
                             .onSuccess(response -> {
                                 Result result = null;
@@ -356,7 +356,7 @@ public class SearchModel {
                     .build();
 
             restFactory
-                    .resource(DASHBOARD_RESOURCE)
+                    .create(DASHBOARD_RESOURCE)
                     .method(res -> res.search(currentNode, request))
                     .onSuccess(response -> {
                         if (search == currentSearch) {

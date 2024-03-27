@@ -64,7 +64,7 @@ public class EditApiKeyPresenter
         getView().setCanSelectOwner(securityContext.hasAppPermission(PermissionNames.MANAGE_USERS_PERMISSION));
 
         restFactory
-                .resource(USER_RESOURCE)
+                .create(USER_RESOURCE)
                 .method(res -> res.getAssociates(null))
                 .onSuccess(userNames ->
                         getView().setUserNames(userNames))
@@ -160,7 +160,7 @@ public class EditApiKeyPresenter
 
 //                GWT.log("ID: " + this.apiKey.getId());
                 restFactory
-                        .resource(API_KEY_RESOURCE)
+                        .create(API_KEY_RESOURCE)
                         .method(res -> res.update(this.apiKey.getId(), updatedApiKey))
                         .onSuccess(apiKey -> {
                             this.apiKey = apiKey;
@@ -193,7 +193,7 @@ public class EditApiKeyPresenter
                         if (ok) {
                             // cancel clicked so delete the created key
                             restFactory
-                                    .resource(API_KEY_RESOURCE)
+                                    .create(API_KEY_RESOURCE)
                                     .method(res -> res.delete(this.apiKey.getId()))
                                     .onSuccess(didDelete -> {
                                         GwtNullSafe.run(onChangeHandler);
@@ -234,7 +234,7 @@ public class EditApiKeyPresenter
                     getView().isEnabled());
 //            GWT.log("sending create req");
             restFactory
-                    .resource(API_KEY_RESOURCE)
+                    .create(API_KEY_RESOURCE)
                     .method(res -> res.create(request))
                     .onSuccess(response -> {
                         apiKey = response.getHashedApiKey();

@@ -164,7 +164,7 @@ public class ManageActivityPresenter
         uiConfigCache.get().onSuccess(uiConfig -> {
             final String helpUrl = uiConfig.getHelpUrlQuickFilter();
             restFactory
-                    .resource(ACTIVITY_RESOURCE)
+                    .create(ACTIVITY_RESOURCE)
                     .method(ActivityResource::listFieldDefinitions)
                     .onSuccess(fieldDefinitions -> {
                         quickFilterTooltipSupplier = () -> QuickFilterTooltipUtil.createTooltip(
@@ -240,7 +240,7 @@ public class ManageActivityPresenter
         if (e != null) {
             // Load the activity.
             restFactory
-                    .resource(ACTIVITY_RESOURCE)
+                    .create(ACTIVITY_RESOURCE)
                     .method(res -> res.fetch(e.getId()))
                     .onSuccess(this::onEdit)
                     .exec();
@@ -269,7 +269,7 @@ public class ManageActivityPresenter
                         if (result) {
                             // Delete the activity
                             restFactory
-                                    .resource(ACTIVITY_RESOURCE)
+                                    .create(ACTIVITY_RESOURCE)
                                     .method(res -> res.delete(entity.getId()))
                                     .onSuccess(success -> {
                                         listPresenter.refresh();

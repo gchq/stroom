@@ -76,7 +76,7 @@ public class ImportConfigPresenter
             @Override
             protected void onSuccess(final ResourceKey resourceKey) {
                 restFactory
-                        .resource(CONTENT_RESOURCE)
+                        .create(CONTENT_RESOURCE)
                         .method(res -> res.importContent(new ImportConfigRequest(resourceKey,
                                 ImportSettings.createConfirmation(),
                                 new ArrayList<>())))

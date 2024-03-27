@@ -134,7 +134,7 @@ public class DocumentUserListPresenter extends AbstractUserListPresenter {
 
         if (!allSimpleUsers.isEmpty()) {
             restFactory
-                    .resource(DOC_PERMISSION_RESOURCE)
+                    .create(DOC_PERMISSION_RESOURCE)
                     .method(res -> res.filterUsers(new FilterUsersRequest(allSimpleUsers, filter)))
                     .onSuccess(filteredSimpleUsers -> {
                         // Map the users back again

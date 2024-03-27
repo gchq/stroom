@@ -129,7 +129,7 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
 
     private void initialiseRules(final RestFactory restFactory) {
         restFactory
-                .resource(DATA_RETENTION_RULES_RESOURCE)
+                .create(DATA_RETENTION_RULES_RESOURCE)
                 .method(DataRetentionRulesResource::fetch)
                 .onSuccess(result -> {
                     policy = result;
@@ -452,7 +452,7 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
             policy.setRules(getUserRules());
 
             restFactory
-                    .resource(DATA_RETENTION_RULES_RESOURCE)
+                    .create(DATA_RETENTION_RULES_RESOURCE)
                     .method(res -> res.update(policy))
                     .onSuccess(result -> {
                         policy = result;

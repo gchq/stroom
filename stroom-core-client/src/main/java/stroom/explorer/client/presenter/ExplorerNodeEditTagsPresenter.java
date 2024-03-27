@@ -92,12 +92,12 @@ public class ExplorerNodeEditTagsPresenter
                     .collect(Collectors.toList());
 
             restFactory
-                    .resource(EXPLORER_RESOURCE)
+                    .create(EXPLORER_RESOURCE)
                     .method(ExplorerResource::fetchExplorerNodeTags)
                     .onSuccess(allTags -> {
                         if (isSingleDocRef()) {
                             restFactory
-                                    .resource(EXPLORER_RESOURCE)
+                                    .create(EXPLORER_RESOURCE)
                                     .method(res -> res.fetchExplorerNodeTags(docRefs))
                                     .onSuccess(nodeTags -> {
                                         getView().setData(docRefs, nodeTags, allTags);
@@ -172,7 +172,7 @@ public class ExplorerNodeEditTagsPresenter
     private void addTagsToNodes(final HidePopupRequestEvent event, final Set<String> editedTags) {
         final List<DocRef> nodeDocRefs = getNodeDocRefs();
         restFactory
-                .resource(EXPLORER_RESOURCE)
+                .create(EXPLORER_RESOURCE)
                 .call(res -> res.addTags(new AddRemoveTagsRequest(nodeDocRefs, editedTags)))
                 .onSuccess(voidResult -> {
                     // Update the node in the tree with the new tags
@@ -190,7 +190,7 @@ public class ExplorerNodeEditTagsPresenter
                 .tags(editedTags)
                 .build();
         restFactory
-                .resource(EXPLORER_RESOURCE)
+                .create(EXPLORER_RESOURCE)
                 .method(res -> res.updateNodeTags(updatedNode))
                 .onSuccess(explorerNode -> {
                     // Update the node in the tree with the new tags

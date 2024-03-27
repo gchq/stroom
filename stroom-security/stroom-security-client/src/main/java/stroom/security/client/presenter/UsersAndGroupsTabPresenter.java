@@ -195,7 +195,7 @@ public class UsersAndGroupsTabPresenter
                     ok -> {
                         if (ok) {
                             restFactory
-                                    .resource(USER_RESOURCE)
+                                    .create(USER_RESOURCE)
                                     .method(res -> res.delete(userRef.getUuid()))
                                     .onSuccess(result -> {
                                         listPresenter.refresh();
@@ -241,7 +241,7 @@ public class UsersAndGroupsTabPresenter
         newGroupPresenter.show(e -> {
             if (e.isOk()) {
                 restFactory
-                        .resource(USER_RESOURCE)
+                        .create(USER_RESOURCE)
                         .method(res -> res.createGroup(newGroupPresenter.getName()))
                         .onSuccess(result -> {
                             e.hide();
@@ -258,7 +258,7 @@ public class UsersAndGroupsTabPresenter
         newUserPresenter.show(e -> {
             if (e.isOk()) {
                 restFactory
-                        .resource(USER_RESOURCE)
+                        .create(USER_RESOURCE)
                         .method(res -> res.createUser(newUserPresenter.getUserName()))
                         .onSuccess(result -> {
                             e.hide();
@@ -278,7 +278,7 @@ public class UsersAndGroupsTabPresenter
                 final String usersCsvData = createMultipleUsersPresenter.getUsersCsvData();
                 if (usersCsvData != null && !usersCsvData.isEmpty()) {
                     restFactory
-                            .resource(USER_RESOURCE)
+                            .create(USER_RESOURCE)
                             .method(res -> res.createUsersFromCsv(createMultipleUsersPresenter.getUsersCsvData()))
                             .onSuccess(result -> {
                                 e.hide();

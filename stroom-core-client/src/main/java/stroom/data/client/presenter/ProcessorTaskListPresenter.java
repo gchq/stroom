@@ -97,7 +97,7 @@ public class ProcessorTaskListPresenter
                 if (criteria.getExpression() != null) {
                     CriteriaUtil.setRange(criteria, range);
                     restFactory
-                            .resource(PROCESSOR_TASK_RESOURCE)
+                            .create(PROCESSOR_TASK_RESOURCE)
                             .method(res -> res.find(criteria))
                             .onSuccess(dataConsumer)
                             .onFailure(throwableConsumer)
@@ -114,7 +114,7 @@ public class ProcessorTaskListPresenter
                 findMetaCriteria.setExpression(MetaExpressionUtil.createDataIdExpression(row.getMetaId()));
 
                 restFactory
-                        .resource(META_RESOURCE)
+                        .create(META_RESOURCE)
                         .method(res -> res.findMetaRow(findMetaCriteria))
                         .onSuccess(metaRows -> {
                             // Should only get one back

@@ -56,7 +56,7 @@ public class CurrentActivity implements HasHandlers {
             consumer.accept(currentActivity);
         } else {
             restFactory
-                    .resource(ACTIVITY_RESOURCE)
+                    .create(ACTIVITY_RESOURCE)
                     .method(ActivityResource::getCurrentActivity)
                     .onSuccess(a -> {
                         currentActivity = a;
@@ -69,7 +69,7 @@ public class CurrentActivity implements HasHandlers {
 
     public void setActivity(final Activity activity) {
         restFactory
-                .resource(ACTIVITY_RESOURCE)
+                .create(ACTIVITY_RESOURCE)
                 .method(res -> res.setCurrentActivity(activity))
                 .onSuccess(a -> {
                     currentActivity = a;

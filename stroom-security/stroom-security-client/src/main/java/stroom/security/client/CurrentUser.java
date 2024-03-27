@@ -122,7 +122,7 @@ public class CurrentUser implements ClientSecurityContext, HasHandlers {
         future.onFailure(throwable -> AlertEvent.fireErrorFromException(CurrentUser.this, throwable, null));
 
         restFactory
-                .resource(DOC_PERMISSION_RESOURCE)
+                .create(DOC_PERMISSION_RESOURCE)
                 .method(res ->
                         res.checkDocumentPermission(new CheckDocumentPermissionRequest(documentUuid, permission)))
                 .onSuccess(future::setResult)

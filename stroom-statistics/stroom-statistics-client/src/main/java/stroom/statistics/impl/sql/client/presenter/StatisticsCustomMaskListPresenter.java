@@ -190,7 +190,7 @@ public class StatisticsCustomMaskListPresenter extends DocumentEditPresenter<Pag
                 result -> {
                     if (result) {
                         restFactory
-                                .resource(STATISTIC_ROLLUP_RESOURCE)
+                                .create(STATISTIC_ROLLUP_RESOURCE)
                                 .method(res -> res.bitMaskPermGeneration(statisticsDataSource.getStatisticFieldCount()))
                                 .onSuccess(res -> {
                                     updateState(new HashSet<>(res));
@@ -282,7 +282,7 @@ public class StatisticsCustomMaskListPresenter extends DocumentEditPresenter<Pag
         // grab the mask list from this presenter
         oldStatisticsDataSourceData.setCustomRollUpMasks(new HashSet<>(maskList.getMasks()));
         restFactory
-                .resource(STATISTIC_ROLLUP_RESOURCE)
+                .create(STATISTIC_ROLLUP_RESOURCE)
                 .method(res -> res.fieldChange(new StatisticsDataSourceFieldChangeRequest(oldStatisticsDataSourceData,
                         newStatisticsDataSourceData)))
                 .onSuccess(result -> {

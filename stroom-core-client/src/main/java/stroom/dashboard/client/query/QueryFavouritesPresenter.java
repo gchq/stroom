@@ -168,7 +168,7 @@ public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesP
         criteria.setPageRequest(new PageRequest(0, 100));
 
         restFactory
-                .resource(STORED_QUERY_RESOURCE)
+                .create(STORED_QUERY_RESOURCE)
                 .method(res -> res.find(criteria))
                 .onSuccess(result -> {
                     selectionModel.clear();
@@ -204,7 +204,7 @@ public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesP
 
     private void create(final StoredQuery query) {
         restFactory
-                .resource(STORED_QUERY_RESOURCE)
+                .create(STORED_QUERY_RESOURCE)
                 .method(res -> res.create(query))
                 .onSuccess(result -> {
                     refresh(false);
@@ -215,7 +215,7 @@ public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesP
 
     private void update(final StoredQuery query) {
         restFactory
-                .resource(STORED_QUERY_RESOURCE)
+                .create(STORED_QUERY_RESOURCE)
                 .method(res -> res.update(query))
                 .onSuccess(result -> {
                     refresh(false);
@@ -226,7 +226,7 @@ public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesP
 
     private void delete(final StoredQuery query) {
         restFactory
-                .resource(STORED_QUERY_RESOURCE)
+                .create(STORED_QUERY_RESOURCE)
                 .method(res -> res.delete(query))
                 .onSuccess(result -> refresh(false))
                 .exec();

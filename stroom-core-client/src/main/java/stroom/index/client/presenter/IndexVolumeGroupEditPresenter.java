@@ -111,7 +111,7 @@ public class IndexVolumeGroupEditPresenter
             nodeManager.listAllNodes(nodeNames ->
                             nodeNames.forEach(nodeName ->
                                     restFactory
-                                            .resource(INDEX_VOLUME_RESOURCE)
+                                            .create(INDEX_VOLUME_RESOURCE)
                                             .method(res -> res.rescan(nodeName))
                                             .onSuccess(response -> delayedUpdate.update())
                                             .onFailure(throwable -> {
@@ -133,7 +133,7 @@ public class IndexVolumeGroupEditPresenter
         final IndexVolume volume = volumeStatusListPresenter.getSelectionModel().getSelected();
         if (volume != null) {
             restFactory
-                    .resource(INDEX_VOLUME_RESOURCE)
+                    .create(INDEX_VOLUME_RESOURCE)
                     .method(res -> res.fetch(volume.getId()))
                     .onSuccess(result -> editVolume(result, "Edit Volume"))
                     .exec();
@@ -163,7 +163,7 @@ public class IndexVolumeGroupEditPresenter
                             volumeStatusListPresenter.getSelectionModel().clear();
                             for (final IndexVolume volume : list) {
                                 restFactory
-                                        .resource(INDEX_VOLUME_RESOURCE)
+                                        .create(INDEX_VOLUME_RESOURCE)
                                         .method(res -> res.delete(volume.getId()))
                                         .onSuccess(response -> volumeStatusListPresenter.refresh())
                                         .exec();
@@ -239,7 +239,7 @@ public class IndexVolumeGroupEditPresenter
                     null);
         } else {
             restFactory
-                    .resource(INDEX_VOLUME_GROUP_RESOURCE)
+                    .create(INDEX_VOLUME_GROUP_RESOURCE)
                     .method(res -> res.fetchByName(getView().getName()))
                     .onSuccess(grp -> {
                         if (grp != null && !Objects.equals(groupId, grp.getId())) {
@@ -260,7 +260,7 @@ public class IndexVolumeGroupEditPresenter
     private void createVolumeGroup(final Consumer<IndexVolumeGroup> consumer,
                                    final IndexVolumeGroup volumeGroup) {
         restFactory
-                .resource(INDEX_VOLUME_GROUP_RESOURCE)
+                .create(INDEX_VOLUME_GROUP_RESOURCE)
                 .method(res -> res.update(volumeGroup.getId(), volumeGroup))
                 .onSuccess(consumer)
                 .exec();

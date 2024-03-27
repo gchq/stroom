@@ -150,7 +150,7 @@ public abstract class AbstractMetaListPresenter
                 if (criteria.getExpression() != null) {
                     CriteriaUtil.setRange(criteria, range);
                     restFactory
-                            .resource(META_RESOURCE)
+                            .create(META_RESOURCE)
                             .method(res -> res.findMetaRow(criteria))
                             .onSuccess(dataConsumer)
                             .onFailure(throwableConsumer)
@@ -666,7 +666,7 @@ public abstract class AbstractMetaListPresenter
                             final Status newStatus) {
         return () -> {
             restFactory
-                    .resource(META_RESOURCE)
+                    .create(META_RESOURCE)
                     .method(res -> res.updateStatus(new UpdateStatusRequest(criteria, currentStatus, newStatus)))
                     .onSuccess(result ->
                             AlertEvent.fireInfo(
@@ -681,7 +681,7 @@ public abstract class AbstractMetaListPresenter
 
     private void download(final FindMetaCriteria criteria) {
         restFactory
-                .resource(DATA_RESOURCE)
+                .create(DATA_RESOURCE)
                 .method(res -> res.download(criteria))
                 .onSuccess(result -> ExportFileCompleteUtil.onSuccess(locationManager, this, result))
                 .exec();
@@ -707,7 +707,7 @@ public abstract class AbstractMetaListPresenter
                 .build();
 
         restFactory
-                .resource(PROCESSOR_FILTER_RESOURCE)
+                .create(PROCESSOR_FILTER_RESOURCE)
                 .method(res -> res.create(request))
                 .onSuccess(processorFilter -> {
                     if (processorFilter != null) {
@@ -739,7 +739,7 @@ public abstract class AbstractMetaListPresenter
                 .build();
 
         restFactory
-                .resource(PROCESSOR_FILTER_RESOURCE)
+                .create(PROCESSOR_FILTER_RESOURCE)
                 .method(res -> res.reprocess(request))
                 .onSuccess(result -> {
                     if (result != null && result.size() > 0) {

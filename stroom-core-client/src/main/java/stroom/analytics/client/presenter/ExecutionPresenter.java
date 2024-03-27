@@ -113,7 +113,7 @@ public class ExecutionPresenter extends MyPresenterWidget<ExecutionView> {
             executionScheduleEditPresenter.show(newSchedule, executionSchedule -> {
                 if (executionSchedule != null) {
                     restFactory
-                            .resource(EXECUTION_SCHEDULE_RESOURCE)
+                            .create(EXECUTION_SCHEDULE_RESOURCE)
                             .method(res -> res.createExecutionSchedule(executionSchedule))
                             .onSuccess(created -> {
                                 executionScheduleListPresenter.refresh();
@@ -131,7 +131,7 @@ public class ExecutionPresenter extends MyPresenterWidget<ExecutionView> {
             executionScheduleEditPresenter.show(selected, executionSchedule -> {
                 if (executionSchedule != null) {
                     restFactory
-                            .resource(EXECUTION_SCHEDULE_RESOURCE)
+                            .create(EXECUTION_SCHEDULE_RESOURCE)
                             .method(res -> res.updateExecutionSchedule(executionSchedule))
                             .onSuccess(updated -> {
                                 executionScheduleListPresenter.refresh();
@@ -147,7 +147,7 @@ public class ExecutionPresenter extends MyPresenterWidget<ExecutionView> {
         final ExecutionSchedule selected = executionScheduleListPresenter.getSelected();
         if (selected != null) {
             restFactory
-                    .resource(EXECUTION_SCHEDULE_RESOURCE)
+                    .create(EXECUTION_SCHEDULE_RESOURCE)
                     .method(res -> res.deleteExecutionSchedule(selected))
                     .onSuccess(success -> executionScheduleListPresenter.refresh())
                     .exec();

@@ -174,7 +174,7 @@ public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView>
                                     final Runnable onSuccess) {
 
         restFactory
-                .resource(EXPRESSION_RESOURCE)
+                .create(EXPRESSION_RESOURCE)
                 .method(res -> res.validate(new ValidateExpressionRequest(
                         expression,
                         fields,
@@ -268,7 +268,7 @@ public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView>
             filter.setMaxMetaCreateTimeMs(maxMetaCreateTimeMs);
 
             restFactory
-                    .resource(PROCESSOR_FILTER_RESOURCE)
+                    .create(PROCESSOR_FILTER_RESOURCE)
                     .method(res -> res.update(filter.getId(), filter))
                     .onSuccess(this::hide)
                     .exec();
@@ -286,7 +286,7 @@ public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView>
                     .maxMetaCreateTimeMs(maxMetaCreateTimeMs)
                     .build();
             restFactory
-                    .resource(PROCESSOR_FILTER_RESOURCE)
+                    .create(PROCESSOR_FILTER_RESOURCE)
                     .method(res -> res.create(request))
                     .onSuccess(this::hide)
                     .exec();

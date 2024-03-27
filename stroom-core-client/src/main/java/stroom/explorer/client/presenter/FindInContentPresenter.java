@@ -137,7 +137,7 @@ public class FindInContentPresenter
 
                 } else {
                     restFactory
-                            .resource(EXPLORER_RESOURCE)
+                            .create(EXPLORER_RESOURCE)
                             .method(res -> res.findInContent(currentQuery))
                             .onSuccess(resultPage -> {
                                 if (resultPage.getPageStart() != cellTable.getPageStart()) {
@@ -194,7 +194,7 @@ public class FindInContentPresenter
                     selection.getDocContentMatch().getExtension(),
                     currentQuery.getFilter());
             restFactory
-                    .resource(EXPLORER_RESOURCE)
+                    .create(EXPLORER_RESOURCE)
                     .method(res -> res.fetchHighlights(fetchHighlightsRequest))
                     .onSuccess(response -> {
                         if (response != null && response.getText() != null) {

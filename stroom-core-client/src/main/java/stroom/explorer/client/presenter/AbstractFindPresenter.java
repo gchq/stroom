@@ -114,7 +114,7 @@ public abstract class AbstractFindPresenter<T_PROXY extends Proxy<?>>
 
                 } else {
                     restFactory
-                            .resource(EXPLORER_RESOURCE)
+                            .create(EXPLORER_RESOURCE)
                             .method(res -> res.find(currentQuery))
                             .onSuccess(resultPage -> {
                                 if (resultPage.getPageStart() != cellTable.getPageStart()) {

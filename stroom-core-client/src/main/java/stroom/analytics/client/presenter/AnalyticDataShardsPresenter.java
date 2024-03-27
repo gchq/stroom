@@ -102,7 +102,7 @@ public class AnalyticDataShardsPresenter
 
             queryToolbarPresenter.onSearching(true);
             restFactory
-                    .resource(ANALYTIC_DATA_SHARD_RESOURCE)
+                    .create(ANALYTIC_DATA_SHARD_RESOURCE)
                     .method(res -> res.getData(selected.getNode(), request))
                     .onSuccess(result -> {
                         tablePresenter.setData(result);

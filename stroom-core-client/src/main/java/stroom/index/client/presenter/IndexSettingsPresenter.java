@@ -115,7 +115,7 @@ public class IndexSettingsPresenter extends DocumentEditPresenter<IndexSettingsV
 
     private void updateGroupList(final String selected) {
         restFactory
-                .resource(INDEX_VOLUME_GROUP_RESOURCE)
+                .create(INDEX_VOLUME_GROUP_RESOURCE)
                 .method(res -> res.find(new ExpressionCriteria()))
                 .onSuccess(result -> {
                     final List<String> volumeGroupNames = result

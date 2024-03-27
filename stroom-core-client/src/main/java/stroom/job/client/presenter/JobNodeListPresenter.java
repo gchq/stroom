@@ -108,7 +108,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
                                 final Consumer<Throwable> throwableConsumer) {
                 findJobNodeCriteria.getJobName().setString(jobName);
                 restFactory
-                        .resource(JOB_NODE_RESOURCE)
+                        .create(JOB_NODE_RESOURCE)
                         .method(res -> res.find(findJobNodeCriteria))
                         .onSuccess(dataConsumer)
                         .onFailure(throwableConsumer)
@@ -120,7 +120,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
                 // Ping each node.
                 data.getValues().forEach(row -> {
                     restFactory
-                            .resource(JOB_NODE_RESOURCE)
+                            .create(JOB_NODE_RESOURCE)
                             .method(res -> res.info(row.getJob().getName(), row.getNodeName()))
                             .onSuccess(info -> {
                                 latestNodeInfo.put(row, info);
@@ -161,7 +161,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
         enabledColumn.setFieldUpdater((index, row, value) -> {
             row.setEnabled(value.toBoolean());
             restFactory
-                    .resource(JOB_NODE_RESOURCE)
+                    .create(JOB_NODE_RESOURCE)
                     .call(res -> res.setEnabled(row.getId(), value.toBoolean()))
                     .exec();
         });
@@ -282,7 +282,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
         maxColumn.setFieldUpdater((index, row, value) -> {
             row.setTaskLimit(value.intValue());
             restFactory
-                    .resource(JOB_NODE_RESOURCE)
+                    .create(JOB_NODE_RESOURCE)
                     .call(res -> res.setTaskLimit(row.getId(), value.intValue()))
                     .exec();
         });
@@ -321,7 +321,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
 
     private void showSchedule(final JobNode row) {
         restFactory
-                .resource(JOB_NODE_RESOURCE)
+                .create(JOB_NODE_RESOURCE)
                 .method(res -> res.info(row.getJob().getName(), row.getNodeName()))
                 .onSuccess(result -> setSchedule(row, result))
                 .onFailure(throwable -> setSchedule(row, null))
@@ -341,7 +341,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
             schedulePresenter.show(schedule -> {
                 JobNodeUtil.setSchedule(jobNode, schedule);
                 restFactory
-                        .resource(JOB_NODE_RESOURCE)
+                        .create(JOB_NODE_RESOURCE)
                         .call(res -> res.setSchedule(jobNode.getId(), schedule))
                         .onSuccess(result ->
                                 dataProvider.refresh())

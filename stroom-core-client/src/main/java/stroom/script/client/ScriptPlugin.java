@@ -67,7 +67,7 @@ public class ScriptPlugin extends DocumentPlugin<ScriptDoc> {
                      final Consumer<ScriptDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .resource(SCRIPT_RESOURCE)
+                .create(SCRIPT_RESOURCE)
                 .method(res -> res.fetch(docRef.getUuid()))
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
@@ -80,7 +80,7 @@ public class ScriptPlugin extends DocumentPlugin<ScriptDoc> {
                      final Consumer<ScriptDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .resource(SCRIPT_RESOURCE)
+                .create(SCRIPT_RESOURCE)
                 .method(res -> res.update(document.getUuid(), document))
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)

@@ -175,7 +175,7 @@ public class ImportConfigConfirmPresenter extends
     public void refresh() {
         importSettingsBuilder.importMode(ImportMode.CREATE_CONFIRMATION);
         restFactory
-                .resource(CONTENT_RESOURCE)
+                .create(CONTENT_RESOURCE)
                 .method(res -> res.importContent(new ImportConfigRequest(resourceKey,
                         importSettingsBuilder.build(),
                         confirmList)))
@@ -452,7 +452,7 @@ public class ImportConfigConfirmPresenter extends
         importSettingsBuilder.enableFilters(false);
 
         restFactory
-                .resource(CONTENT_RESOURCE)
+                .create(CONTENT_RESOURCE)
                 .method(res -> res.importContent(new ImportConfigRequest(resourceKey,
                         importSettingsBuilder.build(),
                         new ArrayList<>())))
@@ -468,7 +468,7 @@ public class ImportConfigConfirmPresenter extends
     public void importData() {
         importSettingsBuilder.importMode(ImportMode.ACTION_CONFIRMATION);
         restFactory
-                .resource(CONTENT_RESOURCE)
+                .create(CONTENT_RESOURCE)
                 .method(res -> res.importContent(new ImportConfigRequest(resourceKey,
                         importSettingsBuilder.build(),
                         confirmList)))

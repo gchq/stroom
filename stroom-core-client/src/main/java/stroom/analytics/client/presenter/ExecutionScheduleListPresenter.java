@@ -102,7 +102,7 @@ public class ExecutionScheduleListPresenter
                 if (request != null) {
                     CriteriaUtil.setRange(request, range);
                     restFactory
-                            .resource(EXECUTION_SCHEDULE_RESOURCE)
+                            .create(EXECUTION_SCHEDULE_RESOURCE)
                             .method(res -> res.fetchExecutionSchedule(request))
                             .onSuccess(dataConsumer)
                             .onFailure(throwableConsumer)
@@ -141,7 +141,7 @@ public class ExecutionScheduleListPresenter
         };
         enabledColumn.setFieldUpdater((index, row, value) -> {
             restFactory
-                    .resource(EXECUTION_SCHEDULE_RESOURCE)
+                    .create(EXECUTION_SCHEDULE_RESOURCE)
                     .method(res -> res.updateExecutionSchedule(row.copy().enabled(value.toBoolean()).build()))
                     .onSuccess(updated -> refresh())
                     .exec();

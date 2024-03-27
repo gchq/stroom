@@ -163,7 +163,7 @@ public class DataRetentionImpactPresenter
         // take a looooong time
         // Need to assign it to a variable for the generics typing
         restFactory
-                .resource(RETENTION_RULES_RESOURCE)
+                .create(RETENTION_RULES_RESOURCE)
                 .method(res -> res.getRetentionDeletionSummary(request))
                 .onSuccess(response -> {
                     // check we are expecting the results
@@ -194,7 +194,7 @@ public class DataRetentionImpactPresenter
     private void cancelQuery() {
         if (currentQueryId != null) {
             restFactory
-                    .resource(RETENTION_RULES_RESOURCE)
+                    .create(RETENTION_RULES_RESOURCE)
                     .method(res -> res.cancelQuery(currentQueryId))
                     .onSuccess(success -> {
                         isQueryRunning = false;

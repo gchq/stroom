@@ -189,7 +189,7 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
                      final Consumer<DashboardDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .resource(DASHBOARD_RESOURCE)
+                .create(DASHBOARD_RESOURCE)
                 .method(res -> res.fetch(docRef.getUuid()))
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
@@ -202,7 +202,7 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
                      final Consumer<DashboardDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .resource(DASHBOARD_RESOURCE)
+                .create(DASHBOARD_RESOURCE)
                 .method(res -> res.update(document.getUuid(), document))
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)

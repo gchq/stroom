@@ -69,7 +69,7 @@ public class FsVolumeGroupListPresenter extends MyPresenterWidget<PagerView> {
                                 final Consumer<Throwable> throwableConsumer) {
                 CriteriaUtil.setRange(criteria, range);
                 restFactory
-                        .resource(FS_VOLUME_GROUP_RESOURCE)
+                        .create(FS_VOLUME_GROUP_RESOURCE)
                         .method(res -> res.find(criteria))
                         .onSuccess(dataConsumer)
                         .onFailure(throwableConsumer)

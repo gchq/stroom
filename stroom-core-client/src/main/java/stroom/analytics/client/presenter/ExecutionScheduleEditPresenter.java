@@ -55,7 +55,7 @@ public class ExecutionScheduleEditPresenter
         view.getScheduleBox().setSchedulePresenterProvider(schedulePresenterProvider);
         view.getScheduleBox().setScheduleRestriction(new ScheduleRestriction(false, false, true));
         view.getScheduleBox().setScheduleReferenceTimeConsumer(scheduleReferenceTimeConsumer -> restFactory
-                .resource(EXECUTION_SCHEDULE_RESOURCE)
+                .create(EXECUTION_SCHEDULE_RESOURCE)
                 .method(res -> res.fetchTracker(executionSchedule))
                 .onSuccess(tracker -> {
                     Long lastExecuted = null;

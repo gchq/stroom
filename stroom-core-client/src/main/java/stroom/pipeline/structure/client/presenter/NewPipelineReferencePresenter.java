@@ -140,7 +140,7 @@ public class NewPipelineReferencePresenter
         dataTypeWidget.clear();
 
         restFactory
-                .resource(META_RESOURCE)
+                .create(META_RESOURCE)
                 .method(MetaResource::getTypes)
                 .onSuccess(result -> {
                     if (result != null) {

@@ -101,7 +101,7 @@ public class DocumentPermissionsPresenter
             consumer.accept(cached);
         } else {
             restFactory
-                    .resource(DOC_PERMISSION_RESOURCE)
+                    .create(DOC_PERMISSION_RESOURCE)
                     .method(res -> res.getPermissionForDocType(docType))
                     .onSuccess(permissions -> {
                         ALL_PERMISSIONS_CACHE.put(docType, permissions);
@@ -134,7 +134,7 @@ public class DocumentPermissionsPresenter
 
             final DocRef docRef = explorerNode.getDocRef();
             restFactory
-                    .resource(DOC_PERMISSION_RESOURCE)
+                    .create(DOC_PERMISSION_RESOURCE)
                     .method(res -> res.fetchAllDocumentPermissions(new FetchAllDocumentPermissionsRequest(explorerNode.getDocRef())))
                     .onSuccess(documentPermissions -> {
                         this.documentPermissions = documentPermissions;
@@ -177,7 +177,7 @@ public class DocumentPermissionsPresenter
 
         return event -> {
             restFactory
-                    .resource(DOC_PERMISSION_RESOURCE)
+                    .create(DOC_PERMISSION_RESOURCE)
                     .method(res -> res.copyPermissionFromParent(new CopyPermissionsFromParentRequest(explorerNode.getDocRef())))
                     .onSuccess(parentDocPermissions -> {
                         // We want to wipe existing permissions on the server, which means creating REMOVES
@@ -263,7 +263,7 @@ public class DocumentPermissionsPresenter
             // of what they are about to do as it may impact 00s or 000s of documents.
             if (Cascade.isCascading(cascade)) {
                 restFactory
-                        .resource(DOC_PERMISSION_RESOURCE)
+                        .create(DOC_PERMISSION_RESOURCE)
                         .method(res -> res.fetchPermissionChangeImpact(new ChangeDocumentPermissionsRequest(
                                 docRef,
                                 changes,
@@ -294,7 +294,7 @@ public class DocumentPermissionsPresenter
 
     private void doPermissionChange(final HidePopupRequestEvent e, final DocRef docRef) {
         restFactory
-                .resource(DOC_PERMISSION_RESOURCE)
+                .create(DOC_PERMISSION_RESOURCE)
                 .method(res -> res.changeDocumentPermissions(new ChangeDocumentPermissionsRequest(
                         docRef,
                         changes,

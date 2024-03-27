@@ -31,7 +31,7 @@ class RestFactoryImpl implements RestFactory, HasHandlers {
 
 
     @Override
-    public <T extends DirectRestService> Resource<T> resource(final T service) {
+    public <T extends DirectRestService> Resource<T> create(final T service) {
         return new ResourceImpl<>(this, service);
     }
 

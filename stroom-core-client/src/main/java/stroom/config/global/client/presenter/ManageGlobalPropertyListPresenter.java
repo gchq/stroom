@@ -145,7 +145,7 @@ public class ManageGlobalPropertyListPresenter
 //        GWT.log("Refresh table called");
 
         restFactory
-                .resource(GLOBAL_CONFIG_RESOURCE_RESOURCE)
+                .create(GLOBAL_CONFIG_RESOURCE_RESOURCE)
                 .method(res -> res.list(criteria))
                 .onSuccess(listConfigResponse -> {
 
@@ -204,7 +204,7 @@ public class ManageGlobalPropertyListPresenter
                 dataGrid.getVisibleRange().getLength()));
 
         restFactory
-                .resource(GLOBAL_CONFIG_RESOURCE_RESOURCE)
+                .create(GLOBAL_CONFIG_RESOURCE_RESOURCE)
                 .method(res -> res.listByNode(nodeName, criteria))
                 .onSuccess(this::handleNodeResponse)
                 .onFailure(throwable -> {

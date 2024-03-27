@@ -435,7 +435,7 @@ public class IndexShardPresenter extends DocumentEditPresenter<PagerView, Lucene
                                         final Consumer<Throwable> throwableConsumer) {
                         CriteriaUtil.setRange(queryCriteria, range);
                         restFactory
-                                .resource(INDEX_RESOURCE)
+                                .create(INDEX_RESOURCE)
                                 .method(res -> res.find(queryCriteria))
                                 .onSuccess(dataConsumer)
                                 .onFailure(throwableConsumer)
@@ -541,7 +541,7 @@ public class IndexShardPresenter extends DocumentEditPresenter<PagerView, Lucene
         delayedUpdate.reset();
         nodeManager.listEnabledNodes(nodeNames -> nodeNames.forEach(nodeName -> {
             restFactory
-                    .resource(INDEX_RESOURCE)
+                    .create(INDEX_RESOURCE)
                     .method(res -> res.flushIndexShards(nodeName, selectionCriteria))
                     .onSuccess(result -> delayedUpdate.update())
                     .exec();
@@ -557,7 +557,7 @@ public class IndexShardPresenter extends DocumentEditPresenter<PagerView, Lucene
         delayedUpdate.reset();
         nodeManager.listEnabledNodes(nodeNames -> nodeNames.forEach(nodeName -> {
             restFactory
-                    .resource(INDEX_RESOURCE)
+                    .create(INDEX_RESOURCE)
                     .method(res -> res.deleteIndexShards(nodeName, selectionCriteria))
                     .onSuccess(result -> delayedUpdate.update())
                     .exec();

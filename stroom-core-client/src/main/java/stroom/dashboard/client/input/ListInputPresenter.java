@@ -99,7 +99,7 @@ public class ListInputPresenter
         if (settings.isUseDictionary() &&
                 settings.getDictionary() != null) {
             restFactory
-                    .resource(WORD_LIST_RESOURCE)
+                    .create(WORD_LIST_RESOURCE)
                     .method(res -> res.getWords(settings.getDictionary().getUuid()))
                     .onSuccess(words -> {
                         if (words != null) {

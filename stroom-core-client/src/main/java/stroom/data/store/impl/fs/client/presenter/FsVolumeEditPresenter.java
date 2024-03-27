@@ -97,7 +97,7 @@ public class FsVolumeEditPresenter extends MyPresenterWidget<FsVolumeEditView> {
     private void doWithVolumeValidation(final FsVolume volume,
                                         final Runnable work) {
         restFactory
-                .resource(FS_VOLUME_RESOURCE)
+                .create(FS_VOLUME_RESOURCE)
                 .method(res -> res.validate(volume))
                 .onSuccess(validationResult -> {
                     if (validationResult.isOk()) {
@@ -130,7 +130,7 @@ public class FsVolumeEditPresenter extends MyPresenterWidget<FsVolumeEditView> {
 
     private void updateVolume(final Consumer<FsVolume> consumer, final FsVolume volume) {
         restFactory
-                .resource(FS_VOLUME_RESOURCE)
+                .create(FS_VOLUME_RESOURCE)
                 .method(res -> res.update(volume.getId(), volume))
                 .onSuccess(consumer)
                 .exec();
@@ -138,7 +138,7 @@ public class FsVolumeEditPresenter extends MyPresenterWidget<FsVolumeEditView> {
 
     private void createVolume(final Consumer<FsVolume> consumer, final FsVolume volume) {
         restFactory
-                .resource(FS_VOLUME_RESOURCE)
+                .create(FS_VOLUME_RESOURCE)
                 .method(res -> res.create(volume))
                 .onSuccess(consumer)
                 .exec();

@@ -75,7 +75,7 @@ public class SplashPresenter extends MyPresenterWidget<SplashPresenter.SplashVie
                         .onHideRequest(e -> {
                             if (e.isOk()) {
                                 restFactory
-                                        .resource(ACTIVITY_RESOURCE)
+                                        .create(ACTIVITY_RESOURCE)
                                         .method(res -> res.acknowledgeSplash(new AcknowledgeSplashRequest(body,
                                                 version)))
                                         .onSuccess(result -> e.hide())

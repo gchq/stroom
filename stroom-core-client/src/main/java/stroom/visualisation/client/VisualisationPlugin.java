@@ -67,7 +67,7 @@ public class VisualisationPlugin extends DocumentPlugin<VisualisationDoc> {
                      final Consumer<VisualisationDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .resource(VISUALISATION_RESOURCE)
+                .create(VISUALISATION_RESOURCE)
                 .method(res -> res.fetch(docRef.getUuid()))
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)
@@ -80,7 +80,7 @@ public class VisualisationPlugin extends DocumentPlugin<VisualisationDoc> {
                      final Consumer<VisualisationDoc> resultConsumer,
                      final Consumer<Throwable> errorConsumer) {
         restFactory
-                .resource(VISUALISATION_RESOURCE)
+                .create(VISUALISATION_RESOURCE)
                 .method(res -> res.update(document.getUuid(), document))
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)

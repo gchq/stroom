@@ -278,7 +278,7 @@ public class DocumentPluginEventManager extends Plugin {
         registerHandler(getEventBus().addHandler(SaveAsDocumentEvent.getType(), event -> {
             // First get the explorer node for the docref.
             restFactory
-                    .resource(EXPLORER_RESOURCE)
+                    .create(EXPLORER_RESOURCE)
                     .method(res -> res.getFromDocRef(event.getDocRef()))
                     .onSuccess(explorerNode -> {
                         // Now we have the explorer node proceed with the save as.
@@ -576,7 +576,7 @@ public class DocumentPluginEventManager extends Plugin {
                        final PermissionInheritance permissionInheritance,
                        final Consumer<ExplorerNode> consumer) {
         restFactory
-                .resource(EXPLORER_RESOURCE)
+                .create(EXPLORER_RESOURCE)
                 .method(res -> res.create(new ExplorerServiceCreateRequest(
                         docType,
                         docName,
@@ -593,7 +593,7 @@ public class DocumentPluginEventManager extends Plugin {
                       final PermissionInheritance permissionInheritance,
                       final Consumer<BulkActionResult> consumer) {
         restFactory
-                .resource(EXPLORER_RESOURCE)
+                .create(EXPLORER_RESOURCE)
                 .method(res -> res.copy(new ExplorerServiceCopyRequest(
                         explorerNodes,
                         destinationFolder,
@@ -609,7 +609,7 @@ public class DocumentPluginEventManager extends Plugin {
                       final PermissionInheritance permissionInheritance,
                       final Consumer<BulkActionResult> consumer) {
         restFactory
-                .resource(EXPLORER_RESOURCE)
+                .create(EXPLORER_RESOURCE)
                 .method(res -> res.move(new ExplorerServiceMoveRequest(
                         explorerNodes,
                         destinationFolder,
@@ -620,7 +620,7 @@ public class DocumentPluginEventManager extends Plugin {
 
     private void rename(final ExplorerNode explorerNode, final String docName, final Consumer<ExplorerNode> consumer) {
         restFactory
-                .resource(EXPLORER_RESOURCE)
+                .create(EXPLORER_RESOURCE)
                 .method(res -> res.rename(new ExplorerServiceRenameRequest(explorerNode, docName)))
                 .onSuccess(consumer)
                 .exec();
@@ -628,7 +628,7 @@ public class DocumentPluginEventManager extends Plugin {
 
     public void delete(final List<DocRef> docRefs, final Consumer<BulkActionResult> consumer) {
         restFactory
-                .resource(EXPLORER_RESOURCE)
+                .create(EXPLORER_RESOURCE)
                 .method(res -> res.delete(new ExplorerServiceDeleteRequest(docRefs)))
                 .onSuccess(consumer)
                 .exec();
@@ -637,13 +637,13 @@ public class DocumentPluginEventManager extends Plugin {
     private void setAsFavourite(final DocRef docRef, final boolean setFavourite) {
         if (setFavourite) {
             restFactory
-                    .resource(EXPLORER_FAV_RESOURCE)
+                    .create(EXPLORER_FAV_RESOURCE)
                     .call(res -> res.createUserFavourite(docRef))
                     .onSuccess(result -> RefreshExplorerTreeEvent.fire(DocumentPluginEventManager.this))
                     .exec();
         } else {
             restFactory
-                    .resource(EXPLORER_FAV_RESOURCE)
+                    .create(EXPLORER_FAV_RESOURCE)
                     .call(res -> res.deleteUserFavourite(docRef))
                     .onSuccess(result -> RefreshExplorerTreeEvent.fire(DocumentPluginEventManager.this))
                     .exec();
@@ -655,7 +655,7 @@ public class DocumentPluginEventManager extends Plugin {
         if (documentPlugin != null) {
             // Decorate the DocRef with its name from the info service (required by the doc presenter)
             restFactory
-                    .resource(EXPLORER_RESOURCE)
+                    .create(EXPLORER_RESOURCE)
                     .method(res -> res.decorate(docRef))
                     .onSuccess(decoratedDocRef -> {
                         if (decoratedDocRef != null) {
@@ -679,7 +679,7 @@ public class DocumentPluginEventManager extends Plugin {
     public void highlight(final DocRef docRef) {
         // Obtain the Explorer node for the provided DocRef
         restFactory
-                .resource(EXPLORER_RESOURCE)
+                .create(EXPLORER_RESOURCE)
                 .method(res -> res.getFromDocRef(docRef))
                 .onSuccess(this::highlight)
                 .exec();
@@ -764,7 +764,7 @@ public class DocumentPluginEventManager extends Plugin {
     private void fetchPermissions(final List<ExplorerNode> explorerNodes,
                                   final Consumer<Map<ExplorerNode, ExplorerNodePermissions>> consumer) {
         restFactory
-                .resource(EXPLORER_RESOURCE)
+                .create(EXPLORER_RESOURCE)
                 .method(res -> res.fetchExplorerPermissions(explorerNodes))
                 .onSuccess(response -> {
                     final Map<ExplorerNode, ExplorerNodePermissions> map = response.stream().collect(Collectors.toMap(
@@ -1087,7 +1087,7 @@ public class DocumentPluginEventManager extends Plugin {
                 // Should only be one item as info is not supported for multi selection
                 // in the tree
                 restFactory
-                        .resource(EXPLORER_RESOURCE)
+                        .create(EXPLORER_RESOURCE)
                         .method(res -> res.info(explorerNode.getDocRef()))
                         .onSuccess(explorerNodeInfo -> {
                             ShowInfoDocumentDialogEvent.fire(

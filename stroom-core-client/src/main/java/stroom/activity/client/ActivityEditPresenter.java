@@ -214,7 +214,7 @@ public class ActivityEditPresenter extends MyPresenterWidget<ActivityEditView> {
 
         // Validate the activity.
         restFactory
-                .resource(ACTIVITY_RESOURCE)
+                .create(ACTIVITY_RESOURCE)
                 .method(res -> res.validate(activity))
                 .onSuccess(result -> afterValidation(result, details, consumer))
                 .exec();
@@ -234,7 +234,7 @@ public class ActivityEditPresenter extends MyPresenterWidget<ActivityEditView> {
             // Save the activity.
             if (activity.getId() == null) {
                 restFactory
-                        .resource(ACTIVITY_RESOURCE)
+                        .create(ACTIVITY_RESOURCE)
                         .method(ActivityResource::create)
                         .onSuccess(result -> {
                             activity = result;
@@ -251,7 +251,7 @@ public class ActivityEditPresenter extends MyPresenterWidget<ActivityEditView> {
 
     private void update(final Activity activity, final ActivityDetails details, final Consumer<Activity> consumer) {
         restFactory
-                .resource(ACTIVITY_RESOURCE)
+                .create(ACTIVITY_RESOURCE)
                 .method(res -> res.update(activity.getId(), activity))
                 .onSuccess(result -> {
                     ActivityEditPresenter.this.activity = result;

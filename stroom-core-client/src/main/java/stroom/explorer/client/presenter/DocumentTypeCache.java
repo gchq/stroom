@@ -45,7 +45,7 @@ public class DocumentTypeCache {
         // Get the document types if they are null.
         if (documentTypes == null) {
             restFactory
-                    .resource(EXPLORER_RESOURCE)
+                    .create(EXPLORER_RESOURCE)
                     .method(ExplorerResource::fetchDocumentTypes)
                     .onSuccess(result -> {
                         documentTypes = result;

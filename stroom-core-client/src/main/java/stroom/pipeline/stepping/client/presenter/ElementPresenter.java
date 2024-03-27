@@ -135,7 +135,7 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements
                             .build();
 
                     restFactory
-                            .resource(STEPPING_RESOURCE)
+                            .create(STEPPING_RESOURCE)
                             .method(res -> res.findElementDoc(findElementDocRequest))
                             .onSuccess(result -> loadEntityRef(result, future))
                             .onFailure(caught -> {

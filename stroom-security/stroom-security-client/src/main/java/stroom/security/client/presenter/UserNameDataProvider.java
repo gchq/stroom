@@ -69,7 +69,7 @@ public class UserNameDataProvider implements Refreshable {
                                     final Consumer<Throwable> throwableConsumer) {
                     CriteriaUtil.setRange(criteria, range);
                     restFactory
-                            .resource(USER_RESOURCE)
+                            .create(USER_RESOURCE)
                             .method(res -> res.findAssociates(criteria))
                             .onSuccess(dataConsumer)
                             .onFailure(throwableConsumer)

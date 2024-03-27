@@ -44,13 +44,13 @@ public class SelectionSummaryPresenter extends MyPresenterWidget<CommonAlertView
 
         if (reprocess) {
             restFactory
-                    .resource(META_RESOURCE)
+                    .create(META_RESOURCE)
                     .method(res -> res.getReprocessSelectionSummary(criteria))
                     .onSuccess(result -> update(postAction, action, result))
                     .exec();
         } else {
             restFactory
-                    .resource(META_RESOURCE)
+                    .create(META_RESOURCE)
                     .method(res -> res.getSelectionSummary(criteria))
                     .onSuccess(result -> update(postAction, action, result))
                     .exec();
