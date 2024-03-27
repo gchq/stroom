@@ -15,6 +15,7 @@ public class ApiKeysPresenter
         extends ContentTabPresenter<ApiKeysView>
         implements Refreshable, ApiKeyUiHandlers {
 
+    public static final String TAB_TYPE = "ApiKeys";
     private final ApiKeysListPresenter listPresenter;
 
     @Inject
@@ -49,6 +50,11 @@ public class ApiKeysPresenter
     @Override
     public String getLabel() {
         return "Api Keys";
+    }
+
+    @Override
+    public String getType() {
+        return TAB_TYPE;
     }
 
 

@@ -273,6 +273,10 @@ public class ExpressionTreePresenter extends MyPresenterWidget<ExpressionTreePre
         return getView().addContextMenuHandler(handler);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface ExpressionTreeView extends View, HasContextMenuHandlers, HasUiHandlers<ExpressionUiHandlers> {
 
         void setTree(DefaultTreeForTreeLayout<Item> model);

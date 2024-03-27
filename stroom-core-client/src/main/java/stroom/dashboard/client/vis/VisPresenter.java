@@ -76,9 +76,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisView>
+public class VisPresenter
+        extends AbstractComponentPresenter<VisPresenter.VisView>
         implements ResultComponent, StatusHandler, SelectionUiHandlers, HasSelection, VisUiHandlers {
 
+    public static final String TAB_TYPE = "vis-component";
     private static final ScriptResource SCRIPT_RESOURCE = GWT.create(ScriptResource.class);
     private static final VisualisationResource VISUALISATION_RESOURCE = GWT.create(VisualisationResource.class);
 
@@ -645,7 +647,7 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
     }
 
     @Override
-    public ComponentType getType() {
+    public ComponentType getComponentType() {
         return TYPE;
     }
 
@@ -744,6 +746,15 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
     public List<Map<String, String>> getSelection() {
         return currentSelection;
     }
+
+    @Override
+    public String getType() {
+        return TAB_TYPE;
+    }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface VisView extends View, RequiresResize, HasUiHandlers<VisUiHandlers> {
 

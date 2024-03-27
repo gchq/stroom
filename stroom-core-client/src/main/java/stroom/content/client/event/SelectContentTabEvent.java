@@ -56,6 +56,10 @@ public class SelectContentTabEvent extends GwtEvent<SelectContentTabEvent.Select
         return tabData;
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface SelectContentTabHandler extends EventHandler {
 
         void onSelect(SelectContentTabEvent event);

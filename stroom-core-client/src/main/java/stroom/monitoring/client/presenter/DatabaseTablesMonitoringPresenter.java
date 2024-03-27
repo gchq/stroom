@@ -44,6 +44,8 @@ import java.util.function.Consumer;
 public class DatabaseTablesMonitoringPresenter
         extends ContentTabPresenter<PagerView> {
 
+    public static final String TAB_TYPE = "DatabaseTables";
+
     private static final DbStatusResource DB_STATUS_RESOURCE = GWT.create(DbStatusResource.class);
 
     private final FindDBTableCriteria criteria;
@@ -141,5 +143,10 @@ public class DatabaseTablesMonitoringPresenter
     @Override
     public String getLabel() {
         return "Database Tables";
+    }
+
+    @Override
+    public String getType() {
+        return TAB_TYPE;
     }
 }

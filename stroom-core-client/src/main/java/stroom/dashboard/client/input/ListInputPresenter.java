@@ -44,6 +44,7 @@ public class ListInputPresenter
         extends AbstractComponentPresenter<ListInputView>
         implements ListInputUiHandlers, HasParams {
 
+    public static final String TAB_TYPE = "list-input-component";
     public static final ComponentType TYPE =
             new ComponentType(1,
                     "list-input",
@@ -136,9 +137,17 @@ public class ListInputPresenter
     }
 
     @Override
-    public ComponentType getType() {
+    public ComponentType getComponentType() {
         return TYPE;
     }
+
+    @Override
+    public String getType() {
+        return TAB_TYPE;
+    }
+
+    // --------------------------------------------------------------------------------
+
 
     public interface ListInputView extends View, HasUiHandlers<ListInputUiHandlers> {
 

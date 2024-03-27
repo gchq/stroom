@@ -91,7 +91,7 @@ public class Components implements HasHandlers, HasChangeDataHandlers<Components
     public void remove(final String id, final boolean fireEvents) {
         final Component component = idMap.remove(id);
         if (component != null) {
-            final String type = component.getType().getId();
+            final String type = component.getComponentType().getId();
             final List<Component> list = typeMap.get(type);
             if (list != null) {
                 list.remove(component);
@@ -147,7 +147,7 @@ public class Components implements HasHandlers, HasChangeDataHandlers<Components
             // See if we can find this component.
             final Component component = get(id);
             // If we have found the component check that it is the right type.
-            if (component != null && typeId.equals(component.getType().getId())) {
+            if (component != null && typeId.equals(component.getComponentType().getId())) {
                 // Set the id as this is a valid component.
                 newId = id;
             }

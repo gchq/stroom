@@ -68,8 +68,11 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-public class TextPresenter extends AbstractComponentPresenter<TextPresenter.TextView> implements TextUiHandlers {
+public class TextPresenter
+        extends AbstractComponentPresenter<TextPresenter.TextView>
+        implements TextUiHandlers {
 
+    public static final String TAB_TYPE = "text-component";
     private static final DataResource DATA_RESOURCE = GWT.create(DataResource.class);
 
     public static final ComponentType TYPE = new ComponentType(2, "text", "Text", ComponentUse.PANEL);
@@ -691,7 +694,7 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
     }
 
     @Override
-    public ComponentType getType() {
+    public ComponentType getComponentType() {
         return TYPE;
     }
 
@@ -718,6 +721,15 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
             AlertEvent.fireError(this, "No stream id", null);
         }
     }
+
+    @Override
+    public String getType() {
+        return TAB_TYPE;
+    }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface TextView extends View, HasUiHandlers<TextUiHandlers> {
 
